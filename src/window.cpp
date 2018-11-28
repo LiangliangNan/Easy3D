@@ -135,31 +135,22 @@ bool Window::key_release(int key, int modifiers)
 
 bool Window::draw()
 {
-#if 1  // not overlap windows
-	std::size_t win_id = 0;
-	const std::vector<Window*>& windows = viewer_->windows();
-	for (std::size_t i=0; i<windows.size(); ++i) {
-		if (windows[i] == this) {
-			win_id = i;
-		}
-	}
-	float menu_width = 180.f * menu_scaling();
-	float pos_x = 10.0f + (10.0f + menu_width) * win_id;
-    ImGui::SetNextWindowPos(ImVec2(pos_x, 10.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(0.0f, 0.0f), ImGuiCond_FirstUseEver);
+    float offset = 0.0f;
+    float menu_width = 180.f * menu_scaling();
+    ImGui::SetNextWindowPos(ImVec2(offset, offset), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(0.0f, offset), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(menu_width, -1.0f), ImVec2(menu_width, -1.0f));
-#endif 
 
 	static bool _viewer_menu_visible = true;
 	ImGui::Begin(
         name_.c_str(), &_viewer_menu_visible,
         ImGuiWindowFlags_NoSavedSettings
         | ImGuiWindowFlags_AlwaysAutoResize
-
-//                ImGuiWindowFlags_NoTitleBar
-//                //| ImGuiWindowFlags_NoResize
+        | ImGuiWindowFlags_NoMove
+        | ImGuiWindowFlags_MenuBar
+        | ImGuiWindowFlags_NoTitleBar
+//        | ImGuiWindowFlags_NoResize
 //                | ImGuiWindowFlags_AlwaysAutoResize
-//                | ImGuiWindowFlags_NoMove
 //                | ImGuiWindowFlags_NoScrollbar
 //                | ImGuiWindowFlags_NoScrollWithMouse
 //                | ImGuiWindowFlags_NoCollapse
@@ -180,6 +171,82 @@ bool Window::draw()
 
 void Window::draw_widgets()
 {
+    static bool show_about = false;
+    if (show_about)
+     {
+         ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_AlwaysAutoResize);
+         ImGui::Text("By Liangliang Nan.");
+         ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+         ImGui::End();
+     }
+
+    // Menu
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Open", "Ctrl+O")) {}
+            if (ImGui::BeginMenu("Open Recent"))
+            {
+                ImGui::MenuItem("bunny.ply");
+                ImGui::MenuItem("terain.las");
+                ImGui::MenuItem("building.obj");
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Save", "Ctrl+S")) {}
+            if (ImGui::MenuItem("Save As..")) {}
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Options"))
+            {
+                static bool fixed_position = true;
+                ImGui::MenuItem("Window Fixed Position", "", &fixed_position);
+
+                if (ImGui::BeginMenu("Background Color"))
+                {
+                    ImGui::ColorPicker3("clear color", (float*)viewer_->background_color()); // Edit 3 floats representing a color
+                    ImGui::EndMenu();
+                }
+
+               static int style_idx = 1;
+                if (ImGui::Combo("Window Style", &style_idx, "Classic\0Dark\0Light\0"))
+                {
+                    switch (style_idx)
+                    {
+                    case 0: ImGui::StyleColorsClassic(); break;
+                    case 1: ImGui::StyleColorsDark(); break;
+                    case 2: ImGui::StyleColorsLight(); break;
+                    }
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Quit", "Alt+F4")) {}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("View"))
+        {
+            if (ImGui::MenuItem("Snapshot", NULL))
+                std::cout << "snapshot" << std::endl;
+            ImGui::Separator();
+            if (ImGui::MenuItem("Save Camera State", NULL))
+                std::cout << "save camera state" << std::endl;
+            if (ImGui::MenuItem("Load Camera State", NULL))
+                std::cout << "load camera state" << std::endl;
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Help"))
+        {
+            ImGui::MenuItem("About Dear ImGui", NULL, &show_about);
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenuBar();
+    }
+
 	// Workspace
 	if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen))
 	{

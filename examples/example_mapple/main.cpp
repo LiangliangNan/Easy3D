@@ -38,7 +38,7 @@ int main(int /* argc */, char ** /* argv */) {
 		PluginSmartBox smartbox(&win);
 		PluginPolyFit  polyfit(&win);
 
-#if 1
+#if 0
 		Window win2(&app, "Another Window");
 		PluginSmartBox smartbox2(&win2);
 #endif

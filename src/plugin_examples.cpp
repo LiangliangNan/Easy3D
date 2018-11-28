@@ -76,7 +76,7 @@ bool PluginSmartBox::draw() {
 		// Add a button
 		if (ImGui::Button("Print Hello", ImVec2(-1, 0)))
 		{
-			std::cout << "Hello\n";
+             std::cout << "Hello" << std::endl;
 		}
 		ImGui::PopID();
 	}
@@ -131,7 +131,7 @@ bool PluginPolyFit::draw() {
 		// Add a button
 		if (ImGui::Button("Print Hello", ImVec2(-1, 0)))
 		{
-			std::cout << "Hello\n";
+            std::cout << "Hello" << std::endl;
 		}
 		ImGui::PopID();
 	}
