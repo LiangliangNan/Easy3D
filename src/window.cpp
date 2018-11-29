@@ -174,9 +174,26 @@ void Window::draw_widgets()
     static bool show_about = false;
     if (show_about)
      {
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 10));
          ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_AlwaysAutoResize);
-         ImGui::Text("By Liangliang Nan.");
-         ImGui::Text("Dear ImGui is licensed under the MIT License, see LICENSE for more information.");
+         ImGui::Text(
+			 "Easy3D is an easy, lightweight, and flexible framework for developing\n"
+			 "cross-platform 3D applications. It requires minimum dependencies, i.e.\n"
+			 "\t- GLFW (for cross-platform OpenGL context creation) and\n"
+			 "\t- ImGui (for GUI creation and event handling,\n"
+			 "\n"
+			 "Easy3D works on all major operating systems with a decent C++11 capable\n"
+			 "compiler, e.g., MacOS (Clang), Linux (GCC or Clang), and Windows (Visual\n"
+			 "Studio >= 2015). All dependencies are included and built using CMake.\n"
+			 "\n"
+		 );
+		 ImGui::Separator();
+		 ImGui::Text(
+			 "\n"
+			 "Liangliang Nan\n"
+			 "liangliang.nan@gmail.com\n"
+			 "https://3d.bk.tudelft.nl/liangliang/\n"
+		 );
          ImGui::End();
      }
 
@@ -185,43 +202,21 @@ void Window::draw_widgets()
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Open", "Ctrl+O")) {}
-            if (ImGui::BeginMenu("Open Recent"))
-            {
-                ImGui::MenuItem("bunny.ply");
-                ImGui::MenuItem("terain.las");
-                ImGui::MenuItem("building.obj");
-                ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("Save", "Ctrl+S")) {}
-            if (ImGui::MenuItem("Save As..")) {}
+			if (ImGui::MenuItem("Open", "Ctrl+O")) { std::cout << "open" << std::endl; }
+            if (ImGui::MenuItem("Save As...", "Ctrl+S")) { std::cout << "save" << std::endl; }
+
+			ImGui::Separator();
+			if (ImGui::BeginMenu("Recent Files...")) {
+ 				ImGui::MenuItem("bunny.ply");
+				ImGui::MenuItem("terain.las");
+				ImGui::MenuItem("building.obj");
+				ImGui::EndMenu();
+			}
+
             ImGui::Separator();
-            if (ImGui::BeginMenu("Options"))
-            {
-                static bool fixed_position = true;
-                ImGui::MenuItem("Window Fixed Position", "", &fixed_position);
+			if (ImGui::MenuItem("Quit", "Alt+F4"))
+				glfwSetWindowShouldClose(viewer_->window_, GLFW_TRUE);
 
-                if (ImGui::BeginMenu("Background Color"))
-                {
-                    ImGui::ColorPicker3("clear color", (float*)viewer_->background_color()); // Edit 3 floats representing a color
-                    ImGui::EndMenu();
-                }
-
-               static int style_idx = 1;
-                if (ImGui::Combo("Window Style", &style_idx, "Classic\0Dark\0Light\0"))
-                {
-                    switch (style_idx)
-                    {
-                    case 0: ImGui::StyleColorsClassic(); break;
-                    case 1: ImGui::StyleColorsDark(); break;
-                    case 2: ImGui::StyleColorsLight(); break;
-                    }
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::MenuItem("Quit", "Alt+F4")) {}
             ImGui::EndMenu();
         }
 
@@ -229,19 +224,68 @@ void Window::draw_widgets()
         {
             if (ImGui::MenuItem("Snapshot", NULL))
                 std::cout << "snapshot" << std::endl;
+
             ImGui::Separator();
             if (ImGui::MenuItem("Save Camera State", NULL))
                 std::cout << "save camera state" << std::endl;
             if (ImGui::MenuItem("Load Camera State", NULL))
                 std::cout << "load camera state" << std::endl;
 
+			ImGui::Separator();
+			if (ImGui::BeginMenu("Options"))
+			{
+				static bool fixed_position = true;
+				ImGui::MenuItem("Window Fixed Position", "", &fixed_position);
+
+				if (ImGui::BeginMenu("Background Color"))
+				{
+					ImGui::ColorPicker3("clear color", (float*)viewer_->background_color()); // Edit 3 floats representing a color
+					ImGui::EndMenu();
+				}
+
+				static int style_idx = 1;
+				if (ImGui::Combo("Window Style", &style_idx, "Classic\0Dark\0Light\0"))
+				{
+					switch (style_idx)
+					{
+					case 0: ImGui::StyleColorsClassic(); break;
+					case 1: ImGui::StyleColorsDark(); break;
+					case 2: ImGui::StyleColorsLight(); break;
+					}
+				}
+
+				ImGui::EndMenu();
+			}
+
             ImGui::EndMenu();
         }
 
+		if (ImGui::BeginMenu("Select"))
+		{
+			static int element_idx = 0;
+			if (ImGui::Combo("", &element_idx, "None\0Vertex\0Edge\0Face\0"))
+			{
+				switch (element_idx)
+				{
+				case 0: {std::cout << "none" << std::endl; }; break;
+				case 1: {std::cout << "select Vertex" << std::endl; }; break;
+				case 2: {std::cout << "select Edge" << std::endl; }; break;
+				case 3: {std::cout << "select Face" << std::endl; }; break;
+				}
+			}
+			ImGui::Separator();
+			ImGui::MenuItem("Invert Selected", NULL, false);
+			ImGui::MenuItem("Delete Selected", NULL, false);
+			ImGui::EndMenu();
+		}
+
         if (ImGui::BeginMenu("Help"))
         {
-            ImGui::MenuItem("About Dear ImGui", NULL, &show_about);
-            ImGui::EndMenu();
+			ImGui::MenuItem("Viewer", NULL, false);
+			ImGui::MenuItem("Shortcut", NULL, false);
+			ImGui::Separator();
+			ImGui::MenuItem("About", NULL, &show_about);
+			ImGui::EndMenu();
         }
 
         ImGui::EndMenuBar();
