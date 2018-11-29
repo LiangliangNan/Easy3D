@@ -1,5 +1,6 @@
 /*
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+*	https://3d.bk.tudelft.nl/liangliang/
 *
 *	This file is part of EasyGUI: software for processing and rendering
 *   meshes and point clouds.
@@ -274,6 +275,14 @@ void BasicViewer::set_visible(bool visible) {
 		else
 			glfwHideWindow(window_);
 	}
+}
+
+
+// Returned values are(0, 0, screen_width, screen_height), so that the origin is
+// located in the lower left corner of the window (OpenGL style coordinate system).
+void BasicViewer::get_viewport(int viewport[4]) const {
+	glfwMakeContextCurrent(window_);
+	glGetIntegerv(GL_VIEWPORT, viewport);
 }
 
 

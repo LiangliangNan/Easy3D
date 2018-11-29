@@ -11,62 +11,50 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rd_party\glew\glew.vcxproj">
-      <Project>{ee0ca6c2-eae2-4c71-9f4a-77f2805bf9bd}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\3rd_party\glfw\build\glfw.vcxproj">
-      <Project>{e9f585c7-563c-3db0-9ca0-9142acab6ada}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\model\model.vcxproj">
-      <Project>{3d2de591-27a2-427a-9599-83389f1750f1}</Project>
-    </ProjectReference>
+    <ClInclude Include="box.h" />
+    <ClInclude Include="IO.h" />
+    <ClInclude Include="line.h" />
+    <ClInclude Include="mat.h" />
+    <ClInclude Include="math_types.h" />
+    <ClInclude Include="plane.h" />
+    <ClInclude Include="point_cloud.h" />
+    <ClInclude Include="properties.h" />
+    <ClInclude Include="quat.h" />
+    <ClInclude Include="rect.h" />
+    <ClInclude Include="segment.h" />
+    <ClInclude Include="surface_mesh.h" />
+    <ClInclude Include="types.h" />
+    <ClInclude Include="vec.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="basic_viewer.cpp" />
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="constraint.cpp" />
-    <ClCompile Include="frame.cpp" />
-    <ClCompile Include="manipulatedCameraFrame.cpp" />
-    <ClCompile Include="manipulatedFrame.cpp" />
-    <ClCompile Include="plugin.cpp" />
-    <ClCompile Include="plugin_examples.cpp" />
-    <ClCompile Include="viewer.cpp" />
-    <ClCompile Include="window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="basic_viewer.h" />
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="constraint.h" />
-    <ClInclude Include="frame.h" />
-    <ClInclude Include="ImGuiHelpers.h" />
-    <ClInclude Include="imguitraits.h" />
-    <ClInclude Include="imgui_fonts_droid_sans.h" />
-    <ClInclude Include="manipulatedCameraFrame.h" />
-    <ClInclude Include="manipulatedFrame.h" />
-    <ClInclude Include="plugin.h" />
-    <ClInclude Include="plugin_examples.h" />
-    <ClInclude Include="viewer.h" />
-    <ClInclude Include="window.h" />
+    <ClCompile Include="IO.cpp" />
+    <ClCompile Include="IO_obj.cpp" />
+    <ClCompile Include="IO_off.cpp" />
+    <ClCompile Include="IO_poly.cpp" />
+    <ClCompile Include="IO_stl.cpp" />
+    <ClCompile Include="point_cloud.cpp" />
+    <ClCompile Include="surface_mesh.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}</ProjectGuid>
+    <ProjectGuid>{3D2DE591-27A2-427A-9599-83389F1750F1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>easygui</RootNamespace>
+    <RootNamespace>surfacemesh</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
-    <ProjectName>easy3d_basic_viewer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -80,45 +68,48 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLEW_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib />
-  </ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IntDir>$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)\;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

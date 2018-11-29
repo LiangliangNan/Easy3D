@@ -5,85 +5,75 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="basic_viewer.h">
+    <ClInclude Include="properties.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="camera.h">
+    <ClInclude Include="types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="frame.h">
+    <ClInclude Include="IO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="manipulatedFrame.h">
+    <ClInclude Include="point_cloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="constraint.h">
+    <ClInclude Include="surface_mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="manipulatedCameraFrame.h">
+    <ClInclude Include="mat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_fonts_droid_sans.h">
+    <ClInclude Include="vec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ImGuiHelpers.h">
+    <ClInclude Include="math_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="imguitraits.h">
+    <ClInclude Include="box.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plugin.h">
+    <ClInclude Include="line.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plugin_examples.h">
+    <ClInclude Include="plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="viewer.h">
+    <ClInclude Include="quat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="window.h">
+    <ClInclude Include="segment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="basic_viewer.cpp">
+    <ClCompile Include="IO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="camera.cpp">
+    <ClCompile Include="point_cloud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="constraint.cpp">
+    <ClCompile Include="IO_obj.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="frame.cpp">
+    <ClCompile Include="IO_off.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="manipulatedCameraFrame.cpp">
+    <ClCompile Include="IO_poly.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="manipulatedFrame.cpp">
+    <ClCompile Include="IO_stl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="plugin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="plugin_examples.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="viewer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="window.cpp">
+    <ClCompile Include="surface_mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,5 +1,6 @@
 /*
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+*	https://3d.bk.tudelft.nl/liangliang/
 *
 *	This file is part of EasyGUI: software for processing and rendering
 *   meshes and point clouds.
@@ -51,13 +52,22 @@ public:
 
     virtual ~BasicViewer();
 
+	// Enter the application main loop.
+	void run();
+
+	//-----------------------------------------------------
+
 	void set_title(const std::string &title);
 	const std::string& title() const { return title_; }
 
-	/// Set whether or not the viewer is currently visible (assuming all parents are visible)
+	// Set whether or not the viewer is currently visible (assuming all parents are visible)
 	void set_visible(bool visible);
-	/// Return whether or not the viewer is currently visible (assuming all parents are visible)
+	// Return whether or not the viewer is currently visible (assuming all parents are visible)
 	bool is_visible() const { return visible_; }
+
+	// Returned values are(0, 0, screen_width, screen_height), so that the origin is
+	// located in the lower left corner of the window (OpenGL style coordinate system).
+	void  get_viewport(int viewport[4]) const;
 
 	const float* background_color() const { return &background_color_[0]; }
 	void set_background_color(float r, float g, float b);
@@ -68,13 +78,11 @@ public:
 	/// Update the rendering
 	void repaint();
 
-	// Enter the application main loop.
-	void run();
-
 	/// Put your OpenGL draw calls here
 	virtual void draw() { /* To be overridden */ }
 
     // OpenGL context resize
+
     // explicitly set window size
     void resize(int w,int h);
     // external resize due to user interaction

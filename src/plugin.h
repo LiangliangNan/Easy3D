@@ -1,5 +1,6 @@
 /*
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+*	https://3d.bk.tudelft.nl/liangliang/
 *
 *	This file is part of EasyGUI: software for processing and rendering
 *   meshes and point clouds.
