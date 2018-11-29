@@ -40,7 +40,7 @@ bool PluginSmartBox::draw() {
 		ImGui::PushID(title_.c_str());	//  to avoid ID conflict
 		// Expose variable directly ...
 		//ImGui::InputDouble("double", &doubleVariable, 0, 0, "%.4f");
-		ImGui::DragScalar("double", ImGuiDataType_Double, &doubleVariable, 0.1f, 0, 0, "%.4f");
+		ImGui::DragScalar("double", ImGuiDataType_Double, &doubleVariable, 0.1f, 0, 0, "%.2f");
 
 		// ... or using a custom callback
 		static bool boolVariable = true;

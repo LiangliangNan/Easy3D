@@ -112,6 +112,7 @@ protected:
 	static ImGuiContext *	context_;
 
 	bool	movable_;
+	float   alpha_;
 
 	friend class Viewer;
 	friend class Plugin;

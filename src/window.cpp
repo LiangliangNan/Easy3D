@@ -35,9 +35,10 @@
 ImGuiContext* Window::context_ = nullptr;
 
 
-Window::Window(Viewer* viewer, const std::string& title) 
+Window::Window(Viewer* viewer, const std::string& title)
 	: name_(title)
 	, movable_(false)
+	, alpha_(0.8f)
 {
 	viewer_ = viewer;
 	viewer_->windows_.push_back(this);
@@ -68,9 +69,9 @@ void Window::init() {
 void Window::reload_font(int font_size)
 {
 	ImGuiIO& io = ImGui::GetIO();
-    io.Fonts->Clear();
+	io.Fonts->Clear();
 	io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, font_size * hidpi_scaling());
-    io.FontGlobalScale = 1.0f / pixel_ratio();
+	io.FontGlobalScale = 1.0f / pixel_ratio();
 }
 
 
@@ -140,6 +141,7 @@ bool Window::draw()
 	ImGui::SetNextWindowPos(ImVec2(offset, offset), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(0.0f, offset), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSizeConstraints(ImVec2(menu_width, -1.0f), ImVec2(menu_width, -1.0f));
+	ImGui::SetNextWindowBgAlpha(alpha_);
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
 		| ImGuiWindowFlags_MenuBar
@@ -147,7 +149,7 @@ bool Window::draw()
 	if (!movable_)
 		flags |= ImGuiWindowFlags_NoMove;
 	ImGui::Begin(name_.c_str(), NULL, flags);
-	ImGui::PushItemWidth(ImGui::GetWindowWidth() * 1.4f);
+	ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
 
 	draw_widgets();
 	for (auto p : plugins_)
@@ -161,65 +163,65 @@ bool Window::draw()
 
 void Window::draw_widgets()
 {
-    static bool show_about = false;
-    if (show_about)
-     {
-		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth(), 10));
-         ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_AlwaysAutoResize);
-         ImGui::Text(
-			 "Easy3D is an easy, lightweight, and flexible framework for developing\n"
-			 "cross-platform 3D applications. It requires minimum dependencies, i.e.\n"
-			 "\t- GLFW (for cross-platform OpenGL context creation) and\n"
-			 "\t- ImGui (for GUI creation and event handling,\n"
-			 "\n"
-			 "Easy3D works on all major operating systems with a decent C++11 capable\n"
-			 "compiler, e.g., MacOS (Clang), Linux (GCC or Clang), and Windows (Visual\n"
-			 "Studio >= 2015). All dependencies are included and built using CMake.\n"
-			 "\n"
-		 );
-		 ImGui::Separator();
-		 ImGui::Text(
-			 "\n"
-			 "Liangliang Nan\n"
-			 "liangliang.nan@gmail.com\n"
-			 "https://3d.bk.tudelft.nl/liangliang/\n"
-		 );
-         ImGui::End();
-     }
+	static bool show_about = false;
+	if (show_about)
+	{
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowWidth() + 10, 10));
+		ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text(
+			"Easy3D is an easy, lightweight, and flexible framework for developing\n"
+			"cross-platform 3D applications. It requires minimum dependencies, i.e.\n"
+			"\t- GLFW (for cross-platform OpenGL context creation) and\n"
+			"\t- ImGui (for GUI creation and event handling,\n"
+			"\n"
+			"Easy3D works on all major operating systems with a decent C++11 capable\n"
+			"compiler, e.g., MacOS (Clang), Linux (GCC or Clang), and Windows (Visual\n"
+			"Studio >= 2015). All dependencies are included and built using CMake.\n"
+			"\n"
+		);
+		ImGui::Separator();
+		ImGui::Text(
+			"\n"
+			"Liangliang Nan\n"
+			"liangliang.nan@gmail.com\n"
+			"https://3d.bk.tudelft.nl/liangliang/\n"
+		);
+		ImGui::End();
+	}
 
-    // Menu
-    if (ImGui::BeginMenuBar())
-    {
-        if (ImGui::BeginMenu("File"))
-        {
+	// Menu
+	if (ImGui::BeginMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
 			if (ImGui::MenuItem("Open", "Ctrl+O")) { std::cout << "open" << std::endl; }
-            if (ImGui::MenuItem("Save As...", "Ctrl+S")) { std::cout << "save" << std::endl; }
+			if (ImGui::MenuItem("Save As...", "Ctrl+S")) { std::cout << "save" << std::endl; }
 
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Recent Files...")) {
- 				ImGui::MenuItem("bunny.ply");
+				ImGui::MenuItem("bunny.ply");
 				ImGui::MenuItem("terain.las");
 				ImGui::MenuItem("building.obj");
 				ImGui::EndMenu();
 			}
 
-            ImGui::Separator();
+			ImGui::Separator();
 			if (ImGui::MenuItem("Quit", "Alt+F4"))
 				glfwSetWindowShouldClose(viewer_->window_, GLFW_TRUE);
 
-            ImGui::EndMenu();
-        }
+			ImGui::EndMenu();
+		}
 
-        if (ImGui::BeginMenu("View"))
-        {
-            if (ImGui::MenuItem("Snapshot", NULL))
-                std::cout << "snapshot" << std::endl;
+		if (ImGui::BeginMenu("View"))
+		{
+			if (ImGui::MenuItem("Snapshot", NULL))
+				std::cout << "snapshot" << std::endl;
 
-            ImGui::Separator();
-            if (ImGui::MenuItem("Save Camera State", NULL))
-                std::cout << "save camera state" << std::endl;
-            if (ImGui::MenuItem("Load Camera State", NULL))
-                std::cout << "load camera state" << std::endl;
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save Camera State", NULL))
+				std::cout << "save camera state" << std::endl;
+			if (ImGui::MenuItem("Load Camera State", NULL))
+				std::cout << "load camera state" << std::endl;
 
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Options"))
@@ -246,15 +248,11 @@ void Window::draw_widgets()
 
 				ImGui::Checkbox("Window Movable", &movable_);
 				ImGui::ColorEdit3("Background Color", (float*)viewer_->background_color(), ImGuiColorEditFlags_NoInputs);
-				static float opaque = 0.8f;
-				ImGui::PushItemWidth(80);
-				ImGui::DragFloat("Transparency", &opaque, 0.01f, 0.0f, 1.0f, "%.2f");
-				ImGui::PopItemWidth();
 				ImGui::EndMenu();
 			}
 
-            ImGui::EndMenu();
-        }
+			ImGui::EndMenu();
+		}
 
 		if (ImGui::BeginMenu("Select"))
 		{
@@ -280,17 +278,17 @@ void Window::draw_widgets()
 			ImGui::EndMenu();
 		}
 
-        if (ImGui::BeginMenu("Help"))
-        {
+		if (ImGui::BeginMenu("Help"))
+		{
 			ImGui::MenuItem("Viewer", NULL, false);
 			ImGui::MenuItem("Shortcut", NULL, false);
 			ImGui::Separator();
 			ImGui::MenuItem("About", NULL, &show_about);
 			ImGui::EndMenu();
-        }
+		}
 
-        ImGui::EndMenuBar();
-    }
+		ImGui::EndMenuBar();
+	}
 
 	// Workspace
 	if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen))
