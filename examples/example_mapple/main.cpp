@@ -32,9 +32,9 @@ int main(int /* argc */, char ** /* argv */) {
         Viewer app("Easy3D_BasicViewer", 80, 3, 2);
         //BasicViewer app("Easy3D_BasicViewer", 80, 3, 2);
 #else
-		Application app("Easy3D_ImGui_Viewer", 40, 3, 2);
+		Application app("Easy3D Viewer", 40, 3, 2);
 
-		Window win(&app, "Default Window");
+		Window win(&app, "Easy3D Demo Window");
 		PluginSmartBox smartbox(&win);
 		PluginPolyFit  polyfit(&win);
 

@@ -111,6 +111,8 @@ protected:
 	// Single global context by default, but can be overridden by the user
 	static ImGuiContext *	context_;
 
+	bool	movable_;
+
 	friend class Viewer;
 	friend class Plugin;
 };

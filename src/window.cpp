@@ -37,6 +37,7 @@ ImGuiContext* Window::context_ = nullptr;
 
 Window::Window(Viewer* viewer, const std::string& title) 
 	: name_(title)
+	, movable_(false)
 {
 	viewer_ = viewer;
 	viewer_->windows_.push_back(this);
@@ -54,7 +55,7 @@ void Window::init() {
 		ImGui_ImplGlfw_InitForOpenGL(viewer_->window_, false);
 		ImGui_ImplOpenGL3_Init(glsl_version);
 		ImGuiIO& io = ImGui::GetIO();
-		io.IniFilename = nullptr;
+		//io.IniFilename = nullptr;
 		ImGui::StyleColorsDark();
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.FrameRounding = 5.0f;
@@ -68,7 +69,6 @@ void Window::reload_font(int font_size)
 {
 	ImGuiIO& io = ImGui::GetIO();
     io.Fonts->Clear();
-	//io.Fonts->AddFontFromFileTTF("../3rd_party/imgui/misc/fonts/Roboto-Medium.ttf", 26.0f);
 	io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, font_size * hidpi_scaling());
     io.FontGlobalScale = 1.0f / pixel_ratio();
 }
@@ -135,35 +135,25 @@ bool Window::key_release(int key, int modifiers)
 
 bool Window::draw()
 {
-    float offset = 0.0f;
-    float menu_width = 180.f * menu_scaling();
-    ImGui::SetNextWindowPos(ImVec2(offset, offset), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(0.0f, offset), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSizeConstraints(ImVec2(menu_width, -1.0f), ImVec2(menu_width, -1.0f));
+	float offset = 0.0f;
+	float menu_width = 180.f * menu_scaling();
+	ImGui::SetNextWindowPos(ImVec2(offset, offset), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0.0f, offset), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSizeConstraints(ImVec2(menu_width, -1.0f), ImVec2(menu_width, -1.0f));
 
-	static bool _viewer_menu_visible = true;
-	ImGui::Begin(
-        name_.c_str(), &_viewer_menu_visible,
-        ImGuiWindowFlags_NoSavedSettings
-        | ImGuiWindowFlags_AlwaysAutoResize
-        | ImGuiWindowFlags_NoMove
-        | ImGuiWindowFlags_MenuBar
-        | ImGuiWindowFlags_NoTitleBar
-//        | ImGuiWindowFlags_NoResize
-//                | ImGuiWindowFlags_AlwaysAutoResize
-//                | ImGuiWindowFlags_NoScrollbar
-//                | ImGuiWindowFlags_NoScrollWithMouse
-//                | ImGuiWindowFlags_NoCollapse
-//                | ImGuiWindowFlags_NoSavedSettings
-//                    //| ImGuiWindowFlags_NoInputs
-	);
-	ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+		| ImGuiWindowFlags_MenuBar
+		| ImGuiWindowFlags_AlwaysAutoResize;
+	if (!movable_)
+		flags |= ImGuiWindowFlags_NoMove;
+	ImGui::Begin(name_.c_str(), NULL, flags);
+	ImGui::PushItemWidth(ImGui::GetWindowWidth() * 1.4f);
 
 	draw_widgets();
 	for (auto p : plugins_)
 		p->draw();
 
-    ImGui::PopItemWidth();
+	ImGui::PopItemWidth();
 	ImGui::End();
 	return false;
 }
@@ -234,26 +224,32 @@ void Window::draw_widgets()
 			ImGui::Separator();
 			if (ImGui::BeginMenu("Options"))
 			{
-				static bool fixed_position = true;
-				ImGui::MenuItem("Window Fixed Position", "", &fixed_position);
-
-				if (ImGui::BeginMenu("Background Color"))
+				const char* items[] = { "Classic", "Dark", "Light" };
+				static const char* current_item = items[1];
+				if (ImGui::BeginCombo("Window Style", NULL, ImGuiComboFlags_NoPreview))
 				{
-					ImGui::ColorPicker3("clear color", (float*)viewer_->background_color()); // Edit 3 floats representing a color
-					ImGui::EndMenu();
-				}
-
-				static int style_idx = 1;
-				if (ImGui::Combo("Window Style", &style_idx, "Classic\0Dark\0Light\0"))
-				{
-					switch (style_idx)
+					for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
 					{
-					case 0: ImGui::StyleColorsClassic(); break;
-					case 1: ImGui::StyleColorsDark(); break;
-					case 2: ImGui::StyleColorsLight(); break;
+						if (ImGui::Selectable(items[i], items[i] == current_item)) {
+							switch (i)
+							{
+							case 0: ImGui::StyleColorsClassic(); break;
+							case 1: ImGui::StyleColorsDark(); break;
+							case 2: ImGui::StyleColorsLight(); break;
+							}
+							current_item = items[i];
+							ImGui::SetItemDefaultFocus();   // Set the focus
+						}
 					}
+					ImGui::EndCombo();
 				}
 
+				ImGui::Checkbox("Window Movable", &movable_);
+				ImGui::ColorEdit3("Background Color", (float*)viewer_->background_color(), ImGuiColorEditFlags_NoInputs);
+				static float opaque = 0.8f;
+				ImGui::PushItemWidth(80);
+				ImGui::DragFloat("Transparency", &opaque, 0.01f, 0.0f, 1.0f, "%.2f");
+				ImGui::PopItemWidth();
 				ImGui::EndMenu();
 			}
 
@@ -262,20 +258,25 @@ void Window::draw_widgets()
 
 		if (ImGui::BeginMenu("Select"))
 		{
-			static int element_idx = 0;
-			if (ImGui::Combo("", &element_idx, "None\0Vertex\0Edge\0Face\0"))
+			const char* items[] = { "None", "Vertex", "Face", "Edge" };
+			static const char* current_item = items[0];
+			ImGui::PushItemWidth(120);
+			if (ImGui::BeginCombo("##ComboSelect", current_item))
 			{
-				switch (element_idx)
+				for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
 				{
-				case 0: {std::cout << "none" << std::endl; }; break;
-				case 1: {std::cout << "select Vertex" << std::endl; }; break;
-				case 2: {std::cout << "select Edge" << std::endl; }; break;
-				case 3: {std::cout << "select Face" << std::endl; }; break;
+					if (ImGui::Selectable(items[i], items[i] == current_item)) {
+						current_item = items[i];
+						ImGui::SetItemDefaultFocus();   // Set the focus
+					}
 				}
+				ImGui::EndCombo();
 			}
+			ImGui::PopItemWidth();
+
 			ImGui::Separator();
-			ImGui::MenuItem("Invert Selected", NULL, false);
-			ImGui::MenuItem("Delete Selected", NULL, false);
+			ImGui::MenuItem("Invert", NULL, false);
+			ImGui::MenuItem("Delete", NULL, false);
 			ImGui::EndMenu();
 		}
 
