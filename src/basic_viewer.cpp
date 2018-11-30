@@ -759,8 +759,10 @@ namespace easy3d {
 				// create shader program
 				if (!surface_program_) {
 					surface_program_ = new ShaderProgram("surface_color");
-					const std::string& vert_file = "C:/tmp/surface_color.vert";
-					const std::string& frag_file = "C:/tmp/surface_color.frag";
+					//const std::string& vert_file = "../../resources/shaders/surface_color.vert";
+					//const std::string& frag_file = "../../resources/shaders/surface_color.frag";
+					const std::string& vert_file = "C:/Research/code/Easy3D/resources/shaders/surface_color.vert";
+					const std::string& frag_file = "C:/Research/code/Easy3D/resources/shaders/surface_color.frag";
 					if (surface_program_->load_shader_from_file(ShaderProgram::VERTEX, vert_file) &&
 						surface_program_->load_shader_from_file(ShaderProgram::FRAGMENT, frag_file))
 					{

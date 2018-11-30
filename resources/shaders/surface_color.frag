@@ -5,17 +5,16 @@ uniform vec3	wCamPos;
 uniform vec3	ambient;		
 uniform vec3	specular;
 uniform float	shininess;
-uniform vec3	SurfaceColor;
+uniform vec3	color;
 
 in  vec3	position;
 
 out vec4	outputF;
 
 void main(void) {
-	vec3 color = DataIn.SurfaceColor;
 	vec3 normal = normalize(cross(dFdx(position), dFdy(position)));
 
-	vec3 view_dir = normalize(wCamPos - DataIn.position);
+	vec3 view_dir = normalize(wCamPos - position);
 	vec3 light_dir = normalize(wLightPos);
 
 	// diffuse factor

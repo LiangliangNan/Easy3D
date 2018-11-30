@@ -8,5 +8,6 @@ uniform mat4 MVP;
 out vec3 position;
 
 void main() {
+	position = vtx_position;
 	gl_Position = MVP * vec4(vtx_position, 1.0);
 }
