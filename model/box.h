@@ -57,10 +57,10 @@ public:
 			initialized_ = true;
 		}
 		else {
-			x_min_ = mpl_min(x_min_, p.x);
-			y_min_ = mpl_min(y_min_, p.y);
-			x_max_ = mpl_max(x_max_, p.x);
-			y_max_ = mpl_max(y_max_, p.y);
+			x_min_ = std::min(x_min_, p.x);
+			y_min_ = std::min(y_min_, p.y);
+			x_max_ = std::max(x_max_, p.x);
+			y_max_ = std::max(y_max_, p.y);
 		}
 	}
 
@@ -152,12 +152,12 @@ public:
 			initialized_ = true;
 		}
 		else {
-			x_min_ = mpl_min(x_min_, p.x);
-			y_min_ = mpl_min(y_min_, p.y);
-			z_min_ = mpl_min(z_min_, p.z);
-			x_max_ = mpl_max(x_max_, p.x);
-			y_max_ = mpl_max(y_max_, p.y);
-			z_max_ = mpl_max(z_max_, p.z);
+			x_min_ = std::min(x_min_, p.x);
+			y_min_ = std::min(y_min_, p.y);
+			z_min_ = std::min(z_min_, p.z);
+			x_max_ = std::max(x_max_, p.x);
+			y_max_ = std::max(y_max_, p.y);
+			z_max_ = std::max(z_max_, p.z);
 		}
 	}
 

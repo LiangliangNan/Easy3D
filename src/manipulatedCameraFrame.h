@@ -26,177 +26,182 @@
 #include "manipulatedFrame.h"
 
 
-/*! \brief The ManipulatedCameraFrame class represents a ManipulatedFrame with
-  Camera specific mouse bindings. \class ManipulatedCameraFrame
-  manipulatedCameraFrame.h QGLViewer/manipulatedCameraFrame.h
+namespace easy3d {
 
-  A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
-  to be set as the Camera::frame(). Mouse motions are basically interpreted in a
-  negated way: when the mouse goes to the right, the ManipulatedFrame
-  translation goes to the right, while the ManipulatedCameraFrame has to go to
-  the \e left, so that the \e scene seems to move to the right.
 
-  A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
-  the associated Camera::pivotPoint().
+	/*! \brief The ManipulatedCameraFrame class represents a ManipulatedFrame with
+	  Camera specific mouse bindings. \class ManipulatedCameraFrame
+	  manipulatedCameraFrame.h QGLViewer/manipulatedCameraFrame.h
 
-  A ManipulatedCameraFrame can also "fly" in the scene. It basically moves
-  forward, and turns according to the mouse motion. See flySpeed(),
-  sceneUpVector() and the QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD
-  QGLViewer::MouseAction.
+	  A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
+	  to be set as the Camera::frame(). Mouse motions are basically interpreted in a
+	  negated way: when the mouse goes to the right, the ManipulatedFrame
+	  translation goes to the right, while the ManipulatedCameraFrame has to go to
+	  the \e left, so that the \e scene seems to move to the right.
 
-  See the <a href="../mouse.html">mouse page</a> for a description of the
-  possible actions that can be performed using the mouse and their bindings.
-  \nosubgrouping */
-class ManipulatedCameraFrame : public ManipulatedFrame
-{
-public:
-	ManipulatedCameraFrame();
-	/*! Virtual destructor. Empty. */
-	virtual ~ManipulatedCameraFrame() {}
+	  A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
+	  the associated Camera::pivotPoint().
 
-	ManipulatedCameraFrame(const ManipulatedCameraFrame &mcf);
-	ManipulatedCameraFrame &operator=(const ManipulatedCameraFrame &mcf);
+	  A ManipulatedCameraFrame can also "fly" in the scene. It basically moves
+	  forward, and turns according to the mouse motion. See flySpeed(),
+	  sceneUpVector() and the QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD
+	  QGLViewer::MouseAction.
 
-	/*! @name Pivot point */
-	//@{
-public:
-	/*! Returns the point the ManipulatedCameraFrame pivot point, around which the
-	camera rotates.
+	  See the <a href="../mouse.html">mouse page</a> for a description of the
+	  possible actions that can be performed using the mouse and their bindings.
+	  \nosubgrouping */
+	class ManipulatedCameraFrame : public ManipulatedFrame
+	{
+	public:
+		ManipulatedCameraFrame();
+		/*! Virtual destructor. Empty. */
+		virtual ~ManipulatedCameraFrame() {}
 
-	It is defined in the world coordinate system. Default value is (0,0,0).
+		ManipulatedCameraFrame(const ManipulatedCameraFrame &mcf);
+		ManipulatedCameraFrame &operator=(const ManipulatedCameraFrame &mcf);
 
-	When the ManipulatedCameraFrame is associated to a Camera,
-	Camera::pivotPoint() also returns this value. This point can interactively be
-	changed using the mouse (see Camera::setPivotPointFromPixel() and
-	QGLViewer::RAP_FROM_PIXEL and QGLViewer::RAP_IS_CENTER in the <a
-	href="../mouse.html">mouse page</a>). */
-	vec3 pivotPoint() const { return pivotPoint_; }
-	/*! Sets the pivotPoint(), defined in the world coordinate system. */
-	void setPivotPoint(const vec3 &point) { pivotPoint_ = point; }
+		/*! @name Pivot point */
+		//@{
+	public:
+		/*! Returns the point the ManipulatedCameraFrame pivot point, around which the
+		camera rotates.
 
-	/*! @name Camera manipulation */
-	//@{
-public:
-	/*! Returns \c true when the frame's rotation is constrained around the
-	   sceneUpVector(), and \c false otherwise, when the rotation is completely
-	   free (default).
+		It is defined in the world coordinate system. Default value is (0,0,0).
 
-			In free mode, the associated camera can be arbitrarily rotated in the
-	   scene, along its three axis, thus possibly leading to any arbitrary
-	   orientation.
+		When the ManipulatedCameraFrame is associated to a Camera,
+		Camera::pivotPoint() also returns this value. This point can interactively be
+		changed using the mouse (see Camera::setPivotPointFromPixel() and
+		QGLViewer::RAP_FROM_PIXEL and QGLViewer::RAP_IS_CENTER in the <a
+		href="../mouse.html">mouse page</a>). */
+		vec3 pivotPoint() const { return pivotPoint_; }
+		/*! Sets the pivotPoint(), defined in the world coordinate system. */
+		void setPivotPoint(const vec3 &point) { pivotPoint_ = point; }
 
-			When you setRotatesAroundUpVector() to \c true, the sceneUpVector()
-	   defines a 'vertical' direction around which the camera rotates. The camera
-	   can rotate left or right, around this axis. It can also be moved up or down
-	   to show the 'top' and 'bottom' views of the scene. As a result, the
-	   sceneUpVector() will always appear vertical in the scene, and the horizon
-	   is preserved and stays projected along the camera's horizontal axis.
+		/*! @name Camera manipulation */
+		//@{
+	public:
+		/*! Returns \c true when the frame's rotation is constrained around the
+		   sceneUpVector(), and \c false otherwise, when the rotation is completely
+		   free (default).
 
-			Note that setting this value to \c true when the sceneUpVector() is
-	   not already vertically projected will break these invariants. It will also
-	   limit the possible movement of the camera, possibly up to a lock when the
-	   sceneUpVector() is projected horizontally. Use Camera::setUpVector() to
-	   define the sceneUpVector() and align the camera before calling this method
-	   to ensure this does not happen. */
-	bool rotatesAroundUpVector() const { return rotatesAroundUpVector_; }
-	/*! Sets the value of rotatesAroundUpVector().
+				In free mode, the associated camera can be arbitrarily rotated in the
+		   scene, along its three axis, thus possibly leading to any arbitrary
+		   orientation.
 
-	   Default value is false (free rotation). */
-	void setRotatesAroundUpVector(bool constrained) {
-		rotatesAroundUpVector_ = constrained;
-	}
+				When you setRotatesAroundUpVector() to \c true, the sceneUpVector()
+		   defines a 'vertical' direction around which the camera rotates. The camera
+		   can rotate left or right, around this axis. It can also be moved up or down
+		   to show the 'top' and 'bottom' views of the scene. As a result, the
+		   sceneUpVector() will always appear vertical in the scene, and the horizon
+		   is preserved and stays projected along the camera's horizontal axis.
 
-	/*! Returns whether or not the QGLViewer::ZOOM action zooms on the pivot
-	  point.
+				Note that setting this value to \c true when the sceneUpVector() is
+		   not already vertically projected will break these invariants. It will also
+		   limit the possible movement of the camera, possibly up to a lock when the
+		   sceneUpVector() is projected horizontally. Use Camera::setUpVector() to
+		   define the sceneUpVector() and align the camera before calling this method
+		   to ensure this does not happen. */
+		bool rotatesAroundUpVector() const { return rotatesAroundUpVector_; }
+		/*! Sets the value of rotatesAroundUpVector().
 
-	  When set to \c false (default), a zoom action will move the camera along its
-	  Camera::viewDirection(), i.e. back and forth along a direction perpendicular
-	  to the projection screen.
+		   Default value is false (free rotation). */
+		void setRotatesAroundUpVector(bool constrained) {
+			rotatesAroundUpVector_ = constrained;
+		}
 
-	  setZoomsOnPivotPoint() to \c true will move the camera along an axis defined
-	  by the Camera::pivotPoint() and its current position instead. As a result,
-	  the projected position of the pivot point on screen will stay the same
-	  during a zoom. */
-	bool zoomsOnPivotPoint() const { return zoomsOnPivotPoint_; }
-	/*! Sets the value of zoomsOnPivotPoint().
+		/*! Returns whether or not the QGLViewer::ZOOM action zooms on the pivot
+		  point.
 
-	   Default value is false. */
-	void setZoomsOnPivotPoint(bool enabled) { zoomsOnPivotPoint_ = enabled; }
+		  When set to \c false (default), a zoom action will move the camera along its
+		  Camera::viewDirection(), i.e. back and forth along a direction perpendicular
+		  to the projection screen.
 
-private:
+		  setZoomsOnPivotPoint() to \c true will move the camera along an axis defined
+		  by the Camera::pivotPoint() and its current position instead. As a result,
+		  the projected position of the pivot point on screen will stay the same
+		  during a zoom. */
+		bool zoomsOnPivotPoint() const { return zoomsOnPivotPoint_; }
+		/*! Sets the value of zoomsOnPivotPoint().
+
+		   Default value is false. */
+		void setZoomsOnPivotPoint(bool enabled) { zoomsOnPivotPoint_ = enabled; }
+
+	private:
 #ifndef DOXYGEN
-	void zoom(float delta, const Camera *const camera);
+		void zoom(float delta, const Camera *const camera);
 #endif
-	//@}
+		//@}
 
-	/*! @name Fly parameters */
-	//@{
-public:
+		/*! @name Fly parameters */
+		//@{
+	public:
 
-	/*! Sets the sceneUpVector(), defined in the world coordinate system.
+		/*! Sets the sceneUpVector(), defined in the world coordinate system.
 
-	Default value is (0,1,0), but it is updated by the Camera when this object is
-	set as its Camera::frame(). Using Camera::setUpVector() instead is probably a
-	better solution. */
-	void setSceneUpVector(const vec3 &up) { sceneUpVector_ = up; }
+		Default value is (0,1,0), but it is updated by the Camera when this object is
+		set as its Camera::frame(). Using Camera::setUpVector() instead is probably a
+		better solution. */
+		void setSceneUpVector(const vec3 &up) { sceneUpVector_ = up; }
 
-public:
+	public:
 
-	/*! Returns the up vector of the scene, expressed in the world coordinate
-	system.
+		/*! Returns the up vector of the scene, expressed in the world coordinate
+		system.
 
-	In 'fly mode' (corresponding to the QGLViewer::MOVE_FORWARD and
-	QGLViewer::MOVE_BACKWARD QGLViewer::MouseAction bindings), horizontal
-	displacements of the mouse rotate the ManipulatedCameraFrame around this
-	vector. Vertical displacements rotate always around the Camera \c X axis.
+		In 'fly mode' (corresponding to the QGLViewer::MOVE_FORWARD and
+		QGLViewer::MOVE_BACKWARD QGLViewer::MouseAction bindings), horizontal
+		displacements of the mouse rotate the ManipulatedCameraFrame around this
+		vector. Vertical displacements rotate always around the Camera \c X axis.
 
-	This value is also used when setRotationIsConstrained() is set to \c true to
-	define the up vector (and incidentally the 'horizon' plane) around which the
-	camera will rotate.
+		This value is also used when setRotationIsConstrained() is set to \c true to
+		define the up vector (and incidentally the 'horizon' plane) around which the
+		camera will rotate.
 
-	Default value is (0,1,0), but it is updated by the Camera when this object is
-	set as its Camera::frame(). Camera::setOrientation() and
-	Camera::setUpVector()) direclty modify this value and should be used instead.
-  */
-	vec3 sceneUpVector() const { return sceneUpVector_; }
-
-
-	/*! @name Mouse event handlers */
-	//@{
-protected:
-	virtual void mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera);
-	virtual void mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera);
-	virtual void wheelEvent(int x, int y, int dx, int dy, Camera *const camera);
-
-	/*! @name Spinning */
-	//@{
-protected:
-	virtual void spin();
-	//@}
+		Default value is (0,1,0), but it is updated by the Camera when this object is
+		set as its Camera::frame(). Camera::setOrientation() and
+		Camera::setUpVector()) direclty modify this value and should be used instead.
+	  */
+		vec3 sceneUpVector() const { return sceneUpVector_; }
 
 
-private:
-	void updateSceneUpVector();
-	quat turnQuaternion(int dx, const Camera *const camera);
-	quat pitchYawQuaternion(int dx, int dy, const Camera *const camera);
+		/*! @name Mouse event handlers */
+		//@{
+	protected:
+		virtual void mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera);
+		virtual void mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera);
+		virtual void wheelEvent(int x, int y, int dx, int dy, Camera *const camera);
 
-private:
-	vec3 sceneUpVector_;
+		/*! @name Spinning */
+		//@{
+	protected:
+		virtual void spin();
+		//@}
 
-	bool rotatesAroundUpVector_;
-	// Inverse the direction of an horizontal mouse motion. Depends on the
-	// projected screen orientation of the vertical axis when the mouse button is
-	// pressed.
-	bool constrainedRotationIsReversed_;
 
-	bool zoomsOnPivotPoint_;
+	private:
+		void updateSceneUpVector();
+		quat turnQuaternion(int dx, const Camera *const camera);
+		quat pitchYawQuaternion(int dx, int dy, const Camera *const camera);
 
-	vec3 pivotPoint_;
+	private:
+		vec3 sceneUpVector_;
 
-private:
-	friend class Camera;
-	friend class BasicViewer;
-};
+		bool rotatesAroundUpVector_;
+		// Inverse the direction of an horizontal mouse motion. Depends on the
+		// projected screen orientation of the vertical axis when the mouse button is
+		// pressed.
+		bool constrainedRotationIsReversed_;
 
+		bool zoomsOnPivotPoint_;
+
+		vec3 pivotPoint_;
+
+	private:
+		friend class Camera;
+		friend class BasicViewer;
+	};
+
+
+}
 
 #endif // QGLVIEWER_MANIPULATED_CAMERA_FRAME_H

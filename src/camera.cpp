@@ -28,6 +28,9 @@
 #include "basic_viewer.h"
 
 
+namespace easy3d {
+
+
 /*! Default constructor.
 
  sceneCenter() is set to (0,0,0) and sceneRadius() is set to 1.0. type() is
@@ -1564,4 +1567,6 @@ void Camera::getFrustumPlanesCoefficients2(double frustum[6][4]) const
 void Camera::onFrameModified() {
 	projectionMatrixIsUpToDate_ = false;
 	modelViewMatrixIsUpToDate_ = false;
+}
+
 }

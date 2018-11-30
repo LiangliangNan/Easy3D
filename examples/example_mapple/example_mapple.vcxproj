@@ -12,10 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="application.cpp" />
+    <ClCompile Include="mapple.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="application.h" />
+    <ClInclude Include="mapple.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\3rd_party\glew\glew.vcxproj">
@@ -33,6 +33,10 @@
     <ProjectReference Include="..\..\src\viewer_imgui.vcxproj">
       <Project>{bac217bb-b308-4beb-b839-b8819fafe349}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\resources\shaders\surface_color.frag" />
+    <None Include="..\..\resources\shaders\surface_color.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -4,7 +4,7 @@
 #include <iostream>
 
 
-namespace OpenGL {
+namespace easy3d {
 
 	// Convert an OpenGL error code into a descriptive string.
 	inline const char* gl_error_string(GLenum code) {

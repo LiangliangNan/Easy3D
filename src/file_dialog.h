@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace Easy3D
+namespace easy3d
 {
 	/**
 	 * \brief Open a native file open/save dialog.

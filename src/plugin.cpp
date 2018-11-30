@@ -23,9 +23,13 @@
 #include "window.h"
 
 
-Plugin::Plugin(Window * window, const std::string& title)
-	: window_(window), title_(title)
-{
-	window_ = window;
-	window_->plugins_.push_back(this);
+namespace easy3d {
+
+	Plugin::Plugin(Window * window, const std::string& title)
+		: window_(window), title_(title)
+	{
+		window_ = window;
+		window_->plugins_.push_back(this);
+	}
+
 }

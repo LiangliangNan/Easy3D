@@ -19,7 +19,7 @@
 */
 
 
-#include "application.h"
+#include "mapple.h"
 
 #include <GL/glew.h>
 #include "opengl_error.h"
@@ -28,18 +28,18 @@
 #include "shader_program.h"
 
 
+using namespace easy3d;
 
-Application::Application(
-	const std::string& title, 
+Mapple::Mapple(
 	int num_samples /* = 4 */,
 	int gl_major /* = 3 */,
 	int gl_minor /* = 2 */ 
-) : Viewer(title, num_samples, gl_major, gl_minor)
+) : Viewer("Mapple", num_samples, gl_major, gl_minor)
 {
 }
 
 
-void Application::init() {
+void Mapple::init() {
 	Viewer::init();
 
 	const std::vector<vec3> points = {
@@ -106,14 +106,11 @@ void Application::init() {
 
 	camera_->setSceneBoundingBox(vec3(-1, -1, -1), vec3(1, 1, 1));
 	camera_->showEntireScene();
-
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
 }
 
 
 
-void Application::cleanup() {
+void Mapple::cleanup() {
 	delete program_;
 	delete surface_;
 	delete wireframe_;
@@ -122,7 +119,7 @@ void Application::cleanup() {
 }
 
 
-void Application::draw() {	
+void Mapple::draw() {	
 	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
 	glPointSize(20);
 
@@ -130,15 +127,17 @@ void Application::draw() {
 	const mat4& mvp = camera_->modelViewProjectionMatrix();
 	program_->set_uniform("mvp", mvp);		mpl_debug_gl_error;
 
-	program_->set_uniform("inColor", vec3(0.4, 0.8, 0.8));		mpl_debug_gl_error;
+	program_->set_uniform("inColor", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
 	surface_->draw(false);					mpl_debug_gl_error;
 
-	program_->set_uniform("inColor", vec3(0.0, 0.0, 1.0));
+	program_->set_uniform("inColor", vec3(0.0f, 0.0f, 1.0f));
 	wireframe_->draw(false);					mpl_debug_gl_error;
 
-	program_->set_uniform("inColor", vec3(1.0, 0.0, 0.0));
+	program_->set_uniform("inColor", vec3(1.0f, 0.0f, 0.0f));
 	vertices_->draw(false);					mpl_debug_gl_error;
 
 	program_->unbind();						mpl_debug_gl_error;
+
+	Viewer::draw();
 
 }

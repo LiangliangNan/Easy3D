@@ -24,21 +24,28 @@
 #include "plugin.h"
 
 
-class PluginSmartBox : public Plugin
-{
-public:
-	PluginSmartBox(Window* win): Plugin(win, "Plugin - SmartBox") {}
-
-	bool draw();
-};
+namespace easy3d {
 
 
-class PluginPolyFit : public Plugin
-{
-public:
-	PluginPolyFit(Window* win) : Plugin(win, "Plugin - PolyFit") {}
+	class PluginSmartBox : public Plugin
+	{
+	public:
+		PluginSmartBox(Window* win) : Plugin(win, "Plugin - SmartBox") {}
 
-	bool draw();
-};
+		bool draw();
+	};
+
+
+	class PluginPolyFit : public Plugin
+	{
+	public:
+		PluginPolyFit(Window* win) : Plugin(win, "Plugin - PolyFit") {}
+
+		bool draw();
+	};
+
+}
+
+
 
 #endif // _EASY3D_PLUGIN_EXAMPLES_H_

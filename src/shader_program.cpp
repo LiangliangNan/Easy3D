@@ -8,6 +8,7 @@
 #include <fstream>
 
 
+namespace easy3d {
 
 GLenum ShaderProgram::spGLShaderTypes[ShaderProgram::NUM_SHADER_TYPES] = {
 	GL_VERTEX_SHADER,
@@ -1302,3 +1303,5 @@ std::string ShaderProgram::_type_string(GLenum type) const {
 	return "unknown type";
 }
 
+
+}

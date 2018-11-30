@@ -1,14 +1,14 @@
 /*
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *
-*	This file is part of Mapple: software for processing and rendering
+*	This file is part of easy3d: software for processing and rendering
 *   meshes and point clouds.
 *
-*	Mapple is free software; you can redistribute it and/or modify
+*	easy3d is free software; you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License Version 3
 *	as published by the Free Software Foundation.
 *
-*	Mapple is distributed in the hope that it will be useful,
+*	easy3d is distributed in the hope that it will be useful,
 *	but WITHOUT ANY WARRANTY; without even the implied warranty of
 *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 *	GNU General Public License for more details.
@@ -24,13 +24,15 @@
 #include <string>
 
 
+namespace easy3d {
+
 
 #define mpl_gl_error {\
-	OpenGL::check_gl_error(__FILE__, __LINE__) ;\
+	check_gl_error(__FILE__, __LINE__) ;\
 }
 
 #define mpl_frame_buffer_error {\
-	OpenGL::check_frame_buffer_error(__FILE__, __LINE__) ;\
+	check_frame_buffer_error(__FILE__, __LINE__) ;\
 }
 
 
@@ -43,15 +45,13 @@
 #endif
 
 
-namespace OpenGL {
-
 	// Prints the last GL error to the Logger.
 	bool check_gl_error(const std::string& file, int line);
 	bool check_frame_buffer_error(const std::string& file, int line);
 
 	// Check if there was an error. The error message will be stored in "log" if provided.
-    bool gl_error(std::string& log);
-    bool frame_buffer_error(std::string& log);
+	bool gl_error(std::string& log);
+	bool frame_buffer_error(std::string& log);
 
 }
 

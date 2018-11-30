@@ -29,7 +29,7 @@
 #endif
 
 
-namespace Easy3D {
+namespace easy3d {
 
 	std::string file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save) {
 		auto result = file_dialog(filetypes, save, false);

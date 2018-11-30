@@ -23,20 +23,17 @@
 
 #include "viewer.h"
 
-class FacesDrawable;
-class LinesDrawable;
-class PointsDrawable;
-class ShaderProgram;
+namespace easy3d {
+	class FacesDrawable;
+	class LinesDrawable;
+	class PointsDrawable;
+	class ShaderProgram;
+}
 
-class Application : public Viewer
+class Mapple : public easy3d::Viewer
 {
 public:
-	Application(
-		const std::string& title,
-		int num_samples = 4,
-		int gl_major = 3,
-		int gl_minor = 2
-		);
+	Mapple(int num_samples = 4, int gl_major = 3, int gl_minor = 2);
 
 protected:
 	void init();
@@ -45,10 +42,10 @@ protected:
 	void cleanup();
 
 private:
-	ShaderProgram*  program_;
+	easy3d::ShaderProgram*  program_;
 
-	FacesDrawable*	surface_;
-	LinesDrawable*	wireframe_;
-	PointsDrawable*	vertices_;
+	easy3d::FacesDrawable*	surface_;
+	easy3d::LinesDrawable*	wireframe_;
+	easy3d::PointsDrawable*	vertices_;
 };
 

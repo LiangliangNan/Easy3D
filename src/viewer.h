@@ -31,51 +31,55 @@
 // https://eliasdaler.github.io/using-imgui-with-sfml-pt2/
 
 
-class Window;
 
-class Viewer : public BasicViewer
-{
-public:
-	Viewer(
-		const std::string& title = "Easy3D Viewer",
-		int samples = 4,
-		int gl_major = 3,
-		int gl_minor = 2,
-		bool full_screen = false,
-		bool resizable = true,
-		int depth_bits = 24,
-		int stencil_bits = 8
-	);
+namespace easy3d {
 
-	const std::vector<Window*>& windows() const { return windows_; }
+	class Window;
 
-protected:
+	class Viewer : public BasicViewer
+	{
+	public:
+		Viewer(
+			const std::string& title = "easy3d Viewer",
+			int samples = 4,
+			int gl_major = 3,
+			int gl_minor = 2,
+			bool full_screen = false,
+			bool resizable = true,
+			int depth_bits = 24,
+			int stencil_bits = 8
+		);
 
-	// imgui plugins
-	void init();
+		const std::vector<Window*>& windows() const { return windows_; }
 
-	// draw the widgets
-	bool pre_draw();	
+	protected:
 
-	//  the widgets
-	bool post_draw();
+		// imgui plugins
+		void init() override;
 
-	void cleanup();
+		// draw the widgets
+		void pre_draw() const override;
 
-    void post_resize(int w, int h);
+		//  the widgets
+		void post_draw() const override;
 
-	bool callback_event_cursor_pos(double x, double y);
-	bool callback_event_mouse_button(int button, int action, int modifiers);
-	bool callback_event_keyboard(int key, int action, int modifiers);
-	bool callback_event_character(unsigned int codepoint);
-	bool callback_event_scroll(double dx, double dy);
+		void cleanup() override;
 
-protected:
+		void post_resize(int w, int h) override;
 
-	// List of registered windows
-	std::vector<Window*>	windows_;
-	friend class Window;
-};
+		bool callback_event_cursor_pos(double x, double y) override;
+		bool callback_event_mouse_button(int button, int action, int modifiers) override;
+		bool callback_event_keyboard(int key, int action, int modifiers) override;
+		bool callback_event_character(unsigned int codepoint) override;
+		bool callback_event_scroll(double dx, double dy) override;
 
+	protected:
+
+		// List of registered windows
+		std::vector<Window*>	windows_;
+		friend class Window;
+	};
+
+}
 
 #endif	// _EASY3D_VIEWER_H_

@@ -22,20 +22,22 @@
 #include <iostream>
 #include <algorithm>
 
-#include "application.h"
+#include "mapple.h"
 #include "window.h"
 #include "plugin_examples.h"
 
 
+using namespace easy3d;
+
 int main(int /* argc */, char ** /* argv */) {
     try {
 #if 0
-        Viewer app("Easy3D_Viewer", 80, 3, 2);
-         //BasicViewer app("Easy3D_BasicViewer", 80, 3, 2);
+		Viewer app("Easy3D_Viewer", 80, 3, 2);
+        //BasicViewer app("Easy3D_BasicViewer", 80, 3, 2);
 #else
-		Application app("Easy3D Viewer", 40, 3, 2);
+		Mapple app(40, 3, 2);
 
-		Window win(&app, "Easy3D Demo Window");
+		Window win(&app, "easy3d Demo Window");
 		PluginSmartBox smartbox(&win);
 		PluginPolyFit  polyfit(&win);
 

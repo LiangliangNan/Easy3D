@@ -8,6 +8,10 @@
 #include <string>	// for to_string()
 
 
+
+namespace easy3d {
+
+
 static const std::string err_msg = "error (null_string)";
 
 
@@ -44,22 +48,22 @@ bool OpenglInfo::init() {
 	}
 
 	if (OpenglInfo::gl_version_number() < 4.3 || OpenglInfo::glsl_version_number() < 4.3) {
-		std::cerr << "OpenGL/GLSL version 4.3 or higher required. Mapple may not run properly..." << std::endl;
+		std::cerr << "OpenGL/GLSL version 4.3 or higher required. easy3d may not run properly..." << std::endl;
 		//exit(1);
 	}
 
 	if (!OpenglInfo::is_supported("GL_ARB_vertex_array_object")) {
-		std::cerr << "Vertex Array Object not supported. Mapple may not run properly..." << std::endl;
+		std::cerr << "Vertex Array Object not supported. easy3d may not run properly..." << std::endl;
 		//exit(1);
 	}
 
 	if (!OpenglInfo::is_supported("GL_ARB_framebuffer_object")) {
-		std::cerr << "Framebuffer Object not supported. Mapple may not run properly..." << std::endl;
+		std::cerr << "Framebuffer Object not supported. easy3d may not run properly..." << std::endl;
 		//exit(1);
 	}
 
 	if (!OpenglInfo::is_supported("GL_ARB_shader_storage_buffer_object")) {
-		std::cerr << "Shader Storage Buffer Object not supported. Mapple may not run properly..." << std::endl;
+		std::cerr << "Shader Storage Buffer Object not supported. easy3d may not run properly..." << std::endl;
 		//exit(1);
 	}
 
@@ -1311,4 +1315,6 @@ bool OpenglInfo::_init() {
 	spDataF[GL_UNSIGNED_INT_10_10_10_2] = "GL_UNSIGNED_INT_10_10_10_2";
 	spDataF[GL_UNSIGNED_INT_2_10_10_10_REV] = "GL_UNSIGNED_INT_2_10_10_10_REV";
 	return true;
+}
+
 }
