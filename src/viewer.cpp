@@ -28,6 +28,7 @@
 
 #include "plugin.h"
 #include "window.h"
+#include "camera.h"
 
 #include <cmath>
 #include <iostream>
@@ -44,11 +45,6 @@ Viewer::Viewer(
 	int stencil_bits /* = 8 */
 ) 
 	: BasicViewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits)
-{
-}
-
-
-Viewer::~Viewer()
 {
 }
 
@@ -75,43 +71,33 @@ void Viewer::cleanup() {
 
 		ImGui::DestroyContext(Window::context_);
 	}
+
+	BasicViewer::cleanup();
 }
 
 
-void Viewer::draw_all() {
-	glfwMakeContextCurrent(window_);
-	glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	// ----------- pre-draw -------------------
-
+bool Viewer::pre_draw() {
 	if (!windows_.empty()) {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 	}
 
-	if (pre_draw())
-		return;
+	return BasicViewer::pre_draw();
+}
 
-	// ----------------draw -------------------
-
-
-	draw();
+bool Viewer::post_draw() {
 	for (auto p : windows_) {
 		if (p->draw())
-			return;
+			return true;
 	}
-
-	// -----------post-draw -------------------
 
 	if (!windows_.empty()) {
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	if (post_draw())
-		return;
+	return BasicViewer::post_draw();
 }
 
 

@@ -34,6 +34,8 @@
 */
 
 
+class  PointCloud;
+class  SurfaceMesh;
 class  Camera;
 struct GLFWwindow;
 
@@ -79,15 +81,12 @@ public:
 	/// Update the rendering
 	void repaint();
 
-	/// Put your OpenGL draw calls here
-	virtual void draw() { /* To be overridden */ }
-
-    // OpenGL context resize
-
     // explicitly set window size
     void resize(int w,int h);
-    // external resize due to user interaction
-    virtual void post_resize(int w,int h) {}
+
+	// open/save file
+	void open_file();
+	void save_file();
 
 protected:
 
@@ -99,8 +98,14 @@ protected:
 	// Returns **true** if action should be cancelled.
 	virtual bool pre_draw() { return false; /* To be overridden */ }
 
+	/// Put your OpenGL draw calls here
+	virtual void draw() { /* To be overridden */ }
+
 	// Returns **true** if action should be cancelled.
 	virtual bool post_draw() { return false; /* To be overridden */ }
+
+    // external resize due to user interaction
+    virtual void post_resize(int w, int h) { /* To be overridden */ }
 
 	/// Put resource collection calls here (e.g., destroy shaders, textures). 
 	/// This function is called before the rendering context is destroyed.
@@ -139,7 +144,7 @@ private:
 	virtual void draw_all();
 
 	/// Destroy the window
-	virtual void destroy();
+	void destroy();
 
 	virtual void setup_callbacks();
 
@@ -155,6 +160,9 @@ private:
 protected:
 	GLFWwindow*		window_;
 	std::string		title_;
+
+	SurfaceMesh*	surface_;
+	PointCloud*		pointcloud_;
 
 	int		samples_;	// the actual samples available
 

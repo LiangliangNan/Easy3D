@@ -47,17 +47,20 @@ public:
 		int stencil_bits = 8
 	);
 
-	~Viewer();
-
 	const std::vector<Window*>& windows() const { return windows_; }
 
 protected:
-	void cleanup();
-
-	void draw_all();
 
 	// imgui plugins
 	void init();
+
+	// draw the widgets
+	bool pre_draw();	
+
+	//  the widgets
+	bool post_draw();
+
+	void cleanup();
 
     void post_resize(int w, int h);
 

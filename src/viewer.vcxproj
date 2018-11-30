@@ -23,6 +23,7 @@
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="drawable.cpp" />
+    <ClCompile Include="file_dialog.cpp" />
     <ClCompile Include="frame.cpp" />
     <ClCompile Include="manipulatedCameraFrame.cpp" />
     <ClCompile Include="manipulatedFrame.cpp" />
@@ -36,6 +37,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="constraint.h" />
     <ClInclude Include="drawable.h" />
+    <ClInclude Include="file_dialog.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="ImGuiHelpers.h" />
     <ClInclude Include="imguitraits.h" />
@@ -46,7 +48,6 @@
     <ClInclude Include="opengl_info.h" />
     <ClInclude Include="shader_program.h" />
     <ClInclude Include="vertex_array_object.h" />
-    <ClInclude Include="viewer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

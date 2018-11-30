@@ -314,12 +314,12 @@ void Window::draw_widgets()
 		float p = ImGui::GetStyle().FramePadding.x;
 		if (ImGui::Button("Load##Mesh", ImVec2((w - p) / 2.f, 0)))
 		{
-			//viewer_->open_dialog_load_mesh();
+			viewer_->open_file();
 		}
 		ImGui::SameLine(0, p);
 		if (ImGui::Button("Save##Mesh", ImVec2((w - p) / 2.f, 0)))
 		{
-			//viewer_->open_dialog_save_mesh();
+			viewer_->save_file();
 		}
 	}
 }

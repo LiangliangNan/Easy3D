@@ -30,8 +30,8 @@
 int main(int /* argc */, char ** /* argv */) {
     try {
 #if 0
-        Viewer app("Easy3D_BasicViewer", 80, 3, 2);
-        //BasicViewer app("Easy3D_BasicViewer", 80, 3, 2);
+        Viewer app("Easy3D_Viewer", 80, 3, 2);
+         //BasicViewer app("Easy3D_BasicViewer", 80, 3, 2);
 #else
 		Application app("Easy3D Viewer", 40, 3, 2);
 
@@ -39,7 +39,7 @@ int main(int /* argc */, char ** /* argv */) {
 		PluginSmartBox smartbox(&win);
 		PluginPolyFit  polyfit(&win);
 
-#if 0
+#if 1
 		Window win2(&app, "Another Window");
 		PluginSmartBox smartbox2(&win2);
 #endif

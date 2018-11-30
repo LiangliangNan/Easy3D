@@ -38,8 +38,6 @@ public:
 		int gl_minor = 2
 		);
 
-	~Application();
-
 protected:
 	void init();
 	void draw();

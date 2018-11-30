@@ -35,6 +35,7 @@
 
 #include "camera.h"
 #include "manipulatedCameraFrame.h"
+#include "file_dialog.h"
 
 
 // Internal global variables used for glfw event handling
@@ -56,6 +57,8 @@ BasicViewer::BasicViewer(
 	, visible_(false)
 	, process_events_(true)
 	, samples_(0)
+	, surface_(nullptr)
+	, pointcloud_(nullptr)
 {
 #if !defined(_WIN32)
 	/* Avoid locale-related number parsing issues */
@@ -260,13 +263,16 @@ BasicViewer::~BasicViewer() {
 
 
 void BasicViewer::destroy() {
-	// viewer may have already be destroyed by the user
+	// viewer may have already been destroyed by the user
 	if (!window_)
 		return;
 
-	delete camera_;
+	if (camera_)		delete camera_;
+	//if (surface_)		delete surface_;
+	//if (pointcloud_)	delete pointcloud_;
 
 	cleanup();
+
 	glfwDestroyWindow(window_);
 	window_ = nullptr;
 	glfwTerminate();
@@ -690,4 +696,18 @@ void BasicViewer::run() {
 	}
 
 	destroy();
+}
+
+
+void BasicViewer::open_file() {
+	std::vector< std::pair<std::string, std::string> > filetypes = {
+		{"obj", "Wavefront Mesh"},
+		{"ply", "ply Mesh"},
+	};
+	const std::string& file_name = Easy3D::file_dialog(filetypes, false);
+}
+
+
+void BasicViewer::save_file() {
+
 }
