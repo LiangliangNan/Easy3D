@@ -1002,3 +1002,10 @@ void Frame::projectOnLine(const vec3 &origin, const vec3 &direction) {
 	const vec3& proj = line.projection(shift);
 	translate(shift - proj);
 }
+
+
+void Frame::frameModified() {
+	for (auto obs : observers_) {
+		obs->onFrameModified();
+	}
+}

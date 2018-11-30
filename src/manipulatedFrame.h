@@ -240,6 +240,9 @@ private:
 	// Whether the SCREEN_TRANS direction (horizontal or vertical) is fixed or
 	// not.
 	bool dirIsFixed_;
+
+	private:
+		friend class BasicViewer;
 };
 
 #endif // QGLVIEWER_MANIPULATED_FRAME_H

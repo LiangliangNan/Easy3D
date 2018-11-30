@@ -33,6 +33,10 @@
 #include <GL/glew.h>    // Initialize with glewInit()
 #include <GLFW/glfw3.h> // Include glfw3.h after our OpenGL definitions
 
+#include "camera.h"
+#include "manipulatedCameraFrame.h"
+
+
 // Internal global variables used for glfw event handling
 static BasicViewer * __viewer;
 
@@ -117,10 +121,11 @@ BasicViewer::BasicViewer(
 	}
 
 	glfwMakeContextCurrent(window_);
-	// Initialize OpenGL loader
+
+	// Load OpenGL and its extensions
 	if (glewInit() != GLEW_OK) {
 		glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-		throw std::runtime_error("Failed to initialize OpenGL loader!");
+		throw std::runtime_error("Failed to load OpenGL and its extensions!");
 	}
 
     glfwSwapInterval(1); // Enable vsync
@@ -162,6 +167,13 @@ BasicViewer::BasicViewer(
 	modifiers_ = 0;
 	drag_active_ = false;
 	process_events_ = true;
+
+	camera_ = new Camera;
+	camera_->setSceneRadius(1.0f);
+	camera_->setSceneCenter(vec3(0, 0, 0));
+	int w, h;
+	glfwGetWindowSize(window_, &w, &h);
+	camera_->setScreenWidthAndHeight(w, h);
 
 	__viewer = this;
 
@@ -252,6 +264,8 @@ void BasicViewer::destroy() {
 	if (!window_)
 		return;
 
+	delete camera_;
+
 	cleanup();
 	glfwDestroyWindow(window_);
 	window_ = nullptr;
@@ -304,18 +318,20 @@ void BasicViewer::repaint() {
 
 
 bool BasicViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-	std::string msg;
-	if (button == GLFW_MOUSE_BUTTON_LEFT)
-		msg += "Left button pressed";
-	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-		msg += "Right button pressed";
+	if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == 0)
+		camera_->frame()->mousePressEvent(x, y, button, modifiers, camera_);
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == 0) {
 
-	if (modifiers == GLFW_MOD_CONTROL)
-		msg += " + CTRL modifier";
-	else if (modifiers == GLFW_MOD_SHIFT)
-		msg += " + SHIFT modifier";
-
-	std::cout << title_ + ": " + msg + " (" << x << ", " << y << ")" << std::endl;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == GLFW_MOD_SHIFT) {
+		if (!camera_->setPivotPointFromPixel(x, y)) {
+			camera_->setPivotPoint(camera_->sceneCenter());
+			std::cout << "set pivot point as scene center" << std::endl;
+		}
+		else {
+			std::cout << "set pivot point as scene center" << std::endl;
+		}
+	}
 
 	//repaint();
 	return false;
@@ -336,24 +352,19 @@ bool BasicViewer::mouse_release_event(int x, int y, int button, int modifiers) {
 
 	std::cout << title_ + ": " + msg + " (" << x << ", " << y << ")" << std::endl;
 
+	button_ = -1;
+
 	//repaint();
 	return false;
 }
 
 
 bool BasicViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-	std::string msg;
-	if (button == GLFW_MOUSE_BUTTON_LEFT)
-		msg += "Left button dragging";
-	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-		msg += "Right button dragging";
-
-	if (modifiers == GLFW_MOD_CONTROL)
-		msg += " + CTRL modifier";
-	else if (modifiers == GLFW_MOD_SHIFT)
-		msg += " + SHIFT modifier";
-
-	std::cout << title_ + ": " + msg << " (" << x << ", " << y << "), delta (" << dx << ", " << dy << ")" << std::endl;
+	if (modifiers == 0) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
+			camera_->frame()->mouseMoveEvent(x, y, dx, dy, button, modifiers, camera_);
+		}
+	}
 
 	//repaint();
 	return false;
@@ -371,66 +382,59 @@ bool BasicViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifi
 
 
 bool BasicViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
-	/* To be overridden */
-	//mCamera.zoom = std::max(0.1, mCamera.zoom * (rel.y() > 0 ? 1.1 : 0.9));
-	std::cout << title_ + ": (" << x << ", " << y << "), factor (" << (dy > 0 ? 1.1 : 0.9) << ")" << std::endl;
+	try {
+		camera_->frame()->wheelEvent(x, y, dx, dy, camera_);
+	}
+	catch (const std::exception &e) {
+		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+	}
+
 	//repaint();
 	return false;
 }
 
 
 bool BasicViewer::key_press_event(int key, int modifiers) {
-	if (key >= '0' && key <= '9') {
-		std::string mod;
-		if (modifiers == GLFW_MOD_CONTROL) {
-			mod = "CTRL modifier";
+	try {
+		if (key == GLFW_KEY_C && modifiers == 0) {
+			camera_->centerScene();
+			std::cout << "center scene" << std::endl;
 		}
-		else if (modifiers == GLFW_MOD_SHIFT) {
-			mod = "SHIFT modifier";
+		else if (key == GLFW_KEY_F && modifiers == 0) {
+			camera_->showEntireScene();
+			std::cout << "show entire scene" << std::endl;
 		}
-		if (key == GLFW_KEY_3) {
-			try {
-				if (mod.empty())
-					std::cout << title_ + ": Key_3 pressed" << std::endl;
-				else
-					std::cout << title_ + ": " + mod + " + Key_3 pressed" << std::endl;
-				return true;
-			}
-			catch (const std::exception &ex) {
-				std::cout << "Could not load current state: " << ex.what() << std::endl;
-			}
+		else if (key == GLFW_KEY_LEFT) {
+			std::cout << title_ + ": Key_LEFT pressed" << std::endl;
 		}
-	}
-	else if (key == GLFW_KEY_LEFT) {
-		std::cout << title_ + ": Key_LEFT pressed" << std::endl;
-	}
-	else if (key == GLFW_KEY_RIGHT) {
-		std::cout << title_ + ": Key_RIGHT pressed" << std::endl;
-	}
-	else if (key == GLFW_KEY_UP) {
-		std::cout << title_ + ": Key_UP pressed" << std::endl;
-	}
-	else if (key == GLFW_KEY_DOWN) {
-		std::cout << title_ + ": Key_DOWN pressed" << std::endl;
-	}
-	else if (key == GLFW_KEY_M) {
-		// NOTE: switching on/off MSAA in this way only works for a single-window 
-		//       application, because OpenGL is a state machine. For multi-window
-		//       applications, you have to call glDisable()/glEnable() before the
-		//       individual draw functions.
-		if (samples_ > 0) {
-			if (glIsEnabled(GL_MULTISAMPLE)) {
-				glDisable(GL_MULTISAMPLE);
-				std::cout << title_ + ": MSAA disabled" << std::endl;
-			}
-			else {
-				glEnable(GL_MULTISAMPLE);
-				std::cout << title_ + ": MSAA enabled" << std::endl;
+		else if (key == GLFW_KEY_RIGHT) {
+			std::cout << title_ + ": Key_RIGHT pressed" << std::endl;
+		}
+		else if (key == GLFW_KEY_UP) {
+			std::cout << title_ + ": Key_UP pressed" << std::endl;
+		}
+		else if (key == GLFW_KEY_DOWN) {
+			std::cout << title_ + ": Key_DOWN pressed" << std::endl;
+		}
+		else if (key == GLFW_KEY_M) {
+			// NOTE: switching on/off MSAA in this way only works for a single-window 
+			//       application, because OpenGL is a state machine. For multi-window
+			//       applications, you have to call glDisable()/glEnable() before the
+			//       individual draw functions.
+			if (samples_ > 0) {
+				if (glIsEnabled(GL_MULTISAMPLE)) {
+					glDisable(GL_MULTISAMPLE);
+					std::cout << title_ + ": MSAA disabled" << std::endl;
+				}
+				else {
+					glEnable(GL_MULTISAMPLE);
+					std::cout << title_ + ": MSAA enabled" << std::endl;
+				}
 			}
 		}
 	}
-	else {
-		// key release event
+	catch (const std::exception &e) {
+		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 	}
 
 	//repaint();
@@ -439,43 +443,10 @@ bool BasicViewer::key_press_event(int key, int modifiers) {
 
 
 bool BasicViewer::key_release_event(int key, int modifiers) {
-	if (key >= '0' && key <= '9') {
-		std::string mod;
-		if (modifiers == GLFW_MOD_CONTROL) {
-			mod = "CTRL modifier";
-		}
-		else if (modifiers == GLFW_MOD_SHIFT) {
-			mod = "SHIFT modifier";
-		}
-		if (key == GLFW_KEY_3) {
-			try {
-				if (mod.empty())
-					std::cout << title_ + ": Key_3 released" << std::endl;
-				else
-					std::cout << title_ + ": " + mod + " + Key_3 released" << std::endl;
-				return true;
-			}
-			catch (const std::exception &ex) {
-				std::cout << "Could not load current state: " << ex.what() << std::endl;
-			}
-		}
+	try {
 	}
-	else if (key == GLFW_KEY_LEFT) {
-		std::cout << title_ + ": Key_LEFT released" << std::endl;
-	}
-	else if (key == GLFW_KEY_RIGHT) {
-		std::cout << title_ + ": Key_RIGHT released" << std::endl;
-	}
-	else if (key == GLFW_KEY_UP) {
-		std::cout << title_ + ": Key_UP released" << std::endl;
-	}
-	else if (key == GLFW_KEY_DOWN) {
-		std::cout << title_ + ": Key_DOWN released" << std::endl;
-	}
-	else if (key == GLFW_KEY_M) {
-	}
-	else {
-		// key release event
+	catch (const std::exception &e) {
+		std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
 	}
 
 	//repaint();
@@ -647,6 +618,7 @@ void BasicViewer::callback_event_resize(int w, int h) {
 
 	try {
 		glViewport(0, 0, w, h);
+		camera_->setScreenWidthAndHeight(w, h);
 		post_resize(w, h);
 	}
 	catch (const std::exception &e) {

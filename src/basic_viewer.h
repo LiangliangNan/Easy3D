@@ -34,6 +34,7 @@
 */
 
 
+class  Camera;
 struct GLFWwindow;
 
 class BasicViewer
@@ -92,6 +93,7 @@ protected:
 
 	/// Put any initialization that requires a working rendering context 
 	/// (e.g., creating OpenGL resources like shaders, textures).
+	/// This function will be called before the draw procedure.
 	virtual void init() { /* To be overridden */ }
 
 	// Returns **true** if action should be cancelled.
@@ -162,6 +164,8 @@ protected:
 
 	// enable/disable event processing
 	bool	process_events_;
+
+	Camera* camera_;
 
 	// mouse
 	int		button_;		// for mouse drag

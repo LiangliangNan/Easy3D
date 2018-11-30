@@ -396,8 +396,8 @@ public:
 	}
 	
 public:
-	void addObserver(FrameObserver* obs);
-	void removeObserver(FrameObserver* obs);
+	void addObserver(FrameObserver* obs) { observers_.insert(obs); }
+	void removeObserver(FrameObserver* obs) { observers_.erase(obs); }
 
 protected:
 	// Should be called whenever the position() or orientation() of the Frame is modified.

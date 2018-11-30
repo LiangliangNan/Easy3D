@@ -122,6 +122,22 @@ void ManipulatedFrame::zoom(float delta, const Camera *const camera) {
 }
 
 
+/*! Initiates the ManipulatedFrame mouse manipulation.
+
+Overloading of MouseGrabber::mousePressEvent(). See also mouseMoveEvent() and
+mouseReleaseEvent().
+
+The mouse behavior depends on which button is pressed. See the <a
+href="../mouse.html">QGLViewer mouse page</a> for details. */
+void ManipulatedFrame::mousePressEvent(int x, int y, int button, int modifiers, Camera *const camera) {
+	(void)x;
+	(void)y;
+	(void)button;
+	(void)modifiers;
+	(void)camera;
+}
+
+
 /*! Modifies the ManipulatedFrame according to the mouse motion.
 
 Actual behavior depends on mouse bindings. See the QGLViewer::MouseAction enum

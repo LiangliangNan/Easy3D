@@ -11,9 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rd_party\glew\glew.vcxproj">
-      <Project>{ee0ca6c2-eae2-4c71-9f4a-77f2805bf9bd}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\3rd_party\glfw\build\glfw.vcxproj">
       <Project>{e9f585c7-563c-3db0-9ca0-9142acab6ada}</Project>
     </ProjectReference>
@@ -25,28 +22,31 @@
     <ClCompile Include="basic_viewer.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="constraint.cpp" />
+    <ClCompile Include="drawable.cpp" />
     <ClCompile Include="frame.cpp" />
     <ClCompile Include="manipulatedCameraFrame.cpp" />
     <ClCompile Include="manipulatedFrame.cpp" />
-    <ClCompile Include="plugin.cpp" />
-    <ClCompile Include="plugin_examples.cpp" />
-    <ClCompile Include="viewer.cpp" />
-    <ClCompile Include="window.cpp" />
+    <ClCompile Include="opengl_error.cpp" />
+    <ClCompile Include="opengl_info.cpp" />
+    <ClCompile Include="shader_program.cpp" />
+    <ClCompile Include="vertex_array_object.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="basic_viewer.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="constraint.h" />
+    <ClInclude Include="drawable.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="ImGuiHelpers.h" />
     <ClInclude Include="imguitraits.h" />
     <ClInclude Include="imgui_fonts_droid_sans.h" />
     <ClInclude Include="manipulatedCameraFrame.h" />
     <ClInclude Include="manipulatedFrame.h" />
-    <ClInclude Include="plugin.h" />
-    <ClInclude Include="plugin_examples.h" />
+    <ClInclude Include="opengl_error.h" />
+    <ClInclude Include="opengl_info.h" />
+    <ClInclude Include="shader_program.h" />
+    <ClInclude Include="vertex_array_object.h" />
     <ClInclude Include="viewer.h" />
-    <ClInclude Include="window.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

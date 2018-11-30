@@ -166,6 +166,7 @@ public:
 protected:
 	virtual void mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera);
 	virtual void mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera);
+	virtual void wheelEvent(int x, int y, int dx, int dy, Camera *const camera);
 
 	/*! @name Spinning */
 	//@{
@@ -194,6 +195,7 @@ private:
 
 private:
 	friend class Camera;
+	friend class BasicViewer;
 };
 
 

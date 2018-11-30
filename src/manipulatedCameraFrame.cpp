@@ -84,19 +84,16 @@ void ManipulatedCameraFrame::updateSceneUpVector() {
 //                 M o u s e    h a n d l i n g                               //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 void ManipulatedCameraFrame::zoom(float delta, const Camera *const camera) {
 	const float sceneRadius = camera->sceneRadius();
 	if (zoomsOnPivotPoint_) {
 		vec3 direction = position() - camera->pivotPoint();
-		if (direction.norm() > 0.02 * sceneRadius || delta > 0.0)
+		if (direction.norm() > 0.02f * sceneRadius || delta > 0.0f)
 			translate(delta * direction);
 	}
 	else {
-		const float coef =
-			std::max(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z),
-				float(0.2) * sceneRadius);
-		vec3 trans(0.0, 0.0, -coef * delta);
+		const float coef = std::max(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
+		vec3 trans(0.0f, 0.0f, -coef * delta);
 		translate(inverseTransformOf(trans));
 	}
 }
@@ -134,7 +131,7 @@ void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int ddx, int ddy, int 
 	}
 	else if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_RIGHT)	// QGLViewer::TRANSLATE
 	{
-		vec3 trans(ddx, -ddy, 0.0);
+		vec3 trans(-ddx, ddy, 0.0);
 		// Scale to fit the screen mouse displacement
 		switch (camera->type()) 
 		{
@@ -264,6 +261,26 @@ void ManipulatedCameraFrame::mouseReleaseEvent(int x, int y, int button, int mod
 
 	ManipulatedFrame::mouseReleaseEvent(x, y, button, modifiers, camera);
 }
+
+
+
+/*! This is an overload of ManipulatedFrame::wheelEvent().
+
+The wheel behavior depends on the wheel binded action. Current possible actions
+are QGLViewer::ZOOM, QGLViewer::MOVE_FORWARD, QGLViewer::MOVE_BACKWARD.
+QGLViewer::ZOOM speed depends on wheelSensitivity() while
+QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD depend on flySpeed(). See
+QGLViewer::setWheelBinding() to customize the binding. */
+void ManipulatedCameraFrame::wheelEvent(int x, int y, int dx, int dy, Camera *const camera)
+{
+	zoom(wheelDelta(x, y, dx, dy), camera);
+	frameModified();
+
+	// #CONNECTION# startAction should always be called before
+	if (previousConstraint_)
+		setConstraint(previousConstraint_);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 

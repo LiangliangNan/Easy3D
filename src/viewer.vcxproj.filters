@@ -42,16 +42,22 @@
     <ClInclude Include="imguitraits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plugin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="viewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="window.h">
+    <ClInclude Include="shader_program.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="opengl_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="opengl_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vertex_array_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="drawable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,16 +80,19 @@
     <ClCompile Include="manipulatedFrame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="plugin.cpp">
+    <ClCompile Include="shader_program.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="plugin_examples.cpp">
+    <ClCompile Include="opengl_error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="viewer.cpp">
+    <ClCompile Include="opengl_info.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="window.cpp">
+    <ClCompile Include="vertex_array_object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="drawable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
