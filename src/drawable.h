@@ -118,14 +118,13 @@ public:
 
 	// -------------------------- rendering -----------------------------
 
-	// draw the arrays.
-	// NOTE: this functions should only be called when your shader program 
-	//		 is in use, i.e., between glUseProgram(id) and glUseProgram(0);	
-	virtual void draw(bool with_storage_buffer = true) const = 0;
+	// Draw this drawable.
+	// NOTE: this functions should be called when your shader program is in use, 
+	//		 i.e., between glUseProgram(id) and glUseProgram(0);	
+	void draw(bool with_storage_buffer = true) const;
 
 	void set_highlight_id(int id) { highlight_id_ = id; }
 	int  highlight_id() const { return highlight_id_; }
-
 
 protected:
 	Box3   bounding_box_; // cached bounding box
@@ -158,8 +157,6 @@ class FacesDrawable : public Drawable {
 public:
 	DrawableType type() const { return DT_FACES; }
 
-	void draw(bool with_storage_buffer = true) const;
-
 	// The selection of a polygonal face is internally implemented by selecting triangle
 	// primitives using shaders. So I need a way to map back to the original polygons.
 	// \param indices: indices[i] are the triangle indices of the i'th face.
@@ -184,16 +181,12 @@ private:
 class LinesDrawable : public Drawable {
 public:
 	DrawableType type() const { return DT_LINES; }
-
-	void draw(bool with_storage_buffer = true) const;
 };
 
 
 class PointsDrawable : public Drawable {
 public:
 	DrawableType type() const { return DT_POINTS; }
-
-	void draw(bool with_storage_buffer = true) const;
 };
 
 

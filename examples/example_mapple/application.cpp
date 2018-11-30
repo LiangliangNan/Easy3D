@@ -21,12 +21,12 @@
 
 #include "application.h"
 
-
-#include <cmath>
-
 #include <GL/glew.h>
 #include "opengl_error.h"
 #include "camera.h"
+#include "drawable.h"
+#include "shader_program.h"
+
 
 
 Application::Application(
@@ -48,18 +48,18 @@ Application::~Application()
 void Application::init() {
 	Viewer::init();
 
-	const std::vector<vec3> points = { 
-		vec3(-1.0f, -1.0f, 1.0f),
-		vec3(1.0f, -1.0f, 1.0f),
-		vec3(-1.0f, 1.0f, 1.0f),
-		vec3(1.0f, 1.0f, 1.0f),
-		vec3(-1.0f, -1.0f, -1.0f),
-		vec3(1.0f, -1.0f, -1.0f),
-		vec3(-1.0f, 1.0f, -1.0f),
-		vec3(1.0f, 1.0f, -1.0f)
+	const std::vector<vec3> points = {
+		vec3(-1.0f, -1.0f, 1.0f),	// 0
+		vec3(1.0f, -1.0f, 1.0f),	// 1
+		vec3(-1.0f, 1.0f, 1.0f),	// 2
+		vec3(1.0f, 1.0f, 1.0f),		// 3
+		vec3(-1.0f, -1.0f, -1.0f),	// 4
+		vec3(1.0f, -1.0f, -1.0f),	// 5
+		vec3(-1.0f, 1.0f, -1.0f),	// 6
+		vec3(1.0f, 1.0f, -1.0f)		// 7
 	};
 
-	const std::vector<unsigned int> indices = {
+	const std::vector<unsigned int> indices_surface = {
 		0, 1, 2, 2, 1, 3,   // f
 		4, 6, 5, 5, 6, 7,   // b
 		4, 0, 6, 6, 0, 2,   // l
@@ -68,11 +68,26 @@ void Application::init() {
 		4, 5, 0, 0, 5, 1,   // b
 	};
 
-	surface_.update_vertex_buffer(points);
-	surface_.update_index_buffer(indices);
+	const std::vector<unsigned int> indices_wireframe = {
+		0,1,2,3,4,5,6,7,
+		0,2,4,6,1,3,5,7,
+		0,4,2,6,1,5,3,7
+	};
 
 
-	program_.load_shader_from_code(ShaderProgram::VERTEX,
+	surface_ = new FacesDrawable;
+	surface_->update_vertex_buffer(points);
+	surface_->update_index_buffer(indices_surface);
+
+	wireframe_ = new LinesDrawable;
+	wireframe_->update_vertex_buffer(points);
+	wireframe_->update_index_buffer(indices_wireframe);
+
+	vertices_ = new PointsDrawable;
+	vertices_->update_vertex_buffer(points);
+
+	program_ = new ShaderProgram;
+	program_->load_shader_from_code(ShaderProgram::VERTEX,
 		/* Vertex shader */
 		"#version 330\n"
 		"uniform mat4 mvp;\n"
@@ -82,31 +97,54 @@ void Application::init() {
 		"}"
 	);
 
-	program_.load_shader_from_code(ShaderProgram::FRAGMENT,
+	program_->load_shader_from_code(ShaderProgram::FRAGMENT,
 		/* Fragment shader */
 		"#version 330\n"
+		"uniform vec3 inColor;\n"
 		"out vec4 color;\n"
 		"void main() {\n"
-		"    color = vec4(0.4,0.8, 0.8, 1.0);\n"
+		"    color = vec4(inColor, 1.0);\n"
 		"}"
 	);
 
-	program_.set_attrib_name(ShaderProgram::POSITION, "position");
-	program_.set_attrib_name(ShaderProgram::COLOR, "color");
-
-	program_.link_program();
+	program_->set_attrib_name(ShaderProgram::POSITION, "position");
+	program_->link_program();
 
 	camera_->setSceneBoundingBox(vec3(-1, -1, -1), vec3(1, 1, 1));
 	camera_->showEntireScene();
+
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 }
 
 
-void Application::draw() {
-	
-	program_.bind();						mpl_debug_gl_error;
+
+void Application::cleanup() {
+	delete program_;
+	delete surface_;
+	delete wireframe_;
+	delete vertices_;
+	Viewer::cleanup();
+}
+
+
+void Application::draw() {	
+	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
+	glPointSize(20);
+
+	program_->bind();						mpl_debug_gl_error;
 	const mat4& mvp = camera_->modelViewProjectionMatrix();
-	program_.set_uniform("mvp", mvp);		mpl_debug_gl_error;
-	surface_.draw(false);					mpl_debug_gl_error;
-	program_.unbind();						mpl_debug_gl_error;
+	program_->set_uniform("mvp", mvp);		mpl_debug_gl_error;
+
+	program_->set_uniform("inColor", vec3(0.4, 0.8, 0.8));		mpl_debug_gl_error;
+	surface_->draw(false);					mpl_debug_gl_error;
+
+	program_->set_uniform("inColor", vec3(0.0, 0.0, 1.0));
+	wireframe_->draw(false);					mpl_debug_gl_error;
+
+	program_->set_uniform("inColor", vec3(1.0, 0.0, 0.0));
+	vertices_->draw(false);					mpl_debug_gl_error;
+
+	program_->unbind();						mpl_debug_gl_error;
 
 }

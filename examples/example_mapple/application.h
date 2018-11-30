@@ -22,8 +22,11 @@
 #pragma once
 
 #include "viewer.h"
-#include "shader_program.h"
-#include "drawable.h"
+
+class FacesDrawable;
+class LinesDrawable;
+class PointsDrawable;
+class ShaderProgram;
 
 class Application : public Viewer
 {
@@ -41,8 +44,13 @@ protected:
 	void init();
 	void draw();
 
+	void cleanup();
+
 private:
-	ShaderProgram program_;
-	FacesDrawable surface_;
+	ShaderProgram*  program_;
+
+	FacesDrawable*	surface_;
+	LinesDrawable*	wireframe_;
+	PointsDrawable*	vertices_;
 };
 

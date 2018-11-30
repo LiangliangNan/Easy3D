@@ -213,6 +213,58 @@ void Drawable::fetch_selection_buffer() {
 }
 
 
+void Drawable::draw(bool with_storage_buffer /* = true */) const
+{
+	vao_->bind();
+	GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
+
+	GLenum mode = GL_TRIANGLES;
+	if (type() == DT_POINTS)
+		mode = GL_POINTS;
+	else if (type() == DT_LINES)
+		mode = GL_LINES;
+
+	if (with_storage_buffer) {
+		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
+		barriers |= GL_SHADER_STORAGE_BARRIER_BIT;
+	}
+	if (mode != GL_POINTS)
+		barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
+
+	glMemoryBarrier(barriers);	mpl_debug_gl_error;
+
+	if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
+	if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
+	if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
+	if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
+
+ 	if (mode == GL_POINTS)
+		glDrawArrays(mode, 0, GLsizei(num_vertices_));
+	else {
+		// index buffer must be bound if using glDrawElements()
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);				mpl_debug_gl_error;
+		glDrawElements(mode, GLsizei(num_indices_), GL_UNSIGNED_INT, 0);	mpl_debug_gl_error;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);							mpl_debug_gl_error;
+	}
+
+	if (vertex_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
+	if (normal_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::NORMAL);		mpl_debug_gl_error;
+	if (color_buffer_ != 0)		glDisableVertexAttribArray(ShaderProgram::COLOR);		mpl_debug_gl_error;
+	if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
+
+	if (with_storage_buffer) {
+		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	mpl_debug_gl_error;
+	}
+
+	vao_->unbind();
+}
+
+
+
 void FacesDrawable::set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices) {
 	indices_ = indices;
 	std::size_t count = 0;
@@ -262,110 +314,4 @@ void FacesDrawable::get_highlighted_trangles_range(int& tri_min, int& tri_max) c
 		tri_min = -1;
 		tri_max = -1;
 	}
-}
-
-
-void FacesDrawable::draw(bool with_storage_buffer /* = true*/) const {
-	vao_->bind();
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
-		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT); mpl_debug_gl_error;
-	}
-	else {
-		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT); mpl_debug_gl_error;
-	}
-
-	// using glDrawElements(). index buffer must be bound.
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_); mpl_debug_gl_error;
-
-	if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
-	glDrawElements(GL_TRIANGLES, GLsizei(num_indices_), GL_UNSIGNED_INT, 0);		mpl_debug_gl_error;
-	if (vertex_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::POSITION);mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glDisableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::TEXCOORD);mpl_debug_gl_error;
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); mpl_debug_gl_error;
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	mpl_debug_gl_error;
-	}
-
-	vao_->unbind();
-}
-
-
-void PointsDrawable::draw(bool with_storage_buffer /* = true*/) const {
-	vao_->bind();
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
-		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);	mpl_debug_gl_error;
-	}
-	else 
-		glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);	mpl_debug_gl_error;
-
-	if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
-	glDrawArrays(GL_POINTS, 0, GLsizei(num_vertices_));	mpl_debug_gl_error;
-	if (vertex_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::POSITION);mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glDisableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::TEXCOORD);mpl_debug_gl_error;
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	mpl_debug_gl_error;
-	}
-
-	vao_->unbind();
-}
-
-
-void LinesDrawable::draw(bool with_storage_buffer /* = true*/) const {
-	vao_->bind();
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
-		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);	mpl_debug_gl_error;
-	}
-	else 
-		glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);	mpl_debug_gl_error;
-
-	if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
-	glDrawArrays(GL_LINES, 0, GLsizei(num_vertices_));								mpl_debug_gl_error;
-	if (vertex_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::POSITION);mpl_debug_gl_error;
-	if (normal_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
-	if (color_buffer_ != 0)		glDisableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
-	if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::TEXCOORD);mpl_debug_gl_error;
-
-	if (with_storage_buffer) {
-		// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-		//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	mpl_debug_gl_error;
-	}
-
-	vao_->unbind();
 }
