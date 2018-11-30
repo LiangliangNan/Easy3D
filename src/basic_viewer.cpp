@@ -670,7 +670,7 @@ namespace easy3d {
 		init();
 
 		// TODO: make it member variable
-		bool is_animating = true;
+		bool is_animating = false;
 
 		try {
 			// Rendering loop
