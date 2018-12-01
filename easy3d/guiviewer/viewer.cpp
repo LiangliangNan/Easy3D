@@ -21,6 +21,9 @@
 
 #include <easy3d/guiviewer/viewer.h>
 
+#include <cmath>
+#include <iostream>
+
 #include <3rd_party/imgui/imgui.h>
 #include <3rd_party/imgui/impl/imgui_impl_glfw.h>
 #include <3rd_party/imgui/impl/imgui_impl_opengl3.h>
@@ -29,13 +32,13 @@
 #include <easy3d/guiviewer/plugin.h>
 #include <easy3d/guiviewer/window.h>
 #include <easy3d/core/camera.h>
-#include <easy3d/core/opengl_error.h>
 
-#include <cmath>
-#include <iostream>
+#include "imgui_fonts_droid_sans.h"
 
 
 namespace easy3d {
+
+	ImGuiContext* Viewer::context_ = nullptr;
 
 	Viewer::Viewer(
 		const std::string& title /* = "easy3d Viewer" */,
@@ -46,65 +49,75 @@ namespace easy3d {
 		bool resizable /* = true */,
 		int depth_bits /* = 24 */,
 		int stencil_bits /* = 8 */
-	)
+	) 
 		: BasicViewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits)
+		, movable_(true)
+		, alpha_(0.8f)
 	{
 	}
 
 
 	void Viewer::init() {
-        BasicViewer::init();     mpl_debug_gl_error;
-		for (auto p : windows_)
-			p->init();
-             mpl_debug_gl_error;
+        BasicViewer::init();
+
+		if (!context_) {
+			// Setup ImGui binding
+			IMGUI_CHECKVERSION();
+
+			context_ = ImGui::CreateContext();
+
+			const char* glsl_version = "#version 150";
+			ImGui_ImplGlfw_InitForOpenGL(window_, false);
+			ImGui_ImplOpenGL3_Init(glsl_version);
+			ImGuiIO& io = ImGui::GetIO();
+			io.IniFilename = nullptr;
+			ImGui::StyleColorsDark();
+			ImGuiStyle& style = ImGui::GetStyle();
+			style.FrameRounding = 5.0f;
+
+			// load font
+			reload_font();
+		}
+	}
+
+
+	void Viewer::reload_font(int font_size)
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		io.Fonts->Clear();
+		io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, font_size * hidpi_scaling());
+		io.FontGlobalScale = 1.0f / pixel_ratio();
 	}
 
 
 	void Viewer::post_resize(int w, int h) {
         BasicViewer::post_resize(w, h);
-		for (auto p : windows_)
-			p->post_resize(w, h);
+		if (context_) {
+			ImGui::GetIO().DisplaySize.x = float(w);
+			ImGui::GetIO().DisplaySize.y = float(h);
+		}
 	}
 
 
-	void Viewer::cleanup() {
-		if (!windows_.empty()) {
-			for (auto p : windows_)
-				p->cleanup();
-            mpl_debug_gl_error;
-
-			ImGui_ImplOpenGL3_Shutdown();
-			ImGui_ImplGlfw_Shutdown();
-
-			ImGui::DestroyContext(Window::context_);
-		}
-
-        BasicViewer::cleanup();
+	float Viewer::pixel_ratio()
+	{
+		// Computes pixel ratio for hidpi devices
+		int buf_size[2];
+		int win_size[2];
+		GLFWwindow* window = glfwGetCurrentContext();
+		glfwGetFramebufferSize(window, &buf_size[0], &buf_size[1]);
+		glfwGetWindowSize(window, &win_size[0], &win_size[1]);
+		return (float)buf_size[0] / (float)win_size[0];
 	}
 
 
-	void Viewer::pre_draw() const {
-		if (!windows_.empty()) {
-            ImGui_ImplOpenGL3_NewFrame();     mpl_debug_gl_error;
-            ImGui_ImplGlfw_NewFrame();     mpl_debug_gl_error;
-            ImGui::NewFrame();     mpl_debug_gl_error;
-		}
-
-        BasicViewer::pre_draw();     mpl_debug_gl_error;
-	}
-
-
-	void Viewer::post_draw() const {
-		if (!windows_.empty()) {
-			for (auto p : windows_)
-				p->draw();
-			mpl_debug_gl_error;
-
-            ImGui::Render();    mpl_debug_gl_error;
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());     mpl_debug_gl_error;
-		}
-
-        BasicViewer::post_draw();   mpl_debug_gl_error;
+	float Viewer::hidpi_scaling()
+	{
+		// Computes scaling factor for hidpi devices
+		float xscale, yscale;
+		GLFWwindow* window = glfwGetCurrentContext();
+		glfwGetWindowContentScale(window, &xscale, &yscale);
+		return 0.5f * (xscale + yscale);
 	}
 
 
@@ -218,6 +231,189 @@ namespace easy3d {
 				<< std::endl;
 			return false;
 		}
+	}
+
+
+	void Viewer::cleanup() {
+		for (auto p : windows_)
+			p->cleanup();
+
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+
+		ImGui::DestroyContext(context_);
+
+        BasicViewer::cleanup();
+	}
+
+
+	void Viewer::pre_draw() {
+        ImGui_ImplOpenGL3_NewFrame();  
+        ImGui_ImplGlfw_NewFrame();    
+        ImGui::NewFrame();   
+
+        BasicViewer::pre_draw(); 
+	}
+
+
+	void Viewer::post_draw() {
+		static bool show_about = false;
+		if (show_about) {
+			int w, h;
+			glfwGetWindowSize(window_, &w, &h);
+			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+			ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+			ImGui::Text(
+				"Easy3D is an easy, lightweight, and flexible framework for developing\n"
+				"cross-platform 3D applications. It requires minimum dependencies, i.e.\n"
+				"\t- GLFW (for cross-platform OpenGL context creation) and\n"
+				"\t- ImGui (for GUI creation and event handling,\n"
+				"\n"
+				"Easy3D works on all major operating systems with a decent C++11 capable\n"
+				"compiler, e.g., MacOS (Clang), Linux (GCC or Clang), and Windows (Visual\n"
+				"Studio >= 2015). All dependencies are included and built using CMake.\n"
+				"\n"
+			);
+			ImGui::Separator();
+			ImGui::Text(
+				"\n"
+				"Liangliang Nan\n"
+				"liangliang.nan@gmail.com\n"
+				"https://3d.bk.tudelft.nl/liangliang/\n"
+			);
+			ImGui::End();
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 8));
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open", "Ctrl+O")) { open(); }
+				if (ImGui::MenuItem("Save As...", "Ctrl+S")) { save(); }
+
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Recent Files...")) {
+					ImGui::MenuItem("bunny.ply");
+					ImGui::MenuItem("terain.las");
+					ImGui::MenuItem("building.obj");
+					ImGui::EndMenu();
+				}
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Quit", "Alt+F4"))
+					glfwSetWindowShouldClose(window_, GLFW_TRUE);
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("View"))
+			{
+				if (ImGui::MenuItem("Snapshot", NULL))
+					std::cout << "snapshot" << std::endl;
+
+				ImGui::Separator();
+				if (ImGui::MenuItem("Save Camera State", NULL))
+					std::cout << "save camera state" << std::endl;
+				if (ImGui::MenuItem("Load Camera State", NULL))
+					std::cout << "load camera state" << std::endl;
+
+				ImGui::Separator();
+				if (ImGui::BeginMenu("Options"))
+				{
+					const char* items[] = { "Classic", "Dark", "Light" };
+					static const char* current_item = items[1];
+					if (ImGui::BeginCombo("Window Style", NULL, ImGuiComboFlags_NoPreview))
+					{
+						for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
+						{
+							if (ImGui::Selectable(items[i], items[i] == current_item)) {
+								switch (i)
+								{
+								case 0: ImGui::StyleColorsClassic(); break;
+								case 1: ImGui::StyleColorsDark(); break;
+								case 2: ImGui::StyleColorsLight(); break;
+								}
+								current_item = items[i];
+								ImGui::SetItemDefaultFocus();   // Set the focus
+							}
+						}
+						ImGui::EndCombo();
+					}
+					
+					ImGui::Checkbox("Window Movable", &movable_);
+					ImGui::ColorEdit3("Background Color", (float*)background_color_, ImGuiColorEditFlags_NoInputs);
+					ImGui::PushItemWidth(100);
+					ImGui::DragFloat("Transparency", &alpha_, 0.005f, 0.0f, 1.0f, "%.1f");
+					ImGui::PopItemWidth();
+					ImGui::EndMenu();
+				}
+
+				if (!windows_.empty()) {
+					ImGui::Separator();
+					for (std::size_t i = 0; i < windows_.size(); ++i) {
+						Window* win = windows_[i];
+						ImGui::MenuItem(win->name_.c_str(), 0, &win->visible_);
+					}
+				}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Select"))
+			{
+				const char* items[] = { "None", "Vertex", "Face", "Edge" };
+				static const char* current_item = items[0];
+				ImGui::PushItemWidth(120);
+				if (ImGui::BeginCombo("##ComboSelect", current_item))
+				{
+					for (int i = 0; i < IM_ARRAYSIZE(items); ++i)
+					{
+						if (ImGui::Selectable(items[i], items[i] == current_item)) {
+							current_item = items[i];
+							ImGui::SetItemDefaultFocus();   // Set the focus
+						}
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Separator();
+				ImGui::MenuItem("Invert", NULL, false);
+				ImGui::MenuItem("Delete", NULL, false);
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Help"))
+			{
+				ImGui::MenuItem("Viewer", NULL, false);
+				ImGui::MenuItem("Shortcut", NULL, false);
+				ImGui::Separator();
+				ImGui::MenuItem("About", NULL, &show_about);
+				ImGui::EndMenu();
+			}
+			menu_height_ = ImGui::GetWindowHeight();
+			ImGui::EndMainMenuBar();
+		}
+		ImGui::PopStyleVar();
+
+		for (std::size_t i = 0; i < windows_.size(); ++i) {
+			Window* win = windows_[i];
+			if (!win->visible_)
+				continue;
+			float panel_width = 180.f * Viewer::widget_scaling();
+			float offset = 10.0f;
+			ImGui::SetNextWindowPos(ImVec2((panel_width + offset) * i, menu_height_ + offset * i), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(0.0f, 100), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSizeConstraints(ImVec2(panel_width, -1.0f), ImVec2(panel_width, -1.0f));
+			ImGui::SetNextWindowBgAlpha(alpha_);
+			win->draw();
+		}
+		
+		ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
+
+        BasicViewer::post_draw();
 	}
 
 }

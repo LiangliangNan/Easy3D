@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-struct ImGuiContext;
 
 namespace easy3d {
 
@@ -40,18 +39,12 @@ namespace easy3d {
 	public:
 		Window(Viewer* viewer, const std::string& title);
 
-		// This function is called when the viewer is initialized 
-		virtual void init();
-
 		// This function is called before the viewer is destroyed
 		// (i.e., a valid rendering context still exists)
 		virtual void cleanup();
 
 		// Draw the widgets of this panel.
 		virtual void draw_widgets();
-
-		// This function is called after the window has been resized
-		virtual void post_resize(int width, int height);
 
 		// Mouse IO
 
@@ -95,28 +88,15 @@ namespace easy3d {
 		// This function is called in the draw procedure
 		bool  draw();
 
-		// Ratio between the framebuffer size and the window size.
-		// May be different from the hipdi scaling!
-		float pixel_ratio();
-		// Hidpi scaling to be used for text rendering.
-		float hidpi_scaling();
-		float menu_scaling() { return hidpi_scaling() / pixel_ratio(); }
-
-		// We don't need a per-window font. So this function is static
-		void reload_font(int font_size = 16);
-
 	protected:
 		Viewer *		viewer_;
 		std::string		name_;
+		unsigned int	index_;		// a unique index in the current application
 
 		// List of registered plugins
 		std::vector<Plugin*> plugins_;
 
-		// Single global context by default, but can be overridden by the user
-		static ImGuiContext *	context_;
-
-		bool	movable_;
-		float   alpha_;
+		bool  visible_;
 
 		friend class Viewer;
 		friend class Plugin;

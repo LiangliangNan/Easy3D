@@ -37,7 +37,7 @@ public:
 
 protected:
     void init() override;
-    void draw() const override;
+    void draw() override;
 
     void cleanup() override;
 

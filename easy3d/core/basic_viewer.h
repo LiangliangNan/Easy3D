@@ -69,11 +69,6 @@ namespace easy3d {
 		void set_title(const std::string &title);
 		const std::string& title() const { return title_; }
 
-		// Set whether or not the viewer is currently visible (assuming all parents are visible)
-		void set_visible(bool visible);
-		// Return whether or not the viewer is currently visible (assuming all parents are visible)
-		bool is_visible() const { return visible_; }
-
 		// Returned values are(0, 0, screen_width, screen_height), so that the origin is
 		// located in the lower left corner of the window (OpenGL style coordinate system).
 		void get_viewport(int viewport[4]) const;
@@ -121,13 +116,13 @@ namespace easy3d {
 		virtual void cleanup();
 
 		// This function will be called before the main draw procedure.
-		virtual void pre_draw() const { /* To be overridden */ }
+		virtual void pre_draw() { /* To be overridden */ }
 
 		/// Put your rendering calls here
-		virtual void draw() const;
+		virtual void draw();
 
 		// This function will be called after the main draw procedure.
-		virtual void post_draw() const { /* To be overridden */ }
+		virtual void post_draw() { /* To be overridden */ }
 
 		// External resize due to user interaction.
 		// This function will be called after the window size being changed.
@@ -181,7 +176,8 @@ namespace easy3d {
 		int		samples_;	// the actual samples available
 
 		bool	full_screen_;
-		bool	visible_;
+		int		width_;
+		int		height_;
 		float	background_color_[3];
 
 		// enable/disable event processing

@@ -32,6 +32,9 @@
 
 
 
+struct ImGuiContext;
+
+
 namespace easy3d {
 
 	class Window;
@@ -50,18 +53,16 @@ namespace easy3d {
 			int stencil_bits = 8
 		);
 
-		const std::vector<Window*>& windows() const { return windows_; }
-
 	protected:
 
 		// imgui plugins
 		void init() override;
 
 		// draw the widgets
-		void pre_draw() const override;
+		void pre_draw() override;
 
 		//  the widgets
-		void post_draw() const override;
+		void post_draw() override;
 
 		void cleanup() override;
 
@@ -74,9 +75,32 @@ namespace easy3d {
 		bool callback_event_scroll(double dx, double dy) override;
 
 	protected:
+		// Ratio between the framebuffer size and the window size.
+		// May be different from the hipdi scaling!
+		static float pixel_ratio();
+
+		// Hidpi scaling to be used for text rendering.
+		static float hidpi_scaling();
+
+		static float widget_scaling() { return hidpi_scaling() / pixel_ratio(); }
+
+		// We don't need a per-window font. So this function is static
+		void  reload_font(int font_size = 16);
+
+	protected:
+		// Single global context by default, but can be overridden by the user
+		static ImGuiContext *	context_;
 
 		// List of registered windows
 		std::vector<Window*>	windows_;
+
+		// Global variables for all the windows
+		float	alpha_;
+		bool	movable_;
+		bool    visible_;
+		
+		float   menu_height_;
+
 		friend class Window;
 	};
 

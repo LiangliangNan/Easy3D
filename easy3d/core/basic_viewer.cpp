@@ -63,11 +63,12 @@ namespace easy3d {
 		int stencil_bits /* = 8 */
 	)
 		: title_(title)
-		, full_screen_(false)
-		, visible_(false)
+		, full_screen_(full_screen)
 		, process_events_(true)
 		, samples_(0)
 		, surface_program_(nullptr)
+		, width_(1280)	// default width
+		, height_(960)	// default height
 	{
 #if !defined(_WIN32)
 		/* Avoid locale-related number parsing issues */
@@ -123,7 +124,7 @@ namespace easy3d {
 			window_ = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, nullptr);
 		}
 		else {
-			window_ = glfwCreateWindow(1280, 960, title.c_str(), nullptr, nullptr);
+			window_ = glfwCreateWindow(width_, height_, title.c_str(), nullptr, nullptr);
 		}
 
 		if (!window_) {
@@ -172,7 +173,6 @@ namespace easy3d {
 
 		setup_callbacks();
 
-		visible_ = glfwGetWindowAttrib(window_, GLFW_VISIBLE) != 0;
 		background_color_[0] = background_color_[1] = background_color_[2] = 0.3f;
 		mouse_x_ = mouse_y_ = 0;
 		button_ = -1;
@@ -302,17 +302,6 @@ namespace easy3d {
 		if (title != title_) {
 			glfwSetWindowTitle(window_, title.c_str());
 			title_ = title;
-		}
-	}
-
-
-	void BasicViewer::set_visible(bool visible) {
-		if (visible_ != visible) {
-			visible_ = visible;
-			if (visible)
-				glfwShowWindow(window_);
-			else
-				glfwHideWindow(window_);
 		}
 	}
 
@@ -485,17 +474,15 @@ namespace easy3d {
 
 
 	void BasicViewer::draw_all() {
-        glfwMakeContextCurrent(window_);		mpl_debug_gl_error;
-        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);		mpl_debug_gl_error;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);		mpl_debug_gl_error;
+        glfwMakeContextCurrent(window_);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);		
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// --------------------------------------
 
         pre_draw();		mpl_debug_gl_error;
-
-        draw();		mpl_debug_gl_error;
-
-        post_draw();		mpl_debug_gl_error;
+        draw();			mpl_debug_gl_error;
+        post_draw();	mpl_debug_gl_error;
 
 		// --------------------------------------
 
@@ -635,8 +622,7 @@ namespace easy3d {
 	void BasicViewer::init() {
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
-
-		set_visible(true);
+		glfwShowWindow(window_);
 	}
 
 
@@ -658,7 +644,7 @@ namespace easy3d {
 			int frame_counter = 0;
 
 			while (!glfwWindowShouldClose(window_)) {
-				if (!is_visible())
+				if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
 					continue;
 
 				double tic = get_seconds();
@@ -798,7 +784,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::draw() const {
+	void BasicViewer::draw() {
 		if (!surface_program_)
 			return;
 

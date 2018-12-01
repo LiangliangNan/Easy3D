@@ -119,8 +119,7 @@ void Mapple::cleanup() {
 }
 
 
-void Mapple::draw() const {
-	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
+void Mapple::draw() {
     glPointSize(20);						mpl_debug_gl_error;
 
 	program_->bind();						mpl_debug_gl_error;
