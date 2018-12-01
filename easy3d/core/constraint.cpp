@@ -72,7 +72,7 @@ namespace easy3d {
 		const vec3 &direction) {
 		if ((translationConstraintType() != AxisPlaneConstraint::FREE) &&
 			(translationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
-			const double norm = direction.norm();
+			const float norm = direction.norm();
 			if (norm < 1E-8) {
 				std::cerr << "AxisPlaneConstraint::setTranslationConstraintDir: null vector "
 					"for translation constraint" << std::endl;
@@ -96,7 +96,7 @@ namespace easy3d {
 	void AxisPlaneConstraint::setRotationConstraintDirection(const vec3 &direction) {
 		if ((rotationConstraintType() != AxisPlaneConstraint::FREE) &&
 			(rotationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
-			const double norm = direction.norm();
+			const float norm = direction.norm();
 			if (norm < 1E-8) {
 				std::cerr << "AxisPlaneConstraint::setRotationConstraintDir: null vector for "
 					"rotation constraint" << std::endl;
@@ -170,7 +170,7 @@ namespace easy3d {
 			vec3 axis = rotationConstraintDirection();
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
-			rotation = quat(q, 2.0 * acos(rotation[3]));
+			rotation = quat(q, 2.0f * acos(rotation[3]));
 		} break;
 		case AxisPlaneConstraint::FORBIDDEN:
 			rotation = quat(); // identity
@@ -287,7 +287,7 @@ namespace easy3d {
 				camera()->frame()->inverseTransformOf(rotationConstraintDirection()));
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
-			rotation = quat(q, 2.0 * acos(rotation[3]));
+			rotation = quat(q, 2.0f * acos(rotation[3]));
 		} break;
 		case AxisPlaneConstraint::FORBIDDEN:
 			rotation = quat(); // identity

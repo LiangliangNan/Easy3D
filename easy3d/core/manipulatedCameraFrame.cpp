@@ -106,7 +106,7 @@ namespace easy3d {
 	Motion depends on mouse binding (see <a href="../mouse.html">mouse page</a> for
 	details). The resulting displacements are basically inverted from those of a
 	ManipulatedFrame. */
-	void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int ddx, int ddy, int button, int modifiers, Camera *const camera)
+	void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera)
 	{
 		// #CONNECTION# QGLViewer::mouseMoveEvent does the update().
 		if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_LEFT)	// QGLViewer::ROTATE
@@ -115,17 +115,17 @@ namespace easy3d {
 			if (rotatesAroundUpVector_) {
 				// Multiply by 2.0 to get on average about the same speed as with the
 				// deformed ball
-				float delta_x = 2.0f * rotationSensitivity() * (-ddx) / camera->screenWidth();
-				float delta_y = 2.0f * rotationSensitivity() * (-ddy) / camera->screenHeight();
+				float delta_x = 2.0f * rotationSensitivity() * (-dx) / camera->screenWidth();
+				float delta_y = 2.0f * rotationSensitivity() * (-dy) / camera->screenHeight();
 				if (constrainedRotationIsReversed_)
 					delta_x = -delta_x;
 				vec3 verticalAxis = transformOf(sceneUpVector_);
-				rot = quat(verticalAxis, delta_x) * quat(vec3(1.0, 0.0, 0.0), delta_y);
+				rot = quat(verticalAxis, delta_x) * quat(vec3(1.0f, 0.0f, 0.0f), delta_y);
 			}
 			else {
 				vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
-				int pre_x = x - ddx;
-				int pre_y = y - ddy;
+				int pre_x = x - dx;
+				int pre_y = y - dy;
 				rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
 			}
 			setSpinningQuaternion(rot);
@@ -133,20 +133,20 @@ namespace easy3d {
 		}
 		else if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_RIGHT)	// QGLViewer::TRANSLATE
 		{
-			vec3 trans(-ddx, ddy, 0.0);
+			vec3 trans(-float(dx), float(dy), 0.0f);
 			// Scale to fit the screen mouse displacement
 			switch (camera->type())
 			{
 			case Camera::PERSPECTIVE:
-				trans *= 2.0 * tan(camera->fieldOfView() / 2.0) *
+				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
 					camera->screenHeight();
 				break;
 			case Camera::ORTHOGRAPHIC: {
-				GLdouble w, h;
+				float w, h;
 				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0 * w / camera->screenWidth();
-				trans[1] *= 2.0 * h / camera->screenHeight();
+				trans[0] *= 2.0f * w / camera->screenWidth();
+				trans[1] *= 2.0f * h / camera->screenHeight();
 				break;
 			}
 			}
@@ -157,8 +157,8 @@ namespace easy3d {
 		{
 			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
 
-			float pre_x = float(x - ddx);
-			float pre_y = float(y - ddy);
+			float pre_x = float(x - dx);
+			float pre_y = float(y - dy);
 			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
 			const float angle = atan2(y - trans[1], x - trans[0]);
 
@@ -171,23 +171,23 @@ namespace easy3d {
 		else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT)  // SCREEN_TRANSLATE
 		{
 			vec3 trans;
-			int dir = mouseOriginalDirection(x, y, ddx, ddy);
+			int dir = mouseOriginalDirection(x, y, dx, dy);
 			if (dir == 1)
-				trans = vec3(-ddx, 0.0, 0.0);
+				trans = vec3(-float(dx), 0.0f, 0.0f);
 			else if (dir == -1)
-				trans = vec3(0.0, ddy, 0.0);
+				trans = vec3(0.0f, float(dy), 0.0f);
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
-				trans *= 2.0 * tan(camera->fieldOfView() / 2.0) *
+				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
 					camera->screenHeight();
 				break;
 			case Camera::ORTHOGRAPHIC: {
-				GLdouble w, h;
+				float w, h;
 				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0 * w / camera->screenWidth();
-				trans[1] *= 2.0 * h / camera->screenHeight();
+				trans[0] *= 2.0f * w / camera->screenWidth();
+				trans[1] *= 2.0f * h / camera->screenHeight();
 				break;
 			}
 			}

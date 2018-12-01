@@ -40,37 +40,32 @@ namespace easy3d {
  focusDistance() documentations for default stereo parameter values. */
 Camera::Camera()
 	: frame_(NULL)
-	, fieldOfView_(M_PI / 4.0)
+	, fieldOfView_(static_cast<float>(M_PI / 4.0f))
 	, modelViewMatrixIsUpToDate_(false)
 	, projectionMatrixIsUpToDate_(false) 
 {
 	setFrame(new ManipulatedCameraFrame());
 
 	// Requires fieldOfView() to define focusDistance()
-	setSceneRadius(1.0);
+	setSceneRadius(1.0f);
 
 	// Initial value (only scaled after this)
-	orthoCoef_ = tan(fieldOfView() / 2.0);
+	orthoCoef_ = tan(fieldOfView() / 2.0f);
 
 	// Also defines the pivotPoint(), which changes orthoCoef_. Requires a
 	// frame().
-	setSceneCenter(vec3(0.0, 0.0, 0.0));
+	setSceneCenter(vec3(0.0f, 0.0f, 0.0f));
 
 	// Requires fieldOfView() when called with ORTHOGRAPHIC. Attention to
 	// projectionMatrix_ below.
 	setType(PERSPECTIVE);
 
 	// #CONNECTION# initFromDOMElement default values
-	setZNearCoefficient(0.005);
-	setZClippingCoefficient(sqrt(3.0));
+	setZNearCoefficient(0.005f);
+	setZClippingCoefficient(sqrt(3.0f));
 
 	// Dummy values
 	setScreenWidthAndHeight(600, 400);
-
-	// Stereo parameters
-	setIODistance(0.062);
-	setPhysicalScreenWidth(0.5);
-	// focusDistance is set from setFieldOfView()
 
 	// #CONNECTION# Camera copy constructor
 	for (unsigned short j = 0; j < 16; ++j) {
@@ -128,11 +123,6 @@ Camera &Camera::operator=(const Camera &camera) {
 	setZNearCoefficient(camera.zNearCoefficient());
 	setZClippingCoefficient(camera.zClippingCoefficient());
 	setType(camera.type());
-
-	// Stereo parameters
-	setIODistance(camera.IODistance());
-	setFocusDistance(camera.focusDistance());
-	setPhysicalScreenWidth(camera.physicalScreenWidth());
 
 	orthoCoef_ = camera.orthoCoef_;
 	projectionMatrixIsUpToDate_ = false;
@@ -204,12 +194,12 @@ void Camera::setScreenWidthAndHeight(int width, int height) {
  \attention The value is always positive although the clipping plane is
  positioned at a negative z value in the Camera coordinate system. This follows
  the \c gluPerspective standard. */
-double Camera::zNear() const {
-	const double zNearScene = zClippingCoefficient() * sceneRadius();
-	double z = distanceToSceneCenter() - zNearScene;
+float Camera::zNear() const {
+	const float zNearScene = zClippingCoefficient() * sceneRadius();
+	float z = distanceToSceneCenter() - zNearScene;
 
 	// Prevents negative or null zNear values.
-	const double zMin = zNearCoefficient() * zNearScene;
+	const float zMin = zNearCoefficient() * zNearScene;
 	if (z < zMin)
 		switch (type()) {
 		case Camera::PERSPECTIVE:
@@ -230,7 +220,7 @@ zClippingCoefficient() * sceneRadius() behind the sceneCenter(): \code zFar =
 distanceToSceneCenter() + zClippingCoefficient()*sceneRadius(); \endcode
 
 See the zNear() documentation for details. */
-double Camera::zFar() const {
+float Camera::zFar() const {
 	return distanceToSceneCenter() + zClippingCoefficient() * sceneRadius();
 }
 
@@ -238,9 +228,8 @@ double Camera::zFar() const {
 
 Note that focusDistance() is set to sceneRadius() / tan(fieldOfView()/2) by this
 method. */
-void Camera::setFieldOfView(double fov) {
+void Camera::setFieldOfView(float fov) {
 	fieldOfView_ = fov;
-	setFocusDistance(sceneRadius() / tan(fov / 2.0));
 	projectionMatrixIsUpToDate_ = false;
 }
 
@@ -260,7 +249,7 @@ void Camera::setType(Type type) {
 	// viewDirection(), passing through RAP). Done only when CHANGING type since
 	// orthoCoef_ may have been changed with a setPivotPoint() in the meantime.
 	if ((type == Camera::ORTHOGRAPHIC) && (type_ == Camera::PERSPECTIVE))
-		orthoCoef_ = tan(fieldOfView() / 2.0);
+		orthoCoef_ = tan(fieldOfView() / 2.0f);
 	type_ = type;
 	projectionMatrixIsUpToDate_ = false;
 }
@@ -293,7 +282,7 @@ void Camera::setFrame(ManipulatedCameraFrame *const mcf) {
 /*! Returns the distance from the Camera center to sceneCenter(), projected
   along the Camera Z axis. Used by zNear() and zFar() to optimize the Z range.
 */
-double Camera::distanceToSceneCenter() const {
+float Camera::distanceToSceneCenter() const {
 	return fabs((frame()->coordinatesOf(sceneCenter())).z);
 }
 
@@ -312,12 +301,11 @@ double Camera::distanceToSceneCenter() const {
 
  Overload this method to change this behavior if desired, as is done in the
  <a href="../examples/standardCamera.html">standardCamera example</a>. */
-void Camera::getOrthoWidthHeight(double &halfWidth,
-	double &halfHeight) const {
-	const double dist = orthoCoef_ * fabs(cameraCoordinatesOf(pivotPoint()).z);
+void Camera::getOrthoWidthHeight(float &halfWidth, float &halfHeight) const {
+	const float dist = orthoCoef_ * fabs(cameraCoordinatesOf(pivotPoint()).z);
 	//#CONNECTION# fitScreenRegion
-	halfWidth = dist * ((aspectRatio() < 1.0) ? 1.0 : aspectRatio());
-	halfHeight = dist * ((aspectRatio() < 1.0) ? 1.0 / aspectRatio() : 1.0);
+	halfWidth = dist * ((aspectRatio() < 1.0f) ? 1.0f : aspectRatio());
+	halfHeight = dist * ((aspectRatio() < 1.0f) ? 1.0f / aspectRatio() : 1.0f);
 }
 
 /*! Computes the projection matrix associated with the Camera.
@@ -347,8 +335,8 @@ void Camera::computeProjectionMatrix()
 	if (projectionMatrixIsUpToDate_)
 		return;
 
-	const double ZNear = zNear();
-	const double ZFar = zFar();
+	const float ZNear = zNear();
+	const float ZFar = zFar();
 
 	switch (type())
 	{
@@ -367,14 +355,14 @@ void Camera::computeProjectionMatrix()
 	}
 	case Camera::ORTHOGRAPHIC:
 	{
-		double w, h;
+		float w, h;
 		getOrthoWidthHeight(w, h);
-		projectionMatrix_[0] = 1.0 / w;
-		projectionMatrix_[5] = 1.0 / h;
-		projectionMatrix_[10] = -2.0 / (ZFar - ZNear);
-		projectionMatrix_[11] = 0.0;
+		projectionMatrix_[0] = 1.0f / w;
+		projectionMatrix_[5] = 1.0f / h;
+		projectionMatrix_[10] = -2.0f / (ZFar - ZNear);
+		projectionMatrix_[11] = 0.0f;
 		projectionMatrix_[14] = -(ZFar + ZNear) / (ZFar - ZNear);
-		projectionMatrix_[15] = 1.0;
+		projectionMatrix_[15] = 1.0f;
 		// same as glOrtho( -w, w, -h, h, zNear(), zFar() );
 		break;
 	}
@@ -403,32 +391,32 @@ void Camera::computeModelViewMatrix()
 
 	const quat q = orientation();
 
-	const double q00 = 2.0 * q[0] * q[0];
-	const double q11 = 2.0 * q[1] * q[1];
-	const double q22 = 2.0 * q[2] * q[2];
+	const float q00 = 2.0f * q[0] * q[0];
+	const float q11 = 2.0f * q[1] * q[1];
+	const float q22 = 2.0f * q[2] * q[2];
 
-	const double q01 = 2.0 * q[0] * q[1];
-	const double q02 = 2.0 * q[0] * q[2];
-	const double q03 = 2.0 * q[0] * q[3];
+	const float q01 = 2.0f * q[0] * q[1];
+	const float q02 = 2.0f * q[0] * q[2];
+	const float q03 = 2.0f * q[0] * q[3];
 
-	const double q12 = 2.0 * q[1] * q[2];
-	const double q13 = 2.0 * q[1] * q[3];
+	const float q12 = 2.0f * q[1] * q[2];
+	const float q13 = 2.0f * q[1] * q[3];
 
-	const double q23 = 2.0 * q[2] * q[3];
+	const float q23 = 2.0f * q[2] * q[3];
 
-	modelViewMatrix_[0] = 1.0 - q11 - q22;
+	modelViewMatrix_[0] = 1.0f - q11 - q22;
 	modelViewMatrix_[1] = q01 - q23;
 	modelViewMatrix_[2] = q02 + q13;
-	modelViewMatrix_[3] = 0.0;
+	modelViewMatrix_[3] = 0.0f;
 
 	modelViewMatrix_[4] = q01 + q23;
-	modelViewMatrix_[5] = 1.0 - q22 - q00;
+	modelViewMatrix_[5] = 1.0f - q22 - q00;
 	modelViewMatrix_[6] = q12 - q03;
-	modelViewMatrix_[7] = 0.0;
+	modelViewMatrix_[7] = 0.0f;
 
 	modelViewMatrix_[8] = q02 - q13;
 	modelViewMatrix_[9] = q12 + q03;
-	modelViewMatrix_[10] = 1.0 - q11 - q00;
+	modelViewMatrix_[10] = 1.0f - q11 - q00;
 	modelViewMatrix_[11] = 0.0;
 
 	const vec3 t = q.inverse_rotate(position());
@@ -499,23 +487,21 @@ mat4 Camera::modelViewProjectionMatrix() const {
 
 \attention This methods also sets focusDistance() to sceneRadius() /
 tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
-void Camera::setSceneRadius(double radius) {
-	if (radius <= 0.0) {
+void Camera::setSceneRadius(float radius) {
+	if (radius <= 0.0f) {
 		std::cerr << "Scene radius must be positive - Ignoring value" << std::endl;
 		return;
 	}
 
 	sceneRadius_ = radius;
 	projectionMatrixIsUpToDate_ = false;
-
-	setFocusDistance(sceneRadius() / tan(fieldOfView() / 2.0));
 }
 
 /*! Similar to setSceneRadius() and setSceneCenter(), but the scene limits are
   defined by a (world axis aligned) bounding box. */
 void Camera::setSceneBoundingBox(const vec3 &min, const vec3 &max) {
-	setSceneCenter((min + max) / 2.0);
-	setSceneRadius(0.5 * (max - min).norm());
+	setSceneCenter((min + max) / 2.0f);
+	setSceneRadius(0.5f * (max - min).norm());
 }
 
 /*! Sets the sceneCenter().
@@ -545,7 +531,7 @@ bool Camera::setSceneCenterFromPixel(int x, int y) {
 /*! Changes the pivotPoint() to \p point (defined in the world coordinate
  * system). */
 void Camera::setPivotPoint(const vec3 &point) {
-	const double prevDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
+	const float prevDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
 
 	// If frame's RAP is set directly, projectionMatrixIsUpToDate_ should also be
 	// set to false to ensure proper recomputation of the ORTHO projection matrix.
@@ -553,7 +539,7 @@ void Camera::setPivotPoint(const vec3 &point) {
 
 	// orthoCoef_ is used to compensate for changes of the pivotPoint, so that the
 	// image does not change when the pivotPoint is changed in ORTHOGRAPHIC mode.
-	const double newDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
+	const float newDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
 	// Prevents division by zero when rap is set to camera position
 	if ((prevDist > 1E-9) && (newDist > 1E-9))
 		orthoCoef_ *= prevDist / newDist;
@@ -590,19 +576,19 @@ bool Camera::setPivotPointFromPixel(int x, int y) {
  glVertex3fv(sceneCenter());
  glVertex3fv(sceneCenter() + 20 * pixelGLRatio(sceneCenter()) *
  camera()->upVector()); glEnd(); \endcode */
-double Camera::pixelGLRatio(const vec3 &position) const {
+float Camera::pixelGLRatio(const vec3 &position) const {
 	switch (type()) {
 	case Camera::PERSPECTIVE:
-		return 2.0 * fabs((frame()->coordinatesOf(position)).z) *
-			tan(fieldOfView() / 2.0) / screenHeight();
+		return 2.0f * fabs((frame()->coordinatesOf(position)).z) *
+			tan(fieldOfView() / 2.0f) / screenHeight();
 	case Camera::ORTHOGRAPHIC: {
-		double w, h;
+		float w, h;
 		getOrthoWidthHeight(w, h);
-		return 2.0 * h / screenHeight();
+		return 2.0f * h / screenHeight();
 	}
 	}
 	// Bad compilers complain
-	return 1.0;
+	return 1.0f;
 }
 
 /*! Changes the Camera fieldOfView() so that the entire scene (defined by
@@ -636,9 +622,9 @@ double Camera::pixelGLRatio(const vec3 &position) const {
  some parts of the scene. */
 void Camera::setFOVToFitScene() {
 	if (distanceToSceneCenter() > sqrt(2.0) * sceneRadius())
-		setFieldOfView(2.0 * asin(sceneRadius() / distanceToSceneCenter()));
+		setFieldOfView(2.0f * asin(sceneRadius() / distanceToSceneCenter()));
 	else
-		setFieldOfView(M_PI / 2.0);
+		setFieldOfView(static_cast<float>(M_PI / 2.0f));
 }
 
 /*! Returns the coordinates of the 3D point located at pixel (x,y) on screen.
@@ -710,12 +696,12 @@ void Camera::lookAt(const vec3 &target) {
 
  You should therefore orientate the Camera before you call this method. See
  lookAt(), setOrientation() and setUpVector(). */
-void Camera::fitSphere(const vec3 &center, double radius) {
-	double distance = 0.0;
+void Camera::fitSphere(const vec3 &center, float radius) {
+	float distance = 0.0f;
 	switch (type()) {
 	case Camera::PERSPECTIVE: {
-		const double yview = radius / sin(fieldOfView() / 2.0);
-		const double xview = radius / sin(horizontalFieldOfView() / 2.0);
+		const float yview = radius / sin(fieldOfView() / 2.0f);
+		const float xview = radius / sin(horizontalFieldOfView() / 2.0f);
 		distance = std::max(xview, yview);
 		break;
 	}
@@ -733,7 +719,7 @@ void Camera::fitSphere(const vec3 &center, double radius) {
 void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) {
 	float diameter = std::max(fabs(max[1] - min[1]), fabs(max[0] - min[0]));
 	diameter = std::max(fabs(max[2] - min[2]), diameter);
-	fitSphere(0.5 * (min + max), 0.5 * diameter);
+	fitSphere(0.5f * (min + max), 0.5f * diameter);
 }
 
 /*! Moves the Camera so that the rectangular screen region defined by \p
@@ -831,10 +817,10 @@ void Camera::setUpVector(const vec3 &up, bool noMove) {
 
  This method can be useful to create Quicktime VR panoramic sequences, see the
  BasicViewer::saveSnapshot() documentation for details. */
-void Camera::setOrientation(double theta, double phi) {
-	vec3 axis(0.0, 1.0, 0.0);
+void Camera::setOrientation(float theta, float phi) {
+	vec3 axis(0.0f, 1.0f, 0.0f);
 	const quat rot1(axis, theta);
-	axis = vec3(-cos(theta), 0.0, sin(theta));
+	axis = vec3(-cos(theta), 0.0f, sin(theta));
 	const quat rot2(axis, phi);
 	setOrientation(rot1 * rot2);
 }
@@ -1143,21 +1129,6 @@ sceneRadius())*viewDirection()); break;
 
 ///////////////////////// Camera to world transform ///////////////////////
 
-/*! Same as cameraCoordinatesOf(), but with \c double[3] parameters (\p src and
- * \p res may be identical pointers). */
-void Camera::getCameraCoordinatesOf(const double src[3], double res[3]) const {
-	vec3 r = cameraCoordinatesOf(vec3(src));
-	for (int i = 0; i < 3; ++i)
-		res[i] = r[i];
-}
-
-/*! Same as worldCoordinatesOf(), but with \c double[3] parameters (\p src and \p
- * res may be identical pointers). */
-void Camera::getWorldCoordinatesOf(const double src[3], double res[3]) const {
-	vec3 r = worldCoordinatesOf(vec3(src));
-	for (int i = 0; i < 3; ++i)
-		res[i] = r[i];
-}
 
 /*! Fills \p viewport with the Camera OpenGL viewport.
 
@@ -1310,25 +1281,6 @@ vec3 Camera::unprojectedCoordinatesOf(const vec3 &src, const Frame *frame) const
 	return p;
 }
 
-/*! Same as projectedCoordinatesOf(), but with \c double parameters (\p src and
- * \p res can be identical pointers). */
-void Camera::getProjectedCoordinatesOf(const double src[3], double res[3],
-	const Frame *frame) const {
-	vec3 r = projectedCoordinatesOf(vec3(src), frame);
-	for (int i = 0; i < 3; ++i)
-		res[i] = r[i];
-}
-
-/*! Same as unprojectedCoordinatesOf(), but with \c double parameters (\p src and
- * \p res can be identical pointers). */
-void Camera::getUnprojectedCoordinatesOf(const double src[3], double res[3],
-	const Frame *frame) const {
-	vec3 r = unprojectedCoordinatesOf(vec3(src), frame);
-	for (int i = 0; i < 3; ++i)
-		res[i] = r[i];
-}
-
-
 /*! Gives the coefficients of a 3D half-line passing through the Camera eye and
  pixel (x,y).
 
@@ -1346,20 +1298,20 @@ void Camera::convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const {
 	switch (type()) {
 	case Camera::PERSPECTIVE:
 		orig = position();
-		dir = vec3(((2.0 * x / screenWidth()) - 1.0) *
-			tan(fieldOfView() / 2.0) * aspectRatio(),
-			((2.0 * (screenHeight() - y) / screenHeight()) - 1.0) *
-			tan(fieldOfView() / 2.0),
-			-1.0);
+		dir = vec3(((2.0f * x / screenWidth()) - 1.0f) *
+			tan(fieldOfView() / 2.0f) * aspectRatio(),
+			((2.0f * (screenHeight() - y) / screenHeight()) - 1.0f) *
+			tan(fieldOfView() / 2.0f),
+			-1.0f);
 		dir = worldCoordinatesOf(dir) - orig;
 		dir.normalize();
 		break;
 
 	case Camera::ORTHOGRAPHIC: {
-		double w, h;
+		float w, h;
 		getOrthoWidthHeight(w, h);
-		orig = vec3((2.0 * x / screenWidth() - 1.0) * w,
-			-(2.0 * y / screenHeight() - 1.0) * h, 0.0);
+		orig = vec3((2.0f * x / screenWidth() - 1.0f) * w,
+			-(2.0f * y / screenHeight() - 1.0f) * h, 0.0f);
 		orig = worldCoordinatesOf(orig);
 		dir = viewDirection();
 		break;
@@ -1390,25 +1342,25 @@ plane can hence be applied in an other viewer to visualize the culling results:
  glClipPlane(GL_CLIP_PLANE0, coef[2]);
  glClipPlane(GL_CLIP_PLANE1, coef[3]);
 \endcode */
-void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
+void Camera::getFrustumPlanesCoefficients(float coef[6][4]) const
 {
 	// Computed once and for all
 	const vec3 pos = position();
 	const vec3 viewDir = viewDirection();
 	const vec3 up = upVector();
 	const vec3 right = rightVector();
-	const double posViewDir = dot(pos, viewDir);
+	const float posViewDir = dot(pos, viewDir);
 
 	static vec3 normal[6];
-	static double dist[6];
+	static float dist[6];
 
 	switch (type())
 	{
 	case Camera::PERSPECTIVE:
 	{
-		const double hhfov = horizontalFieldOfView() / 2.0;
-		const double chhfov = cos(hhfov);
-		const double shhfov = sin(hhfov);
+		const float hhfov = horizontalFieldOfView() / 2.0f;
+		const float chhfov = cos(hhfov);
+		const float shhfov = sin(hhfov);
 		normal[0] = -shhfov * viewDir;
 		normal[1] = normal[0] + chhfov * right;
 		normal[0] = normal[0] - chhfov * right;
@@ -1416,9 +1368,9 @@ void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
 		normal[2] = -viewDir;
 		normal[3] = viewDir;
 
-		const double hfov = fieldOfView() / 2.0;
-		const double chfov = cos(hfov);
-		const double shfov = sin(hfov);
+		const float hfov = fieldOfView() / 2.0f;
+		const float chfov = cos(hfov);
+		const float shfov = sin(hfov);
 		normal[4] = -shfov * viewDir;
 		normal[5] = normal[4] - chfov * up;
 		normal[4] = normal[4] + chfov * up;
@@ -1434,11 +1386,11 @@ void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
 		// dist[3] = (pos + zFar()  * viewDir) * normal[3];
 
 		// 2 times less computations using expanded/merged equations. Dir vectors are normalized.
-		const double posRightCosHH = chhfov * dot(pos, right);
+		const float posRightCosHH = chhfov * dot(pos, right);
 		dist[0] = -shhfov * posViewDir;
 		dist[1] = dist[0] + posRightCosHH;
 		dist[0] = dist[0] - posRightCosHH;
-		const double posUpCosH = chfov * dot(pos, up);
+		const float posUpCosH = chfov * dot(pos, up);
 		dist[4] = -shfov * posViewDir;
 		dist[5] = dist[4] - posUpCosH;
 		dist[4] = dist[4] + posUpCosH;
@@ -1451,7 +1403,7 @@ void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
 		normal[4] = up;
 		normal[5] = -up;
 
-		double hw, hh;
+		float hw, hh;
 		getOrthoWidthHeight(hw, hh);
 		dist[0] = dot((pos - hw * right), normal[0]);
 		dist[1] = dot((pos + hw * right), normal[1]);
@@ -1468,9 +1420,9 @@ void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
 
 	for (int i = 0; i < 6; ++i)
 	{
-		coef[i][0] = double(normal[i].x);
-		coef[i][1] = double(normal[i].y);
-		coef[i][2] = double(normal[i].z);
+		coef[i][0] = normal[i].x;
+		coef[i][1] = normal[i].y;
+		coef[i][2] = normal[i].z;
 		coef[i][3] = dist[i];
 	}
 }
@@ -1480,7 +1432,7 @@ void Camera::getFrustumPlanesCoefficients(double coef[6][4]) const
 float frustum[6][4];
 That's six sets of four numbers (six planes, each with an A, B, C, and D value).
 */
-void Camera::getFrustumPlanesCoefficients2(double frustum[6][4]) const
+void Camera::getFrustumPlanesCoefficients2(float frustum[6][4]) const
 {
 	const mat4& clip = modelViewProjectionMatrix();
 
@@ -1491,7 +1443,7 @@ void Camera::getFrustumPlanesCoefficients2(double frustum[6][4]) const
 	frustum[0][3] = clip[15] + clip[12];
 
 	/* Normalize the result */
-	double  t = sqrt(frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2]);
+	float  t = sqrt(frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2]);
 	frustum[0][0] /= t;
 	frustum[0][1] /= t;
 	frustum[0][2] /= t;

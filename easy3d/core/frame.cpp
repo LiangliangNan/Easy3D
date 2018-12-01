@@ -240,12 +240,12 @@ namespace easy3d {
 	//////////////////////////////////
 
 	/*! Same as setTranslation(), but with \p double parameters. */
-	void Frame::setTranslation(double x, double y, double z) {
+	void Frame::setTranslation(float x, float y, float z) {
 		setTranslation(vec3(x, y, z));
 	}
 
 	/*! Fill \c x, \c y and \c z with the translation() of the Frame. */
-	void Frame::getTranslation(double &x, double &y, double &z) const {
+	void Frame::getTranslation(float &x, float &y, float &z) const {
 		const vec3 t = translation();
 		x = t[0];
 		y = t[1];
@@ -253,14 +253,14 @@ namespace easy3d {
 	}
 
 	/*! Same as setRotation() but with \c double quat parameters. */
-	void Frame::setRotation(double q0, double q1, double q2, double q3) {
+	void Frame::setRotation(float q0, float q1, float q2, float q3) {
 		setRotation(quat(q0, q1, q2, q3));
 	}
 
 	/*! The \p q are set to the rotation() of the Frame.
 
 	See quat::quat(double, double, double, double) for details on \c q. */
-	void Frame::getRotation(double &q0, double &q1, double &q2, double &q3) const {
+	void Frame::getRotation(float &q0, float &q1, float &q2, float &q3) const {
 		const quat q = rotation();
 		q0 = q[0];
 		q1 = q[1];
@@ -295,13 +295,13 @@ namespace easy3d {
 	}
 
 	/*! Same as translate(const vec3&) but with \c double parameters. */
-	void Frame::translate(double x, double y, double z) {
+	void Frame::translate(float x, float y, float z) {
 		vec3 t(x, y, z);
 		translate(t);
 	}
 
 	/*! Same as translate(vec3&) but with \c double parameters. */
-	void Frame::translate(double &x, double &y, double &z) {
+	void Frame::translate(float &x, float &y, float &z) {
 		vec3 t(x, y, z);
 		translate(t);
 		x = t[0];
@@ -335,7 +335,7 @@ namespace easy3d {
 	}
 
 	/*! Same as rotate(quat&) but with \c double quat parameters. */
-	void Frame::rotate(double &q0, double &q1, double &q2, double &q3) {
+	void Frame::rotate(float &q0, float &q1, float &q2, float &q3) {
 		quat q(q0, q1, q2, q3);
 		rotate(q);
 		q0 = q[0];
@@ -346,7 +346,7 @@ namespace easy3d {
 
 	/*! Same as rotate(const quat&) but with \c double quat parameters.
 	 */
-	void Frame::rotate(double q0, double q1, double q2, double q3) {
+	void Frame::rotate(float q0, float q1, float q2, float q3) {
 		quat q(q0, q1, q2, q3);
 		rotate(q);
 	}
@@ -403,7 +403,7 @@ namespace easy3d {
 	}
 
 	/*! Same as setPosition(), but with \c double parameters. */
-	void Frame::setPosition(double x, double y, double z) {
+	void Frame::setPosition(float x, float y, float z) {
 		setPosition(vec3(x, y, z));
 	}
 
@@ -438,7 +438,7 @@ namespace easy3d {
 	}
 
 	/*! \p x, \p y and \p z are set to the position() of the Frame. */
-	void Frame::getPosition(double &x, double &y, double &z) const {
+	void Frame::getPosition(float &x, float &y, float &z) const {
 		vec3 p = position();
 		x = p.x;
 		y = p.y;
@@ -459,7 +459,7 @@ namespace easy3d {
 	}
 
 	/*! Same as setOrientation(), but with \c double parameters. */
-	void Frame::setOrientation(double q0, double q1, double q2, double q3) {
+	void Frame::setOrientation(float q0, float q1, float q2, float q3) {
 		setOrientation(quat(q0, q1, q2, q3));
 	}
 
@@ -470,7 +470,7 @@ namespace easy3d {
 	  /*! The \p q are set to the orientation() of the Frame.
 
 	  See quat::quat(double, double, double, double) for details on \c q. */
-	void Frame::getOrientation(double &q0, double &q1, double &q2, double &q3) const {
+	void Frame::getOrientation(float &q0, float &q1, float &q2, float &q3) const {
 		quat o = orientation();
 		q0 = o[0];
 		q1 = o[1];
@@ -717,36 +717,36 @@ namespace easy3d {
 	////// double[3] versions
 
 	/*! Same as coordinatesOf(), but with \c double parameters. */
-	void Frame::getCoordinatesOf(const double src[3], double res[3]) const {
+	void Frame::getCoordinatesOf(const float src[3], float res[3]) const {
 		const vec3 r = coordinatesOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as inverseCoordinatesOf(), but with \c double parameters. */
-	void Frame::getInverseCoordinatesOf(const double src[3], double res[3]) const {
+	void Frame::getInverseCoordinatesOf(const float src[3], float res[3]) const {
 		const vec3 r = inverseCoordinatesOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as localCoordinatesOf(), but with \c double parameters. */
-	void Frame::getLocalCoordinatesOf(const double src[3], double res[3]) const {
+	void Frame::getLocalCoordinatesOf(const float src[3], float res[3]) const {
 		const vec3 r = localCoordinatesOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as localInverseCoordinatesOf(), but with \c double parameters. */
-	void Frame::getLocalInverseCoordinatesOf(const double src[3],
-		double res[3]) const {
+	void Frame::getLocalInverseCoordinatesOf(const float src[3],
+		float res[3]) const {
 		const vec3 r = localInverseCoordinatesOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as coordinatesOfIn(), but with \c double parameters. */
-	void Frame::getCoordinatesOfIn(const double src[3], double res[3],
+	void Frame::getCoordinatesOfIn(const float src[3], float res[3],
 		const Frame *const in) const {
 		const vec3 r = coordinatesOfIn(vec3(src), in);
 		for (int i = 0; i < 3; ++i)
@@ -754,7 +754,7 @@ namespace easy3d {
 	}
 
 	/*! Same as coordinatesOfFrom(), but with \c double parameters. */
-	void Frame::getCoordinatesOfFrom(const double src[3], double res[3],
+	void Frame::getCoordinatesOfFrom(const float src[3], float res[3],
 		const Frame *const from) const {
 		const vec3 r = coordinatesOfFrom(vec3(src), from);
 		for (int i = 0; i < 3; ++i)
@@ -850,35 +850,35 @@ namespace easy3d {
 	/////////////////  double[3] versions  //////////////////////
 
 	/*! Same as transformOf(), but with \c double parameters. */
-	void Frame::getTransformOf(const double src[3], double res[3]) const {
+	void Frame::getTransformOf(const float src[3], float res[3]) const {
 		vec3 r = transformOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as inverseTransformOf(), but with \c double parameters. */
-	void Frame::getInverseTransformOf(const double src[3], double res[3]) const {
+	void Frame::getInverseTransformOf(const float src[3], float res[3]) const {
 		vec3 r = inverseTransformOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as localTransformOf(), but with \c double parameters. */
-	void Frame::getLocalTransformOf(const double src[3], double res[3]) const {
+	void Frame::getLocalTransformOf(const float src[3], float res[3]) const {
 		vec3 r = localTransformOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as localInverseTransformOf(), but with \c double parameters. */
-	void Frame::getLocalInverseTransformOf(const double src[3], double res[3]) const {
+	void Frame::getLocalInverseTransformOf(const float src[3], float res[3]) const {
 		vec3 r = localInverseTransformOf(vec3(src));
 		for (int i = 0; i < 3; ++i)
 			res[i] = r[i];
 	}
 
 	/*! Same as transformOfIn(), but with \c double parameters. */
-	void Frame::getTransformOfIn(const double src[3], double res[3],
+	void Frame::getTransformOfIn(const float src[3], float res[3],
 		const Frame *const in) const {
 		vec3 r = transformOfIn(vec3(src), in);
 		for (int i = 0; i < 3; ++i)
@@ -886,7 +886,7 @@ namespace easy3d {
 	}
 
 	/*! Same as transformOfFrom(), but with \c double parameters. */
-	void Frame::getTransformOfFrom(const double src[3], double res[3],
+	void Frame::getTransformOfFrom(const float src[3], float res[3],
 		const Frame *const from) const {
 		vec3 r = transformOfFrom(vec3(src), from);
 		for (int i = 0; i < 3; ++i)
@@ -921,10 +921,10 @@ namespace easy3d {
 	The rotation (and translation when \p move is \c true) applied to the Frame are
 	filtered by the possible constraint(). */
 	void Frame::alignWithFrame(const Frame *const frame, bool move,
-		double threshold) {
+		float threshold) {
 		vec3 directions[2][3];
 		for (unsigned short d = 0; d < 3; ++d) {
-			vec3 dir((d == 0) ? 1.0 : 0.0, (d == 1) ? 1.0 : 0.0, (d == 2) ? 1.0 : 0.0);
+			vec3 dir((d == 0) ? 1.0f : 0.0f, (d == 1) ? 1.0f : 0.0f, (d == 2) ? 1.0f : 0.0f);
 			if (frame)
 				directions[0][d] = frame->inverseTransformOf(dir);
 			else
@@ -932,8 +932,8 @@ namespace easy3d {
 			directions[1][d] = inverseTransformOf(dir);
 		}
 
-		double maxProj = 0.0;
-		double proj;
+		float maxProj = 0.0;
+		float proj;
 		unsigned short index[2];
 		index[0] = index[1] = 0;
 		for (unsigned short i = 0; i < 3; ++i)
@@ -951,17 +951,17 @@ namespace easy3d {
 		float coef = dot(directions[0][index[0]], directions[1][index[1]]);
 		if (fabs(coef) >= threshold) {
 			const vec3 axis = cross(directions[0][index[0]], directions[1][index[1]]);
-			double angle = asin(axis.norm());
+			float angle = asin(axis.norm());
 			if (coef >= 0.0)
 				angle = -angle;
 			rotate(rotation().inverse() * quat(axis, angle) * orientation());
 
 			// Try to align an other axis direction
 			unsigned short d = (index[1] + 1) % 3;
-			vec3 dir((d == 0) ? 1.0 : 0.0, (d == 1) ? 1.0 : 0.0, (d == 2) ? 1.0 : 0.0);
+			vec3 dir((d == 0) ? 1.0f : 0.0f, (d == 1) ? 1.0f : 0.0f, (d == 2) ? 1.0f : 0.0f);
 			dir = inverseTransformOf(dir);
 
-			double max = 0.0;
+			float max = 0.0;
 			for (unsigned short i = 0; i < 3; ++i) {
 				float proj = fabs(dot(directions[0][i], dir));
 				if (proj > max) {
@@ -972,8 +972,8 @@ namespace easy3d {
 
 			if (max >= threshold) {
 				const vec3 axis = cross(directions[0][index[0]], dir);
-				double angle = asin(axis.norm());
-				if (dot(directions[0][index[0]], dir) >= 0.0)
+				float angle = asin(axis.norm());
+				if (dot(directions[0][index[0]], dir) >= 0.0f)
 					angle = -angle;
 				rotate(rotation().inverse() * quat(axis, angle) * orientation());
 			}

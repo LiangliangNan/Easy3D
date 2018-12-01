@@ -129,7 +129,7 @@ namespace easy3d {
 	public:
 		void setPosition(const vec3 &pos);
 		void setOrientation(const quat &q);
-		void setOrientation(double theta, double phi);
+		void setOrientation(float theta, float phi);
 		void setUpVector(const vec3 &up, bool noMove = true);
 		void setViewDirection(const vec3 &direction);
 		//@}
@@ -139,7 +139,7 @@ namespace easy3d {
 	public:
 		void lookAt(const vec3 &target);
 		void showEntireScene();
-		void fitSphere(const vec3 &center, double radius);
+		void fitSphere(const vec3 &center, float radius);
 		void fitBoundingBox(const vec3 &min, const vec3 &max);
 		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax);
 		void centerScene();
@@ -173,15 +173,15 @@ namespace easy3d {
 		horizontalFieldOfView()).
 
 		Use setFOVToFitScene() to adapt the fieldOfView() to a given scene. */
-		double fieldOfView() const { return fieldOfView_; }
+		float fieldOfView() const { return fieldOfView_; }
 
 		/*! Returns the horizontal field of view of the Camera (in radians).
 
 		Value is set using setHorizontalFieldOfView() or setFieldOfView(). These
 		values are always linked by: \code horizontalFieldOfView() = 2.0 * atan (
 		tan(fieldOfView()/2.0) * aspectRatio() ). \endcode */
-		double horizontalFieldOfView() const {
-			return 2.0 * atan(tan(fieldOfView() / 2.0) * aspectRatio());
+		float horizontalFieldOfView() const {
+			return 2.0f * atan(tan(fieldOfView() / 2.0f) * aspectRatio());
 		}
 
 		/*! Returns the Camera aspect ratio defined by screenWidth() / screenHeight().
@@ -189,8 +189,8 @@ namespace easy3d {
 		When the Camera is attached to a BasicViewer, these values and hence the
 		aspectRatio() are automatically fitted to the viewer's window aspect ratio
 		using setScreenWidthAndHeight(). */
-		double aspectRatio() const {
-			return screenWidth_ / static_cast<double>(screenHeight_);
+		float aspectRatio() const {
+			return screenWidth_ / static_cast<float>(screenHeight_);
 		}
 		/*! Returns the width (in pixels) of the Camera screen.
 
@@ -205,7 +205,7 @@ namespace easy3d {
 		also QOpenGLWidget::height() */
 		int screenHeight() const { return screenHeight_; }
 		void getViewport(int viewport[4]) const;
-		double pixelGLRatio(const vec3 &position) const;
+		float pixelGLRatio(const vec3 &position) const;
 
 		/*! Returns the coefficient which is used to set zNear() when the Camera is
 		inside the sphere defined by sceneCenter() and zClippingCoefficient() *
@@ -221,7 +221,7 @@ namespace easy3d {
 		worst Z precision.
 
 		Only meaningful when Camera type is Camera::PERSPECTIVE. */
-		double zNearCoefficient() const { return zNearCoef_; }
+		float zNearCoefficient() const { return zNearCoef_; }
 		/*! Returns the coefficient used to position the near and far clipping planes.
 
 		The near (resp. far) clipping plane is positioned at a distance equal to
@@ -244,18 +244,18 @@ namespace easy3d {
 		\attention When BasicViewer::cameraPathAreEdited(), this value is set to 5.0 so
 		that the Camera paths are not clipped. The previous zClippingCoefficient()
 		value is restored back when you leave this mode. */
-		double zClippingCoefficient() const { return zClippingCoef_; }
+		float zClippingCoefficient() const { return zClippingCoef_; }
 
-		virtual double zNear() const;
-		virtual double zFar() const;
-		virtual void getOrthoWidthHeight(double &halfWidth, double &halfHeight) const;
-		void getFrustumPlanesCoefficients(double coef[6][4]) const;
-		void getFrustumPlanesCoefficients2(double coef[6][4]) const; // my version
+		virtual float zNear() const;
+		virtual float zFar() const;
+		virtual void getOrthoWidthHeight(float &halfWidth, float &halfHeight) const;
+		void getFrustumPlanesCoefficients(float coef[6][4]) const;
+		void getFrustumPlanesCoefficients2(float coef[6][4]) const; // my version
 
 	public:
 		void setType(Type type);
 
-		void setFieldOfView(double fov);
+		void setFieldOfView(float fov);
 
 		/*! Sets the horizontalFieldOfView() of the Camera (in radians).
 
@@ -263,8 +263,8 @@ namespace easy3d {
 		This method actually calls setFieldOfView(( 2.0 * atan (tan(hfov / 2.0) /
 		aspectRatio()) )) so that a call to horizontalFieldOfView() returns the
 		expected value. */
-		void setHorizontalFieldOfView(double hfov) {
-			setFieldOfView(2.0 * atan(tan(hfov / 2.0) / aspectRatio()));
+		void setHorizontalFieldOfView(float hfov) {
+			setFieldOfView(2.0f * atan(tan(hfov / 2.0f) / aspectRatio()));
 		}
 
 		void setFOVToFitScene();
@@ -282,18 +282,18 @@ namespace easy3d {
 		viewer's window dimensions, overload loadProjectionMatrix() or multiply the
 		created GL_PROJECTION matrix by a scaled diagonal matrix in your
 		BasicViewer::draw() method. */
-		void setAspectRatio(double aspect) {
+		void setAspectRatio(float aspect) {
 			setScreenWidthAndHeight(int(100.0 * aspect), 100);
 		}
 
 		void setScreenWidthAndHeight(int width, int height);
 		/*! Sets the zNearCoefficient() value. */
-		void setZNearCoefficient(double coef) {
+		void setZNearCoefficient(float coef) {
 			zNearCoef_ = coef;
 			projectionMatrixIsUpToDate_ = false;
 		}
 		/*! Sets the zClippingCoefficient() value. */
-		void setZClippingCoefficient(double coef) {
+		void setZClippingCoefficient(float coef) {
 			zClippingCoef_ = coef;
 			projectionMatrixIsUpToDate_ = false;
 		}
@@ -313,7 +313,7 @@ namespace easy3d {
 		Note that BasicViewer::sceneRadius() (resp. BasicViewer::setSceneRadius()) simply
 		call this method (resp. setSceneRadius()) on its associated
 		BasicViewer::camera(). */
-		double sceneRadius() const { return sceneRadius_; }
+		float sceneRadius() const { return sceneRadius_; }
 
 		/*! Returns the position of the scene center, defined in the world coordinate
 		system.
@@ -330,10 +330,10 @@ namespace easy3d {
 		calls this method (resp. setSceneCenter()) on its associated
 		BasicViewer::camera(). */
 		vec3 sceneCenter() const { return sceneCenter_; }
-		double distanceToSceneCenter() const;
+		float distanceToSceneCenter() const;
 
 	public:
-		void setSceneRadius(double radius);
+		void setSceneRadius(float radius);
 		void setSceneCenter(const vec3 &center);
 		bool setSceneCenterFromPixel(int x, int y);
 		void setSceneBoundingBox(const vec3 &min, const vec3 &max);
@@ -372,8 +372,8 @@ namespace easy3d {
 	public:
 		vec3 cameraCoordinatesOf(const vec3 &src) const;
 		vec3 worldCoordinatesOf(const vec3 &src) const;
-		void getCameraCoordinatesOf(const double src[3], double res[3]) const;
-		void getWorldCoordinatesOf(const double src[3], double res[3]) const;
+		void getCameraCoordinatesOf(const float src[3], float res[3]) const;
+		void getWorldCoordinatesOf(const float src[3], float res[3]) const;
 		//@}
 
 		/*! @name 2D screen to 3D world coordinate systems conversions */
@@ -381,91 +381,30 @@ namespace easy3d {
 	public:
 		vec3 projectedCoordinatesOf(const vec3 &src, const Frame *frame = NULL) const;
 		vec3 unprojectedCoordinatesOf(const vec3 &src, const Frame *frame = NULL) const;
-		void getProjectedCoordinatesOf(const double src[3], double res[3], const Frame *frame = NULL) const;
-		void getUnprojectedCoordinatesOf(const double src[3], double res[3], const Frame *frame = NULL) const;
 		void convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const;
 		vec3 pointUnderPixel(int x, int y, bool &found) const;
-		//@}
-
-	public:
-		/*! Returns the user's inter-ocular distance (in meters). Default value is
-		0.062m, which fits most people.
-
-		loadProjectionMatrixStereo() uses this value to define the Camera offset and
-		frustum. See setIODistance(). */
-		double IODistance() const { return IODistance_; }
-
-		/*! Returns the physical distance between the user's eyes and the screen (in
-		meters).
-
-		physicalDistanceToScreen() and focusDistance() represent the same distance.
-		The former is expressed in physical real world units, while the latter is
-		expressed in OpenGL virtual world units.
-
-		This is a helper function. It simply returns physicalScreenWidth() / 2.0 /
-		tan(horizontalFieldOfView() / 2.0); */
-		double physicalDistanceToScreen() const {
-			return physicalScreenWidth() / 2.0 / tan(horizontalFieldOfView() / 2.0);
-		}
-
-		/*! Returns the physical screen width, in meters. Default value is 0.5m
-		(average monitor width).
-
-		Used for stereo display only (see loadModelViewMatrixStereo() and
-		loadProjectionMatrixStereo()). Set using setPhysicalScreenWidth(). */
-		double physicalScreenWidth() const { return physicalScreenWidth_; }
-
-		/*! Returns the focus distance used by stereo display, expressed in OpenGL
-		units.
-
-		This is the distance in the virtual world between the Camera and the plane
-		where the horizontal stereo parallax is null (the stereo left and right
-		cameras' lines of sigth cross at this distance).
-
-		This distance is the virtual world equivalent of the real-world
-		physicalDistanceToScreen().
-
-		\attention This value is modified by BasicViewer::setSceneRadius(),
-		setSceneRadius() and setFieldOfView(). When one of these values is modified,
-		focusDistance() is set to sceneRadius() / tan(fieldOfView()/2), which provides
-		good results. */
-		double focusDistance() const { return focusDistance_; }
-	public:
-		/*! Sets the IODistance(). */
-		void setIODistance(double distance) { IODistance_ = distance; }
-
-		/*! Sets the physical screen (monitor or projected wall) width (in meters). */
-		void setPhysicalScreenWidth(double width) { physicalScreenWidth_ = width; }
-
-		/*! Sets the focusDistance(), in OpenGL scene units. */
-		void setFocusDistance(double distance) { focusDistance_ = distance; }
 		//@}
 
 	private:
 		void onFrameModified();
 
 	private:
-		// F r a m e
+		// Frame
 		ManipulatedCameraFrame *frame_;
 
-		// C a m e r a   p a r a m e t e r s
+		// Camera parameters
 		int screenWidth_, screenHeight_; // size of the window, in pixels
-		double fieldOfView_;              // in radians
-		vec3 sceneCenter_;
-		double sceneRadius_; // OpenGL units
-		double zNearCoef_;
-		double zClippingCoef_;
-		double orthoCoef_;
-		Type type_;                            // PERSPECTIVE or ORTHOGRAPHIC
+		float fieldOfView_;              // in radians
+		vec3  sceneCenter_;
+		float sceneRadius_; // OpenGL units
+		float zNearCoef_;
+		float zClippingCoef_;
+		float orthoCoef_;
+		Type type_;                 // PERSPECTIVE or ORTHOGRAPHIC
 		mat4 modelViewMatrix_;		// Buffered model view matrix.
 		bool modelViewMatrixIsUpToDate_;
 		mat4 projectionMatrix_;		// Buffered projection matrix.
 		bool projectionMatrixIsUpToDate_;
-
-		// S t e r e o   p a r a m e t e r s
-		double IODistance_;          // inter-ocular distance, in meters
-		double focusDistance_;       // in scene units
-		double physicalScreenWidth_; // in meters
 
 		friend class BasicViewer;
 	};

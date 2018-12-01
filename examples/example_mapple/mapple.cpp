@@ -115,7 +115,7 @@ void Mapple::cleanup() {
 	delete surface_;
 	delete wireframe_;
 	delete vertices_;
-    Viewer::cleanup();		mpl_debug_gl_error;
+    Viewer::cleanup();
 }
 
 

@@ -351,35 +351,15 @@ namespace easy3d {
 		else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == GLFW_MOD_SHIFT) {
 			if (!camera_->setPivotPointFromPixel(x, y)) {
 				camera_->setPivotPoint(camera_->sceneCenter());
-				std::cout << "set pivot point as scene center" << std::endl;
-			}
-			else {
-				std::cout << "set pivot point as scene center" << std::endl;
 			}
 		}
 
-		//update();
 		return false;
 	}
 
 
 	bool BasicViewer::mouse_release_event(int x, int y, int button, int modifiers) {
-		std::string msg;
-		if (button == GLFW_MOUSE_BUTTON_LEFT)
-			msg += "Left button released";
-		else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-			msg += "Right button released";
-
-		if (modifiers == GLFW_MOD_CONTROL)
-			msg += " + CTRL modifier";
-		else if (modifiers == GLFW_MOD_SHIFT)
-			msg += " + SHIFT modifier";
-
-		std::cout << title_ + ": " + msg + " (" << x << ", " << y << ")" << std::endl;
-
 		button_ = -1;
-
-		//update();
 		return false;
 	}
 
@@ -645,10 +625,9 @@ namespace easy3d {
 
 
 	bool BasicViewer::focus_event(bool focused) {
-		/* To be overridden */
-		if (focused)
-			std::cout << title_ << ": focused" << std::endl;
-
+		if (focused) {
+			// ... 
+		}
 		return false;
 	}
 

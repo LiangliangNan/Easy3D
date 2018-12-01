@@ -177,7 +177,7 @@ namespace easy3d {
 					camera->screenHeight();
 				break;
 			case Camera::ORTHOGRAPHIC: {
-				double w, h;
+				float w, h;
 				camera->getOrthoWidthHeight(w, h);
 				trans[0] *= 2.0f * float(w) / camera->screenWidth();
 				trans[1] *= 2.0f * float(h) / camera->screenHeight();
@@ -224,7 +224,7 @@ namespace easy3d {
 					camera->screenHeight();
 				break;
 			case Camera::ORTHOGRAPHIC: {
-				GLdouble w, h;
+				float w, h;
 				camera->getOrthoWidthHeight(w, h);
 				trans[0] *= 2.0f * float(w) / camera->screenWidth();
 				trans[1] *= 2.0f * float(h) / camera->screenHeight();
