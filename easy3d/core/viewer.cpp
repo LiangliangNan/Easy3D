@@ -332,12 +332,9 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == 0)
+        if (modifiers == 0)
 			camera_->frame()->mousePressEvent(x, y, button, modifiers, camera_);
-		else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == 0) {
-
-		}
-		else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == GLFW_MOD_SHIFT) {
+        else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
 			bool found = false;
 			vec3 p = point_under_pixel(x, y, found);
 			if (found)
@@ -361,6 +358,12 @@ namespace easy3d {
 			if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
 				camera_->frame()->mouseMoveEvent(x, y, dx, dy, button, modifiers, camera_);
 			}
+            else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+                int delta = 0; // just to make the zoom speed equivalent to the wheel effect
+                if (dy < 0) delta = -1;
+                else if (dy > 0) delta = 1;
+                camera_->frame()->wheelEvent(x, y, dx, delta, camera_);
+            }
 		}
 
 		//update();
