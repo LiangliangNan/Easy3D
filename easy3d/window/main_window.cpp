@@ -50,7 +50,7 @@ namespace easy3d {
 		int depth_bits /* = 24 */,
 		int stencil_bits /* = 8 */
 	) 
-		: BasicViewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits)
+		: Viewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits)
 		, movable_(true)
 		, alpha_(0.8f)
 	{
@@ -58,7 +58,7 @@ namespace easy3d {
 
 
 	void MainWindow::init() {
-        BasicViewer::init();
+        Viewer::init();
 
 		if (!context_) {
 			// Setup ImGui binding
@@ -91,7 +91,7 @@ namespace easy3d {
 
 
 	void MainWindow::post_resize(int w, int h) {
-        BasicViewer::post_resize(w, h);
+        Viewer::post_resize(w, h);
 		if (context_) {
 			ImGui::GetIO().DisplaySize.x = float(w);
 			ImGui::GetIO().DisplaySize.y = float(h);
@@ -243,7 +243,7 @@ namespace easy3d {
 
 		ImGui::DestroyContext(context_);
 
-        BasicViewer::cleanup();
+        Viewer::cleanup();
 	}
 
 
@@ -252,7 +252,7 @@ namespace easy3d {
         ImGui_ImplGlfw_NewFrame();    
         ImGui::NewFrame();   
 
-        BasicViewer::pre_draw(); 
+        Viewer::pre_draw(); 
 	}
 
 
@@ -413,7 +413,7 @@ namespace easy3d {
 		ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
-        BasicViewer::post_draw();
+        Viewer::post_draw();
 	}
 
 }

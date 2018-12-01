@@ -22,7 +22,7 @@
 #define _EASY3D_VIEWER_H_
 
 
-#include <easy3d/core/basic_viewer.h>
+#include <easy3d/core/viewer.h>
 
 
 
@@ -39,7 +39,7 @@ namespace easy3d {
 
 	class Panel;
 
-	class MainWindow : public BasicViewer
+	class MainWindow : public Viewer
 	{
 	public:
 		MainWindow(

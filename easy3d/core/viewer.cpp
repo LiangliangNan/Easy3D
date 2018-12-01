@@ -18,7 +18,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "basic_viewer.h"
+#include "viewer.h"
 
 #include <thread>
 #include <chrono>
@@ -49,11 +49,11 @@ namespace easy3d {
 
 
 	// Internal global variables used for glfw event handling
-	static BasicViewer * __viewer;
+	static Viewer * __viewer;
 
 
-	BasicViewer::BasicViewer(
-		const std::string& title /* = "easy3d BasicViewer" */,
+	Viewer::Viewer(
+		const std::string& title /* = "easy3d Viewer" */,
 		int samples /* = 4 */,
 		int gl_major /* = 3 */,
 		int gl_minor /* = 2 */,
@@ -196,7 +196,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::setup_callbacks() {
+	void Viewer::setup_callbacks() {
 		glfwSetCursorPosCallback(window_, [](GLFWwindow *win, double x, double y)
 		{
 			if (!__viewer->process_events_)
@@ -266,12 +266,12 @@ namespace easy3d {
 	}
 
 
-	BasicViewer::~BasicViewer() {
+	Viewer::~Viewer() {
 		cleanup();
 	}
 
 
-	void BasicViewer::cleanup() {
+	void Viewer::cleanup() {
 		// viewer may have already been destroyed by the user
 		if (!window_)
 			return;
@@ -298,7 +298,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::set_title(const std::string &title) {
+	void Viewer::set_title(const std::string &title) {
 		if (title != title_) {
 			glfwSetWindowTitle(window_, title.c_str());
 			title_ = title;
@@ -308,30 +308,30 @@ namespace easy3d {
 
 	// Returned values are(0, 0, screen_width, screen_height), so that the origin is
 	// located in the lower left corner of the window (OpenGL style coordinate system).
-	void BasicViewer::get_viewport(int viewport[4]) const {
+	void Viewer::get_viewport(int viewport[4]) const {
 		glfwMakeContextCurrent(window_);
 		glGetIntegerv(GL_VIEWPORT, viewport);
 	}
 
 
-	void BasicViewer::set_background_color(float r, float g, float b) {
+	void Viewer::set_background_color(float r, float g, float b) {
 		background_color_[0] = r;
 		background_color_[1] = g;
 		background_color_[2] = b;
 	}
 
 
-	void BasicViewer::resize(int w, int h) {
+	void Viewer::resize(int w, int h) {
 		glfwSetWindowSize(window_, w, h);
 	}
 
 
-	void BasicViewer::update() const {
+	void Viewer::update() const {
 		glfwPostEmptyEvent();
 	}
 
 
-	bool BasicViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == 0)
 			camera_->frame()->mousePressEvent(x, y, button, modifiers, camera_);
 		else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == 0) {
@@ -347,13 +347,13 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
 		button_ = -1;
 		return false;
 	}
 
 
-	bool BasicViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+	bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
 		if (modifiers == 0) {
 			if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT) {
 				camera_->frame()->mouseMoveEvent(x, y, dx, dy, button, modifiers, camera_);
@@ -365,7 +365,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+	bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
 		// highlight geometry primitives here
 
 		//std::cout << title_ + ": free move (" << x << ", " << y << "), delta (" << dx << ", " << dy << ")" << std::endl;
@@ -375,7 +375,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
+	bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 		try {
 			camera_->frame()->wheelEvent(x, y, dx, dy, camera_);
 		}
@@ -388,7 +388,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::key_press_event(int key, int modifiers) {
+	bool Viewer::key_press_event(int key, int modifiers) {
 		try {
 			if (modifiers == 0) {
 				if (key == GLFW_KEY_C) {
@@ -442,7 +442,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::key_release_event(int key, int modifiers) {
+	bool Viewer::key_release_event(int key, int modifiers) {
 		try {
 		}
 		catch (const std::exception &e) {
@@ -454,7 +454,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::char_input_event(unsigned int codepoint) {
+	bool Viewer::char_input_event(unsigned int codepoint) {
 		try {
 			//switch (codepoint) {
 			//case '-':	break;
@@ -473,7 +473,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::draw_all() {
+	void Viewer::draw_all() {
         glfwMakeContextCurrent(window_);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);		
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -499,7 +499,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_cursor_pos(double x, double y) {
+	bool Viewer::callback_event_cursor_pos(double x, double y) {
 		int px = static_cast<int>(x);
 		int py = static_cast<int>(y);
 
@@ -521,7 +521,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_mouse_button(int button, int action, int modifiers) {
+	bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
 		try {
 			if (action == GLFW_PRESS) {
 				drag_active_ = true;
@@ -541,7 +541,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_keyboard(int key, int action, int modifiers) {
+	bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
 		try {
 			if (action == GLFW_PRESS) {
 				return key_press_event(key, modifiers);
@@ -557,7 +557,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_character(unsigned int codepoint) {
+	bool Viewer::callback_event_character(unsigned int codepoint) {
 		try {
 			return char_input_event(codepoint);
 		}
@@ -569,7 +569,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_drop(int count, const char **filenames) {
+	bool Viewer::callback_event_drop(int count, const char **filenames) {
 		try {
 			std::vector<std::string> arg(count);
 			for (int i = 0; i < count; ++i)
@@ -584,7 +584,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::callback_event_scroll(double dx, double dy) {
+	bool Viewer::callback_event_scroll(double dx, double dy) {
 		try {
 			return mouse_scroll_event(mouse_x_, mouse_y_, static_cast<int>(dx), static_cast<int>(dy));
 		}
@@ -595,7 +595,7 @@ namespace easy3d {
 		}
 	}
 
-	void BasicViewer::callback_event_resize(int w, int h) {
+	void Viewer::callback_event_resize(int w, int h) {
 		if (w == 0 && h == 0)
 			return;
 
@@ -611,7 +611,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::focus_event(bool focused) {
+	bool Viewer::focus_event(bool focused) {
 		if (focused) {
 			// ... 
 		}
@@ -619,7 +619,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::init() {
+	void Viewer::init() {
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
 		glfwShowWindow(window_);
@@ -631,7 +631,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::run() {
+	void Viewer::run() {
 		init();
 
 		// TODO: make it member variable
@@ -680,7 +680,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::open() {
+	bool Viewer::open() {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront mesh"},
 			{"off", "Object file format"},
@@ -693,7 +693,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::open_mesh(const std::string& file_name) {
+	bool Viewer::open_mesh(const std::string& file_name) {
 		Surface_mesh* mesh = new Surface_mesh;
 		if (mesh->read(file_name)) {
 			if (mesh->n_faces() > 0) {
@@ -764,7 +764,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::save() const {
+	bool Viewer::save() const {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront Mesh"},
 			{"ply", "ply Mesh or Point Cloud"},
@@ -776,7 +776,7 @@ namespace easy3d {
 	}
 
 
-	bool BasicViewer::drop_event(const std::vector<std::string> & filenames) {
+	bool Viewer::drop_event(const std::vector<std::string> & filenames) {
 		for (auto& name : filenames) {
 			open_mesh(name);
 		}
@@ -784,7 +784,7 @@ namespace easy3d {
 	}
 
 
-	void BasicViewer::draw() {
+	void Viewer::draw() {
 		if (!surface_program_)
 			return;
 

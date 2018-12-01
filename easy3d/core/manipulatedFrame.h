@@ -245,7 +245,7 @@ namespace easy3d {
 		bool dirIsFixed_;
 
 	private:
-		friend class BasicViewer;
+		friend class Viewer;
 	};
 
 }

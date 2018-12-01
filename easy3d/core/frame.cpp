@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2014 Gilles Debunne. All rights reserved.
 
- This file is part of the BasicViewer library version 2.7.1.
+ This file is part of the Viewer library version 2.7.1.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -410,7 +410,7 @@ namespace easy3d {
 	/*! Same as successive calls to setPosition() and then setOrientation().
 
 	Only one modified() signal is emitted, which is convenient if this signal is
-	connected to a BasicViewer::update() slot. See also setTranslationAndRotation()
+	connected to a Viewer::update() slot. See also setTranslationAndRotation()
 	and setPositionAndOrientationWithConstraint(). */
 	void Frame::setPositionAndOrientation(const vec3 &position,
 		const quat &orientation) {
@@ -428,7 +428,7 @@ namespace easy3d {
 	/*! Same as successive calls to setTranslation() and then setRotation().
 
 	Only one modified() signal is emitted, which is convenient if this signal is
-	connected to a BasicViewer::update() slot. See also setPositionAndOrientation()
+	connected to a Viewer::update() slot. See also setPositionAndOrientation()
 	and setTranslationAndRotationWithConstraint(). */
 	void Frame::setTranslationAndRotation(const vec3 &translation,
 		const quat &rotation) {

@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="basic_viewer.cpp" />
+    <ClCompile Include="viewer.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="drawable.cpp" />
@@ -27,7 +27,7 @@
     <ClCompile Include="vertex_array_object.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="basic_viewer.h" />
+    <ClInclude Include="viewer.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="constraint.h" />
     <ClInclude Include="drawable.h" />

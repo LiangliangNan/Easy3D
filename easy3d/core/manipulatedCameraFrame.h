@@ -198,7 +198,7 @@ namespace easy3d {
 
 	private:
 		friend class Camera;
-		friend class BasicViewer;
+		friend class Viewer;
 	};
 
 

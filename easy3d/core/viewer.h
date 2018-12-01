@@ -27,7 +27,7 @@
 
 /*  EasyGUI is really easy to use. That's why it has such a name.
 *
-*   Just create an instance of BasicViewer, or derive your viewer 
+*   Just create an instance of Viewer, or derive your viewer 
 *   from it by re-implementing its draw() function (and other 
 *   functions if necessary), and run your viewer:
 *		MyViewer viewer("Example");
@@ -45,11 +45,11 @@ namespace easy3d {
 	class FacesDrawable;
 	class ShaderProgram;
 
-	class BasicViewer
+	class Viewer
 	{
 	public:
-		BasicViewer(
-			const std::string& title = "BasicViewer",
+		Viewer(
+			const std::string& title = "Viewer",
 			int samples = 4,
 			int gl_major = 3,
 			int gl_minor = 2,
@@ -59,7 +59,7 @@ namespace easy3d {
 			int stencil_bits = 8
 		);
 
-		virtual ~BasicViewer();
+		virtual ~Viewer();
 
 		// Enter the application main loop.
 		void run();
@@ -101,7 +101,7 @@ namespace easy3d {
 		// created yet or the visible one is not *current*. This init() function is 
 		// to ensure you have a valid rendering context. It will be called before 
 		// the draw procedure. See also cleanup().
-		// NOTE: Don't forget to call BasicViewer::init() at the beginning of your 
+		// NOTE: Don't forget to call Viewer::init() at the beginning of your 
 		//		 inherited function.
 		virtual void init();
 
@@ -111,7 +111,7 @@ namespace easy3d {
 		// (e.g., destroyed already) or the visible one is not *current*. This
 		// cleanup() function is to ensure you have a valid rendering context. 
 		// See also init().
-		// NOTE: Don't forget to call BasicViewer::cleanup() at the end of your 
+		// NOTE: Don't forget to call Viewer::cleanup() at the end of your 
 		//		 inherited function.
 		virtual void cleanup();
 

@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2014 Gilles Debunne. All rights reserved.
 
- This file is part of the BasicViewer library version 2.7.1.
+ This file is part of the Viewer library version 2.7.1.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -40,7 +40,7 @@ namespace easy3d {
 
 
 	/*! \brief The Frame class represents a coordinate system, defined by a position
-	  and an orientation. \class Frame frame.h BasicViewer/frame.h
+	  and an orientation. \class Frame frame.h Viewer/frame.h
 
 	  A Frame is a 3D coordinate system, represented by a position() and an
 	  orientation(). The order of these transformations is important: the Frame is
@@ -97,7 +97,7 @@ namespace easy3d {
 	  and should be sufficient to prevent ambiguities. These notions are obviously
 	  identical when the referenceFrame() is \c NULL, i.e. when the Frame is defined
 	  in the world coordinate system (the one you are in at the beginning of the
-	  BasicViewer::draw() method, see the <a href="../introduction.html">introduction
+	  Viewer::draw() method, see the <a href="../introduction.html">introduction
 	  page</a>).
 
 	  Frames can hence easily be organized in a tree hierarchy, which root is the

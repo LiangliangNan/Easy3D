@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2014 Gilles Debunne. All rights reserved.
 
- This file is part of the BasicViewer library version 2.7.1.
+ This file is part of the Viewer library version 2.7.1.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -25,7 +25,7 @@
 #include <algorithm>
 
 #include "manipulatedCameraFrame.h"
-#include "basic_viewer.h"
+#include "viewer.h"
 
 
 namespace easy3d {
@@ -109,7 +109,7 @@ Camera::Camera(const Camera &camera)
  of \p camera.
 
  \attention The Camera screenWidth() and screenHeight() are set to those of \p
- camera. If your Camera is associated with a BasicViewer, you should update these
+ camera. If your Camera is associated with a Viewer, you should update these
  value after the call to this method: \code
  *(camera()) = otherCamera;
  camera()->setScreenWidthAndHeight(width(), height());
@@ -140,14 +140,14 @@ Camera &Camera::operator=(const Camera &camera) {
 
 /*! Sets Camera screenWidth() and screenHeight() (expressed in pixels).
 
-You should not call this method when the Camera is associated with a BasicViewer,
+You should not call this method when the Camera is associated with a Viewer,
 since the latter automatically updates these values when it is resized (hence
 overwritting your values).
 
 Non-positive dimension are silently replaced by a 1 pixel value to ensure
 frustrum coherence.
 
-If your Camera is used without a BasicViewer (offscreen rendering, shadow maps),
+If your Camera is used without a Viewer (offscreen rendering, shadow maps),
 use setAspectRatio() instead to define the projection matrix. */
 void Camera::setScreenWidthAndHeight(int width, int height) {
 	// Prevent negative and zero dimensions that would cause divisions by zero.
@@ -181,7 +181,7 @@ void Camera::setScreenWidthAndHeight(int width, int height) {
 
  If you need a completely different zNear computation, overload the zNear() and
  zFar() methods in a new class that publicly inherits from Camera and use
- BasicViewer::setCamera(): \code class myCamera :: public qglviewer::Camera
+ Viewer::setCamera(): \code class myCamera :: public qglviewer::Camera
  {
    virtual double Camera::zNear() const { return 0.001; };
    virtual double Camera::zFar() const { return 100.0; };
@@ -327,7 +327,7 @@ void Camera::getOrthoWidthHeight(float &halfWidth, float &halfHeight) const {
  matrix.
 
  \note You must call this method if your Camera is not associated with a
- BasicViewer and is used for offscreen computations (using
+ Viewer and is used for offscreen computations (using
  (un)projectedCoordinatesOf() for instance). loadProjectionMatrix() does it
  otherwise. */
 void Camera::computeProjectionMatrix()
@@ -381,7 +381,7 @@ void Camera::computeProjectionMatrix()
  Use getModelViewMatrix() to retrieve this matrix.
 
  \note You must call this method if your Camera is not associated with a
- BasicViewer and is used for offscreen computations (using
+ Viewer and is used for offscreen computations (using
  (un)projectedCoordinatesOf() for instance). loadModelViewMatrix() does it
  otherwise. */
 void Camera::computeModelViewMatrix()
@@ -437,9 +437,9 @@ void Camera::computeModelViewMatrix()
  This matrix only reflects the Camera's internal parameters and it may differ
  from the \c GL_PROJECTION matrix retrieved using \c
  glGetDoublev(GL_PROJECTION_MATRIX, m). It actually represents the state of the
- \c GL_PROJECTION after BasicViewer::preDraw(), at the beginning of
- BasicViewer::draw(). If you modified the \c GL_PROJECTION matrix (for instance
- using BasicViewer::startScreenCoordinatesSystem()), the two results differ.
+ \c GL_PROJECTION after Viewer::preDraw(), at the beginning of
+ Viewer::draw(). If you modified the \c GL_PROJECTION matrix (for instance
+ using Viewer::startScreenCoordinatesSystem()), the two results differ.
 
  The result is an OpenGL 4x4 matrix, which is given in \e column-major order
  (see \c glMultMatrix man page for details).
@@ -458,9 +458,9 @@ const mat4& Camera::projectionMatrix() const
 
  Note that this matrix may \e not be the one you would get from a \c
  glGetDoublev(GL_MODELVIEW_MATRIX, m). It actually represents the state of the
- \c GL_MODELVIEW after BasicViewer::preDraw(), at the \e beginning of
- BasicViewer::draw(). It converts from the world to the Camera coordinate system.
- As soon as you modify the \c GL_MODELVIEW in your BasicViewer::draw() method
+ \c GL_MODELVIEW after Viewer::preDraw(), at the \e beginning of
+ Viewer::draw(). It converts from the world to the Camera coordinate system.
+ As soon as you modify the \c GL_MODELVIEW in your Viewer::draw() method
  (using glTranslate, glRotate... or similar methods), the two matrices differ.
 
  The result is an OpenGL 4x4 matrix, which is given in \e column-major order
@@ -592,7 +592,7 @@ float Camera::pixelGLRatio(const vec3 &position) const {
 }
 
 /*! Changes the Camera fieldOfView() so that the entire scene (defined by
- BasicViewer::sceneCenter() and BasicViewer::sceneRadius()) is visible from the
+ Viewer::sceneCenter() and Viewer::sceneRadius()) is visible from the
  Camera position().
 
  The position() and orientation() of the Camera are not modified and you first
@@ -664,7 +664,7 @@ vec3 Camera::pointUnderPixel(int x, int y, bool &found) const {
  Simply calls fitSphere() on a sphere defined by sceneCenter() and
  sceneRadius().
 
- You will typically use this method in BasicViewer::init() after you defined a new
+ You will typically use this method in Viewer::init() after you defined a new
  sceneRadius(). */
 void Camera::showEntireScene() { fitSphere(sceneCenter(), sceneRadius()); }
 
@@ -785,8 +785,8 @@ void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) {
 
  When \p noMove is \c true (default), the Camera position() is left unchanged,
  which is an intuitive behavior when the Camera is in a walkthrough fly mode
- (see the BasicViewer::MOVE_FORWARD and BasicViewer::MOVE_BACKWARD
- BasicViewer::MouseAction).
+ (see the Viewer::MOVE_FORWARD and Viewer::MOVE_BACKWARD
+ Viewer::MouseAction).
 
  The frame()'s ManipulatedFrame::sceneUpVector() is set accordingly.
 
@@ -816,7 +816,7 @@ void Camera::setUpVector(const vec3 &up, bool noMove) {
  to call showEntireScene() after this method to move the Camera.
 
  This method can be useful to create Quicktime VR panoramic sequences, see the
- BasicViewer::saveSnapshot() documentation for details. */
+ Viewer::saveSnapshot() documentation for details. */
 void Camera::setOrientation(float theta, float phi) {
 	vec3 axis(0.0f, 1.0f, 0.0f);
 	const quat rot1(axis, theta);
@@ -930,7 +930,7 @@ vec3 Camera::worldCoordinatesOf(const vec3 &src) const {
 	return frame()->inverseCoordinatesOf(src);
 }
 
-/*! The point the Camera pivots around with the BasicViewer::ROTATE mouse binding.
+/*! The point the Camera pivots around with the Viewer::ROTATE mouse binding.
 Defined in world coordinate system.
 
 Default value is the sceneCenter().
@@ -1165,7 +1165,7 @@ void Camera::getViewport(int viewport[4]) const {
  viewport matrices. You can hence define a virtual Camera and use this method to
  compute projections out of a classical rendering context.
 
- \attention However, if your Camera is not attached to a BasicViewer (used for
+ \attention However, if your Camera is not attached to a Viewer (used for
  offscreen computations for instance), make sure the Camera matrices are updated
  before calling this method. Call computeModelViewMatrix() and
  computeProjectionMatrix() to do so.
@@ -1257,7 +1257,7 @@ vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
  viewport matrices. You can hence define a virtual Camera and use this method to
  compute un-projections out of a classical rendering context.
 
- \attention However, if your Camera is not attached to a BasicViewer (used for
+ \attention However, if your Camera is not attached to a Viewer (used for
  offscreen computations for instance), make sure the Camera matrices are updated
  before calling this method (use computeModelViewMatrix(),
  computeProjectionMatrix()). See also setScreenWidthAndHeight().

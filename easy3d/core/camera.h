@@ -2,7 +2,7 @@
 
  Copyright (C) 2002-2014 Gilles Debunne. All rights reserved.
 
- This file is part of the BasicViewer library version 2.7.1.
+ This file is part of the Viewer library version 2.7.1.
 
  http://www.libqglviewer.com - contact@libqglviewer.com
 
@@ -32,14 +32,14 @@
 namespace easy3d {
 
 
-	class BasicViewer;
+	class Viewer;
 
 
 	class Frame;
 	class ManipulatedCameraFrame;
 
 	/*! \brief A perspective or orthographic camera.
-	  \class Camera camera.h BasicViewer/camera.h
+	  \class Camera camera.h Viewer/camera.h
 
 	  A Camera defines some intrinsic parameters (fieldOfView(), position(),
 	  viewDirection(), upVector()...) and useful positioning tools that ease its
@@ -56,16 +56,16 @@ namespace easy3d {
 	  complex Camera setups.
 
 	  Different displacements can be performed using the mouse. The list of possible
-	  actions is defined by the BasicViewer::MouseAction enum. Use
-	  BasicViewer::setMouseBinding() to attach a specific action to an arbitrary mouse
+	  actions is defined by the Viewer::MouseAction enum. Use
+	  Viewer::setMouseBinding() to attach a specific action to an arbitrary mouse
 	  button-state key binding. These actions are detailed in the <a
 	  href="../mouse.html">mouse page</a>.
 
-	  The default button binding are: BasicViewer::ROTATE (left), BasicViewer::ZOOM
-	  (middle) and BasicViewer::TRANSLATE (right). With this configuration, the Camera
+	  The default button binding are: Viewer::ROTATE (left), Viewer::ZOOM
+	  (middle) and Viewer::TRANSLATE (right). With this configuration, the Camera
 	  \e observes a scene and rotates around its pivotPoint(). You can switch
-	  between this mode and a fly mode using the BasicViewer::CAMERA_MODE (see
-	  BasicViewer::toggleCameraMode()) keyboard shortcut (default is 'Space').
+	  between this mode and a fly mode using the Viewer::CAMERA_MODE (see
+	  Viewer::toggleCameraMode()) keyboard shortcut (default is 'Space').
 
 	  <h3>Other functionalities</h3>
 
@@ -73,9 +73,9 @@ namespace easy3d {
 	  (see Type()). fieldOfView() is meaningless with Camera::ORTHOGRAPHIC.
 
 	  The near and far planes of the Camera are fitted to the scene and determined
-	  from BasicViewer::sceneRadius(), BasicViewer::sceneCenter() and
+	  from Viewer::sceneRadius(), Viewer::sceneCenter() and
 	  zClippingCoefficient() by the zNear() and zFar() methods. Reasonable values on
-	  the scene extends hence have to be provided to the BasicViewer in order for the
+	  the scene extends hence have to be provided to the Viewer in order for the
 	  Camera to correctly display the scene. High level positioning methods also use
 	  this information (showEntireScene(), centerScene()...).
 
@@ -94,7 +94,7 @@ namespace easy3d {
 	  Camera::PERSPECTIVE type() only). Test the <a
 	  href="../examples/stereoViewer.html">stereoViewer example</a> to check.
 
-	  A Camera can also be used outside of a BasicViewer or even without OpenGL for
+	  A Camera can also be used outside of a Viewer or even without OpenGL for
 	  its coordinate system conversion capabilities. Note however that some of them
 	  explicitly rely on the presence of a Z-buffer. \nosubgrouping */
 	class Camera : public FrameObserver
@@ -186,7 +186,7 @@ namespace easy3d {
 
 		/*! Returns the Camera aspect ratio defined by screenWidth() / screenHeight().
 
-		When the Camera is attached to a BasicViewer, these values and hence the
+		When the Camera is attached to a Viewer, these values and hence the
 		aspectRatio() are automatically fitted to the viewer's window aspect ratio
 		using setScreenWidthAndHeight(). */
 		float aspectRatio() const {
@@ -195,13 +195,13 @@ namespace easy3d {
 		/*! Returns the width (in pixels) of the Camera screen.
 
 		Set using setScreenWidthAndHeight(). This value is automatically fitted to the
-		BasicViewer's window dimensions when the Camera is attached to a BasicViewer. See
+		Viewer's window dimensions when the Camera is attached to a Viewer. See
 		also QOpenGLWidget::width() */
 		int screenWidth() const { return screenWidth_; }
 		/*! Returns the height (in pixels) of the Camera screen.
 
 		Set using setScreenWidthAndHeight(). This value is automatically fitted to the
-		BasicViewer's window dimensions when the Camera is attached to a BasicViewer. See
+		Viewer's window dimensions when the Camera is attached to a Viewer. See
 		also QOpenGLWidget::height() */
 		int screenHeight() const { return screenHeight_; }
 		void getViewport(int viewport[4]) const;
@@ -241,7 +241,7 @@ namespace easy3d {
 		overload the zNear() and zFar() methods. See the <a
 		href="../examples/standardCamera.html">standardCamera example</a>.
 
-		\attention When BasicViewer::cameraPathAreEdited(), this value is set to 5.0 so
+		\attention When Viewer::cameraPathAreEdited(), this value is set to 5.0 so
 		that the Camera paths are not clipped. The previous zClippingCoefficient()
 		value is restored back when you leave this mode. */
 		float zClippingCoefficient() const { return zClippingCoef_; }
@@ -275,13 +275,13 @@ namespace easy3d {
 		You should use setScreenWidthAndHeight() instead.
 
 		This method might however be convenient when the Camera is not associated with
-		a BasicViewer. It actually sets the screenHeight() to 100 and the screenWidth()
+		a Viewer. It actually sets the screenHeight() to 100 and the screenWidth()
 		accordingly. See also setFOVToFitScene().
 
 		\note If you absolutely need an aspectRatio() that does not correspond to your
 		viewer's window dimensions, overload loadProjectionMatrix() or multiply the
 		created GL_PROJECTION matrix by a scaled diagonal matrix in your
-		BasicViewer::draw() method. */
+		Viewer::draw() method. */
 		void setAspectRatio(float aspect) {
 			setScreenWidthAndHeight(int(100.0 * aspect), 100);
 		}
@@ -310,9 +310,9 @@ namespace easy3d {
 
 		See also setSceneBoundingBox().
 
-		Note that BasicViewer::sceneRadius() (resp. BasicViewer::setSceneRadius()) simply
+		Note that Viewer::sceneRadius() (resp. Viewer::setSceneRadius()) simply
 		call this method (resp. setSceneRadius()) on its associated
-		BasicViewer::camera(). */
+		Viewer::camera(). */
 		float sceneRadius() const { return sceneRadius_; }
 
 		/*! Returns the position of the scene center, defined in the world coordinate
@@ -326,9 +326,9 @@ namespace easy3d {
 		Default value is (0,0,0) (world origin). Use setSceneCenter() to change it.
 		See also setSceneBoundingBox().
 
-		Note that BasicViewer::sceneCenter() (resp. BasicViewer::setSceneCenter()) simply
+		Note that Viewer::sceneCenter() (resp. Viewer::setSceneCenter()) simply
 		calls this method (resp. setSceneCenter()) on its associated
-		BasicViewer::camera(). */
+		Viewer::camera(). */
 		vec3 sceneCenter() const { return sceneCenter_; }
 		float distanceToSceneCenter() const;
 
@@ -406,7 +406,7 @@ namespace easy3d {
 		mat4 projectionMatrix_;		// Buffered projection matrix.
 		bool projectionMatrixIsUpToDate_;
 
-		friend class BasicViewer;
+		friend class Viewer;
 	};
 
 }
