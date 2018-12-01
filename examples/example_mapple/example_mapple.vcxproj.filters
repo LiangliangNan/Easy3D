@@ -21,9 +21,15 @@
     <ClCompile Include="mapple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="plugin_polyfit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mapple.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin_polyfit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

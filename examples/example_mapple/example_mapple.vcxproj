@@ -13,9 +13,11 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mapple.cpp" />
+    <ClCompile Include="plugin_polyfit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mapple.h" />
+    <ClInclude Include="plugin_polyfit.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\3rd_party\glew\glew.vcxproj">

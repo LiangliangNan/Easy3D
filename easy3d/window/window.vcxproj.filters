@@ -24,9 +24,6 @@
     <ClInclude Include="imguitraits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plugin_examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="plugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -38,9 +35,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="plugin_examples.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="plugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

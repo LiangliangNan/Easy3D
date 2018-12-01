@@ -15,13 +15,11 @@
     <ClInclude Include="ImGuiHelpers.h" />
     <ClInclude Include="imguitraits.h" />
     <ClInclude Include="imgui_fonts_droid_sans.h" />
-    <ClInclude Include="plugin_examples.h" />
     <ClInclude Include="plugin.h" />
     <ClInclude Include="panel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main_window.cpp" />
-    <ClCompile Include="plugin_examples.cpp" />
     <ClCompile Include="plugin.cpp" />
     <ClCompile Include="panel.cpp" />
   </ItemGroup>

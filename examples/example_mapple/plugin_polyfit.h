@@ -18,23 +18,13 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASY3D_PLUGIN_EXAMPLES_H_
-#define _EASY3D_PLUGIN_EXAMPLES_H_
+#ifndef _EASY3D_PLUGIN_POLYFIT_H_
+#define _EASY3D_PLUGIN_POLYFIT_H_
 
-#include "plugin.h"
+#include <easy3d/window/plugin.h>
 
 
 namespace easy3d {
-
-
-	class PluginSmartBox : public Plugin
-	{
-	public:
-		PluginSmartBox(Panel* win) : Plugin(win, "Plugin - SmartBox") {}
-
-        bool draw() const override;
-	};
-
 
 	class PluginPolyFit : public Plugin
 	{
@@ -47,5 +37,4 @@ namespace easy3d {
 }
 
 
-
-#endif // _EASY3D_PLUGIN_EXAMPLES_H_
+#endif // _EASY3D_PLUGIN_POLYFIT_H_

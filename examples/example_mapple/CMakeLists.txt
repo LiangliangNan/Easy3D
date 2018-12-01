@@ -4,10 +4,10 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-add_executable(${PROJECT_NAME}
-                mapple.cpp
-                main.cpp
-)
+file(GLOB SOURCES ./*.cpp)
+file(GLOB HEADERS ./*.h)
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
