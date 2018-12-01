@@ -19,7 +19,7 @@
 */
 
 
-#include <easy3d/guiviewer/viewer.h>
+#include <easy3d/window/main_window.h>
 
 #include <cmath>
 #include <iostream>
@@ -29,8 +29,8 @@
 #include <3rd_party/imgui/impl/imgui_impl_opengl3.h>
 #include <3rd_party/GLFW/include/GLFW/glfw3.h>
 
-#include <easy3d/guiviewer/plugin.h>
-#include <easy3d/guiviewer/window.h>
+#include <easy3d/window/plugin.h>
+#include <easy3d/window/panel.h>
 #include <easy3d/core/camera.h>
 
 #include "imgui_fonts_droid_sans.h"
@@ -38,10 +38,10 @@
 
 namespace easy3d {
 
-	ImGuiContext* Viewer::context_ = nullptr;
+	ImGuiContext* MainWindow::context_ = nullptr;
 
-	Viewer::Viewer(
-		const std::string& title /* = "easy3d Viewer" */,
+	MainWindow::MainWindow(
+		const std::string& title /* = "easy3d MainWindow" */,
 		int samples /* = 4 */,
 		int gl_major /* = 3 */,
 		int gl_minor /* = 2 */,
@@ -57,7 +57,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::init() {
+	void MainWindow::init() {
         BasicViewer::init();
 
 		if (!context_) {
@@ -81,7 +81,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::reload_font(int font_size)
+	void MainWindow::reload_font(int font_size)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->Clear();
@@ -90,7 +90,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::post_resize(int w, int h) {
+	void MainWindow::post_resize(int w, int h) {
         BasicViewer::post_resize(w, h);
 		if (context_) {
 			ImGui::GetIO().DisplaySize.x = float(w);
@@ -99,7 +99,7 @@ namespace easy3d {
 	}
 
 
-	float Viewer::pixel_ratio()
+	float MainWindow::pixel_ratio()
 	{
 		// Computes pixel ratio for hidpi devices
 		int buf_size[2];
@@ -111,7 +111,7 @@ namespace easy3d {
 	}
 
 
-	float Viewer::hidpi_scaling()
+	float MainWindow::hidpi_scaling()
 	{
 		// Computes scaling factor for hidpi devices
 		float xscale, yscale;
@@ -121,7 +121,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::callback_event_cursor_pos(double x, double y) {
+	bool MainWindow::callback_event_cursor_pos(double x, double y) {
 		int px = static_cast<int>(x);
 		int py = static_cast<int>(y);
 
@@ -147,7 +147,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
+	bool MainWindow::callback_event_mouse_button(int button, int action, int modifiers) {
 		try {
 			if (action == GLFW_PRESS) {
 				for (auto p : windows_) {
@@ -177,7 +177,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
+	bool MainWindow::callback_event_keyboard(int key, int action, int modifiers) {
 		try {
 			if (action == GLFW_PRESS) {
 				for (auto p : windows_) {
@@ -201,7 +201,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::callback_event_character(unsigned int codepoint) {
+	bool MainWindow::callback_event_character(unsigned int codepoint) {
 		try {
 			for (auto p : windows_) {
 				if (p->char_input(codepoint))
@@ -217,7 +217,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::callback_event_scroll(double dx, double dy) {
+	bool MainWindow::callback_event_scroll(double dx, double dy) {
 		try {
 			for (auto p : windows_) {
 				if (p->mouse_scroll(dy))
@@ -234,7 +234,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::cleanup() {
+	void MainWindow::cleanup() {
 		for (auto p : windows_)
 			p->cleanup();
 
@@ -247,7 +247,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::pre_draw() {
+	void MainWindow::pre_draw() {
         ImGui_ImplOpenGL3_NewFrame();  
         ImGui_ImplGlfw_NewFrame();    
         ImGui::NewFrame();   
@@ -256,7 +256,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::post_draw() {
+	void MainWindow::post_draw() {
 		static bool show_about = false;
 		if (show_about) {
 			int w, h;
@@ -341,7 +341,7 @@ namespace easy3d {
 						ImGui::EndCombo();
 					}
 					
-					ImGui::Checkbox("Window Movable", &movable_);
+					ImGui::Checkbox("Panel Movable", &movable_);
 					ImGui::ColorEdit3("Background Color", (float*)background_color_, ImGuiColorEditFlags_NoInputs);
 					ImGui::PushItemWidth(100);
 					ImGui::DragFloat("Transparency", &alpha_, 0.005f, 0.0f, 1.0f, "%.1f");
@@ -352,7 +352,7 @@ namespace easy3d {
 				if (!windows_.empty()) {
 					ImGui::Separator();
 					for (std::size_t i = 0; i < windows_.size(); ++i) {
-						Window* win = windows_[i];
+						Panel* win = windows_[i];
 						ImGui::MenuItem(win->name_.c_str(), 0, &win->visible_);
 					}
 				}
@@ -386,7 +386,7 @@ namespace easy3d {
 
 			if (ImGui::BeginMenu("Help"))
 			{
-				ImGui::MenuItem("Viewer", NULL, false);
+				ImGui::MenuItem("MainWindow", NULL, false);
 				ImGui::MenuItem("Shortcut", NULL, false);
 				ImGui::Separator();
 				ImGui::MenuItem("About", NULL, &show_about);
@@ -398,10 +398,10 @@ namespace easy3d {
 		ImGui::PopStyleVar();
 
 		for (std::size_t i = 0; i < windows_.size(); ++i) {
-			Window* win = windows_[i];
+			Panel* win = windows_[i];
 			if (!win->visible_)
 				continue;
-			float panel_width = 180.f * Viewer::widget_scaling();
+			float panel_width = 180.f * MainWindow::widget_scaling();
 			float offset = 10.0f;
 			ImGui::SetNextWindowPos(ImVec2((panel_width + offset) * i, menu_height_ + offset * i), ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(0.0f, 100), ImGuiCond_FirstUseEver);

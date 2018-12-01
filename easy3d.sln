@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Easy3D", "Easy3D", "{3B2039
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "model", "easy3d\model\model.vcxproj", "{3D2DE591-27A2-427A-9599-83389F1750F1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "viewer_imgui", "easy3d\guiviewer\viewer_imgui.vcxproj", "{BAC217BB-B308-4BEB-B839-B8819FAFE349}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "window", "easy3d\window\window.vcxproj", "{BAC217BB-B308-4BEB-B839-B8819FAFE349}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "core", "easy3d\core\core.vcxproj", "{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}"
 EndProject

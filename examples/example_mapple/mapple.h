@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <easy3d/guiviewer/viewer.h>
+#include <easy3d/window/main_window.h>
 
 namespace easy3d {
 	class FacesDrawable;
@@ -30,7 +30,7 @@ namespace easy3d {
 	class ShaderProgram;
 }
 
-class Mapple : public easy3d::Viewer
+class Mapple : public easy3d::MainWindow
 {
 public:
 	Mapple(int num_samples = 4, int gl_major = 3, int gl_minor = 2);

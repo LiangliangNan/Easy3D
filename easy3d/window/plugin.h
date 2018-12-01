@@ -18,18 +18,40 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef _EASY3D_PLUGIN_H_
+#define _EASY3D_PLUGIN_H_
 
-#include "plugin.h"
-#include "window.h"
+#include <string>
+#include <vector>
 
 
 namespace easy3d {
 
-	Plugin::Plugin(Window * window, const std::string& title)
-		: window_(window), title_(title)
+	// Abstract class for plugins. 
+	// A plugin typically implements some methods. It may contain several GUI 
+	// elements (e.g., buttons for executing commands, input boxes for methods 
+	// or rendering parameters) and is always attached to a panel.
+
+	class Panel;
+
+	class Plugin
 	{
-		window_ = window;
-		window_->plugins_.push_back(this);
-	}
+	public:
+		Plugin(Panel * panel, const std::string& title);
+		virtual ~Plugin() {}
+
+		const std::string& title() const { return title_; }
+
+	public:
+        virtual bool draw() const = 0;
+
+		virtual void cleanup() { }
+
+	protected:
+		Panel *		panel_;
+		std::string	title_;
+	};
 
 }
+
+#endif	// _EASY3D_PLUGIN_H_

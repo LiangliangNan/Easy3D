@@ -19,5 +19,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_imgui_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} glew glfw imgui core model guiviewer)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} glew glfw imgui core model window)
 

@@ -28,16 +28,21 @@
 namespace easy3d {
 
 
-	class  Viewer;
+	class  MainWindow;
 	class  Plugin;
 
-	// The control panel that provides common interactions with 3D viewers,
+	// A control panel provides means for interacting with 3D viewers,
 	// e.g., open/load file, change display parameters.
 
-	class Window
+	// All control panels MUST be derived from this class and may implement 
+	// any/all the callbacks marked `virtual` here.
+	// NOTE: Return true of callbacks tells the viewer that the event has been 
+	// handled and that it should not be passed to the viewer and other plugins.
+
+	class Panel
 	{
 	public:
-		Window(Viewer* viewer, const std::string& title);
+		Panel(MainWindow* viewer, const std::string& title);
 
 		// This function is called before the viewer is destroyed
 		// (i.e., a valid rendering context still exists)
@@ -89,16 +94,15 @@ namespace easy3d {
 		bool  draw();
 
 	protected:
-		Viewer *		viewer_;
+		MainWindow *	viewer_;
 		std::string		name_;
-		unsigned int	index_;		// a unique index in the current application
 
 		// List of registered plugins
 		std::vector<Plugin*> plugins_;
 
-		bool  visible_;
+		bool  visible_;	// a panel can be hidden/shown
 
-		friend class Viewer;
+		friend class MainWindow;
 		friend class Plugin;
 	};
 

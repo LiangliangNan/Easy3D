@@ -18,7 +18,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "window.h"
+#include "panel.h"
 #include "plugin.h"
 
 #include <iostream>
@@ -28,14 +28,14 @@
 #include <3rd_party/imgui/impl/imgui_impl_opengl3.h>
 #include <3rd_party/GLFW/include/GLFW/glfw3.h>
 
-#include "viewer.h"
+#include "main_window.h"
 #include "ImGuiHelpers.h"
 
 
 namespace easy3d {
 
 
-	Window::Window(Viewer* viewer, const std::string& title)
+	Panel::Panel(MainWindow* viewer, const std::string& title)
 		: name_(title)
 		, visible_(true)
 	{
@@ -44,56 +44,56 @@ namespace easy3d {
 	}
 
 
-	void Window::cleanup()
+	void Panel::cleanup()
 	{
 		for (auto p : plugins_)
 			p->cleanup();
 	}
 
 	// Mouse IO
-	bool Window::mouse_press(int button, int modifier)
+	bool Panel::mouse_press(int button, int modifier)
 	{
 		ImGui_ImplGlfw_MouseButtonCallback(viewer_->window_, button, GLFW_PRESS, modifier);
 		return ImGui::GetIO().WantCaptureMouse;
 	}
 
-	bool Window::mouse_release(int button, int modifier)
+	bool Panel::mouse_release(int button, int modifier)
 	{
 		return ImGui::GetIO().WantCaptureMouse;
 	}
 
-	bool Window::mouse_move(int mouse_x, int mouse_y)
+	bool Panel::mouse_move(int mouse_x, int mouse_y)
 	{
 		return ImGui::GetIO().WantCaptureMouse;
 	}
 
-	bool Window::mouse_scroll(double delta_y)
+	bool Panel::mouse_scroll(double delta_y)
 	{
 		ImGui_ImplGlfw_ScrollCallback(viewer_->window_, 0.f, delta_y);
 		return ImGui::GetIO().WantCaptureMouse;
 	}
 
 	// Keyboard IO
-	bool Window::char_input(unsigned int key)
+	bool Panel::char_input(unsigned int key)
 	{
 		ImGui_ImplGlfw_CharCallback(nullptr, key);
 		return ImGui::GetIO().WantCaptureKeyboard;
 	}
 
-	bool Window::key_press(int key, int modifiers)
+	bool Panel::key_press(int key, int modifiers)
 	{
 		ImGui_ImplGlfw_KeyCallback(viewer_->window_, key, 0, GLFW_PRESS, modifiers);
 		return ImGui::GetIO().WantCaptureKeyboard;
 	}
 
-	bool Window::key_release(int key, int modifiers)
+	bool Panel::key_release(int key, int modifiers)
 	{
 		ImGui_ImplGlfw_KeyCallback(viewer_->window_, key, 0, GLFW_RELEASE, modifiers);
 		return ImGui::GetIO().WantCaptureKeyboard;
 	}
 
 
-	bool Window::draw()
+	bool Panel::draw()
 	{
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize;
 		if (!viewer_->movable_)
@@ -112,7 +112,7 @@ namespace easy3d {
 	}
 
 
-	void Window::draw_widgets()
+	void Panel::draw_widgets()
 	{
 		// Workspace
 		if (ImGui::CollapsingHeader("Workspace", ImGuiTreeNodeFlags_DefaultOpen))

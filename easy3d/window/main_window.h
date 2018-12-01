@@ -37,13 +37,13 @@ struct ImGuiContext;
 
 namespace easy3d {
 
-	class Window;
+	class Panel;
 
-	class Viewer : public BasicViewer
+	class MainWindow : public BasicViewer
 	{
 	public:
-		Viewer(
-			const std::string& title = "easy3d Viewer",
+		MainWindow(
+			const std::string& title = "easy3d MainWindow",
 			int samples = 4,
 			int gl_major = 3,
 			int gl_minor = 2,
@@ -92,7 +92,7 @@ namespace easy3d {
 		static ImGuiContext *	context_;
 
 		// List of registered windows
-		std::vector<Window*>	windows_;
+		std::vector<Panel*>	windows_;
 
 		// Global variables for all the windows
 		float	alpha_;
@@ -101,7 +101,7 @@ namespace easy3d {
 		
 		float   menu_height_;
 
-		friend class Window;
+		friend class Panel;
 	};
 
 }

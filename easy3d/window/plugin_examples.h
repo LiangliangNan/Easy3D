@@ -18,40 +18,34 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASY3D_PLUGIN_H_
-#define _EASY3D_PLUGIN_H_
+#ifndef _EASY3D_PLUGIN_EXAMPLES_H_
+#define _EASY3D_PLUGIN_EXAMPLES_H_
 
-#include <string>
-#include <vector>
+#include "plugin.h"
 
 
 namespace easy3d {
 
-	// Abstract class for plugins
-	// All plugins MUST be derived from this class and may implement any/all the 
-	// callbacks marked `virtual` here.
-	// NOTE: Return true of callbacks tells the viewer that the event has been 
-	// handled and that it should not be passed to the viewer and other plugins.
-	class Window;
 
-	class Plugin
+	class PluginSmartBox : public Plugin
 	{
 	public:
-		Plugin(Window * window, const std::string& title);
-		virtual ~Plugin() {}
+		PluginSmartBox(Panel* win) : Plugin(win, "Plugin - SmartBox") {}
 
-		const std::string& title() const { return title_; }
+        bool draw() const override;
+	};
 
+
+	class PluginPolyFit : public Plugin
+	{
 	public:
-        virtual bool draw() const = 0;
+		PluginPolyFit(Panel* win) : Plugin(win, "Plugin - PolyFit") {}
 
-		virtual void cleanup() { }
-
-	protected:
-		Window *	window_;
-		std::string	title_;
+        bool draw() const override;
 	};
 
 }
 
-#endif	// _EASY3D_PLUGIN_H_
+
+
+#endif // _EASY3D_PLUGIN_EXAMPLES_H_

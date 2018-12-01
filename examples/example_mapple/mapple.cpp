@@ -34,13 +34,13 @@ Mapple::Mapple(
 	int num_samples /* = 4 */,
 	int gl_major /* = 3 */,
 	int gl_minor /* = 2 */ 
-) : Viewer("Mapple", num_samples, gl_major, gl_minor)
+) : MainWindow("Mapple", num_samples, gl_major, gl_minor)
 {
 }
 
 
 void Mapple::init() {
-    Viewer::init();		mpl_debug_gl_error;
+	MainWindow::init();		mpl_debug_gl_error;
 
 	const std::vector<vec3> points = {
 		vec3(-1.0f, -1.0f, 1.0f),	// 0
@@ -115,7 +115,7 @@ void Mapple::cleanup() {
 	delete surface_;
 	delete wireframe_;
 	delete vertices_;
-    Viewer::cleanup();
+	MainWindow::cleanup();
 }
 
 
@@ -137,6 +137,6 @@ void Mapple::draw() {
 
 	program_->unbind();						mpl_debug_gl_error;
 
-	Viewer::draw();
+	MainWindow::draw();
 
 }

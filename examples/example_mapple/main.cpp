@@ -23,8 +23,8 @@
 #include <algorithm>
 
 #include "mapple.h"
-#include <easy3d/guiviewer/window.h>
-#include <easy3d/guiviewer/plugin_examples.h>
+#include <easy3d/window/panel.h>
+#include <easy3d/window/plugin_examples.h>
 
 
 using namespace easy3d;
@@ -37,15 +37,15 @@ int main(int /* argc */, char ** /* argv */) {
 #else
 		Mapple app(40, 3, 2);
 
-		Window win(&app, "Rendering Panel");
-		PluginSmartBox smartbox(&win);
-		PluginPolyFit  polyfit(&win);
+		Panel pan(&app, "Rendering Panel");
+		PluginSmartBox smartbox(&pan);
+		PluginPolyFit  polyfit(&pan);
 
 #if 1
-		Window win2(&app, "Model Panel");
+		Panel win2(&app, "Model Panel");
 		PluginSmartBox smartbox2(&win2);
 
-		Window win3(&app, "Model Panel##3");
+		Panel win3(&app, "Model Panel##3");
 		PluginSmartBox smartbox3(&win3);
 #endif
 #endif

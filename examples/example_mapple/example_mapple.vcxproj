@@ -30,11 +30,11 @@
     <ProjectReference Include="..\..\easy3d\core\core.vcxproj">
       <Project>{5dc20538-fb02-4040-bc6a-f0bd3e6ce44b}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\easy3d\guiviewer\viewer_imgui.vcxproj">
-      <Project>{bac217bb-b308-4beb-b839-b8819fafe349}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\easy3d\model\model.vcxproj">
       <Project>{3d2de591-27a2-427a-9599-83389f1750f1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\easy3d\window\window.vcxproj">
+      <Project>{bac217bb-b308-4beb-b839-b8819fafe349}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
