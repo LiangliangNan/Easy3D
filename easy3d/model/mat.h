@@ -921,7 +921,7 @@ inline Mat<N, N, T> inverse(const Mat<N, N, T> &m) {
 		indxc[i] = maxc;
 
 		//	check for singular matrix:
-		if (Numeric::is_zero(result(maxc, maxc))) {
+        if (std::abs(result(maxc, maxc)) < std::numeric_limits<T>::epsilon()) {
 			std::cerr << "input matrix is singular" << std::endl;
 			return result; // return partial result
 		}
@@ -1073,7 +1073,7 @@ inline bool gaussJordanElimination(
 		indxc[i] = maxc;
 
 		//	check for singular matrix:
-		if (Numeric::is_zero(amat(maxc, maxc)))
+        if (std::abs(amat(maxc, maxc)) < std::numeric_limits<T>::epsilon())
 			return false;
 
 		//	multiply row by 1/pivot:
@@ -1130,7 +1130,7 @@ inline bool luDecomposition(
 		}
 
 		//	check for singular matrix:
-		if (Numeric::is_zero(max))
+        if (std::abs(max) < std::numeric_limits<float_t>::min())
 			return false;
 
 		scalev[i] = T(1) / max; // save scaling factor
@@ -1167,7 +1167,7 @@ inline bool luDecomposition(
 		(*rowp)[j] = imax;
 
 		//	check for singular matrix:
-		if (Numeric::is_zero(amat(j, j)))
+        if (std::abs(amat(j, j)) < std::numeric_limits<T>::epsilon())
 			return false;
 
 		//	divide by the pivot element:
@@ -1206,7 +1206,7 @@ inline void luBackSubstitution(
 			for (size_t j = ii - 1; j < i; ++j)
 				sum -= alu(i, j) * result[j];
 		}
-		else if (!Numeric::is_zero(sum)) {
+        else if (std::abs(sum) > std::numeric_limits<T>::epsilon()) {
 			ii = i + 1;
 		}
 		result[i] = sum;

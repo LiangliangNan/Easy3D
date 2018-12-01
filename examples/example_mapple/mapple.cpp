@@ -40,7 +40,7 @@ Mapple::Mapple(
 
 
 void Mapple::init() {
-	Viewer::init();
+    Viewer::init();		mpl_debug_gl_error;
 
 	const std::vector<vec3> points = {
 		vec3(-1.0f, -1.0f, 1.0f),	// 0
@@ -115,13 +115,13 @@ void Mapple::cleanup() {
 	delete surface_;
 	delete wireframe_;
 	delete vertices_;
-	Viewer::cleanup();
+    Viewer::cleanup();		mpl_debug_gl_error;
 }
 
 
-void Mapple::draw() {	
+void Mapple::draw() const {
 	//glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
-	glPointSize(20);
+    glPointSize(20);						mpl_debug_gl_error;
 
 	program_->bind();						mpl_debug_gl_error;
 	const mat4& mvp = camera_->modelViewProjectionMatrix();

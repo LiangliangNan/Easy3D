@@ -207,10 +207,9 @@ typename GenericPlane3<FT>::Point3 GenericPlane3<FT>::to_3d(const Point2& p) con
 template < class FT> inline
 typename GenericPlane3<FT>::Point3 GenericPlane3<FT>::point() const {
 	Point3 p(FT(0), FT(0), FT(0));
-	std::size_t idx = Numeric::index_of_max_abs(coeff_[0], coeff_[1], coeff_[2]);
-	if (idx == 0)
+   if (coeff_[0] >= coeff_[1] && coeff_[0] >= coeff_[2])
 		p.x = -coeff_[3] / coeff_[0];
-	else if (idx == 1)
+    else if (coeff_[1] >= coeff_[0] && coeff_[1] >= coeff_[2])
 		p.y = -coeff_[3] / coeff_[1];
 	else
 		p.z = -coeff_[3] / coeff_[2];

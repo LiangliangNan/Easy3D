@@ -36,10 +36,10 @@ public:
 	Mapple(int num_samples = 4, int gl_major = 3, int gl_minor = 2);
 
 protected:
-	void init();
-	void draw();
+    void init() override;
+    void draw() const override;
 
-	void cleanup();
+    void cleanup() override;
 
 private:
 	easy3d::ShaderProgram*  program_;

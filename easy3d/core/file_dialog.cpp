@@ -170,7 +170,6 @@ namespace easy3d {
 	}
 
 #elif defined (__APPLE__)	
-	Liangliang: only one file?
 	std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
 		const int FILE_DIALOG_MAX_BUFFER = 1024;
 		char buffer[FILE_DIALOG_MAX_BUFFER];
@@ -187,7 +186,11 @@ namespace easy3d {
 		while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
 		{
 		}
-		return std::string(buffer);
+
+        //return std::string(buffer);
+
+        std::vector<std::string> files = {std::string(buffer)};
+        return files;
 	}
 #endif
 

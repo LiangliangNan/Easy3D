@@ -29,6 +29,7 @@
 #include <easy3d/guiviewer/plugin.h>
 #include <easy3d/guiviewer/window.h>
 #include <easy3d/core/camera.h>
+#include <easy3d/core/opengl_error.h>
 
 #include <cmath>
 #include <iostream>
@@ -91,15 +92,16 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() const {
-		for (auto p : windows_)
-			p->draw();
+        for (auto p : windows_)
+            p->draw();
+        mpl_debug_gl_error;
 
 		if (!windows_.empty()) {
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            ImGui::Render();mpl_debug_gl_error;
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());mpl_debug_gl_error;
 		}
 
-		BasicViewer::post_draw();
+        BasicViewer::post_draw();mpl_debug_gl_error;
 	}
 
 

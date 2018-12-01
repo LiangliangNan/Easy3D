@@ -507,17 +507,17 @@ namespace easy3d {
 
 
 	void BasicViewer::draw_all() {
-		glfwMakeContextCurrent(window_);
-		glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glfwMakeContextCurrent(window_);		mpl_debug_gl_error;
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);		mpl_debug_gl_error;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);		mpl_debug_gl_error;
 
 		// --------------------------------------
 
-		pre_draw();
+        pre_draw();		mpl_debug_gl_error;
 
-		draw();
+        draw();		mpl_debug_gl_error;
 
-		post_draw();
+        post_draw();		mpl_debug_gl_error;
 
 		// --------------------------------------
 

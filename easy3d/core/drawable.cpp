@@ -219,7 +219,6 @@ namespace easy3d {
 	void Drawable::draw(bool with_storage_buffer /* = true */) const
 	{
 		vao_->bind();
-		GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 
 		GLenum mode = GL_TRIANGLES;
 		if (type() == DT_POINTS)
@@ -228,15 +227,16 @@ namespace easy3d {
 			mode = GL_LINES;
 
 		if (with_storage_buffer) {
-			// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
+            // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
 			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
-			barriers |= GL_SHADER_STORAGE_BARRIER_BIT;
-		}
-		if (mode != GL_POINTS)
-			barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
-		glMemoryBarrier(barriers);	mpl_debug_gl_error;
+            GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
+            if (mode != GL_POINTS)
+                barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
+
+            glMemoryBarrier(barriers);	mpl_debug_gl_error;
+		}
 
 		if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	mpl_debug_gl_error;
 		if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	mpl_debug_gl_error;
