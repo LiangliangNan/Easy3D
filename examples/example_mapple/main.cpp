@@ -23,8 +23,8 @@
 #include <algorithm>
 
 #include "mapple.h"
-#include "window.h"
-#include "plugin_examples.h"
+#include <easy3d/guiviewer/window.h>
+#include <easy3d/guiviewer/plugin_examples.h>
 
 
 using namespace easy3d;

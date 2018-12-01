@@ -11,11 +11,39 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="mapple.cpp" />
+    <ClCompile Include="basic_viewer.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="constraint.cpp" />
+    <ClCompile Include="drawable.cpp" />
+    <ClCompile Include="fields.cpp" />
+    <ClCompile Include="file_dialog.cpp" />
+    <ClCompile Include="frame.cpp" />
+    <ClCompile Include="manipulatedCameraFrame.cpp" />
+    <ClCompile Include="manipulatedFrame.cpp" />
+    <ClCompile Include="opengl_error.cpp" />
+    <ClCompile Include="opengl_info.cpp" />
+    <ClCompile Include="shader_code.cpp" />
+    <ClCompile Include="shader_program.cpp" />
+    <ClCompile Include="vertex_array_object.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mapple.h" />
+    <ClInclude Include="basic_viewer.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="constraint.h" />
+    <ClInclude Include="drawable.h" />
+    <ClInclude Include="fields.h" />
+    <ClInclude Include="file_dialog.h" />
+    <ClInclude Include="frame.h" />
+    <ClInclude Include="ImGuiHelpers.h" />
+    <ClInclude Include="imguitraits.h" />
+    <ClInclude Include="imgui_fonts_droid_sans.h" />
+    <ClInclude Include="manipulatedCameraFrame.h" />
+    <ClInclude Include="manipulatedFrame.h" />
+    <ClInclude Include="opengl_error.h" />
+    <ClInclude Include="opengl_info.h" />
+    <ClInclude Include="shader_code.h" />
+    <ClInclude Include="shader_program.h" />
+    <ClInclude Include="vertex_array_object.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\3rd_party\glew\glew.vcxproj">
@@ -24,39 +52,26 @@
     <ProjectReference Include="..\..\3rd_party\glfw\build\glfw.vcxproj">
       <Project>{e9f585c7-563c-3db0-9ca0-9142acab6ada}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\3rd_party\imgui\build\imgui.vcxproj">
-      <Project>{87c5d918-de1b-43d4-9227-2ee71c8b02d2}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\easy3d\core\core.vcxproj">
-      <Project>{5dc20538-fb02-4040-bc6a-f0bd3e6ce44b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\easy3d\guiviewer\viewer_imgui.vcxproj">
-      <Project>{bac217bb-b308-4beb-b839-b8819fafe349}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\easy3d\model\model.vcxproj">
+    <ProjectReference Include="..\model\model.vcxproj">
       <Project>{3d2de591-27a2-427a-9599-83389f1750f1}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\resources\shaders\surface_color.frag" />
-    <None Include="..\..\resources\shaders\surface_color.vert" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{22648A96-A8C4-4F12-9911-DD34406210AF}</ProjectGuid>
+    <ProjectGuid>{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>demo</RootNamespace>
+    <RootNamespace>easygui</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
-    <ProjectName>example_mapple</ProjectName>
+    <ProjectName>core</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -86,14 +101,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl</AdditionalIncludeDirectories>
-      <AdditionalOptions>/Zc:strictStrings %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -104,15 +118,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <Lib />
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

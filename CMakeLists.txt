@@ -21,8 +21,8 @@ option(EASY3D_BUILD_EXAMPLES  "Build Easy3D examples" 		ON)
 
 ### Configuration
 set(EASY3D_ROOT "${CMAKE_CURRENT_LIST_DIR}")
-set(EASY3D_INCLUDE_DIR "${EASY3D_ROOT}/src")
-set(EASY3D_SOURCE_DIR "${EASY3D_ROOT}/src")
+set(EASY3D_INCLUDE_DIR "${EASY3D_ROOT}")
+set(EASY3D_SOURCE_DIR "${EASY3D_ROOT}/core" "${EASY3D_ROOT}/model" "${EASY3D_ROOT}/imgui")
 set(EASY3D_EXTERNAL "${EASY3D_ROOT}/3rd_party")
 
 set(EASY3D_glew_INCLUDE_DIR "${EASY3D_EXTERNAL}/glew/include")
@@ -33,7 +33,7 @@ set(EASY3D_imgui_INCLUDE_DIR "${EASY3D_EXTERNAL}/imgui" "${EASY3D_EXTERNAL}/imgu
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 add_subdirectory(3rd_party)
-add_subdirectory(src)
+add_subdirectory(easy3d)
 
 
 set(GLEW_STATIC 1)

@@ -44,7 +44,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -61,7 +61,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\imgui\impl</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GLEW_STATIC;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>

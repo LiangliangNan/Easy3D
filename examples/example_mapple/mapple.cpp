@@ -22,10 +22,10 @@
 #include "mapple.h"
 
 #include <GL/glew.h>
-#include "opengl_error.h"
-#include "camera.h"
-#include "drawable.h"
-#include "shader_program.h"
+#include <easy3d/core/opengl_error.h>
+#include <easy3d/core/camera.h>
+#include <easy3d/core/drawable.h>
+#include <easy3d/core/shader_program.h>
 
 
 using namespace easy3d;

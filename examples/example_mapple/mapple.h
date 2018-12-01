@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "viewer.h"
+#include <easy3d/guiviewer/viewer.h>
 
 namespace easy3d {
 	class FacesDrawable;
