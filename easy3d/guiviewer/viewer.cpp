@@ -66,10 +66,10 @@ namespace easy3d {
 
 
 	void Viewer::cleanup() {
-		for (auto p : windows_)
-			p->cleanup();
-
 		if (!windows_.empty()) {
+			for (auto p : windows_)
+				p->cleanup();
+
 			ImGui_ImplOpenGL3_Shutdown();
 			ImGui_ImplGlfw_Shutdown();
 
@@ -92,11 +92,11 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() const {
-        for (auto p : windows_)
-            p->draw();
-        mpl_debug_gl_error;
-
 		if (!windows_.empty()) {
+			for (auto p : windows_)
+				p->draw();
+			mpl_debug_gl_error;
+
             ImGui::Render();mpl_debug_gl_error;
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());mpl_debug_gl_error;
 		}

@@ -774,7 +774,7 @@ void OpenglInfo::_add_message(std::string format, ...) {
 	char spAux[256];
 	va_list args;
 	va_start(args, format);
-#ifdef __WIN32
+#ifdef _WIN32
     vsprintf_s(spAux, format.c_str(), args);
 #else
     vsprintf(spAux, format.c_str(), args);
