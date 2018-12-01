@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+#include <easy3d/model/math_types.h>
+
 /*  EasyGUI is really easy to use. That's why it has such a name.
 *
 *   Just create an instance of Viewer, or derive your viewer 
@@ -69,8 +71,7 @@ namespace easy3d {
 		void set_title(const std::string &title);
 		const std::string& title() const { return title_; }
 
-		// Returned values are(0, 0, screen_width, screen_height), so that the origin is
-		// located in the lower left corner of the window (OpenGL style coordinate system).
+		// Returned values are(0, 0, screen_width, screen_height).
 		void get_viewport(int viewport[4]) const;
 
 		const float* background_color() const { return &background_color_[0]; }
@@ -78,6 +79,19 @@ namespace easy3d {
 
 		/// Return the actual samples of the viewer
 		int	 samples() const { return samples_; }
+
+		// Returns the coordinates of the 3D point located at pixel (x,y) on screen.
+		// x, y: screen point expressed in pixel units with an origin in the upper left corner.
+		// found: indicates whether a point was found or not.
+		// NOTE: This method assumes that a GL context is available, and that its
+		//		 content was drawn using the Camera (i.e. using its projection and modelview
+		//		 matrices). This method hence cannot be used for offscreen Camera computations.
+		//		 Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar 
+		//		 operations in that case.
+		//       The precision of the z-Buffer highly depends on how the zNear() and zFar() 
+		//       values are fitted to your scene. Loose boundaries will result in imprecision 
+		//		 along the viewing direction.
+		vec3 point_under_pixel(int x, int y, bool &found) const;
 
 		/// Update the rendering
 		void update() const;

@@ -338,9 +338,12 @@ namespace easy3d {
 
 		}
 		else if (button == GLFW_MOUSE_BUTTON_RIGHT && modifiers == GLFW_MOD_SHIFT) {
-			if (!camera_->setPivotPointFromPixel(x, y)) {
+			bool found = false;
+			vec3 p = point_under_pixel(x, y, found);
+			if (found)
+				camera_->setPivotPoint(p); 
+			else
 				camera_->setPivotPoint(camera_->sceneCenter());
-			}
 		}
 
 		return false;
@@ -623,6 +626,17 @@ namespace easy3d {
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
 		glfwShowWindow(window_);
+	}
+
+
+	vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
+		float depth;
+		// Qt uses upper corner for its origin while GL uses the lower corner.
+		glReadPixels(x, height_ - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	mpl_debug_gl_error;
+		found = depth < 1.0f;
+		vec3 point(float(x), float(y), depth);
+		point = camera_->unprojectedCoordinatesOf(point);
+		return point;
 	}
 
 

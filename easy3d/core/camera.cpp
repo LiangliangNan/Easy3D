@@ -513,20 +513,6 @@ void Camera::setSceneCenter(const vec3 &center) {
 	projectionMatrixIsUpToDate_ = false;
 }
 
-/*! setSceneCenter() to the result of pointUnderPixel(\p pixel).
-
-  Returns \c true if a pointUnderPixel() was found and sceneCenter() was
-  actually changed.
-
-  See also setPivotPointFromPixel(). See the pointUnderPixel() documentation. */
-bool Camera::setSceneCenterFromPixel(int x, int y) {
-	bool found = false;
-	const vec3& point = pointUnderPixel(x, y, found);
-	if (found)
-		setSceneCenter(point);
-	return found;
-}
-
 
 /*! Changes the pivotPoint() to \p point (defined in the world coordinate
  * system). */
@@ -544,23 +530,6 @@ void Camera::setPivotPoint(const vec3 &point) {
 	if ((prevDist > 1E-9) && (newDist > 1E-9))
 		orthoCoef_ *= prevDist / newDist;
 	projectionMatrixIsUpToDate_ = false;
-}
-
-/*! The pivotPoint() is set to the point located under \p pixel on screen.
-
-Returns \c true if a pointUnderPixel() was found. If no point was found under \p
-pixel, the pivotPoint() is left unchanged.
-
-\p pixel is expressed in Qt format (origin in the upper left corner of the
-window). See pointUnderPixel().
-
-See also setSceneCenterFromPixel(). */
-bool Camera::setPivotPointFromPixel(int x, int y) {
-	bool found;
-	vec3 point = pointUnderPixel(x, y, found);
-	if (found)
-		setPivotPoint(point);
-	return found;
 }
 
 /*! Returns the ratio between pixel and OpenGL units at \p position.
@@ -627,37 +596,6 @@ void Camera::setFOVToFitScene() {
 		setFieldOfView(static_cast<float>(M_PI / 2.0f));
 }
 
-/*! Returns the coordinates of the 3D point located at pixel (x,y) on screen.
-
- Calls a \c glReadPixel to get the pixel depth and applies an
- unprojectedCoordinatesOf() to the result. \p found indicates whether a point
- was found or not (i.e. background pixel, result's depth is zFar() in that
- case).
-
- \p x and \p y are expressed in pixel units with an origin in the upper left
- corner. Use screenHeight() - y to convert to OpenGL standard.
-
- \attention This method assumes that a GL context is available, and that its
- content was drawn using the Camera (i.e. using its projection and modelview
- matrices). This method hence cannot be used for offscreen Camera computations.
- Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar
- operations in that case.
-
- \note The precision of the z-Buffer highly depends on how the zNear() and
- zFar() values are fitted to your scene. Loose boundaries will result in
- imprecision along the viewing direction. */
-vec3 Camera::pointUnderPixel(int x, int y, bool &found) const {
-	//float depth;
-	//// Qt uses upper corner for its origin while GL uses the lower corner.
-	//glReadPixels(pixel.x(), screenHeight() - 1 - pixel.y(), 1, 1,
-	//	GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-	//found = depth < 1.0;
-	//vec3 point(pixel.x(), pixel.y(), depth);
-	//point = unprojectedCoordinatesOf(point);
-	//return point;
-	std::cout << "pointUnderPixel() not implemented" << std::endl;
-	return vec3();
-}
 
 /*! Moves the Camera so that the entire scene is visible.
 

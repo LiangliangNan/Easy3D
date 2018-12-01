@@ -109,9 +109,8 @@ namespace easy3d {
 		/*! Enumerates the two possible types of Camera.
 
 		See type() and setType(). This type mainly defines different Camera projection
-		matrix (see loadProjectionMatrix()). Many other methods (pointUnderPixel(),
-		convertClickToLine(), projectedCoordinatesOf(), pixelGLRatio()...) are
-		affected by this Type. */
+		matrix (see loadProjectionMatrix()). Many other methods (convertClickToLine(), 
+		projectedCoordinatesOf(), pixelGLRatio()...) are affected by this Type. */
 		enum Type { PERSPECTIVE, ORTHOGRAPHIC };
 
 		/*! @name Position and orientation */
@@ -335,17 +334,12 @@ namespace easy3d {
 	public:
 		void setSceneRadius(float radius);
 		void setSceneCenter(const vec3 &center);
-		bool setSceneCenterFromPixel(int x, int y);
 		void setSceneBoundingBox(const vec3 &min, const vec3 &max);
 		//@}
 
-		/*! @name Pivot Point */
-		//@{
 	public:
+		// The camera will move around the pivot point if set.
 		void setPivotPoint(const vec3 &point);
-		bool setPivotPointFromPixel(int x, int y);
-
-	public:
 		vec3 pivotPoint() const;
 
 	public:
@@ -372,8 +366,6 @@ namespace easy3d {
 	public:
 		vec3 cameraCoordinatesOf(const vec3 &src) const;
 		vec3 worldCoordinatesOf(const vec3 &src) const;
-		void getCameraCoordinatesOf(const float src[3], float res[3]) const;
-		void getWorldCoordinatesOf(const float src[3], float res[3]) const;
 		//@}
 
 		/*! @name 2D screen to 3D world coordinate systems conversions */
@@ -382,7 +374,6 @@ namespace easy3d {
 		vec3 projectedCoordinatesOf(const vec3 &src, const Frame *frame = NULL) const;
 		vec3 unprojectedCoordinatesOf(const vec3 &src, const Frame *frame = NULL) const;
 		void convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const;
-		vec3 pointUnderPixel(int x, int y, bool &found) const;
 		//@}
 
 	private:
