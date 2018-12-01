@@ -43,7 +43,7 @@ namespace easy3d {
 		const std::string& title() const { return title_; }
 
 	public:
-		virtual bool draw() = 0;
+        virtual bool draw() const = 0;
 
 		virtual void cleanup() { }
 

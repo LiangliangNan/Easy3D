@@ -423,12 +423,10 @@ namespace easy3d {
 		try {
 			if (modifiers == 0) {
 				if (key == GLFW_KEY_C) {
-					camera_->centerScene();
-					std::cout << "center scene" << std::endl;
+                    camera_->centerScene();
 				}
 				else if (key == GLFW_KEY_F) {
-					camera_->showEntireScene();
-					std::cout << "show entire scene" << std::endl;
+                    camera_->showEntireScene();
 				}
 				else if (key == GLFW_KEY_LEFT) {
 					std::cout << title_ + ": Key_LEFT pressed" << std::endl;

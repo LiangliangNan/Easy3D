@@ -32,7 +32,7 @@ namespace easy3d {
 	public:
 		PluginSmartBox(Window* win) : Plugin(win, "Plugin - SmartBox") {}
 
-		bool draw();
+        bool draw() const override;
 	};
 
 
@@ -41,7 +41,7 @@ namespace easy3d {
 	public:
 		PluginPolyFit(Window* win) : Plugin(win, "Plugin - PolyFit") {}
 
-		bool draw();
+        bool draw() const override;
 	};
 
 }

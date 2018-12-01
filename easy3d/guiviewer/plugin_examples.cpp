@@ -33,7 +33,7 @@
 
 namespace easy3d {
 
-	bool PluginSmartBox::draw() {
+    bool PluginSmartBox::draw() const {
 
 		static double doubleVariable = 0.1;
 
@@ -88,7 +88,7 @@ namespace easy3d {
 
 
 
-	bool PluginPolyFit::draw() {
+    bool PluginPolyFit::draw() const {
 
 		static double doubleVariable = 0.1;
 

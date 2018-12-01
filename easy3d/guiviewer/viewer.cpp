@@ -53,13 +53,15 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-		BasicViewer::init();
+        BasicViewer::init();     mpl_debug_gl_error;
 		for (auto p : windows_)
 			p->init();
+             mpl_debug_gl_error;
 	}
 
 
 	void Viewer::post_resize(int w, int h) {
+        BasicViewer::post_resize(w, h);
 		for (auto p : windows_)
 			p->post_resize(w, h);
 	}
@@ -69,6 +71,7 @@ namespace easy3d {
 		if (!windows_.empty()) {
 			for (auto p : windows_)
 				p->cleanup();
+            mpl_debug_gl_error;
 
 			ImGui_ImplOpenGL3_Shutdown();
 			ImGui_ImplGlfw_Shutdown();
@@ -76,18 +79,18 @@ namespace easy3d {
 			ImGui::DestroyContext(Window::context_);
 		}
 
-		BasicViewer::cleanup();
+        BasicViewer::cleanup();
 	}
 
 
 	void Viewer::pre_draw() const {
 		if (!windows_.empty()) {
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();
+            ImGui_ImplOpenGL3_NewFrame();     mpl_debug_gl_error;
+            ImGui_ImplGlfw_NewFrame();     mpl_debug_gl_error;
+            ImGui::NewFrame();     mpl_debug_gl_error;
 		}
 
-		BasicViewer::pre_draw();
+        BasicViewer::pre_draw();     mpl_debug_gl_error;
 	}
 
 
@@ -97,11 +100,11 @@ namespace easy3d {
 				p->draw();
 			mpl_debug_gl_error;
 
-            ImGui::Render();mpl_debug_gl_error;
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());mpl_debug_gl_error;
+            ImGui::Render();    mpl_debug_gl_error;
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());     mpl_debug_gl_error;
 		}
 
-        BasicViewer::post_draw();mpl_debug_gl_error;
+        BasicViewer::post_draw();   mpl_debug_gl_error;
 	}
 
 
