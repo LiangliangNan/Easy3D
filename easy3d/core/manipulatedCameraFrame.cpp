@@ -194,6 +194,12 @@ namespace easy3d {
 
 			translate(inverseTransformOf(translationSensitivity() * trans));
 		}
+		else if (button == GLFW_MOUSE_BUTTON_MIDDLE && modifiers == 0) {
+			int delta = 0; // just to make the zoom speed equivalent to the wheel effect
+			if (dy < 0) delta = -1;
+			else if (dy > 0) delta = 1;
+			camera->frame()->wheelEvent(x, y, dx, delta, camera);
+		}
 
 		// 	case QGLViewer::MOVE_FORWARD: {
 		// 		quat rot = pitchYawQuaternion(dx, dy, camera);

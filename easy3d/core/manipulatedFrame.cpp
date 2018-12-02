@@ -136,6 +136,8 @@ namespace easy3d {
 		(void)button;
 		(void)modifiers;
 		(void)camera;
+		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT)  // SCREEN_TRANSLATE
+			dirIsFixed_ = false;
 	}
 
 
