@@ -674,13 +674,16 @@ namespace easy3d {
 
 
 	vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
-		float depth;
+		float depth = std::numeric_limits<float>::max();
 		// Qt uses upper corner for its origin while GL uses the lower corner.
 		glReadPixels(x, height_ - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	mpl_debug_gl_error;
 		found = depth < 1.0f;
-		vec3 point(float(x), float(y), depth);
-		point = camera_->unprojectedCoordinatesOf(point);
-		return point;
+		if (found) {
+			vec3 point(float(x), float(y), depth);
+			point = camera_->unprojectedCoordinatesOf(point);
+			return point;
+		}
+		return vec3();
 	}
 
 

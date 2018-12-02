@@ -134,7 +134,6 @@ namespace easy3d {
 			int dy = py - mouse_y_;
 			mouse_x_ = px;
 			mouse_y_ = py;
-
 			if (drag_active_)
 				return mouse_drag_event(px, py, dx, dy, button_, modifiers_);
 			else
@@ -181,7 +180,7 @@ namespace easy3d {
 
 	bool MainWindow::callback_event_keyboard(int key, int action, int modifiers) {
 		try {
-			if (action == GLFW_PRESS) {
+			if (action == GLFW_PRESS || action == GLFW_REPEAT) {
 				for (auto p : windows_) {
 					if (p->key_press(key, modifiers))
 						return true;
