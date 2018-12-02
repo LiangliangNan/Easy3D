@@ -30,16 +30,8 @@
 namespace easy3d {
 
 
-	/*! Default constructor.
-
-	 flySpeed() is set to 0.0 and sceneUpVector() is (0,1,0). The pivotPoint() is
-	 set to (0,0,0).
-
-	  \attention Created object is removeFromMouseGrabberPool(). */
 	ManipulatedCameraFrame::ManipulatedCameraFrame()
-		: sceneUpVector_(0.0, 1.0, 0.0)
-		, rotatesAroundUpVector_(false)
-		, zoomsOnPivotPoint_(true)
+		: zoomsOnPivotPoint_(true)
 	{
 	}
 
@@ -48,11 +40,7 @@ namespace easy3d {
 	ManipulatedCameraFrame &ManipulatedCameraFrame::operator=(const ManipulatedCameraFrame &mcf)
 	{
 		ManipulatedFrame::operator=(mcf);
-
-		setSceneUpVector(mcf.sceneUpVector());
-		setRotatesAroundUpVector(mcf.rotatesAroundUpVector_);
 		setZoomsOnPivotPoint(mcf.zoomsOnPivotPoint_);
-
 		return *this;
 	}
 
@@ -61,15 +49,6 @@ namespace easy3d {
 		: ManipulatedFrame(mcf)
 	{
 		(*this) = (mcf);
-	}
-
-	////////////////////////////////////////////////////////////////////////////////
-
-	/*! This method will be called by the Camera when its orientation is changed, so
-	that the sceneUpVector (private) is changed accordingly. You should not need to
-	call this method. */
-	void ManipulatedCameraFrame::updateSceneUpVector() {
-		sceneUpVector_ = inverseTransformOf(vec3(0.0, 1.0, 0.0));
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -90,29 +69,35 @@ namespace easy3d {
 			quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
 			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
 			rotateAroundPoint(rot, pivotPoint());
-			updateSceneUpVector();
 		}
 		else {
-			// The incremental rotation defined in the ManipulatedCameraFrame coordinate system.
-			quat rot;
-			if (rotatesAroundUpVector_) {
+			if (false) { // rotate around the scene up vector.
+				// the scene up vector defines a 'vertical' direction around which the camera rotates.
+				// The camera can rotate left or right, around this axis. It can also be moved up or down
+				// to show the 'top' and 'bottom' views of the scene. As a result, the scene up vector 
+				// will always appear vertical in the scene, and the horizon is preserved and stays 
+				// projected along the camera's horizontal axis.
+				// You need to call Camera::setUpVector() to define the scene up vector to be inverseTransformOf(vec3(0.0, 1.0, 0.0)) and align the camera before calling this method.
 				// Multiply by 2.0 to get on average about the same speed as with the
 				// deformed ball
 				float delta_x = 2.0f * rotationSensitivity() * (-dx) / camera->screenWidth();
 				float delta_y = 2.0f * rotationSensitivity() * (-dy) / camera->screenHeight();
 				if (constrainedRotationIsReversed_)
 					delta_x = -delta_x;
-				vec3 verticalAxis = transformOf(sceneUpVector_);
-				rot = quat(verticalAxis, delta_x) * quat(vec3(1.0f, 0.0f, 0.0f), delta_y);
+				const vec3& sceneUpVector = inverseTransformOf(vec3(0.0, 1.0, 0.0));
+				const vec3& verticalAxis = transformOf(sceneUpVector);
+				quat rot = quat(verticalAxis, delta_x) * quat(vec3(1.0f, 0.0f, 0.0f), delta_y);
+				// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+				rotateAroundPoint(rot, pivotPoint());
 			}
 			else {
 				vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
 				int pre_x = x - dx;
 				int pre_y = y - dy;
-				rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+				quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+				// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+				rotateAroundPoint(rot, pivotPoint());
 			}
-			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-			rotateAroundPoint(rot, pivotPoint());
 		}
 		frameModified();
 	}
@@ -285,7 +270,9 @@ QGLViewer::setWheelBinding() to customize the binding. */
 	quat
 		ManipulatedCameraFrame::pitchYawQuaternion(int dx, int dy, const Camera *const camera) {
 		const quat rotX(vec3(1.0, 0.0, 0.0), rotationSensitivity() * (-dy) / camera->screenHeight());
-		const quat rotY(transformOf(sceneUpVector()), rotationSensitivity() * (-dx) / camera->screenWidth());
+		const vec3& sceneUpVector = inverseTransformOf(vec3(0.0, 1.0, 0.0));
+		const vec3& verticalAxis = transformOf(sceneUpVector);
+		const quat rotY(verticalAxis, rotationSensitivity() * (-dx) / camera->screenWidth());
 		return rotY * rotX;
 	}
 

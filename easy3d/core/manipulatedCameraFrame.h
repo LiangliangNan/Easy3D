@@ -79,36 +79,7 @@ namespace easy3d {
 
 		/*! @name Camera manipulation */
 		//@{
-	public:
-		/*! Returns \c true when the frame's rotation is constrained around the
-		   sceneUpVector(), and \c false otherwise, when the rotation is completely
-		   free (default).
-
-				In free mode, the associated camera can be arbitrarily rotated in the
-		   scene, along its three axis, thus possibly leading to any arbitrary
-		   orientation.
-
-				When you setRotatesAroundUpVector() to \c true, the sceneUpVector()
-		   defines a 'vertical' direction around which the camera rotates. The camera
-		   can rotate left or right, around this axis. It can also be moved up or down
-		   to show the 'top' and 'bottom' views of the scene. As a result, the
-		   sceneUpVector() will always appear vertical in the scene, and the horizon
-		   is preserved and stays projected along the camera's horizontal axis.
-
-				Note that setting this value to \c true when the sceneUpVector() is
-		   not already vertically projected will break these invariants. It will also
-		   limit the possible movement of the camera, possibly up to a lock when the
-		   sceneUpVector() is projected horizontally. Use Camera::setUpVector() to
-		   define the sceneUpVector() and align the camera before calling this method
-		   to ensure this does not happen. */
-		bool rotatesAroundUpVector() const { return rotatesAroundUpVector_; }
-		/*! Sets the value of rotatesAroundUpVector().
-
-		   Default value is false (free rotation). */
-		void setRotatesAroundUpVector(bool constrained) {
-			rotatesAroundUpVector_ = constrained;
-		}
-
+ 	public:
 		/*! Returns whether or not the QGLViewer::ZOOM action zooms on the pivot
 		  point.
 
@@ -126,38 +97,6 @@ namespace easy3d {
 		   Default value is false. */
 		void setZoomsOnPivotPoint(bool enabled) { zoomsOnPivotPoint_ = enabled; }
 
-		/*! @name Fly parameters */
-		//@{
-	public:
-
-		/*! Sets the sceneUpVector(), defined in the world coordinate system.
-
-		Default value is (0,1,0), but it is updated by the Camera when this object is
-		set as its Camera::frame(). Using Camera::setUpVector() instead is probably a
-		better solution. */
-		void setSceneUpVector(const vec3 &up) { sceneUpVector_ = up; }
-
-	public:
-
-		/*! Returns the up vector of the scene, expressed in the world coordinate
-		system.
-
-		In 'fly mode' (corresponding to the QGLViewer::MOVE_FORWARD and
-		QGLViewer::MOVE_BACKWARD QGLViewer::MouseAction bindings), horizontal
-		displacements of the mouse rotate the ManipulatedCameraFrame around this
-		vector. Vertical displacements rotate always around the Camera \c X axis.
-
-		This value is also used when setRotationIsConstrained() is set to \c true to
-		define the up vector (and incidentally the 'horizon' plane) around which the
-		camera will rotate.
-
-		Default value is (0,1,0), but it is updated by the Camera when this object is
-		set as its Camera::frame(). Camera::setOrientation() and
-		Camera::setUpVector()) direclty modify this value and should be used instead.
-	  */
-		vec3 sceneUpVector() const { return sceneUpVector_; }
-
-
 		/*! @name frame manipulation */
 		//@{
 	protected:
@@ -166,14 +105,10 @@ namespace easy3d {
 		virtual void action_zoom(int dy_wheel, Camera *const camera);
 
 	private:
-		void updateSceneUpVector();
 		quat turnQuaternion(int dx, const Camera *const camera);
 		quat pitchYawQuaternion(int dx, int dy, const Camera *const camera);
 
 	private:
-		vec3 sceneUpVector_;
-
-		bool rotatesAroundUpVector_;
 		// Inverse the direction of an horizontal mouse motion. Depends on the
 		// projected screen orientation of the vertical axis when the mouse button is
 		// pressed.

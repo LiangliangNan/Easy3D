@@ -189,7 +189,6 @@ namespace easy3d {
 			t_ = translation;
 			frameModified();
 		}
-		void setTranslation(float x, float y, float z);
 		void setTranslationWithConstraint(vec3 &translation);
 
 		/*! Set the current rotation quat. See rotation() and the different
@@ -206,13 +205,10 @@ namespace easy3d {
 			q_ = rotation;
 			frameModified();
 		}
-		void setRotation(float q0, float q1, float q2, float q3);
 		void setRotationWithConstraint(quat &rotation);
 
-		void setTranslationAndRotation(const vec3 &translation,
-			const quat &rotation);
-		void setTranslationAndRotationWithConstraint(vec3 &translation,
-			quat &rotation);
+		void setTranslationAndRotation(const vec3 &translation, const quat &rotation);
+		void setTranslationAndRotationWithConstraint(vec3 &translation, quat &rotation);
 
 		/*! Returns the Frame translation, defined with respect to the
 		referenceFrame().
@@ -231,10 +227,6 @@ namespace easy3d {
 
 		/*! Returns the current quat orientation. See setRotation(). */
 		quat rotation() const { return q_; }
-
-		void getTranslation(float &x, float &y, float &z) const;
-		void getRotation(float &q0, float &q1, float &q2, float &q3) const;
-		//@}
 
 	public:
 		/*! @name Frame hierarchy */
@@ -266,19 +258,9 @@ namespace easy3d {
 		//@{
 		void translate(vec3 &t);
 		void translate(const vec3 &t);
-		// Some compilers complain about "overloading cannot distinguish from previous
-		// declaration" Simply comment out the following method and its associated
-		// implementation
-		void translate(float x, float y, float z);
-		void translate(float &x, float &y, float &z);
 
 		void rotate(quat &q);
 		void rotate(const quat &q);
-		// Some compilers complain about "overloading cannot distinguish from previous
-		// declaration" Simply comment out the following method and its associated
-		// implementation
-		void rotate(float q0, float q1, float q2, float q3);
-		void rotate(float &q0, float &q1, float &q2, float &q3);
 
 		void rotateAroundPoint(quat &rotation, const vec3 &point);
 		void rotateAroundPoint(const quat &rotation, const vec3 &point);
@@ -296,16 +278,6 @@ namespace easy3d {
 		vec3 localInverseCoordinatesOf(const vec3 &src) const;
 		vec3 coordinatesOfIn(const vec3 &src, const Frame *const in) const;
 		vec3 coordinatesOfFrom(const vec3 &src, const Frame *const from) const;
-
-		void getCoordinatesOf(const float src[3], float res[3]) const;
-		void getInverseCoordinatesOf(const float src[3], float res[3]) const;
-		void getLocalCoordinatesOf(const float src[3], float res[3]) const;
-		void getLocalInverseCoordinatesOf(const float src[3], float res[3]) const;
-		void getCoordinatesOfIn(const float src[3], float res[3],
-			const Frame *const in) const;
-		void getCoordinatesOfFrom(const float src[3], float res[3],
-			const Frame *const from) const;
-		//@}
 
 		/*! @name Coordinate system transformation of vectors */
 		// A frame is as a new coordinate system, defined with respect to a reference
@@ -340,16 +312,6 @@ namespace easy3d {
 		vec3 localInverseTransformOf(const vec3 &src) const;
 		vec3 transformOfIn(const vec3 &src, const Frame *const in) const;
 		vec3 transformOfFrom(const vec3 &src, const Frame *const from) const;
-
-		void getTransformOf(const float src[3], float res[3]) const;
-		void getInverseTransformOf(const float src[3], float res[3]) const;
-		void getLocalTransformOf(const float src[3], float res[3]) const;
-		void getLocalInverseTransformOf(const float src[3], float res[3]) const;
-		void getTransformOfIn(const float src[3], float res[3],
-			const Frame *const in) const;
-		void getTransformOfFrom(const float src[3], float res[3],
-			const Frame *const from) const;
-		//@}
 
 		  /*! @name Constraint on the displacement */
 	  //@{

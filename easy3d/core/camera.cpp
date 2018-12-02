@@ -738,9 +738,6 @@ void Camera::setUpVector(const vec3 &up, bool noMove) {
 			.rotate(frame()->coordinatesOf(pivotPoint())));
 
 	frame()->rotate(q);
-
-	// Useful in fly mode to keep the horizontal direction.
-	frame()->updateSceneUpVector();
 }
 
 /*! Sets the orientation() of the Camera using polar coordinates.
@@ -766,7 +763,6 @@ void Camera::setOrientation(float theta, float phi) {
 /*! Sets the Camera orientation(), defined in the world coordinate system. */
 void Camera::setOrientation(const quat &q) {
 	frame()->setOrientation(q);
-	frame()->updateSceneUpVector();
 }
 
 /*! Rotates the Camera so that its viewDirection() is \p direction (defined in

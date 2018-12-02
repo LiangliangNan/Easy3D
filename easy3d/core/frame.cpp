@@ -239,35 +239,6 @@ namespace easy3d {
 	//////////////////// SET AND GET LOCAL TRANSLATION AND ROTATION
 	//////////////////////////////////
 
-	/*! Same as setTranslation(), but with \p double parameters. */
-	void Frame::setTranslation(float x, float y, float z) {
-		setTranslation(vec3(x, y, z));
-	}
-
-	/*! Fill \c x, \c y and \c z with the translation() of the Frame. */
-	void Frame::getTranslation(float &x, float &y, float &z) const {
-		const vec3 t = translation();
-		x = t[0];
-		y = t[1];
-		z = t[2];
-	}
-
-	/*! Same as setRotation() but with \c double quat parameters. */
-	void Frame::setRotation(float q0, float q1, float q2, float q3) {
-		setRotation(quat(q0, q1, q2, q3));
-	}
-
-	/*! The \p q are set to the rotation() of the Frame.
-
-	See quat::quat(double, double, double, double) for details on \c q. */
-	void Frame::getRotation(float &q0, float &q1, float &q2, float &q3) const {
-		const quat q = rotation();
-		q0 = q[0];
-		q1 = q[1];
-		q2 = q[2];
-		q3 = q[3];
-	}
-
 	////////////////////////////////////////////////////////////////////////////////
 
 	/*! Translates the Frame of \p t (defined in the Frame coordinate system).
@@ -294,21 +265,6 @@ namespace easy3d {
 		frameModified();
 	}
 
-	/*! Same as translate(const vec3&) but with \c double parameters. */
-	void Frame::translate(float x, float y, float z) {
-		vec3 t(x, y, z);
-		translate(t);
-	}
-
-	/*! Same as translate(vec3&) but with \c double parameters. */
-	void Frame::translate(float &x, float &y, float &z) {
-		vec3 t(x, y, z);
-		translate(t);
-		x = t[0];
-		y = t[1];
-		z = t[2];
-	}
-
 	/*! Rotates the Frame by \p q (defined in the Frame coordinate system): R = R*q.
 
 	  The rotation actually applied to the Frame may differ from \p q since it can
@@ -332,23 +288,6 @@ namespace easy3d {
 		q_ *= q;
 		q_.normalize(); // Prevents numerical drift
 		frameModified();
-	}
-
-	/*! Same as rotate(quat&) but with \c double quat parameters. */
-	void Frame::rotate(float &q0, float &q1, float &q2, float &q3) {
-		quat q(q0, q1, q2, q3);
-		rotate(q);
-		q0 = q[0];
-		q1 = q[1];
-		q2 = q[2];
-		q3 = q[3];
-	}
-
-	/*! Same as rotate(const quat&) but with \c double quat parameters.
-	 */
-	void Frame::rotate(float q0, float q1, float q2, float q3) {
-		quat q(q0, q1, q2, q3);
-		rotate(q);
 	}
 
 	/*! Makes the Frame rotate() by \p rotation around \p point.
@@ -714,53 +653,6 @@ namespace easy3d {
 		return res;
 	}
 
-	////// double[3] versions
-
-	/*! Same as coordinatesOf(), but with \c double parameters. */
-	void Frame::getCoordinatesOf(const float src[3], float res[3]) const {
-		const vec3 r = coordinatesOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as inverseCoordinatesOf(), but with \c double parameters. */
-	void Frame::getInverseCoordinatesOf(const float src[3], float res[3]) const {
-		const vec3 r = inverseCoordinatesOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as localCoordinatesOf(), but with \c double parameters. */
-	void Frame::getLocalCoordinatesOf(const float src[3], float res[3]) const {
-		const vec3 r = localCoordinatesOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as localInverseCoordinatesOf(), but with \c double parameters. */
-	void Frame::getLocalInverseCoordinatesOf(const float src[3],
-		float res[3]) const {
-		const vec3 r = localInverseCoordinatesOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as coordinatesOfIn(), but with \c double parameters. */
-	void Frame::getCoordinatesOfIn(const float src[3], float res[3],
-		const Frame *const in) const {
-		const vec3 r = coordinatesOfIn(vec3(src), in);
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as coordinatesOfFrom(), but with \c double parameters. */
-	void Frame::getCoordinatesOfFrom(const float src[3], float res[3],
-		const Frame *const from) const {
-		const vec3 r = coordinatesOfFrom(vec3(src), from);
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
 	///////////////////////// FRAME TRANSFORMATIONS OF VECTORS
 	/////////////////////////////////
 
@@ -845,52 +737,6 @@ namespace easy3d {
 			res = in->transformOf(res);
 
 		return res;
-	}
-
-	/////////////////  double[3] versions  //////////////////////
-
-	/*! Same as transformOf(), but with \c double parameters. */
-	void Frame::getTransformOf(const float src[3], float res[3]) const {
-		vec3 r = transformOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as inverseTransformOf(), but with \c double parameters. */
-	void Frame::getInverseTransformOf(const float src[3], float res[3]) const {
-		vec3 r = inverseTransformOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as localTransformOf(), but with \c double parameters. */
-	void Frame::getLocalTransformOf(const float src[3], float res[3]) const {
-		vec3 r = localTransformOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as localInverseTransformOf(), but with \c double parameters. */
-	void Frame::getLocalInverseTransformOf(const float src[3], float res[3]) const {
-		vec3 r = localInverseTransformOf(vec3(src));
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as transformOfIn(), but with \c double parameters. */
-	void Frame::getTransformOfIn(const float src[3], float res[3],
-		const Frame *const in) const {
-		vec3 r = transformOfIn(vec3(src), in);
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
-	}
-
-	/*! Same as transformOfFrom(), but with \c double parameters. */
-	void Frame::getTransformOfFrom(const float src[3], float res[3],
-		const Frame *const from) const {
-		vec3 r = transformOfFrom(vec3(src), from);
-		for (int i = 0; i < 3; ++i)
-			res[i] = r[i];
 	}
 
 	/////////////////////////////////   ALIGN   /////////////////////////////////
