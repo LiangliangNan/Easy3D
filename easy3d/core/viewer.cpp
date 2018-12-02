@@ -329,6 +329,7 @@ namespace easy3d {
 
 	void Viewer::update() const {
 		glfwPostEmptyEvent();
+		glfwPollEvents();
 	}
 
 
@@ -636,7 +637,7 @@ namespace easy3d {
 		glfwShowWindow(window_);
 
 		usage_ = std::string(R"(Easy3D viewer usage:
-  H or F1:	       Help
+  H or F1:         Help
   Ctrl + O:        Open file
   Ctrl + S:        Save file
   Left [+ Shift]:  Rotate scene [screen based]
@@ -689,7 +690,6 @@ namespace easy3d {
 
 				double tic = get_seconds();
 
-				glfwPollEvents();
 				draw_all();
 
 				glfwSwapBuffers(window_);
