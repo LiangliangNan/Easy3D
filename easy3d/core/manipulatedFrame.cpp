@@ -72,10 +72,6 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Rotates the ManipulatedFrame by its spinningQuaternion(). Called by a timer
-	  when the ManipulatedFrame isSpinning(). */
-	void ManipulatedFrame::spin() { rotate(spinningQuaternion()); }
-
 	/*! Return 1 if mouse motion was started horizontally and -1 if it was more
 	vertical. Returns 0 if this could not be determined yet (perfect diagonal
 	motion, rare). */
@@ -147,16 +143,17 @@ namespace easy3d {
 			float pre_y = float(y - dy);
 			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
 			const float angle = atan2(y - trans[1], x - trans[0]);
-
 			const vec3 axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
+			// The incremental rotation defined in the ManipulatedFrame coordinate system.
 			quat rot(axis, angle - prev_angle);
-			setSpinningQuaternion(rot);
-			spin();
+			// Rotates the ManipulatedFrame around its origin.
+			rotate(rot);
 		}
 		else {
 			vec3 trans = camera->projectedCoordinatesOf(position());
 			int pre_x = x - dx;
 			int pre_y = y - dy;
+			// The incremental rotation defined in the ManipulatedFrame coordinate system.
 			quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
 			trans = vec3(-rot[0], -rot[1], -rot[2]);
 			trans = camera->frame()->orientation().rotate(trans);
@@ -164,8 +161,8 @@ namespace easy3d {
 			rot[0] = trans[0];
 			rot[1] = trans[1];
 			rot[2] = trans[2];
-			setSpinningQuaternion(rot);
-			spin();
+			// Rotates the ManipulatedFrame around its origin.
+			rotate(rot);
 		}
 	}
 

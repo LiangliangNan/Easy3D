@@ -65,15 +65,6 @@ namespace easy3d {
 
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Overloading of ManipulatedFrame::spin().
-
-	Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its
-	origin. */
-	void ManipulatedCameraFrame::spin() {
-		rotateAroundPoint(spinningQuaternion(), pivotPoint());
-	}
-
-
 	/*! This method will be called by the Camera when its orientation is changed, so
 	that the sceneUpVector (private) is changed accordingly. You should not need to
 	call this method. */
@@ -95,12 +86,14 @@ namespace easy3d {
 			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
 			const float angle = atan2(y - trans[1], x - trans[0]);
 
+			// The incremental rotation defined in the ManipulatedCameraFrame coordinate system.
 			quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
-			setSpinningQuaternion(rot);
-			spin();
+			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+			rotateAroundPoint(rot, pivotPoint());
 			updateSceneUpVector();
 		}
 		else {
+			// The incremental rotation defined in the ManipulatedCameraFrame coordinate system.
 			quat rot;
 			if (rotatesAroundUpVector_) {
 				// Multiply by 2.0 to get on average about the same speed as with the
@@ -118,8 +111,8 @@ namespace easy3d {
 				int pre_y = y - dy;
 				rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
 			}
-			setSpinningQuaternion(rot);
-			spin();
+			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+			rotateAroundPoint(rot, pivotPoint());
 		}
 		frameModified();
 	}
@@ -187,10 +180,9 @@ QGLViewer::setWheelBinding() to customize the binding. */
 	void ManipulatedCameraFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
 		float delta = wheelDelta(wheel_dy);
-
 		const float sceneRadius = camera->sceneRadius();
 		if (zoomsOnPivotPoint_) {
-			vec3 direction = position() - camera->pivotPoint();
+			const vec3& direction = camera->pivotPoint() - position();
 			if (direction.norm() > 0.02f * sceneRadius || delta > 0.0f)
 				translate(delta * direction);
 		}

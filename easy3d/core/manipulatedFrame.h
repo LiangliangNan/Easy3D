@@ -90,12 +90,7 @@ namespace easy3d {
 	  The ManipulatedFrame also emits a manipulated() signal each time its state is
 	  modified by the mouse. This signal is automatically connected to the
 	  QGLViewer::update() slot when the ManipulatedFrame is attached to a viewer
-	  using QGLViewer::setManipulatedFrame().
-
-	  You can make the ManipulatedFrame spin() if you release the rotation mouse
-	  button while moving the mouse fast enough (see spinningSensitivity()). See
-	  also translationSensitivity() and rotationSensitivity() for sensitivity
-	  tuning. \nosubgrouping */
+	  using QGLViewer::setManipulatedFrame().*/
 	class ManipulatedFrame : public Frame
 	{
 	public:
@@ -178,28 +173,6 @@ namespace easy3d {
 		float wheelSensitivity() const { return wheelSensitivity_; }
 		//@}
 
-	public:
-		/*! Returns the incremental rotation that is applied by spin() to the
-		 ManipulatedFrame orientation when it isSpinning().
-
-		 Default value is a null rotation (identity quat). Use
-		 setSpinningQuaternion() to change this value.
-
-		 The spinningQuaternion() axis is defined in the ManipulatedFrame coordinate
-		 system. You can use Frame::transformOfFrom() to convert this axis from an
-		 other Frame coordinate system. */
-		quat spinningQuaternion() const { return spinningQuaternion_; }
-
-		/*! Defines the spinningQuaternion(). Its axis is defined in the
-		ManipulatedFrame coordinate system. */
-		void setSpinningQuaternion(const quat &q) {
-			spinningQuaternion_ = q;
-		}
-
-	protected:
-		virtual void spin();
-		//@}
-
 		/*! @name frame manipulation */
 		//@{
 	public:
@@ -237,9 +210,6 @@ namespace easy3d {
 		float translationSensitivity_;
 		float wheelSensitivity_;
 		float zoomSensitivity_;
-
-		// Mouse speed and spinning
-		quat spinningQuaternion_;
 
 		// Whether the SCREEN_TRANS direction (horizontal or vertical) is fixed or not.
 		bool dirIsFixed_;

@@ -330,8 +330,8 @@ namespace easy3d {
 	void Viewer::update() const {
 		glfwPostEmptyEvent();
 
-		// Liangliang: force process all event
-		glfwPollEvents();
+		//// Liangliang: force process all event
+		//glfwPollEvents();
 	}
 
 
@@ -692,7 +692,7 @@ namespace easy3d {
 		init();
 
 		// TODO: make it member variable
-		bool is_animating = false;
+		bool is_animating = true;
 
 		try {
 			// Rendering loop
