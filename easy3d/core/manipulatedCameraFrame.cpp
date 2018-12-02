@@ -71,33 +71,12 @@ namespace easy3d {
 			rotateAroundPoint(rot, pivotPoint());
 		}
 		else {
-			if (false) { // rotate around the scene up vector.
-				// the scene up vector defines a 'vertical' direction around which the camera rotates.
-				// The camera can rotate left or right, around this axis. It can also be moved up or down
-				// to show the 'top' and 'bottom' views of the scene. As a result, the scene up vector 
-				// will always appear vertical in the scene, and the horizon is preserved and stays 
-				// projected along the camera's horizontal axis.
-				// You need to call Camera::setUpVector() to define the scene up vector to be inverseTransformOf(vec3(0.0, 1.0, 0.0)) and align the camera before calling this method.
-				// Multiply by 2.0 to get on average about the same speed as with the
-				// deformed ball
-				float delta_x = 2.0f * rotationSensitivity() * (-dx) / camera->screenWidth();
-				float delta_y = 2.0f * rotationSensitivity() * (-dy) / camera->screenHeight();
-				if (constrainedRotationIsReversed_)
-					delta_x = -delta_x;
-				const vec3& sceneUpVector = inverseTransformOf(vec3(0.0, 1.0, 0.0));
-				const vec3& verticalAxis = transformOf(sceneUpVector);
-				quat rot = quat(verticalAxis, delta_x) * quat(vec3(1.0f, 0.0f, 0.0f), delta_y);
-				// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-				rotateAroundPoint(rot, pivotPoint());
-			}
-			else {
-				vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
-				int pre_x = x - dx;
-				int pre_y = y - dy;
-				quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
-				// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-				rotateAroundPoint(rot, pivotPoint());
-			}
+			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
+			int pre_x = x - dx;
+			int pre_y = y - dy;
+			quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+			rotateAroundPoint(rot, pivotPoint());
 		}
 		frameModified();
 	}
@@ -185,96 +164,11 @@ QGLViewer::setWheelBinding() to customize the binding. */
 	}
 
 
-	//void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera)
-//	{
-
-		// 	case QGLViewer::MOVE_FORWARD: {
-		// 		quat rot = pitchYawQuaternion(dx, dy, camera);
-		// 		rotate(rot);
-		// 		//#CONNECTION# wheelEvent MOVE_FORWARD case
-		// 		// actual translation is made in flyUpdate().
-		// 		// translate(inverseTransformOf(float(0.0, 0.0, -flySpeed())));
-		// 		break;
-		// 	}
-		// 
-		// 	case QGLViewer::MOVE_BACKWARD: {
-		// 		quat rot = pitchYawQuaternion(dx, dy, camera);
-		// 		rotate(rot);
-		// 		// actual translation is made in flyUpdate().
-		// 		// translate(inverseTransformOf(float(0.0, 0.0, flySpeed())));
-		// 		break;
-		// 	}
-		// 
-		// 	case QGLViewer::DRIVE: {
-		// 		quat rot = turnQuaternion(dx, camera);
-		// 		rotate(rot);
-		// 		// actual translation is made in flyUpdate().
-		// 		driveSpeed_ = 0.01 * (event->y() - pressPos_.y());
-		// 		break;
-		// 	}
-		// 
-		// 	case QGLViewer::LOOK_AROUND: {
-		// 		quat rot = pitchYawQuaternion(dx, dy, camera);
-		// 		rotate(rot);
-		// 		break;
-		// 	}
-
-
-
-			//case QGLViewer::ROLL: {
-			//	const float angle =
-			//		M_PI * (event->x() - prevPos_.x()) / camera->screenWidth();
-			//	quat rot(float(0.0, 0.0, 1.0), angle);
-			//	rotate(rot);
-			//	setSpinningQuaternion(rot);
-			//	updateSceneUpVector();
-			//	break;
-			//}
-
-			//case QGLViewer::ZOOM_ON_REGION:
-			//case QGLViewer::NO_MOUSE_ACTION:
-			//	break;
-			//}
-
-			//if (action_ != QGLViewer::NO_MOUSE_ACTION) {
-			//	prevPos_ = event->pos();
-			//	if (action_ != QGLViewer::ZOOM_ON_REGION)
-			//		// ZOOM_ON_REGION should not emit manipulated().
-			//		// prevPos_ is used to draw rectangle feedback.
-			//		Q_EMIT manipulated();
-			//}
-
-	//}
-
-	/*! This is an overload of ManipulatedFrame::mouseReleaseEvent(). The
-	  QGLViewer::MouseAction is terminated. */
-	//void ManipulatedCameraFrame::mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera)
-	//{
-	//	//if (action_ == QGLViewer::ZOOM_ON_REGION)
-	//	//	camera->fitScreenRegion(QRect(pressPos_, event->pos()));
-
-	//	ManipulatedFrame::mouseReleaseEvent(x, y, button, modifiers, camera);
-	//}
-
-
-	////////////////////////////////////////////////////////////////////////////////
-
-	/*! Returns a quat that is a rotation around current camera Y,
-	 * proportionnal to the horizontal mouse position. */
-	quat ManipulatedCameraFrame::turnQuaternion(int dx, const Camera *const camera) {
-		return quat(vec3(0.0, 1.0, 0.0), rotationSensitivity() * (-dx) / camera->screenWidth());
+	void ManipulatedCameraFrame::action_turn(float angle_radian, Camera *const camera) {
+		// The rotation around current camera Y, proportional to the horizontal mouse position
+		quat rot(vec3(0.0, 1.0, 0.0), angle_radian);
+		rotate(rot);
+		frameModified();
 	}
-
-	/*! Returns a quat that is the composition of two rotations, inferred from
-	  the mouse pitch (X axis) and yaw (sceneUpVector() axis). */
-	quat
-		ManipulatedCameraFrame::pitchYawQuaternion(int dx, int dy, const Camera *const camera) {
-		const quat rotX(vec3(1.0, 0.0, 0.0), rotationSensitivity() * (-dy) / camera->screenHeight());
-		const vec3& sceneUpVector = inverseTransformOf(vec3(0.0, 1.0, 0.0));
-		const vec3& verticalAxis = transformOf(sceneUpVector);
-		const quat rotY(verticalAxis, rotationSensitivity() * (-dx) / camera->screenWidth());
-		return rotY * rotX;
-	}
-
 
 }

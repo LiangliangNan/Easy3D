@@ -106,18 +106,11 @@ namespace easy3d {
 	}
 
 
-	// Initiates the ManipulatedFrame mouse manipulation.
 	void ManipulatedFrame::action_start() {
 		dirIsFixed_ = false;
 	}
 
 
-	/*! Stops the ManipulatedFrame mouse manipulation.
-	Overloading of MouseGrabber::mouseReleaseEvent().
-	If the action was a QGLViewer::ROTATE QGLViewer::MouseAction, a continuous
-	spinning is possible if the speed of the mouse cursor is larger than
-	spinningSensitivity() when the button is released. Press the rotate button again
-	to stop spinning. See startSpinning() and isSpinning(). */
 	void ManipulatedFrame::action_end()
 	{
 		dirIsFixed_ = false;
@@ -229,30 +222,6 @@ namespace easy3d {
 	}
 
 
-	/*! Overloading of MouseGrabber::mouseDoubleClickEvent().
-
-	Left button double click aligns the ManipulatedFrame with the \p camera axis
-	(see alignWithFrame() and QGLViewer::ALIGN_FRAME). Right button projects the
-	ManipulatedFrame on the \p camera view direction. */
-	void ManipulatedFrame::mouseDoubleClickEvent(int x, int y, int button, int modifiers, Camera *const camera) {
-		//if (modifiers == 0)
-		//	switch (button)
-		//	{
-		//	case GLFW_MOUSE_BUTTON_LEFT:
-		//		alignWithFrame(camera->frame());
-		//		break;
-		//	case GLFW_MOUSE_BUTTON_RIGHT:
-		//		projectOnLine(camera->position(), camera->viewDirection());
-		//		break;
-		//	default:
-		//		break;
-		//	}
-	}
-
-	/*! Overloading of MouseGrabber::wheelEvent().
-
-	Using the wheel is equivalent to a QGLViewer::ZOOM QGLViewer::MouseAction. See
-	 QGLViewer::setWheelBinding(), setWheelSensitivity(). */
 	void ManipulatedFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
 		float delta = wheelDelta(wheel_dy);

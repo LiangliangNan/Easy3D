@@ -176,7 +176,9 @@ namespace easy3d {
 
 		background_color_[0] = background_color_[1] = background_color_[2] = 0.3f;
 		mouse_x_ = mouse_y_ = 0;
+		mouse_pressed_x_ = mouse_pressed_y_ = 0;
 		button_ = -1;
+		pressed_key_ = GLFW_KEY_UNKNOWN;
 		modifiers_ = 0;
 		drag_active_ = false;
 		process_events_ = true;
@@ -267,6 +269,128 @@ namespace easy3d {
 	}
 
 
+	bool Viewer::callback_event_cursor_pos(double x, double y) {
+		int px = static_cast<int>(x);
+		int py = static_cast<int>(y);
+
+		try {
+			int dx = px - mouse_x_;
+			int dy = py - mouse_y_;
+			mouse_x_ = px;
+			mouse_y_ = py;
+			if (drag_active_)
+				return mouse_drag_event(px, py, dx, dy, button_, modifiers_);
+			else
+				return mouse_free_move_event(px, py, dx, dy, modifiers_);
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+			return false;
+		}
+	}
+
+
+	bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
+		try {
+			if (action == GLFW_PRESS) {
+				drag_active_ = true;
+				button_ = button;
+				modifiers_ = modifiers;
+				mouse_pressed_x_ = mouse_x_;
+				mouse_pressed_y_ = mouse_y_;
+				return mouse_press_event(mouse_x_, mouse_y_, button, modifiers);
+			}
+			else {
+				drag_active_ = false;
+				return mouse_release_event(mouse_x_, mouse_y_, button, modifiers);
+			}
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+			return false;
+		}
+	}
+
+
+	bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
+		try {
+			if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+				return key_press_event(key, modifiers);
+			}
+			else {
+				return key_release_event(key, modifiers);
+			}
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+			return false;
+		}
+	}
+
+
+	bool Viewer::callback_event_character(unsigned int codepoint) {
+		try {
+			return char_input_event(codepoint);
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what()
+				<< std::endl;
+			return false;
+		}
+	}
+
+
+	bool Viewer::callback_event_drop(int count, const char **filenames) {
+		try {
+			std::vector<std::string> arg(count);
+			for (int i = 0; i < count; ++i)
+				arg[i] = filenames[i];
+			return drop_event(arg);
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what()
+				<< std::endl;
+			return false;
+		}
+	}
+
+
+	bool Viewer::callback_event_scroll(double dx, double dy) {
+		try {
+			return mouse_scroll_event(mouse_x_, mouse_y_, static_cast<int>(dx), static_cast<int>(dy));
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what()
+				<< std::endl;
+			return false;
+		}
+	}
+
+
+	void Viewer::callback_event_resize(int w, int h) {
+		if (w == 0 && h == 0)
+			return;
+
+		try {
+			glViewport(0, 0, w, h);
+			camera_->setScreenWidthAndHeight(w, h);
+			post_resize(w, h);
+		}
+		catch (const std::exception &e) {
+			std::cerr << "Caught exception in event handler: " << e.what()
+				<< std::endl;
+		}
+	}
+
+
+	bool Viewer::focus_event(bool focused) {
+		if (focused) {
+			// ... 
+		}
+		return false;
+	}
+
+
 	Viewer::~Viewer() {
 		cleanup();
 	}
@@ -337,42 +461,47 @@ namespace easy3d {
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
 		camera_->frame()->action_start();
-
-        if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
+		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
 			bool found = false;
 			vec3 p = point_under_pixel(x, y, found);
-			if (found) {
+			if (found)
 				camera_->setPivotPoint(p);
-				std::cout << "pivot point set" << std::endl;
-			}
 			else
 				camera_->setPivotPoint(camera_->sceneCenter());
 		}
-
 		return false;
 	}
 
 
 	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == GLFW_MOD_CONTROL) { // ZOOM_ON_REGION
+			int xmin = std::min(mouse_pressed_x_, x);	int xmax = std::max(mouse_pressed_x_, x);
+			int ymin = std::min(mouse_pressed_y_, y);	int ymax = std::max(mouse_pressed_y_, y);
+			camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
+		}
+		else
+			camera_->frame()->action_end();
+
 		button_ = -1;
-		camera_->frame()->action_end();
 		return false;
 	}
 
 
 	bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-		switch (button)
-		{
-		case GLFW_MOUSE_BUTTON_LEFT:
-			camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
-			break;
-		case GLFW_MOUSE_BUTTON_RIGHT:
-			camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
-			break;
-		case GLFW_MOUSE_BUTTON_MIDDLE:
-			if (dy != 0) 
-				camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
-			break;
+		if (modifiers != GLFW_MOD_CONTROL) { // GLFW_MOD_CONTROL is reserved for zoom on region
+			switch (button)
+			{
+			case GLFW_MOUSE_BUTTON_LEFT:
+				camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+				break;
+			case GLFW_MOUSE_BUTTON_RIGHT:
+				camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+				break;
+			case GLFW_MOUSE_BUTTON_MIDDLE:
+				if (dy != 0)
+					camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
+				break;
+			}
 		}
 
 		return false;
@@ -386,129 +515,121 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
-		try {
-			camera_->frame()->action_zoom(dy, camera_);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-		}
-
-		//update();
+		camera_->frame()->action_zoom(dy, camera_);
 		return false;
 	}
 
 
 	bool Viewer::key_press_event(int key, int modifiers) {
-		try {
-			if (modifiers == 0) {
-				if (key == GLFW_KEY_C) {
-					camera_->centerScene();
+		if (key == GLFW_KEY_C && modifiers == 0) {
+			camera_->centerScene();
+		}
+		else if (key == GLFW_KEY_F && modifiers == 0) {
+			camera_->showEntireScene();
+		}
+		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
+			float angle = float(1 * M_PI / 180.0f); // turn left, 1 degrees each step
+			camera_->frame()->action_turn(angle, camera_);
+		}
+		else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
+			float angle = float(1 * M_PI / 180.0f); // turn right, 1 degrees each step
+			camera_->frame()->action_turn(-angle, camera_);
+		}
+		else if (key == GLFW_KEY_UP && modifiers == 0) {	// move camera forward
+			float step = 0.02f * camera_->sceneRadius();
+			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
+		}
+		else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
+			float step = 0.02f * camera_->sceneRadius();
+			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
+		}
+		else if (key == GLFW_KEY_UP && modifiers == GLFW_MOD_CONTROL) {	// move camera up
+			float step = 0.02f * camera_->sceneRadius();
+			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
+		}
+		else if (key == GLFW_KEY_DOWN && modifiers == GLFW_MOD_CONTROL) {	// move camera down 
+			float step = 0.02f * camera_->sceneRadius();
+			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
+		}
+		else if (key == GLFW_KEY_M && modifiers == 0) {
+			// NOTE: switching on/off MSAA in this way only works for a single-window 
+			//       application, because OpenGL is a state machine. For multi-window
+			//       applications, you have to call glDisable()/glEnable() before the
+			//       individual draw functions.
+			if (samples_ > 0) {
+				if (glIsEnabled(GL_MULTISAMPLE)) {
+					glDisable(GL_MULTISAMPLE);
+					std::cout << title_ + ": MSAA disabled" << std::endl;
 				}
-				else if (key == GLFW_KEY_F) {
-					camera_->showEntireScene();
+				else {
+					glEnable(GL_MULTISAMPLE);
+					std::cout << title_ + ": MSAA enabled" << std::endl;
 				}
-				else if (key == GLFW_KEY_LEFT) {
-					std::cout << title_ + ": Key_LEFT pressed" << std::endl;
-				}
-				else if (key == GLFW_KEY_RIGHT) {
-					std::cout << title_ + ": Key_RIGHT pressed" << std::endl;
-				}
-				else if (key == GLFW_KEY_UP) {
-					std::cout << title_ + ": Key_UP pressed" << std::endl;
-				}
-				else if (key == GLFW_KEY_DOWN) {
-					std::cout << title_ + ": Key_DOWN pressed" << std::endl;
-				}
-				else if (key == GLFW_KEY_M) {
-					// NOTE: switching on/off MSAA in this way only works for a single-window 
-					//       application, because OpenGL is a state machine. For multi-window
-					//       applications, you have to call glDisable()/glEnable() before the
-					//       individual draw functions.
-					if (samples_ > 0) {
-						if (glIsEnabled(GL_MULTISAMPLE)) {
-							glDisable(GL_MULTISAMPLE);
-							std::cout << title_ + ": MSAA disabled" << std::endl;
-						}
-						else {
-							glEnable(GL_MULTISAMPLE);
-							std::cout << title_ + ": MSAA enabled" << std::endl;
-						}
-					}
-				}
-				else if (key == GLFW_KEY_F1 || key == GLFW_KEY_H)
-					std::cout << usage_ << std::endl;
-				else if (key == GLFW_KEY_P) {
-					if (camera_->type() == Camera::PERSPECTIVE)
-						camera_->setType(Camera::ORTHOGRAPHIC);
-					else
-						camera_->setType(Camera::PERSPECTIVE);
-				}
-			}
-			else if (modifiers == GLFW_MOD_CONTROL) {
-				if (key == GLFW_KEY_O)
-					open();
-				else if (key == GLFW_KEY_S)
-					save();
-				else if (key == GLFW_KEY_MINUS) 
-					camera_->frame()->action_zoom(-1, camera_);
-				else if (key == GLFW_KEY_EQUAL)
-					camera_->frame()->action_zoom(1, camera_);
-			}
-			else {
-				pressed_key_ = key;
 			}
 		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+		else if (key == GLFW_KEY_F1 && modifiers == 0)
+			std::cout << usage_ << std::endl;
+		else if (key == GLFW_KEY_P && modifiers == 0) {
+			if (camera_->type() == Camera::PERSPECTIVE)
+				camera_->setType(Camera::ORTHOGRAPHIC);
+			else
+				camera_->setType(Camera::PERSPECTIVE);
 		}
+		else if (key == GLFW_KEY_SPACE && modifiers == 0) {
+			// Aligns camera
+			Frame frame;
+			frame.setTranslation(camera_->pivotPoint());
+			camera_->frame()->alignWithFrame(&frame, true);
 
-		//update();
+			// Aligns frame
+			//if (manipulatedFrame())
+			//	manipulatedFrame()->alignWithFrame(camera_->frame());
+		}
+		else if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL)
+			open();
+		else if (key == GLFW_KEY_S && modifiers == GLFW_MOD_CONTROL)
+			save();
+		else if (key == GLFW_KEY_MINUS && modifiers == GLFW_MOD_CONTROL)
+			camera_->frame()->action_zoom(-1, camera_);
+		else if (key == GLFW_KEY_EQUAL && modifiers == GLFW_MOD_CONTROL)
+			camera_->frame()->action_zoom(1, camera_);
+
+		pressed_key_ = key;
+
 		return false;
 	}
 
 
 	bool Viewer::key_release_event(int key, int modifiers) {
-		try {
-			pressed_key_ = GLFW_KEY_UNKNOWN;
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-		}
-
-		//update();
+		pressed_key_ = GLFW_KEY_UNKNOWN;
 		return false;
 	}
 
 
 	bool Viewer::char_input_event(unsigned int codepoint) {
-		try {
-			//switch (codepoint) {
-			//case '-':	break;
-			//case 'c':	break;
-			//case 'C':	break;
-			//case '0':	break;
-			//default:
-			//	return false;
-			//}
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-		}
+		//switch (codepoint) {
+		//case '-':	break;
+		//case 'c':	break;
+		//case 'C':	break;
+		//case '0':	break;
+		//default:
+		//	return false;
+		//}
 
 		return false;
 	}
 
 
 	void Viewer::draw_all() {
-        glfwMakeContextCurrent(window_);
-        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);		
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glfwMakeContextCurrent(window_);
+		glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// --------------------------------------
 
-        pre_draw();		mpl_debug_gl_error;
-        draw();			mpl_debug_gl_error;
-        post_draw();	mpl_debug_gl_error;
+		pre_draw();		mpl_debug_gl_error;
+		draw();			mpl_debug_gl_error;
+		post_draw();	mpl_debug_gl_error;
 
 		// --------------------------------------
 
@@ -522,126 +643,6 @@ namespace easy3d {
 		//		// ...
 		//	}
 		//}
-	}
-
-
-	bool Viewer::callback_event_cursor_pos(double x, double y) {
-		int px = static_cast<int>(x);
-		int py = static_cast<int>(y);
-
-		try {
-			int dx = px - mouse_x_;
-			int dy = py - mouse_y_;
-			mouse_x_ = px;
-			mouse_y_ = py;
-
-			if (drag_active_)
-				return mouse_drag_event(px, py, dx, dy, button_, modifiers_);
-			else
-				return mouse_free_move_event(px, py, dx, dy, modifiers_);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
-	}
-
-
-	bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
-		try {
-			if (action == GLFW_PRESS) {
-				drag_active_ = true;
-				button_ = button;
-				modifiers_ = modifiers;
-				return mouse_press_event(mouse_x_, mouse_y_, button, modifiers);
-			}
-			else {
-				drag_active_ = false;
-				return mouse_release_event(mouse_x_, mouse_y_, button, modifiers);
-			}
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
-	}
-
-
-	bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
-		try {
-			if (action == GLFW_PRESS) {
-				return key_press_event(key, modifiers);
-			}
-			else {
-				return key_release_event(key, modifiers);
-			}
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
-	}
-
-
-	bool Viewer::callback_event_character(unsigned int codepoint) {
-		try {
-			return char_input_event(codepoint);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-			return false;
-		}
-	}
-
-
-	bool Viewer::callback_event_drop(int count, const char **filenames) {
-		try {
-			std::vector<std::string> arg(count);
-			for (int i = 0; i < count; ++i)
-				arg[i] = filenames[i];
-			return drop_event(arg);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-			return false;
-		}
-	}
-
-
-	bool Viewer::callback_event_scroll(double dx, double dy) {
-		try {
-			return mouse_scroll_event(mouse_x_, mouse_y_, static_cast<int>(dx), static_cast<int>(dy));
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-			return false;
-		}
-	}
-
-	void Viewer::callback_event_resize(int w, int h) {
-		if (w == 0 && h == 0)
-			return;
-
-		try {
-			glViewport(0, 0, w, h);
-			camera_->setScreenWidthAndHeight(w, h);
-			post_resize(w, h);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-		}
-	}
-
-
-	bool Viewer::focus_event(bool focused) {
-		if (focused) {
-			// ... 
-		}
-		return false;
 	}
 
 
@@ -663,12 +664,12 @@ namespace easy3d {
   F:               Fit screen      
   C:               Center scene
   Shift + Right:   Set/unset pivot point
-  P:               Toggle perspective/orthographic projection)" 
-// W:               Toggle wireframe
-//   <,>     Toggle between models
-//   ;       Toggle vertex labels
-//   :       Toggle face labels)"			
-);
+  P:               Toggle perspective/orthographic projection)"
+			// W:               Toggle wireframe
+			//   <,>     Toggle between models
+			//   ;       Toggle vertex labels
+			//   :       Toggle face labels)"			
+		);
 	}
 
 
@@ -865,7 +866,7 @@ namespace easy3d {
 		surface_program_->set_uniform("color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
 
 		for (auto md : surface_drawables_)
-			 md.second->draw(false);
+			md.second->draw(false);
 
 		surface_program_->unbind();	mpl_debug_gl_error;
 	}

@@ -32,8 +32,8 @@ using namespace easy3d;
 int main(int /* argc */, char ** /* argv */) {
     try {
 #if 1
-        MainWindow app("Easy3D_Viewer", 80, 3, 2);
-        //Viewer app("Easy3D_BasicViewer", 80, 3, 2);
+        //MainWindow app("Easy3D_Viewer", 80, 3, 2);
+        Viewer app("Easy3D_BasicViewer", 80, 3, 2);
 #else
 		Mapple app(40, 3, 2);
 

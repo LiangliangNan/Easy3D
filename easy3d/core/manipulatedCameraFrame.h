@@ -103,16 +103,9 @@ namespace easy3d {
 		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
 		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
 		virtual void action_zoom(int dy_wheel, Camera *const camera);
+		virtual void action_turn(float angle_radian, Camera *const camera);		// The rotation around camera Y
 
 	private:
-		quat turnQuaternion(int dx, const Camera *const camera);
-		quat pitchYawQuaternion(int dx, int dy, const Camera *const camera);
-
-	private:
-		// Inverse the direction of an horizontal mouse motion. Depends on the
-		// projected screen orientation of the vertical axis when the mouse button is
-		// pressed.
-		bool constrainedRotationIsReversed_;
 
 		bool zoomsOnPivotPoint_;
 

@@ -158,6 +158,8 @@ namespace easy3d {
 				drag_active_ = true;
 				button_ = button;
 				modifiers_ = modifiers;
+				mouse_pressed_x_ = mouse_x_;
+				mouse_pressed_y_ = mouse_y_;
 				return mouse_press_event(mouse_x_, mouse_y_, button, modifiers);
 			}
 			else {

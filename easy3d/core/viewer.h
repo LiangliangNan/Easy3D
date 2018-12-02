@@ -204,7 +204,9 @@ namespace easy3d {
 		int		modifiers_;		// for mouse drag
 		bool	drag_active_;	// for mouse drag
 		int		mouse_x_;		// for mouse button and scroll events
-		int		mouse_y_;		// for mouse button and scroll events
+		int		mouse_y_;		
+		int     mouse_pressed_x_;	// last pressed position
+		int     mouse_pressed_y_;
 		int     pressed_key_;
 
 		std::string usage_;

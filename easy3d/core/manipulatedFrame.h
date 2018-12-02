@@ -176,17 +176,16 @@ namespace easy3d {
 		/*! @name frame manipulation */
 		//@{
 	public:
-		virtual void action_start(); // will be called when an action (e.g., drag) starts, e.g., mouse pressed
-		virtual void action_end();	 // will be called when an action (e.g., drag) ends, e.g., mouse released
+		// Initiates the ManipulatedFrame mouse manipulation.
+		// This function should be called when an action (e.g., drag) starts, e.g., mouse pressed
+		virtual void action_start(); 
+		// Stops the ManipulatedFrame mouse manipulation.
+		// This function should be called when an action (e.g., drag) ends, e.g., mouse released
+		virtual void action_end();
 		
 		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
 		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
 		virtual void action_zoom(int dy_wheel, Camera *const camera);
-
-		
-		virtual void mouseDoubleClickEvent(int x, int y, int button, int modifiers, Camera *const camera);
-
-		//@}
 
 #ifndef DOXYGEN
 	protected:
