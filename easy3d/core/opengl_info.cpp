@@ -32,6 +32,7 @@ bool OpenglInfo::init() {
 		return false;
 	}
 
+	/*
 	std::cout << "GLEW Version: " << OpenglInfo::glew_version() << std::endl;
 	std::cout << "GL Vendor: " << OpenglInfo::gl_vendor() << std::endl;
 	std::cout << "GL Renderer: " << OpenglInfo::gl_renderer() << std::endl;
@@ -66,6 +67,8 @@ bool OpenglInfo::init() {
 		std::cerr << "Shader Storage Buffer Object not supported. easy3d may not run properly..." << std::endl;
 		//exit(1);
 	}
+
+	*/
 
 	return true;
 }

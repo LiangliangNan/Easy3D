@@ -69,6 +69,7 @@ namespace easy3d {
 		, surface_program_(nullptr)
 		, width_(1280)	// default width
 		, height_(960)	// default height
+		, pressed_key_(GLFW_KEY_UNKNOWN)
 	{
 #if !defined(_WIN32)
 		/* Avoid locale-related number parsing issues */
@@ -333,11 +334,12 @@ namespace easy3d {
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
 		camera_->frame()->mousePressEvent(x, y, button, modifiers, camera_);
+
         if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
 			bool found = false;
 			vec3 p = point_under_pixel(x, y, found);
 			if (found)
-				camera_->setPivotPoint(p); 
+				camera_->setPivotPoint(p);
 			else
 				camera_->setPivotPoint(camera_->sceneCenter());
 		}
@@ -385,10 +387,10 @@ namespace easy3d {
 		try {
 			if (modifiers == 0) {
 				if (key == GLFW_KEY_C) {
-                    camera_->centerScene();
+					camera_->centerScene();
 				}
 				else if (key == GLFW_KEY_F) {
-                    camera_->showEntireScene();
+					camera_->showEntireScene();
 				}
 				else if (key == GLFW_KEY_LEFT) {
 					std::cout << title_ + ": Key_LEFT pressed" << std::endl;
@@ -418,12 +420,27 @@ namespace easy3d {
 						}
 					}
 				}
+				else if (key == GLFW_KEY_F1 || key == GLFW_KEY_H)
+					std::cout << usage_ << std::endl;
+				else if (key == GLFW_KEY_P) {
+					if (camera_->type() == Camera::PERSPECTIVE)
+						camera_->setType(Camera::ORTHOGRAPHIC);
+					else
+						camera_->setType(Camera::PERSPECTIVE);
+				}
 			}
 			else if (modifiers == GLFW_MOD_CONTROL) {
 				if (key == GLFW_KEY_O)
 					open();
 				else if (key == GLFW_KEY_S)
 					save();
+				else if (key == GLFW_KEY_MINUS) 
+					camera_->frame()->wheelEvent(mouse_x_, mouse_y_, 0, -1, camera_);
+				else if (key == GLFW_KEY_EQUAL)
+					camera_->frame()->wheelEvent(mouse_x_, mouse_y_, 0, 1, camera_);
+			}
+			else {
+				pressed_key_ = key;
 			}
 		}
 		catch (const std::exception &e) {
@@ -437,6 +454,7 @@ namespace easy3d {
 
 	bool Viewer::key_release_event(int key, int modifiers) {
 		try {
+			pressed_key_ = GLFW_KEY_UNKNOWN;
 		}
 		catch (const std::exception &e) {
 			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
@@ -616,6 +634,24 @@ namespace easy3d {
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
 		glfwShowWindow(window_);
+
+		usage_ = std::string(R"(Easy3D viewer usage:
+  H or F1:	       Help
+  Ctrl + O:        Open file
+  Ctrl + S:        Save file
+  Left [+ Shift]:  Rotate scene [screen based]
+  Right [+ Shift]: Translate scene [screen based]
+  Middle/wheel:    Zoom out/in
+  Ctrl + '-'/'+':  Zoom out/in
+  F:               Fit screen      
+  C:               Center scene
+  Shift + Right:   Set/unset pivot point
+  P:               Toggle perspective/orthographic projection)" 
+// W:               Toggle wireframe
+//   <,>     Toggle between models
+//   ;       Toggle vertex labels
+//   :       Toggle face labels)"			
+);
 	}
 
 
@@ -653,6 +689,7 @@ namespace easy3d {
 
 				double tic = get_seconds();
 
+				glfwPollEvents();
 				draw_all();
 
 				glfwSwapBuffers(window_);

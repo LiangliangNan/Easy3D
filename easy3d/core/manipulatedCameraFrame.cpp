@@ -40,7 +40,7 @@ namespace easy3d {
 	ManipulatedCameraFrame::ManipulatedCameraFrame()
 		: sceneUpVector_(0.0, 1.0, 0.0)
 		, rotatesAroundUpVector_(false)
-		, zoomsOnPivotPoint_(false)
+		, zoomsOnPivotPoint_(true)
 	{
 	}
 

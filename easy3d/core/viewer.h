@@ -205,6 +205,9 @@ namespace easy3d {
 		bool	drag_active_;	// for mouse drag
 		int		mouse_x_;		// for mouse button and scroll events
 		int		mouse_y_;		// for mouse button and scroll events
+		int     pressed_key_;
+
+		std::string usage_;
 
 		//----------------- viewer data -------------------
 
