@@ -15,18 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\tinyfiledialogs.c">
+    <ClCompile Include="hello.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\hello_wchar_t.c">
+    <ClCompile Include="tinyfiledialogs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\readme displayed below (extract from header file).txt" />
+    <Text Include="CMakeLists.txt" />
+    <Text Include="readme displayed below (extract from header file).txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\tinyfiledialogs.h">
+    <ClInclude Include="tinyfiledialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

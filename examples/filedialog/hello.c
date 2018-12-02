@@ -108,7 +108,7 @@ int main( int argc , char * argv[] )
 	FILE * lIn;
 	char lBuffer[1024];
 	char lString[1024];
-	char const * lFilterPatterns[2] = { "*.txt", "*.text" };
+	char const * lFilterPatterns[2] = { "*.txt", "*.obj" };
 
 	tinyfd_verbose = argc - 1;
     tinyfd_silent = 1;
@@ -203,7 +203,7 @@ int main( int argc , char * argv[] )
 		2,
 		lFilterPatterns,
 		NULL,
-		0);
+		1);
 
 	if (! lTheOpenFileName)
 	{

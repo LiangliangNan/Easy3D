@@ -115,14 +115,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\hello_wchar_t.c" />
-    <ClCompile Include="..\tinyfiledialogs.c" />
+    <ClCompile Include="hello.c" />
+    <ClCompile Include="tinyfiledialogs.c" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\readme displayed below (extract from header file).txt" />
+    <Text Include="CMakeLists.txt" />
+    <Text Include="readme displayed below (extract from header file).txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\tinyfiledialogs.h" />
+    <ClInclude Include="tinyfiledialogs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
