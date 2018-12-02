@@ -34,9 +34,6 @@
     <ClInclude Include="fields.h" />
     <ClInclude Include="file_dialog.h" />
     <ClInclude Include="frame.h" />
-    <ClInclude Include="ImGuiHelpers.h" />
-    <ClInclude Include="imguitraits.h" />
-    <ClInclude Include="imgui_fonts_droid_sans.h" />
     <ClInclude Include="manipulatedCameraFrame.h" />
     <ClInclude Include="manipulatedFrame.h" />
     <ClInclude Include="opengl_error.h" />

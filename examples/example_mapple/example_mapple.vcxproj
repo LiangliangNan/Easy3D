@@ -39,10 +39,6 @@
       <Project>{bac217bb-b308-4beb-b839-b8819fafe349}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\resources\shaders\surface_color.frag" />
-    <None Include="..\..\resources\shaders\surface_color.vert" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{22648A96-A8C4-4F12-9911-DD34406210AF}</ProjectGuid>

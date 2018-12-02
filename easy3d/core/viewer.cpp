@@ -329,6 +329,8 @@ namespace easy3d {
 
 	void Viewer::update() const {
 		glfwPostEmptyEvent();
+
+		// Liangliang: force process all event
 		glfwPollEvents();
 	}
 
