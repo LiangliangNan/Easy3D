@@ -4,9 +4,11 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-file(GLOB SOURCES ./*.cpp)
-file(GLOB HEADERS ./*.h)
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME}
+    ./main.cpp
+    ./mapple.cpp
+    ./plugin_polyfit.cpp
+    )
 
 
 if (MSVC)

@@ -20,9 +20,9 @@
 
 *****************************************************************************/
 
-#include "manipulatedFrame.h"
+#include "manipulated_frame.h"
 #include "camera.h"
-#include "manipulatedCameraFrame.h"
+#include "manipulated_camera_frame.h"
 
 
 namespace easy3d {
@@ -43,7 +43,7 @@ namespace easy3d {
 		setWheelSensitivity(1.0);
 		setZoomSensitivity(1.0);
 
-		previousConstraint_ = NULL;
+        previousConstraint_ = nullptr;
 	}
 
 	/*! Equal operator. Calls Frame::operator=() and then copy attributes. */
@@ -130,24 +130,24 @@ namespace easy3d {
 	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
 	{
 		if (screen) {
-			vec3 trans = camera->projectedCoordinatesOf(position());
+            const vec3& trans = camera->projectedCoordinatesOf(position());
 
 			float pre_x = float(x - dx);
 			float pre_y = float(y - dy);
 			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
 			const float angle = atan2(y - trans[1], x - trans[0]);
-			const vec3 axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
+            const vec3& axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
 			quat rot(axis, angle - prev_angle);
 			// Rotates the ManipulatedFrame around its origin.
 			rotate(rot);
 		}
 		else {
-			vec3 trans = camera->projectedCoordinatesOf(position());
+            vec3 trans = camera->projectedCoordinatesOf(position());
 			int pre_x = x - dx;
 			int pre_y = y - dy;
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-			quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+            quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
 			trans = vec3(-rot[0], -rot[1], -rot[2]);
 			trans = camera->frame()->orientation().rotate(trans);
 			trans = transformOf(trans);

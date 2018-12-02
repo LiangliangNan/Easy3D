@@ -23,7 +23,7 @@
 #include "constraint.h"
 #include "camera.h"
 #include "frame.h"
-#include "manipulatedCameraFrame.h"
+#include "manipulated_camera_frame.h"
 
 
 namespace easy3d {

@@ -1,0 +1,1 @@
+when resized, depth values read from glReadPixels() are not correct.

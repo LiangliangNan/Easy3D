@@ -11,55 +11,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="manipulated_camera_frame.cpp" />
-    <ClCompile Include="manipulated_frame.cpp" />
-    <ClCompile Include="viewer.cpp" />
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="constraint.cpp" />
-    <ClCompile Include="drawable.cpp" />
-    <ClCompile Include="fields.cpp" />
-    <ClCompile Include="file_dialog.cpp" />
-    <ClCompile Include="frame.cpp" />
-    <ClCompile Include="opengl_error.cpp" />
-    <ClCompile Include="opengl_info.cpp" />
-    <ClCompile Include="shader_code.cpp" />
-    <ClCompile Include="shader_program.cpp" />
-    <ClCompile Include="vertex_array_object.cpp" />
+    <ClInclude Include="tinyfiledialogs.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="manipulated_camera_frame.h" />
-    <ClInclude Include="manipulated_frame.h" />
-    <ClInclude Include="viewer.h" />
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="constraint.h" />
-    <ClInclude Include="drawable.h" />
-    <ClInclude Include="fields.h" />
-    <ClInclude Include="file_dialog.h" />
-    <ClInclude Include="frame.h" />
-    <ClInclude Include="opengl_error.h" />
-    <ClInclude Include="opengl_info.h" />
-    <ClInclude Include="shader_code.h" />
-    <ClInclude Include="shader_program.h" />
-    <ClInclude Include="vertex_array_object.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\3rd_party\glew\glew.vcxproj">
-      <Project>{ee0ca6c2-eae2-4c71-9f4a-77f2805bf9bd}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\3rd_party\glfw\build\glfw.vcxproj">
-      <Project>{e9f585c7-563c-3db0-9ca0-9142acab6ada}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\model\model.vcxproj">
-      <Project>{3d2de591-27a2-427a-9599-83389f1750f1}</Project>
-    </ProjectReference>
+    <ClCompile Include="tinyfiledialogs.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}</ProjectGuid>
+    <ProjectGuid>{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>easygui</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
-    <ProjectName>core</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -98,7 +60,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,7 +77,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\3rd_party\glew\include;$(SolutionDir)\3rd_party\glfw\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\3rd_party\imgui;$(SolutionDir)\3rd_party\glfw\include;$(SolutionDir)\3rd_party\glew\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

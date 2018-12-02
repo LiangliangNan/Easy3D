@@ -23,7 +23,7 @@
 #ifndef QGLVIEWER_MANIPULATED_CAMERA_FRAME_H
 #define QGLVIEWER_MANIPULATED_CAMERA_FRAME_H
 
-#include "manipulatedFrame.h"
+#include "manipulated_frame.h"
 
 
 namespace easy3d {

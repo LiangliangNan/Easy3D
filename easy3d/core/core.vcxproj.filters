@@ -21,13 +21,7 @@
     <ClInclude Include="frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="manipulatedFrame.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="constraint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="manipulatedCameraFrame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="shader_program.h">
@@ -57,6 +51,12 @@
     <ClInclude Include="viewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="manipulated_camera_frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="manipulated_frame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp">
@@ -66,12 +66,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="frame.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="manipulatedCameraFrame.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="manipulatedFrame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="shader_program.cpp">
@@ -99,6 +93,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="viewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="manipulated_camera_frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="manipulated_frame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

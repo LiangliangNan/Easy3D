@@ -29,14 +29,30 @@ set(EASY3D_glew_INCLUDE_DIR "${EASY3D_EXTERNAL}/glew/include")
 set(EASY3D_glfw_INCLUDE_DIR "${EASY3D_EXTERNAL}/glfw/include")
 set(EASY3D_imgui_INCLUDE_DIR "${EASY3D_EXTERNAL}/imgui" "${EASY3D_EXTERNAL}/imgui/impl")
 
+
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-add_subdirectory(3rd_party)
-add_subdirectory(easy3d)
+
+################################################################################
 
 
 set(GLEW_STATIC 1)
+
+##for C
+#set(CMAKE_C_FLAGS_DEBUG _DEBUG)
+#set(CMAKE_C_FLAGS_RELWITHDEBINFO _DEBUG)
+##For C++
+#set(CMAKE_CXX_FLAGS_DEBUG _DEBUG)
+#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO _DEBUG)
+
+set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} -_DEBUG)
+
+################################################################################
+
+
+add_subdirectory(3rd_party)
+add_subdirectory(easy3d)
 
 
 if(EASY3D_BUILD_EXAMPLES)

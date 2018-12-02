@@ -35,7 +35,7 @@
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include "camera.h"
-#include "manipulatedCameraFrame.h"
+#include "manipulated_camera_frame.h"
 #include <easy3d/model/surface_mesh.h>
 #include <easy3d/model/point_cloud.h>
 #include "drawable.h"
@@ -46,10 +46,6 @@
 
 
 namespace easy3d {
-
-
-	// Internal global variables used for glfw event handling
-	static Viewer * __viewer;
 
 
 	Viewer::Viewer(
@@ -66,6 +62,8 @@ namespace easy3d {
 		, full_screen_(full_screen)
 		, process_events_(true)
 		, samples_(0)
+		, axis_ (nullptr)
+		, axis_program_(nullptr)
 		, surface_program_(nullptr)
 		, width_(1280)	// default width
 		, height_(960)	// default height
@@ -145,16 +143,17 @@ namespace easy3d {
 		glfwSwapInterval(1); // Enable vsync
 
 #if defined(DEBUG) || defined(_DEBUG)
-		printf("OpenGL Version %d.%d loaded\n", gl_major, gl_minor);
+        std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
 		int major = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MAJOR);
 		int minor = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MINOR);
 		int rev = glfwGetWindowAttrib(window_, GLFW_CONTEXT_REVISION);
-		printf("OpenGL version received: %d.%d.%d\n", major, minor, rev);
-		printf("Supported OpenGL is %s\n", (const char*)glGetString(GL_VERSION));
-		printf("Supported GLSL is %s\n", (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+        std::cout << "OpenGL version received:  " << major << "." << minor << "." << rev << std::endl;
+        std::cout << "Supported OpenGL:         " << glGetString(GL_VERSION) << std::endl;
+        std::cout << "Supported GLSL:           " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 #endif
 
-		if (strstr((const char *)glGetString(GL_VENDOR), "Intel") != nullptr) {
+        std::string vender(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+        if (vender.find("Intel") != std::string::npos) {
 			std::cerr << "Detected Intel HD Graphics card, disabling MSAA as a precaution .." << std::endl;
 		}
 
@@ -183,14 +182,7 @@ namespace easy3d {
 		drag_active_ = false;
 		process_events_ = true;
 
-		camera_ = new Camera;
-		camera_->setSceneRadius(1.0f);
-		camera_->setSceneCenter(vec3(0, 0, 0));
-		int w, h;
-		glfwGetWindowSize(window_, &w, &h);
-		camera_->setScreenWidthAndHeight(w, h);
-
-		__viewer = this;
+		glfwSetWindowUserPointer(window_, this);
 
 #if defined(__APPLE__)
 		/* Poll for events once before starting a potentially lengthy loading process.*/
@@ -202,14 +194,15 @@ namespace easy3d {
 	void Viewer::setup_callbacks() {
 		glfwSetCursorPosCallback(window_, [](GLFWwindow *win, double x, double y)
 		{
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
 
 			int w, h;
 			glfwGetWindowSize(win, &w, &h);
 			if (x >= 0 && x <= w && y >= 0 && y <= h)
-				__viewer->callback_event_cursor_pos(x, y);
-			else if (__viewer->drag_active_) {
+				viewer->callback_event_cursor_pos(x, y);
+			else if (viewer->drag_active_) {
 				// Restrict the cursor to be within the client area during dragging
 				if (x < 0) x = 0;	if (x > w) x = w;
 				if (y < 0) y = 0;	if (y > h) y = h;
@@ -218,49 +211,55 @@ namespace easy3d {
 		});
 
 		glfwSetMouseButtonCallback(window_, [](GLFWwindow *win, int button, int action, int modifiers) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
-			__viewer->callback_event_mouse_button(button, action, modifiers);
+			viewer->callback_event_mouse_button(button, action, modifiers);
 		});
 
 		glfwSetKeyCallback(window_, [](GLFWwindow *win, int key, int scancode, int action, int mods) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
 			(void)scancode;
-			__viewer->callback_event_keyboard(key, action, mods);
+			viewer->callback_event_keyboard(key, action, mods);
 		});
 
 		glfwSetCharCallback(window_, [](GLFWwindow *win, unsigned int codepoint) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
-			__viewer->callback_event_character(codepoint);
+			viewer->callback_event_character(codepoint);
 		});
 
 		glfwSetDropCallback(window_, [](GLFWwindow *win, int count, const char **filenames) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
-			__viewer->callback_event_drop(count, filenames);
+			viewer->callback_event_drop(count, filenames);
 		});
 
 		glfwSetScrollCallback(window_, [](GLFWwindow *win, double dx, double dy) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
-			__viewer->callback_event_scroll(dx, dy);
+			viewer->callback_event_scroll(dx, dy);
 		});
 
 		/* React to framebuffer size events -- includes window size events
 		   and also catches things like dragging a window from a Retina-capable
 		   screen to a normal screen on Mac OS X */
 		glfwSetFramebufferSizeCallback(window_, [](GLFWwindow *win, int width, int height) {
-			if (!__viewer->process_events_)
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			if (!viewer->process_events_)
 				return;
-			__viewer->callback_event_resize(width, height);
+			viewer->callback_event_resize(width, height);
 		});
 
 		// notify when the screen has lost focus (e.g. application switch)
 		glfwSetWindowFocusCallback(window_, [](GLFWwindow *win, int focused) {
-			// focused: 0 when false, 1 when true
-			__viewer->focus_event(focused != 0);
+			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			viewer->focus_event(focused != 0);// true for focused
 		});
 
 		glfwSetWindowCloseCallback(window_, [](GLFWwindow *win) {
@@ -372,6 +371,8 @@ namespace easy3d {
 			return;
 
 		try {
+			width_ = w;
+			height_ = h;
 			glViewport(0, 0, w, h);
 			camera_->setScreenWidthAndHeight(w, h);
 			post_resize(w, h);
@@ -404,6 +405,16 @@ namespace easy3d {
 		if (camera_) {
 			delete camera_;
 			camera_ = nullptr;
+		}
+
+		if (axis_) {
+			delete axis_;
+			axis_ = nullptr;
+		}
+
+		if (axis_program_) {
+			delete axis_program_;
+			axis_program_ = nullptr;
 		}
 
 		for (auto model : surface_drawables_) {
@@ -509,6 +520,10 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+		bool found = false;
+		const vec3& p = point_under_pixel(x, y, found);
+		if (found)
+			std::cout << "point under mouse: " << p << std::endl;
 		// highlight geometry primitives here
 		return false;
 	}
@@ -620,9 +635,20 @@ namespace easy3d {
 	}
 
 
+	void Viewer::pre_draw() {
+		const mat4& MVP = camera_->modelViewProjectionMatrix();
+		axis_program_->bind();
+		axis_program_->set_uniform("MVP", MVP);
+		axis_program_->set_uniform("color", vec3(1.f, 0.f, 0.f));		mpl_debug_gl_error;
+		axis_->draw(false);					mpl_debug_gl_error;
+		axis_program_->unbind();
+	}
+
+
 	void Viewer::draw_all() {
 		glfwMakeContextCurrent(window_);
 		glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
+		glClearDepth(1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// --------------------------------------
@@ -647,6 +673,38 @@ namespace easy3d {
 
 
 	void Viewer::init() {
+		std::vector<vec3> points = {vec3(0,0,0), vec3(1,0,0), vec3(0,1,0), vec3(0,0,1)};
+		std::vector<unsigned int> indices = { 0, 1, 0, 2, 0, 3 };
+		axis_ = new LinesDrawable;
+		axis_->update_vertex_buffer(points);
+		axis_->update_index_buffer(indices);
+		axis_program_ = new ShaderProgram;
+		axis_program_->load_shader_from_code(ShaderProgram::VERTEX,
+			"#version 330\n"
+			"uniform mat4 MVP;\n"
+			"in vec3 vtx_position;\n"
+			"void main() {\n"
+			"    gl_Position = MVP * vec4(vtx_position, 1.0);\n"
+			"}"
+		);
+		axis_program_->load_shader_from_code(ShaderProgram::FRAGMENT,
+			"#version 330\n"
+			"uniform vec3 color;\n"
+			"out vec4 outputColor;\n"
+			"void main() {\n"
+			"    outputColor = vec4(color, 1.0);\n"
+			"}"
+		);
+		axis_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+		axis_program_->link_program();
+
+		camera_ = new Camera;
+		camera_->setSceneRadius(1.0f);
+		camera_->setSceneCenter(vec3(0, 0, 0));
+		int w, h;
+		glfwGetFramebufferSize(window_, &w, &h);
+		camera_->setScreenWidthAndHeight(w, h);
+
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
 		glfwShowWindow(window_);
@@ -742,8 +800,10 @@ namespace easy3d {
 
 	bool Viewer::open() {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
-			{"obj", "Wavefront mesh"},
-			{"off", "Object file format"},
+			{"obj", "Wavefront Mesh"},
+			{"off", "Object File Format"},
+			{"ply", "PLY mesh or point cloud"},
+			{"*", "All Files"}
 		};
 		const std::string& file_name = easy3d::file_dialog(filetypes, false);
 		if (file_name.empty())
@@ -873,5 +933,6 @@ namespace easy3d {
 
 		surface_program_->unbind();	mpl_debug_gl_error;
 	}
+
 
 }

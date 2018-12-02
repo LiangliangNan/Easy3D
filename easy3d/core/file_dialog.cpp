@@ -46,6 +46,8 @@ namespace easy3d {
 #if defined(_WIN32)
 		OPENFILENAMEW ofn;
 		ZeroMemory(&ofn, sizeof(OPENFILENAMEW));
+		ofn.hwndOwner = GetForegroundWindow();
+		ofn.hInstance = 0;
 		ofn.lStructSize = sizeof(OPENFILENAMEW);
 		wchar_t tmp[FILE_DIALOG_MAX_BUFFER];
 		ofn.lpstrFile = tmp;
@@ -56,12 +58,12 @@ namespace easy3d {
 		std::string filter;
 
 		if (!save && filetypes.size() > 1) {
-			filter.append("Supported file types (");
+			filter.append("Supported Formats (");
 			for (size_t i = 0; i < filetypes.size(); ++i) {
 				filter.append("*.");
 				filter.append(filetypes[i].first);
 				if (i + 1 < filetypes.size())
-					filter.append(";");
+					filter.append("; ");
 			}
 			filter.append(")");
 			filter.push_back('\0');
@@ -69,7 +71,7 @@ namespace easy3d {
 				filter.append("*.");
 				filter.append(filetypes[i].first);
 				if (i + 1 < filetypes.size())
-					filter.append(";");
+					filter.append("; ");
 			}
 			filter.push_back('\0');
 		}
@@ -92,12 +94,12 @@ namespace easy3d {
 		ofn.lpstrFilter = wfilter.data();
 
 		if (save) {
-			ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+			ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 			if (GetSaveFileNameW(&ofn) == FALSE)
 				return {};
 		}
 		else {
-			ofn.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+			ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 			if (multiple)
 				ofn.Flags |= OFN_ALLOWMULTISELECT;
 			if (GetOpenFileNameW(&ofn) == FALSE)

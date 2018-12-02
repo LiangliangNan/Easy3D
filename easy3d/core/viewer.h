@@ -45,6 +45,7 @@ namespace easy3d {
 	class Surface_mesh;
 	class Camera;
 	class FacesDrawable;
+	class LinesDrawable;
 	class ShaderProgram;
 
 	class Viewer
@@ -130,7 +131,7 @@ namespace easy3d {
 		virtual void cleanup();
 
 		// This function will be called before the main draw procedure.
-		virtual void pre_draw() { /* To be overridden */ }
+		virtual void pre_draw();
 
 		/// Put your rendering calls here
 		virtual void draw();
@@ -198,6 +199,8 @@ namespace easy3d {
 		bool	process_events_;
 
 		Camera* camera_;
+		LinesDrawable* axis_;
+		ShaderProgram* axis_program_;
 
 		// mouse
 		int		button_;		// for mouse drag

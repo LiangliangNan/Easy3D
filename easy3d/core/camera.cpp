@@ -24,7 +24,7 @@
 
 #include <algorithm>
 
-#include "manipulatedCameraFrame.h"
+#include "manipulated_camera_frame.h"
 #include "viewer.h"
 
 

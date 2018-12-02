@@ -20,7 +20,7 @@
 
 *****************************************************************************/
 
-#include "manipulatedCameraFrame.h"
+#include "manipulated_camera_frame.h"
 
 #include <algorithm>
 
