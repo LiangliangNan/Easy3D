@@ -200,13 +200,17 @@ namespace easy3d {
 		virtual void spin();
 		//@}
 
-		/*! @name Mouse event handlers */
+		/*! @name frame manipulation */
 		//@{
-	protected:
-		virtual void mousePressEvent(int x, int y, int button, int modifiers, Camera *const camera);
-		virtual void mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera);
-		virtual void mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera);
-		virtual void wheelEvent(int x, int y, int dx, int dy, Camera *const camera);
+	public:
+		virtual void action_start(); // will be called when an action (e.g., drag) starts, e.g., mouse pressed
+		virtual void action_end();	 // will be called when an action (e.g., drag) ends, e.g., mouse released
+		
+		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
+		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
+		virtual void action_zoom(int dy_wheel, Camera *const camera);
+
+		
 		virtual void mouseDoubleClickEvent(int x, int y, int button, int modifiers, Camera *const camera);
 
 		//@}
@@ -223,10 +227,7 @@ namespace easy3d {
 				X or Y direction, whichever has the largest magnitude. */
 		float deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const;
 		/*! Returns a normalized wheel delta, proportionnal to wheelSensitivity(). */
-		float wheelDelta(int x, int y, int dx, int dy) const;
-
-	private:
-		void zoom(float delta, const Camera *const camera);
+		float wheelDelta(int wheel_dy) const;
 
 #endif // DOXYGEN
 
@@ -240,8 +241,7 @@ namespace easy3d {
 		// Mouse speed and spinning
 		quat spinningQuaternion_;
 
-		// Whether the SCREEN_TRANS direction (horizontal or vertical) is fixed or
-		// not.
+		// Whether the SCREEN_TRANS direction (horizontal or vertical) is fixed or not.
 		bool dirIsFixed_;
 
 	private:

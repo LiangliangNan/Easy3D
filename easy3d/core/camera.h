@@ -203,7 +203,6 @@ namespace easy3d {
 		Viewer's window dimensions when the Camera is attached to a Viewer. See
 		also QOpenGLWidget::height() */
 		int screenHeight() const { return screenHeight_; }
-		void getViewport(int viewport[4]) const;
 		float pixelGLRatio(const vec3 &position) const;
 
 		/*! Returns the coefficient which is used to set zNear() when the Camera is
@@ -356,7 +355,6 @@ namespace easy3d {
 		void computeProjectionMatrix();
 		void computeModelViewMatrix();
 
-		// TODO: change member variables to be mat4
 		const mat4& projectionMatrix() const;
 		const mat4& modelViewMatrix() const;
 		mat4 modelViewProjectionMatrix() const;

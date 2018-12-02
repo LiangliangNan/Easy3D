@@ -24,7 +24,6 @@
 
 #include <algorithm>
 
-#include <GLFW/glfw3.h> // Include glfw3.h after our OpenGL definitions
 #include "camera.h"
 
 
@@ -86,31 +85,22 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-	void ManipulatedCameraFrame::zoom(float delta, const Camera *const camera) {
-		const float sceneRadius = camera->sceneRadius();
-		if (zoomsOnPivotPoint_) {
-			vec3 direction = position() - camera->pivotPoint();
-			if (direction.norm() > 0.02f * sceneRadius || delta > 0.0f)
-				translate(delta * direction);
+	void ManipulatedCameraFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	{
+		if (screen) {
+			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
+
+			float pre_x = float(x - dx);
+			float pre_y = float(y - dy);
+			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
+			const float angle = atan2(y - trans[1], x - trans[0]);
+
+			quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
+			setSpinningQuaternion(rot);
+			spin();
+			updateSceneUpVector();
 		}
 		else {
-			const float coef = std::max(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
-			vec3 trans(0.0f, 0.0f, -coef * delta);
-			translate(inverseTransformOf(trans));
-		}
-	}
-
-
-	/*! Overloading of ManipulatedFrame::mouseMoveEvent().
-
-	Motion depends on mouse binding (see <a href="../mouse.html">mouse page</a> for
-	details). The resulting displacements are basically inverted from those of a
-	ManipulatedFrame. */
-	void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera)
-	{
-		// #CONNECTION# QGLViewer::mouseMoveEvent does the update().
-		if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_LEFT)	// QGLViewer::ROTATE
-		{
 			quat rot;
 			if (rotatesAroundUpVector_) {
 				// Multiply by 2.0 to get on average about the same speed as with the
@@ -131,45 +121,13 @@ namespace easy3d {
 			setSpinningQuaternion(rot);
 			spin();
 		}
-		else if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_RIGHT)	// QGLViewer::TRANSLATE
-		{
-			vec3 trans(-float(dx), float(dy), 0.0f);
-			// Scale to fit the screen mouse displacement
-			switch (camera->type())
-			{
-			case Camera::PERSPECTIVE:
-				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
-					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-					camera->screenHeight();
-				break;
-			case Camera::ORTHOGRAPHIC: {
-				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / camera->screenWidth();
-				trans[1] *= 2.0f * h / camera->screenHeight();
-				break;
-			}
-			}
-			translate(inverseTransformOf(translationSensitivity() * trans));
-		}
+		frameModified();
+	}
 
-		else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_LEFT) // SCREEN_ROTATE
-		{
-			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
 
-			float pre_x = float(x - dx);
-			float pre_y = float(y - dy);
-			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-			const float angle = atan2(y - trans[1], x - trans[0]);
-
-			quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
-			setSpinningQuaternion(rot);
-			spin();
-			updateSceneUpVector();
-		}
-
-		else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT)  // SCREEN_TRANSLATE
-		{
+	void ManipulatedCameraFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	{
+		if (screen) {
 			vec3 trans;
 			int dir = mouseOriginalDirection(x, y, dx, dy);
 			if (dir == 1)
@@ -194,12 +152,64 @@ namespace easy3d {
 
 			translate(inverseTransformOf(translationSensitivity() * trans));
 		}
-		else if (button == GLFW_MOUSE_BUTTON_MIDDLE && modifiers == 0) {
-			int delta = 0; // just to make the zoom speed equivalent to the wheel effect
-			if (dy < 0) delta = -1;
-			else if (dy > 0) delta = 1;
-			camera->frame()->wheelEvent(x, y, dx, delta, camera);
+
+		else {
+			vec3 trans(-float(dx), float(dy), 0.0f);
+			// Scale to fit the screen mouse displacement
+			switch (camera->type())
+			{
+			case Camera::PERSPECTIVE:
+				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
+					camera->screenHeight();
+				break;
+			case Camera::ORTHOGRAPHIC: {
+				float w, h;
+				camera->getOrthoWidthHeight(w, h);
+				trans[0] *= 2.0f * w / camera->screenWidth();
+				trans[1] *= 2.0f * h / camera->screenHeight();
+				break;
+			}
+			}
+			translate(inverseTransformOf(translationSensitivity() * trans));
 		}
+		frameModified();
+	}
+
+
+	/*! This is an overload of ManipulatedFrame::wheelEvent().
+
+The wheel behavior depends on the wheel binded action. Current possible actions
+are QGLViewer::ZOOM, QGLViewer::MOVE_FORWARD, QGLViewer::MOVE_BACKWARD.
+QGLViewer::ZOOM speed depends on wheelSensitivity() while
+QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD depend on flySpeed(). See
+QGLViewer::setWheelBinding() to customize the binding. */
+	void ManipulatedCameraFrame::action_zoom(int wheel_dy, Camera *const camera)
+	{
+		float delta = wheelDelta(wheel_dy);
+
+		const float sceneRadius = camera->sceneRadius();
+		if (zoomsOnPivotPoint_) {
+			vec3 direction = position() - camera->pivotPoint();
+			if (direction.norm() > 0.02f * sceneRadius || delta > 0.0f)
+				translate(delta * direction);
+		}
+		else {
+			const float coef = std::max(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
+			vec3 trans(0.0f, 0.0f, -coef * delta);
+			translate(inverseTransformOf(trans));
+		}
+
+		frameModified();
+
+		// #CONNECTION# startAction should always be called before
+		if (previousConstraint_)
+			setConstraint(previousConstraint_);
+	}
+
+
+	//void ManipulatedCameraFrame::mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera)
+//	{
 
 		// 	case QGLViewer::MOVE_FORWARD: {
 		// 		quat rot = pitchYawQuaternion(dx, dy, camera);
@@ -257,37 +267,17 @@ namespace easy3d {
 			//		Q_EMIT manipulated();
 			//}
 
-		frameModified();
-	}
+	//}
 
 	/*! This is an overload of ManipulatedFrame::mouseReleaseEvent(). The
 	  QGLViewer::MouseAction is terminated. */
-	void ManipulatedCameraFrame::mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera)
-	{
-		//if (action_ == QGLViewer::ZOOM_ON_REGION)
-		//	camera->fitScreenRegion(QRect(pressPos_, event->pos()));
+	//void ManipulatedCameraFrame::mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera)
+	//{
+	//	//if (action_ == QGLViewer::ZOOM_ON_REGION)
+	//	//	camera->fitScreenRegion(QRect(pressPos_, event->pos()));
 
-		ManipulatedFrame::mouseReleaseEvent(x, y, button, modifiers, camera);
-	}
-
-
-
-	/*! This is an overload of ManipulatedFrame::wheelEvent().
-
-	The wheel behavior depends on the wheel binded action. Current possible actions
-	are QGLViewer::ZOOM, QGLViewer::MOVE_FORWARD, QGLViewer::MOVE_BACKWARD.
-	QGLViewer::ZOOM speed depends on wheelSensitivity() while
-	QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD depend on flySpeed(). See
-	QGLViewer::setWheelBinding() to customize the binding. */
-	void ManipulatedCameraFrame::wheelEvent(int x, int y, int dx, int dy, Camera *const camera)
-	{
-		zoom(wheelDelta(x, y, dx, dy), camera);
-		frameModified();
-
-		// #CONNECTION# startAction should always be called before
-		if (previousConstraint_)
-			setConstraint(previousConstraint_);
-	}
+	//	ManipulatedFrame::mouseReleaseEvent(x, y, button, modifiers, camera);
+	//}
 
 
 	////////////////////////////////////////////////////////////////////////////////

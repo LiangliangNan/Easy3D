@@ -24,9 +24,6 @@
 #include "camera.h"
 #include "manipulatedCameraFrame.h"
 
-#include <cstdlib>
-#include <GLFW/glfw3.h> // Include glfw3.h after our OpenGL definitions
-
 
 namespace easy3d {
 
@@ -107,39 +104,30 @@ namespace easy3d {
 		return value * zoomSensitivity();
 	}
 
-	float ManipulatedFrame::wheelDelta(int x, int y, int dx, int dy) const {
-		(void)x; (void)y; (void)dx;
+	float ManipulatedFrame::wheelDelta(int wheel_dy) const {
 		static const float WHEEL_SENSITIVITY_COEF = 0.1f;
-		return dy * wheelSensitivity() * WHEEL_SENSITIVITY_COEF;
-	}
-
-	void ManipulatedFrame::zoom(float delta, const Camera *const camera) {
-		vec3 trans(0.0, 0.0, (camera->position() - position()).norm() * delta);
-
-		trans = camera->frame()->orientation().rotate(trans);
-		if (referenceFrame())
-			trans = referenceFrame()->transformOf(trans);
-		translate(trans);
+		return wheel_dy * wheelSensitivity() * WHEEL_SENSITIVITY_COEF;
 	}
 
 
-	/*! Initiates the ManipulatedFrame mouse manipulation.
-
-	Overloading of MouseGrabber::mousePressEvent(). See also mouseMoveEvent() and
-	mouseReleaseEvent().
-
-	The mouse behavior depends on which button is pressed. See the <a
-	href="../mouse.html">QGLViewer mouse page</a> for details. */
-	void ManipulatedFrame::mousePressEvent(int x, int y, int button, int modifiers, Camera *const camera) {
-		(void)x;
-		(void)y;
-		(void)button;
-		(void)modifiers;
-		(void)camera;
-		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT)  // SCREEN_TRANSLATE
-			dirIsFixed_ = false;
+	// Initiates the ManipulatedFrame mouse manipulation.
+	void ManipulatedFrame::action_start() {
+		dirIsFixed_ = false;
 	}
 
+
+	/*! Stops the ManipulatedFrame mouse manipulation.
+	Overloading of MouseGrabber::mouseReleaseEvent().
+	If the action was a QGLViewer::ROTATE QGLViewer::MouseAction, a continuous
+	spinning is possible if the speed of the mouse cursor is larger than
+	spinningSensitivity() when the button is released. Press the rotate button again
+	to stop spinning. See startSpinning() and isSpinning(). */
+	void ManipulatedFrame::action_end()
+	{
+		dirIsFixed_ = false;
+		if (previousConstraint_)
+			setConstraint(previousConstraint_);
+	}
 
 	/*! Modifies the ManipulatedFrame according to the mouse motion.
 
@@ -150,10 +138,22 @@ namespace easy3d {
 	Camera::screenWidth(), Camera::screenHeight(), Camera::fieldOfView()).
 
 	Emits the manipulated() signal. */
-	void ManipulatedFrame::mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera)
+	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
 	{
-		if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_LEFT)	// QGLViewer::ROTATE
-		{
+		if (screen) {
+			vec3 trans = camera->projectedCoordinatesOf(position());
+
+			float pre_x = float(x - dx);
+			float pre_y = float(y - dy);
+			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
+			const float angle = atan2(y - trans[1], x - trans[0]);
+
+			const vec3 axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
+			quat rot(axis, angle - prev_angle);
+			setSpinningQuaternion(rot);
+			spin();
+		}
+		else {
 			vec3 trans = camera->projectedCoordinatesOf(position());
 			int pre_x = x - dx;
 			int pre_y = y - dy;
@@ -167,51 +167,11 @@ namespace easy3d {
 			setSpinningQuaternion(rot);
 			spin();
 		}
-		else if (modifiers == 0 && button == GLFW_MOUSE_BUTTON_RIGHT)	// QGLViewer::TRANSLATE
-		{
-			vec3 trans(float(dx), float(-dy), 0.0f);
-			// Scale to fit the screen mouse displacement
-			switch (camera->type())
-			{
-			case Camera::PERSPECTIVE:
-				trans *= 2.0 * tan(camera->fieldOfView() / 2.0) *
-					fabs((camera->frame()->coordinatesOf(position())).z) /
-					camera->screenHeight();
-				break;
-			case Camera::ORTHOGRAPHIC: {
-				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * float(w) / camera->screenWidth();
-				trans[1] *= 2.0f * float(h) / camera->screenHeight();
-				break;
-			}
-			}
-			// Transform to world coordinate system.
-			trans =
-				camera->frame()->orientation().rotate(translationSensitivity() * trans);
-			// And then down to frame
-			if (referenceFrame())
-				trans = referenceFrame()->transformOf(trans);
-			translate(trans);
-		}
+	}
 
-		else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_LEFT) // SCREEN_ROTATE
-		{
-			vec3 trans = camera->projectedCoordinatesOf(position());
-
-			float pre_x = float(x - dx);
-			float pre_y = float(y - dy);
-			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-			const float angle = atan2(y - trans[1], x - trans[0]);
-
-			const vec3 axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
-			quat rot(axis, angle - prev_angle);
-			setSpinningQuaternion(rot);
-			spin();
-		}
-
-		else if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT)  // SCREEN_TRANSLATE
-		{
+	void ManipulatedFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	{
+		if (screen)	{
 			vec3 trans;
 			int dir = mouseOriginalDirection(x, y, dx, dy);
 			if (dir == 1)
@@ -242,24 +202,35 @@ namespace easy3d {
 
 			translate(trans);
 		}
+		else {
+			vec3 trans(float(dx), -float(dy), 0.0);
+			// Scale to fit the screen mouse displacement
+			switch (camera->type()) {
+			case Camera::PERSPECTIVE:
+				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+					fabs((camera->frame()->coordinatesOf(position())).z) /
+					camera->screenHeight();
+				break;
+			case Camera::ORTHOGRAPHIC: {
+				float w, h;
+				camera->getOrthoWidthHeight(w, h);
+				trans[0] *= 2.0f * w / camera->screenWidth();
+				trans[1] *= 2.0f * h / camera->screenHeight();
+				break;
+			}
+			}
+			// Transform to world coordinate system.
+			trans =
+				camera->frame()->orientation().rotate(translationSensitivity() * trans);
+			// And then down to frame
+			if (referenceFrame())
+				trans = referenceFrame()->transformOf(trans);
+			translate(trans);
+		}
 
 		frameModified();
 	}
 
-	/*! Stops the ManipulatedFrame mouse manipulation.
-
-	Overloading of MouseGrabber::mouseReleaseEvent().
-
-	If the action was a QGLViewer::ROTATE QGLViewer::MouseAction, a continuous
-	spinning is possible if the speed of the mouse cursor is larger than
-	spinningSensitivity() when the button is released. Press the rotate button again
-	to stop spinning. See startSpinning() and isSpinning(). */
-	void ManipulatedFrame::mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera)
-	{
-		(void)x; (void)y; (void)button; (void)modifiers; (void)camera;
-		if (previousConstraint_)
-			setConstraint(previousConstraint_);
-	}
 
 	/*! Overloading of MouseGrabber::mouseDoubleClickEvent().
 
@@ -267,26 +238,34 @@ namespace easy3d {
 	(see alignWithFrame() and QGLViewer::ALIGN_FRAME). Right button projects the
 	ManipulatedFrame on the \p camera view direction. */
 	void ManipulatedFrame::mouseDoubleClickEvent(int x, int y, int button, int modifiers, Camera *const camera) {
-		if (modifiers == 0)
-			switch (button)
-			{
-			case GLFW_MOUSE_BUTTON_LEFT:
-				alignWithFrame(camera->frame());
-				break;
-			case GLFW_MOUSE_BUTTON_RIGHT:
-				projectOnLine(camera->position(), camera->viewDirection());
-				break;
-			default:
-				break;
-			}
+		//if (modifiers == 0)
+		//	switch (button)
+		//	{
+		//	case GLFW_MOUSE_BUTTON_LEFT:
+		//		alignWithFrame(camera->frame());
+		//		break;
+		//	case GLFW_MOUSE_BUTTON_RIGHT:
+		//		projectOnLine(camera->position(), camera->viewDirection());
+		//		break;
+		//	default:
+		//		break;
+		//	}
 	}
 
 	/*! Overloading of MouseGrabber::wheelEvent().
 
 	Using the wheel is equivalent to a QGLViewer::ZOOM QGLViewer::MouseAction. See
 	 QGLViewer::setWheelBinding(), setWheelSensitivity(). */
-	void ManipulatedFrame::wheelEvent(int x, int y, int dx, int dy, Camera *const camera) {
-		zoom(wheelDelta(x, y, dx, dy), camera);
+	void ManipulatedFrame::action_zoom(int wheel_dy, Camera *const camera)
+	{
+		float delta = wheelDelta(wheel_dy);
+
+		vec3 trans(0.0f, 0.0f, (camera->position() - position()).norm() * delta);
+
+		trans = camera->frame()->orientation().rotate(trans);
+		if (referenceFrame())
+			trans = referenceFrame()->transformOf(trans);
+		translate(trans);
 		frameModified();
 
 		// #CONNECTION# startAction should always be called before

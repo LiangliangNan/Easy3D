@@ -336,13 +336,15 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-		camera_->frame()->mousePressEvent(x, y, button, modifiers, camera_);
+		camera_->frame()->action_start();
 
         if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
 			bool found = false;
 			vec3 p = point_under_pixel(x, y, found);
-			if (found)
+			if (found) {
 				camera_->setPivotPoint(p);
+				std::cout << "pivot point set" << std::endl;
+			}
 			else
 				camera_->setPivotPoint(camera_->sceneCenter());
 		}
@@ -353,29 +355,39 @@ namespace easy3d {
 
 	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
 		button_ = -1;
+		camera_->frame()->action_end();
 		return false;
 	}
 
 
 	bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-		camera_->frame()->mouseMoveEvent(x, y, dx, dy, button, modifiers, camera_);
+		switch (button)
+		{
+		case GLFW_MOUSE_BUTTON_LEFT:
+			camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+			break;
+		case GLFW_MOUSE_BUTTON_RIGHT:
+			camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+			break;
+		case GLFW_MOUSE_BUTTON_MIDDLE:
+			if (dy != 0) 
+				camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
+			break;
+		}
+
 		return false;
 	}
 
 
 	bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
 		// highlight geometry primitives here
-
-		//std::cout << title_ + ": free move (" << x << ", " << y << "), delta (" << dx << ", " << dy << ")" << std::endl;
-
-		//update();
 		return false;
 	}
 
 
 	bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 		try {
-			camera_->frame()->wheelEvent(x, y, dx, dy, camera_);
+			camera_->frame()->action_zoom(dy, camera_);
 		}
 		catch (const std::exception &e) {
 			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
@@ -438,9 +450,9 @@ namespace easy3d {
 				else if (key == GLFW_KEY_S)
 					save();
 				else if (key == GLFW_KEY_MINUS) 
-					camera_->frame()->wheelEvent(mouse_x_, mouse_y_, 0, -1, camera_);
+					camera_->frame()->action_zoom(-1, camera_);
 				else if (key == GLFW_KEY_EQUAL)
-					camera_->frame()->wheelEvent(mouse_x_, mouse_y_, 0, 1, camera_);
+					camera_->frame()->action_zoom(1, camera_);
 			}
 			else {
 				pressed_key_ = key;
@@ -639,12 +651,14 @@ namespace easy3d {
 		glfwShowWindow(window_);
 
 		usage_ = std::string(R"(Easy3D viewer usage:
-  H or F1:         Help
+  F1:              Help
   Ctrl + O:        Open file
   Ctrl + S:        Save file
-  Left [+ Shift]:  Rotate scene [screen based]
-  Right [+ Shift]: Translate scene [screen based]
-  Middle/wheel:    Zoom out/in
+  Left:            Rotate scene
+  Right:           Translate scene
+  Alt + Left:      Rotate scene (screen based)
+  Alt + Right:     Translate scene (screen based)
+  Middle/Wheel:    Zoom out/in
   Ctrl + '-'/'+':  Zoom out/in
   F:               Fit screen      
   C:               Center scene
@@ -693,7 +707,6 @@ namespace easy3d {
 				double tic = get_seconds();
 
 				draw_all();
-
 				glfwSwapBuffers(window_);
 
 				if (is_animating || frame_counter++ < num_extra_frames)

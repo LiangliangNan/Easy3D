@@ -126,12 +126,6 @@ namespace easy3d {
 		   Default value is false. */
 		void setZoomsOnPivotPoint(bool enabled) { zoomsOnPivotPoint_ = enabled; }
 
-	private:
-#ifndef DOXYGEN
-		void zoom(float delta, const Camera *const camera);
-#endif
-		//@}
-
 		/*! @name Fly parameters */
 		//@{
 	public:
@@ -164,12 +158,12 @@ namespace easy3d {
 		vec3 sceneUpVector() const { return sceneUpVector_; }
 
 
-		/*! @name Mouse event handlers */
+		/*! @name frame manipulation */
 		//@{
 	protected:
-		virtual void mouseMoveEvent(int x, int y, int dx, int dy, int button, int modifiers, Camera *const camera);
-		virtual void mouseReleaseEvent(int x, int y, int button, int modifiers, Camera *const camera);
-		virtual void wheelEvent(int x, int y, int dx, int dy, Camera *const camera);
+		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
+		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
+		virtual void action_zoom(int dy_wheel, Camera *const camera);
 
 		/*! @name Spinning */
 		//@{

@@ -1067,20 +1067,6 @@ sceneRadius())*viewDirection()); break;
 
 ///////////////////////// Camera to world transform ///////////////////////
 
-
-/*! Fills \p viewport with the Camera OpenGL viewport.
-
-This method is mainly used in conjunction with \c gluProject, which requires
-such a viewport. Returned values are (0, screenHeight(), screenWidth(), -
-screenHeight()), so that the origin is located in the \e upper left corner of
-the window (Qt style coordinate system). */
-void Camera::getViewport(int viewport[4]) const {
-	viewport[0] = 0;
-	viewport[1] = screenHeight();
-	viewport[2] = screenWidth();
-	viewport[3] = -screenHeight();
-}
-
 /*! Returns the screen projected coordinates of a point \p src defined in the \p
  frame coordinate system.
 
