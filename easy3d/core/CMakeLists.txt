@@ -15,8 +15,10 @@ set(easy3d_core_HEADERS
     ./manipulated_frame.h
     ./opengl_error.h
     ./opengl_info.h
+    ./primitives.h
     ./shader_code.h
     ./shader_program.h
+    ./transform.h
     ./vertex_array_object.h
     ./viewer.h
     )
@@ -32,8 +34,10 @@ set(easy3d_core_SOURCES
     ./manipulated_frame.cpp
     ./opengl_error.cpp
     ./opengl_info.cpp
+    ./primitives.cpp
     ./shader_code.cpp
     ./shader_program.cpp
+    ./transform.cpp
     ./vertex_array_object.cpp
     ./viewer.cpp
     )

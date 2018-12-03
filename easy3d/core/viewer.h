@@ -52,7 +52,7 @@ namespace easy3d {
 	{
 	public:
 		Viewer(
-			const std::string& title = "Viewer",
+			const std::string& title = "Easy3dViewer",
 			int samples = 4,
 			int gl_major = 3,
 			int gl_minor = 2,
