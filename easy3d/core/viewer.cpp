@@ -512,10 +512,6 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
-		bool found = false;
-		const vec3& p = point_under_pixel(x, y, found);
-		if (found)
-			std::cout << "point under mouse: " << p << std::endl;
 		// highlight geometry primitives here
 		return false;
 	}

@@ -46,7 +46,7 @@ set(GLEW_STATIC 1)
 #set(CMAKE_CXX_FLAGS_DEBUG _DEBUG)
 #set(CMAKE_CXX_FLAGS_RELWITHDEBINFO _DEBUG)
 
-set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} -_DEBUG)
+#set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} -_DEBUG)
 
 ################################################################################
 
