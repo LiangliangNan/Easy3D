@@ -59,6 +59,7 @@ Camera::Camera()
 	// Requires fieldOfView() when called with ORTHOGRAPHIC. Attention to
 	// projectionMatrix_ below.
 	setType(PERSPECTIVE);
+	setViewDirection(vec3(0.0, 1.0, 0.0));
 
 	// #CONNECTION# initFromDOMElement default values
 	setZNearCoefficient(0.005f);
@@ -67,14 +68,12 @@ Camera::Camera()
 	// Dummy values
 	setScreenWidthAndHeight(600, 400);
 
-	// #CONNECTION# Camera copy constructor
-	for (unsigned short j = 0; j < 16; ++j) {
-		modelViewMatrix_[j] = ((j % 5 == 0) ? 1.0f : 0.0f);
-		// #CONNECTION# computeProjectionMatrix() is lazy and assumes 0.0 almost
-		// everywhere.
-		projectionMatrix_[j] = 0.0f;
-	}
+	modelViewMatrix_.load_identity();
+	projectionMatrix_.load_zero(); // computeProjectionMatrix() is lazy and assumes 0.0 almost
 	computeProjectionMatrix();
+
+	// position and orient the camera 
+	showEntireScene();
 }
 
 /*! Virtual destructor.
@@ -92,12 +91,8 @@ Camera::Camera(const Camera &camera)
 	// Requires the interpolationKfi_
 	setFrame(new ManipulatedCameraFrame(*camera.frame()));
 
-	for (unsigned short j = 0; j < 16; ++j) {
-		modelViewMatrix_[j] = ((j % 5 == 0) ? 1.0f : 0.0f);
-		// #CONNECTION# computeProjectionMatrix() is lazy and assumes 0.0 almost
-		// everywhere.
-		projectionMatrix_[j] = 0.0f;
-	}
+	modelViewMatrix_.load_identity();
+	projectionMatrix_.load_zero(); // computeProjectionMatrix() is
 
 	(*this) = camera;
 }

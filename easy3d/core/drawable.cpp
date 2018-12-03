@@ -220,19 +220,13 @@ namespace easy3d {
 	{
 		vao_->bind();
 
-		GLenum mode = GL_TRIANGLES;
-		if (type() == DT_POINTS)
-			mode = GL_POINTS;
-		else if (type() == DT_LINES)
-			mode = GL_LINES;
-
 		if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
 			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	mpl_debug_gl_error;
 
             GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
-            if (mode != GL_POINTS)
+            if (index_buffer_ != 0)
                 barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
             glMemoryBarrier(barriers);	mpl_debug_gl_error;
@@ -243,12 +237,15 @@ namespace easy3d {
 		if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	mpl_debug_gl_error;
 		if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	mpl_debug_gl_error;
 
-		if (mode == GL_POINTS)
-			glDrawArrays(mode, 0, GLsizei(num_vertices_));
+		// Primitives like lines and triangles can be drawn without the index buffer provided that 
+		// all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v2). This requires
+		// the shared vertices be duplicated in the vertex buffer.
+		if (index_buffer_ == 0)
+			glDrawArrays(type(), 0, GLsizei(num_vertices_));
 		else {
 			// index buffer must be bound if using glDrawElements()
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);				mpl_debug_gl_error;
-			glDrawElements(mode, GLsizei(num_indices_), GL_UNSIGNED_INT, 0);	mpl_debug_gl_error;
+			glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, 0);	mpl_debug_gl_error;
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);							mpl_debug_gl_error;
 		}
 

@@ -20,11 +20,10 @@
 #ifndef _MPL_OPENGL_DRAWABLE_H_
 #define _MPL_OPENGL_DRAWABLE_H_
 
-
-#include <easy3d/model/math_types.h>
-
 #include <string>
 #include <vector>
+
+#include <easy3d/model/math_types.h>
 
 /********************************************************************************************
 *
@@ -47,9 +46,9 @@ namespace easy3d {
 
 	// representation models
 	enum DrawableType {
-		DT_FACES = 0,	// a set of faces
-		DT_LINES,		// a set of line segments
-		DT_POINTS		// a set of points
+		DT_POINTS = 0x0000,		// same as GL_POINTS
+		DT_LINES = 0x0001,		// same as GL_LINES
+		DT_TRIANGLES = 0x0004	// same as GL_TRIANGLES
 	};
 
 	class Drawable
@@ -60,6 +59,7 @@ namespace easy3d {
 
 		static std::string title() { return "Drawable"; }
 
+		// accept  values are: GL_POINTS, GL_LINES, GL_TRIANGLES
 		virtual DrawableType type() const = 0;
 
 		const std::string name() const { return name_; }
@@ -158,7 +158,7 @@ namespace easy3d {
 
 	class FacesDrawable : public Drawable {
 	public:
-		DrawableType type() const { return DT_FACES; }
+		DrawableType type() const { return DT_TRIANGLES; }
 
 		// The selection of a polygonal face is internally implemented by selecting triangle
 		// primitives using shaders. So I need a way to map back to the original polygons.

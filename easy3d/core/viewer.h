@@ -75,8 +75,8 @@ namespace easy3d {
 		int width() const { return width_; }
 		int height() const { return height_; }
 
-		const float* background_color() const { return &background_color_[0]; }
-		void set_background_color(float r, float g, float b);
+		const vec3& background_color() const { return background_color_; }
+		void set_background_color(const vec3& c) { background_color_ = c; }
 
 		/// Return the actual samples of the viewer
 		int	 samples() const { return samples_; }
@@ -193,7 +193,7 @@ namespace easy3d {
 		bool	full_screen_;
 		int		width_;
 		int		height_;
-		float	background_color_[3];
+		vec3	background_color_;
 
 		// enable/disable event processing
 		bool	process_events_;

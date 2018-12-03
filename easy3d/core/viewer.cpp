@@ -34,15 +34,16 @@
 #include <3rd_party/glew/include/GL/glew.h>		// Initialize with glewInit() 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
-#include "camera.h"
-#include "manipulated_camera_frame.h"
+#include <easy3d/core/camera.h>
+#include <easy3d/core/manipulated_camera_frame.h>
 #include <easy3d/model/surface_mesh.h>
 #include <easy3d/model/point_cloud.h>
-#include "drawable.h"
-#include "shader_program.h"
-#include "shader_code.h"
-#include "opengl_error.h"
-#include "file_dialog.h"
+#include <easy3d/core/drawable.h>
+#include <easy3d/core/shader_program.h>
+#include <easy3d/core/shader_code.h>
+#include <easy3d/core/opengl_error.h>
+#include <easy3d/core/file_dialog.h>
+#include <easy3d/core/transform.h>
 
 
 namespace easy3d {
@@ -299,9 +300,14 @@ namespace easy3d {
 				mouse_pressed_y_ = mouse_y_;
 				return mouse_press_event(mouse_x_, mouse_y_, button, modifiers);
 			}
-			else {
+			else if (action == GLFW_RELEASE) {
 				drag_active_ = false;
 				return mouse_release_event(mouse_x_, mouse_y_, button, modifiers);
+			}
+			else if (action == GLFW_REPEAT) {
+				drag_active_ = false;
+				std::cout << "double click? Seems never happen" << std::endl;
+				return false;
 			}
 		}
 		catch (const std::exception &e) {
@@ -439,13 +445,6 @@ namespace easy3d {
 			glfwSetWindowTitle(window_, title.c_str());
 			title_ = title;
 		}
-	}
-
-
-	void Viewer::set_background_color(float r, float g, float b) {
-		background_color_[0] = r;
-		background_color_[1] = g;
-		background_color_[2] = b;
 	}
 
 
@@ -623,99 +622,11 @@ namespace easy3d {
 	}
 
 
-	void Viewer::pre_draw() {
-		const mat4& MVP = camera_->modelViewProjectionMatrix();
-		axis_program_->bind();
-		axis_program_->set_uniform("MVP", MVP);
-		axis_program_->set_uniform("color", vec3(1.f, 0.f, 0.f));		mpl_debug_gl_error;
-		axis_->draw(false);					mpl_debug_gl_error;
-		axis_program_->unbind();
-	}
-
-
-	void Viewer::draw_all() {
-		glfwMakeContextCurrent(window_);
-		glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
-		glClearDepth(1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		// --------------------------------------
-
-		pre_draw();		mpl_debug_gl_error;
-		draw();			mpl_debug_gl_error;
-		post_draw();	mpl_debug_gl_error;
-
-		// --------------------------------------
-
-		// Liangliang: Use this to implement a timer
-		//double elapsed = glfwGetTime() - last_interaction_;
-		//if (elapsed > 0.5f) {
-		//	/* Draw tooltips */
-		//	const Widget *widget = findWidget(mMousePos);
-		//	if (widget && !widget->tooltip().empty()) {
-		//		int tooltipWidth = 150;
-		//		// ...
-		//	}
-		//}
-	}
-
-
-	void Viewer::init() {
-		std::vector<vec3> points = {vec3(0,0,0), vec3(1,0,0), vec3(0,1,0), vec3(0,0,1)};
-		std::vector<unsigned int> indices = { 0, 1, 0, 2, 0, 3 };
-		axis_ = new LinesDrawable;
-		axis_->update_vertex_buffer(points);
-		axis_->update_index_buffer(indices);
-		axis_program_ = new ShaderProgram;
-		axis_program_->load_shader_from_code(ShaderProgram::VERTEX,
-			"#version 330\n"
-			"uniform mat4 MVP;\n"
-			"in vec3 vtx_position;\n"
-			"void main() {\n"
-			"    gl_Position = MVP * vec4(vtx_position, 1.0);\n"
-			"}"
-		);
-		axis_program_->load_shader_from_code(ShaderProgram::FRAGMENT,
-			"#version 330\n"
-			"uniform vec3 color;\n"
-			"out vec4 outputColor;\n"
-			"void main() {\n"
-			"    outputColor = vec4(color, 1.0);\n"
-			"}"
-		);
-		axis_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
-		axis_program_->link_program();
-
-		camera_ = new Camera;
-		camera_->setSceneRadius(1.0f);
-		camera_->setSceneCenter(vec3(0, 0, 0));
-		int w, h;
-		glfwGetFramebufferSize(window_, &w, &h);
-		camera_->setScreenWidthAndHeight(w, h);
-
-		// seems depth test is disabled by default
-		glEnable(GL_DEPTH_TEST);
-		glfwShowWindow(window_);
-
-		usage_ = std::string(R"(Easy3D viewer usage:
-  F1:              Help
-  Ctrl + O:        Open file
-  Ctrl + S:        Save file
-  Left:            Rotate scene
-  Right:           Translate scene
-  Alt + Left:      Rotate scene (screen based)
-  Alt + Right:     Translate scene (screen based)
-  Middle/Wheel:    Zoom out/in
-  Ctrl + '-'/'+':  Zoom out/in
-  F:               Fit screen      
-  C:               Center scene
-  Shift + Right:   Set/unset pivot point
-  P:               Toggle perspective/orthographic projection)"
-			// W:               Toggle wireframe
-			//   <,>     Toggle between models
-			//   ;       Toggle vertex labels
-			//   :       Toggle face labels)"			
-		);
+	bool Viewer::drop_event(const std::vector<std::string> & filenames) {
+		for (auto& name : filenames) {
+			open_mesh(name);
+		}
+		return false;
 	}
 
 
@@ -786,6 +697,78 @@ namespace easy3d {
 	}
 
 
+	void Viewer::draw_all() {
+		glfwMakeContextCurrent(window_);
+		glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
+		glClearDepth(1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+		// --------------------------------------
+
+		pre_draw();		mpl_debug_gl_error;
+		draw();			mpl_debug_gl_error;
+		post_draw();	mpl_debug_gl_error;
+
+		// --------------------------------------
+
+		// Liangliang: Use this to implement a timer
+		//double elapsed = glfwGetTime() - last_interaction_;
+		//if (elapsed > 0.5f) {
+		//	/* Draw tooltips */
+		//	const Widget *widget = findWidget(mMousePos);
+		//	if (widget && !widget->tooltip().empty()) {
+		//		int tooltipWidth = 150;
+		//		// ...
+		//	}
+		//}
+	}
+
+
+	void Viewer::init() {
+		float len = 0.7f;
+		std::vector<vec3> points = { vec3(0,0,0), vec3(len,0,0), vec3(0,0,0), vec3(0,len,0), vec3(0,0,0), vec3(0,0,len) };
+		std::vector<vec3> colors = { vec3(1,0,0), vec3(1,0,0), vec3(0,1,0), vec3(0,1,0), vec3(0,0,1), vec3(0,0,1) };
+		axis_ = new LinesDrawable;
+		axis_->update_vertex_buffer(points);
+		axis_->update_color_buffer(colors);
+		axis_program_ = new ShaderProgram("line_color");
+		axis_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::lines_color_vert);
+		axis_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::lines_color_frag);
+		axis_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+		axis_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
+		axis_program_->link_program();
+
+		camera_ = new Camera;
+		camera_->setSceneRadius(1.0f);
+		camera_->setSceneCenter(vec3(0, 0, 0));
+		camera_->setScreenWidthAndHeight(width_, height_);
+
+		// seems depth test is disabled by default
+		glEnable(GL_DEPTH_TEST);
+		glfwShowWindow(window_);
+
+		usage_ = std::string(R"(Easy3D viewer usage:
+  F1:              Help
+  Ctrl + O:        Open file
+  Ctrl + S:        Save file
+  Left:            Rotate scene
+  Right:           Translate scene
+  Alt + Left:      Rotate scene (screen based)
+  Alt + Right:     Translate scene (screen based)
+  Middle/Wheel:    Zoom out/in
+  Ctrl + '-'/'+':  Zoom out/in
+  F:               Fit screen      
+  C:               Center scene
+  Shift + Right:   Set/unset pivot point
+  P:               Toggle perspective/orthographic projection)"
+			// W:               Toggle wireframe
+			//   <,>     Toggle between models
+			//   ;       Toggle vertex labels
+			//   :       Toggle face labels)"			
+		);
+	}
+
+
 	bool Viewer::open() {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront Mesh"},
@@ -840,8 +823,8 @@ namespace easy3d {
 					if (surface_program_->load_shader_from_file(ShaderProgram::VERTEX, vert_file) &&
 						surface_program_->load_shader_from_file(ShaderProgram::FRAGMENT, frag_file))
 #else
-					if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, surface_color_vert) &&
-						surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, surface_color_frag))
+					if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
+						surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
 #endif
 					{
 						surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
@@ -884,11 +867,30 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::drop_event(const std::vector<std::string> & filenames) {
-		for (auto& name : filenames) {
-			open_mesh(name);
-		}
-		return false;
+	void Viewer::pre_draw() {
+		// The viewport and the scissor are changed to fit the lower left
+		// corner. Original values are saved.
+		int viewport[4];
+		int scissor[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		glGetIntegerv(GL_SCISSOR_BOX, scissor);	mpl_debug_gl_error;
+
+		static int corner_frame_size = 150;
+		glViewport(0, 0, corner_frame_size, corner_frame_size);
+		glScissor(0, 0, corner_frame_size, corner_frame_size);	mpl_debug_gl_error;
+
+		const mat4& proj = easy3d::ortho(-1, 1, -1, 1, -1, 1);
+		const mat4& view = camera_->orientation().inverse().matrix();
+		const mat4& MVP = proj * view;
+		axis_program_->bind();
+		axis_program_->set_uniform("MVP", MVP);
+		axis_program_->set_uniform("per_vertex_color", true);
+		axis_program_->set_uniform("default_color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
+		axis_->draw(false);					mpl_debug_gl_error;
+		axis_program_->unbind();
+
+		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+		glViewport(0, 0, width_, height_);
 	}
 
 
@@ -914,7 +916,8 @@ namespace easy3d {
 		surface_program_->set_uniform("ambient", vec4(0.05f, 0.05f, 0.05f, 1.0f));		mpl_debug_gl_error;
 		surface_program_->set_uniform("specular", vec4(0.4f, 0.4f, 0.4f, 1.0f));		mpl_debug_gl_error;
 		surface_program_->set_uniform("shininess", 64.0f);		mpl_debug_gl_error;
-		surface_program_->set_uniform("color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
+		surface_program_->set_uniform("per_vertex_color", false);		
+		surface_program_->set_uniform("default_color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
 
 		for (auto md : surface_drawables_)
 			md.second->draw(false);
