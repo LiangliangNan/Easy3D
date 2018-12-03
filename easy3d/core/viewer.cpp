@@ -442,14 +442,6 @@ namespace easy3d {
 	}
 
 
-	// Returned values are(0, 0, screen_width, screen_height), so that the origin is
-	// located in the lower left corner of the window (OpenGL style coordinate system).
-	void Viewer::get_viewport(int viewport[4]) const {
-		glfwMakeContextCurrent(window_);
-		glGetIntegerv(GL_VIEWPORT, viewport);
-	}
-
-
 	void Viewer::set_background_color(float r, float g, float b) {
 		background_color_[0] = r;
 		background_color_[1] = g;

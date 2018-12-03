@@ -72,8 +72,8 @@ namespace easy3d {
 		void set_title(const std::string &title);
 		const std::string& title() const { return title_; }
 
-		// Returned values are(0, 0, screen_width, screen_height).
-		void get_viewport(int viewport[4]) const;
+		int width() const { return width_; }
+		int height() const { return height_; }
 
 		const float* background_color() const { return &background_color_[0]; }
 		void set_background_color(float r, float g, float b);
