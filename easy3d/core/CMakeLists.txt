@@ -13,6 +13,7 @@ set(easy3d_core_HEADERS
     ./frame.h
     ./manipulated_camera_frame.h
     ./manipulated_frame.h
+    ./model.h
     ./opengl_error.h
     ./opengl_info.h
     ./primitives.h
@@ -32,6 +33,7 @@ set(easy3d_core_SOURCES
     ./frame.cpp
     ./manipulated_camera_frame.cpp
     ./manipulated_frame.cpp
+    ./model.cpp
     ./opengl_error.cpp
     ./opengl_info.cpp
     ./primitives.cpp

@@ -10,7 +10,7 @@
 namespace easy3d {
 
 
-	Drawable::Drawable()
+	Drawable::Drawable(const std::string& name)
 		: num_vertices_(0)
 		, num_indices_(0)
 		, vertex_buffer_(0)
@@ -23,7 +23,8 @@ namespace easy3d {
 		, current_storage_buffer_size_(0)
 		, current_selection_buffer_size_(0)
 		, highlight_id_(-1)
-		, name_("no_name")
+		, name_(name)
+		, visible_(true)
 	{
 		vao_ = new VertexArrayObject;
 	}
@@ -32,7 +33,7 @@ namespace easy3d {
 	Drawable::~Drawable() {
 		if (vao_) {
 			delete vao_;
-			vao_ = 0;
+			vao_ = nullptr;
 		}
 
 		release_vertex_buffer();
@@ -84,6 +85,14 @@ namespace easy3d {
 	void Drawable::release_selection_buffer() {
 		if (selection_buffer_ != 0)
 			VertexArrayObject::release_buffer(selection_buffer_);
+	}
+
+
+	// This drawable will use a shared vertex buffer (e.g., wireframe <- faces)
+	void Drawable::set_vertex_buffer(unsigned int buffer) {
+		assert(vao_);
+		assert(buffer != 0);
+		vertex_buffer_ = buffer;
 	}
 
 

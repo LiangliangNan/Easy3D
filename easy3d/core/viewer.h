@@ -41,12 +41,12 @@ struct GLFWwindow;
 
 namespace easy3d {
 
-	class Point_cloud;
+	class Model;
 	class Surface_mesh;
+	class Point_cloud;
 	class Camera;
-	class FacesDrawable;
-	class LinesDrawable;
 	class ShaderProgram;
+	class LinesDrawable;
 
 	class Viewer
 	{
@@ -105,7 +105,7 @@ namespace easy3d {
 		bool save() const;
 
 		// Open/Save a file specified by a file dialog. Return false if failed.
-		bool open_mesh(const std::string& file_name);
+		Surface_mesh* open_mesh(const std::string& file_name);
 		bool save_mesh(const std::string& file_name) const;
 
 	protected:
@@ -137,7 +137,7 @@ namespace easy3d {
 		virtual void draw();
 
 		// This function will be called after the main draw procedure.
-		virtual void post_draw() { /* To be overridden */ }
+		virtual void post_draw();
 
 		// External resize due to user interaction.
 		// This function will be called after the window size being changed.
@@ -168,7 +168,7 @@ namespace easy3d {
 		/// Handle a focus change event
 		virtual bool focus_event(bool focused);
 
-	private:
+	protected:
 
 		/* Event handlers. Client code should not touch these */
 		virtual bool callback_event_cursor_pos(double x, double y);
@@ -179,14 +179,16 @@ namespace easy3d {
 		virtual bool callback_event_scroll(double dx, double dy);
 		virtual void callback_event_resize(int w, int h);
 
-		/// Draw the viewer contents
-		void draw_all();
-
 		void setup_callbacks();
 
 	protected:
-		GLFWwindow*		window_;
-		std::string		title_;
+		std::string usage() const;
+		void draw_corner_axes();
+
+	protected:
+		GLFWwindow*	window_;
+		std::string	title_;
+		Camera*		camera_;
 
 		int		samples_;	// the actual samples available
 
@@ -198,10 +200,6 @@ namespace easy3d {
 		// enable/disable event processing
 		bool	process_events_;
 
-		Camera* camera_;
-		LinesDrawable* axis_;
-		ShaderProgram* axis_program_;
-
 		// mouse
 		int		button_;		// for mouse drag
 		int		modifiers_;		// for mouse drag
@@ -212,12 +210,17 @@ namespace easy3d {
 		int     mouse_pressed_y_;
 		int     pressed_key_;
 
-		std::string usage_;
-
 		//----------------- viewer data -------------------
 
+		// corner axes
+		bool	show_corner_axes_;
+		LinesDrawable* axes_;
+
+		ShaderProgram* lines_program_;
 		ShaderProgram* surface_program_;
-		std::map<Surface_mesh*, FacesDrawable*>		surface_drawables_;
+
+		std::vector<Model*> models_;
+		int model_idx_;
 	};
 
 }

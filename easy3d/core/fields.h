@@ -11,33 +11,33 @@ namespace easy3d {
 	};
 
 
-	// scalar field defined on faces
-	class FaceScalarField : public ScalarField, public FacesDrawable {
-	public:
-		FaceScalarField() {}
-		~FaceScalarField() {}
-	};
+	//// scalar field defined on faces
+	//class FaceScalarField : public ScalarField, public FacesDrawable {
+	//public:
+	//	FaceScalarField() {}
+	//	~FaceScalarField() {}
+	//};
 
 
-	// scalar field defined on edges
-	class EdgeScalarField : public ScalarField, public LinesDrawable {
-	public:
-		EdgeScalarField() {}
-		~EdgeScalarField() {}
-	};
+	//// scalar field defined on edges
+	//class EdgeScalarField : public ScalarField, public LinesDrawable {
+	//public:
+	//	EdgeScalarField() {}
+	//	~EdgeScalarField() {}
+	//};
 
-
-	class VertexScalarField : ScalarField, public PointsDrawable {
-	public:
-		VertexScalarField() {}
-		~VertexScalarField() {}
-	};
-
-
-	class VectorField : public LinesDrawable {
-	public:
-		VectorField();
-		~VectorField();
-	};
+// 
+// 	class VertexScalarField : ScalarField, public PointsDrawable {
+// 	public:
+// 		VertexScalarField() {}
+// 		~VertexScalarField() {}
+// 	};
+// 
+// 
+// 	class VectorField : public LinesDrawable {
+// 	public:
+// 		VectorField();
+// 		~VectorField();
+// 	};
 
 }

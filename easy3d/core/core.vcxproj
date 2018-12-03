@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="manipulated_camera_frame.cpp" />
     <ClCompile Include="manipulated_frame.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="primitives.cpp" />
     <ClCompile Include="transform.cpp" />
     <ClCompile Include="viewer.cpp" />
@@ -31,6 +32,7 @@
   <ItemGroup>
     <ClInclude Include="manipulated_camera_frame.h" />
     <ClInclude Include="manipulated_frame.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="primitives.h" />
     <ClInclude Include="transform.h" />
     <ClInclude Include="viewer.h" />

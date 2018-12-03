@@ -69,15 +69,15 @@ void Mapple::init() {
 	};
 
 
-	surface_ = new FacesDrawable;
+	surface_ = new FacesDrawable("surface");
 	surface_->update_vertex_buffer(points);
 	surface_->update_index_buffer(indices_surface);
 
-	wireframe_ = new LinesDrawable;
+	wireframe_ = new LinesDrawable("wireframe");
 	wireframe_->update_vertex_buffer(points);
 	wireframe_->update_index_buffer(indices_wireframe);
 
-	vertices_ = new PointsDrawable;
+	vertices_ = new PointsDrawable("vertices");
 	vertices_->update_vertex_buffer(points);
 
 	program_ = new ShaderProgram;

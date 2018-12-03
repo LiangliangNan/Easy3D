@@ -43,7 +43,7 @@ namespace easy3d {
 	{
 	public:
 		MainWindow(
-			const std::string& title = "easy3d MainWindow",
+			const std::string& title = "Easy3D Viewer",
 			int samples = 4,
 			int gl_major = 3,
 			int gl_minor = 2,
@@ -92,7 +92,7 @@ namespace easy3d {
 		static ImGuiContext *	context_;
 
 		// List of registered windows
-		std::vector<Panel*>	windows_;
+		std::vector<Panel*>	panels_;
 
 		// Global variables for all the windows
 		float	alpha_;

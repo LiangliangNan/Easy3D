@@ -85,6 +85,11 @@ namespace easy3d {
 			filter.append(pair.first);
 			filter.push_back('\0');
 		}
+
+		// for all files (*.*)
+		filter.append("All Files (*.*)");
+		filter.push_back('\0');
+		filter.append("*.*");
 		filter.push_back('\0');
 
 		int size = MultiByteToWideChar(CP_UTF8, 0, &filter[0], (int)filter.size(), NULL, 0);

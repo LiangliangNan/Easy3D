@@ -40,7 +40,7 @@ namespace easy3d {
 		, visible_(true)
 	{
 		viewer_ = viewer;
-		viewer_->windows_.push_back(this);
+		viewer_->panels_.push_back(this);
 	}
 
 

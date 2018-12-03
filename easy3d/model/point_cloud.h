@@ -38,7 +38,7 @@
 
 //== INCLUDES =================================================================
 
-
+#include <easy3d/core/model.h>
 #include <easy3d/model/types.h>
 #include <easy3d/model/properties.h>
 
@@ -53,7 +53,7 @@ namespace easy3d {
 
 
 /// A for point clouds.
-class Point_cloud
+class Point_cloud : public Model
 {
 
 public: //------------------------------------------------------ topology types

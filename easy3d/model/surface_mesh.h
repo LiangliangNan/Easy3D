@@ -24,6 +24,7 @@
 //== INCLUDES =================================================================
 
 
+#include <easy3d/core/model.h>
 #include <easy3d/model/types.h>
 #include <easy3d/model/properties.h>
 
@@ -38,7 +39,7 @@ namespace easy3d {
 
 
 /// A halfedge data structure for polygonal meshes.
-class Surface_mesh
+class Surface_mesh : public Model
 {
 
 public: //------------------------------------------------------ topology types

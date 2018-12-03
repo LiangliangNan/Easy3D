@@ -54,7 +54,7 @@ namespace easy3d {
 	class Drawable
 	{
 	public:
-		Drawable();
+		Drawable(const std::string& name);
 		virtual ~Drawable();
 
 		static std::string title() { return "Drawable"; }
@@ -64,6 +64,9 @@ namespace easy3d {
 
 		const std::string name() const { return name_; }
 		void set_name(const std::string n) { name_ = n; }
+
+		bool is_visible() const { return visible_; }
+		void set_visible(bool v) { visible_ = v; }
 
 		VertexArrayObject* vao() { return vao_; }
 
@@ -91,6 +94,10 @@ namespace easy3d {
 		void update_vertex_buffer(const float* vertices, std::size_t count, int dim);
 		void update_vertex_buffer(const std::vector<vec3>& vertices);
 
+		// This drawable will use a shared vertex buffer (e.g., when rendering both
+		// wireframe and surface, you don't need to upload data to GPU twice).
+		void set_vertex_buffer(unsigned int buffer);
+	
 		// dim: number of float components of a color, 3 by default
 		void update_color_buffer(const float* colors, std::size_t count, int dim);
 		void update_color_buffer(const std::vector<vec3>& colors);
@@ -130,15 +137,15 @@ namespace easy3d {
 		int  highlight_id() const { return highlight_id_; }
 
 	protected:
-		Box3   bounding_box_; // cached bounding box
+		std::string	name_;
+		Box3		bounding_box_; // cached bounding box
+		bool		visible_;
 
 		// vertex array object
 		VertexArrayObject*	vao_;
 
-		std::string			name_;
-
 		std::size_t	 num_vertices_;
-		std::size_t  num_indices_;	// draw_as_polygons() needs this
+		std::size_t  num_indices_;
 
 		unsigned int vertex_buffer_;
 		unsigned int color_buffer_;
@@ -156,8 +163,25 @@ namespace easy3d {
 	};
 
 
+
+
+	class PointsDrawable : public Drawable {
+	public:
+		PointsDrawable(const std::string& name) : Drawable(name) {}
+		DrawableType type() const { return DT_POINTS; }
+	};
+
+
+	class LinesDrawable : public Drawable {
+	public:
+		LinesDrawable(const std::string& name) : Drawable(name) {}
+		DrawableType type() const { return DT_LINES; }
+	};
+
+
 	class FacesDrawable : public Drawable {
 	public:
+		FacesDrawable(const std::string& name) : Drawable(name) {}
 		DrawableType type() const { return DT_TRIANGLES; }
 
 		// The selection of a polygonal face is internally implemented by selecting triangle
@@ -180,17 +204,6 @@ namespace easy3d {
 		std::vector< std::vector<unsigned int> > indices_;
 	};
 
-
-	class LinesDrawable : public Drawable {
-	public:
-		DrawableType type() const { return DT_LINES; }
-	};
-
-
-	class PointsDrawable : public Drawable {
-	public:
-		DrawableType type() const { return DT_POINTS; }
-	};
 
 
 }

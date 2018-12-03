@@ -41,7 +41,7 @@ namespace easy3d {
 	ImGuiContext* MainWindow::context_ = nullptr;
 
 	MainWindow::MainWindow(
-		const std::string& title /* = "easy3d MainWindow" */,
+		const std::string& title /* = "Easy3D Viewer" */,
 		int samples /* = 4 */,
 		int gl_major /* = 3 */,
 		int gl_minor /* = 2 */,
@@ -122,121 +122,47 @@ namespace easy3d {
 
 
 	bool MainWindow::callback_event_cursor_pos(double x, double y) {
-		int px = static_cast<int>(x);
-		int py = static_cast<int>(y);
-
-		try {
-			for (auto p : windows_)
-				if (p->mouse_move(px, py))
-					return true;
-
-			int dx = px - mouse_x_;
-			int dy = py - mouse_y_;
-			mouse_x_ = px;
-			mouse_y_ = py;
-			if (drag_active_)
-				return mouse_drag_event(px, py, dx, dy, button_, modifiers_);
-			else
-				return mouse_free_move_event(px, py, dx, dy, modifiers_);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
+		if (ImGui::GetIO().WantCaptureMouse)
+			return true;
+		else
+			return Viewer::callback_event_cursor_pos(x, y);
 	}
 
 
 	bool MainWindow::callback_event_mouse_button(int button, int action, int modifiers) {
-		try {
-			if (action == GLFW_PRESS) {
-				for (auto p : windows_) {
-					if (p->mouse_press(button, modifiers))
-						return true;
-				}
-
-				drag_active_ = true;
-				button_ = button;
-				modifiers_ = modifiers;
-				mouse_pressed_x_ = mouse_x_;
-				mouse_pressed_y_ = mouse_y_;
-				return mouse_press_event(mouse_x_, mouse_y_, button, modifiers);
-			}
-			else {
-				for (auto p : windows_) {
-					if (p->mouse_release(button, modifiers))
-						return true;
-				}
-
-				drag_active_ = false;
-				return mouse_release_event(mouse_x_, mouse_y_, button, modifiers);
-			}
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
+		if (ImGui::GetIO().WantCaptureMouse)
+			return true;
+		else
+			return Viewer::callback_event_mouse_button(button, action, modifiers);
 	}
 
 
 	bool MainWindow::callback_event_keyboard(int key, int action, int modifiers) {
-		try {
-			if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-				for (auto p : windows_) {
-					if (p->key_press(key, modifiers))
-						return true;
-				}
-				return key_press_event(key, modifiers);
-			}
-			else {
-				for (auto p : windows_) {
-					if (p->key_release(key, modifiers))
-						return true;
-				}
-				return key_release_event(key, modifiers);
-			}
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
-			return false;
-		}
+		if (ImGui::GetIO().WantCaptureKeyboard)
+			return true;
+		else
+			return Viewer::callback_event_keyboard(key, action, modifiers);
 	}
 
 
 	bool MainWindow::callback_event_character(unsigned int codepoint) {
-		try {
-			for (auto p : windows_) {
-				if (p->char_input(codepoint))
-					return true;
-			}
-			return char_input_event(codepoint);
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-			return false;
-		}
+		if (ImGui::GetIO().WantCaptureKeyboard)
+			return true;
+		else
+			return Viewer::callback_event_character(codepoint);
 	}
 
 
 	bool MainWindow::callback_event_scroll(double dx, double dy) {
-		try {
-			for (auto p : windows_) {
-				if (p->mouse_scroll(dy))
-					return true;
-			}
-
-			return mouse_scroll_event(mouse_x_, mouse_y_, static_cast<int>(dx), static_cast<int>(dy));
-		}
-		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
-			return false;
-		}
+		if (ImGui::GetIO().WantCaptureMouse)
+			return true;
+		else
+			return Viewer::callback_event_scroll(dx, dy);
 	}
 
 
 	void MainWindow::cleanup() {
-		for (auto p : windows_)
+		for (auto p : panels_)
 			p->cleanup();
 
 		ImGui_ImplOpenGL3_Shutdown();
@@ -263,7 +189,7 @@ namespace easy3d {
 			int w, h;
 			glfwGetWindowSize(window_, &w, &h);
 			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-			ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+			ImGui::Begin("About Easy3D", &show_about, ImGuiWindowFlags_NoResize);
 			ImGui::Text(
 				"Easy3D is an easy, lightweight, and flexible framework for developing\n"
 				"cross-platform 3D applications. It requires minimum dependencies, i.e.\n"
@@ -282,6 +208,16 @@ namespace easy3d {
 				"liangliang.nan@gmail.com\n"
 				"https://3d.bk.tudelft.nl/liangliang/\n"
 			);
+			ImGui::End();
+		}
+
+		static bool show_manual = false;
+		if (show_manual) {
+			int w, h;
+			glfwGetWindowSize(window_, &w, &h);
+			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+			ImGui::Begin("Easy3D Manual", &show_manual, ImGuiWindowFlags_NoResize);
+			ImGui::Text(usage().c_str());
 			ImGui::End();
 		}
 
@@ -350,10 +286,10 @@ namespace easy3d {
 					ImGui::EndMenu();
 				}
 
-				if (!windows_.empty()) {
+				if (!panels_.empty()) {
 					ImGui::Separator();
-					for (std::size_t i = 0; i < windows_.size(); ++i) {
-						Panel* win = windows_[i];
+					for (std::size_t i = 0; i < panels_.size(); ++i) {
+						Panel* win = panels_[i];
 						ImGui::MenuItem(win->name_.c_str(), 0, &win->visible_);
 					}
 				}
@@ -387,8 +323,7 @@ namespace easy3d {
 
 			if (ImGui::BeginMenu("Help"))
 			{
-				ImGui::MenuItem("MainWindow", NULL, false);
-				ImGui::MenuItem("Shortcut", NULL, false);
+				ImGui::MenuItem("Manual", NULL, &show_manual);
 				ImGui::Separator();
 				ImGui::MenuItem("About", NULL, &show_about);
 				ImGui::EndMenu();
@@ -398,8 +333,8 @@ namespace easy3d {
 		}
 		ImGui::PopStyleVar();
 
-		for (std::size_t i = 0; i < windows_.size(); ++i) {
-			Panel* win = windows_[i];
+		for (std::size_t i = 0; i < panels_.size(); ++i) {
+			Panel* win = panels_[i];
 			if (!win->visible_)
 				continue;
 			float panel_width = 180.f * MainWindow::widget_scaling();
