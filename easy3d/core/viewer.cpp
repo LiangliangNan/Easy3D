@@ -996,6 +996,10 @@ namespace easy3d {
 		glViewport(0, 0, corner_frame_size, corner_frame_size);
 		glScissor(0, 0, corner_frame_size, corner_frame_size);	mpl_debug_gl_error;
 
+		// To make the axis appear over other objects: reserve a tiny bit of the 
+		// front depth range. NOTE: do remember to restore it later.
+		glDepthRange(0, 0.001f);
+
 		const mat4& proj = easy3d::ortho(-1, 1, -1, 1, -1, 1);
 		const mat4& view = camera_->orientation().inverse().matrix();
 		const mat4& MVP = proj * view;
@@ -1006,8 +1010,10 @@ namespace easy3d {
 		axes_->draw(false);					mpl_debug_gl_error;
 		lines_program_->unbind();
 
+		// restore
 		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 		glViewport(0, 0, width_, height_);
+		glDepthRange(0.0f, 1.0f);
 	}
 
 
