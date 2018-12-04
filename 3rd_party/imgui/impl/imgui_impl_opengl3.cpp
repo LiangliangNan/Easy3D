@@ -165,7 +165,7 @@ void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
     GLboolean last_enable_scissor_test = glIsEnabled(GL_SCISSOR_TEST);
     bool clip_origin_lower_left = true;
 
-// Liangliang : seems not working on my macOS desktop? Has to test on my laptop!!!
+// Liangliang : seems GL_CLIP_ORIGIN is availabe only on OpenGL 4.5+, so apparently not working on macOS desktop? Has to test on my laptop!!!
 #undef GL_CLIP_ORIGIN
 #ifdef GL_CLIP_ORIGIN
     GLenum last_clip_origin = 0; glGetIntegerv(GL_CLIP_ORIGIN, (GLint*)&last_clip_origin); // Support for GL 4.5's glClipControl(GL_UPPER_LEFT)
