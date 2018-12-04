@@ -149,7 +149,7 @@ bool read_off_ascii(Surface_mesh& mesh,
     }
 
 
-    return true;
+    return  mesh.n_faces() > 0;
 }
 
 
@@ -227,7 +227,7 @@ bool read_off_binary(Surface_mesh& mesh,
     }
 
 
-    return true;
+    return  mesh.n_faces() > 0;
 }
 
 
@@ -288,7 +288,7 @@ bool read_off(Surface_mesh& mesh, const std::string& filename)
 
 
     fclose(in);
-    return ok;
+	return ok && mesh.n_faces() > 0;
 }
 
 

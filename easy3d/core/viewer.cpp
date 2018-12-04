@@ -67,10 +67,12 @@ namespace easy3d {
 		, width_(1280)	// default width
 		, height_(960)	// default height
 		, pressed_key_(GLFW_KEY_UNKNOWN)
-		, axes_ (nullptr)
+		, axes_(nullptr)
 		, camera_(nullptr)
+		, points_program_(nullptr)
 		, lines_program_(nullptr)
 		, surface_program_(nullptr)
+		, point_size_(2)
 		, model_idx_(-1)
 	{
 #if !defined(_WIN32)
@@ -147,17 +149,17 @@ namespace easy3d {
 		glfwSwapInterval(1); // Enable vsync
 
 #if defined(DEBUG) || defined(_DEBUG)
-        std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
+		std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
 		int major = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MAJOR);
 		int minor = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MINOR);
 		int rev = glfwGetWindowAttrib(window_, GLFW_CONTEXT_REVISION);
-        std::cout << "OpenGL version received:  " << major << "." << minor << "." << rev << std::endl;
-        std::cout << "Supported OpenGL:         " << glGetString(GL_VERSION) << std::endl;
-        std::cout << "Supported GLSL:           " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+		std::cout << "OpenGL version received:  " << major << "." << minor << "." << rev << std::endl;
+		std::cout << "Supported OpenGL:         " << glGetString(GL_VERSION) << std::endl;
+		std::cout << "Supported GLSL:           " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 #endif
 
-        std::string vender(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
-        if (vender.find("Intel") != std::string::npos) {
+		std::string vender(reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+		if (vender.find("Intel") != std::string::npos) {
 			std::cerr << "Detected Intel HD Graphics card, disabling MSAA as a precaution .." << std::endl;
 		}
 
@@ -416,6 +418,11 @@ namespace easy3d {
 			camera_ = nullptr;
 		}
 
+		if (points_program_) {
+			delete points_program_;
+			points_program_ = nullptr;
+		}
+
 		if (lines_program_) {
 			delete lines_program_;
 			lines_program_ = nullptr;
@@ -522,16 +529,18 @@ namespace easy3d {
 	bool Viewer::key_press_event(int key, int modifiers) {
 		if (key == GLFW_KEY_A && modifiers == 0) {
 			show_corner_axes_ = !show_corner_axes_;
-		}		
+		}
 		else if (key == GLFW_KEY_C && modifiers == 0) {
-            if (!models_.empty() && model_idx_ >= 0 && model_idx_ < models_.size()) {
+			if (!models_.empty() && model_idx_ >= 0 && model_idx_ < models_.size()) {
 				const Box3& box = models_[model_idx_]->bounding_box();
+				//camera_->fitSphere(box.center(), box.diagonal() * 0.5f);
+				//camera_->setSceneCenter(box.center());
 				camera_->setSceneBoundingBox(box.min(), box.max());
 				camera_->showEntireScene();
 			}
-		}		
+		}
 		else if (key == GLFW_KEY_F && modifiers == 0) {
-			if (!models_.empty()){
+			if (!models_.empty()) {
 				Box3 box;
 				for (auto m : models_)
 					box.add_box(m->bounding_box());
@@ -601,6 +610,18 @@ namespace easy3d {
 			open();
 		else if (key == GLFW_KEY_S && modifiers == GLFW_MOD_CONTROL)
 			save();
+
+		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
+			point_size_ -= 1;
+			if (point_size_ < 1)
+				point_size_ = 1;
+		}
+		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
+			point_size_ += 1;
+			if (point_size_ > 10)
+				point_size_ = 10;
+		}
+
 		else if (key == GLFW_KEY_MINUS && modifiers == GLFW_MOD_CONTROL)
 			camera_->frame()->action_zoom(-1, camera_);
 		else if (key == GLFW_KEY_EQUAL && modifiers == GLFW_MOD_CONTROL)
@@ -610,13 +631,17 @@ namespace easy3d {
 			if (models_.empty())
 				model_idx_ = -1;
 			else
-				model_idx_ = (model_idx_ - 1) % models_.size();
+				model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
+			if (model_idx_ >= 0)
+				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
 		}
 		else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
 			if (models_.empty())
 				model_idx_ = -1;
 			else
-				model_idx_ = (model_idx_ + 1) % models_.size();
+				model_idx_ = int((model_idx_ + 1) % models_.size());
+			if (model_idx_ >= 0)
+				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
 		}
 		else if (key == GLFW_KEY_W && modifiers == 0) {
 			if (model_idx_ < models_.size()) {
@@ -669,8 +694,21 @@ namespace easy3d {
 
 
 	bool Viewer::drop_event(const std::vector<std::string> & filenames) {
+		int count = 0;
 		for (auto& name : filenames) {
-			open_mesh(name);
+			if (open(name))
+				++count;
+		}
+
+		if (count > 0) {
+			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+			Box3 box;
+			for (auto m : models_)
+				box.add_box(m->bounding_box());
+			camera_->setSceneBoundingBox(box.min(), box.max());
+			camera_->showEntireScene();
+			update();
+			return true;
 		}
 		return false;
 	}
@@ -746,15 +784,32 @@ namespace easy3d {
 
 	void Viewer::init() {
 		camera_ = new Camera;
+		camera_->setScreenWidthAndHeight(width_, height_);
 		camera_->setSceneRadius(1.0f);
 		camera_->setSceneCenter(vec3(0, 0, 0));
-		camera_->setScreenWidthAndHeight(width_, height_);
+		camera_->showEntireScene();
 
 		// seems depth test is disabled by default
 		glEnable(GL_DEPTH_TEST);
-		glfwShowWindow(window_);	
+		glfwShowWindow(window_);
 
 		// create shader programs
+		// TODO: have a shader manager to manage all the shaders
+		points_program_ = new ShaderProgram("points_color");
+		if (points_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::points_color_vert) &&
+			points_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::points_color_frag))
+		{
+			points_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+			points_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
+			points_program_->set_attrib_name(ShaderProgram::NORMAL, "vtx_normal");
+			points_program_->link_program();
+		}
+		else {
+			std::cerr << "failed creating shader program for points" << std::endl;
+			delete points_program_;
+			points_program_ = nullptr;
+		}
+
 		lines_program_ = new ShaderProgram("line_color");
 		if (lines_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::lines_color_vert) &&
 			lines_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::lines_color_frag))
@@ -770,16 +825,8 @@ namespace easy3d {
 		}
 
 		surface_program_ = new ShaderProgram("surface_color");
-#if 0 // using files
-		// Liangliang: Weird relative path doesn't work!!!!!! I have been using this for many years.
-		const std::string& vert_file = "../../resources/shaders/surface_color.vert";
-		const std::string& frag_file = "../../resources/shaders/surface_color.frag";
-		if (surface_program_->load_shader_from_file(ShaderProgram::VERTEX, vert_file) &&
-			surface_program_->load_shader_from_file(ShaderProgram::FRAGMENT, frag_file))
-#else
 		if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
 			surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
-#endif
 		{
 			surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
 			surface_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
@@ -794,27 +841,26 @@ namespace easy3d {
 
 
 	std::string Viewer::usage() const {
-		return std::string(R"(Easy3D viewer usage:
-  F1:              Help
-  Ctrl + O:        Open file
-  Ctrl + S:        Save file
-  Left:            Rotate scene
-  Right:           Translate scene
-  Alt + Left:      Rotate scene (screen based)
-  Alt + Right:     Translate scene (screen based)
-  Middle/Wheel:    Zoom out/in
-  Ctrl + '-'/'+':  Zoom out/in
-  F:               Fit screen (entire scene/all models)     
-  C:               Fit screen (current model only)
-  Shift + Right:   Set/unset pivot point
-  P:               Toggle perspective/orthographic projection)
-  A:               Toggle axes
-  W:               Toggle wireframe
-  ',' or '.':      Switch between models
-)"
-);
-		//   ;       Toggle vertex labels
-		//   :       Toggle face labels)
+		return std::string(
+			"Easy3D viewer usage:												\n"
+			"  F1:              Help											\n"
+			"  Ctrl + O:        Open file										\n"
+			"  Ctrl + S:        Save file										\n"
+			"  Left:            Rotate scene									\n"
+			"  Right:           Translate scene									\n"
+			"  Alt + Left:      Rotate scene (screen based)						\n"
+			"  Alt + Right:     Translate scene (screen based)					\n"
+			"  Middle/Wheel:    Zoom out/in										\n"
+			"  Ctrl + '-'/'+':  Zoom out/in										\n"
+			"  F:               Fit screen (entire scene/all models)     		\n"
+			"  C:               Fit screen (current model only)					\n"
+			"  Shift + Right:   Set/unset pivot point							\n"
+			"  P:               Toggle perspective/orthographic projection)		\n"
+			"  A:               Toggle axes										\n"
+			"  W:               Toggle wireframe								\n"
+			"  < or >:          Switch between models							\n"
+			"  Ctrl + < or >:   Switch between models and fit screen current model"
+		);
 	}
 
 
@@ -822,68 +868,98 @@ namespace easy3d {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront Mesh"},
 			{"off", "Object File Format"},
-			{"ply", "PLY Mesh or Point Cloud"}
+			{"bin", "Binary Point Cloud"}
 		};
 		const std::vector<std::string>& files = easy3d::file_dialog(filetypes, false, true);
 		int count = 0;
-		Box3 box;
-		for (const auto& f : files) {
-			Surface_mesh* m = open_mesh(f);
-			if (m) {
-				// fit screen
-				Box3 b;
-				auto points = m->get_vertex_property<vec3>("v:point");
-				for (auto v : m->vertices())
-					b.add_point(points[v]);
-				m->set_bounding_box(b);
-				box.add_box(b);
+		for (const auto& file_name : files) {
+			if (open(file_name))
 				++count;
-			}
 		}
-		if (count > 0) {
-			camera_->setSceneBoundingBox(box.min(), box.max());
-			camera_->showEntireScene();
-			update();
-			return true;
-		}
-		return false;
+		return count > 0;
 	}
 
 
-	Surface_mesh* Viewer::open_mesh(const std::string& file_name) {
-		Surface_mesh* mesh = new Surface_mesh;
-		if (!mesh->read(file_name) || mesh->n_faces() == 0) {
-			std::cerr << "loading file failed" << std::endl;
-			delete mesh;
-			return nullptr;
-		}
-		mesh->set_name(file_name);
-		models_.push_back(mesh);
-		++model_idx_;
+	Model* Viewer::open(const std::string& file_name) {
+		// extract file extension
+		std::string::size_type dot(file_name.rfind("."));
+		if (dot == std::string::npos)
+			return false;
 
-		std::cout << "file loaded" << std::endl
-			<< "\tnum faces:    " << mesh->n_faces() << std::endl
-			<< "\tnum vertices: " << mesh->n_vertices() << std::endl
-			<< "\tnum edges:    " << mesh->n_edges() << std::endl;
+		std::string ext = file_name.substr(dot + 1, file_name.length() - dot - 1);
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 
-		// create face drawable
-
-		std::vector<unsigned int> indices;
-		for (auto f : mesh->faces()) {
-			int test_n = 0;
-			for (auto v : mesh->vertices(f)) {
-				indices.push_back(v.idx());
-				++test_n;
+		Model* model = nullptr;
+		if (ext == "bin") { // point cloud
+			Point_cloud* cloud = new Point_cloud;
+			if (cloud->read(file_name)) {
+				model = cloud;
+				// create points drawable
+				auto points = cloud->get_vertex_property<vec3>("v:point");
+				PointsDrawable* pt_drawable = cloud->add_point_drawable("points");
+				pt_drawable->update_vertex_buffer(points.vector());
+				auto normals = cloud->get_vertex_property<vec3>("v:normal");
+				if (normals)
+					pt_drawable->update_normal_buffer(normals.vector());
+				auto colors = cloud->get_vertex_property<vec3>("v:color");
+				if (colors)
+					pt_drawable->update_color_buffer(colors.vector());
+				Box3 b;
+				for (auto v : cloud->vertices())
+					b.add_point(points[v]);
+				cloud->set_bounding_box(b);
+				std::cout << "cloud loaded" << std::endl
+					<< "\tnum vertices: " << cloud->n_vertices() << std::endl;
 			}
-			if (test_n != 3)
-				std::cerr << "now only triangles can be rendered" << std::endl;
+			else
+				delete cloud;
+		}
+		else {
+			Surface_mesh* mesh = new Surface_mesh;
+			if (mesh->read(file_name)) {
+				model = mesh;
+				// create face drawable
+				std::vector<unsigned int> indices;
+				for (auto f : mesh->faces()) {
+					int test_n = 0;
+					for (auto v : mesh->vertices(f)) {
+						indices.push_back(v.idx());
+						++test_n;
+					}
+					if (test_n != 3)
+						std::cerr << "now only triangles can be rendered" << std::endl;
+				}
+				auto points = mesh->get_vertex_property<vec3>("v:point");
+				FacesDrawable* faces = mesh->add_face_drawable("surface");
+				faces->update_vertex_buffer(points.vector());
+				faces->update_index_buffer(indices);
+				Box3 b;
+				for (auto v : mesh->vertices())
+					b.add_point(points[v]);
+				mesh->set_bounding_box(b);
+				std::cout << "mesh loaded" << std::endl
+					<< "\tnum faces:    " << mesh->n_faces() << std::endl
+					<< "\tnum vertices: " << mesh->n_vertices() << std::endl
+					<< "\tnum edges:    " << mesh->n_edges() << std::endl;
+			}
+			else
+				delete mesh;
 		}
 
-		auto points = mesh->get_vertex_property<vec3>("v:point");
-		FacesDrawable* faces = mesh->add_face_drawable("surface");
-		faces->update_vertex_buffer(points.vector());
-		faces->update_index_buffer(indices);
-		return mesh;
+		if (model) {
+			model->set_name(file_name);
+			models_.push_back(model);
+			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+			Box3 box;
+			for (auto m : models_)
+				box.add_box(m->bounding_box());
+			camera_->setSceneBoundingBox(box.min(), box.max());
+			camera_->showEntireScene();
+			update();
+			return model;
+		}
+
+		return nullptr;
 	}
 
 
@@ -891,14 +967,14 @@ namespace easy3d {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront Mesh"},
 			{"off", "Object File Format"},
-			{"ply", "PLY Mesh or Point Cloud"}
+			{"bin", "Binary Point Cloud"}
 		};
 		const std::string& file_name = easy3d::file_dialog(filetypes, true);
 		if (file_name.empty())
 			return false;
+		std::cout << "save file not implemented yet" << std::endl;
 		return false;
 	}
-
 
 	void Viewer::draw_corner_axes() {
 		if (!lines_program_)
@@ -975,12 +1051,12 @@ namespace easy3d {
 		surface_program_->set_uniform("ambient", vec4(0.05f, 0.05f, 0.05f, 1.0f));		mpl_debug_gl_error;
 		surface_program_->set_uniform("specular", vec4(0.4f, 0.4f, 0.4f, 1.0f));		mpl_debug_gl_error;
 		surface_program_->set_uniform("shininess", 64.0f);		mpl_debug_gl_error;
-		surface_program_->set_uniform("per_vertex_color", false);		
+		surface_program_->set_uniform("per_vertex_color", false);
 		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
 			Model* m = models_[idx];
-			if (!m->is_visible()) 
+			if (!m->is_visible())
 				continue;
-			surface_program_->set_uniform("default_color", 
+			surface_program_->set_uniform("default_color",
 				idx == model_idx_ ? vec3(0.4f, 0.8f, 0.8f) : vec3(0.8f, 0.8f, 0.8f));		mpl_debug_gl_error;
 			for (auto d : m->face_drawables()) {
 				if (d->is_visible())
@@ -1003,6 +1079,33 @@ namespace easy3d {
 			}
 		}
 		lines_program_->unbind();
+
+		glPointSize(point_size_);
+		points_program_->bind();	mpl_debug_gl_error;
+		points_program_->set_uniform("MVP", MVP);		mpl_debug_gl_error;
+		points_program_->set_uniform("wLightPos", wLightPos);		mpl_debug_gl_error;
+		points_program_->set_uniform("wCamPos", wCamPos);		mpl_debug_gl_error;
+		points_program_->set_uniform("ambient", vec4(0.05f, 0.05f, 0.05f, 1.0f));		mpl_debug_gl_error;
+		points_program_->set_uniform("specular", vec4(0.4f, 0.4f, 0.4f, 1.0f));		mpl_debug_gl_error;
+		points_program_->set_uniform("shininess", 64.0f);		mpl_debug_gl_error;
+		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
+			Model* m = models_[idx];
+			if (!m->is_visible())
+				continue;
+			Point_cloud* cloud = dynamic_cast<Point_cloud*>(m);
+			if (!cloud)
+				continue;
+			bool lighting = cloud->get_vertex_property<vec3>("v:normal");
+			points_program_->set_uniform("lighting", lighting);
+			bool per_vertex_color = cloud->get_vertex_property<vec3>("v:color");
+			points_program_->set_uniform("per_vertex_color", per_vertex_color);
+			points_program_->set_uniform("default_color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
+			for (auto d : m->point_drawables()) {
+				if (d->is_visible())
+					d->draw(false);
+			}
+		}
+		points_program_->unbind();	mpl_debug_gl_error;
 	}
 
 

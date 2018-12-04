@@ -2,8 +2,11 @@
 #ifndef _MATH_BOX_H_
 #define _MATH_BOX_H_
 
-#include "vec.h"
 #include <cassert>
+#include <algorithm>
+
+#include "vec.h"
+
 
 template <class FT>
 class GenericBox2 {
@@ -101,6 +104,29 @@ public:
 	{
 	}
 
+	// defined by the diagonal corners
+	GenericBox3(const Vec<3, FT>& pmin, const Vec<3, FT>& pmax)
+		: initialized_(true)
+	{
+		x_min_ = pmin.x;  x_max_ = pmax.x;
+		y_min_ = pmin.y;  y_max_ = pmax.y;
+		z_min_ = pmin.z;  z_max_ = pmax.z;
+	}
+
+
+	// defined by center and radius
+	GenericBox3(const Vec<3, FT>& c, FT r)
+		: initialized_(true)
+	{
+		Vec<3, FT> dir(1, 1, 1);	
+		dir.normalize();
+		const Vec<3, FT>& pmin = c - dir * r;
+		const Vec<3, FT>& pmax = c + dir * r;
+		x_min_ = pmin.x;  x_max_ = pmax.x;
+		y_min_ = pmin.y;  y_max_ = pmax.y;
+		z_min_ = pmin.z;  z_max_ = pmax.z;
+	}
+
 	bool initialized() const { return initialized_; }
 	void clear() { initialized_ = false; }
 
@@ -135,8 +161,12 @@ public:
 	}
 
 	FT diagonal() const {
-		if (initialized_)
-			return ::sqrt(mpl_sqr(x_max() - x_min()) + mpl_sqr(y_max() - y_min()) + mpl_sqr(z_max() - z_min()));
+		if (initialized_) {
+			FT dx = x_max() - x_min();
+			FT dy = y_max() - y_min();
+			FT dz = z_max() - z_min();
+			return ::sqrt(dx * dx + dy * dy + dz * dz);
+		}
 		else
 			return FT(0);
 	}

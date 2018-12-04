@@ -41,10 +41,10 @@ struct GLFWwindow;
 
 namespace easy3d {
 
-	class Model;
-	class Surface_mesh;
-	class Point_cloud;
 	class Camera;
+	class Model;
+	class Point_cloud;
+	class Surface_mesh;
 	class ShaderProgram;
 	class LinesDrawable;
 
@@ -100,13 +100,13 @@ namespace easy3d {
 		// explicitly set window size
 		void resize(int w, int h);
 
-		// Open/Save a file specified by a file dialog. Return false if failed.
+		// Open/Save models specified by a file dialog.
 		bool open();
 		bool save() const;
 
-		// Open/Save a file specified by a file dialog. Return false if failed.
-		Surface_mesh* open_mesh(const std::string& file_name);
-		bool save_mesh(const std::string& file_name) const;
+		// Open a file with file name given
+		// NOTE: model will not be added to the viewer
+		Model* open(const std::string& file_name); 
 
 	protected:
 
@@ -215,6 +215,9 @@ namespace easy3d {
 		// corner axes
 		bool	show_corner_axes_;
 		LinesDrawable* axes_;
+
+		ShaderProgram* points_program_;
+		float point_size_;
 
 		ShaderProgram* lines_program_;
 		ShaderProgram* surface_program_;

@@ -85,7 +85,7 @@ bool read_poly(Surface_mesh& mesh, const std::string& filename)
     fread((char*)point.data(), sizeof(Point),                               nv, in);
 
     fclose(in);
-    return true;
+    return mesh.n_faces() > 0;
 }
 
 

@@ -212,7 +212,7 @@ bool read_stl(Surface_mesh& mesh, const std::string& filename)
 
 
     fclose(in);
-    return true;
+    return mesh.n_faces() > 0;
 }
 
 

@@ -32,6 +32,7 @@
 #include <easy3d/window/plugin.h>
 #include <easy3d/window/panel.h>
 #include <easy3d/core/camera.h>
+#include <easy3d/core/model.h>
 
 #include "imgui_fonts_droid_sans.h"
 
@@ -70,7 +71,7 @@ namespace easy3d {
 			ImGui_ImplGlfw_InitForOpenGL(window_, false);
 			ImGui_ImplOpenGL3_Init(glsl_version);
 			ImGuiIO& io = ImGui::GetIO();
-			io.IniFilename = nullptr;
+//			io.IniFilename = nullptr;
 			ImGui::StyleColorsDark();
 			ImGuiStyle& style = ImGui::GetStyle();
 			style.FrameRounding = 5.0f;
@@ -226,16 +227,24 @@ namespace easy3d {
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open", "Ctrl+O")) { open(); }
-				if (ImGui::MenuItem("Save As...", "Ctrl+S")) { save(); }
+				if (ImGui::MenuItem("Open", "Ctrl+O")) 
+					open(); 
+				if (ImGui::MenuItem("Save As...", "Ctrl+S")) 
+					save(); 
 
-				ImGui::Separator();
-				if (ImGui::BeginMenu("Recent Files...")) {
-					ImGui::MenuItem("bunny.ply");
-					ImGui::MenuItem("terain.las");
-					ImGui::MenuItem("building.obj");
-					ImGui::EndMenu();
-				}
+				//ImGui::Separator();
+				//if (ImGui::BeginMenu("Recent Files...")) {
+				//	std::string file_name;
+				//	std::vector<Model*>::const_reverse_iterator it = models_.rbegin();
+				//	for (; it != models_.rend(); ++it) {
+				//		if (ImGui::MenuItem((*it)->name().c_str())) {
+				//			file_name = (*it)->name();
+				//		}
+				//	}
+				//	if (!file_name.empty())
+				//		open(file_name);
+				//	ImGui::EndMenu();
+				//}
 
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quit", "Alt+F4"))

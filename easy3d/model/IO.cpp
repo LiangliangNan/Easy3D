@@ -82,7 +82,7 @@ namespace easy3d {
 			input.read((char*)normals.data(), num * sizeof(Normal));
 		}
 
-		return true;
+		return cloud.n_vertices() > 0;
 	}
 
 

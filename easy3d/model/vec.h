@@ -278,7 +278,7 @@ public:
 		T s = length();
 		s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
 		*this *= s;
-		return *this;;
+		return *this;
 	}
 
 	// operators

@@ -9,6 +9,9 @@ namespace easy3d {
 
 	namespace shadercode {
 
+		extern std::string points_color_frag;
+		extern std::string points_color_vert;
+
 		extern std::string lines_color_frag;
 		extern std::string lines_color_vert;
 
