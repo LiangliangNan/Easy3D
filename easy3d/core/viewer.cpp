@@ -524,7 +524,7 @@ namespace easy3d {
 			show_corner_axes_ = !show_corner_axes_;
 		}		
 		else if (key == GLFW_KEY_C && modifiers == 0) {
-			if (!models_.empty() && model_idx_ > 0 && model_idx_ < models_.size()) {
+            if (!models_.empty() && model_idx_ >= 0 && model_idx_ < models_.size()) {
 				const Box3& box = models_[model_idx_]->bounding_box();
 				camera_->setSceneBoundingBox(box.min(), box.max());
 				camera_->showEntireScene();
