@@ -24,7 +24,6 @@
 #include <easy3d/window/main_window.h>
 
 namespace easy3d {
-	class FacesDrawable;
 	class LinesDrawable;
 	class PointsDrawable;
 	class ShaderProgram;
@@ -43,9 +42,7 @@ protected:
 
 private:
 	easy3d::ShaderProgram*  program_;
-
-	easy3d::FacesDrawable*	surface_;
-	easy3d::LinesDrawable*	wireframe_;
+	easy3d::LinesDrawable*	segments_;
 	easy3d::PointsDrawable*	vertices_;
 };
 

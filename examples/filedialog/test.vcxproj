@@ -121,15 +121,7 @@
     <ClCompile Include="hello.c" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="readme displayed below (extract from header file).txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="tinyfiledialogs.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\3rd_party\tinyfiledialogs\tinyfiledialogs.vcxproj">
-      <Project>{f7bdc85c-ae86-4117-a6bc-82ab52ba500b}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

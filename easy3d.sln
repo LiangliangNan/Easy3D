@@ -30,10 +30,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		ToDo.txt = ToDo.txt
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "examples\filedialog\test.vcxproj", "{088064E5-F43F-4F72-8FAA-24B3F9B4E311}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyfiledialogs", "3rd_party\tinyfiledialogs\tinyfiledialogs.vcxproj", "{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -90,20 +86,6 @@ Global
 		{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}.Release|x64.ActiveCfg = Release|x64
 		{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}.Release|x64.Build.0 = Release|x64
 		{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B}.Release|x86.ActiveCfg = Release|x64
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Debug|x64.ActiveCfg = Debug|x64
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Debug|x64.Build.0 = Debug|x64
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Debug|x86.ActiveCfg = Debug|Win32
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Debug|x86.Build.0 = Debug|Win32
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Release|x64.ActiveCfg = Release|x64
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Release|x64.Build.0 = Release|x64
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Release|x86.ActiveCfg = Release|Win32
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311}.Release|x86.Build.0 = Release|Win32
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Debug|x64.ActiveCfg = Debug|x64
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Debug|x64.Build.0 = Debug|x64
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Debug|x86.ActiveCfg = Debug|x64
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Release|x64.ActiveCfg = Release|x64
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Release|x64.Build.0 = Release|x64
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,8 +99,6 @@ Global
 		{3D2DE591-27A2-427A-9599-83389F1750F1} = {3B203975-23A5-4ABD-8E78-B9FB3970C751}
 		{BAC217BB-B308-4BEB-B839-B8819FAFE349} = {3B203975-23A5-4ABD-8E78-B9FB3970C751}
 		{5DC20538-FB02-4040-BC6A-F0BD3E6CE44B} = {3B203975-23A5-4ABD-8E78-B9FB3970C751}
-		{088064E5-F43F-4F72-8FAA-24B3F9B4E311} = {9361F013-D7EC-4055-AFEF-B8980119FA81}
-		{F7BDC85C-AE86-4117-A6BC-82AB52BA500B} = {D46159FA-C744-4BEC-8CB6-CD801DDF7883}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9C4871EA-71EF-4C85-8330-3BE59E52600B}

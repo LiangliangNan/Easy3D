@@ -21,7 +21,7 @@
 
 #include "mapple.h"
 
-#include <GL/glew.h>
+#include <3rd_party/glew/include/GL/glew.h>
 #include <easy3d/core/opengl_error.h>
 #include <easy3d/core/camera.h>
 #include <easy3d/core/drawable.h>
@@ -36,53 +36,47 @@ Mapple::Mapple(
 	int gl_minor /* = 2 */ 
 ) : MainWindow("Mapple", num_samples, gl_major, gl_minor)
 {
+	program_ = nullptr;
+	vertices_ = nullptr;
+	segments_ = nullptr;
 }
 
 
+#include <fstream>
 void Mapple::init() {
 	MainWindow::init();		mpl_debug_gl_error;
 
-	const std::vector<vec3> points = {
-		vec3(-1.0f, -1.0f, 1.0f),	// 0
-		vec3(1.0f, -1.0f, 1.0f),	// 1
-		vec3(-1.0f, 1.0f, 1.0f),	// 2
-		vec3(1.0f, 1.0f, 1.0f),		// 3
-		vec3(-1.0f, -1.0f, -1.0f),	// 4
-		vec3(1.0f, -1.0f, -1.0f),	// 5
-		vec3(-1.0f, 1.0f, -1.0f),	// 6
-		vec3(1.0f, 1.0f, -1.0f)		// 7
-	};
-
-	const std::vector<unsigned int> indices_surface = {
-		0, 1, 2, 2, 1, 3,   // f
-		4, 6, 5, 5, 6, 7,   // b
-		4, 0, 6, 6, 0, 2,   // l
-		1, 5, 3, 3, 5, 7,   // r
-		2, 3, 6, 6, 3, 7,   // t
-		4, 5, 0, 0, 5, 1,   // b
-	};
-
-	const std::vector<unsigned int> indices_wireframe = {
-		0,1,2,3,4,5,6,7,
-		0,2,4,6,1,3,5,7,
-		0,4,2,6,1,5,3,7
-	};
+	const std::string dir = "C:/Users/Liangliang/Dropbox/Students/Nikos/weekly progress/20181120/";
+	const std::string file = dir + "2ndCrossSectionProblem_1.lines";
+	std::ifstream input(file.c_str());
+	if (input.fail()) {
+		std::cerr << "could not open file \'" << file << "\'" << std::endl;
+		return;
+	}
 
 
-	surface_ = new FacesDrawable("surface");
-	surface_->update_vertex_buffer(points);
-	surface_->update_index_buffer(indices_surface);
+	std::string dummy;
+	int num_lines = 0;
+	input >> dummy >> num_lines;
+	std::vector<vec3> points;
+	Box3 box;
+	for (int i=0; i< num_lines; ++i) {
+		vec3 s, t;
+		input >> s >> t;
+		points.push_back(s);
+		points.push_back(t);
+		box.add_point(s);
+		box.add_point(t);
+	}
 
-	wireframe_ = new LinesDrawable("wireframe");
-	wireframe_->update_vertex_buffer(points);
-	wireframe_->update_index_buffer(indices_wireframe);
+	segments_ = new LinesDrawable("cross_section");
+	segments_->update_vertex_buffer(points);
 
 	vertices_ = new PointsDrawable("vertices");
 	vertices_->update_vertex_buffer(points);
 
 	program_ = new ShaderProgram;
 	program_->load_shader_from_code(ShaderProgram::VERTEX,
-		/* Vertex shader */
 		"#version 330\n"
 		"uniform mat4 mvp;\n"
 		"in vec3 position;\n"
@@ -92,7 +86,6 @@ void Mapple::init() {
 	);
 
 	program_->load_shader_from_code(ShaderProgram::FRAGMENT,
-		/* Fragment shader */
 		"#version 330\n"
 		"uniform vec3 inColor;\n"
 		"out vec4 color;\n"
@@ -104,39 +97,37 @@ void Mapple::init() {
 	program_->set_attrib_name(ShaderProgram::POSITION, "position");
 	program_->link_program();
 
-	camera_->setSceneBoundingBox(vec3(-1, -1, -1), vec3(1, 1, 1));
+	camera_->setSceneBoundingBox(box.min(), box.max());
 	camera_->showEntireScene();
+
+	glEnable(GL_LINE_SMOOTH);
 }
 
 
 
 void Mapple::cleanup() {
-	delete program_;
-	delete surface_;
-	delete wireframe_;
-	delete vertices_;
+	if (segments_) delete segments_;
+	if (vertices_) delete vertices_;
+	if (program_)  delete program_;
 	MainWindow::cleanup();
 }
 
 
 void Mapple::draw() {
-    glPointSize(20);						mpl_debug_gl_error;
+	MainWindow::draw();
 
-	program_->bind();						mpl_debug_gl_error;
+	glPointSize(point_size_);		
+
+	program_->bind();					
 	const mat4& mvp = camera_->modelViewProjectionMatrix();
-	program_->set_uniform("mvp", mvp);		mpl_debug_gl_error;
+	program_->set_uniform("mvp", mvp);	
 
-	program_->set_uniform("inColor", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
-	surface_->draw(false);					mpl_debug_gl_error;
-
-	program_->set_uniform("inColor", vec3(0.0f, 0.0f, 1.0f));
-	wireframe_->draw(false);					mpl_debug_gl_error;
+	program_->set_uniform("inColor", vec3(0.4f, 0.8f, 0.8f));	
+	segments_->draw(false);				
 
 	program_->set_uniform("inColor", vec3(1.0f, 0.0f, 0.0f));
 	vertices_->draw(false);					mpl_debug_gl_error;
 
 	program_->unbind();						mpl_debug_gl_error;
-
-	MainWindow::draw();
 
 }

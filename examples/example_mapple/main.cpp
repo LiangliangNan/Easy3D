@@ -31,16 +31,16 @@ using namespace easy3d;
 
 int main(int /* argc */, char ** /* argv */) {
     try {
-#if 1
-        MainWindow app("Easy3D_Viewer", 80, 3, 2);
-        //Viewer app("Easy3D_Viewer", 4, 3, 2);
+#if 0
+         //MainWindow app("Easy3D_Viewer", 80, 3, 2);
+       Viewer app("Easy3D_Viewer", 4, 3, 2);
 #else
 		Mapple app(40, 3, 2);
 
-		Panel pan(&app, "Rendering Panel");
-		PluginPolyFit  polyfit(&pan);
+// 		Panel pan(&app, "Rendering Panel");
+// 		PluginPolyFit  polyfit(&pan);
 
-#if 1
+#if 0
 		Panel win2(&app, "Model Panel");
 		PluginPolyFit polyfit2(&win2);
 

@@ -29,9 +29,6 @@
     <ProjectReference Include="..\..\3rd_party\imgui\build\imgui.vcxproj">
       <Project>{87c5d918-de1b-43d4-9227-2ee71c8b02d2}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\3rd_party\tinyfiledialogs\tinyfiledialogs.vcxproj">
-      <Project>{f7bdc85c-ae86-4117-a6bc-82ab52ba500b}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\easy3d\core\core.vcxproj">
       <Project>{5dc20538-fb02-4040-bc6a-f0bd3e6ce44b}</Project>
     </ProjectReference>
