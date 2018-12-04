@@ -6168,9 +6168,13 @@ char const * tinyfd_openFileDialog(
 
         if ( osascriptPresent( ) )
         {
-                if (aTitle&&!strcmp(aTitle,"tinyfd_query")){strcpy(tinyfd_response,"applescript");return (char const *)1;}
+                if (aTitle&&!strcmp(aTitle,"tinyfd_query"))
+                {
+                    strcpy(tinyfd_response,"applescript");return (char const *)1;
+                }
                 strcpy( lDialogString , "osascript ");
-                if ( ! osx9orBetter() ) strcat( lDialogString , " -e 'tell application \"System Events\"' -e 'Activate'");
+                if ( ! osx9orBetter() )
+                    strcat( lDialogString , " -e 'tell application \"System Events\"' -e 'Activate'");
                 strcat( lDialogString , " -e 'try' -e '" );
     if ( ! aAllowMultipleSelects )
     {

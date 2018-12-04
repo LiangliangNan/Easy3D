@@ -178,25 +178,102 @@ namespace easy3d {
 
 #elif defined (__APPLE__)	
 	std::vector<std::string> file_dialog(const std::vector<std::pair<std::string, std::string>> &filetypes, bool save, bool multiple) {
-		const int FILE_DIALOG_MAX_BUFFER = 1024;
-		char buffer[FILE_DIALOG_MAX_BUFFER];
+        if (save && multiple) {
+            throw std::invalid_argument("save and multiple must not both be true.");
+        }
 
-		// For apple use applescript hack
-		FILE * output = popen(
-			"osascript -e \""
-			"   tell application \\\"System Events\\\"\n"
-			"           activate\n"
-			"           set existing_file to choose file\n"
-			"   end tell\n"
-			"   set existing_file_path to (POSIX path of (existing_file))\n"
-			"\" 2>/dev/null | tr -d '\n' ", "r");
-		while (fgets(buffer, FILE_DIALOG_MAX_BUFFER, output) != NULL)
-		{
-		}
 
-        //return std::string(buffer);
+        const int FILE_DIALOG_MAX_BUFFER = 1024;
+        char lDialogString [FILE_DIALOG_MAX_BUFFER] ;
 
-        std::vector<std::string> files = {std::string(buffer)};
+        strcpy( lDialogString , "osascript ");
+        strcat( lDialogString , " -e 'try' -e '" );
+        if ( ! multiple )
+               strcat( lDialogString , "POSIX path of ( " );
+        else
+               strcat( lDialogString , "set mylist to " );
+        strcat( lDialogString , "choose file " );
+
+        strcat(lDialogString, "with prompt \"") ;
+        if (multiple)
+            strcat(lDialogString, "Select the file(s) to open") ;
+        else
+            strcat(lDialogString, "Select the file to open") ;
+        strcat(lDialogString, "\" ") ;
+
+//        char const * aDefaultPathAndFile = ".";
+//        getPathWithoutFinalSlash( lString , aDefaultPathAndFile ) ;
+//        if ( strlen(lString) )
+//        {
+//                strcat(lDialogString, "default location \"") ;
+//                strcat(lDialogString, lString ) ;
+//                strcat(lDialogString , "\" " ) ;
+//        }
+
+        if (filetypes.size() > 0) {
+            strcat(lDialogString , "of type {\"" );
+            std::string type = "*." + filetypes[0].first;    // "*.png"
+            strcat( lDialogString , type.c_str() + 2 ) ;
+            strcat( lDialogString , "\"" ) ;
+            for (std::size_t i = 1 ; i < filetypes.size(); ++i) {
+                strcat( lDialogString , ",\"" ) ;
+                type = "*." + filetypes[i].first;    // "*.png"
+                strcat( lDialogString , type.c_str() + 2) ;
+                strcat( lDialogString , "\"" ) ;
+            }
+           strcat( lDialogString , "} " ) ;
+        }
+
+        if (multiple)
+        {
+            strcat( lDialogString , "multiple selections allowed true ' " ) ;
+            strcat( lDialogString ,
+                            "-e 'set mystring to POSIX path of item 1 of mylist' " );
+            strcat( lDialogString ,
+                            "-e 'repeat with  i from 2 to the count of mylist' " );
+            strcat( lDialogString , "-e 'set mystring to mystring & \"|\"' " );
+            strcat( lDialogString ,
+            "-e 'set mystring to mystring & POSIX path of item i of mylist' " );
+            strcat( lDialogString , "-e 'end repeat' " );
+            strcat( lDialogString , "-e 'mystring' " );
+        }
+        else
+            strcat( lDialogString , ")' " ) ;
+
+        strcat(lDialogString, "-e 'on error number -128' " ) ;
+        strcat(lDialogString, "-e 'end try'") ;
+
+        std::vector<std::string> files;
+        FILE * output = popen( lDialogString , "r" );
+        if (!output)
+            return files ;
+
+        bool skip_empty_fields = true;
+        char seperator = '\|';
+        char buffer[FILE_DIALOG_MAX_BUFFER] = {'\0'};
+        char* p = buffer;
+        while ( fgets( p , sizeof( buffer ) , output ) != NULL )
+        {
+            std::string sequence(p);
+            std::string::size_type pos = sequence.find_last_of('\n');
+            if (pos != std::string::npos)
+                sequence = sequence.substr(0, pos);
+            std::size_t length = sequence.length();
+            std::size_t start = 0;
+            while (start < length) {
+                std::size_t end = sequence.find(seperator, start);
+                if (end == std::string::npos) {
+                    end = length;
+                }
+                if (!skip_empty_fields || (end - start > 0)) {
+                    files.push_back(sequence.substr(start, end - start));
+                }
+                start = end + 1;
+            }
+            p += strlen( p );
+        }
+        pclose( output ) ;
+
         return files;
 	}
 #endif

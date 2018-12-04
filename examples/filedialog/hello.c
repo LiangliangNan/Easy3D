@@ -98,7 +98,7 @@ misrepresented as being the original software.
 int main(int argc, char * argv[])
 {
 	char const * lTheOpenFileName;
-	char const * lFilterPatterns[2] = { "*.txt", "*.obj" };
+    char const * lFilterPatterns[2] = { "*.obj", "*.off" };
 	lTheOpenFileName = tinyfd_openFileDialog(
 		"let us read the password back",
 		"",
