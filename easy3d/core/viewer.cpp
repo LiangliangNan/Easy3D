@@ -742,8 +742,10 @@ namespace easy3d {
             point = camera_->unprojectedCoordinatesOf(point);
 			return point;
 		}
-        else
-            std::cout << "not found" << std::endl;
+#ifndef NDEBUG
+		std::cout << "window size: " << width_ << ", "<< height_ 
+			<< "; mouse: " << x << ", " << y << std::endl;
+#endif
 		return vec3();
 	}
 
