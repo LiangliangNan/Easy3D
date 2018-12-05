@@ -187,6 +187,7 @@ namespace easy3d {
 
 	protected:
 		GLFWwindow*	window_;
+        double      highdpi_;
 		std::string	title_;
 		Camera*		camera_;
 

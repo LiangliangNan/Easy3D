@@ -35,9 +35,9 @@ namespace easy3d {
 	bool ShaderProgram::initialized_ = false;
 
 
-	ShaderProgram::ShaderProgram(const std::string& name)
-		: name_(name)
-		, program_(0)
+    ShaderProgram::ShaderProgram(const std::string& name)
+        : program_(0)
+        , name_(name)
 	{
 		if (is_supported()) {
 			for (int i = 0; i < ShaderProgram::NUM_SHADER_TYPES; ++i) {

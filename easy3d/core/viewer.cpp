@@ -59,21 +59,21 @@ namespace easy3d {
 		int depth_bits /* = 24 */,
 		int stencil_bits /* = 8 */
 	)
-		: title_(title)
-		, full_screen_(full_screen)
-		, process_events_(true)
-		, samples_(0)
-		, show_corner_axes_(true)
-		, width_(1280)	// default width
-		, height_(960)	// default height
-		, pressed_key_(GLFW_KEY_UNKNOWN)
-		, axes_(nullptr)
-		, camera_(nullptr)
-		, points_program_(nullptr)
-		, lines_program_(nullptr)
-		, surface_program_(nullptr)
-		, point_size_(2)
-		, model_idx_(-1)
+        : title_(title)
+        , camera_(nullptr)
+        , samples_(0)
+        , full_screen_(full_screen)
+        , width_(400)	// default width
+        , height_(400)	// default height
+        , process_events_(true)
+        , pressed_key_(GLFW_KEY_UNKNOWN)
+        , show_corner_axes_(true)
+        , axes_(nullptr)
+        , points_program_(nullptr)
+        , point_size_(2)
+        , lines_program_(nullptr)
+        , surface_program_(nullptr)
+        , model_idx_(-1)
 	{
 #if !defined(_WIN32)
 		/* Avoid locale-related number parsing issues */
@@ -129,8 +129,9 @@ namespace easy3d {
 			window_ = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, nullptr);
 		}
 		else {
-			window_ = glfwCreateWindow(width_, height_, title.c_str(), nullptr, nullptr);
+            window_ = glfwCreateWindow(width_, height_, title.c_str(), nullptr, nullptr);
 		}
+        glfwSetWindowUserPointer(window_, this);
 
 		if (!window_) {
 			glfwTerminate();
@@ -139,14 +140,14 @@ namespace easy3d {
 		}
 
 		glfwMakeContextCurrent(window_);
+        glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        glfwSwapInterval(1); // Enable vsync
 
 		// Load OpenGL and its extensions
 		if (glewInit() != GLEW_OK) {
 			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
 			throw std::runtime_error("Failed to load OpenGL and its extensions!");
 		}
-
-		glfwSwapInterval(1); // Enable vsync
 
 #if defined(DEBUG) || defined(_DEBUG)
 		std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
@@ -175,9 +176,16 @@ namespace easy3d {
 			}
 		}
 
-		glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        int width, height;
+        glfwGetFramebufferSize(window_, &width, &height);
+        int width_window, height_window;
+        glfwGetWindowSize(window_, &width_window, &height_window);
+        highdpi_ = static_cast<double>(width)/width_window;
 
-		setup_callbacks();
+        camera_ = new Camera;
+        camera_->setSceneRadius(1.0f);
+        camera_->setSceneCenter(vec3(0, 0, 0));
+        camera_->showEntireScene();
 
 		background_color_[0] = background_color_[1] = background_color_[2] = 0.3f;
 		mouse_x_ = mouse_y_ = 0;
@@ -188,7 +196,10 @@ namespace easy3d {
 		drag_active_ = false;
 		process_events_ = true;
 
-		glfwSetWindowUserPointer(window_, this);
+        setup_callbacks();
+
+        // seems depth test is disabled by default
+        glEnable(GL_DEPTH_TEST);
 
 #if defined(__APPLE__)
 		/* Poll for events once before starting a potentially lengthy loading process.*/
@@ -204,8 +215,8 @@ namespace easy3d {
 			if (!viewer->process_events_)
 				return;
 
-			int w, h;
-			glfwGetWindowSize(win, &w, &h);
+            int w, h;
+            glfwGetWindowSize(win, &w, &h);
 			if (x >= 0 && x <= w && y >= 0 && y <= h)
 				viewer->callback_event_cursor_pos(x, y);
 			else if (viewer->drag_active_) {
@@ -252,10 +263,7 @@ namespace easy3d {
 			viewer->callback_event_scroll(dx, dy);
 		});
 
-		/* React to framebuffer size events -- includes window size events
-		   and also catches things like dragging a window from a Retina-capable
-		   screen to a normal screen on Mac OS X */
-		glfwSetFramebufferSizeCallback(window_, [](GLFWwindow *win, int width, int height) {
+        glfwSetWindowSizeCallback(window_, [](GLFWwindow *win, int width, int height) {
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
@@ -275,17 +283,16 @@ namespace easy3d {
 
 
 	bool Viewer::callback_event_cursor_pos(double x, double y) {
-		int px = static_cast<int>(x);
-		int py = static_cast<int>(y);
-
+        int px = static_cast<int>(x);
+        int py = static_cast<int>(y);
 		try {
 			int dx = px - mouse_x_;
-			int dy = py - mouse_y_;
+            int dy = py - mouse_y_;
 			mouse_x_ = px;
 			mouse_y_ = py;
 			if (drag_active_)
 				return mouse_drag_event(px, py, dx, dy, button_, modifiers_);
-			else
+            else
 				return mouse_free_move_event(px, py, dx, dy, modifiers_);
 		}
 		catch (const std::exception &e) {
@@ -379,14 +386,17 @@ namespace easy3d {
 
 	void Viewer::callback_event_resize(int w, int h) {
 		if (w == 0 && h == 0)
-			return;
+			return;       
 
-		try {
-			width_ = w;
-			height_ = h;
-			glViewport(0, 0, w, h);
-			camera_->setScreenWidthAndHeight(w, h);
-			post_resize(w, h);
+        try {
+            width_ = w;
+            height_ = h;
+            camera_->setScreenWidthAndHeight(w, h);
+
+            w = static_cast<int>(w * highdpi_);
+            h = static_cast<int>(h * highdpi_);
+            glViewport(0, 0, w, h);
+            post_resize(w, h);
 		}
 		catch (const std::exception &e) {
 			std::cerr << "Caught exception in event handler: " << e.what()
@@ -455,12 +465,15 @@ namespace easy3d {
 	}
 
 
-	void Viewer::resize(int w, int h) {
-		glfwSetWindowSize(window_, w, h);
-	}
+    void Viewer::resize(int w, int h) {
+        //glfwSetWindowSize(window_, static_cast<int>(w/highdpi_), static_cast<int>(h/highdpi_));
+        width_ = w;
+        height_ = h;
+        glfwSetWindowSize(window_, w, h);
+    }
 
 
-	void Viewer::update() const {
+    void Viewer::update() const {
 		glfwPostEmptyEvent();
 	}
 
@@ -716,6 +729,10 @@ namespace easy3d {
 
 	vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
 		float depth = std::numeric_limits<float>::max();
+
+        int w, h;
+        glfwGetWindowSize(window_, &w, &h);
+
 		// Qt uses upper corner for its origin while GL uses the lower corner.
 		glReadPixels(x, height_ - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	mpl_debug_gl_error;
 		found = depth < 1.0f;
@@ -734,7 +751,7 @@ namespace easy3d {
 
 
 	void Viewer::run() {
-		init();
+        init();
 
 		// TODO: make it member variable
 		bool is_animating = false;
@@ -783,14 +800,7 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-		camera_ = new Camera;
-		camera_->setScreenWidthAndHeight(width_, height_);
-		camera_->setSceneRadius(1.0f);
-		camera_->setSceneCenter(vec3(0, 0, 0));
-		camera_->showEntireScene();
-
-		// seems depth test is disabled by default
-		glEnable(GL_DEPTH_TEST);
+        resize(800, 800);
 		glfwShowWindow(window_);
 
 		// create shader programs
@@ -995,8 +1005,9 @@ namespace easy3d {
 			axes_->update_color_buffer(colors);
 		}
 		// The viewport and the scissor are changed to fit the lower left corner.
-		int scissor[4];
-		glGetIntegerv(GL_SCISSOR_BOX, scissor);	mpl_debug_gl_error;
+        int viewport[4], scissor[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);	mpl_debug_gl_error;
+        glGetIntegerv(GL_SCISSOR_BOX, scissor);	mpl_debug_gl_error;
 
 		static int corner_frame_size = 150;
 		glViewport(0, 0, corner_frame_size, corner_frame_size);
@@ -1004,7 +1015,7 @@ namespace easy3d {
 
 		// To make the axis appear over other objects: reserve a tiny bit of the 
 		// front depth range. NOTE: do remember to restore it later.
-		glDepthRange(0, 0.001f);
+        glDepthRange(0, 0.001);
 
 		const mat4& proj = easy3d::ortho(-1, 1, -1, 1, -1, 1);
 		const mat4& view = camera_->orientation().inverse().matrix();
@@ -1018,8 +1029,8 @@ namespace easy3d {
 
 		// restore
 		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
-		glViewport(0, 0, width_, height_);
-		glDepthRange(0.0f, 1.0f);
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glDepthRange(0.0, 1.0);
 	}
 
 

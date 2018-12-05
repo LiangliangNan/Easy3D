@@ -249,10 +249,10 @@ namespace easy3d {
             return files ;
 
         bool skip_empty_fields = true;
-        char seperator = '\|';
+        char seperator = '|';
         char buffer[FILE_DIALOG_MAX_BUFFER] = {'\0'};
         char* p = buffer;
-        while ( fgets( p , sizeof( buffer ) , output ) != NULL )
+        while ( fgets( p , sizeof( buffer ) , output ) != nullptr )
         {
             std::string sequence(p);
             std::string::size_type pos = sequence.find_last_of('\n');
