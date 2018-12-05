@@ -226,6 +226,12 @@ namespace easy3d {
 		void print_active_uniforms();
 		void print_active_uniform_blocks();
 
+		// ---------------------- Load/Save binary -------------------------------
+		// The ready-to-use (i.e., compiled and linked) program in a single binary file.
+		// NOTE: OpenGL >= 4.1
+		bool load_binary(const std::string& file_name);
+		void save_binary(const std::string& file_name);
+
 	protected:
 
 		// AUX STRUCTURES
@@ -306,8 +312,8 @@ namespace easy3d {
 
 		std::string _type_string(GLenum type) const;
 
-		// aux function to read the shader's source code from file
-		bool _read_shader_file(const std::string& file, std::string& shader_code);
+		// aux function to read the shader's source code from a file
+		std::string _read_file(const std::string& file);
 
 	private:
 		std::string name_;

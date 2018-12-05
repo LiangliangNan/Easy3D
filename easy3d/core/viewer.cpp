@@ -825,18 +825,24 @@ namespace easy3d {
 		}
 
 		surface_program_ = new ShaderProgram("surface_color");
+#define USE_HANDY_PROGRAM
+#ifdef USE_HANDY_PROGRAM
+		surface_program_->load_binary("surface_color.prog");
+#else
 		if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
 			surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
 		{
 			surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
 			surface_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
 			surface_program_->link_program();
+			surface_program_->save_binary("surface_color.prog");
 		}
 		else {
 			std::cerr << "failed creating shader program for surfaces" << std::endl;
 			delete surface_program_;
 			surface_program_ = nullptr;
 		}
+#endif
 	}
 
 
