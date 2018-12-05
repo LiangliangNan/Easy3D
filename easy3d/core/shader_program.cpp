@@ -201,11 +201,13 @@ namespace easy3d {
 		_add_blocks();		mpl_debug_gl_error;
 
 #ifndef NDEBUG
-		// print some hints for user 
-		std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
-		print_active_attributes();
-		print_active_uniforms();
-		print_active_uniform_blocks();
+        // print some hints for user
+        if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+            std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
+            print_active_attributes();
+            print_active_uniforms();
+            print_active_uniform_blocks();
+        }
 #endif
 
 		return true;
@@ -672,6 +674,11 @@ namespace easy3d {
 			return;
 		}
 
+        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+            std::cerr << "querying active attributes requires OpenGL >= 4.3" << std::endl;
+            return;
+        }
+
 		GLint numAttribs;
 		glGetProgramInterfaceiv(program_, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &numAttribs);
 
@@ -696,6 +703,11 @@ namespace easy3d {
 			std::cerr << "program not linked" << std::endl;
 			return;
 		}
+
+        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+            std::cerr << "querying active uniforms requires OpenGL >= 4.3" << std::endl;
+            return;
+        }
 
 		GLint numUniforms = 0;
 		glGetProgramInterfaceiv(program_, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);	mpl_debug_gl_error;
@@ -722,6 +734,11 @@ namespace easy3d {
 			std::cerr << "program not linked" << std::endl;
 			return;
 		}
+
+        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+            std::cerr << "querying active uniform blocks requires OpenGL >= 4.3" << std::endl;
+            return;
+        }
 
 		GLint numBlocks = 0;
 
@@ -1303,6 +1320,11 @@ namespace easy3d {
 
 
 	bool ShaderProgram::load_binary(const std::string& file_name) {
+        if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
+            std::cerr << "load binary program requires OpenGL >= 4.1" << std::endl;
+            return false;
+        }
+
 		std::string code = _read_file(file_name);
 		if (code.empty()) {
 			std::cerr << "empty program in file: " << file_name << std::endl;
@@ -1326,10 +1348,13 @@ namespace easy3d {
 			_add_uniforms();	mpl_debug_gl_error;
 			_add_blocks();		mpl_debug_gl_error;
 #ifndef NDEBUG
-			// print some hints for user 
-			print_active_attributes();
-			print_active_uniforms();
-			print_active_uniform_blocks();
+            // print some hints for user
+            if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+                std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
+                print_active_attributes();
+                print_active_uniforms();
+                print_active_uniform_blocks();
+            }
 #endif
 			return true;
 		}
@@ -1341,12 +1366,18 @@ namespace easy3d {
 	}
 
 
-	void ShaderProgram::save_binary(const std::string& file_name) {
+    bool ShaderProgram::save_binary(const std::string& file_name) {
+        if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
+            std::cerr << "save binary program requires OpenGL >= 4.1" << std::endl;
+            return false;
+        }
+
 		// check the program linked or not
 		std::string log;
 		if (!program_info_log(log)) {
-			std::cerr << "program not linked yet: " << log << std::endl;
-			return;
+            std::cerr << "program not linked yet." <<
+                         (!log.empty() ? " " + log  : "") << std::endl;
+            return false;
 		}
 
 		GLint datasize;
@@ -1362,7 +1393,9 @@ namespace easy3d {
 		stream.open(file_name.c_str(), std::ios::binary | std::ios::out);
 		if (stream.is_open()) {
 			stream.write(bindata, datasize + 4);
+            return true;
 		}
+        return false;
 	}
 
 }

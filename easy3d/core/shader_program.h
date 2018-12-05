@@ -222,15 +222,16 @@ namespace easy3d {
 		bool program_info_log(std::string& log);
 
 		// useful for debug. More detailed version are implemented in OpenglInfo class.
+        // NOTE: require OpenGL >= 4.3
 		void print_active_attributes();
 		void print_active_uniforms();
 		void print_active_uniform_blocks();
 
 		// ---------------------- Load/Save binary -------------------------------
 		// The ready-to-use (i.e., compiled and linked) program in a single binary file.
-		// NOTE: OpenGL >= 4.1
+        // NOTE: require OpenGL >= 4.1
 		bool load_binary(const std::string& file_name);
-		void save_binary(const std::string& file_name);
+        bool save_binary(const std::string& file_name);
 
 	protected:
 

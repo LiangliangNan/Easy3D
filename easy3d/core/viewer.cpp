@@ -825,7 +825,7 @@ namespace easy3d {
 		}
 
 		surface_program_ = new ShaderProgram("surface_color");
-#define USE_HANDY_PROGRAM
+//#define USE_HANDY_PROGRAM
 #ifdef USE_HANDY_PROGRAM
 		surface_program_->load_binary("surface_color.prog");
 #else
@@ -890,7 +890,7 @@ namespace easy3d {
 		// extract file extension
 		std::string::size_type dot(file_name.rfind("."));
 		if (dot == std::string::npos)
-			return false;
+            return nullptr;
 
 		std::string ext = file_name.substr(dot + 1, file_name.length() - dot - 1);
 		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
