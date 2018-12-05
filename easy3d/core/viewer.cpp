@@ -63,8 +63,8 @@ namespace easy3d {
         , camera_(nullptr)
         , samples_(0)
         , full_screen_(full_screen)
-        , width_(400)	// default width
-        , height_(400)	// default height
+        , width_(1280)	// default width
+        , height_(960)	// default height
         , process_events_(true)
         , pressed_key_(GLFW_KEY_UNKNOWN)
         , show_corner_axes_(true)
@@ -176,13 +176,15 @@ namespace easy3d {
 			}
 		}
 
-        int width, height;
-        glfwGetFramebufferSize(window_, &width, &height);
-        int width_window, height_window;
-        glfwGetWindowSize(window_, &width_window, &height_window);
-        highdpi_ = static_cast<double>(width)/width_window;
+        int fb_width, fb_height;
+        glfwGetFramebufferSize(window_, &fb_width, &fb_height);
+        glfwGetWindowSize(window_, &width_, &height_);  // get the actual window size
+
+        highdpi_ = static_cast<double>(fb_width)/width_;
+        glViewport(0, 0, fb_width, fb_height);
 
         camera_ = new Camera;
+        camera_->setScreenWidthAndHeight(width_, height_);
         camera_->setSceneRadius(1.0f);
         camera_->setSceneCenter(vec3(0, 0, 0));
         camera_->showEntireScene();
@@ -392,10 +394,7 @@ namespace easy3d {
             width_ = w;
             height_ = h;
             camera_->setScreenWidthAndHeight(w, h);
-
-            w = static_cast<int>(w * highdpi_);
-            h = static_cast<int>(h * highdpi_);
-            glViewport(0, 0, w, h);
+            glViewport(0, 0, static_cast<int>(w * highdpi_), static_cast<int>(h * highdpi_));
             post_resize(w, h);
 		}
 		catch (const std::exception &e) {
@@ -466,9 +465,6 @@ namespace easy3d {
 
 
     void Viewer::resize(int w, int h) {
-        //glfwSetWindowSize(window_, static_cast<int>(w/highdpi_), static_cast<int>(h/highdpi_));
-        width_ = w;
-        height_ = h;
         glfwSetWindowSize(window_, w, h);
     }
 
@@ -528,7 +524,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
-		// highlight geometry primitives here
+        // highlight geometry primitives here
 		return false;
 	}
 
@@ -728,19 +724,26 @@ namespace easy3d {
 
 
 	vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
-		float depth = std::numeric_limits<float>::max();
 
-        int w, h;
-        glfwGetWindowSize(window_, &w, &h);
+        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
+        int glx = x;
+        int gly = height_ - 1 - y;
 
-		// Qt uses upper corner for its origin while GL uses the lower corner.
-		glReadPixels(x, height_ - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	mpl_debug_gl_error;
+        // NOTE: when dealing with OpenGL, we alway work in the highdpi screen space
+        glx = static_cast<int>(glx * highdpi_);
+        gly = static_cast<int>(gly * highdpi_);
+
+        float depth = std::numeric_limits<float>::max();
+        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	mpl_debug_gl_error;
 		found = depth < 1.0f;
 		if (found) {
-			vec3 point(float(x), float(y), depth);
-			point = camera_->unprojectedCoordinatesOf(point);
+            vec3 point(float(x), float(y), depth);
+            // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
+            point = camera_->unprojectedCoordinatesOf(point);
 			return point;
 		}
+        else
+            std::cout << "not found" << std::endl;
 		return vec3();
 	}
 
@@ -751,7 +754,10 @@ namespace easy3d {
 
 
 	void Viewer::run() {
+        // initialize before showing the window
         init();
+
+        glfwShowWindow(window_);
 
 		// TODO: make it member variable
 		bool is_animating = false;
@@ -800,9 +806,6 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-        resize(800, 800);
-		glfwShowWindow(window_);
-
 		// create shader programs
 		// TODO: have a shader manager to manage all the shaders
 		points_program_ = new ShaderProgram("points_color");
@@ -835,24 +838,18 @@ namespace easy3d {
 		}
 
 		surface_program_ = new ShaderProgram("surface_color");
-//#define USE_HANDY_PROGRAM
-#ifdef USE_HANDY_PROGRAM
-		surface_program_->load_binary("surface_color.prog");
-#else
 		if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
 			surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
 		{
 			surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
 			surface_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
 			surface_program_->link_program();
-			surface_program_->save_binary("surface_color.prog");
 		}
 		else {
 			std::cerr << "failed creating shader program for surfaces" << std::endl;
 			delete surface_program_;
 			surface_program_ = nullptr;
 		}
-#endif
 	}
 
 
