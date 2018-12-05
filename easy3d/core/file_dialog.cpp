@@ -184,7 +184,7 @@ namespace easy3d {
 
 
         const int FILE_DIALOG_MAX_BUFFER = 1024;
-        char lDialogString [FILE_DIALOG_MAX_BUFFER] ;
+        char lDialogString [FILE_DIALOG_MAX_BUFFER] = { '\0' };
 
         strcpy( lDialogString , "osascript ");
         strcat( lDialogString , " -e 'try' -e '" );

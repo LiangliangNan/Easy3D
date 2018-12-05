@@ -31,6 +31,21 @@
 
 namespace easy3d {
 
+    // To use the camera, you need to do the following:
+    // - Call setScreenWidthAndHeight() at
+    //     (1) creation of the application and
+    //     (2) when the window size change
+    // - Call setLookat() at creation to initialize the camera look position
+    // - Call frame()->action_start() on mouse down and
+    //        frame()->action_end() on mouse up.
+    // - Call frame()->action_rotate() on mouse move for rotation and
+    //        frame()->action_translate() on mouse move for translation and
+    //        frame()->action_zoom() on mouse move for zoom
+    // To make the entire sence visible, call
+    // 		  setSceneBoundingBox() and showEntireScene();
+    //
+    // To retrieve the model view projection matrix, call modelViewProjectionMatrix()
+
 
 	class Viewer;
 

@@ -187,9 +187,6 @@ namespace easy3d {
 
         camera_ = new Camera;
         camera_->setScreenWidthAndHeight(width_, height_);
-        camera_->setSceneRadius(1.0f);
-        camera_->setSceneCenter(vec3(0, 0, 0));
-        camera_->showEntireScene();
 
 		background_color_[0] = background_color_[1] = background_color_[2] = 0.3f;
 		mouse_x_ = mouse_y_ = 0;
@@ -476,7 +473,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-		camera_->frame()->action_start();
+        camera_->frame()->action_start();
 		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
 			bool found = false;
 			vec3 p = point_under_pixel(x, y, found);
