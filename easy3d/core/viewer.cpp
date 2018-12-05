@@ -178,10 +178,12 @@ namespace easy3d {
 
         int fb_width, fb_height;
         glfwGetFramebufferSize(window_, &fb_width, &fb_height);
-        glfwGetWindowSize(window_, &width_, &height_);  // get the actual window size
+        int win_width, win_height;
+        glfwGetWindowSize(window_, &win_width, &win_height);  // get the actual window size
+        highdpi_ = static_cast<double>(fb_width)/win_width;
 
-        highdpi_ = static_cast<double>(fb_width)/width_;
         glViewport(0, 0, fb_width, fb_height);
+        glEnable(GL_DEPTH_TEST);
 
         camera_ = new Camera;
         camera_->setScreenWidthAndHeight(width_, height_);
@@ -199,9 +201,6 @@ namespace easy3d {
 		process_events_ = true;
 
         setup_callbacks();
-
-        // seems depth test is disabled by default
-        glEnable(GL_DEPTH_TEST);
 
 #if defined(__APPLE__)
 		/* Poll for events once before starting a potentially lengthy loading process.*/
@@ -465,6 +464,8 @@ namespace easy3d {
 
 
     void Viewer::resize(int w, int h) {
+        w = static_cast<int>(w / highdpi_);
+        h = static_cast<int>(h / highdpi_);
         glfwSetWindowSize(window_, w, h);
     }
 
@@ -756,9 +757,10 @@ namespace easy3d {
 
 
 	void Viewer::run() {
-        // initialize before showing the window
+        // initialize before showing the window because it can be slow
         init();
 
+        resize(width_, height_);    // Make expected window size
         glfwShowWindow(window_);
 
 		// TODO: make it member variable
