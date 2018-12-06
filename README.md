@@ -1,5 +1,5 @@
 # Easy3D 
-## An lightweight, easy-to-use, and efficient C++ library for developing cross-platform 3D applications.
+## A lightweight, easy-to-use, and efficient C++ library for developing cross-platform 3D applications.
 
 ### Easy3D provides: ###
 * Efficient data structures for representing 3D data (i.e., point clouds and meshes).
