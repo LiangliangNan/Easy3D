@@ -146,8 +146,10 @@ QGLViewer::setWheelBinding() to customize the binding. */
 		float delta = wheelDelta(wheel_dy);
 		const float sceneRadius = camera->sceneRadius();
 		if (zoomsOnPivotPoint_) {
-			const vec3& direction = camera->pivotPoint() - position();
-			if (direction.norm() > 0.02f * sceneRadius || delta > 0.0f)
+			const vec3& direction = camera->pivotPoint() - position();	
+			// Liangliang: the condition "delta < 0.0f" is to avoid deadlock, 
+			//			   i.e., getting too close to the pivot point.
+			if (direction.norm() > 0.02f * sceneRadius || delta < 0.0f)
 				translate(delta * direction);
 		}
 		else {

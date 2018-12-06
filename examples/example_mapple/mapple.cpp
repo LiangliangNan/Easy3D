@@ -46,7 +46,7 @@ Mapple::Mapple(
 void Mapple::init() {
 	MainWindow::init();		mpl_debug_gl_error;
 
-	const std::string dir = "C:/Users/Liangliang/Dropbox/Students/Nikos/weekly progress/20181120/";
+	const std::string dir = "C:/Users/liang/Dropbox/Students/Nikos/weekly progress/20181120/";
 	const std::string file = dir + "2ndCrossSectionProblem_1.lines";
 	std::ifstream input(file.c_str());
 	if (input.fail()) {
