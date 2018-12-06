@@ -1,4 +1,4 @@
-![](logo.png)
+<img src="logo.png" width="400">
 
 ### Easy3D provides: ###
 * Efficient data structures for representing 3D data (i.e., point clouds and meshes).
