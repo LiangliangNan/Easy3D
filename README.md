@@ -1,5 +1,3 @@
-# Easy3D 
-
 ### Easy3D provides: ###
 * Efficient data structures for representing 3D data (i.e., point clouds and meshes).
 * High-level encapsulation of OpenGL and GLSL for efficient rendering a set of points, lines, 
