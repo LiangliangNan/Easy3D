@@ -96,6 +96,11 @@ namespace easy3d
 	// \param[in] posIndex the vertex attribute array index that represents position in the current shader
 	void draw_point(GLuint positionAttrib, const vec3 &pos);
 
+
+	void draw_line(GLuint positionAttrib, const vec3 &s, const vec3& t);
+
+	void draw_screen_line(GLuint positionAttrib, int x0, int y0, int x1, int y1, int w, int h, int vpw, int vph, float depth);
+
 }
 
 
