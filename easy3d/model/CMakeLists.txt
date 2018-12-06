@@ -7,5 +7,7 @@ project(${PROJECT_NAME})
 file(GLOB SOURCES ./*.cpp)
 file(GLOB HEADERS ./*.h)
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      FOLDER "Easy3D")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})

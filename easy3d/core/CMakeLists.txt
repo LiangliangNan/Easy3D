@@ -46,7 +46,8 @@ set(easy3d_core_SOURCES
 
 
 add_library(${PROJECT_NAME} STATIC ${easy3d_core_SOURCES} ${easy3d_core_HEADERS})
-
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      FOLDER "Easy3D")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})

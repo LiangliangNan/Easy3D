@@ -21,6 +21,8 @@ set(imgui_SOURCES
 
 
 add_library(${PROJECT_NAME} STATIC ${imgui_SOURCES} ${imgui_HEADERS})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      FOLDER "3rd_party")
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})

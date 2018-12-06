@@ -18,8 +18,6 @@ set(LIB_SUFFIX "" CACHE STRING "Takes an empty string or 64. Directory where lib
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-
 if (UNIX)
     option(GLFW_USE_OSMESA "Use OSMesa for offscreen context creation" OFF)
 endif()

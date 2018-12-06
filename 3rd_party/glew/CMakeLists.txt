@@ -6,6 +6,8 @@ project(${PROJECT_NAME})
 
 
 add_library(${PROJECT_NAME} STATIC src/glew.c)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      FOLDER "3rd_party")
 
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)

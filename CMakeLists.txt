@@ -17,7 +17,7 @@ else()
 endif()
 
 # Build examples and third-parties
-option(EASY3D_BUILD_EXAMPLES  "Build Easy3D examples" 		ON)
+option(EASY3D_BUILD_EXAMPLES    "Build Easy3D examples"     ON)
 
 ################################################################################
 
@@ -38,25 +38,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 ################################################################################
 
-
-set(GLEW_STATIC 1)
-
-##for C
-#set(CMAKE_C_FLAGS_DEBUG _DEBUG)
-#set(CMAKE_C_FLAGS_RELWITHDEBINFO _DEBUG)
-##For C++
-#set(CMAKE_CXX_FLAGS_DEBUG _DEBUG)
-#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO _DEBUG)
-
-#set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} -_DEBUG)
-
-################################################################################
-
-
 add_subdirectory(3rd_party)
 add_subdirectory(easy3d)
 
-
 if(EASY3D_BUILD_EXAMPLES)
-	add_subdirectory(examples)
+    add_subdirectory(examples)
 endif()

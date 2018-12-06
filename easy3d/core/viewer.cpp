@@ -149,7 +149,7 @@ namespace easy3d {
 			throw std::runtime_error("Failed to load OpenGL and its extensions!");
 		}
 
-#if defined(DEBUG) || defined(_DEBUG)
+#ifndef NDEBUG
 		std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
 		int major = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MAJOR);
 		int minor = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MINOR);
@@ -580,10 +580,9 @@ namespace easy3d {
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
 		else if (key == GLFW_KEY_M && modifiers == 0) {
-			// NOTE: switching on/off MSAA in this way only works for a single-window 
-			//       application, because OpenGL is a state machine. For multi-window
-			//       applications, you have to call glDisable()/glEnable() before the
-			//       individual draw functions.
+			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL 
+			//       is a state machine. For multi-window applications, you have to call 
+			//		 glDisable()/glEnable() before the individual draw functions.
 			if (samples_ > 0) {
 				if (glIsEnabled(GL_MULTISAMPLE)) {
 					glDisable(GL_MULTISAMPLE);
@@ -873,7 +872,7 @@ namespace easy3d {
 			"  A:               Toggle axes										\n"
 			"  W:               Toggle wireframe								\n"
 			"  < or >:          Switch between models							\n"
-			"  Ctrl + < or >:   Switch between models and fit screen current model"
+			"  M:               Toggle MSAA										\n"
 		);
 	}
 
