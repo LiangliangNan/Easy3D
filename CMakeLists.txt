@@ -16,6 +16,8 @@ else()
 	set(EASY3D_TOPLEVEL_PROJECT OFF)
 endif()
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Build examples and third-parties
 option(EASY3D_BUILD_EXAMPLES    "Build Easy3D examples"     ON)
 

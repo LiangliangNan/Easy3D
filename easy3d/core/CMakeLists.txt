@@ -4,7 +4,7 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-set(easy3d_core_HEADERS
+set(${PROJECT_NAME}_HEADERS
     ./camera.h
     ./constraint.h
     ./drawable.h
@@ -24,7 +24,7 @@ set(easy3d_core_HEADERS
     ./viewer.h
     )
 
-set(easy3d_core_SOURCES
+set(${PROJECT_NAME}_SOURCES
     ./camera.cpp
     ./constraint.cpp
     ./drawable.cpp
@@ -45,7 +45,7 @@ set(easy3d_core_SOURCES
     )
 
 
-add_library(${PROJECT_NAME} STATIC ${easy3d_core_SOURCES} ${easy3d_core_HEADERS})
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "Easy3D")
 

@@ -4,9 +4,24 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-file(GLOB SOURCES ./*.cpp)
-file(GLOB HEADERS ./*.h)
-add_library(${PROJECT_NAME} STATIC ${SOURCES} ${HEADERS})
+set(${PROJECT_NAME}_HEADERS
+    ./imgui_fonts_droid_sans.h
+    ./ImGuiHelpers.h
+    ./imguitraits.h
+    ./main_window.h
+    ./panel.h
+    ./plugin.h
+    )
+
+set(${PROJECT_NAME}_SOURCES
+    ./main_window.cpp
+    ./panel.cpp
+    ./plugin.cpp
+    )
+
+
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "Easy3D")
 

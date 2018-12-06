@@ -4,11 +4,19 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-add_executable(${PROJECT_NAME}
+set(${PROJECT_NAME}_HEADERS
+    ./mapple.h
+    ./plugin_polyfit.h
+    )
+
+set(${PROJECT_NAME}_SOURCES
     ./main.cpp
     ./mapple.cpp
     ./plugin_polyfit.cpp
     )
+
+add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "Examples")
 
