@@ -67,6 +67,8 @@ namespace easy3d {
 		// Enter the application main loop.
 		void run();
 
+        std::string usage() const;
+
 		//-----------------------------------------------------
 
 		void set_title(const std::string &title);
@@ -182,7 +184,6 @@ namespace easy3d {
 		void setup_callbacks();
 
 	protected:
-		std::string usage() const;
 		void draw_corner_axes();
 
 	protected:
