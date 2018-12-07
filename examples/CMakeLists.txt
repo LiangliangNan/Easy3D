@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.1)
 
 add_subdirectory("Example_01_PointCloud")
-add_subdirectory("Example_02_Mesh")
-add_subdirectory("Example_03_FileIO")
-add_subdirectory("Example_04_Property")
-add_subdirectory("Example_05_Viewer")
-add_subdirectory("Example_06_Drawable")
-add_subdirectory("Example_07_ScalarField")
-add_subdirectory("Example_08_VectorField")
+add_subdirectory("Example_02_PointCloud_Properties")
+add_subdirectory("Example_03_PointCloud_FileIO")
+add_subdirectory("Example_04_Mesh")
+add_subdirectory("Example_05_Mesh_Connectivities")
+add_subdirectory("Example_06_Mesh_Properties")
+add_subdirectory("Example_07_Mesh_FileIO")
+add_subdirectory("Example_08_Viewer")
+add_subdirectory("Example_09_Drawables")
+add_subdirectory("Example_10_ScalarFields")
+add_subdirectory("Example_11_VectorFields")
 
 
 #get_directory_property(subdir_list DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} SUBDIRECTORIES)

@@ -22,15 +22,22 @@
 
 using namespace easy3d;
 
+
+// This example shows how to
+//		- create a point cloud from a set of points
+
+
 void main() {
 	// Create a point cloud
-	Point_cloud cloud;
+	Point_cloud* cloud = new Point_cloud;
 
 	// Add some points. Here we add 100 points on a 10*10 grid.
 	for (float i=-5; i<5; ++i) {
-		for (float j = -5; j < 5; ++j) {
-			cloud.add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane
-		}
+		for (float j = -5; j < 5; ++j) 
+			cloud->add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane
 	}
-	std::cout << "point cloud has " << cloud.n_vertices() << " points" << std::endl;
+	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
+
+	// Delete the point cloud (i.e., release memory)
+	delete cloud;
 }
