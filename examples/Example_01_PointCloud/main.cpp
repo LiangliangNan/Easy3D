@@ -22,21 +22,15 @@
 
 using namespace easy3d;
 
-int main(int /* argc */, char ** /* argv */) {
+void main() {
 	// Create a point cloud
 	Point_cloud cloud;
 
-	// Now we add some points.
-	// In this example, we add 8k points on a 20*20*20 grid.
-	for (float i=-10; i<10; ++i) {
-		for (float j = -10; j < 10; ++j) {
-			for (float k = -10; k < 10; ++k) {
-				cloud.add_vertex(vec3(i, j, k));
-			}
+	// Add some points. Here we add 100 points on a 10*10 grid.
+	for (float i=-5; i<5; ++i) {
+		for (float j = -5; j < 5; ++j) {
+			cloud.add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane
 		}
 	}
-
 	std::cout << "point cloud has " << cloud.n_vertices() << " points" << std::endl;
-
-    return EXIT_SUCCESS;
 }
