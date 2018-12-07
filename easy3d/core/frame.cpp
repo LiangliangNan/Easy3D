@@ -341,11 +341,6 @@ namespace easy3d {
 			setTranslation(position);
 	}
 
-	/*! Same as setPosition(), but with \c double parameters. */
-	void Frame::setPosition(float x, float y, float z) {
-		setPosition(vec3(x, y, z));
-	}
-
 	/*! Same as successive calls to setPosition() and then setOrientation().
 
 	Only one modified() signal is emitted, which is convenient if this signal is
@@ -376,14 +371,6 @@ namespace easy3d {
 		frameModified();
 	}
 
-	/*! \p x, \p y and \p z are set to the position() of the Frame. */
-	void Frame::getPosition(float &x, float &y, float &z) const {
-		vec3 p = position();
-		x = p.x;
-		y = p.y;
-		z = p.z;
-	}
-
 	/*! Sets the orientation() of the Frame, defined in the world coordinate system.
 	Emits the modified() signal.
 
@@ -397,25 +384,6 @@ namespace easy3d {
 			setRotation(orientation);
 	}
 
-	/*! Same as setOrientation(), but with \c double parameters. */
-	void Frame::setOrientation(float q0, float q1, float q2, float q3) {
-		setOrientation(quat(q0, q1, q2, q3));
-	}
-
-	/*! Get the current orientation of the frame (same as orientation()).
-	  Parameters are the orientation quat values.
-	  See also setOrientation(). */
-
-	  /*! The \p q are set to the orientation() of the Frame.
-
-	  See quat::quat(double, double, double, double) for details on \c q. */
-	void Frame::getOrientation(float &q0, float &q1, float &q2, float &q3) const {
-		quat o = orientation();
-		q0 = o[0];
-		q1 = o[1];
-		q2 = o[2];
-		q3 = o[3];
-	}
 
 	/*! Returns the position of the Frame, defined in the world coordinate system.
 	   See also orientation(), setPosition() and translation(). */

@@ -2,14 +2,14 @@
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *	https://3d.bk.tudelft.nl/liangliang/
 *
-*	This file is part of EasyGUI: software for processing and rendering
+*	This file is part of Easy3D: software for processing and rendering
 *   meshes and point clouds.
 *
-*	EasyGUI is free software; you can redistribute it and/or modify
+*	Easy3D is free software; you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License Version 3
 *	as published by the Free Software Foundation.
 *
-*	EasyGUI is distributed in the hope that it will be useful,
+*	Easy3D is distributed in the hope that it will be useful,
 *	but WITHOUT ANY WARRANTY; without even the implied warranty of
 *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 *	GNU General Public License for more details.
@@ -46,14 +46,13 @@ Mapple::Mapple(
 void Mapple::init() {
 	MainWindow::init();		mpl_debug_gl_error;
 
-	const std::string dir = "C:/Users/liang/Dropbox/Students/Nikos/weekly progress/20181120/";
+	const std::string dir = "C:/Users/liangliang/Dropbox/Students/Nikos/weekly progress/20181120/";
 	const std::string file = dir + "2ndCrossSectionProblem_1.lines";
 	std::ifstream input(file.c_str());
 	if (input.fail()) {
 		std::cerr << "could not open file \'" << file << "\'" << std::endl;
 		return;
 	}
-
 
 	std::string dummy;
 	int num_lines = 0;
@@ -115,6 +114,9 @@ void Mapple::cleanup() {
 
 void Mapple::draw() {
 	MainWindow::draw();
+
+	if (!program_)
+		return;
 
 	glPointSize(point_size_);		
 

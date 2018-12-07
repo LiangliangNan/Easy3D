@@ -18,25 +18,20 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/model/point_cloud.h>
+#include "cdt.h"
 
 using namespace easy3d;
 
 int main(int /* argc */, char ** /* argv */) {
-	// Create a point cloud
-	Point_cloud cloud;
+    try {
+        Mapple app(40, 3, 2);
+		app.run();
 
-	// Now we add some points.
-	// In this example, we add 8k points on a 20*20*20 grid.
-	for (float i=-10; i<10; ++i) {
-		for (float j = -10; j < 10; ++j) {
-			for (float k = -10; k < 10; ++k) {
-				cloud.add_vertex(vec3(i, j, k));
-			}
-		}
-	}
-
-	std::cout << "point cloud has " << cloud.n_vertices() << " points" << std::endl;
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+		std::cerr << error_msg << std::endl;
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

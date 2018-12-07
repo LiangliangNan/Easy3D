@@ -157,11 +157,9 @@ namespace easy3d {
 		Frame(const vec3 &position, const quat &orientation);
 
 		void setPosition(const vec3 &position);
-		void setPosition(float x, float y, float z);
 		void setPositionWithConstraint(vec3 &position);
 
 		void setOrientation(const quat &orientation);
-		void setOrientation(float q0, float q1, float q2, float q3);
 		void setOrientationWithConstraint(quat &orientation);
 
 		void setPositionAndOrientation(const vec3 &position,
@@ -172,8 +170,6 @@ namespace easy3d {
 		vec3 position() const;
 		quat orientation() const;
 
-		void getPosition(float &x, float &y, float &z) const;
-		void getOrientation(float &q0, float &q1, float &q2, float &q3) const;
 		//@}
 
 	public:

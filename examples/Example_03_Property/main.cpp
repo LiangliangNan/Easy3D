@@ -2,14 +2,14 @@
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *	https://3d.bk.tudelft.nl/liangliang/
 *
-*	This file is part of EasyGUI: software for processing and rendering
+*	This file is part of Easy3D: software for processing and rendering
 *   meshes and point clouds.
 *
-*	EasyGUI is free software; you can redistribute it and/or modify
+*	Easy3D is free software; you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License Version 3
 *	as published by the Free Software Foundation.
 *
-*	EasyGUI is distributed in the hope that it will be useful,
+*	Easy3D is distributed in the hope that it will be useful,
 *	but WITHOUT ANY WARRANTY; without even the implied warranty of
 *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 *	GNU General Public License for more details.

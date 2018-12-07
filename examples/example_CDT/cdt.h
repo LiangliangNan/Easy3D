@@ -19,44 +19,36 @@
 */
 
 
-#ifndef _OPENGL_GL_ERROR_H_
-#define _OPENGL_GL_ERROR_H_
+#pragma once
 
-#include <string>
-
+#include <easy3d/window/main_window.h>
 
 namespace easy3d {
-
-
-#define mpl_gl_error {\
-	check_gl_error(__FILE__, __LINE__) ;\
+	class LinesDrawable;
+	class PointsDrawable;
+	class ShaderProgram;
 }
 
-#define mpl_frame_buffer_error {\
-	check_frame_buffer_error(__FILE__, __LINE__) ;\
-}
+class Mapple : public easy3d::MainWindow
+{
+public:
+	Mapple(int num_samples = 4, int gl_major = 3, int gl_minor = 2);
 
+	void load_crosssection(const std::string& file_name, std::vector<vec3>& points);
+	void compute_CDT(const std::vector<vec3>& points);
 
-#ifndef NDEBUG
-#define mpl_debug_gl_error				mpl_gl_error
-#define mpl_debug_frame_buffer_error	mpl_frame_buffer_error
-#else
-#define mpl_debug_gl_error
-#define mpl_debug_frame_buffer_error
-#endif
+protected:
+    void init() override;
+    void draw() override;
 
+    void cleanup() override;
 
-	// Prints the last GL error to the Logger.
-	bool check_gl_error(const std::string& file, int line);
-	bool check_frame_buffer_error(const std::string& file, int line);
+private:
+	easy3d::ShaderProgram*  program_;
 
-	// Check if there was an error. The error message will be stored in "log" if provided.
-	bool gl_error(std::string& log);
-	bool frame_buffer_error(std::string& log);
+	easy3d::LinesDrawable*	input_segments_;
+	easy3d::PointsDrawable*	input_vertices_;
 
-}
-
-
-#endif
-
+	easy3d::LinesDrawable*	CDT_segments_;
+};
 
