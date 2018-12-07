@@ -200,7 +200,7 @@ namespace easy3d {
 		_add_uniforms();	mpl_debug_gl_error;
 		_add_blocks();		mpl_debug_gl_error;
 
-#ifndef NDEBUG
+#if 0
         // print some hints for user
         if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
             std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
@@ -1347,7 +1347,8 @@ namespace easy3d {
 		if (program_info_log(log)) {
 			_add_uniforms();	mpl_debug_gl_error;
 			_add_blocks();		mpl_debug_gl_error;
-#ifndef NDEBUG
+
+#if 0
             // print some hints for user
             if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
                 std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;

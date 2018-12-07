@@ -174,7 +174,9 @@ namespace easy3d {
 		// NOTE: model will not be added to the viewer
 		Model* open(const std::string& file_name);
 
-	private:
+        void draw_corner_axes();
+
+        void setup_callbacks();
 
 		/* Event handlers. Client code should not touch these */
 		virtual bool callback_event_cursor_pos(double x, double y);
@@ -184,10 +186,6 @@ namespace easy3d {
 		virtual bool callback_event_drop(int count, const char **filenames);
 		virtual bool callback_event_scroll(double dx, double dy);
 		virtual void callback_event_resize(int w, int h);
-
-		void setup_callbacks();
-
-		void draw_corner_axes();
 
 	protected:
 		GLFWwindow*	window_;

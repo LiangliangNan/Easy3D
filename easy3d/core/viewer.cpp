@@ -149,7 +149,7 @@ namespace easy3d {
 			throw std::runtime_error("Failed to load OpenGL and its extensions!");
 		}
 
-#ifndef NDEBUG
+#if 0
 		std::cout << "OpenGL Version requested: " << gl_major << "." << gl_minor << std::endl;
 		int major = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MAJOR);
 		int minor = glfwGetWindowAttrib(window_, GLFW_CONTEXT_VERSION_MINOR);
@@ -203,6 +203,8 @@ namespace easy3d {
 		/* Poll for events once before starting a potentially lengthy loading process.*/
 		glfwPollEvents();
 #endif
+
+		std::cout << usage() << std::endl;
 	}
 
 
@@ -929,14 +931,19 @@ namespace easy3d {
 				model = mesh;
 				// create face drawable
 				std::vector<unsigned int> indices;
+				std::size_t non_triangles = 0;
 				for (auto f : mesh->faces()) {
-					int test_n = 0;
-					for (auto v : mesh->vertices(f)) {
-						indices.push_back(v.idx());
-						++test_n;
-					}
-					if (test_n != 3)
-						std::cerr << "now only triangles can be rendered" << std::endl;
+					std::vector<unsigned int> vts;
+ 					for (auto v : mesh->vertices(f))
+						vts.push_back(v.idx());
+					if (vts.size() == 3)
+						indices.insert(indices.end(), vts.begin(), vts.end());
+					else
+						++non_triangles;
+				}
+				if (non_triangles > 0) {
+					std::cerr << "Warning: the default Easy3D viewer can only render triangles and"
+						" non-triangle faces are ignored" << std::endl;
 				}
 				auto points = mesh->get_vertex_property<vec3>("v:point");
 				FacesDrawable* faces = mesh->add_face_drawable("surface");
@@ -963,8 +970,18 @@ namespace easy3d {
 
 	void Viewer::add_model(Model* model) {
 		if (model) {
-			models_.push_back(model);
-			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+			unsigned int num = model->n_vertices();
+			if (num == 0) {
+				std::cerr << "Warning: model does not have vertices. Only complete model can be added to the viewer." << std::endl;
+				return;
+			}
+
+			if (model->point_drawables().empty() && 
+				model->line_drawables().empty() && 
+				model->face_drawables().empty())
+			{
+				std::cerr << "Warning: model does not have a drawable (nothing could be rendered). Consider adding drawables before adding it to the viewer." << std::endl;
+			}
 
 			Box3 box;
 			if (dynamic_cast<Point_cloud*>(model)) {
@@ -981,6 +998,9 @@ namespace easy3d {
 					box.add_point(points[v]);
 			}
 			model->set_bounding_box(box);
+
+			models_.push_back(model);
+			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
 			for (auto m : models_) {
 				if (m != model)	// the bbox of model is already contained 
@@ -1037,7 +1057,6 @@ namespace easy3d {
 		lines_program_->bind();
 		lines_program_->set_uniform("MVP", MVP);
 		lines_program_->set_uniform("per_vertex_color", true);
-		lines_program_->set_uniform("default_color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
 		axes_->draw(false);					mpl_debug_gl_error;
 		lines_program_->unbind();
 
@@ -1085,10 +1104,6 @@ namespace easy3d {
 		// it can also be computed as follows:
 		//const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
 		surface_program_->set_uniform("wCamPos", wCamPos);		mpl_debug_gl_error;
-		surface_program_->set_uniform("ambient", vec4(0.05f, 0.05f, 0.05f, 1.0f));		mpl_debug_gl_error;
-		surface_program_->set_uniform("specular", vec4(0.4f, 0.4f, 0.4f, 1.0f));		mpl_debug_gl_error;
-		surface_program_->set_uniform("shininess", 64.0f);		mpl_debug_gl_error;
-		surface_program_->set_uniform("per_vertex_color", false);
 		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
 			Model* m = models_[idx];
 			if (!m->is_visible())
@@ -1105,8 +1120,6 @@ namespace easy3d {
 
 		lines_program_->bind();
 		lines_program_->set_uniform("MVP", MVP);
-		lines_program_->set_uniform("per_vertex_color", false);
-		lines_program_->set_uniform("default_color", vec3(0.0f, 0.0f, 0.0f));		mpl_debug_gl_error;
 		for (auto m : models_) {
 			if (!m->is_visible())
 				continue;
@@ -1122,9 +1135,6 @@ namespace easy3d {
 		points_program_->set_uniform("MVP", MVP);		mpl_debug_gl_error;
 		points_program_->set_uniform("wLightPos", wLightPos);		mpl_debug_gl_error;
 		points_program_->set_uniform("wCamPos", wCamPos);		mpl_debug_gl_error;
-		points_program_->set_uniform("ambient", vec4(0.05f, 0.05f, 0.05f, 1.0f));		mpl_debug_gl_error;
-		points_program_->set_uniform("specular", vec4(0.4f, 0.4f, 0.4f, 1.0f));		mpl_debug_gl_error;
-		points_program_->set_uniform("shininess", 64.0f);		mpl_debug_gl_error;
 		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
 			Model* m = models_[idx];
 			if (!m->is_visible())
@@ -1136,7 +1146,6 @@ namespace easy3d {
 			points_program_->set_uniform("lighting", lighting);
 			bool per_vertex_color = cloud->get_vertex_property<vec3>("v:color");
 			points_program_->set_uniform("per_vertex_color", per_vertex_color);
-			points_program_->set_uniform("default_color", vec3(0.4f, 0.8f, 0.8f));		mpl_debug_gl_error;
 			for (auto d : m->point_drawables()) {
 				if (d->is_visible())
 					d->draw(false);

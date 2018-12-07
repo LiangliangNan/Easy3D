@@ -15,8 +15,8 @@ namespace easy3d {
 
 	Model::~Model() {
 		for (auto d : point_drawables_)	delete d;
-		for (auto d : line_drawables_)		delete d;
-		for (auto d : face_drawables_)		delete d;
+		for (auto d : line_drawables_)	delete d;
+		for (auto d : face_drawables_)	delete d;
 	}
 
 

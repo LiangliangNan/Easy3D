@@ -58,6 +58,9 @@ namespace easy3d {
 		const Box3& bounding_box() const;
 		void set_bounding_box(const Box3& box);
 
+		/// returns number of vertices in the model
+		virtual unsigned int n_vertices() const = 0;
+
 		//-------------------- rendering  -----------------------
 
 		bool is_visible() const { return visible_; }
