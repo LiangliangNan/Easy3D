@@ -909,18 +909,14 @@ namespace easy3d {
 				model = cloud;
 				// create points drawable
 				auto points = cloud->get_vertex_property<vec3>("v:point");
-				PointsDrawable* pt_drawable = cloud->add_point_drawable("points");
-				pt_drawable->update_vertex_buffer(points.vector());
+				PointsDrawable* drawable = cloud->add_point_drawable("points");
+				drawable->update_vertex_buffer(points.vector());
 				auto normals = cloud->get_vertex_property<vec3>("v:normal");
 				if (normals)
-					pt_drawable->update_normal_buffer(normals.vector());
+					drawable->update_normal_buffer(normals.vector());
 				auto colors = cloud->get_vertex_property<vec3>("v:color");
 				if (colors)
-					pt_drawable->update_color_buffer(colors.vector());
-				Box3 b;
-				for (auto v : cloud->vertices())
-					b.add_point(points[v]);
-				cloud->set_bounding_box(b);
+					drawable->update_color_buffer(colors.vector());
 				std::cout << "cloud loaded" << std::endl
 					<< "\tnum vertices: " << cloud->n_vertices() << std::endl;
 			}
@@ -946,10 +942,6 @@ namespace easy3d {
 				FacesDrawable* faces = mesh->add_face_drawable("surface");
 				faces->update_vertex_buffer(points.vector());
 				faces->update_index_buffer(indices);
-				Box3 b;
-				for (auto v : mesh->vertices())
-					b.add_point(points[v]);
-				mesh->set_bounding_box(b);
 				std::cout << "mesh loaded" << std::endl
 					<< "\tnum faces:    " << mesh->n_faces() << std::endl
 					<< "\tnum vertices: " << mesh->n_vertices() << std::endl
@@ -961,18 +953,43 @@ namespace easy3d {
 
 		if (model) {
 			model->set_name(file_name);
-			models_.push_back(model);
-			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-			Box3 box;
-			for (auto m : models_)
-				box.add_box(m->bounding_box());
-			camera_->setSceneBoundingBox(box.min(), box.max());
-			camera_->showEntireScene();
-			update();
+			add_model(model);
 			return model;
 		}
 
 		return nullptr;
+	}
+
+
+	void Viewer::add_model(Model* model) {
+		if (model) {
+			models_.push_back(model);
+			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+
+			Box3 box;
+			if (dynamic_cast<Point_cloud*>(model)) {
+				Point_cloud* cloud = dynamic_cast<Point_cloud*>(model);
+				auto points = cloud->get_vertex_property<vec3>("v:point");
+				for (auto v : cloud->vertices())
+					box.add_point(points[v]);
+				model->set_bounding_box(box);
+			}
+			else if (dynamic_cast<Surface_mesh*>(model)) {
+				Surface_mesh* mesh = dynamic_cast<Surface_mesh*>(model);
+				auto points = mesh->get_vertex_property<vec3>("v:point");
+				for (auto v : mesh->vertices())
+					box.add_point(points[v]);
+			}
+			model->set_bounding_box(box);
+
+			for (auto m : models_) {
+				if (m != model)	// the bbox of model is already contained 
+					box.add_box(m->bounding_box());
+			}
+			camera_->setSceneBoundingBox(box.min(), box.max());
+			camera_->showEntireScene();
+			update();
+		}
 	}
 
 

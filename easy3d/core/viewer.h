@@ -106,9 +106,8 @@ namespace easy3d {
 		bool open();
 		bool save() const;
 
-		// Open a file with file name given
-		// NOTE: model will not be added to the viewer
-		Model* open(const std::string& file_name); 
+		// The 'model' can be a point cloud or a mesh
+		void add_model(Model* model);
 
 	protected:
 
@@ -171,6 +170,11 @@ namespace easy3d {
 		virtual bool focus_event(bool focused);
 
 	protected:
+		// Open a file with file name given
+		// NOTE: model will not be added to the viewer
+		Model* open(const std::string& file_name);
+
+	private:
 
 		/* Event handlers. Client code should not touch these */
 		virtual bool callback_event_cursor_pos(double x, double y);
@@ -183,7 +187,6 @@ namespace easy3d {
 
 		void setup_callbacks();
 
-	protected:
 		void draw_corner_axes();
 
 	protected:

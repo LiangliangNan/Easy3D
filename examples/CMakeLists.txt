@@ -1,11 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory("example_imgui")
-add_subdirectory("example_mapple")
-add_subdirectory("example_CDT")
-
 add_subdirectory("Example_01_PointCloud")
 add_subdirectory("Example_02_Mesh")
+add_subdirectory("Example_03_FileIO")
 add_subdirectory("Example_03_Property")
 add_subdirectory("Example_04_Viewer")
 add_subdirectory("Example_05_Drawable")

@@ -20,11 +20,12 @@
 
 #include <easy3d/core/viewer.h>
 #include <easy3d/model/point_cloud.h>
+#include <easy3d/model/surface_mesh.h>
 #include <easy3d/core/drawable.h>
 
 using namespace easy3d;
 
-// This example shows how to
+// This example shows:
 //		- load a point cloud from a file
 //		- create a drawable for rendering
 //		- use the viewer to visualize the point cloud
@@ -54,11 +55,11 @@ int main(int /* argc */, char ** /* argv */) {
 	if (colors)		// if colors exist
 		drawable->update_color_buffer(colors.vector());
 
-	// add the model to the viewer
+	// add the model to the viewer for rendering
 	viewer.add_model(cloud);
 
 	// run the viewer
 	viewer.run();
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

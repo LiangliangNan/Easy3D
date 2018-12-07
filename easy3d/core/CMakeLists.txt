@@ -8,7 +8,6 @@ set(${PROJECT_NAME}_HEADERS
     ./camera.h
     ./constraint.h
     ./drawable.h
-    ./fields.h
     ./file_dialog.h
     ./frame.h
     ./manipulated_camera_frame.h
@@ -16,7 +15,6 @@ set(${PROJECT_NAME}_HEADERS
     ./model.h
     ./opengl_error.h
     ./opengl_info.h
-    ./primitives.h
     ./shader_code.h
     ./shader_program.h
     ./transform.h
@@ -28,7 +26,6 @@ set(${PROJECT_NAME}_SOURCES
     ./camera.cpp
     ./constraint.cpp
     ./drawable.cpp
-    ./fields.cpp
     ./file_dialog.cpp
     ./frame.cpp
     ./manipulated_camera_frame.cpp
@@ -36,7 +33,6 @@ set(${PROJECT_NAME}_SOURCES
     ./model.cpp
     ./opengl_error.cpp
     ./opengl_info.cpp
-    ./primitives.cpp
     ./shader_code.cpp
     ./shader_program.cpp
     ./transform.cpp
