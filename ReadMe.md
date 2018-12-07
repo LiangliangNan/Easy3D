@@ -1,14 +1,14 @@
 <img src="logo.png" width="400">
 
 ### Easy3D provides: ###
-* Efficient data structures for representing 3D data (i.e., point clouds and meshes).
-* High-level encapsulation of OpenGL and GLSL for efficient rendering a set of points, lines, 
-  and/or polygons. Thus any types of 3D drawables (e.g., point clouds, mesh surfaces, scalar 
-  fields, vector fields) can be easily rendered by writing a few lines of code. 
+* Efficient data structures for representing and managing3D models (i.e., point clouds and meshes).
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering. Any types of 
+  3D drawables (e.g., point clouds, mesh surfaces, scalar fields, vector fields) can be rendered 
+  by writing a few lines of code. Users do not need to touch the low-level OpenGL APIs.
 * A viewer that can be used directly to visualized 3D scenes in various formats. 
 
-Easy3D is quite suitable for research and educational purposes. It can also be used as 
-starting point for developing more sophisticated 3D applications.
+Easy3D is intended for research and educational purposes. It can also be used as a starting point 
+for developing more sophisticated 3D applications.
   
 ---
   
