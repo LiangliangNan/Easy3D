@@ -30,21 +30,24 @@ using namespace easy3d;
 //		- use the viewer to visualize the point cloud
 
 int main(int /* argc */, char ** /* argv */) {
-	// create the default Easy3D viewer
+	// Create the default Easy3D viewer.
+	// Note: a viewer must be created before creating any drawables. 
 	Viewer viewer;
 
-	// create a point cloud
+	// Create a point cloud
 	Point_cloud* cloud = new Point_cloud;
 
-	// load point cloud data from a file
+	// Load point cloud data from a file
 	cloud->read("../../../data/bunny.bin");
-	// give the model a name (optional)
+	// Give the model a name (optional)
 	cloud->set_name("bunny");
 
-	// create a drawable (a set of points that can be rendered)
+	// Create a drawable and attach it to the point cloud.
+	// In this example, the drawable contains all the points of the point cloud.
+	// Note: a viewer must exist when creating drawables. 
 	PointsDrawable* drawable = cloud->add_point_drawable("points");
 
-	// collect points, colors, and normals (if exist) and transfer them to GPU
+	// Collect points, colors, and normals (if exist) and transfer them to GPU
 	auto points = cloud->get_vertex_property<vec3>("v:point");
 	drawable->update_vertex_buffer(points.vector());
 	auto normals = cloud->get_vertex_property<vec3>("v:normal");
@@ -54,10 +57,10 @@ int main(int /* argc */, char ** /* argv */) {
 	if (colors)		// if colors exist
 		drawable->update_color_buffer(colors.vector());
 
-	// add the model to the viewer
+	// Add the model to the viewer
 	viewer.add_model(cloud);
 
-	// run the viewer
+	// Run the viewer
 	viewer.run();
 
 	return EXIT_SUCCESS;

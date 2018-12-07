@@ -18,43 +18,49 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/model/point_cloud.h>
+#include <easy3d/model/surface_mesh.h>
 
 using namespace easy3d;
 
 
 // This example shows how to
-//		- load a point cloud from a file
-//		- create a drawable for rendering
-//		- use the viewer to visualize the point cloud
+//		- add per-face properties to a mesh;
+//		- access existing properties.
+//
+// You should be able to add/access per-edge/vertex properties also.
 
+Surface_mesh* old_mesh_from_previous_example() {
+	// Create a surface mesh
+	Surface_mesh* mesh = new Surface_mesh;
+
+	// Add 4 vertices
+	Surface_mesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
+	Surface_mesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
+	Surface_mesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
+	Surface_mesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+
+	// Add 4 triangular faces
+	mesh->add_triangle(v0, v1, v3);
+	mesh->add_triangle(v1, v2, v3);
+	mesh->add_triangle(v2, v0, v3);
+	mesh->add_triangle(v0, v2, v1);
+
+	return mesh;
+}
 
 void main() {
-	// Create a point cloud
-	Point_cloud cloud;
+	Surface_mesh* mesh = old_mesh_from_previous_example();
 
-	// Add some points. Here we add 100 points on a 10*10 grid
-	for (float i = -5; i < 5; ++i) {
-		for (float j = -5; j < 5; ++j) 
-			cloud.add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane
+	// We add a per-face property "f:normal" storing the normal of each face
+
+	Surface_mesh::Face_property<vec3> normals = mesh->add_face_property<vec3>("v:normal");
+	for (auto f : mesh->faces()) {
+		// We use the built-in function of Surface_mesh compute_face_normal(). 
+		// Of course you can write your own function to compute the normal of 
+		// a face (the normalized cross product of two consecutive edge vectors). 
+		normals[f] = mesh->compute_face_normal(f);
+		std::cout << "normal of face " << f << ": " << normals[f] << std::endl;
 	}
-	std::cout << "point cloud has " << cloud.n_vertices() << " points" << std::endl;
 
-	// We can add a per-point property, e.g., normal
-
-	// NOTE: it is "add" instead of "get"
-	Point_cloud::Vertex_property<vec3> normals = cloud.add_vertex_property<vec3>("v:normal");
-	for (auto v : cloud.vertices()) 
-		normals[v] = vec3(0, 0, 1);	// All points have the same normal direction.
-
-	// Now let's print all point coordinates and their normals
-
-	// By default, points are stored as a Vertex_property named "v:point".
-	// The 'v:' is optional, but easy to distinguished from edge/face properties.  
-	Point_cloud::Vertex_property<vec3> points = cloud.get_vertex_property<vec3>("v:point");
-
-	int index = 0;
-	for (auto v : cloud.vertices())
-		std::cout << "point " << index++ << ": (" << points[v] << "), (" << normals[v] << ")" << std::endl;
-
+	delete mesh;
 }

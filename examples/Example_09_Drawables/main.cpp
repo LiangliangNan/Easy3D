@@ -23,9 +23,8 @@
 using namespace easy3d;
 
 // This example shows how to
-//		- load a point cloud from a file
-//		- create a drawable for rendering
-//		- use the viewer to visualize the point cloud
+//		- create a drawable for a specific rendering purpose;
+//		- use the viewer to visualize the drawable.
 
 int main(int /* argc */, char ** /* argv */) {
     Viewer app("Example_05_Drawable", 4, 3, 2);

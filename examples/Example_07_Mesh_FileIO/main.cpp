@@ -24,30 +24,38 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- construct a mesh from its vertices
-//		- traverse the vertices/edges/faces
-//		- traverse the connected edges of a vertex
+//		- load a surface mesh from a file;
+//		- save a surface mesh into a file.
 
 
 void main() {
-	// create a surface mesh
+	// Create a surface mesh
 	Surface_mesh* mesh = new Surface_mesh;
 
-	// add 4 vertices
-	Surface_mesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-	Surface_mesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
-	Surface_mesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
-	Surface_mesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+	// Read a mesh specified by its file name
+	std::string file_name = "../../../data/building.off";
+	bool success = mesh->read(file_name);
+	if (!success) {
+		std::cerr << "file does not exist or invalid file format" << std::endl;
+		delete mesh;
+		return;
+	}
+	std::cout << "mesh loaded. " << std::endl;
+	std::cout << "\tvertices: " << mesh->n_vertices() << std::endl;
+	std::cout << "\tedges: " << mesh->n_edges() << std::endl;
+	std::cout << "\tfaces: " << mesh->n_faces() << std::endl;
 
-	// add 4 triangular faces
-	mesh->add_triangle(v0, v1, v3);
-	mesh->add_triangle(v1, v2, v3);
-	mesh->add_triangle(v2, v0, v3);
-	mesh->add_triangle(v0, v2, v1);
+	// ...
+	// Do fancy stuff with the mesh
+	// ...
 
-	std::cout << "vertices: " << mesh->n_vertices() << std::endl;
-	std::cout << "edges: " << mesh->n_edges() << std::endl;
-	std::cout << "faces: " << mesh->n_faces() << std::endl;
+	// Write the mesh to a new file.
+	std::string save_file_name = "../../../data/building-copy.obj";
+	success = mesh->write(save_file_name);
+	if (success)
+		std::cout << "mesh saved" << std::endl;
+	else
+		std::cerr << "failed create the new file" << std::endl;
 
 	// delete the mesh (i.e., release memory)
 	delete mesh;
