@@ -63,8 +63,8 @@ namespace easy3d {
 	PointsDrawable* Model::add_point_drawable(const std::string& name) {
 		for (auto d : point_drawables_) {
 			if (d->name() == name) {
-				std::cerr << "point drawable \'" << name << "\' already exists" << std::endl;
-				return d;
+				std::cerr << "Error: point drawable \'" << name << "\' already exists" << std::endl;
+				return nullptr;
 			}
 		}
 		PointsDrawable* d = new PointsDrawable(name);

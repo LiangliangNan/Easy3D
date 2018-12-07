@@ -37,14 +37,14 @@ void main() {
 
 	// Read the point cloud from a known file. 
 	// We use Point_cloud's built-in function read().
-	bool success = cloud->read("../../../data/bunny.bin");
+	bool success = cloud->read("../../../data/building_with_normals.bin");
 	if (success) {
 		std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
 		// Now let's save the model into a file with customized format. In each 
 		// line we store the x, y, z coordinates, followed by the normal (nx, ny,
 		// nz) and color (r, g, b) if they exist.
-		std::ofstream output("../../../data/bunny-copy.txt");
+		std::ofstream output("../../../data/building_with_normals-copy.txt");
 		if (output.is_open()) { // if the file has been successfully created
 			// The point coordinates.
 			Point_cloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
@@ -52,6 +52,9 @@ void main() {
 			Point_cloud::Vertex_property<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
 			// The point colors.
 			Point_cloud::Vertex_property<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
+			std::cout << "saving the point cloud...";
+
+			int prev_percent = -1;
 			for (auto v : cloud->vertices()) {
 				output << points[v];
 				if (normals)	// if normals exist
@@ -59,6 +62,13 @@ void main() {
 				if (colors)		// if colors exist
 					output << " " << colors[v];
 				output << std::endl;
+
+				// Show the progress
+				int progress = int(100.0f * (v.idx() + 1) / float(cloud->n_vertices()));
+				if (progress != prev_percent) {
+					printf("%3d%%\b\b\b\b", progress);
+					prev_percent = progress;
+				}
 			}
 		}
 	}

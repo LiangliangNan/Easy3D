@@ -14,13 +14,11 @@
     <ClCompile Include="manipulated_camera_frame.cpp" />
     <ClCompile Include="manipulated_frame.cpp" />
     <ClCompile Include="model.cpp" />
-    <ClCompile Include="primitives.cpp" />
     <ClCompile Include="transform.cpp" />
     <ClCompile Include="viewer.cpp" />
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="constraint.cpp" />
     <ClCompile Include="drawable.cpp" />
-    <ClCompile Include="fields.cpp" />
     <ClCompile Include="file_dialog.cpp" />
     <ClCompile Include="frame.cpp" />
     <ClCompile Include="opengl_error.cpp" />
@@ -33,13 +31,11 @@
     <ClInclude Include="manipulated_camera_frame.h" />
     <ClInclude Include="manipulated_frame.h" />
     <ClInclude Include="model.h" />
-    <ClInclude Include="primitives.h" />
     <ClInclude Include="transform.h" />
     <ClInclude Include="viewer.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="constraint.h" />
     <ClInclude Include="drawable.h" />
-    <ClInclude Include="fields.h" />
     <ClInclude Include="file_dialog.h" />
     <ClInclude Include="frame.h" />
     <ClInclude Include="opengl_error.h" />

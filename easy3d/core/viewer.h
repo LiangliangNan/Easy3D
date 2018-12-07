@@ -220,8 +220,6 @@ namespace easy3d {
 		LinesDrawable* axes_;
 
 		ShaderProgram* points_program_;
-		float point_size_;
-
 		ShaderProgram* lines_program_;
 		ShaderProgram* surface_program_;
 

@@ -29,10 +29,10 @@ using namespace easy3d;
 //		- create a drawable for rendering
 //		- use the viewer to visualize the point cloud
 
-int main(int /* argc */, char ** /* argv */) {
+void main() {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-	Viewer viewer;
+	Viewer viewer("Example_08_Viewer");
 
 	// Create a point cloud
 	Point_cloud* cloud = new Point_cloud;
@@ -57,11 +57,12 @@ int main(int /* argc */, char ** /* argv */) {
 	if (colors)		// if colors exist
 		drawable->update_color_buffer(colors.vector());
 
+	drawable->set_per_vertex_color(colors); // set to true if has color property
+	drawable->set_default_color(vec3(0.4f, 0.8f, 0.8f));
+
 	// Add the model to the viewer
 	viewer.add_model(cloud);
 
 	// Run the viewer
 	viewer.run();
-
-	return EXIT_SUCCESS;
 }

@@ -25,6 +25,8 @@ namespace easy3d {
 		, highlight_id_(-1)
 		, name_(name)
 		, visible_(true)
+		, per_vertex_color_(false)
+		, default_color_(1.0f, 0.0f, 0.0f)
 	{
 		vao_ = new VertexArrayObject;
 	}
@@ -225,9 +227,12 @@ namespace easy3d {
 	}
 
 
-	void Drawable::draw(bool with_storage_buffer /* = true */) const
+	void Drawable::draw(bool with_storage_buffer /* = false */) const
 	{
 		vao_->bind();
+
+		if (type() == DT_POINTS)
+			glPointSize(dynamic_cast<const PointsDrawable*>(this)->point_size());
 
 		if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())

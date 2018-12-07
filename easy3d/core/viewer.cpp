@@ -70,7 +70,6 @@ namespace easy3d {
         , show_corner_axes_(true)
         , axes_(nullptr)
         , points_program_(nullptr)
-        , point_size_(2)
         , lines_program_(nullptr)
         , surface_program_(nullptr)
         , model_idx_(-1)
@@ -620,14 +619,24 @@ namespace easy3d {
 			save();
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
-			point_size_ -= 1;
-			if (point_size_ < 1)
-				point_size_ = 1;
-		}
+			for (auto m : models_) {
+				for (auto d : m->point_drawables()) {
+					float size = d->point_size() - 1.0f;
+					if (size < 1)
+						size = 1;
+					d->set_point_size(size);
+				}
+			}
+		}	
 		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
-			point_size_ += 1;
-			if (point_size_ > 10)
-				point_size_ = 10;
+			for (auto m : models_) {
+				for (auto d : m->point_drawables()) {
+					float size = d->point_size() + 1.0f;
+					if (size > 20)
+						size = 20;
+					d->set_point_size(size);
+				}
+			}
 		}
 
 		else if (key == GLFW_KEY_MINUS && modifiers == GLFW_MOD_CONTROL)
@@ -1108,11 +1117,13 @@ namespace easy3d {
 			Model* m = models_[idx];
 			if (!m->is_visible())
 				continue;
-			surface_program_->set_uniform("default_color",
-				idx == model_idx_ ? vec3(0.4f, 0.8f, 0.8f) : vec3(0.8f, 0.8f, 0.8f));		mpl_debug_gl_error;
 			for (auto d : m->face_drawables()) {
-				if (d->is_visible())
+				if (d->is_visible()) {
+					surface_program_->set_uniform("per_vertex_color", d->per_vertex_color());
+					surface_program_->set_uniform("default_color",
+					idx == model_idx_ ? d->default_color() : vec3(0.8f, 0.8f, 0.8f));		mpl_debug_gl_error;
 					d->draw(false);
+				}
 			}
 		}
 		surface_program_->unbind();	mpl_debug_gl_error;
@@ -1124,17 +1135,19 @@ namespace easy3d {
 			if (!m->is_visible())
 				continue;
 			for (auto d : m->line_drawables()) {
-				if (d->is_visible())
+				if (d->is_visible()) {
+					lines_program_->set_uniform("per_vertex_color", d->per_vertex_color());
+					lines_program_->set_uniform("default_color", d->default_color());
 					d->draw(false);
+				}
 			}
 		}
 		lines_program_->unbind();
 
-		glPointSize(point_size_);
-		points_program_->bind();	mpl_debug_gl_error;
-		points_program_->set_uniform("MVP", MVP);		mpl_debug_gl_error;
-		points_program_->set_uniform("wLightPos", wLightPos);		mpl_debug_gl_error;
-		points_program_->set_uniform("wCamPos", wCamPos);		mpl_debug_gl_error;
+		points_program_->bind();
+		points_program_->set_uniform("MVP", MVP);	
+		points_program_->set_uniform("wLightPos", wLightPos);	
+		points_program_->set_uniform("wCamPos", wCamPos);	
 		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
 			Model* m = models_[idx];
 			if (!m->is_visible())
@@ -1145,10 +1158,12 @@ namespace easy3d {
 			bool lighting = cloud->get_vertex_property<vec3>("v:normal");
 			points_program_->set_uniform("lighting", lighting);
 			bool per_vertex_color = cloud->get_vertex_property<vec3>("v:color");
-			points_program_->set_uniform("per_vertex_color", per_vertex_color);
 			for (auto d : m->point_drawables()) {
-				if (d->is_visible())
+				if (d->is_visible()) {
+					points_program_->set_uniform("per_vertex_color", d->per_vertex_color());
+					points_program_->set_uniform("default_color", d->default_color());		
 					d->draw(false);
+				}
 			}
 		}
 		points_program_->unbind();	mpl_debug_gl_error;

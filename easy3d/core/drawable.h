@@ -69,6 +69,13 @@ namespace easy3d {
 		bool is_visible() const { return visible_; }
 		void set_visible(bool v) { visible_ = v; }
 
+		bool per_vertex_color() const { return per_vertex_color_; }
+		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
+
+		// default_color will be ignored if per_vertex_color is true and given.
+		const vec3& default_color() const { return default_color_; }
+		void set_default_color(const vec3& c) { default_color_ = c; }
+
 		VertexArrayObject* vao() { return vao_; }
 
 		// ---------------------- buffer access ------------------------------
@@ -132,7 +139,7 @@ namespace easy3d {
 		// Draw this drawable.
 		// NOTE: this functions should be called when your shader program is in use, 
 		//		 i.e., between glUseProgram(id) and glUseProgram(0);	
-		void draw(bool with_storage_buffer = true) const;
+		void draw(bool with_storage_buffer = false) const;
 
 		void set_highlight_id(int id) { highlight_id_ = id; }
 		int  highlight_id() const { return highlight_id_; }
@@ -140,7 +147,10 @@ namespace easy3d {
 	protected:
 		std::string	name_;
 		Box3		bounding_box_; // cached bounding box
+
 		bool		visible_;
+		bool		per_vertex_color_;
+		vec3		default_color_;
 
 		// vertex array object
 		VertexArrayObject*	vao_;
@@ -168,21 +178,37 @@ namespace easy3d {
 
 	class PointsDrawable : public Drawable {
 	public:
-		PointsDrawable(const std::string& name) : Drawable(name) {}
+		PointsDrawable(const std::string& name) 
+			: Drawable(name) 
+			, point_size_(2.0f)
+		{
+			default_color_ = vec3(0.0f, 1.0f, 0.0f);
+		}
 		DrawableType type() const { return DT_POINTS; }
+
+		// default_color will be ignored if per_vertex_color is true and given.
+		float point_size() const { return point_size_; }
+		void set_point_size(float s) { point_size_ = s; }
+
+	private:
+		float point_size_;
 	};
 
 
 	class LinesDrawable : public Drawable {
 	public:
-		LinesDrawable(const std::string& name) : Drawable(name) {}
+		LinesDrawable(const std::string& name) : Drawable(name) {
+			default_color_ = vec3(0.0f, 0.0f, 0.0f);
+		}
 		DrawableType type() const { return DT_LINES; }
 	};
 
 
 	class FacesDrawable : public Drawable {
 	public:
-		FacesDrawable(const std::string& name) : Drawable(name) {}
+		FacesDrawable(const std::string& name) : Drawable(name) {
+			default_color_ = vec3(0.4f, 0.8f, 0.8f);
+		}
 		DrawableType type() const { return DT_TRIANGLES; }
 
 		// The selection of a polygonal face is internally implemented by selecting triangle

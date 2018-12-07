@@ -65,7 +65,7 @@ namespace easy3d {
 
 		// in MB. 
 		// returns 0 if the query fails.
-		// NOTE: (1) OpenGL 2.0 is required.
+		// NOTE: (1) OpenGL >= 2.0 is required.
 		//		 (2) currently only NVidia GPU is supported 
 		static int total_gpu_memory();
 		static int available_gpu_memory();
