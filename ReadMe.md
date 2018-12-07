@@ -11,8 +11,8 @@
   rendering. Users do not need to touch the low-level OpenGL APIs.
 * File IO of a few standard 3D formats (e.g., PLY, OBJ, OFF, XYZ).
 * A viewer that can be used directly to visualized 3D scenes in various formats.
-* Step-by-step tutorials to get acquainted with data structures and rendering 
-* for 3D modeling and data processing. 
+* Step-by-step tutorials to get acquainted with the data structures and basic rendering 
+  for 3D modeling and data processing. 
  
 ---
 
@@ -54,7 +54,7 @@ void main() {
 	if (normals)	// if normals exist
 		drawable->update_normal_buffer(normals.vector());
 	auto colors = cloud->get_vertex_property<vec3>("v:color");
-	if (colors)		// if colors exist
+	if (colors)	// if colors exist
 		drawable->update_color_buffer(colors.vector());
 
 	// add the model to the viewer
@@ -82,6 +82,6 @@ liangliang.nan@gmail.com
 
 https://3d.bk.tudelft.nl/liangliang/
 
-July 18, 2017
+Dec. 8, 2018
 
-Copyright (C) 2017 
+Copyright (C) 2018
