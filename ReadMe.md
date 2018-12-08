@@ -64,10 +64,13 @@ Bellow is anothr example showing how to render a surface model (rendering result
 	viewer.add_model(mesh);
 ```
 
+<center>
+	
 <img src="example_cloud.png" height="350">  |  <img src="example_mesh.png" height="300">
 :------------------------------------------:|:-------------------------------------------:
 Figure 1                                    |  Figure 2
 
+</center>
   
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
