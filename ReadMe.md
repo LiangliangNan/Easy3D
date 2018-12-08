@@ -2,7 +2,6 @@
 
 ### Easy3D is a C++ library for non-expert users to quickly get experiences in 3D modeling and geometry processing. It is intended for research and educational purposes. But it is also a good starting point for developing sophisticated 3D applications.
 
----
 
 ### Key Features ###
 * Efficient data structures for representing and managing3D models (i.e., point 
@@ -13,9 +12,8 @@
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering 
   for 3D modeling and data processing. 
  
----
 
-### Code Example ###
+### Code Examples ###
 
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example shows how to
 * load a point cloud from a file;
@@ -70,7 +68,6 @@ Bellow is anothr example showing how to render a surface model (rendering result
 :------------------------------------------:|:-------------------------------------------:
 Figure 1                                    |  Figure 2
 
----
   
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
