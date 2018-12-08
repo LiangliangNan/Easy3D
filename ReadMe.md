@@ -64,7 +64,7 @@ Bellow is anothr example showing how to render a surface model (rendering result
 	viewer.add_model(mesh);
 ```
 
-<img src="example_cloud.png" height="400">  |  <img src="example_mesh.png" height="400">
+<img src="example_cloud.png" height="350">  |  <img src="example_mesh.png" height="300">
 :------------------------------------------:|:-------------------------------------------:
 Figure 1                                    |  Figure 2
 
