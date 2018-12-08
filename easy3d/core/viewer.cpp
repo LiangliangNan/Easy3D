@@ -926,8 +926,10 @@ namespace easy3d {
 				if (normals)
 					drawable->update_normal_buffer(normals.vector());
 				auto colors = cloud->get_vertex_property<vec3>("v:color");
-				if (colors)
+				if (colors) {
 					drawable->update_color_buffer(colors.vector());
+					drawable->set_per_vertex_color(true);
+				}
 				std::cout << "cloud loaded" << std::endl
 					<< "\tnum vertices: " << cloud->n_vertices() << std::endl;
 			}
