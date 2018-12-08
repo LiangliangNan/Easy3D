@@ -20,7 +20,8 @@
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example shows how to
 * load a point cloud from a file;
 * create a drawable for rendering the point cloud;
-* use the viewer to visualize the point cloud;
+* use the viewer to visualize the point cloud.
+
 The rendering result is shown in Figure 1.
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
