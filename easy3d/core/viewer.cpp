@@ -34,16 +34,16 @@
 #include <3rd_party/glew/include/GL/glew.h>		// Initialize with glewInit() 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
-#include <easy3d/core/camera.h>
-#include <easy3d/core/manipulated_camera_frame.h>
 #include <easy3d/model/surface_mesh.h>
 #include <easy3d/model/point_cloud.h>
 #include <easy3d/core/drawable.h>
 #include <easy3d/core/shader_program.h>
-#include <easy3d/core/shader_code.h>
+#include <easy3d/core/resources.h>
 #include <easy3d/core/opengl_error.h>
 #include <easy3d/core/file_dialog.h>
 #include <easy3d/core/transform.h>
+#include <easy3d/core/camera.h>
+#include <easy3d/core/manipulated_camera_frame.h>
 
 
 namespace easy3d {
@@ -1095,10 +1095,22 @@ namespace easy3d {
 		if (models_.empty())
 			return;
 
-		// Makes the depth coordinates of the filled primitives smaller, so that
-		// displaying the mesh and the surface does not cause Z-fighting.
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(0.5f, -0.0001f);
+		// Let's check if wireframe and surfaces are both shown. If true, we 
+		// make the depth coordinates of the surface smaller, so that displaying
+		// the mesh and the surface together does not cause Z-fighting.
+		std::size_t count = 0;
+		for (auto m : models_) {
+			if (!m->is_visible())
+				continue;
+			for (auto d : m->line_drawables()) {
+				if (d->is_visible())
+					++count;
+			}
+		}
+		if (count > 0) {
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(0.5f, -0.0001f);
+		}
 
 		surface_program_->bind();	mpl_debug_gl_error;
 		const mat4& MVP = camera_->modelViewProjectionMatrix();
@@ -1127,7 +1139,9 @@ namespace easy3d {
 			}
 		}
 		surface_program_->unbind();	mpl_debug_gl_error;
-		glDisable(GL_POLYGON_OFFSET_FILL);
+
+		if (count > 0) 
+			glDisable(GL_POLYGON_OFFSET_FILL);
 
 		lines_program_->bind();
 		lines_program_->set_uniform("MVP", MVP);
