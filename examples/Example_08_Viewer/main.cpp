@@ -19,49 +19,54 @@
 */
 
 #include <easy3d/core/viewer.h>
-#include <easy3d/model/point_cloud.h>
 #include <easy3d/core/drawable.h>
+#include <easy3d/core/resources.h>
+#include <easy3d/model/surface_mesh.h>
+
 
 using namespace easy3d;
 
+
 // This example shows how to
-//		- load a point cloud from a file
-//		- create a drawable for rendering
-//		- use the viewer to visualize the point cloud
+//		- create a surface model from a set of triangles;
+//      - create a drawable for rendering mesh surfaces;
+//		- use the viewer to visualize the surface.
 
 void main() {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
 	Viewer viewer("Example_08_Viewer");
 
-	// Create a point cloud
-	Point_cloud* cloud = new Point_cloud;
+	// Create a mesh model.
+	Surface_mesh* mesh = new Surface_mesh;
 
-	// Load point cloud data from a file
-	cloud->read("../../../data/bunny.bin");
-	// Give the model a name (optional)
-	cloud->set_name("bunny");
+	// In this example, we use the Easy3D example data (a building model) to
+	// create the model. 
+	//   - demodata::vertices:  an array of 3D points storing the model vertices
+	//   - demodata::colors: an array of colors storing the vertex colors 
+	for (std::size_t i = 0; i < demodata::vertices.size(); i += 3) {
+		const vec3& p0 = demodata::vertices[i];
+		const vec3& p1 = demodata::vertices[i + 1];
+		const vec3& p2 = demodata::vertices[i + 2];
+		std::vector<Surface_mesh::Vertex> face_vertices = {
+			mesh->add_vertex(p0),
+			mesh->add_vertex(p1),
+			mesh->add_vertex(p2)
+		};
+		mesh->add_face(face_vertices);
+	}
 
-	// Create a drawable and attach it to the point cloud.
-	// In this example, the drawable contains all the points of the point cloud.
-	// Note: a viewer must exist when creating drawables. 
-	PointsDrawable* drawable = cloud->add_point_drawable("points");
+	// Create a drawable for rendering the surface of this model.
+	FacesDrawable* drawable = mesh->add_face_drawable("surface");
 
-	// Collect points, colors, and normals (if exist) and transfer them to GPU
-	auto points = cloud->get_vertex_property<vec3>("v:point");
-	drawable->update_vertex_buffer(points.vector());
-	auto normals = cloud->get_vertex_property<vec3>("v:normal");
-	if (normals)	// if normals exist
-		drawable->update_normal_buffer(normals.vector());
-	auto colors = cloud->get_vertex_property<vec3>("v:color");
-	if (colors)		// if colors exist
-		drawable->update_color_buffer(colors.vector());
+	// Transfer vertex coordinates and colors to the GPU. 
+	drawable->update_vertex_buffer(demodata::vertices);
+	drawable->update_color_buffer(demodata::colors); // an array of colors
 
-	drawable->set_per_vertex_color(colors); // set to true if has color property
-	drawable->set_default_color(vec3(0.4f, 0.8f, 0.8f));
+	drawable->set_per_vertex_color(true);	// vertices have different colors
 
 	// Add the model to the viewer
-	viewer.add_model(cloud);
+	viewer.add_model(mesh);
 
 	// Run the viewer
 	viewer.run();

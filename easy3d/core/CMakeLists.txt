@@ -15,7 +15,7 @@ set(${PROJECT_NAME}_HEADERS
     ./model.h
     ./opengl_error.h
     ./opengl_info.h
-    ./shader_code.h
+    ./resources.h
     ./shader_program.h
     ./transform.h
     ./vertex_array_object.h
@@ -33,7 +33,7 @@ set(${PROJECT_NAME}_SOURCES
     ./model.cpp
     ./opengl_error.cpp
     ./opengl_info.cpp
-    ./shader_code.cpp
+    ./resources.cpp
     ./shader_program.cpp
     ./transform.cpp
     ./vertex_array_object.cpp

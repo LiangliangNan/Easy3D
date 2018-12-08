@@ -2,8 +2,10 @@
 #define _EASY3D_OPENGL_SHADER_CODES_H_
 
 
-#include <string>
+#include <easy3d/model/math_types.h>
 
+#include <string>
+#include <vector>
 
 namespace easy3d {
 
@@ -17,6 +19,12 @@ namespace easy3d {
 
 		extern std::string surface_color_frag;
 		extern std::string surface_color_vert;
+	}
+
+
+	namespace demodata {
+		extern const std::vector<vec3> vertices;
+		extern const std::vector<vec3> colors;
 	}
 
 }
