@@ -61,7 +61,7 @@ Bellow is anothr example showing how to render a surface model (rendering result
 
 <center>
 	
-<img src="example_cloud.png" height="180">  |  <img src="example_mesh.png" height="180">  |  <img src="example_scalar.png" height="180">
+<img src="images/cloud.png" height="180">  |  <img src="images/mesh.png" height="180">  |  <img src="images/scalar.png" height="180">
 :------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:
 Figure 1                                    |  Figure 2            			  |  Figure 3
 
