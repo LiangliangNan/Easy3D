@@ -18,7 +18,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/model/surface_mesh.h>
+#include <easy3d/surface_mesh.h>
 
 using namespace easy3d;
 

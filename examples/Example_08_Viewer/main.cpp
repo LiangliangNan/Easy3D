@@ -18,10 +18,10 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/core/viewer.h>
-#include <easy3d/core/drawable.h>
-#include <easy3d/core/resources.h>
-#include <easy3d/model/surface_mesh.h>
+#include <easy3d/viewer.h>
+#include <easy3d/drawable.h>
+#include <easy3d/resources.h>
+#include <easy3d/surface_mesh.h>
 
 
 using namespace easy3d;

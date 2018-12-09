@@ -18,7 +18,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/model/point_cloud.h>
+#include <easy3d/point_cloud.h>
 
 using namespace easy3d;
 

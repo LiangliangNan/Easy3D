@@ -18,9 +18,9 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/core/viewer.h>
-#include <easy3d/model/point_cloud.h>
-#include <easy3d/core/drawable.h>
+#include <easy3d/viewer.h>
+#include <easy3d/point_cloud.h>
+#include <easy3d/drawable.h>
 
 using namespace easy3d;
 
