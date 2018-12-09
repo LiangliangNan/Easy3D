@@ -1,6 +1,6 @@
 <img src="images/logo.png" width="400">
 
-### Easy3D is a C++ library for non-expert users to quickly gain experiences in 3D modeling and geometry processing. It is intended for research and educational purposes. But it is also a good starting point for developing sophisticated 3D applications.
+### Easy3D is an open source library for 3D modeling and geometry processing. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
 
 ### Key features ###
