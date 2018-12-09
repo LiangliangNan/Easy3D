@@ -37,14 +37,14 @@ void main() {
 
 	// Read the point cloud from a known file. 
 	// We use Point_cloud's built-in function read().
-	bool success = cloud->read("../../../data/building_with_normals.bin");
+    bool success = cloud->read("../../../Easy3D/data/building_with_normals.bin");
 	if (success) {
 		std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
 		// Now let's save the model into a file with customized format. In each 
 		// line we store the x, y, z coordinates, followed by the normal (nx, ny,
 		// nz) and color (r, g, b) if they exist.
-		std::ofstream output("../../../data/building_with_normals-copy.txt");
+        std::ofstream output("../../../Easy3D/data/building_with_normals-copy.txt");
 		if (output.is_open()) { // if the file has been successfully created
 			// The point coordinates.
 			Point_cloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");

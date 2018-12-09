@@ -39,7 +39,7 @@ int main() {
 	Point_cloud* cloud = new Point_cloud;
 
 	// Load point cloud data from a file
-	cloud->read("../../../data/building_with_normals.bin");
+    cloud->read("../../../Easy3D/data/building_with_normals.bin");
 
 	// Create a drawable for rendering the point cloud itself.
 	PointsDrawable* points_drawable = cloud->add_point_drawable("points");

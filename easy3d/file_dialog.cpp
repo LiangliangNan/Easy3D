@@ -18,6 +18,18 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/** ----------------------------------------------------------
+ *
+ * the code is adapted from NanoGUI with enhancement and improvement.
+ *		- NanoGUI (Nov 17th, 2018)
+ * The original code is available at
+ * https://github.com/wjakob/nanogui/blob/master/src/common.cpp
+ *
+ * NanoGUI is a minimalistic cross-platform widget library for OpenGL 3.x
+ * or higher.
+ *
+ *----------------------------------------------------------*/
+
 
 #include <easy3d/file_dialog.h>
 
