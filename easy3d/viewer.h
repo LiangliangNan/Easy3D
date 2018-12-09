@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 /*  Easy3D is really easy to use. That's why it has such a name.
 *
@@ -45,7 +45,7 @@ namespace easy3d {
 	class Model;
 	class Point_cloud;
 	class Surface_mesh;
-	class Shader;
+	class ShaderProgram;
 	class LinesDrawable;
 
 	class Viewer
@@ -219,9 +219,9 @@ namespace easy3d {
 		bool	show_corner_axes_;
 		LinesDrawable* axes_;
 
-		Shader* points_program_;
-		Shader* lines_program_;
-		Shader* surface_program_;
+		ShaderProgram* points_program_;
+		ShaderProgram* lines_program_;
+		ShaderProgram* surface_program_;
 
 		std::vector<Model*> models_;
 		int model_idx_;

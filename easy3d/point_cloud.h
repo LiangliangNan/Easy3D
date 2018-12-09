@@ -272,7 +272,7 @@ public: //----------------------------------------------- add new vertex
     //@{
 
     /// add a new vertex with position \c p
-    Vertex add_vertex(const Point& p);
+    Vertex add_vertex(const vec3& p);
 
     //@}
 
@@ -440,16 +440,16 @@ public: //------------------------------------------ geometry-related functions
     //@{
 
     /// position of a vertex (read only)
-    const Point& position(Vertex v) const { return vpoint_[v]; }
+    const vec3& position(Vertex v) const { return vpoint_[v]; }
 
     /// position of a vertex
-    Point& position(Vertex v) { return vpoint_[v]; }
+    vec3& position(Vertex v) { return vpoint_[v]; }
 
 	/// vector of vertex positions (read only)
-	const std::vector<Point>& points() const { return vpoint_.vector(); }
+	const std::vector<vec3>& points() const { return vpoint_.vector(); }
 
 	/// vector of vertex positions
-	std::vector<Point>& points() { return vpoint_.vector(); }
+	std::vector<vec3>& points() { return vpoint_.vector(); }
 
     //@}
 
@@ -474,7 +474,7 @@ private: //------------------------------------------------------- private data
 	Property_container		mprops_;
 
     Vertex_property<bool>	vdeleted_;
-    Vertex_property<Point>  vpoint_;
+    Vertex_property<vec3>  vpoint_;
 
     unsigned int	deleted_vertices_;
     bool			garbage_;

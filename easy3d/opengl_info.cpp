@@ -1,6 +1,7 @@
 #include "opengl_info.h"
 #include "opengl_error.h"
-#include <GL/glew.h>
+
+#include <3rd_party/glew/include/GL/glew.h>
 
 #include <iostream>
 #include <cstdio>	// for vsprintf()

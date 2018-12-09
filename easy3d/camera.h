@@ -24,7 +24,7 @@
 #define QGLVIEWER_CAMERA_H
 
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 #include "frame.h"
 

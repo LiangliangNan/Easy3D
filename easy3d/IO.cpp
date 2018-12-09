@@ -65,21 +65,21 @@ namespace easy3d {
 		cloud.resize(num);
 
 		// read the points block
-		Point_cloud::Vertex_property<Point> points = cloud.vertex_property<Point>("v:point");
-		input.read((char*)points.data(), num * sizeof(Point));
+		Point_cloud::Vertex_property<vec3> points = cloud.vertex_property<vec3>("v:point");
+		input.read((char*)points.data(), num * sizeof(vec3));
 
 		// read the colors block if exists
 		input.read((char*)(&num), sizeof(int));
 		if (num > 0) {
-			Point_cloud::Vertex_property<Color> colors = cloud.vertex_property<Color>("v:color");
-			input.read((char*)colors.data(), num * sizeof(Color));
+			Point_cloud::Vertex_property<vec3> colors = cloud.vertex_property<vec3>("v:color");
+			input.read((char*)colors.data(), num * sizeof(vec3));
 		}
 
 		// read the normals block if exists
 		input.read((char*)(&num), sizeof(int));
 		if (num > 0) {
-			Point_cloud::Vertex_property<Normal> normals = cloud.vertex_property<Normal>("v:normal");
-			input.read((char*)normals.data(), num * sizeof(Normal));
+			Point_cloud::Vertex_property<vec3> normals = cloud.vertex_property<vec3>("v:normal");
+			input.read((char*)normals.data(), num * sizeof(vec3));
 		}
 
 		return cloud.n_vertices() > 0;
@@ -109,22 +109,22 @@ namespace easy3d {
 		}
 
 		// write the points block
-		Point_cloud::Vertex_property<Point> points = cloud.get_vertex_property<Point>("v:point");
+		Point_cloud::Vertex_property<vec3> points = cloud.get_vertex_property<vec3>("v:point");
 		int num = (int)points.vector().size();
 		output.write((char*)&num, sizeof(int));
-		output.write((char*)points.data(), num * sizeof(Point));
+		output.write((char*)points.data(), num * sizeof(vec3));
 
-		Point_cloud::Vertex_property<Color>  colors = cloud.get_vertex_property<Color>("v:color");
+		Point_cloud::Vertex_property<vec3>  colors = cloud.get_vertex_property<vec3>("v:color");
 		num = (int)colors.vector().size();
 		output.write((char*)&num, sizeof(int));
 		if (num > 0)
-			output.write((char*)colors.data(), num * sizeof(Color));
+			output.write((char*)colors.data(), num * sizeof(vec3));
 
-		Point_cloud::Vertex_property<Normal> normals = cloud.get_vertex_property<Normal>("v:normal");
+		Point_cloud::Vertex_property<vec3> normals = cloud.get_vertex_property<vec3>("v:normal");
 		num = (int)normals.vector().size();
 		output.write((char*)&num, sizeof(int));
 		if (num > 0)
-			output.write((char*)normals.data(), num * sizeof(Normal));
+			output.write((char*)normals.data(), num * sizeof(vec3));
 
 		// we didn't find a writer module
 		return false;

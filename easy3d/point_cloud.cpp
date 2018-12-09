@@ -39,7 +39,7 @@ Point_cloud::Point_cloud()
 {
     // allocate standard properties
     // same list is used in operator=() and assign()
-    vpoint_   = add_vertex_property<Point>("v:point");
+    vpoint_   = add_vertex_property<vec3>("v:point");
     vdeleted_ = add_vertex_property<bool>("v:deleted", false);
 
 	mprops_.push_back();
@@ -70,7 +70,7 @@ Point_cloud& Point_cloud::operator=(const Point_cloud& rhs)
 
         // property handles contain pointers, have to be reassigned
         vdeleted_ = vertex_property<bool>("v:deleted");
-        vpoint_   = vertex_property<Point>("v:point");
+        vpoint_   = vertex_property<vec3>("v:point");
 
         // how many elements are deleted?
         deleted_vertices_ = rhs.deleted_vertices_;
@@ -93,7 +93,7 @@ Point_cloud& Point_cloud::assign(const Point_cloud& rhs)
 		mprops_.clear();
 
         // allocate standard properties
-        vpoint_   = add_vertex_property<Point>("v:point");
+        vpoint_   = add_vertex_property<vec3>("v:point");
         vdeleted_ = add_vertex_property<bool>("v:deleted", false);
 
         // copy properties from other cloud
@@ -177,7 +177,7 @@ void Point_cloud::property_stats() const
 //-----------------------------------------------------------------------------
 
 
-Point_cloud::Vertex Point_cloud::add_vertex(const Point& p)
+Point_cloud::Vertex Point_cloud::add_vertex(const vec3& p)
 {
     Vertex v = new_vertex();
     vpoint_[v] = p;

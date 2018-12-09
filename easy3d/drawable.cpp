@@ -1,10 +1,33 @@
-#include "drawable.h"
-#include <GL/glew.h>
-#include "vertex_array_object.h"
-#include "shader.h"
-#include "opengl_error.h"
+/*
+*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+*	https://3d.bk.tudelft.nl/liangliang/
+*
+*	This file is part of Easy3D: software for processing and rendering
+*   meshes and point clouds.
+*
+*	Easy3D is free software; you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License Version 3
+*	as published by the Free Software Foundation.
+*
+*	Easy3D is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*	GNU General Public License for more details.
+*
+*	You should have received a copy of the GNU General Public License
+*	along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+#include <easy3d/drawable.h>
 
 #include <cassert>
+
+#include <3rd_party/glew/include/GL/glew.h>
+#include "vertex_array_object.h"
+#include "shader_program.h"
+#include "opengl_error.h"
+
 
 
 namespace easy3d {
@@ -101,7 +124,7 @@ namespace easy3d {
 	void Drawable::update_vertex_buffer(const float* vertices, std::size_t count, int dim) {
 		assert(vao_);
 
-		int status = vao_->create_array_buffer(vertex_buffer_, Shader::POSITION, vertices, count * sizeof(float) * dim, GL_FLOAT, dim);
+		int status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices, count * sizeof(float) * dim, GL_FLOAT, dim);
 		if (status != GL_NO_ERROR) {
 			num_vertices_ = 0;
 			std::cerr << "failed creating vertex buffer" << std::endl;
@@ -115,7 +138,7 @@ namespace easy3d {
 	void Drawable::update_color_buffer(const float* colors, std::size_t count, int dim) {
 		assert(vao_);
 
-		int status = vao_->create_array_buffer(color_buffer_, Shader::COLOR, colors, count * sizeof(float) * dim, GL_FLOAT, dim);
+		int status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors, count * sizeof(float) * dim, GL_FLOAT, dim);
 		if (status != GL_NO_ERROR)
 			std::cerr << "failed updating color buffer" << std::endl;
 	}
@@ -123,7 +146,7 @@ namespace easy3d {
 
 	void Drawable::update_normal_buffer(const float* normals, std::size_t count, int dim) {
 		assert(vao_);
-		int status = vao_->create_array_buffer(normal_buffer_, Shader::NORMAL, normals, count * sizeof(float) * dim, GL_FLOAT, dim);
+		int status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals, count * sizeof(float) * dim, GL_FLOAT, dim);
 		if (status != GL_NO_ERROR)
 			std::cerr << "failed updating normal buffer" << std::endl;
 	}
@@ -132,7 +155,7 @@ namespace easy3d {
 	void Drawable::update_texcoord_buffer(const float* texcoords, std::size_t count, int dim) {
 		assert(vao_);
 
-		int status = vao_->create_array_buffer(texcoord_buffer_, Shader::TEXCOORD, texcoords, count * sizeof(float) * dim, GL_FLOAT, dim);
+		int status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords, count * sizeof(float) * dim, GL_FLOAT, dim);
 		if (status != GL_NO_ERROR)
 			std::cerr << "failed updating texcoord buffer" << std::endl;
 	}
@@ -237,19 +260,19 @@ namespace easy3d {
 		if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
 			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	easy3d_debug_gl_error;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);	
 
             GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
             if (index_buffer_ != 0)
                 barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
-            glMemoryBarrier(barriers);	easy3d_debug_gl_error;
+            glMemoryBarrier(barriers);	
 		}
 
-		if (vertex_buffer_ != 0)	glEnableVertexAttribArray(Shader::POSITION);	easy3d_debug_gl_error;
-		if (normal_buffer_ != 0)	glEnableVertexAttribArray(Shader::NORMAL);	easy3d_debug_gl_error;
-		if (color_buffer_ != 0)		glEnableVertexAttribArray(Shader::COLOR);	easy3d_debug_gl_error;
-		if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(Shader::TEXCOORD);	easy3d_debug_gl_error;
+		if (vertex_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::POSITION);	
+		if (normal_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::NORMAL);	
+		if (color_buffer_ != 0)		glEnableVertexAttribArray(ShaderProgram::COLOR);	
+		if (texcoord_buffer_ != 0)	glEnableVertexAttribArray(ShaderProgram::TEXCOORD);	
 
 		// Primitives like lines and triangles can be drawn without the index buffer provided that 
 		// all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v2). This requires
@@ -258,20 +281,20 @@ namespace easy3d {
 			glDrawArrays(type(), 0, GLsizei(num_vertices_));
 		else {
 			// index buffer must be bound if using glDrawElements()
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);				easy3d_debug_gl_error;
-			glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, 0);	easy3d_debug_gl_error;
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);							easy3d_debug_gl_error;
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);				
+			glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, 0);	
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);							
 		}
 
-		if (vertex_buffer_ != 0)	glDisableVertexAttribArray(Shader::POSITION);	easy3d_debug_gl_error;
-		if (normal_buffer_ != 0)	glDisableVertexAttribArray(Shader::NORMAL);		easy3d_debug_gl_error;
-		if (color_buffer_ != 0)		glDisableVertexAttribArray(Shader::COLOR);		easy3d_debug_gl_error;
-		if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(Shader::TEXCOORD);	easy3d_debug_gl_error;
+		if (vertex_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::POSITION);	
+		if (normal_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::NORMAL);		
+		if (color_buffer_ != 0)		glDisableVertexAttribArray(ShaderProgram::COLOR);		
+		if (texcoord_buffer_ != 0)	glDisableVertexAttribArray(ShaderProgram::TEXCOORD);	
 
 		if (with_storage_buffer) {
 			// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
 			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	easy3d_debug_gl_error;
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);	
 		}
 
 		vao_->unbind();

@@ -56,18 +56,18 @@ bool read_off_ascii(Surface_mesh& mesh,
     int                  nc;
     unsigned int         i, j, items, idx;
     unsigned int         nV, nF, nE;
-    Vec3f                p, n, c;
-    Vec2f                t;
+    vec3                p, n, c;
+    vec2                t;
     Surface_mesh::Vertex v;
 
 
     // properties
-    Surface_mesh::Vertex_property<Normal>              normals;
-    Surface_mesh::Vertex_property<Texture_coordinate>  texcoords;
-    Surface_mesh::Vertex_property<Color>               colors;
-    if (has_normals)   normals   = mesh.vertex_property<Normal>("v:normal");
-    if (has_texcoords) texcoords = mesh.vertex_property<Texture_coordinate>("v:texcoord");
-    if (has_colors)    colors    = mesh.vertex_property<Color>("v:color");
+    Surface_mesh::Vertex_property<vec3>              normals;
+    Surface_mesh::Vertex_property<vec2>  texcoords;
+    Surface_mesh::Vertex_property<vec3>               colors;
+    if (has_normals)   normals   = mesh.vertex_property<vec3>("v:normal");
+    if (has_texcoords) texcoords = mesh.vertex_property<vec2>("v:texcoord");
+    if (has_colors)    colors    = mesh.vertex_property<vec3>("v:color");
 
 
     // #Vertice, #Faces, #Edges
@@ -86,7 +86,7 @@ bool read_off_ascii(Surface_mesh& mesh,
         // position
         items = sscanf(lp, "%f %f %f%n", &p[0], &p[1], &p[2], &nc);
         assert(items==3);
-        v = mesh.add_vertex((Point)p);
+        v = mesh.add_vertex(p);
         lp += nc;
 
         // normal
@@ -164,8 +164,8 @@ bool read_off_binary(Surface_mesh& mesh,
 {
     unsigned int       i, j, idx;
     unsigned int       nV, nF, nE;
-    Vec3f              p, n, c;
-    Vec2f              t;
+    vec3              p, n, c;
+    vec2              t;
     Surface_mesh::Vertex  v;
 
 
@@ -174,10 +174,10 @@ bool read_off_binary(Surface_mesh& mesh,
 
 
     // properties
-    Surface_mesh::Vertex_property<Normal>              normals;
-    Surface_mesh::Vertex_property<Texture_coordinate>  texcoords;
-    if (has_normals)   normals   = mesh.vertex_property<Normal>("v:normal");
-    if (has_texcoords) texcoords = mesh.vertex_property<Texture_coordinate>("v:texcoord");
+    Surface_mesh::Vertex_property<vec3>              normals;
+    Surface_mesh::Vertex_property<vec2>  texcoords;
+    if (has_normals)   normals   = mesh.vertex_property<vec3>("v:normal");
+    if (has_texcoords) texcoords = mesh.vertex_property<vec2>("v:texcoord");
 
 
     // #Vertice, #Faces, #Edges
@@ -193,7 +193,7 @@ bool read_off_binary(Surface_mesh& mesh,
     {
         // position
         read(in, p);
-        v = mesh.add_vertex((Point)p);
+        v = mesh.add_vertex(p);
 
         // normal
         if (has_normals)
@@ -305,9 +305,9 @@ bool write_off(const Surface_mesh& mesh, const std::string& filename)
     bool  has_normals   = false;
     bool  has_texcoords = false;
     bool  has_colors = false;
-    Surface_mesh::Vertex_property<Normal> normals = mesh.get_vertex_property<Normal>("v:normal");
-    Surface_mesh::Vertex_property<Texture_coordinate>  texcoords = mesh.get_vertex_property<Texture_coordinate>("v:texcoord");
-    Surface_mesh::Vertex_property<Color> colors = mesh.get_vertex_property<Color>("v:color");
+    Surface_mesh::Vertex_property<vec3> normals = mesh.get_vertex_property<vec3>("v:normal");
+    Surface_mesh::Vertex_property<vec2>  texcoords = mesh.get_vertex_property<vec2>("v:texcoord");
+    Surface_mesh::Vertex_property<vec3> colors = mesh.get_vertex_property<vec3>("v:color");
     if (normals)   has_normals = true;
     if (texcoords) has_texcoords = true;
     if (colors) has_colors = true;
@@ -324,27 +324,27 @@ bool write_off(const Surface_mesh& mesh, const std::string& filename)
 
 
     // vertices, and optionally normals and texture coordinates
-    Surface_mesh::Vertex_property<Point> points = mesh.get_vertex_property<Point>("v:point");
+    Surface_mesh::Vertex_property<vec3> points = mesh.get_vertex_property<vec3>("v:point");
     for (Surface_mesh::Vertex_iterator vit=mesh.vertices_begin(); vit!=mesh.vertices_end(); ++vit)
     {
-        const Point& p = points[*vit];
+        const vec3& p = points[*vit];
         fprintf(out, "%.10f %.10f %.10f", p[0], p[1], p[2]);
 
         if (has_normals)
         {
-            const Normal& n = normals[*vit];
+            const vec3& n = normals[*vit];
             fprintf(out, " %.10f %.10f %.10f", n[0], n[1], n[2]);
         }
 
         if (has_colors)
         {
-            const Color& c = colors[*vit];
+            const vec3& c = colors[*vit];
             fprintf(out, " %.10f %.10f %.10f", c[0], c[1], c[2]);
         }
 
         if (has_texcoords)
         {
-            const Texture_coordinate& t = texcoords[*vit];
+            const vec2& t = texcoords[*vit];
             fprintf(out, " %.10f %.10f", t[0], t[1]);
         }
 

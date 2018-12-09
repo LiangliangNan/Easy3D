@@ -23,7 +23,7 @@
 #ifndef QGLVIEWER_CONSTRAINT_H
 #define QGLVIEWER_CONSTRAINT_H
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 namespace easy3d {
 

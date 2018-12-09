@@ -7407,7 +7407,7 @@ static void ImGui::NavUpdate()
                 SetWindowScrollY(window, ImFloor(window->Scroll.y + ((g.NavMoveDir == ImGuiDir_Up) ? -1.0f : +1.0f) * scroll_speed));
         }
 
-        // *Normal* Manual scroll with NavScrollXXX keys
+        // *vec3* Manual scroll with NavScrollXXX keys
         // Next movement request will clamp the NavId reference rectangle to the visible area, so navigation will resume within those bounds.
         ImVec2 scroll_dir = GetNavInputAmount2d(ImGuiNavDirSourceFlags_PadLStick, ImGuiInputReadMode_Down, 1.0f/10.0f, 10.0f);
         if (scroll_dir.x != 0.0f && window->ScrollbarX)

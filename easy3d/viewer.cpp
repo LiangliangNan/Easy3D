@@ -37,9 +37,8 @@
 #include <easy3d/surface_mesh.h>
 #include <easy3d/point_cloud.h>
 #include <easy3d/drawable.h>
-#include <easy3d/shader.h>
+#include <easy3d/shader_program.h>
 #include <easy3d/resources.h>
-#include <easy3d/opengl_error.h>
 #include <easy3d/file_dialog.h>
 #include <easy3d/transform.h>
 #include <easy3d/camera.h>
@@ -742,7 +741,7 @@ namespace easy3d {
         gly = static_cast<int>(gly * highdpi_);
 
         float depth = std::numeric_limits<float>::max();
-        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	easy3d_debug_gl_error;
+        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	
 		found = depth < 1.0f;
 		if (found) {
             vec3 point(float(x), float(y), depth);
@@ -819,14 +818,14 @@ namespace easy3d {
 	void Viewer::init() {
 		// create shader programs
 		// TODO: have a shader manager to manage all the shaders
-		points_program_ = new Shader("points_color");
-		if (points_program_->load_from_codes(
-			easy3d::shadercode::points_color_vert, 
-			easy3d::shadercode::points_color_frag))
+		points_program_ = new ShaderProgram("points_color");
+		if (points_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::points_color_vert) &&
+			points_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::points_color_frag))
 		{
-			points_program_->set_attrib_name(Shader::POSITION, "vtx_position");
-			points_program_->set_attrib_name(Shader::COLOR, "vtx_color");
-			points_program_->set_attrib_name(Shader::NORMAL, "vtx_normal");
+			points_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+			points_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
+			points_program_->set_attrib_name(ShaderProgram::NORMAL, "vtx_normal");
+			points_program_->link_program();
 		}
 		else {
 			std::cerr << "failed creating shader program for points" << std::endl;
@@ -834,13 +833,13 @@ namespace easy3d {
 			points_program_ = nullptr;
 		}
 
-		lines_program_ = new Shader("line_color");
-		if (lines_program_->load_from_codes(
-			easy3d::shadercode::lines_color_vert,
-			easy3d::shadercode::lines_color_frag))
+		lines_program_ = new ShaderProgram("line_color");
+		if (lines_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::lines_color_vert) &&
+			lines_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::lines_color_frag))
 		{
-			lines_program_->set_attrib_name(Shader::POSITION, "vtx_position");
-			lines_program_->set_attrib_name(Shader::COLOR, "vtx_color");
+			lines_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+			lines_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
+			lines_program_->link_program();
 		}
 		else {
 			std::cerr << "failed creating shader program for lines" << std::endl;
@@ -848,13 +847,13 @@ namespace easy3d {
 			surface_program_ = nullptr;
 		}
 
-		surface_program_ = new Shader("surface_color");
-		if (surface_program_->load_from_codes(
-			easy3d::shadercode::surface_color_vert,
-			easy3d::shadercode::surface_color_frag))
+		surface_program_ = new ShaderProgram("surface_color");
+		if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
+			surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
 		{
-			surface_program_->set_attrib_name(Shader::POSITION, "vtx_position");
-			surface_program_->set_attrib_name(Shader::COLOR, "vtx_color");
+			surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
+			surface_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
+			surface_program_->link_program();
 		}
 		else {
 			std::cerr << "failed creating shader program for surfaces" << std::endl;
@@ -1051,12 +1050,12 @@ namespace easy3d {
 		}
 		// The viewport and the scissor are changed to fit the lower left corner.
         int viewport[4], scissor[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);	easy3d_debug_gl_error;
-        glGetIntegerv(GL_SCISSOR_BOX, scissor);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_VIEWPORT, viewport);	
+        glGetIntegerv(GL_SCISSOR_BOX, scissor);	
 
 		static int corner_frame_size = 150;
 		glViewport(0, 0, corner_frame_size, corner_frame_size);
-		glScissor(0, 0, corner_frame_size, corner_frame_size);	easy3d_debug_gl_error;
+		glScissor(0, 0, corner_frame_size, corner_frame_size);	
 
 		// To make the axis appear over other objects: reserve a tiny bit of the 
 		// front depth range. NOTE: do remember to restore it later.
@@ -1068,7 +1067,7 @@ namespace easy3d {
 		lines_program_->bind();
 		lines_program_->set_uniform("MVP", MVP);
 		lines_program_->set_uniform("per_vertex_color", true);
-		axes_->draw(false);					easy3d_debug_gl_error;
+		axes_->draw(false);					
 		lines_program_->unbind();
 
 		// restore
@@ -1114,19 +1113,19 @@ namespace easy3d {
 			glPolygonOffset(0.5f, -0.0001f);
 		}
 
-		surface_program_->bind();	easy3d_debug_gl_error;
+		surface_program_->bind();	
 		const mat4& MVP = camera_->modelViewProjectionMatrix();
-		surface_program_->set_uniform("MVP", MVP);		easy3d_debug_gl_error;
+		surface_program_->set_uniform("MVP", MVP);		
 		// light is defined in VC
 		vec4 eyeLightPos(0.27f, 0.27f, 0.92f, 0);
 		const mat4& MV = camera_->modelViewMatrix();
 		const vec4& wLightPos = inverse(MV) * eyeLightPos;
-		surface_program_->set_uniform("wLightPos", wLightPos);		easy3d_debug_gl_error;
+		surface_program_->set_uniform("wLightPos", wLightPos);		
 		// NOTE: camera position is defined in world coordinate system.
 		const vec3& wCamPos = camera_->position();
 		// it can also be computed as follows:
 		//const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-		surface_program_->set_uniform("wCamPos", wCamPos);		easy3d_debug_gl_error;
+		surface_program_->set_uniform("wCamPos", wCamPos);		
 		for (std::size_t idx = 0; idx < models_.size(); ++idx) {
 			Model* m = models_[idx];
 			if (!m->is_visible())
@@ -1135,12 +1134,12 @@ namespace easy3d {
 				if (d->is_visible()) {
 					surface_program_->set_uniform("per_vertex_color", d->per_vertex_color());
 					surface_program_->set_uniform("default_color",
-					idx == model_idx_ ? d->default_color() : vec3(0.8f, 0.8f, 0.8f));		easy3d_debug_gl_error;
+					idx == model_idx_ ? d->default_color() : vec3(0.8f, 0.8f, 0.8f));		
 					d->draw(false);
 				}
 			}
 		}
-		surface_program_->unbind();	easy3d_debug_gl_error;
+		surface_program_->unbind();	
 
 		if (count > 0) 
 			glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1182,7 +1181,7 @@ namespace easy3d {
 				}
 			}
 		}
-		points_program_->unbind();	easy3d_debug_gl_error;
+		points_program_->unbind();	
 	}
 
 

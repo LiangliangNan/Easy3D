@@ -23,9 +23,8 @@
 #ifndef QGLVIEWER_FRAME_H
 #define QGLVIEWER_FRAME_H
 
-#include <easy3d/math_types.h>
-#include "constraint.h"
-
+#include <easy3d/types.h>
+#include <easy3d/constraint.h>
 
 #include <set>
 

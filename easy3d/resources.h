@@ -2,7 +2,7 @@
 #define _EASY3D_OPENGL_SHADER_CODES_H_
 
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 #include <string>
 #include <vector>

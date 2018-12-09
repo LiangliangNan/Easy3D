@@ -1628,7 +1628,7 @@ static void ShowDemoWindowLayout()
 
         // Button
         ImGui::AlignTextToFramePadding();
-        ImGui::Text("Normal buttons"); ImGui::SameLine();
+        ImGui::Text("vec3 buttons"); ImGui::SameLine();
         ImGui::Button("Banana"); ImGui::SameLine();
         ImGui::Button("Apple"); ImGui::SameLine();
         ImGui::Button("Corniflower");

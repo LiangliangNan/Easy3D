@@ -22,7 +22,7 @@
 #ifndef _MATH_RECTANGLE_H_
 #define _MATH_RECTANGLE_H_
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 
 template <class FT>

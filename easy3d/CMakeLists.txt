@@ -5,7 +5,6 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-    ./arcball.h
     ./box.h
     ./camera.h
 	./constraint.h
@@ -13,27 +12,30 @@ set(${PROJECT_NAME}_HEADERS
     ./file_dialog.h
 	./frame.h
     ./IO.h
+	./line.h
 	./manipulated_camera_frame.h
 	./manipulated_frame.h
     ./mat.h
-    ./math_types.h
     ./model.h
     ./opengl_error.h
 	./opengl_info.h
+	./plane.h
     ./point_cloud.h
     ./properties.h
     ./quat.h
+	./rect.h
     ./resources.h
-    ./shader.h
+	./segment.h
+    ./shader_program.h
     ./surface_mesh.h
     ./transform.h
+	./types.h
     ./vec.h
     ./vertex_array_object.h
     ./viewer.h
     )
 
 set(${PROJECT_NAME}_SOURCES
-	./arcball.cpp
     ./camera.cpp
 	./constraint.cpp
     ./drawable.cpp
@@ -51,7 +53,7 @@ set(${PROJECT_NAME}_SOURCES
 	./opengl_info.cpp
     ./point_cloud.cpp
     ./resources.cpp
-    ./shader.cpp
+    ./shader_program.cpp
     ./surface_mesh.cpp
     ./transform.cpp
     ./vertex_array_object.cpp

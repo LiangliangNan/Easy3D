@@ -23,7 +23,7 @@
 #define _MPL_OPENGL_TRANSFORM_H_
 
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 
 // Defines functions that generate common transformation matrices.

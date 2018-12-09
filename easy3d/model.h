@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include <easy3d/math_types.h>
+#include <easy3d/types.h>
 
 /********************************************************************************************
 *

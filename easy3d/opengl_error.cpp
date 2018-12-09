@@ -1,7 +1,8 @@
-#include "opengl_error.h"
-#include <GL/glew.h>
+#include <easy3d/opengl_error.h>
 
 #include <iostream>
+
+#include <3rd_party/glew/include/GL/glew.h>
 
 
 namespace easy3d {

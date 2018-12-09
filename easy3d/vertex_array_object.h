@@ -22,7 +22,7 @@
 #ifndef _OPENGL_VERTEX_ARRAY_OBJECT_H_
 #define _OPENGL_VERTEX_ARRAY_OBJECT_H_
 
-#include <GL/glew.h>
+#include <3rd_party/glew/include/GL/glew.h>
 
 #include <string>
 

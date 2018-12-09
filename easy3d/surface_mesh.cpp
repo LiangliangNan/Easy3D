@@ -43,7 +43,7 @@ Surface_mesh()
     vconn_    = add_vertex_property<Vertex_connectivity>("v:connectivity");
     hconn_    = add_halfedge_property<Halfedge_connectivity>("h:connectivity");
     fconn_    = add_face_property<Face_connectivity>("f:connectivity");
-    vpoint_   = add_vertex_property<Point>("v:point");
+    vpoint_   = add_vertex_property<vec3>("v:point");
     vdeleted_ = add_vertex_property<bool>("v:deleted", false);
     edeleted_ = add_edge_property<bool>("e:deleted", false);
     fdeleted_ = add_face_property<bool>("f:deleted", false);
@@ -87,11 +87,11 @@ operator=(const Surface_mesh& rhs)
         vdeleted_ = vertex_property<bool>("v:deleted");
         edeleted_ = edge_property<bool>("e:deleted");
         fdeleted_ = face_property<bool>("f:deleted");
-        vpoint_   = vertex_property<Point>("v:point");
+        vpoint_   = vertex_property<vec3>("v:point");
 
         // normals might be there, therefore use get_property
-        vnormal_  = get_vertex_property<Point>("v:normal");
-        fnormal_  = get_face_property<Point>("f:normal");
+        vnormal_  = get_vertex_property<vec3>("v:normal");
+        fnormal_  = get_face_property<vec3>("f:normal");
 
         // how many elements are deleted?
         deleted_vertices_ = rhs.deleted_vertices_;
@@ -124,14 +124,14 @@ assign(const Surface_mesh& rhs)
         vconn_    = add_vertex_property<Vertex_connectivity>("v:connectivity");
         hconn_    = add_halfedge_property<Halfedge_connectivity>("h:connectivity");
         fconn_    = add_face_property<Face_connectivity>("f:connectivity");
-        vpoint_   = add_vertex_property<Point>("v:point");
+        vpoint_   = add_vertex_property<vec3>("v:point");
         vdeleted_ = add_vertex_property<bool>("v:deleted", false);
         edeleted_ = add_edge_property<bool>("e:deleted", false);
         fdeleted_ = add_face_property<bool>("f:deleted", false);
 
         // normals might be there, therefore use get_property
-        vnormal_  = get_vertex_property<Point>("v:normal");
-        fnormal_  = get_face_property<Point>("f:normal");
+        vnormal_  = get_vertex_property<vec3>("v:normal");
+        fnormal_  = get_face_property<vec3>("f:normal");
 
         // copy properties from other mesh
         vconn_.array()     = rhs.vconn_.array();
@@ -275,7 +275,7 @@ property_stats() const
 
 Surface_mesh::Vertex
 Surface_mesh::
-add_vertex(const Point& p)
+add_vertex(const vec3& p)
 {
     Vertex v = new_vertex();
     vpoint_[v] = p;
@@ -722,7 +722,7 @@ Surface_mesh::
 update_face_normals()
 {
     if (!fnormal_)
-        fnormal_ = face_property<Point>("f:normal");
+        fnormal_ = face_property<vec3>("f:normal");
 
     Face_iterator fit, fend=faces_end();
 
@@ -734,18 +734,18 @@ update_face_normals()
 //-----------------------------------------------------------------------------
 
 
-Normal
+vec3
 Surface_mesh::
 compute_face_normal(Face f) const
 {
     Halfedge h = halfedge(f);
     Halfedge hend = h;
 
-    Point p0 = vpoint_[to_vertex(h)];
+    vec3 p0 = vpoint_[to_vertex(h)];
     h = next_halfedge(h);
-    Point p1 = vpoint_[to_vertex(h)];
+    vec3 p1 = vpoint_[to_vertex(h)];
     h = next_halfedge(h);
-    Point p2 = vpoint_[to_vertex(h)];
+    vec3 p2 = vpoint_[to_vertex(h)];
 
     if (next_halfedge(h) == hend) // face is a triangle
     {
@@ -754,7 +754,7 @@ compute_face_normal(Face f) const
 
     else // face is a general polygon
     {
-        Normal n(0,0,0);
+        vec3 n(0,0,0);
 
         hend = h;
         do
@@ -780,7 +780,7 @@ Surface_mesh::
 update_vertex_normals()
 {
     if (!vnormal_)
-        vnormal_ = vertex_property<Point>("v:normal");
+        vnormal_ = vertex_property<vec3>("v:normal");
 
     Vertex_iterator vit, vend=vertices_end();
 
@@ -792,20 +792,20 @@ update_vertex_normals()
 //-----------------------------------------------------------------------------
 
 
-Normal
+vec3
 Surface_mesh::
 compute_vertex_normal(Vertex v) const
 {
-    Point     nn(0,0,0);
+    vec3     nn(0,0,0);
     Halfedge  h = halfedge(v);
 
     if (h.is_valid())
     {
         const Halfedge hend = h;
-        const Point p0 = vpoint_[v];
+        const vec3 p0 = vpoint_[v];
 
-        Point   n, p1, p2;
-        Scalar  cosine, angle, denom;
+        vec3   n, p1, p2;
+        float  cosine, angle, denom;
 
         do
         {
@@ -819,7 +819,7 @@ compute_vertex_normal(Vertex v) const
 
                 // check whether we can robustly compute angle
                 denom = sqrt(dot(p1,p1)*dot(p2,p2));
-                if (denom > std::numeric_limits<Scalar>::min())
+                if (denom > std::numeric_limits<float>::min())
                 {
                     cosine = dot(p1,p2) / denom;
                     if      (cosine < -1.0) cosine = -1.0;
@@ -830,7 +830,7 @@ compute_vertex_normal(Vertex v) const
 
                     // check whether normal is != 0
                     denom = norm(n);
-                    if (denom > std::numeric_limits<Scalar>::min())
+                    if (denom > std::numeric_limits<float>::min())
                     {
                         n  *= angle/denom;
                         nn += n;
@@ -852,7 +852,7 @@ compute_vertex_normal(Vertex v) const
 //-----------------------------------------------------------------------------
 
 
-Scalar
+float
 Surface_mesh::
 edge_length(Edge e) const
 {

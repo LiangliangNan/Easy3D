@@ -55,7 +55,7 @@ public:
 
     CmpVec(float _eps=FLT_MIN) : eps_(_eps) {}
 
-    bool operator()(const Vec3f& v0, const Vec3f& v1) const
+    bool operator()(const vec3& v0, const vec3& v1) const
     {
         if (fabs(v0[0] - v1[0]) <= eps_)
         {
@@ -80,14 +80,14 @@ bool read_stl(Surface_mesh& mesh, const std::string& filename)
 {
     char                            line[100], *c;
     unsigned int                    i, nT;
-    Vec3f                           p;
+    vec3                           p;
     Surface_mesh::Vertex               v;
     std::vector<Surface_mesh::Vertex>  vertices(3);
     size_t n_items(0);
 
     CmpVec comp(FLT_MIN);
-    std::map<Vec3f, Surface_mesh::Vertex, CmpVec>            vMap(comp);
-    std::map<Vec3f, Surface_mesh::Vertex, CmpVec>::iterator  vMapIt;
+    std::map<vec3, Surface_mesh::Vertex, CmpVec>            vMap(comp);
+    std::map<vec3, Surface_mesh::Vertex, CmpVec>::iterator  vMapIt;
 
 
     // clear mesh
@@ -136,7 +136,7 @@ bool read_stl(Surface_mesh& mesh, const std::string& filename)
                 if ((vMapIt=vMap.find(p)) == vMap.end())
                 {
                     // No : add vertex and remember idx/vector mapping
-                    v = mesh.add_vertex((Point)p);
+                    v = mesh.add_vertex(p);
                     vertices[i] = v;
                     vMap[p] = v;
                 }
@@ -190,7 +190,7 @@ bool read_stl(Surface_mesh& mesh, const std::string& filename)
                     if ((vMapIt=vMap.find(p)) == vMap.end())
                     {
                         // No : add vertex and remember idx/vector mapping
-                        v = mesh.add_vertex((Point)p);
+                        v = mesh.add_vertex(p);
                         vertices[i] = v;
                         vMap[p] = v;
                     }
@@ -227,7 +227,7 @@ bool write_stl(const Surface_mesh& mesh, const std::string& filename)
         return false;
     }
 
-    auto fnormals = mesh.get_face_property<Normal>("f:normal");
+    auto fnormals = mesh.get_face_property<vec3>("f:normal");
     if (!fnormals)
     {
         std::cerr << "write_stl: no a face normals present!" << std::endl;
@@ -235,11 +235,11 @@ bool write_stl(const Surface_mesh& mesh, const std::string& filename)
     }
 
     std::ofstream ofs(filename.c_str());
-    auto points = mesh.get_vertex_property<Point>("v:point");
+    auto points = mesh.get_vertex_property<vec3>("v:point");
 
     ofs << "solid stl" << std::endl;
-    Normal n;
-    Point p;
+    vec3 n;
+    vec3 p;
 
     for (auto f : mesh.faces())
     {
