@@ -1,6 +1,6 @@
 
-#include "model.h"
-#include "drawable.h"
+#include <easy3d/model.h>
+#include <easy3d/drawable.h>
 
 
 namespace easy3d {
@@ -97,4 +97,5 @@ namespace easy3d {
 		face_drawables_.push_back(d);
 		return d;
 	}
+
 }

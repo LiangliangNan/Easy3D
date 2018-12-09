@@ -7,6 +7,7 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
     ./box.h
     ./camera.h
+    ./constant.h
     ./constraint.h
     ./drawable.h
     ./file_dialog.h

@@ -33,10 +33,10 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef _OPENGL_SHADER_PROGRAM_H_
-#define _OPENGL_SHADER_PROGRAM_H_
+#ifndef EASY3D_SHADER_PROGRAM_H
+#define EASY3D_SHADER_PROGRAM_H
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -285,7 +285,7 @@ namespace easy3d {
 			// uniforms information
 			// maps of std::string can be super slow when calling find with a string literal or const char* 
 			// as find forces construction/copy/destruction of a std::sting copy of the const char*.
-			std::map<std::string, BlockUniform> uniformOffsets;
+            std::unordered_map<std::string, BlockUniform> uniformOffsets;
 		};
 
 		// VARIABLES
@@ -296,7 +296,7 @@ namespace easy3d {
 		// Stores info on all blocks found
 		// maps of std::string can be super slow when calling find with a string literal or const char* 
 		// as find forces construction/copy/destruction of a std::sting copy of the const char*.
-		static std::map<std::string, UniformBlock> spBlocks;
+        static std::unordered_map<std::string, UniformBlock> spBlocks;
 
 		// stores the OpenGL shader types
 		static GLenum spGLShaderTypes[ShaderProgram::NUM_SHADER_TYPES];
@@ -314,7 +314,7 @@ namespace easy3d {
 		// stores info on the uniforms
 		// maps of std::string can be super slow when calling find with a string literal or const char* 
 		// as find forces construction/copy/destruction of a std::sting copy of the const char*.
-		std::map<std::string, Uniform> pUniforms;
+        std::unordered_map<std::string, Uniform> pUniforms;
 
 		// AUX FUNCTIONS
 
@@ -346,7 +346,7 @@ namespace easy3d {
 		const ShaderProgram& operator=(const ShaderProgram&);
 	};
 
-
 }
 
-#endif
+
+#endif  // EASY3D_SHADER_PROGRAM_H

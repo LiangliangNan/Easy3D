@@ -18,8 +18,8 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _MPL_OPENGL_DRAWABLE_H_
-#define _MPL_OPENGL_DRAWABLE_H_
+#ifndef EASY3D_DRAWABLE_H
+#define EASY3D_DRAWABLE_H
 
 #include <string>
 #include <vector>
@@ -231,10 +231,7 @@ namespace easy3d {
 		std::vector< std::vector<unsigned int> > indices_;
 	};
 
-
-
 }
 
 
-
-#endif
+#endif  // EASY3D_DRAWABLE_H

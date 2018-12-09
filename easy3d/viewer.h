@@ -18,10 +18,10 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASY3D_BASIC_VIEWER_H_
-#define _EASY3D_BASIC_VIEWER_H_
+#ifndef EASY3D_VIEWER_H
+#define EASY3D_VIEWER_H
 
-#include <map>
+
 #include <string>
 #include <vector>
 
@@ -230,4 +230,4 @@ namespace easy3d {
 }
 
 
-#endif	// _EASY3D_BASIC_VIEWER_H_
+#endif	// EASY3D_VIEWER_H

@@ -18,8 +18,8 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASY3D_OPENGL_MODEL_H_
-#define _EASY3D_OPENGL_MODEL_H_
+#ifndef EASY3D_MODEL_H
+#define EASY3D_MODEL_H
 
 
 #include <string>
@@ -94,4 +94,4 @@ namespace easy3d {
 	};
 }
 
-#endif
+#endif  // EASY3D_MODEL_H

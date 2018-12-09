@@ -18,11 +18,12 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASY3D_FILE_DIALOG_H_
-#define _EASY3D_FILE_DIALOG_H_
+#ifndef EASY3D_FILE_DIALOG_H
+#define EASY3D_FILE_DIALOG_H
 
 #include <string>
 #include <vector>
+
 
 namespace easy3d
 {
@@ -57,5 +58,5 @@ namespace easy3d
 	std::vector<std::string> file_dialog(const std::vector< std::pair<std::string, std::string> > &filetypes, bool save, bool multiple);
 }
 
-#endif	// _EASY3D_FILE_DIALOG_H_
+#endif	// EASY3D_FILE_DIALOG_H
 

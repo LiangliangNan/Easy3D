@@ -24,9 +24,9 @@
 #include <cassert>
 
 #include <3rd_party/glew/include/GL/glew.h>
-#include "vertex_array_object.h"
-#include "shader_program.h"
-#include "opengl_error.h"
+#include <easy3d/vertex_array_object.h>
+#include <easy3d/shader_program.h>
+#include <easy3d/opengl_error.h>
 
 
 

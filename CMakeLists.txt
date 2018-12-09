@@ -43,5 +43,5 @@ add_subdirectory(3rd_party)
 add_subdirectory(easy3d)
 
 if(EASY3D_BUILD_EXAMPLES)
-    add_subdirectory(examples)
+    add_subdirectory(tutorials)
 endif()

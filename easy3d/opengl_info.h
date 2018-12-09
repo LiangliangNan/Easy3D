@@ -19,12 +19,12 @@
 */
 
 
-#ifndef _OPENGL_OPENGL_INFO_H_
-#define _OPENGL_OPENGL_INFO_H_
+#ifndef EASY3D_OPENGL_INFO_H
+#define EASY3D_OPENGL_INFO_H
 
 #include <string>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 
 
 namespace easy3d {
@@ -122,24 +122,24 @@ namespace easy3d {
 
 		static std::ostream*  _output_stream;
 
-		static std::map<int, std::string>	spBufferAccess;
-		static std::map<int, std::string>	spBufferUsage;
-		static std::map<int, std::string>	spBufferBinding;
-		static std::map<int, int>			spBufferBound;
-		static std::map<int, int>			spBoundBuffer;
-		static std::map<int, std::string>	spDataF;
-		static std::map<int, std::string>	spGLSLType;
-		static std::map<int, int> 			spGLSLTypeSize;
-		static std::map<int, std::string>	spShaderType;
-		static std::map<int, std::string>	spTransFeedBufferMode;
-		static std::map<int, std::string>	spGLSLPrimitives;
-		static std::map<int, std::string>	spTessGenSpacing;
-		static std::map<int, std::string>	spVertexOrder;
+        static std::unordered_map<int, std::string>	spBufferAccess;
+        static std::unordered_map<int, std::string>	spBufferUsage;
+        static std::unordered_map<int, std::string>	spBufferBinding;
+        static std::unordered_map<int, int>			spBufferBound;
+        static std::unordered_map<int, int>			spBoundBuffer;
+        static std::unordered_map<int, std::string>	spDataF;
+        static std::unordered_map<int, std::string>	spGLSLType;
+        static std::unordered_map<int, int> 			spGLSLTypeSize;
+        static std::unordered_map<int, std::string>	spShaderType;
+        static std::unordered_map<int, std::string>	spTransFeedBufferMode;
+        static std::unordered_map<int, std::string>	spGLSLPrimitives;
+        static std::unordered_map<int, std::string>	spTessGenSpacing;
+        static std::unordered_map<int, std::string>	spVertexOrder;
 	};
 
 
 }
 
-#endif
+#endif  // EASY3D_OPENGL_INFO_H
 
 

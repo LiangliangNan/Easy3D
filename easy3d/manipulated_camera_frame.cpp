@@ -1,30 +1,42 @@
-/****************************************************************************
+/*
+*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+*	https://3d.bk.tudelft.nl/liangliang/
+*
+*	This file is part of Easy3D: software for processing and rendering
+*   meshes and point clouds.
+*
+*	Easy3D is free software; you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License Version 3
+*	as published by the Free Software Foundation.
+*
+*	Easy3D is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*	GNU General Public License for more details.
+*
+*	You should have received a copy of the GNU General Public License
+*	along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
- Copyright (C) 2002-2014 Gilles Debunne. All rights reserved.
 
- This file is part of the QGLViewer library version 2.7.1.
+/** ----------------------------------------------------------
+ *
+ * the code is adapted from libQGLViewer with modifications.
+ *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
+ * The original code is available at
+ * http://libqglviewer.com/
+ *
+ * libQGLViewer is a C++ library based on Qt that eases the
+ * creation of OpenGL 3D viewers.
+ *
+ *----------------------------------------------------------*/
 
- http://www.libqglviewer.com - contact@libqglviewer.com
 
- This file may be used under the terms of the GNU General Public License
- versions 2.0 or 3.0 as published by the Free Software Foundation and
- appearing in the LICENSE file included in the packaging of this file.
- In addition, as a special exception, Gilles Debunne gives you certain
- additional rights, described in the file GPL_EXCEPTION in this package.
-
- libQGLViewer uses dual licensing. Commercial/proprietary software must
- purchase a libQGLViewer Commercial License.
-
- This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
- WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
-*****************************************************************************/
-
-#include "manipulated_camera_frame.h"
+#include <easy3d/manipulated_camera_frame.h>
 
 #include <algorithm>
 
-#include "camera.h"
+#include <easy3d/camera.h>
 
 
 namespace easy3d {

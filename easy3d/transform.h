@@ -19,8 +19,8 @@
 */
 
 
-#ifndef _MPL_OPENGL_TRANSFORM_H_
-#define _MPL_OPENGL_TRANSFORM_H_
+#ifndef EASY3D_TRANSFORM_H
+#define EASY3D_TRANSFORM_H
 
 
 #include <easy3d/types.h>
@@ -120,9 +120,7 @@ namespace easy3d
 	// NOTE: this is the padded version suitable in uniform blocks.
 	mat43 normal_matrix_padded(const mat4& mat);
 
-
-}//namespace OpenGL
-
+}
 
 
-#endif
+#endif  // EASY3D_TRANSFORM_H

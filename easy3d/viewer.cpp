@@ -18,7 +18,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "viewer.h"
+#include <easy3d/viewer.h>
 
 #include <thread>
 #include <chrono>

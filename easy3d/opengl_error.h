@@ -19,8 +19,8 @@
 */
 
 
-#ifndef _OPENGL_GL_ERROR_H_
-#define _OPENGL_GL_ERROR_H_
+#ifndef EASY3D_OPENGL_ERROR_H
+#define EASY3D_OPENGL_ERROR_H
 
 #include <string>
 
@@ -57,6 +57,6 @@ namespace easy3d {
 }
 
 
-#endif
+#endif  // EASY3D_OPENGL_ERROR_H
 
 

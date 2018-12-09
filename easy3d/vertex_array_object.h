@@ -19,12 +19,13 @@
 */
 
 
-#ifndef _OPENGL_VERTEX_ARRAY_OBJECT_H_
-#define _OPENGL_VERTEX_ARRAY_OBJECT_H_
+#ifndef EASY_VERTEX_ARRAY_OBJECT_H
+#define EASY_VERTEX_ARRAY_OBJECT_H
 
 #include <3rd_party/glew/include/GL/glew.h>
 
 #include <string>
+
 
 namespace easy3d {
 
@@ -104,21 +105,9 @@ namespace easy3d {
 	private:
 		GLuint	id_;
 
-		//struct VertexAttributes
-		//{
-		//	GLint Index;
-		//	GLint  Size;
-		//	GLenum Type;
-		//	GLboolean Normalize;
-		//	GLsizei Stride;
-		//	GLuint Offset;
-		//	int Divisor;
-		//	bool IsMatrix;
-		//};
-		//typedef std::map< GLuint, std::vector<VertexAttributes> > AttributeMap;
-		//AttributeMap Attributes;
 	};
 
 }
 
-#endif
+
+#endif  // EASY_VERTEX_ARRAY_OBJECT_H

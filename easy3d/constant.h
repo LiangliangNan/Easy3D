@@ -19,36 +19,15 @@
 */
 
 
-#ifndef EASY3D_RESOURCES_H
-#define EASY3D_RESOURCES_H
+#ifndef EASY3D_CONSTANT_H
+#define EASY3D_CONSTANT_H
 
 
-#include <easy3d/types.h>
 
-#include <string>
-#include <vector>
-
-namespace easy3d {
-
-	namespace shadercode {
-
-		extern std::string points_color_frag;
-		extern std::string points_color_vert;
-
-		extern std::string lines_color_frag;
-		extern std::string lines_color_vert;
-
-		extern std::string surface_color_frag;
-		extern std::string surface_color_vert;
-	}
+#ifndef M_PI
+#define M_PI       3.14159265358979323846   // pi
+#endif
 
 
-	namespace demodata {
-		extern const std::vector<vec3> vertices;
-		extern const std::vector<vec3> colors;
-	}
 
-}
-
-
-#endif // EASY3D_RESOURCES_H
+#endif // EASY3D_CONSTANT_H

@@ -18,10 +18,10 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "file_dialog.h"
+#include <easy3d/file_dialog.h>
 
 #if defined(_WIN32)
-#  include <windows.h>
+#  include <Windows.h>
 #else
 // #  include <locale.h>
 // #  include <signal.h>
