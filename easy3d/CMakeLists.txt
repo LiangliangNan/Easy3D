@@ -25,7 +25,6 @@ set(${PROJECT_NAME}_HEADERS
     ./quat.h
     ./resources.h
     ./shader.h
-	./shader_program.h
     ./surface_mesh.h
     ./transform.h
     ./vec.h
@@ -53,7 +52,6 @@ set(${PROJECT_NAME}_SOURCES
     ./point_cloud.cpp
     ./resources.cpp
     ./shader.cpp
-	./shader_program.cpp
     ./surface_mesh.cpp
     ./transform.cpp
     ./vertex_array_object.cpp

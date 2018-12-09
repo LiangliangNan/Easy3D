@@ -45,7 +45,7 @@ namespace easy3d {
 	class Model;
 	class Point_cloud;
 	class Surface_mesh;
-	class ShaderProgram;
+	class Shader;
 	class LinesDrawable;
 
 	class Viewer
@@ -219,9 +219,9 @@ namespace easy3d {
 		bool	show_corner_axes_;
 		LinesDrawable* axes_;
 
-		ShaderProgram* points_program_;
-		ShaderProgram* lines_program_;
-		ShaderProgram* surface_program_;
+		Shader* points_program_;
+		Shader* lines_program_;
+		Shader* surface_program_;
 
 		std::vector<Model*> models_;
 		int model_idx_;

@@ -37,7 +37,7 @@
 #include <easy3d/surface_mesh.h>
 #include <easy3d/point_cloud.h>
 #include <easy3d/drawable.h>
-#include <easy3d/shader_program.h>
+#include <easy3d/shader.h>
 #include <easy3d/resources.h>
 #include <easy3d/opengl_error.h>
 #include <easy3d/file_dialog.h>
@@ -819,14 +819,14 @@ namespace easy3d {
 	void Viewer::init() {
 		// create shader programs
 		// TODO: have a shader manager to manage all the shaders
-		points_program_ = new ShaderProgram("points_color");
-		if (points_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::points_color_vert) &&
-			points_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::points_color_frag))
+		points_program_ = new Shader("points_color");
+		if (points_program_->load_from_codes(
+			easy3d::shadercode::points_color_vert, 
+			easy3d::shadercode::points_color_frag))
 		{
-			points_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
-			points_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
-			points_program_->set_attrib_name(ShaderProgram::NORMAL, "vtx_normal");
-			points_program_->link_program();
+			points_program_->set_attrib_name(Shader::POSITION, "vtx_position");
+			points_program_->set_attrib_name(Shader::COLOR, "vtx_color");
+			points_program_->set_attrib_name(Shader::NORMAL, "vtx_normal");
 		}
 		else {
 			std::cerr << "failed creating shader program for points" << std::endl;
@@ -834,13 +834,13 @@ namespace easy3d {
 			points_program_ = nullptr;
 		}
 
-		lines_program_ = new ShaderProgram("line_color");
-		if (lines_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::lines_color_vert) &&
-			lines_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::lines_color_frag))
+		lines_program_ = new Shader("line_color");
+		if (lines_program_->load_from_codes(
+			easy3d::shadercode::lines_color_vert,
+			easy3d::shadercode::lines_color_frag))
 		{
-			lines_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
-			lines_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
-			lines_program_->link_program();
+			lines_program_->set_attrib_name(Shader::POSITION, "vtx_position");
+			lines_program_->set_attrib_name(Shader::COLOR, "vtx_color");
 		}
 		else {
 			std::cerr << "failed creating shader program for lines" << std::endl;
@@ -848,13 +848,13 @@ namespace easy3d {
 			surface_program_ = nullptr;
 		}
 
-		surface_program_ = new ShaderProgram("surface_color");
-		if (surface_program_->load_shader_from_code(ShaderProgram::VERTEX, easy3d::shadercode::surface_color_vert) &&
-			surface_program_->load_shader_from_code(ShaderProgram::FRAGMENT, easy3d::shadercode::surface_color_frag))
+		surface_program_ = new Shader("surface_color");
+		if (surface_program_->load_from_codes(
+			easy3d::shadercode::surface_color_vert,
+			easy3d::shadercode::surface_color_frag))
 		{
-			surface_program_->set_attrib_name(ShaderProgram::POSITION, "vtx_position");
-			surface_program_->set_attrib_name(ShaderProgram::COLOR, "vtx_color");
-			surface_program_->link_program();
+			surface_program_->set_attrib_name(Shader::POSITION, "vtx_position");
+			surface_program_->set_attrib_name(Shader::COLOR, "vtx_color");
 		}
 		else {
 			std::cerr << "failed creating shader program for surfaces" << std::endl;
