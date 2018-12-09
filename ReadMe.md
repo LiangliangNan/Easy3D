@@ -59,11 +59,13 @@ Bellow is anothr example showing how to render a surface model (rendering result
 	viewer.add_model(mesh);
 ```
 
+By abstracting geometric elements as drawables, general visualization taskes can be done very conveniently. Figure 3 shows an example of the visualization of a scalar field (i.e., height) defined on the mesh vertices.
+
 <center>
 	
 <img src="images/cloud.png" height="180">  |  <img src="images/mesh.png" height="180">  |  <img src="images/scalar.png" height="180">
-:------------------------------------------:|:-------------------------------------------:|:-------------------------------------------:
-Figure 1                                    |  Figure 2            			  |  Figure 3
+:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
+Figure 1                                   |  Figure 2            		        |  Figure 3
 
 </center>
   
