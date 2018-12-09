@@ -5,4 +5,5 @@
    - math or solvers
    - algorithm (PolyFit should go here)
    - gui (the viewer should go here) 
+   - file_io 
    - ...
