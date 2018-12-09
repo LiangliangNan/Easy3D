@@ -8,7 +8,7 @@ add_executable(${PROJECT_NAME}
                 main.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES
-                      FOLDER "Examples")
+                      FOLDER "Tutorials")
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)

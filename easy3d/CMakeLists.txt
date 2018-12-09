@@ -7,29 +7,29 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
     ./box.h
     ./camera.h
-	./constraint.h
+    ./constraint.h
     ./drawable.h
     ./file_dialog.h
-	./frame.h
+    ./frame.h
     ./IO.h
-	./line.h
-	./manipulated_camera_frame.h
-	./manipulated_frame.h
+    ./line.h
+    ./manipulated_camera_frame.h
+    ./manipulated_frame.h
     ./mat.h
     ./model.h
     ./opengl_error.h
-	./opengl_info.h
-	./plane.h
+    ./opengl_info.h
+    ./plane.h
     ./point_cloud.h
     ./properties.h
     ./quat.h
-	./rect.h
+    ./rect.h
     ./resources.h
-	./segment.h
+    ./segment.h
     ./shader_program.h
     ./surface_mesh.h
     ./transform.h
-	./types.h
+    ./types.h
     ./vec.h
     ./vertex_array_object.h
     ./viewer.h
@@ -37,20 +37,20 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
     ./camera.cpp
-	./constraint.cpp
+    ./constraint.cpp
     ./drawable.cpp
     ./file_dialog.cpp
-	./frame.cpp
+    ./frame.cpp
     ./IO.cpp
     ./IO_obj.cpp
     ./IO_off.cpp
     ./IO_poly.cpp
     ./IO_stl.cpp
-	./manipulated_camera_frame.cpp
-	./manipulated_frame.cpp
+    ./manipulated_camera_frame.cpp
+    ./manipulated_frame.cpp
     ./model.cpp
     ./opengl_error.cpp
-	./opengl_info.cpp
+    ./opengl_info.cpp
     ./point_cloud.cpp
     ./resources.cpp
     ./shader_program.cpp
@@ -58,7 +58,7 @@ set(${PROJECT_NAME}_SOURCES
     ./transform.cpp
     ./vertex_array_object.cpp
     ./viewer.cpp
-	)
+    )
 
 	
 

@@ -33,7 +33,7 @@ using namespace easy3d;
 int main() {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-	Viewer viewer("Example_11_VectorFields");
+    Viewer viewer("Tutorial_11_VectorFields");
 
 	// Create a point cloud
 	Point_cloud* cloud = new Point_cloud;

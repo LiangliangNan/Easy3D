@@ -35,7 +35,7 @@ using namespace easy3d;
 void main() {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-	Viewer viewer("Example_08_Viewer");
+    Viewer viewer("Tutorial_08_Viewer");
 
 	// Create a mesh model.
 	Surface_mesh* mesh = new Surface_mesh;

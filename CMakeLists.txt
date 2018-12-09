@@ -26,12 +26,11 @@ option(EASY3D_BUILD_EXAMPLES    "Build Easy3D examples"     ON)
 ### Configuration
 set(EASY3D_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 set(EASY3D_INCLUDE_DIR "${EASY3D_ROOT}")
-set(EASY3D_SOURCE_DIR "${EASY3D_ROOT}/core" "${EASY3D_ROOT}/model" "${EASY3D_ROOT}/imgui")
+set(EASY3D_SOURCE_DIR "${EASY3D_ROOT}")
 set(EASY3D_EXTERNAL "${EASY3D_ROOT}/3rd_party")
 
 set(EASY3D_glew_INCLUDE_DIR "${EASY3D_EXTERNAL}/glew/include")
 set(EASY3D_glfw_INCLUDE_DIR "${EASY3D_EXTERNAL}/glfw/include")
-set(EASY3D_imgui_INCLUDE_DIR "${EASY3D_EXTERNAL}/imgui" "${EASY3D_EXTERNAL}/imgui/impl")
 
 
 ### conditionally compile certain modules depending on libraries found on the system

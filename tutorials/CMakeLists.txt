@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.1)
+
+add_subdirectory("Tutorial_01_PointCloud")
+add_subdirectory("Tutorial_02_PointCloud_Properties")
+add_subdirectory("Tutorial_03_PointCloud_FileIO")
+add_subdirectory("Tutorial_04_Mesh")
+add_subdirectory("Tutorial_05_Mesh_Connectivities")
+add_subdirectory("Tutorial_06_Mesh_Properties")
+add_subdirectory("Tutorial_07_Mesh_FileIO")
+add_subdirectory("Tutorial_08_Viewer")
+add_subdirectory("Tutorial_09_Drawables")
+add_subdirectory("Tutorial_10_ScalarFields")
+add_subdirectory("Tutorial_11_VectorFields")
+
+
+#get_directory_property(subdir_list DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} SUBDIRECTORIES)
+#foreach(subdir ${subdir_list})
+#    add_subdirectory("${subdir}")
+#    message(STATUS "${subdir}")
+#endforeach()
