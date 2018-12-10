@@ -40,7 +40,12 @@ int main(int /*argc*/, char** /*argv*/) {
 	PointCloud* cloud = new PointCloud;
 
 	// Load point cloud data from a file
-    cloud->read("../../../Easy3D/data/building_with_normals.bin");
+    bool success = cloud->read("../../../Easy3D/data/building_with_normals.bin");
+	if (!success) {
+		std::cerr << "file does not exist or invalid file format" << std::endl;
+		delete cloud;
+		return EXIT_FAILURE;
+	}
 
 	// Create a drawable for rendering the point cloud itself.
 	PointsDrawable* points_drawable = cloud->add_points_drawable("points");

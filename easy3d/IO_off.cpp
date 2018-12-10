@@ -80,9 +80,9 @@ bool read_off_ascii(SurfaceMesh& mesh,
 
 
     // properties
-    SurfaceMesh::Vertex_property<vec3>              normals;
-    SurfaceMesh::Vertex_property<vec2>  texcoords;
-    SurfaceMesh::Vertex_property<vec3>               colors;
+    SurfaceMesh::VertexProperty<vec3>              normals;
+    SurfaceMesh::VertexProperty<vec2>  texcoords;
+    SurfaceMesh::VertexProperty<vec3>               colors;
     if (has_normals)   normals   = mesh.vertex_property<vec3>("v:normal");
     if (has_texcoords) texcoords = mesh.vertex_property<vec2>("v:texcoord");
     if (has_colors)    colors    = mesh.vertex_property<vec3>("v:color");
@@ -192,8 +192,8 @@ bool read_off_binary(SurfaceMesh& mesh,
 
 
     // properties
-    SurfaceMesh::Vertex_property<vec3>              normals;
-    SurfaceMesh::Vertex_property<vec2>  texcoords;
+    SurfaceMesh::VertexProperty<vec3>              normals;
+    SurfaceMesh::VertexProperty<vec2>  texcoords;
     if (has_normals)   normals   = mesh.vertex_property<vec3>("v:normal");
     if (has_texcoords) texcoords = mesh.vertex_property<vec2>("v:texcoord");
 
@@ -323,9 +323,9 @@ bool write_off(const SurfaceMesh& mesh, const std::string& filename)
     bool  has_normals   = false;
     bool  has_texcoords = false;
     bool  has_colors = false;
-    SurfaceMesh::Vertex_property<vec3> normals = mesh.get_vertex_property<vec3>("v:normal");
-    SurfaceMesh::Vertex_property<vec2>  texcoords = mesh.get_vertex_property<vec2>("v:texcoord");
-    SurfaceMesh::Vertex_property<vec3> colors = mesh.get_vertex_property<vec3>("v:color");
+    SurfaceMesh::VertexProperty<vec3> normals = mesh.get_vertex_property<vec3>("v:normal");
+    SurfaceMesh::VertexProperty<vec2>  texcoords = mesh.get_vertex_property<vec2>("v:texcoord");
+    SurfaceMesh::VertexProperty<vec3> colors = mesh.get_vertex_property<vec3>("v:color");
     if (normals)   has_normals = true;
     if (texcoords) has_texcoords = true;
     if (colors) has_colors = true;
@@ -342,8 +342,8 @@ bool write_off(const SurfaceMesh& mesh, const std::string& filename)
 
 
     // vertices, and optionally normals and texture coordinates
-    SurfaceMesh::Vertex_property<vec3> points = mesh.get_vertex_property<vec3>("v:point");
-    for (SurfaceMesh::Vertex_iterator vit=mesh.vertices_begin(); vit!=mesh.vertices_end(); ++vit)
+    SurfaceMesh::VertexProperty<vec3> points = mesh.get_vertex_property<vec3>("v:point");
+    for (SurfaceMesh::VertexIterator vit=mesh.vertices_begin(); vit!=mesh.vertices_end(); ++vit)
     {
         const vec3& p = points[*vit];
         fprintf(out, "%.10f %.10f %.10f", p[0], p[1], p[2]);
@@ -371,11 +371,11 @@ bool write_off(const SurfaceMesh& mesh, const std::string& filename)
 
 
     // faces
-    for (SurfaceMesh::Face_iterator fit=mesh.faces_begin(); fit!=mesh.faces_end(); ++fit)
+    for (SurfaceMesh::FaceIterator fit=mesh.faces_begin(); fit!=mesh.faces_end(); ++fit)
     {
         int nV = mesh.valence(*fit);
         fprintf(out, "%d", nV);
-        SurfaceMesh::Vertex_around_face_circulator fvit=mesh.vertices(*fit), fvend=fvit;
+        SurfaceMesh::VertexAroundFaceCirculator fvit=mesh.vertices(*fit), fvend=fvit;
         do
         {
             fprintf(out, " %d", (*fvit).idx());

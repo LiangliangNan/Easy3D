@@ -34,21 +34,21 @@
  *----------------------------------------------------------*/
 
 
-// I would like to process huge scans (tens of millions of points), an earlier 
-// implementation based on double-connected list has issues in the following aspects:
+// I would like to process/visualize huge scans (tens of millions of points, or even more),
+// an earlier implementation based on double-connected list has the following issues:
 // 	1) no random access of the data;
 //  2) OpenGL renderring overhead (needs packing to transfer data to GPU);
 //  3) hard to employ OMP support;
 //  4) file management (unable reading and writing large blocks);
 //  5) selection, etc.
 // Thus I have this implementation inspired by (actually some code is taken from) 
-// SurfaceMesh: https://opensource.cit-ec.de/projects/surface_mesh
-// The idea behind is that all coordinate and associated attribute values
-// are stored as std::vector<T
+// Surface_mesh: https://opensource.cit-ec.de/projects/surface_mesh
+// The idea behind is that point coordinates and associated attribute values are stored as
+// std::vector<T>.
 
 
-#ifndef POINT_CLOUD_H
-#define POINT_CLOUD_H
+#ifndef EASY3D_POINT_CLOUD_H
+#define EASY3D_POINT_CLOUD_H
 
 
 //== INCLUDES =================================================================
@@ -76,12 +76,12 @@ public: //------------------------------------------------------ topology types
 
     /// Base class for topology types (internally it is basically an index)
     /// \sa Vertex
-    class Base_handle
+    class BaseHandle
     {
     public:
 
         /// constructor
-        explicit Base_handle(int _idx=-1) : idx_(_idx) {}
+        explicit BaseHandle(int _idx=-1) : idx_(_idx) {}
 
         /// Get the underlying index of this handle
         int idx() const { return idx_; }
@@ -93,32 +93,32 @@ public: //------------------------------------------------------ topology types
         bool is_valid() const { return idx_ != -1; }
 
         /// are two handles equal?
-        bool operator==(const Base_handle& _rhs) const {
+        bool operator==(const BaseHandle& _rhs) const {
             return idx_ == _rhs.idx_;
         }
 
         /// are two handles different?
-        bool operator!=(const Base_handle& _rhs) const {
+        bool operator!=(const BaseHandle& _rhs) const {
             return idx_ != _rhs.idx_;
         }
 
         /// compare operator useful for sorting handles
-        bool operator<(const Base_handle& _rhs) const {
+        bool operator<(const BaseHandle& _rhs) const {
             return idx_ < _rhs.idx_;
         }
 
     private:
-        friend class Vertex_iterator;
+        friend class VertexIterator;
         friend class PointCloud;
         int idx_;
     };
 
 
     /// this type represents a vertex (internally it is basically an index)
-    struct Vertex : public Base_handle
+    struct Vertex : public BaseHandle
     {
         /// default constructor (with invalid index)
-        explicit Vertex(int _idx=-1) : Base_handle(_idx) {}
+        explicit Vertex(int _idx=-1) : BaseHandle(_idx) {}
         std::ostream& operator<<(std::ostream& os) const { return os << 'v' << idx(); }
     };
 
@@ -126,13 +126,13 @@ public: //------------------------------------------------------ topology types
 public: //------------------------------------------------------ property types
 
     /// Vertex property of type T
-    template <class T> class Vertex_property : public Property<T>
+    template <class T> class VertexProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Vertex_property() {}
-        explicit Vertex_property(Property<T> p) : Property<T>(p) {}
+        explicit VertexProperty() {}
+        explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for vertex \c v
         typename Property<T>::reference operator[](Vertex v)
@@ -149,14 +149,14 @@ public: //------------------------------------------------------ property types
 
 
     /// Cloud property of type T
-    /// \sa Vertex_property
-    template <class T> class Model_property : public Property<T>
+    /// \sa VertexProperty
+    template <class T> class ModelProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Model_property() {}
-        explicit Model_property(Property<T> p) : Property<T>(p) {}
+        explicit ModelProperty() {}
+        explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for the cloud
         typename Property<T>::reference operator[](size_t idx)
@@ -177,12 +177,12 @@ public: //------------------------------------------------------ iterator types
 
     /// this class iterates linearly over all vertices
     /// \sa vertices_begin(), vertices_end()
-    class Vertex_iterator
+    class VertexIterator
     {
     public:
 
         /// Default constructor
-        Vertex_iterator(Vertex v=Vertex(), const PointCloud* m=NULL) : hnd_(v), cloud_(m)
+        VertexIterator(Vertex v=Vertex(), const PointCloud* m=NULL) : hnd_(v), cloud_(m)
         {
             if (cloud_ && cloud_->garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -191,19 +191,19 @@ public: //------------------------------------------------------ iterator types
         Vertex operator*()  const { return  hnd_; }
 
         /// are two iterators equal?
-        bool operator==(const Vertex_iterator& rhs) const
+        bool operator==(const VertexIterator& rhs) const
         {
             return (hnd_==rhs.hnd_);
         }
 
         /// are two iterators different?
-        bool operator!=(const Vertex_iterator& rhs) const
+        bool operator!=(const VertexIterator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment iterator
-        Vertex_iterator& operator++()
+        VertexIterator& operator++()
         {
             ++hnd_.idx_;
             assert(cloud_);
@@ -212,7 +212,7 @@ public: //------------------------------------------------------ iterator types
         }
 
         /// pre-decrement iterator
-        Vertex_iterator& operator--()
+        VertexIterator& operator--()
         {
             --hnd_.idx_;
             assert(cloud_);
@@ -231,14 +231,14 @@ public: //-------------------------- containers for C++11 range-based for loops
     /// this helper class is a container for iterating through all
     /// vertices using C++11 range-based for-loops.
     /// \sa vertices()
-    class Vertex_container
+    class VertexContainer
     {
     public:
-        Vertex_container(Vertex_iterator _begin, Vertex_iterator _end) : begin_(_begin), end_(_end) {}
-        Vertex_iterator begin() const { return begin_; }
-        Vertex_iterator end()   const { return end_;   }
+        VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
+        VertexIterator begin() const { return begin_; }
+        VertexIterator end()   const { return end_;   }
     private:
-        Vertex_iterator begin_, end_;
+        VertexIterator begin_, end_;
     };
 
 
@@ -344,51 +344,51 @@ public: //--------------------------------------------------- property handling
     /** add a vertex property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Vertex_property<T> add_vertex_property(const std::string& name, const T t=T())
+    template <class T> VertexProperty<T> add_vertex_property(const std::string& name, const T t=T())
     {
-        return Vertex_property<T>(vprops_.add<T>(name, t));
+        return VertexProperty<T>(vprops_.add<T>(name, t));
     }
 	/** add a model property of type \c T with name \c name and default value \c t.
 	fails if a property named \c name exists already, since the name has to be unique.
 	in this case it returns an invalid property */
-	template <class T> Model_property<T> add_model_property(const std::string& name, const T t = T())
+	template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t = T())
 	{
-		return Model_property<T>(mprops_.add<T>(name, t));
+		return ModelProperty<T>(mprops_.add<T>(name, t));
 	}
 
     /** get the vertex property named \c name of type \c T. returns an invalid
-     Vertex_property if the property does not exist or if the type does not match. */
-    template <class T> Vertex_property<T> get_vertex_property(const std::string& name) const
+     VertexProperty if the property does not exist or if the type does not match. */
+    template <class T> VertexProperty<T> get_vertex_property(const std::string& name) const
     {
-        return Vertex_property<T>(vprops_.get<T>(name));
+        return VertexProperty<T>(vprops_.get<T>(name));
     }
 	/** get the model property named \c name of type \c T. returns an invalid
-	Model_property if the property does not exist or if the type does not match. */
-	template <class T> Model_property<T> get_model_property(const std::string& name) const
+	ModelProperty if the property does not exist or if the type does not match. */
+	template <class T> ModelProperty<T> get_model_property(const std::string& name) const
 	{
-		return Model_property<T>(mprops_.get<T>(name));
+		return ModelProperty<T>(mprops_.get<T>(name));
 	}
 
     /** if a vertex property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Vertex_property<T> vertex_property(const std::string& name, const T t=T())
+    template <class T> VertexProperty<T> vertex_property(const std::string& name, const T t=T())
     {
-        return Vertex_property<T>(vprops_.get_or_add<T>(name, t));
+        return VertexProperty<T>(vprops_.get_or_add<T>(name, t));
     }
 	/** if a model property of type \c T with name \c name exists, it is returned.
 	otherwise this property is added (with default value \c t) */
-	template <class T> Model_property<T> model_property(const std::string& name, const T t = T())
+	template <class T> ModelProperty<T> model_property(const std::string& name, const T t = T())
 	{
-		return Model_property<T>(mprops_.get_or_add<T>(name, t));
+		return ModelProperty<T>(mprops_.get_or_add<T>(name, t));
 	}
 
     /// remove the vertex property \c p
-    template <class T> void remove_vertex_property(Vertex_property<T>& p)
+    template <class T> void remove_vertex_property(VertexProperty<T>& p)
     {
         vprops_.remove(p);
     }
 	/// remove the model property \c p
-	template <class T> void remove_model_property(Model_property<T>& p)
+	template <class T> void remove_model_property(ModelProperty<T>& p)
 	{
 		mprops_.remove(p);
 	}
@@ -430,21 +430,21 @@ public: //--------------------------------------------- iterators
     //@{
 
     /// returns start iterator for vertices
-    Vertex_iterator vertices_begin() const
+    VertexIterator vertices_begin() const
     {
-        return Vertex_iterator(Vertex(0), this);
+        return VertexIterator(Vertex(0), this);
     }
 
     /// returns end iterator for vertices
-    Vertex_iterator vertices_end() const
+    VertexIterator vertices_end() const
     {
-        return Vertex_iterator(Vertex(vertices_size()), this);
+        return VertexIterator(Vertex(vertices_size()), this);
     }
 
     /// returns vertex container for C++11 range-based for-loops
-    Vertex_container vertices() const
+    VertexContainer vertices() const
     {
-        return Vertex_container(vertices_begin(), vertices_end());
+        return VertexContainer(vertices_begin(), vertices_end());
     }
 
     //@}
@@ -485,11 +485,11 @@ private: //--------------------------------------------------- helper functions
 
 private: //------------------------------------------------------- private data
 
-    Property_container		vprops_;
-	Property_container		mprops_;
+    PropertyContainer		vprops_;
+	PropertyContainer		mprops_;
 
-    Vertex_property<bool>	vdeleted_;
-    Vertex_property<vec3>  vpoint_;
+    VertexProperty<bool>	vdeleted_;
+    VertexProperty<vec3>  vpoint_;
 
     unsigned int	deleted_vertices_;
     bool			garbage_;
@@ -507,5 +507,5 @@ inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v)
 //=============================================================================
 } // namespace easy3d
 //=============================================================================
-#endif // POINT_CLOUD_H
+#endif // EASY3D_POINT_CLOUD_H
 //=============================================================================

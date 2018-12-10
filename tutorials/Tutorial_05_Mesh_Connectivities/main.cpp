@@ -99,8 +99,8 @@ int main(int /*argc*/, char** /*argv*/) {
 	for (auto f : mesh->faces()) {
 		std::cout << "half-edges around face " << f << ": ";
 		// loop over all half-edges around the face
-		SurfaceMesh::Halfedge_around_face_circulator h_fit = mesh->halfedges(f);
-		SurfaceMesh::Halfedge_around_face_circulator h_end = h_fit;
+		SurfaceMesh::HalfedgeAroundFaceCirculator h_fit = mesh->halfedges(f);
+		SurfaceMesh::HalfedgeAroundFaceCirculator h_end = h_fit;
 		do {
 			SurfaceMesh::Halfedge h = *h_fit;
 			std::cout << h << " ";

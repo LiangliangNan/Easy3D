@@ -43,6 +43,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 #include <algorithm>
 #include <typeinfo>
 #include <cassert>
@@ -57,15 +58,15 @@ namespace easy3d {
 //== CLASS DEFINITION =========================================================
 
 
-class Base_property_array
+class BasePropertyArray
 {
 public:
 
     /// Default constructor
-    Base_property_array(const std::string& name) : name_(name) {}
+    BasePropertyArray(const std::string& name) : name_(name) {}
 
     /// Destructor.
-    virtual ~Base_property_array() {}
+    virtual ~BasePropertyArray() {}
 
     /// Reserve memory for n elements.
     virtual void reserve(size_t n) = 0;
@@ -83,7 +84,7 @@ public:
     virtual void swap(size_t i0, size_t i1) = 0;
 
     /// Return a deep copy of self.
-    virtual Base_property_array* clone () const = 0;
+    virtual BasePropertyArray* clone () const = 0;
 
     /// Return the type_info of the property
     virtual const std::type_info& type() = 0;
@@ -103,7 +104,7 @@ protected:
 
 
 template <class T>
-class Property_array : public Base_property_array
+class PropertyArray : public BasePropertyArray
 {
 public:
 
@@ -112,10 +113,10 @@ public:
     typedef typename vector_type::reference         reference;
     typedef typename vector_type::const_reference   const_reference;
 
-    Property_array(const std::string& name, T t=T()) : Base_property_array(name), value_(t) {}
+    PropertyArray(const std::string& name, T t=T()) : BasePropertyArray(name), value_(t) {}
 
 
-public: // virtual interface of Base_property_array
+public: // virtual interface of BasePropertyArray
 
     virtual void reserve(size_t n)
     {
@@ -144,9 +145,9 @@ public: // virtual interface of Base_property_array
         data_[i1]=d;
     }
 
-    virtual Base_property_array* clone() const
+    virtual BasePropertyArray* clone() const
     {
-        Property_array<T>* p = new Property_array<T>(name_, value_);
+        PropertyArray<T>* p = new PropertyArray<T>(name_, value_);
         p->data_ = data_;
         return p;
     }
@@ -194,7 +195,7 @@ private:
 // specialization for bool properties
 template <>
 inline const bool*
-Property_array<bool>::data() const
+PropertyArray<bool>::data() const
 {
     assert(false);
     return NULL;
@@ -210,14 +211,14 @@ class Property
 {
 public:
 
-    typedef typename Property_array<T>::reference reference;
-    typedef typename Property_array<T>::const_reference const_reference;
+    typedef typename PropertyArray<T>::reference reference;
+    typedef typename PropertyArray<T>::const_reference const_reference;
 
-    friend class Property_container;
+    friend class PropertyContainer;
 
 public:
 
-    Property(Property_array<T>* p=NULL) : parray_(p) {}
+    Property(PropertyArray<T>* p=NULL) : parray_(p) {}
 
     void reset()
     {
@@ -259,20 +260,20 @@ public:
 		return parray_->vector();
 	}
 
-    Property_array<T>& array()
+    PropertyArray<T>& array()
     {
         assert(parray_ != NULL);
         return *parray_;
     }
 
-    const Property_array<T>& array() const
+    const PropertyArray<T>& array() const
     {
         assert(parray_ != NULL);
         return *parray_;
     }
 
 private:
-    Property_array<T>* parray_;
+    PropertyArray<T>* parray_;
 };
 
 
@@ -280,21 +281,21 @@ private:
 //== CLASS DEFINITION =========================================================
 
 
-class Property_container
+class PropertyContainer
 {
 public:
 
     // default constructor
-    Property_container() : size_(0) {}
+    PropertyContainer() : size_(0) {}
 
     // destructor (deletes all property arrays)
-    virtual ~Property_container() { clear(); }
+    virtual ~PropertyContainer() { clear(); }
 
     // copy constructor: performs deep copy of property arrays
-    Property_container(const Property_container& _rhs) { operator=(_rhs); }
+    PropertyContainer(const PropertyContainer& _rhs) { operator=(_rhs); }
 
     // assignment: performs deep copy of property arrays
-    Property_container& operator=(const Property_container& _rhs)
+    PropertyContainer& operator=(const PropertyContainer& _rhs)
     {
         if (this != &_rhs)
         {
@@ -331,14 +332,14 @@ public:
         {
             if (parrays_[i]->name() == name)
             {
-                std::cerr << "[Property_container] A property with name \""
+                std::cerr << "[PropertyContainer] A property with name \""
                           << name << "\" already exists. Returning invalid property.\n";
                 return Property<T>();
             }
         }
 
         // otherwise add the property
-        Property_array<T>* p = new Property_array<T>(name, t);
+        PropertyArray<T>* p = new PropertyArray<T>(name, t);
         p->resize(size_);
         parrays_.push_back(p);
         return Property<T>(p);
@@ -350,7 +351,7 @@ public:
     {
         for (size_t i=0; i<parrays_.size(); ++i)
             if (parrays_[i]->name() == name)
-                return Property<T>(dynamic_cast<Property_array<T>*>(parrays_[i]));
+                return Property<T>(dynamic_cast<PropertyArray<T>*>(parrays_[i]));
         return Property<T>();
     }
 
@@ -377,7 +378,7 @@ public:
     // delete a property
     template <class T> void remove(Property<T>& h)
     {
-        std::vector<Base_property_array*>::iterator it=parrays_.begin(), end=parrays_.end();
+        std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
         for (; it!=end; ++it)
         {
             if (*it == h.parray_)
@@ -440,7 +441,7 @@ public:
 
 
 private:
-    std::vector<Base_property_array*>  parrays_;
+    std::vector<BasePropertyArray*>  parrays_;
     size_t  size_;
 };
 

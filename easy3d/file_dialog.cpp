@@ -33,14 +33,12 @@
 
 #include <easy3d/file_dialog.h>
 
+
 #if defined(_WIN32)
-#  include <Windows.h>
+#include <Windows.h>
 #else
-// #  include <locale.h>
-// #  include <signal.h>
-// #  include <sys/dir.h>
-#  include<stdexcept>
-#  include<algorithm>
+#include <algorithm>
+#include <stdexcept>
 #endif
 
 

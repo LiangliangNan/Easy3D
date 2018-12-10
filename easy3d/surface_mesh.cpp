@@ -57,9 +57,9 @@ SurfaceMesh()
 {
     // allocate standard properties
     // same list is used in operator=() and assign()
-    vconn_    = add_vertex_property<Vertex_connectivity>("v:connectivity");
-    hconn_    = add_halfedge_property<Halfedge_connectivity>("h:connectivity");
-    fconn_    = add_face_property<Face_connectivity>("f:connectivity");
+    vconn_    = add_vertex_property<VertexConnectivity>("v:connectivity");
+    hconn_    = add_halfedge_property<HalfedgeConnectivity>("h:connectivity");
+    fconn_    = add_face_property<FaceConnectivity>("f:connectivity");
     vpoint_   = add_vertex_property<vec3>("v:point");
     vdeleted_ = add_vertex_property<bool>("v:deleted", false);
     edeleted_ = add_edge_property<bool>("e:deleted", false);
@@ -98,9 +98,9 @@ operator=(const SurfaceMesh& rhs)
         mprops_ = rhs.mprops_;
 
         // property handles contain pointers, have to be reassigned
-        vconn_    = vertex_property<Vertex_connectivity>("v:connectivity");
-        hconn_    = halfedge_property<Halfedge_connectivity>("h:connectivity");
-        fconn_    = face_property<Face_connectivity>("f:connectivity");
+        vconn_    = vertex_property<VertexConnectivity>("v:connectivity");
+        hconn_    = halfedge_property<HalfedgeConnectivity>("h:connectivity");
+        fconn_    = face_property<FaceConnectivity>("f:connectivity");
         vdeleted_ = vertex_property<bool>("v:deleted");
         edeleted_ = edge_property<bool>("e:deleted");
         fdeleted_ = face_property<bool>("f:deleted");
@@ -138,9 +138,9 @@ assign(const SurfaceMesh& rhs)
         mprops_.clear();
 
         // allocate standard properties
-        vconn_    = add_vertex_property<Vertex_connectivity>("v:connectivity");
-        hconn_    = add_halfedge_property<Halfedge_connectivity>("h:connectivity");
-        fconn_    = add_face_property<Face_connectivity>("f:connectivity");
+        vconn_    = add_vertex_property<VertexConnectivity>("v:connectivity");
+        hconn_    = add_halfedge_property<HalfedgeConnectivity>("h:connectivity");
+        fconn_    = add_face_property<FaceConnectivity>("f:connectivity");
         vpoint_   = add_vertex_property<vec3>("v:point");
         vdeleted_ = add_vertex_property<bool>("v:deleted", false);
         edeleted_ = add_edge_property<bool>("e:deleted", false);
@@ -602,8 +602,8 @@ valence(Vertex v) const
 {
     unsigned int count(0);
 
-    Vertex_around_vertex_circulator vvit = vertices(v);
-    Vertex_around_vertex_circulator vvend = vvit;
+    VertexAroundVertexCirculator vvit = vertices(v);
+    VertexAroundVertexCirculator vvend = vvit;
     if (vvit) do
     {
         ++count;
@@ -622,8 +622,8 @@ valence(Face f) const
 {
     unsigned int count(0);
 
-    Vertex_around_face_circulator fvit = vertices(f);
-    Vertex_around_face_circulator fvend = fvit;
+    VertexAroundFaceCirculator fvit = vertices(f);
+    VertexAroundFaceCirculator fvend = fvit;
     do {
         ++count;
     } while (++fvit != fvend);
@@ -639,7 +639,7 @@ bool
 SurfaceMesh::
 is_triangle_mesh() const
 {
-    Face_iterator fit=faces_begin(), fend=faces_end();
+    FaceIterator fit=faces_begin(), fend=faces_end();
     for (; fit!=fend; ++fit)
         if (valence(*fit) != 3)
             return false;
@@ -655,7 +655,7 @@ bool
 SurfaceMesh::
 is_quad_mesh() const
 {
-    Face_iterator fit=faces_begin(), fend=faces_end();
+    FaceIterator fit=faces_begin(), fend=faces_end();
     for (; fit!=fend; ++fit)
         if (valence(*fit) != 4)
             return false;
@@ -675,7 +675,7 @@ triangulate()
      because they are now implemented index-based instead of
      pointer-based.
      */
-    Face_iterator fit=faces_begin(), fend=faces_end();
+    FaceIterator fit=faces_begin(), fend=faces_end();
     for (; fit!=fend; ++fit)
         triangulate(*fit);
 }
@@ -741,7 +741,7 @@ update_face_normals()
     if (!fnormal_)
         fnormal_ = face_property<vec3>("f:normal");
 
-    Face_iterator fit, fend=faces_end();
+    FaceIterator fit, fend=faces_end();
 
     for (fit=faces_begin(); fit!=fend; ++fit)
         fnormal_[*fit] = compute_face_normal(*fit);
@@ -799,7 +799,7 @@ update_vertex_normals()
     if (!vnormal_)
         vnormal_ = vertex_property<vec3>("v:normal");
 
-    Vertex_iterator vit, vend=vertices_end();
+    VertexIterator vit, vend=vertices_end();
 
     for (vit=vertices_begin(); vit!=vend; ++vit)
         vnormal_[*vit] = compute_vertex_normal(*vit);
@@ -1265,7 +1265,7 @@ is_collapse_ok(Halfedge v0v1)
 
 
     // test intersection of the one-rings of v0 and v1
-    Vertex_around_vertex_circulator vv_it, vv_end;
+    VertexAroundVertexCirculator vv_it, vv_end;
     vv_it = vv_end = vertices(v0);
     do
     {
@@ -1328,7 +1328,7 @@ remove_edge(Halfedge h)
 
 
     // halfedge -> vertex
-    Halfedge_around_vertex_circulator vh_it, vh_end;
+    HalfedgeAroundVertexCirculator vh_it, vh_end;
     vh_it = vh_end = halfedges(vo);
     do
     {
@@ -1428,7 +1428,7 @@ delete_vertex(Vertex v)
     std::vector<Face> incident_faces;
     incident_faces.reserve(6);
 
-    Face_around_vertex_circulator fc, fc_end;
+    FaceAroundVertexCirculator fc, fc_end;
     fc = fc_end = faces(v);
 
     if (fc)
@@ -1500,7 +1500,7 @@ delete_face(Face f)
     //   1) invalidate face handle.
     //   2) collect all boundary halfedges, set them deleted
     //   3) store vertex handles
-    Halfedge_around_face_circulator hc, hc_end;
+    HalfedgeAroundFaceCirculator hc, hc_end;
     hc = hc_end = halfedges(f);
 
     do
@@ -1608,9 +1608,9 @@ garbage_collection()
 
 
     // setup handle mapping
-    Vertex_property<Vertex>      vmap = add_vertex_property<Vertex>("v:garbage-collection");
-    Halfedge_property<Halfedge>  hmap = add_halfedge_property<Halfedge>("h:garbage-collection");
-    Face_property<Face>          fmap = add_face_property<Face>("f:garbage-collection");
+    VertexProperty<Vertex>      vmap = add_vertex_property<Vertex>("v:garbage-collection");
+    HalfedgeProperty<Halfedge>  hmap = add_halfedge_property<Halfedge>("h:garbage-collection");
+    FaceProperty<Face>          fmap = add_face_property<Face>("f:garbage-collection");
     for (i=0; i<nV; ++i)
         vmap[Vertex(i)] = Vertex(i);
     for (i=0; i<nH; ++i)

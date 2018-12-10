@@ -224,7 +224,7 @@ void PointCloud::garbage_collection()
 	int  nV(vertices_size());
 
     // setup handle mapping
-    Vertex_property<Vertex> vmap = add_vertex_property<Vertex>("v:garbage-collection");
+    VertexProperty<Vertex> vmap = add_vertex_property<Vertex>("v:garbage-collection");
     for (int i=0; i<nV; ++i)
         vmap[Vertex(i)] = Vertex(i);
 
