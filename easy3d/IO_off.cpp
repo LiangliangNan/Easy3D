@@ -40,7 +40,6 @@
 #include <easy3d/IO.h>
 
 #include <cstdio>
-
 #include <cstring>
 
 //== NAMESPACE ================================================================
