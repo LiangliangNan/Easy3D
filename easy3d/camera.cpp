@@ -290,7 +290,7 @@ namespace easy3d {
       along the Camera Z axis. Used by zNear() and zFar() to optimize the Z range.
     */
     float Camera::distanceToSceneCenter() const {
-        return fabs((frame()->coordinatesOf(sceneCenter())).z);
+        return std::fabs((frame()->coordinatesOf(sceneCenter())).z);
     }
 
     /*! Returns the \p halfWidth and \p halfHeight of the Camera orthographic
@@ -309,7 +309,7 @@ namespace easy3d {
      Overload this method to change this behavior if desired, as is done in the
      <a href="../examples/standardCamera.html">standardCamera example</a>. */
     void Camera::getOrthoWidthHeight(float &halfWidth, float &halfHeight) const {
-        const float dist = orthoCoef_ * fabs(cameraCoordinatesOf(pivotPoint()).z);
+        const float dist = orthoCoef_ * std::fabs(cameraCoordinatesOf(pivotPoint()).z);
         //#CONNECTION# fitScreenRegion
         halfWidth = dist * ((aspectRatio() < 1.0f) ? 1.0f : aspectRatio());
         halfHeight = dist * ((aspectRatio() < 1.0f) ? 1.0f / aspectRatio() : 1.0f);
@@ -524,7 +524,7 @@ namespace easy3d {
     /*! Changes the pivotPoint() to \p point (defined in the world coordinate
      * system). */
     void Camera::setPivotPoint(const vec3 &point) {
-        const float prevDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
+        const float prevDist = std::fabs(cameraCoordinatesOf(pivotPoint()).z);
 
         // If frame's RAP is set directly, projectionMatrixIsUpToDate_ should also be
         // set to false to ensure proper recomputation of the ORTHO projection matrix.
@@ -532,7 +532,7 @@ namespace easy3d {
 
         // orthoCoef_ is used to compensate for changes of the pivotPoint, so that the
         // image does not change when the pivotPoint is changed in ORTHOGRAPHIC mode.
-        const float newDist = fabs(cameraCoordinatesOf(pivotPoint()).z);
+        const float newDist = std::fabs(cameraCoordinatesOf(pivotPoint()).z);
         // Prevents division by zero when rap is set to camera position
         if ((prevDist > 1E-9) && (newDist > 1E-9))
             orthoCoef_ *= prevDist / newDist;
@@ -555,7 +555,7 @@ namespace easy3d {
     float Camera::pixelGLRatio(const vec3 &position) const {
         switch (type()) {
         case Camera::PERSPECTIVE:
-            return 2.0f * fabs((frame()->coordinatesOf(position)).z) *
+            return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
                 tan(fieldOfView() / 2.0f) / screenHeight();
         case Camera::ORTHOGRAPHIC: {
             float w, h;
@@ -662,8 +662,8 @@ namespace easy3d {
     /*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
       max) is entirely visible, using fitSphere(). */
     void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) {
-        float diameter = std::max(fabs(max[1] - min[1]), fabs(max[0] - min[0]));
-        diameter = std::max(fabs(max[2] - min[2]), diameter);
+        float diameter = std::max<float>(std::fabs(max[1] - min[1]), std::fabs(max[0] - min[0]));
+        diameter = std::max<float>(std::fabs(max[2] - min[2]), diameter);
         fitSphere(0.5f * (min + max), 0.5f * diameter);
     }
 
@@ -677,7 +677,7 @@ namespace easy3d {
       the 3D rectangle that is eventually fitted. */
     void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) {
         const vec3& vd = viewDirection();
-        const double distToPlane = distanceToSceneCenter();
+        const float distToPlane = distanceToSceneCenter();
         int cx = static_cast<int>((xmin + xmax) * 0.5);
         int cy = static_cast<int>((ymin + ymax) * 0.5);
 
@@ -691,21 +691,21 @@ namespace easy3d {
         convertClickToLine(cx, ymin, orig, dir);
         const vec3& pointY = orig + distToPlane / dot(dir, vd) * dir;
 
-        double distance = 0.0;
+        float distance = 0.0f;
         switch (type()) {
         case Camera::PERSPECTIVE: {
-            const double distX =
+            const float distX =
                 (pointX - newCenter).norm() / sin(horizontalFieldOfView() / 2.0);
-            const double distY = (pointY - newCenter).norm() / sin(fieldOfView() / 2.0);
+            const float distY = (pointY - newCenter).norm() / sin(fieldOfView() / 2.0);
             distance = std::max(distX, distY);
             break;
         }
         case Camera::ORTHOGRAPHIC: {
-            const double dist = dot((newCenter - pivotPoint()), vd);
+            const float dist = dot((newCenter - pivotPoint()), vd);
             //#CONNECTION# getOrthoWidthHeight
-            const double distX = (pointX - newCenter).norm() / orthoCoef_ /
+            const float distX = (pointX - newCenter).norm() / orthoCoef_ /
                 ((aspectRatio() < 1.0) ? 1.0 : aspectRatio());
-            const double distY = (pointY - newCenter).norm() / orthoCoef_ /
+            const float distY = (pointY - newCenter).norm() / orthoCoef_ /
                 ((aspectRatio() < 1.0) ? 1.0 / aspectRatio() : 1.0);
             distance = dist + std::max(distX, distY);
             break;
