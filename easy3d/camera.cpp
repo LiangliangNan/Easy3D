@@ -98,7 +98,7 @@ namespace easy3d {
 
     /*! Copy constructor. Performs a deep copy using operator=(). */
     Camera::Camera(const Camera &camera)
-        : frame_(NULL)
+        : frame_(nullptr)
     {
         // Requires the interpolationKfi_
         setFrame(new ManipulatedCameraFrame(*camera.frame()));
@@ -135,7 +135,7 @@ namespace easy3d {
         projectionMatrixIsUpToDate_ = false;
 
         // frame_ and interpolationKfi_ pointers are not shared.
-        frame_->setReferenceFrame(NULL);
+        frame_->setReferenceFrame(nullptr);
         frame_->setPosition(camera.position());
         frame_->setOrientation(camera.orientation());
 
@@ -597,10 +597,10 @@ namespace easy3d {
      sceneCenter(). It optimizes the shadow map resolution, although it may miss
      some parts of the scene. */
     void Camera::setFOVToFitScene() {
-        if (distanceToSceneCenter() > sqrt(2.0) * sceneRadius())
+        if (distanceToSceneCenter() > sqrt(2.0f) * sceneRadius())
             setFieldOfView(2.0f * asin(sceneRadius() / distanceToSceneCenter()));
         else
-            setFieldOfView(static_cast<float>(M_PI / 2.0f));
+            setFieldOfView(static_cast<float>(M_PI) / 2.0f);
     }
 
 
@@ -662,8 +662,8 @@ namespace easy3d {
     /*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
       max) is entirely visible, using fitSphere(). */
     void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) {
-        float diameter = std::max<float>(std::fabs(max[1] - min[1]), std::fabs(max[0] - min[0]));
-        diameter = std::max<float>(std::fabs(max[2] - min[2]), diameter);
+        float diameter = std::max(std::fabs(max[1] - min[1]), std::fabs(max[0] - min[0]));
+        diameter = std::max(std::fabs(max[2] - min[2]), diameter);
         fitSphere(0.5f * (min + max), 0.5f * diameter);
     }
 
@@ -695,8 +695,8 @@ namespace easy3d {
         switch (type()) {
         case Camera::PERSPECTIVE: {
             const float distX =
-                (pointX - newCenter).norm() / sin(horizontalFieldOfView() / 2.0);
-            const float distY = (pointY - newCenter).norm() / sin(fieldOfView() / 2.0);
+                (pointX - newCenter).norm() / sin(horizontalFieldOfView() / 2.0f);
+            const float distY = (pointY - newCenter).norm() / sin(fieldOfView() / 2.0f);
             distance = std::max(distX, distY);
             break;
         }
@@ -704,9 +704,9 @@ namespace easy3d {
             const float dist = dot((newCenter - pivotPoint()), vd);
             //#CONNECTION# getOrthoWidthHeight
             const float distX = (pointX - newCenter).norm() / orthoCoef_ /
-                ((aspectRatio() < 1.0) ? 1.0 : aspectRatio());
+                ((aspectRatio() < 1.0f) ? 1.0f : aspectRatio());
             const float distY = (pointY - newCenter).norm() / orthoCoef_ /
-                ((aspectRatio() < 1.0) ? 1.0 / aspectRatio() : 1.0);
+                ((aspectRatio() < 1.0f) ? 1.0f / aspectRatio() : 1.0f);
             distance = dist + std::max(distX, distY);
             break;
         }
