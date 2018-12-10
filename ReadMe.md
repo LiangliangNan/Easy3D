@@ -14,7 +14,7 @@
 
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example first loads a point cloud from a file, creates a drawable of the points, and uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example first loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
@@ -41,7 +41,7 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 	viewer.run();
 ```
 
-Bellow is anothr example showing how to render a surface model (result is in Figure 2).
+Bellow is another example showing how to render a surface model (the result is in Figure 2).
 ```c++
 	SurfaceMesh* mesh = ... // a mesh created by your algorithm or loaded from a file
 	
@@ -68,6 +68,15 @@ Figure 1                                   |  Figure 2            		        |  F
 
 </center>
   
+
+### Build
+
+Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
+and then use your favorite IDE to work with Easy3D.
+
+In case you use *Qt Creator*, simply open the CMakeLists.txt file. Then, all files 
+will be well organized as projects.
+
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
 GNU General Public License as published by the Free Software Foundation; either version 3
