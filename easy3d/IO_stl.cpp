@@ -39,6 +39,7 @@
 #include <easy3d/IO.h>
 
 #include <cstdio>
+#include <cstring>
 #include <cfloat>
 #include <map>
 #include <fstream>

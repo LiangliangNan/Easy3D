@@ -165,7 +165,7 @@ QGLViewer::setWheelBinding() to customize the binding. */
 				translate(delta * direction);
 		}
 		else {
-			const float coef = std::max(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
+			const float coef = std::max<float>(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
 			vec3 trans(0.0f, 0.0f, -coef * delta);
 			translate(inverseTransformOf(trans));
 		}
