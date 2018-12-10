@@ -67,14 +67,16 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "Easy3D")
 
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glfw_INCLUDE_DIR})
 
 
-target_link_libraries(${PROJECT_NAME} INTERFACE glew glfw)
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
+
+target_link_libraries(${PROJECT_NAME} PRIVATE glew glfw)

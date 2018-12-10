@@ -19,7 +19,7 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Build examples and third-parties
-option(EASY3D_BUILD_EXAMPLES    "Build Easy3D examples"     ON)
+option(EASY3D_BUILD_TUTORIALS    "Build Easy3D Tutorials"     ON)
 
 ################################################################################
 
@@ -42,6 +42,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 add_subdirectory(3rd_party)
 add_subdirectory(easy3d)
 
-if(EASY3D_BUILD_EXAMPLES)
+if(EASY3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif()

@@ -10,6 +10,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "3rd_party")
 
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
+
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
