@@ -14,7 +14,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 find_package(OpenGL REQUIRED)
-#target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} glew glfw easy3d)
-add_library(combinedLib INTERFACE)
-target_link_libraries(combinedLib INTERFACE glew glfw easy3d)
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} combinedLib)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} glew glfw easy3d)
