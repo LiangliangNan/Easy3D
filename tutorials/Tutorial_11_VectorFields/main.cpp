@@ -30,7 +30,7 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-int main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
     Viewer viewer("Tutorial_11_VectorFields");
@@ -95,5 +95,8 @@ int main() {
 	viewer.add_model(cloud);
 
 	// Run the viewer
-	viewer.run();
+    viewer.run();
+
+    return EXIT_SUCCESS;
 }
+

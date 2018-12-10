@@ -78,7 +78,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 }
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
     Viewer viewer("Tutorial_10_ScalarFields");
@@ -86,7 +86,7 @@ void main() {
 	// Load a mesh model and create a drawable for the faces. 
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	if (!mesh)
-		return;
+        return EXIT_FAILURE;
 
 	// In the previous tutorial, we render the model using a uniform color.
 	// In this tutorial, let's define a scalar field on the mesh vertices: elevation. 
@@ -131,4 +131,7 @@ void main() {
 
 	// Run the viewer
 	viewer.run();
+
+    return EXIT_SUCCESS;
 }
+

@@ -28,7 +28,7 @@ using namespace easy3d;
 //		- save a surface mesh into a file.
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;
 
@@ -38,7 +38,7 @@ void main() {
 	if (!success) {
 		std::cerr << "file does not exist or invalid file format" << std::endl;
 		delete mesh;
-		return;
+        return EXIT_FAILURE;
 	}
 	std::cout << "mesh loaded. " << std::endl;
 	std::cout << "\tvertices: " << mesh->n_vertices() << std::endl;
@@ -59,4 +59,7 @@ void main() {
 
 	// delete the mesh (i.e., release memory)
 	delete mesh;
+
+    return EXIT_SUCCESS;
 }
+

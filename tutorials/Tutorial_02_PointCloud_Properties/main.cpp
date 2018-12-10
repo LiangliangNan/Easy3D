@@ -35,7 +35,7 @@ vec3 random_color() {
 	return vec3(r, g, b);
 }
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Initialize random number generator.
 	srand(0);
 
@@ -74,4 +74,7 @@ void main() {
 
 	// delete the point cloud (i.e., release memory)
 	delete cloud;
+
+    return EXIT_SUCCESS;
 }
+

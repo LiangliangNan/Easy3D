@@ -27,7 +27,7 @@ using namespace easy3d;
 //		- create a point cloud from a set of points
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create a point cloud
 	PointCloud* cloud = new PointCloud;
 
@@ -40,4 +40,6 @@ void main() {
 
 	// Delete the point cloud (i.e., release memory)
 	delete cloud;
+
+    return EXIT_SUCCESS;
 }

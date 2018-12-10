@@ -32,7 +32,7 @@ using namespace easy3d;
 //      - create a drawable for rendering mesh surfaces;
 //		- use the viewer to visualize the surface.
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
     Viewer viewer("Tutorial_08_Viewer");
@@ -70,4 +70,7 @@ void main() {
 
 	// Run the viewer
 	viewer.run();
+
+    return EXIT_SUCCESS;
 }
+

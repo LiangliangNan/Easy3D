@@ -28,7 +28,7 @@ using namespace easy3d;
 //		- construct a mesh from its vertices and known connectivities
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;
 
@@ -50,4 +50,7 @@ void main() {
 
 	// Delete the mesh (i.e., release memory)
 	delete mesh;
+
+    return EXIT_SUCCESS;
 }
+

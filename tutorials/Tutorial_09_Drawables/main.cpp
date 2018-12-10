@@ -30,7 +30,7 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
 	Viewer viewer("Example_09_Drawables");
@@ -44,7 +44,7 @@ void main() {
 	if (!success) {
 		std::cerr << "file does not exist or invalid file format" << std::endl;
 		delete mesh;
-		return;
+        return EXIT_FAILURE;
 	}
 
 	// A drawable can represent either a set of points, or lines, or faces. 
@@ -128,4 +128,7 @@ void main() {
 
 	// Run the viewer
 	viewer.run();
+
+    return EXIT_SUCCESS;
 }
+

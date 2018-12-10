@@ -52,7 +52,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 }
 
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	
 	std::cout << "-------------------------------------------------------\n";
@@ -143,4 +143,7 @@ void main() {
 
 	// Delete the mesh (i.e., release memory)
 	delete mesh;
+
+    return EXIT_SUCCESS;
 }
+

@@ -48,7 +48,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 	return mesh;
 }
 
-void main() {
+int main(int /*argc*/, char** /*argv*/) {
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
 
 	// We add a per-face property "f:normal" storing the normal of each face
@@ -63,4 +63,7 @@ void main() {
 	}
 
 	delete mesh;
+
+    return EXIT_SUCCESS;
 }
+
