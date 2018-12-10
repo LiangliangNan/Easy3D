@@ -47,11 +47,11 @@ int main(int /*argc*/, char** /*argv*/) {
         std::ofstream output("../../../Easy3D/data/building_with_normals-copy.txt");
 		if (output.is_open()) { // if the file has been successfully created
 			// The point coordinates.
-			PointCloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
+			PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 			// The point normals.
-			PointCloud::Vertex_property<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
+			PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
 			// The point colors.
-			PointCloud::Vertex_property<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
+			PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
 			std::cout << "saving the point cloud...";
 
 			int prev_percent = -1;

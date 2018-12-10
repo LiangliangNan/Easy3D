@@ -214,7 +214,7 @@ public:
     typedef typename PropertyArray<T>::reference reference;
     typedef typename PropertyArray<T>::const_reference const_reference;
 
-    friend class Property_container;
+    friend class PropertyContainer;
 
 public:
 
@@ -281,21 +281,21 @@ private:
 //== CLASS DEFINITION =========================================================
 
 
-class Property_container
+class PropertyContainer
 {
 public:
 
     // default constructor
-    Property_container() : size_(0) {}
+    PropertyContainer() : size_(0) {}
 
     // destructor (deletes all property arrays)
-    virtual ~Property_container() { clear(); }
+    virtual ~PropertyContainer() { clear(); }
 
     // copy constructor: performs deep copy of property arrays
-    Property_container(const Property_container& _rhs) { operator=(_rhs); }
+    PropertyContainer(const PropertyContainer& _rhs) { operator=(_rhs); }
 
     // assignment: performs deep copy of property arrays
-    Property_container& operator=(const Property_container& _rhs)
+    PropertyContainer& operator=(const PropertyContainer& _rhs)
     {
         if (this != &_rhs)
         {
@@ -332,7 +332,7 @@ public:
         {
             if (parrays_[i]->name() == name)
             {
-                std::cerr << "[Property_container] A property with name \""
+                std::cerr << "[PropertyContainer] A property with name \""
                           << name << "\" already exists. Returning invalid property.\n";
                 return Property<T>();
             }

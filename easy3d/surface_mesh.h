@@ -64,12 +64,12 @@ public: //------------------------------------------------------ topology types
 
     /// Base class for all topology types (internally it is basically an index)
     /// \sa Vertex, Halfedge, Edge, Face
-    class Base_handle
+    class BaseHandle
     {
     public:
 
         /// constructor
-        explicit Base_handle(int _idx=-1) : idx_(_idx) {}
+        explicit BaseHandle(int _idx=-1) : idx_(_idx) {}
 
         /// Get the underlying index of this handle
         int idx() const { return idx_; }
@@ -81,25 +81,25 @@ public: //------------------------------------------------------ topology types
         bool is_valid() const { return idx_ != -1; }
 
         /// are two handles equal?
-        bool operator==(const Base_handle& _rhs) const {
+        bool operator==(const BaseHandle& _rhs) const {
             return idx_ == _rhs.idx_;
         }
 
         /// are two handles different?
-        bool operator!=(const Base_handle& _rhs) const {
+        bool operator!=(const BaseHandle& _rhs) const {
             return idx_ != _rhs.idx_;
         }
 
         /// compare operator useful for sorting handles
-        bool operator<(const Base_handle& _rhs) const {
+        bool operator<(const BaseHandle& _rhs) const {
             return idx_ < _rhs.idx_;
         }
 
     private:
-        friend class Vertex_iterator;
-        friend class Halfedge_iterator;
-        friend class Edge_iterator;
-        friend class Face_iterator;
+        friend class VertexIterator;
+        friend class HalfedgeIterator;
+        friend class EdgeIterator;
+        friend class FaceIterator;
         friend class SurfaceMesh;
         int idx_;
     };
@@ -107,38 +107,38 @@ public: //------------------------------------------------------ topology types
 
     /// this type represents a vertex (internally it is basically an index)
     ///  \sa Halfedge, Edge, Face
-    struct Vertex : public Base_handle
+    struct Vertex : public BaseHandle
     {
         /// default constructor (with invalid index)
-        explicit Vertex(int _idx=-1) : Base_handle(_idx) {}
+        explicit Vertex(int _idx=-1) : BaseHandle(_idx) {}
         std::ostream& operator<<(std::ostream& os) const { return os << 'v' << idx(); }
     };
 
 
     /// this type represents a halfedge (internally it is basically an index)
     /// \sa Vertex, Edge, Face
-    struct Halfedge : public Base_handle
+    struct Halfedge : public BaseHandle
     {
         /// default constructor (with invalid index)
-        explicit Halfedge(int _idx=-1) : Base_handle(_idx) {}
+        explicit Halfedge(int _idx=-1) : BaseHandle(_idx) {}
     };
 
 
     /// this type represents an edge (internally it is basically an index)
     /// \sa Vertex, Halfedge, Face
-    struct Edge : public Base_handle
+    struct Edge : public BaseHandle
     {
         /// default constructor (with invalid index)
-        explicit Edge(int _idx=-1) : Base_handle(_idx) {}
+        explicit Edge(int _idx=-1) : BaseHandle(_idx) {}
     };
 
 
     /// this type represents a face (internally it is basically an index)
     /// \sa Vertex, Halfedge, Edge
-    struct Face : public Base_handle
+    struct Face : public BaseHandle
     {
         /// default constructor (with invalid index)
-        explicit Face(int _idx=-1) : Base_handle(_idx) {}
+        explicit Face(int _idx=-1) : BaseHandle(_idx) {}
     };
 
 
@@ -147,8 +147,8 @@ public: //------------------------------------------------------ topology types
 public: //-------------------------------------------------- connectivity types
 
     /// This type stores the vertex connectivity
-    /// \sa Halfedge_connectivity, Face_connectivity
-    struct Vertex_connectivity
+    /// \sa HalfedgeConnectivity, FaceConnectivity
+    struct VertexConnectivity
     {
         /// an outgoing halfedge per vertex (it will be a boundary halfedge for boundary vertices)
         Halfedge  halfedge_;
@@ -156,8 +156,8 @@ public: //-------------------------------------------------- connectivity types
 
 
     /// This type stores the halfedge connectivity
-    /// \sa Vertex_connectivity, Face_connectivity
-    struct Halfedge_connectivity
+    /// \sa VertexConnectivity, FaceConnectivity
+    struct HalfedgeConnectivity
     {
         /// face incident to halfedge
         Face      face_;
@@ -171,8 +171,8 @@ public: //-------------------------------------------------- connectivity types
 
 
     /// This type stores the face connectivity
-    /// \sa Vertex_connectivity, Halfedge_connectivity
-    struct Face_connectivity
+    /// \sa VertexConnectivity, HalfedgeConnectivity
+    struct FaceConnectivity
     {
         /// a halfedge that is part of the face
         Halfedge  halfedge_;
@@ -184,14 +184,14 @@ public: //-------------------------------------------------- connectivity types
 public: //------------------------------------------------------ property types
 
     /// Vertex property of type T
-    /// \sa Halfedge_property, Edge_property, Face_property
-    template <class T> class Vertex_property : public Property<T>
+    /// \sa HalfedgeProperty, EdgeProperty, FaceProperty
+    template <class T> class VertexProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Vertex_property() {}
-        explicit Vertex_property(Property<T> p) : Property<T>(p) {}
+        explicit VertexProperty() {}
+        explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for vertex \c v
         typename Property<T>::reference operator[](Vertex v)
@@ -208,14 +208,14 @@ public: //------------------------------------------------------ property types
 
 
     /// Halfedge property of type T
-    /// \sa Vertex_property, Edge_property, Face_property
-    template <class T> class Halfedge_property : public Property<T>
+    /// \sa VertexProperty, EdgeProperty, FaceProperty
+    template <class T> class HalfedgeProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Halfedge_property() {}
-        explicit Halfedge_property(Property<T> p) : Property<T>(p) {}
+        explicit HalfedgeProperty() {}
+        explicit HalfedgeProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for halfedge \c h
         typename Property<T>::reference operator[](Halfedge h)
@@ -232,14 +232,14 @@ public: //------------------------------------------------------ property types
 
 
     /// Edge property of type T
-    /// \sa Vertex_property, Halfedge_property, Face_property
-    template <class T> class Edge_property : public Property<T>
+    /// \sa VertexProperty, HalfedgeProperty, FaceProperty
+    template <class T> class EdgeProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Edge_property() {}
-        explicit Edge_property(Property<T> p) : Property<T>(p) {}
+        explicit EdgeProperty() {}
+        explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for edge \c e
         typename Property<T>::reference operator[](Edge e)
@@ -256,14 +256,14 @@ public: //------------------------------------------------------ property types
 
 
     /// Face property of type T
-    /// \sa Vertex_property, Halfedge_property, Edge_property
-    template <class T> class Face_property : public Property<T>
+    /// \sa VertexProperty, HalfedgeProperty, EdgeProperty
+    template <class T> class FaceProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Face_property() {}
-        explicit Face_property(Property<T> p) : Property<T>(p) {}
+        explicit FaceProperty() {}
+        explicit FaceProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for face \c f
         typename Property<T>::reference operator[](Face f)
@@ -280,14 +280,14 @@ public: //------------------------------------------------------ property types
 
 
     /// Mesh property of type T
-    /// \sa Vertex_property, Halfedge_property, Edge_property
-    template <class T> class Model_property : public Property<T>
+    /// \sa VertexProperty, HalfedgeProperty, EdgeProperty
+    template <class T> class ModelProperty : public Property<T>
     {
     public:
 
         /// default constructor
-        explicit Model_property() {}
-        explicit Model_property(Property<T> p) : Property<T>(p) {}
+        explicit ModelProperty() {}
+        explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
         /// access the data stored for the mesh
         typename Property<T>::reference operator[](size_t idx)
@@ -308,13 +308,13 @@ public: //------------------------------------------------------ iterator types
 
     /// this class iterates linearly over all vertices
     /// \sa vertices_begin(), vertices_end()
-    /// \sa Halfedge_iterator, Edge_iterator, Face_iterator
-    class Vertex_iterator
+    /// \sa HalfedgeIterator, EdgeIterator, FaceIterator
+    class VertexIterator
     {
     public:
 
         /// Default constructor
-        Vertex_iterator(Vertex v=Vertex(), const SurfaceMesh* m=NULL) : hnd_(v), mesh_(m)
+        VertexIterator(Vertex v=Vertex(), const SurfaceMesh* m=NULL) : hnd_(v), mesh_(m)
         {
             if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -323,19 +323,19 @@ public: //------------------------------------------------------ iterator types
         Vertex operator*()  const { return  hnd_; }
 
         /// are two iterators equal?
-        bool operator==(const Vertex_iterator& rhs) const
+        bool operator==(const VertexIterator& rhs) const
         {
             return (hnd_==rhs.hnd_);
         }
 
         /// are two iterators different?
-        bool operator!=(const Vertex_iterator& rhs) const
+        bool operator!=(const VertexIterator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment iterator
-        Vertex_iterator& operator++()
+        VertexIterator& operator++()
         {
             ++hnd_.idx_;
             assert(mesh_);
@@ -344,7 +344,7 @@ public: //------------------------------------------------------ iterator types
         }
 
         /// pre-decrement iterator
-        Vertex_iterator& operator--()
+        VertexIterator& operator--()
         {
             --hnd_.idx_;
             assert(mesh_);
@@ -360,13 +360,13 @@ public: //------------------------------------------------------ iterator types
 
     /// this class iterates linearly over all halfedges
     /// \sa halfedges_begin(), halfedges_end()
-    /// \sa Vertex_iterator, Edge_iterator, Face_iterator
-    class Halfedge_iterator
+    /// \sa VertexIterator, EdgeIterator, FaceIterator
+    class HalfedgeIterator
     {
     public:
 
         /// Default constructor
-        Halfedge_iterator(Halfedge h=Halfedge(), const SurfaceMesh* m=NULL) : hnd_(h), mesh_(m)
+        HalfedgeIterator(Halfedge h=Halfedge(), const SurfaceMesh* m=NULL) : hnd_(h), mesh_(m)
         {
             if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -375,19 +375,19 @@ public: //------------------------------------------------------ iterator types
         Halfedge operator*()  const { return  hnd_; }
 
         /// are two iterators equal?
-        bool operator==(const Halfedge_iterator& rhs) const
+        bool operator==(const HalfedgeIterator& rhs) const
         {
             return (hnd_==rhs.hnd_);
         }
 
         /// are two iterators different?
-        bool operator!=(const Halfedge_iterator& rhs) const
+        bool operator!=(const HalfedgeIterator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment iterator
-        Halfedge_iterator& operator++()
+        HalfedgeIterator& operator++()
         {
             ++hnd_.idx_;
             assert(mesh_);
@@ -396,7 +396,7 @@ public: //------------------------------------------------------ iterator types
         }
 
         /// pre-decrement iterator
-        Halfedge_iterator& operator--()
+        HalfedgeIterator& operator--()
         {
             --hnd_.idx_;
             assert(mesh_);
@@ -412,13 +412,13 @@ public: //------------------------------------------------------ iterator types
 
     /// this class iterates linearly over all edges
     /// \sa edges_begin(), edges_end()
-    /// \sa Vertex_iterator, Halfedge_iterator, Face_iterator
-    class Edge_iterator
+    /// \sa VertexIterator, HalfedgeIterator, FaceIterator
+    class EdgeIterator
     {
     public:
 
         /// Default constructor
-        Edge_iterator(Edge e=Edge(), const SurfaceMesh* m=NULL) : hnd_(e), mesh_(m)
+        EdgeIterator(Edge e=Edge(), const SurfaceMesh* m=NULL) : hnd_(e), mesh_(m)
         {
             if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -427,19 +427,19 @@ public: //------------------------------------------------------ iterator types
         Edge operator*()  const { return  hnd_; }
 
         /// are two iterators equal?
-        bool operator==(const Edge_iterator& rhs) const
+        bool operator==(const EdgeIterator& rhs) const
         {
             return (hnd_==rhs.hnd_);
         }
 
         /// are two iterators different?
-        bool operator!=(const Edge_iterator& rhs) const
+        bool operator!=(const EdgeIterator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment iterator
-        Edge_iterator& operator++()
+        EdgeIterator& operator++()
         {
             ++hnd_.idx_;
             assert(mesh_);
@@ -448,7 +448,7 @@ public: //------------------------------------------------------ iterator types
         }
 
         /// pre-decrement iterator
-        Edge_iterator& operator--()
+        EdgeIterator& operator--()
         {
             --hnd_.idx_;
             assert(mesh_);
@@ -464,13 +464,13 @@ public: //------------------------------------------------------ iterator types
 
     /// this class iterates linearly over all faces
     /// \sa faces_begin(), faces_end()
-    /// \sa Vertex_iterator, Halfedge_iterator, Edge_iterator
-    class Face_iterator
+    /// \sa VertexIterator, HalfedgeIterator, EdgeIterator
+    class FaceIterator
     {
     public:
 
         /// Default constructor
-        Face_iterator(Face f=Face(), const SurfaceMesh* m=NULL) : hnd_(f), mesh_(m)
+        FaceIterator(Face f=Face(), const SurfaceMesh* m=NULL) : hnd_(f), mesh_(m)
         {
             if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -479,19 +479,19 @@ public: //------------------------------------------------------ iterator types
         Face operator*()  const { return  hnd_; }
 
         /// are two iterators equal?
-        bool operator==(const Face_iterator& rhs) const
+        bool operator==(const FaceIterator& rhs) const
         {
             return (hnd_==rhs.hnd_);
         }
 
         /// are two iterators different?
-        bool operator!=(const Face_iterator& rhs) const
+        bool operator!=(const FaceIterator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment iterator
-        Face_iterator& operator++()
+        FaceIterator& operator++()
         {
             ++hnd_.idx_;
             assert(mesh_);
@@ -500,7 +500,7 @@ public: //------------------------------------------------------ iterator types
         }
 
         /// pre-decrement iterator
-        Face_iterator& operator--()
+        FaceIterator& operator--()
         {
             --hnd_.idx_;
             assert(mesh_);
@@ -520,14 +520,14 @@ public: //-------------------------- containers for C++11 range-based for loops
     /// this helper class is a container for iterating through all
     /// vertices using C++11 range-based for-loops.
     /// \sa vertices()
-    class Vertex_container
+    class VertexContainer
     {
     public:
-        Vertex_container(Vertex_iterator _begin, Vertex_iterator _end) : begin_(_begin), end_(_end) {}
-        Vertex_iterator begin() const { return begin_; }
-        Vertex_iterator end()   const { return end_;   }
+        VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
+        VertexIterator begin() const { return begin_; }
+        VertexIterator end()   const { return end_;   }
     private:
-        Vertex_iterator begin_, end_;
+        VertexIterator begin_, end_;
     };
 
 
@@ -535,14 +535,14 @@ public: //-------------------------- containers for C++11 range-based for loops
     /// this helper class is a container for iterating through all
     /// halfedge using C++11 range-based for-loops.
     /// \sa halfedges()
-    class Halfedge_container
+    class HalfedgeContainer
     {
     public:
-        Halfedge_container(Halfedge_iterator _begin, Halfedge_iterator _end) : begin_(_begin), end_(_end) {}
-        Halfedge_iterator begin() const { return begin_; }
-        Halfedge_iterator end()   const { return end_;   }
+        HalfedgeContainer(HalfedgeIterator _begin, HalfedgeIterator _end) : begin_(_begin), end_(_end) {}
+        HalfedgeIterator begin() const { return begin_; }
+        HalfedgeIterator end()   const { return end_;   }
     private:
-        Halfedge_iterator begin_, end_;
+        HalfedgeIterator begin_, end_;
     };
 
 
@@ -550,14 +550,14 @@ public: //-------------------------- containers for C++11 range-based for loops
     /// this helper class is a container for iterating through all
     /// edges using C++11 range-based for-loops.
     /// \sa edges()
-    class Edge_container
+    class EdgeContainer
     {
     public:
-        Edge_container(Edge_iterator _begin, Edge_iterator _end) : begin_(_begin), end_(_end) {}
-        Edge_iterator begin() const { return begin_; }
-        Edge_iterator end()   const { return end_;   }
+        EdgeContainer(EdgeIterator _begin, EdgeIterator _end) : begin_(_begin), end_(_end) {}
+        EdgeIterator begin() const { return begin_; }
+        EdgeIterator end()   const { return end_;   }
     private:
-        Edge_iterator begin_, end_;
+        EdgeIterator begin_, end_;
     };
 
 
@@ -565,14 +565,14 @@ public: //-------------------------- containers for C++11 range-based for loops
     /// this helper class is a container for iterating through all
     /// faces using C++11 range-based for-loops.
     /// \sa faces()
-    class Face_container
+    class FaceContainer
     {
     public:
-        Face_container(Face_iterator _begin, Face_iterator _end) : begin_(_begin), end_(_end) {}
-        Face_iterator begin() const { return begin_; }
-        Face_iterator end()   const { return end_;   }
+        FaceContainer(FaceIterator _begin, FaceIterator _end) : begin_(_begin), end_(_end) {}
+        FaceIterator begin() const { return begin_; }
+        FaceIterator end()   const { return end_;   }
     private:
-        Face_iterator begin_, end_;
+        FaceIterator begin_, end_;
     };
 
 
@@ -583,33 +583,33 @@ public: //---------------------------------------------------- circulator types
 
     /// this class circulates through all one-ring neighbors of a vertex.
     /// it also acts as a container-concept for C++11 range-based for loops.
-    /// \sa Halfedge_around_vertex_circulator, Face_around_vertex_circulator, vertices(Vertex)
-    class Vertex_around_vertex_circulator
+    /// \sa HalfedgeAroundVertexCirculator, FaceAroundVertexCirculator, vertices(Vertex)
+    class VertexAroundVertexCirculator
     {
     public:
 
         /// default constructor
-        Vertex_around_vertex_circulator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
+        VertexAroundVertexCirculator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
         : mesh_(m), active_(true)
         {
             if (mesh_) halfedge_ = mesh_->halfedge(v);
         }
 
         /// are two circulators equal?
-        bool operator==(const Vertex_around_vertex_circulator& rhs) const
+        bool operator==(const VertexAroundVertexCirculator& rhs) const
         {
             assert(mesh_);
             return (active_ && (mesh_==rhs.mesh_) && (halfedge_==rhs.halfedge_));
         }
 
         /// are two circulators different?
-        bool operator!=(const Vertex_around_vertex_circulator& rhs) const
+        bool operator!=(const VertexAroundVertexCirculator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment (rotate couter-clockwise)
-        Vertex_around_vertex_circulator& operator++()
+        VertexAroundVertexCirculator& operator++()
         {
             assert(mesh_);
             halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
@@ -618,7 +618,7 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// pre-decrement (rotate clockwise)
-        Vertex_around_vertex_circulator& operator--()
+        VertexAroundVertexCirculator& operator--()
         {
             assert(mesh_);
             halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
@@ -639,9 +639,9 @@ public: //---------------------------------------------------- circulator types
         Halfedge halfedge() const { return halfedge_; }
 
         // helper for C++11 range-based for-loops
-        Vertex_around_vertex_circulator& begin() { active_=!halfedge_.is_valid(); return *this; }
+        VertexAroundVertexCirculator& begin() { active_=!halfedge_.is_valid(); return *this; }
         // helper for C++11 range-based for-loops
-        Vertex_around_vertex_circulator& end()   { active_=true;  return *this; }
+        VertexAroundVertexCirculator& end()   { active_=true;  return *this; }
 
     private:
         const SurfaceMesh*  mesh_;
@@ -653,33 +653,33 @@ public: //---------------------------------------------------- circulator types
 
     /// this class circulates through all outgoing halfedges of a vertex.
     /// it also acts as a container-concept for C++11 range-based for loops.
-    /// \sa Vertex_around_vertex_circulator, Face_around_vertex_circulator, halfedges(Vertex)
-    class Halfedge_around_vertex_circulator
+    /// \sa VertexAroundVertexCirculator, FaceAroundVertexCirculator, halfedges(Vertex)
+    class HalfedgeAroundVertexCirculator
     {
     public:
 
         /// default constructor
-        Halfedge_around_vertex_circulator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
+        HalfedgeAroundVertexCirculator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
         : mesh_(m), active_(true)
         {
             if (mesh_) halfedge_ = mesh_->halfedge(v);
         }
 
         /// are two circulators equal?
-        bool operator==(const Halfedge_around_vertex_circulator& rhs) const
+        bool operator==(const HalfedgeAroundVertexCirculator& rhs) const
         {
             assert(mesh_);
             return (active_ && (mesh_==rhs.mesh_) && (halfedge_==rhs.halfedge_));
         }
 
         /// are two circulators different?
-        bool operator!=(const Halfedge_around_vertex_circulator& rhs) const
+        bool operator!=(const HalfedgeAroundVertexCirculator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment (rotate couter-clockwise)
-        Halfedge_around_vertex_circulator& operator++()
+        HalfedgeAroundVertexCirculator& operator++()
         {
             assert(mesh_);
             halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
@@ -688,7 +688,7 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// pre-decrement (rotate clockwise)
-        Halfedge_around_vertex_circulator& operator--()
+        HalfedgeAroundVertexCirculator& operator--()
         {
             assert(mesh_);
             halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
@@ -702,9 +702,9 @@ public: //---------------------------------------------------- circulator types
         operator bool() const { return halfedge_.is_valid(); }
 
         // helper for C++11 range-based for-loops
-        Halfedge_around_vertex_circulator& begin() { active_=!halfedge_.is_valid(); return *this; }
+        HalfedgeAroundVertexCirculator& begin() { active_=!halfedge_.is_valid(); return *this; }
         // helper for C++11 range-based for-loops
-        Halfedge_around_vertex_circulator& end()   { active_=true;  return *this; }
+        HalfedgeAroundVertexCirculator& end()   { active_=true;  return *this; }
 
     private:
         const SurfaceMesh*  mesh_;
@@ -716,13 +716,13 @@ public: //---------------------------------------------------- circulator types
 
     /// this class circulates through all incident faces of a vertex.
     /// it also acts as a container-concept for C++11 range-based for loops.
-    /// \sa Vertex_around_vertex_circulator, Halfedge_around_vertex_circulator, faces(Vertex)
-    class Face_around_vertex_circulator
+    /// \sa VertexAroundVertexCirculator, HalfedgeAroundVertexCirculator, faces(Vertex)
+    class FaceAroundVertexCirculator
     {
     public:
 
         /// construct with mesh and vertex (vertex should not be isolated!)
-        Face_around_vertex_circulator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
+        FaceAroundVertexCirculator(const SurfaceMesh* m=NULL, Vertex v=Vertex())
         : mesh_(m), active_(true)
         {
             if (mesh_)
@@ -734,20 +734,20 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// are two circulators equal?
-        bool operator==(const Face_around_vertex_circulator& rhs) const
+        bool operator==(const FaceAroundVertexCirculator& rhs) const
         {
             assert(mesh_);
             return (active_ && (mesh_==rhs.mesh_) && (halfedge_==rhs.halfedge_));
         }
 
         /// are two circulators different?
-        bool operator!=(const Face_around_vertex_circulator& rhs) const
+        bool operator!=(const FaceAroundVertexCirculator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment (rotates counter-clockwise)
-        Face_around_vertex_circulator& operator++()
+        FaceAroundVertexCirculator& operator++()
         {
             assert(mesh_ && halfedge_.is_valid());
             do {
@@ -758,7 +758,7 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// pre-decrement (rotate clockwise)
-        Face_around_vertex_circulator& operator--()
+        FaceAroundVertexCirculator& operator--()
         {
             assert(mesh_ && halfedge_.is_valid());
             do
@@ -778,9 +778,9 @@ public: //---------------------------------------------------- circulator types
         operator bool() const { return halfedge_.is_valid(); }
 
         // helper for C++11 range-based for-loops
-        Face_around_vertex_circulator& begin() { active_=!halfedge_.is_valid(); return *this; }
+        FaceAroundVertexCirculator& begin() { active_=!halfedge_.is_valid(); return *this; }
         // helper for C++11 range-based for-loops
-        Face_around_vertex_circulator& end()   { active_=true;  return *this; }
+        FaceAroundVertexCirculator& end()   { active_=true;  return *this; }
 
     private:
         const SurfaceMesh*  mesh_;
@@ -792,33 +792,33 @@ public: //---------------------------------------------------- circulator types
 
     /// this class circulates through the vertices of a face.
     /// it also acts as a container-concept for C++11 range-based for loops.
-    /// \sa Halfedge_around_face_circulator, vertices(Face)
-    class Vertex_around_face_circulator
+    /// \sa HalfedgeAroundFaceCirculator, vertices(Face)
+    class VertexAroundFaceCirculator
     {
     public:
 
         /// default constructor
-        Vertex_around_face_circulator(const SurfaceMesh* m=NULL, Face f=Face())
+        VertexAroundFaceCirculator(const SurfaceMesh* m=NULL, Face f=Face())
         : mesh_(m), active_(true)
         {
             if (mesh_) halfedge_ = mesh_->halfedge(f);
         }
 
         /// are two circulators equal?
-        bool operator==(const Vertex_around_face_circulator& rhs) const
+        bool operator==(const VertexAroundFaceCirculator& rhs) const
         {
             assert(mesh_);
             return (active_ && (mesh_==rhs.mesh_) && (halfedge_==rhs.halfedge_));
         }
 
         /// are two circulators different?
-        bool operator!=(const Vertex_around_face_circulator& rhs) const
+        bool operator!=(const VertexAroundFaceCirculator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment (rotates counter-clockwise)
-        Vertex_around_face_circulator& operator++()
+        VertexAroundFaceCirculator& operator++()
         {
             assert(mesh_ && halfedge_.is_valid());
             halfedge_ = mesh_->next_halfedge(halfedge_);
@@ -827,7 +827,7 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// pre-decrement (rotates clockwise)
-        Vertex_around_face_circulator& operator--()
+        VertexAroundFaceCirculator& operator--()
         {
             assert(mesh_ && halfedge_.is_valid());
             halfedge_ = mesh_->prev_halfedge(halfedge_);
@@ -842,9 +842,9 @@ public: //---------------------------------------------------- circulator types
         }
 
         // helper for C++11 range-based for-loops
-        Vertex_around_face_circulator& begin() { active_=false; return *this; }
+        VertexAroundFaceCirculator& begin() { active_=false; return *this; }
         // helper for C++11 range-based for-loops
-        Vertex_around_face_circulator& end()   { active_=true;  return *this; }
+        VertexAroundFaceCirculator& end()   { active_=true;  return *this; }
 
     private:
         const SurfaceMesh*  mesh_;
@@ -856,33 +856,33 @@ public: //---------------------------------------------------- circulator types
 
     /// this class circulates through all halfedges of a face.
     /// it also acts as a container-concept for C++11 range-based for loops.
-    /// \sa Vertex_around_face_circulator, halfedges(Face)
-    class Halfedge_around_face_circulator
+    /// \sa VertexAroundFaceCirculator, halfedges(Face)
+    class HalfedgeAroundFaceCirculator
     {
     public:
 
         /// default constructur
-        Halfedge_around_face_circulator(const SurfaceMesh* m=NULL, Face f=Face())
+        HalfedgeAroundFaceCirculator(const SurfaceMesh* m=NULL, Face f=Face())
         : mesh_(m), active_(true)
         {
             if (mesh_) halfedge_ = mesh_->halfedge(f);
         }
 
         /// are two circulators equal?
-        bool operator==(const Halfedge_around_face_circulator& rhs) const
+        bool operator==(const HalfedgeAroundFaceCirculator& rhs) const
         {
             assert(mesh_);
             return (active_ && (mesh_==rhs.mesh_) && (halfedge_==rhs.halfedge_));
         }
 
         /// are two circulators different?
-        bool operator!=(const Halfedge_around_face_circulator& rhs) const
+        bool operator!=(const HalfedgeAroundFaceCirculator& rhs) const
         {
             return !operator==(rhs);
         }
 
         /// pre-increment (rotates counter-clockwise)
-        Halfedge_around_face_circulator& operator++()
+        HalfedgeAroundFaceCirculator& operator++()
         {
             assert(mesh_ && halfedge_.is_valid());
             halfedge_ = mesh_->next_halfedge(halfedge_);
@@ -891,7 +891,7 @@ public: //---------------------------------------------------- circulator types
         }
 
         /// pre-decrement (rotates clockwise)
-        Halfedge_around_face_circulator& operator--()
+        HalfedgeAroundFaceCirculator& operator--()
         {
             assert(mesh_ && halfedge_.is_valid());
             halfedge_ = mesh_->prev_halfedge(halfedge_);
@@ -902,9 +902,9 @@ public: //---------------------------------------------------- circulator types
         Halfedge operator*() const { return halfedge_; }
 
         // helper for C++11 range-based for-loops
-        Halfedge_around_face_circulator& begin() { active_=false; return *this; }
+        HalfedgeAroundFaceCirculator& begin() { active_=false; return *this; }
         // helper for C++11 range-based for-loops
-        Halfedge_around_face_circulator& end()   { active_=true;  return *this; }
+        HalfedgeAroundFaceCirculator& end()   { active_=true;  return *this; }
 
     private:
         const SurfaceMesh*  mesh_;
@@ -1124,7 +1124,7 @@ public: //---------------------------------------------- low-level connectivity
         // The vertex is non-manifold if more than one gap exists, i.e.
         // more than one outgoing boundary halfedge.
         int n(0);
-        Halfedge_around_vertex_circulator hit = halfedges(v), hend=hit;
+        HalfedgeAroundVertexCirculator hit = halfedges(v), hend=hit;
         if (hit) do
         {
             if (is_boundary(*hit))
@@ -1284,127 +1284,127 @@ public: //--------------------------------------------------- property handling
     /** add a vertex property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Vertex_property<T> add_vertex_property(const std::string& name, const T t=T())
+    template <class T> VertexProperty<T> add_vertex_property(const std::string& name, const T t=T())
     {
-        return Vertex_property<T>(vprops_.add<T>(name, t));
+        return VertexProperty<T>(vprops_.add<T>(name, t));
     }
     /** add a halfedge property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Halfedge_property<T> add_halfedge_property(const std::string& name, const T t=T())
+    template <class T> HalfedgeProperty<T> add_halfedge_property(const std::string& name, const T t=T())
     {
-        return Halfedge_property<T>(hprops_.add<T>(name, t));
+        return HalfedgeProperty<T>(hprops_.add<T>(name, t));
     }
     /** add a edge property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Edge_property<T> add_edge_property(const std::string& name, const T t=T())
+    template <class T> EdgeProperty<T> add_edge_property(const std::string& name, const T t=T())
     {
-        return Edge_property<T>(eprops_.add<T>(name, t));
+        return EdgeProperty<T>(eprops_.add<T>(name, t));
     }
     /** add a face property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Face_property<T> add_face_property(const std::string& name, const T t=T())
+    template <class T> FaceProperty<T> add_face_property(const std::string& name, const T t=T())
     {
-        return Face_property<T>(fprops_.add<T>(name, t));
+        return FaceProperty<T>(fprops_.add<T>(name, t));
     }
     /** add a model property of type \c T with name \c name and default value \c t.
      fails if a property named \c name exists already, since the name has to be unique.
      in this case it returns an invalid property */
-    template <class T> Model_property<T> add_model_property(const std::string& name, const T t=T())
+    template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t=T())
     {
-        return Model_property<T>(mprops_.add<T>(name, t));
+        return ModelProperty<T>(mprops_.add<T>(name, t));
     }
 
 
     /** get the vertex property named \c name of type \c T. returns an invalid
-     Vertex_property if the property does not exist or if the type does not match. */
-    template <class T> Vertex_property<T> get_vertex_property(const std::string& name) const
+     VertexProperty if the property does not exist or if the type does not match. */
+    template <class T> VertexProperty<T> get_vertex_property(const std::string& name) const
     {
-        return Vertex_property<T>(vprops_.get<T>(name));
+        return VertexProperty<T>(vprops_.get<T>(name));
     }
     /** get the halfedge property named \c name of type \c T. returns an invalid
-     Vertex_property if the property does not exist or if the type does not match. */
-    template <class T> Halfedge_property<T> get_halfedge_property(const std::string& name) const
+     VertexProperty if the property does not exist or if the type does not match. */
+    template <class T> HalfedgeProperty<T> get_halfedge_property(const std::string& name) const
     {
-        return Halfedge_property<T>(hprops_.get<T>(name));
+        return HalfedgeProperty<T>(hprops_.get<T>(name));
     }
     /** get the edge property named \c name of type \c T. returns an invalid
-     Vertex_property if the property does not exist or if the type does not match. */
-    template <class T> Edge_property<T> get_edge_property(const std::string& name) const
+     VertexProperty if the property does not exist or if the type does not match. */
+    template <class T> EdgeProperty<T> get_edge_property(const std::string& name) const
     {
-        return Edge_property<T>(eprops_.get<T>(name));
+        return EdgeProperty<T>(eprops_.get<T>(name));
     }
     /** get the face property named \c name of type \c T. returns an invalid
-     Vertex_property if the property does not exist or if the type does not match. */
-    template <class T> Face_property<T> get_face_property(const std::string& name) const
+     VertexProperty if the property does not exist or if the type does not match. */
+    template <class T> FaceProperty<T> get_face_property(const std::string& name) const
     {
-        return Face_property<T>(fprops_.get<T>(name));
+        return FaceProperty<T>(fprops_.get<T>(name));
     }
     /** get the model property named \c name of type \c T. returns an invalid
-     Model_property if the property does not exist or if the type does not match. */
-    template <class T> Model_property<T> get_model_property(const std::string& name) const
+     ModelProperty if the property does not exist or if the type does not match. */
+    template <class T> ModelProperty<T> get_model_property(const std::string& name) const
     {
-        return Model_property<T>(mprops_.get<T>(name));
+        return ModelProperty<T>(mprops_.get<T>(name));
     }
 
 
     /** if a vertex property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Vertex_property<T> vertex_property(const std::string& name, const T t=T())
+    template <class T> VertexProperty<T> vertex_property(const std::string& name, const T t=T())
     {
-        return Vertex_property<T>(vprops_.get_or_add<T>(name, t));
+        return VertexProperty<T>(vprops_.get_or_add<T>(name, t));
     }
     /** if a halfedge property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Halfedge_property<T> halfedge_property(const std::string& name, const T t=T())
+    template <class T> HalfedgeProperty<T> halfedge_property(const std::string& name, const T t=T())
     {
-        return Halfedge_property<T>(hprops_.get_or_add<T>(name, t));
+        return HalfedgeProperty<T>(hprops_.get_or_add<T>(name, t));
     }
     /** if an edge property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Edge_property<T> edge_property(const std::string& name, const T t=T())
+    template <class T> EdgeProperty<T> edge_property(const std::string& name, const T t=T())
     {
-        return Edge_property<T>(eprops_.get_or_add<T>(name, t));
+        return EdgeProperty<T>(eprops_.get_or_add<T>(name, t));
     }
     /** if a face property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Face_property<T> face_property(const std::string& name, const T t=T())
+    template <class T> FaceProperty<T> face_property(const std::string& name, const T t=T())
     {
-        return Face_property<T>(fprops_.get_or_add<T>(name, t));
+        return FaceProperty<T>(fprops_.get_or_add<T>(name, t));
     }
 
      /** if a model property of type \c T with name \c name exists, it is returned.
      otherwise this property is added (with default value \c t) */
-    template <class T> Model_property<T> model_property(const std::string& name, const T t=T())
+    template <class T> ModelProperty<T> model_property(const std::string& name, const T t=T())
     {
-        return Model_property<T>(mprops_.get_or_add<T>(name, t));
+        return ModelProperty<T>(mprops_.get_or_add<T>(name, t));
     }
 
 
     /// remove the vertex property \c p
-    template <class T> void remove_vertex_property(Vertex_property<T>& p)
+    template <class T> void remove_vertex_property(VertexProperty<T>& p)
     {
         vprops_.remove(p);
     }
     /// remove the halfedge property \c p
-    template <class T> void remove_halfedge_property(Halfedge_property<T>& p)
+    template <class T> void remove_halfedge_property(HalfedgeProperty<T>& p)
     {
         hprops_.remove(p);
     }
     /// remove the edge property \c p
-    template <class T> void remove_edge_property(Edge_property<T>& p)
+    template <class T> void remove_edge_property(EdgeProperty<T>& p)
     {
         eprops_.remove(p);
     }
     /// remove the face property \c p
-    template <class T> void remove_face_property(Face_property<T>& p)
+    template <class T> void remove_face_property(FaceProperty<T>& p)
     {
         fprops_.remove(p);
     }
     /// remove the model property \c p
-    template <class T> void remove_model_property(Model_property<T>& p)
+    template <class T> void remove_model_property(ModelProperty<T>& p)
     {
         mprops_.remove(p);
     }
@@ -1480,105 +1480,105 @@ public: //--------------------------------------------- iterators & circulators
     //@{
 
     /// returns start iterator for vertices
-    Vertex_iterator vertices_begin() const
+    VertexIterator vertices_begin() const
     {
-        return Vertex_iterator(Vertex(0), this);
+        return VertexIterator(Vertex(0), this);
     }
 
     /// returns end iterator for vertices
-    Vertex_iterator vertices_end() const
+    VertexIterator vertices_end() const
     {
-        return Vertex_iterator(Vertex(vertices_size()), this);
+        return VertexIterator(Vertex(vertices_size()), this);
     }
 
     /// returns vertex container for C++11 range-based for-loops
-    Vertex_container vertices() const
+    VertexContainer vertices() const
     {
-        return Vertex_container(vertices_begin(), vertices_end());
+        return VertexContainer(vertices_begin(), vertices_end());
     }
 
     /// returns start iterator for halfedges
-    Halfedge_iterator halfedges_begin() const
+    HalfedgeIterator halfedges_begin() const
     {
-        return Halfedge_iterator(Halfedge(0), this);
+        return HalfedgeIterator(Halfedge(0), this);
     }
 
     /// returns end iterator for halfedges
-    Halfedge_iterator halfedges_end() const
+    HalfedgeIterator halfedges_end() const
     {
-        return Halfedge_iterator(Halfedge(halfedges_size()), this);
+        return HalfedgeIterator(Halfedge(halfedges_size()), this);
     }
 
     /// returns halfedge container for C++11 range-based for-loops
-    Halfedge_container halfedges() const
+    HalfedgeContainer halfedges() const
     {
-        return Halfedge_container(halfedges_begin(), halfedges_end());
+        return HalfedgeContainer(halfedges_begin(), halfedges_end());
     }
 
     /// returns start iterator for edges
-    Edge_iterator edges_begin() const
+    EdgeIterator edges_begin() const
     {
-        return Edge_iterator(Edge(0), this);
+        return EdgeIterator(Edge(0), this);
     }
 
     /// returns end iterator for edges
-    Edge_iterator edges_end() const
+    EdgeIterator edges_end() const
     {
-        return Edge_iterator(Edge(edges_size()), this);
+        return EdgeIterator(Edge(edges_size()), this);
     }
 
     /// returns edge container for C++11 range-based for-loops
-    Edge_container edges() const
+    EdgeContainer edges() const
     {
-        return Edge_container(edges_begin(), edges_end());
+        return EdgeContainer(edges_begin(), edges_end());
     }
 
     /// returns start iterator for faces
-    Face_iterator faces_begin() const
+    FaceIterator faces_begin() const
     {
-        return Face_iterator(Face(0), this);
+        return FaceIterator(Face(0), this);
     }
 
     /// returns end iterator for faces
-    Face_iterator faces_end() const
+    FaceIterator faces_end() const
     {
-        return Face_iterator(Face(faces_size()), this);
+        return FaceIterator(Face(faces_size()), this);
     }
 
     /// returns face container for C++11 range-based for-loops
-    Face_container faces() const
+    FaceContainer faces() const
     {
-        return Face_container(faces_begin(), faces_end());
+        return FaceContainer(faces_begin(), faces_end());
     }
 
     /// returns circulator for vertices around vertex \c v
-    Vertex_around_vertex_circulator vertices(Vertex v) const
+    VertexAroundVertexCirculator vertices(Vertex v) const
     {
-        return Vertex_around_vertex_circulator(this, v);
+        return VertexAroundVertexCirculator(this, v);
     }
 
     /// returns circulator for outgoing halfedges around vertex \c v
-    Halfedge_around_vertex_circulator halfedges(Vertex v) const
+    HalfedgeAroundVertexCirculator halfedges(Vertex v) const
     {
-        return Halfedge_around_vertex_circulator(this, v);
+        return HalfedgeAroundVertexCirculator(this, v);
     }
 
     /// returns circulator for faces around vertex \c v
-    Face_around_vertex_circulator faces(Vertex v) const
+    FaceAroundVertexCirculator faces(Vertex v) const
     {
-        return Face_around_vertex_circulator(this, v);
+        return FaceAroundVertexCirculator(this, v);
     }
 
     /// returns circulator for vertices of face \c f
-    Vertex_around_face_circulator vertices(Face f) const
+    VertexAroundFaceCirculator vertices(Face f) const
     {
-        return Vertex_around_face_circulator(this, f);
+        return VertexAroundFaceCirculator(this, f);
     }
 
     /// returns circulator for halfedges of face \c f
-    Halfedge_around_face_circulator halfedges(Face f) const
+    HalfedgeAroundFaceCirculator halfedges(Face f) const
     {
-        return Halfedge_around_face_circulator(this, f);
+        return HalfedgeAroundFaceCirculator(this, f);
     }
 
     //@}
@@ -1828,23 +1828,23 @@ private: //--------------------------------------------------- helper functions
 
 private: //------------------------------------------------------- private data
 
-    Property_container vprops_;
-    Property_container hprops_;
-    Property_container eprops_;
-    Property_container fprops_;
-    Property_container mprops_;
+    PropertyContainer vprops_;
+    PropertyContainer hprops_;
+    PropertyContainer eprops_;
+    PropertyContainer fprops_;
+    PropertyContainer mprops_;
 
-    Vertex_property<Vertex_connectivity>      vconn_;
-    Halfedge_property<Halfedge_connectivity>  hconn_;
-    Face_property<Face_connectivity>          fconn_;
+    VertexProperty<VertexConnectivity>      vconn_;
+    HalfedgeProperty<HalfedgeConnectivity>  hconn_;
+    FaceProperty<FaceConnectivity>          fconn_;
 
-    Vertex_property<bool>  vdeleted_;
-    Edge_property<bool>    edeleted_;
-    Face_property<bool>    fdeleted_;
+    VertexProperty<bool>  vdeleted_;
+    EdgeProperty<bool>    edeleted_;
+    FaceProperty<bool>    fdeleted_;
 
-    Vertex_property<vec3>   vpoint_;
-    Vertex_property<vec3>  vnormal_;
-    Face_property<vec3>    fnormal_;
+    VertexProperty<vec3>   vpoint_;
+    VertexProperty<vec3>  vnormal_;
+    FaceProperty<vec3>    fnormal_;
 
     unsigned int deleted_vertices_;
     unsigned int deleted_edges_;
