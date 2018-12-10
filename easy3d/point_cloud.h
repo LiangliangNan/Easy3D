@@ -34,21 +34,21 @@
  *----------------------------------------------------------*/
 
 
-// I would like to process huge scans (tens of millions of points), an earlier 
-// implementation based on double-connected list has issues in the following aspects:
+// I would like to process/visualize huge scans (tens of millions of points, or even more),
+// an earlier implementation based on double-connected list has the following issues:
 // 	1) no random access of the data;
 //  2) OpenGL renderring overhead (needs packing to transfer data to GPU);
 //  3) hard to employ OMP support;
 //  4) file management (unable reading and writing large blocks);
 //  5) selection, etc.
 // Thus I have this implementation inspired by (actually some code is taken from) 
-// SurfaceMesh: https://opensource.cit-ec.de/projects/surface_mesh
-// The idea behind is that all coordinate and associated attribute values
-// are stored as std::vector<T
+// Surface_mesh: https://opensource.cit-ec.de/projects/surface_mesh
+// The idea behind is that point coordinates and associated attribute values are stored as
+// std::vector<T>.
 
 
-#ifndef POINT_CLOUD_H
-#define POINT_CLOUD_H
+#ifndef EASY3D_POINT_CLOUD_H
+#define EASY3D_POINT_CLOUD_H
 
 
 //== INCLUDES =================================================================
@@ -507,5 +507,5 @@ inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v)
 //=============================================================================
 } // namespace easy3d
 //=============================================================================
-#endif // POINT_CLOUD_H
+#endif // EASY3D_POINT_CLOUD_H
 //=============================================================================
