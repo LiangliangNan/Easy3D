@@ -39,6 +39,8 @@
 // #  include <locale.h>
 // #  include <signal.h>
 // #  include <sys/dir.h>
+#  include<stdexcept>
+#  include<algorithm>
 #endif
 
 
