@@ -29,6 +29,8 @@ using namespace easy3d;
 //
 // You should be able to add/access per-edge/vertex properties also.
 
+
+
 SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;

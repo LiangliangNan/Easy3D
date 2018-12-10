@@ -23,7 +23,6 @@
 #include <easy3d/resources.h>
 #include <easy3d/surface_mesh.h>
 
-
 using namespace easy3d;
 
 
@@ -31,6 +30,8 @@ using namespace easy3d;
 //		- create a surface model from a set of triangles;
 //      - create a drawable for rendering mesh surfaces;
 //		- use the viewer to visualize the surface.
+
+
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.

@@ -20,7 +20,6 @@
 
 #include <easy3d/surface_mesh.h>
 
-
 using namespace easy3d;
 
 
@@ -31,6 +30,8 @@ using namespace easy3d;
 //		- access the incident half-edges of each face
 //		- access the two end points of each edge;
 //		- access the two faces connected by each edge
+
+
 
 SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh

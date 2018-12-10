@@ -20,12 +20,12 @@
 
 #include <easy3d/surface_mesh.h>
 
-
 using namespace easy3d;
 
 
 // This example shows how to
 //		- construct a mesh from its vertices and known connectivities
+
 
 
 int main(int /*argc*/, char** /*argv*/) {

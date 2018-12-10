@@ -22,13 +22,13 @@
 
 #include <fstream>
 
-
 using namespace easy3d;
 
 
 // This example shows how to
 //		- load a point cloud from a file;
 //		- save a point cloud into a file.
+
 
 
 int main(int /*argc*/, char** /*argv*/) {

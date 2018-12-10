@@ -27,6 +27,7 @@ using namespace easy3d;
 //		- create a point cloud from a set of points
 
 
+
 int main(int /*argc*/, char** /*argv*/) {
 	// Create a point cloud
 	PointCloud* cloud = new PointCloud;

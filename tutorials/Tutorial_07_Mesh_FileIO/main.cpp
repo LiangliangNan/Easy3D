@@ -28,6 +28,7 @@ using namespace easy3d;
 //		- save a surface mesh into a file.
 
 
+
 int main(int /*argc*/, char** /*argv*/) {
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;

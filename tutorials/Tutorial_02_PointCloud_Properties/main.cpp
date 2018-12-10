@@ -28,6 +28,7 @@ using namespace easy3d;
 //		- access existing properties.
 
 
+
 vec3 random_color() {
 	float r = rand() % 255 / 255.0f;	// in the range [0, 1]
 	float g = rand() % 255 / 255.0f;	// in the range [0, 1]

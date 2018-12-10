@@ -22,12 +22,13 @@
 #include <easy3d/surface_mesh.h>
 #include <easy3d/drawable.h>
 
-
 using namespace easy3d;
+
 
 // This example shows how to
 //		- create a drawable for a specific rendering purpose;
 //		- use the viewer to visualize the drawable.
+
 
 
 int main(int /*argc*/, char** /*argv*/) {

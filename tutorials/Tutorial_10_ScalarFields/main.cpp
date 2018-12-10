@@ -22,12 +22,13 @@
 #include <easy3d/surface_mesh.h>
 #include <easy3d/drawable.h>
 
-
 using namespace easy3d;
+
 
 // This example shows how to
 //		- rendering a scalar field defined on vertices of a mesh;
 //		- use the viewer to visualize the drawable.
+
 
 
 // You have seen the creation of this model and it drawable in the
