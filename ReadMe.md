@@ -1,21 +1,20 @@
 <img src="images/logo.png" width="400">
 
-### Easy3D is an open source library for 3D modeling and geometry processing. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
+### Easy3D is an open source library for 3D modeling and geometry processing. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
+### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
+---
 
 ### Key features ###
-* Efficient data structures for representing and managing3D models (i.e., point 
-  clouds and meshes). Easy to add/access arbitrary types of per-element properties.
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient 
-  rendering. Users do not need to touch the low-level OpenGL APIs.
-* A viewer that can be used directly to visualized 3D scenes in various formats.
-* Step-by-step tutorials to get acquainted with the data structures and basic rendering 
-  for 3D modeling and data processing. 
+* Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering. Users do not need to touch the low-level APIs of OpenGL.
+* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+* Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
  
 
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, create a drawable for rendering the point cloud, and uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example first loads a point cloud from a file, creates a drawable of the points, and uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
@@ -42,7 +41,7 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 	viewer.run();
 ```
 
-Bellow is anothr example showing how to render a surface model (rendering result is shown in Figure 2).
+Bellow is anothr example showing how to render a surface model (result is in Figure 2).
 ```c++
 	Surface_mesh* mesh = ... // a mesh created by your algorithm or loaded from a file
 	
@@ -73,12 +72,11 @@ Figure 1                                   |  Figure 2            		        |  F
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
 GNU General Public License as published by the Free Software Foundation; either version 3
 of the License or (at your option) any later version. The full text of the license can be
-found in the accompanying LICENSE file.
+found in the accompanying 'License' file.
 
 ---
 
-Should you have any questions, comments, or suggestions, please contact me at: 
-liangliang.nan@gmail.com
+Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
 
 **_Liangliang Nan_**
 
