@@ -49,11 +49,11 @@ void main() {
 	}
 	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
-	// In Easy3D, all actually values are stored as per-element (e.g., vertex, 
-	// edge, and face) properties. A model can have multiple properties and 
-	// properties are accessed by their names. So it is important to give each 
-	// property a unique name. Easy3D will pop up a warning if you attempt to 
-	// create a property with an already used name.
+	// In Easy3D, all actual 3D data an related information are stored as 
+	// per-element (e.g., vertex, edge, and face) properties. A model can have 
+	// multiple properties and the properties can be accessed by their names. 
+	// So it is important to give each property a unique name. Easy3D will pop 
+	// up a warning if you attempt to create a property with an already used name.
 	
 	// Let's add a random color to each point. We give this property a name 
 	// "v:color". Here "v:" is optional and it just indicates that this property 
