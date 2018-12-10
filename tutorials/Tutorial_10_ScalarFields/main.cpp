@@ -32,9 +32,9 @@ using namespace easy3d;
 
 // You have seen the creation of this model and it drawable in the
 // previous tutorial. Just skip it and go to the main() function.
-Surface_mesh* old_mesh_from_previous_example() {
+SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Read a mesh specified by its file name
     std::string file_name = "../../../Easy3D/data/building.off";
@@ -46,13 +46,13 @@ Surface_mesh* old_mesh_from_previous_example() {
 	}
 
 	// Create the face drawable and attach it to the mesh.
-	FacesDrawable* surface_drawable = mesh->add_face_drawable("surface");
+	FacesDrawable* surfaces_drawable = mesh->add_faces_drawable("surface");
 
 	// All the vertices.
 	auto vertices = mesh->get_vertex_property<vec3>("v:point");
 	const auto& points = vertices.vector();
 	// Upload the vertex positions to the GPU.
-	surface_drawable->update_vertex_buffer(points);
+	surfaces_drawable->update_vertex_buffer(points);
 
 	// Now the vertex indices for all the triangles.
 	std::vector<unsigned int> indices;
@@ -72,7 +72,7 @@ Surface_mesh* old_mesh_from_previous_example() {
 	}
 	// Upload the vertex indices to the index buffer.
 	// After this, the data for rendering the surface drawable is complete.
-	surface_drawable->update_index_buffer(indices);
+	surfaces_drawable->update_index_buffer(indices);
 
 	return mesh;
 }
@@ -84,7 +84,7 @@ void main() {
     Viewer viewer("Tutorial_10_ScalarFields");
 
 	// Load a mesh model and create a drawable for the faces. 
-	Surface_mesh* mesh = old_mesh_from_previous_example();
+	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	if (!mesh)
 		return;
 
@@ -118,7 +118,7 @@ void main() {
 	}
 
 	// The faces drawable we created before.
-	FacesDrawable* surface = mesh->face_drawable("surface");
+	FacesDrawable* surface = mesh->faces_drawable("surface");
 	// Note we had already uploaded the vertex positions and the vertex indices
 	// to the GPU. Now we only need to transfer the color data to the GPU.
 	surface->update_color_buffer(scalar_field_colors);

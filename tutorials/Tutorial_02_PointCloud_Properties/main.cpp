@@ -40,7 +40,7 @@ void main() {
 	srand(0);
 
 	// Create a point cloud.
-	Point_cloud* cloud = new Point_cloud;
+	PointCloud* cloud = new PointCloud;
 
 	// Add some points. Here we add 100 points on a 10*10 grid.
 	for (float i=-5; i<5; ++i) {
@@ -59,7 +59,7 @@ void main() {
 	// "v:color". Here "v:" is optional and it just indicates that this property 
 	// is defined on the vertices. You will later see properties can be defined 
 	// one edges (use "e:") and faces (use "f:") for surface meshes.
-	Point_cloud::Vertex_property<vec3> colors = cloud->add_vertex_property<vec3>("v:color");
+	PointCloud::Vertex_property<vec3> colors = cloud->add_vertex_property<vec3>("v:color");
 	for (auto v : cloud->vertices())	// iterate over all vertices
 		colors[v] = random_color();		// assign a random color to point 'v'
 
@@ -68,7 +68,7 @@ void main() {
 	// Here we simply print the coordinates and colors.
 
 	// The point coordinates are stored as a per-point property 'v:point'.
-	Point_cloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
+	PointCloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 	for (auto v : cloud->vertices())
 		std::cout << "index: " << v.idx() << ", xyz: " << points[v] << ", color: " << colors[v] << std::endl;
 

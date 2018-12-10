@@ -33,10 +33,10 @@ using namespace easy3d;
 
 void main() {
 	// Create a point cloud.
-	Point_cloud* cloud = new Point_cloud;
+	PointCloud* cloud = new PointCloud;
 
 	// Read the point cloud from a known file. 
-	// We use Point_cloud's built-in function read().
+	// We use PointCloud's built-in function read().
     bool success = cloud->read("../../../Easy3D/data/building_with_normals.bin");
 	if (success) {
 		std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
@@ -47,11 +47,11 @@ void main() {
         std::ofstream output("../../../Easy3D/data/building_with_normals-copy.txt");
 		if (output.is_open()) { // if the file has been successfully created
 			// The point coordinates.
-			Point_cloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
+			PointCloud::Vertex_property<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 			// The point normals.
-			Point_cloud::Vertex_property<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
+			PointCloud::Vertex_property<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
 			// The point colors.
-			Point_cloud::Vertex_property<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
+			PointCloud::Vertex_property<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
 			std::cout << "saving the point cloud...";
 
 			int prev_percent = -1;

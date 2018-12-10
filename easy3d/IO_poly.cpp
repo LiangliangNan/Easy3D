@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -67,7 +68,7 @@ template <typename T> size_t write(FILE* out, T& t)
 //-----------------------------------------------------------------------------
 
 
-bool read_poly(Surface_mesh& mesh, const std::string& filename)
+bool read_poly(SurfaceMesh& mesh, const std::string& filename)
 {
     // open file (in binary mode)
     FILE* in = fopen(filename.c_str(), "rb");
@@ -89,15 +90,15 @@ bool read_poly(Surface_mesh& mesh, const std::string& filename)
 	mesh.resize(nv, ne, nf);
 
     // get properties
-    Surface_mesh::Vertex_property<Surface_mesh::Vertex_connectivity>      vconn = mesh.vertex_property<Surface_mesh::Vertex_connectivity>("v:connectivity");
-    Surface_mesh::Halfedge_property<Surface_mesh::Halfedge_connectivity>  hconn = mesh.halfedge_property<Surface_mesh::Halfedge_connectivity>("h:connectivity");
-    Surface_mesh::Face_property<Surface_mesh::Face_connectivity>          fconn = mesh.face_property<Surface_mesh::Face_connectivity>("f:connectivity");
-    Surface_mesh::Vertex_property<vec3>                                  point = mesh.vertex_property<vec3>("v:point");
+    SurfaceMesh::Vertex_property<SurfaceMesh::Vertex_connectivity>      vconn = mesh.vertex_property<SurfaceMesh::Vertex_connectivity>("v:connectivity");
+    SurfaceMesh::Halfedge_property<SurfaceMesh::Halfedge_connectivity>  hconn = mesh.halfedge_property<SurfaceMesh::Halfedge_connectivity>("h:connectivity");
+    SurfaceMesh::Face_property<SurfaceMesh::Face_connectivity>          fconn = mesh.face_property<SurfaceMesh::Face_connectivity>("f:connectivity");
+    SurfaceMesh::Vertex_property<vec3>                                  point = mesh.vertex_property<vec3>("v:point");
 
     // read properties from file
-    fread((char*)vconn.data(), sizeof(Surface_mesh::Vertex_connectivity),   nv, in);
-    fread((char*)hconn.data(), sizeof(Surface_mesh::Halfedge_connectivity), nh, in);
-    fread((char*)fconn.data(), sizeof(Surface_mesh::Face_connectivity),     nf, in);
+    fread((char*)vconn.data(), sizeof(SurfaceMesh::Vertex_connectivity),   nv, in);
+    fread((char*)hconn.data(), sizeof(SurfaceMesh::Halfedge_connectivity), nh, in);
+    fread((char*)fconn.data(), sizeof(SurfaceMesh::Face_connectivity),     nf, in);
     fread((char*)point.data(), sizeof(vec3),                               nv, in);
 
     fclose(in);
@@ -108,7 +109,7 @@ bool read_poly(Surface_mesh& mesh, const std::string& filename)
 //-----------------------------------------------------------------------------
 
 
-bool write_poly(const Surface_mesh& mesh, const std::string& filename)
+bool write_poly(const SurfaceMesh& mesh, const std::string& filename)
 {
     // check for colors
     auto color = mesh.get_vertex_property<vec3>("v:color");
@@ -135,16 +136,16 @@ bool write_poly(const Surface_mesh& mesh, const std::string& filename)
 
 
     // get properties
-    Surface_mesh::Vertex_property<Surface_mesh::Vertex_connectivity>      vconn = mesh.get_vertex_property<Surface_mesh::Vertex_connectivity>("v:connectivity");
-    Surface_mesh::Halfedge_property<Surface_mesh::Halfedge_connectivity>  hconn = mesh.get_halfedge_property<Surface_mesh::Halfedge_connectivity>("h:connectivity");
-    Surface_mesh::Face_property<Surface_mesh::Face_connectivity>          fconn = mesh.get_face_property<Surface_mesh::Face_connectivity>("f:connectivity");
-    Surface_mesh::Vertex_property<vec3>                                  point = mesh.get_vertex_property<vec3>("v:point");
+    SurfaceMesh::Vertex_property<SurfaceMesh::Vertex_connectivity>      vconn = mesh.get_vertex_property<SurfaceMesh::Vertex_connectivity>("v:connectivity");
+    SurfaceMesh::Halfedge_property<SurfaceMesh::Halfedge_connectivity>  hconn = mesh.get_halfedge_property<SurfaceMesh::Halfedge_connectivity>("h:connectivity");
+    SurfaceMesh::Face_property<SurfaceMesh::Face_connectivity>          fconn = mesh.get_face_property<SurfaceMesh::Face_connectivity>("f:connectivity");
+    SurfaceMesh::Vertex_property<vec3>                                  point = mesh.get_vertex_property<vec3>("v:point");
 
 
     // write properties to file
-    fwrite((char*)vconn.data(), sizeof(Surface_mesh::Vertex_connectivity),   nv, out);
-    fwrite((char*)hconn.data(), sizeof(Surface_mesh::Halfedge_connectivity), nh, out);
-    fwrite((char*)fconn.data(), sizeof(Surface_mesh::Face_connectivity),     nf, out);
+    fwrite((char*)vconn.data(), sizeof(SurfaceMesh::Vertex_connectivity),   nv, out);
+    fwrite((char*)hconn.data(), sizeof(SurfaceMesh::Halfedge_connectivity), nh, out);
+    fwrite((char*)fconn.data(), sizeof(SurfaceMesh::Face_connectivity),     nf, out);
     fwrite((char*)point.data(), sizeof(vec3),                               nv, out);
 
     if (has_colors) fwrite((char*)color.data(), sizeof(vec3), nv, out);

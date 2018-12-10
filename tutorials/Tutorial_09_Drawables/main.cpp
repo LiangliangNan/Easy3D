@@ -36,7 +36,7 @@ void main() {
 	Viewer viewer("Example_09_Drawables");
 
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Read a mesh specified by its file name
     std::string file_name = "../../../Easy3D/data/building.off";
@@ -55,7 +55,7 @@ void main() {
 	//    - a "LinesDrawable" representing the bounding box of the model.
 
 	// Create the face drawable and attach it to the mesh.
-	FacesDrawable* surface_drawable = mesh->add_face_drawable("surface");
+	FacesDrawable* surfaces_drawable = mesh->add_faces_drawable("surface");
 
 	// To visualize the surface, there are two options to collect data and feed
 	// them to the GPU. 
@@ -71,7 +71,7 @@ void main() {
 	auto vertices = mesh->get_vertex_property<vec3>("v:point");
 	const auto& points = vertices.vector();
 	// Upload the vertex positions to the GPU.
-	surface_drawable->update_vertex_buffer(points);
+	surfaces_drawable->update_vertex_buffer(points);
 
 	// Now the vertex indices for all the triangles.
 	std::vector<unsigned int> indices;
@@ -91,12 +91,12 @@ void main() {
 	}
 	// Upload the vertex indices to the index buffer.
 	// After this, the data for rendering the surface drawable is complete.
-	surface_drawable->update_index_buffer(indices);
-	surface_drawable->set_default_color(vec3(0.4f, 0.8f, 0.8f)); // give it an color
+	surfaces_drawable->update_index_buffer(indices);
+	surfaces_drawable->set_default_color(vec3(0.4f, 0.8f, 0.8f)); // give it an color
 
 	// Now let's create the drawable for the bounding box of the model.
 	// We also attached it to the model.
-	LinesDrawable* bbox_drawable = mesh->add_line_drawable("bbox");
+	LinesDrawable* bbox_drawable = mesh->add_lines_drawable("bbox");
 	Box3 box;
 	// Compute the bounding box.
 	for (const auto& p : points)

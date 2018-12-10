@@ -619,7 +619,7 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
-				for (auto d : m->point_drawables()) {
+				for (auto d : m->points_drawables()) {
 					float size = d->point_size() - 1.0f;
 					if (size < 1)
 						size = 1;
@@ -629,7 +629,7 @@ namespace easy3d {
 		}	
 		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
 			for (auto m : models_) {
-				for (auto d : m->point_drawables()) {
+				for (auto d : m->points_drawables()) {
 					float size = d->point_size() + 1.0f;
 					if (size > 20)
 						size = 20;
@@ -661,15 +661,15 @@ namespace easy3d {
 		}
 		else if (key == GLFW_KEY_W && modifiers == 0) {
 			if (model_idx_ < models_.size()) {
-				Surface_mesh* m = dynamic_cast<Surface_mesh*>(models_[model_idx_]);
+				SurfaceMesh* m = dynamic_cast<SurfaceMesh*>(models_[model_idx_]);
 				if (m) {
-					LinesDrawable* wireframe = m->line_drawable("wireframe");
+					LinesDrawable* wireframe = m->lines_drawable("wireframe");
 					if (!wireframe) {
-						wireframe = m->add_line_drawable("wireframe");
+						wireframe = m->add_lines_drawable("wireframe");
 						std::vector<unsigned int> indices;
 						for (auto e : m->edges()) {
-							Surface_mesh::Vertex s = m->vertex(e, 0);
-							Surface_mesh::Vertex t = m->vertex(e, 1);
+							SurfaceMesh::Vertex s = m->vertex(e, 0);
+							SurfaceMesh::Vertex t = m->vertex(e, 1);
 							indices.push_back(s.idx());
 							indices.push_back(t.idx());
 						}
@@ -914,12 +914,12 @@ namespace easy3d {
 
 		Model* model = nullptr;
 		if (ext == "bin") { // point cloud
-			Point_cloud* cloud = new Point_cloud;
+			PointCloud* cloud = new PointCloud;
 			if (cloud->read(file_name)) {
 				model = cloud;
 				// create points drawable
 				auto points = cloud->get_vertex_property<vec3>("v:point");
-				PointsDrawable* drawable = cloud->add_point_drawable("points");
+				PointsDrawable* drawable = cloud->add_points_drawable("points");
 				drawable->update_vertex_buffer(points.vector());
 				auto normals = cloud->get_vertex_property<vec3>("v:normal");
 				if (normals)
@@ -936,7 +936,7 @@ namespace easy3d {
 				delete cloud;
 		}
 		else {
-			Surface_mesh* mesh = new Surface_mesh;
+			SurfaceMesh* mesh = new SurfaceMesh;
 			if (mesh->read(file_name)) {
 				model = mesh;
 				// create face drawable
@@ -956,7 +956,7 @@ namespace easy3d {
 						" non-triangle faces are ignored" << std::endl;
 				}
 				auto points = mesh->get_vertex_property<vec3>("v:point");
-				FacesDrawable* faces = mesh->add_face_drawable("surface");
+				FacesDrawable* faces = mesh->add_faces_drawable("surface");
 				faces->update_vertex_buffer(points.vector());
 				faces->update_index_buffer(indices);
 				std::cout << "mesh loaded" << std::endl
@@ -986,23 +986,23 @@ namespace easy3d {
 				return;
 			}
 
-			if (model->point_drawables().empty() && 
-				model->line_drawables().empty() && 
-				model->face_drawables().empty())
+			if (model->points_drawables().empty() && 
+				model->lines_drawables().empty() && 
+				model->faces_drawables().empty())
 			{
 				std::cerr << "Warning: model does not have a drawable (nothing could be rendered). Consider adding drawables before adding it to the viewer." << std::endl;
 			}
 
 			Box3 box;
-			if (dynamic_cast<Point_cloud*>(model)) {
-				Point_cloud* cloud = dynamic_cast<Point_cloud*>(model);
+			if (dynamic_cast<PointCloud*>(model)) {
+				PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 				auto points = cloud->get_vertex_property<vec3>("v:point");
 				for (auto v : cloud->vertices())
 					box.add_point(points[v]);
 				model->set_bounding_box(box);
 			}
-			else if (dynamic_cast<Surface_mesh*>(model)) {
-				Surface_mesh* mesh = dynamic_cast<Surface_mesh*>(model);
+			else if (dynamic_cast<SurfaceMesh*>(model)) {
+				SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 				auto points = mesh->get_vertex_property<vec3>("v:point");
 				for (auto v : mesh->vertices())
 					box.add_point(points[v]);
@@ -1103,7 +1103,7 @@ namespace easy3d {
 		for (auto m : models_) {
 			if (!m->is_visible())
 				continue;
-			for (auto d : m->line_drawables()) {
+			for (auto d : m->lines_drawables()) {
 				if (d->is_visible())
 					++count;
 			}
@@ -1130,7 +1130,7 @@ namespace easy3d {
 			Model* m = models_[idx];
 			if (!m->is_visible())
 				continue;
-			for (auto d : m->face_drawables()) {
+			for (auto d : m->faces_drawables()) {
 				if (d->is_visible()) {
 					surface_program_->set_uniform("per_vertex_color", d->per_vertex_color());
 					surface_program_->set_uniform("default_color",
@@ -1149,7 +1149,7 @@ namespace easy3d {
 		for (auto m : models_) {
 			if (!m->is_visible())
 				continue;
-			for (auto d : m->line_drawables()) {
+			for (auto d : m->lines_drawables()) {
 				if (d->is_visible()) {
 					lines_program_->set_uniform("per_vertex_color", d->per_vertex_color());
 					lines_program_->set_uniform("default_color", d->default_color());
@@ -1167,13 +1167,13 @@ namespace easy3d {
 			Model* m = models_[idx];
 			if (!m->is_visible())
 				continue;
-			Point_cloud* cloud = dynamic_cast<Point_cloud*>(m);
+			PointCloud* cloud = dynamic_cast<PointCloud*>(m);
 			if (!cloud)
 				continue;
 			bool lighting = cloud->get_vertex_property<vec3>("v:normal");
 			points_program_->set_uniform("lighting", lighting);
 			bool per_vertex_color = cloud->get_vertex_property<vec3>("v:color");
-			for (auto d : m->point_drawables()) {
+			for (auto d : m->points_drawables()) {
 				if (d->is_visible()) {
 					points_program_->set_uniform("per_vertex_color", d->per_vertex_color());
 					points_program_->set_uniform("default_color", d->default_color());		

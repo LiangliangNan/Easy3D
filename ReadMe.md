@@ -18,11 +18,11 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
-	Point_cloud* cloud = new Point_cloud;	// create a point cloud
+	PointCloud* cloud = new PointCloud;	// create a point cloud
 	cloud->read("../../../data/bunny.bin");	// load point cloud data from a file
 
 	// create a drawable (a set of points that can be rendered)
-	PointsDrawable* drawable = cloud->add_point_drawable("points");
+	PointsDrawable* drawable = cloud->add_points_drawable("points");
 
 	// collect points, colors, and normals (if exist) and transfer them to GPU
 	auto points = cloud->get_vertex_property<vec3>("v:point");
@@ -43,10 +43,10 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 
 Bellow is anothr example showing how to render a surface model (result is in Figure 2).
 ```c++
-	Surface_mesh* mesh = ... // a mesh created by your algorithm or loaded from a file
+	SurfaceMesh* mesh = ... // a mesh created by your algorithm or loaded from a file
 	
 	// create a drawable for rendering the surface of this model
-	FacesDrawable* drawable = mesh->add_face_drawable("surface");
+	FacesDrawable* drawable = mesh->add_faces_drawable("surface");
 
 	// transfer vertex coordinates and colors to the GPU. 
 	drawable->update_vertex_buffer(demodata::vertices);	// an array of 3D points

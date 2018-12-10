@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -92,18 +93,18 @@ private:
 //-----------------------------------------------------------------------------
 
 
-bool read_stl(Surface_mesh& mesh, const std::string& filename)
+bool read_stl(SurfaceMesh& mesh, const std::string& filename)
 {
     char                            line[100], *c;
     unsigned int                    i, nT;
     vec3                           p;
-    Surface_mesh::Vertex               v;
-    std::vector<Surface_mesh::Vertex>  vertices(3);
+    SurfaceMesh::Vertex               v;
+    std::vector<SurfaceMesh::Vertex>  vertices(3);
     size_t n_items(0);
 
     CmpVec comp(FLT_MIN);
-    std::map<vec3, Surface_mesh::Vertex, CmpVec>            vMap(comp);
-    std::map<vec3, Surface_mesh::Vertex, CmpVec>::iterator  vMapIt;
+    std::map<vec3, SurfaceMesh::Vertex, CmpVec>            vMap(comp);
+    std::map<vec3, SurfaceMesh::Vertex, CmpVec>::iterator  vMapIt;
 
 
     // clear mesh
@@ -235,7 +236,7 @@ bool read_stl(Surface_mesh& mesh, const std::string& filename)
 //-----------------------------------------------------------------------------
 
 
-bool write_stl(const Surface_mesh& mesh, const std::string& filename)
+bool write_stl(const SurfaceMesh& mesh, const std::string& filename)
 {
     if (!mesh.is_triangle_mesh())
     {

@@ -30,13 +30,13 @@ using namespace easy3d;
 
 void main() {
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Add 4 vertices
-	Surface_mesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-	Surface_mesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
-	Surface_mesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
-	Surface_mesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
+	SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
+	SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
+	SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
 
 	// Add 4 triangular faces
 	mesh->add_triangle(v0, v1, v3);

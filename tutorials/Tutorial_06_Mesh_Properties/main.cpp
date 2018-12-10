@@ -29,15 +29,15 @@ using namespace easy3d;
 //
 // You should be able to add/access per-edge/vertex properties also.
 
-Surface_mesh* old_mesh_from_previous_example() {
+SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Add 4 vertices
-	Surface_mesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-	Surface_mesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
-	Surface_mesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
-	Surface_mesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
+	SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
+	SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
+	SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
 
 	// Add 4 triangular faces
 	mesh->add_triangle(v0, v1, v3);
@@ -49,13 +49,13 @@ Surface_mesh* old_mesh_from_previous_example() {
 }
 
 void main() {
-	Surface_mesh* mesh = old_mesh_from_previous_example();
+	SurfaceMesh* mesh = old_mesh_from_previous_example();
 
 	// We add a per-face property "f:normal" storing the normal of each face
 
-	Surface_mesh::Face_property<vec3> normals = mesh->add_face_property<vec3>("v:normal");
+	SurfaceMesh::Face_property<vec3> normals = mesh->add_face_property<vec3>("v:normal");
 	for (auto f : mesh->faces()) {
-		// We use the built-in function of Surface_mesh compute_face_normal(). 
+		// We use the built-in function of SurfaceMesh compute_face_normal(). 
 		// Of course you can write your own function to compute the normal of 
 		// a face (the normalized cross product of two consecutive edge vectors). 
 		normals[f] = mesh->compute_face_normal(f);

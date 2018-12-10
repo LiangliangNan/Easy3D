@@ -35,9 +35,9 @@ namespace easy3d {
 
 
 	Model::~Model() {
-		for (auto d : point_drawables_)	delete d;
-		for (auto d : line_drawables_)	delete d;
-		for (auto d : face_drawables_)	delete d;
+		for (auto d : points_drawables_)	delete d;
+		for (auto d : lines_drawables_)	delete d;
+		for (auto d : faces_drawables_)	delete d;
 	}
 
 
@@ -54,8 +54,8 @@ namespace easy3d {
 	}
 
 
-	PointsDrawable* Model::point_drawable(const std::string& name) const {
-		for (auto d : point_drawables_) {
+	PointsDrawable* Model::points_drawable(const std::string& name) const {
+		for (auto d : points_drawables_) {
 			if (d->name() == name)
 				return d;
 		}
@@ -63,8 +63,8 @@ namespace easy3d {
 	}
 
 
-	LinesDrawable* Model::line_drawable(const std::string& name) const {
-		for (auto d : line_drawables_) {
+	LinesDrawable* Model::lines_drawable(const std::string& name) const {
+		for (auto d : lines_drawables_) {
 			if (d->name() == name)
 				return d;
 		}
@@ -72,8 +72,8 @@ namespace easy3d {
 	}
 
 
-	FacesDrawable* Model::face_drawable(const std::string& name) const {
-		for (auto d : face_drawables_) {
+	FacesDrawable* Model::faces_drawable(const std::string& name) const {
+		for (auto d : faces_drawables_) {
 			if (d->name() == name)
 				return d;
 		}
@@ -81,41 +81,41 @@ namespace easy3d {
 	}
 
 
-	PointsDrawable* Model::add_point_drawable(const std::string& name) {
-		for (auto d : point_drawables_) {
+	PointsDrawable* Model::add_points_drawable(const std::string& name) {
+		for (auto d : points_drawables_) {
 			if (d->name() == name) {
 				std::cerr << "Error: point drawable \'" << name << "\' already exists" << std::endl;
 				return nullptr;
 			}
 		}
 		PointsDrawable* d = new PointsDrawable(name);
-		point_drawables_.push_back(d);
+		points_drawables_.push_back(d);
 		return d;
 	}
 
 
-	LinesDrawable* Model::add_line_drawable(const std::string& name) {
-		for (auto d : line_drawables_) {
+	LinesDrawable* Model::add_lines_drawable(const std::string& name) {
+		for (auto d : lines_drawables_) {
 			if (d->name() == name) {
 				std::cerr << "line drawable \'" << name << "\' already exists" << std::endl;
 				return d;
 			}
 		}
 		LinesDrawable* d = new LinesDrawable(name);
-		line_drawables_.push_back(d);
+		lines_drawables_.push_back(d);
 		return d;
 	}
 
 
-	FacesDrawable* Model::add_face_drawable(const std::string& name) {
-		for (auto d : face_drawables_) {
+	FacesDrawable* Model::add_faces_drawable(const std::string& name) {
+		for (auto d : faces_drawables_) {
 			if (d->name() == name) {
 				std::cerr << "face drawable \'" << name << "\' already exists" << std::endl;
 				return d;
 			}
 		}
 		FacesDrawable* d = new FacesDrawable(name);
-		face_drawables_.push_back(d);
+		faces_drawables_.push_back(d);
 		return d;
 	}
 

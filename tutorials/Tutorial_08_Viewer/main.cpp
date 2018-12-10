@@ -38,7 +38,7 @@ void main() {
     Viewer viewer("Tutorial_08_Viewer");
 
 	// Create a mesh model.
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// In this example, we use the Easy3D example data (a building model) to
 	// create the model. 
@@ -48,7 +48,7 @@ void main() {
 		const vec3& p0 = demodata::vertices[i];
 		const vec3& p1 = demodata::vertices[i + 1];
 		const vec3& p2 = demodata::vertices[i + 2];
-		std::vector<Surface_mesh::Vertex> face_vertices = {
+		std::vector<SurfaceMesh::Vertex> face_vertices = {
 			mesh->add_vertex(p0),
 			mesh->add_vertex(p1),
 			mesh->add_vertex(p2)
@@ -57,7 +57,7 @@ void main() {
 	}
 
 	// Create a drawable for rendering the surface of this model.
-	FacesDrawable* drawable = mesh->add_face_drawable("surface");
+	FacesDrawable* drawable = mesh->add_faces_drawable("surface");
 
 	// Transfer vertex coordinates and colors to the GPU. 
 	drawable->update_vertex_buffer(demodata::vertices);

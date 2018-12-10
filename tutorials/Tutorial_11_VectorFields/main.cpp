@@ -36,13 +36,13 @@ int main() {
     Viewer viewer("Tutorial_11_VectorFields");
 
 	// Create a point cloud
-	Point_cloud* cloud = new Point_cloud;
+	PointCloud* cloud = new PointCloud;
 
 	// Load point cloud data from a file
     cloud->read("../../../Easy3D/data/building_with_normals.bin");
 
 	// Create a drawable for rendering the point cloud itself.
-	PointsDrawable* points_drawable = cloud->add_point_drawable("points");
+	PointsDrawable* points_drawable = cloud->add_points_drawable("points");
 
 	// Collect points, colors, and normals (if exist) and transfer them to GPU
 	auto points = cloud->get_vertex_property<vec3>("v:point");
@@ -79,7 +79,7 @@ int main() {
 		}
 
 		// Create a drawable for rendering the normal vectors.
-		LinesDrawable* normals_drawable = cloud->add_line_drawable("normals");
+		LinesDrawable* normals_drawable = cloud->add_lines_drawable("normals");
 		// Upload the data to the GPU.
 		normals_drawable->update_vertex_buffer(normal_points);
 		// We will draw the normal vectors in green color

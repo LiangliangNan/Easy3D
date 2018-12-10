@@ -32,15 +32,15 @@ using namespace easy3d;
 //		- access the two end points of each edge;
 //		- access the two faces connected by each edge
 
-Surface_mesh* old_mesh_from_previous_example() {
+SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Add 4 vertices
-	Surface_mesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-	Surface_mesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
-	Surface_mesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
-	Surface_mesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
+	SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
+	SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
+	SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
 
 	// Add 4 triangular faces
 	mesh->add_triangle(v0, v1, v3);
@@ -53,7 +53,7 @@ Surface_mesh* old_mesh_from_previous_example() {
 
 
 void main() {
-	Surface_mesh* mesh = old_mesh_from_previous_example();
+	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	
 	std::cout << "-------------------------------------------------------\n";
 	// The incident vertices of each vertex
@@ -98,10 +98,10 @@ void main() {
 	for (auto f : mesh->faces()) {
 		std::cout << "half-edges around face " << f << ": ";
 		// loop over all half-edges around the face
-		Surface_mesh::Halfedge_around_face_circulator h_fit = mesh->halfedges(f);
-		Surface_mesh::Halfedge_around_face_circulator h_end = h_fit;
+		SurfaceMesh::Halfedge_around_face_circulator h_fit = mesh->halfedges(f);
+		SurfaceMesh::Halfedge_around_face_circulator h_end = h_fit;
 		do {
-			Surface_mesh::Halfedge h = *h_fit;
+			SurfaceMesh::Halfedge h = *h_fit;
 			std::cout << h << " ";
 			++h_fit;
 		} while (h_fit != h_end);
@@ -114,9 +114,9 @@ void main() {
 	// loop over all edges
 	for (auto e : mesh->edges()) {
 		std::cout << "the two end points of edge " << e << ": ";
-		Surface_mesh::Vertex vs = mesh->vertex(e, 0);
+		SurfaceMesh::Vertex vs = mesh->vertex(e, 0);
 		std::cout << vs << " ";
-		Surface_mesh::Vertex vt = mesh->vertex(e, 1);
+		SurfaceMesh::Vertex vt = mesh->vertex(e, 1);
 		std::cout << vt << " " << std::endl;
 	}
 
@@ -126,13 +126,13 @@ void main() {
 	// loop over all edges
 	for (auto e : mesh->edges()) {
 		std::cout << "the two faces connected edge " << e << ": ";
-		Surface_mesh::Halfedge h0 = mesh->halfedge(e, 0);
+		SurfaceMesh::Halfedge h0 = mesh->halfedge(e, 0);
 		if (mesh->is_boundary(h0))
 			std::cout << "NULL" << " ";
 		else
 			std::cout << mesh->face(h0) << " ";
 	
-		Surface_mesh::Halfedge h1 = mesh->halfedge(e, 1);
+		SurfaceMesh::Halfedge h1 = mesh->halfedge(e, 1);
 		if (mesh->is_boundary(h1))
 			std::cout << "NULL" << " ";
 		else

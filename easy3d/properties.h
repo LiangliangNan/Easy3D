@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 

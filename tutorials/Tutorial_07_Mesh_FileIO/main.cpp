@@ -30,7 +30,7 @@ using namespace easy3d;
 
 void main() {
 	// Create a surface mesh
-	Surface_mesh* mesh = new Surface_mesh;
+	SurfaceMesh* mesh = new SurfaceMesh;
 
 	// Read a mesh specified by its file name
     std::string file_name = "../../../Easy3D/data/building.off";

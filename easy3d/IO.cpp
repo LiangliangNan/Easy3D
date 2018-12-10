@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -49,7 +50,7 @@ namespace easy3d {
 
 	//== IMPLEMENTATION ===========================================================
 
-	bool read_cloud(Point_cloud& cloud, const std::string& filename)
+	bool read_cloud(PointCloud& cloud, const std::string& filename)
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
@@ -81,20 +82,20 @@ namespace easy3d {
 		cloud.resize(num);
 
 		// read the points block
-		Point_cloud::Vertex_property<vec3> points = cloud.vertex_property<vec3>("v:point");
+		PointCloud::Vertex_property<vec3> points = cloud.vertex_property<vec3>("v:point");
 		input.read((char*)points.data(), num * sizeof(vec3));
 
 		// read the colors block if exists
 		input.read((char*)(&num), sizeof(int));
 		if (num > 0) {
-			Point_cloud::Vertex_property<vec3> colors = cloud.vertex_property<vec3>("v:color");
+			PointCloud::Vertex_property<vec3> colors = cloud.vertex_property<vec3>("v:color");
 			input.read((char*)colors.data(), num * sizeof(vec3));
 		}
 
 		// read the normals block if exists
 		input.read((char*)(&num), sizeof(int));
 		if (num > 0) {
-			Point_cloud::Vertex_property<vec3> normals = cloud.vertex_property<vec3>("v:normal");
+			PointCloud::Vertex_property<vec3> normals = cloud.vertex_property<vec3>("v:normal");
 			input.read((char*)normals.data(), num * sizeof(vec3));
 		}
 
@@ -105,7 +106,7 @@ namespace easy3d {
 	//-----------------------------------------------------------------------------
 
 
-	bool write_cloud(const Point_cloud& cloud, const std::string& filename)
+	bool write_cloud(const PointCloud& cloud, const std::string& filename)
 	{
 		// extract file extension
 		std::string::size_type dot(filename.rfind("."));
@@ -125,18 +126,18 @@ namespace easy3d {
 		}
 
 		// write the points block
-		Point_cloud::Vertex_property<vec3> points = cloud.get_vertex_property<vec3>("v:point");
+		PointCloud::Vertex_property<vec3> points = cloud.get_vertex_property<vec3>("v:point");
 		int num = (int)points.vector().size();
 		output.write((char*)&num, sizeof(int));
 		output.write((char*)points.data(), num * sizeof(vec3));
 
-		Point_cloud::Vertex_property<vec3>  colors = cloud.get_vertex_property<vec3>("v:color");
+		PointCloud::Vertex_property<vec3>  colors = cloud.get_vertex_property<vec3>("v:color");
 		num = (int)colors.vector().size();
 		output.write((char*)&num, sizeof(int));
 		if (num > 0)
 			output.write((char*)colors.data(), num * sizeof(vec3));
 
-		Point_cloud::Vertex_property<vec3> normals = cloud.get_vertex_property<vec3>("v:normal");
+		PointCloud::Vertex_property<vec3> normals = cloud.get_vertex_property<vec3>("v:normal");
 		num = (int)normals.vector().size();
 		output.write((char*)&num, sizeof(int));
 		if (num > 0)
@@ -150,7 +151,7 @@ namespace easy3d {
 //== IMPLEMENTATION ===========================================================
 
 
-bool read_mesh(Surface_mesh& mesh, const std::string& filename)
+bool read_mesh(SurfaceMesh& mesh, const std::string& filename)
 {
     std::setlocale(LC_NUMERIC, "C");
 
@@ -189,7 +190,7 @@ bool read_mesh(Surface_mesh& mesh, const std::string& filename)
 //-----------------------------------------------------------------------------
 
 
-bool write_mesh(const Surface_mesh& mesh, const std::string& filename)
+bool write_mesh(const SurfaceMesh& mesh, const std::string& filename)
 {
     // extract file extension
     std::string::size_type dot(filename.rfind("."));

@@ -29,7 +29,7 @@ using namespace easy3d;
 
 void main() {
 	// Create a point cloud
-	Point_cloud* cloud = new Point_cloud;
+	PointCloud* cloud = new PointCloud;
 
 	// Add some points. Here we add 100 points on a 10*10 grid.
 	for (float i=-5; i<5; ++i) {

@@ -29,9 +29,8 @@
 
 /********************************************************************************************
 *
-* A Model is the base class for Mesh, PointSet, etc. 
-* A Model can have multiple drawable object, e.g., surface, vertices, wire frame, etc. 
-* A Model can update the display if needed.
+* A Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud. 
+* A Model can have multiple drawables, e.g., faces, vertices, wireframe. 
 *
 *	Version:	 1.1
 *	created:	 Dec. 03, 2018
@@ -68,19 +67,19 @@ namespace easy3d {
 
 		// Get the drawable named 'name'.
 		// Return NULL if not exist.
-		PointsDrawable* point_drawable(const std::string& name) const;
-		LinesDrawable*  line_drawable(const std::string& name) const;
-		FacesDrawable*  face_drawable(const std::string& name) const;
+		PointsDrawable* points_drawable(const std::string& name) const;
+		LinesDrawable*  lines_drawable(const std::string& name) const;
+		FacesDrawable*  faces_drawable(const std::string& name) const;
 
 		// Create a drawable named 'name'.
 		// Ignore the creation if a drawable named 'name' already exist.
-		PointsDrawable* add_point_drawable(const std::string& name);
-		LinesDrawable*  add_line_drawable(const std::string& name);
-		FacesDrawable*  add_face_drawable(const std::string& name);
+		PointsDrawable* add_points_drawable(const std::string& name);
+		LinesDrawable*  add_lines_drawable(const std::string& name);
+		FacesDrawable*  add_faces_drawable(const std::string& name);
 
-		const std::vector<PointsDrawable*>  point_drawables() { return point_drawables_; }
-		const std::vector<LinesDrawable*>   line_drawables() { return line_drawables_; }
-		const std::vector<FacesDrawable*>   face_drawables() { return face_drawables_; }
+		const std::vector<PointsDrawable*>  points_drawables() { return points_drawables_; }
+		const std::vector<LinesDrawable*>   lines_drawables() { return lines_drawables_; }
+		const std::vector<FacesDrawable*>   faces_drawables() { return faces_drawables_; }
 
 	protected:
 		std::string	name_;
@@ -88,9 +87,9 @@ namespace easy3d {
 		Box3		bbox_;
 		bool		bbox_known_;
 
-		std::vector<PointsDrawable*>  point_drawables_;
-		std::vector<LinesDrawable*>   line_drawables_;
-		std::vector<FacesDrawable*>   face_drawables_;
+		std::vector<PointsDrawable*>  points_drawables_;
+		std::vector<LinesDrawable*>   lines_drawables_;
+		std::vector<FacesDrawable*>   faces_drawables_;
 	};
 }
 

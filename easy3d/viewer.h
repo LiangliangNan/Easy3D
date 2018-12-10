@@ -43,8 +43,8 @@ namespace easy3d {
 
 	class Camera;
 	class Model;
-	class Point_cloud;
-	class Surface_mesh;
+	class PointCloud;
+	class SurfaceMesh;
 	class ShaderProgram;
 	class LinesDrawable;
 

@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -41,7 +42,7 @@
 //  4) file management (unable reading and writing large blocks);
 //  5) selection, etc.
 // Thus I have this implementation inspired by (actually some code is taken from) 
-// Surface_mesh: https://opensource.cit-ec.de/projects/surface_mesh
+// SurfaceMesh: https://opensource.cit-ec.de/projects/surface_mesh
 // The idea behind is that all coordinate and associated attribute values
 // are stored as std::vector<T
 
@@ -67,7 +68,7 @@ namespace easy3d {
 
 
 /// A for point clouds.
-class Point_cloud : public Model
+class PointCloud : public Model
 {
 
 public: //------------------------------------------------------ topology types
@@ -108,7 +109,7 @@ public: //------------------------------------------------------ topology types
 
     private:
         friend class Vertex_iterator;
-        friend class Point_cloud;
+        friend class PointCloud;
         int idx_;
     };
 
@@ -181,7 +182,7 @@ public: //------------------------------------------------------ iterator types
     public:
 
         /// Default constructor
-        Vertex_iterator(Vertex v=Vertex(), const Point_cloud* m=NULL) : hnd_(v), cloud_(m)
+        Vertex_iterator(Vertex v=Vertex(), const PointCloud* m=NULL) : hnd_(v), cloud_(m)
         {
             if (cloud_ && cloud_->garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
         }
@@ -221,7 +222,7 @@ public: //------------------------------------------------------ iterator types
 
     private:
         Vertex  hnd_;
-        const Point_cloud* cloud_;
+        const PointCloud* cloud_;
     };
 
 
@@ -247,19 +248,19 @@ public: //-------------------------------------------- constructor / destructor
     //@{
 
     /// default constructor
-    Point_cloud();
+    PointCloud();
 
     // destructor (is virtual, since we inherit from Geometry_representation)
-    virtual ~Point_cloud();
+    virtual ~PointCloud();
 
     /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
-    Point_cloud(const Point_cloud& rhs) { operator=(rhs); }
+    PointCloud(const PointCloud& rhs) { operator=(rhs); }
 
     /// assign \c rhs to \c *this. performs a deep copy of all properties.
-    Point_cloud& operator=(const Point_cloud& rhs);
+    PointCloud& operator=(const PointCloud& rhs);
 
     /// assign \c rhs to \c *this. does not copy custom properties.
-    Point_cloud& assign(const Point_cloud& rhs);
+    PointCloud& assign(const PointCloud& rhs);
 
     //@}
 
@@ -498,7 +499,7 @@ private: //------------------------------------------------------- private data
 //------------------------------------------------------------ output operators
 
 
-inline std::ostream& operator<<(std::ostream& os, Point_cloud::Vertex v)
+inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v)
 {
     return (os << 'v' << v.idx());
 }

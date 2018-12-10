@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ * 
  *----------------------------------------------------------*/
 
 
@@ -53,23 +54,23 @@ namespace easy3d {
 
 //=============================================================================
 
-bool read_cloud(Point_cloud& cloud, const std::string& filename);
-bool write_cloud(const Point_cloud& cloud, const std::string& filename);
+bool read_cloud(PointCloud& cloud, const std::string& filename);
+bool write_cloud(const PointCloud& cloud, const std::string& filename);
 
 //=============================================================================
 
 
-bool read_mesh(Surface_mesh& mesh, const std::string& filename);
-bool read_off(Surface_mesh& mesh, const std::string& filename);
-bool read_obj(Surface_mesh& mesh, const std::string& filename);
-bool read_poly(Surface_mesh& mesh, const std::string& filename);
-bool read_stl(Surface_mesh& mesh, const std::string& filename);
+bool read_mesh(SurfaceMesh& mesh, const std::string& filename);
+bool read_off(SurfaceMesh& mesh, const std::string& filename);
+bool read_obj(SurfaceMesh& mesh, const std::string& filename);
+bool read_poly(SurfaceMesh& mesh, const std::string& filename);
+bool read_stl(SurfaceMesh& mesh, const std::string& filename);
 
-bool write_mesh(const Surface_mesh& mesh, const std::string& filename);
-bool write_off(const Surface_mesh& mesh, const std::string& filename);
-bool write_obj(const Surface_mesh& mesh, const std::string& filename);
-bool write_poly(const Surface_mesh& mesh, const std::string& filename);
-bool write_stl(const Surface_mesh& mesh, const std::string& filename);
+bool write_mesh(const SurfaceMesh& mesh, const std::string& filename);
+bool write_off(const SurfaceMesh& mesh, const std::string& filename);
+bool write_obj(const SurfaceMesh& mesh, const std::string& filename);
+bool write_poly(const SurfaceMesh& mesh, const std::string& filename);
+bool write_stl(const SurfaceMesh& mesh, const std::string& filename);
 
 
 //=============================================================================

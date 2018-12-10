@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -51,8 +52,8 @@ namespace easy3d {
 //== IMPLEMENTATION ===========================================================
 
 
-Surface_mesh::
-Surface_mesh()
+SurfaceMesh::
+SurfaceMesh()
 {
     // allocate standard properties
     // same list is used in operator=() and assign()
@@ -74,8 +75,8 @@ Surface_mesh()
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::
-~Surface_mesh()
+SurfaceMesh::
+~SurfaceMesh()
 {
 }
 
@@ -83,9 +84,9 @@ Surface_mesh::
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh&
-Surface_mesh::
-operator=(const Surface_mesh& rhs)
+SurfaceMesh&
+SurfaceMesh::
+operator=(const SurfaceMesh& rhs)
 {
     if (this != &rhs)
     {
@@ -123,9 +124,9 @@ operator=(const Surface_mesh& rhs)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh&
-Surface_mesh::
-assign(const Surface_mesh& rhs)
+SurfaceMesh&
+SurfaceMesh::
+assign(const SurfaceMesh& rhs)
 {
     if (this != &rhs)
     {
@@ -180,7 +181,7 @@ assign(const Surface_mesh& rhs)
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 read(const std::string& filename)
 {
     return read_mesh(*this, filename);
@@ -191,7 +192,7 @@ read(const std::string& filename)
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 write(const std::string& filename) const
 {
     return write_mesh(*this, filename);
@@ -202,7 +203,7 @@ write(const std::string& filename) const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 clear()
 {
     vprops_.resize(0);
@@ -222,7 +223,7 @@ clear()
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 free_memory()
 {
     vprops_.free_memory();
@@ -237,7 +238,7 @@ free_memory()
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 reserve(unsigned int nvertices,
         unsigned int nedges,
         unsigned int nfaces )
@@ -254,7 +255,7 @@ reserve(unsigned int nvertices,
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 property_stats() const
 {
     std::vector<std::string> props;
@@ -289,8 +290,8 @@ property_stats() const
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Vertex
-Surface_mesh::
+SurfaceMesh::Vertex
+SurfaceMesh::
 add_vertex(const vec3& p)
 {
     Vertex v = new_vertex();
@@ -302,8 +303,8 @@ add_vertex(const vec3& p)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Halfedge
-Surface_mesh::
+SurfaceMesh::Halfedge
+SurfaceMesh::
 find_halfedge(Vertex start, Vertex end) const
 {
     assert(is_valid(start) && is_valid(end));
@@ -329,8 +330,8 @@ find_halfedge(Vertex start, Vertex end) const
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Edge
-Surface_mesh::
+SurfaceMesh::Edge
+SurfaceMesh::
 find_edge(Vertex a, Vertex b) const
 {
     Halfedge h = find_halfedge(a,b);
@@ -342,7 +343,7 @@ find_edge(Vertex a, Vertex b) const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 adjust_outgoing_halfedge(Vertex v)
 {
     Halfedge h  = halfedge(v);
@@ -367,8 +368,8 @@ adjust_outgoing_halfedge(Vertex v)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Face
-Surface_mesh::
+SurfaceMesh::Face
+SurfaceMesh::
 add_triangle(Vertex v0, Vertex v1, Vertex v2)
 {
     add_face_vertices_.resize(3);
@@ -382,8 +383,8 @@ add_triangle(Vertex v0, Vertex v1, Vertex v2)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Face
-Surface_mesh::
+SurfaceMesh::Face
+SurfaceMesh::
 add_quad(Vertex v0, Vertex v1, Vertex v2, Vertex v3)
 {
     add_face_vertices_.resize(4);
@@ -398,8 +399,8 @@ add_quad(Vertex v0, Vertex v1, Vertex v2, Vertex v3)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Face
-Surface_mesh::
+SurfaceMesh::Face
+SurfaceMesh::
 add_face(const std::vector<Vertex>& vertices)
 {
     const std::size_t n(vertices.size());
@@ -430,7 +431,7 @@ add_face(const std::vector<Vertex>& vertices)
     {
         if ( !is_boundary(vertices[i]) )
         {
-            std::cerr << "Surface_mesh::add_face: complex vertex\n";
+            std::cerr << "SurfaceMesh::add_face: complex vertex\n";
             return Face();
         }
 
@@ -439,7 +440,7 @@ add_face(const std::vector<Vertex>& vertices)
 
         if (!is_new[i] && !is_boundary(halfedges[i]))
         {
-            std::cerr << "Surface_mesh::add_face: complex edge\n";
+            std::cerr << "SurfaceMesh::add_face: complex edge\n";
             return Face();
         }
     }
@@ -475,7 +476,7 @@ add_face(const std::vector<Vertex>& vertices)
                 // ok ?
                 if (boundary_next == inner_next)
                 {
-                    std::cerr << "Surface_mesh::add_face: patch re-linking failed\n";
+                    std::cerr << "SurfaceMesh::add_face: patch re-linking failed\n";
                     return Face();
                 }
 
@@ -596,7 +597,7 @@ add_face(const std::vector<Vertex>& vertices)
 
 
 unsigned int
-Surface_mesh::
+SurfaceMesh::
 valence(Vertex v) const
 {
     unsigned int count(0);
@@ -616,7 +617,7 @@ valence(Vertex v) const
 
 
 unsigned int
-Surface_mesh::
+SurfaceMesh::
 valence(Face f) const
 {
     unsigned int count(0);
@@ -635,7 +636,7 @@ valence(Face f) const
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 is_triangle_mesh() const
 {
     Face_iterator fit=faces_begin(), fend=faces_end();
@@ -651,7 +652,7 @@ is_triangle_mesh() const
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 is_quad_mesh() const
 {
     Face_iterator fit=faces_begin(), fend=faces_end();
@@ -667,7 +668,7 @@ is_quad_mesh() const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 triangulate()
 {
     /* The iterators will stay valid, even though new faces are added,
@@ -684,7 +685,7 @@ triangulate()
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 triangulate(Face f)
 {
     /*
@@ -734,7 +735,7 @@ triangulate(Face f)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 update_face_normals()
 {
     if (!fnormal_)
@@ -751,7 +752,7 @@ update_face_normals()
 
 
 vec3
-Surface_mesh::
+SurfaceMesh::
 compute_face_normal(Face f) const
 {
     Halfedge h = halfedge(f);
@@ -792,7 +793,7 @@ compute_face_normal(Face f) const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 update_vertex_normals()
 {
     if (!vnormal_)
@@ -809,7 +810,7 @@ update_vertex_normals()
 
 
 vec3
-Surface_mesh::
+SurfaceMesh::
 compute_vertex_normal(Vertex v) const
 {
     vec3     nn(0,0,0);
@@ -869,7 +870,7 @@ compute_vertex_normal(Vertex v) const
 
 
 float
-Surface_mesh::
+SurfaceMesh::
 edge_length(Edge e) const
 {
     return norm(vpoint_[vertex(e,0)] - vpoint_[vertex(e,1)]);
@@ -880,7 +881,7 @@ edge_length(Edge e) const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 split(Face f, Vertex v)
 {
     /*
@@ -933,8 +934,8 @@ split(Face f, Vertex v)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Halfedge
-Surface_mesh::
+SurfaceMesh::Halfedge
+SurfaceMesh::
 split(Edge e, Vertex v)
 {
     Halfedge h0 = halfedge(e, 0);
@@ -1036,8 +1037,8 @@ split(Edge e, Vertex v)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Halfedge
-Surface_mesh::
+SurfaceMesh::Halfedge
+SurfaceMesh::
 insert_vertex(Halfedge h0, Vertex v)
 {
     // before:
@@ -1093,8 +1094,8 @@ insert_vertex(Halfedge h0, Vertex v)
 //-----------------------------------------------------------------------------
 
 
-Surface_mesh::Halfedge
-Surface_mesh::
+SurfaceMesh::Halfedge
+SurfaceMesh::
 insert_edge(Halfedge h0, Halfedge h1)
 {
     assert(face(h0) == face(h1));
@@ -1137,7 +1138,7 @@ insert_edge(Halfedge h0, Halfedge h1)
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 is_flip_ok(Edge e) const
 {
     // boundary edges cannot be flipped
@@ -1165,7 +1166,7 @@ is_flip_ok(Edge e) const
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 flip(Edge e)
 {
     // CAUTION : Flipping a halfedge may result in
@@ -1221,7 +1222,7 @@ flip(Edge e)
 
 
 bool
-Surface_mesh::
+SurfaceMesh::
 is_collapse_ok(Halfedge v0v1)
 {
     Halfedge  v1v0(opposite_halfedge(v0v1));
@@ -1285,7 +1286,7 @@ is_collapse_ok(Halfedge v0v1)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 collapse(Halfedge h)
 {
     Halfedge h0 = h;
@@ -1308,7 +1309,7 @@ collapse(Halfedge h)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 remove_edge(Halfedge h)
 {
     Halfedge  hn = next_halfedge(h);
@@ -1365,7 +1366,7 @@ remove_edge(Halfedge h)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 remove_loop(Halfedge h)
 {
     Halfedge  h0 = h;
@@ -1418,7 +1419,7 @@ remove_loop(Halfedge h)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 delete_vertex(Vertex v)
 {
     if (vdeleted_[v])  return;
@@ -1457,7 +1458,7 @@ delete_vertex(Vertex v)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 delete_edge(Edge e)
 {
     if (edeleted_[e])  return;
@@ -1473,7 +1474,7 @@ delete_edge(Edge e)
 //-----------------------------------------------------------------------------
 
 void
-Surface_mesh::
+SurfaceMesh::
 delete_face(Face f)
 {
     if (fdeleted_[f])  return;
@@ -1592,7 +1593,7 @@ delete_face(Face f)
 
 
 void
-Surface_mesh::
+SurfaceMesh::
 garbage_collection()
 {
     int  i, i0, i1,

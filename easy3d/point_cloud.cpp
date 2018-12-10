@@ -23,13 +23,14 @@
  *
  * the code is adapted from Surface_mesh with modifications.
  *		- Surface_mesh (version 1.1)
- * The orignal code is available at
+ * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
  *
  * Surface_mesh is a halfedge-based mesh data structure for
  * representing and processing 2-manifold polygonal surface
  * meshes. It is implemented in C++ and designed with an
  * emphasis on simplicity and efficiency.
+ *
  *----------------------------------------------------------*/
 
 
@@ -51,7 +52,7 @@ namespace easy3d {
 //== IMPLEMENTATION ===========================================================
 
 
-Point_cloud::Point_cloud()
+PointCloud::PointCloud()
 {
     // allocate standard properties
     // same list is used in operator=() and assign()
@@ -68,7 +69,7 @@ Point_cloud::Point_cloud()
 //-----------------------------------------------------------------------------
 
 
-Point_cloud::~Point_cloud()
+PointCloud::~PointCloud()
 {
 }
 
@@ -76,7 +77,7 @@ Point_cloud::~Point_cloud()
 //-----------------------------------------------------------------------------
 
 
-Point_cloud& Point_cloud::operator=(const Point_cloud& rhs)
+PointCloud& PointCloud::operator=(const PointCloud& rhs)
 {
     if (this != &rhs)
     {
@@ -100,7 +101,7 @@ Point_cloud& Point_cloud::operator=(const Point_cloud& rhs)
 //-----------------------------------------------------------------------------
 
 
-Point_cloud& Point_cloud::assign(const Point_cloud& rhs)
+PointCloud& PointCloud::assign(const PointCloud& rhs)
 {
     if (this != &rhs)
     {
@@ -132,7 +133,7 @@ Point_cloud& Point_cloud::assign(const Point_cloud& rhs)
 //-----------------------------------------------------------------------------
 
 
-bool Point_cloud::read(const std::string& filename)
+bool PointCloud::read(const std::string& filename)
 {
 	return read_cloud(*this, filename);
 }
@@ -142,7 +143,7 @@ bool Point_cloud::read(const std::string& filename)
 
 
 bool
-Point_cloud::
+PointCloud::
 write(const std::string& filename) const
 {
 	return write_cloud(*this, filename);
@@ -152,7 +153,7 @@ write(const std::string& filename) const
 //-----------------------------------------------------------------------------
 
 
-void Point_cloud::clear()
+void PointCloud::clear()
 {
     vprops_.resize(0);
 
@@ -166,7 +167,7 @@ void Point_cloud::clear()
 //-----------------------------------------------------------------------------
 
 
-void Point_cloud::free_memory()
+void PointCloud::free_memory()
 {
     vprops_.free_memory();
 }
@@ -175,7 +176,7 @@ void Point_cloud::free_memory()
 //-----------------------------------------------------------------------------
 
 
-void Point_cloud::property_stats() const
+void PointCloud::property_stats() const
 {
     std::vector<std::string> props = vertex_properties();
 
@@ -193,7 +194,7 @@ void Point_cloud::property_stats() const
 //-----------------------------------------------------------------------------
 
 
-Point_cloud::Vertex Point_cloud::add_vertex(const vec3& p)
+PointCloud::Vertex PointCloud::add_vertex(const vec3& p)
 {
     Vertex v = new_vertex();
     vpoint_[v] = p;
@@ -204,7 +205,7 @@ Point_cloud::Vertex Point_cloud::add_vertex(const vec3& p)
 //-----------------------------------------------------------------------------
 
 
-void Point_cloud::delete_vertex(Vertex v)
+void PointCloud::delete_vertex(Vertex v)
 {
     if (vdeleted_[v])  return;
 
@@ -218,7 +219,7 @@ void Point_cloud::delete_vertex(Vertex v)
 //-----------------------------------------------------------------------------
 
 
-void Point_cloud::garbage_collection()
+void PointCloud::garbage_collection()
 {
 	int  nV(vertices_size());
 
