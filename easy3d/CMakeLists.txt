@@ -79,4 +79,4 @@ if (MSVC)
 endif()
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(${PROJECT_NAME} INTERFACE ${OPENGL_LIBRARIES} glew glfw)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES} glew glfw)
