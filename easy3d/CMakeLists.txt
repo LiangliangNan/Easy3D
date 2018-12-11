@@ -78,5 +78,5 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
-
-target_link_libraries(${PROJECT_NAME} PRIVATE glew glfw)
+find_package(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} INTERFACE ${OPENGL_LIBRARIES} glew glfw)
