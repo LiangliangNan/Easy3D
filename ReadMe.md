@@ -71,7 +71,7 @@ Figure 1                                   |  Figure 2            		        |  F
 
 ### Build
 
-Easy3D has been tested on macOs, Linux, and Window. You should also be able to build it on other platforms.
+Easy3D has been tested on macOs, Linux, and Windows. You should also be able to build it on other platforms.
 
 Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
 and then use your favorite IDE to work with Easy3D.
