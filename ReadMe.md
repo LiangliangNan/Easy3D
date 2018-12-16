@@ -43,7 +43,7 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 
 Bellow is another example showing how to render a surface model (the result is in Figure 2).
 ```c++
-	SurfaceMesh* mesh = ... // a mesh created by your algorithm or loaded from a file
+	SurfaceMesh* mesh = new SurfaceMesh;	// create a surface mesh
 	
 	// create a drawable for rendering the surface of this model
 	FacesDrawable* drawable = mesh->add_faces_drawable("surface");
