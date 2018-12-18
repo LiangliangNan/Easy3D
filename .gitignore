@@ -3,3 +3,4 @@ x64
 *.user
 *.log
 build
+.DS_Store
