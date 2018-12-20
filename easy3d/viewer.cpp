@@ -474,14 +474,6 @@ namespace easy3d {
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
         camera_->frame()->action_start();
-		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
-			bool found = false;
-			vec3 p = point_under_pixel(x, y, found);
-			if (found)
-				camera_->setPivotPoint(p);
-			else
-				camera_->setPivotPoint(camera_->sceneCenter());
-		}
 		return false;
 	}
 
@@ -505,10 +497,10 @@ namespace easy3d {
 			switch (button)
 			{
 			case GLFW_MOUSE_BUTTON_LEFT:
-				camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+                camera_->frame()->action_rotate(x, y, dx, dy, camera_);
 				break;
 			case GLFW_MOUSE_BUTTON_RIGHT:
-				camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+                camera_->frame()->action_translate(x, y, dx, dy, camera_);
 				break;
 			case GLFW_MOUSE_BUTTON_MIDDLE:
 				if (dy != 0)
@@ -871,13 +863,10 @@ namespace easy3d {
 			"  Ctrl + S:        Save file										\n"
 			"  Left:            Rotate scene									\n"
 			"  Right:           Translate scene									\n"
-			"  Alt + Left:      Rotate scene (screen based)						\n"
-			"  Alt + Right:     Translate scene (screen based)					\n"
 			"  Middle/Wheel:    Zoom out/in										\n"
 			"  Ctrl + '-'/'+':  Zoom out/in										\n"
 			"  F:               Fit screen (entire scene/all models)     		\n"
 			"  C:               Fit screen (current model only)					\n"
-			"  Shift + Right:   Set/unset pivot point							\n"
 			"  P:               Toggle perspective/orthographic projection)		\n"
 			"  A:               Toggle axes										\n"
 			"  W:               Toggle wireframe								\n"
