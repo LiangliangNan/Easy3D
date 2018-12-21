@@ -473,8 +473,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-        camera_->frame()->action_start();
-		return false;
+        return false;
 	}
 
 
@@ -484,8 +483,6 @@ namespace easy3d {
 			int ymin = std::min(mouse_pressed_y_, y);	int ymax = std::max(mouse_pressed_y_, y);
 			camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
 		}
-		else
-			camera_->frame()->action_end();
 
 		button_ = -1;
 		return false;
@@ -532,8 +529,6 @@ namespace easy3d {
 		else if (key == GLFW_KEY_C && modifiers == 0) {
 			if (!models_.empty() && model_idx_ >= 0 && model_idx_ < models_.size()) {
 				const Box3& box = models_[model_idx_]->bounding_box();
-				//camera_->fitSphere(box.center(), box.diagonal() * 0.5f);
-				//camera_->setSceneCenter(box.center());
 				camera_->setSceneBoundingBox(box.min(), box.max());
 				camera_->showEntireScene();
 			}
@@ -546,30 +541,6 @@ namespace easy3d {
 				camera_->setSceneBoundingBox(box.min(), box.max());
 				camera_->showEntireScene();
 			}
-		}
-		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
-			float angle = float(1 * M_PI / 180.0f); // turn left, 1 degrees each step
-			camera_->frame()->action_turn(angle, camera_);
-		}
-		else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
-			float angle = float(1 * M_PI / 180.0f); // turn right, 1 degrees each step
-			camera_->frame()->action_turn(-angle, camera_);
-		}
-		else if (key == GLFW_KEY_UP && modifiers == 0) {	// move camera forward
-			float step = 0.02f * camera_->sceneRadius();
-			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
-		}
-		else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
-			float step = 0.02f * camera_->sceneRadius();
-			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
-		}
-		else if (key == GLFW_KEY_UP && modifiers == GLFW_MOD_CONTROL) {	// move camera up
-			float step = 0.02f * camera_->sceneRadius();
-			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
-		}
-		else if (key == GLFW_KEY_DOWN && modifiers == GLFW_MOD_CONTROL) {	// move camera down 
-			float step = 0.02f * camera_->sceneRadius();
-			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
 		else if (key == GLFW_KEY_M && modifiers == 0) {
 			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL 
@@ -593,16 +564,6 @@ namespace easy3d {
 				camera_->setType(Camera::ORTHOGRAPHIC);
 			else
 				camera_->setType(Camera::PERSPECTIVE);
-		}
-		else if (key == GLFW_KEY_SPACE && modifiers == 0) {
-			// Aligns camera
-			Frame frame;
-			frame.setTranslation(camera_->pivotPoint());
-			camera_->frame()->alignWithFrame(&frame, true);
-
-			// Aligns frame
-			//if (manipulatedFrame())
-			//	manipulatedFrame()->alignWithFrame(camera_->frame());
 		}
 		else if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL)
 			open();
@@ -861,8 +822,8 @@ namespace easy3d {
 			"  F1:              Help											\n"
 			"  Ctrl + O:        Open file										\n"
 			"  Ctrl + S:        Save file										\n"
-			"  Left:            Rotate scene									\n"
-			"  Right:           Translate scene									\n"
+            "  Left:            Rotate      									\n"
+            "  Right:           Translate    									\n"
 			"  Middle/Wheel:    Zoom out/in										\n"
 			"  Ctrl + '-'/'+':  Zoom out/in										\n"
 			"  F:               Fit screen (entire scene/all models)     		\n"

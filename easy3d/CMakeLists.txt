@@ -8,7 +8,6 @@ set(${PROJECT_NAME}_HEADERS
     ./box.h
     ./camera.h
     ./constant.h
-    ./constraint.h
     ./drawable.h
     ./file_dialog.h
     ./frame.h
@@ -38,7 +37,6 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
     ./camera.cpp
-    ./constraint.cpp
     ./drawable.cpp
     ./file_dialog.cpp
     ./frame.cpp
