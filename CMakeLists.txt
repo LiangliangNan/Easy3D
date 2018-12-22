@@ -18,7 +18,7 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Build examples and third-parties
+# Build tutorials
 option(EASY3D_BUILD_TUTORIALS    "Build Easy3D Tutorials"     ON)
 
 ################################################################################
