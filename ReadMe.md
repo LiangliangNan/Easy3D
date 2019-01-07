@@ -7,7 +7,7 @@
 
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering. Users do not need to touch the low-level APIs of OpenGL.
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed fucntion calls). Users do not need to touch the low-level APIs of OpenGL. 
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
  
