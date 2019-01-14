@@ -973,6 +973,15 @@ namespace easy3d {
 	}
 
 
+    Model* Viewer::current_model() const {
+        if (models_.empty())
+            return nullptr;
+        if (model_idx_ < models_.size())
+            return models_[model_idx_];
+        return nullptr;
+    }
+
+
 	bool Viewer::save() const {
 		std::vector< std::pair<std::string, std::string> > filetypes = {
 			{"obj", "Wavefront Mesh"},
@@ -982,8 +991,21 @@ namespace easy3d {
 		const std::string& file_name = easy3d::file_dialog(filetypes, true);
 		if (file_name.empty())
 			return false;
-		std::cout << "save file not implemented yet" << std::endl;
-		return false;
+
+        bool saved = false;
+        if (dynamic_cast<const PointCloud*>(current_model())) {
+            const PointCloud* cloud = dynamic_cast<const PointCloud*>(current_model());
+            saved = cloud->write(file_name);
+        }
+        else if (dynamic_cast<const SurfaceMesh*>(current_model())) {
+            const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(current_model());
+            saved = mesh->write(file_name);
+        }
+
+        if (saved)
+            std::cout << "file successfully saved" << std::endl;
+
+        return saved;
 	}
 
 	void Viewer::draw_corner_axes() {

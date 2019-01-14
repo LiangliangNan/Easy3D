@@ -12,20 +12,16 @@ set(${PROJECT_NAME}_HEADERS
     ./file_dialog.h
     ./frame.h
     ./IO.h
-    ./line.h
     ./manipulated_camera_frame.h
     ./manipulated_frame.h
     ./mat.h
     ./model.h
     ./opengl_error.h
     ./opengl_info.h
-    ./plane.h
     ./point_cloud.h
     ./properties.h
     ./quat.h
-    ./rect.h
     ./resources.h
-    ./segment.h
     ./shader_program.h
     ./surface_mesh.h
     ./transform.h

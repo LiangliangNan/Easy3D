@@ -109,6 +109,9 @@ namespace easy3d {
 		// The 'model' can be a point cloud or a mesh
 		void add_model(Model* model);
 
+        const std::vector<Model*>& models() const { return models_; }
+        Model* current_model() const;
+
 	protected:
 
 		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when 

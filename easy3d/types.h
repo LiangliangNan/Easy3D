@@ -26,10 +26,6 @@
 
 #include <easy3d/vec.h>
 #include <easy3d/mat.h>
-#include <easy3d/rect.h>
-#include <easy3d/line.h>
-#include <easy3d/segment.h>
-#include <easy3d/plane.h>
 #include <easy3d/box.h>
 #include <easy3d/quat.h>
 
@@ -48,10 +44,6 @@ namespace easy3d {
     typedef Vec<3, float>				vec3;
     typedef Vec<4, float>				vec4;
 
-    typedef Vec<2, int32_t>				ivec2;
-    typedef Vec<3, int32_t>				ivec3;
-    typedef Vec<4, int32_t>				ivec4;
-
     typedef Mat2<float>					mat2;
     typedef Mat3<float>					mat3;
     typedef Mat4<float>					mat4;
@@ -60,19 +52,8 @@ namespace easy3d {
 
     typedef Quat<float>					quat;
 
-    typedef GenericLine<2, float>		Line2;
-    typedef GenericLine<3, float>		Line3;
-
-    typedef GenericSegment<2, float>	Segment2;
-    typedef GenericSegment<3, float>	Segment3;
-
-    typedef GenericPlane3<float>		Plane3;
-
     typedef GenericBox2<float>			Box2;
     typedef GenericBox3<float>			Box3;
-
-    typedef GenericRectangle<float>		Rect;
-    typedef GenericRectangle<int32_t>	iRect;
 
 }
 
