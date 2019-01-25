@@ -11,7 +11,7 @@
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
 
-<span style="color:blue">The following rendering algorithms will come soon:</span>
+<span style="color:red">The following rendering algorithms will be available soon:</span>
  - Ambient occlusion: SSAO, HBAO, cache-aware HBAO
  - Shadow: hard shadow (shadow maps), soft shadow (PCSS)
  - Transparency: average color blending, dual depth peeling
