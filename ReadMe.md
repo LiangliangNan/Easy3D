@@ -7,17 +7,17 @@
 
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed fucntion calls). Users do not need to touch the low-level APIs of OpenGL. Easy3D implemented the following rendering algorithms (coming soon ...):
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed fucntion calls). Users do not need to touch the low-level APIs of OpenGL. 
+* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+* Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
+
+<span style="color:blue">The following rendering algorithms will come soon:</span>
  - Ambient occlusion: SSAO, HBAO, cache-aware HBAO
  - Shadow: hard shadow (shadow maps), soft shadow (PCSS)
  - Transparency: average color blending, dual depth peeling
  - Eye-dome lighting: for rendering point clouds without normal information
  - and more ...
  
-* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
-* Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
- 
-
 ### A quick glance ###
 
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example first loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
