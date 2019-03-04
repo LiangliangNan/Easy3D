@@ -3,8 +3,16 @@
 ### Easy3D is an open source library for 3D modeling and geometry processing. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 ### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
----
+<center>
+	
+<img src="images/cloud.png" height="180">  |  <img src="images/mesh.png" height="180">  |  <img src="images/scalar.png" height="180">
+:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
+Figure 1                                   |  Figure 2            		        |  Figure 3
 
+</center>
+
+---
+  
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
 * High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed fucntion calls). Users do not need to touch the low-level APIs of OpenGL. 
@@ -65,15 +73,6 @@ Bellow is another example showing how to render a surface model (the result is i
 ```
 
 By abstracting geometric elements as drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
-
-<center>
-	
-<img src="images/cloud.png" height="180">  |  <img src="images/mesh.png" height="180">  |  <img src="images/scalar.png" height="180">
-:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
-Figure 1                                   |  Figure 2            		        |  Figure 3
-
-</center>
-  
 
 ### Build
 
