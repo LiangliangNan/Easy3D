@@ -49,8 +49,8 @@ namespace easy3d {
         FT x_max() const { if (initialized_) return x_max_; else return 0; }
         FT y_max() const { if (initialized_) return y_max_; else return 0; }
 
-        FT min(unsigned axis) const { if (initialized_) return (axis == 0) ? x_min_ : y_min_; else return 0; }
-        FT max(unsigned axis) const { if (initialized_) return (axis == 0) ? x_max_ : y_max_; else return 0; }
+        FT min(unsigned int axis) const { if (initialized_) return (axis == 0) ? x_min_ : y_min_; else return 0; }
+        FT max(unsigned int axis) const { if (initialized_) return (axis == 0) ? x_max_ : y_max_; else return 0; }
 
         FT x_range() const { if (initialized_) return x_max() - x_min(); else return 0; }
         FT y_range() const { if (initialized_) return y_max() - y_min(); else return 0; }
@@ -68,8 +68,11 @@ namespace easy3d {
         }
 
         FT diagonal() const {
-            if (initialized_)
-                return ::sqrt(mpl_sqr(x_max() - x_min()) + mpl_sqr(y_max() - y_min()));
+            if (initialized_) {
+                FT dx = x_max() - x_min();
+                FT dy = y_max() - y_min();
+                return std::sqrt(dx * dx + dy * dy);
+            }
             else
                 return FT(0);
         }
@@ -160,8 +163,8 @@ namespace easy3d {
         FT y_max() const { if (initialized_) return y_max_; else return 0; }
         FT z_max() const { if (initialized_) return z_max_; else return 0; }
 
-        FT min(unsigned axis) const { if (initialized_) return (axis == 0) ? x_min_ : ((axis == 1) ? y_min_ : z_min_); else return 0; }
-        FT max(unsigned axis) const { if (initialized_) return (axis == 0) ? x_max_ : ((axis == 1) ? y_max_ : z_max_); else return 0; }
+        FT min(unsigned int axis) const { if (initialized_) return (axis == 0) ? x_min_ : ((axis == 1) ? y_min_ : z_min_); else return 0; }
+        FT max(unsigned int axis) const { if (initialized_) return (axis == 0) ? x_max_ : ((axis == 1) ? y_max_ : z_max_); else return 0; }
 
         FT x_range() const { if (initialized_) return x_max() - x_min(); else return 0; }
         FT y_range() const { if (initialized_) return y_max() - y_min(); else return 0; }
