@@ -45,15 +45,15 @@ namespace easy3d {
         GenericBox2(const Vec<2, FT>& pmin, const Vec<2, FT>& pmax)
             : initialized_(true)
         {
-            x_min_ = pmin.x;  x_max_ = pmax.x;
-            y_min_ = pmin.y;  y_max_ = pmax.y;
+            x_min_ = std::min(pmin.x, pmax.x);  x_max_ = std::max(pmin.x, pmax.x);
+            y_min_ = std::min(pmin.y, pmax.y);  y_max_ = std::max(pmin.y, pmax.y);
         }
 
         // defined by center and radius
         GenericBox2(const Vec<2, FT>& c, FT r)
             : initialized_(true)
         {
-            Vec<2, FT> dir(1, 1, 1);
+            Vec<2, FT> dir(1, 1);
             dir.normalize();
             const Vec<2, FT>& pmin = c - dir * r;
             const Vec<2, FT>& pmax = c + dir * r;
