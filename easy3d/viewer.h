@@ -67,6 +67,9 @@ namespace easy3d {
 		// Enter the application main loop.
 		void run();
 
+        Camera* camera() { return camera_; }
+        const Camera* camera() const { return camera_; }
+
         std::string usage() const;
 
 		//-----------------------------------------------------

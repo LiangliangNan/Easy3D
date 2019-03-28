@@ -11,10 +11,4 @@ add_subdirectory("Tutorial_08_Viewer")
 add_subdirectory("Tutorial_09_Drawables")
 add_subdirectory("Tutorial_10_ScalarFields")
 add_subdirectory("Tutorial_11_VectorFields")
-
-
-#get_directory_property(subdir_list DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} SUBDIRECTORIES)
-#foreach(subdir ${subdir_list})
-#    add_subdirectory("${subdir}")
-#    message(STATUS "${subdir}")
-#endforeach()
+add_subdirectory("Tutorial_12_RealCamera")
