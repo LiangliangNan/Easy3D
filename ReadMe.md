@@ -10,7 +10,7 @@
 :-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
 Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
 
-<img src="images/vector.jpg" height="180"> |   <img src="images/scene.jpg" height="180">
+<img src="images/vector.png" height="180"> |   <img src="images/scene.jpg" height="180">
 :-----------------------------------------:|:------------------------------------------:
 Fig.4 Vector field                         |   Fig.5 Rendering a model given camera intrinsic and extrinsic parameters
 
