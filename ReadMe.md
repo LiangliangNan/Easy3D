@@ -12,7 +12,7 @@ Fig. 1 Point cloud                         |  Fig. 2 Mesh                       
 
 <img src="images/scene.jpg" height="180"> 
 
-Fig. 4 Redering a model given camera intrinsic and extrinsic parameters
+Fig. 4 Rendering a model given camera intrinsic and extrinsic parameters
 
 </center>
 
