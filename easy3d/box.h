@@ -41,6 +41,26 @@ namespace easy3d {
         {
         }
 
+        // defined by the diagonal corners
+        GenericBox2(const Vec<2, FT>& pmin, const Vec<2, FT>& pmax)
+            : initialized_(true)
+        {
+            x_min_ = pmin.x;  x_max_ = pmax.x;
+            y_min_ = pmin.y;  y_max_ = pmax.y;
+        }
+
+        // defined by center and radius
+        GenericBox2(const Vec<2, FT>& c, FT r)
+            : initialized_(true)
+        {
+            Vec<2, FT> dir(1, 1, 1);
+            dir.normalize();
+            const Vec<2, FT>& pmin = c - dir * r;
+            const Vec<2, FT>& pmax = c + dir * r;
+            x_min_ = pmin.x;  x_max_ = pmax.x;
+            y_min_ = pmin.y;  y_max_ = pmax.y;
+        }
+
         bool initialized() const { return initialized_; }
         void clear() { initialized_ = false; }
 
@@ -95,7 +115,7 @@ namespace easy3d {
 
         void add_box(const GenericBox2<FT>& b) {
             add_point(b.min());
-            add_point(b.min());
+            add_point(b.max());
         }
 
         GenericBox2<FT> operator+(const GenericBox2<FT>& b) const {
