@@ -557,7 +557,7 @@ namespace easy3d {
     vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {
         vec3 tmp = src;
         if (frame)
-            const vec3 tmp = frame->inverseCoordinatesOf(src);
+            tmp = frame->inverseCoordinatesOf(src);
 
         const mat4& mvp = modelViewProjectionMatrix();
         const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
