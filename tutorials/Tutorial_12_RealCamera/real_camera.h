@@ -47,9 +47,6 @@ private:
         float tx, ty, tz;   // the translation
     };
 
-    // converts CameraPara into a 3x4 projection matrix
-    easy3d::mat34 compute_projection_matrix(const CameraPara& cam) const;
-
     // update the view
     void change_view(const CameraPara& cam);
 };

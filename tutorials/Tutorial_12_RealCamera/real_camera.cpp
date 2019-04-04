@@ -107,32 +107,14 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 
 
 void RealCamera::change_view(const CameraPara &cam) {
-    const mat34& proj = compute_projection_matrix(cam);
-
-    // set the aspect ratio to be the same as the image
+    // https://stackoverflow.com/questions/12933284/rodrigues-into-eulerangles-and-vice-versa/36506782
+    const vec3 rvec(cam.rx, cam.ry, cam.rz);
+    float angle = rvec.length();
+    quat q(rvec / angle, angle);
+    camera()->setOrientation(quat(q[3], q[2], q[1], q[0]));
+    camera()->setPosition(vec3(cam.tx, cam.ty, cam.tz));
+    float fov = 2.0 * atan(1.0 / (cam.fy / cam.v0));
+    camera()->setFieldOfView(fov);
     resize(cam.w, cam.h);
-
-    camera()->setFromProjectionMatrix(proj);
     update();
-}
-
-
-mat34 RealCamera::compute_projection_matrix(const CameraPara &cam) const
-{
-    const mat4 mMat1 = mat4::translation(-cam.tx, -cam.ty, -cam.tz);
-    const mat4 mMat2 = mat4::rotation(cam.rx, cam.ry, cam.rz);
-    const mat34 mMat3(1.0);
-
-    // Liangliang: writing matrix is toooooooo annoying :-(
-    mat3 mMat4(0.0);
-    mMat4(0, 0) = cam.fx;	mMat4(0, 1) = 0;        mMat4(0, 2) = cam.u0;
-    mMat4(1, 0) = 0;        mMat4(1, 1) = cam.fy;	mMat4(1, 2) = cam.v0;
-    mMat4(2, 0) = 0;        mMat4(2, 1) = 0;        mMat4(2, 2) = 1;
-
-    mat3 mMat5(0.0);    // in NDC
-    mMat5(0, 0) = 1.0f/cam.w;	mMat5(0, 1) = 0;            mMat5(0, 2) = 0.5;
-    mMat5(1, 0) = 0;            mMat5(1, 1) = 1.0f/cam.h;	mMat5(1, 2) = 0.5;
-    mMat5(2, 0) = 0;            mMat5(2, 1) = 0;            mMat5(2, 2) = 1;
-
-    return mMat5 * mMat4* mMat3 * mMat2 * mMat1;
 }
