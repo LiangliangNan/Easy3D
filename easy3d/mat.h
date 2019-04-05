@@ -1992,6 +1992,7 @@ namespace easy3d {
     /*----------------------------------------------------------------------------*/
     template <typename T>
     inline Mat4<T> Mat4<T>::rotation(T x, T y, T z) {
+#if 0
         // see the equations here
         // http://www.songho.ca/opengl/gl_anglestoaxes.html
         // http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation/
@@ -2021,26 +2022,29 @@ namespace easy3d {
 
         return result;
 
+#else
+        
         // the above code is equivalent to (but should be faster than) the code below.
 
-        //Mat4<T> rx, ry, rz;
+        Mat4<T> rx, ry, rz;
 
-        //rx(0, 0) = T(1);	rx(0, 1) = T(0);	rx(0, 2) = T(0);	rx(0, 3) = T(0);
-        //rx(1, 0) = T(0);	rx(1, 1) = cosf(x); rx(1, 2) = -sinf(x); rx(1, 3) = T(0);
-        //rx(2, 0) = T(0);	rx(2, 1) = sinf(x); rx(2, 2) = cosf(x); rx(2, 3) = T(0);
-        //rx(3, 0) = T(0);	rx(3, 1) = T(0);	rx(3, 2) = T(0);	rx(3, 3) = T(1);
+        rx(0, 0) = T(1);    rx(0, 1) = T(0);    rx(0, 2) = T(0);    rx(0, 3) = T(0);
+        rx(1, 0) = T(0);    rx(1, 1) = cosf(x); rx(1, 2) = -sinf(x); rx(1, 3) = T(0);
+        rx(2, 0) = T(0);    rx(2, 1) = sinf(x); rx(2, 2) = cosf(x); rx(2, 3) = T(0);
+        rx(3, 0) = T(0);    rx(3, 1) = T(0);    rx(3, 2) = T(0);    rx(3, 3) = T(1);
 
-        //ry(0, 0) = cosf(y);  ry(0, 1) = T(0);	ry(0, 2) = sinf(y); ry(0, 3) = T(0);
-        //ry(1, 0) = T(0);	 ry(1, 1) = T(1);	ry(1, 2) = T(0);	ry(1, 3) = T(0);
-        //ry(2, 0) = -sinf(y); ry(2, 1) = T(0);	ry(2, 2) = cosf(y); ry(2, 3) = T(0);
-        //ry(3, 0) = T(0);	 ry(3, 1) = T(0);	ry(3, 2) = T(0);	ry(3, 3) = T(1);
+        ry(0, 0) = cosf(y);  ry(0, 1) = T(0);    ry(0, 2) = sinf(y); ry(0, 3) = T(0);
+        ry(1, 0) = T(0);     ry(1, 1) = T(1);    ry(1, 2) = T(0);    ry(1, 3) = T(0);
+        ry(2, 0) = -sinf(y); ry(2, 1) = T(0);    ry(2, 2) = cosf(y); ry(2, 3) = T(0);
+        ry(3, 0) = T(0);     ry(3, 1) = T(0);    ry(3, 2) = T(0);    ry(3, 3) = T(1);
 
-        //rz(0, 0) = cosf(z); rz(0, 1) = -sinf(z); rz(0, 2) = T(0);	rz(0, 3) = T(0);
-        //rz(1, 0) = sinf(z); rz(1, 1) = cosf(z); rz(1, 2) = T(0);	rz(1, 3) = T(0);
-        //rz(2, 0) = T(0);	rz(2, 1) = T(0);	rz(2, 2) = T(1);	rz(2, 3) = T(0);
-        //rz(3, 0) = T(0);	rz(3, 1) = T(0);	rz(3, 2) = T(0);	rz(3, 3) = T(1);
+        rz(0, 0) = cosf(z); rz(0, 1) = -sinf(z); rz(0, 2) = T(0);    rz(0, 3) = T(0);
+        rz(1, 0) = sinf(z); rz(1, 1) = cosf(z); rz(1, 2) = T(0);    rz(1, 3) = T(0);
+        rz(2, 0) = T(0);    rz(2, 1) = T(0);    rz(2, 2) = T(1);    rz(2, 3) = T(0);
+        rz(3, 0) = T(0);    rz(3, 1) = T(0);    rz(3, 2) = T(0);    rz(3, 3) = T(1);
 
-        //return rz * ry * rx;
+        return rx * ry * rz;
+#endif
     }
 
     /*----------------------------------------------------------------------------*/
