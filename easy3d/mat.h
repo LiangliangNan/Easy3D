@@ -1766,6 +1766,13 @@ namespace easy3d {
         *	the right-hand rule.*/
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
 
+		/* Static constructor return a 3D rotation matrix defined by the axis–angle representation.
+		 *  Both the rotation axis and the angle are represented by a vector codirectional with the rotation axis
+		 *  whose length is the rotation angle θ.
+		 *      @param axis_angle: direction is the axis and lenght is the angle (in radian)
+		 *  NOTE: Positive values of angle rotate counter-clockwise about axis as per the right-hand rule.*/
+		static Mat4<T> rotation(const Vec<3, T> &axis_angle);
+
         /**	Static constructor return a 3D rotation matrix (as an affine transformation).
         *	NOTE: q is a unit quaternion representing a rotation. */
         static Mat4<T> rotation(const Quat<T> &q);
@@ -1953,6 +1960,15 @@ namespace easy3d {
         const Vec<3, T>& tmp = normalize(axis);
         return Mat4<T>(Mat3<T>::rotation(tmp, angle)); // gen 3x3 rotation matrix as arg to Mat4 constructor
     }
+
+	/*----------------------------------------------------------------------------*/
+
+	template <typename T>
+	inline Mat4<T> Mat4<T>::rotation(const Vec<3, T> &axis_angle) {
+		const T len = axis_angle.length();
+		return Mat4<T>(Mat3<T>::rotation(axis_angle / len, len));
+	}
+
 
     /*----------------------------------------------------------------------------*/
     template <typename T>

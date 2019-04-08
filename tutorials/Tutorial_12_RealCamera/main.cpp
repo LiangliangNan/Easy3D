@@ -26,7 +26,11 @@
 //        extrinsic) camera parameters. The camera parameters were
 //        recovered using computer vison techniques (i.e., SfM in this example).
 
-
+//It has bugs.
+//Check here:
+//     https://sightations.wordpress.com/2010/08/03/simulating-calibrated-cameras-in-opengl/
+//     https://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
+//     https://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.

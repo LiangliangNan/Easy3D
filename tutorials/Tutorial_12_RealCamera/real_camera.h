@@ -23,12 +23,14 @@
 
 #include <easy3d/viewer.h>
 
-
 // This RealCamera class visualizes a model from the view point
 // given its (intrinsic and extrinsic) camera parameters.
-// The camera parameters were recovered using computer vison
+// The camera parameters were recovered using computer vision
 // techniques (i.e., SfM in this class).
 
+namespace easy3d {
+	class Camera;
+}
 
 class RealCamera : public easy3d::Viewer
 {
@@ -46,9 +48,16 @@ private:
         float rx, ry, rz;   // rotation in angle-axis format (i.e., the 3 angles in radian)
         float tx, ty, tz;   // the translation
     };
+    std::vector<CameraPara> views_;
+    int current_view_;
 
-    // update the view
-    void change_view(const CameraPara& cam);
+	bool read_bundler_file(const std::string& file_name);
+
+	// K [R T] -> easy3d camera representation
+	bool KRT_to_camera(int view_index, easy3d::Camera* c);
+
+	void change_view(int view_index);
+	void create_cameras_drawable(float scale = 1.0f);
 };
 
 

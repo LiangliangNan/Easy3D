@@ -521,7 +521,15 @@ namespace easy3d {
             proj(1, 0), proj(1, 1), proj(1, 2),
             proj(2, 0), proj(2, 1), proj(2, 2));
 
-        const vec3 cam_pos(determinant(m1), -determinant(m2), determinant(m3) / (-determinant(m4)));
+#if 0 // this has bug?
+		const vec3 cam_pos(determinant(m1), -determinant(m2), determinant(m3) / (-determinant(m4)));
+#else
+		float X = determinant(m1);
+		float Y = -determinant(m2);
+		float Z = determinant(m3);
+		float T = -determinant(m4);
+		const vec3 cam_pos(X / T, Y / T, Z / T);
+#endif
 
         // We compute the rotation matrix column by column.
 
