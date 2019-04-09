@@ -1144,7 +1144,6 @@ namespace easy3d {
 				continue;
 			bool lighting = cloud->get_vertex_property<vec3>("v:normal");
 			points_program_->set_uniform("lighting", lighting);
-			bool per_vertex_color = cloud->get_vertex_property<vec3>("v:color");
 			for (auto d : m->points_drawables()) {
 				if (d->is_visible()) {
 					points_program_->set_uniform("per_vertex_color", d->per_vertex_color());
