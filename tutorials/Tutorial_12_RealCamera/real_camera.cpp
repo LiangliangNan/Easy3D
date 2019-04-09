@@ -163,21 +163,21 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
 	const float f = camera()->zFar();
 
 #ifdef USE_BUNDLER_DATA
-        const mat4 K(
-            fx, skew, cx, 0,
-            0,  fy,   cy, 0,
-            0,  0,    1 , 0,
-			0,  0,    0,  1
+        const mat3 K(
+            fx, skew, cx,
+            0,  fy,   cy,
+            0,  0,    1
 		);
 
         const mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
         const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
-        const mat4 P = K * T * R;
-		mat34 V;
-        V.set_row(0,  P.row(0));
-		V.set_row(1, -P.row(1));  // invert the y axis
-		V.set_row(2, -P.row(2));  // invert the z axis
-		c->setFromProjectionMatrix(V);
+
+        mat34 M(1.0);
+        M(1, 1) = -1;// invert the y axis
+        M(2, 2) = -1;// invert the z axis
+
+        const mat34& P = K * M * T * R;
+        c->setFromProjectionMatrix(P);
 #else
         // https://stackoverflow.com/questions/12933284/rodrigues-into-eulerangles-and-vice-versa/36506782
         const vec3 rvec(cam.rx, cam.ry, cam.rz);
