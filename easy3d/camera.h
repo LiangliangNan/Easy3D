@@ -65,7 +65,28 @@ namespace easy3d {
 		quat orientation() const;
 
 		void setFromModelViewMatrix(const mat4& mv);
-		void setFromProjectionMatrix(const mat34& proj);
+        
+        /*! Defines the position(), orientation() and fieldOfView() of the camera from calibrated
+         *  camera instrinc and extrinsic parameters.
+         *  \param fx and fy: the focal length
+         *  \param cx and cy: the principal point
+         *  \param skew: distortion
+         *  \param rot: the rotation in angle-axis format, i.e., direction is the axis and length
+         *              is the angle (in radian)
+         *  \param t: the camera translation
+         */
+        void set_from_calibration(float fx, float fy, float skew, float cx, float cy,
+                                  const vec3& rot, const vec3& t);
+        
+        /*! Does the same thing as set_from_calibration().
+         *  \param proj The projection matrix computed as P = K * M * [R : T], where R is a
+         *              3x3 matrix representing the camera rotation and T is a 3-vector
+         *              describing the camera translation.
+         *  \attention: M is a 3 by 4 matrix [1, 0, 0, 0; 0, -1, 0, 0; 0, 0, -1, 0] converting
+         *              from vision convention to OpenGL convention, i.e., inverting Y and Z axes.
+         */
+        void set_from_projection_matrix(const mat34& proj);
+
 
 	public:
 		void setPosition(const vec3 &pos);

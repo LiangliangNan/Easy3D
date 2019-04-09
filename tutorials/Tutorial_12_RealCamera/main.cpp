@@ -22,19 +22,22 @@
 
 
 // This example shows how to
-//		- render a model from the view point given its (intrinsic and
-//        extrinsic) camera parameters. The camera parameters were
-//        recovered using computer vison techniques (i.e., SfM in this example).
-
-//It has bugs.
-//Check here:
-//     https://sightations.wordpress.com/2010/08/03/simulating-calibrated-cameras-in-opengl/
-//     https://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
-//     https://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
+//		- render a model from the view point given the camera's intrinsic and
+//        extrinsic parameters. The camera parameters were recovered using
+//        commonly used computer vison techniques (i.e., calibration, or SfM).
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    RealCamera viewer("Tutorial_12_RealCamera");
+    
+    // the bunder file (We use only the camera instric and extrinsic parameters).
+    const std::string bundler_file = "../../../Easy3D/data/fountain/bundle.out";
+    
+    // the point cloud file.
+    const std::string cloud_file = "../../../Easy3D/data/fountain/pointcloud.bin";
+    
+    RealCamera viewer("Tutorial_12_RealCamera",
+                      bundler_file,
+                      cloud_file);
 
 	// Run the viewer
     viewer.run();

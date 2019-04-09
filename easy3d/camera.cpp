@@ -497,62 +497,83 @@ namespace easy3d {
     }
 
 
-    void Camera::setFromProjectionMatrix(const mat34& proj) {
+    void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
+                                      const vec3 &rot, const vec3 &t)
+    {
+        const mat3 K(
+                     fx, skew, cx,
+                     0,  fy,   cy,
+                     0,  0,    1);
+        const mat4 R = mat4::rotation(rot);
+        const mat4 T = mat4::translation(t);
+        
+        mat34 M(1.0);
+        M(1, 1) = -1;// invert the y axis
+        M(2, 2) = -1;// invert the z axis
+        
+        const mat34& proj = K * M * T * R;
+        set_from_projection_matrix(proj);
+    }
+    
+    
+    void Camera::set_from_projection_matrix(const mat34 &proj) {
         // The 3 lines of the matrix are the normals to the planes x=0, y=0, z=0
         // in the camera CS. As we normalize them, we do not need the 4th coordinate.
-        vec3 line_0(proj(0, 0), proj(0, 1), proj(0, 2));	line_0 = normalize(line_0);
-        vec3 line_1(proj(1, 0), proj(1, 1), proj(1, 2));	line_1 = normalize(line_1);
-        vec3 line_2(proj(2, 0), proj(2, 1), proj(2, 2));	line_2 = normalize(line_2);
-
-        mat3 m1(
-            proj(0, 1), proj(0, 2), proj(0, 3),
-            proj(1, 1), proj(1, 2), proj(1, 3),
-            proj(2, 1), proj(2, 2), proj(2, 3));
-        mat3 m2(
-            proj(0, 0), proj(0, 2), proj(0, 3),
-            proj(1, 0), proj(1, 2), proj(1, 3),
-            proj(2, 0), proj(2, 2), proj(2, 3));
-        mat3 m3(
-            proj(0, 0), proj(0, 1), proj(0, 3),
-            proj(1, 0), proj(1, 1), proj(1, 3),
-            proj(2, 0), proj(2, 1), proj(2, 3));
-        mat3 m4(
-            proj(0, 0), proj(0, 1), proj(0, 2),
-            proj(1, 0), proj(1, 1), proj(1, 2),
-            proj(2, 0), proj(2, 1), proj(2, 2));
-
-#if 0 // this has bug?
-		const vec3 cam_pos(determinant(m1), -determinant(m2), determinant(m3) / (-determinant(m4)));
-#else
-		float X = determinant(m1);
-		float Y = -determinant(m2);
-		float Z = determinant(m3);
-		float T = -determinant(m4);
-		const vec3 cam_pos(X / T, Y / T, Z / T);
-#endif
-
+        vec3 line_0(proj(0, 0), proj(0, 1), proj(0, 2));    line_0 = normalize(line_0);
+        vec3 line_1(proj(1, 0), proj(1, 1), proj(1, 2));    line_1 = normalize(line_1);
+        vec3 line_2(proj(2, 0), proj(2, 1), proj(2, 2));    line_2 = normalize(line_2);
+        
+        const mat3 m1(
+                      proj(0, 1), proj(0, 2), proj(0, 3),
+                      proj(1, 1), proj(1, 2), proj(1, 3),
+                      proj(2, 1), proj(2, 2), proj(2, 3));
+        const mat3 m2(
+                      proj(0, 0), proj(0, 2), proj(0, 3),
+                      proj(1, 0), proj(1, 2), proj(1, 3),
+                      proj(2, 0), proj(2, 2), proj(2, 3));
+        const mat3 m3(
+                      proj(0, 0), proj(0, 1), proj(0, 3),
+                      proj(1, 0), proj(1, 1), proj(1, 3),
+                      proj(2, 0), proj(2, 1), proj(2, 3));
+        const mat3 m4(
+                      proj(0, 0), proj(0, 1), proj(0, 2),
+                      proj(1, 0), proj(1, 1), proj(1, 2),
+                      proj(2, 0), proj(2, 1), proj(2, 2));
+        
+        const float X = determinant(m1);
+        const float Y = -determinant(m2);
+        const float Z = determinant(m3);
+        const float T = -determinant(m4);
+        const vec3 cam_pos(X / T, Y / T, Z / T);
+        
         // We compute the rotation matrix column by column.
-
+        
         // GL Z axis is front facing.
-        vec3 column_2 = -line_2;
-
+        const vec3 column_2 = -line_2;
+        
         // X-axis is almost like line_0 but should be orthogonal to the Z axis.
         vec3 column_0 = cross(cross(column_2, line_0), column_2);
         column_0 = normalize(column_0);
-
+        
         // Y-axis is almost like line_1 but should be orthogonal to the Z axis.
         // Moreover line_1 is downward oriented as the screen CS.
         vec3 column_1 = -cross(cross(column_2, line_1), column_2);
         column_1 = normalize(column_1);
-
-        mat3 rot(column_0, column_1, column_2);
-
+        
+        const mat3 rot(column_0, column_1, column_2);
+        
         // We compute the field of view
-
+        
+        // line_1^column_0 -> vector of intersection line between
+        // y_screen=0 and x_camera=0 plane.
+        // column_2*(...)  -> cos of the angle between Z vector et y_screen=0 plane
+        // * 2 -> field of view = 2 * half angle
+        
+        // We need some intermediate values.
         vec3 dummy = cross(line_1, column_0);
         dummy = normalize(dummy);
-        float fov = std::acos(dot(column_2, dummy)) * 2.0f;
-
+        const float fov = std::acos(dot(column_2, dummy)) * 2.0f;
+        
         // We set the camera.
         quat q;
         q.set_from_rotation_matrix(rot);
@@ -560,6 +581,7 @@ namespace easy3d {
         setPosition(cam_pos);
         setFieldOfView(fov);
     }
+
 
 
     vec3 Camera::projectedCoordinatesOf(const vec3 &src, const Frame *frame) const {

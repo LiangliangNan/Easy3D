@@ -8,6 +8,7 @@ add_executable(${PROJECT_NAME}
                 main.cpp
                 real_camera.h
                 real_camera.cpp
+                read_bundler_file.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       FOLDER "Tutorials")
