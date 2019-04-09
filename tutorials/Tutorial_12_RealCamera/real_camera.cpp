@@ -20,9 +20,6 @@
 
 #include "real_camera.h"
 
-#include <fstream>
-#include <sstream>
-
 #include <easy3d/point_cloud.h>
 #include <easy3d/drawable.h>
 #include <easy3d/camera.h>
@@ -37,27 +34,30 @@ using namespace easy3d;
 RealCamera::RealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
-: Viewer(title)
+    : Viewer(title)
+    , current_view_(0)
 {
-    set_background_color(vec3(0.8f, 0.8f, 0.8f));
+    set_background_color(vec3(0.8f, 0.8f, 0.9f));
 
 	// Read the point cloud
 	if (open(cloud_file)) {
 		auto drawable = current_model()->points_drawable("points");
 		drawable->set_per_vertex_color(true);
 		drawable->set_point_size(5.0f);
+        
+        // Read the camera parameters from the bundler file.
+        if (read_bundler_file(bundler_file))
+            create_cameras_drawable(0.5f);
+        else
+            std::cerr << "Error: failed load bundler file." << std::endl;
 	}
 	else
 		std::cerr << "Error: failed load point cloud." << std::endl;
-    
-    // Read the camera parameters from the bundler file.
-    if (read_bundler_file(bundler_file))
-        create_cameras_drawable(0.5f);
-    else
-        std::cerr << "Error: failed load bundler file." << std::endl;
 
-    std::cout << "------------ Real Camera ----------" << std::endl
-              << "Press keys 'Space' to switch views" << std::endl;
+    std::cout
+    << "------------ Real Camera ----------" << std::endl
+    << "Press 'Space' to switch views" << std::endl
+    << "Press 'H' to show/hide the cameras" << std::endl;
 }
 
 
@@ -65,7 +65,21 @@ bool RealCamera::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
         if (!views_.empty()) {
             current_view_ = (current_view_ + 1) % views_.size();
-            change_view(current_view_);
+            if (KRT_to_camera(current_view_, camera())) {
+                std::cout << "----- view " << current_view_ << " ------" << std::endl;
+                const CameraPara& c = views_[current_view_];
+                // make sure the aspect ratio (actual size does not matter)
+                resize(c.w * 0.5, c.h * 0.5);
+                update();
+            }
+        }
+        return true;
+    }
+    if (key == GLFW_KEY_H) {
+        LinesDrawable* d = current_model()->lines_drawable("cameras");
+        if (d) {
+            d->set_visible(!d->is_visible());
+            update();
         }
         return true;
     }
@@ -107,16 +121,6 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, Camera* c) {
     c->set_from_projection_matrix(P);
    
 	return true;
-}
-
-
-void RealCamera::change_view(std::size_t view_index) {
-	if (KRT_to_camera(view_index, camera())) {
-        std::cout << "----- view " << view_index << " ------" << std::endl;
-		const CameraPara& c = views_[view_index];
-        resize(c.w * 0.5, c.h * 0.5);
-		update();
-	}
 }
 
 
@@ -186,10 +190,9 @@ void RealCamera::create_cameras_drawable(float scale)
 			vertices.push_back(m * p);
 		}
 	}
-	LinesDrawable* d = current_model()->lines_drawable("camera");
+	LinesDrawable* d = current_model()->lines_drawable("cameras");
 	if (!d)
-		d = current_model()->add_lines_drawable("camera");
+		d = current_model()->add_lines_drawable("cameras");
 	d->update_vertex_buffer(vertices);
 	d->set_default_color(vec3(0, 0, 1));
-
 }

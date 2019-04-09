@@ -58,7 +58,6 @@ private:
 	// K [R T] -> easy3d camera representation
 	bool KRT_to_camera(std::size_t view_index, easy3d::Camera* c);
 
-	void change_view(std::size_t view_index);
 	void create_cameras_drawable(float scale = 1.0f);
 };
 
