@@ -163,19 +163,18 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
 	const float f = camera()->zFar();
 
 #ifdef USE_BUNDLER_DATA
-		mat4 K(
-			fx, skew, cx, 0,
-			0,  fy,   cy, 0,
-			0,  0,    1 , 0,
+        const mat4 K(
+            fx, skew, cx, 0,
+            0,  fy,   cy, 0,
+            0,  0,    1 , 0,
 			0,  0,    0,  1
 		);
 
-		mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
-		mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
-
-		mat4 P = K * T * R;
+        const mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
+        const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
+        const mat4 P = K * T * R;
 		mat34 V;
-		V.set_row(0, P.row(0));
+        V.set_row(0,  P.row(0));
 		V.set_row(1, -P.row(1));  // invert the y axis
 		V.set_row(2, -P.row(2));  // invert the z axis
 		c->setFromProjectionMatrix(V);
@@ -198,7 +197,7 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
 void RealCamera::change_view(int view_index) {
 	if (KRT_to_camera(view_index, camera())) {
 		const CameraPara& c = views_[view_index];
-		resize(c.w * 0.5, c.h * 0.5);
+        resize(c.w * 0.5, c.h * 0.5);
 		update();
 	}
 }
