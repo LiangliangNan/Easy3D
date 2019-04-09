@@ -98,14 +98,14 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, Camera* c) {
 
 #if 1 // use the ground truth camera intrinsic parameters
     const mat3 K(
-        2759.48, 0,         1520.69,
-        0,       2764.16,   1006.81,
-        0,       0,         1
+        2759.48f, 0,         1520.69f,
+        0,        2764.16f,  1006.81f,
+        0,        0,         1
     );
 #else  // use the camera intrinsic parameters computed from bundler
     const mat3 K(
-        cam.fx, 0   ,   cam.u0,
-        0,      cam.fy, cam.v0,
+        cam.fx, 0   ,   cam.cx,
+        0,      cam.fy, cam.cy,
         0,      0,      1
     );
 #endif

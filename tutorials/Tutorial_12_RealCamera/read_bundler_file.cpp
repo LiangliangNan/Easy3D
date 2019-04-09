@@ -167,6 +167,8 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 	for (const auto& c : cameras) {
 		CameraPara cam;
         cam.fx = cam.fy = c.f;
+        cam.cx = 1520.69f;
+        cam.cy = 1006.81f;
 		cam.w = 3072;
 		cam.h = 2048;
 
