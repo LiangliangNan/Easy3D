@@ -34,13 +34,8 @@
 using namespace easy3d;
 
 
-#define USE_BUNDLER_DATA
-
 RealCamera::RealCamera(const std::string& title) : Viewer(title) {
     set_background_color(vec3(0.8f, 0.8f, 0.8f));
-
-
-#ifdef USE_BUNDLER_DATA
 
 	// Read the point cloud from a known file.
 	const std::string cloud_file = "../../../Easy3D/data/fountain/pointcloud.bin";
@@ -57,63 +52,12 @@ RealCamera::RealCamera(const std::string& title) : Viewer(title) {
 	if (!read_bundler_file(bundler_file)) {
 		std::cerr << "Error: failed load bundler file." << std::endl;
 	}
-
-#else
-	// Read the point cloud from a known file.
-	const std::string cloud_file = "../../../Easy3D-Mapple/data/real_camera/pointcloud.bin";
-	if (open(cloud_file)) {
-		auto drawable = current_model()->points_drawable("vertices");
-		drawable->set_point_size(5.0f);
-	}
-	else
-		std::cerr << "Error: failed load point cloud. Please make sure the file exists and format is correct." << std::endl;
-
-    CameraPara cam;
-    cam.w = 1920;
-    cam.h = 1080;
-    cam.fx = 1842.2077240f;
-    cam.fy = 1838.9055970f;
-    cam.u0 = 975.13697300f;
-    cam.v0 = 546.13760400f;
-    cam.rx = 0.1707014584f;
-    cam.ry = 0.5250153953f;
-    cam.rz = -0.009298784f;
-    cam.tx = 0.1360685179f;
-    cam.ty = -0.278497233f;
-    cam.tz = 2.4276577107f; views_.push_back(cam);
-    
-    cam.w = 1920;
-    cam.h = 1080;
-    cam.fx = 1955.9917480f;
-    cam.fy = 1952.7915110f;
-    cam.u0 = 975.07971700f;
-    cam.v0 = 539.05811400f;
-    cam.rx = 0.0070340829f;
-    cam.ry = -0.148287175f;
-    cam.rz = 0.0360668739f;
-    cam.tx = -0.007660835f;
-    cam.ty = 0.1060953556f;
-    cam.tz = 2.3937444743f; views_.push_back(cam);
-    
-    cam.w = 1920;
-    cam.h = 1080;
-    cam.fx = 1834.4864850f;
-    cam.fy = 1839.7799250f;
-    cam.u0 = 953.54416900f;
-    cam.v0 = 535.75893000f;
-    cam.rx = 0.0611976305f;
-    cam.ry = -1.695009600f;
-    cam.rz = 0.0292804834f;
-    cam.tx = 0.7386870949f;
-    cam.ty = -0.113801253f;
-    cam.tz = 4.7867648132f;  views_.push_back(cam);
-#endif
     
     current_view_ = 0;
 	create_cameras_drawable();
 
     std::cout << "------------ Real Camera ----------" << std::endl
-              << "Press keys 1, 2, 3 to switch views" << std::endl;
+              << "Press keys 'Space' to switch views" << std::endl;
 }
 
 
@@ -142,7 +86,6 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 }
 
 
-#include <easy3d/transform.h>
 bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
 	if (view_index < 0 || view_index >= views_.size()) {
 		std::cerr << "Error: invalid view index (" << view_index << ")" << std::endl;
@@ -159,36 +102,32 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
     const float cx = cam.u0;
     const float cy = cam.v0;
     const float skew = 0.0;
-	const float n = camera()->zNear();
-	const float f = camera()->zFar();
 
-#ifdef USE_BUNDLER_DATA
-        const mat3 K(
-            fx, skew, cx,
-            0,  fy,   cy,
-            0,  0,    1
-		);
-
-        const mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
-        const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
-
-        mat34 M(1.0);
-        M(1, 1) = -1;// invert the y axis
-        M(2, 2) = -1;// invert the z axis
-
-        const mat34& P = K * M * T * R;
-        c->setFromProjectionMatrix(P);
-#else
-        // https://stackoverflow.com/questions/12933284/rodrigues-into-eulerangles-and-vice-versa/36506782
-        const vec3 rvec(cam.rx, cam.ry, cam.rz);
-        const float len = rvec.length();
-        const quat q(rvec / len, len);
-        c->setOrientation(quat(q[3], q[2], q[1], q[0]));
-		c->setPosition(vec3(cam.tx, cam.ty, cam.tz));
-        //float fov = 2.0f * atan(1.0f / (fy / cam.v0));
-        float fov = 2.0f * atan(1.0f / (2.0 * fx / h));
-		c->setFieldOfView(fov);
+#if 1 // use the ground truth camera intrinsic parameters
+    const mat3 K(
+        2759.48, skew,      1520.69,
+        0,       2764.16,   1006.81,
+        0,       0,         1
+    );
+#else  // use the camera intrinsic parameters computed from bundler
+    const mat3 K(
+        fx, skew, cx,
+        0,  fy,   cy,
+        0,  0,    1
+    );
 #endif
+
+    std::cout <<"fx, fy: " << fx <<", " << fy << std::endl;
+
+    const mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
+    const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
+
+    mat34 M(1.0);
+    M(1, 1) = -1;// invert the y axis
+    M(2, 2) = -1;// invert the z axis
+
+    const mat34& P = K * M * T * R;
+    c->setFromProjectionMatrix(P);
    
 	return true;
 }
