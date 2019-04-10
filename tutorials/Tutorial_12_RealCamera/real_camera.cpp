@@ -96,29 +96,16 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, Camera* c) {
     
 	const CameraPara& cam = views_[view_index];
 
-#if 0 // use the ground truth camera intrinsic parameters
-    const mat3 K(
-        2759.48f, 0,         1520.69f,
-        0,        2764.16f,  1006.81f,
-        0,        0,         1
-    );
-#else  // use the camera intrinsic parameters computed from bundler
-    const mat3 K(
-        cam.fx, 0   ,   cam.cx,
-        0,      cam.fy, cam.cy,
-        0,      0,      1
-    );
-#endif
-
-    const mat4 R = mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
-    const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
-
-    mat34 M(1.0);
-    M(1, 1) = -1;// invert the y axis
-    M(2, 2) = -1;// invert the z axis
-
-    const mat34& P = K * M * T * R;
-    c->set_from_projection_matrix(P);
+    const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
+    const float angle = rot_vec.length();
+    const quat q(rot_vec / angle, angle);
+    c->setOrientation(q);
+    
+    const vec3 pos(cam.tx, cam.ty, cam.tz);
+    c->setPosition(-q.rotate(pos));
+    
+    const float proj_5th = 2.0 * cam.fy / cam.h;
+    c->setFieldOfView(2.0 * atan(1.0 / proj_5th));
    
 	return true;
 }
