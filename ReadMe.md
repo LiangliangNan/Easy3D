@@ -19,7 +19,7 @@ Fig.4 Vector field                         |   Fig.5 Rendering a model given cam
   
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed fucntion calls). Users do not need to touch the low-level APIs of OpenGL. 
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed function calls). Users do not need to touch the low-level APIs of OpenGL. 
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
 
@@ -33,7 +33,7 @@ Fig.4 Vector field                         |   Fig.5 Rendering a model given cam
  
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example first loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
@@ -81,7 +81,7 @@ By abstracting geometric elements as drawables, more general visualization can b
 
 ### Build
 
-Easy3D has been tested on macOs, Linux, and Windows. You should also be able to build it on other platforms.
+Easy3D has been tested on macOS, Linux, and Windows. You should also be able to build it on other platforms.
 
 Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
 and then use your favorite IDE to work with Easy3D.
