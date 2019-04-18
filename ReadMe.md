@@ -21,13 +21,14 @@ Fig.4 Vector field                         |   Fig.5 Rendering a model given cam
 * Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
 * High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed function calls). Users do not need to touch the low-level APIs of OpenGL. 
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+* A bunch of rendering techniques commonly available in commercial modeling software, e.g., ambient occlusion (SSAO), hard shadow (shadow maps), soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average color blending, dual depth peeling), and more ...
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
 
-<span style="color:blue">The following rendering algorithms will be available soon:</span>
- - Ambient occlusion: SSAO, HBAO, cache-aware HBAO
- - Shadow: hard shadow (shadow maps), soft shadow (PCSS)
- - Transparency: average color blending, dual depth peeling
- - Eye-dome lighting: for rendering point clouds without normal information
+<span style="color:blue">The following will be available soon:</span>
+ - KD-Tree
+ - Point cloud normal estimation and re-orientation
+ - Poisson surface reconstruction
+ - PolyFit: 
  - and more ...
 
  
@@ -77,7 +78,7 @@ Bellow is another example showing how to render a surface model (the result is i
 	viewer.add_model(mesh);
 ```
 
-By abstracting geometric elements as drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
+By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
 
 ### Build
 
@@ -86,7 +87,7 @@ Easy3D has been tested on macOS, Linux, and Windows. You should also be able to 
 Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
 and then use your favorite IDE to work with Easy3D.
 
-In case you use *Qt Creator*, simply open the CMakeLists.txt file. Then, all files 
+In case you use *Qt Creator* or other IDEs that can handle the CMakeLists.txt file, simply open that file and then all files 
 will be well organized as projects.
 
 ### License
