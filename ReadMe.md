@@ -14,6 +14,15 @@ Fig.1 Point cloud                          |  Fig.2 Mesh                        
 :-----------------------------------------:|:------------------------------------------:
 Fig.4 Vector field                         |   Fig.5 Rendering a model given camera intrinsic and extrinsic parameters
 
+
+<img src="images/edl.jpg" height="180">    |   <img src="images/ssao.jpg" height="180">  
+:-----------------------------------------:|:-------------------------------------------:
+Eye-dome lighting                          |   Ambient occlusion   		  
+
+<img src="images/shadow.jpg" height="180"> |   <img src="images/transparency.jpg" height="180">
+:-----------------------------------------:|:-------------------------------------------------:
+Shadow                       		   |   Transparency
+
 </center>
 
   
@@ -28,7 +37,7 @@ Fig.4 Vector field                         |   Fig.5 Rendering a model given cam
  - KD-Tree
  - Point cloud normal estimation and re-orientation
  - Poisson surface reconstruction
- - PolyFit: 
+ - [PolyFit](https://github.com/LiangliangNan/PolyFit)
  - and more ...
 
  
