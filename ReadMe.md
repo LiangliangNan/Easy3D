@@ -106,7 +106,7 @@ found in the accompanying 'License' file.
 If Easy3D is useful in your research/work, I would be grateful if you show your appreciation by citing it:
 ```
 Liangliang Nan. 
-Easy3D: an easy-to-use, efficient, and open-source C++ library for processing and rendering 3D data. 
+Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data. 
 2018.
 ```
 
