@@ -1,0 +1,595 @@
+7 November 2018 -- LASzip DLL: assure that legacy and extended flags are identical to prevent corrupt LAZ files
+6 November 2018 -- all LAStools: fix for '-cpu64' and '-cores 2' on single input files that started 32 bit exes
+5 November 2018 -- lasthin: bug fix when using option '-central' for '-step 200' sizes larger than 50
+4 November 2018 -- lasview: new option '-point_size 5' to render fatter points on start-up
+1 November 2018 -- all LAStools: parse more NAD83 GCS representations requested by Kirk Waters from NOAA
+31 October 2018 -- las2las: fix for bug with '-set_ogc_wkt' introduced with the change on 8 May 2018
+30 September 2018 -- lasliberate and lasliberateGUI: now also liberating new LAS 1.4 point types 6 to 10 to LAS and LAZ
+29 September 2018 -- lasvalidate: bug fix for LAS 1.4 point type 7 containing RGB colors
+29 September 2018 -- lasinfo: new options '-supress_z', '-supress_flags', '-supress_rgb', '-supress_point_source', ...
+28 September 2018 -- las2las: new option '-move_evlrs_to_vlrs'
+28 September 2018 -- laszip DLL: tiny bug fix for writing extended classifications via DLL and updated examples
+27 September 2018 -- lasgrid, las2dem, lascanopy: further improved handling of 16 bit integer BIL
+17 September 2018 -- LASlib: no more support for deprecated LASattributes (aka "extra bytes") with dimensions 2 or 3 
+16 September 2018 -- LASlib: new '-map_user_data map.txt' and '-map_intensity map.txt' and '-map_point_source map.txt'
+15 September 2018 -- lasgrid, las2dem, lascanopy: auto switch nodata value from -9999 to 0 for 16 bit integer BIL
+14 September 2018 -- lasinfo: new option '-nw' or '-no_warnings' to suppress output of WARNING messages
+13 September 2018 -- las2las: new options 'set_attribute_scale 0 0.1' and '-set_attribute_offset 1 10.0'
+10 September 2018 -- all LAStools: command-line option '-cpu64' invokes 64 bit tool instead where available.
+9 September 2018 -- LASlib, all LAStools: tools can now also read points from PLY format (binary and ASCII).
+7 September 2018 -- NEW: many 64 bit command-line tools (without GUI). limited raster formats: BIL, ASC, XYZ, FLT, DTM, LAZ 
+7 September 2018 -- laspublish: dropping support for Potree 1.4
+31 August 2018 -- lasheight: fixed *serious* run-time performance bug introduced in version 180731 and 180812. update!!!
+12 August 2018 -- laspublish: fix in bug on chrome for Potree 1.4. by default Potree 1.6 is used (old one with '-potree14')
+10 August 2018 -- LASlib, all LAStools: fix bug in LAStransform 'change_classification_from_to 19 2' reported by Kirk
+6 August 2018 -- lasview, lascontrol: '-cp control_points.txt' file can also be parsed when separated by semicolons 
+31 July 2018 -- lasheight: now '-class 2 8 75 76' option can also include extended classifications as ground points
+30 July 2018 -- lasclassify: for height-normalized data you can use '-height_in_z' instead of the user data values
+30 July 2018 -- LASlib, all LAStools: bug fix in selective decompression of "extra_bytes" for point types 6 and higher
+27 July 2018 -- lasduplicate: added option '-highest_z' which was a logical (but missing) complement to '-lowest_z'
+22 July 2018 -- LASib, txt2las: fixed LASreader_txt bug for parsing 'c'lassfication to '-set_version 1.4' and '-set_point_type 6'
+10 July 2018 -- LASlib: when reading from an istream user must manually set seek-ability (hard to determine)
+ 8 July 2018 -- LASlib, all LAStools: '-classify_attribute_below_as', '-classify_attribute_above_as', '-classify_attribute_between_as'
+ 6 July 2018 -- lasground, lasnoise: testing options '-ignore_withheld' and '-ignore_overlap' (but not with '-olay')
+20 June 2018 -- LASlib, all LAStools: fix for '-set_classification 0' transform for new LAS 1.4 point types 6-10
+20 June 2018 -- lascontrol: generate report even if input point data does not cover any of the control points
+17 June 2018 -- LASlib, all LAStools: fix in flag copy from old LAS 1.3 (0-5) to new LAS 1.4 point types (6-10)
+16 June 2018 -- txt2las: new option '-set_global_encoding 1' because this bit is simply so often set wrong
+12 June 2018 -- las2las: new option '-set_global_encoding_gps_bit 1' because this bit is simply so often set wrong
+11 June 2018 -- lasview: new option '-points_all' loads all points from input (especially useful for manual editing)
+10 June 2018 -- LASlib, all LAStools: fix for additional attributes in "extra bytes" combined with '-buffered 15'
+28 May 2018 -- lasclip: remove leading spaces from '-split 2' file name from DBF file, use LAZ if format not specified
+20 May 2018 -- LASlib, all LAStools: bug fix when trying to set CRS via '-gda94 -utm 56south' in command line 
+19 May 2018 -- lasnoise, lasheight, & others: bug fix when on-the-fly filtering on additional attributes
+12 May 2018 -- las2las, LASlib: new filters '-drop_RGB_red 5000 6000' and '-drop_RGB_green 200 10000' 
+ 8 May 2018 -- las2las: handling of OGC WKT and more clear "setting" versus "reprojecting" the CRS
+29 April 2018 -- all LAStools GUIs: allow to overlay a PNG assuming it has a world-coordinate PGW file
+23 April 2018 -- lasview: for manual editing also "<r>egister changes" avaulable via pop-up menu 
+22 April 2018 -- lasview: also display 'user data' attribute for points picked with 'i'
+21 April 2018 -- lasgrid, las2dem, lascanopy: fix bug of removed filters/transforms when gridding/rasterizing '-attribute ...' 
+21 April 2018 -- lastrack: '-store_height_as_extra_bytes', '-store_yz_range_as_extra_bytes', '-store_xyz_range_as_extra_bytes' 
+20 April 2018 -- lastrack: new '-classify_xyz_range_between 50 1000 7' uses 3D distance from point to track
+19 April 2018 -- las2las: 'remove_all_evlrs' and '-remove_all_evlr 0' and '-remove_evlrs_from_to 1 3'
+17 April 2018 -- lasinfo: better formatted output when bins of histograms have decimal digitls
+11 April 2018 -- lasgrid: fix issue for huge rasters (using temp file storage) running on multiple cores
+ 9 April 2018 -- lasclip, las2las, lasheight, lasnoise: remove empty files unless '-dont_remove_empty_files'
+ 7 April 2018 -- lasview: also display 'point source ID' (aka flightline number) for points picked with 'i'
+ 6 April 2018 -- las2iso and lasboundary: adding '-odbf' to the command line produces a 'z' attribute
+ 3 April 2018 -- lascolor: ability to process entire folders of LAS/LAZ and corresponding TIF files
+ 2 April 2018 -- blast2dem, blast2iso: improved generation of *.prj files
+30 March 2018 -- laspublish: support recently released version 1.6 of Potree via command switch '-potree16' 
+30 March 2018 -- blast2dem, blast2iso: support for input LASlayers '-ilay', '-ilaydir e:\layers', and '-ilay 2'
+29 March 2018 -- LASlib, all LAStools: fix for "missing points" when writing just decompressed "native" LAS 1.4
+28 March 2018 -- lasinfo: also report TOWGS84 Helmert transform stored in GeoTIFF key 2062 (GeogTOWGS84GeoKey)
+27 March 2018 -- lasground, lasnoise, lasheight, lasthin, ... : also allow '-ignore_class 0' for classification 0
+23 March 2018 -- LASlib, all LAStools: more checks for correct arguments for LAStransforms 
+25 March 2018 -- NEW: lasvoxel computes a number of different summarizing 3D voxelizations for high-density LiDAR 
+23 March 2018 -- lasvalidate: fixing bug introduced in LAStools release version 180322
+22 March 2018 -- lascanopy, lasgrid, las2dem: fix for bug in writing TIF rasters that appeared in version 180303
+21 March 2018 -- lasheight (and others): also allow '-ignore_class 2 5 0' to include classification 0
+20 March 2018 -- LASlib: new '-transform_helmert 598.1,73.7,418.2,0.202,0.045,-2.455,6.7' for ECEF coordinates 
+15 March 2018 -- lasvalidate: validation of files compressed with "native LAS 1.4 extension" of LASzip possible
+ 3 March 2018 -- LASlib, all LAStools: "allow '-odir' to just specify a drive such as '-odir f:' of '-odir f:\'
+ 2 March 2018 -- lasboundary, lascanopy: use file name from output rollout of the GUI for meaningful modes
+28 February 2018 -- LASlib, all LAStools: now '-set_RGB_of_class' also works for classifications > 31
+24 February 2018 -- las2las: automatically move eligible EVLRs to VLR section when downgrading LAS 1.4
+23 February 2018 -- las2las: bug fix when downgrading LAS 1.4 with new point types via '-set_version 1.3'
+14 February 2018 -- lasview: expose possibility to visualize workings of "spike-free" algorithm via the GUI
+14 February 2018 -- lasgrid, lascanopy, las2dem: now CSV files represent "no_data" with ",," instead of ",-,"
+ 9 February 2018 -- LASzip: minor version increment to 3.2 as POINT14_v4 fixes context inefficiency bug
+ 9 February 2018 -- lassort: support for applying LASlayers with '-ilay' on read 
+ 9 February 2018 -- many LAStools: support stdin/stdout piping for multi-pass tools like lasground, lasnoise, ...
+31 January 2018 -- many LAStools: improved command-line parsing for select tools and select argument combinations
+31 January 2018 -- las2las: fix proper functioning of '-set_ogc_wkt' for certain command line argument combinations
+30 January 2018 -- txt2las and LASlib: use 'I' to parse NIR channel and 'J' to parse hexadecimal intensities
+3 January 2018 -- lasgrid, las2dem, lascanopy: actually turn on compression when writing rasters as LAZ files 
+28 December 2017 -- all LAStools: prepare to correct 'context switch' bug reported by Wanwannodao on some future date
+25 December 2017 -- all LAStools: fixed half-pixel shift in on-the-fly-reading of BIL without BLW (ulxmap/ulymap are used)
+25 December 2017 -- lascanopy: support appendix in output file names '-odix _blub_blub' in addition to abbreviated metrics
+16 December 2017 -- lasgrid: fixed missing line-return bug when outputting rasters as CSV files 
+15 December 2017 -- all LAStools: support for auto flightline assignment '-faf' and '-faf 101' even with '-cores 4' 
+14 December 2017 -- all LAStools: keep multiple flightlines with '-keep_point_source 2 3 4' 
+10 December 2017 -- all LAStools: new '-keep_random_fraction 0.2 4711' allows seeding the random generator with 4711 
+ 1 December 2017 -- LASlib: support additional point attributes (aka extra bytes) during '-merged' operations
+30 November 2017 -- las2las: set OGC WKT with '-set_ogc_wkt "PROJCS[\"WGS84\",GEOGCS[\"GCS_ ...". note the '\'
+24 November 2017 -- lascanopy: use option '-height_in_attribute 0' if height is stored as additional attribute
+22 November 2017 -- las2txt: parse extra bytes attributes with indices larger than 9 by bracketing (12) them 
+21 November 2017 -- txt2las: allow adding up to 32 (from 10) additional extra bytes attributes
+21 November 2017 -- lasclip: use output file name from DBF attribute of SHP file with '-split Plot_Name'
+17 November 2017 -- LASlib: new transform '-copy_intensity_into_NIR' (makes only sense for point type 8)
+7 November 2017 -- lasthin: new '-gps_time 0.01' thins per 0.01 sec intervals instead of per spatial cells
+30 October 2017 -- las2las: new option '-vertical_evrf2007' for European Vertical Reference Frame 2007
+26 October 2017 -- lasthin: optional minimum number of points needed for option '-percentile 40 10'
+15 October 2017 -- lasclassify: use height above ground from additional attribute with '-height_in_attribute 0'
+14 October 2017 -- lasinfo: new WARNING when bounding box in LAS header miss-matches coordinate resolution
+10 October 2017 -- las2las: allow both piping input ('-stdin') *and* output ('-stdout') if no filter or coordinate change 
+14 September 2017 -- las2dem: fixed bug in elevation rasters when processing native compressed LAS 1.4 
+5 September 2017 -- lasthin: new option keeps only points closest to a certain elevation '-percentile 40'
+3 September 2017 -- lasgrid, las2dem, lasoverlap: option '-no_kml' avoids auto-creation of KML wrapper
+28 August 2017 -- selected LAStools: fix issues when outputting LAS 1.4 as LAZ with "native LAS 1.4 extension"
+27 August 2017 -- lassort, lasoptimize: fixed bug when sorting new LAS 1.4 point types by return number 
+26 August 2017 -- lastrack: bug fix in new '-classify_xy_range_and_height_between' functionality
+18 August 2017 -- NEW: lasoptimize prepares files for maximal compression and efficient spatial indexing
+18 August 2017 -- all LAStools: support for Oblique Stereographic projection added for Volker Rail
+18 August 2017 -- lastrack: new '-classify_xy_range_between' and 'classify_xy_range_and_height_between'
+17 August 2017 -- LASlib: switch on "native LAS 1.4 extension". turns off with '-no_native'.
+15 August 2017 -- lassort: fixed bug when sorting new LAS 1.4 point types by flight line (aka point source ID)
+7 August 2017 -- lasclassify, lasnoise, lasthin: amount of console output controlled with '-verbose' or '-quiet'
+5 August 2017 -- lassort, lasthin, lasduplicate: support '-remain_buffered' after '-buffered 25' to keep buffer
+5 August 2017 -- LASlib: unless '-buffered 25' just created buffers always '-remain_buffered'
+5 August 2017 -- LASlib: removed option '-unbuffered' because it makes too many assumptions
+26 July 2017 -- las2tin: now supports DXF format as output option for the generated Delaunay TIN
+18 July 2017 -- LASzip + LASlib: bug fix for spatially-indexed reading from native compressed LAS 1.4 files
+14 July 2017 -- las2las: fixed missing 'comma' in compound (COMPD_CS) OGC WKT string 
+13 July 2017 -- lasdiff: added missing checks for LAS 1.4 EVLR size and payloads
+10 July 2017 -- lasground, lasground_new, lasheight: amount of console output controlled with '-verbose' or '-quiet'
+5 July 2017 -- lasreturn: option '-repair_number_of_returns' now also works for new LAS 1.4 point types 6 to 10
+28 June 2017 -- lasgrid, las2dem, blast2dem, lascanopy: fixed quantization bug in X/Y coords for LAZ grid output
+28 June 2017 -- lasgrid, las2dem, blast2dem, lascanopy: no more bug for unlicensed writing (black-diagonal) 
+25 June 2017 -- lascolor: fix inability to read a certain type of tiled 4-band TIF images
+24 June 2017 -- lasgrid, las2dem, lascanopy: correct *unsigned* output for 16 bit '-intensity' for '-no_data 0'
+24 June 2017 -- LASlib: corrected on-the-fly conversion from BIL rasters to point clouds for unsigned integers
+23 June 2017 -- lasnoise: fixed that '-ignore_class 8' did not ignore points during isolated computation
+22 June 2017 -- laslayers: added ability to run on multiple '-cores 7'
+18 June 2017 -- lasboundary + all GUIs: fixed "small polygons missing bug" in '-use_lax' mode and in GUI previews
+8 June 2017 -- lasclassify: IMPORTANT BUG FIX (but only if you downloaded version 170528 where it was introduced)
+28 May 2017 -- LASzip DLL: support for "selective decompression" of compressed LAS 1.4 points added into DLL API
+27 May 2017 -- lascontrol: let '-odir quality' specify where error report '-cp_out cp_check.csv' will be stored 
+21 May 2017 -- lasgrid: fixed BIL output for the '-point_density' option. now '-density' means '-point_density'.
+13 May 2017 -- all (license-restricted) LAStools: option '-fail' prevents running when license is missing/expired
+11 May 2017 -- LASlib: new transforms '-copy_classification_into_user_data' and '-copy_attribute_into_user_data 1'
+10 May 2017 -- las2dem, blast2dem, lasgrid: fix rounding error for ususual or very small step sizes (0.2 or less)
+5 May 2017 -- lasground + lasground_new: user data change due to '-compute_height' makes it into LASlayers output
+28 April 2017 -- lasboundary: allow creation of KML and SHP '-overview' files for multiple LAS/LAZ files
+26 April 2017 -- lasboundary: also adding option to add '-labels' to SHP output that populate the DBF attibutes
+25 April 2017 -- LASzip DLL: "native LAS 1.4 extension" in LASzip DLL via 'laszip_request_native_extension()'
+24 April 2017 -- lastile: also '-remove_buffer' for buffers generated by on-the-fly buffering (= '-buffered 50')
+22 April 2017 -- lasground and lasground_new: fix of bb extend for '-buffered 20' and '-remain_buffered' combo
+20 April 2017 -- LASlib: new option '-unbuffered' for lasreadopener removes buffers from on-the-fly buffering
+16 April 2017 -- txt2las: allow requesting a particular point type with new option '-set_point_type 6'
+14 April 2017 -- LASlib: enable "adaptive chunking" for "native LAS 1.4 extension" for compressing new LAS 1.4
+8 April 2017 -- LASlib: new check to detect corrupt LAZ files generated by libLAS for files with "Extra Bytes"
+30 March 2017 -- LASlib: alpha-release of "native LAS 1.4 extension" for LASzip compression of new LAS 1.4 points
+29 March 2017 -- LASlib: enable "native LAS 1.4 extension" for LASzip via '-native'
+27 March 2017 -- lascolor: support NIR, 4 band RGBNIR images as well as three band grey and single band copying
+26 March 2017 -- lascanopy: fixed bug in raster mode when attempting to use '-use_tile_bb' or '-use_orig_bb'
+22 March 2017 -- las2shp: fixed bug accidentally introduced in version 170203
+22 March 2017 -- lassort: fixed *serious* bug accidentally introduced in version 170313
+22 March 2017 -- LASlib: new filter '-thin_points_with_time 0.000001' vs '-thin_pulses_with_time 0.001'
+12 March 2017 -- LASlib: new filters '-drop_every_nth' '-drop_number_of_returns' '-keep_number_of_returns'
+11 March 2017 -- lassort: option to first sort by '-scanner_channel' and then by '-return_number' 
+11 March 2017 -- lassort: option to first sort by '-point_source' and then by '-scanner_channel'
+10 March 2017 -- LAStools: also read more generic LCC, TM, and AEAC projections from OGC WKT strings 
+10 March 2017 -- lasboundary: add download links via '-base_url http://lidar.com/data' to KML output
+9 March 2017 -- lassort: fixed serious bug only happening for new LAS 1.4 point types 6 through 10
+8 March 2017 -- LASlib: new transform '-copy_user_data_into_scanner_channel' fixes bad LAS 1.4 files
+6 March 2017 -- LASlib: new transform '-copy_NIR_into_intensity' for point types 8 and 10
+2 February 2017 -- lascolor: support TIFF with more than 3 bands (for now simply ignore the additional bands)
+2 February 2017 -- lasground, lasground_new: small bug fix for '-replace_z' with non-zero 'z_offset' in LAS header
+2 February 2017 -- LAStools: read (subset of) projections from OGC WKT strings if coded via AUTHORITY EPSG code
+1 February 2017 -- LASlib: better support for OGC WKT strings in VLRs or EVLRs when reading
+1 February 2017 -- LASlib: new transform '-copy_intensity_into_z' for use in lasgrid or lascanopy
+30 January 2017 -- las2shp: ability to output also 'x' and 'y' to corresponding DBF file 
+20 January 2017 -- las2shp: ability to output other LAS attributes to corresponding DBF file 
+16 January 2017 -- LASlib: support for NAVD88 Geoids when generating OGC WKT string via '-vertical_navd88_geoid12b' 
+11 January 2017 -- txt2las: 'k'/'h'/'o' for <k>eypoint/with<h>eld/<o>verlap flag and 'l' for scanner channe<l>
+10 January 2017 -- las2txt: parse option 'h'/'o' for with<h>eld/<o>verlap flag and 'l' for scanner channe<l>
+10 January 2017 -- LASlib: new '-merge_scanner_channel_into_point_source' '-split_scanner_channel_from_point_source'
+10 January 2017 -- LASlib: new transform '-copy_scanner_channel_into_point_source'
+10 January 2017 -- LASlib: new filters '-keep_scanner_channel 2' and '-drop_scanner_channel 1'
+8 January 2017 -- lasdiff: better difference reporting when checking "extra bytes"
+8 January 2017 -- lasinfo: more complete output for GeoTIFF tags 2048, 2050, and
+6 January 2017 -- all LAStools: rudimentary support for Lambert Conic Conformal (1SP) by ignoring scale factor
+6 January 2017 -- all LAStools: more EPSG codes due to updates 'pcs.csv' and 'gcs.csv' files 
+6 January 2017 -- lasboundary: new option to add '-labels' to KML output 
+5 January 2017 -- lasplanes: fixed tiny bug that occured when output to PEF file with '-o planes.pef' was requested
+4 January 2017 -- all LAStools: added DHHN92 "Deutsches Haupthoehennetz 1992" for OpenNRW LiDAR (-vertical_dhhn92)
+2 January 2017 -- all LAStools: more support for CRS with "user defined" AlbersEqualArea projection in GeoTIFF tags
+2 January 2017 -- lasview: better handling of intensity distributions containing only a few bright points
+2 January 2017 -- lasview: draw measurement line between points picked with 'i' when <SHIFT> or <CAPS LOCK> is on
+10 December 2016 -- blast2dem: also support rasterization of extra bytes via '-attribute 0' or '-attribute 1'
+28 November 2016 -- all LAStools: new filters '-keep_second_last' and '-drop_second_last' return 
+26 November 2016 -- lascopy: added ability to also copy z, intensity, and RGB  from source to target 
+23 November 2016 -- lascopy: fixed bug in copying classifications for returns part of a multi-return
+14 November 2016 -- blast2dem: output *.prj files for ASC/BIL/FLT/XYZ
+14 November 2016 -- NEW: lascopy copies classifications from source to target based on GPS time + return number
+14 November 2016 -- blast2dem: grids can be output as compressed LAZ points
+14 November 2016 -- blast2dem, blast2iso: support for entire set of CRS like the remaining LAStools
+13 November 2016 -- all LAStools: early FALSE when setting output directory via '-odir __' will not succeed  
+9 November 2016 -- all LAStools: support CRS via "user defined" AlbersEqualArea projection in GeoTIFF tags
+8 November 2016 -- lascanopy, lasgrid, las2dem fix memory bug introduced with PRJ support in 160721
+7 November 2016 -- lasclip: fix issue when option '-donut' is used and polygons have repeated vertices
+28 October 2016 -- lasreturn: '-classify_as 12' or '-flag_as_synthetic' mark returns from incomplete pulses
+27 October 2016 -- lasreturn: new option '-check_return_numbering' prints missing return histograms
+26 October 2016 -- lasgrid: new option '-return_type -highest -false' to visualize missing (cloud) returns
+23 October 2016 -- las2las: OGC WKT string stores COMPD_CS for projection + vertical
+22 October 2016 -- las2las: new '-set_ogc_wkt_in_elvr' store to EVLR instead of VLR
+22 October 2016 -- LASlib: ability to not only read but also write EVLR
+16 October 2016 -- laslayers: new option '-add' to add filters and transforms as LASlayers to LAY files
+16 October 2016 -- LASlib, las2las: new filters '-keep_attribute_between' and '-drop_attribute_between'
+15 October 2016 -- las2dem, las2iso, las2tin: no more endless loop when '-lakes' or '-creeks' input is emtpy
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_blue_is_NIR -0.1 0.5 (computed from R of RGB and B = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_green_is_NIR 0.4 0.8 (computed from R of RGB and G = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_intensity_is_NIR -0.2 0.2 (computed from R of RGB and intensity = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_from_CIR 0.4 0.8 (computed from RGB = CIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI 0.2 0.7 (computed from R+NIR for point type 8)
+29 September 2016 -- LASlib, las2las: new filters -keep_extended_scanner_channel 1 and -drop_extended_scanner_channel 0
+25 September 2016 -- lasgrid: better '-false' and '-gray' colors when used with option '-classification'  
+21 September 2016 -- LASlib, las2las: new filters '-drop_attribute_above' and '-keep_attribute_below'
+18 September 2016 -- LASlib, lasinfo: improved reporting of (extended & legacy) classification histograms
+16 September 2016 -- laszip: corrected "LAS 1.4 compatibility mode" for case that legacy counters are zero
+10 September 2016 -- tin2dem: new option '-kill 3.0' removes triangles with xy-edge length of 3.0 or more
+8 September 2016 -- blast2dem: correct handling of 16 bit RGB color ranges in '-rgb' mode
+7 September 2016 -- lassort: fixed GPS time, point source ID, and return numbers sort for LAS 1.4
+15 August 2016 -- lascanopy: fix small bug in case input are ASC/BIL rasters instead of LAS/LAZ points
+30 July 2016 -- las2las: correct naming of stateplanes when combining '-sp83 CA_I' with 'set_ogc_wkt'
+29 July 2016 -- lasgrid, las2dem, lascanopy, lasoverlap: grids can be output as compressed LAZ points
+28 July 2016 -- lasclip: new option '-donuts' to handle islands and lakes (based on winding order)
+27 July 2016 -- lascontrol: new options '-cp_ignore_diff_above 1.5' '-cp_ignore_diff_below -0.5' 
+26 July 2016 -- lascanopy: ability to use '-names' in '-loc' and '-lor' lists of circ/rect plots
+21 July 2016 -- las2iso, lasboundary, las2shp, las2tin: output *.prj files for SHP file output
+19 July 2016 -- las2las: fixed bug with '-target_survey_feet' not always working with '-cores 8'
+18 July 2016 -- lasgrid, las2dem, lascanopy, lasoverlap: output *.prj files for ASC/BIL/FLT/XYZ
+13 July 2016 -- las2las: added AUTHORITY EPSG code 1116 associated with NAD83 2011 for OGC WKT output
+9 July 2016 -- LAStools: added Norwegian vertical datums -vertical_nn2000 -vertical_nn54 
+9 July 2016 -- lasground, lasground_new, lasheight, lasnoise: fixed bug of version 160703 when using '-buffered 20'
+2 July 2016 -- LAStools: add datums -vertical_navd88 -vertical_cgvd2013 -vertical_cgvd28 -vertical_dvr90 
+2 July 2016 -- lasheight: added the options "store as extra bytes" and "none" to the GUI
+28 June 2016 -- LASlib: new transforms '-set_extended_return_number 11' and '-set_extended_number_of_returns 13'
+28 June 2016 -- LASlib: new filters '-keep_first_of_many' and '-keep_last_of_many'
+24 June 2016 -- LASlib: the 'reserved' field of newly created VLRs is set to zero instead of 0xAABB
+8 June 2016 -- LASlib: ASCII text input can have ';' as a seperator (e.g. 500936.36;104300.50;711.73)
+6 June 2016 -- lasthin: also GUI shows options for adaptive thinning (e.g. keypoints) and contour thinning
+28 May 2016 -- QGIS 2.14.1: major update to LAStools and LAStools Production toolboxes for QGIS 2.14.1
+20 May 2016 -- las2las: '-move_ancient_to_extended_classification' 5 bits + flags = 8 bit classifications
+15 May 2016 -- LASlib: '-translate_raw_xy_at_random 2 2' perturbes X/Y for faster Delaunay of points on grid
+12 May 2016 -- lasgrid, las2dem, lascanopy: appropiate resolution for X/Y coordinates for XYZ output
+29 April 2016 -- LASlib: don't EXIT but produce WARNINGs when rescale / reoffset overflows integers
+20 April 2016 -- LASlib: new transforms, '-switch_R_G', '-switch_R_B' and '-set_RGB 32768 16384 0'
+14 April 2016 -- lasclassify: added missing '-ignore_class' selection options to the GUI
+14 April 2016 -- lasground: fixed rare crash when classifying flightlines separately with '-by_flightline'
+10 April 2016 -- LASlib: exit with ERROR when '-rescale 0.001 ...' or '-reoffset ...' overflow integer
+ 9 April 2016 -- lasinfo: new option '-set_file_source_ID_from_point_source_ID'
+ 8 April 2016 -- lassort: sort first by GPS time then by return number '-gps_time -return_number'
+28 March 2016 -- laspublish: fixed bug for download (files were copied / moved to wrong location)
+28 March 2016 -- lasthin: added '-adaptive 0.2' for adaptive thinning (e.g. keypoints)
+20 March 2016 -- lasthin: added '-contours 2.0' to farthest from contour for each cell
+19 March 2016 -- BLAST: new '-temp_files h:\temp' specifies where to temp store 'file_list.12345.txt'
+14 March 2016 -- lasthin: fixed bug in '-subcircle 0.2' that sometimes duplicated points
+13 March 2016 -- LASlayers: fixed bug for '-ignore_class 7' when classifying to same class 7
+28 February 2016 -- LASlayers: support for '-filtered_transform' in a transform layer
+28 February 2016 -- LASlib: new filters '-drop_extended_class 42' and '-drop_extended_class 219'
+28 February 2016 -- laspublish: 2D download maps for 'Hotine Oblique Mercator' and 'Oblique Stereoscopic'
+19 February 2016 -- LASlayers: bug fix for delete layers in combination with filters or transform layers
+18 February 2016 -- lasinfo: more useful '-set_number_of_variable_length_records' and friends
+16 February 2016 -- lasclip & lascanopy: avoid crash when SHP file contains completely emtpy records
+7 February 2016 -- las2dem and blast2dem: small bug fix for additional '-scale 2.1' argument
+7 February 2016 -- LAStools: support for EPSG code 4326
+25 January 2016 -- LASlib: brand-new opportunity to do a '-filtered_transform' 
+24 January 2016 -- txt2las: better support for storing attributes in "Extra Bytes with '-add_attribute'
+24 January 2016 -- NEW: laspublish to visualize and download LiDAR in a Web browser with Potree
+19 January 2016 -- LASlib: new transform to '-scale_rgb 1.5 2.1 1.8' 
+19 January 2015 -- NEW: lasreturn repairs 'number of returns'. geometrically analyzes multi-returns
+10 January 2016 -- all GUIs: edit ".\LAStools\bin\serf\geo\my_epsg.csv" to add your own EPSG codes
+ 9 January 2016 -- LAStools: also parse 'gcs.csv' file whenever an unknown datum is encountered
+ 6 January 2016 -- lasgrid, las2dem: can raster '-attribute [0|1|2...]' stored as "Extra Bytes"
+ 4 January 2016 -- lasground: option '-by_flightline' allows to classify flightlines separately
+ 2 January 2016 -- LAStools: parse 'pcs.csv' file whenever an unknown EPSG code is encountered
+ 1 January 2016 -- las2las & txt2las: create OGC WKT string for CRS for full LAS 1.4 compliance 
+ 1 January 2016 -- all GUIs: can create a directory when browsing for one via pop-up window
+20 December 2015 -- LAStools: new EPSG codes 2945(MTM3) to 2952 (MTM10) and 3753/3754 (Ohio)
+18 December 2015 -- lastile: attempted fix of "excessive empty tile" problem in multi-core mode
+6 December 2015 -- lasboundary: new '-use_tile_bb' and '-largest_only' (only with '-use_lax')
+6 December 2015 -- lasoverlap: new '-use_tile_bb' to easier process buffered tiles
+9 October 2015 -- lasground, lasclassify: now '-feet' and '-elevation_feet' works with '-cores 2'
+9 October 2015 -- lasclip: fixed bug introduced for '-split' option in version 150924
+25 September 2015 -- LASlib: disabling auto-upgrade to LAS 1.4 introduced in 150924. now it just warns.
+24 September 2015 -- prototype implementing "uprising" of the n>1 returns against 1st return supremacy
+24 September 2015 -- lasclip: new options '-ignore_first_of_many', '-ignore_intermediate', '-ignore_single' ...
+24 September 2015 -- LASlib: upgrade to LAS 1.4 when '-merged'ing more points than older LAS allows
+24 September 2015 -- LASlib: consistant zeroing of legacy counters for new LAS 1.4 point types
+24 September 2015 -- LASzip: better DLL supports streaming and "extra bytes" in "compatibility mode"
+24 September 2015 -- lasclip: fixed bug for '-split' that was introduced in version 150828 
+24 September 2015 -- las2tin: new option '-histo edge_length 0.1' or '-histo edge_length_max 0.1'
+28 August 2015 -- lasinfo: option '-repair_counters' corrected for 64 bit counters of LAS 1.4 files
+28 August 2015 -- lasthin: added option '-central' to keep the most central point of each cell
+21 August 2015 -- lascontrol: adjust z coodinate using mean error with new LAS/LAZ or LAY files
+21 August 2015 -- lasgrid: new '-invert_ramp' for '-false' and '-gray' colorings
+20 August 2015 -- LASlayers: using '-olay' with a filter or transform adds them to the LAY file
+19 August 2015 -- lasground: new '-bulge 1.0' offers more control for what is added to the ground
+19 August 2015 -- lastile: new '-flag_as_withheld' or '-flag_as_synthetic' for buffer points
+
+19 August 2015 -- lastile: multi-core tiling to be used with spatially indexed input
+18 August 2015 -- lasdiff: fixed report for truncated files (fewer or more points) 
+1 August 2015 -- LASlib: moving LASpoint, LASquantizer, and LASattributer to LASzip for "compatibility"
+31 July 2015 -- LASzip: new DLL (incompatible with prior version) supports "LAS 1.4 compatibility mode"
+25 July 2015 -- LAStools: EPSG codes (http://groups.google.com/d/topic/lastools/9fUZaLKPReg/discussion)
+30 June 2015 -- las2tin: new option '-histo_edge_length 0.1' and '-histo_edge_length_only 0.1'
+30 June 2015 -- lasclassify: little bug fix after introduction of '-keep_overlap' filter for LAS 1.4
+6 June 2015 -- LASlib: added filters '-keep_overlap' and '-drop_overlap' for new LAS 1.4 point types
+6 June 2015 -- lasoverage: added option '-flag_as_overlap' for new LAS 1.4 point types 6 to 10
+26 May 2015 -- BLAST extension: updated to support recent additions for new LAS 1.4 point types
+26 May 2015 -- laszip: small bug fix for combination of '-cores n' with '-io_ibuffer xxxxxx'
+26 May 2015 -- all LAStools: error message for on-the-fly compression of new LAS 1.4 point types
+26 May 2015 -- lastile: small fix sets file source ID to 0 when tiling many flightlines into tiles
+26 May 2015 -- GUIs: fixed execution path issue when starting tool via "Windows Explorer search bar"
+20 May 2015 -- lassplit: fixed serious bug introduced in version 150516
+16 May 2015 -- all LAStools: projections Albers Equal Area Conic and Earth Centered Earth Fixed
+15 May 2015 -- lasclip: added '-flag_as_withheld' as an alternative to removing or reclassifying
+15 May 2015 -- lasoverage: added option '-recover_flightlines' for missing point_source_IDs
+14 May 2015 -- lasinfo: added a new option '-set_GUID F794F8A4-A23E-421E-A134-ACF7754E1C54'
+10 May 2015 -- lasoverlap: new '-min_diff 0.2' with '-max_diff 0.5' for more focused error coloring
+3 May 2015 -- las2las: improved up-conversion to LAS 1.4 via '-set_version 1.4 -point_type 6'
+24 April 2015 -- las2txt: added 'k'eypoint and 'o'verlap flags as new parse string options
+24 April 2015 -- lasoverage: added 'flag_as_overlap' for the new flag in the LAS 1.4 point types
+4 April 2015 -- LASzip DLL: added functions for creation and exploitation of spatial index files
+3 April 2015 -- LASlib: moved spatial indexing (LAX file generation) from LASlib to LASzip 
+30 March 2015 -- NEW: toolbox for ERDAS IMAGINE 2014 
+30 March 2015 -- laszip: compresses and decompresses LAS 1.4 files via new "compatibility mode"
+30 March 2015 -- GUIs: delete multiple files: pick a (red) box covering them and press <delete> 
+30 March 2015 -- las2txt: correct ASCII output for extended attributes of new LAS 1.4 point types
+04 March 2015 -- lasduplicate: new option to remove exact duplicates *and* '-nearby 0.005' points
+04 March 2015 -- GUIs: simultaneous use of '-lof' multi-file processing with unique'file_name.xxx.txt' 
+2 February 2015 -- IMPORTANT: lasgrid, lasground, ...: fixed little bug introduced in version 150131
+31 January 2015 -- NEW: lasground_new: alternative to lasground for mix of mountains and buildings
+31 January 2015 -- lastile: '-remove_buffer' and '-refine_tiles' can now run on '-cores 4' or more
+31 January 2015 -- lasheight: bug fix for ground points stored in multiple '-classification 2 8'
+31 January 2015 -- las2las: better handling of ESPG codes in batch mode on '-cores 8' or more
+31 January 2015 -- all GUIs: fixed little bug introduced in version 141218
+31 January 2015 -- LASlib: new transforms for extended attributes of LAS 1.4 point types 6 - 10
+18 December 2014 -- lascanopy: added option '-all' and fixed scaling bug for '-int_d 0 64 128'
+18 December 2014 -- LASlib: different scale_factors/offsets are now possible with '-buffered 25'
+18 December 2014 -- lasgrid: fixed option '-rgb' and added new area-normalized '-point_density'
+18 December 2014 -- laszip: use '-check' to find truncations and/or bit-errors in LAZ files
+16 November 2014 -- LASlib: improved detection & reporting of file truncation and/or LAZ bit-errors
+16 November 2014 -- lascanopy: several minor bug fixes and significantly improved GUI menu options
+20 October 2014 -- las2iso: fixed miss-spelled '-set_file_source_ID' to '-set_file_source_id'
+20 October 2014 -- blast2iso: added missing '-kill 600' parameter 
+20 October 2014 -- las2dem, las2iso, las2tin, blast2dem, blast2iso: auto adapt kill/concavity to feet 
+17 October 2014 -- lascanopy: fixed "first-plot-only bug" for *.laz input in '-lor'/'-loc'/'-lop' mode   
+16 October 2014 -- lasground: serious bug removed for (rare) LAS/LAZ files with header.z_offset < 0 
+13 October 2014 -- las2las: more control over '-target_precision' and '-target_elevation_precision'
+13 October 2014 -- LASlib: allow relative paths of type '-i d:tiles\*.laz' as input
+13 October 2014 -- LASlib: bigger I/O buffers for LASreader_las & LASwriter_las to improve performance
+13 October 2014 -- las2dem, lasgrid, lascanopy, lasoverlap: fixed bug introduced on 15 September 2014
+29 September 2014 -- NEW: lasplanes to find planar patches in terrestrial and mobile (airborne?) scans
+29 September 2014 -- lastile: better performance by increasing the I/O buffers
+15 September 2014 -- las2dem, lasgrid, lascanopy, lasoverlap: fixed mem-leak in multi-files processing
+6 September 2014 -- LASlib: leaner LASzip by removal virtual classes and delayed chunk table read
+31 August 2014 -- lascolor: bug fix for certain type of JPEG-compressed TIF images
+30 August 2014 -- all LAStools via LASlib: less I/O overhead especially on '-merged' folders of LAZ
+25 August 2014 -- lasboundary: new options '-use_bb' and '-use_lax' for hyper-fast approximate shapes
+24 August 2014 -- lasclip: new option '-split' to split LiDAR points into one file per input polygon
+20 August 2014 -- lasmerge: new option '-keep_lastiling' preserves LAStiling VLR of first LAS/LAZ file
+20 August 2014 -- lasmerge: can copy VLRs to other files by first listing empty LAS/LAZ (zero points) 
+20 August 2014 -- lastile: no longer produces tiles containing *only* buffer points (e.g. '-buffer 50')
+14 August 2014 -- lastrack: fixed non-working options '-drop_above', '-drop_below' and '-drop_between'
+14 August 2014 -- lasground: new '-extra_pass' lowers memory-needs together with '-ignore_class 3 5 6'
+13 August 2014 -- las2las: convert from/to geocentric or Earth-centered Earth-fixed (ECEF) coordinates
+10 August 2014 -- lastile: '-refine_tiles 10000000' with more than 10000000 points into four sub-tiles 
+8 August 2014 -- bug fixes: las2iso (kml output), lascanopy (files_are_plots), LASlib (on-the-fly BIL)
+30 July 2014 -- LASlib: fixed small bug in on-the-fly BIL reader LASreader_bil.cpp
+21 July 2014 -- lascanopy: option to shift the grid origin with option '-grid_ll 5 15'
+21 July 2014 -- LASlib: new filter called '-thin_with_time 0.0001', new '-unique' flag for input files
+9 July 2014 -- lascanopy: output plots or rasters to CSV file and include '-centroids' or '-names'
+9 July 2014 -- lasgrid: allow gridding of '-range' of '-elevation', '-intensity', '-user_data', ... 
+9 July 2014 -- lasheight: fixed bug for '-ground_points external.bil' introduced in 140615 
+9 July 2014 -- LASlib: make LASreader_txt parse piped ASCII text with '-stdin' and '-itxt'
+9 July 2014 -- LASlib: new transforms (-set_withheld_flag 0 -set_synthetic_flag 1 -set_keypoint_flag 0)
+15 June 2014 -- las2txt: recover PTS/PTX with '-opts'/'-optx' created by txt2las with '-ipts'/'-iptx'
+15 June 2014 -- lasthin: new options '-classify_as 8' and '-flag_as_withheld'
+15 June 2014 -- lasground: new options '-ground_class 8' '-non_ground_class 5' '-non_ground_unchanged'
+15 June 2014 -- lascanopy: fixed bug for input LAZ/LAS files with z_offset != 0.0
+15 June 2014 -- lasnoise: fixed bug for '-ignore_points' 
+5 June 2014 -- NEW: lastrack to classify, drop, normalize points based on a trajectory file
+26 May 2014 -- lasclip & lasthin: new option '-ignore_class 2 8' to not clip/classify/thin all points
+20 May 2014 -- lasnoise: fixed bug for '-remove_points' and significantly improved memory footprint 
+16 May 2014 -- QGIS toolboxes: improved for QGIS 2.2 including new LAStools Pipeline and Production
+11 May 2014 -- ArcGIS toolboxes: fixed up brand new LAStools Pipeline (with & without Model Builder)
+30 April 2014 -- blast2dem and blast2iso: support for '-cores 3' to run multiple jobs in parallel
+30 April 2014 -- lascanopy: new intensity metrics, bincentiles documented, circular & polygonal plot  
+22 March 2014 -- las2dem: new '-edge_longest' and '-edge_shortest' for QC of LiDAR pulse spacing
+22 March 2014 -- blast2dem & blast2iso: support for BIL and ASC format
+1 March 2014 -- lasview: edit (<e>+<r>), delete (<d>+<r>), undo/redo (<CTRL-u>/<CTRL-o>), save
+                         changes as LASlayers (<CTRL-s>), apply LASlayers (<CTRL-a>), pick and
+                         view cross sections (<x>/<CTRL+x>), move cross sections (arrow keys),
+                         fast change to zoom (<CTRL>), translate (<SHIFT>), pan (<ALT>) mode.
+21 February 2014 -- LASlib: renaming of clip filters (-clip_z to -keep_z, -clip_z_between to -drop_z) 
+7 February 2014 -- LASlib: renaming of several variables (xyz -> XYZ, ...) for github launch
+31 December 2013 -- lasview: color points based on user data (can illustrate height above ground)
+30 December 2013 -- lasinfo: produce histogram for attributes in extra bytes with '-histo 0 5' 
+29 December 2013 -- lasheight: stores height as new attribute with '-store_as_extra_bytes'
+25 December 2013 -- NEW: lascolor for adding RGB colors from orthophotos to the LAS points
+10 December 2013 -- all LAStools: added support for certain ESPG codes in GUI and via '-epsg' 
+9 December 2013 -- LASlib: bug fix and improved writing of new LAS 1.4 point types
+27 November 2013 -- lasgrid, las2dem, lascanopy, lasoverage: fixed half pixel offset of IMG writer
+26 November 2013 -- lassplit, lasoverage: ability to '-recover_flightlines' from GPS time
+25 November 2013 -- LASlib: new capability to filter points based on RGB band ranges
+25 October 2013 -- lasthin: new option to "thicken" LiDAR points simulating the laser beam-width
+17 October 2013 -- lascanopy: fixed bug in height rasters for LAS input with non-zero z_offset
+10 October 2013 -- LAStools: all tools read FUSION DTM rasters via on-the-fly conversion to LAS
+6 October 2013 -- ArcGIS toolboxes: improved, new LAStools Professional, new LAStools Pipeline
+3 October 2013 -- LASlib: fix for reading and merging on-the-fly converted rasters (e.g. BIL, ASC)
+30 September 2013 -- txt2las: bug fixed for adding EXTRA_BYTES with scales and offsets
+22 September 2013 -- all LAStools and LASlib: input files paths can now contain both '/' and '\' 
+18 September 2013 -- lasduplicate: fixed bug in '-unique_xyz' mode + option to output duplicates
+18 September 2013 -- lasgrid: fixed bug in '-counter_32bit', correct origin for empty output rasters 
+18 September 2013 -- LASzip DLL: fixed small memory leak
+18 September 2013 -- lasthin: fixed small bug to prepopulate the bounding box for ASCII input
+29 July 2013 -- LASzip: created an easy-to-use DLL interface for LASzip integration
+29 July 2013 -- lasground: improved handling of non-airborne LiDAR via option '-not_airborne'
+29 July 2013 -- lascanopy: added kurtosis (-kur) and skewness (-ske) as new raster products 
+29 July 2013 -- NEW: blast2iso for creating seamless contours for up to 2 billion LiDAR points
+29 July 2013 -- NEW: lasnoise for removing or flagging isolated points
+6 May 2013 -- improved lasinfo handling of LAS 1.4 files
+1 May 2013 -- fixed LAZ reading bug (50000 points only) for download-truncated LAZ files
+18 April 2013 -- fixed broken 32 bit integer mode of TIF writer in las2dem, lasgrid, blast2dem
+9 April 2013 -- fixed broken 8 and 16 bit output modes for las2dem, lasgrid, blast2dem
+9 April 2013 -- output a WARNING if the option -odir "c:\" or -odir "..\lidar\" is used
+4 April 2013 -- las2las: fixed missbehaving '-target_utm auto' function (uninitialized variable)
+4 April 2013 -- las2dem, lasgrid, blast2dem: fixed corrupted GeoTIFF projection tags 
+29 March 2013 -- lasground: fixed a serious bug for '-replace_z' and '-compute_height'
+25 March 2013 -- fixed a serious bug for '-thin_with_grid 0.5' when looping over files
+15 March 2013 -- stdin for lasinfo, BIL & ASC output fix, lasground & lasheight copy skipped files
+25 February 2013 -- fixes for lasheight, las2dem, blast2dem, lastile, and lascanopy
+13 February 2013 -- many little bug fixes (lasheight, lasgrid, las2dem, blast2dem, ...)
+28 December 2012 -- added '-clip_z_between 12 14.51' and '-clip_raw_z_between 1200 1451'
+12 December 2012 -- blast2dem: cool new options '-slope', '-false', '-invert_ramp, and '-rgb'
+12 December 2012 -- lasground: added options '-replace_z' and '-compute_height'
+8 December 2012 -- lasinfo: added '-cores 6' capability and options '-odir' and '-odix'
+2 December 2012 -- las2las: down-converts true LAS 1.4 files to LAS 1.2 with '-set_version 1.2'
+26 November 2012 -- lascanopy added '-c 2 4 10 20 100' to compute multiple count rasters 
+11 November 2012 -- NEW: e572las converts LiDAR in E57 format to the LAS/LAZ/ASCII files
+31 October 2012 -- lascanopy: fixed two bugs that would slightly miss-compute percentiles
+21 October 2012 -- lasinfo: added to the lastool GUI and fixed extremely rare lasground bug
+30 September 2012 -- NEW: lascanopy computes metrics such as height percentiles for forestry
+13 September 2012 -- lasinfo: improved output and fixed laszip bug for LAS 1.4 point types
+9 September 2012 -- lasclip, las2dem, las2iso, las2tin: fixed constraint triangulation bug 
+22 August 2012 -- added the '-pipe_on' option for a multi-stage LAStools pipeline
+11 August 2012 -- added on-the-fly buffered reading of LiDAR files (efficient with LAX)
+13 July 2012 -- NEW: lasoverage finds and flags overage points in the flightline overlap
+9 July 2012 -- fixed crash that occured when input had a corrupt VLRs without payload
+28 June 2012 -- blast2dem: ability to handle rasters with more than 65336 rows or cols
+12 June 2012 -- lasground: preserve classification by excluding points with '-ignore_class'
+12 June 2012 -- las2dem & blast2dem: removed limitation of maximal ncol being 65536
+1 June 2012 -- lassplit: the files may now be split based on various other point attributes 
+25 May 2012 -- the ArcGIS toolbox now has illustrating comments for all possible parameters
+22 May 2012 -- added las2iso, lasmerge, lassplit, and lasheight (classify) to ArcGIS toolbox
+6 May 2012 -- las2iso & las2tin: option to add closed (-lakes) and open (-streams) breaklines
+1 May 2012 -- lasheight: classify (vegetation) points based on height above ground intervals
+1 May 2012 -- added file browse box to several GUIs
+8 April 2012 -- changed ESRI LAStools LiDAR processing toolbox to be ArcGIS 9.3 compatible
+8 April 2012 -- added LASreader_bil for native read support of binary BIL grids
+3 April 2012 -- lasground: option to '-ignore_class 6' to preserve / leave out classified points
+3 April 2012 -- many more tools in the ESRI ArcGIS LAStools LiDAR processing toolbox
+28 March 2012 -- NEW: ESRI ArcGIS LAStools LiDAR processing toolbox (first version)
+27 March 2012 -- added LASreader_asc for native read support of ESRI ASC grids
+26 March 2012 -- output file name handling also for raster and line products (+ '-ocut 5') 
+19 March 2012 -- better output naming (-odix/-odir) + overwrite check for point producing tools
+16 March 2012 -- las2shp: optionally convert to PointZ primitive instead of MultiPointZ 
+16 March 2012 -- las2dem: compute slope maps as actual values (0 - 90 degrees) or color coded 
+16 March 2012 -- lasgrid, las2dem, lasoverlap: support for simple FLT + HDR raster format
+8 March 2012 -- lasinfo: count more than 4 billion points ('lasinfo -i *.las') without overflow
+22 February 2012 -- lasinfo: compute density/spacing of points with '-compute_density' or '-cd'
+14 February 2012 -- NEW: lasoverlap verifies flight line coverage & controls vert/horiz alignment
+14 February 2012 -- lasheight supports external '-ground_points' file (e.g. for geoid transforms)
+14 February 2012 -- las2dem has support for closed (hydro-flattening) and hard breaklines 
+14 February 2012 -- specify output directory with '-odir' and file name appedix '-odix'
+9 February 2012 -- lasinfo: batch output as "*_info.txt" for many files with '-single -otxt'
+9 February 2012 -- lasgrid, las2dem, blast2dem: raster the tile without buffer '-use_tile_bb'
+6 February 2012 -- lasthin: allow marking thinned out points as '-withheld' instead 
+6 February 2012 -- lastile: option for full bounding box in header for partial filled tiles
+6 February 2012 -- lasgrid, las2dem, blast2dem: output of worldfiles for JPG, PNG, TIF, BIL
+6 February 2012 -- lasgrid, las2dem, blast2dem: support for XYZ and FUSION DTM format
+1 February 2012 -- lasthin: implemented the '-random' option. allows to set a '-seed 121' 
+24 January 2012 -- lasinfo: report adjusted Standard GPS time min/max as '-gps_week' 
+24 January 2012 -- las2las: convert GPS time '-week_to_adjusted 1662' & '-adjusted_to_week' 
+17 January 2012 -- it's now possible to manually edit / tweak the command line in the GUI
+16 January 2012 -- NEW: created lassplit for extracting original flight lines from tilings
+16 January 2012 -- basic LAS 1.4 write support (down-converted points are up-converted)
+13 January 2012 -- most tools now allow multi-core batching via GUI or with '-cores 4'
+28 December 2011 -- (limited) read support for LAS 1.4 (new point types are down-converted)
+16 December 2011 -- all LAStools can now read ESRI's SHP files that contain only points
+14 December 2011 -- lasboundary: priority queue to tighten boundary around "islands"
+13 December 2011 -- most LAStools have now a GUI
+9 December 2011 -- laszip, lasview, lasgrid, las2dem: added GUI (if called without args)
+4 December 2011 -- txt2las: option to set classification with '-set_class 2'
+26 November 2011 -- lasview: overlay control points via '-cp pts.csv -cp_parse ssxyz'
+26 November 2011 -- laszip: generate LAX file as compressing/decompressing via '-lax'
+19 November 2011 -- lassort: sort based on point source id (afterwards based on time)
+27 October 2011 -- lasheight: allows reclassifying points based on their height
+26 October 2011 -- blast2dem: able to merge multiple files like '-i *.las -merged'  
+26 October 2011 -- lasview: inspect spatial indexing ('Q'&'q') and waveforms ('W'&'i')
+26 October 2011 -- lasduplicate: keep '-lowest_z' or '-unique_xyz' points
+26 October 2011 -- laszip: prototype for LAS 1.3 full waveform compression
+6 October 2011 -- lascontrol: handle control points outside of the LIDAR points
+6 October 2011 -- laszip & lasindex: large file support with fseek64
+6 October 2011 -- laszip: ability to read LAZ with missing chunk table
+6 October 2011 -- las2tin: removing large boundary triangles with '-concavity 25' 
+15 September 2011 -- NEW: created lasclassify after demands to find buildings and trees
+6 September 2011 -- lasinfo: computes point density and coverage area.
+6 September 2011 -- lastile: add & remove buffers at tile borders. reversible tilings.
+2 September 2011 -- lasboundary: is 10 times faster. uses 100 times less memory.
+2 September 2011 -- lasgrid: more gridding options (e.g. scan angle, user data)
+21 August 2011 -- NEW: created lascontrol after incompatible LAS 1.4 draft release
+15 August 2011 -- NEW: created lasground after demands for bare-earth extraction
+15 August 2011 -- lastool: also displays existing projection information
+5 August 2011 -- lastool and many LAStools allow to add/set projection info
+30 July 2011 -- lasclip: support in GUI and *.txt files for polygon input
+30 July 2011 -- lasheight: allows dropping points based on height above ground
+30 July 2011 -- lassort: sort by GPS time as a new option
+21 July 2011 -- NEW: created lastool, one tool to rule them all. a simple GUI for LAStools.
+7 July 2011 -- NEW: created lasheight in the express to kahl with lightning delay
+30 June 2011 -- out-of-core lasgrid for large rasters & support for ERDAS *.img
+23 June 2011 -- turned on LASzip version 2.0 compressor with chunking 
+12 June 2011 -- NEW: created blast2dem the day after Mark and Meg got married at Tahoe
+11 June 2011 -- support for over 4,294,967,295 points in merged LAS/LAZ or for ASCII
+31 May 2011 -- new spatial data base functionality for folders of LAS/LAZ files
+21 May 2011 -- most tools can now batch process with wildcards or multiple file names
+17 May 2011 -- laszip: enabling batch processing 
+15 May 2011 -- laszip: improved GPS11v2 compression for interleaved flight-lines
+13 May 2011 -- all tools can now read spatially indexed data if LAX file
+13 May 2011 -- moved indexing, filtering, transforming into LASreader
+9 May 2011 -- laszip: the chunked compressor now allows variable chunk sizes
+2 May 2011 -- lasduplicate: created after Mark's packet arrived
+29 April 2011 - lasindex: created after cable outage during the royal wedding (-:
+27 April 2011 -- the LASreader of the LASlib interface now allows to seek()
+25 April 2011 -- laszip: chunked compression for random access decompression
+22 April 2011 -- txt2las & shp2las command-line flags specify projection VLR
+18 April 2011 -- las2las: sets projection tags or reprojects horizontally
+12 April 2011 -- lasboundary: output PolygonZ instead of PolylineZ for SHP files 
+11 April 2011 -- all tools can now read/write ASCII via on-the-fly conversion
+7 April 2011 -- las2dem: improved false colors and RGB color handling
+6 April 2011 -- las2dem: added -intensity as an alternative to -elevation
+22 March 2011 -- lasthin: ooups ... fixed a fat fat bug living in the sparsity
+20 March 2011 -- txt2las: added capability to read *.zip, *.rar, and *.7z directly
+20 March 2011 -- all tools can now read and write LASzip version 2.0
+18 March 2011 -- new cool LASfilters and LAStransforms
+15 March 2011 -- las2txt: added the 'E' option to place an '-extra STRING' 
+4 March 2011 -- lasdem: added floating point -precision to ASC/BIL/TIF output
+3 March 2011 -- lasdem: ASC ESRI ASCII *.asc grids as an output option 
+27 February 2011 -- lasthin: keep '-sparse' grids in a hash_map or a map
+24 February 2011 -- lasclip: added possibility to merely classify (not clip) points 
+22 February 2011 -- txt2las: added option to scale the intensity scan_angle
+12 February 2011 -- lasthin: option to keep highest instead of lowest point
+7 February 2011 -- NEW: created lasclip after baking a cheese in dad's microwave oven 
+26 January 2011 -- las2las, lasinfo, las2txt, and lasmerge: use LAStransform
+5 February 2011 -- NEW: created lassort a few hours before having Lufthansa Thai food
+23 January 2011 -- all tools use LASwriteOpener 
+21 January 2011 -- all tools use LASreadOpener and can read multiple LAS files
+21 January 2011 -- lasboundary: added the concept of a '-disjoint_hull' as output  
+19 January 2011 -- NEW: created lastile after mara met with silke to talk about africa
+17 January 2011 -- lasboundary: added capability to output '-holes' in the data set  
+15 January 2011 -- las2iso: new LineWriter adds possibility to output in KML & WKT
+4 January 2011 -- all tools have a LASfilter to clip or eliminate points
+3 January 2011 -- laszip: completely refactored for integration into liblas
+3 December 2010 -- laslib API: updated to (somewhat) support LAS format 1.3
+30 November 2010 -- NEW: created lasprecision spotting few paper cups at Starbuck's Offenbach
+7 February 2010 -- NEW: created lasgrid while pondering about Karleen's Valentine
+17 January 2010 -- laszip: switched the range coder with faster arithmetic coder
+30 October 2009 -- NEW: created lasboundary after working late and biking through the night
+25 August 2009 -- NEW: created las2shp & las2shp after painting walls and hanging the yellow curtains
+17 August 2009 -- las2iso: possibility to simplify and clean the contours
+10 July 2009 -- lasinfo: '-auto_date' sets the day/year to the file creation date
+11 April 2009 -- NEW: created las2dem after making an offer on 1881 Chestnut
+6 April 2009 -- NEW: created las2iso after getting more serious about 1881 Chestnut
+17 September 2008 -- all tools to deal with LAS format version 1.2
+19 April 2008 -- NEW: created lasthin after not going on Sheker's full moon hike
+31 March 2008 -- NEW: created las2tin on a lonely flight UA 927 from FRA to SFO
+12 March 2008 -- all tools ask for input when started without arguments
+17 November 2007 -- Howard contacts me. the LAStools code base branches off into LIBlas.
+07 November 2007 -- NEW: created lasmerge after an email from luis.viveros@digimapas.cl
+13 July 2007 -- lasinfo: new option to "repair" the header and change items
+13 July 2007 -- txt2las: single pass if output is to file
+10 July 2007 -- NEW: created las2las after talking with LLNL Linda about the H1B process
+25 June 2007 -- txt2las: added warning in case that quantization causes a sign flip
+9 May 2007 -- NEW: created lasview adapted from my streaming point viewer
+4 May 2007 -- completed las2txt one month later because my mother passed away
+4 April 2007 -- NEW: created las2txt in the ICE from Frankfurt Airport to Wuerzburg
+25 March 2007 -- NEW: created lasinfo in Hongkong at Pacific Coffee after walking up the hill
+26 February 2007 -- NEW: created txt2las sitting in the SFO lounge waiting for LH 455
+23 February 2007 -- NEW: created lasdiff before getting ready for henna's birthday cabin trip
+22 February 2007 -- laspointreaders and laspointwriters about an hour before henna's birthday
+21 February 2007 -- NEW: created laswriter API after eating Sarah's veggies with peanutsauce
+18 February 2007 -- NEW: created lasreader API after repairing 2 vacuum cleaners in the garden
+14 February 2007 -- NEW: created laszip after picking flowers for henna's Valentine dinner

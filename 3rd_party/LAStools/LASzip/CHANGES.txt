@@ -1,0 +1,37 @@
+7 November 2018 -- laszip DLL: upped to 3.2 r8 for identical legacy and extended flags check
+20 October 2018 -- fixed rare bug in LASinterval::merge_intervals()
+5 October 2018 -- laszip DLL: upped to 3.2 r6 for corrected 'is_empty' return value in laszip_inside_rectangle()
+28 September 2018 -- laszip DLL: tiny bug fix for writing extended classifications via DLL and updated examples
+17 September 2018 -- laszip DLL: no more support for deprecated LASattributes (aka "extra bytes") with dimensions 2 or 3 
+30 July 2018 -- bug fix in selective decompression of "extra_bytes" for point types 6 and higher
+29 March 2018 -- add LASlib only fields to some structs to avoid future mix-up for "native" LAS 1.4
+9 February 2018 -- minor version increment to 3.2 as POINT14_v4 fixes context inefficiency bug
+28 December 2017 -- prepare to correct 'context switch' bug reported by Wanwannodao on some future date
+15 September 2017 -- new C++ istream / ostream interface completed and released
+22 August 2017 -- new C++ istream / ostream interface 
+18 July 2017 -- bug fix for spatially-indexed reading from native compressed LAS 1.4 files
+28 May 2017 -- support for "selective decompression" of compressed LAS 1.4 points added into DLL API
+25 April 2017 -- enable "native LAS 1.4 extension" in LASzip DLL via 'request_native_extension'
+30 March 2017 -- alpha-release of "native LAS 1.4 extension" for LASzip compression
+11 January 2017 --  new DLL/API function 'laszip_set_chunk_size()' to change chunk size
+8 January 2017 -- changed file names from "laszip_dll.h" to "laszip_api.h" for hobu
+7 January 2017 -- set reserved field in LASzip VLR from 0xAABB to 0x0
+7 January 2017 -- make scan angle quantization in compatibility mode consistent with LASlib
+7 January 2017 -- compatibility mode *decompression* fix for points with waveforms
+23 September 2015 -- correct update of bounding box and counters from inventory on closing
+23 September 2015 -- correct update of bounding box and counters from inventory on closing
+22 September 2015 -- bug fix for not overwriting description of pre-existing "extra bytes"
+5 September 201 -- the "LAS 1.4 compatibility mode" now allows pre-existing "extra bytes"
+31 July 2015 -- new DLL (incompatible with prior version) supports "LAS 1.4 compatibility mode"
+4 April 2015 -- added DLL functions for creation and exploitation of spatial indexing LAX files
+3 April 2015 -- moved spatial indexing (LAX file generation) from LASlib to LASzip 
+16 November 2014 -- improved detection & reporting of file truncation and/or LAZ bit-errors
+6 September 2014 -- removal of (unused) EntropyEncoder and EntropyDecoder purely virtual classes
+24 August 2014 -- when reading LAZ chunk table read is delayed until first read() or seek() is called
+18 September 2013 -- fixed small memory leak
+24 August 2013 -- fixed bug with explicit cast from LASitem:type to unsigned short and vice versa 
+11 August 2013 -- laszipdllexample: new EXAMPLE_THREE shows export of geo-referenced LAZ
+8 August 2013 -- LASzip: new DLL calls laszip_get_coordinates() and laszip_set_coordinates()
+6 August 2013 -- LASzip: new DLL calls laszip_auto_offset() and laszip_check_for_integer_overflow()
+1 August 2013 -- LASzip: new DLL calls unload_dll() and get_point_count() for FUSION integration
+29 July 2013 -- LASzip: created an easy-to-use DLL interface for LASzip integration

@@ -6,12 +6,20 @@ project(${PROJECT_NAME})
 
 
 add_library(${PROJECT_NAME} STATIC src/glew.c)
-set_target_properties(${PROJECT_NAME} PROPERTIES
-                      FOLDER "3rd_party")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_glew_INCLUDE_DIR})
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC GLEW_STATIC GLEW_NO_GLU)
+
+find_package(OpenGL REQUIRED)
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
 
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
-
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
-
+if (MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        _CRT_SECURE_NO_WARNINGS
+        _CRT_SECURE_NO_DEPRECATE
+        )
+endif()

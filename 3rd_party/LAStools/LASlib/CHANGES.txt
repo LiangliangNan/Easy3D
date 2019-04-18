@@ -1,0 +1,212 @@
+7 November 2018 -- LASzip DLL: assure that legacy and extended flags are identical to prevent corrupt LAZ files
+1 November 2018 -- all LAStools: parse more NAD83 GCS representations requested by Kirk Waters from NOAA
+31 October 2018 -- las2las: fix for bug with '-set_ogc_wkt' introduced with the change on 8 May 2018
+29 September 2018 -- lasvalidate: bug fix for LAS 1.4 point type 7 containing RGB colors
+29 September 2018 -- lasinfo: new options '-supress_z', '-supress_flags', '-supress_rgb', '-supress_point_source', ...
+28 September 2018 -- las2las: new option '-move_evlrs_to_vlrs'
+17 September 2018 -- LASlib: no more support for deprecated LASattributes (aka "extra bytes") with dimensions 2 or 3 
+16 September 2018 -- LASlib: new '-map_user_data map.txt' and '-map_intensity map.txt' and '-map_point_source map.txt'
+14 September 2018 -- lasinfo: new option '-nw' or '-no_warnings' to suppress output of WARNING messages
+13 September 2018 -- las2las: new options 'set_attribute_scale 0 0.1' and '-set_attribute_offset 1 10.0'
+9 September 2018 -- LASlib, all LAStools: tools can now also read points from PLY format (binary and ASCII).
+10 August 2018 -- LASlib, all LAStools: fix bug in LAStransform 'change_classification_from_to 19 2' reported by Kirk
+30 July 2018 -- LASlib, all LAStools: bug fix in selective decompression of "extra_bytes" for point types 6 and higher
+22 July 2018 -- LASib, txt2las: fixed LASreader_txt bug for parsing 'c'lassfication to '-set_version 1.4' and '-set_point_type 6'
+20 June 2018 -- LASlib, all LAStools: fix for '-set_classification 0' transform for new LAS 1.4 point types 6-10
+17 June 2018 -- LASlib, all LAStools: fix in flag copy from old LAS 1.3 (0-5) to new LAS 1.4 point types (6-10)
+16 June 2018 -- txt2las: new option '-set_global_encoding 1' because this bit is simply so often set wrong
+12 June 2018 -- las2las: new option '-set_global_encoding_gps_bit 1' because this bit is simply so often set wrong
+10 June 2018 -- LASlib, all LAStools: fix for additional attributes in "extra bytes" combined with '-buffered 15'
+20 May 2018 -- LASlib, all LAStools: bug fix when trying to set CRS via '-gda94 -utm 56south' in command line 
+12 May 2018 -- las2las, LASlib: new filters '-drop_RGB_red 5000 6000' and '-drop_RGB_green 200 10000' 
+ 8 May 2018 -- las2las: handling of OGC WKT and more clear "setting" versus "reprojecting" the CRS
+19 April 2018 -- las2las: 'remove_all_evlrs' and '-remove_all_evlr 0' and '-remove_evlrs_from_to 1 3'
+17 April 2018 -- lasinfo: better formatted output when bins of histograms have decimal digitls
+29 March 2018 -- LASlib, all LAStools: fix for "missing points" when writing just decompressed "native" LAS 1.4
+28 March 2018 -- lasinfo: also report TOWGS84 Helmert transform stored in GeoTIFF key 2062 (GeogTOWGS84GeoKey)
+23 March 2018 -- LASlib, all LAStools: more checks for correct arguments for LAStransforms 
+20 March 2018 -- LASlib: new '-transform_helmert 598.1,73.7,418.2,0.202,0.045,-2.455,6.7' for ECEF coordinates 
+ 3 March 2018 -- LASlib, all LAStools: "allow '-odir' to just specify a drive such as '-odir f:' of '-odir f:\'
+28 February 2018 -- LASlib, all LAStools: now '-set_RGB_of_class' also works for classifications > 31
+24 February 2018 -- las2las: automatically move eligible EVLRs to VLR section when downgrading LAS 1.4
+23 February 2018 -- las2las: bug fix when downgrading LAS 1.4 with new point types via '-set_version 1.3'
+ 9 February 2018 -- LASzip: minor version increment to 3.2 as POINT14_v4 fixes context inefficiency bug
+ 9 February 2018 -- LASlib: new LASreaderStored supports stdin/stdout piping for multi-pass tools
+31 January 2018 -- las2las: fix proper functioning of '-set_ogc_wkt' for certain command line argument combinations
+30 January 2018 -- txt2las and LASlib: use 'I' to parse NIR channel and 'J' to parse hexadecimal intensities
+28 December 2017 -- LASlib: prepare to correct 'context switch' bug reported by Wanwannodao on some future date
+25 December 2017 -- LASlib: fixed half-pixel shift in on-the-fly-reading of BIL without BLW (ulxmap/ulymap are used)
+15 December 2017 -- LASlib: support for auto flightline assignment '-faf' and '-faf 101' even with '-cores 4' 
+14 December 2017 -- LASlib: keep multiple flightlines with '-keep_point_source 2 3 4' 
+10 December 2017 -- LASlib: new '-keep_random_fraction 0.2 4711' allows seeding the random generator with 4711 
+ 1 December 2017 -- LASlib: support additional point attributes (aka extra bytes) during '-merged' operations
+30 November 2017 -- las2las: set OGC WKT with '-set_ogc_wkt "PROJCS[\"WGS84\",GEOGCS[\"GCS_ ...". note the many '\'s in front of each '\"'
+22 November 2017 -- las2txt: parse extra bytes attributes with indices larger than 9 by bracketing (12) them 
+21 November 2017 -- txt2las: allow adding up to 32 (from 10) additional extra bytes attributes
+17 November 2017 -- LASlib: new transform '-copy_intensity_into_NIR' (makes only sense for point type 8)
+30 October 2017 -- las2las: new option '-vertical_evrf2007' for European Vertical Reference Frame 2007
+14 October 2017 -- lasinfo: new WARNING when bounding box in LAS header miss-matches coordinate resolution
+10 October 2017 -- las2las: allow both piping input ('-stdin') *and* output ('-stdout') if no filter or coordinate change 
+17 August 2017 -- LASlib: switch on "native LAS 1.4 extension". turns off with '-no_native'.
+5 August 2017 -- LASlib: unless '-buffered 25' just created buffers always '-remain_buffered'
+5 August 2017 -- LASlib: removed option '-unbuffered' because it makes too many assumptions
+18 July 2017 -- LASzip + LASlib: bug fix for spatially-indexed reading from native compressed LAS 1.4 files
+14 July 2017 -- las2las: fixed missing 'comma' in compound (COMPD_CS) OGC WKT string 
+13 July 2017 -- lasdiff: added missing checks for LAS 1.4 EVLR size and payloads
+24 June 2017 -- LASlib: corrected on-the-fly conversion from BIL rasters to point clouds for unsigned integers
+11 May 2017 -- LASlib: new transforms '-copy_classification_into_user_data' and '-copy_attribute_into_user_data 1'
+20 April 2017 -- LASlib: new option '-unbuffered' for lasreadopener removes buffers from on-the-fly buffering
+16 April 2017 -- txt2las: allow requesting a particular point type with new option '-set_point_type 6'
+14 April 2017 -- LASlib: enable "adaptive chunking" for "native LAS 1.4 extension" for compressing new LAS 1.4
+8 April 2017 -- LASlib: new check to detect corrupt LAZ files generated by libLAS for files with "Extra Bytes"
+30 March 2017 -- LASlib: alpha-release of "native LAS 1.4 extension" for LASzip compression of new LAS 1.4 points
+29 March 2017 -- LASlib: enable "native LAS 1.4 extension" for LASzip via '-native'
+22 March 2017 -- LASlib: new filter '-thin_points_with_time 0.000001' vs '-thin_pulses_with_time 0.001'
+12 March 2017 -- LASlib: new filters '-drop_every_nth' '-drop_number_of_returns' '-keep_number_of_returns'
+8 March 2017 -- LASlib: new transform '-copy_user_data_into_scanner_channel' fixes bad LAS 1.4 files
+6 March 2017 -- LASlib: new transform '-copy_NIR_into_intensity' for point types 8 and 10
+1 February 2017 -- LASlib: better support for OGC WKT strings in VLRs or EVLRs when reading
+1 February 2017 -- LASlib: new transform '-copy_intensity_into_z' for use in lasgrid or lascanopy
+16 January 2017 -- LASlib: support for NAVD88 Geoids when generating OGC WKT string via '-vertical_navd88_geoid12b'
+6 January 2017 -- all LAStools: rudimentary support for Lambert Conic Conformal (1SP) by ignoring scale factor
+6 January 2017 -- all LAStools: more EPSG codes due to updates 'pcs.csv' and 'gcs.csv' files 
+4 January 2017 -- all LAStools: added DHHN92 "Deutsches Haupthoehennetz 1992" for OpenNRW LiDAR (-vertical_dhhn92)
+2 January 2017 -- all LAStools: more support for CRS with "user defined" AlbersEqualArea projection in GeoTIFF tags
+28 November 2016 -- all LAStools: new filters '-keep_second_last' and '-drop_second_last' return 
+13 November 2016 -- all LAStools: early FALSE when setting output directory via '-odir __' will not succeed  
+9 November 2016 -- all LAStools: support CRS via "user defined" AlbersEqualArea projection in GeoTIFF tags
+23 October 2016 -- las2las: OGC WKT string stores COMPD_CS for projection + vertical
+22 October 2016 -- las2las: new '-set_ogc_wkt_in_elvr' store to EVLR instead of VLR
+22 October 2016 -- LASlib: ability to not only read but also write EVLR
+16 October 2016 -- LASlib, las2las: new filters '-keep_attribute_between' and '-drop_attribute_between'
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_blue_is_NIR -0.1 0.5 (computed from R of RGB and B = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_green_is_NIR 0.4 0.8 (computed from R of RGB and G = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_intensity_is_NIR -0.2 0.2 (computed from R of RGB and intensity = NIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI_from_CIR 0.4 0.8 (computed from RGB = CIR)
+30 September 2016 -- LASlib, las2las: new filter -keep_NDVI 0.2 0.7 (computed from R+NIR for point type 8)
+29 September 2016 -- LASlib, las2las: new filters -keep_extended_scanner_channel 1 and -drop_extended_scanner_channel 0
+21 September 2016 -- LASlib, las2las: new filters '-drop_attribute_above' and '-keep_attribute_below'
+18 September 2016 -- LASlib, lasinfo: improved reporting of (extended & legacy) classification histograms
+16 September 2016 -- laszip: corrected "LAS 1.4 compatibility mode" for case that legacy counters are zero
+30 July 2016 -- las2las: correct naming of stateplanes when combining '-sp83 CA_I' with 'set_ogc_wkt'
+19 July 2016 -- las2las: fixed bug with '-target_survey_feet' not always working with '-cores 8'
+13 July 2016 -- las2las: added AUTHORITY EPSG code 1116 associated with NAD83 2011 for OGC WKT output
+9 July 2016 -- LAStools: added Norwegian vertical datums -vertical_nn2000 -vertical_nn54 
+2 July 2016 -- LAStools: add datums -vertical_navd88 -vertical_cgvd2013 -vertical_cgvd28 -vertical_dvr90 
+28 June 2016 -- LASlib: new transforms '-set_extended_return_number 11' and '-set_extended_number_of_returns 13'
+28 June 2016 -- LASlib: new filters '-keep_first_of_many' and '-keep_last_of_many'
+24 June 2016 -- LASlib: the 'reserved' field of newly created VLRs is set to zero instead of 0xAABB
+8 June 2016 -- LASlib: ASCII text input can have ';' as a seperator (e.g. 500936.36;104300.50;711.73)
+20 May 2016 -- las2las: '-move_ancient_to_extended_classification' 5 bits + flags = 8 bit classifications
+15 May 2016 -- LASlib: '-translate_raw_xy_at_random 2 2' perturbes X/Y for faster Delaunay of points on grid
+29 April 2016 -- LASlib: don't EXIT but produce WARNINGs when rescale / reoffset overflows integers
+10 April 2016 -- LASlib: exit with ERROR when '-rescale 0.001 ...' or '-reoffset ...' overflow integer
+ 9 April 2016 -- lasinfo: new option '-set_file_source_ID_from_point_source_ID'
+28 February 2016 -- LASlib: new filters '-drop_extended_class 42' and '-drop_extended_class 219'
+18 February 2016 -- lasinfo: more useful '-set_number_of_variable_length_records' and friends
+25 January 2016 -- LASlib: brand-new opportunity to do a '-filtered_transform' 
+24 January 2016 -- txt2las: better support for storing attributes in "Extra Bytes with '-add_attribute'
+19 January 2016 -- LASlib: new transform to '-scale_rgb 1.5 2.1 1.8' 
+ 1 January 2016 -- las2las & txt2las: create OGC WKT string for CRS for full LAS 1.4 compliance 
+25 September 2015 -- LASlib: disabling auto-upgrade to LAS 1.4 introduced in 150924. now it just warns.
+24 September 2015 -- LASlib: upgrade to LAS 1.4 when '-merged'ing more points than older LAS allows
+24 September 2015 -- LASlib: consistant zeroing of legacy counters for new LAS 1.4 point types
+28 August 2015 -- lasinfo: option '-repair_counters' corrected for 64 bit counters of LAS 1.4 files
+18 August 2015 -- lasdiff: fixed report for truncated files (fewer or more points) 
+1 August 2015 -- LASlib: moving LASpoint, LASquantizer, and LASattributer to LASzip for "compatibility"
+25 July 2015 -- LAStools: EPSG codes (http://groups.google.com/d/topic/lastools/9fUZaLKPReg/discussion)
+6 June 2015 -- LASlib: added filters '-keep_overlap' and '-drop_overlap' for new LAS 1.4 point types
+16 May 2015 -- LAStools: new projections Albers Equal Area Conic and Earth Centered Earth Fixed
+3 May 2015 -- las2las: improved up-conversion to LAS 1.4 via '-set_version 1.4 -point_type 6'
+3 May 2015 -- LASlib: fixed LASreader_merged to use file source ID of 0 when merging flightlines 
+3 May 2015 -- LASlib: updated LASwriter_las and LASinventory to better handle LAS 1.4 content
+3 April 2015 -- LASzip & LASlib: move spatial indexing from LASlib to LASzip for DLL integration
+31 March 2015 -- LASlib: remove unused LASquadtree inheritance of abstract class LASspatial 
+30 March 2015 -- las2txt: correct ASCII output for extended attributes of new LAS 1.4 point types
+30 March 2015 -- LASlib: LASwriterCompatibleDown/LASwriterCompatibleUp for LAS 1.4 compatibility
+31 January 2015 -- LASlib: new transforms for extended attributes of LAS 1.4 point types 6 - 10
+18 December 2014 -- LASlib: different scale_factors/offsets are now possible with '-buffered 25'
+18 December 2014 -- laszip: use '-check' to find truncations and/or bit-errors in LAZ files
+16 November 2014 -- LASlib: improved detection & reporting of file truncation and/or LAZ bit-errors
+30 August 2014 -- LASlib: significantly less I/O overhead especially on '-merged' folders of LAZ
+12 August 2014 -- LASlib: fixed (another) small bug in on-the-fly BIL reader LASreader_bil.cpp
+30 July 2014 -- LASlib: fixed small bug in on-the-fly BIL reader LASreader_bil.cpp
+21 July 2014 -- LASlib: new filter called '-thin_with_time 0.0001', new '-unique' flag for input files
+9 July 2014 -- LASlib: make LASreader_txt parse piped ASCII text with '-stdin' and '-itxt'
+9 July 2014 -- LASlib: new transforms (-set_withheld_flag 0 -set_synthetic_flag 1 -set_keypoint_flag 0)
+22 March 2014 -- LASlib: allow more flavours of ASC grids for on-the-fly conversion to LAS
+21 February 2014 -- LASlib: renaming of clip filters (-clip_z to -keep_z, -clip_z_between to -drop_z) 
+7 February 2014 -- LASlib: renaming of several variables (xyz -> XYZ, ...) for github launch
+30 December 2013 -- lasinfo: produce histogram for attributes in extra bytes with '-histo 0 5' 
+9 December 2013 -- LASlib: bug fix and improved writing of new LAS 1.4 point types
+25 November 2013 -- LASlib: new capability to filter points based on RGB band ranges  
+10 October 2013 -- LASlib: can now read FUSION DTM rasters by on-the-fly conversion to LAS
+3 October 2013 -- LASlib: fix for reading and merging on-the-fly converted rasters (e.g. BIL, ASC)
+30 September 2013 -- txt2las: bug fixed for adding EXTRA_BYTES with scales and offsets
+22 September 2013 -- LASlib: input files paths can now contain both '/' and '\'
+18 September 2013 -- LASlib: output WARNING if -odir "c:\" or -odir "..\lidar\" is used (windows)
+29 July 2013 -- lasinfo: fixed output directory bug when running with multiple cores
+6 May 2013 -- lasinfo: improved handling of LAS 1.4 files
+1 May 2013 -- fixed LAZ reading bug (50000 points only) for download-truncated LAZ files
+9 April 2013 -- LASlib: output WARNING if -odir "c:\" or -odir "..\lidar\" is used (linux)
+15 March 2013 -- corrected interplay of '-ocut 2' and '-odix _g' when used at the same time
+28 December 2012 -- added '-clip_z_between 12 14.51' and '-clip_raw_z_between 1200 1451'
+30 September 2012 -- extended classification for new point types is written correctly
+13 September 2012 -- improved lasinfo output and fixed laszip bug for LAS 1.4 point types
+22 August 2012 -- added the '-pipe_on' option for a multi-stage LAStools pipeline
+11 August 2012 -- added on-the-fly buffered reading of LiDAR files (efficient with LAX)
+9 July 2012 -- fixed crash that occured when input had a corrupt VLRs without payload
+8 April 2012 -- added LASreader_bil for native read support of binary BIL grids
+27 March 2012 -- added LASreader_asc for native read support of ESRI ASC grids
+26 March 2012 -- even better output file naming with '-ocut 5' 
+19 March 2012 -- better output naming (-odix/-odir) + overwrite check for point producing tools
+14 February 2012 -- specify output directory with '-odir' and file name appedix '-odix'
+16 January 2012 -- basic LAS 1.4 write support (down-converted points are up-converted)
+28 December 2011 -- (limited) read support for LAS 1.4 (new point types are down-converted)
+16 December 2011 -- support for reading ESRI' SHP format for types 1,11,21,8,18,28 
+9 December 2011 -- laszip: added GUI (if called without arguments)
+1 December 2011 -- laszip: fixed seek bug for interrupted LAZ files (e.g. ftp, CTRL^C)
+26 October 2011 -- laszip: prototype for LAS 1.3 full waveform compression
+26 October 2011 -- read / write interface for full waveform LAS 1.3 data
+6 October 2011 -- large file support (fseek64) for spatial indexing and compression
+6 October 2011 -- laszip: ability to read LAZ with missing chunk table
+5 September 2011 -- support for reading and writing Terrasolid's BIN format
+23 June 2011 -- turned on LASzip version 2.0 compressor with chunking 
+11 June 2011 -- support for over 4,294,967,295 points in merged LAS/LAZ or for ASCII
+31 May 2011 -- new spatial data base functionality for folders of LAS/LAZ files
+21 May 2011 -- most tools can now batch process with wildcards or multiple file names
+17 May 2011 -- laszip: enabling batch processing 
+15 May 2011 -- laszip: improved GPS11v2 compression for interleaved flight-lines
+13 May 2011 -- all tools can now read spatially indexed data if LAX file
+13 May 2011 -- moved indexing, filtering, transforming into LASreader
+9 May 2011 -- laszip: the chunked compressor now allows variable chunk sizes
+27 April 2011 -- the LASreader of the LASlib interface now allows to seek()
+25 April 2011 -- laszip: chunked compression for random access decompression
+22 April 2011 -- lastransform: many more ways to transform 
+11 April 2011 -- added lasreader_txt and laswriter_txt for on-the-fly conversion
+20 March 2011 -- laszip: added POINT10 RGB, GPS, BYTE compressor versions 2 
+19 March 2011 -- lasfilter: added various simple thinning filters
+18 March 2011 -- all: added null output -nil and compressed input and output -v2
+28 January 2011 -- all: major clean up for LASlib (with LASzip) re-release
+24 January 2011 -- lasreader: introduced LASreadOpener
+21 January 2011 -- lasreader: turned into abstract reader to support multiple files
+21 January 2011 -- lastransform: (re-)created after matt told me about the optech dashmap bug
+20 January 2011 -- lasreadermerged: created missing Livermore and my Extra Virgin Olive Oil
+10 January 2011 -- all: licensing change for LGPL release and liblas integration
+7 January 2011 -- read/writeitemraw: introduced swap buffers to reduce number of fwrite calls
+25 December 2010 -- lasfilter & lasutility: created after swinging in Mara's hammock for hours
+16 December 2010 -- lasdefinitions: updated to support generic LASitem point formats
+12 December 2010 -- bytestream: refactored after Howard got pushy (-;
+10 December 2010 -- integercompressor: unified for all entropy coders at Baeckerei Schaefer
+8 December 2010 -- arithmetic & entropy: unified framework for all entropy coders
+7 December 2010 -- read & write in items after getting invited to KAUST in Saudi Arabia
+3 December 2010 -- all: updated to (somewhat) support LAS format 1.3
+30 October 2009 -- arithmetic: refactoring Amir Said's FastAC code
+31 October 2009 -- integercompressor: switched from the Rangecoder to the Entropycoder
+7 September 2008 -- all: updated to support LAS format 1.2 
+11 June 2007 -- lasdefinitions: number of return / scan direction bitfield order was wrong
+22 February 2007 -- lasreadpoint & laswritepoint: created about an hour before henna's birthdy
+21 February 2007 -- laswriter: created after eating Sarah's veggies with peanutsauce
+18 February 2007 -- lasreader: created after repairing 2 vacuum cleaners in the garden
+30 September 2005 -- integercompressor: now splitting the corrector into raw and compressed bits
+13 July 2005 -- integercompressor: created after returning with many mosquito bites from OBX

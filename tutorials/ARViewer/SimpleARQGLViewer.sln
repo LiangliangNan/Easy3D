@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleARQGLViewer", "SimpleARQGLViewer.vcxproj", "{8D6BC363-B330-31B6-AEEF-B4F8238D7F8E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3rd_qglviewer", "qglviewer\3rd_qglviewer.vcxproj", "{944083FE-23C5-3EDE-A305-0C342D1AF872}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8D6BC363-B330-31B6-AEEF-B4F8238D7F8E}.Debug|x64.ActiveCfg = Debug|x64
+		{8D6BC363-B330-31B6-AEEF-B4F8238D7F8E}.Debug|x64.Build.0 = Debug|x64
+		{8D6BC363-B330-31B6-AEEF-B4F8238D7F8E}.Release|x64.ActiveCfg = Release|x64
+		{8D6BC363-B330-31B6-AEEF-B4F8238D7F8E}.Release|x64.Build.0 = Release|x64
+		{944083FE-23C5-3EDE-A305-0C342D1AF872}.Debug|x64.ActiveCfg = Debug|x64
+		{944083FE-23C5-3EDE-A305-0C342D1AF872}.Debug|x64.Build.0 = Debug|x64
+		{944083FE-23C5-3EDE-A305-0C342D1AF872}.Release|x64.ActiveCfg = Release|x64
+		{944083FE-23C5-3EDE-A305-0C342D1AF872}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7DD90319-CC98-4925-A11D-C30C4D74A46A}
+	EndGlobalSection
+EndGlobal

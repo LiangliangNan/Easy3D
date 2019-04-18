@@ -1,14 +1,27 @@
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory("Tutorial_01_PointCloud")
-add_subdirectory("Tutorial_02_PointCloud_Properties")
-add_subdirectory("Tutorial_03_PointCloud_FileIO")
-add_subdirectory("Tutorial_04_Mesh")
-add_subdirectory("Tutorial_05_Mesh_Connectivities")
-add_subdirectory("Tutorial_06_Mesh_Properties")
-add_subdirectory("Tutorial_07_Mesh_FileIO")
-add_subdirectory("Tutorial_08_Viewer")
-add_subdirectory("Tutorial_09_Drawables")
-add_subdirectory("Tutorial_10_ScalarFields")
-add_subdirectory("Tutorial_11_VectorFields")
-add_subdirectory("Tutorial_12_RealCamera")
+# point cloud
+add_subdirectory("Tutorial_101_PointCloud")
+add_subdirectory("Tutorial_102_PointCloud_Properties")
+add_subdirectory("Tutorial_103_PointCloud_FileIO")
+
+# mesh
+add_subdirectory("Tutorial_201_Mesh")
+add_subdirectory("Tutorial_202_Mesh_Connectivities")
+add_subdirectory("Tutorial_203_Mesh_Properties")
+add_subdirectory("Tutorial_204_Mesh_FileIO")
+
+# viewer & drawing
+add_subdirectory("Tutorial_301_Viewer")
+add_subdirectory("Tutorial_302_Drawables")
+add_subdirectory("Tutorial_303_ScalarFields")
+add_subdirectory("Tutorial_304_VectorFields")
+add_subdirectory("Tutorial_305_RealCamera")
+
+# rendering techniques
+add_subdirectory("Tutorial_401_EyeDomeLighting")
+add_subdirectory("Tutorial_402_AmbientOcclusion")
+add_subdirectory("Tutorial_403_HardShadow")
+add_subdirectory("Tutorial_404_SoftShadow")
+add_subdirectory("Tutorial_405_Transparency")
+

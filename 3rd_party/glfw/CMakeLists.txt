@@ -4,7 +4,7 @@ project(GLFW C)
 
 set(CMAKE_LEGACY_CYGWIN_WIN32 OFF)
 
-if (NOT CMAKE_VERSION VERSION_LESS "3.1")
+if (POLICY CMP0054)
     cmake_policy(SET CMP0054 NEW)
 endif()
 
@@ -14,9 +14,17 @@ set(GLFW_VERSION_PATCH "0")
 set(GLFW_VERSION_EXTRA "")
 set(GLFW_VERSION "${GLFW_VERSION_MAJOR}.${GLFW_VERSION_MINOR}")
 set(GLFW_VERSION_FULL "${GLFW_VERSION}.${GLFW_VERSION_PATCH}${GLFW_VERSION_EXTRA}")
-set(LIB_SUFFIX "" CACHE STRING "Takes an empty string or 64. Directory where lib will be installed: lib or lib64")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
+option(GLFW_BUILD_TESTS "Build the GLFW test programs" OFF)
+option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
+option(GLFW_INSTALL "Generate installation target" OFF)
+option(GLFW_VULKAN_STATIC "Assume the Vulkan loader is linked with the application" OFF)
+
+include(GNUInstallDirs)
 
 if (UNIX)
     option(GLFW_USE_OSMESA "Use OSMesa for offscreen context creation" OFF)
@@ -46,6 +54,11 @@ else()
 endif()
 
 if (GLFW_VULKAN_STATIC)
+    if (BUILD_SHARED_LIBS)
+        # If you absolutely must do this, remove this line and add the Vulkan
+        # loader static library via the CMAKE_SHARED_LINKER_FLAGS
+        message(FATAL_ERROR "You are trying to link the Vulkan loader static library into the GLFW shared library")
+    endif()
     set(_GLFW_VULKAN_STATIC 1)
 endif()
 
@@ -146,24 +159,6 @@ elseif (UNIX)
     message(STATUS "Using X11 for window creation")
 else()
     message(FATAL_ERROR "No supported platform was detected")
-endif()
-
-#--------------------------------------------------------------------
-# Add Vulkan static library if requested
-#--------------------------------------------------------------------
-if (GLFW_VULKAN_STATIC)
-    if (VULKAN_FOUND AND VULKAN_STATIC_LIBRARY)
-        list(APPEND glfw_LIBRARIES "${VULKAN_STATIC_LIBRARY}")
-        if (BUILD_SHARED_LIBS)
-            message(WARNING "Linking Vulkan loader static library into GLFW")
-        endif()
-    else()
-        if (BUILD_SHARED_LIBS OR GLFW_BUILD_EXAMPLES OR GLFW_BUILD_TESTS)
-            message(FATAL_ERROR "Vulkan loader static library not found")
-        else()
-            message(WARNING "Vulkan loader static library not found")
-        endif()
-    endif()
 endif()
 
 #--------------------------------------------------------------------
@@ -298,6 +293,13 @@ if (_GLFW_COCOA)
 endif()
 
 #--------------------------------------------------------------------
+# Add the Vulkan loader as a dependency if necessary
+#--------------------------------------------------------------------
+if (GLFW_VULKAN_STATIC)
+    list(APPEND glfw_PKG_DEPS "vulkan")
+endif()
+
+#--------------------------------------------------------------------
 # Export GLFW library dependencies
 #--------------------------------------------------------------------
 foreach(arg ${glfw_PKG_DEPS})
@@ -312,7 +314,7 @@ endforeach()
 #--------------------------------------------------------------------
 include(CMakePackageConfigHelpers)
 
-set(GLFW_CONFIG_PATH "lib${LIB_SUFFIX}/cmake/glfw3")
+set(GLFW_CONFIG_PATH "${CMAKE_INSTALL_LIBDIR}/cmake/glfw3")
 
 configure_package_config_file(src/glfw3Config.cmake.in
                               src/glfw3Config.cmake
@@ -332,12 +334,24 @@ configure_file(src/glfw3.pc.in src/glfw3.pc @ONLY)
 #--------------------------------------------------------------------
 add_subdirectory(src)
 
+if (GLFW_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+
+if (GLFW_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+
+if (DOXYGEN_FOUND AND GLFW_BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
+
 #--------------------------------------------------------------------
 # Install files other than the library
 # The library is installed by src/CMakeLists.txt
 #--------------------------------------------------------------------
 if (GLFW_INSTALL)
-    install(DIRECTORY include/GLFW DESTINATION include
+    install(DIRECTORY include/GLFW DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
             FILES_MATCHING PATTERN glfw3.h PATTERN glfw3native.h)
 
     install(FILES "${GLFW_BINARY_DIR}/src/glfw3Config.cmake"
@@ -348,7 +362,17 @@ if (GLFW_INSTALL)
             EXPORT_LINK_INTERFACE_LIBRARIES
             DESTINATION "${GLFW_CONFIG_PATH}")
     install(FILES "${GLFW_BINARY_DIR}/src/glfw3.pc"
-            DESTINATION "lib${LIB_SUFFIX}/pkgconfig")
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
+    # Only generate this target if no higher-level project already has
+    if (NOT TARGET uninstall)
+        configure_file(cmake_uninstall.cmake.in
+                       cmake_uninstall.cmake IMMEDIATE @ONLY)
+
+        add_custom_target(uninstall
+                          "${CMAKE_COMMAND}" -P
+                          "${GLFW_BINARY_DIR}/cmake_uninstall.cmake")
+        set_target_properties(uninstall PROPERTIES FOLDER "GLFW3")
+    endif()
 endif()
 

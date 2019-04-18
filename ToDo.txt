@@ -1,9 +1,0 @@
-- Implement PolyFit 
-- Add the MIP solvers
-- Organize the files in modules
-   - core
-   - math or solvers
-   - algorithm (PolyFit should go here)
-   - gui (the viewer should go here) 
-   - file_io 
-   - ...
