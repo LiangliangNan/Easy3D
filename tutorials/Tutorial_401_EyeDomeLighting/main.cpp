@@ -29,7 +29,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-	TutorialEyeDomeLighting viewer("Tutorial_13_EyeDomeLighting");
+    TutorialEyeDomeLighting viewer("Tutorial_401_EyeDomeLighting");
 
     // Read the point cloud from a known file.
     const std::string file = "../../Easy3D-Mapple/data/bunny_without_normals.bin";

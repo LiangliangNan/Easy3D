@@ -29,7 +29,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-	TutorialAmbientOcclusion viewer("Tutorial_14_AmbientOcclusion");
+    TutorialAmbientOcclusion viewer("Tutorial_402_AmbientOcclusion");
 
     const std::string file = "../../Easy3D-Mapple/data/house.obj";
     easy3d::Model* model = viewer.open(file);

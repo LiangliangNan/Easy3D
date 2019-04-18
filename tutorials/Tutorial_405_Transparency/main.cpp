@@ -30,7 +30,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-	TutorialTransparency viewer("Tutorial_17_Transparency");
+    TutorialTransparency viewer("Tutorial_405_Transparency");
 
     const std::string file = "../../Easy3D-Mapple/data/bunny.poly";
     easy3d::Model* model = viewer.open(file);

@@ -35,7 +35,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // the point cloud file.
     const std::string cloud_file = "../../Easy3D-Mapple/data/fountain/pointcloud.ply";
     
-    RealCamera viewer("Tutorial_12_RealCamera",
+    RealCamera viewer("Tutorial_305_RealCamera",
                       bundler_file,
                       cloud_file);
     

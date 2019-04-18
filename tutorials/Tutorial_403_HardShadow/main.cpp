@@ -29,13 +29,13 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-	TutorialHardShadow viewer("Tutorial_15_HardShadow");
+    TutorialHardShadow viewer("Tutorial_403_HardShadow");
 
     const std::string file = "../../Easy3D-Mapple/data/room.obj";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->triangles_drawable("surface");
-        drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
+        drawable->set_default_color(easy3d::vec3(0.9f, 0.9f, 0.9f));
     }
     else
         std::cerr << "Error: failed load model." << std::endl;

@@ -36,7 +36,7 @@ using namespace easy3d;
 int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-	Viewer viewer("Example_09_Drawables");
+    Viewer viewer("Tuturial_302_Drawables");
 
 	// Read a mesh specified by its file name
     const std::string file_name = "../../Easy3D-Mapple/data/building.off";

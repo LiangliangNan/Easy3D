@@ -87,7 +87,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-    Viewer viewer("Tutorial_10_ScalarFields");
+    Viewer viewer("Tutorial_303_ScalarFields");
 
 	// Load a mesh model and create a drawable for the faces. 
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
