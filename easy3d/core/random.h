@@ -2,8 +2,13 @@
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *	https://3d.bk.tudelft.nl/liangliang/
 *
-*	This file is part of Easy3D: software for processing and rendering
-*   meshes and point clouds.
+*	This file is part of Easy3D. If it is useful in your research/work, 
+*   I would be grateful if you show your appreciation by citing it:
+*   ------------------------------------------------------------------
+*           Liangliang Nan. 
+*           Easy3D: an easy-to-use, efficient, and open-source C++ 
+*           library for processing and rendering 3D data. 2018.
+*   ------------------------------------------------------------------
 *
 *	Easy3D is free software; you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License Version 3
@@ -40,7 +45,7 @@ namespace easy3d {
         return min + random_float() * (max - min);
     }
 
-    vec3 random_color(bool allow_dark = false) {
+    inline vec3 random_color(bool allow_dark = false) {
         float min_rgb = 0.3f;
         if (allow_dark)
             min_rgb = 0.0f;
@@ -55,4 +60,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_CONSTANT_H
+#endif // EASY3D_RANDOM_H

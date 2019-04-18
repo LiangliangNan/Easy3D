@@ -2,8 +2,13 @@
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *	https://3d.bk.tudelft.nl/liangliang/
 *
-*	This file is part of Easy3D: software for processing and rendering
-*   meshes and point clouds.
+*	This file is part of Easy3D. If it is useful in your research/work,
+*   I would be grateful if you show your appreciation by citing it:
+*   ------------------------------------------------------------------
+*           Liangliang Nan.
+*           Easy3D: an easy-to-use, efficient, and open-source C++
+*           library for processing and rendering 3D data. 2018.
+*   ------------------------------------------------------------------
 *
 *	Easy3D is free software; you can redistribute it and/or modify
 *	it under the terms of the GNU General Public License Version 3
@@ -48,6 +53,9 @@ RealCamera::RealCamera(const std::string& title,
             create_cameras_drawable(0.2f);
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
+
+        camera()->setViewDirection(vec3(0, 0, -1));
+        camera_->showEntireScene();
     }
     else
         std::cerr << "Error: failed load point cloud." << std::endl;
