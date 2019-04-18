@@ -32,17 +32,6 @@
 
 #include <easy3d/core/types.h>
 
-/********************************************************************************************
-*
-* A Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud. 
-* A Model can have multiple drawables, e.g., faces, vertices, wireframe. 
-*
-*	Version:	 1.1
-*	created:	 Dec. 03, 2018
-*	author:		 Liangliang Nan
-*	contact:     liangliang.nan@gmail.com
-*
-*********************************************************************************************/
 
 namespace easy3d {
 
@@ -50,6 +39,10 @@ namespace easy3d {
 	class LinesDrawable;
 	class TrianglesDrawable;
 
+    /*
+    * Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud.
+    * A Model can have multiple drawables, e.g., faces, vertices, wireframe.
+    */
 	class Model
 	{
 	public:
