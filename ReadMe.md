@@ -103,11 +103,11 @@ of the License or (at your option) any later version. The full text of the licen
 found in the accompanying 'License' file.
 
 ### Citation
-If you found Easy3D is useful in your research/study/work, I would be grateful if you can show your appreciation by citing it:
+If Easy3D is useful in your research/work, I would be grateful if you show your appreciation by citing it:
 ```
 Liangliang Nan. 
 Easy3D: an easy-to-use, efficient, and open-source C++ library for processing and rendering 3D data. 
-2019.
+2018.
 ```
 
 ---
