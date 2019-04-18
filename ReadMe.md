@@ -29,7 +29,7 @@ Eye-dome lighting                       |  Shadow  				     |   Transparency
 * A bunch of rendering techniques commonly available in commercial modeling software, e.g., ambient occlusion (SSAO), hard shadow (shadow maps), soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average color blending, dual depth peeling), and more ...
 * Step-by-step tutorials to get acquainted with the data structures and basic rendering for 3D modeling and geometry processing. 
 
-<span style="color:blue">The following will be available soon:</span>
+**The following will be available soon:**
  - KD-Tree
  - Point cloud normal estimation and re-orientation
  - Plane extraction from point clouds
@@ -101,6 +101,14 @@ Easy3D is free software; you can redistribute it and/or modify it under the term
 GNU General Public License as published by the Free Software Foundation; either version 3
 of the License or (at your option) any later version. The full text of the license can be
 found in the accompanying 'License' file.
+
+### Citation
+If you found Easy3D is useful in your research/study/work, I would be grateful if you can show your appreciation by citing it:
+```
+Liangliang Nan. 
+Easy3D: an easy-to-use, efficient, and open-source C++ library for processing and rendering 3D data. 
+2019.
+```
 
 ---
 
