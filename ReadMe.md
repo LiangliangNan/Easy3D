@@ -32,8 +32,9 @@ Eye-dome lighting                       |  Shadow  				     |   Transparency
 <span style="color:blue">The following will be available soon:</span>
  - KD-Tree
  - Point cloud normal estimation and re-orientation
+ - Plane extraction from point clouds
  - Poisson surface reconstruction
- - [PolyFit](https://github.com/LiangliangNan/PolyFit)
+ - [PolyFit: Polygonal surface reconstruction](https://github.com/LiangliangNan/PolyFit)
  - and more ...
 
  
