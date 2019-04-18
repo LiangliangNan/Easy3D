@@ -1,4 +1,4 @@
-<img src="images/logo.png" width="400">
+<img src="images/logo.jpg" width="400">
 
 ### Easy3D is an open source library for 3D modeling and geometry processing. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 ### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
@@ -10,18 +10,14 @@
 :-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
 Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
 
-<img src="images/vector.png" height="180"> |   <img src="images/scene.jpg" height="180">
+<img src="images/vector.jpg" height="180"> |   <img src="images/scene.jpg" height="180">
 :-----------------------------------------:|:------------------------------------------:
 Fig.4 Vector field                         |   Fig.5 Rendering a model given camera intrinsic and extrinsic parameters
 
 
-<img src="images/edl.jpg" height="180">    |   <img src="images/ssao.jpg" height="180">  
-:-----------------------------------------:|:-------------------------------------------:
-Eye-dome lighting                          |   Ambient occlusion   		  
-
-<img src="images/shadow.jpg" height="180"> |   <img src="images/transparency.jpg" height="180">
-:-----------------------------------------:|:-------------------------------------------------:
-Shadow                       		   |   Transparency
+<img src="images/edl.jpg" height="180"> | <img src="images/shadow.jpg" height="180"> |  <img src="images/transparency.jpg" height="180">
+:--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
+Eye-dome lighting                       |  Shadow  				     |   Transparency	  
 
 </center>
 
