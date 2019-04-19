@@ -37,7 +37,7 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Read a mesh specified by its file name
-    const std::string file_name = "../../Easy3D-Mapple/data/building.off";
+    const std::string file_name = "../../Easy3D/data/building.off";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
 		std::cerr << "file does not exist or invalid file format" << std::endl;

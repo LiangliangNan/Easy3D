@@ -43,7 +43,7 @@ int main(int /*argc*/, char** /*argv*/) {
     Viewer viewer("Tutorial_304_VectorFields");
 
 	// Load point cloud data from a file
-    const std::string file_name = "../../Easy3D-Mapple/data/building_cloud.bin";
+    const std::string file_name = "../../Easy3D/data/building_cloud.bin";
     easy3d::PointCloud* cloud = dynamic_cast<easy3d::PointCloud*>(viewer.open(file_name));
     if (!cloud) {
         std::cerr << "failed loading model from \'" << file_name << "\'" << std::endl;

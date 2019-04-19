@@ -35,10 +35,10 @@ int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
     
     // the bunder file (We use only the camera instric and extrinsic parameters).
-    const std::string bundler_file = "../../Easy3D-Mapple/data/fountain/bundle.out";
+    const std::string bundler_file = "../../Easy3D/data/fountain/bundle.out";
     
     // the point cloud file.
-    const std::string cloud_file = "../../Easy3D-Mapple/data/fountain/pointcloud.ply";
+    const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
     
     RealCamera viewer("Tutorial_305_RealCamera",
                       bundler_file,

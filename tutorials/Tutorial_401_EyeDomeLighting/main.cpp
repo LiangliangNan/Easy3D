@@ -37,7 +37,7 @@ int main(int /*argc*/, char** /*argv*/) {
     TutorialEyeDomeLighting viewer("Tutorial_401_EyeDomeLighting");
 
     // Read the point cloud from a known file.
-    const std::string file = "../../Easy3D-Mapple/data/bunny_without_normals.bin";
+    const std::string file = "../../Easy3D/data/bunny_without_normals.bin";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->points_drawable("vertices");

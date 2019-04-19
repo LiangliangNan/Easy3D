@@ -36,7 +36,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
     TutorialHardShadow viewer("Tutorial_403_HardShadow");
 
-    const std::string file = "../../Easy3D-Mapple/data/room.obj";
+    const std::string file = "../../Easy3D/data/room.obj";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->triangles_drawable("surface");

@@ -44,7 +44,7 @@ int main(int /*argc*/, char** /*argv*/) {
     Viewer viewer("Tuturial_302_Drawables");
 
 	// Read a mesh specified by its file name
-    const std::string file_name = "../../Easy3D-Mapple/data/building.off";
+    const std::string file_name = "../../Easy3D/data/building.off";
 
     // There are multiple options for loading a model and creating drawables.
     // This example shows how to customize the drawables. You can change the

@@ -39,7 +39,7 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Read the point cloud from a known file. 
-    PointCloud* cloud = PointCloudIO::load("../../Easy3D-Mapple/data/building_cloud.bin");
+    PointCloud* cloud = PointCloudIO::load("../../Easy3D/data/building_cloud.bin");
     if (cloud) {
 		std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 

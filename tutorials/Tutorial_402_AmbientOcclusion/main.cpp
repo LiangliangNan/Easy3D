@@ -36,7 +36,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
     TutorialAmbientOcclusion viewer("Tutorial_402_AmbientOcclusion");
 
-    const std::string file = "../../Easy3D-Mapple/data/house.obj";
+    const std::string file = "../../Easy3D/data/house.obj";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->triangles_drawable("surface");
