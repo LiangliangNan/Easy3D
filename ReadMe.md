@@ -44,10 +44,10 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
-	PointCloud* cloud = new PointCloud;	// create a point cloud
-	cloud->read("../../../data/bunny.bin");	// load point cloud data from a file
-
-	// create a drawable (a set of points that can be rendered)
+	// load a point cloud from a file
+	PointCloud* cloud = PointCloudIO::load("../../../data/bunny.ply");
+	
+	// create a drawable (a set of points)
 	PointsDrawable* drawable = cloud->add_points_drawable("points");
 
 	// collect points, colors, and normals (if exist) and transfer them to GPU
