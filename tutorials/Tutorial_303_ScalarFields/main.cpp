@@ -37,7 +37,6 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-
 // You have seen the creation of this model and it drawable in the
 // previous tutorial. Just skip it and go to the main() function.
 SurfaceMesh* old_mesh_from_previous_example() {

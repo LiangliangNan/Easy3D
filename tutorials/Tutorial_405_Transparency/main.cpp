@@ -28,10 +28,11 @@
 #include <easy3d/viewer/drawable.h>
 
 
-// This example shows how to renders a surface mesh with transparency effect 
+// This example shows how to render a surface mesh with transparency effect
 // using the following techniques 
 //		  - Average Color Blending
 //		  - Dual Depth Peeling
+
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.

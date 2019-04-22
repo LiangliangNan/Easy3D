@@ -36,7 +36,6 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-
 int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 

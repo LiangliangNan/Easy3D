@@ -36,7 +36,6 @@ using namespace easy3d;
 //		- save a point cloud to a file.
 
 
-
 int main(int /*argc*/, char** /*argv*/) {
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load("../../Easy3D/data/building_cloud.bin");

@@ -27,6 +27,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable.h>
 
+
 // This example shows how to
 //		- render a point cloud without normal information (but still be
 //		  able to perceive the depth) using the Eye Dome Lighting technique.

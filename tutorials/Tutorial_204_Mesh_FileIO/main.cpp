@@ -34,7 +34,6 @@ using namespace easy3d;
 //		- save a surface mesh into a file.
 
 
-
 int main(int /*argc*/, char** /*argv*/) {
 	// Read a mesh specified by its file name
     const std::string file_name = "../../Easy3D/data/building.off";

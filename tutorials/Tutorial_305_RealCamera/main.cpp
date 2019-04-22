@@ -31,6 +31,7 @@
 //        extrinsic parameters. The camera parameters were recovered using
 //        commonly used computer vison techniques (i.e., calibration, or SfM).
 
+
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
     
