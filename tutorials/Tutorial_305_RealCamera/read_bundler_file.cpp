@@ -27,6 +27,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <cstring>  // for memcpy()
 
 using namespace easy3d;
 
