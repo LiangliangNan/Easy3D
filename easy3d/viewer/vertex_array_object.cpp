@@ -51,7 +51,7 @@ namespace easy3d {
         }
 
         // Liangliang: it is a bad idea to initialize OpenGL stuff in the constructors
-        //			   because the OpenGL context may not exist. In Mapple, I alway
+        //			   because the OpenGL context may not exist. In Easy3D, I alway
         //             follow the "create when needed" rule.
         // glGenVertexArrays(1, &id_);	easy3d_debug_gl_error;
         // if (id_ == 0) {

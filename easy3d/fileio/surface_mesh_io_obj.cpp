@@ -471,7 +471,7 @@ namespace easy3d {
 			}
 
 			// comment
-			fprintf(out, "# OBJ exported from Mapple\n");
+            fprintf(out, "# OBJ exported from Easy3D\n");
 
 			//vertices
 			SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");

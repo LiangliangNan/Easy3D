@@ -74,7 +74,7 @@ namespace easy3d {
 				return false;
 			}
 
-            if (!ply_add_comment(ply, "Saved by Mapple (liangliang.nan@gmail.com)")) {
+            if (!ply_add_comment(ply, "Saved by Easy3D (liangliang.nan@gmail.com)")) {
 				std::cerr << "failed to add comment" << std::endl;
 				ply_close(ply);
 				return false;

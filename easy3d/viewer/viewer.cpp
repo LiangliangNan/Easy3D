@@ -693,16 +693,20 @@ namespace easy3d {
 				model_idx_ = -1;
 			else
 				model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
-			if (model_idx_ >= 0)
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_]);
 				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
 		}
 		else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
 			if (models_.empty())
 				model_idx_ = -1;
 			else
 				model_idx_ = int((model_idx_ + 1) % models_.size());
-			if (model_idx_ >= 0)
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_]);
 				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
 		}
         else if (key == GLFW_KEY_DELETE && modifiers == 0) {
             if (current_model())

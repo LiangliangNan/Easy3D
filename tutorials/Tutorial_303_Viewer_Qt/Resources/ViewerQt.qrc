@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>help.png</file>
+        <file>snap_shot.png</file>
+        <file>axis_and_label.png</file>
+        <file>exit.png</file>
+        <file>fileopen.png</file>
+        <file>filesave.png</file>
+        <file>perspective.png</file>
+    </qresource>
+</RCC>
