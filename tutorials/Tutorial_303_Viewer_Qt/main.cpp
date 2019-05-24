@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     // Commented to let Qt choose the most suitable OpenGL implementation
-	//QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+    QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
 
 	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 	QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
