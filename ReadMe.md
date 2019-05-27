@@ -74,7 +74,7 @@ Bellow is another example showing how to render a surface model (the result is i
 	SurfaceMesh* mesh = new SurfaceMesh;	// create a surface mesh
 	
 	// create a drawable for rendering the surface of this model
-	FacesDrawable* drawable = mesh->add_faces_drawable("surface");
+	TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
 
 	// transfer vertex coordinates and colors to the GPU. 
 	drawable->update_vertex_buffer(demodata::vertices);	// an array of 3D points
