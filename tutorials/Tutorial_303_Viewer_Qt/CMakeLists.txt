@@ -44,16 +44,14 @@ if (Qt5Widgets_FOUND)
     # deprecated API in order to know how to port your code away from it.
     target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS GLEW_NO_GLU)
 
-    if (Qt5Widgets_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_QT5)
-    endif()
-
-    target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_QT5)
 
     if (MSVC)
         target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
     endif()
+
+    target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
 
     target_link_libraries( ${PROJECT_NAME} Qt5::Core )
     target_link_libraries( ${PROJECT_NAME} Qt5::Gui )
