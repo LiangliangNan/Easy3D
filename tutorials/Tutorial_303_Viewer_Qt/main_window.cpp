@@ -221,7 +221,9 @@ Model* MainWindow::open(const std::string& file_name) {
 
     if (model) {
         model->set_name(file_name);
+		viewer_->makeCurrent();
         viewer_->addModel(model);
+		viewer_->doneCurrent();
         setCurrentFile(QString::fromStdString(file_name));
         return model;
     }

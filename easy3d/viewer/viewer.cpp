@@ -1318,7 +1318,6 @@ namespace easy3d {
 			draw_corner_axes();
 
         if (show_pivot_point_) {
-
             ShaderProgram* program = ShaderManager::get_program("lines_color");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;

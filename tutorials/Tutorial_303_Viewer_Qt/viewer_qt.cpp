@@ -116,10 +116,10 @@ void ViewerQt::initializeGL()
     opengl::setup_gl_debug_callback();
 #endif
 
-    if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
-        std::cerr << "Multisample not supported on this machine!!! ViewerQt may not run properly" << std::endl;
+	if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
+		throw std::runtime_error("Multisample not supported on this machine!!! ViewerQt may not run properly");
     if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
-        std::cerr << "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly" << std::endl;
+		throw std::runtime_error("Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
 
     background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -134,7 +134,6 @@ void ViewerQt::initializeGL()
     dpi_scaling_ = devicePixelRatio();
 #endif
 
-#ifndef NDEBUG
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
     std::cout << "OpenGL version requested: " << major_requested << "." << minor_requested << std::endl;
@@ -147,12 +146,11 @@ void ViewerQt::initializeGL()
         throw std::runtime_error("ViewerQt requires at least OpenGL 3.2");
     }
 
-    // This won't work because QOpenGLWidget draws everying in framebuffer and
+    // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
     // will query the actual samples in the paintGL() method.
-//    //int samples_received = 0;
-//    //func_->glGetIntegerv(GL_SAMPLES, &samples_received);
-#endif
+    //int samples_received = 0;
+    //func_->glgetintegerv(gl_samples, &samples_received);
 
     std::cout << usage() << std::endl;
 
@@ -864,6 +862,37 @@ void ViewerQt::postDraw() {
     // Visual hints: axis, camera, grid...
     if (show_corner_axes_)
         drawCornerAxes();
+
+	if (show_pivot_point_) {
+		ShaderProgram* program = ShaderManager::get_program("lines_color");
+		if (!program) {
+			std::vector<ShaderProgram::Attribute> attributes;
+			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+			program = ShaderManager::create_program_from_files("lines_color", attributes);
+		}
+		if (!program)
+			return;
+
+		const float size = 10;  // this works on windows
+
+		LinesDrawable drawable("pivotpoint");
+		std::vector<vec3> points = {
+			vec3(pivot_point_.x() - size, pivot_point_.y(), 0.5f), vec3(pivot_point_.x() + size, pivot_point_.y(), 0.5f),
+			vec3(pivot_point_.x(), pivot_point_.y() - size, 0.5f), vec3(pivot_point_.x(), pivot_point_.y() + size, 0.5f)
+		};
+		drawable.update_vertex_buffer(points);
+
+		const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
+		glDisable(GL_DEPTH_TEST);   // always on top
+		program->bind();
+		program->set_uniform("MVP", proj);
+		program->set_uniform("per_vertex_color", false);
+		program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
+		drawable.draw();
+		program->release();
+		glEnable(GL_DEPTH_TEST);   // restore
+	}
 }
 
 
