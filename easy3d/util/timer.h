@@ -28,7 +28,7 @@
 
 #include <thread>
 #include <chrono>
-
+#include <functional>
 
 namespace easy3d {
 
