@@ -124,18 +124,10 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
     }
     
     const CameraPara& cam = views_[view_index];
-    
-#if 0 // use the ground truth camera intrinsic parameters
-    float fx = 2759.48f;
-    float fy = 2764.16f;
-    float cx = 1520.69f;
-    float cy = 1006.81f;
-#else // use the camera intrinsic parameters computed from bundler
     float fx = cam.fx;
     float fy = cam.fy;
     float cx = cam.cx;
     float cy = cam.cy;
-#endif
     
     if (method == 1) {
         c->set_from_calibration(
