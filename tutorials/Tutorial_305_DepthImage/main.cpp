@@ -23,31 +23,22 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "real_camera.h"
+#include "depth_image.h"
 
 
-// This example shows how to
-//        - render a model from the view point given the camera's intrinsic and
-//        extrinsic parameters. The camera parameters were recovered using
-//        commonly used computer vison techniques (i.e., calibration, or SfM).
-
+// This example shows how to create depth images from the rendering.
 
 int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-
-    // the bunder file (We use only the camera instric and extrinsic parameters).
-    const std::string bundler_file = "../../Easy3D/data/fountain/bundle.out";
-    
     // the point cloud file.
     const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
-    
-    RealCamera viewer("RealCamera", bundler_file, cloud_file);
-    
+
+    DepthImage viewer("DepthImage", cloud_file);
+
     viewer.resize(960, 800);
-    
+
     // Run the viewer
     viewer.run();
-    
+
     return EXIT_SUCCESS;
 }
 

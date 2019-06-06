@@ -23,31 +23,37 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "real_camera.h"
+#ifndef EASY3D_TUTORIAL_DEPTH_IMAGE_H
+#define EASY3D_TUTORIAL_DEPTH_IMAGE_H
+
+#include <easy3d/viewer/viewer.h>
 
 
-// This example shows how to
-//        - render a model from the view point given the camera's intrinsic and
-//        extrinsic parameters. The camera parameters were recovered using
-//        commonly used computer vison techniques (i.e., calibration, or SfM).
+// This DepthImage class visualizes 3D models as depth images.
 
-
-int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-
-    // the bunder file (We use only the camera instric and extrinsic parameters).
-    const std::string bundler_file = "../../Easy3D/data/fountain/bundle.out";
-    
-    // the point cloud file.
-    const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
-    
-    RealCamera viewer("RealCamera", bundler_file, cloud_file);
-    
-    viewer.resize(960, 800);
-    
-    // Run the viewer
-    viewer.run();
-    
-    return EXIT_SUCCESS;
+namespace easy3d {
+    class FramebufferObject;
 }
 
+
+class DepthImage : public easy3d::Viewer
+{
+public:
+    DepthImage(const std::string& title, const std::string& model_file);
+    
+protected:
+    bool key_press_event(int key, int modifiers) override;
+    void draw() override;
+    void cleanup() override;
+
+    void generate_depth();
+    void draw_depth();
+
+private:
+    bool depth_rendering_;
+
+    easy3d::FramebufferObject*	fbo_;
+};
+
+
+#endif // EASY3D_TUTORIAL_DEPTH_IMAGE_H

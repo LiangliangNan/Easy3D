@@ -57,7 +57,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 	// Upload the vertex positions to the GPU.
 	surface_drawable->update_vertex_buffer(points);
 
-    // computer vertex normals for each vertex
+    // compute vertex normals for each vertex
     mesh->update_vertex_normals();
     // The "normal" property
     auto normals = mesh->get_vertex_property<vec3>("v:normal");
@@ -98,7 +98,7 @@ int main(int /*argc*/, char** /*argv*/) {
 	if (!mesh)
         return EXIT_FAILURE;
 
-	// In the previous tutorial, we render the model using a uniform color.
+    // By default, Easy3D renders the model using a uniform color.
 	// In this tutorial, let's define a scalar field on the mesh vertices: elevation. 
 	// This is actually the z-value of each vertex.
 	auto elevation = mesh->add_vertex_property<float>("v:elevation");
