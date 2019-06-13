@@ -29,14 +29,15 @@ Eye-dome lighting                       |  Shadow  				     |   Transparency
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and processing algorithms for 3D modeling and geometry processing. 
 
-**Plan for the next release (~August 2019)**
+** In progress and planed for the next release (~August 2019)**
  - KD-Tree
  - Point cloud normal estimation and re-orientation
  - Plane extraction from point clouds
  - Poisson surface reconstruction
  - [PolyFit: Polygonal surface reconstruction](https://github.com/LiangliangNan/PolyFit)
  - Textured rendering
- - A viewer based-on Qt
+ - Set line width for LinesDrawable
+ - Line/point imposters
  - and more ...
 
  
