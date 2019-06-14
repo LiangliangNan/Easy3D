@@ -41,12 +41,15 @@ int main(int /*argc*/, char** /*argv*/) {
     if (model) {
         auto drawable = model->triangles_drawable("surface");
         drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
+
+        // Run the viewer
+        viewer.run();
+
+        return EXIT_SUCCESS;
     }
-    else
-        std::cerr << "Error: failed load mesh. Please make sure the file exists and format is correct." << std::endl;
 
-	// Run the viewer
-    viewer.run();
-
-    return EXIT_SUCCESS;
+    else {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+        return EXIT_FAILURE;
+    }
 }

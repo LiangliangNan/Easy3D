@@ -60,8 +60,7 @@ int main(int /*argc*/, char** /*argv*/) {
 #else
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
-		std::cerr << "file does not exist or invalid file format" << std::endl;
-		delete mesh;
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
 	}
 

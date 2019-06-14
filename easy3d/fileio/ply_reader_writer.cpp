@@ -358,7 +358,6 @@ namespace easy3d {
 		std::size_t PlyReader::num_faces(const std::string& file_name) {
 			p_ply ply = ply_open(file_name.c_str(), nullptr, 0, nullptr);
 			if (!ply) {
-				std::cerr << "failed to open ply file \'" << file_name << "\'" << std::endl;
 				return 0;
 			}
 

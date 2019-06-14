@@ -45,7 +45,7 @@ int main(int /*argc*/, char** /*argv*/) {
     const std::string file_name = "../../Easy3D/data/building_cloud.bin";
     easy3d::PointCloud* cloud = dynamic_cast<easy3d::PointCloud*>(viewer.open(file_name));
     if (!cloud) {
-        std::cerr << "failed loading model from \'" << file_name << "\'" << std::endl;
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
     }
 

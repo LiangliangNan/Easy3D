@@ -60,19 +60,19 @@ namespace easy3d {
         const std::string dir = setting::resource_directory() + "/shaders/";
         const std::string vs_file = dir + base_name + ".vert";
         if (!file::is_file(vs_file)) {
-            std::cerr << "vertex shader file \'" << base_name + ".vert\' does not exist" << std::endl;
+            std::cerr << "vertex shader file \'" << vs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string fs_file = dir + base_name + ".frag";
         if (!file::is_file(fs_file)) {
-            std::cerr << "fragment shader file \'" << base_name + ".frag\' does not exist" << std::endl;
+            std::cerr << "fragment shader file \'" << fs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string gs_file = dir + base_name + ".geom";
         if (geom_shader && !file::is_file(gs_file)) {
-            std::cerr << "geometry shader file \'" << base_name + ".geom\' does not exist" << std::endl;
+            std::cerr << "geometry shader file \'" << gs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
         }

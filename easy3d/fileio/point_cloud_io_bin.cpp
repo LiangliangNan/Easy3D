@@ -41,7 +41,7 @@ namespace easy3d {
 		bool load_bin(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str(), std::fstream::binary);
 			if (input.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 
@@ -79,7 +79,7 @@ namespace easy3d {
 			// open file
 			std::ofstream output(file_name.c_str(), std::fstream::binary);
 			if (output.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 

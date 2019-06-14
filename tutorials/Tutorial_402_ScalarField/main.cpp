@@ -95,8 +95,10 @@ int main(int /*argc*/, char** /*argv*/) {
 
 	// Load a mesh model and create a drawable for the faces. 
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
-	if (!mesh)
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
+    }
 
     // By default, Easy3D renders the model using a uniform color.
 	// In this tutorial, let's define a scalar field on the mesh vertices: elevation. 

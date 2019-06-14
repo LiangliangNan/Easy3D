@@ -39,8 +39,7 @@ int main(int /*argc*/, char** /*argv*/) {
     const std::string file_name = "../../Easy3D/data/building.off";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
-		std::cerr << "file does not exist or invalid file format" << std::endl;
-		delete mesh;
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
 	}
 	std::cout << "mesh loaded. " << std::endl;

@@ -39,35 +39,36 @@ using namespace easy3d;
 int main(int /*argc*/, char** /*argv*/) {
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load("../../Easy3D/data/building_cloud.bin");
-    if (cloud) {
-		std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
+    if (!cloud) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+        return EXIT_FAILURE;
+    }
 
-		// Now let's save the model into a file with customized format. In each 
-		// line we store the x, y, z coordinates, followed by the normal (nx, ny,
-		// nz) and color (r, g, b) if they exist.
-        std::ofstream output("./building_cloud-copy.txt");
-		if (output.is_open()) { // if the file has been successfully created
-			// The point coordinates.
-			PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
-			// The point normals.
-			PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
-			// The point colors.
-			PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
-            std::cout << "saving the point cloud..." << std::endl;
+    std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
-			for (auto v : cloud->vertices()) {
-				output << points[v];
-				if (normals)	// if normals exist
-					output << " " << normals[v];
-				if (colors)		// if colors exist
-					output << " " << colors[v];
-				output << std::endl;
-			}
-            std::cout << "point cloud saved to './building_cloud-copy.txt'" << std::endl;
-		}
-	}
-	else 
-		std::cout << "file does not exist or invalid file format" << std::endl;
+    // Now let's save the model into a file with customized format. In each
+    // line we store the x, y, z coordinates, followed by the normal (nx, ny,
+    // nz) and color (r, g, b) if they exist.
+    std::ofstream output("./building_cloud-copy.txt");
+    if (output.is_open()) { // if the file has been successfully created
+        // The point coordinates.
+        PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
+        // The point normals.
+        PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
+        // The point colors.
+        PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
+        std::cout << "saving the point cloud..." << std::endl;
+
+        for (auto v : cloud->vertices()) {
+            output << points[v];
+            if (normals)	// if normals exist
+                output << " " << normals[v];
+            if (colors)		// if colors exist
+                output << " " << colors[v];
+            output << std::endl;
+        }
+        std::cout << "point cloud saved to './building_cloud-copy.txt'" << std::endl;
+    }
 
     // Delete the point cloud (i.e., release memory)
     delete cloud;

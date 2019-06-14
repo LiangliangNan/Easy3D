@@ -59,7 +59,7 @@ namespace easy3d {
 			if (in_ == nullptr) {
 				input_ = new std::ifstream(file_name_.c_str());
 				if (input_->fail()) {
-					std::cerr << "could not open file\'" << file_name_ << "\'" << std::endl;
+                    std::cerr << "could not open file \'" << file_name_ << "\'" << std::endl;
 					return nullptr;
 				}
 				in_ = new LineInputStream(*input_);

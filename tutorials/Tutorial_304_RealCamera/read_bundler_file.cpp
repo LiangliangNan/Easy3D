@@ -71,7 +71,7 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 
 	std::ifstream input(file_name.c_str());
 	if (input.fail()) {
-		std::cerr << "could not open file: \'" << file_name << "\'" << std::endl;
+        std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 		return false;
 	}
 

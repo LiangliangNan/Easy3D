@@ -39,7 +39,7 @@ namespace easy3d {
 		bool load_xyz(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str());
 			if (input.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 
@@ -72,7 +72,7 @@ namespace easy3d {
 		bool save_xyz(const std::string& file_name, const PointCloud* cloud) {
 			std::ofstream output(file_name.c_str());
 			if (output.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 			output.precision(16);
@@ -92,7 +92,7 @@ namespace easy3d {
 		bool load_bxyz(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str(), std::fstream::binary);
 			if (input.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 

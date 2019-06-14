@@ -1279,8 +1279,10 @@ static int ply_read_header_element(p_ply ply) {
 }
 
 static void ply_error_cb(p_ply ply, const char *message) {
+#ifndef NDEBUG
     (void) ply;
     fprintf(stderr, "RPly: %s\n", message);
+#endif
 }
 
 static void ply_ferror(p_ply ply, const char *fmt, ...) {

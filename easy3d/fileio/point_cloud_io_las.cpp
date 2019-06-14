@@ -48,7 +48,7 @@ namespace easy3d {
 
 			LASreader* lasreader = lasreadopener.open();
 			if (!lasreader || lasreader->npoints <= 0) {
-				std::cerr << "could not open file" << std::endl;
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				lasreader->close();
 				delete lasreader;
 				return false;
