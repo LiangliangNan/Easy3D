@@ -1040,7 +1040,7 @@ namespace easy3d {
             if (colors)
                 surface->update_color_buffer(vertex_colors);
             surface->release_index_buffer();
-#else
+#else   // smooth shading
             auto points = mesh->get_vertex_property<vec3>("v:point");
             surface->update_vertex_buffer(points.vector());
             auto colors = mesh->get_vertex_property<vec3>("v:color");
