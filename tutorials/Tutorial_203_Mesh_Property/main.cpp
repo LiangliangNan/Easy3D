@@ -60,7 +60,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
 	// We add a per-face property "f:normal" storing the normal of each face
 
-	SurfaceMesh::FaceProperty<vec3> normals = mesh->add_face_property<vec3>("v:normal");
+	SurfaceMesh::FaceProperty<vec3> normals = mesh->add_face_property<vec3>("f:normal");
 	for (auto f : mesh->faces()) {
 		// We use the built-in function of SurfaceMesh compute_face_normal(). 
 		// Of course you can write your own function to compute the normal of 
