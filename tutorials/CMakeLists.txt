@@ -13,7 +13,7 @@ add_subdirectory("Tutorial_204_Mesh_IO")
 
 # viewer & drawing
 add_subdirectory("Tutorial_301_Viewer")
-add_subdirectory("Tutorial_302_Viewer_ImGui")
+add_subdirectory("Tutorial_302_Viewer_imgui")
 add_subdirectory("Tutorial_303_Viewer_Qt")
 add_subdirectory("Tutorial_304_RealCamera")
 add_subdirectory("Tutorial_305_DepthImage")
