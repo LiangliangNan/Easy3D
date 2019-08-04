@@ -6,10 +6,7 @@ project(${PROJECT_NAME})
 
 set(${PROJECT_NAME}_HEADERS
     ./imgui_fonts_droid_sans.h
-    ./ImGuiHelpers.h
-    ./imguitraits.h
     ./viewer_imgui.h
-
     ./imgui/imgui.h
     ./imgui/impl/imgui_impl_glfw.h
     ./imgui/impl/imgui_impl_opengl3.h
