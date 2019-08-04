@@ -78,7 +78,7 @@ namespace easy3d {
 
 		// A general purpose PLY file writer
         // This class is internally used by PointCloudIO and SurfaceMeshIO.
-        // Client code should also use PointCloudIO and SurfaceMeshIO.
+        // Client code should use PointCloudIO and SurfaceMeshIO.
 		class PlyWriter {
 		public:
 			bool write(
@@ -94,7 +94,7 @@ namespace easy3d {
 
 		// A general purpose PLY file reader
         // This class is internally used by PointCloudIO and SurfaceMeshIO.
-        // Client code should also use PointCloudIO and SurfaceMeshIO.
+        // Client code should use PointCloudIO and SurfaceMeshIO.
 		class PlyReader
 		{
 		public:
