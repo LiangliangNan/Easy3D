@@ -30,11 +30,11 @@ Eye-dome lighting                       |  Shadow  				     |   Transparency
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and processing algorithms for 3D modeling and geometry processing. 
 
 ** In progress and planed for the next release (~August 2019)**
+ - Better documentation (basically more comments in API definition)
  - KD-Tree
  - Point cloud normal estimation and re-orientation
  - Plane extraction from point clouds
  - Poisson surface reconstruction
- - [PolyFit: Polygonal surface reconstruction](https://github.com/LiangliangNan/PolyFit)
  - Textured rendering
  - Set line width for LinesDrawable
  - Line/point imposters
