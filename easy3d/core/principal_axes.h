@@ -160,6 +160,7 @@ namespace easy3d {
             solver.solve(M_, EigenSolver<FT>::DECREASING);
 
             for (unsigned short i=0; i<DIM; ++i) {
+                eigen_value_[i] = solver.eigen_value(i);
                 for (unsigned short j=0; j<DIM; ++j)
                     axis_[i][j] = solver.eigen_vector(j, i); // eigenvectors are stored in columns
             }
