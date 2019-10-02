@@ -7,7 +7,6 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
     point_cloud_normals.h
     point_cloud_poisson_reconstruction.h
-#   point_cloud_qualities.h
     point_cloud_ransac.h
     surface_mesh_sampler.h
     )
@@ -15,7 +14,6 @@ set(${PROJECT_NAME}_HEADERS
 set(${PROJECT_NAME}_SOURCES
     point_cloud_normals.cpp
     point_cloud_poisson_reconstruction.cpp
-#   point_cloud_qualities.cpp
     point_cloud_ransac.cpp
     surface_mesh_sampler.cpp
     )
