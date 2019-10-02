@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.1)
 add_subdirectory("Tutorial_101_PointCloud")
 add_subdirectory("Tutorial_102_PointCloud_Property")
 add_subdirectory("Tutorial_103_PointCloud_IO")
+add_subdirectory("Tutorial_104_NormalEstimation")
 
 # mesh
 add_subdirectory("Tutorial_201_Mesh")
