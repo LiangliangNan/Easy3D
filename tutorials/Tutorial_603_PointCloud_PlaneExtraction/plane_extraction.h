@@ -23,24 +23,20 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
-#define EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
+#ifndef EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H
+#define EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H
 
 #include <easy3d/viewer/viewer.h>
 
 
-class TutorialNormalEstimation : public easy3d::Viewer
+class TutorialPlaneExtraction : public easy3d::Viewer
 {
 public:
-    TutorialNormalEstimation(const std::string& title = "");
+    TutorialPlaneExtraction(const std::string& title = "");
 
 protected:
     bool key_press_event(int key, int modifiers) override;
-
-private:
-    void update_rendering();
-
 };
 
 
-#endif // EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
+#endif // EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H

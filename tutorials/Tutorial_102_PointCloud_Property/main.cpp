@@ -24,6 +24,7 @@
 */
 
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/random.h>
 
 using namespace easy3d;
 
@@ -32,14 +33,6 @@ using namespace easy3d;
 //		- add per-point properties to a point cloud;
 //		- access existing properties.
 
-
-
-vec3 random_color() {
-	float r = rand() % 255 / 255.0f;	// in the range [0, 1]
-	float g = rand() % 255 / 255.0f;	// in the range [0, 1]
-	float b = rand() % 255 / 255.0f;	// in the range [0, 1]
-	return vec3(r, g, b);
-}
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Initialize random number generator.

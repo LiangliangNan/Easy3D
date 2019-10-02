@@ -6,8 +6,8 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
                 main.cpp
-                normal_estimation.h
-                normal_estimation.cpp
+                plane_extraction.h
+                plane_extraction.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

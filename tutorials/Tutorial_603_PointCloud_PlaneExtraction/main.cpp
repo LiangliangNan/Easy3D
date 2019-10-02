@@ -23,22 +23,21 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "normal_estimation.h"
+#include "plane_extraction.h"
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable.h>
 
 
 // This example shows how to
-//		- estimation normal information of a point cloud.
-//      - re-orientation the normals.
+//		- extract planes from a point cloud using RANSAC.
 
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialNormalEstimation viewer("Tutorial_603_PointCloud_PlaneExtraction");
+    TutorialPlaneExtraction viewer("Tutorial_603_PointCloud_PlaneExtraction");
 
     // Read the point cloud from a known file.
-    const std::string file = "../../Easy3D/data/bunny_without_normals.bin";
+    const std::string file = "../../Easy3D/data/building_cloud.bin";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->points_drawable("vertices");

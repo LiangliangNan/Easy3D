@@ -107,9 +107,9 @@ namespace easy3d {
         PointCloud_Ransac::reverse_iterator start = pc.rbegin();
         MiscLib::Vector< std::pair< MiscLib::RefCountPtr< PrimitiveShape >, std::size_t > >::const_iterator shape_itr = shapes.begin();
 
-        auto lables = cloud->vertex_property<int>("v:segment_label", -1);
-        auto indices = cloud->vertex_property<int>("v:segment_index", -1);
-        int segment_index = 0;
+        auto primitive_types = cloud->vertex_property<int>("v:primitive_type", PrimitivesRansac::UNKNOWN);
+        auto primitive_indices = cloud->vertex_property<int>("v:primitive_index", -1);
+        int index = 0;
         for (unsigned int id = 0; shape_itr != shapes.end(); ++shape_itr, ++id) {
             const PrimitiveShape* primitive = shape_itr->first;
             std::size_t num = shape_itr->second;
@@ -140,8 +140,8 @@ namespace easy3d {
 //                const Plane3 plane(vec3(p.getValue()), vec3(n.getValue()));
                 for (auto id : vts) {
                     const PointCloud::Vertex v(id);
-                    lables[v] = PrimitivesRansac::PLANE;
-                    indices[v] = segment_index;
+                    primitive_types[v] = PrimitivesRansac::PLANE;
+                    primitive_indices[v] = index;
                 }
                 break;
             }
@@ -155,8 +155,8 @@ namespace easy3d {
 //                vec3  dir(nor[0], nor[1], nor[2]); dir = normalize(dir);
                 for (auto id : vts) {
                     const PointCloud::Vertex v(id);
-                    lables[v] = PrimitivesRansac::CYLINDER;
-                    indices[v] = segment_index;
+                    primitive_types[v] = PrimitivesRansac::CYLINDER;
+                    primitive_indices[v] = index;
                 }
                 break;
             }
@@ -167,8 +167,8 @@ namespace easy3d {
 //                const Vec3f& center = sphere.Center();
                 for (auto id : vts) {
                     const PointCloud::Vertex v(id);
-                    lables[v] = PrimitivesRansac::SPHERE;
-                    indices[v] = segment_index;
+                    primitive_types[v] = PrimitivesRansac::SPHERE;
+                    primitive_indices[v] = index;
                 }
                 break;
             }
@@ -181,8 +181,8 @@ namespace easy3d {
                 double radius = cone.RadiusAtLength(1.0f); */ // NOTE:: the center is the apex of the cone
                 for (auto id : vts) {
                     const PointCloud::Vertex v(id);
-                    lables[v] = PrimitivesRansac::CONE;
-                    indices[v] = segment_index;
+                    primitive_types[v] = PrimitivesRansac::CONE;
+                    primitive_indices[v] = index;
                 }
                 break;
             }
@@ -195,17 +195,17 @@ namespace easy3d {
 //                double max_radius = torus.MajorRadius();
                 for (auto id : vts) {
                     const PointCloud::Vertex v(id);
-                    lables[v] = PrimitivesRansac::TORUS;
-                    indices[v] = segment_index;
+                    primitive_types[v] = PrimitivesRansac::TORUS;
+                    primitive_indices[v] = index;
                 }
                 break;
             }
             }
-            ++segment_index;
+            ++index;
         }
 
-        std::cout << segment_index << " primitives extracted. " << remaining << " points remained" << std::endl;
-        return segment_index;
+        std::cout << index << " primitives extracted. " << remaining << " points remained" << std::endl;
+        return index;
     }
 
 

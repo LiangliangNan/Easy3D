@@ -36,10 +36,6 @@ public:
 
 protected:
     bool key_press_event(int key, int modifiers) override;
-
-private:
-    void update_rendering();
-
 };
 
 
