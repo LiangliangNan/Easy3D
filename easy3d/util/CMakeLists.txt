@@ -9,10 +9,8 @@ set(${PROJECT_NAME}_HEADERS
     dialogs.h
     file.h
     line_stream.h
-    logging.h
     stop_watch.h
     string.h
-    thread.h
     timer.h
     )
 
