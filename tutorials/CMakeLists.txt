@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.1)
 add_subdirectory("Tutorial_101_PointCloud")
 add_subdirectory("Tutorial_102_PointCloud_Property")
 add_subdirectory("Tutorial_103_PointCloud_IO")
-add_subdirectory("Tutorial_104_NormalEstimation")
 
 # mesh
 add_subdirectory("Tutorial_201_Mesh")
@@ -32,3 +31,7 @@ add_subdirectory("Tutorial_503_HardShadow")
 add_subdirectory("Tutorial_504_SoftShadow")
 add_subdirectory("Tutorial_505_Transparency")
 
+# point cloud algorithms
+add_subdirectory("Tutorial_601_PointCloud_NormalEstimation")
+add_subdirectory("Tutorial_602_PointCloud_SurfaceReconstruction")
+add_subdirectory("Tutorial_603_PointCloud_PlaneExtraction")

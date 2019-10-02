@@ -35,14 +35,14 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialNormalEstimation viewer("Tutorial_104_NormalEstimation");
+    TutorialNormalEstimation viewer("Tutorial_603_PointCloud_PlaneExtraction");
 
     // Read the point cloud from a known file.
     const std::string file = "../../Easy3D/data/bunny_without_normals.bin";
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->points_drawable("vertices");
-        drawable->set_point_size(5.0f);
+        drawable->set_point_size(2.0f);
         drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
 
         // Run the viewer
