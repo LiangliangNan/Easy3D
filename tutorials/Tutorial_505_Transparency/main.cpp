@@ -36,7 +36,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialTransparency viewer("Tutorial_405_Transparency");
+    TutorialTransparency viewer("Tutorial_505_Transparency");
 
     const std::string file = "../../Easy3D/data/hand.poly";
     easy3d::Model* model = viewer.open(file);

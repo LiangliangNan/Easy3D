@@ -35,7 +35,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialSoftShadow viewer("Tutorial_404_SoftShadow");
+    TutorialSoftShadow viewer("Tutorial_504_SoftShadow");
 
     const std::string file = "../../Easy3D/data/room.obj";
     easy3d::Model* model = viewer.open(file);

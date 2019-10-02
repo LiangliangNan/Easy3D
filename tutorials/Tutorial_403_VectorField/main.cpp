@@ -39,7 +39,7 @@ using namespace easy3d;
 int main(int /*argc*/, char** /*argv*/) {
 	// Create the default Easy3D viewer.
 	// Note: a viewer must be created before creating any drawables. 
-    Viewer viewer("Tutorial_304_VectorFields");
+    Viewer viewer("Tutorial_403_VectorField");
 
 	// Load point cloud data from a file
     const std::string file_name = "../../Easy3D/data/building_cloud.bin";

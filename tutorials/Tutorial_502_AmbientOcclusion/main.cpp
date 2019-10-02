@@ -34,7 +34,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialAmbientOcclusion viewer("Tutorial_402_AmbientOcclusion");
+    TutorialAmbientOcclusion viewer("Tutorial_502_AmbientOcclusion");
 
     const std::string file = "../../Easy3D/data/house.obj";
     easy3d::Model* model = viewer.open(file);

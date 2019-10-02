@@ -34,7 +34,7 @@
 
 int main(int /*argc*/, char** /*argv*/) {
     // Create the viewer.
-    TutorialHardShadow viewer("Tutorial_403_HardShadow");
+    TutorialHardShadow viewer("Tutorial_503_HardShadow");
 
     const std::string file = "../../Easy3D/data/room.obj";
     easy3d::Model* model = viewer.open(file);
