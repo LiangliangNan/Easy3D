@@ -74,7 +74,7 @@ namespace easy3d {
 				return false;
 			}
 
-            if (!ply_add_comment(ply, "Saved by Easy3D (liangliang.nan@gmail.com)")) {
+            if (!ply_add_comment(ply, "Saved by Easy3D (Contact: liangliang.nan@gmail.com)")) {
 				std::cerr << "failed to add comment" << std::endl;
 				ply_close(ply);
 				return false;
@@ -358,6 +358,7 @@ namespace easy3d {
 		std::size_t PlyReader::num_faces(const std::string& file_name) {
 			p_ply ply = ply_open(file_name.c_str(), nullptr, 0, nullptr);
 			if (!ply) {
+				std::cerr << "failed to open ply file \'" << file_name << "\'" << std::endl;
 				return 0;
 			}
 

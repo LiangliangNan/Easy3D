@@ -1109,7 +1109,6 @@ namespace easy3d {
             auto points = cloud->get_vertex_property<vec3>("v:point");
             for (auto v : cloud->vertices())
                 box.add_point(points[v]);
-            model->set_bounding_box(box);
         }
         else if (dynamic_cast<SurfaceMesh*>(model)) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);

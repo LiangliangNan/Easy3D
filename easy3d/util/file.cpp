@@ -587,7 +587,7 @@ namespace easy3d {
         void write_string_to_file(const std::string& data, const std::string& filename) {
 			std::ofstream out(filename.c_str(), std::ios::binary);
 			if (out.fail()) {
-                std::cerr << "could not open file \'" << filename << "\'" << std::endl;
+				std::cerr << "Could not open file \'" << filename << "\'" << std::endl;
 				return;
 			}
 			out.write(data.c_str(), data.length());

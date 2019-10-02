@@ -121,9 +121,9 @@ namespace easy3d {
         light_view_matrix_ = light_frustum_->view_matrix();
         light_projection_matrix_ = light_frustum_->projection_matrix();
 
-        // Multiplying the vertex’ position by light MVP (i.e., light_projection_matrix_ * light_view_matrix_) will
+        // Multiplying the vertex's position by light MVP (i.e., light_projection_matrix_ * light_view_matrix_) will
         // give homogeneous coordinates, which are in [-1,1] ; but texture sampling must be done in [0,1]. This can
-        // be fixed by tweaking the fetch coordinates directly in the fragment shader but it’s more efficient to
+        // be fixed by tweaking the fetch coordinates directly in the fragment shader but it's more efficient to
         // multiply the homogeneous coordinates by the following matrix, which simply divides  coordinates by 2
         // ( the diagonal: [-1,1] -> [-0.5, 0.5] ) and translates them ( the lower row: [-0.5, 0.5] -> [0,1] ).
         const mat4 clip2Tex(

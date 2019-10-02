@@ -59,7 +59,7 @@ namespace easy3d {
 			// open file (in ASCII mode)
 			FILE* in = fopen(file_name.c_str(), "r");
 			if (!in) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+				std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 
@@ -209,7 +209,7 @@ namespace easy3d {
 			// open file (in binary mode)
 			FILE* fp = nullptr;
 			if ((fopen_s(&fp, file_name.c_str(), "rb") != 0) || (fp == nullptr)) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+				std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 
@@ -466,7 +466,7 @@ namespace easy3d {
 
 			FILE* out = fopen(file_name.c_str(), "w");
 			if (!out) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+				std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 

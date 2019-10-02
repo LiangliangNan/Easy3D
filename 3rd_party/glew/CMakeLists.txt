@@ -9,7 +9,8 @@ add_library(${PROJECT_NAME} STATIC src/glew.c)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_glew_INCLUDE_DIR})
+set(GLEW_INCLUDE_DIR  ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ${GLEW_INCLUDE_DIR})
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC GLEW_STATIC GLEW_NO_GLU)
 

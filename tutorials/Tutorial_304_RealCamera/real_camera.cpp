@@ -72,6 +72,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
             current_view_ = (current_view_ + 1) % views_.size();
             if (KRT_to_camera(current_view_, 2, camera())) {
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
+                set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara& c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.25, c.h * 0.25);

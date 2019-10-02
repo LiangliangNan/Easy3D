@@ -26,7 +26,7 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from libQGLViewer with modifications.
+ * The code is adapted from libQGLViewer with modifications.
  *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
  * http://libqglviewer.com/
@@ -51,20 +51,20 @@
  * stores the three rotation angles around the X, Y and Z axes. These 3 rotations are
  * then applied successively, usually in this order: first Y, then Z, then X (but not
  * necessarily). Using a different order yields different results.
- * Euler angles are usually used to set a character’s orientation since game characters
- * only rotate on the vertical axis. Therefore, it’s easier to write, understand and
- * maintain “float direction;” than 3 different orientations. Another good use of Euler
+ * Euler angles are usually used to set a character's orientation since game characters
+ * only rotate on the vertical axis. Therefore, it is easier to write, understand and
+ * maintain "float direction" than 3 different orientations. Another good use of Euler
  * angles is an FPS camera: you have one angle for heading (Y), and one for up/down (X).
  * However, when things get more complex, Euler angle will be hard to work with, eg.,:
  *  - Interpolating smoothly between 2 orientations is hard. Naively interpolating the
  *    X, Y, and Z angles will be ugly.
  *  - Applying several rotations is complicated and unprecise: you have to compute the
  *    final rotation matrix, and guess the Euler angles from this matrix.
- *  - A well-known problem, the “Gimbal Lock”, will sometimes block your rotations, and
+ *  - A well-known problem, the "Gimbal Lock", will sometimes block your rotations, and
  *    other singularities which will flip your model upside-down.
- *  - Different angles make the same rotation (-180° and 180°, for instance)
- *  - It’s a mess - as said above, usually the right order is YZX, but if you also use
- *    a library with a different order, you’ll be in trouble.
+ *  - Different angles make the same rotation (-180 and 180 degrees, for instance)
+ *  - It is a mess - as said above, usually the right order is YZX, but if you also use
+ *    a library with a different order, you'll be in trouble.
  *  - Some operations are complicated, e.g., rotation of N degrees around a specific axis.
  * Quaternions are a tool to represent rotations, which solves these problems.
  *

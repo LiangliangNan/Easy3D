@@ -32,7 +32,7 @@
 #include <easy3d/core/types.h>
 
 /********************************************************************************************
-*
+* A Drawable is a general abstraction for "something that can be drawn."
 * Drawable is the base class for drawable objects (i.e., points, line segments, triangles).
 * A drawable manages the rendering of an objects. When data (vertex position/color/normal,
 * selection, etc.) changes, it controls the upload of the data to GPU.

@@ -29,6 +29,7 @@ set(${PROJECT_NAME}_HEADERS
     shadow.h
     soft_shadow.h
     opengl_timer.h
+    texture.h
     transform.h
     transform_decompose.h
     transparency.h
@@ -65,15 +66,18 @@ set(${PROJECT_NAME}_SOURCES
     vertex_array_object.cpp
     viewer.cpp
     )
+
+
+set(${PROJECT_NAME}_SHADERS
+    )
 	
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SHADERS} )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "Easy3D")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glfw_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} glew glfw core util fileio tinyfiledialogs)
 

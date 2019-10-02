@@ -72,12 +72,15 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 
 Bellow is another example showing how to render a surface model (the result is in Figure 2).
 ```c++
-	// create a drawable for rendering the surface of a mesh model
+        // create a surface mesh
+        SurfaceMesh* mesh = new SurfaceMesh;
+	
+	// create a drawable for rendering the surface of this model
 	TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
 
 	// transfer vertex coordinates and colors to the GPU. 
-	drawable->update_vertex_buffer(vertices);	// an array of 3D points
-	drawable->update_color_buffer(colors); 		// an array of colors
+        drawable->update_vertex_buffer(vertices);	// an array of 3D points
+        drawable->update_color_buffer(colors); 		// an array of colors
 	
 	drawable->set_per_vertex_color(true);	// vertices have different colors
 

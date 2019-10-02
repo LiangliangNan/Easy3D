@@ -128,7 +128,8 @@ add_library(${PROJECT_NAME} STATIC ${lastools_SOURCES} ${lastools_HEADERS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_lastools_INCLUDE_DIR})
+set(LASTOOLS_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/LASzip/src ${CMAKE_CURRENT_LIST_DIR}/LASlib/inc)
+target_include_directories(${PROJECT_NAME} PRIVATE ${LASTOOLS_INCLUDE_DIR})
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE

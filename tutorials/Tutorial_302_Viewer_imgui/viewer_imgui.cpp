@@ -33,11 +33,10 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 
-#include "imgui_fonts_droid_sans.h"
-
-#include "imgui/imgui.h"
-#include "imgui/impl/imgui_impl_glfw.h"
-#include "imgui/impl/imgui_impl_opengl3.h"
+#include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
+#include <3rd_party/imgui/imgui.h>
+#include <3rd_party/imgui/impl/imgui_impl_glfw.h>
+#include <3rd_party/imgui/impl/imgui_impl_opengl3.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 
 

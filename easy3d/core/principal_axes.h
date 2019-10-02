@@ -76,7 +76,6 @@ namespace easy3d {
 
 
 #include <cassert>
-#include <easy3d/core/principal_axes.h>
 #include <easy3d/core/eigen_solver.h>
 
 

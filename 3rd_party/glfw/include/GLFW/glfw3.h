@@ -1,5 +1,5 @@
 /*************************************************************************
- * GLFW 3.3 - www.glfw.org
+ * GLFW 3.4 - www.glfw.org
  * A library for OpenGL, window and input
  *------------------------------------------------------------------------
  * Copyright (c) 2002-2006 Marcus Geelnard
@@ -96,11 +96,30 @@ extern "C" {
  #define _WIN32
 #endif /* _WIN32 */
 
+/* Include because most Windows GLU headers need wchar_t and
+ * the macOS OpenGL header blocks the definition of ptrdiff_t by glext.h.
+ * Include it unconditionally to avoid surprising side-effects.
+ */
+#include <stddef.h>
+
+/* Include because it is needed by Vulkan and related functions.
+ * Include it unconditionally to avoid surprising side-effects.
+ */
+#include <stdint.h>
+
+#if defined(GLFW_INCLUDE_VULKAN)
+  #include <vulkan/vulkan.h>
+#endif /* Vulkan header */
+
+/* The Vulkan header may have indirectly included windows.h (because of
+ * VK_USE_PLATFORM_WIN32_KHR) so we offer our replacement symbols after it.
+ */
+
 /* It is customary to use APIENTRY for OpenGL function pointer declarations on
  * all platforms.  Additionally, the Windows OpenGL header needs APIENTRY.
  */
-#ifndef APIENTRY
- #ifdef _WIN32
+#if !defined(APIENTRY)
+ #if defined(_WIN32)
   #define APIENTRY __stdcall
  #else
   #define APIENTRY
@@ -121,17 +140,6 @@ extern "C" {
  #define CALLBACK __stdcall
  #define GLFW_CALLBACK_DEFINED
 #endif /* CALLBACK */
-
-/* Include because most Windows GLU headers need wchar_t and
- * the macOS OpenGL header blocks the definition of ptrdiff_t by glext.h.
- * Include it unconditionally to avoid surprising side-effects.
- */
-#include <stddef.h>
-
-/* Include because it is needed by Vulkan and related functions.
- * Include it unconditionally to avoid surprising side-effects.
- */
-#include <stdint.h>
 
 /* Include the chosen OpenGL or OpenGL ES headers.
  */
@@ -211,10 +219,6 @@ extern "C" {
 
 #endif /* OpenGL and OpenGL ES headers */
 
-#if defined(GLFW_INCLUDE_VULKAN)
-  #include <vulkan/vulkan.h>
-#endif /* Vulkan header */
-
 #if defined(GLFW_DLL) && defined(_GLFW_BUILD_DLL)
  /* GLFW_DLL must be defined by applications that are linking against the DLL
   * version of the GLFW library.  _GLFW_BUILD_DLL is defined by the GLFW
@@ -259,7 +263,7 @@ extern "C" {
  *  backward-compatible.
  *  @ingroup init
  */
-#define GLFW_VERSION_MINOR          3
+#define GLFW_VERSION_MINOR          4
 /*! @brief The revision number of the GLFW library.
  *
  *  This is incremented when a bug fix release is made that does not contain any
@@ -917,62 +921,62 @@ extern "C" {
 #define GLFW_CLIENT_API             0x00022001
 /*! @brief Context client API major version hint and attribute.
  *
- *  Context client API major version [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context client API major version [hint](@ref GLFW_CONTEXT_VERSION_MAJOR_hint)
+ *  and [attribute](@ref GLFW_CONTEXT_VERSION_MAJOR_attrib).
  */
 #define GLFW_CONTEXT_VERSION_MAJOR  0x00022002
 /*! @brief Context client API minor version hint and attribute.
  *
- *  Context client API minor version [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context client API minor version [hint](@ref GLFW_CONTEXT_VERSION_MINOR_hint)
+ *  and [attribute](@ref GLFW_CONTEXT_VERSION_MINOR_attrib).
  */
 #define GLFW_CONTEXT_VERSION_MINOR  0x00022003
 /*! @brief Context client API revision number hint and attribute.
  *
- *  Context client API revision number [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context client API revision number
+ *  [attribute](@ref GLFW_CONTEXT_REVISION_attrib).
  */
 #define GLFW_CONTEXT_REVISION       0x00022004
 /*! @brief Context robustness hint and attribute.
  *
- *  Context client API revision number [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context client API revision number [hint](@ref GLFW_CONTEXT_ROBUSTNESS_hint)
+ *  and [attribute](@ref GLFW_CONTEXT_ROBUSTNESS_attrib).
  */
 #define GLFW_CONTEXT_ROBUSTNESS     0x00022005
 /*! @brief OpenGL forward-compatibility hint and attribute.
  *
- *  OpenGL forward-compatibility [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  OpenGL forward-compatibility [hint](@ref GLFW_OPENGL_FORWARD_COMPAT_hint)
+ *  and [attribute](@ref GLFW_OPENGL_FORWARD_COMPAT_attrib).
  */
 #define GLFW_OPENGL_FORWARD_COMPAT  0x00022006
 /*! @brief OpenGL debug context hint and attribute.
  *
- *  OpenGL debug context [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  OpenGL debug context [hint](@ref GLFW_OPENGL_DEBUG_CONTEXT_hint) and
+ *  [attribute](@ref GLFW_OPENGL_DEBUG_CONTEXT_attrib).
  */
 #define GLFW_OPENGL_DEBUG_CONTEXT   0x00022007
 /*! @brief OpenGL profile hint and attribute.
  *
- *  OpenGL profile [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  OpenGL profile [hint](@ref GLFW_OPENGL_PROFILE_hint) and
+ *  [attribute](@ref GLFW_OPENGL_PROFILE_attrib).
  */
 #define GLFW_OPENGL_PROFILE         0x00022008
 /*! @brief Context flush-on-release hint and attribute.
  *
- *  Context flush-on-release [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context flush-on-release [hint](@ref GLFW_CONTEXT_RELEASE_BEHAVIOR_hint) and
+ *  [attribute](@ref GLFW_CONTEXT_RELEASE_BEHAVIOR_attrib).
  */
 #define GLFW_CONTEXT_RELEASE_BEHAVIOR 0x00022009
 /*! @brief Context error suppression hint and attribute.
  *
- *  Context error suppression [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context error suppression [hint](@ref GLFW_CONTEXT_NO_ERROR_hint) and
+ *  [attribute](@ref GLFW_CONTEXT_NO_ERROR_attrib).
  */
 #define GLFW_CONTEXT_NO_ERROR       0x0002200A
 /*! @brief Context creation API hint and attribute.
  *
- *  Context creation API [hint](@ref GLFW_CLIENT_API_hint) and
- *  [attribute](@ref GLFW_CLIENT_API_attrib).
+ *  Context creation API [hint](@ref GLFW_CONTEXT_CREATION_API_hint) and
+ *  [attribute](@ref GLFW_CONTEXT_CREATION_API_attrib).
  */
 #define GLFW_CONTEXT_CREATION_API   0x0002200B
 /*! @brief Window content area scaling window
@@ -1164,12 +1168,20 @@ typedef struct GLFWwindow GLFWwindow;
  */
 typedef struct GLFWcursor GLFWcursor;
 
-/*! @brief The function signature for error callbacks.
+/*! @brief The function pointer type for error callbacks.
  *
- *  This is the function signature for error callback functions.
+ *  This is the function pointer type for error callbacks.  An error callback
+ *  function has the following signature:
+ *  @code
+ *  void callback_name(int error_code, const char* description)
+ *  @endcode
  *
- *  @param[in] error An [error code](@ref errors).
+ *  @param[in] error_code An [error code](@ref errors).  Future releases may add
+ *  more error codes.
  *  @param[in] description A UTF-8 encoded string describing the error.
+ *
+ *  @pointer_lifetime The error description string is valid until the callback
+ *  function returns.
  *
  *  @sa @ref error_handling
  *  @sa @ref glfwSetErrorCallback
@@ -1180,9 +1192,13 @@ typedef struct GLFWcursor GLFWcursor;
  */
 typedef void (* GLFWerrorfun)(int,const char*);
 
-/*! @brief The function signature for window position callbacks.
+/*! @brief The function pointer type for window position callbacks.
  *
- *  This is the function signature for window position callback functions.
+ *  This is the function pointer type for window position callbacks.  A window
+ *  position callback function has the following signature:
+ *  @code
+ *  void callback_name(GLFWwindow* window, int xpos, int ypos)
+ *  @endcode
  *
  *  @param[in] window The window that was moved.
  *  @param[in] xpos The new x-coordinate, in screen coordinates, of the
@@ -1199,9 +1215,13 @@ typedef void (* GLFWerrorfun)(int,const char*);
  */
 typedef void (* GLFWwindowposfun)(GLFWwindow*,int,int);
 
-/*! @brief The function signature for window resize callbacks.
+/*! @brief The function pointer type for window size callbacks.
  *
- *  This is the function signature for window size callback functions.
+ *  This is the function pointer type for window size callbacks.  A window size
+ *  callback function has the following signature:
+ *  @code
+ *  void callback_name(GLFWwindow* window, int width, int height)
+ *  @endcode
  *
  *  @param[in] window The window that was resized.
  *  @param[in] width The new width, in screen coordinates, of the window.
@@ -1217,9 +1237,13 @@ typedef void (* GLFWwindowposfun)(GLFWwindow*,int,int);
  */
 typedef void (* GLFWwindowsizefun)(GLFWwindow*,int,int);
 
-/*! @brief The function signature for window close callbacks.
+/*! @brief The function pointer type for window close callbacks.
  *
- *  This is the function signature for window close callback functions.
+ *  This is the function pointer type for window close callbacks.  A window
+ *  close callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window)
+ *  @endcode
  *
  *  @param[in] window The window that the user attempted to close.
  *
@@ -1233,9 +1257,13 @@ typedef void (* GLFWwindowsizefun)(GLFWwindow*,int,int);
  */
 typedef void (* GLFWwindowclosefun)(GLFWwindow*);
 
-/*! @brief The function signature for window content refresh callbacks.
+/*! @brief The function pointer type for window content refresh callbacks.
  *
- *  This is the function signature for window refresh callback functions.
+ *  This is the function pointer type for window content refresh callbacks.
+ *  A window content refresh callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window);
+ *  @endcode
  *
  *  @param[in] window The window whose content needs to be refreshed.
  *
@@ -1249,9 +1277,13 @@ typedef void (* GLFWwindowclosefun)(GLFWwindow*);
  */
 typedef void (* GLFWwindowrefreshfun)(GLFWwindow*);
 
-/*! @brief The function signature for window focus/defocus callbacks.
+/*! @brief The function pointer type for window focus callbacks.
  *
- *  This is the function signature for window focus callback functions.
+ *  This is the function pointer type for window focus callbacks.  A window
+ *  focus callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int focused)
+ *  @endcode
  *
  *  @param[in] window The window that gained or lost input focus.
  *  @param[in] focused `GLFW_TRUE` if the window was given input focus, or
@@ -1266,10 +1298,13 @@ typedef void (* GLFWwindowrefreshfun)(GLFWwindow*);
  */
 typedef void (* GLFWwindowfocusfun)(GLFWwindow*,int);
 
-/*! @brief The function signature for window iconify/restore callbacks.
+/*! @brief The function pointer type for window iconify callbacks.
  *
- *  This is the function signature for window iconify/restore callback
- *  functions.
+ *  This is the function pointer type for window iconify callbacks.  A window
+ *  iconify callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int iconified)
+ *  @endcode
  *
  *  @param[in] window The window that was iconified or restored.
  *  @param[in] iconified `GLFW_TRUE` if the window was iconified, or
@@ -1284,10 +1319,13 @@ typedef void (* GLFWwindowfocusfun)(GLFWwindow*,int);
  */
 typedef void (* GLFWwindowiconifyfun)(GLFWwindow*,int);
 
-/*! @brief The function signature for window maximize/restore callbacks.
+/*! @brief The function pointer type for window maximize callbacks.
  *
- *  This is the function signature for window maximize/restore callback
- *  functions.
+ *  This is the function pointer type for window maximize callbacks.  A window
+ *  maximize callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int maximized)
+ *  @endcode
  *
  *  @param[in] window The window that was maximized or restored.
  *  @param[in] iconified `GLFW_TRUE` if the window was maximized, or
@@ -1302,10 +1340,13 @@ typedef void (* GLFWwindowiconifyfun)(GLFWwindow*,int);
  */
 typedef void (* GLFWwindowmaximizefun)(GLFWwindow*,int);
 
-/*! @brief The function signature for framebuffer resize callbacks.
+/*! @brief The function pointer type for framebuffer size callbacks.
  *
- *  This is the function signature for framebuffer resize callback
- *  functions.
+ *  This is the function pointer type for framebuffer size callbacks.
+ *  A framebuffer size callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int width, int height)
+ *  @endcode
  *
  *  @param[in] window The window whose framebuffer was resized.
  *  @param[in] width The new width, in pixels, of the framebuffer.
@@ -1320,10 +1361,13 @@ typedef void (* GLFWwindowmaximizefun)(GLFWwindow*,int);
  */
 typedef void (* GLFWframebuffersizefun)(GLFWwindow*,int,int);
 
-/*! @brief The function signature for window content scale callbacks.
+/*! @brief The function pointer type for window content scale callbacks.
  *
- *  This is the function signature for window content scale callback
- *  functions.
+ *  This is the function pointer type for window content scale callbacks.
+ *  A window content scale callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, float xscale, float yscale)
+ *  @endcode
  *
  *  @param[in] window The window whose content scale changed.
  *  @param[in] xscale The new x-axis content scale of the window.
@@ -1338,14 +1382,19 @@ typedef void (* GLFWframebuffersizefun)(GLFWwindow*,int,int);
  */
 typedef void (* GLFWwindowcontentscalefun)(GLFWwindow*,float,float);
 
-/*! @brief The function signature for mouse button callbacks.
+/*! @brief The function pointer type for mouse button callbacks.
  *
- *  This is the function signature for mouse button callback functions.
+ *  This is the function pointer type for mouse button callback functions.
+ *  A mouse button callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int button, int action, int mods)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] button The [mouse button](@ref buttons) that was pressed or
  *  released.
- *  @param[in] action One of `GLFW_PRESS` or `GLFW_RELEASE`.
+ *  @param[in] action One of `GLFW_PRESS` or `GLFW_RELEASE`.  Future releases
+ *  may add more actions.
  *  @param[in] mods Bit field describing which [modifier keys](@ref mods) were
  *  held down.
  *
@@ -1359,9 +1408,13 @@ typedef void (* GLFWwindowcontentscalefun)(GLFWwindow*,float,float);
  */
 typedef void (* GLFWmousebuttonfun)(GLFWwindow*,int,int,int);
 
-/*! @brief The function signature for cursor position callbacks.
+/*! @brief The function pointer type for cursor position callbacks.
  *
- *  This is the function signature for cursor position callback functions.
+ *  This is the function pointer type for cursor position callbacks.  A cursor
+ *  position callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, double xpos, double ypos);
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] xpos The new cursor x-coordinate, relative to the left edge of
@@ -1378,9 +1431,13 @@ typedef void (* GLFWmousebuttonfun)(GLFWwindow*,int,int,int);
  */
 typedef void (* GLFWcursorposfun)(GLFWwindow*,double,double);
 
-/*! @brief The function signature for cursor enter/leave callbacks.
+/*! @brief The function pointer type for cursor enter/leave callbacks.
  *
- *  This is the function signature for cursor enter/leave callback functions.
+ *  This is the function pointer type for cursor enter/leave callbacks.
+ *  A cursor enter/leave callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int entered)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] entered `GLFW_TRUE` if the cursor entered the window's content
@@ -1395,9 +1452,13 @@ typedef void (* GLFWcursorposfun)(GLFWwindow*,double,double);
  */
 typedef void (* GLFWcursorenterfun)(GLFWwindow*,int);
 
-/*! @brief The function signature for scroll callbacks.
+/*! @brief The function pointer type for scroll callbacks.
  *
- *  This is the function signature for scroll callback functions.
+ *  This is the function pointer type for scroll callbacks.  A scroll callback
+ *  function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, double xoffset, double yoffset)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] xoffset The scroll offset along the x-axis.
@@ -1412,14 +1473,19 @@ typedef void (* GLFWcursorenterfun)(GLFWwindow*,int);
  */
 typedef void (* GLFWscrollfun)(GLFWwindow*,double,double);
 
-/*! @brief The function signature for keyboard key callbacks.
+/*! @brief The function pointer type for keyboard key callbacks.
  *
- *  This is the function signature for keyboard key callback functions.
+ *  This is the function pointer type for keyboard key callbacks.  A keyboard
+ *  key callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int key, int scancode, int action, int mods)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] key The [keyboard key](@ref keys) that was pressed or released.
  *  @param[in] scancode The system-specific scancode of the key.
- *  @param[in] action `GLFW_PRESS`, `GLFW_RELEASE` or `GLFW_REPEAT`.
+ *  @param[in] action `GLFW_PRESS`, `GLFW_RELEASE` or `GLFW_REPEAT`.  Future
+ *  releases may add more actions.
  *  @param[in] mods Bit field describing which [modifier keys](@ref mods) were
  *  held down.
  *
@@ -1433,9 +1499,13 @@ typedef void (* GLFWscrollfun)(GLFWwindow*,double,double);
  */
 typedef void (* GLFWkeyfun)(GLFWwindow*,int,int,int,int);
 
-/*! @brief The function signature for Unicode character callbacks.
+/*! @brief The function pointer type for Unicode character callbacks.
  *
- *  This is the function signature for Unicode character callback functions.
+ *  This is the function pointer type for Unicode character callbacks.
+ *  A Unicode character callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, unsigned int codepoint)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] codepoint The Unicode code point of the character.
@@ -1450,12 +1520,16 @@ typedef void (* GLFWkeyfun)(GLFWwindow*,int,int,int,int);
  */
 typedef void (* GLFWcharfun)(GLFWwindow*,unsigned int);
 
-/*! @brief The function signature for Unicode character with modifiers
+/*! @brief The function pointer type for Unicode character with modifiers
  *  callbacks.
  *
- *  This is the function signature for Unicode character with modifiers callback
- *  functions.  It is called for each input character, regardless of what
- *  modifier keys are held down.
+ *  This is the function pointer type for Unicode character with modifiers
+ *  callbacks.  It is called for each input character, regardless of what
+ *  modifier keys are held down.  A Unicode character with modifiers callback
+ *  function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, unsigned int codepoint, int mods)
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
  *  @param[in] codepoint The Unicode code point of the character.
@@ -1473,13 +1547,20 @@ typedef void (* GLFWcharfun)(GLFWwindow*,unsigned int);
  */
 typedef void (* GLFWcharmodsfun)(GLFWwindow*,unsigned int,int);
 
-/*! @brief The function signature for file drop callbacks.
+/*! @brief The function pointer type for path drop callbacks.
  *
- *  This is the function signature for file drop callbacks.
+ *  This is the function pointer type for path drop callbacks.  A path drop
+ *  callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWwindow* window, int path_count, const char* paths[])
+ *  @endcode
  *
  *  @param[in] window The window that received the event.
- *  @param[in] count The number of dropped files.
+ *  @param[in] path_count The number of dropped paths.
  *  @param[in] paths The UTF-8 encoded file and/or directory path names.
+ *
+ *  @pointer_lifetime The path array and its strings are valid until the
+ *  callback function returns.
  *
  *  @sa @ref path_drop
  *  @sa @ref glfwSetDropCallback
@@ -1488,15 +1569,19 @@ typedef void (* GLFWcharmodsfun)(GLFWwindow*,unsigned int,int);
  *
  *  @ingroup input
  */
-typedef void (* GLFWdropfun)(GLFWwindow*,int,const char**);
+typedef void (* GLFWdropfun)(GLFWwindow*,int,const char*[]);
 
-/*! @brief The function signature for monitor configuration callbacks.
+/*! @brief The function pointer type for monitor configuration callbacks.
  *
- *  This is the function signature for monitor configuration callback functions.
+ *  This is the function pointer type for monitor configuration callbacks.
+ *  A monitor callback function has the following signature:
+ *  @code
+ *  void function_name(GLFWmonitor* monitor, int event)
+ *  @endcode
  *
  *  @param[in] monitor The monitor that was connected or disconnected.
- *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Remaining
- *  values reserved for future use.
+ *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Future
+ *  releases may add more events.
  *
  *  @sa @ref monitor_event
  *  @sa @ref glfwSetMonitorCallback
@@ -1507,14 +1592,17 @@ typedef void (* GLFWdropfun)(GLFWwindow*,int,const char**);
  */
 typedef void (* GLFWmonitorfun)(GLFWmonitor*,int);
 
-/*! @brief The function signature for joystick configuration callbacks.
+/*! @brief The function pointer type for joystick configuration callbacks.
  *
- *  This is the function signature for joystick configuration callback
- *  functions.
+ *  This is the function pointer type for joystick configuration callbacks.
+ *  A joystick configuration callback function has the following signature:
+ *  @code
+ *  void function_name(int jid, int event)
+ *  @endcode
  *
  *  @param[in] jid The joystick that was connected or disconnected.
- *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Remaining
- *  values reserved for future use.
+ *  @param[in] event One of `GLFW_CONNECTED` or `GLFW_DISCONNECTED`.  Future
+ *  releases may add more events.
  *
  *  @sa @ref joystick_event
  *  @sa @ref glfwSetJoystickCallback
@@ -1849,9 +1937,16 @@ GLFWAPI int glfwGetError(const char** description);
  *  Once set, the error callback remains set even after the library has been
  *  terminated.
  *
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set.
+ *
+ *  @callback_signature
+ *  @code
+ *  void callback_name(int error_code, const char* description)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [callback pointer type](@ref GLFWerrorfun).
  *
  *  @errors None.
  *
@@ -1866,7 +1961,7 @@ GLFWAPI int glfwGetError(const char** description);
  *
  *  @ingroup init
  */
-GLFWAPI GLFWerrorfun glfwSetErrorCallback(GLFWerrorfun cbfun);
+GLFWAPI GLFWerrorfun glfwSetErrorCallback(GLFWerrorfun callback);
 
 /*! @brief Returns the currently connected monitors.
  *
@@ -2125,10 +2220,17 @@ GLFWAPI void* glfwGetMonitorUserPointer(GLFWmonitor* monitor);
  *  currently set callback.  This is called when a monitor is connected to or
  *  disconnected from the system.
  *
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWmonitor* monitor, int event)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWmonitorfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -2140,7 +2242,7 @@ GLFWAPI void* glfwGetMonitorUserPointer(GLFWmonitor* monitor);
  *
  *  @ingroup monitor
  */
-GLFWAPI GLFWmonitorfun glfwSetMonitorCallback(GLFWmonitorfun cbfun);
+GLFWAPI GLFWmonitorfun glfwSetMonitorCallback(GLFWmonitorfun callback);
 
 /*! @brief Returns the available video modes for the specified monitor.
  *
@@ -3089,8 +3191,8 @@ GLFWAPI void glfwSetWindowOpacity(GLFWwindow* window, float opacity);
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_PLATFORM_ERROR.
  *
- *  @remark @wayland There is no concept of iconification in wl_shell, this
- *  function will emit @ref GLFW_PLATFORM_ERROR when using this deprecated
+ *  @remark @wayland Once a window is iconified, @ref glfwRestoreWindow won’t
+ *  be able to restore it.  This is a design decision of the xdg-shell
  *  protocol.
  *
  *  @thread_safety This function must only be called from the main thread.
@@ -3477,10 +3579,17 @@ GLFWAPI void* glfwGetWindowUserPointer(GLFWwindow* window);
  *  area of the window.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int xpos, int ypos)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowposfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3495,7 +3604,7 @@ GLFWAPI void* glfwGetWindowUserPointer(GLFWwindow* window);
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowposfun glfwSetWindowPosCallback(GLFWwindow* window, GLFWwindowposfun cbfun);
+GLFWAPI GLFWwindowposfun glfwSetWindowPosCallback(GLFWwindow* window, GLFWwindowposfun callback);
 
 /*! @brief Sets the size callback for the specified window.
  *
@@ -3504,10 +3613,17 @@ GLFWAPI GLFWwindowposfun glfwSetWindowPosCallback(GLFWwindow* window, GLFWwindow
  *  in screen coordinates, of the content area of the window.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int width, int height)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowsizefun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3520,7 +3636,7 @@ GLFWAPI GLFWwindowposfun glfwSetWindowPosCallback(GLFWwindow* window, GLFWwindow
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowsizefun glfwSetWindowSizeCallback(GLFWwindow* window, GLFWwindowsizefun cbfun);
+GLFWAPI GLFWwindowsizefun glfwSetWindowSizeCallback(GLFWwindow* window, GLFWwindowsizefun callback);
 
 /*! @brief Sets the close callback for the specified window.
  *
@@ -3534,10 +3650,17 @@ GLFWAPI GLFWwindowsizefun glfwSetWindowSizeCallback(GLFWwindow* window, GLFWwind
  *  The close callback is not triggered by @ref glfwDestroyWindow.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowclosefun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3553,7 +3676,7 @@ GLFWAPI GLFWwindowsizefun glfwSetWindowSizeCallback(GLFWwindow* window, GLFWwind
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowclosefun glfwSetWindowCloseCallback(GLFWwindow* window, GLFWwindowclosefun cbfun);
+GLFWAPI GLFWwindowclosefun glfwSetWindowCloseCallback(GLFWwindow* window, GLFWwindowclosefun callback);
 
 /*! @brief Sets the refresh callback for the specified window.
  *
@@ -3566,10 +3689,17 @@ GLFWAPI GLFWwindowclosefun glfwSetWindowCloseCallback(GLFWwindow* window, GLFWwi
  *  very infrequently or never at all.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window);
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowrefreshfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3582,7 +3712,7 @@ GLFWAPI GLFWwindowclosefun glfwSetWindowCloseCallback(GLFWwindow* window, GLFWwi
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowrefreshfun glfwSetWindowRefreshCallback(GLFWwindow* window, GLFWwindowrefreshfun cbfun);
+GLFWAPI GLFWwindowrefreshfun glfwSetWindowRefreshCallback(GLFWwindow* window, GLFWwindowrefreshfun callback);
 
 /*! @brief Sets the focus callback for the specified window.
  *
@@ -3595,10 +3725,17 @@ GLFWAPI GLFWwindowrefreshfun glfwSetWindowRefreshCallback(GLFWwindow* window, GL
  *  and @ref glfwSetMouseButtonCallback.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int focused)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowfocusfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3610,7 +3747,7 @@ GLFWAPI GLFWwindowrefreshfun glfwSetWindowRefreshCallback(GLFWwindow* window, GL
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowfocusfun glfwSetWindowFocusCallback(GLFWwindow* window, GLFWwindowfocusfun cbfun);
+GLFWAPI GLFWwindowfocusfun glfwSetWindowFocusCallback(GLFWwindow* window, GLFWwindowfocusfun callback);
 
 /*! @brief Sets the iconify callback for the specified window.
  *
@@ -3618,15 +3755,19 @@ GLFWAPI GLFWwindowfocusfun glfwSetWindowFocusCallback(GLFWwindow* window, GLFWwi
  *  is called when the window is iconified or restored.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
  *
- *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int iconified)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowiconifyfun).
  *
- *  @remark @wayland The wl_shell protocol has no concept of iconification,
- *  this callback will never be called when using this deprecated protocol.
+ *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
  *  @thread_safety This function must only be called from the main thread.
  *
@@ -3636,7 +3777,7 @@ GLFWAPI GLFWwindowfocusfun glfwSetWindowFocusCallback(GLFWwindow* window, GLFWwi
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowiconifyfun glfwSetWindowIconifyCallback(GLFWwindow* window, GLFWwindowiconifyfun cbfun);
+GLFWAPI GLFWwindowiconifyfun glfwSetWindowIconifyCallback(GLFWwindow* window, GLFWwindowiconifyfun callback);
 
 /*! @brief Sets the maximize callback for the specified window.
  *
@@ -3644,10 +3785,17 @@ GLFWAPI GLFWwindowiconifyfun glfwSetWindowIconifyCallback(GLFWwindow* window, GL
  *  is called when the window is maximized or restored.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int maximized)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowmaximizefun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3659,7 +3807,7 @@ GLFWAPI GLFWwindowiconifyfun glfwSetWindowIconifyCallback(GLFWwindow* window, GL
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowmaximizefun glfwSetWindowMaximizeCallback(GLFWwindow* window, GLFWwindowmaximizefun cbfun);
+GLFWAPI GLFWwindowmaximizefun glfwSetWindowMaximizeCallback(GLFWwindow* window, GLFWwindowmaximizefun callback);
 
 /*! @brief Sets the framebuffer resize callback for the specified window.
  *
@@ -3667,10 +3815,17 @@ GLFWAPI GLFWwindowmaximizefun glfwSetWindowMaximizeCallback(GLFWwindow* window, 
  *  which is called when the framebuffer of the specified window is resized.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int width, int height)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWframebuffersizefun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3682,7 +3837,7 @@ GLFWAPI GLFWwindowmaximizefun glfwSetWindowMaximizeCallback(GLFWwindow* window, 
  *
  *  @ingroup window
  */
-GLFWAPI GLFWframebuffersizefun glfwSetFramebufferSizeCallback(GLFWwindow* window, GLFWframebuffersizefun cbfun);
+GLFWAPI GLFWframebuffersizefun glfwSetFramebufferSizeCallback(GLFWwindow* window, GLFWframebuffersizefun callback);
 
 /*! @brief Sets the window content scale callback for the specified window.
  *
@@ -3690,10 +3845,17 @@ GLFWAPI GLFWframebuffersizefun glfwSetFramebufferSizeCallback(GLFWwindow* window
  *  which is called when the content scale of the specified window changes.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, float xscale, float yscale)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWwindowcontentscalefun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -3706,7 +3868,7 @@ GLFWAPI GLFWframebuffersizefun glfwSetFramebufferSizeCallback(GLFWwindow* window
  *
  *  @ingroup window
  */
-GLFWAPI GLFWwindowcontentscalefun glfwSetWindowContentScaleCallback(GLFWwindow* window, GLFWwindowcontentscalefun cbfun);
+GLFWAPI GLFWwindowcontentscalefun glfwSetWindowContentScaleCallback(GLFWwindow* window, GLFWwindowcontentscalefun callback);
 
 /*! @brief Processes all pending events.
  *
@@ -4353,10 +4515,17 @@ GLFWAPI void glfwSetCursor(GLFWwindow* window, GLFWcursor* cursor);
  *  scancode may be zero.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new key callback, or `NULL` to remove the currently
+ *  @param[in] callback The new key callback, or `NULL` to remove the currently
  *  set callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int key, int scancode, int action, int mods)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWkeyfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4369,7 +4538,7 @@ GLFWAPI void glfwSetCursor(GLFWwindow* window, GLFWcursor* cursor);
  *
  *  @ingroup input
  */
-GLFWAPI GLFWkeyfun glfwSetKeyCallback(GLFWwindow* window, GLFWkeyfun cbfun);
+GLFWAPI GLFWkeyfun glfwSetKeyCallback(GLFWwindow* window, GLFWkeyfun callback);
 
 /*! @brief Sets the Unicode character callback.
  *
@@ -4389,10 +4558,17 @@ GLFWAPI GLFWkeyfun glfwSetKeyCallback(GLFWwindow* window, GLFWkeyfun cbfun);
  *  on Windows.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, unsigned int codepoint)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWcharfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4405,7 +4581,7 @@ GLFWAPI GLFWkeyfun glfwSetKeyCallback(GLFWwindow* window, GLFWkeyfun cbfun);
  *
  *  @ingroup input
  */
-GLFWAPI GLFWcharfun glfwSetCharCallback(GLFWwindow* window, GLFWcharfun cbfun);
+GLFWAPI GLFWcharfun glfwSetCharCallback(GLFWwindow* window, GLFWcharfun callback);
 
 /*! @brief Sets the Unicode character with modifiers callback.
  *
@@ -4423,10 +4599,17 @@ GLFWAPI GLFWcharfun glfwSetCharCallback(GLFWwindow* window, GLFWcharfun cbfun);
  *  [key callback](@ref glfwSetKeyCallback) instead.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or an
  *  [error](@ref error_handling) occurred.
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, unsigned int codepoint, int mods)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWcharmodsfun).
  *
  *  @deprecated Scheduled for removal in version 4.0.
  *
@@ -4440,7 +4623,7 @@ GLFWAPI GLFWcharfun glfwSetCharCallback(GLFWwindow* window, GLFWcharfun cbfun);
  *
  *  @ingroup input
  */
-GLFWAPI GLFWcharmodsfun glfwSetCharModsCallback(GLFWwindow* window, GLFWcharmodsfun cbfun);
+GLFWAPI GLFWcharmodsfun glfwSetCharModsCallback(GLFWwindow* window, GLFWcharmodsfun callback);
 
 /*! @brief Sets the mouse button callback.
  *
@@ -4454,10 +4637,17 @@ GLFWAPI GLFWcharmodsfun glfwSetCharModsCallback(GLFWwindow* window, GLFWcharmods
  *  [window focus callback](@ref glfwSetWindowFocusCallback) has been called.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int button, int action, int mods)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWmousebuttonfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4470,7 +4660,7 @@ GLFWAPI GLFWcharmodsfun glfwSetCharModsCallback(GLFWwindow* window, GLFWcharmods
  *
  *  @ingroup input
  */
-GLFWAPI GLFWmousebuttonfun glfwSetMouseButtonCallback(GLFWwindow* window, GLFWmousebuttonfun cbfun);
+GLFWAPI GLFWmousebuttonfun glfwSetMouseButtonCallback(GLFWwindow* window, GLFWmousebuttonfun callback);
 
 /*! @brief Sets the cursor position callback.
  *
@@ -4480,10 +4670,17 @@ GLFWAPI GLFWmousebuttonfun glfwSetMouseButtonCallback(GLFWwindow* window, GLFWmo
  *  content area of the window.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, double xpos, double ypos);
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWcursorposfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4495,19 +4692,26 @@ GLFWAPI GLFWmousebuttonfun glfwSetMouseButtonCallback(GLFWwindow* window, GLFWmo
  *
  *  @ingroup input
  */
-GLFWAPI GLFWcursorposfun glfwSetCursorPosCallback(GLFWwindow* window, GLFWcursorposfun cbfun);
+GLFWAPI GLFWcursorposfun glfwSetCursorPosCallback(GLFWwindow* window, GLFWcursorposfun callback);
 
-/*! @brief Sets the cursor enter/exit callback.
+/*! @brief Sets the cursor enter/leave callback.
  *
  *  This function sets the cursor boundary crossing callback of the specified
  *  window, which is called when the cursor enters or leaves the content area of
  *  the window.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int entered)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWcursorenterfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4519,7 +4723,7 @@ GLFWAPI GLFWcursorposfun glfwSetCursorPosCallback(GLFWwindow* window, GLFWcursor
  *
  *  @ingroup input
  */
-GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcursorenterfun cbfun);
+GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcursorenterfun callback);
 
 /*! @brief Sets the scroll callback.
  *
@@ -4531,10 +4735,17 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *  wheel or a touchpad scrolling area.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new scroll callback, or `NULL` to remove the currently
- *  set callback.
+ *  @param[in] callback The new scroll callback, or `NULL` to remove the
+ *  currently set callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, double xoffset, double yoffset)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWscrollfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4546,12 +4757,12 @@ GLFWAPI GLFWcursorenterfun glfwSetCursorEnterCallback(GLFWwindow* window, GLFWcu
  *
  *  @ingroup input
  */
-GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun cbfun);
+GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun callback);
 
-/*! @brief Sets the file drop callback.
+/*! @brief Sets the path drop callback.
  *
- *  This function sets the file drop callback of the specified window, which is
- *  called when one or more dragged files are dropped on the window.
+ *  This function sets the path drop callback of the specified window, which is
+ *  called when one or more dragged paths are dropped on the window.
  *
  *  Because the path array and its strings may have been generated specifically
  *  for that event, they are not guaranteed to be valid after the callback has
@@ -4559,10 +4770,17 @@ GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun cb
  *  make a deep copy.
  *
  *  @param[in] window The window whose callback to set.
- *  @param[in] cbfun The new file drop callback, or `NULL` to remove the
+ *  @param[in] callback The new file drop callback, or `NULL` to remove the
  *  currently set callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(GLFWwindow* window, int path_count, const char* paths[])
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWdropfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4576,7 +4794,7 @@ GLFWAPI GLFWscrollfun glfwSetScrollCallback(GLFWwindow* window, GLFWscrollfun cb
  *
  *  @ingroup input
  */
-GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* window, GLFWdropfun cbfun);
+GLFWAPI GLFWdropfun glfwSetDropCallback(GLFWwindow* window, GLFWdropfun callback);
 
 /*! @brief Returns whether the specified joystick is present.
  *
@@ -4895,10 +5113,17 @@ GLFWAPI int glfwJoystickIsGamepad(int jid);
  *  called by joystick functions.  The function will then return whatever it
  *  returns if the joystick is not present.
  *
- *  @param[in] cbfun The new callback, or `NULL` to remove the currently set
+ *  @param[in] callback The new callback, or `NULL` to remove the currently set
  *  callback.
  *  @return The previously set callback, or `NULL` if no callback was set or the
  *  library had not been [initialized](@ref intro_init).
+ *
+ *  @callback_signature
+ *  @code
+ *  void function_name(int jid, int event)
+ *  @endcode
+ *  For more information about the callback parameters, see the
+ *  [function pointer type](@ref GLFWjoystickfun).
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
@@ -4910,7 +5135,7 @@ GLFWAPI int glfwJoystickIsGamepad(int jid);
  *
  *  @ingroup input
  */
-GLFWAPI GLFWjoystickfun glfwSetJoystickCallback(GLFWjoystickfun cbfun);
+GLFWAPI GLFWjoystickfun glfwSetJoystickCallback(GLFWjoystickfun callback);
 
 /*! @brief Adds the specified SDL_GameControllerDB gamepad mappings.
  *
@@ -5069,23 +5294,26 @@ GLFWAPI void glfwSetClipboardString(GLFWwindow* window, const char* string);
  */
 GLFWAPI const char* glfwGetClipboardString(GLFWwindow* window);
 
-/*! @brief Returns the value of the GLFW timer.
+/*! @brief Returns the GLFW time.
  *
- *  This function returns the value of the GLFW timer.  Unless the timer has
- *  been set using @ref glfwSetTime, the timer measures time elapsed since GLFW
- *  was initialized.
+ *  This function returns the current GLFW time, in seconds.  Unless the time
+ *  has been set using @ref glfwSetTime it measures time elapsed since GLFW was
+ *  initialized.
+ *
+ *  This function and @ref glfwSetTime are helper functions on top of @ref
+ *  glfwGetTimerFrequency and @ref glfwGetTimerValue.
  *
  *  The resolution of the timer is system dependent, but is usually on the order
  *  of a few micro- or nanoseconds.  It uses the highest-resolution monotonic
  *  time source on each supported platform.
  *
- *  @return The current value, in seconds, or zero if an
+ *  @return The current time, in seconds, or zero if an
  *  [error](@ref error_handling) occurred.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED.
  *
  *  @thread_safety This function may be called from any thread.  Reading and
- *  writing of the internal timer offset is not atomic, so it needs to be
+ *  writing of the internal base time is not atomic, so it needs to be
  *  externally synchronized with calls to @ref glfwSetTime.
  *
  *  @sa @ref time
@@ -5096,23 +5324,26 @@ GLFWAPI const char* glfwGetClipboardString(GLFWwindow* window);
  */
 GLFWAPI double glfwGetTime(void);
 
-/*! @brief Sets the GLFW timer.
+/*! @brief Sets the GLFW time.
  *
- *  This function sets the value of the GLFW timer.  It then continues to count
- *  up from that value.  The value must be a positive finite number less than
- *  or equal to 18446744073.0, which is approximately 584.5 years.
+ *  This function sets the current GLFW time, in seconds.  The value must be
+ *  a positive finite number less than or equal to 18446744073.0, which is
+ *  approximately 584.5 years.
+ *
+ *  This function and @ref glfwGetTime are helper functions on top of @ref
+ *  glfwGetTimerFrequency and @ref glfwGetTimerValue.
  *
  *  @param[in] time The new value, in seconds.
  *
  *  @errors Possible errors include @ref GLFW_NOT_INITIALIZED and @ref
  *  GLFW_INVALID_VALUE.
  *
- *  @remark The upper limit of the timer is calculated as
+ *  @remark The upper limit of GLFW time is calculated as
  *  floor((2<sup>64</sup> - 1) / 10<sup>9</sup>) and is due to implementations
  *  storing nanoseconds in 64 bits.  The limit may be increased in the future.
  *
  *  @thread_safety This function may be called from any thread.  Reading and
- *  writing of the internal timer offset is not atomic, so it needs to be
+ *  writing of the internal base time is not atomic, so it needs to be
  *  externally synchronized with calls to @ref glfwGetTime.
  *
  *  @sa @ref time
@@ -5416,7 +5647,7 @@ GLFWAPI int glfwVulkanSupported(void);
  *
  *  This function returns an array of names of Vulkan instance extensions required
  *  by GLFW for creating Vulkan surfaces for GLFW windows.  If successful, the
- *  list will always contains `VK_KHR_surface`, so if you don't require any
+ *  list will always contain `VK_KHR_surface`, so if you don't require any
  *  additional extensions you can pass this list directly to the
  *  `VkInstanceCreateInfo` struct.
  *

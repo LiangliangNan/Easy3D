@@ -2,11 +2,11 @@
 *	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
 *	https://3d.bk.tudelft.nl/liangliang/
 *
-*	This file is part of Easy3D. If it is useful in your research/work, 
+*	This file is part of Easy3D. If it is useful in your research/work,
 *   I would be grateful if you show your appreciation by citing it:
 *   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
+*           Liangliang Nan.
+*           Easy3D: a lightweight, easy-to-use, and efficient C++
 *           library for processing and rendering 3D data. 2018.
 *   ------------------------------------------------------------------
 *
@@ -35,61 +35,61 @@
 
 namespace easy3d {
 
-	class PointsDrawable;
-	class LinesDrawable;
-	class TrianglesDrawable;
+    class PointsDrawable;
+    class LinesDrawable;
+    class TrianglesDrawable;
 
     /*
     * Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud.
     * A Model can have multiple drawables, e.g., faces, vertices, wireframe.
     */
-	class Model
-	{
-	public:
-		Model(const std::string& name = "unknown");
-		virtual ~Model();
+    class Model
+    {
+    public:
+        Model(const std::string& name = "unknown");
+        virtual ~Model();
 
-		const std::string& name() const { return name_; }
-		void set_name(const std::string& n) { name_ = n; }
+        const std::string& name() const { return name_; }
+        void set_name(const std::string& n) { name_ = n; }
 
-		const Box3& bounding_box() const;
-		void set_bounding_box(const Box3& box);
+        const Box3& bounding_box() const;
+        void set_bounding_box(const Box3& box);
 
-		/// returns number of vertices in the model
-		virtual unsigned int n_vertices() const = 0;
+        /// returns number of vertices in the model
+        virtual unsigned int n_vertices() const = 0;
 
-		//-------------------- rendering  -----------------------
+        //-------------------- rendering  -----------------------
 
-		bool is_visible() const { return visible_; }
-		void set_visible(bool b) { visible_ = b; }
+        bool is_visible() const { return visible_; }
+        void set_visible(bool b) { visible_ = b; }
 
-		// Gets the drawable named 'name'.
-		// Returns a nullptr if the drawable does not exist.
-		PointsDrawable* points_drawable(const std::string& name) const;
-		LinesDrawable*  lines_drawable(const std::string& name) const;
+        // Gets the drawable named 'name'.
+        // Returns a nullptr if the drawable does not exist.
+        PointsDrawable* points_drawable(const std::string& name) const;
+        LinesDrawable*  lines_drawable(const std::string& name) const;
         TrianglesDrawable*  triangles_drawable(const std::string& name) const;
 
-		// Create a drawable named 'name'.
+        // Create a drawable named 'name'.
         // Ignore the creation if a drawable named 'name' already exists.
-		PointsDrawable* add_points_drawable(const std::string& name);
-		LinesDrawable*  add_lines_drawable(const std::string& name);
+        PointsDrawable* add_points_drawable(const std::string& name);
+        LinesDrawable*  add_lines_drawable(const std::string& name);
         TrianglesDrawable*  add_triangles_drawable(const std::string& name);
 
-		// Returns all available drawables.
+        // Returns all available drawables.
         const std::vector<PointsDrawable*>&  points_drawables() const { return points_drawables_; }
         const std::vector<LinesDrawable*>&   lines_drawables() const { return lines_drawables_; }
         const std::vector<TrianglesDrawable*>& triangles_drawables() const { return triangles_drawables_; }
 
-	protected:
-		std::string	name_;
-		bool		visible_;
-		Box3		bbox_;
-		bool		bbox_known_;
+    protected:
+        std::string	name_;
+        bool		visible_;
+        Box3		bbox_;
+        bool		bbox_known_;
 
         std::vector<PointsDrawable*>    points_drawables_;
         std::vector<LinesDrawable*>     lines_drawables_;
         std::vector<TrianglesDrawable*> triangles_drawables_;
-	};
+    };
 }
 
 #endif  // EASY3D_MODEL_H

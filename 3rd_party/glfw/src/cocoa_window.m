@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 macOS - www.glfw.org
+// GLFW 3.4 macOS - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -22,6 +22,8 @@
 // 3. This notice may not be removed or altered from any source
 //    distribution.
 //
+//========================================================================
+// It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
 #include "internal.h"
@@ -610,10 +612,8 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 
 - (void)scrollWheel:(NSEvent *)event
 {
-    double deltaX, deltaY;
-
-    deltaX = [event scrollingDeltaX];
-    deltaY = [event scrollingDeltaY];
+    double deltaX = [event scrollingDeltaX];
+    double deltaY = [event scrollingDeltaY];
 
     if ([event hasPreciseScrollingDeltas])
     {
@@ -730,9 +730,8 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
     else
         characters = (NSString*) string;
 
-    NSUInteger i, length = [characters length];
-
-    for (i = 0;  i < length;  i++)
+    const NSUInteger length = [characters length];
+    for (NSUInteger i = 0;  i < length;  i++)
     {
         const unichar codepoint = [characters characterAtIndex:i];
         if ((codepoint & 0xff00) == 0xf700)
@@ -1222,7 +1221,7 @@ void _glfwPlatformSetWindowMonitor(_GLFWwindow* window,
     // HACK: Changing the style mask can cause the first responder to be cleared
     [window->ns.object makeFirstResponder:window->ns.view];
 
-    if (monitor)
+    if (window->monitor)
     {
         [window->ns.object setLevel:NSMainMenuWindowLevel + 1];
         [window->ns.object setHasShadow:NO];

@@ -219,7 +219,7 @@ namespace easy3d {
                     strSource = "WINDOWS";
                     break;
                 case GL_DEBUG_SOURCE_SHADER_COMPILER:
-                    strSource = "SHADER COMP.";
+                    strSource = "SHADER COMP";
                     break;
                 case GL_DEBUG_SOURCE_THIRD_PARTY:
                     strSource = "3RD PARTY";
