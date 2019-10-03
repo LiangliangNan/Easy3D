@@ -36,6 +36,7 @@ Eye-dome lighting                       |  Shadow  				     |   Transparency
  - Line/point imposters
  - 2D Delaunay triangulation (based on Jonathan Richard Shewchuk's Triangle)
  - 3D Delaunay triangulation (based on Sihang's Tetgen)
+ - Rendering meshes with concave faces and faces with holes
  - and more ...
  
 ### A quick glance ###
