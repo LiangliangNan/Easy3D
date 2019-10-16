@@ -5,6 +5,7 @@ project(${PROJECT_NAME})
 
 
 add_executable(${PROJECT_NAME}
+		../../easy3d/viewer/drawable.cpp
                 main.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES

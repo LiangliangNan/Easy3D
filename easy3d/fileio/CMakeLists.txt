@@ -13,6 +13,9 @@ set(${PROJECT_NAME}_HEADERS
     )
 
 set(${PROJECT_NAME}_SOURCES
+    ../util/file.cpp
+    ../util/stop_watch.cpp
+    ../util/string.cpp
     ply_reader_writer.cpp
     point_cloud_io.cpp
     point_cloud_io_bin.cpp

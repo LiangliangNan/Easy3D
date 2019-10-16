@@ -23,7 +23,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "plane_extraction.h".h"
+#include "plane_extraction.h"
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
