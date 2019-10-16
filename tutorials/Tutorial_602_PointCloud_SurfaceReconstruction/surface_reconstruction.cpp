@@ -23,7 +23,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "surface_reconstruction.h".h"
+#include "surface_reconstruction.h"
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
