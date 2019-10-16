@@ -7,7 +7,6 @@ add_executable(${PROJECT_NAME}
                 main.cpp
                 normal_estimation.h
                 normal_estimation.cpp
-                ../../easy3d/algo/point_cloud_normals.cpp
 )
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
