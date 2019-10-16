@@ -458,7 +458,7 @@ namespace easy3d {
 
     void PointCloudNormals::reorient(PointCloud *cloud, unsigned int k)
     {
-        LOG(WARNING) << "reorient point cloud normals requires boost";
+        std::cout << "reorient point cloud normals requires boost\n";
     }
 
 #endif

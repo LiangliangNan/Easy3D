@@ -234,7 +234,7 @@ bool LevMar(IteratorT begin, IteratorT end, FuncT &func,
 				}
 #ifdef DOPARALLEL
 				for(unsigned int i = 0; i < paramDim; ++i)
-					vmag = std::max(fabs(v[i]), vmag);
+					vmag = std::max((ScalarType)fabs(v[i]), vmag);
 #endif
 				// and check for convergence with magnitude of v
 #ifndef PRECISIONLEVMAR
