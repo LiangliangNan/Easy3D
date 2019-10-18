@@ -109,9 +109,19 @@ If Easy3D is useful in your research/work, I would be grateful if you show your 
 ```
 Liangliang Nan. 
 Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data. 
+https://github.com/LiangliangNan/Easy3D
 2018.
 ```
 
+LaTex code:
+```
+@misc{easy3d2018nan,
+  title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
+  author={Liangliang, Nan},
+  howpublished={\url{https://github.com/LiangliangNan/Easy3D}},
+  year={2018},
+}
+```
 ---
 
 Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
