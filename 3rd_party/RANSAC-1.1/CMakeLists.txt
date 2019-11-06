@@ -223,12 +223,14 @@ endif()
 # ------------------------------------------------------------------------------
 # OpenMP
 # ------------------------------------------------------------------------------
-# Liangliang: In the original RANSAC implementation, OpenMP is enabled if
-#             the DOPARALLEL micro is defined. However, it seems enabling
-#             OpenMP causes the process loops infinitely on Windows (tested
-#             with Microft Visual Studio 2017). So I just don't enable it.
+# Liangliang: In the original RANSAC implementation, OpenMP is enabled if the
+#             DOPARALLEL micro is defined. However, it seems enabling OpenMP
+#             causes the process loops infinitely on Windows 10 and Ubuntu (it
+#             seems to be working on macOS). So I just don't enable it for
+#             Windows and Linux.
 find_package(OpenMP QUIET)
-if (OPENMP_FOUND AND NOT WIN32)
+#if (OPENMP_FOUND)
+if (OPENMP_FOUND AND NOT WIN32 AND NOT LINUX)
     message("OpenMP found")
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
