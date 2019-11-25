@@ -42,31 +42,27 @@ namespace easy3d {
 #define rad2deg(a)		((a) * 180.0 / M_PI)
 #define deg2rad(a)		((a) * M_PI / 180.0)
 
-#define int_max			INT_MAX
-#define int_min			INT_MIN
-
-#define float_max		FLT_MAX
-#define float_min		FLT_MIN
-
-#define double_max		DBL_MAX
-#define double_min		DBL_MIN
-
+    // Function returning min/max for corresponding type
+    template <typename FT> inline FT min();
+    template <typename FT> inline FT max();
+    // Template specializations for float and double
+    template <> inline int   min<int>() { return INT_MIN; }
+    template <> inline int   max<int>() { return INT_MAX; }
+    template <> inline float   min<float>() { return FLT_MIN; }
+    template <> inline float   max<float>() { return FLT_MAX; }
+    template <> inline double  min<double>() { return DBL_MIN; }
+    template <> inline double  max<double>() { return DBL_MAX; }
 
     // standard epsilon values
-    const float  FLOAT_EPS      = 1.0e-7f;
-    const float  FLOAT_EPS_SQR  = 1.0e-14f;
-    const double DOUBLE_EPS     = 1.0e-14;
-    const double DOUBLE_EPS_SQR = 1.0e-28;
-
     // Function returning epsilon for corresponding type
     template <typename FT> inline FT epsilon();
     template <typename FT> inline FT epsilon_sqr();
 
     // Template specializations for float and double
-    template <> inline float  epsilon<float>() { return FLOAT_EPS; }
-    template <> inline float  epsilon_sqr<float>() { return FLOAT_EPS_SQR; }
-    template <> inline double epsilon<double>() { return DOUBLE_EPS; }
-    template <> inline double epsilon_sqr<double>() { return DOUBLE_EPS_SQR; }
+    template <> inline float  epsilon<float>() { return 1.0e-7f; }
+    template <> inline float  epsilon_sqr<float>() { return 1.0e-14f; }
+    template <> inline double epsilon<double>() { return 1.0e-14; }
+    template <> inline double epsilon_sqr<double>() { return 1.0e-28; }
 }
 
 
