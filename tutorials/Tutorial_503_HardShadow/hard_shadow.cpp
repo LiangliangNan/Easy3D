@@ -39,6 +39,7 @@ TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title)
     camera_->showEntireScene();
 
 	shadow_ = new Shadow(camera());
+    shadow_->set_background_color(background_color());
 	shadow_enabled_ = true;
 
 	std::cout << "------------ Hard Shadow ----------" << std::endl

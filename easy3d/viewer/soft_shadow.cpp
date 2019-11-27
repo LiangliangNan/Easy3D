@@ -95,6 +95,7 @@ namespace easy3d {
                 d->draw(false);
             }
         }
+        background_->draw(false);
         program->release();
 
         // restore the default color
@@ -147,6 +148,10 @@ namespace easy3d {
                 d->draw(false);
             }
         }
+
+        program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
+        program->set_uniform("per_vertex_color", false);
+        background_->draw(false);
 
         program->release_texture();
         program->release();

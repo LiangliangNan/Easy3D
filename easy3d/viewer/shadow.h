@@ -55,6 +55,7 @@ namespace easy3d {
         // works for directional lights.
         bool ortho_background() const { return orhto_background_; }
         void set_ortho_background(bool b) { orhto_background_ = b; }
+        void set_background_color(const vec3& c) { background_color_ = c; }
 
         // assumed to be a square shadow map. Defauly: 1024.
         int shadow_map_size() const { return shadow_map_size_; }
@@ -105,7 +106,12 @@ namespace easy3d {
         vec3    light_pos_;
 
         int		shadow_map_size_;
+
+        // the shadow is cast onto a minimum plane orthogonal to the light direction.
         bool	orhto_background_;
+        TrianglesDrawable* background_;
+        vec3    background_color_;
+
         float	light_distance_;	// for perspective light frustum only
         float	darkness_;
 

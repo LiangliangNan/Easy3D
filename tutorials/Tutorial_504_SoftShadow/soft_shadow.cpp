@@ -39,6 +39,7 @@ TutorialSoftShadow::TutorialSoftShadow(const std::string& title) : Viewer(title)
     camera_->showEntireScene();
 
 	shadow_ = new SoftShadow(camera());
+    shadow_->set_background_color(background_color_);
 	shadow_enabled_ = true;
 
 	std::cout << "------------ Soft Shadow ----------" << std::endl

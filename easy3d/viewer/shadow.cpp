@@ -47,7 +47,9 @@ namespace easy3d {
         , camera_frustum_(nullptr)
         , light_frustum_(nullptr)
         , shadow_map_size_(1024)
-        , orhto_background_(false)
+        , orhto_background_(true)
+        , background_(nullptr)
+        , background_color_(1.0f, 1.0f, 1.0f)
         , light_distance_(50.0f)
         , darkness_(0.6f)
     {
@@ -75,6 +77,11 @@ namespace easy3d {
         if (light_frustum_) {
             delete light_frustum_;
             light_frustum_ = nullptr;
+        }
+
+        if (background_) {
+            delete background_;
+            background_ = nullptr;
         }
     }
 
@@ -185,6 +192,7 @@ namespace easy3d {
                 d->draw(false);
             }
         }
+        background_->draw(false);
         program->release();
         fbo_->release();
     }
@@ -222,6 +230,11 @@ namespace easy3d {
                 d->draw(false);
             }
         }
+
+        program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
+        program->set_uniform("per_vertex_color", false);
+        background_->draw(false);
+
         program->release_texture();
         program->release();
 
@@ -338,16 +351,38 @@ namespace easy3d {
 
 
     void Shadow::update_ortho_background() {
-//        vec3 normal = RenderingEngine::light_position(); // the background's normal in VC.
-//        const mat3& trans = opengl::normal_matrix(inverse(camera_->modelViewMatrix()));
-//        normal = normalize(trans * normal);		  // the background's normal in WC.
-//        float dist = scene_bbox_.diagonal() * 0.001f;
-//        const vec3& center = light_frustum_->far_center() + normal * dist;
+        vec3 normal = vec3(setting::light_position); // the background's normal in VC.
+        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        normal = normalize(trans * normal);		  // the background's normal in WC.
+        float dist = camera_->sceneRadius() * 0.002f;
+        const vec3& center = light_frustum_->far_center() + normal * dist;
 
-//        RenderingEngine::ground_plane()->set_center(center);
-//        RenderingEngine::ground_plane()->set_normal(normal);
-//        RenderingEngine::ground_plane()->set_up_vector(light_frustum_->up_vector());
-//        RenderingEngine::ground_plane()->set_size(light_frustum_->far_width());
+        vec3 up = light_frustum_->up_vector();
+        vec3 dx = cross(up, normal);
+        float size = light_frustum_->far_width();
+        dx = normalize(dx) * size;
+        vec3 dy = normalize(up) * size;;
+        float tc = 1.0f;
+
+        std::vector<vec3> vertices;
+        std::vector<vec2> texcoords;
+        std::vector<unsigned int> indices;
+        vec3 a(center - dx - dy);	vertices.push_back(a);	texcoords.push_back(vec2(-tc, -tc));
+        vec3 b(center + dx - dy);	vertices.push_back(b);	texcoords.push_back(vec2(+tc, -tc));
+        vec3 c(center + dx + dy);	vertices.push_back(c);	texcoords.push_back(vec2(+tc, +tc));
+        vec3 d(center - dx + dy);	vertices.push_back(d);	texcoords.push_back(vec2(-tc, +tc));
+        indices.push_back(0); indices.push_back(1); indices.push_back(2); // I will render the quad as two triangles
+        indices.push_back(0); indices.push_back(2); indices.push_back(3);
+
+        std::vector<vec3> normals;
+        normals.resize(4, normal);
+
+        if (!background_)
+            background_ = new TrianglesDrawable;
+        background_->update_vertex_buffer(vertices);
+        background_->update_texcoord_buffer(texcoords);
+        background_->update_index_buffer(indices);
+        background_->update_normal_buffer(normals);
     }
 
 
