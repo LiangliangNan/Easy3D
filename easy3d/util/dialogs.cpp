@@ -57,12 +57,17 @@ namespace easy3d {
               filters[i] = filetypes[i].c_str();
        }
 
+       std::string types_string;
+       for (std::size_t i=0; i<filetypes.size(); ++i)
+           types_string = types_string + filetypes[i] + ((i == filetypes.size() - 1) ? "" : "; ");
+       types_string = "Supported formats (" + types_string + ")";
+
        const char* buffer = tinyfd_openFileDialog(
                    "Please select the file(s) to open",
                    default_path.c_str(),
                    static_cast<int>(filetypes.size()),
                    filters,
-                   "All supported formats",
+                   types_string.c_str(),
                    multiple
                    );
 
@@ -110,12 +115,17 @@ namespace easy3d {
                filters[i] = filetypes[i].c_str();
         }
 
+        std::string types_string;
+        for (std::size_t i=0; i<filetypes.size(); ++i)
+            types_string = types_string + filetypes[i] + ((i == filetypes.size() - 1) ? "" : "; ");
+        types_string = "Supported formats (" + types_string + ")";
+
         const char* file = tinyfd_saveFileDialog(
                     "Please specify the file name to save",
                     default_file_name.c_str(),
                     static_cast<int>(filetypes.size()),
                     filters,
-                    "All supported formats"
+                    types_string.c_str()
                     );
 
         if (filters)
