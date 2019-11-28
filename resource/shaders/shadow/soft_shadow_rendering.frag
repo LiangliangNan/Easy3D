@@ -31,6 +31,7 @@ uniform mat4  lightViewMatrix;
 
 uniform bool two_sides_lighting;
 
+uniform bool is_background = false;
 
 out vec4 FragColor;	// Ouput data
 
@@ -670,38 +671,43 @@ float pcssShadow(vec2 uv, float z, vec2 dz_duv, float zEye)
 
 vec3 shade(vec3 worldPos)
 {
-    vec3 normal = normalize(DataIn.normal);
+    if (is_background)
+        return DataIn.color;
 
-    vec3 view_dir = normalize(wCamPos - worldPos);
-    vec3 light_dir = normalize(wLightPos);	// directional light
-    //vec3 light_dir = normalize(wLightPos - worldPos); // point light
-
-    float df = 0.0;	// diffuse factor
-    if (two_sides_lighting)
-            df = abs(dot(light_dir, normal));
-    else
-            df = max(dot(light_dir, normal), 0);
-
-    float sf = 0.0;	// specular factor
-    if (df > 0.0) {	// if the vertex is lit compute the specular color
-            vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
-            if (two_sides_lighting)
-                    sf = abs(dot(half_vector, normal));
-            else
-                    sf = max(dot(half_vector, normal), 0.0);
-            sf = pow(sf, shininess);
-    }
-
-    vec3 color;
-    if (!gl_FrontFacing && distinct_back_color)
-            color = back_color;
     else {
-            color = DataIn.color;
+        vec3 normal = normalize(DataIn.normal);
+
+        vec3 view_dir = normalize(wCamPos - worldPos);
+        vec3 light_dir = normalize(wLightPos);	// directional light
+        //vec3 light_dir = normalize(wLightPos - worldPos); // point light
+
+        float df = 0.0;	// diffuse factor
+        if (two_sides_lighting)
+                df = abs(dot(light_dir, normal));
+        else
+                df = max(dot(light_dir, normal), 0);
+
+        float sf = 0.0;	// specular factor
+        if (df > 0.0) {	// if the vertex is lit compute the specular color
+                vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
+                if (two_sides_lighting)
+                        sf = abs(dot(half_vector, normal));
+                else
+                        sf = max(dot(half_vector, normal), 0.0);
+                sf = pow(sf, shininess);
+        }
+
+        vec3 color;
+        if (!gl_FrontFacing && distinct_back_color)
+                color = back_color;
+        else {
+                color = DataIn.color;
+        }
+
+        color = color * df + specular * sf;
+
+        return color;
     }
-
-    color = color * df + specular * sf;
-
-    return color;
 }
 
 
@@ -716,6 +722,9 @@ void main(void) {
             //(ProjCoords.y <= 0 || ProjCoords.y >= 1) ||
             (ProjCoords.z <= 0 || ProjCoords.z >= 1))
     {
+        if (is_background)
+            FragColor = vec4(color, 1.0);
+        else
             FragColor = vec4(color + ambient, 1.0);
     }
     else {
@@ -731,6 +740,10 @@ void main(void) {
 
             // I don't want the shadow regions to be completely dark.
             shadow = (1.0 - darkness) + shadow * darkness;
-            FragColor = vec4(color * shadow + ambient, 1.0);
+
+            if (is_background)
+                FragColor = vec4(color * shadow, 1.0);
+            else
+                FragColor = vec4(color * shadow + ambient, 1.0);
     }
 }

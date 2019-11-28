@@ -6,6 +6,8 @@ uniform vec3	ambient = vec3(0.05f, 0.05f, 0.05f);
 uniform vec3	specular = vec3(0.4f, 0.4f, 0.4f);
 uniform float	shininess = 64.0f;
 
+uniform bool    is_background = false;
+
 uniform sampler2DShadow  shadowMap;
 uniform float darkness;
 
@@ -20,7 +22,12 @@ in Data{
 out vec4 FragColor;	// Ouput data
 
 
-void main(void) {
+vec3 shade(vec3 worldPos)
+{
+    if (is_background)
+        return DataIn.color;
+
+    else {
         vec3 normal = normalize(DataIn.normal);
 
         vec3 view_dir = normalize(wCamPos - DataIn.position);
@@ -33,6 +40,14 @@ void main(void) {
 
         vec3 color = DataIn.color;
         color = color * df + specular * sf;
+        return color;
+    }
+}
+
+
+
+void main(void) {
+        vec3 color = shade(DataIn.position);
 
         vec3 coords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;
         // to avoid shadow acne: See: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
@@ -42,6 +57,9 @@ void main(void) {
         // give control over darkness;
         visibility = (visibility < 0.9) ? (1.0 - darkness) : 1.0f;
 
-        FragColor = vec4(color * visibility + ambient, 1.0);
+        if (is_background)
+            FragColor = vec4(color * visibility, 1.0);
+        else
+            FragColor = vec4(color * visibility + ambient, 1.0);
 }
 

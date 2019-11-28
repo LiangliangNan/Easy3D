@@ -192,7 +192,10 @@ namespace easy3d {
                 d->draw(false);
             }
         }
-        background_->draw(false);
+
+        // We can ignore background (background only receives shadows)
+        //background_->draw(false);
+
         program->release();
         fbo_->release();
     }
@@ -227,12 +230,15 @@ namespace easy3d {
             if (d->is_visible()) {
                 program->set_uniform("default_color", d->default_color());				easy3d_debug_gl_error;
                 program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
+                program->set_uniform("is_background", false);
                 d->draw(false);
             }
         }
 
+        // draw the background plane
         program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
         program->set_uniform("per_vertex_color", false);
+        program->set_uniform("is_background", true);
         background_->draw(false);
 
         program->release_texture();
