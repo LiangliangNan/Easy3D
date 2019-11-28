@@ -81,6 +81,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glfw_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} glew glfw core util fileio tinyfiledialogs)
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)

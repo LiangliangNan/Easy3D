@@ -182,7 +182,7 @@ namespace easy3d {
         // OpenGL debug callback
         //------------------------------------------------------------------------------
 
-        static void easy3dOpenGLCallback(GLenum source,
+        static void GLAPIENTRY easy3dOpenGLCallback(GLenum source,
           GLenum type,
           GLuint id,
           GLenum severity,
