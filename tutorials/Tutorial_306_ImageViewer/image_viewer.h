@@ -23,51 +23,33 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef EASY3D_TUTORIAL_IMAGE_VIEWER_H
+#define EASY3D_TUTORIAL_IMAGE_VIEWER_H
 
-#ifndef EASY3D_OPENGL_TEXTURE_H
-#define EASY3D_OPENGL_TEXTURE_H
+#include <easy3d/viewer/viewer.h>
 
 
-#include <string>
-
-#include <easy3d/viewer/opengl.h>
-
+// This ImageViewer class visualizes an image in the screen space.
 
 namespace easy3d {
+    class Texture;
+}
 
-    // currently only TEXTURE_2D is supported
-    class Texture
-    {
-    public:
-        // wrap: GL_REPEAT, GL_CLAMP
-        // filter: GL_MIPMAP, GL_LINEAR
-        static Texture* create(const std::string& image_file, GLenum wrap = GL_REPEAT, GLenum filter = GL_MIPMAP);
-        ~Texture();
+class ImageViewer : public easy3d::Viewer
+{
+public:
+    ImageViewer(const std::string& title, const std::string& image_file);
+    
+protected:
+    virtual void init() override;
+    virtual void cleanup() override;
 
-        int width() const { return sizes_[0]; }
-        int height() const { return sizes_[1]; }
-        int channels() const { return sizes_[2]; }
+    void draw() override;
 
-        GLuint id() const { return id_; }
-
-        void bind();
-        void unbind();
-
-    protected:
-        void set_parameters();
-
-    private:
-        GLuint	id_;
-
-        int dimension_;
-        int sizes_[3];
-
-    private:
-        Texture();
-    };
-
-} // namespace easy3d
+private:
+    easy3d::Texture* texture_;
+    std::string      image_file_;
+};
 
 
-#endif  // EASY3D_OPENGL_TEXTURE_H
-
+#endif // EASY3D_TUTORIAL_IMAGE_VIEWER_H

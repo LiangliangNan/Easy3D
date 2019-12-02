@@ -60,6 +60,7 @@ set(${PROJECT_NAME}_SOURCES
     shader_program.cpp
     shadow.cpp
     soft_shadow.cpp
+    texture.cpp
     opengl_timer.cpp
     transform.cpp
     transform_decompose.cpp

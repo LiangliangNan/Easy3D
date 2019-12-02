@@ -17,6 +17,7 @@ add_subdirectory("Tutorial_302_Viewer_imgui")
 add_subdirectory("Tutorial_303_Viewer_Qt")
 add_subdirectory("Tutorial_304_RealCamera")
 add_subdirectory("Tutorial_305_DepthImage")
+#add_subdirectory("Tutorial_306_ImageViewer")
 
 # basic rendering
 add_subdirectory("Tutorial_401_Drawable")

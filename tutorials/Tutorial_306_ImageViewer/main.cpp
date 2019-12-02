@@ -23,51 +23,22 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-#ifndef EASY3D_OPENGL_TEXTURE_H
-#define EASY3D_OPENGL_TEXTURE_H
+#include "image_viewer.h"
 
 
-#include <string>
+// This example shows how to render an images.
 
-#include <easy3d/viewer/opengl.h>
+int main(int /*argc*/, char** /*argv*/) {
+    // the image file.
+    const std::string image_file = "../../Easy3D/data/fountain/images/0000.jpg";
 
+    ImageViewer viewer("ImageViewer", image_file);
 
-namespace easy3d {
+    viewer.resize(960, 800);
 
-    // currently only TEXTURE_2D is supported
-    class Texture
-    {
-    public:
-        // wrap: GL_REPEAT, GL_CLAMP
-        // filter: GL_MIPMAP, GL_LINEAR
-        static Texture* create(const std::string& image_file, GLenum wrap = GL_REPEAT, GLenum filter = GL_MIPMAP);
-        ~Texture();
+    // Run the viewer
+    viewer.run();
 
-        int width() const { return sizes_[0]; }
-        int height() const { return sizes_[1]; }
-        int channels() const { return sizes_[2]; }
-
-        GLuint id() const { return id_; }
-
-        void bind();
-        void unbind();
-
-    protected:
-        void set_parameters();
-
-    private:
-        GLuint	id_;
-
-        int dimension_;
-        int sizes_[3];
-
-    private:
-        Texture();
-    };
-
-} // namespace easy3d
-
-
-#endif  // EASY3D_OPENGL_TEXTURE_H
+    return EXIT_SUCCESS;
+}
 
