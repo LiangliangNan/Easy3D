@@ -74,18 +74,19 @@ namespace easy3d {
 			}
 
             GLuint tex = 0;
-            glCreateTextures(GL_TEXTURE_2D, 1, &tex);	easy3d_debug_gl_error;
-            glTextureStorage2D(tex, 1, internal_format, width, height);	easy3d_debug_gl_error;
+            glGenTextures(1, &tex);	easy3d_debug_gl_error;
+            glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_gl_error;
 
-            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
-            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_R, wrap);	easy3d_debug_gl_error;
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);	easy3d_debug_gl_error;
 
 			if (data) {
-				glTextureSubImage2D(tex, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
+				glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
 			}
+			glBindTexture(GL_TEXTURE_2D, 0);
 
             Texture* result = new Texture;
             result->sizes_[0] = width;
