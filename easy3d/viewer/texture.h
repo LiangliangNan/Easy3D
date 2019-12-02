@@ -39,9 +39,9 @@ namespace easy3d {
     class Texture
     {
     public:
-        // wrap: GL_REPEAT, GL_CLAMP
-        // filter: GL_MIPMAP, GL_LINEAR
-        static Texture* create(const std::string& image_file, GLenum wrap = GL_REPEAT, GLenum filter = GL_MIPMAP);
+        // wrap: GL_REPEAT, GL_CLAMP_TO_EDGE
+        // filter: GL_NEAREST, GL_LINEAR
+        static Texture* create(const std::string& image_file, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_NEAREST);
         ~Texture();
 
         int width() const { return sizes_[0]; }

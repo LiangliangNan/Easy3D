@@ -60,6 +60,9 @@ void ImageViewer::cleanup() {
 
 
 void ImageViewer::draw() {
+	if (texture_ == nullptr)
+		return;
+
     static const std::string quad_name = "screen_space/textured_quad";
     ShaderProgram* program = ShaderManager::get_program(quad_name);
     if (!program) {

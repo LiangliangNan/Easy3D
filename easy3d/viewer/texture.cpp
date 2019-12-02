@@ -26,6 +26,7 @@
 
 #include <easy3d/viewer/texture.h>
 #include <easy3d/util/file.h>
+#include <easy3d/viewer/opengl_error.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <3rd_party/stb/stb_image.h>
@@ -53,46 +54,43 @@ namespace easy3d {
     }
 
 
-    Texture* Texture::create(const std::string& file_name, GLenum wrap /* = GL_REPEAT*/, GLenum filter /* = GL_MIPMAP*/) {
+    Texture* Texture::create(const std::string& file_name, GLenum wrap /* = GL_CLAMP_TO_EDGE*/, GLenum filter /* = GL_NEAREST*/) {
         if (!file::is_file(file_name)) {
             std::cerr << "file \'" << file_name << "\' does not exist" << std::endl;
             return nullptr;
         }
 
-        using stb_comp_t = decltype(STBI_default);
-        stb_comp_t comp = STBI_rgb_alpha;
-
-        int width, height, channels;
-        const auto data = stbi_load(file_name.data(), &width, &height, &channels, comp);
+        int width, height, comp;
+        const auto data = stbi_load(file_name.data(), &width, &height, &comp, STBI_rgb);
         if (data) {
-            auto const[internal_format, format] = [comp]() {
-                switch (comp)
-                {
-                case STBI_rgb_alpha:	return std::make_pair(GL_RGBA8, GL_RGBA);
-                case STBI_rgb:			return std::make_pair(GL_RGB8, GL_RGB);
-                case STBI_grey:			return std::make_pair(GL_R8, GL_RED);
-                case STBI_grey_alpha:	return std::make_pair(GL_RG8, GL_RG);
-                default: throw std::runtime_error("invalid format");
-                }
-            }();
+			GLenum internal_format, format;
+			switch (comp)
+			{
+			case STBI_rgb_alpha:  internal_format = GL_RGBA8; format = GL_RGBA; break;
+			case STBI_rgb:		  internal_format = GL_RGB8; format = GL_RGB; break;	
+			case STBI_grey:		  internal_format = GL_R8; format = GL_RED; break;		
+			case STBI_grey_alpha: internal_format = GL_RG8; format = GL_RG; break;
+			default: throw std::runtime_error("invalid format");
+			}
 
             GLuint tex = 0;
-            glCreateTextures(GL_TEXTURE_2D, 1, &tex);
-            glTextureStorage2D(tex, 1, internal_format, width, height);
+            glCreateTextures(GL_TEXTURE_2D, 1, &tex);	easy3d_debug_gl_error;
+            glTextureStorage2D(tex, 1, internal_format, width, height);	easy3d_debug_gl_error;
 
-            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, filter);
-            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, filter);
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_S, wrap);
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_T, wrap);
-            glTextureParameteri(tex, GL_TEXTURE_WRAP_R, wrap);
+            glTextureParameteri(tex, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
+            glTextureParameteri(tex, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
+            glTextureParameteri(tex, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
+            glTextureParameteri(tex, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
+            glTextureParameteri(tex, GL_TEXTURE_WRAP_R, wrap);	easy3d_debug_gl_error;
 
-            if (data)
-                glTextureSubImage2D(tex, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
+			if (data) {
+				glTextureSubImage2D(tex, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
+			}
 
             Texture* result = new Texture;
             result->sizes_[0] = width;
             result->sizes_[1] = height;
-            result->sizes_[2] = channels;
+            result->sizes_[2] = comp;
             result->id_ = tex;
             stbi_image_free(data);
             return result;
