@@ -61,42 +61,43 @@ namespace easy3d {
         }
 
         int width, height, comp;
-        const auto data = stbi_load(file_name.data(), &width, &height, &comp, STBI_rgb);
-        if (data) {
-			GLenum internal_format, format;
-			switch (comp)
-			{
-			case STBI_rgb_alpha:  internal_format = GL_RGBA8; format = GL_RGBA; break;
-			case STBI_rgb:		  internal_format = GL_RGB8; format = GL_RGB; break;	
-			case STBI_grey:		  internal_format = GL_R8; format = GL_RED; break;		
-			case STBI_grey_alpha: internal_format = GL_RG8; format = GL_RG; break;
-			default: throw std::runtime_error("invalid format");
-			}
+        // flip the image vertically, so the first pixel in the output array is the bottom left
+        stbi_set_flip_vertically_on_load(1);
+        unsigned char* data = stbi_load(file_name.data(), &width, &height, &comp, 0);
+        if (!data)
+            return nullptr;
 
-            GLuint tex = 0;
-            glGenTextures(1, &tex);	easy3d_debug_gl_error;
-            glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_gl_error;
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, wrap);	easy3d_debug_gl_error;
-
-			if (data) {
-				glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
-			}
-			glBindTexture(GL_TEXTURE_2D, 0);
-
-            Texture* result = new Texture;
-            result->sizes_[0] = width;
-            result->sizes_[1] = height;
-            result->sizes_[2] = comp;
-            result->id_ = tex;
-            stbi_image_free(data);
-            return result;
+        GLenum internal_format, format;
+        switch (comp)
+        {
+        case STBI_rgb_alpha:  internal_format = GL_RGBA8; format = GL_RGBA; break;
+        case STBI_rgb:		  internal_format = GL_RGB8; format = GL_RGB; break;
+        case STBI_grey:		  internal_format = GL_R8; format = GL_RED; break;
+        case STBI_grey_alpha: internal_format = GL_RG8; format = GL_RG; break;
+        default: throw std::runtime_error("invalid format");
         }
-        return nullptr;
+
+        GLuint tex = 0;
+        glGenTextures(1, &tex);	easy3d_debug_gl_error;
+        glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_gl_error;
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
+
+        if (data) {
+            glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        Texture* result = new Texture;
+        result->sizes_[0] = width;
+        result->sizes_[1] = height;
+        result->sizes_[2] = comp;
+        result->id_ = tex;
+        stbi_image_free(data);
+        return result;
     }
 
 

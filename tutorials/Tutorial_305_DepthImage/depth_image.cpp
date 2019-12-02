@@ -130,7 +130,7 @@ void DepthImage::generate_depth() {
 
 
 void DepthImage::draw_depth() {
-    static const std::string quad_name = "screen_space/textured_quad";
+    static const std::string quad_name = "screen_space/quad_gray_texture";
     ShaderProgram* program = ShaderManager::get_program(quad_name);
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes = {

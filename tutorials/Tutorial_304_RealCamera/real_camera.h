@@ -35,6 +35,7 @@
 
 namespace easy3d {
     class Camera;
+    class Texture;
 }
 
 class RealCamera : public easy3d::Viewer
@@ -46,6 +47,8 @@ public:
     
 protected:
     bool key_press_event(int key, int modifiers) override;
+
+    void draw() override;
     
 private:
     struct CameraPara {
@@ -64,6 +67,13 @@ private:
     bool KRT_to_camera(std::size_t view_index, int method, easy3d::Camera* c);
     
     void create_cameras_drawable(float scale = 1.0f);
+
+    void draw_image();
+
+    void load_image();
+
+private:
+    easy3d::Texture* texture_;
 };
 
 

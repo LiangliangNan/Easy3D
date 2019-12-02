@@ -99,7 +99,7 @@ namespace easy3d {
 
         // moves the camera so that the 'model' is centered on the screen.
         // if 'model' is NULL, it centers the entire scene (all models).
-        void fit_screen(const easy3d::Model* model = nullptr);
+        virtual void fit_screen(const easy3d::Model* model = nullptr);
 
 		// Returns the coordinates of the 3D point located at pixel (x,y) on screen.
 		// x, y: screen point expressed in pixel units with an origin in the upper left corner.

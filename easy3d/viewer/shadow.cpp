@@ -437,7 +437,7 @@ namespace easy3d {
 
 
     void Shadow::draw_shadow_map(int w, int h) {
-        static const std::string quad_name = "screen_space/textured_quad";
+        static const std::string quad_name = "screen_space/quad_gray_texture";
         ShaderProgram* program = ShaderManager::get_program(quad_name);
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
@@ -452,7 +452,7 @@ namespace easy3d {
 
         program->bind();			easy3d_debug_gl_error;
         program->bind_texture("textureID", fbo_->depth_texture(), 0);
-        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 200, 10, 200, 200, w, h, -0.9f); easy3d_debug_gl_error;
+        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 200, 10, 500, 500, w, h, -0.9f); easy3d_debug_gl_error;
         program->release_texture();
         program->release();		easy3d_debug_gl_error;
 

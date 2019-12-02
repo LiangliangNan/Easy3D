@@ -41,14 +41,23 @@ public:
     ImageViewer(const std::string& title, const std::string& image_file);
     
 protected:
+    virtual bool key_press_event(int key, int modifiers) override;
+    virtual bool mouse_scroll_event(int x, int y, int dx, int dy) override;
     virtual void init() override;
     virtual void cleanup() override;
 
     void draw() override;
 
+    void compute_image_region(int& x, int& y, int& w, int& h);
+
+    // moves the camera so that the 'model' is centered on the screen.
+    // if 'model' is NULL, it centers the entire scene (all models).
+    virtual void fit_screen(const easy3d::Model* model = nullptr) override;
+
 private:
     easy3d::Texture* texture_;
     std::string      image_file_;
+    float            scale_;
 };
 
 

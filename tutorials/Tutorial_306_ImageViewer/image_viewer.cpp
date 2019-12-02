@@ -40,15 +40,22 @@ using namespace easy3d;
 
 ImageViewer::ImageViewer(const std::string& title, const std::string& image_file)
     : Viewer(title)
+    , scale_(1.0f)
 {
     image_file_ = image_file;
     set_background_color(vec3(1, 1, 1));
+
+    std::cout << "------------ Image Viewer ----------" << std::endl
+              << "Press 'Ctrl + O' to open an image" << std::endl
+              << "Press 'Space' to reset the view" << std::endl
+        << std::endl;
 }
 
 
 void ImageViewer::init() {
     Viewer::init();
     texture_ = Texture::create(image_file_);
+    fit_screen();
 }
 
 
@@ -59,11 +66,69 @@ void ImageViewer::cleanup() {
 }
 
 
+void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) {
+    w = static_cast<int>(texture_->width() * scale_);
+    h = static_cast<int>(texture_->height() * scale_);
+    x = static_cast<int>((width() - w) * 0.5f);
+    y = static_cast<int>((height() - h) * 0.5f);
+}
+
+
+bool ImageViewer::key_press_event(int key, int modifiers) {
+    if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL) {
+        const std::vector<std::string> filetypes = {"*.png", "*.jpg"};
+        const std::string& file_name = FileDialog::open(filetypes, std::string(""));
+
+        if (!file::is_file(file_name))
+            return false;
+
+        if (texture_)
+            delete texture_;
+        texture_ = Texture::create(file_name);
+        fit_screen();
+        return texture_ != nullptr;
+    }
+    if (key == GLFW_KEY_SPACE) {
+        fit_screen();
+        return true;
+    }
+    else
+        return Viewer::key_press_event(key, modifiers);
+}
+
+
+void ImageViewer::fit_screen(const easy3d::Model *model) {
+    const int image_w = texture_->width();
+    const int image_h = texture_->height();
+    float image_as = image_w / static_cast<float>(image_h);
+    float viewer_as = width() / static_cast<float>(height());
+    if (image_as < viewer_as) // thin
+        scale_ = height() / static_cast<float>(image_h);
+    else
+        scale_ = width() / static_cast<float>(image_w);
+    update();
+}
+
+
+bool ImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
+    (void)x;
+    (void)y;
+    (void)dx;
+    if (dy > 0)
+        scale_ *= 1.1f;
+    else if (dy < 0)
+        scale_ /= 1.1f;
+    update();
+
+    return false;
+}
+
+
 void ImageViewer::draw() {
 	if (texture_ == nullptr)
 		return;
 
-    static const std::string quad_name = "screen_space/textured_quad";
+    static const std::string quad_name = "screen_space/quad_color_texture";
     ShaderProgram* program = ShaderManager::get_program(quad_name);
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes = {
@@ -76,9 +141,12 @@ void ImageViewer::draw() {
     if (!program)
         return;
 
+    int x, y, w, h;
+    compute_image_region(x, y, w, h);
+
     program->bind();
     program->bind_texture("textureID", texture_->id(), 0);
-    opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, -0.9f);
+    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x, y, w, h, width(), height(), -0.9f);
     program->release_texture();
     program->release();
 }

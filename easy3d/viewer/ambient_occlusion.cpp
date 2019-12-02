@@ -293,7 +293,7 @@ namespace easy3d {
 
 
 	void AmbientOcclusion::draw_occlusion(int x, int y, int w, int h) {
-        static const std::string name = "screen_space/textured_quad";
+        static const std::string name = "screen_space/quad_gray_texture";
         ShaderProgram* program = ShaderManager::get_program(name);
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;

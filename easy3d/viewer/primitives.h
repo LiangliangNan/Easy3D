@@ -46,7 +46,7 @@ namespace easy3d {
         // \param[in] positionAttrib the vertex attribute array index that represents position in the current shader
         // \param[in] (x, y)		  the position (i.e., min corner) of the quad.
         // \param[in] (w, h)		  the size (i.e., width and height) of the quad.
-        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport.
+        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport (of the viewer).
         void draw_quad(unsigned int posIndex, int x, int y, int w, int h, int vpw, int vph, float depth);
         void draw_quad_wire(unsigned int posIndex, int x, int y, int w, int h, int vpw, int vph, float depth);
 
@@ -58,7 +58,7 @@ namespace easy3d {
         // \param[in] texcoordAttrib the vertex attribute array index that represents 2D UVs in the current shader
         // \param[in] (x, y)		  the position (i.e., min corner) of the quad.
         // \param[in] (w, h)		  the size (i.e., width and height) of the quad.
-        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport.
+        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport (of the viewer).
         // \param[in] depth	the depth at which the quad will be drawn (in Normalized Device Coordinates, i.e., [-1.0, 1.0])
         // NOTE: After clipping and division by w, depth coordinates range from −1 to 1, corresponding to the near and far clipping planes.
         void draw_quad(unsigned int posIndex, unsigned int texcoordAttrib, int x, int y, int w, int h, int vpw, int vph, float depth);

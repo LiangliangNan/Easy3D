@@ -29,6 +29,12 @@
 #include <easy3d/viewer/drawable.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
+#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/shader_manager.h>
+#include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/primitives.h>
+#include <easy3d/util/string.h>
+#include <easy3d/util/file.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -41,6 +47,7 @@ RealCamera::RealCamera(const std::string& title,
                        const std::string& cloud_file)
     : Viewer(title)
     , current_view_(0)
+    , texture_(nullptr)
 {
     // Read the point cloud
     if (open(cloud_file)) {
@@ -76,7 +83,6 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 const CameraPara& c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.25, c.h * 0.25);
-                update();
             }
         }
         return true;
@@ -118,6 +124,17 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 }
 
 
+void RealCamera::load_image() {
+    const std::string image_file = "../../Easy3D/data/fountain/images/" + string::from_integer(current_view_, 4, '0') + ".jpg";
+    if (file::is_file(image_file)) {
+            if (texture_)
+                delete texture_;
+        texture_ = Texture::create(image_file);
+    }
+    update();
+}
+
+
 bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
     if (view_index < 0 || view_index >= views_.size()) {
         std::cerr << "Error: invalid view index (" << view_index << ")" << std::endl;
@@ -149,6 +166,8 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
         const float proj_5th = 2.0f * fy / cam.h;
         c->setFieldOfView(2.0f * atan(1.0f / proj_5th));
     }
+
+    load_image();
 
 	return true;
 }
@@ -225,4 +244,48 @@ void RealCamera::create_cameras_drawable(float scale)
         d = current_model()->add_lines_drawable("cameras");
     d->update_vertex_buffer(vertices);
     d->set_default_color(vec3(0, 0, 1));
+}
+
+
+void RealCamera::draw() {
+    Viewer::draw();
+    draw_image();
+}
+
+
+void RealCamera::draw_image() {
+    if (texture_ == nullptr)
+        return;
+
+    static const std::string quad_name = "screen_space/quad_color_texture";
+    ShaderProgram* program = ShaderManager::get_program(quad_name);
+    if (!program) {
+        std::vector<ShaderProgram::Attribute> attributes = {
+            ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
+            ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
+        };
+        std::vector<std::string> outputs;
+        program = ShaderManager::create_program_from_files(quad_name, attributes, outputs, false);
+    }
+    if (!program)
+        return;
+
+    int w = texture_->width();
+    int h = texture_->height();
+    float image_as = w / static_cast<float>(h);
+    float viewer_as = width() / static_cast<float>(height());
+    if (image_as < viewer_as) {// thin
+        h = static_cast<int>(height() * 0.5f);
+        w = static_cast<int>(h * image_as);
+    }
+    else {
+        w = static_cast<int>(width() * 0.5f);
+        h = static_cast<int>(w / image_as);
+    }
+
+    program->bind();
+    program->bind_texture("textureID", texture_->id(), 0);
+    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, w, h, width(), height(), -0.9f);
+    program->release_texture();
+    program->release();
 }
