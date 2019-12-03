@@ -45,7 +45,7 @@ using namespace easy3d;
 RealCamera::RealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
-    : Viewer(title)
+    : Viewer(title, 4, 3, 2, false, false)
     , current_view_(0)
     , texture_(nullptr)
 {
@@ -82,7 +82,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara& c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.25, c.h * 0.25);
+                resize(c.w * 0.3, c.h * 0.3);
             }
         }
         return true;
@@ -93,7 +93,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
                 const CameraPara& c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.25, c.h * 0.25);
+                resize(c.w * 0.3, c.h * 0.3);
                 update();
             }
         }
@@ -105,7 +105,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
                 const CameraPara& c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.25, c.h * 0.25);
+                resize(c.w * 0.3, c.h * 0.3);
                 update();
             }
         }

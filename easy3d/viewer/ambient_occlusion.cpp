@@ -306,7 +306,7 @@ namespace easy3d {
 
         program->bind();		easy3d_debug_gl_error;
 
-		program->bind_texture("textureID", ssao_fbo_->color_texture(1), 0);
+        program->bind_texture("textureID", ssao_texture(), 0);
         opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x, y, w, h, width_, height_, -1.0f); easy3d_debug_gl_error;
         program->release_texture();
         program->release();		easy3d_debug_gl_error;

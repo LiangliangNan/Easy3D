@@ -127,7 +127,7 @@ void TutorialAmbientOcclusion::draw() {
 		program->release_texture();
 		program->release();
 
-        ao_->draw_occlusion(0, 0, 500, 500);
+        ao_->draw_occlusion(20, 20, 500, 500);
 	}
 	else
 		Viewer::draw();
