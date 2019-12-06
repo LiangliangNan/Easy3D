@@ -1201,7 +1201,11 @@ static int ply_read_header_format(p_ply ply) {
         ply->idriver = &ply_idriver_binary;
     else ply->idriver = &ply_idriver_binary_reverse;
     if (!ply_read_word(ply)) return 0;
-    if (strcmp(BWORD(ply), "1.0")) return 0;
+
+    //Liangliang: to be robust to handle error like "format ascii 1.0textureless"
+    //if (strcmp(BWORD(ply), "1.0")) return 0;
+    if (strncmp(BWORD(ply), "1.0", 2)) return 0;
+
     if (!ply_read_word(ply)) return 0;
     return 1;
 }
