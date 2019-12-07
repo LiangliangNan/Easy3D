@@ -32,7 +32,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // the image file.
     const std::string image_file = "../../Easy3D/data/fountain/images/0000.jpg";
 
-    ImageViewer viewer("ImageViewer", image_file);
+    ImageViewer viewer("Tutorial_306_ImageViewer", image_file);
 
     viewer.resize(960, 800);
 

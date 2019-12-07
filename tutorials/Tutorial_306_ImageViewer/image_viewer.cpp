@@ -98,6 +98,9 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
 
 
 void ImageViewer::fit_screen(const easy3d::Model *model) {
+    (void)model;
+    if (texture_ == nullptr)
+        return;
     const int image_w = texture_->width();
     const int image_h = texture_->height();
     float image_as = image_w / static_cast<float>(image_h);

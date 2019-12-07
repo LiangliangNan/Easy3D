@@ -39,31 +39,31 @@ namespace easy3d {
     class Texture
     {
     public:
-        // wrap: GL_REPEAT, GL_CLAMP_TO_EDGE
+        // wrap: GL_CLAMP_TO_EDGE, GL_REPEAT
         // filter: GL_NEAREST, GL_LINEAR
         static Texture* create(const std::string& image_file, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_NEAREST);
         ~Texture();
-
-        int width() const { return sizes_[0]; }
-        int height() const { return sizes_[1]; }
-        int channels() const { return sizes_[2]; }
 
         GLuint id() const { return id_; }
 
         void bind();
         void unbind();
 
-    protected:
-        void set_parameters();
+        int width() const { return sizes_[0]; }
+        int height() const { return sizes_[1]; }
+        int channels() const { return sizes_[2]; }
 
     private:
         GLuint	id_;
-
-        int dimension_;
         int sizes_[3];
 
     private:
+        //can only be created by using the create() function
         Texture();
+
+        //copying disabled
+        Texture(const Texture&);
+        Texture& operator=(const Texture&);
     };
 
 } // namespace easy3d

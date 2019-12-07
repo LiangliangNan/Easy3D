@@ -32,7 +32,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // the point cloud file.
     const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
 
-    DepthImage viewer("DepthImage", cloud_file);
+    DepthImage viewer("Tutorial_305_DepthImage", cloud_file);
 
     viewer.resize(960, 800);
 

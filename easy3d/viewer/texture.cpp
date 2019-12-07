@@ -38,7 +38,6 @@ namespace easy3d {
 
     Texture::Texture()
         : id_(0)
-        , dimension_(0)
     {
         sizes_[0] = 0;
         sizes_[1] = 0;
