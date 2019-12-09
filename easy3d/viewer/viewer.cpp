@@ -1081,7 +1081,7 @@ namespace easy3d {
     }
 
 
-	void Viewer::add_model(Model* model) {
+    void Viewer::add_model(Model* model, bool create_default_drawables /* = true*/) {
         if (!model)
             return;
 
@@ -1096,12 +1096,8 @@ namespace easy3d {
             return;
         }
 
-        if (model->points_drawables().empty() &&
-            model->lines_drawables().empty() &&
-            model->triangles_drawables().empty())
-        {
+        if (create_default_drawables)
             create_drawables(model);
-        }
 
         Box3 box;
         if (dynamic_cast<PointCloud*>(model)) {

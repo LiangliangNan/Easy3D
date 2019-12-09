@@ -117,7 +117,7 @@ namespace easy3d {
 		/// Update the rendering
 		void update() const;
 
-        void add_model(Model* model);
+        void add_model(Model* model, bool create_default_drawables = true);
         void delete_model(Model* model);
 
         const std::vector<Model*>& models() const { return models_; }
