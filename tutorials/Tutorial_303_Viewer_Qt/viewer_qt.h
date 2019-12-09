@@ -59,7 +59,7 @@ public:
     const easy3d::vec4& backGroundColor() const { return background_color_; }
     void setBackgroundColor(const easy3d::vec4& c);
 
-	void addModel(easy3d::Model* model);
+    void addModel(easy3d::Model* model, bool create_default_drawables = true);
 	void deleteModel(easy3d::Model* model);
 
 	const std::vector<easy3d::Model*>& models() const { return models_; }
