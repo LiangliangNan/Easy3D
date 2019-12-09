@@ -85,10 +85,15 @@ namespace easy3d {
 		for (const auto& n : fnames)
 			std::cout << "\t" << n << std::endl;
 
-		std::cout << "edge properties on mesh " << file::base_name(file_name) << std::endl;
-		const auto& enames = mesh->edge_properties();
-		for (const auto& n : enames)
-			std::cout << "\t" << n << std::endl;
+        std::cout << "edge properties on mesh " << file::base_name(file_name) << std::endl;
+        const auto& enames = mesh->edge_properties();
+        for (const auto& n : enames)
+            std::cout << "\t" << n << std::endl;
+
+        std::cout << "halfedge properties on mesh " << file::base_name(file_name) << std::endl;
+        const auto& hnames = mesh->halfedge_properties();
+        for (const auto& n : hnames)
+            std::cout << "\t" << n << std::endl;
 #endif
 
 		std::cout << "load model done. time: " << w.time_string() << std::endl;

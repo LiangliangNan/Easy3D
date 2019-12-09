@@ -205,10 +205,13 @@ Model* MainWindow::open(const std::string& file_name) {
             io::PointCloudIO_ptx serializer(file_name);
             PointCloud* cloud = nullptr;
             while ((cloud = serializer.load_next())) {
+                viewer_->makeCurrent();
                 viewer_->addModel(cloud);
+                viewer_->doneCurrent();
                 std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
             }
-            setCurrentFile(QString::fromStdString(file_name));
+            if (cloud)
+                setCurrentFile(QString::fromStdString(file_name));
         }
         else {
             PointCloud* cloud = PointCloudIO::load(file_name);

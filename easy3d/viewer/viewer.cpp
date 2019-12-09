@@ -940,15 +940,15 @@ namespace easy3d {
         if (ext == "ply")
             is_ply_mesh = (io::PlyReader::num_faces(file_name) > 0);
 
-        Model* model = nullptr;
         if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
             SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
             if (mesh) {
-                model = mesh;
-                create_drawables(mesh);
+                mesh->set_name(file_name);
+                add_model(mesh);
                 std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
                     << "num vertices: " << mesh->n_vertices() << "; "
                     << "num edges: " << mesh->n_edges() << std::endl;
+                return mesh;
             }
         }
         else if (ext == "mesh" || ext == "meshb" || ext == "tet") { // cgraph
@@ -960,26 +960,21 @@ namespace easy3d {
                 io::PointCloudIO_ptx serializer(file_name);
                 PointCloud* cloud = nullptr;
                 while ((cloud = serializer.load_next())) {
-                    create_drawables(cloud);
                     add_model(cloud);
                     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
                 }
+                return cloud;
             }
             else {
                 PointCloud* cloud = PointCloudIO::load(file_name);
                 if (cloud) {
-                    create_drawables(cloud);
-                    model = cloud;
+                    cloud->set_name(file_name);
+                    add_model(cloud);
                     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+                    return cloud;
                 }
             }
         }
-
-		if (model) {
-			model->set_name(file_name);
-			add_model(model);
-			return model;
-		}
 
 		return nullptr;
 	}
