@@ -36,9 +36,9 @@ namespace easy3d {
 #define M_PI			3.14159265358979323846264338327950288419716939937510582   // pi
 #endif
 
-#define half_pi			M_PI * 0.5
+//#define half_pi			M_PI * 0.5
 #define quarter_pi		M_PI * 0.25
-#define two_pi			M_PI * 2.0          
+//#define two_pi			M_PI * 2.0          
 #define rad2deg(a)		((a) * 180.0 / M_PI)
 #define deg2rad(a)		((a) * M_PI / 180.0)
 
