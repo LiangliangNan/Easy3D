@@ -30,6 +30,7 @@
 #include <cstring>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/util/tokenizer.h>
 
 
 namespace easy3d {
@@ -198,7 +199,9 @@ namespace easy3d {
 			fclose(in);
 			return mesh->n_faces() > 0;
 		}
+
 #else // use the tokenizer
+
 		bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
 		{
 			if (!mesh) {
@@ -207,9 +210,9 @@ namespace easy3d {
 			}
 
 			// open file (in binary mode)
-			FILE* fp = nullptr;
-			if ((fopen_s(&fp, file_name.c_str(), "rb") != 0) || (fp == nullptr)) {
-				std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
+            FILE* fp = fopen(file_name.c_str(), "rb");
+            if (fp == nullptr) {
+                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
 				return false;
 			}
 
@@ -242,7 +245,7 @@ namespace easy3d {
 			mesh->clear();
 
 
-			NvTokenizer tok(data, "/");
+            Tokenizer tok(data, "/");
 #ifndef NDEBUG
 			tok.setVerbose();
 #endif

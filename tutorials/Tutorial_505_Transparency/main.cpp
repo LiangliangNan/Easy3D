@@ -42,7 +42,7 @@ int main(int /*argc*/, char** /*argv*/) {
     easy3d::Model* model = viewer.open(file);
     if (model) {
         auto drawable = model->triangles_drawable("surface");
-        drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
+        drawable->set_default_color(easy3d::vec3(1.0f, 0.67f, 0.5f));
 
         // Run the viewer
         viewer.run();

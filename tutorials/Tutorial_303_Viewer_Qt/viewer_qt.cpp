@@ -608,7 +608,7 @@ void ViewerQt::create_drawables(Model* m) {
 }
 
 
-void ViewerQt::addModel(Model* model) {
+void ViewerQt::addModel(Model* model, bool create_default_drawables /* = true*/) {
     if (!model)
         return;
 
@@ -620,12 +620,8 @@ void ViewerQt::addModel(Model* model) {
         return;
     }
 
-    if (model->points_drawables().empty() &&
-        model->lines_drawables().empty() &&
-        model->triangles_drawables().empty())
-    {
+    if (create_default_drawables)
         create_drawables(model);
-    }
 
     Box3 box;
     if (dynamic_cast<PointCloud*>(model)) {
