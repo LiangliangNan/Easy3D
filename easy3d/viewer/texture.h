@@ -47,7 +47,7 @@ namespace easy3d {
         GLuint id() const { return id_; }
 
         void bind();
-        void unbind();
+        void release();
 
         int width() const { return sizes_[0]; }
         int height() const { return sizes_[1]; }

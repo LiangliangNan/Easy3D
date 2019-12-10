@@ -25,7 +25,8 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_lines.h>
 
 
 using namespace easy3d;

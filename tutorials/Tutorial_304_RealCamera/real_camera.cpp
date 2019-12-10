@@ -26,7 +26,8 @@
 #include "real_camera.h"
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/texture.h>

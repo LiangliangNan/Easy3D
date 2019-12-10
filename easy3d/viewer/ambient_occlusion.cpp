@@ -36,8 +36,9 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable.h>
-
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/opengl.h>
 
 
@@ -194,15 +195,15 @@ namespace easy3d {
             if (model->is_visible()) {
                 for (auto d : model->points_drawables()) {
                     if (d->is_visible())
-                         d->draw(false); easy3d_debug_gl_error
+                         d->gl_draw(false); easy3d_debug_gl_error
                 }
                 for (auto d : model->triangles_drawables()) {
                     if (d->is_visible())
-                        d->draw(false); easy3d_debug_gl_error
+                        d->gl_draw(false); easy3d_debug_gl_error
                 }
                 for (auto d : model->lines_drawables()) {
                     if (d->is_visible())
-                        d->draw(false); easy3d_debug_gl_error
+                        d->gl_draw(false); easy3d_debug_gl_error
                 }
             }
         }

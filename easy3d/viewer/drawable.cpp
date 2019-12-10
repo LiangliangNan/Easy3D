@@ -32,6 +32,7 @@
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/viewer/drawable_points.h>
 
 
 
@@ -248,8 +249,7 @@ namespace easy3d {
 	}
 
 
-	void Drawable::draw(bool with_storage_buffer /* = false */) const
-	{
+    void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
 		vao_->bind();
 
 		if (type() == DT_POINTS)
@@ -285,73 +285,5 @@ namespace easy3d {
 
         vao_->release();	easy3d_debug_gl_error;
 	}
-
-
-    DrawableType PointsDrawable::type() const {
-        return DT_POINTS;
-    }
-
-
-    DrawableType LinesDrawable::type() const {
-        return DT_LINES;
-    }
-
-
-    DrawableType TrianglesDrawable::type() const {
-        return DT_TRIANGLES;
-    }
-
-
-	void TrianglesDrawable::set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices) {
-		indices_ = indices;
-		std::size_t count = 0;
-		for (std::size_t i = 0; i < indices_.size(); ++i) {
-			count += indices_[i].size();
-		}
-		//Selectable::set_num_primitives(count);
-	}
-
-
-	void TrianglesDrawable::set_selected(std::size_t face_idx, bool b) {
-		// 	const std::vector<unsigned int>& indices = indices_[face_idx];
-		// 	for (std::size_t i = 0; i < indices.size(); ++i) {
-		// 		unsigned int id = indices[i];
-		// 		Selectable::set_selected(id, b);
-		// 	}
-	}
-
-
-	bool TrianglesDrawable::is_selected(std::size_t face_idx) const {
-		// 	const std::vector<unsigned int>& indices = indices_[face_idx];
-		// 	for (std::size_t i = 0; i < indices.size(); ++i) {
-		// 		unsigned int id = indices[i];
-		// 		if (Selectable::is_selected(id))
-		// 			return false;
-		// 	}
-		return true;
-	}
-
-
-	int TrianglesDrawable::num_selected() const {
-		int count = 0;
-		for (std::size_t i = 0; i < indices_.size(); ++i) {
-			if (is_selected(i))
-				++count;
-		}
-		return count;
-	}
-
-
-	void TrianglesDrawable::get_highlighted_trangles_range(int& tri_min, int& tri_max) const {
-		if (highlight_id_ >= 0 && highlight_id_ < indices_.size()) {
-			tri_min = indices_[highlight_id_].front();
-			tri_max = indices_[highlight_id_].back();
-		}
-		else {
-			tri_min = -1;
-			tri_max = -1;
-		}
-	}
-
 
 }

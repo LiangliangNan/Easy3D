@@ -25,7 +25,7 @@
 
 #include "eye_dome_lighting.h"
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
 
 
 // This example shows how to

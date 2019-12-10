@@ -112,7 +112,7 @@ namespace easy3d {
     }
 
 
-    void Texture::unbind() {
+    void Texture::release() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
 

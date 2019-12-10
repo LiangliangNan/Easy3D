@@ -25,7 +25,7 @@
 
 #include "eye_dome_lighting.h"
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/shader_program.h>
@@ -96,7 +96,7 @@ void TutorialEyeDomeLighting::draw() {
 		program->set_uniform("lighting", drawable->normal_buffer());
 		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->default_color());
-		drawable->draw(false);
+        drawable->gl_draw(false);
 
 		program->release();
 		edl_->end();

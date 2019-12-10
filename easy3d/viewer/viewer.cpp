@@ -42,7 +42,9 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/opengl_info.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/primitives.h>
@@ -1284,7 +1286,7 @@ namespace easy3d {
         program->set_uniform("wCamPos", wCamPos);
         program->set_uniform("ssaoEnabled", false);
         program->set_uniform("per_vertex_color", true);
-        axes_->draw(false);
+        axes_->gl_draw(false);
         program->release();
 
         // restore
@@ -1336,7 +1338,7 @@ namespace easy3d {
             program->set_uniform("MVP", proj);
             program->set_uniform("per_vertex_color", false);
             program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
-            drawable.draw();
+            drawable.gl_draw(false);
             program->release();
             glEnable(GL_DEPTH_TEST);   // restore
         }
@@ -1347,114 +1349,37 @@ namespace easy3d {
         if (models_.empty())
             return;
 
-        // Let's check if wireframe and surfaces are both shown. If true, we
-        // make the depth coordinates of the surface smaller, so that displaying
-        // the mesh and the surface together does not cause Z-fighting.
-        std::size_t count = 0;
-        for (auto m : models_) {
+        for (const auto m : models_) {
             if (!m->is_visible())
                 continue;
-            for (auto d : m->lines_drawables()) {
+
+            for (auto d : m->points_drawables()) {
                 if (d->is_visible())
+                    d->draw(camera(), false);
+            }
+
+            // Let's check if wireframe and surfaces are both shown. If true, we
+            // make the depth coordinates of the surface smaller, so that displaying
+            // the mesh and the surface together does not cause Z-fighting.
+            std::size_t count = 0;
+            for (auto d : m->lines_drawables()) {
+                if (d->is_visible()) {
+                    d->draw(camera(), false);
                     ++count;
-            }
-        }
-        if (count > 0) {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0.5f, -0.0001f);
-        }
-
-        const mat4& MVP = camera_->modelViewProjectionMatrix();
-        // camera position is defined in world coordinate system.
-        const vec3& wCamPos = camera_->position();
-        // it can also be computed as follows:
-        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4& MV = camera_->modelViewMatrix();
-        const vec4& wLightPos = inverse(MV) * setting::light_position;
-
-        ShaderProgram* program = ShaderManager::get_program("surface_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-            program = ShaderManager::create_program_from_files("surface_color", attributes);
-        }
-        if (program) {
-            program->bind();
-            program->set_uniform("MVP", MVP);
-            program->set_uniform("wLightPos", wLightPos);
-            program->set_uniform("wCamPos", wCamPos);
-            program->set_uniform("ssaoEnabled", false);
-            for (std::size_t idx = 0; idx < models_.size(); ++idx) {
-                Model* m = models_[idx];
-                if (!m->is_visible())
-                    continue;
-                for (auto d : m->triangles_drawables()) {
-                    if (d->is_visible()) {
-                        program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
-                        program->set_uniform("default_color", idx == model_idx_ ? d->default_color() : vec3(0.8f, 0.8f, 0.8f));
-                        d->draw(false);
-                    }
                 }
             }
-            program->release();
-        }
 
-        if (count > 0)
-            glDisable(GL_POLYGON_OFFSET_FILL);
-
-        program = ShaderManager::get_program("lines_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("lines_color", attributes);
-        }
-        if (program) {
-            program->bind();
-            program->set_uniform("MVP", MVP);
-            for (auto m : models_) {
-                if (!m->is_visible())
-                    continue;
-                for (auto d : m->lines_drawables()) {
-                    if (d->is_visible()) {
-                        program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
-                        program->set_uniform("default_color", d->default_color());
-                        d->draw(false);
-                    }
-                }
+            if (count > 0) {
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset(0.5f, -0.0001f);
             }
-            program->release();
-        }
-
-        program = ShaderManager::get_program("points_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-            program = ShaderManager::create_program_from_files("points_color", attributes);
-        }
-        if (program) {
-            program->bind();
-            program->set_uniform("MVP", MVP);
-            program->set_uniform("wLightPos", wLightPos);
-            program->set_uniform("wCamPos", wCamPos);
-            program->set_uniform("ssaoEnabled", false);
-            for (auto m : models_) {
-                if (!m->is_visible())
-                    continue;
-                for (auto d : m->points_drawables()) {
-                    if (d->is_visible()) {
-                        program->set_uniform("lighting", d->normal_buffer());
-                        program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
-                        program->set_uniform("default_color", d->default_color());
-                        d->draw(false);
-                    }
-                }
+            for (auto d : m->triangles_drawables()) {
+                if (d->is_visible())
+                    d->draw(camera(), false);
             }
-            program->release();
+            if (count > 0)
+                glDisable(GL_POLYGON_OFFSET_FILL);
+
         }
 	}
 

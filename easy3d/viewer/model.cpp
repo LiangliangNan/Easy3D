@@ -26,7 +26,9 @@
 
 
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_triangles.h>
 
 
 namespace easy3d {

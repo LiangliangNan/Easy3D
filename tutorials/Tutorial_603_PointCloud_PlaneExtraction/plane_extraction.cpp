@@ -28,7 +28,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

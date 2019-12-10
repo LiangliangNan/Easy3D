@@ -26,7 +26,7 @@
 #include "ambient_occlusion.h"
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/ambient_occlusion.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/shader_program.h>
@@ -122,7 +122,7 @@ void TutorialAmbientOcclusion::draw() {
 		auto drawable = current_model()->triangles_drawable("surface");
 		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->default_color());
-		drawable->draw(false);
+        drawable->gl_draw(false);
 
 		program->release_texture();
 		program->release();

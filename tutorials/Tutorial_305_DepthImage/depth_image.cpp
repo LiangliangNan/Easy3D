@@ -27,7 +27,8 @@
 
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/shader_program.h>
@@ -117,11 +118,11 @@ void DepthImage::generate_depth() {
         for (auto m : models_) {
             for (auto d : m->points_drawables()) {
                 if (d->is_visible())
-                    d->draw(false);
+                    d->gl_draw(false);
             }
             for (auto d : m->triangles_drawables()) {
                 if (d->is_visible())
-                    d->draw(false);
+                    d->gl_draw(false);
             }
         }
         program->release();

@@ -25,7 +25,7 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 
 

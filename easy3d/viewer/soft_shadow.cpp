@@ -31,7 +31,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/frustum.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_triangles.h>
 
 
 namespace easy3d {
@@ -92,7 +92,7 @@ namespace easy3d {
         program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
-                d->draw(false);
+                d->gl_draw(false);
             }
         }
 
@@ -149,7 +149,7 @@ namespace easy3d {
                 program->set_uniform("default_color", d->default_color());				easy3d_debug_gl_error;
                 program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());		easy3d_debug_gl_error;
                 program->set_uniform("is_background", false);
-                d->draw(false);
+                d->gl_draw(false);
             }
         }
 
@@ -157,7 +157,7 @@ namespace easy3d {
         program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
-        background_->draw(false);
+        background_->gl_draw(false);
 
         program->release_texture();
         program->release();

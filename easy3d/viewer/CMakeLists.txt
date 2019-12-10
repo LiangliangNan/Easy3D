@@ -10,6 +10,9 @@ set(${PROJECT_NAME}_HEADERS
     camera.h
     constraint.h
     drawable.h
+    drawable_lines.h
+    drawable_points.h
+    drawable_triangles.h
     dual_depth_peeling.h
     eye_dome_lighting.h
     frame.h
@@ -43,6 +46,9 @@ set(${PROJECT_NAME}_SOURCES
     camera.cpp
     constraint.cpp
     drawable.cpp
+    drawable_lines.cpp
+    drawable_points.cpp
+    drawable_triangles.cpp
     dual_depth_peeling.cpp
     eye_dome_lighting.cpp
     frame.cpp

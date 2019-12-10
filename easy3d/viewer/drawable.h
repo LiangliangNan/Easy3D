@@ -42,6 +42,7 @@
 namespace easy3d {
 
     class Model;
+    class Camera;
 	class VertexArrayObject;
 
 	// representation models
@@ -64,7 +65,7 @@ namespace easy3d {
 		const std::string name() const { return name_; }
 		void set_name(const std::string n) { name_ = n; }
 
-        // the model to which the drawable is attached to
+        // the model to which the drawable is attached to (can be NULL).
         const Model* model() const { return model_; }
         void set_model(const Model* m) { model_ = m; }
 
@@ -134,16 +135,19 @@ namespace easy3d {
 
 		// -------------------------- rendering -----------------------------
 
-		// Draw this drawable.
-		// NOTE: this functions should be called when your shader program is in use, 
-		//		 i.e., between glUseProgram(id) and glUseProgram(0);	
-		void draw(bool with_storage_buffer = false) const;
-
 		void set_highlight_id(int id) { highlight_id_ = id; }
 		int  highlight_id() const { return highlight_id_; }
 
+        // Rendering
+        virtual void draw(const Camera* camera, bool with_storage_buffer = false) const = 0;
+
+        // The internal draw of this drawable.
+        // NOTE: this functions should be called when your shader program is in use,
+        //		 i.e., between glUseProgram(id) and glUseProgram(0);
+        void gl_draw(bool with_storage_buffer = false) const;
+
 	protected:
-		std::string	name_;
+        std::string	 name_;
         const Model* model_;
 
 		bool		visible_;
@@ -169,101 +173,6 @@ namespace easy3d {
 		std::size_t	 current_selection_buffer_size_; // in case the object is modified
 
 		int	highlight_id_;
-	};
-
-
-    // The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh
-	class PointsDrawable : public Drawable {
-	public:
-        PointsDrawable(const std::string& name = "")
-			: Drawable(name) 
-			, point_size_(2.0f)
-            , impostors_(false)
-		{
-			default_color_ = vec3(0.0f, 1.0f, 0.0f);
-		}
-
-        DrawableType type() const override ;
-
-        // default_color will be ignored if per_vertex_color is true and given.
-		float point_size() const { return point_size_; }
-		void set_point_size(float s) { point_size_ = s; }
-
-        bool impostors() const { return impostors_; }
-        void set_impostors(bool b) { impostors_ = b; }
-
-	private:
-		float point_size_;
-        bool  impostors_;
-	};
-
-
-    // The drawable for rendering a set of line segments, e.g., wireframe of a mesh, vector fields
-	class LinesDrawable : public Drawable {
-	public:
-        LinesDrawable(const std::string& name = "")
-            : Drawable(name)
-            , impostors_(false)
-            , impostor_thickness_(1.0f)
-        {
-			default_color_ = vec3(0.0f, 0.0f, 0.0f);
-		}
-        DrawableType type() const override;
-
-        bool impostors() const { return impostors_; }
-        void set_impostors(bool b) { impostors_ = b; }
-
-        float impostor_thickness() const { return impostor_thickness_; }
-        void set_impostor_thickness(float t) { impostor_thickness_ = t; }
-
-    private:
-        bool  impostors_;
-        float impostor_thickness_;
-    };
-
-
-    // The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
-    // NOTE: it surports triangles only. To visualize general polygons, the vertex coordinates
-    //       and properties (e.g., color, normal) should be provided as consequtive triplets
-    //       in an array to be transfered to GPU. See update_vertex_buffer().
-    class TrianglesDrawable : public Drawable {
-	public:
-        TrianglesDrawable(const std::string& name = "")
-            : Drawable(name)
-            , phong_shading_(false)
-            , opacity_(0.6f)
-        {
-			default_color_ = vec3(0.4f, 0.8f, 0.8f);
-		}
-        DrawableType type() const override;
-
-        bool phong_shading() const { return phong_shading_; }
-        void set_phong_shading(bool b) { phong_shading_ = b; }
-
-        float opacity() const { return opacity_; }
-        void set_opacity(float a) { opacity_ = a; }
-
-		// The selection of a polygonal face is internally implemented by selecting triangle
-		// primitives using shaders. So I need a way to map back to the original polygons.
-		// \param indices: indices[i] are the triangle indices of the i'th face.
-		void set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices);
-		const std::vector< std::vector<unsigned int> >& triangle_indices() { return indices_; }
-
-		// a face (i.e., polygon) is internally rendered as multiple triangles
-		void get_highlighted_trangles_range(int& tri_min, int& tri_max) const;
-
-		// set/query if a facet is selected.
-		// NOTE: a face is selected if all its vertices are selected.
-		inline void set_selected(std::size_t face_idx, bool b);
-		inline bool is_selected(std::size_t face_idx) const;
-
-		int  num_selected() const;
-
-	private:
-		std::vector< std::vector<unsigned int> > indices_;
-
-        bool    phong_shading_;
-        float   opacity_;
 	};
 
 }

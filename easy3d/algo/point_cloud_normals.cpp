@@ -40,7 +40,7 @@
 #ifdef VISUALIZATION_FOR_DEBUGGING
 #include <easy3d/core/constant.h>
 #include <easy3d/core/random.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_lines.h>
 #endif
 
 #endif

@@ -28,7 +28,7 @@
 
 #include <algorithm>
 
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/shader_manager.h>
@@ -197,7 +197,7 @@ namespace easy3d {
             program->set_uniform("MVP", MVP);
             for (auto d : surfaces) {
                 if (d->is_visible()) {
-                    d->draw(false);
+                    d->gl_draw(false);
                 }
             }
             program->release();
@@ -239,7 +239,7 @@ namespace easy3d {
                     program->set_uniform("Alpha", d->opacity());
                     program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
                     program->set_uniform("default_color", d->default_color());
-                    d->draw(false);
+                    d->gl_draw(false);
                 }
             }
             program->release_texture();
