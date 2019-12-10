@@ -106,12 +106,13 @@ found in the accompanying 'License' file.
 
 ### Citation
 If Easy3D is useful in your research/work, I would be grateful if you show your appreciation by citing it:
-```
+
+```bibtex
 @misc{easy3d2018nan,
-  title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
-  author={Liangliang, Nan},
-  howpublished={\url{https://github.com/LiangliangNan/Easy3D}},
-  year={2018},
+  title = {{Easy3D}: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
+  author = {Liangliang, Nan},
+  note = {\url{https://github.com/LiangliangNan/Easy3D}},
+  year = {2018},
 }
 ```
 ---
