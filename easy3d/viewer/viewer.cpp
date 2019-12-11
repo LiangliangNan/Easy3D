@@ -847,10 +847,10 @@ namespace easy3d {
 				double tic = get_seconds();
 				pre_draw();
 
-                gpu_timer_->start();
+                //gpu_timer_->start();
                 draw();
-                gpu_timer_->stop();
-                gpu_time_ = gpu_timer_->time();
+//                gpu_timer_->stop();
+//                gpu_time_ = gpu_timer_->time();
 
 				post_draw();
 				glfwSwapBuffers(window_);

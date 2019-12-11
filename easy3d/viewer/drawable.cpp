@@ -32,7 +32,6 @@
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/drawable_points.h>
 
 
 
@@ -251,9 +250,6 @@ namespace easy3d {
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
 		vao_->bind();
-
-		if (type() == DT_POINTS)
-            glPointSize(dynamic_cast<const PointsDrawable*>(this)->point_size());	easy3d_debug_gl_error;
 
 		if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())

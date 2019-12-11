@@ -1,29 +1,14 @@
-#version 430 core
+#version 330 core
 // please send comments or report bug to: liangliang.nan@gmail.com
 
-layout(std140) uniform Matrices {
-	mat4 MV;
-	mat4 invMV;
-	mat4 PROJ;
-	mat4 MVP;
-	mat4 MANIP;
-	mat3 NORMAL;
-	mat4 SHADOW;
-	bool clippingPlaneEnabled;
-	bool crossSectionEnabled;
-	vec4 clippingPlane0;
-	vec4 clippingPlane1;
-};
-
+uniform mat4    PROJ;
 uniform bool	perspective;
 
 layout(std140) uniform Lighting {
-	vec3	wLightPos;
-	vec3	eLightPos;
-	vec3	wCamPos;
-	vec3	ambient;		// in [0, 1], r==g==b;
-	vec3	specular;		// in [0, 1], r==g==b;
-	float	shininess;
+        vec3	eLightPos;
+        vec3	ambient;		// in [0, 1], r==g==b;
+        vec3	specular;		// in [0, 1], r==g==b;
+        float	shininess;
 };
 
 uniform float	sphere_radius;

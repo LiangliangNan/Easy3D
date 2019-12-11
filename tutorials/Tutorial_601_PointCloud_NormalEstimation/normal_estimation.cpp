@@ -56,11 +56,12 @@ bool TutorialNormalEstimation::key_press_event(int key, int modifiers) {
         }
 
         PointCloudNormals algo;
-        algo.estimate(cloud);
-
-        update_rendering();
-
-        return true;
+        if (algo.estimate(cloud)) {
+            update_rendering();
+            return true;
+        }
+        else
+            return false;
     }
     else if (key == GLFW_KEY_R) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
@@ -73,11 +74,12 @@ bool TutorialNormalEstimation::key_press_event(int key, int modifiers) {
         }
 
         PointCloudNormals algo;
-        algo.reorient(cloud);
-
-        update_rendering();
-
-        return true;
+        if (algo.reorient(cloud)) {
+            update_rendering();
+            return true;
+        }
+        else
+            return false;
     }
    else
         return Viewer::key_press_event(key, modifiers);
@@ -91,8 +93,10 @@ void TutorialNormalEstimation::update_rendering() {
 
     // The "normal" property
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    auto drawable = cloud->points_drawable("vertices");
-    // Upload the vertex normals to the GPU.
-    drawable->update_normal_buffer(normals.vector());
-    update();
+    if (normals) {
+        auto drawable = cloud->points_drawable("vertices");
+        // Upload the vertex normals to the GPU.
+        drawable->update_normal_buffer(normals.vector());
+        update();
+    }
 }

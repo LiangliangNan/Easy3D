@@ -40,13 +40,13 @@ namespace easy3d {
         /// Estimates the point cloud normals using PCA.
         /// @param k: the number of neighboring points to construct the covariance matrix.
         /// @param compute_curvature: also computes the curvature?
-        void estimate(PointCloud* cloud, unsigned int k = 16, bool compute_curvature = false);
+        bool estimate(PointCloud* cloud, unsigned int k = 16, bool compute_curvature = false) const;
 
         /// Reorients the point cloud normals.
         /// This method implements the normal reorientation method described in
         /// Hoppe et al. Surface reconstruction from unorganized points. SIGGRAPH 1992.
         /// @param k: the number of neighboring points to construct the graph.
-        void reorient(PointCloud* cloud, unsigned int k = 16);
+        bool reorient(PointCloud* cloud, unsigned int k = 16) const;
     };
 
 

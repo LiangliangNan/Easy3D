@@ -48,11 +48,11 @@
 
 namespace easy3d {
 
-    void PointCloudNormals::estimate(PointCloud* cloud, unsigned int k /* = 16 */, bool compute_curvature /* = false */)
+    bool PointCloudNormals::estimate(PointCloud* cloud, unsigned int k /* = 16 */, bool compute_curvature /* = false */) const
     {
         if (!cloud) {
             std::cerr << "empty input point cloud" << std::endl;
-            return;
+            return false;
         }
 
         StopWatch w;
@@ -100,6 +100,7 @@ namespace easy3d {
         }
 
         std::cerr << "done. Time: " << w.time_string() << std::endl;
+        return true;
     }
 
 #ifdef HAS_BOOST
@@ -370,17 +371,17 @@ namespace easy3d {
     }
 
 
-    void PointCloudNormals::reorient(PointCloud *cloud, unsigned int k)
+    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
     {
         if (!cloud) {
             std::cerr << "empty input point cloud" << std::endl;
-            return;
+            return false;
         }
 
         auto normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
             std::cerr << "normal information does not exist" << std::endl;
-            return;
+            return false;
         }
 
         StopWatch w;
@@ -452,13 +453,16 @@ namespace easy3d {
         mst_graph->set_per_vertex_color(true);
         mst_graph->set_visible(true);
 #endif
+
+        return  true;
     }
 
 #else
 
-    void PointCloudNormals::reorient(PointCloud *cloud, unsigned int k)
+    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
     {
         std::cout << "reorient point cloud normals requires boost\n";
+        return false;
     }
 
 #endif
