@@ -1183,7 +1183,7 @@ namespace easy3d {
             return false;
         }
 
-        const std::vector<std::string> filetypes = {"*.ppm *.tga *.bmp"};
+        const std::vector<std::string> filetypes = {"*.ppm", "*.tga", "*.bmp"};
         std::string file_name = file::replace_extension(current_model()->name(), "ppm");
         file_name = FileDialog::save(filetypes, file_name);
         if (file_name.empty())
