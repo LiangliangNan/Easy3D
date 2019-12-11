@@ -358,7 +358,7 @@ namespace easy3d {
 
         std::string replace_extension(std::string const& file_name, std::string const& ext)
         {
-            std::size_t slashpos = file_name.find_last_of('/');
+            std::size_t slashpos = file_name.find_last_of(PATH_SEPARATORS);
             if (slashpos == std::string::npos)
                 slashpos = 0;
 

@@ -12,6 +12,7 @@ set(${PROJECT_NAME}_HEADERS
     stop_watch.h
     string.h
     timer.h
+    tokenizer.h
     )
 
 set(${PROJECT_NAME}_SOURCES
