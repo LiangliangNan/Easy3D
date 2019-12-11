@@ -39,7 +39,6 @@ namespace easy3d {
         : Drawable(name)
         , point_size_(2.0f)
         , impostors_(false)
-        , texture_(nullptr)
     {
         default_color_ = vec3(0.0f, 1.0f, 0.0f);
     }

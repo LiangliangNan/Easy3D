@@ -144,10 +144,10 @@ int main(int /*argc*/, char** /*argv*/) {
 	bbox_drawable->update_vertex_buffer(bbox_points);
 	// Upload the vertex indices of the bounding box to the GPU.
 	bbox_drawable->update_index_buffer(bbox_indices);
-	bbox_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));	// red color
+    bbox_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));	// red color
 
 	// Add the model to the viewer
-	viewer.add_model(mesh);
+    viewer.add_model(mesh, false);
 #endif
 
 	// Run the viewer

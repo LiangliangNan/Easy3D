@@ -4,29 +4,12 @@
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-layout(std140) uniform Matrices {
-	mat4 MV;
-	mat4 invMV;
-	mat4 PROJ;
-	mat4 MVP;
-	mat4 MANIP;
-	mat3 NORMAL;
-	mat4 SHADOW;
-	bool clippingPlaneEnabled;
-	bool crossSectionEnabled;
-	vec4 clippingPlane0;
-	vec4 clippingPlane1;
-};
-
+uniform mat4    PROJ;
 uniform bool	perspective;
-
-uniform vec3	color;
 uniform float	radius;
 
 layout(std140) uniform Lighting {
-	vec3	wLightPos;
 	vec3	eLightPos;
-	vec3	wCamPos;
 	vec3	ambient;		// in [0, 1], r==g==b;
 	vec3	specular;		// in [0, 1], r==g==b;
 	float	shininess;
@@ -46,8 +29,8 @@ in  vec3 gOutColor;
 out vec4 outputF;
 
 
-vec3 ComputeLight(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color){
-	float df = max(dot(N, L), 0);
+vec3 shade(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color){
+        float df = max(abs(dot(N, L)), 0);
 
 	float sf = 0.0;	// specular factor
 	if (df > 0.0) {	// if the vertex is lit compute the specular color
@@ -56,7 +39,7 @@ vec3 ComputeLight(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 co
 		sf = pow(sf, sh);
 	}
 
-	return color * df + spec * sf + amb;
+        return color * df + spec * sf + amb;
 }
 
 void main()
@@ -144,6 +127,6 @@ void main()
 	gl_FragDepth = depth;
 
 	vec3 light_dir = normalize(eLightPos);
-	vec3 final_color = ComputeLight(normal, light_dir, view_dir, ambient, specular, shininess, gOutColor);
+        vec3 final_color = shade(normal, light_dir, view_dir, ambient, specular, shininess, gOutColor);
 	outputF = vec4(final_color, 1.0);
 }

@@ -31,7 +31,6 @@
 
 namespace easy3d {
 
-    class Texture;
 
     // The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh
 	class PointsDrawable : public Drawable {
@@ -47,10 +46,6 @@ namespace easy3d {
         // if ture, points are renderred as shperes
         bool impostors() const { return impostors_; }
         void set_impostors(bool b) { impostors_ = b; }
-
-        Texture* texture() const { return texture_; }
-        // set the texture. Disable texture if tex is NULL.
-        void set_texture(Texture* tex) { texture_ = tex; }
 
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
@@ -69,7 +64,6 @@ namespace easy3d {
 	private:
         float       point_size_;
         bool        impostors_;
-        Texture*    texture_;
 	};
 
 }

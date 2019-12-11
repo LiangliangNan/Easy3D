@@ -43,6 +43,7 @@ namespace easy3d {
 
     class Model;
     class Camera;
+    class Texture;
 	class VertexArrayObject;
 
 	// representation models
@@ -138,6 +139,10 @@ namespace easy3d {
 		void set_highlight_id(int id) { highlight_id_ = id; }
 		int  highlight_id() const { return highlight_id_; }
 
+        Texture* texture() const { return texture_; }
+        // set the texture. Disable texture if tex is NULL.
+        void set_texture(Texture* tex) { texture_ = tex; }
+
         // Rendering
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const = 0;
 
@@ -172,7 +177,8 @@ namespace easy3d {
 		unsigned int selection_buffer_;  // used for selection.
 		std::size_t	 current_selection_buffer_size_; // in case the object is modified
 
-		int	highlight_id_;
+        int         highlight_id_;
+        Texture*    texture_;
 	};
 
 }

@@ -56,6 +56,7 @@ namespace easy3d {
         , selection_buffer_(0)
         , current_selection_buffer_size_(0)
         , highlight_id_(-1)
+        , texture_(nullptr)
     {
 		vao_ = new VertexArrayObject;
 	}

@@ -40,22 +40,22 @@ using namespace easy3d;
 // You have seen the creation of this model and it drawable in the
 // previous tutorial. Just skip it and go to the main() function.
 SurfaceMesh* old_mesh_from_previous_example() {
-	// Read a mesh specified by its file name
+    // Read a mesh specified by its file name
     const std::string file_name = "../../Easy3D/data/building.off";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
-		std::cerr << "file does not exist or invalid file format" << std::endl;
-		return nullptr;
-	}
+        std::cerr << "file does not exist or invalid file format" << std::endl;
+        return nullptr;
+    }
 
-	// Create the drawable and attach it to the mesh.
-	TrianglesDrawable* surface_drawable = mesh->add_triangles_drawable("surface");
+    // Create the drawable and attach it to the mesh.
+    TrianglesDrawable* surface_drawable = mesh->add_triangles_drawable("surface");
 
-	// All the vertices.
-	auto vertices = mesh->get_vertex_property<vec3>("v:point");
-	const auto& points = vertices.vector();
-	// Upload the vertex positions to the GPU.
-	surface_drawable->update_vertex_buffer(points);
+    // All the vertices.
+    auto vertices = mesh->get_vertex_property<vec3>("v:point");
+    const auto& points = vertices.vector();
+    // Upload the vertex positions to the GPU.
+    surface_drawable->update_vertex_buffer(points);
 
     // compute vertex normals for each vertex
     mesh->update_vertex_normals();
@@ -64,27 +64,27 @@ SurfaceMesh* old_mesh_from_previous_example() {
     // Upload the vertex positions to the GPU.
     surface_drawable->update_normal_buffer(normals.vector());
 
-	// Now the vertex indices for all the triangles.
-	std::vector<unsigned int> indices;
-	std::size_t non_triangles = 0;
-	for (auto f : mesh->faces()) {
-		std::vector<unsigned int> vts;
-		for (auto v : mesh->vertices(f))
-			vts.push_back(v.idx());
-		if (vts.size() == 3)
-			indices.insert(indices.end(), vts.begin(), vts.end());
-		else
-			++non_triangles;
-	}
-	if (non_triangles > 0) {
-		std::cerr << "Warning: the default Easy3D viewer can only render triangles and"
-			" non-triangle faces are ignored" << std::endl;
-	}
-	// Upload the vertex indices to the index buffer.
-	// After this, the data for rendering the surface drawable is complete.
-	surface_drawable->update_index_buffer(indices);
+    // Now the vertex indices for all the triangles.
+    std::vector<unsigned int> indices;
+    std::size_t non_triangles = 0;
+    for (auto f : mesh->faces()) {
+        std::vector<unsigned int> vts;
+        for (auto v : mesh->vertices(f))
+            vts.push_back(v.idx());
+        if (vts.size() == 3)
+            indices.insert(indices.end(), vts.begin(), vts.end());
+        else
+            ++non_triangles;
+    }
+    if (non_triangles > 0) {
+        std::cerr << "Warning: the default Easy3D viewer can only render triangles and"
+            " non-triangle faces are ignored" << std::endl;
+    }
+    // Upload the vertex indices to the index buffer.
+    // After this, the data for rendering the surface drawable is complete.
+    surface_drawable->update_index_buffer(indices);
 
-	return mesh;
+    return mesh;
 }
 
 
@@ -93,8 +93,8 @@ int main(int /*argc*/, char** /*argv*/) {
 	// Note: a viewer must be created before creating any drawables. 
     Viewer viewer("Tutorial_402_ScalarField");
 
-	// Load a mesh model and create a drawable for the faces. 
-	SurfaceMesh* mesh = old_mesh_from_previous_example();
+    // Load a mesh model and create a drawable for the faces.
+    SurfaceMesh* mesh = old_mesh_from_previous_example();
     if (!mesh) {
         std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
@@ -123,23 +123,23 @@ int main(int /*argc*/, char** /*argv*/) {
 	// according to its scalar value. We can use a vertex property or an array 
 	// to store the colors. Here we use the std::vector array.
 	std::vector<vec3> scalar_field_colors;
-	for (auto v : mesh->vertices()) {
+    for (auto v : mesh->vertices()) {
 		float value = elevation[v];
 		float r = (value - min_value) / (max_value - min_value);
 		scalar_field_colors.push_back(vec3(r, 0.0f, 1.0f -r));
 	}
 
 	// The faces drawable we created before.
-	TrianglesDrawable* surface = mesh->triangles_drawable("surface");
+    TrianglesDrawable* surface = mesh->triangles_drawable("surface");
 	// Note we had already uploaded the vertex positions and the vertex indices
 	// to the GPU. Now we only need to transfer the color data to the GPU.
-	surface->update_color_buffer(scalar_field_colors);
+    surface->update_color_buffer(scalar_field_colors);
 
 	// Vertices have varying colors. 
 	surface->set_per_vertex_color(true);
 
-	// Add the model to the viewer
-	viewer.add_model(mesh);
+    // Add the model to the viewer
+    viewer.add_model(mesh);
 
 	// Run the viewer
 	viewer.run();

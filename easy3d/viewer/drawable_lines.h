@@ -31,22 +31,22 @@
 
 namespace easy3d {
 
+    // a line poster can be a cylinder, or a cone
+    enum ImposterType {
+        IT_NULL,
+        IT_CYLINDERS,
+        IT_CONES
+    };
 
     // The drawable for rendering a set of line segments, e.g., wireframe of a mesh, vector fields
 	class LinesDrawable : public Drawable {
 	public:
-        LinesDrawable(const std::string& name = "")
-            : Drawable(name)
-            , impostors_(false)
-            , impostor_thickness_(1.0f)
-        {
-			default_color_ = vec3(0.0f, 0.0f, 0.0f);
-		}
+        LinesDrawable(const std::string& name = "");
 
         DrawableType type() const override;
 
-        bool impostors() const { return impostors_; }
-        void set_impostors(bool b) { impostors_ = b; }
+        ImposterType impostor_type() const { return impostor_type_; }
+        void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
         float impostor_thickness() const { return impostor_thickness_; }
         void set_impostor_thickness(float t) { impostor_thickness_ = t; }
@@ -54,8 +54,19 @@ namespace easy3d {
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
 
+    protected:
+        // without texture
+        void _draw_plain_lines(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_cylinders(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_cones(const Camera* camera, bool with_storage_buffer) const;
+
+        // textured
+        void _draw_plain_lines_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_cylinders_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_cones_with_texture(const Camera* camera, bool with_storage_buffer) const;
+
     private:
-        bool  impostors_;
+        ImposterType  impostor_type_;
         float impostor_thickness_;
     };
 
