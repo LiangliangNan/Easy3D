@@ -527,8 +527,11 @@ namespace easy3d {
 			// extract some standard vec3 properties, e.g., points, normals, colors, texture coords
 			for (auto& element : elements) {
                 Vec3Property prop_point(element.name, "point");
-                if (details::extract_vector_property(element.float_properties, "x", "y", "z", prop_point))
+                if (details::extract_vector_property(element.float_properties, "x", "y", "z", prop_point) ||
+                    details::extract_vector_property(element.float_properties, "X", "Y", "Z", prop_point))
+                {
                     element.vec3_properties.push_back(prop_point);
+                }
 
                 Vec3Property prop_normal(element.name, "normal");
 				if (details::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal))
