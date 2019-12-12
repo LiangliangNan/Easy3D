@@ -83,9 +83,6 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glew_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glfw_INCLUDE_DIR})
-
 target_link_libraries(${PROJECT_NAME} glew glfw core util fileio tinyfiledialogs)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
