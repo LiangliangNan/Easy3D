@@ -50,7 +50,7 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 	Viewer viewer;	// create the default Easy3D viewer
 
 	// load a point cloud from a file
-	PointCloud* cloud = PointCloudIO::load("../../../data/bunny.ply");
+	PointCloud* cloud = PointCloudIO::load("../../../data/building_cloud.bin");
 	
 	// create a drawable (a set of points)
 	PointsDrawable* drawable = cloud->add_points_drawable("points");
