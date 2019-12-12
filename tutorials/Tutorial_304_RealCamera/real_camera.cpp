@@ -66,6 +66,7 @@ RealCamera::RealCamera(const std::string& title,
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
 
+        camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
     }

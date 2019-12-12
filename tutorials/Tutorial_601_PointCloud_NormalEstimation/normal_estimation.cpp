@@ -35,7 +35,8 @@
 using namespace easy3d;
 
 TutorialNormalEstimation::TutorialNormalEstimation(const std::string& title) : Viewer(title) {
-	camera()->setViewDirection(vec3(0, 0, -1));
+    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->setViewDirection(vec3(0, 0, -1));
     camera_->showEntireScene();
 
     std::cout << "------------ Point cloud normal estimation ----------" << std::endl

@@ -394,17 +394,6 @@ namespace easy3d {
 
 
     void Shadow::draw_light_frustum() {
-        ShaderProgram* program = ShaderManager::get_program("lines_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color")
-            };
-            program = ShaderManager::create_program_from_files("lines_color", attributes);
-        }
-        if (!program)
-          return;
-
         vec3 normal = setting::light_position; // the background's normal in VC.
         const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
@@ -427,13 +416,10 @@ namespace easy3d {
         LinesDrawable frustum("frustum");
         frustum.update_vertex_buffer(points);
         frustum.update_index_buffer(indices, 24);
-
-        program->bind();
-        program->set_uniform("MVP", camera_->modelViewProjectionMatrix());
-        program->set_uniform("per_vertex_color", false);
-        program->set_uniform("default_color", vec3(1.0, 0.0, 0.0));
-        frustum.gl_draw(false);
-        program->release();
+        frustum.set_per_vertex_color(false);
+        frustum.set_default_color(vec3(1.0, 0.0, 0.0));
+        frustum.draw(camera_, false);
+        return;
     }
 
 
@@ -451,9 +437,10 @@ namespace easy3d {
 		if (!program)
 			return;
 
+        int x0 = 200, y0 = 10, size = 500;
         program->bind();			easy3d_debug_gl_error;
         program->bind_texture("textureID", fbo_->depth_texture(), 0);
-        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 200, 10, 500, 500, w, h, -0.9f); easy3d_debug_gl_error;
+        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x0, y0, size, size, w, h, -0.9f); easy3d_debug_gl_error;
         program->release_texture();
         program->release();		easy3d_debug_gl_error;
 
@@ -473,7 +460,7 @@ namespace easy3d {
 		program->bind();		easy3d_debug_gl_error;
 		program->set_uniform("per_vertex_color", false);
 		program->set_uniform("default_color", vec3(0.0f, 0.0f, 0.0f));
-        opengl::draw_quad_wire(ShaderProgram::POSITION, 200, 10, 200, 200, w, h, -1.0f); easy3d_debug_gl_error;
+        opengl::draw_quad_wire(ShaderProgram::POSITION, x0, y0, size, size, w, h, -1.0f); easy3d_debug_gl_error;
         program->release();
     }
 

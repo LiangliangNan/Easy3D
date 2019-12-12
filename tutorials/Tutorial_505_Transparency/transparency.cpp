@@ -35,8 +35,9 @@
 using namespace easy3d;
 
 TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
-	camera()->setViewDirection(vec3(0, 0, -1));
-    camera()->showEntireScene();
+    camera()->setUpVector(vec3(-1, 0, 0));
+    camera()->setViewDirection(vec3(0, 0, 1));
+    camera_->showEntireScene();
 
 	transparency_ = new AverageColorBlending(camera());
 	std::cout << "method: Average Color Blending" << std::endl;

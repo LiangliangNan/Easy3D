@@ -36,9 +36,6 @@
 using namespace easy3d;
 
 TutorialPlaneExtraction::TutorialPlaneExtraction(const std::string& title) : Viewer(title) {
-	camera()->setViewDirection(vec3(0, 0, -1));
-    camera_->showEntireScene();
-
     std::cout << "------------ Point cloud plane extraction ----------" << std::endl
               << "Press key 'e' to extract planes" << std::endl;
 }

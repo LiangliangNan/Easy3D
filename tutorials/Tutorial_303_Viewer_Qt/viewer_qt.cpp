@@ -72,8 +72,8 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
 
     camera_ = new Camera;
     camera_->setType(Camera::PERSPECTIVE);
-    camera_->setScreenWidthAndHeight(width(), height());
-    camera_->setViewDirection(vec3(0.0, 1.0, 0.0));
+    camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
+    camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
 }
 
@@ -848,12 +848,12 @@ void ViewerQt::postDraw() {
         drawCornerAxes();
 
 	if (show_pivot_point_) {
-		ShaderProgram* program = ShaderManager::get_program("lines_color");
+        ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;
 			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
 			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-			program = ShaderManager::create_program_from_files("lines_color", attributes);
+            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
 		}
 		if (!program)
 			return;

@@ -118,7 +118,7 @@ namespace easy3d {
         program->set_uniform("radius", impostor_thickness() * ratio);
 
         program->set_uniform("default_color", default_color());
-        program->set_uniform("per_vertex_color", per_vertex_color());
+        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
 
         program->set_block_uniform("Lighting", "eLightPos", setting::light_position);
         program->set_block_uniform("Lighting", "ambient", setting::light_ambient);
@@ -152,7 +152,7 @@ namespace easy3d {
         program->set_uniform("radius", impostor_thickness() * ratio);
 
         program->set_uniform("default_color", default_color());
-        program->set_uniform("per_vertex_color", per_vertex_color());
+        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
 
         program->set_block_uniform("Lighting", "eLightPos", setting::light_position);
         program->set_block_uniform("Lighting", "ambient", setting::light_ambient);

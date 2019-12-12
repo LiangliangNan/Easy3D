@@ -52,6 +52,10 @@ DepthImage::DepthImage(const std::string& title, const std::string& mesh_file)
 
     set_background_color(vec3(1, 1, 1));
 
+    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->setViewDirection(vec3(0, 0, -1));
+    camera_->showEntireScene();
+
     std::cout << "------------ Depth Image ----------" << std::endl
               << "Press 'Space' to switch between depth and normal rendering" << std::endl;
 }
@@ -118,8 +122,10 @@ void DepthImage::generate_depth() {
         program->set_uniform("MVP", camera()->modelViewProjectionMatrix());
         for (auto m : models_) {
             for (auto d : m->points_drawables()) {
-                if (d->is_visible())
+                if (d->is_visible()) {
+                    glPointSize(d->point_size());
                     d->gl_draw(false);
+                }
             }
             for (auto d : m->triangles_drawables()) {
                 if (d->is_visible())

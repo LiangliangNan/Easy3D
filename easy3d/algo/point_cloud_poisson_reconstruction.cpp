@@ -35,6 +35,8 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/util/file.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <3rd_party/poisson_recon-9.0.1/MyTime.h>
 #include <3rd_party/poisson_recon-9.0.1/MemoryUsage.h>
@@ -113,7 +115,7 @@ PoissonReconstruction::PoissonReconstruction(void)
 
 	confidence_ = false;
 	normalWeight_ = false;
-	verbose_ = false;
+    verbose_ = false;
 }
 
 PoissonReconstruction::~PoissonReconstruction(void) {
@@ -231,7 +233,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	//////////////////////////////////////////////////////////////////////////
 
     std::cout << "Screened Poisson Reconstruction (V9.0.1)" << std::endl;
-//	StopWatch t; t.start();
+    StopWatch t, w;
 
 	//////////////////////////////////////////////////////////////////////////	
 
@@ -246,8 +248,9 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	XForm4x4< REAL > xForm, iXForm;
 
 	{ // Load the samples (and color data)
-        std::cout << "loading data into tree..." << std::endl;
-		profiler.start();
+        std::cout << "loading data into tree... ";
+        t.restart();
+        profiler.start();
         const float* pts = cloud->points()[0];
 		const float* nms = normals.vector()[0];
 		const float* cls = 0;
@@ -283,8 +286,8 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 		if (verbose_)
 			profiler.print(" - Load input into tree: ");
 
-        std::cout << "input points / samples: " << pointCount << " / " << samples->size() << std::endl;
-        std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB" << std::endl;
+        std::cout << "input points/samples: " << pointCount << "/" << samples->size() <<
+                     ". memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -299,7 +302,8 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 
 		// Get the kernel density estimator [If discarding, compute anew. Otherwise, compute once.]
 		{
-			profiler.start();
+            t.restart();
+            profiler.start();
 			density = tree.setDensityEstimator< WEIGHT_DEGREE >(*samples, kernelDepth, samples_per_node_);
 			if (verbose_)
 				profiler.print(" - Got kernel density:   ");
@@ -307,20 +311,22 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 
 		// Transform the Hermite samples into a vector field [If discarding, compute anew. Otherwise, compute once.]
 		{
-            std::cout << "setting normal field..." << std::endl;
-			profiler.start();
+            std::cout << "setting normal field... ";
+            t.restart();
+            profiler.start();
 			normalInfo = new SparseNodeData< Point3D< REAL >, NORMAL_DEGREE >();
 			*normalInfo = tree.setNormalField< NORMAL_DEGREE >(*samples, *density, pointWeightSum, true);
 			if (verbose_)
 				profiler.print(" - Got normal field:     ");
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB" << std::endl;
+            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
         }
 
 		// Trim the tree and prepare for multi-grid
 		{
-            std::cout << "trimming tree and preparing for multi-grid..." << std::endl;
+            std::cout << "trimming tree and preparing for multi-grid... ";
 
+            t.restart();
 			profiler.start();
 			std::vector< int > indexMap;
 
@@ -334,12 +340,13 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 			if (verbose_)
 				profiler.print(" - Finalized tree:       ");
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB" << std::endl;
+            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
 		}
 
 		// Add the FEM constraints
 		{
-			profiler.start();
+            t.restart();
+            profiler.start();
 			constraints = tree.initDenseNodeData< DEGREE >();
 			tree.addFEMConstraints< DEGREE, BType, NORMAL_DEGREE, BType >(FEMVFConstraintFunctor< NORMAL_DEGREE, BType, DEGREE, BType >(1., 0.), *normalInfo, constraints, solveDepth);
 			if (verbose_)
@@ -353,7 +360,8 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 		// Add the interpolation constraints
 		if (pointWeight_ > 0)
 		{
-			profiler.start();
+            t.restart();
+            profiler.start();
 			int AdaptiveExponent = 1;
 			iInfo = new InterpolationInfo(tree, *samples, targetValue, AdaptiveExponent, (REAL)pointWeight_ * pointWeightSum, (REAL)0);
 			tree.addInterpolationConstraints< DEGREE, BType >(*iInfo, constraints, solveDepth);
@@ -367,9 +375,10 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 
 		// Solve the linear system
 		{
-            std::cout << "solving the linear system..." << std::endl;
+            std::cout << "solving the linear system... ";
 
-			profiler.start();
+            t.restart();
+            profiler.start();
 			typename Octree< REAL >::SolverInfo solverInfo;
 
 			bool showResidual = false;
@@ -382,7 +391,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 			if (iInfo)
                 delete iInfo, iInfo = nullptr;
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB" << std::endl;
+            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
 		}
 	}
 
@@ -390,7 +399,8 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	// 	CoredFileMeshData< PlyColorVertex< Real > > mesh;	// no depth, but has color
 	CoredFileMeshData< PlyColorAndValueVertex< REAL > > mesh;
 	{
-		profiler.start();
+        t.restart();
+        profiler.start();
 		double valueSum = 0, weightSum = 0;
 		typename Octree< REAL >::template MultiThreadedEvaluator< DEGREE, BType > evaluator(&tree, solution, threads_);
 #pragma omp parallel for num_threads(threads_) reduction( + : valueSum , weightSum )
@@ -413,9 +423,10 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	}
 
 	{
-        std::cout << "extracting mesh..." << std::endl;
+        std::cout << "extracting mesh... ";
 
-		profiler.start();
+        t.restart();
+        profiler.start();
         SparseNodeData< ProjectiveData< Point3D< REAL >, REAL >, DATA_DEGREE >* colorData = nullptr;
 		if (sampleData)
 		{
@@ -453,15 +464,16 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
             delete samples; samples = nullptr;
         }
 
-        std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB" << std::endl;
+        std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 
     PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
     SurfaceMesh* result = convert_to_mesh(mesh, iXForm, density_attr_name, colors);
-    result->set_name(cloud->name() + "_poisson");
-//    std::cout << "total reconstruction time: " << t.time_string() << std::endl;
+    const std::string& file_name = file::name_less_extension(cloud->name()) + "_Poisson.ply";
+    result->set_name(file_name);
+    std::cout << "total reconstruction time: " << w.time_string() << std::endl;
 
 	return result;
 }
