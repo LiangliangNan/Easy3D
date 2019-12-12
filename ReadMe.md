@@ -17,7 +17,11 @@ Vector field                               |   Rendering a model given camera in
 
 <img src="images/edl.jpg" height="180"> | <img src="images/shadow.jpg" height="180"> |  <img src="images/transparency.jpg" height="180">
 :--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
-Eye-dome lighting                       |  Shadow  				     |   Transparency	  
+Eye-dome lighting                       |  Shadow                                    |   Transparency	
+
+<img src="images/imposters.jpg" height="180"> 
+
+Point/Line imposters                          	    
 
 </center>
 
