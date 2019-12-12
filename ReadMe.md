@@ -19,9 +19,9 @@ Vector field                               |   Rendering a model given camera in
 :--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
 Eye-dome lighting                       |  Shadow                                    |   Transparency	
 
-<img src="images/imposters.jpg" height="180"> 
-
-Point/Line imposters                          	    
+<img src="images/imposters.jpg" height="180">| <img src="images/reconstruction.jpg" height="180"> |  <img src="images/planes.jpg" height="180">
+:-------------------------------------------:|:--------------------------------------------------:|:------------------------------------------------:
+Point/Line imposters                         |  Surface reconstruction                            |   Plane extraction                          	    
 
 </center>
 
