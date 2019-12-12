@@ -49,15 +49,14 @@ namespace easy3d {
 
 
 	const Box3& Model::bounding_box() const {
-		if (!bbox_known_)
-			std::cerr << "bounding box not set" << std::endl;
+        if (!bbox_known_) {
+            Box3& box = const_cast<Model*>(this)->bbox_;
+            box.clear();
+            for (const auto& p : points())
+                box.add_point(p);
+        }
+
 		return bbox_;
-	}
-
-
-	void Model::set_bounding_box(const Box3& box) { 
-		bbox_ = box; 
-		bbox_known_ = true;
 	}
 
 

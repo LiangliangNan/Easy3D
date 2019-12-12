@@ -52,11 +52,13 @@ namespace easy3d {
         const std::string& name() const { return name_; }
         void set_name(const std::string& n) { name_ = n; }
 
-        const Box3& bounding_box() const;
-        void set_bounding_box(const Box3& box);
+        virtual const Box3& bounding_box() const;
 
         /// returns number of vertices in the model
         virtual unsigned int n_vertices() const = 0;
+
+        /// vector of vertex positions (read only)
+        virtual const std::vector<vec3>& points() const = 0;
 
         //-------------------- rendering  -----------------------
 

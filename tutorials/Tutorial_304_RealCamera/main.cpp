@@ -37,17 +37,22 @@ int main(int /*argc*/, char** /*argv*/) {
 
     // the bunder file (We use only the camera instric and extrinsic parameters).
     const std::string bundler_file = "../../Easy3D/data/fountain/bundle.out";
-    
     // the point cloud file.
     const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
-    
-    RealCamera viewer("RealCamera", bundler_file, cloud_file);
-    
-    viewer.resize(960, 800);
-    
-    // Run the viewer
-    viewer.run();
-    
+
+    try {
+        RealCamera viewer("RealCamera", bundler_file, cloud_file);
+
+        viewer.resize(960, 800);
+
+        // Run the viewer
+        viewer.run();
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }
 

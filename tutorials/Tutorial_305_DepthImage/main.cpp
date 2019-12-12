@@ -32,12 +32,18 @@ int main(int /*argc*/, char** /*argv*/) {
     // the point cloud file.
     const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
 
-    DepthImage viewer("Tutorial_305_DepthImage", cloud_file);
+    try {
+        DepthImage viewer("Tutorial_305_DepthImage", cloud_file);
 
-    viewer.resize(960, 800);
+        viewer.resize(960, 800);
 
-    // Run the viewer
-    viewer.run();
+        // Run the viewer
+        viewer.run();
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

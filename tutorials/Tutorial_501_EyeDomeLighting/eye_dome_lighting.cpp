@@ -61,7 +61,7 @@ bool TutorialEyeDomeLighting::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialEyeDomeLighting::draw() {
+void TutorialEyeDomeLighting::draw() const {
     if (!current_model()) {
         return;
     }
@@ -86,13 +86,14 @@ void TutorialEyeDomeLighting::draw() {
 		if (!program)
 			return;
 
-		edl_->begin();
+        auto drawable = current_model()->points_drawable("vertices");
+        glPointSize(drawable->point_size());
+
+        edl_->begin();
 		program->bind();
 		program->set_uniform("MVP", MVP);
 		program->set_uniform("wLightPos", wLightPos);
 		program->set_uniform("wCamPos", wCamPos);
-
-		auto drawable = current_model()->points_drawable("vertices");
 		program->set_uniform("lighting", drawable->normal_buffer());
 		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->default_color());

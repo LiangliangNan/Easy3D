@@ -48,7 +48,7 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
-    void draw() override;
+    void draw() const override;
     
 private:
     struct CameraPara {
@@ -68,7 +68,7 @@ private:
     
     void create_cameras_drawable(float scale = 1.0f);
 
-    void draw_image();
+    void draw_image() const;
 
     void load_image();
 

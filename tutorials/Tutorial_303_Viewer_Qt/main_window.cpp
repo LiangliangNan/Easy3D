@@ -175,7 +175,7 @@ bool MainWindow::onSave() {
 }
 
 
-Model* MainWindow::open(const std::string& file_name) {
+Model* MainWindow::open(const std::string& file_name, bool create_default_drawables /* = true*/) {
     auto models = viewer_->models();
     for (auto m : models) {
         if (m->name() == file_name) {
@@ -205,7 +205,7 @@ Model* MainWindow::open(const std::string& file_name) {
             PointCloud* cloud = nullptr;
             while ((cloud = serializer.load_next())) {
                 viewer_->makeCurrent();
-                viewer_->addModel(cloud);
+                viewer_->addModel(cloud, create_default_drawables);
                 viewer_->doneCurrent();
                 std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
             }
@@ -224,7 +224,7 @@ Model* MainWindow::open(const std::string& file_name) {
     if (model) {
         model->set_name(file_name);
 		viewer_->makeCurrent();
-        viewer_->addModel(model);
+        viewer_->addModel(model, create_default_drawables);
 		viewer_->doneCurrent();
         setCurrentFile(QString::fromStdString(file_name));
         return model;

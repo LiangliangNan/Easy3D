@@ -33,12 +33,18 @@
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-    TutorialHardShadow viewer("Tutorial_503_HardShadow");
-
     const std::string file = "../../Easy3D/data/room.obj";
-    easy3d::Model* model = viewer.open(file);
-    if (model) {
+
+    try {
+        // Create the viewer.
+        TutorialHardShadow viewer("Tutorial_503_HardShadow");
+
+        easy3d::Model* model = viewer.open(file, true);
+        if (!model) {
+            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            return EXIT_FAILURE;
+        }
+
         auto drawable = model->triangles_drawable("surface");
         drawable->set_default_color(easy3d::vec3(0.9f, 0.9f, 0.9f));
 
@@ -46,10 +52,12 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.run();
 
         return EXIT_SUCCESS;
-    }
 
-    else {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }

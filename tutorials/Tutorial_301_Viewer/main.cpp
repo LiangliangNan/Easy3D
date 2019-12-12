@@ -32,12 +32,18 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
-	// Create the default Easy3D viewer.
-	// Note: a viewer must be created before creating any drawables. 
-    Viewer viewer("Tutorial_301_Viewer");
+    try {
+        // Create the default Easy3D viewer.
+        // Note: a viewer must be created before creating any drawables.
+        Viewer viewer("Tutorial_301_Viewer");
 
-	// Run the viewer
-	viewer.run();
+        // Run the viewer
+        viewer.run();
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }

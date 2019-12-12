@@ -929,7 +929,7 @@ namespace easy3d {
 	}
 
 
-	Model* Viewer::open(const std::string& file_name) {
+    Model* Viewer::open(const std::string& file_name, bool create_default_drawables /*= true*/) {
         for (auto m : models_) {
             if (m->name() == file_name) {
                 std::cout << "model alreaded loaded: \'" << file_name << std::endl;
@@ -946,7 +946,7 @@ namespace easy3d {
             SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
             if (mesh) {
                 mesh->set_name(file_name);
-                add_model(mesh);
+                add_model(mesh, create_default_drawables);
                 std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
                     << "num vertices: " << mesh->n_vertices() << "; "
                     << "num edges: " << mesh->n_edges() << std::endl;
@@ -962,7 +962,7 @@ namespace easy3d {
                 io::PointCloudIO_ptx serializer(file_name);
                 PointCloud* cloud = nullptr;
                 while ((cloud = serializer.load_next())) {
-                    add_model(cloud);
+                    add_model(cloud, create_default_drawables);
                     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
                 }
                 return cloud;
@@ -971,7 +971,7 @@ namespace easy3d {
                 PointCloud* cloud = PointCloudIO::load(file_name);
                 if (cloud) {
                     cloud->set_name(file_name);
-                    add_model(cloud);
+                    add_model(cloud, create_default_drawables);
                     std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
                     return cloud;
                 }
@@ -1041,8 +1041,10 @@ namespace easy3d {
             auto points = mesh->get_vertex_property<vec3>("v:point");
             surface->update_vertex_buffer(points.vector());
             auto colors = mesh->get_vertex_property<vec3>("v:color");
-            if (colors)
+            if (colors) {
                 surface->update_color_buffer(colors.vector());
+                surface->set_per_vertex_color(true);
+            }
 
             auto normals = mesh->get_vertex_property<vec3>("v:normal");
             if (normals)
@@ -1095,21 +1097,6 @@ namespace easy3d {
 
         if (create_default_drawables)
             create_drawables(model);
-
-        Box3 box;
-        if (dynamic_cast<PointCloud*>(model)) {
-            PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-            auto points = cloud->get_vertex_property<vec3>("v:point");
-            for (auto v : cloud->vertices())
-                box.add_point(points[v]);
-        }
-        else if (dynamic_cast<SurfaceMesh*>(model)) {
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-            auto points = mesh->get_vertex_property<vec3>("v:point");
-            for (auto v : mesh->vertices())
-                box.add_point(points[v]);
-        }
-        model->set_bounding_box(box);
 
         models_.push_back(model);
         model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
@@ -1345,7 +1332,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::draw() {
+    void Viewer::draw() const {
         if (models_.empty())
             return;
 

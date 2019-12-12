@@ -84,7 +84,7 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialAmbientOcclusion::draw() {
+void TutorialAmbientOcclusion::draw() const {
     if (!current_model()) {
         return;
     }

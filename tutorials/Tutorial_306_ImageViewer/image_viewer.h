@@ -46,9 +46,9 @@ protected:
     virtual void init() override;
     virtual void cleanup() override;
 
-    void draw() override;
+    void draw() const override;
 
-    void compute_image_region(int& x, int& y, int& w, int& h);
+    void compute_image_region(int& x, int& y, int& w, int& h) const;
 
     // moves the camera so that the 'model' is centered on the screen.
     // if 'model' is NULL, it centers the entire scene (all models).

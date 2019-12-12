@@ -78,17 +78,18 @@ void DepthImage::cleanup() {
 }
 
 
-void DepthImage::draw() {
+void DepthImage::draw() const {
     if (depth_rendering_) {
+        DepthImage* viewer = const_cast<DepthImage*>(this);
         if (!fbo_) {
             const int samples = 0;
-            fbo_ = new FramebufferObject(width() * dpi_scaling(), height() * dpi_scaling(), samples);
-            fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
+            viewer->fbo_ = new FramebufferObject(width() * dpi_scaling(), height() * dpi_scaling(), samples);
+            viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
         }
         fbo_->ensure_size(width() * dpi_scaling(), height() * dpi_scaling());
 
         // generate
-        generate_depth();
+        viewer->generate_depth();
 
         // rendering
         draw_depth();
@@ -130,7 +131,7 @@ void DepthImage::generate_depth() {
 }
 
 
-void DepthImage::draw_depth() {
+void DepthImage::draw_depth() const {
     static const std::string quad_name = "screen_space/quad_gray_texture";
     ShaderProgram* program = ShaderManager::get_program(quad_name);
     if (!program) {

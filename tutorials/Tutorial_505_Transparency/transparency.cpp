@@ -77,7 +77,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialTransparency::draw() {
+void TutorialTransparency::draw() const {
     if (!current_model()) {
         return;
     }

@@ -97,11 +97,45 @@ namespace easy3d {
         Camera* camera() { return camera_; }
         const Camera* camera() const { return camera_; }
 
+        // -------------------- fileIO, model management ----------------------
+
+        // returns all the models managed by this viewer
+        const std::vector<Model*>& models() const { return models_; }
+
+        // returns the active model
+        Model* current_model() const;
+
+        // Open/Save models specified by using a file dialog.
+        bool open();
+        bool save() const;
+
+        // open a file (given the file name) and add the model to the viewer
+        // for visualization. It will also create the default drawables for
+        // visualizing the model. If create_default_drawables == false, no
+        // default drawable will be created, which is useful when a user wants
+        // to create a customized drawable.
+        Model* open(const std::string& file_name, bool create_default_drawables = true);
+
+        // add a model to the viewer to be visualized (the viewer will be incharge of
+        // it the model's memory menagement). If create_default_drawables == false, no
+        // default drawable will be created. This is useful when a user wants to create
+        // a customized drawable.
+        void add_model(Model* model, bool create_default_drawables = true);
+
+        // delete the model from the viewer. The model will also be destroyed.
+        void delete_model(Model* model);
+
+        // ----------------------------- UI -----------------------------------
+
         // moves the camera so that the 'model' is centered on the screen.
         // if 'model' is NULL, it centers the entire scene (all models).
         virtual void fit_screen(const easy3d::Model* model = nullptr);
 
-		// Returns the coordinates of the 3D point located at pixel (x,y) on screen.
+        // take a snapshot of the screen and save the snapshot into a file (the file name
+        // specified by using a file dialog)
+        bool snapshot(bool bk_white = true) const;
+
+        // Returns the coordinates of the 3D point located at pixel (x,y) on screen.
 		// x, y: screen point expressed in pixel units with an origin in the upper left corner.
 		// found: indicates whether a point was found or not.
 		// NOTE: This method assumes that a GL context is available, and that its
@@ -114,28 +148,11 @@ namespace easy3d {
 		//		 along the viewing direction.
 		vec3 point_under_pixel(int x, int y, bool &found) const;
 
-		/// Update the rendering
-		void update() const;
+        // rendering. Users can put their additional rendering function here by reimplementing it.
+        virtual void draw() const;
 
-        void add_model(Model* model, bool create_default_drawables = true);
-        void delete_model(Model* model);
-
-        const std::vector<Model*>& models() const { return models_; }
-        Model* current_model() const;
-
-        /// Put your rendering calls here
-        virtual void draw();
-
-		// Open/Save models specified by a file dialog.
-		bool open();
-		bool save() const;
-
-        // Open a file with file name given. It does the following
-        //  - create default drawables (depending on model type)
-        //  - add the model to the viewer for visualization
-        Model* open(const std::string& file_name);
-
-        bool snapshot(bool bk_white = true) const;
+        // Update the rendering
+        void update() const;
 
 	protected:
 

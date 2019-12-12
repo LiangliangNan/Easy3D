@@ -33,26 +33,34 @@
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-    TutorialNormalEstimation viewer("Tutorial_601_PointCloud_NormalEstimation");
-
-    // Read the point cloud from a known file.
     const std::string file = "../../Easy3D/data/bunny_without_normals.bin";
-    easy3d::Model* model = viewer.open(file);
-    if (model) {
+
+    try {
+        // Create the viewer.
+        TutorialNormalEstimation viewer("Tutorial_601_PointCloud_NormalEstimation");
+
+        easy3d::Model* model = viewer.open(file, true);
+        if (!model) {
+            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            return EXIT_FAILURE;
+        }
+
         auto drawable = model->points_drawable("vertices");
-        drawable->set_point_size(2.0f);
+        drawable->set_point_size(3.0f);
         drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
 
         // Run the viewer
         viewer.run();
 
         return EXIT_SUCCESS;
-    }
-    else {
-        std::cerr << "Error: failed load point cloud. Please make sure the file exists and format is correct." << std::endl;
+
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 
 }
 

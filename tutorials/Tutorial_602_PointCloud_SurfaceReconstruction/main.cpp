@@ -33,13 +33,18 @@
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-    TutorialSurfaceReconstruction viewer("Tutorial_602_PointCloud_SurfaceReconstruction");
-
-    // Read the point cloud from a known file.
     const std::string file = "../../Easy3D/data/bunny.bin";
-    easy3d::Model* model = viewer.open(file);
-    if (model) {
+
+    try {
+        // Create the viewer.
+        TutorialSurfaceReconstruction viewer("Tutorial_602_PointCloud_SurfaceReconstruction");
+
+        easy3d::Model* model = viewer.open(file, true);
+        if (!model) {
+            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            return EXIT_FAILURE;
+        }
+
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(2.0f);
         drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
@@ -48,11 +53,14 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.run();
 
         return EXIT_SUCCESS;
-    }
-    else {
-        std::cerr << "Error: failed load point cloud. Please make sure the file exists and format is correct." << std::endl;
+
+    } catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 
 }
 

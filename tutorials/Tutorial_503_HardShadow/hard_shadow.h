@@ -43,7 +43,7 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
-	void draw() override;
+    void draw() const override;
 
 	void cleanup() override;
 

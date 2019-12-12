@@ -66,7 +66,7 @@ void ImageViewer::cleanup() {
 }
 
 
-void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) {
+void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
     w = static_cast<int>(texture_->width() * scale_);
     h = static_cast<int>(texture_->height() * scale_);
     x = static_cast<int>((width() - w) * 0.5f);
@@ -127,7 +127,7 @@ bool ImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 }
 
 
-void ImageViewer::draw() {
+void ImageViewer::draw() const {
 	if (texture_ == nullptr)
 		return;
 

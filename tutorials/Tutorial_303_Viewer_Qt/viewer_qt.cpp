@@ -566,8 +566,10 @@ void ViewerQt::create_drawables(Model* m) {
         }
         surface->update_vertex_buffer(vertices);
         surface->update_normal_buffer(vertex_normals);
-        if (colors)
-            surface->update_color_buffer(vertex_colors);
+        if (colors) {
+            surface->update_color_buffer(colors.vector());
+            surface->set_per_vertex_color(true);
+        }
         surface->release_index_buffer();
 #else
         auto points = mesh->get_vertex_property<vec3>("v:point");
@@ -624,22 +626,6 @@ void ViewerQt::addModel(Model* model, bool create_default_drawables /* = true*/)
 
     if (create_default_drawables)
         create_drawables(model);
-
-    Box3 box;
-    if (dynamic_cast<PointCloud*>(model)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-        auto points = cloud->get_vertex_property<vec3>("v:point");
-        for (auto v : cloud->vertices())
-            box.add_point(points[v]);
-        model->set_bounding_box(box);
-    }
-    else if (dynamic_cast<SurfaceMesh*>(model)) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-        auto points = mesh->get_vertex_property<vec3>("v:point");
-        for (auto v : mesh->vertices())
-            box.add_point(points[v]);
-    }
-    model->set_bounding_box(box);
 
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current

@@ -38,63 +38,69 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
-	// Create the default Easy3D viewer.
-	// Note: a viewer must be created before creating any drawables. 
-    Viewer viewer("Tutorial_403_VectorField");
 
-	// Load point cloud data from a file
-    const std::string file_name = "../../Easy3D/data/building_cloud.bin";
-    easy3d::PointCloud* cloud = dynamic_cast<easy3d::PointCloud*>(viewer.open(file_name));
-    if (!cloud) {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+    try {
+        // Create the default Easy3D viewer.
+        // Note: a viewer must be created before creating any drawables.
+        Viewer viewer("Tutorial_403_VectorField");
+
+        // Load point cloud data from a file
+        const std::string file_name = "../../Easy3D/data/building_cloud.bin";
+        easy3d::PointCloud* cloud = dynamic_cast<easy3d::PointCloud*>(viewer.open(file_name));
+        if (!cloud) {
+            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // The drawable created by default.
+        PointsDrawable* points_drawable = cloud->points_drawable("vertices");
+        points_drawable->set_point_size(6.0f);
+
+        // Now let's create a drawable to visualize the point normals.
+        auto normals = cloud->get_vertex_property<vec3>("v:normal");
+        if (normals) {
+            auto points = cloud->get_vertex_property<vec3>("v:point");
+
+            // Get the bounding box of the model. Then we defined the length of the
+            // normal vectors to be 1% of the bounding box diagonal.
+            const Box3& box = cloud->bounding_box();
+            float length = norm(box.max() - box.min()) * 0.01f;
+
+            // Now let collects the two end points of each normal vector. So from
+            // these points we can create a drawable to visualize the normal vectors.
+
+            // Every consecutive two points represent a normal vector.
+            std::vector<vec3> normal_points;
+            for (auto v : cloud->vertices()) {
+                const vec3& s = points[v];
+                vec3 n = normals[v];
+                n.normalize();
+                const vec3& t = points[v] + n * length;
+                normal_points.push_back(s);
+                normal_points.push_back(t);
+            }
+
+            // Create a drawable for rendering the normal vectors.
+            LinesDrawable* normals_drawable = cloud->add_lines_drawable("normals");
+            // Upload the data to the GPU.
+            normals_drawable->update_vertex_buffer(normal_points);
+            // We will draw the normal vectors in green color
+            normals_drawable->set_per_vertex_color(false);
+            normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+        }
+        else {
+            std::cerr << "This point cloud does not have normal information. "
+                "No vector field can be visualized." << std::endl;
+        }
+
+        // Run the viewer
+        viewer.run();
+    }
+    catch (const std::runtime_error &e) {
+        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }
-
-    // The drawable created by default.
-    PointsDrawable* points_drawable = cloud->points_drawable("vertices");
-	points_drawable->set_point_size(6.0f);
-
-	// Now let's create a drawable to visualize the point normals.
-    auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    if (normals) {
-        auto points = cloud->get_vertex_property<vec3>("v:point");
-
-		// Get the bounding box of the model. Then we defined the length of the
-		// normal vectors to be 1% of the bounding box diagonal.
-		Box3 box;
-		for (auto v : cloud->vertices())
-			box.add_point(points[v]);
-		float length = norm(box.max() - box.min()) * 0.01f;
-
-		// Every consecutive two points represent a normal vector.
-		std::vector<vec3> normal_points;
-		for (auto v : cloud->vertices()) {
-			const vec3& s = points[v];
-			vec3 n = normals[v];
-			n.normalize();
-			const vec3& t = points[v] + n * length;
-			normal_points.push_back(s);
-			normal_points.push_back(t);
-		}
-
-		// Create a drawable for rendering the normal vectors.
-		LinesDrawable* normals_drawable = cloud->add_lines_drawable("normals");
-		// Upload the data to the GPU.
-		normals_drawable->update_vertex_buffer(normal_points);
-		// We will draw the normal vectors in green color
-		normals_drawable->set_per_vertex_color(false);
-		normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
-	}
-	else {
-		std::cerr << "This point cloud does not have normal information. "
-			"No vector field can be visualized." << std::endl;
-	}
-
-	// Run the viewer
-    viewer.run();
-
-    // Delete the point cloud (i.e., release memory)? No. The viewer will do this.
-    // delete cloud;
 
     return EXIT_SUCCESS;
 }

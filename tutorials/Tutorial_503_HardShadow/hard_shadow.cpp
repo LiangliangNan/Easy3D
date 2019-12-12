@@ -58,7 +58,7 @@ bool TutorialHardShadow::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialHardShadow::draw() {
+void TutorialHardShadow::draw() const {
     if (!current_model()) {
         return;
     }
