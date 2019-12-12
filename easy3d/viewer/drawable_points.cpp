@@ -130,7 +130,7 @@ namespace easy3d {
         program->set_uniform("PROJ", camera->projectionMatrix());
         program->set_uniform("screen_width", camera->screenWidth());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
+        float ratio = camera->pixelGLRatio(camera->sceneCenter());
         program->set_uniform("sphere_radius", point_size() * ratio);
 
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
@@ -166,7 +166,7 @@ namespace easy3d {
         program->set_uniform("MV", camera->modelViewMatrix());
         program->set_uniform("PROJ", camera->projectionMatrix());
 
-        float ratio = camera->pixelGLRatio(camera->pivotPoint());
+        float ratio = camera->pixelGLRatio(camera->sceneCenter());
         program->set_uniform("sphere_radius", point_size() * ratio);
 
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());

@@ -23,7 +23,8 @@ add_subdirectory("Tutorial_306_ImageViewer")
 add_subdirectory("Tutorial_401_Drawable")
 add_subdirectory("Tutorial_402_ScalarField")
 add_subdirectory("Tutorial_403_VectorField")
-#add_subdirectory("Tutorial_404_Texture")   // to be implemented
+add_subdirectory("Tutorial_404_Imposters")
+#add_subdirectory("Tutorial_405_Texture")   // to be implemented
 
 # rendering techniques
 add_subdirectory("Tutorial_501_EyeDomeLighting")
