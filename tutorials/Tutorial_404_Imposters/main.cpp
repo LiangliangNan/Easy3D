@@ -48,7 +48,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
         // Load point cloud data from a file
         const std::string file_name = "../../Easy3D/data/sphere.obj";
-        easy3d::SurfaceMesh* mesh = dynamic_cast<easy3d::SurfaceMesh*>(viewer.open(file_name, true));
+        easy3d::SurfaceMesh* mesh = dynamic_cast<easy3d::SurfaceMesh*>(viewer.open(file_name, false));
         if (!mesh) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
@@ -62,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/) {
         points_drawable->update_vertex_buffer(points.vector());
         points_drawable->set_per_vertex_color(false);
         points_drawable->set_default_color(easy3d::vec3(1.0f, 0.0f, 0.0f));
-        points_drawable->set_point_size(16.0f);
+        points_drawable->set_point_size(26.0f);
         points_drawable->set_impostors(true);
 
         //--------------------- render edges as cylinders -----------------------
@@ -79,14 +79,14 @@ int main(int /*argc*/, char** /*argv*/) {
         edges_drawable->set_per_vertex_color(false);
         edges_drawable->set_default_color(easy3d::vec3(1.0f, 0.67f, 0.5f));
         edges_drawable->set_impostor_type(IT_CYLINDERS);
-        edges_drawable->set_impostor_thickness(4);
+        edges_drawable->set_impostor_thickness(8);
 
         //--------------------- render normals as cones -----------------------
 
         // Get the bounding box of the model. Then we defined the length of the
-        // normal vectors to be 5% of the bounding box diagonal.
+        // normal vectors to be 10% of the bounding box diagonal.
         const Box3& box = mesh->bounding_box();
-        float length = norm(box.max() - box.min()) * 0.05f;
+        float length = norm(box.max() - box.min()) * 0.1f;
 
         // Now let collects the two end points of each normal vector. So from
         // these points we can create a drawable to visualize the normal vectors.
@@ -104,9 +104,9 @@ int main(int /*argc*/, char** /*argv*/) {
         LinesDrawable* normals_drawable = mesh->add_lines_drawable("normals");
         normals_drawable->update_vertex_buffer(normal_points);
         normals_drawable->set_per_vertex_color(false);
-        normals_drawable->set_default_color(vec3(0.0f, 0.0f, 1.0f));
+        normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
         normals_drawable->set_impostor_type(IT_CONES);
-        normals_drawable->set_impostor_thickness(8);
+        normals_drawable->set_impostor_thickness(15);
 
         // -----------------------------------------------------------------
 
