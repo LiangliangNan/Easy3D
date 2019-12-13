@@ -7,9 +7,6 @@ uniform vec3	specular = vec3(0.4f, 0.4f, 0.4f);
 uniform float	shininess = 64.0f;
 uniform bool	lighting = true;
 
-// SSAO
-uniform sampler2D   ssaoTexture;
-uniform bool        ssaoEnabled = false;
 
 in  vec3 vsPosition;
 in  vec3 vsColor;
@@ -32,11 +29,6 @@ void main(void) {
         }
 
         color = color * df + specular * sf + ambient;
-        if (ssaoEnabled) {
-            vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
-            float coeff = texture(ssaoTexture, texCoord).r;
-            color = color * coeff;
-        }
     }
     else
         color = color + ambient;

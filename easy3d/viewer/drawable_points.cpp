@@ -99,10 +99,12 @@ namespace easy3d {
         program->set_uniform("MVP", MVP);
         program->set_uniform("wLightPos", wLightPos);
         program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("ssaoEnabled", false);
         program->set_uniform("lighting", normal_buffer());
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
         program->set_uniform("default_color", default_color());
+        program->set_uniform("ambient", setting::light_ambient);
+        program->set_uniform("specular", setting::light_specular);
+        program->set_uniform("shininess", &setting::light_shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
