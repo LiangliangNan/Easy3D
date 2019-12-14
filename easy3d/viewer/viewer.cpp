@@ -1238,13 +1238,13 @@ namespace easy3d {
 
 
 	void Viewer::draw_corner_axes() {
-        ShaderProgram* program = ShaderManager::get_program("surface_color");
+        ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-            program = ShaderManager::create_program_from_files("surface_color", attributes);
+            program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
         }
         if (!program)
             return;
