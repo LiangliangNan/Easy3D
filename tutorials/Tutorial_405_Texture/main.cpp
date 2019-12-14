@@ -26,8 +26,6 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/texture.h>
 
@@ -50,7 +48,7 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
         //--------------- create a mesh (which is a quad) -------------------
-
+#if 1
         SurfaceMesh* mesh = new SurfaceMesh;
         auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
@@ -61,6 +59,10 @@ int main(int /*argc*/, char** /*argv*/) {
         mesh->add_triangle(v0, v1, v2);
         mesh->add_triangle(v0, v2, v3);
         viewer.add_model(mesh);
+#else
+        const std::string file = "../../Easy3D/data/room.obj";
+        easy3d::Model* mesh = viewer.open(file, true);
+#endif
 
         //---------------- Load texture from an image file -------------------
 

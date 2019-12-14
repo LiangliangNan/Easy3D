@@ -20,8 +20,8 @@ in Data{
 
 uniform sampler2D	textureID;
 
-uniform float texture_repeat;
-uniform float fractional_repeat;
+uniform float texture_repeat = 1.0f;
+uniform float fractional_repeat = 0.0f;
 
 
 out vec4 outputF;	// Ouput data

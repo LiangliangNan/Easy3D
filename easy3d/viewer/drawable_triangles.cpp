@@ -162,7 +162,7 @@ namespace easy3d {
         program->set_uniform("smooth_shading", phong_shading());
 
         program->bind_texture("textureID", texture()->id(), 0);
-        program->set_uniform("texture_repeat", 1.0f);      // TODO: make this a parameter
+        program->set_uniform("texture_repeat", 2.0f);      // TODO: make this a parameter
         program->set_uniform("fractional_repeat", 0.0f);   // TODO: make this a parameter
         gl_draw(with_storage_buffer);
         program->release_texture();

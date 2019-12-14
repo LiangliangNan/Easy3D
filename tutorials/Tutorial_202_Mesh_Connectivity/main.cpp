@@ -29,13 +29,19 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- access the incident vertices of each vertex
+//		- access the  vertices of each vertex
+//		- access the incident outgoing/ingoing edges of each vertex
 //		- access the incident faces of each vertex
 //		- access the incident vertices of each face
 //		- access the incident half-edges of each face
 //		- access the two end points of each edge;
 //		- access the two faces connected by each edge
 
+
+// There are two way to traverse the incidency entities of an element.
+//   - use a "for" loop;
+//   - use a circulator.
+#define USE_FOR_LOOP
 
 
 SurfaceMesh* old_mesh_from_previous_example() {
@@ -68,57 +74,115 @@ int main(int /*argc*/, char** /*argv*/) {
 	// loop over all vertices
 	for (auto v : mesh->vertices()) {
 		std::cout << "incident vertices of vertex " << v << ": ";
+#ifdef USE_FOR_LOOP
 		// loop over all incident vertices
-		for (auto vc : mesh->vertices(v))
-			std::cout << vc << " ";
+        for (auto v : mesh->vertices(v))
+            std::cout << v << " ";
+#else   // use circulator
+        SurfaceMesh::VertexAroundVertexCirculator cir = mesh->vertices(v);
+        SurfaceMesh::VertexAroundVertexCirculator end = cir;
+        do {
+            SurfaceMesh::Vertex v = *cir;
+            std::cout << v << " ";
+            ++cir;
+        } while (cir != end);
+#endif
 		std::cout << std::endl;
 	}
 
+    std::cout << "\n--------------------------------------\n";
+    std::cout << "The incident outgoing/ingoing edges of each vertex" << std::endl;
     std::cout << "----------------------------------------\n";
+
+    // loop over all vertices
+    for (auto v : mesh->vertices()) {
+        std::cout << "incident outgoing/ingoing edges of vertex " << v << ": ";
+#ifdef USE_FOR_LOOP
+        // loop over all incident outgoing/ingoing edges
+        for (auto h : mesh->halfedges(v))
+            std::cout << h << "/" << mesh->opposite_halfedge(h) << " ";
+#else   // use circulator
+        SurfaceMesh::HalfedgeAroundVertexCirculator cir = mesh->halfedges(v);
+        SurfaceMesh::HalfedgeAroundVertexCirculator end = cir;
+        do {
+            SurfaceMesh::Halfedge h = *cir;
+            std::cout << h << "/" << mesh->opposite_halfedge(h) << " ";
+            ++cir;
+        } while (cir != end);
+#endif
+        std::cout << std::endl;
+    }
+
+    std::cout << "\n--------------------------------------\n";
     std::cout << "The incident faces of each vertex" << std::endl;
     std::cout << "----------------------------------------\n";
 
 	// loop over all vertices
 	for (auto v : mesh->vertices()) {
 		std::cout << "incident faces of vertex " << v << ": ";
+#ifdef USE_FOR_LOOP
 		// loop over all incident faces
 		for (auto f : mesh->faces(v))
 			std::cout << f << " ";
-		std::cout << std::endl;
+#else   // use circulator
+        SurfaceMesh::FaceAroundVertexCirculator cir = mesh->faces(v);
+        SurfaceMesh::FaceAroundVertexCirculator end = cir;
+        do {
+            SurfaceMesh::Face f = *cir;
+            std::cout << f << " ";
+            ++cir;
+        } while (cir != end);
+#endif
+        std::cout << std::endl;
 	}
 
-    std::cout << "----------------------------------------\n";
+    std::cout << "\n--------------------------------------\n";
     std::cout << "The incident vertices of each face" << std::endl;
     std::cout << "----------------------------------------\n";
 
 	// loop over all faces
 	for (auto f : mesh->faces()) {
 		std::cout << "incident vertices of face " << f << ": ";
+#ifdef USE_FOR_LOOP
 		// loop over all incident vertices
 		for (auto v : mesh->vertices(f))
 			std::cout << v << " ";
-		std::cout << std::endl;
+#else   // use circulator
+        SurfaceMesh::VertexAroundFaceCirculator cir = mesh->vertices(f);
+        SurfaceMesh::VertexAroundFaceCirculator end = cir;
+        do {
+            SurfaceMesh::Vertex v = *cir;
+            std::cout << v << " ";
+            ++cir;
+        } while (cir != end);
+#endif
+        std::cout << std::endl;
 	}
 
-    std::cout << "----------------------------------------\n";
+    std::cout << "\n--------------------------------------\n";
     std::cout << "The incident half-edges of each face" << std::endl;
     std::cout << "----------------------------------------\n";
 
 	// loop over all faces
 	for (auto f : mesh->faces()) {
-		std::cout << "half-edges around face " << f << ": ";
+        std::cout << "half-edges around face " << f << ": ";
+#ifdef USE_FOR_LOOP
 		// loop over all half-edges around the face
-		SurfaceMesh::HalfedgeAroundFaceCirculator h_fit = mesh->halfedges(f);
-		SurfaceMesh::HalfedgeAroundFaceCirculator h_end = h_fit;
+        for (auto h : mesh->halfedges(f))
+            std::cout << h << " ";
+#else
+        SurfaceMesh::HalfedgeAroundFaceCirculator cir = mesh->halfedges(f);
+        SurfaceMesh::HalfedgeAroundFaceCirculator end = cir;
 		do {
-			SurfaceMesh::Halfedge h = *h_fit;
+            SurfaceMesh::Halfedge h = *cir;
 			std::cout << h << " ";
-			++h_fit;
-		} while (h_fit != h_end);
+            ++cir;
+        } while (cir != end);
+#endif
 		std::cout << std::endl;
 	}
 
-    std::cout << "----------------------------------------\n";
+    std::cout << "\n--------------------------------------\n";
     std::cout << "The two end points of each edge" << std::endl;
     std::cout << "----------------------------------------\n";
 
@@ -131,7 +195,7 @@ int main(int /*argc*/, char** /*argv*/) {
 		std::cout << vt << " " << std::endl;
 	}
 
-    std::cout << "----------------------------------------\n";
+    std::cout << "\n--------------------------------------\n";
     std::cout << "The two faces connected by each edge" << std::endl;
     std::cout << "----------------------------------------\n";
 

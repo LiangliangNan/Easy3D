@@ -1008,7 +1008,7 @@ namespace easy3d {
 #if 0   // flat shading
             auto points = mesh->get_vertex_property<vec3>("v:point");
             auto colors = mesh->get_vertex_property<vec3>("v:color");
-            auto texcoords = mesh->get_vertex_property<vec2>("v:texcoord");
+            auto texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
 
             std::vector<vec3> vertices, vertex_normals, vertex_colors;
             std::vector<vec2> vertex_texcoords;
@@ -1037,9 +1037,9 @@ namespace easy3d {
                     }
 
                     if (texcoords) {
-                        vertex_texcoords.push_back(texcoords[va]);
-                        vertex_texcoords.push_back(texcoords[vb]);
-                        vertex_texcoords.push_back(texcoords[vc]);
+                        vertex_texcoords.push_back(texcoords[start]);
+                        vertex_texcoords.push_back(texcoords[mesh->prev_halfedge(cur)]);
+                        vertex_texcoords.push_back(texcoords[cur]);
                     }
 
                     cur = mesh->next_halfedge(cur);

@@ -94,19 +94,19 @@ namespace easy3d {
 
 		// resource directory (containing color maps, shaders, textures, etc.)
 		std::string resource_directory() {
-			std::string dir = "resource";
+            std::string dir = "resources";
 			if (file::is_directory(dir)) 
 				return "./" + dir;
-			else if (file::is_directory("../resource"))
-				return "../resource";
-			else if (file::is_directory("../../resource"))
-				return "../../resource";
-			else if (file::is_directory("../../../resource"))
-				return "../../../resource";
+            else if (file::is_directory("../resources"))
+                return "../resources";
+            else if (file::is_directory("../../resources"))
+                return "../../resources";
+            else if (file::is_directory("../../../resources"))
+                return "../../../resources";
 			return dir;
 		}
 
-    } // namespace setting {
+    } // namespace setting
 
 } // namespace easy3d
 

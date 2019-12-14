@@ -87,8 +87,8 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="icon">
-    <iconset>
-     <normaloff>Resources/fileopen.png</normaloff>Resources/fileopen.png</iconset>
+    <iconset resource="viewer_qt.qrc">
+     <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -99,8 +99,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset>
-     <normaloff>Resources/filesave.png</normaloff>Resources/filesave.png</iconset>
+    <iconset resource="viewer_qt.qrc">
+     <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -111,8 +111,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="Resources/ViewerQt.qrc">
-     <normaloff>:/icons/fileopen.png</normaloff>:/icons/fileopen.png</iconset>
+    <iconset resource="viewer_qt.qrc">
+     <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -122,6 +122,10 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="viewer_qt.qrc">
+     <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
+   </property>
    <property name="text">
     <string>About Easy3D</string>
    </property>
@@ -136,8 +140,8 @@
   </action>
   <action name="actionSnapshot">
    <property name="icon">
-    <iconset>
-     <normaloff>Resources/snap_shot.png</normaloff>Resources/snap_shot.png</iconset>
+    <iconset resource="viewer_qt.qrc">
+     <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
     <string>Snapshot</string>
@@ -156,7 +160,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="Resources/ViewerQt.qrc"/>
+  <include location="viewer_qt.qrc"/>
  </resources>
  <connections/>
 </ui>

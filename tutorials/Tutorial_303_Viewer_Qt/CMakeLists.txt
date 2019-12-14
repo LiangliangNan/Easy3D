@@ -25,7 +25,7 @@ set(${PROJECT_NAME}_FORMS
 	)
 
 set(${PROJECT_NAME}_RESOURCES
-	Resources/ViewerQt.qrc
+        viewer_qt.qrc
 	)
 
 if( MSVC )
@@ -72,4 +72,4 @@ endif()
 ## Resources
 # Copy resources dirs into our shadow build directory
 #file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_BINARY_DIR}/bin )
+file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/icons DESTINATION ${CMAKE_BINARY_DIR}/bin/resources )
