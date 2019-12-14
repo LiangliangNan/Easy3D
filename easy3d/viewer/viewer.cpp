@@ -670,22 +670,26 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
-				for (auto d : m->points_drawables()) {
-					float size = d->point_size() - 1.0f;
-					if (size < 1)
-						size = 1;
-					d->set_point_size(size);
-				}
+                if (dynamic_cast<PointCloud*>(m)) {
+                    for (auto d : m->points_drawables()) {
+                        float size = d->point_size() - 1.0f;
+                        if (size < 1)
+                            size = 1;
+                        d->set_point_size(size);
+                    }
+                }
 			}
 		}	
 		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
 			for (auto m : models_) {
-				for (auto d : m->points_drawables()) {
-					float size = d->point_size() + 1.0f;
-					if (size > 20)
-						size = 20;
-					d->set_point_size(size);
-				}
+                if (dynamic_cast<PointCloud*>(m)) {
+                    for (auto d : m->points_drawables()) {
+                        float size = d->point_size() + 1.0f;
+                        if (size > 20)
+                            size = 20;
+                        d->set_point_size(size);
+                    }
+                }
 			}
 		}
 
