@@ -36,7 +36,7 @@
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/string.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -129,7 +129,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 
 void RealCamera::load_image() {
     const std::string image_file = setting::resource_directory() + "/data/fountain/images/" + string::from_integer(current_view_, 4, '0') + ".jpg";
-    if (file::is_file(image_file)) {
+    if (file_system::is_file(image_file)) {
             if (texture_)
                 delete texture_;
         texture_ = Texture::create(image_file);

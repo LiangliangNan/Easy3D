@@ -35,7 +35,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 
 #include <3rd_party/poisson_recon-9.0.1/MyTime.h>
@@ -471,7 +471,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 
     PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
     SurfaceMesh* result = convert_to_mesh(mesh, iXForm, density_attr_name, colors);
-    const std::string& file_name = file::name_less_extension(cloud->name()) + "_Poisson.ply";
+    const std::string& file_name = file_system::name_less_extension(cloud->name()) + "_Poisson.ply";
     result->set_name(file_name);
     std::cout << "total reconstruction time: " << w.time_string() << std::endl;
 

@@ -34,7 +34,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

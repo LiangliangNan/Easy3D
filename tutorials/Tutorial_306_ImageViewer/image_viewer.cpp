@@ -30,7 +30,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -76,10 +76,10 @@ void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
 
 bool ImageViewer::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL) {
-        const std::vector<std::string> filetypes = {"*.png", "*.jpg"};
+        const std::vector<std::string> filetypes = {"*.png", "*.jpg", "*.bmp", "*.tga", "*.gif", "*.ppm"};
         const std::string& file_name = FileDialog::open(filetypes, std::string(""));
 
-        if (!file::is_file(file_name))
+        if (!file_system::is_file(file_name))
             return false;
 
         if (texture_)

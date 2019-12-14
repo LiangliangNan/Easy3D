@@ -30,7 +30,7 @@
 #include <fstream>
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/line_stream.h>
 
 
@@ -124,7 +124,7 @@ namespace easy3d {
 
 			//now we can read the grid cells
 			PointCloud* cloud = new PointCloud;
-			std::string cloud_name = file::base_name(file_name_) + "-#" + std::to_string(cloud_index_);
+            std::string cloud_name = file_system::base_name(file_name_) + "-#" + std::to_string(cloud_index_);
 			cloud->set_name(cloud_name);
 
 			PointCloud::VertexProperty<vec3> colors;;

@@ -30,7 +30,7 @@
 #include <fstream>
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 
 
@@ -154,7 +154,7 @@ namespace easy3d {
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
-        const std::string& ext = file::extension(file_name, true);
+        const std::string& ext = file_system::extension(file_name, true);
 
 		PointCloud* cloud = new PointCloud;
 		cloud->set_name(file_name);
@@ -188,7 +188,7 @@ namespace easy3d {
 		}
 
 #ifndef NDEBUG
-		std::cout << "vertex properties on point cloud " << file::base_name(file_name) << std::endl;
+        std::cout << "vertex properties on point cloud " << file_system::base_name(file_name) << std::endl;
 		const auto& vnames = cloud->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;
@@ -206,7 +206,7 @@ namespace easy3d {
 			return false;
 		}
 
-		std::string ext = file::extension(file_name, true);
+        std::string ext = file_system::extension(file_name, true);
 		bool success = false;
 		if (ext == "ply")
 			success = io::save_ply(file_name, cloud, true);

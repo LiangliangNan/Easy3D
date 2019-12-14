@@ -30,7 +30,7 @@
 
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_info.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -74,7 +74,7 @@ namespace easy3d {
                 const char* msg = gl_error_string(error_code);
                 if (msg) {
                     std::cerr << "GL error: \n"
-                              << "\tfile: " << file::simple_name(file) << std::endl
+                              << "\tfile: " << file_system::simple_name(file) << std::endl
                               << "\tline: " << line << std::endl
                               << "\tinfo: " << msg << std::endl;
                     return false;
@@ -89,7 +89,7 @@ namespace easy3d {
                 const char* msg = gl_error_string(error_code);
                 if (msg) {
                     std::cerr << "GL error: \n"
-                              << "\tfile: " << file::simple_name(file) << std::endl
+                              << "\tfile: " << file_system::simple_name(file) << std::endl
                               << "\tline: " << line << std::endl
                               << "\tfunction: " << function << std::endl
                               << "\tinfo: " << msg << std::endl;
@@ -116,7 +116,7 @@ namespace easy3d {
             std::string msg;
             if (frame_buffer_error(msg) && !msg.empty()) {
                 std::cerr << "GL framebuffer error: \n"
-                          << "\tfile: " << file::simple_name(file) << std::endl
+                          << "\tfile: " << file_system::simple_name(file) << std::endl
                           << "\tline: " << line << std::endl
                           << "\tinfo: " << msg << std::endl;
                 return false;
@@ -129,7 +129,7 @@ namespace easy3d {
             std::string msg;
             if (frame_buffer_error(msg) && !msg.empty()) {
                 std::cerr << "GL framebuffer error: \n"
-                          << "\tfile: " << file::simple_name(file) << std::endl
+                          << "\tfile: " << file_system::simple_name(file) << std::endl
                           << "\tline: " << line << std::endl
                           << "\tfunction: " << function << std::endl
                           << "\tinfo: " << msg << std::endl;

@@ -23,7 +23,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
 
 #include <iostream>
@@ -66,7 +66,7 @@ some code are modified from or inspired by:
 
 namespace easy3d {
 
-    namespace file {
+    namespace file_system {
 
         const char UNIX_PATH_SEPARATOR = '/';
         const char WINDOWS_PATH_SEPARATOR = '\\';

@@ -43,7 +43,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 #include "viewer_qt.h"
 
@@ -184,7 +184,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         }
     }
 
-    const std::string& ext = file::extension(file_name, true);
+    const std::string& ext = file_system::extension(file_name, true);
     bool is_ply_mesh = false;
     if (ext == "ply")
         is_ply_mesh = (io::PlyReader::num_faces(file_name) > 0);
@@ -248,7 +248,7 @@ void MainWindow::onCurrentModelChanged() {
 void MainWindow::setCurrentFile(const QString &fileName)
 {
     QString dir = fileName.left(fileName.lastIndexOf("/"));
-    if (!dir.isEmpty() && file::is_directory(dir.toStdString()))
+    if (!dir.isEmpty() && file_system::is_directory(dir.toStdString()))
         curDataDirectory_ = dir;
 
     setWindowModified(false);
@@ -367,7 +367,7 @@ void MainWindow::writeSettings()
 {
     QSettings settings("liangliang.nan@gmail.com", "ViewerQt");
     settings.setValue("recentFiles", recentFiles_);
-    if (!curDataDirectory_.isEmpty() && file::is_directory(curDataDirectory_.toStdString()))
+    if (!curDataDirectory_.isEmpty() && file_system::is_directory(curDataDirectory_.toStdString()))
         settings.setValue("currentDirectory", curDataDirectory_);
 }
 

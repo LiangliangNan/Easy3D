@@ -29,7 +29,7 @@
 #include <cmath>
 #include <iostream>
 
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 
@@ -192,7 +192,7 @@ namespace easy3d {
             ImGui::Text("GPU time (ms): %4.1f", gpu_time_);
 
             if (current_model()) {
-                const std::string& name = "Current model: " + file::simple_name(current_model()->name());
+                const std::string& name = "Current model: " + file_system::simple_name(current_model()->name());
                 ImGui::Text("%s", name.c_str());
                 if (dynamic_cast<PointCloud*>(current_model())) {
                     PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());

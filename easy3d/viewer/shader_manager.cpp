@@ -27,7 +27,7 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
 
 
@@ -59,19 +59,19 @@ namespace easy3d {
 
         const std::string dir = setting::resource_directory() + "/shaders/";
         const std::string vs_file = dir + base_name + ".vert";
-        if (!file::is_file(vs_file)) {
+        if (!file_system::is_file(vs_file)) {
             std::cerr << "vertex shader file \'" << vs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string fs_file = dir + base_name + ".frag";
-        if (!file::is_file(fs_file)) {
+        if (!file_system::is_file(fs_file)) {
             std::cerr << "fragment shader file \'" << fs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string gs_file = dir + base_name + ".geom";
-        if (geom_shader && !file::is_file(gs_file)) {
+        if (geom_shader && !file_system::is_file(gs_file)) {
             std::cerr << "geometry shader file \'" << gs_file + " does not exist" << std::endl;
             attempt_load_program_[base_name] = false;
             return nullptr;
@@ -136,19 +136,19 @@ namespace easy3d {
 
 		const std::string dir = setting::resource_directory() + "/shaders/";
 		const std::string vert_file = dir + vert_file_name;
-		if (!file::is_file(vert_file)) {
+        if (!file_system::is_file(vert_file)) {
             std::cerr << "vertex shader file \'" << vert_file_name + "\' does not exist" << std::endl;
 			attempt_load_program_[name] = false;
 			return nullptr;
 		}
 		const std::string frag_file = dir + frag_file_name;
-		if (!file::is_file(frag_file)) {
+        if (!file_system::is_file(frag_file)) {
             std::cerr << "fragment shader file \'" << frag_file_name + "\' does not exist" << std::endl;
 			attempt_load_program_[name] = false;
 			return nullptr;
 		}
 		const std::string geom_file = dir + geom_file_name;
-		if (!geom_file_name.empty() && !file::is_file(geom_file)) {
+        if (!geom_file_name.empty() && !file_system::is_file(geom_file)) {
             std::cerr << "geometry shader file \'" << geom_file_name + "\' does not exist" << std::endl;
 			attempt_load_program_[name] = false;
 			return nullptr;
@@ -157,7 +157,7 @@ namespace easy3d {
 		ShaderProgram* program = new ShaderProgram(name);
 
 		std::string vert_code;
-		file::read_file_to_string(vert_file, vert_code);
+        file_system::read_file_to_string(vert_file, vert_code);
 		if (!extra_vert_code.empty())
 			string::replace_substring(vert_code, "//INSERT", extra_vert_code);
         bool success = program->load_shader_from_code(ShaderProgram::VERTEX, vert_code);
@@ -167,7 +167,7 @@ namespace easy3d {
         }
 		
 		std::string frag_code;
-		file::read_file_to_string(frag_file, frag_code);
+        file_system::read_file_to_string(frag_file, frag_code);
 		if (!extra_frag_code.empty())
 			string::replace_substring(frag_code, "//INSERT", extra_frag_code);
         success = program->load_shader_from_code(ShaderProgram::FRAGMENT, frag_code);
@@ -178,7 +178,7 @@ namespace easy3d {
 
 		if (!geom_file_name.empty()) {
 			std::string geom_code;
-			file::read_file_to_string(geom_file, geom_code);
+            file_system::read_file_to_string(geom_file, geom_code);
 			if (!extra_geom_code.empty())
 				string::replace_substring(geom_code, "//INSERT", extra_geom_code);
             success = program->load_shader_from_code(ShaderProgram::GEOMETRY, geom_code);

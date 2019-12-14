@@ -37,7 +37,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 
 //#define SAVE_ITERMEDIATE_FBO
@@ -111,14 +111,14 @@ namespace easy3d {
         current_peel_ = 0;
 
     #ifdef SAVE_ITERMEDIATE_FBO
-        if (file::is_directory("snapshotBuffers")) {
+        if (file_system::is_directory("snapshotBuffers")) {
             std::vector<std::string> files;
-            file::get_files("snapshotBuffers", files, false);
+            file_system::get_files("snapshotBuffers", files, false);
             for (std::size_t i = 0; i < files.size(); ++i)
-                file::delete_file(files[i]);
+                file_system::delete_file(files[i]);
         }
         else
-            file::create_directory("snapshotBuffers");
+            file_system::create_directory("snapshotBuffers");
     #endif
     }
 

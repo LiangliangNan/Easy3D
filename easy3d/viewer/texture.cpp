@@ -25,7 +25,7 @@
 
 
 #include <easy3d/viewer/texture.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/viewer/opengl_error.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,7 +54,7 @@ namespace easy3d {
 
 
     Texture* Texture::create(const std::string& file_name, GLenum wrap /* = GL_CLAMP_TO_EDGE*/, GLenum filter /* = GL_NEAREST*/) {
-        if (!file::is_file(file_name)) {
+        if (!file_system::is_file(file_name)) {
             std::cerr << "file \'" << file_name << "\' does not exist" << std::endl;
             return nullptr;
         }

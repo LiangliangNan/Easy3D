@@ -33,7 +33,7 @@
 
 namespace easy3d {
 
-    namespace file {
+    namespace file_system {
 
         bool		is_file(const std::string& filename);
         bool		delete_file(const std::string& filename);

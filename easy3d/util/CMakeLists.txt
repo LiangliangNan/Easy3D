@@ -7,7 +7,7 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
     chrono_watch.h
     dialogs.h
-    file.h
+    file_system.h
     line_stream.h
     stop_watch.h
     string.h
@@ -17,7 +17,7 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
     dialogs.cpp
-    file.cpp
+    file_system.cpp
     chrono_watch.cpp
     stop_watch.cpp
     string.cpp

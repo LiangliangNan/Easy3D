@@ -25,7 +25,7 @@
 
 
 #include <easy3d/util/dialogs.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 #include <cstring>
 
@@ -66,7 +66,7 @@ namespace easy3d {
 
        const char* buffer = tinyfd_openFileDialog(
                    "Please select the file(s) to open",
-                   file::convert_to_native_style(default_path).c_str(),
+                   file_system::convert_to_native_style(default_path).c_str(),
                    static_cast<int>(filetypes.size()),
                    filters,
                    types_string.c_str(),

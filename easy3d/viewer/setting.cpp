@@ -25,7 +25,7 @@
 
 
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -94,32 +94,32 @@ namespace easy3d {
 
 		// resource directory (containing color maps, shaders, textures, etc.)
 		std::string resource_directory() {
-            std::string parent = file::executable_directory();
+            std::string parent = file_system::executable_directory();
             std::string dir = parent + "/resources";
-            if (file::is_directory(dir))
+            if (file_system::is_directory(dir))
                 return dir;
             else {
                 // If reached here, we may need to move "up" three times, because
                 // macOS put the executable file in the application bundle, e.g.,
                 // "PolyFit.app/⁨Contents/⁨MacOS⁩/PolyFit".
-                parent = file::parent_directory(parent);
+                parent = file_system::parent_directory(parent);
                 std::string dir = parent + "/resources";
-                if (file::is_directory(dir))
+                if (file_system::is_directory(dir))
                     return dir;
                 else {
-                    parent = file::parent_directory(parent);
+                    parent = file_system::parent_directory(parent);
                     std::string dir = parent + "/resources";
-                    if (file::is_directory(dir))
+                    if (file_system::is_directory(dir))
                         return dir;
                     else {
-                        parent = file::parent_directory(parent);
+                        parent = file_system::parent_directory(parent);
                         std::string dir = parent + "/resources";
-                        if (file::is_directory(dir))
+                        if (file_system::is_directory(dir))
                             return dir;
                     }
                 }
                 // if still could not find it, return the current working directory
-                return file::current_working_directory();
+                return file_system::current_working_directory();
             }
 		}
 
