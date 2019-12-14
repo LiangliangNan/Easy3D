@@ -79,30 +79,27 @@ namespace easy3d {
 
         bool is_file(const std::string& filename) {
             struct stat statbuf;
-            if (::stat(filename.c_str(), &statbuf) == 0) {
+            if (::stat(filename.c_str(), &statbuf) != 0)
+                return false;   // path does not exist
     #ifdef _WIN32
-                return (statbuf.st_mode & S_IFREG);
+            return (statbuf.st_mode & S_IFREG);
     #else
-                return S_ISREG(statbuf.st_mode);
+            return S_ISREG(statbuf.st_mode);
     #endif
-            }
-            return false;
         }
 
 
         bool is_directory(const std::string& path) {
             if (path == path_root(path)) // already the root of the path
                 return true;
-
             struct stat statbuf;
-            if (::stat(path.c_str(), &statbuf) == 0) {
+            if (::stat(path.c_str(), &statbuf) != 0)
+                return false;   // path does not exist
     #ifdef _WIN32
-                return (statbuf.st_mode & S_IFDIR);
+            return (statbuf.st_mode & S_IFDIR);
     #else
-                return S_ISDIR(statbuf.st_mode);
+            return S_ISDIR(statbuf.st_mode);
     #endif
-            }
-            return false;
         }
 
 
