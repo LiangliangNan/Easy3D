@@ -30,6 +30,9 @@
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/setting.h>
 
+#include <easy3d/util/file.h>
+
+
 using namespace easy3d;
 
 
@@ -39,6 +42,24 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
+#if 0
+    const std::string& path = "C:\\Users\\Liangliang\\Downloads\\libigl-master";
+    const std::string& file = "C:\\Users\\Liangliang\\Downloads\\libigl-master\\README.md";
+
+    if (file::is_file(path))
+        std::cout << path << " is file" << std::endl;
+    if (file::is_directory(file))
+        std::cout << file << " is path" << std::endl;
+
+    if (file::is_file(file))
+        std::cout <<file << " is file" << std::endl;
+    if (file::is_directory(path))
+        std::cout << path << " is path" << std::endl;
+
+    return false;
+#endif
+
+
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.

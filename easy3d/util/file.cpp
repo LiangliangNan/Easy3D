@@ -78,23 +78,15 @@ namespace easy3d {
 
 
         bool is_file(const std::string& filename) {
-    #ifdef _WIN32
-            struct _stat statbuf;
-            if (::_stat(filename.c_str(), &statbuf) < 0)  // use '_wstat()' for Multi-Byte Character Set
-                return false;
-
-            if (!(statbuf.st_mode & _S_IFREG))
-                return false;
-    #else // _WIN32
             struct stat statbuf;
-            if (::stat(filename.c_str(), &statbuf) < 0)
-                return false;
-
-            if (!S_ISREG(statbuf.st_mode))
-                return false;
-    #endif // _WIN32
-
-            return true;
+            if (::stat(filename.c_str(), &statbuf) == 0) {
+    #ifdef _WIN32
+                return (statbuf.st_mode & S_IFREG);
+    #else
+                return S_ISREG(statbuf.st_mode);
+    #endif
+            }
+            return false;
         }
 
 
@@ -102,23 +94,15 @@ namespace easy3d {
             if (path == path_root(path)) // already the root of the path
                 return true;
 
-    #ifdef _WIN32
-            struct _stat statbuf;
-            if (::_stat(path.c_str(), &statbuf) < 0)  // use '_wstat()' for Multi-Byte Character Set
-                return false;
-
-            if (!(statbuf.st_mode & _S_IFDIR))
-                return false;
-    #else // _WIN32
             struct stat statbuf;
-            if (::stat(path.c_str(), &statbuf) < 0)
-                return false;
-
-            if (!S_ISDIR(statbuf.st_mode))
-                return false;
-    #endif // _WIN32
-
-            return true;
+            if (::stat(path.c_str(), &statbuf) == 0) {
+    #ifdef _WIN32
+                return (statbuf.st_mode & S_IFDIR);
+    #else
+                return S_ISDIR(statbuf.st_mode);
+    #endif
+            }
+            return false;
         }
 
 
