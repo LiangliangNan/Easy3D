@@ -71,6 +71,14 @@ namespace easy3d {
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
 
+    protected:
+
+        // without texture
+        void _draw_triangles(const Camera* camera, bool with_storage_buffer) const;
+
+        // textured
+        void _draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const;
+
 	private:
 		std::vector< std::vector<unsigned int> > indices_;
 

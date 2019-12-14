@@ -80,6 +80,11 @@ namespace easy3d {
         glGenTextures(1, &tex);	easy3d_debug_gl_error;
         glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_gl_error;
 
+        // To be robust to handle
+        // - R, RG or RGB textures which are not 4-bytes floats, or the width is not divisible by 4.
+        // - image pixels are tightly packed.
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
@@ -100,26 +105,15 @@ namespace easy3d {
     }
 
 
-    void Texture::bind() {
-        glActiveTexture(GL_TEXTURE0);
+    void Texture::bind(int unit) {
+        glActiveTexture(GL_TEXTURE0 + unit);
         glBindTexture(GL_TEXTURE_2D, id_);
-
-        {
-            //glEnable(GL_TEXTURE_2D);		// deprecated function since 3.0 version of OpenGL
-            //glEnable(GL_ALPHA_TEST);		// deprecated function since 3.1 version of OpenGL
-            //glAlphaFunc(GL_GREATER, 0);	// deprecated function since 3.1 version of OpenGL
-        }
     }
 
 
     void Texture::release() {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
-
-        {
-            //glDisable(GL_ALPHA_TEST);		// deprecated function since 3.1 version of OpenGL
-            //glDisable(GL_TEXTURE_2D);		// deprecated function since 3.0 version of OpenGL
-        }
     }
 
 } // namespace easy3d

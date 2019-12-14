@@ -851,10 +851,10 @@ namespace easy3d {
 				double tic = get_seconds();
 				pre_draw();
 
-                //gpu_timer_->start();
+                gpu_timer_->start();
                 draw();
-//                gpu_timer_->stop();
-//                gpu_time_ = gpu_timer_->time();
+                gpu_timer_->stop();
+                gpu_time_ = gpu_timer_->time();
 
 				post_draw();
 				glfwSwapBuffers(window_);
@@ -1008,8 +1008,10 @@ namespace easy3d {
 #if 0   // flat shading
             auto points = mesh->get_vertex_property<vec3>("v:point");
             auto colors = mesh->get_vertex_property<vec3>("v:color");
+            auto texcoords = mesh->get_vertex_property<vec2>("v:texcoord");
 
             std::vector<vec3> vertices, vertex_normals, vertex_colors;
+            std::vector<vec2> vertex_texcoords;
             for (auto f : mesh->faces()) {
                 // we assume convex polygonal faces and we render in triangles
                 SurfaceMesh::Halfedge start = mesh->halfedge(f);
@@ -1033,13 +1035,23 @@ namespace easy3d {
                         vertex_colors.push_back(colors[vb]);
                         vertex_colors.push_back(colors[vc]);
                     }
+
+                    if (texcoords) {
+                        vertex_texcoords.push_back(texcoords[va]);
+                        vertex_texcoords.push_back(texcoords[vb]);
+                        vertex_texcoords.push_back(texcoords[vc]);
+                    }
+
                     cur = mesh->next_halfedge(cur);
                 }
             }
             surface->update_vertex_buffer(vertices);
             surface->update_normal_buffer(vertex_normals);
+            surface->set_phong_shading(false);
             if (colors)
                 surface->update_color_buffer(vertex_colors);
+            if (texcoords)
+                surface->update_texcoord_buffer(vertex_texcoords);
             surface->release_index_buffer();
 #else   // smooth shading
             auto points = mesh->get_vertex_property<vec3>("v:point");
@@ -1049,6 +1061,9 @@ namespace easy3d {
                 surface->update_color_buffer(colors.vector());
                 surface->set_per_vertex_color(true);
             }
+            auto texcoords = mesh->get_vertex_property<vec2>("v:texcoord");
+            if (texcoords)
+                surface->update_texcoord_buffer(texcoords.vector());
 
             auto normals = mesh->get_vertex_property<vec3>("v:normal");
             if (normals)
@@ -1061,6 +1076,7 @@ namespace easy3d {
                     normals.push_back(n);
                 }
                 surface->update_normal_buffer(normals);
+                surface->set_phong_shading(true);
             }
 
             std::vector<unsigned int> indices;

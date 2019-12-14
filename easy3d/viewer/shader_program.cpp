@@ -648,16 +648,16 @@ namespace easy3d {
 	}
 
 
-    void ShaderProgram::bind_texture(const std::string& name, unsigned int texture, int unit, GLenum tex_target /* = GL_TEXTURE_2D */)
+    void ShaderProgram::bind_texture(const std::string& name, unsigned int tex_id, int unit, GLenum tex_target /* = GL_TEXTURE_2D */)
 	{
-		glActiveTexture(GL_TEXTURE0 + unit);
-		glBindTexture(tex_target, texture);
-		set_uniform(name, unit);				
+        glActiveTexture(GL_TEXTURE0 + unit);     easy3d_debug_gl_error;
+        glBindTexture(tex_target, tex_id);    easy3d_debug_gl_error;
+        set_uniform(name, unit);	    easy3d_debug_gl_error;
 	}
 
 
     void ShaderProgram::release_texture(GLenum tex_target /* = GL_TEXTURE_2D */) {
-		glActiveTexture(GL_TEXTURE0);			
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(tex_target, 0);
 	}
 

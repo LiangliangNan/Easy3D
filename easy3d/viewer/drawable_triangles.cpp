@@ -29,6 +29,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/texture.h>
 
 
 namespace easy3d {
@@ -92,13 +93,21 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
-        ShaderProgram* program = ShaderManager::get_program("surface_color");
+        if (texture_)
+            _draw_triangles_with_texture(camera, with_storage_buffer);
+        else
+            _draw_triangles(camera, with_storage_buffer);
+    }
+
+
+    void TrianglesDrawable::_draw_triangles(const Camera* camera, bool with_storage_buffer) const {
+        ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-            program = ShaderManager::create_program_from_files("surface_color", attributes);
+            program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
         }
 
         if (!program)
@@ -123,5 +132,42 @@ namespace easy3d {
         program->release();
     }
 
+
+    void TrianglesDrawable::_draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const {
+        ShaderProgram* program = ShaderManager::get_program("surface/surface_texture");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+            program = ShaderManager::create_program_from_files("surface/surface_texture", attributes);
+        }
+
+        if (!program)
+            return;
+
+        const mat4& MVP = camera->modelViewProjectionMatrix();
+        // camera position is defined in world coordinate system.
+        const vec3& wCamPos = camera->position();
+        // it can also be computed as follows:
+        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
+        const mat4& MV = camera->modelViewMatrix();
+        const vec4& wLightPos = inverse(MV) * setting::light_position;
+
+        program->bind();
+        program->set_uniform("MVP", MVP);
+        program->set_uniform("wLightPos", wLightPos);
+        program->set_uniform("wCamPos", wCamPos);
+        program->set_uniform("two_sides_lighting", false);
+        program->set_uniform("smooth_shading", phong_shading());
+
+        program->bind_texture("textureID", texture()->id(), 0);
+        program->set_uniform("texture_repeat", 1.0f);      // TODO: make this a parameter
+        program->set_uniform("fractional_repeat", 0.0f);   // TODO: make this a parameter
+        gl_draw(with_storage_buffer);
+        program->release_texture();
+
+        program->release();
+    }
 
 }

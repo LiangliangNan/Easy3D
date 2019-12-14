@@ -203,7 +203,7 @@ namespace easy3d {
 
 		// tex_target: GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
 		// default value is GL_TEXTURE_2D (0x0DE1, just to eliminate the inclusion of gl header file).
-		void bind_texture(const std::string& name, unsigned int texture, int unit, unsigned int tex_target = 0x0DE1);
+        void bind_texture(const std::string& name, unsigned int tex_id, int unit, unsigned int tex_target = 0x0DE1);
         void release_texture(unsigned int tex_target = 0x0DE1);
 
         void release();	// end using the shader
