@@ -72,10 +72,10 @@ namespace easy3d {
         /** Gets the extension without dot (Ex: /a/b/c.Ext => Ext). */
         std::string extension(const std::string& file_name, bool lower_case = true) ;
 
-        /** Gets file name with extension (Ex: /a/b/c.Ext => c.Ext). */
+        /** Gets file name without path but with extension (Ex: /a/b/c.Ext => c.Ext). */
         std::string simple_name(const std::string& file_name) ;
         /** Gets file name without path and last extension (Ex: c:/file.ext1.ext2 => file.ext1; /a/b/c.Ext => c). */
-        std::string base_name(const std::string& file_name) ;
+        std::string stripped_name(const std::string& file_name) ;
 
         /** Gets file path without last extension (Ex: /a/b/c.Ext => /a/b/c ; file.ext1.ext2 => file.ext1). */
         std::string name_less_extension(const std::string& file_name);
@@ -92,10 +92,12 @@ namespace easy3d {
         std::string path_root(const std::string& path);
         /** Tests if path is absolute, as !get_path_root(path).empty(). */
         bool		is_absolute_path(const std::string& path);
-        /** If 'to' is in a subdirectory of 'from' then this function returns the subpath, otherwise it just returns the file name.
-        * The function does \b not automagically resolve paths as the system does, so be careful to give canonical paths.
-        * However, the function interprets slashes ('/') ans backslashes ('\') as they were equal.
-        */
+        /** If 'to' is in a subdirectory of 'from' then this function returns the subpath,
+         * otherwise it just returns the file name.
+         * The function does \b not automagically resolve paths as the system does, so be
+         * careful to give canonical paths.
+         * However, the function interprets slashes ('/') and backslashes ('\') as they were equal.
+         */
         std::string relative_path(const std::string& from, const std::string& to);
         /** Removes .. and . dirs in a path */
         std::string absolute_path(const std::string& path);

@@ -188,7 +188,7 @@ namespace easy3d {
 		}
 
 #ifndef NDEBUG
-        std::cout << "vertex properties on point cloud " << file_system::base_name(file_name) << std::endl;
+        std::cout << "vertex properties on point cloud " << file_system::stripped_name(file_name) << std::endl;
 		const auto& vnames = cloud->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;

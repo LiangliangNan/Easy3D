@@ -75,22 +75,22 @@ namespace easy3d {
 
 
 #ifndef NDEBUG
-        std::cout << "vertex properties on mesh " << file_system::base_name(file_name) << std::endl;
+        std::cout << "vertex properties on mesh " << file_system::stripped_name(file_name) << std::endl;
 		const auto& vnames = mesh->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;
 
-        std::cout << "face properties on mesh " << file_system::base_name(file_name) << std::endl;
+        std::cout << "face properties on mesh " << file_system::stripped_name(file_name) << std::endl;
 		const auto& fnames = mesh->face_properties();
 		for (const auto& n : fnames)
 			std::cout << "\t" << n << std::endl;
 
-        std::cout << "edge properties on mesh " << file_system::base_name(file_name) << std::endl;
+        std::cout << "edge properties on mesh " << file_system::stripped_name(file_name) << std::endl;
         const auto& enames = mesh->edge_properties();
         for (const auto& n : enames)
             std::cout << "\t" << n << std::endl;
 
-        std::cout << "halfedge properties on mesh " << file_system::base_name(file_name) << std::endl;
+        std::cout << "halfedge properties on mesh " << file_system::stripped_name(file_name) << std::endl;
         const auto& hnames = mesh->halfedge_properties();
         for (const auto& n : hnames)
             std::cout << "\t" << n << std::endl;

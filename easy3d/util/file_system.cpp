@@ -71,7 +71,8 @@ namespace easy3d {
         const char UNIX_PATH_SEPARATOR = '/';
         const char WINDOWS_PATH_SEPARATOR = '\\';
 
-        static const char * const PATH_SEPARATORS = "/\\";
+        static const char* const PATH_SEPARATORS = "/\\";
+        static const unsigned int PATH_SEPARATORS_LEN = 2;
 
 
         //_______________________OS-dependent functions__________________________
@@ -321,8 +322,8 @@ namespace easy3d {
                 return ext;
         }
 
-        std::string base_name(const std::string& file_path) {
-            std::string simpleName = simple_name(file_path);
+        std::string stripped_name(const std::string& file_path) {
+            const std::string& simpleName = simple_name(file_path);
             return name_less_extension(simpleName);
         }
 
@@ -416,10 +417,103 @@ namespace easy3d {
             return false;
         }
 
+        namespace details {
+            /** Helper to iterate over elements of a path (including Windows' root, if any). **/
+            class PathIterator {
+            public:
+                PathIterator(const std::string & v);
+                bool valid() const { return start!=end; }
+                PathIterator & operator++();
+                std::string operator*();
+
+            protected:
+                std::string::const_iterator end;     ///< End of path string
+                std::string::const_iterator start;   ///< Points to the first char of an element, or ==end() if no more
+                std::string::const_iterator stop;    ///< Points to the separator after 'start', or ==end()
+
+                /// Iterate until 'it' points to something different from a separator
+                std::string::const_iterator skipSeparators(std::string::const_iterator it);
+                std::string::const_iterator next(std::string::const_iterator it);
+            };
+
+            PathIterator::PathIterator(const std::string & v) : end(v.end()), start(v.begin()), stop(v.begin()) { operator++(); }
+            PathIterator& PathIterator::operator++()
+            {
+                if (!valid()) return *this;
+                start = skipSeparators(stop);
+                if (start != end) stop = next(start);
+                return *this;
+            }
+
+            std::string PathIterator::operator*()
+            {
+                if (!valid()) return std::string();
+                return std::string(start, stop);
+            }
+
+            std::string::const_iterator PathIterator::skipSeparators(std::string::const_iterator it)
+            {
+                for (; it!=end && std::find_first_of(it, it+1, PATH_SEPARATORS, PATH_SEPARATORS+PATH_SEPARATORS_LEN) != it+1; ++it) {}
+                return it;
+            }
+
+            std::string::const_iterator PathIterator::next(std::string::const_iterator it)
+            {
+                return std::find_first_of(it, end, PATH_SEPARATORS, PATH_SEPARATORS+PATH_SEPARATORS_LEN);
+            }
+        }
+
+        //std::string testA = relative_path("C:\\a\\b", "C:\\a/b/d/f");       // d/f
+        //std::string testB = relative_path("C:\\a\\d", "C:\\a/b/d/f");       // ../b/d/f
+        //std::string testC = relative_path("C:\\ab", "C:\\a/b/d/f");         // ../a/b/d/f
+        //std::string testD = relative_path("a/d", "a/d");                    // ""
+        //std::string testE = relative_path("a", "a/d");                      // ../d
+        //std::string testF = relative_path("C:/a/b", "a/d");                 // Precondition fail. Returns d.
+        //std::string testG = relative_path("/a/b", "a/d");                   // Precondition fail. Returns d.
+        //std::string testH = relative_path("a/b", "/a/d");                   // Precondition fail. Returns d.
+        //
         // See Qt's QDir::absoluteFilePath(), QDir::relativeFilePath() ...
-        std::string relative_path(const std::string& from, const std::string& to) {
-            std::cerr << "not implemented yet. Returning 'to' unchanged." << std::endl;
-            return simple_name(to);
+        std::string relative_path(const std::string& from_path, const std::string& to_path) {
+            // This implementation is not 100% robust, and should be replaced with C++0x "std::path" as soon as possible.
+
+            // Definition: an "element" is a part between slashes. Ex: "/a/b" has two elements ("a" and "b").
+            // Algorithm:
+            // 1. If paths are neither both absolute nor both relative, we need to make them absolute.
+            // 2. If both paths are absolute and root isn't the same (for Windows only, as roots are of the type "C:", "D:"), then the operation is impossible. Return.
+            // 3. Iterate over two paths elements until elements are equal
+            // 4. For each remaining element in "from", add ".." to result
+            // 5. For each remaining element in "to", add this element to result
+
+            // 1 & 2
+            const std::string& from = absolute_path(from_path);
+            const std::string& to = absolute_path(to_path);
+
+            const std::string root = path_root(from);
+            if (root != path_root(to)) {
+                std::cerr << "Cannot relativise paths. From=" << from << ", To=" << to << ". Returning 'to' unchanged." << std::endl;
+                //return to;
+                return simple_name(to);
+            }
+
+            // 3
+            details::PathIterator itFrom(from), itTo(to);
+            // Iterators may point to Windows roots. As we tested they are equal, there is no need to ++itFrom and ++itTo.
+            // However, if we got an Unix root, we must add it to the result.
+            std::string res(root == "/" ? "/" : "");
+            for(; itFrom.valid() && itTo.valid() && *itFrom==*itTo; ++itFrom, ++itTo) {}
+
+            // 4
+            for(; itFrom.valid(); ++itFrom) res += "../";
+
+            // 5
+            for(; itTo.valid(); ++itTo) res += *itTo + "/";
+
+            // Remove trailing slash before returning
+            if (!res.empty() && std::find_first_of(res.rbegin(), res.rbegin()+1, PATH_SEPARATORS, PATH_SEPARATORS+PATH_SEPARATORS_LEN) != res.rbegin()+1)
+            {
+                return res.substr(0, res.length()-1);
+            }
+            return res;
         }
 
 

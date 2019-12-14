@@ -124,7 +124,7 @@ namespace easy3d {
 
 			//now we can read the grid cells
 			PointCloud* cloud = new PointCloud;
-            std::string cloud_name = file_system::base_name(file_name_) + "-#" + std::to_string(cloud_index_);
+            std::string cloud_name = file_system::stripped_name(file_name_) + "-#" + std::to_string(cloud_index_);
 			cloud->set_name(cloud_name);
 
 			PointCloud::VertexProperty<vec3> colors;;
