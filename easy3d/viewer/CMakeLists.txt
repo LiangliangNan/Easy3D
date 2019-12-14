@@ -32,6 +32,8 @@ set(${PROJECT_NAME}_HEADERS
     shadow.h
     soft_shadow.h
     opengl_timer.h
+	tessellator.h
+	tessellator_gen.h
     texture.h
     transform.h
     transform_decompose.h
@@ -66,6 +68,8 @@ set(${PROJECT_NAME}_SOURCES
     shader_program.cpp
     shadow.cpp
     soft_shadow.cpp
+	tessellator.cpp
+	tessellator_gen.cpp
     texture.cpp
     opengl_timer.cpp
     transform.cpp
