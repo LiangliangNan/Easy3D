@@ -1,4 +1,4 @@
-<img src="images/logo.jpg" width="400">
+<img src="resources/images/logo.jpg" width="400">
 
 ### Easy3D is an open source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 ### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
@@ -6,20 +6,20 @@
 
 <center>
 	
-<img src="images/cloud.jpg" height="180">  |  <img src="images/mesh.jpg" height="180">  |  <img src="images/scalar.jpg" height="180">
+<img src="resources/images/cloud.jpg" height="180">  |  <img src="resources/images/mesh.jpg" height="180">  |  <img src="resources/images/scalar.jpg" height="180">
 :-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
 Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
 
-<img src="images/vector.jpg" height="180"> |   <img src="images/scene.jpg" height="180">
+<img src="resources/images/vector.jpg" height="180"> |   <img src="resources/images/scene.jpg" height="180">
 :-----------------------------------------:|:------------------------------------------:
 Vector field                               |   Rendering a model given camera intrinsic and extrinsic parameters
 
 
-<img src="images/edl.jpg" height="180"> | <img src="images/shadow.jpg" height="180"> |  <img src="images/transparency.jpg" height="180">
+<img src="resources/images/edl.jpg" height="180"> | <img src="resources/images/shadow.jpg" height="180"> |  <img src="resources/images/transparency.jpg" height="180">
 :--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
 Eye-dome lighting                       |  Shadow                                    |   Transparency	
 
-<img src="images/imposters.jpg" height="180">| <img src="images/reconstruction.jpg" height="180"> |  <img src="images/planes.jpg" height="180">
+<img src="resources/images/imposters.jpg" height="180">| <img src="resources/images/reconstruction.jpg" height="180"> |  <img src="resources/images/planes.jpg" height="180">
 :-------------------------------------------:|:--------------------------------------------------:|:------------------------------------------------:
 Point/Line imposters                         |  Surface reconstruction                            |   Plane extraction                          	    
 
@@ -35,6 +35,7 @@ Point/Line imposters                         |  Surface reconstruction          
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and processing algorithms for 3D modeling and geometry processing. 
 
 ** In progress and planed for the next release (~Jan. 2010)**
+
  - Better documentation (basically more comments in API definition)
  - Textured rendering
  - Set line width for LinesDrawable
@@ -44,6 +45,7 @@ Point/Line imposters                         |  Surface reconstruction          
 ### A quick glance ###
 
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
+
 ```c++
 	Viewer viewer;	// create the default Easy3D viewer
 
@@ -71,19 +73,20 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 ```
 
 Bellow is another example showing how to render a surface model (the result is in Figure 2).
+
 ```c++
-        // create a surface mesh
-        SurfaceMesh* mesh = new SurfaceMesh;
+	// create a surface mesh
+	SurfaceMesh* mesh = new SurfaceMesh;
 	
 	// create a drawable for rendering the surface of this model
 	TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
-
-	// transfer vertex coordinates and colors to the GPU. 
-        drawable->update_vertex_buffer(vertices);	// an array of 3D points
-        drawable->update_color_buffer(colors); 		// an array of colors
 	
-	drawable->set_per_vertex_color(true);	// vertices have different colors
-
+	// transfer vertex coordinates and colors to the GPU. 
+	drawable->update_vertex_buffer(vertices);   // an array of 3D points
+	drawable->update_color_buffer(colors);      // an array of colors
+	
+	drawable->set_per_vertex_color(true);       // vertices have different colors
+	
 	// add the model to the viewer
 	viewer.add_model(mesh);
 ```

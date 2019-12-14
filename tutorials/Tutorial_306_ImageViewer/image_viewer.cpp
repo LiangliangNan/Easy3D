@@ -97,7 +97,7 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
 }
 
 
-void ImageViewer::fit_screen(const easy3d::Model *model) {
+void ImageViewer::fit_screen(const Model *model) {
     (void)model;
     if (texture_ == nullptr)
         return;

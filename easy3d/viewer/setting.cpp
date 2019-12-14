@@ -94,16 +94,33 @@ namespace easy3d {
 
 		// resource directory (containing color maps, shaders, textures, etc.)
 		std::string resource_directory() {
-            std::string dir = "resources";
-			if (file::is_directory(dir)) 
-				return "./" + dir;
-            else if (file::is_directory("../resources"))
-                return "../resources";
-            else if (file::is_directory("../../resources"))
-                return "../../resources";
-            else if (file::is_directory("../../../resources"))
-                return "../../../resources";
-			return dir;
+            std::string parent = file::executable_directory();
+            std::string dir = parent + "/resources";
+            if (file::is_directory(dir))
+                return dir;
+            else {
+                // If reached here, we may need to move "up" three times, because
+                // macOS put the executable file in the application bundle, e.g.,
+                // "PolyFit.app/⁨Contents/⁨MacOS⁩/PolyFit".
+                parent = file::parent_directory(parent);
+                std::string dir = parent + "/resources";
+                if (file::is_directory(dir))
+                    return dir;
+                else {
+                    parent = file::parent_directory(parent);
+                    std::string dir = parent + "/resources";
+                    if (file::is_directory(dir))
+                        return dir;
+                    else {
+                        parent = file::parent_directory(parent);
+                        std::string dir = parent + "/resources";
+                        if (file::is_directory(dir))
+                            return dir;
+                    }
+                }
+                // if still could not find it, return the current working directory
+                return file::current_working_directory();
+            }
 		}
 
     } // namespace setting

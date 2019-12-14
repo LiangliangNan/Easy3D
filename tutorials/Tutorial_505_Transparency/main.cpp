@@ -26,7 +26,10 @@
 #include "transparency.h"
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/setting.h>
 
+using namespace easy3d;
 
 // This example shows how to render a surface mesh with transparency effect
 // using the following techniques 
@@ -35,20 +38,20 @@
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file = "../../Easy3D/data/hand.poly";
+    const std::string file = setting::resource_directory() + "/data/hand.poly";
 
     try {
         // Create the viewer.
         TutorialTransparency viewer("Tutorial_505_Transparency");
 
-        easy3d::Model* model = viewer.open(file, true);
+        Model* model = viewer.open(file, true);
         if (!model) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
         }
 
         auto drawable = model->triangles_drawable("surface");
-        drawable->set_default_color(easy3d::vec3(1.0f, 0.67f, 0.5f));
+        drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
 
         // Run the viewer
         viewer.run();

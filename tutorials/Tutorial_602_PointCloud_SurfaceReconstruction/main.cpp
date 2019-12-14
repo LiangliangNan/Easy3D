@@ -26,20 +26,22 @@
 #include "surface_reconstruction.h"
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/setting.h>
 
+using namespace easy3d;
 
 // This example shows how to
 //		- reconstruct a smooth surface from a point cloud using the Poisson surface reconstruction method
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file = "../../Easy3D/data/bunny.bin";
+    const std::string file = setting::resource_directory() + "/data/bunny.bin";
 
     try {
         // Create the viewer.
         TutorialSurfaceReconstruction viewer("Tutorial_602_PointCloud_SurfaceReconstruction");
 
-        easy3d::Model* model = viewer.open(file, true);
+        Model* model = viewer.open(file, true);
         if (!model) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
@@ -47,7 +49,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(2.0f);
-        drawable->set_default_color(easy3d::vec3(0.6f, 0.6f, 1.0f));
+        drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));
 
         // Run the viewer
         viewer.run();

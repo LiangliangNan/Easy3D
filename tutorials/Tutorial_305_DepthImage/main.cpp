@@ -24,13 +24,15 @@
 */
 
 #include "depth_image.h"
+#include <easy3d/viewer/setting.h>
 
+using namespace easy3d;
 
 // This example shows how to create depth images from the rendering.
 
 int main(int /*argc*/, char** /*argv*/) {
     // the point cloud file.
-    const std::string cloud_file = "../../Easy3D/data/fountain/pointcloud.ply";
+    const std::string cloud_file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
 
     try {
         DepthImage viewer("Tutorial_305_DepthImage", cloud_file);

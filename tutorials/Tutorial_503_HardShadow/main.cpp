@@ -26,27 +26,29 @@
 #include "hard_shadow.h"
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/setting.h>
 
+using namespace easy3d;
 
 // This example shows how to
 //		- renders a scene with hard shadow using the shadow map technique
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file = "../../Easy3D/data/room.obj";
+    const std::string file = setting::resource_directory() + "/data/room.obj";
 
     try {
         // Create the viewer.
         TutorialHardShadow viewer("Tutorial_503_HardShadow");
 
-        easy3d::Model* model = viewer.open(file, true);
+        Model* model = viewer.open(file, true);
         if (!model) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
         }
 
         auto drawable = model->triangles_drawable("surface");
-        drawable->set_default_color(easy3d::vec3(0.9f, 0.9f, 0.9f));
+        drawable->set_default_color(vec3(0.9f, 0.9f, 0.9f));
 
         // Run the viewer
         viewer.run();

@@ -28,6 +28,7 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/setting.h>
 
 
 using namespace easy3d;
@@ -47,8 +48,8 @@ int main(int /*argc*/, char** /*argv*/) {
         Viewer viewer("Tutorial_404_Imposters");
 
         // Load point cloud data from a file
-        const std::string file_name = "../../Easy3D/data/sphere.obj";
-        easy3d::SurfaceMesh* mesh = dynamic_cast<easy3d::SurfaceMesh*>(viewer.open(file_name, false));
+        const std::string file_name = setting::resource_directory() + "/data/sphere.obj";
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, false));
         if (!mesh) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
@@ -61,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/) {
         PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
         points_drawable->update_vertex_buffer(points.vector());
         points_drawable->set_per_vertex_color(false);
-        points_drawable->set_default_color(easy3d::vec3(1.0f, 0.0f, 0.0f));
+        points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
         points_drawable->set_point_size(26.0f);
         points_drawable->set_impostors(true);
 
@@ -77,7 +78,7 @@ int main(int /*argc*/, char** /*argv*/) {
         }
         edges_drawable->update_vertex_buffer(edge_points);
         edges_drawable->set_per_vertex_color(false);
-        edges_drawable->set_default_color(easy3d::vec3(1.0f, 0.67f, 0.5f));
+        edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
         edges_drawable->set_impostor_type(IT_CYLINDERS);
         edges_drawable->set_impostor_thickness(8);
 

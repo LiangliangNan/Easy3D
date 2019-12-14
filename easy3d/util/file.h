@@ -53,16 +53,19 @@ namespace easy3d {
         void		get_files(const std::string& dir, std::vector<std::string>& files, bool recursive = false);
         void		get_sub_directories(const std::string& dir, std::vector<std::string>& subs, bool recursive = false);
 
-        std::string get_current_working_directory() ;
+        std::string current_working_directory() ;
         bool		set_current_working_directory(const std::string& path);
 
         /** Determines the home path for the current user. */
-        std::string get_home_directory(void);
+        std::string home_directory();
+
+        // Gets the directory where the executable file is located
+        std::string executable_directory();
 
         bool		rename_file(const std::string& old_name, const std::string& new_name);
 
-        time_t		get_time_stamp(const std::string& file_or_dir);
-        std::string get_time_string(const std::string& file_or_dir);
+        time_t		time_stamp(const std::string& file_or_dir);
+        std::string time_string(const std::string& file_or_dir);
 
         /** Gets the parent path from full name (Ex: /a/b/c.Ext => /a/b). */
         std::string dir_name(const std::string& file_name) ;
@@ -86,23 +89,23 @@ namespace easy3d {
         std::string replace_extension(std::string const& file_name, std::string const& ext);
 
         /** Gets root part of a path ("/" or "C:"), or an empty string if none found. */
-        std::string get_path_root(const std::string& path);
+        std::string path_root(const std::string& path);
         /** Tests if path is absolute, as !get_path_root(path).empty(). */
         bool		is_absolute_path(const std::string& path);
         /** If 'to' is in a subdirectory of 'from' then this function returns the subpath, otherwise it just returns the file name.
         * The function does \b not automagically resolve paths as the system does, so be careful to give canonical paths.
         * However, the function interprets slashes ('/') ans backslashes ('\') as they were equal.
         */
-        std::string get_relative_path(const std::string& from, const std::string& to);
+        std::string relative_path(const std::string& from, const std::string& to);
         /** Removes .. and . dirs in a path */
-        std::string get_absolute_path(const std::string& path);
+        std::string absolute_path(const std::string& path);
 
         std::string convert_to_windows_style(const std::string& path);
         /** Converts back slashes (\) to forward slashes (/). */
         std::string convert_to_unix_style(const std::string& path);
 
         /** Get the path separator for the current platform. */
-        char get_native_path_separator();
+        char native_path_separator();
         /** Check if the path contains only the current platform's path separators. */
         bool is_native_style(const std::string& path);
         /** Convert the path to contain only the current platform's path separators. */

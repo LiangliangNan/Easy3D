@@ -27,6 +27,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/setting.h>
 
 
 using namespace easy3d;
@@ -45,8 +46,8 @@ int main(int /*argc*/, char** /*argv*/) {
         Viewer viewer("Tutorial_403_VectorField");
 
         // Load point cloud data from a file
-        const std::string file_name = "../../Easy3D/data/building_cloud.bin";
-        easy3d::PointCloud* cloud = dynamic_cast<easy3d::PointCloud*>(viewer.open(file_name, true));
+        const std::string file_name = setting::resource_directory() + "/data/building_cloud.bin";
+        PointCloud* cloud = dynamic_cast<PointCloud*>(viewer.open(file_name, true));
         if (!cloud) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;

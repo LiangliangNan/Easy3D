@@ -25,8 +25,10 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/viewer/setting.h>
 
 #include <fstream>
+
 
 using namespace easy3d;
 
@@ -38,7 +40,7 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Read the point cloud from a known file. 
-    PointCloud* cloud = PointCloudIO::load("../../Easy3D/data/building_cloud.bin");
+    PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/building_cloud.bin");
     if (!cloud) {
         std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;

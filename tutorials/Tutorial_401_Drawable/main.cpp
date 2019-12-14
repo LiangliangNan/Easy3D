@@ -28,6 +28,7 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/viewer/setting.h>
 
 
 using namespace easy3d;
@@ -40,7 +41,7 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Read a mesh specified by its file name
-    const std::string file_name = "../../Easy3D/data/building.off";
+    const std::string file_name = setting::resource_directory() + "/data/building.off";
 
     try {
 
@@ -52,7 +53,7 @@ int main(int /*argc*/, char** /*argv*/) {
         // This funnction will do the following:
         //  - load the model to the viewer.
         //  - create necessary default drawables for visualization.
-        easy3d::Model* mesh = viewer.open(file_name, true);
+        Model* mesh = viewer.open(file_name, true);
         if (!mesh)
             std::cerr << "failed loading model from \'" << file_name << "\'" << std::endl;
 

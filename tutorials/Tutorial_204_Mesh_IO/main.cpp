@@ -25,6 +25,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/viewer/setting.h>
 
 using namespace easy3d;
 
@@ -36,7 +37,7 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
 	// Read a mesh specified by its file name
-    const std::string file_name = "../../Easy3D/data/building.off";
+    const std::string file_name = setting::resource_directory() + "/data/building.off";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
         std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
@@ -54,7 +55,7 @@ int main(int /*argc*/, char** /*argv*/) {
 	// Write the mesh to a new file.
     std::string save_file_name = "./building-copy.obj";
     if (SurfaceMeshIO::save(save_file_name, mesh))
-		std::cout << "mesh saved" << std::endl;
+        std::cout << "mesh saved to \'" << save_file_name << "\'"  << std::endl;
 	else
 		std::cerr << "failed create the new file" << std::endl;
 

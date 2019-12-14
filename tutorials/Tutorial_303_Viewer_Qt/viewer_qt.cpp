@@ -665,7 +665,7 @@ void ViewerQt::deleteModel(Model* model) {
 }
 
 
-void ViewerQt::fitScreen(const easy3d::Model *model) {
+void ViewerQt::fitScreen(const Model *model) {
 	if (!model && models_.empty())
 		return;
 

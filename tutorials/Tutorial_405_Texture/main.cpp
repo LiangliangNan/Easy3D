@@ -28,7 +28,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/texture.h>
-#include <easy3d/util/file.h>
+#include <easy3d/viewer/setting.h>
 
 using namespace easy3d;
 
@@ -38,12 +38,7 @@ using namespace easy3d;
 //		- render a textured quad using a texture.
 
 
-int main(int argc, char** argv) {
-#ifdef __APPLE__
-    // This makes sure that our "working directory" is not within the application bundle
-    file::set_current_working_directory(file::parent_directory(argv[0]));
-#endif
-
+int main(int /*argc*/, char** /*argv*/) {
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.
@@ -52,7 +47,7 @@ int main(int argc, char** argv) {
         viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
         //--------------- create a mesh (which is a quad) -------------------
-#if 1
+
         SurfaceMesh* mesh = new SurfaceMesh;
         auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
@@ -63,14 +58,10 @@ int main(int argc, char** argv) {
         mesh->add_triangle(v0, v1, v2);
         mesh->add_triangle(v0, v2, v3);
         viewer.add_model(mesh);
-#else
-        const std::string file = "../../Easy3D/data/room.obj";
-        easy3d::Model* mesh = viewer.open(file, true);
-#endif
 
         //---------------- Load texture from an image file -------------------
 
-        const std::string texture_file = "../../Easy3D/images/logo.jpg";
+        const std::string texture_file = setting::resource_directory() + "/images/logo.jpg";
         Texture* tex = Texture::create(texture_file, GL_REPEAT);
         if (!tex) {
             std::cerr << "Error: failed to create texture. Please make sure the file exists and format is correct." << std::endl;

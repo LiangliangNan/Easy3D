@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/viewer/setting.h>
 
 
 using namespace easy3d;
@@ -38,7 +39,7 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file_name = "../../Easy3D/data/building.off";
+    const std::string file_name = setting::resource_directory() + "/data/building.off";
 
     try {
         // Create the default Easy3D viewer.

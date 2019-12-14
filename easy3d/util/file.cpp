@@ -45,6 +45,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pwd.h>
+#include <libproc.h>
+#endif
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h> // for _NSGetExecutablePath
 #endif
 
 #include <easy3d/util/string.h>
@@ -91,7 +96,7 @@ namespace easy3d {
 
 
         bool is_directory(const std::string& path) {
-            if (path == get_path_root(path)) // already the root of the path
+            if (path == path_root(path)) // already the root of the path
                 return true;
 
     #ifdef _WIN32
@@ -184,12 +189,12 @@ namespace easy3d {
         }
 
 
-        std::string get_current_working_directory() {
-            char buff[1024];
+        std::string current_working_directory() {
+            char path[PATH_MAX] = { 0 };
 #ifdef WIN32
-            return std::string(::_getcwd(buff, 4096));
+            return std::string(::_getcwd(path, PATH_MAX));
 #else
-            return std::string(::getcwd(buff, 4096));
+            return std::string(::getcwd(path, PATH_MAX));
 #endif
         }
 
@@ -202,30 +207,46 @@ namespace easy3d {
     #endif
         }
 
-        std::string get_home_directory() {
-            char home_path[2048] = { 0 };
 
-            if (*home_path != 0)
-                return home_path;
-
+        std::string home_directory() {
+            char path[PATH_MAX] = { 0 };
             // TODO: Use HOME environment variable?
-
     #ifdef _WIN32
             // SHGetFolderPathA seems to expect non-wide chars
             // http://msdn.microsoft.com/en-us/library/bb762181(VS.85).aspx
             // FIXME: Max length of home path?
-            if (!SUCCEEDED(::SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, home_path)))
+            if (!SUCCEEDED(::SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path)))
                 std::cerr << "Cannot determine home directory" << std::endl;
     #else // _WIN32
             uid_t user_id = ::geteuid();
             struct passwd* user_info = ::getpwuid(user_id);
             if (user_info == nullptr || user_info->pw_dir == nullptr)
                 std::cerr << "Cannot determine home directory" << std::endl;
-            std::strncpy(home_path, user_info->pw_dir, PATH_MAX);
+            std::strncpy(path, user_info->pw_dir, PATH_MAX);
     #endif // _WIN32
 
-            return home_path;
+            return path;
         }
+
+
+        std::string executable_directory() {
+            char path[PATH_MAX] = { 0 };
+    #ifdef _WIN32
+            HMODULE hModule = GetModuleHandleW(NULL);
+            WCHAR path[MAX_PATH];
+            GetModuleFileNameW(hModule, path, MAX_PATH);
+    #else // _WIN32
+            pid_t pid = getpid();
+            // proc_pidpath() gets the full process name including directories to the
+            // executable and the full executable name.
+            int ret = proc_pidpath(pid, path, sizeof(path));
+            if (ret > 0)
+                return parent_directory(path);
+    #endif // _WIN32
+            // If failed, simply returns current working directory.
+            return current_working_directory();
+        }
+
 
         bool rename_file(const std::string& old_name, const std::string& new_name) {
             if (is_file(new_name)) {
@@ -235,15 +256,15 @@ namespace easy3d {
         }
 
 
-        time_t get_time_stamp(const std::string& file_or_dir) {
+        time_t time_stamp(const std::string& file_or_dir) {
             struct stat buffer;
             if (!stat(file_or_dir.c_str(), &buffer))
                 return (buffer.st_mtime);
             return 0;
         }
 
-        std::string get_time_string(const std::string& file_or_dir) {
-            time_t stamp = get_time_stamp(file_or_dir);
+        std::string time_string(const std::string& file_or_dir) {
+            time_t stamp = time_stamp(file_or_dir);
             if (stamp != 0) {
                 struct tm* timeinfo = localtime(&stamp);
                 std::string tstr = asctime(timeinfo);
@@ -369,7 +390,7 @@ namespace easy3d {
             return file_name.substr(0, dotpos) + "." + ext;
         }
 
-        std::string get_path_root(const std::string& path) {
+        std::string path_root(const std::string& path) {
             // Test for unix root
             if (path.empty())
                 return "";
@@ -402,31 +423,19 @@ namespace easy3d {
                 return true;
             }
             return false;
-
-            //#ifdef _WIN32
-            //		// test for Windows
-            //		// We should check that path[0] is a letter, but as ':' is invalid in paths in other cases, that's not a problem.
-            //		return path.size() >= 2 && path[1] == ':';
-            //		//return path.size() >= 2 && std::isalpha(path[0]) && path[1] == ':';
-            //#else
-            //		// Test for unix
-            //		return path.size() >= 1 && path[0] == '/';
-            //#endif
         }
 
         // See Qt's QDir::absoluteFilePath(), QDir::relativeFilePath() ...
-        std::string get_relative_path(const std::string& from, const std::string& to) {
+        std::string relative_path(const std::string& from, const std::string& to) {
             std::cerr << "not implemented yet. Returning 'to' unchanged." << std::endl;
             return simple_name(to);
         }
 
 
-        std::string get_absolute_path(const std::string& path)
+        std::string absolute_path(const std::string& path)
         {
     #if defined(WIN32)  && !defined(__CYGWIN__)
-            const int max_path_len = 2048;
-            char retbuf[max_path_len];
-
+            char resolved_path[PATH_MAX] = { 0 };
             if (_fullpath(retbuf, path.c_str(), max_path_len) != 0)
                 return retbuf;
             else {
@@ -434,15 +443,12 @@ namespace easy3d {
                 return path;
             }
     #else
-
-            char resolved_path[PATH_MAX];
+            char resolved_path[PATH_MAX] = { 0 };
             char* result = realpath(path.c_str(), resolved_path);
-
             if (result)
                 return std::string(resolved_path);
             else
                 return path;
-
     #endif
         }
 
@@ -470,7 +476,7 @@ namespace easy3d {
             return new_fileName;
         }
 
-        char get_native_path_separator() {
+        char native_path_separator() {
     #if defined(WIN32) && !defined(__CYGWIN__)
             return WINDOWS_PATH_SEPARATOR;
     #else
