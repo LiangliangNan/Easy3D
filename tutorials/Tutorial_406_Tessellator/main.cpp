@@ -140,23 +140,21 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.camera()->setUpVector(vec3(0, 1, 0));
         viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
-        //---------------------- create models -----------------------
+        //---------------------- create model -----------------------
 
-        // Mesh 1: a single concave quad face
+        SurfaceMesh* mesh = new SurfaceMesh;
+
+        // Face 1: a concave quad
         {
-            SurfaceMesh* mesh = new SurfaceMesh;
             SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3( 200,    0, 0));
             SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1000,    0, 0));
             SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(1000,  800, 0));
             SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3( 800,  300, 0));
             mesh->add_quad(v0, v1, v2, v3);
-            viewer.add_model(mesh, false);  // I will create my own drawables
-            create_drawable(mesh, TessellatorGen::NONZERO); // or POSITIVE
         }
 
         // Mesh 2: a self-intersecting face (a star)
         {
-            SurfaceMesh* mesh = new SurfaceMesh;
             std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3( 400, 200, 0)),
                 mesh->add_vertex(vec3( 200, 900, 0)),
@@ -165,13 +163,13 @@ int main(int /*argc*/, char** /*argv*/) {
                 mesh->add_vertex(vec3(-200, 600, 0))
             };
             mesh->add_face(vertices);
-            viewer.add_model(mesh, false);  // I will create my own drawables
-            create_drawable(mesh, TessellatorGen::NONZERO); // or POSITIVE
         }
 
-        //--- Create triangles drawable using the tessellator ---
+        viewer.add_model(mesh, false);  // I will create my own drawables
 
+        //-------- Create triangles drawable using the tessellator ---------
 
+        create_drawable(mesh, TessellatorGen::NONZERO); // or POSITIVE
 
         // -----------------------------------------------------------------
 
