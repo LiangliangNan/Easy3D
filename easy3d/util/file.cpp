@@ -24,6 +24,7 @@
 */
 
 #include <easy3d/util/file.h>
+#include <easy3d/util/string.h>
 
 #include <iostream>
 #include <fstream>
@@ -45,14 +46,12 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <pwd.h>
-#include <libproc.h>
+#include <libgen.h>
 #endif
 
 #ifdef __APPLE__
-#include <mach-o/dyld.h> // for _NSGetExecutablePath
+#include <libproc.h>
 #endif
-
-#include <easy3d/util/string.h>
 
 /*
 some code are modified from or inspired by:
@@ -235,13 +234,17 @@ namespace easy3d {
             HMODULE hModule = GetModuleHandleW(NULL);
             WCHAR path[MAX_PATH];
             GetModuleFileNameW(hModule, path, MAX_PATH);
-    #else // _WIN32
+    #elif defined (__APPLE__)
             pid_t pid = getpid();
             // proc_pidpath() gets the full process name including directories to the
             // executable and the full executable name.
             int ret = proc_pidpath(pid, path, sizeof(path));
             if (ret > 0)
                 return parent_directory(path);
+    #else
+            ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
+            if (count != -1)
+                return dirname(path);
     #endif // _WIN32
             // If failed, simply returns current working directory.
             return current_working_directory();
