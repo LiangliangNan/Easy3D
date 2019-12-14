@@ -53,6 +53,10 @@
 #include <libproc.h>
 #endif
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 /*
 some code are modified from or inspired by:
 "OpenSceneGraph - <osgDB/FileNameUtils>"
@@ -232,10 +236,10 @@ namespace easy3d {
             char path[PATH_MAX] = { 0 };
     #ifdef _WIN32
             // When NULL is passed to GetModuleHandle, the handle of the exe itself is returned
-            HMODULE hModule = GetModuleHandle(NULL);
+            HMODULE hModule = GetModuleHandle(nullptr);
             if (hModule) {
-                GetModuleFileNameW(hModule, path, MAX_PATH);
-                return path;
+                GetModuleFileName(hModule, path, MAX_PATH);
+                return parent_directory(path);
             }
     #elif defined (__APPLE__)
             pid_t pid = getpid();
@@ -440,16 +444,15 @@ namespace easy3d {
 
         std::string absolute_path(const std::string& path)
         {
-    #if defined(WIN32)  && !defined(__CYGWIN__)
             char resolved_path[PATH_MAX] = { 0 };
-            if (_fullpath(retbuf, path.c_str(), max_path_len) != 0)
-                return retbuf;
+    #if defined(WIN32)  && !defined(__CYGWIN__)
+            if (_fullpath(resolved_path, path.c_str(), PATH_MAX) != 0)
+                return resolved_path;
             else {
                 std::cerr << "invalid path. Returning 'path' unchanged." << std::endl;
                 return path;
             }
     #else
-            char resolved_path[PATH_MAX] = { 0 };
             char* result = realpath(path.c_str(), resolved_path);
             if (result)
                 return std::string(resolved_path);
