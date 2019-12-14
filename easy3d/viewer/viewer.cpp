@@ -175,8 +175,8 @@ namespace easy3d {
 
 #if 1
         std::cout << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
-        std::cout << "Supported OpenGL version: " << glGetString(GL_VERSION) << std::endl;
-        std::cout << "Supported GLSL version:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+        std::cout << "OpenGL version received: " << glGetString(GL_VERSION) << std::endl;
+        std::cout << "GLSL version received:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 #endif
 
         glGetIntegerv(GL_SAMPLES, &samples_);

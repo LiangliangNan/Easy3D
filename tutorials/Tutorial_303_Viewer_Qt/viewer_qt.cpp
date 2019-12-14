@@ -139,8 +139,8 @@ void ViewerQt::initializeGL()
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
     std::cout << "OpenGL version requested: " << major_requested << "." << minor_requested << std::endl;
-    std::cout << "Supported OpenGL version: " << func_->glGetString(GL_VERSION) << std::endl;
-    std::cout << "Supported GLSL version:   " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "OpenGL version received: " << func_->glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL version received:   " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 
     int major = 0;  func_->glGetIntegerv(GL_MAJOR_VERSION, &major);
     int minor = 0;  func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
