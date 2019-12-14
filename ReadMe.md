@@ -37,9 +37,7 @@ Point/Line imposters                         |  Surface reconstruction          
 ** In progress and planed for the next release (~Jan. 2010)**
 
  - Better documentation (basically more comments in API definition)
- - Textured rendering
  - Set line width for LinesDrawable
- - Rendering meshes with concave faces and faces with holes
  - and more ...
  
 ### A quick glance ###

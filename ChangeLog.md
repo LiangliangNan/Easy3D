@@ -1,6 +1,10 @@
+#### 14/12/2019
+  - put data in the resources directory;
+  - added Tutorial_406_Tessellator.
+
 #### 11/12/2019
-  - point imposter (using point sprites, geometry shader) ready.
-  - line imposter (using point sprites, geometry shader) ready.
+  - added point imposter (using point sprites, geometry shader);
+  - added line imposter (using point sprites, geometry shader).
 
 #### 10/12/2019 
   - simplified the APIs of drawables (i.e., shader management is now taken care of by the drawables, so client code only needs to call the draw() function for rendering);
