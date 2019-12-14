@@ -28,7 +28,6 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/texture.h>
-
 #include <easy3d/util/file.h>
 
 using namespace easy3d;
@@ -40,7 +39,10 @@ using namespace easy3d;
 
 
 int main(int argc, char** argv) {
+#ifdef __APPLE__
+    // This makes sure that our "working directory" is not within the application bundle
     file::set_current_working_directory(file::parent_directory(argv[0]));
+#endif
 
     try {
         // Create the default Easy3D viewer.
