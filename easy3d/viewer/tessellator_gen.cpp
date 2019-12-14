@@ -35,7 +35,7 @@
 #  if defined(__APPLE__) && defined(__MACH__)
 #    include <OpenGL/glu.h>
 #  else
-#    include <gl/GLU.h>
+#    include <GL/glu.h>
 #  endif
 
 #include <iostream>
