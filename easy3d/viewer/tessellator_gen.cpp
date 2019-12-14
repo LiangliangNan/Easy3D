@@ -171,8 +171,6 @@ namespace easy3d {
         case ABS_GEQ_TWO:
             gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
             return;
-        default:
-            std::cerr << "unknown GLU tessellator winding rule: " << rule << std::endl;
         }
     }
 
