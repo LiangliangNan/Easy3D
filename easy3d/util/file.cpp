@@ -231,9 +231,12 @@ namespace easy3d {
         std::string executable_directory() {
             char path[PATH_MAX] = { 0 };
     #ifdef _WIN32
-            HMODULE hModule = GetModuleHandleW(NULL);
-            WCHAR path[MAX_PATH];
-            GetModuleFileNameW(hModule, path, MAX_PATH);
+            // When NULL is passed to GetModuleHandle, the handle of the exe itself is returned
+            HMODULE hModule = GetModuleHandle(NULL);
+            if (hModule) {
+                GetModuleFileNameW(hModule, path, MAX_PATH);
+                return path;
+            }
     #elif defined (__APPLE__)
             pid_t pid = getpid();
             // proc_pidpath() gets the full process name including directories to the
