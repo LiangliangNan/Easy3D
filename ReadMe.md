@@ -33,12 +33,7 @@ Point/Line imposters                         |  Surface reconstruction          
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, [Poisson Surface Reconstruction](http://www.cs.jhu.edu/~misha/MyPapers/ToG13.pdf), [RANSAC](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.1514&rep=rep1&type=pdf).
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and processing algorithms for 3D modeling and geometry processing. 
-
-** In progress and planed for the next release (~Jan. 2010)**
-
- - Better documentation (basically more comments in API definition)
- - Set line width for LinesDrawable
- - and more ...
+ 
  
 ### A quick glance ###
 
