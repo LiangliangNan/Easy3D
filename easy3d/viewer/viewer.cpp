@@ -752,6 +752,26 @@ namespace easy3d {
 				}
 			}
 		}
+        else if (key == GLFW_KEY_V && modifiers == 0) {
+            if (current_model()) {
+                SurfaceMesh* m = dynamic_cast<SurfaceMesh*>(current_model());
+                if (m) {
+                    PointsDrawable* vertices = m->points_drawable("vertices");
+                    if (!vertices) {
+                        vertices = m->add_points_drawable("vertices");
+                        auto points = m->get_vertex_property<vec3>("v:point");
+                        vertices->update_vertex_buffer(points.vector());
+                        vertices->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+                        vertices->set_per_vertex_color(false);
+                        vertices->set_visible(true);
+                        vertices->set_impostors(true);
+                        vertices->set_point_size(3.0f);
+                    }
+                    else
+                        vertices->set_visible(!vertices->is_visible());
+                }
+            }
+        }
         else if (key == GLFW_KEY_R && modifiers == 0) {
             ShaderManager::reload();
         }
@@ -921,8 +941,9 @@ namespace easy3d {
             "  Shift + Right:   Set/unset anchor point							\n"
 			"  P:               Toggle perspective/orthographic projection)		\n"
 			"  A:               Toggle axes										\n"
-			"  W:               Toggle wireframe								\n"
-			"  < or >:          Switch between models							\n"
+            "  W:               Toggle wireframe								\n"
+            "  V:               Toggle vertices                                 \n"
+            "  < or >:          Switch between models							\n"
             "  M:               Toggle MSAA										\n"
             "  S:               Snapshot										\n"
         );

@@ -1,3 +1,7 @@
+#### 16/12/2019
+  - show/hide mesh vertices;
+  - line with control for LinesDrawables (using geometry shader).
+
 #### 14/12/2019
   - put data in the resources directory;
   - added Tutorial_406_Tessellator.
