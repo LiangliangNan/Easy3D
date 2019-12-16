@@ -80,7 +80,7 @@ int main(int /*argc*/, char** /*argv*/) {
         edges_drawable->set_per_vertex_color(false);
         edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
         edges_drawable->set_impostor_type(IT_CYLINDERS);
-        edges_drawable->set_impostor_thickness(8);
+        edges_drawable->set_line_width(8);
 
         //--------------------- render normals as cones -----------------------
 
@@ -107,7 +107,7 @@ int main(int /*argc*/, char** /*argv*/) {
         normals_drawable->set_per_vertex_color(false);
         normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
         normals_drawable->set_impostor_type(IT_CONES);
-        normals_drawable->set_impostor_thickness(15);
+        normals_drawable->set_line_width(15);
 
         // -----------------------------------------------------------------
 

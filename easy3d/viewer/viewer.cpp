@@ -670,25 +670,29 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
-                if (dynamic_cast<PointCloud*>(m)) {
-                    for (auto d : m->points_drawables()) {
-                        float size = d->point_size() - 1.0f;
-                        if (size < 1)
-                            size = 1;
-                        d->set_point_size(size);
-                    }
+                for (auto d : m->points_drawables()) {
+                    float size = d->point_size() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_point_size(size);
+                }
+                for (auto d : m->lines_drawables()) {
+                    float size = d->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_line_width(size);
                 }
 			}
 		}	
 		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
 			for (auto m : models_) {
-                if (dynamic_cast<PointCloud*>(m)) {
-                    for (auto d : m->points_drawables()) {
-                        float size = d->point_size() + 1.0f;
-                        if (size > 20)
-                            size = 20;
-                        d->set_point_size(size);
-                    }
+                for (auto d : m->points_drawables()) {
+                    float size = d->point_size() + 1.0f;
+                    d->set_point_size(size);
+                }
+                for (auto d : m->lines_drawables()) {
+                    float size = d->line_width() + 1.0f;
+                    d->set_line_width(size);
                 }
 			}
 		}
@@ -909,8 +913,9 @@ namespace easy3d {
             "  Right:           Move up/down/left/right							\n"
             "  Alt + Left:      Orbit-rotate the camera (screen based)			\n"
             "  Alt + Right:     Move up/down/left/right (screen based)			\n"
-			"  Middle/Wheel:    Zoom out/in										\n"
-			"  Ctrl + '-'/'+':  Zoom out/in										\n"
+            "  Middle/Wheel:    Zoom in/out										\n"
+            "  Ctrl + '+'/'-':  Zoom in/out										\n"
+            "  '+'/'-':         Increase/Decrease point size (and line width)	\n"
             "  F:               Fit screen (all models)                         \n"
 			"  C:               Fit screen (current model only)					\n"
             "  Shift + Right:   Set/unset anchor point							\n"

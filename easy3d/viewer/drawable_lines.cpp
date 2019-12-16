@@ -37,7 +37,7 @@ namespace easy3d {
     LinesDrawable::LinesDrawable(const std::string& name /* = ""*/)
         : Drawable(name)
         , impostor_type_(IT_NULL)
-        , impostor_thickness_(1.0f)
+        , line_width_(1.0f)
     {
         default_color_ = vec3(0.0f, 0.0f, 0.0f);
     }
@@ -75,24 +75,53 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines(const Camera* camera, bool with_storage_buffer) const {
-        ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+        if (line_width() <= 1) {
+            ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+            }
+
+            if (!program)
+                return;
+
+            const mat4& MVP = camera->modelViewProjectionMatrix();
+            program->bind();
+            program->set_uniform("MVP", MVP);
+            program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
+            program->set_uniform("default_color", default_color());
+            gl_draw(with_storage_buffer);
+            program->release();
         }
+        else {  // use geometry shader to be able to control the line width
+            ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color_width_control");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                std::vector<std::string> outputs;
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color_width_control", attributes, outputs, true);
+            }
+            if (!program)
+                return;
 
-        if (!program)
-            return;
+            program->bind();
+            program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
 
-        const mat4& MVP = camera->modelViewProjectionMatrix();
-        program->bind();
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
-        gl_draw(with_storage_buffer);
-        program->release();
+            program->set_uniform("MV", camera->modelViewMatrix());
+            program->set_uniform("PROJ", camera->projectionMatrix());
+
+            float ratio = camera->pixelGLRatio(camera->sceneCenter());
+            program->set_uniform("radius", line_width_ * ratio);
+
+            program->set_uniform("default_color", default_color());
+            program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
+
+            gl_draw(with_storage_buffer);
+            program->release();
+        }
     }
 
 
@@ -115,7 +144,7 @@ namespace easy3d {
         program->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("radius", impostor_thickness() * ratio);
+        program->set_uniform("radius", line_width_ * ratio);
 
         program->set_uniform("default_color", default_color());
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
@@ -149,7 +178,7 @@ namespace easy3d {
         program->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("radius", impostor_thickness() * ratio);
+        program->set_uniform("radius", line_width() * ratio);
 
         program->set_uniform("default_color", default_color());
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());

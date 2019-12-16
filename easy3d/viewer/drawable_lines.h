@@ -48,8 +48,8 @@ namespace easy3d {
         ImposterType impostor_type() const { return impostor_type_; }
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
-        float impostor_thickness() const { return impostor_thickness_; }
-        void set_impostor_thickness(float t) { impostor_thickness_ = t; }
+        float line_width() const { return line_width_; }
+        void set_line_width(float w) { line_width_ = w; }
 
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
@@ -67,7 +67,7 @@ namespace easy3d {
 
     private:
         ImposterType  impostor_type_;
-        float impostor_thickness_;
+        float line_width_;
     };
 
 }

@@ -82,6 +82,7 @@ int main(int /*argc*/, char** /*argv*/) {
         // Upload the vertex indices of the bounding box to the GPU.
         bbox_drawable->update_index_buffer(bbox_indices);
         bbox_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));	// red color
+        bbox_drawable->set_line_width(5.0f);
 
         // Run the viewer
         viewer.run();
