@@ -72,27 +72,27 @@ namespace easy3d {
         // surface mesh - surface
         extern bool    surface_mesh_phong_shading;
         extern bool    surface_mesh_show_faces;
-        extern vec3    surface_mesh_faces_default_color;
+        extern vec3    surface_mesh_faces_color;
         extern bool    surface_mesh_use_color_property;
         extern float   surface_mesh_opacity;
 
         // surface mesh - vertices
         extern bool    surface_mesh_show_vertices;
-        extern vec3    surface_mesh_vertices_default_color;
+        extern vec3    surface_mesh_vertices_color;
         extern bool    surface_mesh_vertices_imposters;
         extern float   surface_mesh_vertices_point_size;
 
         // surface mesh - wireframe
         extern bool    surface_mesh_show_wireframe;
-        extern vec3    surface_mesh_wireframe_default_color;
+        extern vec3    surface_mesh_wireframe_color;
         extern bool    surface_mesh_wireframe_imposters;
-        extern float   surface_mesh_wireframe_imposter_thickness;
+        extern float   surface_mesh_wireframe_line_width;
 
         // surface mesh - borders
         extern bool    surface_mesh_show_borders;
-        extern vec3    surface_mesh_borders_default_color;
+        extern vec3    surface_mesh_borders_color;
         extern bool    surface_mesh_borders_imposters;
-        extern float   surface_mesh_borders_imposter_thickness;
+        extern float   surface_mesh_borders_line_width;
 
 		// resource directory (containing color maps, shaders, textures, etc.)
 		extern std::string resource_directory();

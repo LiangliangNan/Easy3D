@@ -743,9 +743,10 @@ namespace easy3d {
                         auto points = m->get_vertex_property<vec3>("v:point");
                         wireframe->update_vertex_buffer(points.vector());
                         wireframe->update_index_buffer(indices);
-                        wireframe->set_default_color(vec3(0.0f, 0.0f, 0.0f));
+                        wireframe->set_default_color(setting::surface_mesh_wireframe_color);
                         wireframe->set_per_vertex_color(false);
                         wireframe->set_visible(true);
+                        wireframe->set_line_width(setting::surface_mesh_wireframe_line_width);
 					}
 					else
 						wireframe->set_visible(!wireframe->is_visible());
@@ -761,11 +762,11 @@ namespace easy3d {
                         vertices = m->add_points_drawable("vertices");
                         auto points = m->get_vertex_property<vec3>("v:point");
                         vertices->update_vertex_buffer(points.vector());
-                        vertices->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+                        vertices->set_default_color(setting::surface_mesh_vertices_color);
                         vertices->set_per_vertex_color(false);
                         vertices->set_visible(true);
                         vertices->set_impostors(true);
-                        vertices->set_point_size(3.0f);
+                        vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                     }
                     else
                         vertices->set_visible(!vertices->is_visible());
