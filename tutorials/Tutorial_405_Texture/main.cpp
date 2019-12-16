@@ -49,20 +49,7 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.camera()->setUpVector(vec3(0, 1, 0));
         viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
-        //--------------- create a mesh (which is a quad) -------------------
-
-        SurfaceMesh* mesh = new SurfaceMesh;
-        auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
-
-        SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(   0,   0, 0)); texcoord[v0] = vec2(0, 0);
-        SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1070,   0, 0)); texcoord[v1] = vec2(1, 0);
-        SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(1070, 245, 0)); texcoord[v2] = vec2(1, 1);
-        SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(   0, 245, 0)); texcoord[v3] = vec2(0, 1);
-        mesh->add_triangle(v0, v1, v2);
-        mesh->add_triangle(v0, v2, v3);
-        viewer.add_model(mesh);
-
-        //---------------- Load texture from an image file -------------------
+        //----------------------- Load texture from an image file ------------------------
 
         const std::string texture_file = setting::resource_directory() + "/images/logo.jpg";
         Texture* tex = Texture::create(texture_file, GL_REPEAT);
@@ -71,10 +58,28 @@ int main(int /*argc*/, char** /*argv*/) {
             return EXIT_FAILURE;
         }
 
+        //--------------- create a mesh (which contains a single quad) -------------------
+
+        SurfaceMesh* mesh = new SurfaceMesh;
+        auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
+
+        int w = tex->width();
+        int h = tex->height();
+        // create a quad face having an aspect ratio the same as the texture image
+        SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0)); texcoord[v0] = vec2(0, 0);
+        SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(w, 0, 0)); texcoord[v1] = vec2(1, 0);
+        SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(w, h, 0)); texcoord[v2] = vec2(1, 1);
+        SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, h, 0)); texcoord[v3] = vec2(0, 1);
+        mesh->add_quad(v0, v1, v2, v3);
+
+        // add the model to the viewer and create the default drwable "surface"
+        viewer.add_model(mesh, true);
+
+        // set the texture of the default drwable "surface"
         auto drawable = mesh->triangles_drawable("surface");
         drawable->set_texture(tex);
 
-        // -----------------------------------------------------------------
+        // -------------------------------------------------------------------------------
 
         // Run the viewer
         viewer.run();

@@ -155,9 +155,9 @@ namespace easy3d {
         std::string	 name_;
         const Model* model_;
 
-		bool		visible_;
-		bool		per_vertex_color_;
-		vec3		default_color_;
+        bool visible_;
+        bool per_vertex_color_;
+        vec3 default_color_;
 
 		// vertex array object
 		VertexArrayObject*	vao_;
