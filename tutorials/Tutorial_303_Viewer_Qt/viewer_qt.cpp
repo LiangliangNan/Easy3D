@@ -394,18 +394,31 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                     size = 1;
                 d->set_point_size(size);
             }
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() - 1.0f;
+                if (size < 1)
+                    size = 1;
+                d->set_line_width(size);
+            }
         }
     }
     else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
-                if (size > 20)
-                    size = 20;
                 d->set_point_size(size);
+            }
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() + 1.0f;
+                d->set_line_width(size);
             }
         }
     }
+
+    else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(-1, camera_);
+    else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(1, camera_);
 
     else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
         int pre_idx = model_idx_;
@@ -453,9 +466,10 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                     auto points = m->get_vertex_property<vec3>("v:point");
                     wireframe->update_vertex_buffer(points.vector());
                     wireframe->update_index_buffer(indices);
-					wireframe->set_default_color(vec3(0.0f, 0.0f, 0.0f));
-					wireframe->set_per_vertex_color(false);
-					wireframe->set_visible(true);
+                    wireframe->set_default_color(setting::surface_mesh_wireframe_color);
+                    wireframe->set_per_vertex_color(false);
+                    wireframe->set_visible(true);
+                    wireframe->set_line_width(setting::surface_mesh_wireframe_line_width);
                     doneCurrent();
                 }
                 else
@@ -463,6 +477,28 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             }
         }
     }
+
+    else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
+        if (currentModel()) {
+            SurfaceMesh* m = dynamic_cast<SurfaceMesh*>(currentModel());
+            if (m) {
+                PointsDrawable* vertices = m->points_drawable("vertices");
+                if (!vertices) {
+                    vertices = m->add_points_drawable("vertices");
+                    auto points = m->get_vertex_property<vec3>("v:point");
+                    vertices->update_vertex_buffer(points.vector());
+                    vertices->set_default_color(setting::surface_mesh_vertices_color);
+                    vertices->set_per_vertex_color(false);
+                    vertices->set_visible(true);
+                    vertices->set_impostors(true);
+                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                }
+                else
+                    vertices->set_visible(!vertices->is_visible());
+            }
+        }
+    }
+
     else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
         ShaderManager::reload();
     }
@@ -492,22 +528,25 @@ void ViewerQt::closeEvent(QCloseEvent* e) {
 
 std::string ViewerQt::usage() const {
     return std::string(
-        "ViewerQt usage:                                                    \n"
+        "Easy3D viewer usage:												\n"
         "  F1:              Help											\n"
         "  Ctrl + O:        Open file										\n"
         "  Ctrl + S:        Save file										\n"
+        "  Fn + Delete:     Delete current model                            \n"
         "  Left:            Orbit-rotate the camera							\n"
         "  Right:           Move up/down/left/right							\n"
         "  Alt + Left:      Orbit-rotate the camera (screen based)			\n"
         "  Alt + Right:     Move up/down/left/right (screen based)			\n"
-        "  Middle/Wheel:    Zoom out/in										\n"
-        "  Ctrl + '-'/'+':  Zoom out/in										\n"
+        "  Middle/Wheel:    Zoom in/out										\n"
+        "  Ctrl + '+'/'-':  Zoom in/out										\n"
+        "  '+'/'-':         Increase/Decrease point size (and line width)	\n"
         "  F:               Fit screen (all models)                         \n"
         "  C:               Fit screen (current model only)					\n"
         "  Shift + Right:   Set/unset anchor point							\n"
         "  P:               Toggle perspective/orthographic projection)		\n"
         "  A:               Toggle axes										\n"
         "  W:               Toggle wireframe								\n"
+        "  V:               Toggle vertices                                 \n"
         "  < or >:          Switch between models							\n"
     );
 }
