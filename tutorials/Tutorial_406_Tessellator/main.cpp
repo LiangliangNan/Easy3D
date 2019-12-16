@@ -36,9 +36,11 @@ using namespace easy3d;
 // polygonal meshes.
 // From this example, you can easily (with minor modifications)
 // render mesh models with concave polygons, self−intersecting
-// polygons, and polygons with .
+// polygons, and polygons with holes.
 
-void create_drawable(SurfaceMesh* mesh, TessellatorGen::WindingRule rule) {
+typedef std::vector<vec3> Hole;
+
+void create_drawable(SurfaceMesh* mesh) {
     if (!mesh)
         return;
 
@@ -63,6 +65,7 @@ void create_drawable(SurfaceMesh* mesh, TessellatorGen::WindingRule rule) {
 
     auto v_colors = mesh->get_vertex_property<vec3>("v:color");
     auto f_colors = mesh->get_face_property<vec3>("f:color");
+    auto f_holes = mesh->get_face_property<Hole>("f:holes");
     const vec3 c(1.0f, 0.67f, 0.5f);
 
     //std::size_t face_idx = 0;
@@ -71,12 +74,15 @@ void create_drawable(SurfaceMesh* mesh, TessellatorGen::WindingRule rule) {
     //std::vector< std::vector<unsigned int> >	triangle_indices(mesh->n_faces());
 
     TessellatorGen gen;
-    gen.set_winding_rule(rule);
     for (auto f : mesh->faces()) {
         gen.reset();
+        if (f_holes && f_holes[f].size() > 0) // does have a hole
+            gen.set_winding_rule(TessellatorGen::ODD);
+        else
+            gen.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
         gen.begin_polygon();
-        gen.begin_contour();
 
+        gen.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
             std::vector<vec3> data(3); // 3 (point) + 3 (normal) + 3 (color)
@@ -96,6 +102,26 @@ void create_drawable(SurfaceMesh* mesh, TessellatorGen::WindingRule rule) {
             gen.add_vertex_data(data[0], 9); // 3 (point) + 3 (normal) + 3 (color)
         }
         gen.end_contour();
+
+
+        if (f_holes && f_holes[f].size() > 3) {
+            gen.begin_contour();
+            const auto& hole = f_holes[f];
+            for (auto p : hole) {
+                std::vector<vec3> data(3); // 3 (point) + 3 (normal) + 3 (color)
+                data[0] = p;
+
+                data[1] = f_normals[f];
+
+                if (f_colors)
+                    data[2] = f_colors[f];
+                else
+                    data[2] = c;
+                gen.add_vertex_data(data[0], 9); // 3 (point) + 3 (normal) + 3 (color)
+            }
+            gen.end_contour();
+        }
+
         gen.end_polygon();
 
         std::size_t num = gen.num_triangles();
@@ -146,30 +172,49 @@ int main(int /*argc*/, char** /*argv*/) {
 
         // Face 1: a concave quad
         {
-            SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3( 200,    0, 0));
-            SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1000,    0, 0));
-            SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(1000,  800, 0));
-            SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3( 800,  300, 0));
+            SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(  0,    0, 0));
+            SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(800,    0, 0));
+            SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(800,  800, 0));
+            SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(600,  300, 0));
             mesh->add_quad(v0, v1, v2, v3);
         }
 
-        // Mesh 2: a self-intersecting face (a star)
+        // Face 2: a self-intersecting face (a star)
         {
             std::vector<SurfaceMesh::Vertex> vertices = {
-                mesh->add_vertex(vec3( 400, 200, 0)),
-                mesh->add_vertex(vec3( 200, 900, 0)),
-                mesh->add_vertex(vec3(   0, 200, 0)),
-                mesh->add_vertex(vec3( 600, 600, 0)),
-                mesh->add_vertex(vec3(-200, 600, 0))
+                mesh->add_vertex(vec3(1500,   0, 0)),
+                mesh->add_vertex(vec3(1300, 800, 0)),
+                mesh->add_vertex(vec3(1100,   0, 0)),
+                mesh->add_vertex(vec3(1700, 500, 0)),
+                mesh->add_vertex(vec3( 900, 500, 0))
             };
             mesh->add_face(vertices);
         }
 
-        viewer.add_model(mesh, false);  // I will create my own drawables
+        // Face 3: a quad face with holes
+        {
+            std::vector<SurfaceMesh::Vertex> vertices = {
+                mesh->add_vertex(vec3(1800,   0, 0)),
+                mesh->add_vertex(vec3(2200,   0, 0)),
+                mesh->add_vertex(vec3(2200, 700, 0)),
+                mesh->add_vertex(vec3(1800, 700, 0))
+            };
+            SurfaceMesh::Face f = mesh->add_face(vertices);
+
+            auto holes = mesh->add_face_property<Hole>("f:holes");
+            holes[f] = {
+                vec3(1900, 100, 0),
+                vec3(2100, 100, 0),
+                vec3(2100, 600, 0),
+                vec3(1900, 600, 0)
+            };
+        }
+
+        viewer.add_model(mesh, false);  // I will create my own drawables using the tessellator
 
         //-------- Create triangles drawable using the tessellator ---------
 
-        create_drawable(mesh, TessellatorGen::NONZERO); // or POSITIVE
+        create_drawable(mesh);
 
         // -----------------------------------------------------------------
 
