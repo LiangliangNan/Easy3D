@@ -200,7 +200,7 @@ namespace easy3d {
 			return mesh->n_faces() > 0;
 		}
 
-#else // use the tokenizer
+#else // use the tokenizer: supports triangle mesh ONLY!!!
 
 		bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
 		{

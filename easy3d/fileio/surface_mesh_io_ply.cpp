@@ -102,21 +102,6 @@ namespace easy3d {
 				}
 			}
 
-
-			//inline SurfaceMesh::Halfedge find_halfedge_between(SurfaceMesh* mesh, SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2) {
-			//    SurfaceMesh::HalfedgeAroundVertexCirculator cir(mesh, v1);
-			//    SurfaceMesh::HalfedgeAroundVertexCirculator end = cir;
-			//    do {
-			//        SurfaceMesh::Halfedge h = *cir;
-			//        if (mesh->to_vertex(h) == v2)
-			//            return h;
-			//    }
-			//    while (++cir != end);
-			//
-			//    return SurfaceMesh::Halfedge(-1);
-			//}
-
-
 		} // namespace details
 
 
