@@ -110,6 +110,11 @@ namespace easy3d {
                 mesh->add_face(vertices);
             }
 
+            // for mesh models, we can simply ignore the edges.
+//            for (int i = 0; i < nb_edges; i++) {
+//                // read the edges
+//            }
+
             return mesh->n_faces() > 0;
 		}
 

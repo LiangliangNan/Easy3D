@@ -109,18 +109,19 @@ namespace easy3d {
         bool open();
         bool save() const;
 
-        // open a file (given the file name) and add the model to the viewer
-        // for visualization. It will also create the default drawables for
-        // visualizing the model. If create_default_drawables == false, no
-        // default drawable will be created, which is useful when a user wants
-        // to create a customized drawable.
-        Model* open(const std::string& file_name, bool create_default_drawables = true);
+        // Open a file (given the file name) and add the model to the viewer
+        // for visualization (the viewer will be incharge of its memory menagement).
+        // By default, this function also It will also creates necessary drawables
+        // for visualizing the model. Set create_default_drawables to false if you
+        // want to create a customized drawable for a sepcific rendering purpose.
+        Model* open(const std::string& file_name, bool create_default_drawables = true, bool smooth_shading = true);
 
-        // add a model to the viewer to be visualized (the viewer will be incharge of
-        // it the model's memory menagement). If create_default_drawables == false, no
-        // default drawable will be created. This is useful when a user wants to create
-        // a customized drawable.
-        void add_model(Model* model, bool create_default_drawables = true);
+        // Add a model to the viewer to be visualized (the viewer will be incharge
+        // of its memory menagement).
+        // By default, this function also It will also creates necessary drawables
+        // for visualizing the model. Set create_default_drawables to false if you
+        // want to create a customized drawable for a sepcific rendering purpose.
+        void add_model(Model* model, bool create_default_drawables = true, bool smooth_shading = true);
 
         // delete the model from the viewer. The model will also be destroyed.
         void delete_model(Model* model);
@@ -220,7 +221,7 @@ namespace easy3d {
         //  - for mesh surfaces, it creates a TrianglesDrawable
         //      - per vertex color will be enabled if vertex property 'v:color' exists
         // TODO: move this function to Renderer module; enable per face color for surface meshes.
-        void create_drawables(Model* m);
+        void create_drawables(Model* m, bool smooth_shading = true);
 
         void draw_corner_axes();
 

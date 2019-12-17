@@ -26,6 +26,7 @@ add_subdirectory("Tutorial_403_VectorField")
 add_subdirectory("Tutorial_404_Imposters")
 add_subdirectory("Tutorial_405_Texture")
 add_subdirectory("Tutorial_406_Tessellator")
+add_subdirectory("Tutorial_407_TexturedMesh")
 
 # rendering techniques
 add_subdirectory("Tutorial_501_EyeDomeLighting")
