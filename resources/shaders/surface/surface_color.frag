@@ -11,9 +11,12 @@ uniform vec3	defaultColor = vec3(0.4f, 0.8f, 0.8f);
 uniform sampler2D   ssaoTexture;
 uniform bool        ssaoEnabled = false;
 
-
 // two sides
-uniform bool        two_sides_lighting = false;
+uniform bool        two_sides_lighting = true;
+
+// backside color
+uniform bool        distinct_back_color = true;
+uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 in Data{
     vec3 color;
@@ -25,6 +28,9 @@ out vec4 outputF;
 
 void main(void) {
     vec3 color = DataIn.color;
+    if (!gl_FrontFacing && distinct_back_color)
+            color = backside_color;
+
     vec3 normal = normalize(DataIn.normal);
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);

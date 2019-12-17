@@ -9,7 +9,7 @@ uniform vec3	specular;		// in [0, 1], r==g==b;
 uniform float	shininess;
 
 uniform bool lightingEnabled = true;
-uniform bool two_sides_lighting = false;
+uniform bool two_sides_lighting = true;
 uniform bool smooth_shading;
 
 in Data{
