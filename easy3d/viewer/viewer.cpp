@@ -1093,6 +1093,7 @@ namespace easy3d {
                     SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
                     SurfaceMesh::Vertex va = mesh->to_vertex(start);
                     const vec3& pa = points[va];
+                    const vec3& n = mesh->compute_face_normal(f);
                     while (cur != start) {
                         SurfaceMesh::Vertex vb = mesh->from_vertex(cur);
                         SurfaceMesh::Vertex vc = mesh->to_vertex(cur);
@@ -1101,8 +1102,6 @@ namespace easy3d {
                         vertices.push_back(pa);
                         vertices.push_back(pb);
                         vertices.push_back(pc);
-
-                        const vec3& n = geom::triangle_normal(pa, pb, pc);
                         vertex_normals.insert(vertex_normals.end(), 3, n);
 
                         if (colors) {

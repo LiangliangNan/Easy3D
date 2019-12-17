@@ -39,7 +39,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 set(LASTOOLS_INCLUDE_DIR ${EASY3D_THIRD_PARTY}/LAStools/LASzip/src ${EASY3D_THIRD_PARTY}/LAStools/LASlib/inc)
 target_include_directories(${PROJECT_NAME} PRIVATE ${LASTOOLS_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} core LAStools rply)
+target_link_libraries(${PROJECT_NAME} core LAStools rply tinyobjloader)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)

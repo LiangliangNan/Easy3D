@@ -30,14 +30,124 @@
 #include <cstring>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/tokenizer.h>
+#include <easy3d/util/file_system.h>
 
+
+// this seems to be more robust and can handle multi-materials
+#define USE_TINY_OBJ_LOADER
+
+
+
+#ifdef USE_TINY_OBJ_LOADER
+#include <3rd_party/tinyobjloader/tiny_obj_loader.h>
+
+namespace easy3d {
+
+    namespace io {
+
+        bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
+        {
+            if (!mesh) {
+                std::cerr << "null mesh pointer" << std::endl;
+                return false;
+            }
+
+            if (!file_system::is_file(file_name)) {
+                std::cerr << "file does not exist: \'" << file_system::simple_name(file_name) << "\'" << std::endl;
+                return false;
+            }
+
+            tinyobj::ObjReaderConfig config;
+            config.triangulate = false;
+            config.vertex_color = false;
+            tinyobj::ObjReader reader;
+            if (!reader.ParseFromFile(file_name, config)) {
+                std::cerr << "error occured loading obj file" << std::endl;
+                const std::string& error = reader.Error();
+                if (!error.empty())
+                    std::cerr << error << std::endl;
+                else {
+                    const std::string& warning = reader.Warning();
+                    if (!warning.empty())
+                        std::cerr << warning << std::endl;
+                }
+                return false;
+            }
+
+            const tinyobj::attrib_t& attrib = reader.GetAttrib();
+            const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
+            const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
+            if (!materials.empty()) {
+                std::cout << "Warning: Model has materials! This obj file loader doesn't handle model materials." << std::endl;
+            }
+
+            // clear mesh
+            mesh->clear();
+
+            // for each vertex
+            for (size_t v = 0; v < attrib.vertices.size() / 3; v++)
+                mesh->add_vertex(vec3(attrib.vertices.data() + 3 * v));
+
+//            // for each normal
+//            std::vector<vec3> normals;
+//            for (size_t v = 0; v < attrib.normals.size() / 3; v++)
+//                normals.push_back(vec3(attrib.normals.data() + 3 * v));
+//            if (!normals.empty())
+//                mesh->add_vertex_property<vec3>("v:normal");
+//            auto prop_normals = mesh->get_vertex_property<vec3>("v:normal");
+
+//            // for each texcoord
+//            std::vector<vec2> texcoords;
+//            for (size_t v = 0; v < attrib.texcoords.size() / 2; v++)
+//                texcoords.push_back(vec2(attrib.texcoords.data() + 2 * v));
+//            if (!texcoords.empty())
+//                mesh->add_vertex_property<vec2>("v:texcoord");
+//            auto prop_texcoords = mesh->get_vertex_property<vec2>("v:texcoord");
+
+            // For each shape
+            for (size_t i = 0; i < shapes.size(); i++) {
+                size_t index_offset = 0;
+
+                assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.material_ids.size());
+                assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.smoothing_group_ids.size());
+
+                // For each face
+                for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+                    size_t fnum = shapes[i].mesh.num_face_vertices[f];
+
+                    // For each vertex in the face
+                    std::vector<SurfaceMesh::Vertex> vertices;
+                    for (size_t v = 0; v < fnum; v++) {
+                        tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
+                        SurfaceMesh::Vertex vtx = SurfaceMesh::Vertex(idx.vertex_index);
+                        vertices.push_back(vtx);
+
+//                        if (prop_normals)
+//                            prop_normals[vtx] = normals[static_cast<std::size_t>(idx.normal_index)];
+//                        if (prop_texcoords)
+//                            prop_texcoords[vtx] = texcoords[static_cast<std::size_t>(idx.texcoord_index)];
+                    }
+
+                    mesh->add_face(vertices);
+
+                    // the material id of this face
+                    //int material_id = shapes[i].mesh.material_ids[f];
+                    // the smoothing group id
+                    //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
+                    index_offset += fnum;
+                }
+            }
+            return mesh->n_faces() > 0;
+        }
+    }
+}
+
+#elif 1
 
 namespace easy3d {
 
 	namespace io {
 
-#if 1
 		bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
 		{
 			if (!mesh) {
@@ -199,8 +309,16 @@ namespace easy3d {
 			fclose(in);
 			return mesh->n_faces() > 0;
 		}
+    }
+}
 
 #else // use the tokenizer: supports triangle mesh ONLY!!!
+
+#include <easy3d/util/tokenizer.h>
+
+namespace easy3d {
+
+    namespace io {
 
 		bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
 		{
@@ -454,10 +572,15 @@ namespace easy3d {
 			std::cout << "read file done" << std::endl;
 			return mesh->n_faces() > 0;
 		}
+    }
+}
+
 #endif
 
 
-		//-----------------------------------------------------------------------------
+namespace easy3d {
+
+    namespace io {
 
 
 		bool save_obj(const std::string& file_name, const SurfaceMesh* mesh)
