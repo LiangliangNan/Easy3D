@@ -37,17 +37,18 @@ namespace easy3d {
     namespace setting {
 
         // ui
-        extern vec4		background_color;
+        extern vec3		background_color;
 
         // lighting
         extern vec4     light_position;  // light poistion defined in camera coordinate system
-        extern vec4		light_specular;
-        extern vec4		light_ambient;
-        extern float	light_shininess;	// specular power
-
         extern bool		light_surface_distinct_back_color;
-        extern vec4		light_surface_back_color;
+        extern vec3		light_surface_back_color;
         extern bool		light_two_sides;
+
+        // material
+        extern vec3		material_ambient;
+        extern vec3		material_specular;
+        extern float	material_shininess;	// specular power
 
         // effect
         extern int		effect_ssao_algorithm;

@@ -30,48 +30,54 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
         const std::string& error = reader.Error();
         if (!error.empty())
             std::cerr << error << std::endl;
-        else {
-            const std::string& warning = reader.Warning();
-            if (!warning.empty())
-                std::cerr << warning << std::endl;
-        }
+        const std::string& warning = reader.Warning();
+        if (!warning.empty())
+            std::cerr << warning << std::endl;
         return false;
     }
+
+    // clear the mesh in case of existing data
+    mesh->clear();
+
+    // --------------------- collect the data ------------------------
 
     const tinyobj::attrib_t& attrib = reader.GetAttrib();
     const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
     const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
 
-    // clear mesh
-    mesh->clear();
-
     // for each vertex
-    for (size_t v = 0; v < attrib.vertices.size() / 3; v++)
-        mesh->add_vertex(vec3(attrib.vertices.data() + 3 * v));
+    for (std::size_t  v = 0; v < attrib.vertices.size(); v+=3) {
+        // Should I create vertices later, to get rid of isolated vertices?
+        mesh->add_vertex(vec3(attrib.vertices.data() + v));
+    }
 
     // for each texcoord
     std::vector<vec2> texcoords;
-    for (size_t v = 0; v < attrib.texcoords.size() / 2; v++)
-        texcoords.push_back(vec2(attrib.texcoords.data() + 2 * v));
+    for (std::size_t  v = 0; v < attrib.texcoords.size(); v+=2) {
+        texcoords.push_back(vec2(attrib.texcoords.data() + v));
+    }
+
+    // ------------------------ build the mesh ------------------------
+
+    // create texture coordinate property if texture coordinates present
     if (!texcoords.empty())
         mesh->add_halfedge_property<vec2>("h:texcoord");
     auto prop_texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
 
-    // For each shape
+    // for each shape
     for (size_t i = 0; i < shapes.size(); i++) {
-        size_t index_offset = 0;
-
+        std::size_t index_offset = 0;
         assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.material_ids.size());
         assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.smoothing_group_ids.size());
 
         // For each face
-        for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-            size_t fnum = shapes[i].mesh.num_face_vertices[f];
+        for (std::size_t  f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+            std::size_t  fnum = shapes[i].mesh.num_face_vertices[f];
 
             // For each vertex in the face
             std::vector<SurfaceMesh::Vertex> vertices;
             std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
-            for (size_t v = 0; v < fnum; v++) {
+            for (std::size_t  v = 0; v < fnum; v++) {
                 tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
                 SurfaceMesh::Vertex vtx(idx.vertex_index);
                 vertices.push_back(vtx);
@@ -84,11 +90,10 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
                 for (auto h : mesh->halfedges(face)) {
                     auto v = mesh->to_vertex(h);
                     int id = texcoord_ids[v.idx()];
-                    prop_texcoords[h] = texcoords[id];
+                    prop_texcoords[h] = texcoords[static_cast<std::size_t>(id)];
                 }
             }
 
-            // the smoothing group id
             //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
             index_offset += fnum;
         }
@@ -101,8 +106,8 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
     std::vector<Group> groups(materials.size());
 
     int face_idx = 0;
-    for (size_t i = 0; i < shapes.size(); i++) {
-        for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+    for (std::size_t  i = 0; i < shapes.size(); i++) {
+        for (std::size_t  f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
             if (!materials.empty()) {
                 // the material id of this face
                 int material_id = shapes[i].mesh.material_ids[f];
@@ -118,11 +123,6 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
         if (group.empty())
             continue;
         TrianglesDrawable* drawable = mesh->add_triangles_drawable(std::to_string(i));
-                const tinyobj::material_t& mat = materials[i];
-                vec3  ambient(mat.ambient);
-                vec3  diffuse(mat.diffuse);
-                vec3  specular(mat.specular);
-                float shininess(mat.shininess);
 
         std::vector<vec3> vertices, vertex_normals;
         std::vector<vec2> vertex_texcoords;
@@ -159,6 +159,14 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
         if (prop_texcoords)
             drawable->update_texcoord_buffer(vertex_texcoords);
         drawable->release_index_buffer();
+
+        const tinyobj::material_t& mat = materials[i];
+        vec3  ambient(mat.ambient);
+        vec3  diffuse(mat.diffuse);
+        vec3  specular(mat.specular);
+        float shininess(mat.shininess);
+        drawable->set_material(Material(ambient, specular, shininess));
+        drawable->set_default_color(diffuse);
 
         std::string texname = mat.ambient_texname;
         if (texname.empty())

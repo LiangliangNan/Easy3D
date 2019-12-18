@@ -4,12 +4,15 @@
 uniform mat4    PROJ;
 uniform bool	perspective;
 
-layout(std140) uniform Lighting {
-        vec3	eLightPos;
+uniform vec3	eLightPos;
+
+layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
         vec3	specular;		// in [0, 1], r==g==b;
         float	shininess;
 };
+
+
 
 uniform float	sphere_radius;
 

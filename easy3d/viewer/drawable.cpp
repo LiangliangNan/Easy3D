@@ -32,11 +32,27 @@
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/viewer/setting.h>
 
 
 
 namespace easy3d {
 
+    Material::Material()
+        : ambient(setting::material_ambient)
+        , specular(setting::material_specular)
+        , shininess(setting::material_shininess)
+    {
+
+    }
+
+    Material::Material(const vec3& ambi, const vec3& spec, float shin)
+        : ambient(ambi)
+        , specular(spec)
+        , shininess(shin)
+    {
+
+    }
 
     Drawable::Drawable(const std::string& name, const Model* model)
         : name_(name)
@@ -44,6 +60,8 @@ namespace easy3d {
         , visible_(true)
         , per_vertex_color_(false)
         , default_color_(1.0f, 0.0f, 0.0f)
+        , highlight_id_(-1)
+        , texture_(nullptr)
         , num_vertices_(0)
 		, num_indices_(0)
 		, vertex_buffer_(0)
@@ -55,8 +73,6 @@ namespace easy3d {
 		, current_storage_buffer_size_(0)
         , selection_buffer_(0)
         , current_selection_buffer_size_(0)
-        , highlight_id_(-1)
-        , texture_(nullptr)
     {
 		vao_ = new VertexArrayObject;
 	}

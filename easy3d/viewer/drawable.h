@@ -41,10 +41,6 @@
 
 namespace easy3d {
 
-    class Model;
-    class Camera;
-    class Texture;
-	class VertexArrayObject;
 
 	// representation models
 	enum DrawableType {
@@ -52,6 +48,22 @@ namespace easy3d {
 		DT_LINES = 0x0001,		// same as GL_LINES
 		DT_TRIANGLES = 0x0004	// same as GL_TRIANGLES
 	};
+
+
+    struct Material {
+        Material();
+        Material(const vec3& ambi, const vec3& spec, float shin);
+        vec3    ambient;
+        //vec3    diffuse; // I may have per face/point/line color!
+        vec3	specular;
+        float	shininess;	// specular power
+    };
+
+
+    class Model;
+    class Camera;
+    class Texture;
+    class VertexArrayObject;
 
 	class Drawable
 	{
@@ -69,18 +81,6 @@ namespace easy3d {
         // the model to which the drawable is attached to (can be NULL).
         const Model* model() const { return model_; }
         void set_model(const Model* m) { model_ = m; }
-
-		bool is_visible() const { return visible_; }
-		void set_visible(bool v) { visible_ = v; }
-
-        bool per_vertex_color() const { return per_vertex_color_;}
-		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
-
-		// default_color will be ignored if per_vertex_color is true and given.
-		const vec3& default_color() const { return default_color_; }
-		void set_default_color(const vec3& c) { default_color_ = c; }
-
-		VertexArrayObject* vao() { return vao_; }
 
 		// ---------------------- buffer access ------------------------------
 
@@ -139,9 +139,23 @@ namespace easy3d {
 		void set_highlight_id(int id) { highlight_id_ = id; }
 		int  highlight_id() const { return highlight_id_; }
 
+        Material& material() { return material_; }
+        const Material& material() const { return material_; }
+        void set_material(const Material& m) { material_ = m; }
+
         Texture* texture() const { return texture_; }
         // set the texture. Disable texture if tex is NULL.
         void set_texture(Texture* tex) { texture_ = tex; }
+
+        bool is_visible() const { return visible_; }
+        void set_visible(bool v) { visible_ = v; }
+
+        bool per_vertex_color() const { return per_vertex_color_;}
+        void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
+
+        // default_color will be ignored if per_vertex_color is true and given.
+        const vec3& default_color() const { return default_color_; }
+        void set_default_color(const vec3& c) { default_color_ = c; }
 
         // Rendering
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const = 0;
@@ -151,6 +165,8 @@ namespace easy3d {
         //		 i.e., between glUseProgram(id) and glUseProgram(0);
         void gl_draw(bool with_storage_buffer = false) const;
 
+        VertexArrayObject* vao() { return vao_; }
+
 	protected:
         std::string	 name_;
         const Model* model_;
@@ -159,7 +175,11 @@ namespace easy3d {
         bool per_vertex_color_;
         vec3 default_color_;
 
-		// vertex array object
+        int         highlight_id_;
+        Material    material_;
+        Texture*    texture_;
+
+        // vertex array object
 		VertexArrayObject*	vao_;
 
 		std::size_t	 num_vertices_;
@@ -176,9 +196,6 @@ namespace easy3d {
 
 		unsigned int selection_buffer_;  // used for selection.
 		std::size_t	 current_selection_buffer_size_; // in case the object is modified
-
-        int         highlight_id_;
-        Texture*    texture_;
 	};
 
 }

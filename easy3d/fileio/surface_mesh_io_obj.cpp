@@ -26,8 +26,7 @@
 
 #include <easy3d/fileio/surface_mesh_io.h>
 
-#include <cstdio>
-#include <cstring>
+#include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
@@ -66,73 +65,70 @@ namespace easy3d {
                 const std::string& error = reader.Error();
                 if (!error.empty())
                     std::cerr << error << std::endl;
-                else {
-                    const std::string& warning = reader.Warning();
-                    if (!warning.empty())
-                        std::cerr << warning << std::endl;
-                }
+                const std::string& warning = reader.Warning();
+                if (!warning.empty())
+                    std::cerr << warning << std::endl;
                 return false;
             }
 
-            const tinyobj::attrib_t& attrib = reader.GetAttrib();
-            const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
-            const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
-            if (!materials.empty()) {
-                std::cout << "Warning: Model has materials! This obj file loader doesn't handle model materials." << std::endl;
-            }
-
-            // clear mesh
+            // clear the mesh in case of existing data
             mesh->clear();
 
+            // --------------------- collect the data ------------------------
+
+            const tinyobj::attrib_t& attrib = reader.GetAttrib();
+            const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
+            //const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
+
             // for each vertex
-            for (size_t v = 0; v < attrib.vertices.size() / 3; v++)
-                mesh->add_vertex(vec3(attrib.vertices.data() + 3 * v));
+            for (std::size_t  v = 0; v < attrib.vertices.size(); v+=3) {
+                // Should I create vertices later, to get rid of isolated vertices?
+                mesh->add_vertex(vec3(attrib.vertices.data() + v));
+            }
 
-//            // for each normal
-//            std::vector<vec3> normals;
-//            for (size_t v = 0; v < attrib.normals.size() / 3; v++)
-//                normals.push_back(vec3(attrib.normals.data() + 3 * v));
-//            if (!normals.empty())
-//                mesh->add_vertex_property<vec3>("v:normal");
-//            auto prop_normals = mesh->get_vertex_property<vec3>("v:normal");
+            // for each texcoord
+            std::vector<vec2> texcoords;
+            for (std::size_t  v = 0; v < attrib.texcoords.size(); v+=2) {
+                texcoords.push_back(vec2(attrib.texcoords.data() + v));
+            }
 
-//            // for each texcoord
-//            std::vector<vec2> texcoords;
-//            for (size_t v = 0; v < attrib.texcoords.size() / 2; v++)
-//                texcoords.push_back(vec2(attrib.texcoords.data() + 2 * v));
-//            if (!texcoords.empty())
-//                mesh->add_vertex_property<vec2>("v:texcoord");
-//            auto prop_texcoords = mesh->get_vertex_property<vec2>("v:texcoord");
+            // ------------------------ build the mesh ------------------------
 
-            // For each shape
+            // create texture coordinate property if texture coordinates present
+            if (!texcoords.empty())
+                mesh->add_halfedge_property<vec2>("h:texcoord");
+            auto prop_texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
+
+            // for each shape
             for (size_t i = 0; i < shapes.size(); i++) {
-                size_t index_offset = 0;
-
+                std::size_t index_offset = 0;
                 assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.material_ids.size());
                 assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.smoothing_group_ids.size());
 
                 // For each face
-                for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                    size_t fnum = shapes[i].mesh.num_face_vertices[f];
+                for (std::size_t  f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+                    std::size_t  fnum = shapes[i].mesh.num_face_vertices[f];
 
                     // For each vertex in the face
                     std::vector<SurfaceMesh::Vertex> vertices;
-                    for (size_t v = 0; v < fnum; v++) {
+                    std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
+                    for (std::size_t  v = 0; v < fnum; v++) {
                         tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
-                        SurfaceMesh::Vertex vtx = SurfaceMesh::Vertex(idx.vertex_index);
+                        SurfaceMesh::Vertex vtx(idx.vertex_index);
                         vertices.push_back(vtx);
-
-//                        if (prop_normals)
-//                            prop_normals[vtx] = normals[static_cast<std::size_t>(idx.normal_index)];
-//                        if (prop_texcoords)
-//                            prop_texcoords[vtx] = texcoords[static_cast<std::size_t>(idx.texcoord_index)];
+                        if (prop_texcoords)
+                            texcoord_ids[vtx.idx()] = idx.texcoord_index;
                     }
 
-                    mesh->add_face(vertices);
+                    SurfaceMesh::Face face = mesh->add_face(vertices);
+                    if (prop_texcoords) {
+                        for (auto h : mesh->halfedges(face)) {
+                            auto v = mesh->to_vertex(h);
+                            int id = texcoord_ids[v.idx()];
+                            prop_texcoords[h] = texcoords[static_cast<std::size_t>(id)];
+                        }
+                    }
 
-                    // the material id of this face
-                    //int material_id = shapes[i].mesh.material_ids[f];
-                    // the smoothing group id
                     //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
                     index_offset += fnum;
                 }

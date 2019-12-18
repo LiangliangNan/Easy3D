@@ -102,9 +102,9 @@ namespace easy3d {
         program->set_uniform("lighting", normal_buffer());
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
         program->set_uniform("default_color", default_color());
-        program->set_uniform("ambient", setting::light_ambient);
-        program->set_uniform("specular", setting::light_specular);
-        program->set_uniform("shininess", &setting::light_shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -137,10 +137,11 @@ namespace easy3d {
 
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
         program->set_uniform("default_color", default_color());
-        program->set_block_uniform("Lighting", "eLightPos", setting::light_position);
-        program->set_block_uniform("Lighting", "ambient", setting::light_ambient);
-        program->set_block_uniform("Lighting", "specular", setting::light_specular);
-        program->set_block_uniform("Lighting", "shininess", &setting::light_shininess);
+        program->set_uniform("eLightPos", setting::light_position);
+
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
 
@@ -173,10 +174,11 @@ namespace easy3d {
 
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
         program->set_uniform("default_color", default_color());
-        program->set_block_uniform("Lighting", "eLightPos", setting::light_position);
-        program->set_block_uniform("Lighting", "ambient", setting::light_ambient);
-        program->set_block_uniform("Lighting", "specular", setting::light_specular);
-        program->set_block_uniform("Lighting", "shininess", &setting::light_shininess);
+        program->set_uniform("eLightPos", setting::light_position);
+
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }

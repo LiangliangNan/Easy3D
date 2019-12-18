@@ -3,19 +3,20 @@
 
 uniform sampler2D	textureID;	
 uniform bool lighting;	// true if lighting is on
-
-layout(std140) uniform Lighting {
-	vec3	wLightPos;
-	vec3	eLightPos;
-	vec3	wCamPos;
-	vec3	ambient;		// in [0, 1], r==g==b;
-	vec3	specular;		// in [0, 1], r==g==b;
-	float	shininess;
-};
-
 uniform bool two_sides_lighting;
 
-uniform int	 hightlight_id;
+uniform vec3	wLightPos;
+uniform vec3	eLightPos;
+uniform vec3	wCamPos;
+
+layout(std140) uniform Material {
+        vec3	ambient;		// in [0, 1], r==g==b;
+        vec3	specular;		// in [0, 1], r==g==b;
+        float	shininess;
+};
+
+
+uniform int  hightlight_id;
 uniform bool selected;
 
 uniform bool distinct_back_color;

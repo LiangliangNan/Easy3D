@@ -4,9 +4,12 @@
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
-uniform vec3	ambient;		// in [0, 1], r==g==b;
-uniform vec3	specular;		// in [0, 1], r==g==b;
-uniform float	shininess;
+
+layout(std140) uniform Material {
+        vec3	ambient;		// in [0, 1], r==g==b;
+        vec3	specular;		// in [0, 1], r==g==b;
+        float	shininess;
+};
 
 uniform bool lightingEnabled = true;
 uniform bool two_sides_lighting = true;
@@ -18,7 +21,7 @@ in Data{
 	vec3 position;
 } DataIn;
 
-uniform sampler2D	textureID;
+uniform sampler2D textureID;
 
 uniform float texture_repeat = 1.0f;
 uniform float fractional_repeat = 0.0f;

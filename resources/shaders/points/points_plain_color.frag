@@ -2,9 +2,13 @@
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
-uniform vec3	ambient = vec3(0.05f, 0.05f, 0.05f);
-uniform vec3	specular = vec3(0.4f, 0.4f, 0.4f);
-uniform float	shininess = 64.0f;
+
+layout(std140) uniform Material {
+        vec3	ambient;		// in [0, 1], r==g==b;
+        vec3	specular;		// in [0, 1], r==g==b;
+        float	shininess;
+};
+
 uniform bool	lighting = true;
 
 

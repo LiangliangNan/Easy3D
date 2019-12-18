@@ -34,17 +34,18 @@ namespace easy3d {
     namespace setting {
 
         // ui
-        vec4	 background_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        vec3	 background_color = vec3(1.0f, 1.0f, 1.0f);
 
         // lighting
-        vec4     light_position = vec4(0.27f, 0.27f, 0.92f, 0);
-        vec4	 light_specular = vec4(0.4f, 0.4f, 0.4f, 1.0f);
-        vec4     light_ambient = vec4(0.05f, 0.05f, 0.05f, 1.0f);
-        float	 light_shininess = 64.0f;
-
+        vec4     light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
         bool	 light_surface_distinct_back_color = false;
-        vec4	 light_surface_back_color = vec4(0.67f, 0.67f, 1.0f, 1.0f);
+        vec3	 light_surface_back_color = vec4(0.67f, 0.67f, 1.0f, 1.0f);
         bool	 light_two_sides = false;
+
+        // material
+        vec3     material_ambient = vec3(0.05f, 0.05f, 0.05f);
+        vec3	 material_specular = vec3(0.4f, 0.4f, 0.4f);
+        float	 material_shininess = 64.0f;
 
         // effect
         int		 effect_ssao_algorithm = 0; // disabled

@@ -128,6 +128,9 @@ namespace easy3d {
         program->set_uniform("ssaoEnabled", false);
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
         program->set_uniform("default_color", default_color());
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -161,9 +164,15 @@ namespace easy3d {
         program->set_uniform("two_sides_lighting", false);
         program->set_uniform("smooth_shading", phong_shading());
 
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
+
         program->bind_texture("textureID", texture()->id(), 0);
-        program->set_uniform("texture_repeat", 2.0f);      // TODO: make this a parameter
+        program->set_uniform("texture_repeat", 1.0f);      // TODO: make this a parameter
         program->set_uniform("fractional_repeat", 0.0f);   // TODO: make this a parameter
+
+
         gl_draw(with_storage_buffer);
         program->release_texture();
 

@@ -8,12 +8,14 @@ uniform mat4    PROJ;
 uniform bool	perspective;
 uniform float	radius;
 
-layout(std140) uniform Lighting {
-	vec3	eLightPos;
-	vec3	ambient;		// in [0, 1], r==g==b;
-	vec3	specular;		// in [0, 1], r==g==b;
-	float	shininess;
+uniform vec3	eLightPos;
+
+layout(std140) uniform Material {
+        vec3	ambient;		// in [0, 1], r==g==b;
+        vec3	specular;		// in [0, 1], r==g==b;
+        float	shininess;
 };
+
 
 in Data{
 	vec3 point;// camera space
