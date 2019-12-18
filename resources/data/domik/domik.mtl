@@ -1,41 +1,70 @@
-# 3ds Max Wavefront OBJ Exporter v0.94b - (c)2007 guruware
-# File Created: 21.02.2015 18:40:34
+# 
+# Wavefront material file
+# Converted by the DEEP Exploration  Deep Exploration 6.3 6.3.3.8068
+# Right Hemisphere, LTD
+# http://www.righthemisphere.com/
+# 
 
 newmtl wire_176026026
-	Ns 32
-	d 1
-	Tr 1
-	Tf 1 1 1
-	illum 2
-	Ka 0.0000 0.0000 0.0000
-	Kd 0.6902 0.1020 0.1020
-	Ks 0.3500 0.3500 0.3500
+Ka 0 0 0
+Kd 0.670588 0.74902 0.639216
+Ks 0.35 0.35 0.35
+illum 2
+Ns 32
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
 
 newmtl domik
-	Ns 10.0000
-	Ni 1.5000
-	d 1.0000
-	Tr 1.0000
-	Tf 1.0000 1.0000 1.0000 
-	illum 2
-	Ka 0.0000 0.0000 0.0000
-	Kd 0.5880 0.5880 0.5880
-	Ks 0.0000 0.0000 0.0000
-	Ke 0.0000 0.0000 0.0000
-	map_Ka domik.jpg
-	map_Kd domik.jpg
+Ka 0 0 0
+Kd 0.588 0.588 0.588
+Ks 0 0 0
+illum 2
+Ns 10
+map_Kd domik.jpg
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA domik.jpg
+map_Ns 
 
 newmtl alpha
-	Ns 10.0000
-	Ni 1.5000
-	d 1.0000
-	Tr 1.0000
-	Tf 1.0000 1.0000 1.0000 
-	illum 2
-	Ka 0.0000 0.0000 0.0000
-	Kd 0.5880 0.5880 0.5880
-	Ks 0.0000 0.0000 0.0000
-	Ke 0.0000 0.0000 0.0000
-	map_Ka alpha.tga
-	map_Kd alpha.tga
-	map_d alpha.tga
+Ka 0 0 0
+Kd 0.588 0.588 0.588
+Ks 0 0 0
+illum 2
+Ns 10
+map_Kd alpha.jpg
+map_bump 
+bump 
+map_opacity alpha.jpg
+map_d alpha.jpg
+refl 
+map_kS 
+map_kA alpha.jpg
+map_Ns 
+
+newmtl Explorer_Default
+Ka 0.117647 0.117647 0.117647
+Kd 0.752941 0.752941 0.752941
+Ks 0.752941 0.752941 0.752941
+illum 2
+Ns 8
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 

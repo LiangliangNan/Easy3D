@@ -622,6 +622,15 @@ namespace easy3d {
 			float step = 0.02f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
 		}
+
+        else if (key == GLFW_KEY_LEFT && modifiers == GLFW_MOD_CONTROL) {	// move camera left
+            float step = 0.02f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
+        }
+        else if (key == GLFW_KEY_RIGHT && modifiers == GLFW_MOD_CONTROL) {	// move camera right
+            float step = 0.02f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
+        }
 		else if (key == GLFW_KEY_UP && modifiers == GLFW_MOD_CONTROL) {	// move camera up
 			float step = 0.02f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
@@ -630,6 +639,8 @@ namespace easy3d {
 			float step = 0.02f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
+
+
 		else if (key == GLFW_KEY_M && modifiers == 0) {
 			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL 
 			//       is a state machine. For multi-window applications, you have to call 
@@ -936,6 +947,10 @@ namespace easy3d {
             "  Alt + Right:     Move up/down/left/right (screen based)			\n"
             "  Middle/Wheel:    Zoom in/out										\n"
             "  Ctrl + '+'/'-':  Zoom in/out										\n"
+            "  '<'/'>'          Turn camera left/right                          \n"
+            "  Up/Down          Zoom in/out                                     \n"
+            "  Ctrl + '<'/'>'   Move camera left/right                          \n"
+            "  Ctrl + Up/Down   Move camera up/down                             \n"
             "  '+'/'-':         Increase/Decrease point size (and line width)	\n"
             "  F:               Fit screen (all models)                         \n"
 			"  C:               Fit screen (current model only)					\n"
