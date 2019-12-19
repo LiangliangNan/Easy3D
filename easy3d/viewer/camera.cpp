@@ -678,9 +678,9 @@ namespace easy3d {
 	/*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
 	  max) is entirely visible, using fitSphere(). */
 	void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) {
-		float diameter = std::max(std::fabs(max[1] - min[1]), std::fabs(max[0] - min[0]));
-		diameter = std::max(std::fabs(max[2] - min[2]), diameter);
-		fitSphere(0.5f * (min + max), 0.5f * diameter);
+        float radius = distance(min, max) * 0.5f;
+        const vec3& center = 0.5f * (min + max);
+        fitSphere(center, radius);
 	}
 
 	/*! Moves the Camera so that the rectangular screen region defined by \p
@@ -692,6 +692,9 @@ namespace easy3d {
 	  viewDirection() and passing through the sceneCenter()) that is used to define
 	  the 3D rectangle that is eventually fitted. */
 	void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) {
+        if (xmin == xmax || ymin == ymax)
+            return;
+
 		const vec3& vd = viewDirection();
 		const float distToPlane = distanceToSceneCenter();
 		int cx = static_cast<int>((xmin + xmax) * 0.5);

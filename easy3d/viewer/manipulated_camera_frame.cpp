@@ -48,7 +48,7 @@ namespace easy3d {
 
 
 	ManipulatedCameraFrame::ManipulatedCameraFrame()
-		: zoomsOnPivotPoint_(true)
+        : zoomsOnPivotPoint_(true)
 	{
 	}
 
@@ -74,24 +74,37 @@ namespace easy3d {
 
 	void ManipulatedCameraFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
 	{
-		if (screen) {
-			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
+        if (dx == 0 && dy == 0)
+            return;
 
-			float pre_x = float(x - dx);
-			float pre_y = float(y - dy);
+        const vec3& trans = camera->projectedCoordinatesOf(pivotPoint());
+        if (has_nan(trans)) {
+#ifndef NDEBUG
+            std::cerr << "vector has NaN: " << trans << std::endl;
+            std::cerr << "camera position: " << camera->position() << std::endl;
+            std::cerr << "camera up vector: " << camera->upVector() << std::endl;
+            std::cerr << "camera rightVector: " << camera->rightVector() << std::endl;
+            std::cerr << "camera viewDirection: " << camera->viewDirection() << std::endl;
+            std::cerr << "camera orientation: " << camera->orientation() << std::endl;
+#endif
+            return;
+        }
+
+		if (screen) {
+            const float pre_x = float(x - dx);
+            const float pre_y = float(y - dy);
 			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
 			const float angle = atan2(y - trans[1], x - trans[0]);
 
 			// The incremental rotation defined in the ManipulatedCameraFrame coordinate system.
-			quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
+            const quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
 			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
 			rotateAroundPoint(rot, pivotPoint());
 		}
 		else {
-			vec3 trans = camera->projectedCoordinatesOf(pivotPoint());
-			int pre_x = x - dx;
-			int pre_y = y - dy;
-			quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+            const int pre_x = x - dx;
+            const int pre_y = y - dy;
+            const quat& rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
 			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
 			rotateAroundPoint(rot, pivotPoint());
 		}
@@ -101,6 +114,9 @@ namespace easy3d {
 
 	void ManipulatedCameraFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
 	{
+        if (dx == 0 && dy == 0)
+            return;
+
 		if (screen) {
 			vec3 trans;
 			int dir = mouseOriginalDirection(x, y, dx, dy);
@@ -151,30 +167,63 @@ namespace easy3d {
 	}
 
 
-	/*! This is an overload of ManipulatedFrame::wheelEvent().
-
-The wheel behavior depends on the wheel binded action. Current possible actions
-are QGLViewer::ZOOM, QGLViewer::MOVE_FORWARD, QGLViewer::MOVE_BACKWARD.
-QGLViewer::ZOOM speed depends on wheelSensitivity() while
-QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD depend on flySpeed(). See
-QGLViewer::setWheelBinding() to customize the binding. */
 	void ManipulatedCameraFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
 		float delta = wheelDelta(wheel_dy);
 		const float sceneRadius = camera->sceneRadius();
 		if (zoomsOnPivotPoint_) {
 			const vec3& direction = camera->pivotPoint() - position();	
-            // Liangliang: For zoom in, "direction.norm() > 0.02f * sceneRadius"
-            //             ensures we don't get too close to the pivot point (to
-            //             avoid deadlock, while there is no restrictions for
-            //             zoom out (delta < 0.0f).
-            if (direction.norm() > 0.02f * sceneRadius || delta < 0.0f)
-				translate(delta * direction);
+
+            // Liangliang:
+            //  - We don't want to move the camera too close to (when zoom in) or
+            //    too far away from (when zoom out) the pivot point. So the camera
+            //    position is maintained to be always within an acceptable range.
+            //  - To avoid deadlock, no action is taken if the camera will go
+            //    beyond the range.
+
+            // the new camera position
+            const vec3& new_pos = position() + delta * direction;
+            const vec3& offset = camera->pivotPoint() - new_pos;
+
+            // the camera should not go behind the pivot point
+            if (dot(offset, camera->viewDirection()) <= 0)
+                return;
+
+            // don't get too close to and don't get too far away from the pivot point.
+            if ( (offset.norm() <= 0.01f * sceneRadius) || (offset.norm() >= 100.0f * sceneRadius))
+                return;
+
+            // now it is safe
+            translate(delta * direction);
 		}
+
         else {
-			const float coef = std::max<float>(fabs((camera->frame()->coordinatesOf(camera->pivotPoint())).z), 0.2f * sceneRadius);
-			vec3 trans(0.0f, 0.0f, -coef * delta);
-			translate(inverseTransformOf(trans));
+            // Liangliang:
+            //  - We don't want to move the camera too close to (when zoom in) or
+            //    too far away from (when zoom out) the scene center. So the camera
+            //    position is maintained to be always within an acceptable range.
+            //  - To avoid deadlock, no action is taken if the camera will go
+            //    beyond the range.
+
+            // in the camera space
+            const vec3& target = camera->frame()->coordinatesOf(camera->sceneCenter());
+            const float coef = target.z;//std::max<float>(fabs(target.z), 0.2f * sceneRadius);
+            const vec3 trans_eye(0.0f, 0.0f, coef * delta);
+
+            // translation in the world space
+            const vec3 offset = inverseTransformOf(trans_eye);
+
+            // compute the target point if we do move the camera
+            ManipulatedCameraFrame frame = *camera->frame();
+            frame.translate(offset);
+            const vec3& new_target = frame.coordinatesOf(camera->sceneCenter());
+
+            // don't get too close to and don't get too far away from the pivot point.
+            if ( new_target.z >= -0.01f * sceneRadius || new_target.z <= -100.0f * sceneRadius)
+                return;
+
+            // now it is safe
+            translate(offset);
 		}
 
 		frameModified();
@@ -187,7 +236,7 @@ QGLViewer::setWheelBinding() to customize the binding. */
 
 	void ManipulatedCameraFrame::action_turn(float angle_radian, Camera *const camera) {
 		// The rotation around current camera Y, proportional to the horizontal mouse position
-		quat rot(vec3(0.0, 1.0, 0.0), angle_radian);
+        const quat rot(vec3(0.0, 1.0, 0.0), angle_radian);
 		rotate(rot);
 		frameModified();
 	}

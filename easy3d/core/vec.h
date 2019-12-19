@@ -643,6 +643,16 @@ namespace easy3d {
         return in >> v.x >> v.y >> v.z >> v.w;
     }
 
+    //----------------------------------------------------------------------
+
+    template <class Vec>
+    bool has_nan(const Vec& v) {
+        for (std::size_t i=0; i<v.size(); ++i) {
+            if (std::isnan(v[i]) || std::isinf(v[i]))
+                return true;
+        }
+        return false;
+    }
 
 #else
 
