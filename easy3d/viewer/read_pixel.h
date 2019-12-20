@@ -61,17 +61,16 @@ namespace easy3d {
 
 		//////////////////////////////////////////////////////////////////////////
 
-		// snapshot the color data of the framebuffer as a PPM image (RGB, no alpha). This is very useful for debugging.
-		void snapshot_color_ppm(const std::string& file_name);
-		void snapshot_color_ppm_ms(int index, const std::string& file_name);	// multisample framebuffer object
+        // snapshot the color render buffer attached to color attachment index into an image file.
+        // This is very useful for debugging.
+        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        void snapshot_color(const std::string& file_name);
+        void snapshot_color_ms(int index, const std::string& file_name);	// multisample framebuffer object
 
-		// snapshot the color data of the framebuffer as a tga image (BGRA, with alpha). This is very useful for debugging.
-		void snapshot_color_tga(int index, const std::string& file_name);
-		void snapshot_color_tga_ms(int index, const std::string& file_name);	// multisample framebuffer object
-
-		// snapshot the depth data of the framebuffer as a ppm image. This is very useful for debugging.
-		void snapshot_depth_ppm(const std::string& file_name);
-		void snapshot_depth_ppm_ms(const std::string& file_name);	// multisample framebuffer object
+        // snapshot the depth render buffer into an image file. This is very useful for debugging.
+        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        void snapshot_depth(const std::string& file_name);
+        void snapshot_depth_ms(const std::string& file_name);	// multisample framebuffer object
 
 	}
 

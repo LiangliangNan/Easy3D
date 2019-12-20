@@ -282,26 +282,28 @@ namespace easy3d {
         bool read_color(unsigned int index, unsigned char* buffer, unsigned int format, bool flip_vertically = true) const;
         bool read_color(unsigned int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true) const;
 
-        // snapshot the color render buffer attached to color attachment index to an image file.
-        // This is very useful for debugging. File format is determined by the given extension.
-        // Only png, jpg, bmp, tga, ppm are supported.
-        bool snapshot_color(unsigned int index, const std::string& file_name, bool flip_vertically = true) const;
-
         // read the depth render buffer into a specified buffer.
         bool read_depth(float* buffer, bool flip_vertically = true) const;
         bool read_depth(std::vector<float>& buffer, bool flip_vertically = true) const;
-
-        // snapshot the depth render buffer as a ppm image. This is very useful for debugging.
-        bool snapshot_depth_ppm(const std::string& file_name, bool flip_vertically = true) const;
 
         // read the color at pixel (x, y) from the color render buffer attached to color attachment index.
         // returns false if the color attachment index does not exist.
         // NOTE: (x, y) in OpenGL coordinate system.
         bool read_color(unsigned char rgba[4], int x, int y, int index = 0) const;
+
         // read the depth at pixel (x, y).
         // returns false if the depth attachment does not exist.
         // NOTE: (x, y) in OpenGL coordinate system.
         bool read_depth(float& depth, int x, int y) const;
+
+        // snapshot the color render buffer attached to color attachment index into an image file.
+        // This is very useful for debugging.
+        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        bool snapshot_color(unsigned int index, const std::string& file_name) const;
+
+        // snapshot the depth render buffer into an image file. This is very useful for debugging.
+        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        bool snapshot_depth(const std::string& file_name) const;
 
         //////////////////////////////////////////////////////////////////////////
 

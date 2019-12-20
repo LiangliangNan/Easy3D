@@ -71,12 +71,6 @@ namespace easy3d {
         // of martin.isenburg@rapidlasso.com, see http://rapidlasso.com
 		bool load_las(const std::string& file_name, PointCloud* cloud);
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
-
-        // Read/Write vg (short for 'vertex group') and bvg (binary version) formats.
-        bool load_vg(const std::string& file_name, PointCloud* cloud);
-        bool save_vg(const std::string& file_name, const PointCloud* cloud);
-        bool load_bvg(const std::string& file_name, PointCloud* cloud);
-        bool save_bvg(const std::string& file_name, const PointCloud* cloud);
 	};
 
 

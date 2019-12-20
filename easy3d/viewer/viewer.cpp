@@ -1267,7 +1267,12 @@ namespace easy3d {
 
         fbo.release();
 
+#if 1   // color render buffer
         return fbo.snapshot_color(0, file_name);
+#else
+        // depth buffer
+        return fbo.snapshot_depth(file_name);
+#endif
     }
 
 

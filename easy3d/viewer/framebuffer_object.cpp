@@ -1460,7 +1460,7 @@ namespace easy3d {
     }
 
 
-    bool FramebufferObject::snapshot_color(unsigned int index, const std::string& file_name, bool flip_vertically /* = true */) const {
+    bool FramebufferObject::snapshot_color(unsigned int index, const std::string& file_name) const {
         if (!is_valid()) {
             std::cerr << "framebuffer not valid" << std::endl;
             return false;
@@ -1473,26 +1473,26 @@ namespace easy3d {
         std::vector<unsigned char> bits;
 
         const std::string& ext = file_system::extension(file_name, true);
-        if (ext == "png" || ext == "jpg" || ext == "bmp") {
-            if (!read_color(index, bits, GL_RGBA, flip_vertically))
+        if (ext == "png" || ext == "jpg") {
+            if (!read_color(index, bits, GL_RGBA, true))
                 return false;
             return ImageIO::save(bits, file_name, width_, height_, 4);
         }
         else if (ext == "ppm") {
             std::vector<unsigned char> bits;
-            if (!read_color(index, bits, GL_RGB, flip_vertically))
+            if (!read_color(index, bits, GL_RGB, true))
                 return false;
-            return io::save_ppm(file_name, bits, width_, height_);
+            return io::save_ppm(bits, file_name, width_, height_);
         }
         else if (ext == "bmp") {
-            if (!read_color(index, bits, GL_BGRA, flip_vertically))
+            if (!read_color(index, bits, GL_BGRA, false))   // bmp is alway flipped?
                 return false;
-            return io::save_bmp(file_name, bits, width_, height_);
+            return io::save_bmp(bits, file_name, width_, height_);
         }
         else if (ext == "tga") {
-            if (!read_color(index, bits, GL_BGRA, flip_vertically))
+            if (!read_color(index, bits, GL_BGRA, true))
                 return false;
-            return io::save_tga(file_name, bits, width_, height_);
+            return io::save_tga(bits, file_name, width_, height_);
         }
         else {
             std::cerr << "unknown file format: " << ext << std::endl;
@@ -1557,20 +1557,23 @@ namespace easy3d {
     }
 
 
-    // snapshot the depth data of the framebuffer as a ppm image. This is very useful for debugging.
-    bool FramebufferObject::snapshot_depth_ppm(const std::string& file_name, bool flip_vertically /* = true */) const {
+    bool FramebufferObject::snapshot_depth(const std::string& file_name) const {
         std::vector<float> depths;
-        bool got = read_depth(depths, flip_vertically);
+        bool got = read_depth(depths, true);
         if (!got)
             return false;
 
-        // convert the depth values to gray scale values
+        // convert the depth values to unsigned char RGB values
         std::vector<unsigned char> bits(depths.size() * 3);
         for (std::size_t i = 0; i < depths.size(); ++i) {
             bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
         }
 
-        return io::save_ppm(file_name, bits, width_, height_);
+        const std::string& ext = file_system::extension(file_name, true);
+        if (ext == "ppm")
+            return io::save_ppm(bits, file_name, width_, height_);
+        else
+            return ImageIO::save(bits, file_name, width_, height_, 3);
     }
 
 

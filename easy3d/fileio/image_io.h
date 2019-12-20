@@ -89,13 +89,13 @@ namespace easy3d {
         // some functions I wrote years ago. This function assumes specific input formats
 
         // NOTE: assumes that each pixel has 3 chanels in RGB order
-        bool save_ppm(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
+        bool save_ppm(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
 
         // NOTE: assumes that each pixel has 4 chanels in BGRA order
-        bool save_bmp(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
+        bool save_bmp(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
 
         // NOTE: assumes that each pixel has 4 chanels in BGRA order
-        bool save_tga(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
+        bool save_tga(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
 
     }
 

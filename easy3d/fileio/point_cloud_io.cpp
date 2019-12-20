@@ -154,15 +154,14 @@ namespace easy3d {
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
-        const std::string& ext = file_system::extension(file_name, true);
-
 		PointCloud* cloud = new PointCloud;
 		cloud->set_name(file_name);
 
 		StopWatch w;
-
 		bool success = false;
-		if (ext == "ply")
+
+        const std::string& ext = file_system::extension(file_name, true);
+        if (ext == "ply")
 			success = io::load_ply(file_name, cloud);
 		else if (ext == "bin")
 			success = io::load_bin(file_name, cloud);
@@ -206,25 +205,34 @@ namespace easy3d {
 			return false;
 		}
 
-        std::string ext = file_system::extension(file_name, true);
+        StopWatch w;
+        bool success = false;
+
+        const std::string& ext = file_system::extension(file_name, true);
 		if (ext == "ply")
-            return io::save_ply(file_name, cloud, true);
+            success = io::save_ply(file_name, cloud, true);
 		else if (ext == "bin")
-            return io::save_bin(file_name, cloud);
+            success = io::save_bin(file_name, cloud);
 		else if (ext == "xyz")
-            return io::save_xyz(file_name, cloud);
+            success = io::save_xyz(file_name, cloud);
 		else if (ext == "bxyz")
-            return io::save_bxyz(file_name, cloud);
+            success = io::save_bxyz(file_name, cloud);
 		else if (ext == "las" || ext == "laz")
-            return io::save_las(file_name, cloud);
-		//	else if (ext == "vg")
-		//        PointSetSerializer_vg::save_vg(file_name, cloud);
-		//	else if (ext == "bvg")
-		//        PointSetSerializer_vg::save_bvg(file_name, cloud);
+            success = io::save_las(file_name, cloud);
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
             return false;
 		}
+
+        if (success) {
+            std::cout << "save model done. time: " << w.time_string() << std::endl;
+            return true;
+        }
+        else {
+            std::cout << "save model failed" << w.time_string() << std::endl;
+            return false;
+        }
+
 	}
 
 } // namespace easy3d

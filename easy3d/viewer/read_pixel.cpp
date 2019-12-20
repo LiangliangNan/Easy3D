@@ -31,6 +31,7 @@
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/fileio/image_io.h>
 
 
@@ -40,7 +41,7 @@ namespace easy3d {
 
 		// read color value at pixel (x, y) from current FBO.
 		// NOTE: (x, y) - the pixel coordinates, which are in the OpenGL coordinate system. 
-		void read_color(unsigned char rgba[4], int x, int y)
+        void read_color(unsigned char rgba[4], int x, int y)
 		{
 			glFinish();
 
@@ -68,7 +69,7 @@ namespace easy3d {
 			}
 
 			GLuint fbo = 0;
-			GLuint color_buffer = 0;
+            GLuint color_buffer = 0;
 
 			glGenFramebuffers(1, &fbo);					easy3d_debug_gl_error;
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
@@ -328,65 +329,74 @@ namespace easy3d {
 		}
 
 
-		// snapshot the color data of the framebuffer as a ppm image (RGB). This is very useful for debugging.
-		void snapshot_color_ppm(const std::string& file_name)
+        void snapshot_color(const std::string& file_name)
 		{
-			std::vector<unsigned char> bits;
-			read_color(bits, GL_RGB, true);
-
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
             int w = viewport[2];
             int h = viewport[3];
 
-            io::save_ppm(file_name, bits, w, h);
+            // I can acutally alway ask for RGBA format and use my ImageIO for saving.
+            // But for ppm, bmp and tga formats, this causes extra internal
+            // formatting (in stb_image_write).
+
+            std::vector<unsigned char> bits;
+
+            const std::string& ext = file_system::extension(file_name, true);
+            if (ext == "png" || ext == "jpg") {
+                read_color(bits, GL_RGBA, true);
+                ImageIO::save(bits, file_name, w, h, 4);
+            }
+            else if (ext == "ppm") {
+                read_color(bits, GL_RGB, true);
+                io::save_ppm(bits, file_name, w, h);
+            }
+            else if (ext == "bmp") {
+                read_color(bits, GL_BGRA, false); // bmp is alwasy flipped?
+                io::save_bmp(bits, file_name, w, h);
+            }
+            else if (ext == "tga") {
+                read_color(bits, GL_BGRA, true);
+                io::save_tga(bits, file_name, w, h);
+            }
+            else
+                std::cerr << "unknown file format: " << ext << std::endl;
 		}
 
 
-		// snapshot the color data of the framebuffer as a ppm image (RGB). This is very useful for debugging.
-		void snapshot_color_ppm_ms(int index, const std::string& file_name)
+        void snapshot_color_ms(int index, const std::string& file_name)
 		{
-			std::vector<unsigned char> bits;
-			read_color_ms(index, bits, GL_RGB, true);
-
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
             int w = viewport[2];
             int h = viewport[3];
 
-            io::save_ppm(file_name, bits, w, h);
+            // I can acutally alway ask for RGBA format and use my ImageIO for saving.
+            // But for ppm, bmp and tga formats, this causes extra internal
+            // formatting (in stb_image_write).
+
+            std::vector<unsigned char> bits;
+
+            const std::string& ext = file_system::extension(file_name, true);
+            if (ext == "png" || ext == "jpg") {
+                read_color_ms(index, bits, GL_RGBA, true);
+                ImageIO::save(bits, file_name, w, h, 4);
+            }
+            else if (ext == "ppm") {
+                read_color_ms(index, bits, GL_RGB, true);
+                io::save_ppm(bits, file_name, w, h);
+            }
+            else if (ext == "bmp") {
+                read_color_ms(index, bits, GL_BGRA, true);
+                io::save_bmp(bits, file_name, w, h);
+            }
+            else if (ext == "tga") {
+                read_color_ms(index, bits, GL_BGRA, true);
+                io::save_tga(bits, file_name, w, h);
+            }
+            else
+                std::cerr << "unknown file format: " << ext << std::endl;
 		}
-
-
-		// snapshot the color data of the framebuffer as a tga image (BGRA). This is very useful for debugging.
-		void snapshot_color_tga(const std::string& file_name)
-		{
-			std::vector<unsigned char> bits;
-			read_color(bits, GL_BGRA, true);
-
-            int viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
-
-            io::save_tga(file_name, bits, w, h);
-		}
-
-
-		// snapshot the color data of the framebuffer as a tga image (BGRA). This is very useful for debugging.
-		void snapshot_color_tga_ms(int index, const std::string& file_name)
-		{
-			std::vector<unsigned char> bits;
-			read_color_ms(index, bits, GL_BGRA, true);
-
-            int viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
-
-            io::save_tga(file_name, bits, w, h);
-		}
-
 
 
 		// read the depth data of the framebuffer into a specified buffer.
@@ -490,45 +500,51 @@ namespace easy3d {
 		}
 
 
-		// snapshot the depth data of the framebuffer as a ppm image. This is very useful for debugging.
-		void snapshot_depth_ppm(const std::string& file_name)
+        void snapshot_depth(const std::string& file_name)
 		{
-			std::vector<float> depths;
-			read_depth(depths);
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-            // convert the depth values to gray scale values
+            std::vector<float> depths;
+            read_depth(depths, true);
+
+            // convert the depth values to unsigned char RGB values
             std::vector<unsigned char> bits(depths.size() * 3);
             for (std::size_t i = 0; i < depths.size(); ++i) {
                 bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
             }
 
-            int viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
-
-            io::save_ppm(file_name, bits, w, h);
+            const std::string& ext = file_system::extension(file_name, true);
+            if (ext == "ppm")
+                io::save_ppm(bits, file_name, w, h);
+            else
+                ImageIO::save(bits, file_name, w, h, 3);
 		}
 
 
-		// snapshot the depth data of the framebuffer as a ppm image. This is very useful for debugging.
-		void snapshot_depth_ppm_ms(const std::string& file_name)
+        void snapshot_depth_ms(const std::string& file_name)
 		{
-			std::vector<float> depths;
-			read_depth_ms(depths, true);
-
-			// convert the depth values to gray scale values
-			std::vector<unsigned char> bits(depths.size() * 3);
-			for (std::size_t i = 0; i < depths.size(); ++i) {
-				bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
-			}
-
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
             int w = viewport[2];
             int h = viewport[3];
 
-            io::save_ppm(file_name, bits, w, h);
+            std::vector<float> depths;
+            read_depth_ms(depths, true);
+
+            // convert the depth values to unsigned char RGB values
+            std::vector<unsigned char> bits(depths.size() * 3);
+            for (std::size_t i = 0; i < depths.size(); ++i) {
+                bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
+            }
+
+            const std::string& ext = file_system::extension(file_name, true);
+            if (ext == "ppm")
+                io::save_ppm(bits, file_name, w, h);
+            else
+                ImageIO::save(bits, file_name, w, h, 3);
 		}
 
 	}

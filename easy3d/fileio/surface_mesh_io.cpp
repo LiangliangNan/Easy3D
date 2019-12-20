@@ -40,14 +40,13 @@ namespace easy3d {
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
-        const std::string& ext = file_system::extension(file_name, true);
-
 		SurfaceMesh* mesh = new SurfaceMesh;
 		mesh->set_name(file_name);
 
 		StopWatch w;
-
 		bool success = false;
+
+        const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ply")
             success = io::load_ply(file_name, mesh);
         else if (ext == "poly")
@@ -109,7 +108,7 @@ namespace easy3d {
 			return false;
 		}
 
-        std::string ext = file_system::extension(file_name, true);
+        const std::string& ext = file_system::extension(file_name, true);
 
 		StopWatch w;
 
@@ -134,9 +133,14 @@ namespace easy3d {
 			success = false;
 		}
 
-		std::cout << "save model done. time: " << w.time_string() << std::endl;
-
-		return success;
+        if (success) {
+            std::cout << "save model done. time: " << w.time_string() << std::endl;
+            return true;
+        }
+        else {
+            std::cout << "save model failed" << w.time_string() << std::endl;
+            return false;
+        }
 	}
 
 
