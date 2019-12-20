@@ -31,6 +31,7 @@
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/viewer/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -76,15 +77,19 @@ void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
 
 bool ImageViewer::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL) {
-        const std::vector<std::string> filetypes = {"*.png", "*.jpg", "*.bmp", "*.tga", "*.gif", "*.ppm"};
-        const std::string& file_name = FileDialog::open(filetypes, std::string(""));
+        const std::string title = "Please choose an image file";
+        const std::string default_path = setting::resource_directory() + "/data/";
+        const std::vector<std::string> filters = {
+            "Image Files (.png .jpg .bmp .ppm .tga)" , "*.png *.jpg *.bmp *.ppm *.tga"
+        };
 
-        if (!file_system::is_file(file_name))
+        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
+        if (file_names.size() != 1 && !file_system::is_file(file_names[0]))
             return false;
 
         if (texture_)
             delete texture_;
-        texture_ = Texture::create(file_name);
+        texture_ = Texture::create(file_names[0]);
         fit_screen();
         return texture_ != nullptr;
     }

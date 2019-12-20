@@ -13,7 +13,6 @@ add_subdirectory("LAStools")
 add_subdirectory("RANSAC-1.1")
 add_subdirectory("poisson_recon-9.0.1")
 
-add_subdirectory("tinyfiledialogs")
 add_subdirectory("tinyobjloader")
 
 

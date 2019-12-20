@@ -966,33 +966,6 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::open() {
-#if 1
-        const std::string title = "Choose files to read";
-        const std::string default_path = setting::resource_directory() + "/data";
-        const std::vector<std::string> filters = {
-            "Text Files (.txt .text)", "*.txt *.text",
-            "Mesh Files (.obj .ply)" , "*.obj *.ply" ,
-            "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
-            "All Files", "*"
-        };
-        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
-
-#else
-        const std::vector<std::string> filetypes = {"*.ply", "*.obj", "*.off", "*.stl", "*.poly", "*.bin", "*.xyz", "*.bxyz", "*.las", "*.laz", "*.ptx"};
-        const std::string& default_path = setting::resource_directory() + "/data/";
-        const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, default_path);
-#endif
-
-		int count = 0;
-        for (const auto& file_name : file_names) {
-            if (open(file_name))
-                ++count;
-        }
-		return count > 0;
-	}
-
-
     Model* Viewer::open(const std::string &file_name, bool create_default_drawables, bool smooth_shading) {
         for (auto m : models_) {
             if (m->name() == file_name) {
@@ -1215,15 +1188,40 @@ namespace easy3d {
     }
 
 
+    bool Viewer::open() {
+        const std::string& title = "Please choose a file to read";
+        const std::string& default_path = setting::resource_directory() + "/data/";
+        const std::vector<std::string>& filters = {
+            "Mesh Files (.obj .ply .off .stl .poly)" , "*.obj *.ply *.off *.stl *.poly" ,
+            "Point Cloud Files (.bin .ply .xyz .bxyz .las .laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
+            "All Files", "*.*"
+        };
+        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
+
+        int count = 0;
+        for (const auto& file_name : file_names) {
+            if (open(file_name))
+                ++count;
+        }
+        return count > 0;
+    }
+
+
 	bool Viewer::save() const {
-        if (!current_model()) {
+        const Model* m = current_model();
+        if (!m) {
             std::cerr << "no model exists" << std::endl;
             return false;
         }
 
-        const std::vector<std::string> filetypes = {"*.ply", "*.obj", "*.off", "*.stl", "*.poly", "*.bin", "*.xyz", "*.bxyz", "*.las", "*.laz"};
-        const Model* m = current_model();
-        const std::string& file_name = FileDialog::save(filetypes, m->name());
+        const std::string& title = "Please choose a file name to save";
+        const std::vector<std::string>& filters = {
+            "Mesh Files (.obj .ply .off .stl .poly)" , "*.obj *.ply *.off *.stl *.poly" ,
+            "Point Cloud Files (.bin .ply .xyz .bxyz .las .laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
+            "All Files", "*.*"
+        };
+
+        const std::string& file_name = FileDialog::save(title, "", filters);
         if (file_name.empty())
             return false;
 
@@ -1250,9 +1248,13 @@ namespace easy3d {
             return false;
         }
 
-        const std::vector<std::string> filetypes = {"*.png", "*,jpg", "*.bmp", "*.ppm", "*.tga"};
-        std::string file_name = file_system::replace_extension(current_model()->name(), "png");
-        file_name = FileDialog::save(filetypes, file_name);
+        const std::string& title = "Please choose a file name to save";
+        const std::vector<std::string>& filters = {
+            "Image Files (.png .jpg .bmp .ppm .tga)" , "*.png *.jpg *.bmp *.ppm *.tga",
+            "All Files", "*.*"
+        };
+
+        const std::string& file_name = FileDialog::save(title, "", filters);
         if (file_name.empty())
             return false;
 

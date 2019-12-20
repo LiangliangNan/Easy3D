@@ -40,7 +40,6 @@ namespace easy3d
     public:
 
 #ifdef HAS_OSDIALOG
-        // https://github.com/AndrewBelt/osdialog
         // usage
         //        const std::string filters =
         //                "Source:off,obj,ply;"
@@ -49,13 +48,47 @@ namespace easy3d
         static std::string open(const std::string& file_name, const std::string& filters) ;
 #endif
 
+#if 1 // HAS_PORTABLE_FILE_DIALOGS
+        /**
+         * \brief Open a native file open dialog.
+         * \param title The title of the dialog, e.g., "Choose a file to open".
+         * \param default_path The default file path, e.g., setting::resource_directory() + "/data".
+         * \param filters The accepted file filters, e.g.,
+         *              const std::vector<std::string> filters = {
+         *                  "Mesh Files (.obj .ply)", "*.obj *.ply",
+         *                  "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
+         *                  "All Files", "*"
+         *              };
+         * \param multiple Allow choosing multiple files if it is true.
+         */
         static std::vector<std::string> open(
                 const std::string& title,               // e.g., "Please choose a file"
                 const std::string& default_path = "",   // e.g., current working/data directory
-                const std::vector<std::string>& filters = { "All Files", "*" },
+                const std::vector<std::string>& filters = { "All Files", "*.*" },
                 bool multiple = false
                 );
 
+        /**
+         * \brief Open a native file save dialog.
+         * \param title The title of the dialog, e.g., "Choose a file to open".
+         * \param default_file_name The suggested file name, e.g., bunny.ply
+         * \param filters The accepted file filters, e.g.,
+         *              const std::vector<std::string> filters = {
+         *                  "Mesh Files (.obj .ply)", "*.obj *.ply",
+         *                  "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
+         *                  "All Files", "*"
+         *              };
+         */
+        static std::string save(
+                const std::string& title,               // e.g., "Please choose a file"
+                const std::string& default_path = "",   // e.g., current working/data directory
+                const std::vector<std::string>& filters = { "All Files", "*.*" },
+                bool confirm_overwrite = true
+                );
+#endif
+
+
+#ifdef HAS_TINY_FILE_DIALOGS
 
         /**
          * \brief Open a native file open dialog.
@@ -88,15 +121,20 @@ namespace easy3d
         static std::string save(
                 const std::vector<std::string>& filetypes,
                 const std::string& default_file_name = ""
-                );
+                );  
+#endif
+
     };
 
+#ifdef HAS_TINY_FILE_DIALOGS
 
     class ColorDialog {
     public:
         // c is the current color
         static vec3 pick(const vec3& c);
     };
+
+#endif
 
 }
 

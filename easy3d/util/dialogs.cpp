@@ -26,12 +26,6 @@
 
 #include <easy3d/util/dialogs.h>
 
-#include <cstring> // for strlen()
-
-#include <easy3d/util/file_system.h>
-#include <3rd_party/tinyfiledialogs/tinyfiledialogs.h>
-
-
 #include <3rd_party/portable_file_dialogs/portable_file_dialogs.h>
 
 
@@ -39,12 +33,7 @@ namespace easy3d {
 
 
 #ifdef HAS_OSDIALOG
-    // usage:
-    //const std::string filters =
-    //        "Source:off,obj,ply;"
-    //        "Header:xyz,ply";
-    //const std::string& file = FileDialog::open("", filters);
-
+    // https://github.com/AndrewBelt/osdialog
     std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
         osdialog_filters* filters_c = nullptr;
         if (!filters.empty())
@@ -61,13 +50,9 @@ namespace easy3d {
     };
 #endif
 
-    std::vector<std::string> open(
-            const std::string& title,               // e.g., "Please choose a file"
-            const std::string& default_path = "",   // e.g., current working/data directory
-            const std::string& filters = { "All Files", "*" },
-            bool multiple = false
-            );
 
+#if 1 // HAS_PORTABLE_FILE_DIALOGS
+    // https://github.com/samhocevar/portable-file-dialogs
     std::vector<std::string> FileDialog::open(
             const std::string& title,
             const std::string& default_path,
@@ -78,6 +63,22 @@ namespace easy3d {
         return f.result();
     }
 
+
+    std::string FileDialog::save(
+            const std::string& title,
+            const std::string& default_path,
+            const std::vector<std::string>& filters,
+            bool confirm_overwrite
+            )
+    {
+        auto f = pfd::save_file(title, default_path, filters, confirm_overwrite);
+        return f.result();
+    }
+
+#endif
+
+
+#ifdef HAS_TINY_FILE_DIALOGS
 
     std::string FileDialog::open(
             const std::vector<std::string> & filetypes,
@@ -195,5 +196,7 @@ namespace easy3d {
         tinyfd_colorChooser("Choose a color", nullptr, color, result);
         return vec3(result[0]/255.0f, result[1]/255.0f, result[2]/255.0f);
     }
+
+#endif
 
 }
