@@ -30,9 +30,28 @@
 #include <cstring>
 
 #include <3rd_party/tinyfiledialogs/tinyfiledialogs.h>
-
+#include <3rd_party/osdialog/osdialog.h>
 
 namespace easy3d {
+
+    std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
+        osdialog_filters* filters_c = nullptr;
+        if (!filters.empty())
+            filters_c = osdialog_filters_parse(filters.c_str());
+
+        std::string result;
+        char *filepath_c = osdialog_file(OSDIALOG_OPEN, nullptr, file_name.c_str(), filters_c);
+        if (filepath_c) {
+            result = std::string(filepath_c);
+            std::free(filepath_c);
+            osdialog_filters_free(filters_c);
+        }
+        return result;
+    };
+
+
+
+
 
 
     std::string FileDialog::open(

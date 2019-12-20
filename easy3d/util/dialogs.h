@@ -38,6 +38,9 @@ namespace easy3d
     class FileDialog
     {
     public:
+
+        static std::string open(const std::string& file_name, const std::string& filters) ;
+
         /**
          * \brief Open a native file open dialog.
          * \param filetypes The accepted file extentions, e.g., "{"*.jpg","*.png"}"
