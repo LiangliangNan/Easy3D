@@ -272,15 +272,13 @@ namespace easy3d {
 
 
         void setup_gl_debug_callback() {
-            if (!OpenglInfo::is_supported("GL_VERSION_4_3")) {
-                std::cerr << "glDebugMessageCallback not available (requires OpenGL >= 4.3)" << std::endl;
-                return;
+            // glDebugMessageCallback requires OpenGL >= 4.3
+            if (glDebugMessageCallback) {
+                glEnable(GL_DEBUG_OUTPUT);
+                glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+                glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+                glDebugMessageCallback(easy3dOpenGLCallback, nullptr);  // no user data
             }
-
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-            glDebugMessageCallback(easy3dOpenGLCallback, nullptr);  // no user data
         }
 
     }
