@@ -1237,25 +1237,25 @@ namespace easy3d {
             return false;
         }
 
-        const std::vector<std::string> filetypes = {"*.ppm", "*.tga", "*.bmp"};
-        std::string file_name = file_system::replace_extension(current_model()->name(), "ppm");
+        const std::vector<std::string> filetypes = {"*.png", "*,jpg", "*.bmp", "*.ppm", "*.tga"};
+        std::string file_name = file_system::replace_extension(current_model()->name(), "png");
         file_name = FileDialog::save(filetypes, file_name);
         if (file_name.empty())
             return false;
 
         const std::string& ext = file_system::extension(file_name, true);
-        if (ext != "ppm" && ext != "tga" && ext != "bmp") {
-            std::cerr << "snapshot format must be ppm, tga, or bmp" << std::endl;
+        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "ppm" && ext != "tga") {
+            std::cerr << "snapshot format must be png, jpg, bmp, ppm, or tga" << std::endl;
             return false;
         }
 
         int w, h;
         glfwGetFramebufferSize(window_, &w, &h);
-        FramebufferObject* fbo = new FramebufferObject(w, h, samples_);
-        fbo->add_color_buffer();
-        fbo->add_depth_buffer();
+        FramebufferObject fbo(w, h, samples_);
+        fbo.add_color_buffer();
+        fbo.add_depth_buffer();
 
-        fbo->bind();
+        fbo.bind();
 
         if (bk_white)
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1265,18 +1265,9 @@ namespace easy3d {
 
         const_cast<Viewer*>(this)->draw();
 
-        fbo->release();
+        fbo.release();
 
-        if (ext == "ppm")
-            return fbo->snapshot_color_ppm(0, file_name);
-        else if (ext == "tga")
-            return fbo->snapshot_color_tga(0, file_name);
-        else if (ext == "bmp")
-            return fbo->snapshot_color_bmp(0, file_name);
-        else {
-            std::cerr << "snapshot format must be ppm, tga, or bmp" << std::endl;
-            return false;
-        }
+        return fbo.snapshot_color(0, file_name);
     }
 
 

@@ -5,6 +5,7 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+    image_io.h
     ply_reader_writer.h
     point_cloud_io.h
     point_cloud_io_ptx.h
@@ -13,6 +14,7 @@ set(${PROJECT_NAME}_HEADERS
     )
 
 set(${PROJECT_NAME}_SOURCES
+    image_io.cpp
     ply_reader_writer.cpp
     point_cloud_io.cpp
     point_cloud_io_bin.cpp

@@ -45,7 +45,7 @@ namespace easy3d {
 	class PointCloudIO
 	{
 	public:
-		// return nullptr if fails
+        // return nullptr if failed
 		static PointCloud* load(const std::string& file_name);
 
 		// save the cloud to a file. return false if failed.
@@ -72,6 +72,11 @@ namespace easy3d {
 		bool load_las(const std::string& file_name, PointCloud* cloud);
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
 
+        // Read/Write vg (short for 'vertex group') and bvg (binary version) formats.
+        bool load_vg(const std::string& file_name, PointCloud* cloud);
+        bool save_vg(const std::string& file_name, const PointCloud* cloud);
+        bool load_bvg(const std::string& file_name, PointCloud* cloud);
+        bool save_bvg(const std::string& file_name, const PointCloud* cloud);
 	};
 
 

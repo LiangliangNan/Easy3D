@@ -31,6 +31,7 @@
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl.h>
+#include <easy3d/fileio/image_io.h>
 
 
 namespace easy3d {
@@ -333,22 +334,12 @@ namespace easy3d {
 			std::vector<unsigned char> bits;
 			read_color(bits, GL_RGB, true);
 
-			//////////////////////////////////////////////////////////////////////////
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr)
-				std::cout << "could not open file \'" << file_name << "\'" << std::endl;
-
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			char tmp[256];
-			sprintf(tmp, "P6 %i %i %i\n", w, h, 255);
-			fwrite(tmp, strlen(tmp), 1, fptr);
-			fwrite(bits.data(), 1, bits.size(), fptr);
-			fclose(fptr);
+            io::save_ppm(file_name, bits, w, h);
 		}
 
 
@@ -358,22 +349,12 @@ namespace easy3d {
 			std::vector<unsigned char> bits;
 			read_color_ms(index, bits, GL_RGB, true);
 
-			//////////////////////////////////////////////////////////////////////////
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr)
-				std::cout << "could not open file \'" << file_name << "\'" << std::endl;
-
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			char tmp[256];
-			sprintf(tmp, "P6 %i %i %i\n", w, h, 255);
-			fwrite(tmp, strlen(tmp), 1, fptr);
-			fwrite(bits.data(), 1, bits.size(), fptr);
-			fclose(fptr);
+            io::save_ppm(file_name, bits, w, h);
 		}
 
 
@@ -383,35 +364,12 @@ namespace easy3d {
 			std::vector<unsigned char> bits;
 			read_color(bits, GL_BGRA, true);
 
-			//////////////////////////////////////////////////////////////////////////
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr) {
-				std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
-				return;
-			}
-
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			fputc(0, fptr); /* ID */
-			fputc(0, fptr); /* Color map */
-			fputc(2, fptr); /* Image type */
-			fputc(0, fptr); fputc(0, fptr); /* First entry of color map (unused) */
-			fputc(0, fptr); fputc(0, fptr); /* Length of color map (unused) */
-			fputc(0, fptr); /* Color map entry size (unused) */
-			fputc(0, fptr); fputc(0, fptr);  /* X offset */
-			fputc(0, fptr); fputc(0, fptr);  /* Y offset */
-			fputc(w % 256, fptr); /* Width */
-			fputc(w / 256, fptr); /* continued */
-			fputc(h % 256, fptr); /* Height */
-			fputc(h / 256, fptr); /* continued */
-			fputc(32, fptr);   /* Bits per pixel */
-			fputc(0x20, fptr); /* Scan from top left */
-			fwrite(bits.data(), bits.size(), 1, fptr);
-			fclose(fptr);
+            io::save_tga(file_name, bits, w, h);
 		}
 
 
@@ -421,35 +379,12 @@ namespace easy3d {
 			std::vector<unsigned char> bits;
 			read_color_ms(index, bits, GL_BGRA, true);
 
-			//////////////////////////////////////////////////////////////////////////
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr) {
-				std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
-				return;
-			}
-
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			fputc(0, fptr); /* ID */
-			fputc(0, fptr); /* Color map */
-			fputc(2, fptr); /* Image type */
-			fputc(0, fptr); fputc(0, fptr); /* First entry of color map (unused) */
-			fputc(0, fptr); fputc(0, fptr); /* Length of color map (unused) */
-			fputc(0, fptr); /* Color map entry size (unused) */
-			fputc(0, fptr); fputc(0, fptr);  /* X offset */
-			fputc(0, fptr); fputc(0, fptr);  /* Y offset */
-			fputc(w % 256, fptr); /* Width */
-			fputc(w / 256, fptr); /* continued */
-			fputc(h % 256, fptr); /* Height */
-			fputc(h / 256, fptr); /* continued */
-			fputc(32, fptr);   /* Bits per pixel */
-			fputc(0x20, fptr); /* Scan from top left */
-			fwrite(bits.data(), bits.size(), 1, fptr);
-			fclose(fptr);
+            io::save_tga(file_name, bits, w, h);
 		}
 
 
@@ -561,29 +496,18 @@ namespace easy3d {
 			std::vector<float> depths;
 			read_depth(depths);
 
-			//////////////////////////////////////////////////////////////////////////
+            // convert the depth values to gray scale values
+            std::vector<unsigned char> bits(depths.size() * 3);
+            for (std::size_t i = 0; i < depths.size(); ++i) {
+                bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
+            }
 
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr)
-				std::cout << "could not open file \'" << file_name << "\'" << std::endl;
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
 
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			char tmp[256];
-			sprintf(tmp, "P6 %i %i %i\n", w, h, 255);
-			fwrite(tmp, strlen(tmp), 1, fptr);
-
-			// convert the depth values to gray scale values
-			std::vector<unsigned char> bits(depths.size() * 3);
-			for (std::size_t i = 0; i < depths.size(); ++i) {
-				bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
-			}
-
-			fwrite(bits.data(), 1, bits.size(), fptr);
-			fclose(fptr);
+            io::save_ppm(file_name, bits, w, h);
 		}
 
 
@@ -593,29 +517,18 @@ namespace easy3d {
 			std::vector<float> depths;
 			read_depth_ms(depths, true);
 
-			//////////////////////////////////////////////////////////////////////////
-
-			FILE* fptr = fopen(file_name.c_str(), "wb");
-			if (!fptr)
-				std::cout << "could not open file \'" << file_name << "\'" << std::endl;
-
-			int viewport[4];
-			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
-
-			char tmp[256];
-			sprintf(tmp, "P6 %i %i %i\n", w, h, 255);
-			fwrite(tmp, strlen(tmp), 1, fptr);
-
 			// convert the depth values to gray scale values
 			std::vector<unsigned char> bits(depths.size() * 3);
 			for (std::size_t i = 0; i < depths.size(); ++i) {
 				bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
 			}
 
-			fwrite(bits.data(), 1, bits.size(), fptr);
-			fclose(fptr);
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            int w = viewport[2];
+            int h = viewport[3];
+
+            io::save_ppm(file_name, bits, w, h);
 		}
 
 	}

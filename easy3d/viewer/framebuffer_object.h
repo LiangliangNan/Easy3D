@@ -282,12 +282,10 @@ namespace easy3d {
         bool read_color(unsigned int index, unsigned char* buffer, unsigned int format, bool flip_vertically = true) const;
         bool read_color(unsigned int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true) const;
 
-        // snapshot the color render buffer attached to color attachment index as a PPM image (RGB, no alpha). This is very useful for debugging.
-        bool snapshot_color_ppm(unsigned int index, const std::string& file_name, bool flip_vertically = true) const;
-        // snapshot the color render buffer attached to color attachment index as a BMP image (BGRA, with alpha). This is very useful for debugging.
-        bool snapshot_color_bmp(unsigned int index, const std::string& file_name, bool flip_vertically = false) const;
-        // snapshot the color render buffer attached to color attachment index as a TGA image (BGRA, with alpha). This is very useful for debugging.
-        bool snapshot_color_tga(unsigned int index, const std::string& file_name, bool flip_vertically = true) const;
+        // snapshot the color render buffer attached to color attachment index to an image file.
+        // This is very useful for debugging. File format is determined by the given extension.
+        // Only png, jpg, bmp, tga, ppm are supported.
+        bool snapshot_color(unsigned int index, const std::string& file_name, bool flip_vertically = true) const;
 
         // read the depth render buffer into a specified buffer.
         bool read_depth(float* buffer, bool flip_vertically = true) const;

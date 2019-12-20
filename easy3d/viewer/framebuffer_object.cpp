@@ -32,7 +32,8 @@
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_info.h>
-
+#include <easy3d/fileio/image_io.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -1459,129 +1460,44 @@ namespace easy3d {
     }
 
 
-    bool FramebufferObject::snapshot_color_ppm(unsigned int index, const std::string& file_name, bool flip_vertically /* = true */) const {
+    bool FramebufferObject::snapshot_color(unsigned int index, const std::string& file_name, bool flip_vertically /* = true */) const {
         if (!is_valid()) {
             std::cerr << "framebuffer not valid" << std::endl;
             return false;
         }
 
-        std::vector<unsigned char> bits;
-        if (!read_color(index, bits, GL_RGB, flip_vertically))
-            return false;
-
-        //////////////////////////////////////////////////////////////////////////
-
-        FILE* fptr = fopen(file_name.c_str(), "wb");
-        if (!fptr) {
-            std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
-            return false;
-        }
-
-        char tmp[256];
-        sprintf(tmp, "P6 %i %i %i\n", width_, height_, 255);
-        fwrite(tmp, strlen(tmp), 1, fptr);
-        fwrite(bits.data(), 1, bits.size(), fptr);
-        fclose(fptr);
-
-        return true;
-    }
-
-
-    bool FramebufferObject::snapshot_color_bmp(unsigned int index, const std::string& file_name, bool flip_vertically /* = false */) const {
-        if (!is_valid()) {
-            std::cerr << "framebuffer not valid" << std::endl;
-            return false;
-        }
+        // I can acutally alway ask for RGBA format and use my ImageIO for saving.
+        // But for ppm, bmp and tga formats, this causes extra internal
+        // formatting (in stb_image_write).
 
         std::vector<unsigned char> bits;
-        if (!read_color(index, bits, GL_BGRA, flip_vertically))
-            return false;
 
-        //////////////////////////////////////////////////////////////////////////
-
-        #pragma pack(push, 1)
-        struct {
-            unsigned short  bfType;
-            unsigned int    bfSize;
-            unsigned int    bfReserved;
-            unsigned int    bfOffBits;
-
-            unsigned int    biSize;
-            signed   int    biWidth;
-            signed   int    biHeight;
-            unsigned short  biPlanes;
-            unsigned short  biBitCount;
-            unsigned int    biCompression;
-            unsigned int    biSizeImage;
-            signed   int    biXPelsPerMeter;
-            signed   int    biYPelsPerMeter;
-            unsigned int    biClrUsed;
-            unsigned int    biClrImportant;
-        } bmpinfo;
-        #pragma pack(pop)
-
-        bmpinfo.bfType = 19778;
-        bmpinfo.bfSize = sizeof(bmpinfo) + width_ * height_ * 4 * sizeof(unsigned char);
-        bmpinfo.bfReserved = 0;
-        bmpinfo.bfOffBits = 54;
-
-        bmpinfo.biSize = 40;
-        bmpinfo.biWidth = width_;
-        bmpinfo.biHeight = height_;
-        bmpinfo.biPlanes = 1;
-        bmpinfo.biBitCount = 32;
-        bmpinfo.biCompression = 0;
-        bmpinfo.biSizeImage = 0;
-        bmpinfo.biXPelsPerMeter = 0;
-        bmpinfo.biYPelsPerMeter = 0;
-        bmpinfo.biClrUsed = 0;
-        bmpinfo.biClrImportant = 0;
-
-        FILE* bmpfile = fopen(file_name.c_str(), "wb");
-        fwrite(&bmpinfo, sizeof(bmpinfo), 1, bmpfile);
-        fwrite(bits.data(), sizeof(char), width_ * height_ * 4 * sizeof(unsigned char), bmpfile);
-        fclose(bmpfile);
-
-        return true;
-    }
-
-
-    bool FramebufferObject::snapshot_color_tga(unsigned int index, const std::string& file_name, bool flip_vertically /* = true */) const {
-        if (!is_valid()) {
-            std::cerr << "framebuffer not valid" << std::endl;
+        const std::string& ext = file_system::extension(file_name, true);
+        if (ext == "png" || ext == "jpg" || ext == "bmp") {
+            if (!read_color(index, bits, GL_RGBA, flip_vertically))
+                return false;
+            return ImageIO::save(bits, file_name, width_, height_, 4);
+        }
+        else if (ext == "ppm") {
+            std::vector<unsigned char> bits;
+            if (!read_color(index, bits, GL_RGB, flip_vertically))
+                return false;
+            return io::save_ppm(file_name, bits, width_, height_);
+        }
+        else if (ext == "bmp") {
+            if (!read_color(index, bits, GL_BGRA, flip_vertically))
+                return false;
+            return io::save_bmp(file_name, bits, width_, height_);
+        }
+        else if (ext == "tga") {
+            if (!read_color(index, bits, GL_BGRA, flip_vertically))
+                return false;
+            return io::save_tga(file_name, bits, width_, height_);
+        }
+        else {
+            std::cerr << "unknown file format: " << ext << std::endl;
             return false;
         }
-
-        std::vector<unsigned char> bits;
-        if (!read_color(index, bits, GL_BGRA, flip_vertically))
-            return false;
-
-        //////////////////////////////////////////////////////////////////////////
-
-        FILE* fptr = fopen(file_name.c_str(), "wb");
-        if (!fptr) {
-            std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
-            return false;
-        }
-
-        fputc(0, fptr); /* ID */
-        fputc(0, fptr); /* Color map */
-        fputc(2, fptr); /* Image type */
-        fputc(0, fptr); fputc(0, fptr); /* First entry of color map (unused) */
-        fputc(0, fptr); fputc(0, fptr); /* Length of color map (unused) */
-        fputc(0, fptr); /* Color map entry size (unused) */
-        fputc(0, fptr); fputc(0, fptr);  /* X offset */
-        fputc(0, fptr); fputc(0, fptr);  /* Y offset */
-        fputc(width_ % 256, fptr); /* Width */
-        fputc(width_ / 256, fptr); /* continued */
-        fputc(height_ % 256, fptr); /* Height */
-        fputc(height_ / 256, fptr); /* continued */
-        fputc(32, fptr);   /* Bits per pixel */
-        fputc(0x20, fptr); /* Scan from top left */
-        fwrite(bits.data(), bits.size(), 1, fptr);
-        fclose(fptr);
-
-        return true;
     }
 
 
@@ -1648,28 +1564,13 @@ namespace easy3d {
         if (!got)
             return false;
 
-        //////////////////////////////////////////////////////////////////////////
-
-        FILE* fptr = fopen(file_name.c_str(), "wb");
-        if (!fptr) {
-            std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
-            return false;
-        }
-
-        char tmp[256];
-        sprintf(tmp, "P6 %i %i %i\n", width_, height_, 255);
-        fwrite(tmp, strlen(tmp), 1, fptr);
-
         // convert the depth values to gray scale values
         std::vector<unsigned char> bits(depths.size() * 3);
         for (std::size_t i = 0; i < depths.size(); ++i) {
             bits[i * 3] = bits[i * 3 + 1] = bits[i * 3 + 2] = static_cast<unsigned char>(depths[i] * 255);
         }
 
-        fwrite(bits.data(), 1, bits.size(), fptr);
-        fclose(fptr);
-
-        return true;
+        return io::save_ppm(file_name, bits, width_, height_);
     }
 
 

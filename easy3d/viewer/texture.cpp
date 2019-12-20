@@ -27,9 +27,7 @@
 #include <easy3d/viewer/texture.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/viewer/opengl_error.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <3rd_party/stb/stb_image.h>
+#include <easy3d/fileio/image_io.h>
 
 #include <iostream>
 
@@ -60,19 +58,19 @@ namespace easy3d {
         }
 
         int width, height, comp;
+        std::vector<unsigned char> data;
         // flip the image vertically, so the first pixel in the output array is the bottom left
-        stbi_set_flip_vertically_on_load(1);
-        unsigned char* data = stbi_load(file_name.data(), &width, &height, &comp, 0);
-        if (!data)
+        bool success = ImageIO::load(data, file_name, width, height, comp, 0);
+        if (!success || data.empty())
             return nullptr;
 
         GLenum internal_format, format;
         switch (comp)
         {
-        case STBI_rgb_alpha:  internal_format = GL_RGBA8; format = GL_RGBA; break;
-        case STBI_rgb:		  internal_format = GL_RGB8; format = GL_RGB; break;
-        case STBI_grey:		  internal_format = GL_R8; format = GL_RED; break;
-        case STBI_grey_alpha: internal_format = GL_RG8; format = GL_RG; break;
+        case 4: internal_format = GL_RGBA8; format = GL_RGBA; break;
+        case 3: internal_format = GL_RGB8; format = GL_RGB; break;
+        case 2: internal_format = GL_RG8; format = GL_RG; break;
+        case 1: internal_format = GL_R8; format = GL_RED; break;
         default: throw std::runtime_error("invalid format");
         }
 
@@ -90,9 +88,7 @@ namespace easy3d {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
 
-        if (data) {
-            glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data);	easy3d_debug_gl_error;
-        }
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data.data());	easy3d_debug_gl_error;
         glBindTexture(GL_TEXTURE_2D, 0);
 
         Texture* result = new Texture;
@@ -100,7 +96,7 @@ namespace easy3d {
         result->sizes_[1] = height;
         result->sizes_[2] = comp;
         result->id_ = tex;
-        stbi_image_free(data);
+
         return result;
     }
 

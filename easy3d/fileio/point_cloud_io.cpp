@@ -207,27 +207,24 @@ namespace easy3d {
 		}
 
         std::string ext = file_system::extension(file_name, true);
-		bool success = false;
 		if (ext == "ply")
-			success = io::save_ply(file_name, cloud, true);
+            return io::save_ply(file_name, cloud, true);
 		else if (ext == "bin")
-			success = io::save_bin(file_name, cloud);
+            return io::save_bin(file_name, cloud);
 		else if (ext == "xyz")
-			success = io::save_xyz(file_name, cloud);
+            return io::save_xyz(file_name, cloud);
 		else if (ext == "bxyz")
-			success = io::save_bxyz(file_name, cloud);
+            return io::save_bxyz(file_name, cloud);
 		else if (ext == "las" || ext == "laz")
-			success = io::save_las(file_name, cloud);
+            return io::save_las(file_name, cloud);
 		//	else if (ext == "vg")
 		//        PointSetSerializer_vg::save_vg(file_name, cloud);
 		//	else if (ext == "bvg")
 		//        PointSetSerializer_vg::save_bvg(file_name, cloud);
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
-			success = false;
+            return false;
 		}
-
-		return success;
 	}
 
 } // namespace easy3d
