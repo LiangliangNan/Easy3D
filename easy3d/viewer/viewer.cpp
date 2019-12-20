@@ -1216,7 +1216,7 @@ namespace easy3d {
 
         const std::string& title = "Please choose a file name to save";
         const std::vector<std::string>& filters = {
-            "Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
+            "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly" ,
             "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
             "All Files (*.*)", "*.*"
         };

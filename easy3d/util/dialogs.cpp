@@ -25,7 +25,7 @@
 
 
 #include <easy3d/util/dialogs.h>
-
+#include <easy3d/util/file_system.h>
 #include <3rd_party/portable_file_dialogs/portable_file_dialogs.h>
 
 
@@ -59,19 +59,25 @@ namespace easy3d {
             const std::vector<std::string>& filters,
             bool multiple)
     {
-        auto f = pfd::open_file(title, default_path, filters, multiple);
+        std::string name = default_path;
+        if (!file_system::is_file(default_path) && !file_system::is_directory(default_path))
+            name = "";
+        auto f = pfd::open_file(title, name, filters, multiple);
         return f.result();
     }
 
 
     std::string FileDialog::save(
             const std::string& title,
-            const std::string& default_path,
+            const std::string& default_file_name,
             const std::vector<std::string>& filters,
             bool confirm_overwrite
             )
     {
-        auto f = pfd::save_file(title, default_path, filters, confirm_overwrite);
+        std::string name = default_file_name;
+        if (!file_system::is_file(default_file_name) && !file_system::is_directory(default_file_name))
+            name = "";
+        auto f = pfd::save_file(title, name, filters, confirm_overwrite);
         return f.result();
     }
 
