@@ -32,9 +32,19 @@
 #include <3rd_party/tinyfiledialogs/tinyfiledialogs.h>
 
 
+#include <3rd_party/portable_file_dialogs/portable_file_dialogs.h>
+
+
 namespace easy3d {
 
+
 #ifdef HAS_OSDIALOG
+    // usage:
+    //const std::string filters =
+    //        "Source:off,obj,ply;"
+    //        "Header:xyz,ply";
+    //const std::string& file = FileDialog::open("", filters);
+
     std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
         osdialog_filters* filters_c = nullptr;
         if (!filters.empty())
@@ -50,6 +60,23 @@ namespace easy3d {
         return result;
     };
 #endif
+
+    std::vector<std::string> open(
+            const std::string& title,               // e.g., "Please choose a file"
+            const std::string& default_path = "",   // e.g., current working/data directory
+            const std::string& filters = { "All Files", "*" },
+            bool multiple = false
+            );
+
+    std::vector<std::string> FileDialog::open(
+            const std::string& title,
+            const std::string& default_path,
+            const std::vector<std::string>& filters,
+            bool multiple)
+    {
+        auto f = pfd::open_file(title, default_path, filters, multiple);
+        return f.result();
+    }
 
 
     std::string FileDialog::open(

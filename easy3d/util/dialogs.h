@@ -45,11 +45,17 @@ namespace easy3d
         //        const std::string filters =
         //                "Source:off,obj,ply;"
         //                "Header:xyz,ply";
-        //        const std::string& file = FileDialog::open("", filters);
-        //        std::vector<std::string> file_names;
-        //        file_names.push_back(file);
+        //        const std::string& file_name = FileDialog::open("", filters);
         static std::string open(const std::string& file_name, const std::string& filters) ;
 #endif
+
+        static std::vector<std::string> open(
+                const std::string& title,               // e.g., "Please choose a file"
+                const std::string& default_path = "",   // e.g., current working/data directory
+                const std::vector<std::string>& filters = { "All Files", "*" },
+                bool multiple = false
+                );
+
 
         /**
          * \brief Open a native file open dialog.

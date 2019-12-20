@@ -967,9 +967,22 @@ namespace easy3d {
 
 
 	bool Viewer::open() {
+#if 1
+        const std::string title = "Choose files to read";
+        const std::string default_path = setting::resource_directory() + "/data";
+        const std::vector<std::string> filters = {
+            "Text Files (.txt .text)", "*.txt *.text",
+            "Mesh Files (.obj .ply)" , "*.obj *.ply" ,
+            "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
+            "All Files", "*"
+        };
+        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
+
+#else
         const std::vector<std::string> filetypes = {"*.ply", "*.obj", "*.off", "*.stl", "*.poly", "*.bin", "*.xyz", "*.bxyz", "*.las", "*.laz", "*.ptx"};
         const std::string& default_path = setting::resource_directory() + "/data/";
         const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, default_path);
+#endif
 
 		int count = 0;
         for (const auto& file_name : file_names) {
