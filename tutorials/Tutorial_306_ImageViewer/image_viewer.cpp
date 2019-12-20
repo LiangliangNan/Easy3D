@@ -80,7 +80,7 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
         const std::string title = "Please choose an image file";
         const std::string default_path = setting::resource_directory() + "/data/";
         const std::vector<std::string> filters = {
-            "Image Files (.png .jpg .bmp .ppm .tga)" , "*.png *.jpg *.bmp *.ppm *.tga"
+            "Image Files (*.png *.jpg *.bmp *.ppm *.tga)", "*.png *.jpg *.bmp *.ppm *.tga"
         };
 
         const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);

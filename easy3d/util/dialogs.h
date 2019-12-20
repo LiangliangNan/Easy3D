@@ -52,37 +52,37 @@ namespace easy3d
         /**
          * \brief Open a native file open dialog.
          * \param title The title of the dialog, e.g., "Choose a file to open".
-         * \param default_path The default file path, e.g., setting::resource_directory() + "/data".
+         * \param default_path The default file path, e.g., setting::resource_directory() + "/data/".
          * \param filters The accepted file filters, e.g.,
          *              const std::vector<std::string> filters = {
-         *                  "Mesh Files (.obj .ply)", "*.obj *.ply",
-         *                  "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
-         *                  "All Files", "*"
+         *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
+         *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
+         *                  "All Files (*.*)", "*.*"
          *              };
          * \param multiple Allow choosing multiple files if it is true.
          */
         static std::vector<std::string> open(
                 const std::string& title,               // e.g., "Please choose a file"
                 const std::string& default_path = "",   // e.g., current working/data directory
-                const std::vector<std::string>& filters = { "All Files", "*.*" },
+                const std::vector<std::string>& filters = { "All Files (*.*)", "*.*" },
                 bool multiple = false
                 );
 
         /**
          * \brief Open a native file save dialog.
          * \param title The title of the dialog, e.g., "Choose a file to open".
-         * \param default_file_name The suggested file name, e.g., bunny.ply
+         * \param default_file_name The suggested file name or file path.
          * \param filters The accepted file filters, e.g.,
          *              const std::vector<std::string> filters = {
-         *                  "Mesh Files (.obj .ply)", "*.obj *.ply",
-         *                  "Point Cloud Files (.bin .xyz .ply)", "*.bin *.xyz *.ply",
-         *                  "All Files", "*"
+         *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
+         *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
+         *                  "All Files (*.*)", "*.*"
          *              };
          */
         static std::string save(
-                const std::string& title,               // e.g., "Please choose a file"
-                const std::string& default_path = "",   // e.g., current working/data directory
-                const std::vector<std::string>& filters = { "All Files", "*.*" },
+                const std::string& title,                   // e.g., "Please choose a file"
+                const std::string& default_file_name = "",  // e.g., "/project/data/bunny.ply"
+                const std::vector<std::string>& filters = { "All Files (*.*)", "*.*" },
                 bool confirm_overwrite = true
                 );
 #endif
