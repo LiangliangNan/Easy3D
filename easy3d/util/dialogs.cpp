@@ -27,13 +27,12 @@
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
 
-#include <cstring>
-
 #include <3rd_party/tinyfiledialogs/tinyfiledialogs.h>
-#include <3rd_party/osdialog/osdialog.h>
+
 
 namespace easy3d {
 
+#ifdef HAS_OSDIALOG
     std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
         osdialog_filters* filters_c = nullptr;
         if (!filters.empty())
@@ -48,10 +47,7 @@ namespace easy3d {
         }
         return result;
     };
-
-
-
-
+#endif
 
 
     std::string FileDialog::open(

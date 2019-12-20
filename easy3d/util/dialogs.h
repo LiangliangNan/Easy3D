@@ -39,7 +39,17 @@ namespace easy3d
     {
     public:
 
+#ifdef HAS_OSDIALOG
+        // https://github.com/AndrewBelt/osdialog
+        // usage
+        //        const std::string filters =
+        //                "Source:off,obj,ply;"
+        //                "Header:xyz,ply";
+        //        const std::string& file = FileDialog::open("", filters);
+        //        std::vector<std::string> file_names;
+        //        file_names.push_back(file);
         static std::string open(const std::string& file_name, const std::string& filters) ;
+#endif
 
         /**
          * \brief Open a native file open dialog.

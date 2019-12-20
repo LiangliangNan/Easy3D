@@ -967,18 +967,10 @@ namespace easy3d {
 
 
 	bool Viewer::open() {
-#if 1
-    const std::string filters =
-            "Source:off,obj,ply;"
-            "Header:xyz,ply";
-    const std::string& file = FileDialog::open("", filters);
-    std::vector<std::string> file_names;
-    file_names.push_back(file);
-#else
         const std::vector<std::string> filetypes = {"*.ply", "*.obj", "*.off", "*.stl", "*.poly", "*.bin", "*.xyz", "*.bxyz", "*.las", "*.laz", "*.ptx"};
         const std::string& default_path = setting::resource_directory() + "/data/";
         const std::vector<std::string>& file_names = FileDialog::open(filetypes, true, default_path);
-#endif
+
 		int count = 0;
         for (const auto& file_name : file_names) {
             if (open(file_name))
