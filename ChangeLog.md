@@ -1,3 +1,9 @@
+#### 20/12/2019
+  - now all image io is managed by ImageIO.
+
+#### 19/12/2019
+  - fixed the bug where camera gets deadlock.
+
 #### 16/12/2019
   - show/hide mesh vertices;
   - line with control for LinesDrawables (using geometry shader).
