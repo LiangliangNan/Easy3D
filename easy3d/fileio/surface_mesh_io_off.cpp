@@ -30,6 +30,7 @@
 #include <easy3d/util/line_stream.h>
 
 #include <fstream>
+#include <cstring> // for strlen()
 
 
 
