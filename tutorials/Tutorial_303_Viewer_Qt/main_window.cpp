@@ -107,9 +107,9 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.plg *.geojson *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.mesh *.meshb *.tet)\n"
-                "Mesh formats (*.ply *.obj *.off *.stl *.poly *.plg)\n"
-                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
+                "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
+                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
                 "All formats (*.*)"
             );
 
@@ -141,13 +141,17 @@ bool MainWindow::onSave() {
 
     if (viewer_->currentModel()) {
         const Model* m = viewer_->currentModel();
+        std::string default_file_name = m->name();
+        if (file_system::extension(default_file_name).empty()) // no extention?
+            default_file_name += ".ply"; // default to ply
+
         const QString& fileName = QFileDialog::getSaveFileName(
                     this,
                     "Open file(s)",
-                    QString::fromStdString(m->name()),
-                    "Supported formats (*.ply *.obj *.off *.stl *.poly *.plg *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.mesh *.meshb *.tet)\n"
-                    "Mesh formats (*.ply *.obj *.off *.stl *.poly *.plg)\n"
-                    "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
+                    QString::fromStdString(default_file_name),
+                    "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
+                    "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
+                    "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
                     "All formats (*.*)"
         );
 

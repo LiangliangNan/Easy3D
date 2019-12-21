@@ -68,6 +68,12 @@
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 
 
+// enforce the same behavior on different platforms
+#ifdef __APPLE__
+#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
+#endif
+
+
 namespace easy3d {
 
 
@@ -87,6 +93,14 @@ namespace easy3d {
         , full_screen_(full_screen)
         , process_events_(true)
         , gpu_timer_(nullptr)
+        , key_(-1)
+        , button_(-1)
+        , modifiers_(-1)
+        , drag_active_(false)
+        , mouse_x_(0)
+        , mouse_y_(0)
+        , mouse_pressed_x_(0)
+        , mouse_pressed_y_(0)
         , show_corner_axes_(true)
         , axes_(nullptr)
         , show_pivot_point_(false)
@@ -505,35 +519,67 @@ namespace easy3d {
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
         camera_->frame()->action_start();
-		if (modifiers == GLFW_MOD_SHIFT && button == GLFW_MOUSE_BUTTON_RIGHT) {
-			bool found = false;
-            const vec3& p = point_under_pixel(x, y, found);
-            if (found) {
-				camera_->setPivotPoint(p);
+        if (modifiers == GLFW_MOD_SHIFT) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                bool found = false;
+                const vec3& p = point_under_pixel(x, y, found);
+                if (found) {
+                    camera_->setPivotPoint(p);
 
-                // show, but hide the visual hint of pivot point after \p delay milliseconds.
-                show_pivot_point_ = true;
-                const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-                pivot_point_ = vec2(proj.x, proj.y);
+                    show_pivot_point_ = true;
+                    const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
+                    pivot_point_ = vec2(proj.x, proj.y);
 
-                const int delay = 2000;
-                Timer::single_shot(delay, [&]() {
-                    show_pivot_point_ = false;
-                    pivot_point_ = vec2(0, 0);
-                    update();
-                });
+                    // show, but hide the visual hint of pivot point after \p delay milliseconds.
+                    const int delay = 2000;
+                    Timer::single_shot(delay, [&]() {
+                        show_pivot_point_ = false;
+                        pivot_point_ = vec2(0, 0);
+                        update();
+                    });
+                }
             }
-            else {
+            else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 				camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
             }
 		}
+        else if (key_ == GLFW_KEY_Z) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) { // zoom to point under pixel
+                bool found = false;
+                const vec3& p = point_under_pixel(x, y, found);
+                if (found) {
+                    // zoom to point under pixel
+                    const float coef = 0.1f;
+                    // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
+                    static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
+                    tempFrame->setPosition(coef*camera()->frame()->position() + (1.0f-coef)*p);
+                    tempFrame->setOrientation(camera()->frame()->orientation());
+                    camera()->setFrame(tempFrame);
+                    camera()->lookAt(p);
+
+                    camera_->setPivotPoint(p);
+                    update();
+                }
+            }
+            else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
+                static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
+                tempFrame->setPosition(camera()->frame()->position());
+                tempFrame->setOrientation(camera()->frame()->orientation());
+                camera()->setFrame(tempFrame);
+                camera()->showEntireScene();
+
+                camera_->setPivotPoint(camera_->sceneCenter());
+                update();
+            }
+        }
 		return false;
 	}
 
 
 	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == GLFW_MOD_CONTROL) { // ZOOM_ON_REGION
+        if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == EASY3D_MOD_CONTROL) { // ZOOM_ON_REGION
 			int xmin = std::min(mouse_pressed_x_, x);	int xmax = std::max(mouse_pressed_x_, x);
 			int ymin = std::min(mouse_pressed_y_, y);	int ymax = std::max(mouse_pressed_y_, y);
 			camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
@@ -547,7 +593,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-		if (modifiers != GLFW_MOD_CONTROL) { // GLFW_MOD_CONTROL is reserved for zoom on region
+        if (modifiers != EASY3D_MOD_CONTROL) { // EASY3D_MOD_CONTROL is reserved for zoom on region
 			switch (button)
 			{
 			case GLFW_MOUSE_BUTTON_LEFT:
@@ -596,6 +642,8 @@ namespace easy3d {
     }
 
 	bool Viewer::key_press_event(int key, int modifiers) {
+        key_ = key;
+
 		if (key == GLFW_KEY_A && modifiers == 0) {
 			show_corner_axes_ = !show_corner_axes_;
 		}
@@ -623,23 +671,22 @@ namespace easy3d {
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
 		}
 
-        else if (key == GLFW_KEY_LEFT && modifiers == GLFW_MOD_CONTROL) {	// move camera left
+        else if (key == GLFW_KEY_LEFT && modifiers == EASY3D_MOD_CONTROL) {	// move camera left
             float step = 0.02f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
         }
-        else if (key == GLFW_KEY_RIGHT && modifiers == GLFW_MOD_CONTROL) {	// move camera right
+        else if (key == GLFW_KEY_RIGHT && modifiers == EASY3D_MOD_CONTROL) {	// move camera right
             float step = 0.02f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
         }
-		else if (key == GLFW_KEY_UP && modifiers == GLFW_MOD_CONTROL) {	// move camera up
+        else if (key == GLFW_KEY_UP && modifiers == EASY3D_MOD_CONTROL) {	// move camera up
 			float step = 0.02f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
 		}
-		else if (key == GLFW_KEY_DOWN && modifiers == GLFW_MOD_CONTROL) {	// move camera down 
+        else if (key == GLFW_KEY_DOWN && modifiers == EASY3D_MOD_CONTROL) {	// move camera down
 			float step = 0.02f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
-
 
 		else if (key == GLFW_KEY_M && modifiers == 0) {
 			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL 
@@ -674,10 +721,16 @@ namespace easy3d {
 			//if (manipulatedFrame())
 			//	manipulatedFrame()->alignWithFrame(camera_->frame());
 		}
-		else if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL)
+
+        else if (key == GLFW_KEY_O && modifiers == EASY3D_MOD_CONTROL)
 			open();
-		else if (key == GLFW_KEY_S && modifiers == GLFW_MOD_CONTROL)
+        else if (key == GLFW_KEY_S && modifiers == EASY3D_MOD_CONTROL)
 			save();
+        
+        else if (key == GLFW_KEY_MINUS && modifiers == EASY3D_MOD_CONTROL)
+            camera_->frame()->action_zoom(-1, camera_);
+        else if (key == GLFW_KEY_EQUAL && modifiers == EASY3D_MOD_CONTROL)
+            camera_->frame()->action_zoom(1, camera_);
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
@@ -707,11 +760,6 @@ namespace easy3d {
                 }
 			}
 		}
-
-		else if (key == GLFW_KEY_MINUS && modifiers == GLFW_MOD_CONTROL)
-			camera_->frame()->action_zoom(-1, camera_);
-		else if (key == GLFW_KEY_EQUAL && modifiers == GLFW_MOD_CONTROL)
-			camera_->frame()->action_zoom(1, camera_);
 
 		else if (key == GLFW_KEY_COMMA && modifiers == 0) {
 			if (models_.empty())
@@ -804,6 +852,7 @@ namespace easy3d {
 	bool Viewer::key_release_event(int key, int modifiers) {
         (void)key;
         (void)modifiers;
+        key_ = -1;
 		return false;
 	}
 
@@ -936,32 +985,39 @@ namespace easy3d {
 
 	std::string Viewer::usage() const {
 		return std::string(
-			"Easy3D viewer usage:												\n"
-			"  F1:              Help											\n"
-			"  Ctrl + O:        Open file										\n"
-			"  Ctrl + S:        Save file										\n"
-            "  Fn + Delete:     Delete current model                            \n"
-            "  Left:            Orbit-rotate the camera							\n"
-            "  Right:           Move up/down/left/right							\n"
-            "  Alt + Left:      Orbit-rotate the camera (screen based)			\n"
-            "  Alt + Right:     Move up/down/left/right (screen based)			\n"
-            "  Middle/Wheel:    Zoom in/out										\n"
-            "  Ctrl + '+'/'-':  Zoom in/out										\n"
-            "  '<'/'>'          Turn camera left/right                          \n"
-            "  Up/Down          Zoom in/out                                     \n"
-            "  Ctrl + '<'/'>'   Move camera left/right                          \n"
-            "  Ctrl + Up/Down   Move camera up/down                             \n"
-            "  '+'/'-':         Increase/Decrease point size (and line width)	\n"
-            "  F:               Fit screen (all models)                         \n"
-			"  C:               Fit screen (current model only)					\n"
-            "  Shift + Right:   Set/unset anchor point							\n"
-			"  P:               Toggle perspective/orthographic projection)		\n"
-			"  A:               Toggle axes										\n"
-            "  W:               Toggle wireframe								\n"
-            "  V:               Toggle vertices                                 \n"
-            "  < or >:          Switch between models							\n"
-            "  M:               Toggle MSAA										\n"
-            "  S:               Snapshot										\n"
+                    " ----------------------------------------------------------------------\n"
+                    "Easy3D viewer usage:                                                   \n"
+                    " ----------------------------------------------------------------------\n"
+                    "  F1:                      Help                                        \n"
+                    " ----------------------------------------------------------------------\n"
+                    "  Ctrl + 'o':              Open file                                   \n"
+                    "  Ctrl + 's':              Save file                                   \n"
+                    "  Fn + Delete:             Delete current model                        \n"
+                    "  '<' or '>':              Switch between models                       \n"
+                    "  's':                     Snapshot                                    \n"
+                    " ----------------------------------------------------------------------\n"
+                    "  'p':                     Toggle perspective/orthographic projection)	\n"
+                    "  Left:                    Orbit-rotate the camera                     \n"
+                    "  Right:                   Move up/down/left/right                     \n"
+                    "  Middle button/Wheel:     Zoom in/out                                 \n"
+                    "  Ctrl + '+'/'-':          Zoom in/out                                 \n"
+                    "  Alt + Left button:       Orbit-rotate the camera (screen based)      \n"
+                    "  Alt + Right button:      Move up/down/left/right (screen based)      \n"
+                    "  Left/Right               Turn camera left/right                      \n"
+                    "  Ctrl + Left/Right        Move camera left/right                      \n"
+                    "  Up/Down                  Move camera forward/backward                \n"
+                    "  Ctrl + Up/Down           Move camera up/down                         \n"
+                    " ----------------------------------------------------------------------\n"
+                    "  'f':                     Fit screen (all models)                     \n"
+                    "  'c':                     Fit screen (current model only)             \n"
+                    "  Shift Left/Right button: Set/Unset pivot point                       \n"
+                    "  'z' + Left/Right button: Zoom to target/Zoom to fit screen           \n"
+                    " ----------------------------------------------------------------------\n"
+                    "  '+'/'-':                 Increase/Decrease point size (line width)	\n"
+                    "  'a':                     Toggle axes									\n"
+                    "  'w':                     Toggle wireframe							\n"
+                    "  'v':                     Toggle vertices                             \n"
+                    " ----------------------------------------------------------------------\n"
         );
 	}
 

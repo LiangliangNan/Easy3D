@@ -58,6 +58,7 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
     : QOpenGLWidget (parent)
 	, func_(nullptr)
     , camera_(nullptr)
+    , pressed_key_(Qt::Key_unknown)
     , pressed_button_(Qt::NoButton)
     , mouse_pressed_pos_(0, 0)
     , mouse_previous_pos_(0, 0)
@@ -188,27 +189,59 @@ void ViewerQt::mousePressEvent(QMouseEvent* e) {
     mouse_pressed_pos_ = e->pos();
 
     camera_->frame()->action_start();
-    if (e->button() == Qt::RightButton && e->modifiers() == Qt::ShiftModifier) {
-        bool found = false;
-        const vec3& p = pointUnderPixel(e->pos(), found);
-		if (found) {
-			camera_->setPivotPoint(p);
+    if (e->modifiers() == Qt::ShiftModifier) {
+        if (e->button() == Qt::LeftButton) {
+            bool found = false;
+            const vec3& p = pointUnderPixel(e->pos(), found);
+            if (found) {
+                camera_->setPivotPoint(p);
 
-			// show, but hide the visual hint of pivot point after \p delay milliseconds.
-			show_pivot_point_ = true;
-			const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-            pivot_point_ = QPointF(static_cast<double>(proj.x), static_cast<double>(proj.y));
+                show_pivot_point_ = true;
+                const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
+                pivot_point_ = QPointF(static_cast<double>(proj.x), static_cast<double>(proj.y));
 
-            const int delay = 2000;
-            QTimer::singleShot(delay, [&](){
-                show_pivot_point_ = false;
-                pivot_point_ = QPointF(0, 0);
-                update();
-            });
-		}
-        else {
+                // show, but hide the visual hint of pivot point after \p delay milliseconds.
+                const int delay = 2000;
+                QTimer::singleShot(delay, [&]() {
+                    show_pivot_point_ = false;
+                    pivot_point_ = QPointF(0, 0);
+                    update();
+                });
+            }
+        }
+        else if (e->button() == Qt::RightButton) {
             camera_->setPivotPoint(camera_->sceneCenter());
             show_pivot_point_ = false;
+        }
+    }
+    else if (pressed_key_ == Qt::Key_Z) {
+        if (e->button() == Qt::LeftButton) { // zoom to point under pixel
+            bool found = false;
+            const vec3& p = pointUnderPixel(e->pos(), found);
+            if (found) {
+                // zoom to point under pixel
+                const float coef = 0.1f;
+                // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
+                static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
+                tempFrame->setPosition(coef*camera()->frame()->position() + (1.0f-coef)*p);
+                tempFrame->setOrientation(camera()->frame()->orientation());
+                camera()->setFrame(tempFrame);
+                camera()->lookAt(p);
+
+                camera_->setPivotPoint(p);
+                update();
+            }
+        }
+        else if (e->button() == Qt::RightButton) {
+            // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
+            static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
+            tempFrame->setPosition(camera()->frame()->position());
+            tempFrame->setOrientation(camera()->frame()->orientation());
+            camera()->setFrame(tempFrame);
+            camera()->showEntireScene();
+
+            camera_->setPivotPoint(camera_->sceneCenter());
+            update();
         }
     }
 
@@ -327,6 +360,8 @@ Model* ViewerQt::currentModel() const {
 }
 
 void ViewerQt::keyPressEvent(QKeyEvent* e) {
+    pressed_key_ = e->key();
+
     if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
         show_corner_axes_ = !show_corner_axes_;
     }
@@ -337,44 +372,40 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
     else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
 		fitScreen();
     }
-    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
     }
-    else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
         camera_->frame()->action_turn(-angle, camera_);
     }
-    else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::NoModifier) {	// move camera forward
+    else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {	// move camera forward
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
     }
-    else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::NoModifier) {// move camera backward
+    else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
     }
 
-    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::ControlModifier) {	// move camera left
+    else if (e->key() == Qt::Key_Left && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera left
+        std::cout << "done" << std::endl;
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
     }
-    else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::ControlModifier) {	// move camera right
+    else if (e->key() == Qt::Key_Right && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera right
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
     }
-    else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::ControlModifier) {	// move camera up
+    else if (e->key() == Qt::Key_Up && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera up
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
     }
-    else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::ControlModifier) {	// move camera down
+    else if (e->key() == Qt::Key_Down && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera down
         float step = 0.02f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
     }
-
-    else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
-        camera_->frame()->action_zoom(-1, camera_);
-    else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
-        camera_->frame()->action_zoom(1, camera_);
 
     else if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
         std::cout << usage() << std::endl;
@@ -394,6 +425,11 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         //if (manipulatedFrame())
         //	manipulatedFrame()->alignWithFrame(camera_->frame());
     }
+
+    else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(-1, camera_);
+    else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(1, camera_);
 
     else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
@@ -423,11 +459,6 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             }
         }
     }
-
-    else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
-        camera_->frame()->action_zoom(-1, camera_);
-    else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
-        camera_->frame()->action_zoom(1, camera_);
 
     else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
         int pre_idx = model_idx_;
@@ -518,6 +549,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 
 
 void ViewerQt::keyReleaseEvent(QKeyEvent* e) {
+    pressed_key_ = Qt::Key_unknown;
     QOpenGLWidget::keyReleaseEvent(e);
     update();
 }
@@ -537,30 +569,39 @@ void ViewerQt::closeEvent(QCloseEvent* e) {
 
 std::string ViewerQt::usage() const {
     return std::string(
-        "Easy3D viewer usage:												\n"
-        "  F1:              Help											\n"
-        "  Ctrl + O:        Open file										\n"
-        "  Ctrl + S:        Save file										\n"
-        "  Fn + Delete:     Delete current model                            \n"
-        "  Left:            Orbit-rotate the camera							\n"
-        "  Right:           Move up/down/left/right							\n"
-        "  Alt + Left:      Orbit-rotate the camera (screen based)			\n"
-        "  Alt + Right:     Move up/down/left/right (screen based)			\n"
-        "  Middle/Wheel:    Zoom in/out										\n"
-        "  Ctrl + '+'/'-':  Zoom in/out										\n"
-        "  '<'/'>'          Turn camera left/right                          \n"
-        "  Up/Down          Zoom in/out                                     \n"
-        "  Ctrl + '<'/'>'   Move camera left/right                          \n"
-        "  Ctrl + Up/Down   Move camera up/down                             \n"
-        "  '+'/'-':         Increase/Decrease point size (and line width)	\n"
-        "  F:               Fit screen (all models)                         \n"
-        "  C:               Fit screen (current model only)					\n"
-        "  Shift + Right:   Set/unset anchor point							\n"
-        "  P:               Toggle perspective/orthographic projection)		\n"
-        "  A:               Toggle axes										\n"
-        "  W:               Toggle wireframe								\n"
-        "  V:               Toggle vertices                                 \n"
-        "  < or >:          Switch between models							\n"
+                " ----------------------------------------------------------------------\n"
+                "Easy3D viewer usage:                                                   \n"
+                " ----------------------------------------------------------------------\n"
+                "  F1:                      Help                                        \n"
+                " ----------------------------------------------------------------------\n"
+                "  Ctrl + 'o':              Open file                                   \n"
+                "  Ctrl + 's':              Save file                                   \n"
+                "  Fn + Delete:             Delete current model                        \n"
+                "  '<' or '>':              Switch between models                       \n"
+                "  's':                     Snapshot                                    \n"
+                " ----------------------------------------------------------------------\n"
+                "  'p':                     Toggle perspective/orthographic projection)	\n"
+                "  Left:                    Orbit-rotate the camera                     \n"
+                "  Right:                   Move up/down/left/right                     \n"
+                "  Middle button/Wheel:     Zoom in/out                                 \n"
+                "  Ctrl + '+'/'-':          Zoom in/out                                 \n"
+                "  Alt + Left button:       Orbit-rotate the camera (screen based)      \n"
+                "  Alt + Right button:      Move up/down/left/right (screen based)      \n"
+                "  Left/Right               Turn camera left/right                      \n"
+                "  Ctrl + Left/Right        Move camera left/right                      \n"
+                "  Up/Down                  Move camera forward/backward                \n"
+                "  Ctrl + Up/Down           Move camera up/down                         \n"
+                " ----------------------------------------------------------------------\n"
+                "  'f':                     Fit screen (all models)                     \n"
+                "  'c':                     Fit screen (current model only)             \n"
+                "  Shift Left/Right button: Set/Unset pivot point                       \n"
+                "  'z' + Left/Right button: Zoom to target/Zoom to fit screen           \n"
+                " ----------------------------------------------------------------------\n"
+                "  '+'/'-':                 Increase/Decrease point size (line width)	\n"
+                "  'a':                     Toggle axes									\n"
+                "  'w':                     Toggle wireframe							\n"
+                "  'v':                     Toggle vertices                             \n"
+                " ----------------------------------------------------------------------\n"
     );
 }
 

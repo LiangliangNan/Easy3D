@@ -51,7 +51,7 @@ public:
 
     ViewerQt* viewer() { return viewer_; }
 
-private slots:
+public slots:
 
     // file
     bool onOpen();
@@ -71,9 +71,9 @@ private slots:
     void onAbout();
 
 protected:
-    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dragEnterEvent(QDragEnterEvent *) override;
     void dropEvent(QDropEvent *) override;
-    void closeEvent(QCloseEvent *event) override;
+    void closeEvent(QCloseEvent *) override;
 
 private:
 

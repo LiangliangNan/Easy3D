@@ -254,6 +254,9 @@ namespace easy3d {
         OpenGLTimer* gpu_timer_;
         double gpu_time_;
 
+        // key
+        int     key_;
+
 		// mouse
 		int		button_;		// for mouse drag
 		int		modifiers_;		// for mouse drag

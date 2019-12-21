@@ -242,7 +242,7 @@ namespace easy3d {
             return true;
         }
         else {
-            std::cout << "save model failed." << std::endl;
+            std::cout << "save model failed" << std::endl;
             return false;
         }
 

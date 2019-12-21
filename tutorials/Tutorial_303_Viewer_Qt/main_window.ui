@@ -146,6 +146,9 @@
    <property name="text">
     <string>Snapshot</string>
    </property>
+   <property name="shortcut">
+    <string>S</string>
+   </property>
   </action>
   <action name="actionBackgroundColor">
    <property name="text">

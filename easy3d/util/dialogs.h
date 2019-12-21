@@ -57,14 +57,14 @@ namespace easy3d
          *              const std::vector<std::string> filters = {
          *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
          *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
-         *                  "All Files (*.*)", "*.*"
+         *                  "All Files (*.*)", "*"
          *              };
          * \param multiple Allow choosing multiple files if it is true.
          */
         static std::vector<std::string> open(
                 const std::string& title = "Please choose the file(s) to open",
                 const std::string& default_directory = "",
-                const std::vector<std::string>& filters = { "All Files (*.*)", "*.*" },
+                const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
                 bool multiple = false
                 );
 
@@ -83,7 +83,7 @@ namespace easy3d
         static std::string save(
                 const std::string& title = "Please choose a file name",
                 const std::string& default_file_name = "",
-                const std::vector<std::string>& filters = { "All Files (*.*)", "*.*" },
+                const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
                 bool confirm_overwrite = false
                 );
 #endif

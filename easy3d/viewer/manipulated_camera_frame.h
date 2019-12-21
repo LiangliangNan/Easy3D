@@ -151,6 +151,9 @@ namespace easy3d {
 //			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 //		}
 //
+//---------------------------------------------------------------------------
+//
+//        // zoom to pixel
 //        const double coef = 0.1;
 //        // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
 //        static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
