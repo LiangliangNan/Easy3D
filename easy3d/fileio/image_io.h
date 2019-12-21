@@ -67,9 +67,9 @@ namespace easy3d {
          *                           image as if has this number of components, e.g. if you set it 4,
          *                           you will always get RGBA output, but you can check channels to
          *                           get the actual number of channels.
-         * \param flip_vertically Flip the image data vertically if it is true. This is convenient
-         *                        For OpenGL applications where the first pixel in the output array
-         *                        is expected to be the bottom left corner of the image.
+         * \param flip_vertically Flip the image data vertically if it is true (default value). This
+         *                        is convenient for OpenGL applications where the first pixel in the
+         *                        output array is expected to be the bottom left corner of the image.
          *
          * \return Return true on succee or false if failed.
          *
@@ -86,7 +86,7 @@ namespace easy3d {
                 int& height,
                 int& channels,
                 int requested_channels = 0,
-                bool flip_vertically = false
+                bool flip_vertically = true
                 );
 
         /**
