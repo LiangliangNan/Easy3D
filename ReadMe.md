@@ -39,49 +39,20 @@ Point/Line imposters                         |  Surface reconstruction          
 
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
 
+Only two lines of code to have a viewer to visualize you meshes or point clouds
+
 ```c++
-	Viewer viewer;	// create the default Easy3D viewer
-
-	// load a point cloud from a file
-	PointCloud* cloud = PointCloudIO::load("../../../data/building_cloud.bin");
-	
-	// create a drawable (a set of points)
-	PointsDrawable* drawable = cloud->add_points_drawable("points");
-
-	// collect points, colors, and normals (if exist) and transfer them to GPU
-	auto points = cloud->get_vertex_property<vec3>("v:point");
-	drawable->update_vertex_buffer(points.vector());
-	auto normals = cloud->get_vertex_property<vec3>("v:normal");
-	if (normals)	// if normals exist
-		drawable->update_normal_buffer(normals.vector());
-	auto colors = cloud->get_vertex_property<vec3>("v:color");
-	if (colors)	// if colors exist
-		drawable->update_color_buffer(colors.vector());
-
-	// add the model to the viewer
-	viewer.add_model(cloud);
-
-	// run the viewer
-	viewer.run();
+        Viewer viewer("MyViewer");
+        viewer.run();
 ```
 
-Bellow is another example showing how to render a surface model (the result is in Figure 2).
+Of course, you can customize the drawables. For example, the following code renders a point clouds as a set of spheres
 
 ```c++
-	// create a surface mesh
-	SurfaceMesh* mesh = new SurfaceMesh;
-	
-	// create a drawable for rendering the surface of this model
-	TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
-	
-	// transfer vertex coordinates and colors to the GPU. 
-	drawable->update_vertex_buffer(vertices);   // an array of 3D points
-	drawable->update_color_buffer(colors);      // an array of colors
-	
-	drawable->set_per_vertex_color(true);       // vertices have different colors
-	
-	// add the model to the viewer
-	viewer.add_model(mesh);
+	// assume your point cloud has been loaded to the viewer
+        PointsDrawable* points_drawable = cloud->points_drawable("vertices");
+        points_drawable->set_impostors(true);	// draw points as spheres
+	points_drawable->set_point_size(3.0f);	// set point size
 ```
 
 By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
