@@ -70,28 +70,34 @@ namespace easy3d {
             return false;
         }
 
-        if (false)
-            stbi_flip_vertically_on_write(1); // flag is non-zero to flip data vertically
+#if 0
+        stbi_flip_vertically_on_write(1); // flag is non-zero to flip data vertically
+#endif
 
-        std::string ext = file_system::extension(file_name, true);
+        std::string final_name = file_name;
+        const std::string& ext = file_system::extension(file_name, true);
 
-        if (ext == "png") {
+        if (ext == "png" || ext.empty()) {
+            if (ext.empty()) {
+                std::cerr << "No extention specified. Default to png" << ext << std::endl;
+                final_name = final_name + ".png";
+            }
+
             // PNG allows you to set the deflate compression level by setting the global
             // variable 'stbi_write_png_compression_level' (it defaults to 8).
             stbi_write_png_compression_level = 8; //
-            return ::stbi_write_png(file_name.c_str(), w, h, comp, data.data(), w * comp);
+            return ::stbi_write_png(final_name.c_str(), w, h, comp, data.data(), w * comp);
         }
         else if (ext == "jpg") {
             // quality is between 1 and 100. Higher quality looks better but results in a bigger image.
-            return ::stbi_write_jpg(file_name.c_str(), w, h, comp, data.data(), 100);
+            return ::stbi_write_jpg(final_name.c_str(), w, h, comp, data.data(), 100);
         }
         else if (ext == "bmp")
-            return ::stbi_write_bmp(file_name.c_str(), w, h, comp, data.data());
+            return ::stbi_write_bmp(final_name.c_str(), w, h, comp, data.data());
         else if (ext == "tga")
-            return ::stbi_write_tga(file_name.c_str(), w, h, comp, data.data());
-
+            return ::stbi_write_tga(final_name.c_str(), w, h, comp, data.data());
         else {
-            std::cerr << "unknown file format: " << ext << std::endl;
+            std::cerr << "unsuported format: " << ext << std::endl;
             return false;
         }
 

@@ -176,6 +176,10 @@ namespace easy3d {
 		//	else if (ext == "bvg")
 		//		PointSetSerializer_vg::load_bvg(file_name, cloud);
 
+        else if (ext.empty()){
+            std::cerr << "unknown file format: no extention" << ext << std::endl;
+            success = false;
+        }
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
 			success = false;
@@ -187,13 +191,16 @@ namespace easy3d {
 		}
 
 #ifndef NDEBUG
-        std::cout << "vertex properties on point cloud " << file_system::stripped_name(file_name) << std::endl;
+        std::cout << "vertex properties on point cloud " << file_system::simple_name(file_name) << std::endl;
 		const auto& vnames = cloud->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;
 #endif
 
-		std::cout << "load model done. time: " << w.time_string() << std::endl;
+        if (success)
+            std::cout << "load model done. time: " << w.time_string() << std::endl;
+        else
+            std::cout << "load model failed." << std::endl;
 
 		return cloud;
 	}
@@ -208,20 +215,26 @@ namespace easy3d {
         StopWatch w;
         bool success = false;
 
+        std::string final_name = file_name;
         const std::string& ext = file_system::extension(file_name, true);
-		if (ext == "ply")
-            success = io::save_ply(file_name, cloud, true);
+        if (ext == "ply" || ext.empty()) {
+            if (ext.empty()) {
+                std::cerr << "No extention specified. Default to ply" << ext << std::endl;
+                final_name = final_name + ".ply";
+            }
+            success = io::save_ply(final_name, cloud, true);
+        }
 		else if (ext == "bin")
-            success = io::save_bin(file_name, cloud);
+            success = io::save_bin(final_name, cloud);
 		else if (ext == "xyz")
-            success = io::save_xyz(file_name, cloud);
+            success = io::save_xyz(final_name, cloud);
 		else if (ext == "bxyz")
-            success = io::save_bxyz(file_name, cloud);
+            success = io::save_bxyz(final_name, cloud);
 		else if (ext == "las" || ext == "laz")
-            success = io::save_las(file_name, cloud);
+            success = io::save_las(final_name, cloud);
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
-            return false;
+            success = false;
 		}
 
         if (success) {
@@ -229,7 +242,7 @@ namespace easy3d {
             return true;
         }
         else {
-            std::cout << "save model failed" << w.time_string() << std::endl;
+            std::cout << "save model failed." << std::endl;
             return false;
         }
 

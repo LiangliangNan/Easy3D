@@ -1221,7 +1221,11 @@ namespace easy3d {
             "All Files (*.*)", "*.*"
         };
 
-        const std::string& file_name = FileDialog::save(title, m->name(), filters);
+        std::string default_file_name = m->name();
+        if (file_system::extension(default_file_name).empty()) // no extention?
+            default_file_name += ".ply"; // default to ply
+
+        const std::string& file_name = FileDialog::save(title, default_file_name, filters);
         if (file_name.empty())
             return false;
 

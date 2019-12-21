@@ -55,14 +55,11 @@ namespace easy3d {
     // https://github.com/samhocevar/portable-file-dialogs
     std::vector<std::string> FileDialog::open(
             const std::string& title,
-            const std::string& default_path,
+            const std::string& default_directory,
             const std::vector<std::string>& filters,
             bool multiple)
     {
-        std::string name = default_path;
-        if (!file_system::is_file(default_path) && !file_system::is_directory(default_path))
-            name = "";
-        auto f = pfd::open_file(title, name, filters, multiple);
+        auto f = pfd::open_file(title, default_directory, filters, multiple);
         return f.result();
     }
 
@@ -74,10 +71,7 @@ namespace easy3d {
             bool confirm_overwrite
             )
     {
-        std::string name = default_file_name;
-        if (!file_system::is_file(default_file_name) && !file_system::is_directory(default_file_name))
-            name = "";
-        auto f = pfd::save_file(title, name, filters, confirm_overwrite);
+        auto f = pfd::save_file(title, default_file_name, filters, confirm_overwrite);
         return f.result();
     }
 

@@ -739,8 +739,30 @@ protected:
                     break;
             }
 
+#if 0
+
             if (default_path.size())
                 command += " default location " + osascript_quote(default_path);
+
+#else       // Liangliang: make it to have a similar behavior as Windows.
+            // If a directory was provided, use it as the initial directory. If
+            // a valid path was provided, use it as the initial file. Otherwise,
+            // let macOS decide.
+
+            static const char* const PATH_SEPARATORS = "/\\";
+            std::string name = default_path; // file name without path
+            std::string::size_type slash = default_path.find_last_of(PATH_SEPARATORS);
+            if (slash != std::string::npos)
+                name = std::string(default_path.begin() + slash + 1, default_path.end());
+
+            if (default_path.size()) {
+                if (in_type == type::save)
+                    command += " default name " + osascript_quote(name);
+                else
+                    command += " default location " + osascript_quote(default_path);
+            }
+#endif
+
             command += " with prompt " + osascript_quote(title);
 
             if (in_type == type::open)

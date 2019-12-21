@@ -62,6 +62,10 @@ namespace easy3d {
 		//        serializer = new MeshSerializer_plg();
 		//	else if (ext == "geojson")
 		//        serializer = new MeshSerializer_json();
+        else if (ext.empty()){
+            std::cerr << "unknown file format: no extention" << ext << std::endl;
+            success = false;
+        }
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
 			success = false;
@@ -74,28 +78,31 @@ namespace easy3d {
 
 
 #ifndef NDEBUG
-        std::cout << "vertex properties on mesh " << file_system::stripped_name(file_name) << std::endl;
+        std::cout << "vertex properties on mesh " << file_system::simple_name(file_name) << std::endl;
 		const auto& vnames = mesh->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;
 
-        std::cout << "face properties on mesh " << file_system::stripped_name(file_name) << std::endl;
+        std::cout << "face properties on mesh " << file_system::simple_name(file_name) << std::endl;
 		const auto& fnames = mesh->face_properties();
 		for (const auto& n : fnames)
 			std::cout << "\t" << n << std::endl;
 
-        std::cout << "edge properties on mesh " << file_system::stripped_name(file_name) << std::endl;
+        std::cout << "edge properties on mesh " << file_system::simple_name(file_name) << std::endl;
         const auto& enames = mesh->edge_properties();
         for (const auto& n : enames)
             std::cout << "\t" << n << std::endl;
 
-        std::cout << "halfedge properties on mesh " << file_system::stripped_name(file_name) << std::endl;
+        std::cout << "halfedge properties on mesh " << file_system::simple_name(file_name) << std::endl;
         const auto& hnames = mesh->halfedge_properties();
         for (const auto& n : hnames)
             std::cout << "\t" << n << std::endl;
 #endif
 
-		std::cout << "load model done. time: " << w.time_string() << std::endl;
+        if (success)
+            std::cout << "load model done. time: " << w.time_string() << std::endl;
+        else
+            std::cout << "load model failed" << std::endl;
 
 		return mesh;
 	}
@@ -108,21 +115,27 @@ namespace easy3d {
 			return false;
 		}
 
+		StopWatch w;
+		bool success = false;
+
+        std::string final_name = file_name;
         const std::string& ext = file_system::extension(file_name, true);
 
-		StopWatch w;
-
-		bool success = false;
-		if (ext == "ply")
-			success = io::save_ply(file_name, mesh, true);
+        if (ext == "ply" || ext.empty()) {
+            if (ext.empty()) {
+                std::cerr << "No extention specified. Default to ply" << ext << std::endl;
+                final_name = final_name + ".ply";
+            }
+            success = io::save_ply(final_name, mesh, true);
+        }
         else if (ext == "poly")
-            success = io::save_poly(file_name, mesh);
+            success = io::save_poly(final_name, mesh);
         else if (ext == "obj")
-            success = io::save_obj(file_name, mesh);
+            success = io::save_obj(final_name, mesh);
         else if (ext == "off")
-			success = io::save_off(file_name, mesh);
+            success = io::save_off(final_name, mesh);
 		else if (ext == "stl")
-			success = io::save_stl(file_name, mesh);
+            success = io::save_stl(final_name, mesh);
 
 		//	else if (ext == "plg")
 		//        serializer = new MeshSerializer_plg();
@@ -138,7 +151,7 @@ namespace easy3d {
             return true;
         }
         else {
-            std::cout << "save model failed" << w.time_string() << std::endl;
+            std::cout << "save model failed" << std::endl;
             return false;
         }
 	}
