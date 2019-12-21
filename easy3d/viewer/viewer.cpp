@@ -71,6 +71,8 @@
 // enforce the same behavior on different platforms
 #ifdef __APPLE__
 #define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
+#else
+#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
 #endif
 
 
