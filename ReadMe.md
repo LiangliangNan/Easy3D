@@ -37,16 +37,14 @@ Point/Line imposters                         |  Surface reconstruction          
  
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
-
-Only two lines of code to have a viewer to visualize you meshes or point clouds
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code, e.g., only two lines of code to have a viewer to visualize you meshes or point clouds
 
 ```c++
         Viewer viewer("MyViewer");
         viewer.run();
 ```
 
-Of course, you can customize the drawables. For example, the following code renders a point clouds as a set of spheres
+Of course, you can customize the drawables. For example, the following code renders a point cloud as a set of spheres
 
 ```c++
 	// assume your point cloud has been loaded to the viewer
