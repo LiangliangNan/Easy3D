@@ -59,11 +59,7 @@ By abstracting geometric elements as one of the above drawables, more general vi
 
 Easy3D has been tested on macOS, Linux, and Windows. You should also be able to build it on other platforms.
 
-Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
-and then use your favorite IDE to work with Easy3D.
-
-In case you use *Qt Creator* or other IDEs that can handle the CMakeLists.txt file, simply open that file and then all files 
-will be well organized as projects.
+Run CMake to generate project files for you IDE. In case you use *Qt Creator* or other IDEs that can handle the CMakeLists.txt file, simply open that file and then all files will be well organized as projects.
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
