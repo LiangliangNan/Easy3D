@@ -60,7 +60,7 @@ namespace easy3d {
         int width, height, comp;
         std::vector<unsigned char> data;
         // flip the image vertically, so the first pixel in the output array is the bottom left
-        bool success = ImageIO::load(data, file_name, width, height, comp, 0);
+        bool success = ImageIO::load(file_name, data, width, height, comp, 0);
         if (!success || data.empty())
             return nullptr;
 

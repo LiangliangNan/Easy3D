@@ -345,19 +345,19 @@ namespace easy3d {
             const std::string& ext = file_system::extension(file_name, true);
             if (ext == "png" || ext == "jpg") {
                 read_color(bits, GL_RGBA, true);
-                ImageIO::save(bits, file_name, w, h, 4);
+                ImageIO::save(file_name, bits, w, h, 4);
             }
             else if (ext == "ppm") {
                 read_color(bits, GL_RGB, true);
-                io::save_ppm(bits, file_name, w, h);
+                io::save_ppm(file_name, bits, w, h);
             }
             else if (ext == "bmp") {
                 read_color(bits, GL_BGRA, false); // bmp is alwasy flipped?
-                io::save_bmp(bits, file_name, w, h);
+                io::save_bmp(file_name, bits, w, h);
             }
             else if (ext == "tga") {
                 read_color(bits, GL_BGRA, true);
-                io::save_tga(bits, file_name, w, h);
+                io::save_tga(file_name, bits, w, h);
             }
             else
                 std::cerr << "unknown file format: " << ext << std::endl;
@@ -380,19 +380,19 @@ namespace easy3d {
             const std::string& ext = file_system::extension(file_name, true);
             if (ext == "png" || ext == "jpg") {
                 read_color_ms(index, bits, GL_RGBA, true);
-                ImageIO::save(bits, file_name, w, h, 4);
+                ImageIO::save(file_name, bits, w, h, 4);
             }
             else if (ext == "ppm") {
                 read_color_ms(index, bits, GL_RGB, true);
-                io::save_ppm(bits, file_name, w, h);
+                io::save_ppm(file_name, bits, w, h);
             }
             else if (ext == "bmp") {
                 read_color_ms(index, bits, GL_BGRA, true);
-                io::save_bmp(bits, file_name, w, h);
+                io::save_bmp(file_name, bits, w, h);
             }
             else if (ext == "tga") {
                 read_color_ms(index, bits, GL_BGRA, true);
-                io::save_tga(bits, file_name, w, h);
+                io::save_tga(file_name, bits, w, h);
             }
             else
                 std::cerr << "unknown file format: " << ext << std::endl;
@@ -518,9 +518,9 @@ namespace easy3d {
 
             const std::string& ext = file_system::extension(file_name, true);
             if (ext == "ppm")
-                io::save_ppm(bits, file_name, w, h);
+                io::save_ppm(file_name, bits, w, h);
             else
-                ImageIO::save(bits, file_name, w, h, 3);
+                ImageIO::save(file_name, bits, w, h, 3);
 		}
 
 
@@ -542,9 +542,9 @@ namespace easy3d {
 
             const std::string& ext = file_system::extension(file_name, true);
             if (ext == "ppm")
-                io::save_ppm(bits, file_name, w, h);
+                io::save_ppm(file_name, bits, w, h);
             else
-                ImageIO::save(bits, file_name, w, h, 3);
+                ImageIO::save(file_name, bits, w, h, 3);
 		}
 
 	}

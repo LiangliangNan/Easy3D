@@ -37,65 +37,110 @@ namespace easy3d {
     class ImageIO
 	{
 	public:
-        // Basic usage:
-        //    int w, h, comp;
-        //    std::vector<unsigned char> data;
-        //    bool success = ImageIO::load(data, file_name, &w, &h, &comp, 0);
-        //    // ... process data if true returned ...
-        //
-        // Parameters:
-        //    data:     outputs the image data. Data will beempty if the specified image file
-        //              doesn't exist, allocation failed, or the image is corrupt or invalid.
-        //    w:        outputs image width in pixels; unchanged if failed.
-        //    h:        outputs image height in pixels; unchanged if failed.
-        //    comp:     outputs the number of 8-bit image components per pixel in the image file;
-        //              unchanged if failed.
-        //    req_comp: if non-zero, force to treat the image as if has this number of components,
-        //              e.g. if you set req_comp to 4, you will always get RGBA output, but you
-        //              can check comp to see the actual number of channels.
-        //
-        // The image data returned is an 1D array of 'unsigned char' which points to the pixel
-        // data, or empty when failed. The pixel data consists of h scanlines of w pixels,
-        // with each pixel consisting of N interleaved 8-bit components; the first pixel
-        // pointed to is top-left-most in the image. There is no padding between image
-        // scanlines or between pixels, regardless of format. The number of components N is
-        // 'req_comp' if req_comp is non-zero, or comp otherwise.
-        // An output image with N components has the following components interleaved in this
-        // order in each pixel:
-        //
-        //     N=#comp     components
-        //       1           grey
-        //       2           grey, alpha
-        //       3           red, green, blue
-        //       4           red, green, blue, alpha
+        /**
+         * \brief Load image data from a file. The following formats are supported
+         *        JPG/JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PNM (.ppm and .pgm). File format is
+         *        determined by the file extension given in the file name.
+         *
+         * \param file_name The image file to load.
+         * \param data  Outputs the image data. Data will beempty if the specified image file
+         *              doesn't exist, allocation failed, or the image is corrupt or invalid.
+         *              The image data returned is an 1D array of 'unsigned char' which points
+         *              to the pixel data, or empty when failed. The pixel data consists of
+         *              'height' scanlines of 'width' pixels, with each pixel consisting of N
+         *              interleaved 8-bit channels/components; the first pixel pointed to is
+         *              top-left-most in the image. There is no padding between image scanlines
+         *              or between pixels, regardless of format. The number of channels N is
+         *              'requested_channels' if it is non-zero, or 'channels' otherwise.
+         *              An output image with N components has the following components interleaved
+         *              in this order in each pixel:
+         *                  N=#channels     components
+         *                  1               grey
+         *                  2               grey, alpha
+         *                  3               red, green, blue
+         *                  4               red, green, blue, alpha
+         *
+         * \param width Outputs image width in pixels. Unchanged if failed.
+         * \param height Outputs image height in pixels. Unchanged if failed.
+         * \param channels Outputs the number of 8-bit image channels per pixel. Unchanged if failed.
+         * \param requested_channels User requested image channels. If non-zero, force to treat the
+         *                           image as if has this number of components, e.g. if you set it 4,
+         *                           you will always get RGBA output, but you can check channels to
+         *                           get the actual number of channels.
+         * \param flip_vertically Flip the image data vertically if it is true. This is convenient
+         *                        For OpenGL applications where the first pixel in the output array
+         *                        is expected to be the bottom left corner of the image.
+         *
+         * \return Return true on succee or false if failed.
+         *
+         * \example
+         *    int width, height, channels;
+         *    std::vector<unsigned char> data;
+         *    bool success = ImageIO::load(data, file_name, &width, &height, &channels, 0);
+         *    // ... process data if true returned ...
+         */
+        static bool load(
+                const std::string& file_name,
+                std::vector<unsigned char>& data,
+                int& width,
+                int& height,
+                int& channels,
+                int requested_channels = 0,
+                bool flip_vertically = false
+                );
 
-        static bool load(std::vector<unsigned char>& data, const std::string& file_name, int& w, int& h, int& comp, int req_comp = 0);
-
-        // save the image data to a file. Only png, jpg, bmp, and tga formats are supported.
-        // File format is determined by the file extension given in the file name.
-        // The image data storage must follow
-        //     N=#comp     components
-        //       1           grey
-        //       2           grey, alpha
-        //       3           red, green, blue
-        //       4           red, green, blue, alpha
-        // Return false if failed.
-        static bool	save(const std::vector<unsigned char>& data, const std::string& file_name, int w, int h, int comp);
+        /**
+         * \brief Write image data into a file. The following formats are supported
+         *        JPG/JPEG, PNG, BMP, and TGA. File format is determined by the file
+         *        extension given in the file name.
+         *
+         * \param file_name The file to which the image data will be save.
+         * \param data  The image data. The image data storage must follow
+         *                  N=#channels     components
+         *                  1               grey
+         *                  2               grey, alpha
+         *                  3               red, green, blue
+         *                  4               red, green, blue, alpha
+         * \param width The width of the image, in pixels.
+         * \param height The height of the image, in pixels.
+         * \param channels The number of 8-bit image channels per pixel.
+         * \param flip_vertically Flip the image data vertically before writting.
+         *
+         * \return Return true on success or false if failed.
+         */
+        static bool	save(
+                const std::string& file_name,
+                const std::vector<unsigned char>& data,
+                int width,
+                int height,
+                int channels,
+                bool flip_vertically = false
+                );
 	};
 
 
 	namespace io {
 
-        // some functions I wrote years ago. This function assumes specific input formats
+        /**
+          * Some image IO functions I wrote years ago. Just want to keep them.
+          * \attention These functions assumes specific input storage.
+          */
 
-        // NOTE: assumes that each pixel has 3 chanels in RGB order
-        bool save_ppm(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
 
-        // NOTE: assumes that each pixel has 4 chanels in BGRA order
-        bool save_bmp(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
+        /**
+         * \attention This function assumes that each pixel has 3 chanels in RGB order.
+         */
+        bool save_ppm(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
-        // NOTE: assumes that each pixel has 4 chanels in BGRA order
-        bool save_tga(const std::vector<unsigned char>& bits, const std::string& file_name, int width, int height);
+        /**
+         * \attention This function assumes that each pixel has 4 chanels in BGRA order.
+         */
+        bool save_bmp(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
+
+        /**
+         * \attention This function assumes that each pixel has 4 chanels in BGRA order.
+         */
+        bool save_tga(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
     }
 

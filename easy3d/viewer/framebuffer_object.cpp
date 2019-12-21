@@ -1476,23 +1476,23 @@ namespace easy3d {
         if (ext == "png" || ext == "jpg") {
             if (!read_color(index, bits, GL_RGBA, true))
                 return false;
-            return ImageIO::save(bits, file_name, width_, height_, 4);
+            return ImageIO::save(file_name, bits, width_, height_, 4);
         }
         else if (ext == "ppm") {
             std::vector<unsigned char> bits;
             if (!read_color(index, bits, GL_RGB, true))
                 return false;
-            return io::save_ppm(bits, file_name, width_, height_);
+            return io::save_ppm(file_name, bits, width_, height_);
         }
         else if (ext == "bmp") {
             if (!read_color(index, bits, GL_BGRA, false))   // bmp is alway flipped?
                 return false;
-            return io::save_bmp(bits, file_name, width_, height_);
+            return io::save_bmp(file_name, bits, width_, height_);
         }
         else if (ext == "tga") {
             if (!read_color(index, bits, GL_BGRA, true))
                 return false;
-            return io::save_tga(bits, file_name, width_, height_);
+            return io::save_tga(file_name, bits, width_, height_);
         }
         else {
             std::cerr << "unknown file format: " << ext << std::endl;
@@ -1571,9 +1571,9 @@ namespace easy3d {
 
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ppm")
-            return io::save_ppm(bits, file_name, width_, height_);
+            return io::save_ppm(file_name, bits, width_, height_);
         else
-            return ImageIO::save(bits, file_name, width_, height_, 3);
+            return ImageIO::save(file_name, bits, width_, height_, 3);
     }
 
 

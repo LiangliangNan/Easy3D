@@ -40,22 +40,22 @@
 namespace easy3d {
 
     bool ImageIO::load(
-            std::vector<unsigned char>& data,
             const std::string& file_name,
-            int& w,
-            int& h,
-            int& comp,
-            int req_comp)
+            std::vector<unsigned char>& data,
+            int& width,
+            int& height,
+            int& channels,
+            int requested_channels,
+            bool flip_vertically)
     {
         data.clear();
 
-        // flip the image vertically, so the first pixel in the output array is the bottom left
-        if (true)
-            stbi_set_flip_vertically_on_load(1);
+        // flag is non-zero to flip data vertically (so the first pixel in the output array is the bottom left)
+        stbi_set_flip_vertically_on_load(flip_vertically);
 
-        unsigned char* pixels = stbi_load(file_name.c_str(), &w, &h, &comp, req_comp);
+        unsigned char* pixels = stbi_load(file_name.c_str(), &width, &height, &channels, requested_channels);
         if (pixels) {
-            data.assign(pixels, pixels + h * w * comp);
+            data.assign(pixels, pixels + height * width * channels);
             stbi_image_free(pixels);
             return true;
         }
@@ -63,16 +63,21 @@ namespace easy3d {
     }
 
 
-    bool ImageIO::save(const std::vector<unsigned char>& data, const std::string& file_name, int w, int h, int comp)
+    bool ImageIO::save(
+            const std::string& file_name,
+            const std::vector<unsigned char>& data,
+            int width,
+            int height,
+            int channels,
+            bool flip_vertically)
     {
         if (data.empty()) {
             std::cerr << "image data is empty" << std::endl;
             return false;
         }
 
-#if 0
-        stbi_flip_vertically_on_write(1); // flag is non-zero to flip data vertically
-#endif
+        // flag is non-zero to flip data vertically
+        stbi_flip_vertically_on_write(flip_vertically);
 
         std::string final_name = file_name;
         const std::string& ext = file_system::extension(file_name, true);
@@ -86,18 +91,18 @@ namespace easy3d {
             // PNG allows you to set the deflate compression level by setting the global
             // variable 'stbi_write_png_compression_level' (it defaults to 8).
             stbi_write_png_compression_level = 8; //
-            return ::stbi_write_png(final_name.c_str(), w, h, comp, data.data(), w * comp);
+            return ::stbi_write_png(final_name.c_str(), width, height, channels, data.data(), width * channels);
         }
         else if (ext == "jpg") {
             // quality is between 1 and 100. Higher quality looks better but results in a bigger image.
-            return ::stbi_write_jpg(final_name.c_str(), w, h, comp, data.data(), 100);
+            return ::stbi_write_jpg(final_name.c_str(), width, height, channels, data.data(), 100);
         }
         else if (ext == "bmp")
-            return ::stbi_write_bmp(final_name.c_str(), w, h, comp, data.data());
+            return ::stbi_write_bmp(final_name.c_str(), width, height, channels, data.data());
         else if (ext == "tga")
-            return ::stbi_write_tga(final_name.c_str(), w, h, comp, data.data());
+            return ::stbi_write_tga(final_name.c_str(), width, height, channels, data.data());
         else {
-            std::cerr << "unsuported format: " << ext << std::endl;
+            std::cerr << "unsupported file format: " << ext << std::endl;
             return false;
         }
 
@@ -108,8 +113,8 @@ namespace easy3d {
 
         // NOTE: assumes that each pixel has 3 chanels in RGB order
         bool save_ppm(
-                const std::vector<unsigned char>& bits,
                 const std::string& file_name,
+                const std::vector<unsigned char>& bits,
                 int width,
                 int height)
         {
@@ -131,8 +136,8 @@ namespace easy3d {
 
         // NOTE: assumes that each pixel has 4 chanels in BGRA order
         bool save_bmp(
-                const std::vector<unsigned char>& bits,
                 const std::string& file_name,
+                const std::vector<unsigned char>& bits,
                 int width,
                 int height)
         {
@@ -142,7 +147,6 @@ namespace easy3d {
                 unsigned int    bfSize;
                 unsigned int    bfReserved;
                 unsigned int    bfOffBits;
-
                 unsigned int    biSize;
                 signed   int    biWidth;
                 signed   int    biHeight;
@@ -185,8 +189,8 @@ namespace easy3d {
 
         // NOTE: assumes that each pixel has 4 chanels in BGRA order
         bool save_tga(
-                const std::vector<unsigned char>& bits,
                 const std::string& file_name,
+                const std::vector<unsigned char>& bits,
                 int width,
                 int height)
         {
