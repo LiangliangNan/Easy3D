@@ -30,25 +30,14 @@
 #include <string>
 #include <vector>
 
-#include <easy3d/core/types.h>
-
 
 namespace easy3d
 {
+
     class FileDialog
     {
     public:
 
-#ifdef HAS_OSDIALOG
-        // usage
-        //        const std::string filters =
-        //                "Source:off,obj,ply;"
-        //                "Header:xyz,ply";
-        //        const std::string& file_name = FileDialog::open("", filters);
-        static std::string open(const std::string& file_name, const std::string& filters) ;
-#endif
-
-#if 1 // HAS_PORTABLE_FILE_DIALOGS
         /**
          * \brief Open a native file open dialog.
          * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
@@ -86,8 +75,16 @@ namespace easy3d
                 const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
                 bool confirm_overwrite = false
                 );
-#endif
 
+
+#ifdef HAS_OSDIALOG
+        // usage
+        //        const std::string filters =
+        //                "Source:off,obj,ply;"
+        //                "Header:xyz,ply";
+        //        const std::string& file_name = FileDialog::open("", filters);
+        static std::string open(const std::string& file_name, const std::string& filters) ;
+#endif
 
 #ifdef HAS_TINY_FILE_DIALOGS
 

@@ -31,27 +31,6 @@
 
 namespace easy3d {
 
-
-#ifdef HAS_OSDIALOG
-    // https://github.com/AndrewBelt/osdialog
-    std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
-        osdialog_filters* filters_c = nullptr;
-        if (!filters.empty())
-            filters_c = osdialog_filters_parse(filters.c_str());
-
-        std::string result;
-        char *filepath_c = osdialog_file(OSDIALOG_OPEN, nullptr, file_name.c_str(), filters_c);
-        if (filepath_c) {
-            result = std::string(filepath_c);
-            std::free(filepath_c);
-            osdialog_filters_free(filters_c);
-        }
-        return result;
-    };
-#endif
-
-
-#if 1 // HAS_PORTABLE_FILE_DIALOGS
     // https://github.com/samhocevar/portable-file-dialogs
     std::vector<std::string> FileDialog::open(
             const std::string& title,
@@ -75,7 +54,25 @@ namespace easy3d {
         return f.result();
     }
 
+
+#ifdef HAS_OSDIALOG
+    // https://github.com/AndrewBelt/osdialog
+    std::string FileDialog::open(const std::string& file_name, const std::string& filters) {
+        osdialog_filters* filters_c = nullptr;
+        if (!filters.empty())
+            filters_c = osdialog_filters_parse(filters.c_str());
+
+        std::string result;
+        char *filepath_c = osdialog_file(OSDIALOG_OPEN, nullptr, file_name.c_str(), filters_c);
+        if (filepath_c) {
+            result = std::string(filepath_c);
+            std::free(filepath_c);
+            osdialog_filters_free(filters_c);
+        }
+        return result;
+    };
 #endif
+
 
 
 #ifdef HAS_TINY_FILE_DIALOGS
