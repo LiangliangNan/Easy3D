@@ -35,7 +35,7 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file = setting::resource_directory() + "/data/building_cloud.bin";
+    const std::string file = setting::resource_directory() + "/data/ball.ply";
 
     try {
         // Create the viewer.
