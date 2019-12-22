@@ -1257,7 +1257,7 @@ namespace easy3d {
             "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
             "All Files (*.*)", "*"
         };
-        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
+        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, true);
 
         int count = 0;
         for (const auto& file_name : file_names) {
