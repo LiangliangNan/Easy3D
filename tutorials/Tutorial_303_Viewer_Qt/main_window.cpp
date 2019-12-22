@@ -136,43 +136,43 @@ bool MainWindow::onOpen() {
 
 
 bool MainWindow::onSave() {
-    if (viewer_->models().empty())
+    const Model* model = viewer_->currentModel();
+    if (!model) {
+        std::cerr << "no model exists" << std::endl;
+        return false;
+    }
+
+    std::string default_file_name = model->name();
+    if (file_system::extension(default_file_name).empty()) // no extention?
+        default_file_name += ".ply"; // default to ply
+
+    const QString& fileName = QFileDialog::getSaveFileName(
+                this,
+                "Open file(s)",
+                QString::fromStdString(default_file_name),
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
+                "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
+                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
+                "All formats (*.*)"
+    );
+
+    if (fileName.isEmpty())
         return false;
 
-    if (viewer_->currentModel()) {
-        const Model* m = viewer_->currentModel();
-        std::string default_file_name = m->name();
-        if (file_system::extension(default_file_name).empty()) // no extention?
-            default_file_name += ".ply"; // default to ply
+    bool saved = false;
+    if (dynamic_cast<const PointCloud*>(model)) {
+        const PointCloud* cloud = dynamic_cast<const PointCloud*>(model);
+        saved = PointCloudIO::save(fileName.toStdString(), cloud);
+    }
+    else if (dynamic_cast<const SurfaceMesh*>(model)) {
+        const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(model);
+        saved = saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
+    }
 
-        const QString& fileName = QFileDialog::getSaveFileName(
-                    this,
-                    "Open file(s)",
-                    QString::fromStdString(default_file_name),
-                    "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
-                    "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
-                    "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
-                    "All formats (*.*)"
-        );
-
-        if (fileName.isEmpty())
-            return false;
-
-        bool saved = false;
-        if (dynamic_cast<const PointCloud*>(m)) {
-            const PointCloud* cloud = dynamic_cast<const PointCloud*>(m);
-            saved = PointCloudIO::save(fileName.toStdString(), cloud);
-        }
-        else if (dynamic_cast<const SurfaceMesh*>(m)) {
-            const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(m);
-            saved = saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
-        }
-
-        if (saved) {
-            std::cout << "model successfully saved to: \'" << fileName.toStdString() << "\'" << std::endl;
-            setCurrentFile(fileName);
-            return true;
-        }
+    if (saved) {
+        std::cout << "model successfully saved to: \'" << fileName.toStdString() << "\'" << std::endl;
+        setCurrentFile(fileName);
+        return true;
     }
 
     return false;
@@ -287,19 +287,26 @@ void MainWindow::onClearRecentFiles() {
 
 
 void MainWindow::saveSnapshot() {
+    const Model* model = viewer_->currentModel();
+    if (!model) {
+        std::cerr << "no model exists" << std::endl;
+        return;
+    }
+
     const bool overwrite = false;
-    const QString proposedFileName = curDataDirectory_ + "/" + "snapshot.png";
+    const std::string& default_file_name = file_system::replace_extension(model->name(), "png");
     QString proposedFormat = "PNG (*.png)";
     const QString fileName = QFileDialog::getSaveFileName(
         this,
-        "Choose an image file name",
-        proposedFileName,
-        "Image formats (*.png *.jpg *.bmp *.ppm)\n"
+        "Please choose a file name",
+        QString::fromStdString(default_file_name),
+        "Image Files (*.png *.jpg *.bmp *.ppm)\n"
         "PNG (*.png)\n"
         "JPG (*.jpg)\n"
         "Windows Bitmap (*.bmp)\n"
-        "24bit RGB Bitmap (*.ppm)",
-        &proposedFormat,
+        "24bit RGB Bitmap (*.ppm)\n"
+        "All Files (*.*)",
+        nullptr,
         overwrite ? QFileDialog::DontConfirmOverwrite : QFlags<QFileDialog::Option>(nullptr)
     );
     // Hide closed dialog

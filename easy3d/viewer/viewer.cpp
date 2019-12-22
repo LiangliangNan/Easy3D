@@ -68,7 +68,7 @@
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 
 
-// enforce the same behavior on different platforms
+// enforce the same behavior on macOS and other platforms (i.e., Windows, Linux)
 #ifdef __APPLE__
 #define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
 #else
@@ -1250,12 +1250,12 @@ namespace easy3d {
 
 
     bool Viewer::open() {
-        const std::string& title = "Please choose a file to read";
+        const std::string& title = "Please choose a file";
         const std::string& default_path = setting::resource_directory() + "/data/";
         const std::vector<std::string>& filters = {
             "Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
             "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
-            "All Files (*.*)", "*.*"
+            "All Files (*.*)", "*"
         };
         const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
 
@@ -1275,11 +1275,11 @@ namespace easy3d {
             return false;
         }
 
-        const std::string& title = "Please choose a file name to save";
+        const std::string& title = "Please choose a file name";
         const std::vector<std::string>& filters = {
             "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly" ,
             "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
-            "All Files (*.*)", "*.*"
+            "All Files (*.*)", "*"
         };
 
         std::string default_file_name = m->name();
@@ -1313,14 +1313,15 @@ namespace easy3d {
             return false;
         }
 
-        const std::string& title = "Please choose a file name to save";
+        const std::string& title = "Please choose a file name";
         const std::string& default_file_name = file_system::replace_extension(current_model()->name(), "png");
         const std::vector<std::string>& filters = {
             "Image Files (*.png *.jpg *.bmp *.ppm *.tga)" , "*.png *.jpg *.bmp *.ppm *.tga",
-            "All Files (*.*)", "*.*"
+            "All Files (*.*)", "*"
         };
 
-        const std::string& file_name = FileDialog::save(title, default_file_name, filters);
+        const bool overwrite = false;
+        const std::string& file_name = FileDialog::save(title, default_file_name, filters, overwrite);
         if (file_name.empty())
             return false;
 
