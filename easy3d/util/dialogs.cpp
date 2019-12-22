@@ -38,6 +38,8 @@ namespace easy3d {
             const std::vector<std::string>& filters,
             bool multiple)
     {
+        // Set verbosity to false
+        pfd::settings::verbose(false);
         auto f = pfd::open_file(title, default_directory, filters, multiple);
         return f.result();
     }
@@ -50,6 +52,9 @@ namespace easy3d {
             bool confirm_overwrite
             )
     {
+
+        // Set verbosity to false
+        pfd::settings::verbose(false);
         auto f = pfd::save_file(title, default_file_name, filters, confirm_overwrite);
         return f.result();
     }
