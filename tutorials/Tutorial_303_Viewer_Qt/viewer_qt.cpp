@@ -372,6 +372,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
     else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
 		fitScreen();
     }
+
     else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
@@ -380,30 +381,31 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
         camera_->frame()->action_turn(-angle, camera_);
     }
+
     else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {	// move camera forward
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
     }
     else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
     }
 
     else if (e->key() == Qt::Key_Left && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera left
-        std::cout << "done" << std::endl;
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
     }
     else if (e->key() == Qt::Key_Right && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera right
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
     }
+
     else if (e->key() == Qt::Key_Up && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera up
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
     }
     else if (e->key() == Qt::Key_Down && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera down
-        float step = 0.02f * camera_->sceneRadius();
+        float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
     }
 
@@ -540,6 +542,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
     }
 
     else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
+        // Reload the shader(s) - useful for writing/debugging shader code.
         ShaderManager::reload();
     }
 

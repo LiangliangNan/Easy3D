@@ -654,6 +654,7 @@ namespace easy3d {
 		else if (key == GLFW_KEY_F && modifiers == 0) {
             fit_screen();
 		}
+
 		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
             float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
 			camera_->frame()->action_turn(angle, camera_);
@@ -662,29 +663,31 @@ namespace easy3d {
             float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
 			camera_->frame()->action_turn(-angle, camera_);
 		}
+
 		else if (key == GLFW_KEY_UP && modifiers == 0) {	// move camera forward
-			float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
 		}
 		else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
-			float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
 		}
 
         else if (key == GLFW_KEY_LEFT && modifiers == EASY3D_MOD_CONTROL) {	// move camera left
-            float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
         }
         else if (key == GLFW_KEY_RIGHT && modifiers == EASY3D_MOD_CONTROL) {	// move camera right
-            float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
         }
+
         else if (key == GLFW_KEY_UP && modifiers == EASY3D_MOD_CONTROL) {	// move camera up
-			float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
 		}
         else if (key == GLFW_KEY_DOWN && modifiers == EASY3D_MOD_CONTROL) {	// move camera down
-			float step = 0.02f * camera_->sceneRadius();
+            float step = 0.05f * camera_->sceneRadius();
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
 
@@ -833,12 +836,12 @@ namespace easy3d {
             }
         }
         else if (key == GLFW_KEY_R && modifiers == 0) {
+            // Reload the shader(s) - useful for writing/debugging shader code.
             ShaderManager::reload();
         }
 
         else if (key == GLFW_KEY_S && modifiers == 0) {
            snapshot();
-           update();
         }
 
         else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {

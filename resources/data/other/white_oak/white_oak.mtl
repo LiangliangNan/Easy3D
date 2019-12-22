@@ -1,0 +1,60 @@
+newmtl Cap_02
+	Ns 10
+	Ni 1.500
+	d 1.000
+	Tr 0.000
+	Tf 1.000 1.000 1.000 
+	illum 2
+	Ka 0.200 0.200 0.200
+	Kd 0.800 0.800 0.800
+	Ks 0.010 0.010 0.010
+	Ke 0.000 0.000 0.000
+	map_Ka T_Cap_02_D.png
+	map_Kd T_Cap_02_D.png
+	map_bump T_Cap_02_N.png
+
+newmtl WhiteOakBark
+	Ns 10
+	Ni 1.500
+	d 1.000
+	Tr 0.000
+	Tf 1.000 1.000 1.000 
+	illum 2
+	Ka 0.200 0.200 0.200
+	Kd 0.800 0.800 0.800
+	Ks 0.010 0.010 0.010
+	Ke 0.000 0.000 0.000
+	map_Ka T_WhiteOakBark_D.png
+	map_Kd T_WhiteOakBark_D.png
+	map_bump T_WhiteOakBark_N.png
+
+newmtl White_Oak_Leaves_Hero_3
+	Ns 10
+	Ni 1.500
+	d 1.000
+	Tr 0.000
+	Tf 1.000 1.000 1.000 
+	illum 2
+	Ka 0.200 0.200 0.200
+	Kd 0.800 0.800 0.800
+	Ks 0.010 0.010 0.010
+	Ke 0.000 0.000 0.000
+	map_Ka T_White_Oak_Leaves_Hero_3_D.png
+	map_Kd T_White_Oak_Leaves_Hero_3_D.png
+	map_d T_White_Oak_Leaves_Hero_3_A.png
+	map_bump T_White_Oak_Leaves_Hero_3_N.png
+
+newmtl White_Oak_Leaves_Hero_1
+	Ns 10
+	Ni 1.500
+	d 1.000
+	Tr 0.000
+	Tf 1.000 1.000 1.000 
+	illum 2
+	Ka 0.200 0.200 0.200
+	Kd 0.800 0.800 0.800
+	Ks 0.010 0.010 0.010
+	Ke 0.000 0.000 0.000
+	map_Ka T_White_Oak_Leaves_Hero_1_D.png
+	map_Kd T_White_Oak_Leaves_Hero_1_D.png
+	map_bump T_White_Oak_Leaves_Hero_1_N.png
