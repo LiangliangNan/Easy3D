@@ -61,7 +61,7 @@ namespace easy3d {
 		, modelViewMatrixIsUpToDate_(false)
 		, projectionMatrixIsUpToDate_(false)
 	{
-        interpolationKfi_ = new KeyFrameInterpolator(this, frame());
+        interpolationKfi_ = new KeyFrameInterpolator;
         setFrame(new ManipulatedCameraFrame());
 
 		// Requires fieldOfView() to define focusDistance()
@@ -106,7 +106,7 @@ namespace easy3d {
 	Camera::Camera(const Camera &camera)
 		: frame_(nullptr)
 	{
-        interpolationKfi_ = new KeyFrameInterpolator(this, frame());
+        interpolationKfi_ = new KeyFrameInterpolator;
 
         // Requires the interpolationKfi_
 		setFrame(new ManipulatedCameraFrame(*camera.frame()));
@@ -711,7 +711,7 @@ namespace easy3d {
 //               end = kfi_.end();
 //           it != end; ++it)
 //        (it.value())->drawPath(3, 5, sceneRadius());
-        interpolationKfi_->drawPath();
+        interpolationKfi_->drawPath(this);
     }
 
 

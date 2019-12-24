@@ -552,27 +552,25 @@ namespace easy3d {
                 const vec3& p = point_under_pixel(x, y, found);
                 if (found) {
                     // zoom to point under pixel
-#if 1   // without animation
+#if 1   // with animation
+                    camera()->interpolateToLookAt(p);
+#else   // without animation
                     const float coef = 0.1f;
                     const vec3& pos = coef*camera()->frame()->position() + (1.0f-coef)*p;
                     const quat& ori = camera()->frame()->orientation();
                     camera_->frame()->setPositionAndOrientation(pos, ori);
                     camera_->lookAt(p);
-#else   // with animation
-                    camera()->interpolateToLookAt(p);
-
 #endif
                     camera_->setPivotPoint(p);
                     update();
                 }
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-#if 1  // without animation
-                camera()->showEntireScene();
-#else   // with animation
+#if 1   // with animation
                 camera()->interpolateToFitScene();
+#else   // without animation
+                camera()->showEntireScene();
 #endif
-
                 camera_->setPivotPoint(camera_->sceneCenter());
                 update();
             }

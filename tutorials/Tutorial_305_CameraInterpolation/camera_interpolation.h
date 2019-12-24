@@ -27,7 +27,6 @@
 #define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/key_frame_interpolator.h>
 
 
 // This tutorial shows how to interpolate camera frames to
@@ -42,9 +41,6 @@ protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
-    
-private:
-    easy3d::KeyFrameInterpolator kfi_;
 };
 
 

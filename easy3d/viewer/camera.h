@@ -197,7 +197,6 @@ namespace easy3d {
 		//@}
 
 		/*! @name Positioning tools */
-		//@{
 	public:
 		void lookAt(const vec3 &target);
 		void showEntireScene();
@@ -205,6 +204,9 @@ namespace easy3d {
 		void fitBoundingBox(const vec3 &min, const vec3 &max);
 		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax);
 		void centerScene();
+
+    public:
+        KeyFrameInterpolator *keyFrameInterpolator() const { return interpolationKfi_; }
 
         void interpolateToLookAt(const vec3& point);
         void interpolateToFitScene();

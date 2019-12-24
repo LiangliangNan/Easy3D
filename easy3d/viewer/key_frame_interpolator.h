@@ -46,8 +46,8 @@
 
 namespace easy3d {
 
-    class Camera;
     class Frame;
+    class Camera;
     class LinesDrawable;
 
     /*! \brief A keyFrame Catmull-Rom Frame interpolator.
@@ -139,7 +139,7 @@ namespace easy3d {
     class KeyFrameInterpolator
     {
     public:
-        KeyFrameInterpolator(Camera* cam, Frame* fr=nullptr);
+        KeyFrameInterpolator(Frame* fr=nullptr);
         virtual ~KeyFrameInterpolator();
 
 //    Q_SIGNALS:
@@ -286,7 +286,7 @@ namespace easy3d {
         /*! @name Path drawing */
         //@{
     public:
-        virtual void drawPath(int mask=1, int nbFrames=6, double scale=1.0);
+        virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, double scale=1.0);
         //@}
 
     private:
@@ -358,7 +358,6 @@ namespace easy3d {
         vec3 v1, v2;
 
         LinesDrawable* path_drawable_;
-        Camera* camera_;
     };
 
 }

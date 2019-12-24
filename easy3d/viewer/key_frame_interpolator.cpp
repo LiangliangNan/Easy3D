@@ -38,9 +38,8 @@
 
 #include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/frame.h>
-#include <easy3d/viewer/viewer.h>
+#include <easy3d/viewer/viewer.h> // update()
 #include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/manipulated_camera_frame.h>
 
 #include <easy3d/util/timer.h>
 
@@ -54,7 +53,7 @@ namespace easy3d {
 
       interpolationTime(), interpolationSpeed() and interpolationPeriod() are set to their default
       values. */
-    KeyFrameInterpolator::KeyFrameInterpolator(Camera* cam, Frame* frame)
+    KeyFrameInterpolator::KeyFrameInterpolator(Frame* frame)
         : frame_(frame)
         , period_(40)
         , interpolationTime_(0.0)
@@ -67,10 +66,7 @@ namespace easy3d {
         , currentFrameValid_(false)
         // #CONNECTION# Values cut pasted initFromDOMElement()
         , path_drawable_(nullptr)
-        , camera_(cam)
     {
-        std::cout << "camera parameter is not necessary" << std::endl;
-
         if (keyFrame_.size() < 2)
             return;
 
@@ -290,53 +286,79 @@ namespace easy3d {
         currentFrameValid_ = false;
     }
 
-    static void drawCamera(double scale)
-    {
-//        glDisable(GL_LIGHTING);
+    //void drawCamera(float scale)
+    //{
+    //    const double halfHeight = scale * 0.07;
+    //    const double halfWidth = halfHeight * 1.3;
+    //    const double dist = halfHeight / tan(double(M_PI) / 8.0);
 
-//        const double halfHeight = scale * 0.07;
-//        const double halfWidth  = halfHeight * 1.3;
-//        const double dist = halfHeight / tan(double(M_PI)/8.0);
+    //    const double arrowHeight = 1.5 * halfHeight;
+    //    const double baseHeight = 1.2 * halfHeight;
+    //    const double arrowHalfWidth = 0.5 * halfWidth;
+    //    const double baseHalfWidth = 0.3 * halfWidth;
 
-//        const double arrowHeight    = 1.5 * halfHeight;
-//        const double baseHeight     = 1.2 * halfHeight;
-//        const double arrowHalfWidth = 0.5 * halfWidth;
-//        const double baseHalfWidth  = 0.3 * halfWidth;
+    //    std::vector<vec3> points;
 
-//        // Frustum outline
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//        glBegin(GL_LINE_STRIP);
-//        glVertex3d(-halfWidth, halfHeight,-dist);
-//        glVertex3d(-halfWidth,-halfHeight,-dist);
-//        glVertex3d( 0.0, 0.0, 0.0);
-//        glVertex3d( halfWidth,-halfHeight,-dist);
-//        glVertex3d(-halfWidth,-halfHeight,-dist);
-//        glEnd();
-//        glBegin(GL_LINE_STRIP);
-//        glVertex3d( halfWidth,-halfHeight,-dist);
-//        glVertex3d( halfWidth, halfHeight,-dist);
-//        glVertex3d( 0.0, 0.0, 0.0);
-//        glVertex3d(-halfWidth, halfHeight,-dist);
-//        glVertex3d( halfWidth, halfHeight,-dist);
-//        glEnd();
+    //    //--------------
+    //    // Frustum outline
+    //    //--------------
 
-//        // Up arrow
-//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-//        // Base
-//        glBegin(GL_QUADS);
-//        glVertex3d(-baseHalfWidth, halfHeight,-dist);
-//        glVertex3d( baseHalfWidth, halfHeight,-dist);
-//        glVertex3d( baseHalfWidth, baseHeight,-dist);
-//        glVertex3d(-baseHalfWidth, baseHeight,-dist);
-//        glEnd();
+    //    // LINE_STRIP
+    //    const vec3 p0(-halfWidth, halfHeight, -dist);
+    //    const vec3 p1(-halfWidth, -halfHeight, -dist);    points.push_back(p0); points.push_back(p1);
+    //    const vec3 p2(0.0, 0.0, 0.0);                    points.push_back(p1); points.push_back(p2);
+    //    const vec3 p3(halfWidth, -halfHeight, -dist);    points.push_back(p2); points.push_back(p3);
+    //    const vec3 p4(-halfWidth, -halfHeight, -dist);    points.push_back(p3); points.push_back(p4);
 
-//        // Arrow
-//        glBegin(GL_TRIANGLES);
-//        glVertex3d( 0.0,           arrowHeight,-dist);
-//        glVertex3d(-arrowHalfWidth, baseHeight, -dist);
-//        glVertex3d( arrowHalfWidth, baseHeight, -dist);
-//        glEnd();
-    }
+    //    // LINE_STRIP
+    //    const vec3 q0(halfWidth, -halfHeight, -dist);
+    //    const vec3 q1(halfWidth, halfHeight, -dist);
+    //    const vec3 q2(0.0, 0.0, 0.0);
+    //    const vec3 q3(-halfWidth, halfHeight, -dist);
+    //    const vec3 q4(halfWidth, halfHeight, -dist);
+    //    points.push_back(q0); points.push_back(q1);
+    //    points.push_back(q1); points.push_back(q2);
+    //    points.push_back(q2); points.push_back(q3);
+    //    points.push_back(q3); points.push_back(q4);
+
+    //    //------------------
+    //    // Up arrow
+    //    //------------------
+
+    //    // Base - QUAD
+    //    const vec3 r0(-baseHalfWidth, halfHeight, -dist);
+    //    const vec3 r1(baseHalfWidth, halfHeight, -dist);
+    //    const vec3 r2(baseHalfWidth, baseHeight, -dist);
+    //    const vec3 r3(-baseHalfWidth, baseHeight, -dist);
+    //    points.push_back(r0); points.push_back(r1);
+    //    points.push_back(r1); points.push_back(r2);
+    //    points.push_back(r2); points.push_back(r3);
+    //    points.push_back(r3); points.push_back(r0);
+
+    //    // Arrow - TRIANGLE
+    //    const vec3 a0(0.0, arrowHeight, -dist);
+    //    const vec3 a1(-arrowHalfWidth, baseHeight, -dist);
+    //    const vec3 a2(arrowHalfWidth, baseHeight, -dist);
+    //    points.push_back(a0); points.push_back(a1);
+    //    points.push_back(a1); points.push_back(a2);
+    //    points.push_back(a2); points.push_back(a0);
+
+    //    std::vector<vec3> vertices;
+    //    for (int i = 0; i < views_.size(); ++i) {
+    //        Camera c;
+    //        KRT_to_camera(i, 1, &c);
+    //        const mat4& m = c.frame()->worldMatrix();
+    //        for (auto& p : points) {
+    //            vertices.push_back(m * p);
+    //        }
+    //    }
+    //    LinesDrawable* d = current_model()->lines_drawable("cameras");
+    //    if (!d)
+    //        d = current_model()->add_lines_drawable("cameras");
+    //    d->update_vertex_buffer(vertices);
+    //    d->set_default_color(vec3(0, 0, 1));
+    //}
+
 
     /*! Draws the path used to interpolate the frame().
 
@@ -369,7 +391,7 @@ namespace easy3d {
       drawPathModifyGLState(mask, nbFrames, scale);
       glPopAttrib();
       \endcode */
-    void KeyFrameInterpolator::drawPath(int mask, int nbFrames, double scale)
+    void KeyFrameInterpolator::drawPath(const Camera* cam, int mask, int nbFrames, double scale)
     {
         const int nbSteps = 30;
         if (!pathIsValid_)
@@ -447,14 +469,14 @@ namespace easy3d {
 
                 path_drawable_->update_vertex_buffer(points);
                 path_drawable_->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-                path_drawable_->set_line_width(5);
+                path_drawable_->set_line_width(4);
                 path_drawable_->set_impostor_type(IT_CONES);
             }
         }
 
         {
             if (path_drawable_)
-                path_drawable_->draw(camera_);
+                path_drawable_->draw(cam);
 
 //            if (mask & 6)
 //            {
