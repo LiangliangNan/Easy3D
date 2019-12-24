@@ -32,7 +32,7 @@
 namespace easy3d {
 
     // https://github.com/samhocevar/portable-file-dialogs
-    std::vector<std::string> FileDialog::open(
+    std::vector<std::string> dialog::open(
             const std::string& title,
             const std::string& default_directory,
             const std::vector<std::string>& filters,
@@ -40,23 +40,84 @@ namespace easy3d {
     {
         // Set verbosity to false
         pfd::settings::verbose(false);
-        auto f = pfd::open_file(title, default_directory, filters, multiple);
+
+        // if the provided path doesn't exist, let the OS decide.
+        const std::string& path = file_system::is_directory(default_directory) ?
+                    default_directory : "";
+        auto f = pfd::open_file(title, path, filters, multiple);
         return f.result();
     }
 
 
-    std::string FileDialog::save(
+    std::string dialog::open(
+            const std::string& title,
+            const std::string& default_directory,
+            const std::vector<std::string>& filters
+            )
+    {
+        const auto& file_names = open(title, default_directory, filters, false);
+        if (!file_names.empty())
+            return file_names[0];
+        else
+            return "";
+    }
+
+
+    std::string dialog::save(
             const std::string& title,
             const std::string& default_file_name,
             const std::vector<std::string>& filters,
             bool confirm_overwrite
             )
     {
-
         // Set verbosity to false
         pfd::settings::verbose(false);
         auto f = pfd::save_file(title, default_file_name, filters, confirm_overwrite);
         return f.result();
+    }
+
+
+    std::string dialog::open_folder(
+            const std::string& title,
+            const std::string& default_directory
+            )
+    {
+        // Set verbosity to false
+        pfd::settings::verbose(false);
+
+        // if the provided path doesn't exist, let the OS decide.
+        const std::string& path = file_system::is_directory(default_directory) ?
+                    default_directory : "";
+        return pfd::select_folder(title, path).result();
+    }
+
+
+    void dialog::notify(
+            const std::string& title,
+            const std::string& message,
+            Type type
+            )
+    {
+        // Set verbosity to false
+        pfd::settings::verbose(false);
+
+        // Notification
+        pfd::notify(title, message, pfd::icon(type));
+    }
+
+
+    dialog::Response dialog::message(
+            const std::string& title,
+            const std::string& message,
+            Choice choice,
+            Type type)
+    {
+        // Set verbosity to false
+        pfd::settings::verbose(false);
+
+        // Show message box
+        auto value = pfd::message(title, message, pfd::choice(choice), pfd::icon(type));
+        return static_cast<Response>(value.result());
     }
 
 
@@ -180,10 +241,10 @@ namespace easy3d {
         if (filters)
             delete [] filters;
 
-		if (file)
-			return std::string(file);
-		else
-			return "";
+        if (file)
+            return std::string(file);
+        else
+            return "";
     }
 
 

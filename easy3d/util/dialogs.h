@@ -24,8 +24,8 @@
 */
 
 
-#ifndef EASY3D_FILE_DIALOG_H
-#define EASY3D_FILE_DIALOG_H
+#ifndef EASY3D_DIALOGS_H
+#define EASY3D_DIALOGS_H
 
 #include <string>
 #include <vector>
@@ -34,9 +34,7 @@
 namespace easy3d
 {
 
-    class FileDialog
-    {
-    public:
+    namespace dialog {
 
         /**
          * \brief Open a native file open dialog.
@@ -49,13 +47,34 @@ namespace easy3d
          *                  "All Files (*.*)", "*"
          *              };
          * \param multiple Allow choosing multiple files if it is true.
+         * @returns The selected file names.
          */
-        static std::vector<std::string> open(
-                const std::string& title = "Please choose the file(s) to open",
-                const std::string& default_directory = "",
-                const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
+        std::vector<std::string> open(
+                const std::string& title,
+                const std::string& default_directory,
+                const std::vector<std::string>& filters,
                 bool multiple = false
                 );
+
+        /**
+         * \brief Open a native file open dialog.
+         * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
+         * \param default_path The default file path, e.g., setting::resource_directory() + "/data/".
+         * \param filters The accepted file filters, e.g.,
+         *              const std::vector<std::string> filters = {
+         *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
+         *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
+         *                  "All Files (*.*)", "*"
+         *              };
+         * @return The selected file name (empty if no file was selected).
+         */
+        std::string open(
+                const std::string& title = "Please choose the file(s) to open",
+                const std::string& default_directory = "",
+                const std::vector<std::string>& filters = { "All Files (*.*)", "*" }
+                );
+
+        // -----------------------------------------------------------------------------
 
         /**
          * \brief Open a native file save dialog.
@@ -68,12 +87,84 @@ namespace easy3d
          *                  "All Files (*.*)", "*.*"
          *              };
          * \param confirm_overwrite Do NOT show the confirm dialog if it is true.
+         * @return The chosen file name (empty if no file name was chosen).
          */
-        static std::string save(
+        std::string save(
                 const std::string& title = "Please choose a file name",
                 const std::string& default_file_name = "",
                 const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
                 bool confirm_overwrite = false
+                );
+
+        // -----------------------------------------------------------------------------
+
+        /**
+         * \brief Open a folder dialog.
+         * \param title The title of the dialog, e.g., "Please choose a folder".
+         * \param default_path The suggested file path, e.g., /project/data/"
+         * @return The chosen folder (empty if no folder was chosen).
+         */
+        std::string open_folder(
+                const std::string& title = "Please choose a folder",
+                const std::string& default_directory = ""
+                );
+
+        // -----------------------------------------------------------------------------
+
+        enum class Type {
+             info = 0,
+             warning,
+             error,
+             question
+        };
+
+        enum class Response {
+            cancel = -1,
+            ok,
+            yes,
+            no,
+            abort,
+            retry,
+            ignore,
+        };
+
+        enum class Choice {
+            ok = 0,
+            ok_cancel,
+            yes_no,
+            yes_no_cancel,
+            retry_cancel,
+            abort_retry_ignore,
+        };
+
+        /**
+         * @brief Notification.
+         * @param title The title of the notification dialog.
+         * @param message The message string.
+         * @param type The notification type. Default is 'info'. See 'Type'.
+         */
+
+        void notify(
+                const std::string& title,
+                const std::string& message,
+                Type type = Type::info
+                );
+
+        // -----------------------------------------------------------------------------
+
+        /**
+         * @brief Message box.
+         * @param title The title of the message box.
+         * @param message The message string.
+         * @param choice The options for the user. Defauly is 'ok_cancel'. See 'Choice'.
+         * @param type The message type. Default is 'info'. See 'Type'.
+         * @return The user's response. See "Response'.
+         */
+        Response message(
+                const std::string& title,
+                const std::string& message,
+                Choice choice = Choice::ok_cancel,
+                Type type = Type::info
                 );
 
 
@@ -136,5 +227,5 @@ namespace easy3d
 
 }
 
-#endif	// EASY3D_FILE_DIALOG_H
+#endif	// EASY3D_DIALOGS_H
 

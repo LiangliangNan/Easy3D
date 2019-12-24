@@ -1256,7 +1256,7 @@ namespace easy3d {
             "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
             "All Files (*.*)", "*"
         };
-        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, true);
+        const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, true);
 
         int count = 0;
         for (const auto& file_name : file_names) {
@@ -1285,7 +1285,7 @@ namespace easy3d {
         if (file_system::extension(default_file_name).empty()) // no extention?
             default_file_name += ".ply"; // default to ply
 
-        const std::string& file_name = FileDialog::save(title, default_file_name, filters);
+        const std::string& file_name = dialog::save(title, default_file_name, filters);
         if (file_name.empty())
             return false;
 
@@ -1320,7 +1320,7 @@ namespace easy3d {
         };
 
         const bool overwrite = false;
-        const std::string& file_name = FileDialog::save(title, default_file_name, filters, overwrite);
+        const std::string& file_name = dialog::save(title, default_file_name, filters, overwrite);
         if (file_name.empty())
             return false;
 

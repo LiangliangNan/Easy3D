@@ -83,7 +83,7 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
             "Image Files (*.png *.jpg *.bmp *.ppm *.tga)", "*.png *.jpg *.bmp *.ppm *.tga"
         };
 
-        const std::vector<std::string>& file_names = FileDialog::open(title, default_path, filters, false);
+        const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, false);
         if (file_names.size() != 1 && !file_system::is_file(file_names[0]))
             return false;
 

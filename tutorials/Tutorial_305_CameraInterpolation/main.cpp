@@ -27,9 +27,8 @@
 #include <easy3d/viewer/setting.h>
 
 // This example shows how to
-//        - render a model from the view point given the camera's intrinsic and
-//        extrinsic parameters. The camera parameters were recovered using
-//        commonly used computer vison techniques (i.e., calibration, or SfM).
+//        - creat an exploration path using the key frame interpolator,
+//        - play the path as an animation.
 
 using namespace easy3d;
 
