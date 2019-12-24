@@ -40,6 +40,7 @@
 #include <easy3d/viewer/frame.h>
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/manipulated_camera_frame.h>
 
 #include <easy3d/util/timer.h>
 
@@ -54,7 +55,7 @@ namespace easy3d {
       interpolationTime(), interpolationSpeed() and interpolationPeriod() are set to their default
       values. */
     KeyFrameInterpolator::KeyFrameInterpolator(Camera* cam, Frame* frame)
-        : frame_(nullptr)
+        : frame_(frame)
         , period_(40)
         , interpolationTime_(0.0)
         , interpolationSpeed_(1.0)
@@ -69,7 +70,12 @@ namespace easy3d {
         , camera_(cam)
     {
         std::cout << "camera parameter is not necessary" << std::endl;
-        setFrame(frame);
+
+        if (keyFrame_.size() < 2)
+            return;
+
+        for (int i=0; i<4; ++i)
+            currentFrame_[i] = keyFrame_.begin();
     }
 
     /*! Virtual destructor. Clears the keyFrame path. */
@@ -86,17 +92,7 @@ namespace easy3d {
     /*! Sets the frame() associated to the KeyFrameInterpolator. */
     void KeyFrameInterpolator::setFrame(Frame* const frame)
     {
-//        if (this->frame()) {
-//            remove_interpolated_event_handler(this->frame());
-//            //disconnect(this, SIGNAL(interpolated()), this->frame(), SIGNAL(interpolated()));
-//        }
-
         frame_ = frame;
-
-//        if (this->frame()) {
-//            add_interpolated_event_handler(this->frame());
-//            //connect(this, SIGNAL(interpolated()), this->frame(), SIGNAL(interpolated()));
-//        }
     }
 
     /*! Updates frame() state according to current interpolationTime(). Then adds
@@ -162,12 +158,6 @@ namespace easy3d {
       or else the interpolation will naturally immediately stop. */
     void KeyFrameInterpolator::startInterpolation(int period)
     {
-        if (keyFrame_.size() < 2)
-            return;
-
-        for (int i=0; i<4; ++i)
-            currentFrame_[i] = keyFrame_.begin();
-
         if (period >= 0)
             setInterpolationPeriod(period);
 
@@ -227,15 +217,10 @@ namespace easy3d {
         else
             keyFrame_.push_back(new KeyFrame(frame, time));
 
-//        frame->add_modify_event_handler(this);
-//        //connect(frame, SIGNAL(modified()), SLOT(invalidateValues()));
-
         valuesAreValid_ = false;
         pathIsValid_ = false;
         currentFrameValid_ = false;
         resetInterpolation();
-
-        std::cout << "key frame added. Time: " << time << std::endl;
     }
 
     /*! Appends a new keyFrame to the path, with its associated \p time (in seconds).
@@ -259,8 +244,6 @@ namespace easy3d {
         pathIsValid_ = false;
         currentFrameValid_ = false;
         resetInterpolation();
-
-        std::cout << "key frame added. Time: " << time << std::endl;
     }
 
 
@@ -299,7 +282,6 @@ namespace easy3d {
     {
         stopInterpolation();
         for (auto f : keyFrame_) {
-            std::cout << "frame: "<< f << ", time: " << f->time() << std::endl;
             delete f;
         }
         keyFrame_.clear();
@@ -448,10 +430,17 @@ namespace easy3d {
 
         if (!path_drawable_) {
             std::vector<vec3> points;
+#if 1
             for (std::size_t i=0; i<path_.size() - 1; ++i) {
                 points.push_back(path_[i].position());
                 points.push_back(path_[i+1].position());
             }
+#else
+            for (std::size_t i=0; i<keyFrame_.size() - 1; ++i) {
+                points.push_back(keyFrame_[i]->position());
+                points.push_back(keyFrame_[i+1]->position());
+            }
+#endif
 
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
@@ -577,7 +566,7 @@ namespace easy3d {
             // Recompute everything from scrach
             currentFrame_[1] = keyFrame_.begin(); // points to the first one
 
-        while (next_frame(currentFrame_[1])->time() > time)
+        while (current_frame(currentFrame_[1])->time() > time)
         {
             currentFrameValid_ = false;
             if (currentFrame_[1] == keyFrame_.begin()) // alreay the first one
@@ -588,7 +577,7 @@ namespace easy3d {
         if (!currentFrameValid_)
             currentFrame_[2] = currentFrame_[1];
 
-        while (next_frame(currentFrame_[2])->time() < time)
+        while (current_frame(currentFrame_[2])->time() < time)
         {
             currentFrameValid_ = false;
             if (*currentFrame_[2] == keyFrame_.back()) // already the last one
@@ -599,7 +588,7 @@ namespace easy3d {
         if (!currentFrameValid_)
         {
             currentFrame_[1] = currentFrame_[2];
-            if ((currentFrame_[1] != keyFrame_.begin()) && (time < next_frame(currentFrame_[2])->time()))
+            if ((currentFrame_[1] != keyFrame_.begin()) && (time < current_frame(currentFrame_[2])->time()))
                 --currentFrame_[1];
 
             currentFrame_[0] = currentFrame_[1];
@@ -608,7 +597,7 @@ namespace easy3d {
 
             currentFrame_[3] = currentFrame_[2];
 
-            if (next_frame(currentFrame_[3]) != keyFrame_.back()) // has next
+            if (current_frame(currentFrame_[3]) != keyFrame_.back()) // has next
                 ++currentFrame_[3];
 
             currentFrameValid_ = true;
@@ -621,9 +610,9 @@ namespace easy3d {
 
     void KeyFrameInterpolator::updateSplineCache()
     {
-        const vec3& delta = next_frame(currentFrame_[2])->position() - next_frame(currentFrame_[1])->position();
-        v1 = 3.0 * delta - 2.0 * next_frame(currentFrame_[1])->tgP() - next_frame(currentFrame_[2])->tgP();
-        v2 = -2.0 * delta + next_frame(currentFrame_[1])->tgP() + next_frame(currentFrame_[2])->tgP();
+        const vec3& delta = current_frame(currentFrame_[2])->position() - current_frame(currentFrame_[1])->position();
+        v1 = 3.0 * delta - 2.0 * current_frame(currentFrame_[1])->tgP() - current_frame(currentFrame_[2])->tgP();
+        v2 = -2.0 * delta + current_frame(currentFrame_[1])->tgP() + current_frame(currentFrame_[2])->tgP();
         splineCacheIsValid_ = true;
     }
 
@@ -638,8 +627,6 @@ namespace easy3d {
       Emits the interpolated() signal and makes the frame() emit the Frame::interpolated() signal. */
     void KeyFrameInterpolator::interpolateAtTime(double time)
     {
-        std::cout << "interpolating at time: " << time << " ";
-
        setInterpolationTime(time);
 
         if ((keyFrame_.empty()) || (!frame()))
@@ -654,21 +641,18 @@ namespace easy3d {
             updateSplineCache();
 
         double alpha;
-        double dt = next_frame(currentFrame_[2])->time() - next_frame(currentFrame_[1])->time();
+        double dt = current_frame(currentFrame_[2])->time() - current_frame(currentFrame_[1])->time();
         if (dt == 0.0)
             alpha = 0.0;
         else
-            alpha = (time - next_frame(currentFrame_[1])->time()) / dt;
+            alpha = (time - current_frame(currentFrame_[1])->time()) / dt;
 
         // Linear interpolation - debug
-        // vec3 pos = alpha*(next_frame(currentFrame_[2])->position()) + (1.0-alpha)*(next_frame(currentFrame_[1])->position());
-        vec3 pos = next_frame(currentFrame_[1])->position() + alpha * (next_frame(currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
-        quat q = quat::squad(next_frame(currentFrame_[1])->orientation(), next_frame(currentFrame_[1])->tgQ(),
-                next_frame(currentFrame_[2])->tgQ(), next_frame(currentFrame_[2])->orientation(), alpha);
+        // vec3 pos = alpha*(current_frame(currentFrame_[2])->position()) + (1.0-alpha)*(current_frame(currentFrame_[1])->position());
+        vec3 pos = current_frame(currentFrame_[1])->position() + alpha * (current_frame(currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
+        quat q = quat::squad(current_frame(currentFrame_[1])->orientation(), current_frame(currentFrame_[1])->tgQ(),
+                current_frame(currentFrame_[2])->tgQ(), current_frame(currentFrame_[2])->orientation(), alpha);
         frame()->setPositionAndOrientationWithConstraint(pos, q);
-        std::cout << pos << q << std::endl;
-
-//        Q_EMIT interpolated();
     }
 
     #ifndef DOXYGEN

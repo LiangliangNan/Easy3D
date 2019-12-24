@@ -519,7 +519,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
+    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
         camera_->frame()->action_start();
         if (modifiers == GLFW_MOD_SHIFT) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -542,10 +542,10 @@ namespace easy3d {
                 }
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-				camera_->setPivotPoint(camera_->sceneCenter());
+                camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
             }
-		}
+        }
         else if (key_ == GLFW_KEY_Z) {
             if (button == GLFW_MOUSE_BUTTON_LEFT) { // zoom to point under pixel
                 bool found = false;
@@ -553,31 +553,42 @@ namespace easy3d {
                 if (found) {
                     // zoom to point under pixel
                     const float coef = 0.1f;
+#if 1
+                    const vec3& pos = coef*camera()->frame()->position() + (1.0f-coef)*p;
+                    const quat& ori = camera()->frame()->orientation();
+                    camera_->frame()->setPositionAndOrientation(pos, ori);
+                    camera_->lookAt(p);
+#else
                     // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
                     static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
                     tempFrame->setPosition(coef*camera()->frame()->position() + (1.0f-coef)*p);
                     tempFrame->setOrientation(camera()->frame()->orientation());
                     camera()->setFrame(tempFrame);
                     camera()->lookAt(p);
+#endif
 
                     camera_->setPivotPoint(p);
                     update();
                 }
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+#if 1
+                camera()->showEntireScene();
+#else
                 // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
                 static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
                 tempFrame->setPosition(camera()->frame()->position());
                 tempFrame->setOrientation(camera()->frame()->orientation());
                 camera()->setFrame(tempFrame);
                 camera()->showEntireScene();
+#endif
 
                 camera_->setPivotPoint(camera_->sceneCenter());
                 update();
             }
         }
-		return false;
-	}
+        return false;
+    }
 
 
 	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
