@@ -42,7 +42,7 @@
 #include <algorithm>
 
 #include <easy3d/viewer/manipulated_camera_frame.h>
-#include <easy3d/viewer/viewer.h>
+#include <easy3d/viewer/key_frame_interpolator.h>
 
 
 namespace easy3d {
@@ -61,7 +61,8 @@ namespace easy3d {
 		, modelViewMatrixIsUpToDate_(false)
 		, projectionMatrixIsUpToDate_(false)
 	{
-		setFrame(new ManipulatedCameraFrame());
+        interpolationKfi_ = new KeyFrameInterpolator(this, frame());
+        setFrame(new ManipulatedCameraFrame());
 
 		// Requires fieldOfView() to define focusDistance()
 		setSceneRadius(1.0f);
@@ -98,13 +99,16 @@ namespace easy3d {
 	 deleted (in case they are shared). */
 	Camera::~Camera() {
 		delete frame_;
+        delete interpolationKfi_;
 	}
 
 	/*! Copy constructor. Performs a deep copy using operator=(). */
 	Camera::Camera(const Camera &camera)
 		: frame_(nullptr)
 	{
-		// Requires the interpolationKfi_
+        interpolationKfi_ = new KeyFrameInterpolator(this, frame());
+
+        // Requires the interpolationKfi_
 		setFrame(new ManipulatedCameraFrame(*camera.frame()));
 
         modelViewMatrix_.load_identity();
@@ -142,6 +146,8 @@ namespace easy3d {
 		frame_->setReferenceFrame(nullptr);
 		frame_->setPosition(camera.position());
 		frame_->setOrientation(camera.orientation());
+
+        interpolationKfi_->resetInterpolation();
 
 		computeProjectionMatrix();
 		computeModelViewMatrix();
@@ -285,6 +291,7 @@ namespace easy3d {
 			return;
 
 		frame_ = mcf;
+        interpolationKfi_->setFrame(frame());
 		frame_->addObserver(this);
 
 		onFrameModified();
@@ -618,6 +625,95 @@ namespace easy3d {
 		else
 			setFieldOfView(static_cast<float>(M_PI) / 2.0f);
 	}
+
+#define MOVE_TO_SCREEN_CENTER 1
+
+    /*! Makes the Camera smoothly zoom on a visible 3D point \p p.
+     See also interpolateToFitScene(). */
+    void Camera::interpolateToLookAt(const vec3 &p) {
+        const float coef = 0.1f;
+        const vec3& pos = coef*frame()->position() + (1.0f-coef)*p;
+        const quat& ori = frame()->orientation();
+
+        ManipulatedCameraFrame tempFrame;
+
+#if MOVE_TO_SCREEN_CENTER
+        // Small hack: attach a temporary frame to take advantage of lookAt without
+        // modifying frame
+        ManipulatedCameraFrame *const originalFrame = frame();
+        tempFrame.setPositionAndOrientation(pos, ori);
+        setFrame(&tempFrame);
+        lookAt(p);
+        setFrame(originalFrame);
+#else
+        tempFrame.setPositionAndOrientation(pos, ori);
+#endif
+        interpolateTo(tempFrame, 0.5);
+    }
+
+    /*! Interpolates the Camera on a one second KeyFrameInterpolator path so that
+     the entire scene fits the screen at the end.
+
+     The scene is defined by its sceneCenter() and its sceneRadius(). See
+     showEntireScene().
+
+     The orientation() of the Camera is not modified. See also
+     interpolateToZoomOnPixel(). */
+    void Camera::interpolateToFitScene() {
+        // Small hack: attach a temporary frame to take advantage of lookAt without
+        // modifying frame
+        ManipulatedCameraFrame tempFrame;
+        ManipulatedCameraFrame *const originalFrame = frame();
+        tempFrame.setPosition(frame()->position());
+        tempFrame.setOrientation(frame()->orientation());
+        setFrame(&tempFrame);
+        showEntireScene();
+        setFrame(originalFrame);
+
+        interpolateTo(tempFrame, 0.5);
+    }
+
+    /*! Smoothly interpolates the Camera on a KeyFrameInterpolator path so that it
+      goes to \p fr.
+
+      \p fr is expressed in world coordinates. \p duration tunes the interpolation
+      speed (default is 1 second).
+
+      See also interpolateToFitScene() and interpolateToZoomOnPixel(). */
+    void Camera::interpolateTo(const Frame &fr, double duration) {
+        if (interpolationKfi_->interpolationIsStarted())
+            interpolationKfi_->stopInterpolation();
+
+        interpolationKfi_->deletePath();
+        interpolationKfi_->addKeyFrame(*(frame()));
+
+#if 0
+        // add an intermediate frame to make the transition smoother (starts faster but ends slower)
+        interpolationKfi_->addKeyFrame(Frame(0.3 * frame()->position() + 0.7 * fr.position(), frame()->orientation()), 0.4);
+#endif
+
+        interpolationKfi_->addKeyFrame(fr, duration);
+
+        interpolationKfi_->startInterpolation();
+    }
+
+
+    /*! Draws all the Camera paths defined by the keyFrameInterpolator().
+
+     Simply calls KeyFrameInterpolator::drawPath() for all the defined paths. The
+     path color is the current \c glColor().
+
+     \attention The OpenGL state is modified by this method: see
+     KeyFrameInterpolator::drawPath(). */
+    void Camera::draw_paths() const {
+//      for (QMap<unsigned int, KeyFrameInterpolator *>::ConstIterator
+//               it = kfi_.begin(),
+//               end = kfi_.end();
+//           it != end; ++it)
+//        (it.value())->drawPath(3, 5, sceneRadius());
+        interpolationKfi_->drawPath();
+    }
+
 
 
 	/*! Moves the Camera so that the entire scene is visible.

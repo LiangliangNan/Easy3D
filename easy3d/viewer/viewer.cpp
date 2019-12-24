@@ -552,35 +552,25 @@ namespace easy3d {
                 const vec3& p = point_under_pixel(x, y, found);
                 if (found) {
                     // zoom to point under pixel
+#if 1   // without animation
                     const float coef = 0.1f;
-#if 1
                     const vec3& pos = coef*camera()->frame()->position() + (1.0f-coef)*p;
                     const quat& ori = camera()->frame()->orientation();
                     camera_->frame()->setPositionAndOrientation(pos, ori);
                     camera_->lookAt(p);
-#else
-                    // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
-                    static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
-                    tempFrame->setPosition(coef*camera()->frame()->position() + (1.0f-coef)*p);
-                    tempFrame->setOrientation(camera()->frame()->orientation());
-                    camera()->setFrame(tempFrame);
-                    camera()->lookAt(p);
-#endif
+#else   // with animation
+                    camera()->interpolateToLookAt(p);
 
+#endif
                     camera_->setPivotPoint(p);
                     update();
                 }
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-#if 1
+#if 1  // without animation
                 camera()->showEntireScene();
-#else
-                // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
-                static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
-                tempFrame->setPosition(camera()->frame()->position());
-                tempFrame->setOrientation(camera()->frame()->orientation());
-                camera()->setFrame(tempFrame);
-                camera()->showEntireScene();
+#else   // with animation
+                camera()->interpolateToFitScene();
 #endif
 
                 camera_->setPivotPoint(camera_->sceneCenter());
@@ -904,7 +894,7 @@ namespace easy3d {
 	}
 
 
-	vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
+    vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
         int gly = height() - 1 - y;
@@ -917,16 +907,16 @@ namespace easy3d {
         float depth = std::numeric_limits<float>::max();
         glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
         glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);					easy3d_debug_gl_error;
-		found = depth < 1.0f;
-		if (found) {
+        found = depth < 1.0f;
+        if (found) {
             vec3 point(float(x), float(y), depth);
             // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
             point = camera_->unprojectedCoordinatesOf(point);
-			return point;
+            return point;
         }
         else
             return vec3();
-	}
+    }
 
 
 	inline double get_seconds() {
@@ -1524,6 +1514,8 @@ namespace easy3d {
                 glDisable(GL_POLYGON_OFFSET_FILL);
 
         }
+
+        //camera()->draw_paths();
 	}
 
 

@@ -446,6 +446,7 @@ namespace easy3d {
                 path_drawable_ = new LinesDrawable;
 
                 path_drawable_->update_vertex_buffer(points);
+                path_drawable_->set_default_color(vec3(1.0f, 0.67f, 0.5f));
                 path_drawable_->set_line_width(5);
                 path_drawable_->set_impostor_type(IT_CONES);
             }

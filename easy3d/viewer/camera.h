@@ -65,6 +65,7 @@ namespace easy3d {
 	class Viewer;
 	class Frame;
 	class ManipulatedCameraFrame;
+    class KeyFrameInterpolator;
 
 	/*! \brief A perspective or orthographic camera.
 	  \class Camera camera.h Viewer/camera.h
@@ -205,8 +206,13 @@ namespace easy3d {
 		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax);
 		void centerScene();
 
-		/*! @name Frustum */
-		//@{
+        void interpolateToLookAt(const vec3& point);
+        void interpolateToFitScene();
+        void interpolateTo(const Frame &fr, double duration);
+
+        /* Draw animation path(s) */
+        void draw_paths() const;
+
 	public:
 		/*! Returns the Camera::Type of the Camera.
 
@@ -457,7 +463,8 @@ namespace easy3d {
 		mat4 projectionMatrix_;		// Buffered projection matrix.
 		bool projectionMatrixIsUpToDate_;
 
-		friend class Viewer;
+        // Key frame interpolation
+        KeyFrameInterpolator *interpolationKfi_;
 	};
 
 }
