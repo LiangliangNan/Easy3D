@@ -18,6 +18,7 @@ set(${PROJECT_NAME}_HEADERS
     frame.h
     framebuffer_object.h
     frustum.h
+    key_frame_interpolator.h
     manipulated_camera_frame.h
     manipulated_frame.h
     model.h
@@ -56,6 +57,7 @@ set(${PROJECT_NAME}_SOURCES
     frame.cpp
     framebuffer_object.cpp
     frustum.cpp
+    key_frame_interpolator.cpp
     manipulated_camera_frame.cpp
     manipulated_frame.cpp
     model.cpp

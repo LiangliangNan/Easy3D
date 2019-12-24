@@ -514,7 +514,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::update() const {
+    void Viewer::update() {
 		glfwPostEmptyEvent();
 	}
 

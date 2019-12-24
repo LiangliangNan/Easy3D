@@ -23,7 +23,7 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "real_camera.h"
+#include "camera_interpolation.h"
 #include <easy3d/viewer/setting.h>
 
 // This example shows how to
@@ -34,19 +34,15 @@
 using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
-
-    // the bunder file (We use only the camera instric and extrinsic parameters).
-    const std::string bundler_file = setting::resource_directory() + "/data/fountain/bundle.out";
-    // the point cloud file.
-    const std::string cloud_file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+    const std::string& file_name = setting::resource_directory() + "/data/building.off";
 
     try {
-        RealCamera viewer("Tutorial_304_RealCamera", bundler_file, cloud_file);
+        CameraIntrepolation viewer("Tutorial_305_CameraInterpolation");
+        if (!viewer.open(file_name, true)) {
+            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            return EXIT_FAILURE;
+        }
 
-        viewer.resize(960, 800);
-
-        // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {
         std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());

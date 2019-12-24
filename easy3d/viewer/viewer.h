@@ -153,7 +153,7 @@ namespace easy3d {
         virtual void draw() const;
 
         // Update the rendering
-        void update() const;
+        static void update();
 
 	protected:
 

@@ -16,7 +16,7 @@ add_subdirectory("Tutorial_301_Viewer")
 add_subdirectory("Tutorial_302_Viewer_imgui")
 add_subdirectory("Tutorial_303_Viewer_Qt")
 add_subdirectory("Tutorial_304_RealCamera")
-add_subdirectory("Tutorial_305_DepthImage")
+add_subdirectory("Tutorial_305_CameraInterpolation")
 add_subdirectory("Tutorial_306_ImageViewer")
 
 # basic rendering
@@ -27,6 +27,7 @@ add_subdirectory("Tutorial_404_Imposters")
 add_subdirectory("Tutorial_405_Texture")
 add_subdirectory("Tutorial_406_Tessellator")
 add_subdirectory("Tutorial_407_TexturedMesh")
+add_subdirectory("Tutorial_408_DepthImage")
 
 # rendering techniques
 add_subdirectory("Tutorial_501_EyeDomeLighting")

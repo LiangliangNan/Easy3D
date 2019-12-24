@@ -165,6 +165,9 @@ namespace easy3d {
         //		 i.e., between glUseProgram(id) and glUseProgram(0);
         void gl_draw(bool with_storage_buffer = false) const;
 
+    protected:
+        void clear();
+
         VertexArrayObject* vao() { return vao_; }
 
 	protected:

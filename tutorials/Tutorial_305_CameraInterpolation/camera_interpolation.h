@@ -23,30 +23,29 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "depth_image.h"
-#include <easy3d/viewer/setting.h>
+#ifndef EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
+#define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 
-using namespace easy3d;
+#include <easy3d/viewer/viewer.h>
+#include <easy3d/viewer/key_frame_interpolator.h>
 
-// This example shows how to create depth images from the rendering.
 
-int main(int /*argc*/, char** /*argv*/) {
-    // the point cloud file.
-    const std::string cloud_file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+// This tutorial shows how to interpolate camera frames to
+// animate model exploration.
 
-    try {
-        DepthImage viewer("Tutorial_305_DepthImage", cloud_file);
+class CameraIntrepolation : public easy3d::Viewer
+{
+public:
+    CameraIntrepolation(const std::string& title);
+    
+protected:
+    bool key_press_event(int key, int modifiers) override;
 
-        viewer.resize(960, 800);
+    void draw() const override;
+    
+private:
+    easy3d::KeyFrameInterpolator kfi_;
+};
 
-        // Run the viewer
-        viewer.run();
-    } catch (const std::runtime_error &e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
-        return EXIT_FAILURE;
-    }
 
-    return EXIT_SUCCESS;
-}
-
+#endif // EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H

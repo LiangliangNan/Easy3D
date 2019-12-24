@@ -79,20 +79,23 @@ namespace easy3d {
 
 
 	Drawable::~Drawable() {
-		if (vao_) {
-			delete vao_;
-			vao_ = nullptr;
-		}
-
-		release_vertex_buffer();
-		release_color_buffer();
-		release_normal_buffer();
-		release_texcoord_buffer();
-		release_index_buffer();
-		release_storage_buffer();
-		release_selection_buffer();
+        clear();
 	}
 
+    void Drawable::clear() {
+        if (vao_) {
+            delete vao_;
+            vao_ = nullptr;
+        }
+
+        release_vertex_buffer();
+        release_color_buffer();
+        release_normal_buffer();
+        release_texcoord_buffer();
+        release_index_buffer();
+        release_storage_buffer();
+        release_selection_buffer();
+    }
 
 	void Drawable::release_vertex_buffer() {
 		if (vertex_buffer_ != 0)
