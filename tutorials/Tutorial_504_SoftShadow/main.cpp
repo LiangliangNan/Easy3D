@@ -36,7 +36,7 @@ using namespace easy3d;
 
 
 int main(int /*argc*/, char** /*argv*/) {
-    const std::string file = setting::resource_directory() + "/data/room.obj";
+    const std::string file = setting::resource_directory() + "/data/room_thickwalls.obj";
 
     try {
         // Create the viewer.
