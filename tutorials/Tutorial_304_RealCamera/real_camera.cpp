@@ -63,7 +63,7 @@ RealCamera::RealCamera(const std::string& title,
         
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
-            create_cameras_drawable(0.2f);
+            create_cameras_drawable(camera()->sceneRadius());
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
 
@@ -177,61 +177,9 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
 
 
 void RealCamera::create_cameras_drawable(float scale)
-{
-    const double halfHeight = scale * 0.07;
-    const double halfWidth = halfHeight * 1.3;
-    const double dist = halfHeight / tan(double(M_PI) / 8.0);
-    
-    const double arrowHeight = 1.5 * halfHeight;
-    const double baseHeight = 1.2 * halfHeight;
-    const double arrowHalfWidth = 0.5 * halfWidth;
-    const double baseHalfWidth = 0.3 * halfWidth;
-    
+{    
     std::vector<vec3> points;
-    
-    //--------------
-    // Frustum outline
-    //--------------
-    
-    // LINE_STRIP
-    const vec3 p0(-halfWidth, halfHeight, -dist);
-    const vec3 p1(-halfWidth, -halfHeight, -dist);    points.push_back(p0); points.push_back(p1);
-    const vec3 p2(0.0, 0.0, 0.0);                    points.push_back(p1); points.push_back(p2);
-    const vec3 p3(halfWidth, -halfHeight, -dist);    points.push_back(p2); points.push_back(p3);
-    const vec3 p4(-halfWidth, -halfHeight, -dist);    points.push_back(p3); points.push_back(p4);
-    
-    // LINE_STRIP
-    const vec3 q0(halfWidth, -halfHeight, -dist);
-    const vec3 q1(halfWidth, halfHeight, -dist);
-    const vec3 q2(0.0, 0.0, 0.0);
-    const vec3 q3(-halfWidth, halfHeight, -dist);
-    const vec3 q4(halfWidth, halfHeight, -dist);
-    points.push_back(q0); points.push_back(q1);
-    points.push_back(q1); points.push_back(q2);
-    points.push_back(q2); points.push_back(q3);
-    points.push_back(q3); points.push_back(q4);
-    
-    //------------------
-    // Up arrow
-    //------------------
-    
-    // Base - QUAD
-    const vec3 r0(-baseHalfWidth, halfHeight, -dist);
-    const vec3 r1(baseHalfWidth, halfHeight, -dist);
-    const vec3 r2(baseHalfWidth, baseHeight, -dist);
-    const vec3 r3(-baseHalfWidth, baseHeight, -dist);
-    points.push_back(r0); points.push_back(r1);
-    points.push_back(r1); points.push_back(r2);
-    points.push_back(r2); points.push_back(r3);
-    points.push_back(r3); points.push_back(r0);
-    
-    // Arrow - TRIANGLE
-    const vec3 a0(0.0, arrowHeight, -dist);
-    const vec3 a1(-arrowHalfWidth, baseHeight, -dist);
-    const vec3 a2(arrowHalfWidth, baseHeight, -dist);
-    points.push_back(a0); points.push_back(a1);
-    points.push_back(a1); points.push_back(a2);
-    points.push_back(a2); points.push_back(a0);
+    opengl::prepare_camera(points, camera()->sceneRadius());
     
     std::vector<vec3> vertices;
     for (int i = 0; i < views_.size(); ++i) {
@@ -247,6 +195,7 @@ void RealCamera::create_cameras_drawable(float scale)
         d = current_model()->add_lines_drawable("cameras");
     d->update_vertex_buffer(vertices);
     d->set_default_color(vec3(0, 0, 1));
+    d->set_line_width(2.0f);
 }
 
 

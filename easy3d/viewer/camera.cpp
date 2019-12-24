@@ -685,7 +685,7 @@ namespace easy3d {
             interpolationKfi_->stopInterpolation();
 
         interpolationKfi_->deletePath();
-        interpolationKfi_->addKeyFrame(*(frame()));
+        interpolationKfi_->addKeyFrame(frame());
 
 #if 0
         // add an intermediate frame to make the transition smoother (starts faster but ends slower)

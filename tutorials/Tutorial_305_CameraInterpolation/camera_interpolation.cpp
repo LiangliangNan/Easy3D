@@ -36,7 +36,7 @@ using namespace easy3d;
 
 
 CameraIntrepolation::CameraIntrepolation(const std::string& title)
-    : Viewer(title, 4, 3, 2, false, false)
+    : Viewer(title)
 {
     std::cout << "------------ Camera Intrepolation ----------" << std::endl
               << "Press 'K' to add key frames" << std::endl

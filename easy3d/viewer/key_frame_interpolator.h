@@ -296,8 +296,8 @@ namespace easy3d {
     private:
         // Copy constructor and opertor= are declared private and undefined
         // Prevents everyone from trying to use them
-        // KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
-        // KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
+         KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
+         KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
 
         void updateCurrentKeyFrameForTime(double time);
         void updateModifiedFrameValues();
@@ -358,6 +358,7 @@ namespace easy3d {
         vec3 v1, v2;
 
         LinesDrawable* path_drawable_;
+        LinesDrawable* cameras_drawable_;
     };
 
 }

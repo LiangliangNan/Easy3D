@@ -40,6 +40,8 @@
 #include <easy3d/viewer/frame.h>
 #include <easy3d/viewer/viewer.h> // update()
 #include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/primitives.h>
+#include <easy3d/viewer/camera.h>   // for scene raduis (to draw cameras in a proper size)
 
 #include <easy3d/util/timer.h>
 
@@ -66,6 +68,7 @@ namespace easy3d {
         , currentFrameValid_(false)
         // #CONNECTION# Values cut pasted initFromDOMElement()
         , path_drawable_(nullptr)
+        , cameras_drawable_(nullptr)
     {
         if (keyFrame_.size() < 2)
             return;
@@ -78,11 +81,12 @@ namespace easy3d {
     KeyFrameInterpolator::~KeyFrameInterpolator()
     {
         deletePath();
-//        for (int i=0; i<4; ++i)
-//            delete currentFrame_[i];
 
         if (path_drawable_)
             delete path_drawable_;
+
+        if (cameras_drawable_)
+            delete cameras_drawable_;
     }
 
     /*! Sets the frame() associated to the KeyFrameInterpolator. */
@@ -249,6 +253,9 @@ namespace easy3d {
      previous keyFrameTime() plus one second (or 0.0 if there is no previous keyFrame). */
     void KeyFrameInterpolator::addKeyFrame(const Frame* const frame)
     {
+        if (!frame)
+            return;
+
         double time;
         if (keyFrame_.empty())
             time = 0.0;
@@ -286,79 +293,6 @@ namespace easy3d {
         currentFrameValid_ = false;
     }
 
-    //void drawCamera(float scale)
-    //{
-    //    const double halfHeight = scale * 0.07;
-    //    const double halfWidth = halfHeight * 1.3;
-    //    const double dist = halfHeight / tan(double(M_PI) / 8.0);
-
-    //    const double arrowHeight = 1.5 * halfHeight;
-    //    const double baseHeight = 1.2 * halfHeight;
-    //    const double arrowHalfWidth = 0.5 * halfWidth;
-    //    const double baseHalfWidth = 0.3 * halfWidth;
-
-    //    std::vector<vec3> points;
-
-    //    //--------------
-    //    // Frustum outline
-    //    //--------------
-
-    //    // LINE_STRIP
-    //    const vec3 p0(-halfWidth, halfHeight, -dist);
-    //    const vec3 p1(-halfWidth, -halfHeight, -dist);    points.push_back(p0); points.push_back(p1);
-    //    const vec3 p2(0.0, 0.0, 0.0);                    points.push_back(p1); points.push_back(p2);
-    //    const vec3 p3(halfWidth, -halfHeight, -dist);    points.push_back(p2); points.push_back(p3);
-    //    const vec3 p4(-halfWidth, -halfHeight, -dist);    points.push_back(p3); points.push_back(p4);
-
-    //    // LINE_STRIP
-    //    const vec3 q0(halfWidth, -halfHeight, -dist);
-    //    const vec3 q1(halfWidth, halfHeight, -dist);
-    //    const vec3 q2(0.0, 0.0, 0.0);
-    //    const vec3 q3(-halfWidth, halfHeight, -dist);
-    //    const vec3 q4(halfWidth, halfHeight, -dist);
-    //    points.push_back(q0); points.push_back(q1);
-    //    points.push_back(q1); points.push_back(q2);
-    //    points.push_back(q2); points.push_back(q3);
-    //    points.push_back(q3); points.push_back(q4);
-
-    //    //------------------
-    //    // Up arrow
-    //    //------------------
-
-    //    // Base - QUAD
-    //    const vec3 r0(-baseHalfWidth, halfHeight, -dist);
-    //    const vec3 r1(baseHalfWidth, halfHeight, -dist);
-    //    const vec3 r2(baseHalfWidth, baseHeight, -dist);
-    //    const vec3 r3(-baseHalfWidth, baseHeight, -dist);
-    //    points.push_back(r0); points.push_back(r1);
-    //    points.push_back(r1); points.push_back(r2);
-    //    points.push_back(r2); points.push_back(r3);
-    //    points.push_back(r3); points.push_back(r0);
-
-    //    // Arrow - TRIANGLE
-    //    const vec3 a0(0.0, arrowHeight, -dist);
-    //    const vec3 a1(-arrowHalfWidth, baseHeight, -dist);
-    //    const vec3 a2(arrowHalfWidth, baseHeight, -dist);
-    //    points.push_back(a0); points.push_back(a1);
-    //    points.push_back(a1); points.push_back(a2);
-    //    points.push_back(a2); points.push_back(a0);
-
-    //    std::vector<vec3> vertices;
-    //    for (int i = 0; i < views_.size(); ++i) {
-    //        Camera c;
-    //        KRT_to_camera(i, 1, &c);
-    //        const mat4& m = c.frame()->worldMatrix();
-    //        for (auto& p : points) {
-    //            vertices.push_back(m * p);
-    //        }
-    //    }
-    //    LinesDrawable* d = current_model()->lines_drawable("cameras");
-    //    if (!d)
-    //        d = current_model()->add_lines_drawable("cameras");
-    //    d->update_vertex_buffer(vertices);
-    //    d->set_default_color(vec3(0, 0, 1));
-    //}
-
 
     /*! Draws the path used to interpolate the frame().
 
@@ -393,6 +327,9 @@ namespace easy3d {
       \endcode */
     void KeyFrameInterpolator::drawPath(const Camera* cam, int mask, int nbFrames, double scale)
     {
+        if (keyFrame_.empty())
+            return;
+
         const int nbSteps = 30;
         if (!pathIsValid_)
         {
@@ -402,9 +339,10 @@ namespace easy3d {
                 delete path_drawable_;
                 path_drawable_ = nullptr;
             }
-
-            if (keyFrame_.empty())
-                return;
+            if (cameras_drawable_) {
+                delete cameras_drawable_;
+                cameras_drawable_ = nullptr;
+            }
 
             if (!valuesAreValid_)
                 updateModifiedFrameValues();
@@ -452,50 +390,47 @@ namespace easy3d {
 
         if (!path_drawable_) {
             std::vector<vec3> points;
-#if 1
+
+            // the path
             for (std::size_t i=0; i<path_.size() - 1; ++i) {
                 points.push_back(path_[i].position());
                 points.push_back(path_[i+1].position());
             }
-#else
-            for (std::size_t i=0; i<keyFrame_.size() - 1; ++i) {
-                points.push_back(keyFrame_[i]->position());
-                points.push_back(keyFrame_[i+1]->position());
-            }
-#endif
 
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
-
                 path_drawable_->update_vertex_buffer(points);
                 path_drawable_->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-                path_drawable_->set_line_width(4);
+                path_drawable_->set_line_width(3);
                 path_drawable_->set_impostor_type(IT_CONES);
             }
         }
 
-        {
-            if (path_drawable_)
-                path_drawable_->draw(cam);
+        if (!cameras_drawable_) {
+            std::vector<vec3> points;
 
-//            if (mask & 6)
-//            {
-//                int count = 0;
-//                if (nbFrames > nbSteps)
-//                    nbFrames = nbSteps;
-//                double goal = 0.0;
-//                Q_FOREACH (Frame fr, path_)
-//                    if ((count++) >= goal)
-//                    {
-//                        goal += nbSteps / static_cast<double>(nbFrames);
-//                        glPushMatrix();
-//                        glMultMatrixf(fr.matrix());
-//                        if (mask & 2) drawCamera(scale);
-//                        if (mask & 4) OpenGL::draw_axis(scale/10.0);
-//                        glPopMatrix();
-//                    }
-//            }
+            // camera representation
+            for (std::size_t i=0; i<keyFrame_.size(); ++i) {
+                std::vector<vec3> cam_points;
+                opengl::prepare_camera(cam_points, cam->sceneRadius());
+                const mat4& m = Frame(keyFrame_[i]->position(), keyFrame_[i]->orientation()).matrix();
+                for (auto& p : cam_points) {
+                    points.push_back(m * p);
+                }
+            }
+
+            if (points.size() > 1) {
+                cameras_drawable_ = new LinesDrawable;
+                cameras_drawable_->update_vertex_buffer(points);
+                cameras_drawable_->set_default_color(vec3(0.0f, 0.0f, 1.0f));
+                cameras_drawable_->set_line_width(2);
+            }
         }
+
+        if (path_drawable_)
+            path_drawable_->draw(cam);
+        if (cameras_drawable_)
+            cameras_drawable_->draw(cam);
     }
 
     void KeyFrameInterpolator::updateModifiedFrameValues()
@@ -580,11 +515,6 @@ namespace easy3d {
     }
 
 
-    template<class T>
-    inline const T* current(const typename std::vector<T*>::iterator& it) {
-        return *it;
-    }
-
     void KeyFrameInterpolator::updateCurrentKeyFrameForTime(double time)
     {
         // Assertion: times are sorted in monotone order.
@@ -595,7 +525,7 @@ namespace easy3d {
             // Recompute everything from scrach
             currentFrame_[1] = keyFrame_.begin(); // points to the first one
 
-        while (current<KeyFrame>(currentFrame_[1])->time() > time)
+        while ((*currentFrame_[1])->time() > time)
         {
             currentFrameValid_ = false;
             if (currentFrame_[1] == keyFrame_.begin()) // alreay the first one
@@ -606,7 +536,7 @@ namespace easy3d {
         if (!currentFrameValid_)
             currentFrame_[2] = currentFrame_[1];
 
-        while (current<KeyFrame>(currentFrame_[2])->time() < time)
+        while ((*currentFrame_[2])->time() < time)
         {
             currentFrameValid_ = false;
             if (*currentFrame_[2] == keyFrame_.back()) // already the last one
@@ -617,7 +547,7 @@ namespace easy3d {
         if (!currentFrameValid_)
         {
             currentFrame_[1] = currentFrame_[2];
-            if ((currentFrame_[1] != keyFrame_.begin()) && (time < current<KeyFrame>(currentFrame_[2])->time()))
+            if ((currentFrame_[1] != keyFrame_.begin()) && (time < (*currentFrame_[2])->time()))
                 --currentFrame_[1];
 
             currentFrame_[0] = currentFrame_[1];
@@ -626,7 +556,7 @@ namespace easy3d {
 
             currentFrame_[3] = currentFrame_[2];
 
-            if (current<KeyFrame>(currentFrame_[3]) != keyFrame_.back()) // has next
+            if ((*currentFrame_[3]) != keyFrame_.back()) // has next
                 ++currentFrame_[3];
 
             currentFrameValid_ = true;
@@ -639,9 +569,9 @@ namespace easy3d {
 
     void KeyFrameInterpolator::updateSplineCache()
     {
-        const vec3& delta = current<KeyFrame>(currentFrame_[2])->position() - current<KeyFrame>(currentFrame_[1])->position();
-        v1 = 3.0 * delta - 2.0 * current<KeyFrame>(currentFrame_[1])->tgP() - current<KeyFrame>(currentFrame_[2])->tgP();
-        v2 = -2.0 * delta + current<KeyFrame>(currentFrame_[1])->tgP() + current<KeyFrame>(currentFrame_[2])->tgP();
+        const vec3& delta = (*currentFrame_[2])->position() - (*currentFrame_[1])->position();
+        v1 = 3.0 * delta - 2.0 * (*currentFrame_[1])->tgP() - (*currentFrame_[2])->tgP();
+        v2 = -2.0 * delta + (*currentFrame_[1])->tgP() + (*currentFrame_[2])->tgP();
         splineCacheIsValid_ = true;
     }
 
@@ -670,17 +600,17 @@ namespace easy3d {
             updateSplineCache();
 
         double alpha;
-        double dt = current<KeyFrame>(currentFrame_[2])->time() - current<KeyFrame>(currentFrame_[1])->time();
+        const double dt = (*currentFrame_[2])->time() - (*currentFrame_[1])->time();
         if (dt == 0.0)
             alpha = 0.0;
         else
-            alpha = (time - current<KeyFrame>(currentFrame_[1])->time()) / dt;
+            alpha = (time - (*currentFrame_[1])->time()) / dt;
 
         // Linear interpolation - debug
-        // vec3 pos = alpha*(current<KeyFrame>(currentFrame_[2])->position()) + (1.0-alpha)*(current<KeyFrame>(currentFrame_[1])->position());
-        vec3 pos = current<KeyFrame>(currentFrame_[1])->position() + alpha * (current<KeyFrame>(currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
-        quat q = quat::squad(current<KeyFrame>(currentFrame_[1])->orientation(), current<KeyFrame>(currentFrame_[1])->tgQ(),
-                current<KeyFrame>(currentFrame_[2])->tgQ(), current<KeyFrame>(currentFrame_[2])->orientation(), alpha);
+        // vec3 pos = alpha*((*currentFrame_[2])->position()) + (1.0-alpha)*((*currentFrame_[1])->position());
+        vec3 pos = (*currentFrame_[1])->position() + alpha * ((*currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
+        quat q = quat::squad((*currentFrame_[1])->orientation(), (*currentFrame_[1])->tgQ(),
+                (*currentFrame_[2])->tgQ(), (*currentFrame_[2])->orientation(), alpha);
         frame()->setPositionAndOrientationWithConstraint(pos, q);
     }
 
@@ -714,7 +644,7 @@ namespace easy3d {
 
     void KeyFrameInterpolator::KeyFrame::flipOrientationIfNeeded(const quat& prev)
     {
-        if (quat::dot(prev, q_) < 0.0)
+        if (quat::dot(prev, q_) < 0.0f)
             q_.negate();
     }
 
