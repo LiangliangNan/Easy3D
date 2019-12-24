@@ -328,10 +328,6 @@ namespace easy3d {
         };
 
 
-        const KeyFrame* current_frame(const std::vector<KeyFrame*>::iterator& it) {
-            //return *std::next(it, 1);
-            return *it;
-        }
     #endif
 
         // K e y F r a m e s

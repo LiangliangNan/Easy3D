@@ -557,6 +557,12 @@ namespace easy3d {
             return keyFrame_.back()->time();
     }
 
+
+    template<class T>
+    inline const T* current(const typename std::vector<T*>::iterator& it) {
+        return *it;
+    }
+
     void KeyFrameInterpolator::updateCurrentKeyFrameForTime(double time)
     {
         // Assertion: times are sorted in monotone order.
@@ -567,7 +573,7 @@ namespace easy3d {
             // Recompute everything from scrach
             currentFrame_[1] = keyFrame_.begin(); // points to the first one
 
-        while (current_frame(currentFrame_[1])->time() > time)
+        while (current<KeyFrame>(currentFrame_[1])->time() > time)
         {
             currentFrameValid_ = false;
             if (currentFrame_[1] == keyFrame_.begin()) // alreay the first one
@@ -578,7 +584,7 @@ namespace easy3d {
         if (!currentFrameValid_)
             currentFrame_[2] = currentFrame_[1];
 
-        while (current_frame(currentFrame_[2])->time() < time)
+        while (current<KeyFrame>(currentFrame_[2])->time() < time)
         {
             currentFrameValid_ = false;
             if (*currentFrame_[2] == keyFrame_.back()) // already the last one
@@ -589,7 +595,7 @@ namespace easy3d {
         if (!currentFrameValid_)
         {
             currentFrame_[1] = currentFrame_[2];
-            if ((currentFrame_[1] != keyFrame_.begin()) && (time < current_frame(currentFrame_[2])->time()))
+            if ((currentFrame_[1] != keyFrame_.begin()) && (time < current<KeyFrame>(currentFrame_[2])->time()))
                 --currentFrame_[1];
 
             currentFrame_[0] = currentFrame_[1];
@@ -598,7 +604,7 @@ namespace easy3d {
 
             currentFrame_[3] = currentFrame_[2];
 
-            if (current_frame(currentFrame_[3]) != keyFrame_.back()) // has next
+            if (current<KeyFrame>(currentFrame_[3]) != keyFrame_.back()) // has next
                 ++currentFrame_[3];
 
             currentFrameValid_ = true;
@@ -611,9 +617,9 @@ namespace easy3d {
 
     void KeyFrameInterpolator::updateSplineCache()
     {
-        const vec3& delta = current_frame(currentFrame_[2])->position() - current_frame(currentFrame_[1])->position();
-        v1 = 3.0 * delta - 2.0 * current_frame(currentFrame_[1])->tgP() - current_frame(currentFrame_[2])->tgP();
-        v2 = -2.0 * delta + current_frame(currentFrame_[1])->tgP() + current_frame(currentFrame_[2])->tgP();
+        const vec3& delta = current<KeyFrame>(currentFrame_[2])->position() - current<KeyFrame>(currentFrame_[1])->position();
+        v1 = 3.0 * delta - 2.0 * current<KeyFrame>(currentFrame_[1])->tgP() - current<KeyFrame>(currentFrame_[2])->tgP();
+        v2 = -2.0 * delta + current<KeyFrame>(currentFrame_[1])->tgP() + current<KeyFrame>(currentFrame_[2])->tgP();
         splineCacheIsValid_ = true;
     }
 
@@ -642,17 +648,17 @@ namespace easy3d {
             updateSplineCache();
 
         double alpha;
-        double dt = current_frame(currentFrame_[2])->time() - current_frame(currentFrame_[1])->time();
+        double dt = current<KeyFrame>(currentFrame_[2])->time() - current<KeyFrame>(currentFrame_[1])->time();
         if (dt == 0.0)
             alpha = 0.0;
         else
-            alpha = (time - current_frame(currentFrame_[1])->time()) / dt;
+            alpha = (time - current<KeyFrame>(currentFrame_[1])->time()) / dt;
 
         // Linear interpolation - debug
-        // vec3 pos = alpha*(current_frame(currentFrame_[2])->position()) + (1.0-alpha)*(current_frame(currentFrame_[1])->position());
-        vec3 pos = current_frame(currentFrame_[1])->position() + alpha * (current_frame(currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
-        quat q = quat::squad(current_frame(currentFrame_[1])->orientation(), current_frame(currentFrame_[1])->tgQ(),
-                current_frame(currentFrame_[2])->tgQ(), current_frame(currentFrame_[2])->orientation(), alpha);
+        // vec3 pos = alpha*(current<KeyFrame>(currentFrame_[2])->position()) + (1.0-alpha)*(current<KeyFrame>(currentFrame_[1])->position());
+        vec3 pos = current<KeyFrame>(currentFrame_[1])->position() + alpha * (current<KeyFrame>(currentFrame_[1])->tgP() + alpha * (v1+alpha*v2));
+        quat q = quat::squad(current<KeyFrame>(currentFrame_[1])->orientation(), current<KeyFrame>(currentFrame_[1])->tgQ(),
+                current<KeyFrame>(currentFrame_[2])->tgQ(), current<KeyFrame>(currentFrame_[2])->orientation(), alpha);
         frame()->setPositionAndOrientationWithConstraint(pos, q);
     }
 
