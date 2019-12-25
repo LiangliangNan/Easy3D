@@ -208,7 +208,7 @@ namespace easy3d {
                 printf("MSAA is available with %i samples (%i requested, max support is %i)\n", samples_, samples, max_num);
         }
         else
-            std::cerr << "Samples: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
+            std::cerr << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
 
         float xscale, yscale;
         glfwGetWindowContentScale(window_, &xscale, &yscale);

@@ -159,8 +159,6 @@ void ViewerQt::initializeGL()
     //int samples_received = 0;
     //func_->glgetintegerv(gl_samples, &samples_received);
 
-    std::cout << usage() << std::endl;
-
     // Calls user defined method.
     init();
 }
@@ -826,17 +824,20 @@ void ViewerQt::paintGL() {
         func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_gl_error;
 #endif
         // warn the user if the expected request was not satisfied
-        int samples_requested = QSurfaceFormat::defaultFormat().samples();
+        int samples = QSurfaceFormat::defaultFormat().samples();
         int max_num = 0;
         func_->glGetIntegerv(GL_MAX_SAMPLES, &max_num);
-        if (samples_requested > 0 && samples_ != samples_requested) {
+        if (samples > 0 && samples_ != samples) {
             if (samples_ == 0)
-                std::cerr << "MSAA is not available (" << samples_requested << " samples requested)" << std::endl;
+                std::cerr << "MSAA is not available (" << samples << " samples requested)" << std::endl;
             else
-                std::cerr << "MSAA is available with " << samples_ << " samples (" << samples_requested << " requested but max support is "<< max_num << ")" << std::endl;
+                std::cerr << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is "<< max_num << ")" << std::endl;
         }
         else
-            std::cerr << "Samples: " << samples_ << " (" << samples_requested << " requested, max support is "<< max_num << ")" << std::endl;
+            std::cerr << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
+
+        std::cout << usage() << std::endl;
+
         queried = true;
     }
 #endif
