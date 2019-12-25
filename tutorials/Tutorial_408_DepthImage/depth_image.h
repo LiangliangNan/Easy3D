@@ -42,7 +42,6 @@ public:
     DepthImage(const std::string& title, const std::string& model_file);
     
 protected:
-    bool key_press_event(int key, int modifiers) override;
     void draw() const override;
     void cleanup() override;
 
@@ -50,8 +49,6 @@ protected:
     void draw_depth() const;
 
 private:
-    bool depth_rendering_;
-
     easy3d::FramebufferObject*	fbo_;
 };
 

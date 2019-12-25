@@ -676,8 +676,8 @@ protected:
 
             if (in_type == type::save)
             {
-                if (confirm_overwrite)
-                    ofn.Flags |= OFN_OVERWRITEPROMPT;
+                if (!confirm_overwrite)
+					ofn.Flags |= OFN_OVERWRITEPROMPT;
 
                 // using set context to apply new visual style (required for windows XP)
                 new_style_context ctx;

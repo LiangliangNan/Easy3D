@@ -1285,10 +1285,11 @@ namespace easy3d {
         };
 
         std::string default_file_name = m->name();
-        if (file_system::extension(default_file_name).empty()) // no extention?
+        if (file_system::extension(default_file_name).empty()) // no extension?
             default_file_name += ".ply"; // default to ply
 
-        const std::string& file_name = dialog::save(title, default_file_name, filters);
+		const bool warn_overwrite = true;
+        const std::string& file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
         if (file_name.empty())
             return false;
 
@@ -1310,20 +1311,17 @@ namespace easy3d {
 
 
     bool Viewer::snapshot(bool bk_white /* = true*/) const {
-        if (!current_model()) {
-            std::cerr << "no model exists" << std::endl;
-            return false;
-        }
-
         const std::string& title = "Please choose a file name";
-        const std::string& default_file_name = file_system::replace_extension(current_model()->name(), "png");
+        std::string default_file_name("untitled.png");
+		if (current_model())
+			default_file_name = file_system::replace_extension(current_model()->name(), "png");
         const std::vector<std::string>& filters = {
             "Image Files (*.png *.jpg *.bmp *.ppm *.tga)" , "*.png *.jpg *.bmp *.ppm *.tga",
             "All Files (*.*)", "*"
         };
 
-        const bool overwrite = false;
-        const std::string& file_name = dialog::save(title, default_file_name, filters, overwrite);
+		const bool warn_overwrite = true;
+        const std::string& file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
         if (file_name.empty())
             return false;
 

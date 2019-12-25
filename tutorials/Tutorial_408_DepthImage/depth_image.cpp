@@ -44,7 +44,6 @@ using namespace easy3d;
 
 DepthImage::DepthImage(const std::string& title, const std::string& mesh_file)
     : Viewer(title)
-    , depth_rendering_(true)
     , fbo_(nullptr)
 {
     if (!open(mesh_file))
@@ -55,20 +54,6 @@ DepthImage::DepthImage(const std::string& title, const std::string& mesh_file)
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
     camera_->showEntireScene();
-
-    std::cout << "------------ Depth Image ----------" << std::endl
-              << "Press 'Space' to switch between depth and normal rendering" << std::endl;
-}
-
-
-bool DepthImage::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
-        depth_rendering_ = !depth_rendering_;
-        update();
-        return true;
-    }
-    else
-        return Viewer::key_press_event(key, modifiers);
 }
 
 
@@ -83,23 +68,8 @@ void DepthImage::cleanup() {
 
 
 void DepthImage::draw() const {
-    if (depth_rendering_) {
-        DepthImage* viewer = const_cast<DepthImage*>(this);
-        if (!fbo_) {
-            const int samples = 0;
-            viewer->fbo_ = new FramebufferObject(width() * dpi_scaling(), height() * dpi_scaling(), samples);
-            viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
-        }
-        fbo_->ensure_size(width() * dpi_scaling(), height() * dpi_scaling());
-
-        // generate
-        viewer->generate_depth();
-
-        // rendering
-        draw_depth();
-    }
-    else
-        Viewer::draw();
+    draw_depth();
+    Viewer::draw();
 }
 
 
@@ -137,6 +107,26 @@ void DepthImage::generate_depth() {
 
 
 void DepthImage::draw_depth() const {
+    DepthImage* viewer = const_cast<DepthImage*>(this);
+#if 0
+    if (!fbo_) {
+        const int samples = 0;
+        viewer->fbo_ = new FramebufferObject(width() * dpi_scaling(), height() * dpi_scaling(), samples);
+        viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
+    }
+    fbo_->ensure_size(width() * dpi_scaling(), height() * dpi_scaling());
+#else
+    if (!fbo_) {
+        const int samples = 0;
+        viewer->fbo_ = new FramebufferObject(width(), height(), samples);
+        viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
+    }
+    fbo_->ensure_size(width(), height());
+#endif
+
+    // generate
+    viewer->generate_depth();
+
     static const std::string quad_name = "screen_space/quad_gray_texture";
     ShaderProgram* program = ShaderManager::get_program(quad_name);
     if (!program) {
@@ -149,9 +139,11 @@ void DepthImage::draw_depth() const {
     if (!program)
         return;
 
+    int w = width() / 2;
+    int h = height() / 2;
     program->bind();
     program->bind_texture("textureID", fbo_->depth_texture(), 0);
-    opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, -0.9f);
+    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 20, 20, w, h, width(), height(), -0.9f);
     program->release_texture();
     program->release();
 }

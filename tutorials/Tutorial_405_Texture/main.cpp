@@ -73,7 +73,7 @@ int main(int /*argc*/, char** /*argv*/) {
         mesh->add_quad(v0, v1, v2, v3);
 
         // add the model to the viewer and create the default drwable "surface"
-        viewer.add_model(mesh, true);
+        viewer.add_model(mesh, true, true);
 
         // set the texture of the default drwable "surface"
         auto drawable = mesh->triangles_drawable("surface");

@@ -44,7 +44,7 @@ namespace easy3d {
         // if the provided path doesn't exist, let the OS decide.
         const std::string& path = file_system::is_directory(default_directory) ?
                     default_directory : "";
-        auto f = pfd::open_file(title, path, filters, multiple);
+        auto f = pfd::open_file(title, file_system::convert_to_native_style(path), filters, multiple);
         return f.result();
     }
 
@@ -67,12 +67,12 @@ namespace easy3d {
             const std::string& title,
             const std::string& default_file_name,
             const std::vector<std::string>& filters,
-            bool confirm_overwrite
+            bool warn_overwrite
             )
     {
         // Set verbosity to false
         pfd::settings::verbose(false);
-        auto f = pfd::save_file(title, default_file_name, filters, confirm_overwrite);
+        auto f = pfd::save_file(title, file_system::convert_to_native_style(default_file_name), filters, !warn_overwrite);
         return f.result();
     }
 
@@ -88,7 +88,7 @@ namespace easy3d {
         // if the provided path doesn't exist, let the OS decide.
         const std::string& path = file_system::is_directory(default_directory) ?
                     default_directory : "";
-        return pfd::select_folder(title, path).result();
+        return pfd::select_folder(title, file_system::convert_to_native_style(path)).result();
     }
 
 

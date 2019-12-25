@@ -47,7 +47,7 @@ int main(int /*argc*/, char** /*argv*/) {
         Viewer viewer("Tutorial_402_ScalarField");
 
         // Load a mesh model and create a drawable for the faces.
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true));
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true, true));
         if (!mesh) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
