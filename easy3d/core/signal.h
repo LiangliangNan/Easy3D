@@ -35,7 +35,7 @@
 namespace easy3d {
 
     /**
-     * \brief Implementation of a simple and tiny signal-slot mechanism.
+     * \brief Implementation of a simple signal-slot mechanism.
      *        Mulitple slots (a class and it member fujction) can be connected
      *        to a signal object.
      *        You can connect functions to the signal which will be called when
@@ -83,11 +83,6 @@ namespace easy3d {
         void trigger(Args&&... args) {
             for(auto it : slots_) {
                 it.second(std::forward<Args>(args)...);
-            }
-        }
-        virtual void trigger() {
-            for(auto it : slots_) {
-                it.second();
             }
         }
 
