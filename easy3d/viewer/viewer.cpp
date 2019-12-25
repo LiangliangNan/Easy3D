@@ -197,16 +197,18 @@ namespace easy3d {
 #endif
 
         glGetIntegerv(GL_SAMPLES, &samples_);
+        int max_num = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+
         // warn the user if the requests were not satisfied
         if (samples > 0 && samples_ != samples) {
             if (samples_ == 0)
                 printf("MSAA is not available with %i samples\n", samples);
-            else {
-                int max_num = 0;
-                glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+            else
                 printf("MSAA is available with %i samples (%i requested, max support is %i)\n", samples_, samples, max_num);
-            }
         }
+        else
+            std::cerr << "Samples: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
 
         float xscale, yscale;
         glfwGetWindowContentScale(window_, &xscale, &yscale);

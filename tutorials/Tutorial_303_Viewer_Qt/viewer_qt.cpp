@@ -135,12 +135,6 @@ void ViewerQt::initializeGL()
     func_->glClearDepthf(1.0f);
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-    dpi_scaling_ = devicePixelRatioF();
-#else
-    dpi_scaling_ = devicePixelRatio();
-#endif
-
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
     std::cout << "OpenGL version requested: " << major_requested << "." << minor_requested << std::endl;
@@ -152,6 +146,12 @@ void ViewerQt::initializeGL()
     if (major * 10 + minor < 32) {
         throw std::runtime_error("ViewerQt requires at least OpenGL 3.2");
     }
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+    dpi_scaling_ = devicePixelRatioF();
+#else
+    dpi_scaling_ = devicePixelRatio();
+#endif
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
