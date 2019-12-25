@@ -75,7 +75,7 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
     camera_->setType(Camera::PERSPECTIVE);
     camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-//    camera_->showEntireScene();
+    camera_->showEntireScene();
     camera_->connect(this, static_cast<void(ViewerQt::*)(void)>(&ViewerQt::update));
 }
 

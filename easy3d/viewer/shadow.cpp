@@ -177,8 +177,7 @@ namespace easy3d {
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files(name, attributes, outputs, false);
+            program = ShaderManager::create_program_from_files(name, attributes, std::vector<std::string>(), false);
         }
         if (!program)
             return;
@@ -211,8 +210,7 @@ namespace easy3d {
                 ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
                 ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
             };
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files(name, attributes, outputs, false);
+            program = ShaderManager::create_program_from_files(name, attributes, std::vector<std::string>(), false);
         }
         if (!program)
             return;
@@ -431,8 +429,7 @@ namespace easy3d {
                 ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
                 ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
             };
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files(quad_name, attributes, outputs, false);
+            program = ShaderManager::create_program_from_files(quad_name, attributes, std::vector<std::string>(), false);
         }
 		if (!program)
 			return;

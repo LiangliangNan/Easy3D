@@ -143,8 +143,7 @@ void ImageViewer::draw() const {
             ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
             ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
         };
-        std::vector<std::string> outputs;
-        program = ShaderManager::create_program_from_files(quad_name, attributes, outputs, false);
+        program = ShaderManager::create_program_from_files(quad_name, attributes);
     }
     if (!program)
         return;

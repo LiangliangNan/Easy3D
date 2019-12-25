@@ -63,7 +63,7 @@ RealCamera::RealCamera(const std::string& title,
         
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
-            create_cameras_drawable(camera()->sceneRadius());
+            create_cameras_drawable();
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
 
@@ -176,13 +176,13 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
 }
 
 
-void RealCamera::create_cameras_drawable(float scale)
+void RealCamera::create_cameras_drawable()
 {    
     std::vector<vec3> points;
-    opengl::prepare_camera(points, camera()->sceneRadius());
+    opengl::prepare_camera(points, camera()->sceneRadius() * 0.05f);
     
     std::vector<vec3> vertices;
-    for (int i = 0; i < views_.size(); ++i) {
+    for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
         KRT_to_camera(i, 1, &c);
         const mat4& m = c.frame()->worldMatrix();
@@ -216,8 +216,7 @@ void RealCamera::draw_image() const {
             ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
             ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
         };
-        std::vector<std::string> outputs;
-        program = ShaderManager::create_program_from_files(quad_name, attributes, outputs, false);
+        program = ShaderManager::create_program_from_files(quad_name, attributes);
     }
     if (!program)
         return;

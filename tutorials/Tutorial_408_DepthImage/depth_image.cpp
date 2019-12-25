@@ -109,8 +109,7 @@ void DepthImage::generate_depth() {
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files(name, attributes, outputs, false);
+            program = ShaderManager::create_program_from_files(name, attributes);
         }
         if (!program)
             return;
@@ -145,8 +144,7 @@ void DepthImage::draw_depth() const {
             ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
             ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
         };
-        std::vector<std::string> outputs;
-        program = ShaderManager::create_program_from_files(quad_name, attributes, outputs, false);
+        program = ShaderManager::create_program_from_files(quad_name, attributes);
     }
     if (!program)
         return;

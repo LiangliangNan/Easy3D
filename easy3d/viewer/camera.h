@@ -52,9 +52,10 @@ namespace easy3d {
      *  - Create and (if necessary) setup camera in the constructor of your viewer.
      *      camera_ = new Camera;
      *      camera_->setType(Camera::PERSPECTIVE);
-     *      camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
-     *      camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-     *      camera_->connect(this, &Viewer::update);
+     *      camera_->setUpVector(vec3(0, 0, 1));        // Z pointing up
+     *      camera_->setViewDirection(vec3(-1, 0, 0));  // X pointing out
+     *      camera_->showEntireScene();                 // osition and orient the camera
+     *      camera_->connect(this, &Viewer::update);    // connect the viewer's update function
      *  - Call camera_->setScreenWidthAndHeight() at both
      *      - creation or initialization (i.e., before the viewer appears) of
      *         the application;

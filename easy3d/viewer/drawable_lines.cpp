@@ -101,8 +101,7 @@ namespace easy3d {
                 std::vector<ShaderProgram::Attribute> attributes;
                 attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
                 attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-                std::vector<std::string> outputs;
-                program = ShaderManager::create_program_from_files("lines/lines_plain_color_width_control", attributes, outputs, true);
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color_width_control", attributes, std::vector<std::string>(), true);
             }
             if (!program)
                 return;
@@ -131,8 +130,7 @@ namespace easy3d {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files("lines/lines_cylinders_color", attributes, outputs, true);
+            program = ShaderManager::create_program_from_files("lines/lines_cylinders_color", attributes, std::vector<std::string>(), true);
         }
         if (!program)
             return;
@@ -165,8 +163,7 @@ namespace easy3d {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files("lines/lines_cones_color", attributes, outputs, true);
+            program = ShaderManager::create_program_from_files("lines/lines_cones_color", attributes, std::vector<std::string>(), true);
         }
         if (!program)
             return;

@@ -155,8 +155,7 @@ namespace easy3d {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            std::vector<std::string> outputs;
-            program = ShaderManager::create_program_from_files("points/points_spheres_geometry_color", attributes, outputs, true);
+            program = ShaderManager::create_program_from_files("points/points_spheres_geometry_color", attributes, std::vector<std::string>(), true);
         }
         if (!program)
             return;
