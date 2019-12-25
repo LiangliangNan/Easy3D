@@ -41,19 +41,11 @@
 #define EASY3D_FRAME_H
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/signal.h>
 #include <easy3d/viewer/constraint.h>
-
-#include <set>
 
 
 namespace easy3d {
-
-
-	class FrameObserver {
-	public:
-        virtual ~FrameObserver() {}
-		virtual void onFrameModified() = 0;
-	};
 
 
 	/*! \brief The Frame class represents a coordinate system, defined by a position
@@ -157,13 +149,13 @@ namespace easy3d {
 	  scene with the mouse.
 
 	  \nosubgrouping */
-	class Frame
+    class Frame : public Signal
 	{
 	public:
 		Frame();
 
 		/*! Virtual destructor. Empty. */
-		virtual ~Frame() {}
+        virtual ~Frame();
 
 		Frame(const Frame &frame);
 		Frame &operator=(const Frame &frame);
@@ -200,7 +192,7 @@ namespace easy3d {
 		of the Frame. */
 		void setTranslation(const vec3 &translation) {
 			t_ = translation;
-			frameModified();
+            trigger();
 		}
 		void setTranslationWithConstraint(vec3 &translation);
 
@@ -216,7 +208,7 @@ namespace easy3d {
 		 setRotationWithConstraint() instead. */
 		void setRotation(const quat &rotation) {
 			q_ = rotation;
-			frameModified();
+            trigger();
 		}
 		void setRotationWithConstraint(quat &rotation);
 
@@ -371,18 +363,6 @@ namespace easy3d {
 			return Frame(-(orientation().inverse_rotate(position())),
 				orientation().inverse());
 		}
-
-	public:
-		void addObserver(FrameObserver* obs) { observers_.insert(obs); }
-		void removeObserver(FrameObserver* obs) { observers_.erase(obs); }
-
-	protected:
-		// Should be called whenever the position() or orientation() of the Frame is modified.
-		// Then all observers will be notified the modification of the frame.
-		void frameModified();
-
-	private:
-		std::set< FrameObserver* >	observers_;
 
 	private:
 		// P o s i t i o n   a n d   o r i e n t a t i o n

@@ -18,6 +18,7 @@ set(${PROJECT_NAME}_HEADERS
     random.h
     rect.h
     segment.h
+    signal.h
     surface_mesh.h
     types.h
     vec.h

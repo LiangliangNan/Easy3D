@@ -286,7 +286,7 @@ namespace easy3d {
         /*! @name Path drawing */
         //@{
     public:
-        virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, double scale=1.0);
+        virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, float scale=1.0);
         //@}
 
     private:

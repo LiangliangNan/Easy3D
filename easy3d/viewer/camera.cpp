@@ -292,7 +292,7 @@ namespace easy3d {
 
 		frame_ = mcf;
         interpolationKfi_->setFrame(frame());
-		frame_->addObserver(this);
+        frame_->connect(this, &Camera::onFrameModified);
 
 		onFrameModified();
 	}
@@ -626,8 +626,6 @@ namespace easy3d {
 			setFieldOfView(static_cast<float>(M_PI) / 2.0f);
 	}
 
-#define MOVE_TO_SCREEN_CENTER 1
-
     /*! Makes the Camera smoothly zoom on a visible 3D point \p p.
      See also interpolateToFitScene(). */
     void Camera::interpolateToLookAt(const vec3 &p) {
@@ -637,7 +635,7 @@ namespace easy3d {
 
         ManipulatedCameraFrame tempFrame;
 
-#if MOVE_TO_SCREEN_CENTER
+#if 1 // Move the POI to screen center
         // Small hack: attach a temporary frame to take advantage of lookAt without
         // modifying frame
         ManipulatedCameraFrame *const originalFrame = frame();
@@ -1612,6 +1610,7 @@ namespace easy3d {
 	void Camera::onFrameModified() {
 		projectionMatrixIsUpToDate_ = false;
 		modelViewMatrixIsUpToDate_ = false;
+        trigger();
 	}
 
 

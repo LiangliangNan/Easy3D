@@ -75,7 +75,8 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
     camera_->setType(Camera::PERSPECTIVE);
     camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-    camera_->showEntireScene();
+//    camera_->showEntireScene();
+    camera_->connect(this, static_cast<void(ViewerQt::*)(void)>(&ViewerQt::update));
 }
 
 
@@ -219,27 +220,13 @@ void ViewerQt::mousePressEvent(QMouseEvent* e) {
             bool found = false;
             const vec3& p = pointUnderPixel(e->pos(), found);
             if (found) {
-                // zoom to point under pixel
-                const float coef = 0.1f;
-                // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
-                static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
-                tempFrame->setPosition(coef*camera()->frame()->position() + (1.0f-coef)*p);
-                tempFrame->setOrientation(camera()->frame()->orientation());
-                camera()->setFrame(tempFrame);
-                camera()->lookAt(p);
-
+                camera()->interpolateToLookAt(p);
                 camera_->setPivotPoint(p);
                 update();
             }
         }
         else if (e->button() == Qt::RightButton) {
-            // Small hack: attach a temporary frame to take advantage of lookAt without modifying frame
-            static ManipulatedCameraFrame* tempFrame = new ManipulatedCameraFrame;
-            tempFrame->setPosition(camera()->frame()->position());
-            tempFrame->setOrientation(camera()->frame()->orientation());
-            camera()->setFrame(tempFrame);
-            camera()->showEntireScene();
-
+            camera()->interpolateToFitScene();
             camera_->setPivotPoint(camera_->sceneCenter());
             update();
         }
@@ -956,12 +943,13 @@ void ViewerQt::postDraw() {
 
 		const float size = 10;  // this works on windows
 
-		LinesDrawable drawable("pivotpoint");
+        static LinesDrawable drawable("pivotpoint");
 		std::vector<vec3> points = {
 			vec3(pivot_point_.x() - size, pivot_point_.y(), 0.5f), vec3(pivot_point_.x() + size, pivot_point_.y(), 0.5f),
 			vec3(pivot_point_.x(), pivot_point_.y() - size, 0.5f), vec3(pivot_point_.x(), pivot_point_.y() + size, 0.5f)
 		};
 		drawable.update_vertex_buffer(points);
+        drawable.set_line_width(2.0f);
 
 		const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
 		glDisable(GL_DEPTH_TEST);   // always on top

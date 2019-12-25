@@ -41,26 +41,34 @@
 
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/signal.h>
 #include <easy3d/viewer/frame.h>
 
 
 namespace easy3d {
 
-    /* To use the camera, you need to do the following:
-    * - Call setScreenWidthAndHeight() at both
-    *     (1) creation or initialization (i.e., before the viewer appears) of
-    *         the application;
-    *     (2) change of the window size.
-    * - Call frame()->action_start() on mouse down and
-    *        frame()->action_end() on mouse up.
-    * - Call frame()->action_rotate() on mouse move for rotation and
-    *        frame()->action_translate() on mouse move for translation and
-    *        frame()->action_zoom() on mouse move for zoom
-    * To make the entire sence visible, call
-    * 		  setSceneBoundingBox() and showEntireScene();
-    *
-    * To retrieve the model view projection matrix, call modelViewProjectionMatrix()
-    */
+    /**
+     * To use the camera, you need to do the following:
+     *  - Create and (if necessary) setup camera in the constructor of your viewer.
+     *      camera_ = new Camera;
+     *      camera_->setType(Camera::PERSPECTIVE);
+     *      camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
+     *      camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
+     *      camera_->connect(this, &Viewer::update);
+     *  - Call camera_->setScreenWidthAndHeight() at both
+     *      - creation or initialization (i.e., before the viewer appears) of
+     *         the application;
+     *      - change of the window size.
+     *  - Call camera_->frame()->action_start() on mouse down and
+     *         camera_->frame()->action_end() on mouse up.
+     *  - Call camera_->frame()->action_rotate() on mouse move for rotation and
+     *         camera_->frame()->action_translate() on mouse move for translation and
+     *         camera_->frame()->action_zoom() on mouse move for zoom
+     * To make the entire sence visible, call
+     * 		   camera_->setSceneBoundingBox() and camera_->showEntireScene();
+     *
+     * To retrieve the model view projection matrix, call camera_->modelViewProjectionMatrix()
+     */
 
 	class Viewer;
 	class Frame;
@@ -126,7 +134,7 @@ namespace easy3d {
 	  A Camera can also be used outside of a Viewer or even without OpenGL for
 	  its coordinate system conversion capabilities. Note however that some of them
 	  explicitly rely on the presence of a Z-buffer. \nosubgrouping */
-	class Camera : public FrameObserver
+    class Camera : public Signal
 	{
 	public:
 		Camera();
@@ -466,7 +474,7 @@ namespace easy3d {
 		bool projectionMatrixIsUpToDate_;
 
         // Key frame interpolation
-        KeyFrameInterpolator *interpolationKfi_;
+        KeyFrameInterpolator* interpolationKfi_;
 	};
 
 }

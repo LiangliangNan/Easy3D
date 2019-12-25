@@ -235,7 +235,7 @@ namespace easy3d {
 			translate(trans);
 		}
 
-		frameModified();
+        trigger();
 	}
 
 
@@ -249,7 +249,7 @@ namespace easy3d {
 		if (referenceFrame())
 			trans = referenceFrame()->transformOf(trans);
 		translate(trans);
-		frameModified();
+        trigger();
 
 		// #CONNECTION# startAction should always be called before
 		if (previousConstraint_)

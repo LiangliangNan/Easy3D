@@ -146,9 +146,9 @@ namespace easy3d {
 
         /**
          * \brief Prepare data (points) for representing a camera in the 3D world as a set of lines.
-         * \param scale The scaling of the camera. A value of the scene radius should give good results.
+         * \param size The size of the camera. A good value can be, e.g., 5% of the scene raidus.
          */
-        void prepare_camera(std::vector<vec3>& points, float scale);
+        void prepare_camera(std::vector<vec3>& points, float size);
     }
 
 }

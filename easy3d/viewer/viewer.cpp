@@ -219,7 +219,8 @@ namespace easy3d {
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-        camera_->showEntireScene();
+        //camera_->showEntireScene();
+        camera_->connect(this, &Viewer::update);
 
         int fw, fh;
         glfwGetFramebufferSize(window_, &fw, &fh);
@@ -514,7 +515,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::update() {
+    void Viewer::update() const {
 		glfwPostEmptyEvent();
 	}
 
@@ -533,7 +534,7 @@ namespace easy3d {
                     pivot_point_ = vec2(proj.x, proj.y);
 
                     // show, but hide the visual hint of pivot point after \p delay milliseconds.
-                    const int delay = 2000;
+                    const int delay = 3000;
                     Timer::single_shot(delay, [&]() {
                         show_pivot_point_ = false;
                         pivot_point_ = vec2(0, 0);
@@ -562,7 +563,6 @@ namespace easy3d {
                     camera_->lookAt(p);
 #endif
                     camera_->setPivotPoint(p);
-                    update();
                 }
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
@@ -572,7 +572,6 @@ namespace easy3d {
                 camera()->showEntireScene();
 #endif
                 camera_->setPivotPoint(camera_->sceneCenter());
-                update();
             }
         }
         return false;
@@ -1456,12 +1455,13 @@ namespace easy3d {
 #else
             const float size = static_cast<float>(10 * dpi_scaling());
 #endif
-            LinesDrawable drawable("pivotpoint");
+            static LinesDrawable drawable("pivotpoint");
             std::vector<vec3> points = {
                 vec3(pivot_point_.x - size, pivot_point_.y, 0.5f), vec3(pivot_point_.x + size, pivot_point_.y, 0.5f),
                 vec3(pivot_point_.x, pivot_point_.y - size, 0.5f), vec3(pivot_point_.x, pivot_point_.y + size, 0.5f)
             };
             drawable.update_vertex_buffer(points);
+            drawable.set_line_width(2.0f);
 
             const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
             glDisable(GL_DEPTH_TEST);   // always on top

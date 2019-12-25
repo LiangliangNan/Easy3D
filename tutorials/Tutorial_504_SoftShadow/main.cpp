@@ -42,7 +42,7 @@ int main(int /*argc*/, char** /*argv*/) {
         // Create the viewer.
         TutorialSoftShadow viewer("Tutorial_504_SoftShadow");
 
-        Model* model = viewer.open(file, true);
+        Model* model = viewer.open(file, true, true);
         if (!model) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;

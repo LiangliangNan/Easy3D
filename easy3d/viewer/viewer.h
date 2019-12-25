@@ -114,14 +114,14 @@ namespace easy3d {
         // By default, this function also It will also creates necessary drawables
         // for visualizing the model. Set create_default_drawables to false if you
         // want to create a customized drawable for a sepcific rendering purpose.
-        Model* open(const std::string& file_name, bool create_default_drawables = true, bool smooth_shading = true);
+        Model* open(const std::string& file_name, bool create_default_drawables = true, bool smooth_shading = false);
 
         // Add a model to the viewer to be visualized (the viewer will be incharge
         // of its memory menagement).
         // By default, this function also It will also creates necessary drawables
         // for visualizing the model. Set create_default_drawables to false if you
         // want to create a customized drawable for a sepcific rendering purpose.
-        void add_model(Model* model, bool create_default_drawables = true, bool smooth_shading = true);
+        void add_model(Model* model, bool create_default_drawables = true, bool smooth_shading = false);
 
         // delete the model from the viewer. The model will also be destroyed.
         void delete_model(Model* model);
@@ -153,7 +153,7 @@ namespace easy3d {
         virtual void draw() const;
 
         // Update the rendering
-        static void update();
+        void update() const;
 
 	protected:
 

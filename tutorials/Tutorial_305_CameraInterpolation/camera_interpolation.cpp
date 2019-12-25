@@ -49,7 +49,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
     if (key == GLFW_KEY_K) {
         easy3d::Frame* frame = camera()->frame();
         camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
-        std::cout << "Key frame added. Position: " << frame->position() << ", orientation: " << frame->orientation() << std::endl;
+        std::cout << "Key frame added" << std::endl;
 
         // update scene bounding box to make sure the path is within the view frustum
         float old_radius = camera()->sceneRadius();
@@ -88,6 +88,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 void CameraIntrepolation::draw() const {
     Viewer::draw();
 
+    // shown only when it is not animating
     if (!camera()->keyFrameInterpolator()->interpolationIsStarted())
         camera()->draw_paths();
 }

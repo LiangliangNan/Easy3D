@@ -38,7 +38,6 @@
 
 #include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/frame.h>
-#include <easy3d/viewer/viewer.h> // update()
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/camera.h>   // for scene raduis (to draw cameras in a proper size)
@@ -57,7 +56,7 @@ namespace easy3d {
       values. */
     KeyFrameInterpolator::KeyFrameInterpolator(Frame* frame)
         : frame_(frame)
-        , period_(40)
+        , period_(40)   // 25 frames per second
         , interpolationTime_(0.0)
         , interpolationSpeed_(1.0)
         , interpolationStarted_(false)
@@ -131,8 +130,6 @@ namespace easy3d {
             }
             timer_.stop();
         }
-
-        Viewer::update();
     }
 
 
@@ -325,7 +322,7 @@ namespace easy3d {
       drawPathModifyGLState(mask, nbFrames, scale);
       glPopAttrib();
       \endcode */
-    void KeyFrameInterpolator::drawPath(const Camera* cam, int mask, int nbFrames, double scale)
+    void KeyFrameInterpolator::drawPath(const Camera* cam, int mask, int nbFrames, float scale)
     {
         if (keyFrame_.empty())
             return;
@@ -412,7 +409,7 @@ namespace easy3d {
             // camera representation
             for (std::size_t i=0; i<keyFrame_.size(); ++i) {
                 std::vector<vec3> cam_points;
-                opengl::prepare_camera(cam_points, cam->sceneRadius());
+                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.05f * scale);
                 const mat4& m = Frame(keyFrame_[i]->position(), keyFrame_[i]->orientation()).matrix();
                 for (auto& p : cam_points) {
                     points.push_back(m * p);
