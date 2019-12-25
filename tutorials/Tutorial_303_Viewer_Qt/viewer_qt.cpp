@@ -63,8 +63,9 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
     , mouse_pressed_pos_(0, 0)
     , mouse_previous_pos_(0, 0)
     , show_corner_axes_(true)
-    , axes_(nullptr)
+    , drawable_axes_(nullptr)
 	, show_pivot_point_(false)
+	, drawable_pivot_point_(nullptr)
     , model_idx_(-1)
 {
 	// like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
@@ -95,8 +96,10 @@ void ViewerQt::cleanup() {
     if (camera_)
         delete camera_;
 
-    if (axes_)
-        delete axes_;
+	if (drawable_axes_)
+		delete drawable_axes_;
+	if (drawable_pivot_point_)
+		delete drawable_pivot_point_;
 
     for (auto m : models_)
         delete m;
@@ -859,7 +862,7 @@ void ViewerQt::drawCornerAxes() {
     if (!program)
         return;
 
-    if (!axes_) {
+    if (!drawable_axes_) {
         const float base = 0.5f;   // the cylinder length, relative to the allowed region
         const float head = 0.2f;   // the cone length, relative to the allowed region
 		std::vector<vec3> points, normals, colors;
@@ -870,11 +873,11 @@ void ViewerQt::drawCornerAxes() {
 		opengl::prepare_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals, colors);
 		opengl::prepare_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals, colors);
 		opengl::prepare_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-        axes_ = new TrianglesDrawable("corner_axes");
-        axes_->update_vertex_buffer(points);
-        axes_->update_normal_buffer(normals);
-        axes_->update_color_buffer(colors);
-        axes_->set_per_vertex_color(true);
+		drawable_axes_ = new TrianglesDrawable("corner_axes");
+		drawable_axes_->update_vertex_buffer(points);
+		drawable_axes_->update_normal_buffer(normals);
+		drawable_axes_->update_color_buffer(colors);
+		drawable_axes_->set_per_vertex_color(true);
     }
     // The viewport and the scissor are changed to fit the lower left corner.
     int viewport[4], scissor[4];
@@ -906,7 +909,7 @@ void ViewerQt::drawCornerAxes() {
     program->set_uniform("wCamPos", wCamPos);
     program->set_uniform("ssaoEnabled", false);
     program->set_uniform("per_vertex_color", true);
-    axes_->gl_draw(false);
+	drawable_axes_->gl_draw(false);
     program->release();
 
     // restore
@@ -943,13 +946,13 @@ void ViewerQt::postDraw() {
 
 		const float size = 10;  // this works on windows
 
-        static LinesDrawable drawable("pivotpoint");
+		if (!drawable_pivot_point_)
+			drawable_pivot_point_ = new LinesDrawable("pivot_point");
 		std::vector<vec3> points = {
 			vec3(pivot_point_.x() - size, pivot_point_.y(), 0.5f), vec3(pivot_point_.x() + size, pivot_point_.y(), 0.5f),
 			vec3(pivot_point_.x(), pivot_point_.y() - size, 0.5f), vec3(pivot_point_.x(), pivot_point_.y() + size, 0.5f)
 		};
-		drawable.update_vertex_buffer(points);
-        drawable.set_line_width(2.0f);
+		drawable_pivot_point_->update_vertex_buffer(points);
 
 		const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
 		glDisable(GL_DEPTH_TEST);   // always on top
@@ -957,7 +960,7 @@ void ViewerQt::postDraw() {
 		program->set_uniform("MVP", proj);
 		program->set_uniform("per_vertex_color", false);
 		program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
-        drawable.gl_draw(false);
+		drawable_pivot_point_->gl_draw(false);
 		program->release();
 		glEnable(GL_DEPTH_TEST);   // restore
 	}

@@ -104,8 +104,9 @@ namespace easy3d {
         , mouse_pressed_x_(0)
         , mouse_pressed_y_(0)
         , show_corner_axes_(true)
-        , axes_(nullptr)
+        , drawable_axes_(nullptr)
         , show_pivot_point_(false)
+		, drawable_pivot_point_(nullptr)
         , model_idx_(-1)
 	{
         // Avoid locale-related number parsing issues.
@@ -468,8 +469,9 @@ namespace easy3d {
 			return;
 
         if (camera_) { delete camera_; camera_ = nullptr; }
-        if (axes_) { delete axes_; axes_ = nullptr; }
- 
+		if (drawable_axes_) { delete drawable_axes_; drawable_axes_ = nullptr; }
+		if (drawable_pivot_point_) { delete drawable_pivot_point_; drawable_pivot_point_ = nullptr; }
+
 		for (auto m : models_)
 			delete m;
         models_.clear();
@@ -1368,7 +1370,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        if (!axes_) {
+        if (!drawable_axes_) {
             float base = 0.5f;   // the cylinder length, relative to the allowed region
             float head = 0.2f;   // the cone length, relative to the allowed region
             std::vector<vec3> points, normals, colors;
@@ -1379,11 +1381,11 @@ namespace easy3d {
             opengl::prepare_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals, colors);
             opengl::prepare_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals, colors);
             opengl::prepare_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-            axes_ = new TrianglesDrawable("corner_axes");
-            axes_->update_vertex_buffer(points);
-            axes_->update_normal_buffer(normals);
-            axes_->update_color_buffer(colors);
-            axes_->set_per_vertex_color(true);
+			drawable_axes_ = new TrianglesDrawable("corner_axes");
+			drawable_axes_->update_vertex_buffer(points);
+			drawable_axes_->update_normal_buffer(normals);
+			drawable_axes_->update_color_buffer(colors);
+			drawable_axes_->set_per_vertex_color(true);
         }
 
         // The viewport and the scissor are changed to fit the lower left corner.
@@ -1416,7 +1418,7 @@ namespace easy3d {
         program->set_uniform("wCamPos", wCamPos);
         program->set_uniform("ssaoEnabled", false);
         program->set_uniform("per_vertex_color", true);
-        axes_->gl_draw(false);
+		drawable_axes_->gl_draw(false);
         program->release();
 
         // restore
@@ -1455,13 +1457,14 @@ namespace easy3d {
 #else
             const float size = static_cast<float>(10 * dpi_scaling());
 #endif
-            static LinesDrawable drawable("pivotpoint");
+			if (!drawable_pivot_point_) 
+				drawable_pivot_point_ = new LinesDrawable("pivot_point");
+
             std::vector<vec3> points = {
                 vec3(pivot_point_.x - size, pivot_point_.y, 0.5f), vec3(pivot_point_.x + size, pivot_point_.y, 0.5f),
                 vec3(pivot_point_.x, pivot_point_.y - size, 0.5f), vec3(pivot_point_.x, pivot_point_.y + size, 0.5f)
             };
-            drawable.update_vertex_buffer(points);
-            drawable.set_line_width(2.0f);
+			drawable_pivot_point_->update_vertex_buffer(points);
 
             const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
             glDisable(GL_DEPTH_TEST);   // always on top
@@ -1469,7 +1472,7 @@ namespace easy3d {
             program->set_uniform("MVP", proj);
             program->set_uniform("per_vertex_color", false);
             program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
-            drawable.gl_draw(false);
+			drawable_pivot_point_->gl_draw(false);
             program->release();
             glEnable(GL_DEPTH_TEST);   // restore
         }

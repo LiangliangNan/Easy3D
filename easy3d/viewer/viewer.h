@@ -49,6 +49,7 @@ namespace easy3d {
 	class Camera;
 	class Model;
     class OpenGLTimer;
+	class LinesDrawable;
     class TrianglesDrawable;
 
 	class Viewer
@@ -270,10 +271,11 @@ namespace easy3d {
 
 		// corner axes
 		bool	show_corner_axes_;
-        TrianglesDrawable* axes_;
+        TrianglesDrawable* drawable_axes_;
 
         bool	show_pivot_point_;
         vec2    pivot_point_;
+		LinesDrawable* drawable_pivot_point_;
 
 		std::vector<Model*> models_;
 		int model_idx_;
