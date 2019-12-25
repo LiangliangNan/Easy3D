@@ -85,6 +85,11 @@ namespace easy3d {
                 it.second(std::forward<Args>(args)...);
             }
         }
+        virtual void trigger() {
+            for(auto it : slots_) {
+                it.second();
+            }
+        }
 
     private:
         std::unordered_map<void*, std::function<void(void)>> slots_;

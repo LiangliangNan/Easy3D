@@ -454,7 +454,7 @@ namespace easy3d {
 		//@}
 
 	private:
-		void onFrameModified();
+        void trigger();
 
 	private:
 		// Frame
