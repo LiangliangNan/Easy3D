@@ -108,21 +108,20 @@ void DepthImage::generate_depth() {
 
 void DepthImage::draw_depth() const {
     DepthImage* viewer = const_cast<DepthImage*>(this);
-#if 0
-    if (!fbo_) {
-        const int samples = 0;
-        viewer->fbo_ = new FramebufferObject(width() * dpi_scaling(), height() * dpi_scaling(), samples);
-        viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
-    }
-    fbo_->ensure_size(width() * dpi_scaling(), height() * dpi_scaling());
-#else
-    if (!fbo_) {
-        const int samples = 0;
-        viewer->fbo_ = new FramebufferObject(width(), height(), samples);
-        viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
-    }
-    fbo_->ensure_size(width(), height());
+    int w = width();
+    int h = height();
+
+#if defined(__APPLE__)
+    w *= dpi_scaling();
+    h *= dpi_scaling();
 #endif
+
+    if (!fbo_) {
+        const int samples = 0;
+        viewer->fbo_ = new FramebufferObject(w, h, samples);
+        viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
+    }
+    fbo_->ensure_size(w, h);
 
     // generate
     viewer->generate_depth();
@@ -139,11 +138,11 @@ void DepthImage::draw_depth() const {
     if (!program)
         return;
 
-    int w = width() / 2;
-    int h = height() / 2;
+    int sw = w / 2;
+    int sh = h / 2;
     program->bind();
     program->bind_texture("textureID", fbo_->depth_texture(), 0);
-    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 20, 20, w, h, width(), height(), -0.9f);
+    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 20, 20, sw, sh, w, h, -0.9f);
     program->release_texture();
     program->release();
 }
