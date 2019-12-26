@@ -398,8 +398,8 @@ namespace easy3d {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);
                 path_drawable_->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-                path_drawable_->set_line_width(3);
-                path_drawable_->set_impostor_type(IT_CONES);
+                path_drawable_->set_line_width(2);
+                path_drawable_->set_impostor_type(IT_CYLINDERS);
             }
         }
 
@@ -409,7 +409,7 @@ namespace easy3d {
             // camera representation
             for (std::size_t i=0; i<keyFrame_.size(); ++i) {
                 std::vector<vec3> cam_points;
-                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.05f * scale);
+                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.05f * scale, static_cast<float>(cam->screenHeight())/cam->screenWidth());
                 const mat4& m = Frame(keyFrame_[i]->position(), keyFrame_[i]->orientation()).matrix();
                 for (auto& p : cam_points) {
                     points.push_back(m * p);

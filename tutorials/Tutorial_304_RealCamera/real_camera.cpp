@@ -178,13 +178,12 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
 
 void RealCamera::create_cameras_drawable()
 {    
-    std::vector<vec3> points;
-    opengl::prepare_camera(points, camera()->sceneRadius() * 0.05f);
-    
     std::vector<vec3> vertices;
     for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
         KRT_to_camera(i, 1, &c);
+        std::vector<vec3> points;
+        opengl::prepare_camera(points, camera()->sceneRadius() * 0.05f, static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
         for (auto& p : points) {
             vertices.push_back(m * p);

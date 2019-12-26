@@ -467,10 +467,10 @@ namespace easy3d {
 		}
 
 
-        void prepare_camera(std::vector<vec3>& points, float size)
+        void prepare_camera(std::vector<vec3>& points, float size, float hw_ratio)
         {
-            const float halfHeight = size;
-            const float halfWidth = halfHeight * 1.3f;
+            const float halfWidth = size;
+            const float halfHeight = halfWidth * hw_ratio;
             const float dist = halfHeight / tan(float(M_PI) / 8.0f);
 
             const float arrowHeight = 2.0f * halfHeight;

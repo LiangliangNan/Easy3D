@@ -50,6 +50,7 @@
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
+#include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/ambient_occlusion.h>
 #include <easy3d/viewer/dual_depth_peeling.h>
 #include <easy3d/viewer/average_color_blending.h>
@@ -738,6 +739,30 @@ namespace easy3d {
             camera_->frame()->action_zoom(-1, camera_);
         else if (key == GLFW_KEY_EQUAL && modifiers == EASY3D_MOD_CONTROL)
             camera_->frame()->action_zoom(1, camera_);
+
+        if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
+            easy3d::Frame* frame = camera()->frame();
+            camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
+            // update scene bounding box to make sure the path is within the view frustum
+            float old_radius = camera()->sceneRadius();
+            float candidate_radius = distance(camera()->sceneCenter(), frame->position());
+            camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+        }
+        else if (key == GLFW_KEY_D && modifiers == EASY3D_MOD_CONTROL) { // delete path
+            camera()->keyFrameInterpolator()->deletePath();
+
+            // update scene bounding box
+            Box3 box;
+            for (auto m : models_)
+                box.add_box(m->bounding_box());
+            camera_->setSceneBoundingBox(box.min(), box.max());
+        }
+        else if (key == GLFW_KEY_K && modifiers == 0) {
+            if (camera()->keyFrameInterpolator()->interpolationIsStarted())
+                camera()->keyFrameInterpolator()->stopInterpolation();
+            else
+                camera()->keyFrameInterpolator()->startInterpolation();
+        }
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
@@ -1476,6 +1501,10 @@ namespace easy3d {
             program->release();
             glEnable(GL_DEPTH_TEST);   // restore
         }
+
+        // shown only when it is not animating
+        if (!camera()->keyFrameInterpolator()->interpolationIsStarted())
+            camera()->draw_paths();
 	}
 
 

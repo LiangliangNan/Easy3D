@@ -46,7 +46,7 @@ CameraIntrepolation::CameraIntrepolation(const std::string& title)
 
 bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
-    if (key == GLFW_KEY_K) {
+    if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame* frame = camera()->frame();
         camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
         std::cout << "Key frame added" << std::endl;
@@ -58,7 +58,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 
         return true;
     }
-    else if (key == GLFW_KEY_SPACE) {
+    else if (key == GLFW_KEY_SPACE && modifiers == 0) {
         if (camera()->keyFrameInterpolator()->interpolationIsStarted()) {
             camera()->keyFrameInterpolator()->stopInterpolation();
             std::cout << "Animation stopped." << std::endl;
@@ -69,7 +69,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
         }
         return true;
     }
-    else if (key == GLFW_KEY_D) {
+    else if (key == GLFW_KEY_D && modifiers == 0) {
         camera()->keyFrameInterpolator()->deletePath();
 
         // update scene bounding box
