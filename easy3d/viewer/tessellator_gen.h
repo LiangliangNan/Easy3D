@@ -40,11 +40,17 @@ namespace easy3d {
         class VertexManager;
     }
 
-    // Tessellation is used for subdividing concave planar polygons, polygons
-    // with holes, or polygons with intersecting edges into triangles.
-    // This class contains a GLU tessellator object that can convert polygons
-    // into triangles. This class provides encapsulation and a mechanism for
-    // the resulting triangles to be read out and used.
+    /**
+     * @brief Tessellator
+     * @details Tessellation is used for subdividing concave planar polygons, polygons
+     *          with holes, or polygons with intersecting edges into triangles. This
+     *          class is based on the GLU tessellator object that can convert polygons
+     *          into triangles. This class provides encapsulation and a mechanism for
+     *          the resulting triangles to be read out and used.
+     * @todo Current implementation can get rid of duplicated vertices based on std::map,
+     *       with which the performance is not optimized. Check the GLUtesselator source
+     *       code if the vertex indices are maintained.
+     */
 
     class TessellatorGen
     {
