@@ -783,9 +783,12 @@ protected:
                 for ( ; iter != end; ++iter)
                 {
                     auto pat = iter->str();
+#if 0 // Liangliang: no need to disable the filters if there is "*.*" or "*"
                     if (pat == "*" || pat == "*.*")
                         has_filter = false;
-                    else if (internal::starts_with(pat, "*."))
+                    else
+#endif
+                        if (internal::starts_with(pat, "*."))
                         filter_list += (filter_list.size() == 0 ? "" : ",") +
                                        osascript_quote(pat.substr(2, pat.size() - 2));
                 }
