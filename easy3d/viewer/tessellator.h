@@ -36,11 +36,16 @@ class GLUtesselator;
 
 namespace easy3d {
 
-    // Tessellation is used for subdividing concave planar polygons or polygons
-    // with intersecting edges into triangles.
-    // This class contains a GLU tessellator object that can convert polygons
-    // into triangles. This class provides encapsulation and a mechanism for
-    // the resulting triangles to be rendered.
+    /**
+     * @brief Tessellator provides encapsulation and a mechanism for the resulting
+     *        triangles to be rendered directly.
+     * @details Tessellation is used for subdividing concave planar polygons, polygons
+     *          with holes, or polygons with intersecting edges into triangles. This
+     *          class is based on the GLU tessellator object that can convert polygons
+     *          into triangles.
+     * @todo Current implementation menages the memory of the new allocated vertices.
+     *       Check the GLUtesselator source code if the vertex memory is maintained.
+     */
 
     class Tessellator
     {
