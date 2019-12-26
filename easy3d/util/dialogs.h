@@ -60,13 +60,15 @@ namespace easy3d
          * \brief Open a native file open dialog.
          * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
          * \param default_path The default file path, e.g., setting::resource_directory() + "/data/".
-         * \param filters The accepted file filters, e.g.,
-         *              const std::vector<std::string> filters = {
-         *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
-         *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
-         *                  "All Files (*.*)", "*"
-         *              };
+         * \param filters The accepted file filters. For each filter, the string you see in the file
+         *                dialog and the actual filter always come in pairs, e.g.,
+         *                      const std::vector<std::string> filters = {
+         *                          "Mesh Files (*.obj *.ply)", "*.obj *.ply",
+         *                          "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
+         *                          "All Files (*.*)", "*"
+         *                      };
          * @return The selected file name (empty if no file was selected).
+         * @todo   A filter needs only one string (the filter can be extracted from the string).
          */
         std::string open(
                 const std::string& title = "Please choose the file(s) to open",
