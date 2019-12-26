@@ -209,9 +209,13 @@ protected:
     bool	show_corner_axes_;
     easy3d::TrianglesDrawable* drawable_axes_;
 
+    // pivot point
 	bool	show_pivot_point_;
 	QPointF pivot_point_;
 	easy3d::LinesDrawable* drawable_pivot_point_;
+
+    // camera path
+    bool	show_camera_path_;
 
     std::vector<easy3d::Model*> models_;
     int model_idx_;

@@ -80,12 +80,6 @@ namespace easy3d {
     KeyFrameInterpolator::~KeyFrameInterpolator()
     {
         deletePath();
-
-        if (path_drawable_)
-            delete path_drawable_;
-
-        if (cameras_drawable_)
-            delete cameras_drawable_;
     }
 
     /*! Sets the frame() associated to the KeyFrameInterpolator. */
@@ -288,6 +282,16 @@ namespace easy3d {
         pathIsValid_ = false;
         valuesAreValid_ = false;
         currentFrameValid_ = false;
+
+        if (path_drawable_) {
+            delete path_drawable_;
+            path_drawable_ = nullptr;
+        }
+
+        if (cameras_drawable_) {
+            delete cameras_drawable_;
+            cameras_drawable_ = nullptr;
+        }
     }
 
 
@@ -409,7 +413,7 @@ namespace easy3d {
             // camera representation
             for (std::size_t i=0; i<keyFrame_.size(); ++i) {
                 std::vector<vec3> cam_points;
-                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.05f * scale, static_cast<float>(cam->screenHeight())/cam->screenWidth());
+                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.03f * scale, static_cast<float>(cam->screenHeight())/cam->screenWidth());
                 const mat4& m = Frame(keyFrame_[i]->position(), keyFrame_[i]->orientation()).matrix();
                 for (auto& p : cam_points) {
                     points.push_back(m * p);
@@ -421,6 +425,7 @@ namespace easy3d {
                 cameras_drawable_->update_vertex_buffer(points);
                 cameras_drawable_->set_default_color(vec3(0.0f, 0.0f, 1.0f));
                 cameras_drawable_->set_line_width(2);
+                //cameras_drawable_->set_impostor_type(IT_CYLINDERS);
             }
         }
 

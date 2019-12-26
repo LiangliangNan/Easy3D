@@ -108,6 +108,7 @@ namespace easy3d {
         , drawable_axes_(nullptr)
         , show_pivot_point_(false)
 		, drawable_pivot_point_(nullptr)
+        , show_camera_path_(false)
         , model_idx_(-1)
 	{
         // Avoid locale-related number parsing issues.
@@ -757,11 +758,14 @@ namespace easy3d {
                 box.add_box(m->bounding_box());
             camera_->setSceneBoundingBox(box.min(), box.max());
         }
-        else if (key == GLFW_KEY_K && modifiers == 0) {
+        else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
             if (camera()->keyFrameInterpolator()->interpolationIsStarted())
                 camera()->keyFrameInterpolator()->stopInterpolation();
             else
                 camera()->keyFrameInterpolator()->startInterpolation();
+        }
+        else if (key == GLFW_KEY_R && modifiers == 0) {
+            show_camera_path_ = !show_camera_path_;
         }
 
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
@@ -1462,7 +1466,10 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() {
-		// Visual hints: axis, camera, grid...
+        // shown only when it is not animating
+        if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
+            camera()->draw_paths();
+
 		if (show_corner_axes_)
 			draw_corner_axes();
 
@@ -1501,10 +1508,6 @@ namespace easy3d {
             program->release();
             glEnable(GL_DEPTH_TEST);   // restore
         }
-
-        // shown only when it is not animating
-        if (!camera()->keyFrameInterpolator()->interpolationIsStarted())
-            camera()->draw_paths();
 	}
 
 

@@ -44,6 +44,7 @@
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
+#include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/read_pixel.h>
 #include <easy3d/viewer/opengl_info.h>
@@ -66,6 +67,7 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
     , drawable_axes_(nullptr)
 	, show_pivot_point_(false)
 	, drawable_pivot_point_(nullptr)
+    , show_camera_path_(false)
     , model_idx_(-1)
 {
 	// like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
@@ -420,6 +422,33 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         camera_->frame()->action_zoom(-1, camera_);
     else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
         camera_->frame()->action_zoom(1, camera_);
+
+    else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
+        easy3d::Frame* frame = camera()->frame();
+        camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
+        // update scene bounding box to make sure the path is within the view frustum
+        float old_radius = camera()->sceneRadius();
+        float candidate_radius = distance(camera()->sceneCenter(), frame->position());
+        camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+    }
+    else if (e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier) { // delete path
+        camera()->keyFrameInterpolator()->deletePath();
+
+        // update scene bounding box
+        Box3 box;
+        for (auto m : models_)
+            box.add_box(m->bounding_box());
+        camera_->setSceneBoundingBox(box.min(), box.max());
+    }
+    else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
+        if (camera()->keyFrameInterpolator()->interpolationIsStarted())
+            camera()->keyFrameInterpolator()->stopInterpolation();
+        else
+            camera()->keyFrameInterpolator()->startInterpolation();
+    }
+    else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
+        show_camera_path_ = !show_camera_path_;
+    }
 
     else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
@@ -930,7 +959,10 @@ void ViewerQt::preDraw() {
 
 
 void ViewerQt::postDraw() {
-    // Visual hints: axis, camera, grid...
+    // shown only when it is not animating
+    if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
+        camera()->draw_paths();
+
     if (show_corner_axes_)
         drawCornerAxes();
 

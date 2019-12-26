@@ -288,13 +288,11 @@ void MainWindow::onClearRecentFiles() {
 
 void MainWindow::saveSnapshot() {
     const Model* model = viewer_->currentModel();
-    if (!model) {
-        std::cerr << "no model exists" << std::endl;
-        return;
-    }
 
     const bool overwrite = false;
-    const std::string& default_file_name = file_system::replace_extension(model->name(), "png");
+    std::string default_file_name("untitled.png");
+    if (model)
+        default_file_name = file_system::replace_extension(model->name(), "png");
     QString proposedFormat = "PNG (*.png)";
     const QString fileName = QFileDialog::getSaveFileName(
         this,

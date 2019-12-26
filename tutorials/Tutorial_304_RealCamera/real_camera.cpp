@@ -183,7 +183,7 @@ void RealCamera::create_cameras_drawable()
         Camera c;
         KRT_to_camera(i, 1, &c);
         std::vector<vec3> points;
-        opengl::prepare_camera(points, camera()->sceneRadius() * 0.05f, static_cast<float>(views_[i].h)/views_[i].w);
+        opengl::prepare_camera(points, camera()->sceneRadius() * 0.03f, static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
         for (auto& p : points) {
             vertices.push_back(m * p);

@@ -273,9 +273,13 @@ namespace easy3d {
 		bool	show_corner_axes_;
         TrianglesDrawable* drawable_axes_;
 
+        // pivot point
         bool	show_pivot_point_;
         vec2    pivot_point_;
 		LinesDrawable* drawable_pivot_point_;
+
+        // camera path
+        bool	show_camera_path_;
 
 		std::vector<Model*> models_;
 		int model_idx_;
