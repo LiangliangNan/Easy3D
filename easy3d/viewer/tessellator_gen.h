@@ -97,7 +97,7 @@ namespace easy3d {
         //       using get_vertices()
         bool get_triangle(std::size_t i, std::size_t &a, std::size_t &b, std::size_t &c) const;
 
-        // List of triangles created over many calls (every subsequent 3 entries form a triangle)
+        // List of triangles created over many calls (every consecutive 3 entries form a triangle)
         const std::vector<std::size_t>& get_triangle_list() const { return triangle_list_; }
 
         // number of triangles generated for the last polygon.
@@ -145,7 +145,7 @@ namespace easy3d {
         std::vector<std::size_t>	intermediate_vertex_ids_;
         std::size_t					num_triangles_in_polygon_;
 
-        // List of triangles created over many calls (every subsequent 3 entries form a triangle)
+        // List of triangles created over many calls (every consecutive 3 entries form a triangle)
         std::vector<std::size_t>	triangle_list_;
 
         // vertices allocated due to tesselation (including existing ones and new ones)
