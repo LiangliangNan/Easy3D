@@ -87,24 +87,7 @@ namespace easy3d {
 
 
     void Tessellator::set_winding_rule(WindingRule rule) {
-        switch (rule)
-        {
-        case ODD:
-            gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
-            return;
-        case NONZERO:
-            gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
-            return;
-        case POSITIVE:
-            gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
-            return;
-        case NEGATIVE:
-            gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
-            return;
-        case ABS_GEQ_TWO:
-            gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
-            return;
-        }
+        gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, rule);
     }
 
 

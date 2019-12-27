@@ -32,9 +32,11 @@
 using namespace easy3d;
 
 
-// This example shows how to tessellate and rendering general polygonal
-// meshes (i.e., meshes with concave faces, self−intersecting faces, and
-// faces with holes).
+// This example shows how to triangulate a general polygonal meshes (i.e., meshes
+// with concave faces, self−intersecting faces, and faces with holes) using the
+// tessellator of Easy3D.
+// Note: For general puruposes, you can use the tessellator to create a TrianglesDrawable
+//       (instead of modifying the mesh).
 
 typedef std::vector<vec3> Hole;
 
@@ -42,8 +44,6 @@ typedef std::vector<vec3> Hole;
 void triangulate(SurfaceMesh* mesh) {
     if (!mesh)
         return;
-
-    std::vector<vec3> points;
 
     mesh->update_face_normals();
     auto normals = mesh->face_property<vec3>("f:normal");

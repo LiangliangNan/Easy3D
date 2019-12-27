@@ -56,11 +56,11 @@ namespace easy3d {
     {
     public:
         enum WindingRule {
-            ODD,
-            NONZERO,
-            POSITIVE,
-            NEGATIVE,
-            ABS_GEQ_TWO
+            ODD         = 100130,   // The values are the same as in GLU.
+            NONZERO     = 100131,
+            POSITIVE    = 100132,
+            NEGATIVE    = 100133,
+            ABS_GEQ_TWO = 100134
         };
 
     public:
