@@ -54,8 +54,10 @@ int main(int /*argc*/, char** /*argv*/) {
         //  - load the model to the viewer.
         //  - create necessary default drawables for visualization.
         Model* mesh = viewer.open(file_name, true);
-        if (!mesh)
+        if (!mesh) {
             std::cerr << "failed loading model from \'" << file_name << "\'" << std::endl;
+            return EXIT_FAILURE;
+        }
 
         // Now let's create the drawable for the bounding box of the model.
         // We also attached it to the model.
@@ -90,7 +92,7 @@ int main(int /*argc*/, char** /*argv*/) {
         // Delete the mesh (i.e., release memory)? No. The viewer will do this.
         // delete mesh;
     } catch (const std::runtime_error &e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }

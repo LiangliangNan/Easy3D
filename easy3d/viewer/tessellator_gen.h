@@ -91,7 +91,7 @@ namespace easy3d {
         void begin_contour();	// a polygon can have multiple contours
 
         // general cases
-        void add_vertex_data(const float* data, unsigned int size); // to be flexible (any data can be provide)
+        void add_vertex(const float* data, unsigned int size); // to be flexible (any data can be provide)
 
         // specialized using common properties
         void add_vertex(const vec3& point);

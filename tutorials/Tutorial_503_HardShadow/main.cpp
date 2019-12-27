@@ -56,7 +56,7 @@ int main(int /*argc*/, char** /*argv*/) {
         return EXIT_SUCCESS;
 
     } catch (const std::runtime_error &e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }

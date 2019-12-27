@@ -60,36 +60,13 @@ namespace easy3d {
                 names_to_index_.clear();
             }
 
-        #if 1 // duplicated vertices will be removed
             std::size_t get_vertex_id(const double *vert)
             {
-                char keystr[200];
-                snprintf(keystr, 200, "%12.12e,%12.12e,%12.12e", vert[0], vert[1], vert[2]);
-                std::string key(keystr);
-                std::map<std::string, std::size_t>::const_iterator pos = names_to_index_.find(key);
+                Iterator pos = names_to_index_.find(vert);
                 if (pos != names_to_index_.end())
                     return pos->second;
                 else {
-                    std::size_t index = vertices_.size();
-                    vertices_.push_back(vert);
-                    names_to_index_[key] = index;
-                    return index;
-                }
-            }
-
-        private:
-            std::vector<const double*>			vertices_;
-            std::map<std::string, std::size_t>	names_to_index_;
-
-        #else  // duplicated vertices will NOT be removed
-
-            std::size_t get_vertex_id(const double *vert)
-            {
-                std::map<const double*, std::size_t>::const_iterator pos = names_to_index_.find(vert);
-                if (pos != names_to_index_.end())
-                    return pos->second;
-                else {
-                    std::size_t index = vertices_.size();
+                    const std::size_t index = vertices_.size();
                     vertices_.push_back(vert);
                     names_to_index_[vert] = index;
                     return index;
@@ -97,8 +74,35 @@ namespace easy3d {
             }
 
         private:
+
+#if 1 // duplicated vertices will be removed
+
+            class CompVec {
+            public:
+                CompVec(double _eps = DBL_MIN) : eps_(_eps) {}
+                bool operator()(const double* v0, const double* v1) const {
+                    if (fabs(v0[0] - v1[0]) <= eps_) {
+                        if (fabs(v0[1] - v1[1]) <= eps_)
+                            return (v0[2] < v1[2] - eps_);
+                        else
+                            return (v0[1] < v1[1] - eps_);
+                    }
+                    else
+                        return (v0[0] < v1[0] - eps_);
+                }
+            private:
+                double eps_;
+            };
+
+            std::vector<const double*>			vertices_;
+            std::map<const double*, std::size_t, CompVec> names_to_index_;
+            typedef  std::map<const double*, std::size_t, CompVec>::const_iterator Iterator;
+
+        #else  // duplicated vertices will NOT be removed
+
             std::vector<const double*>				vertices_;
             std::map<const double*, std::size_t>	names_to_index_;
+            typedef  std::map<const double*, std::size_t>::const_iterator Iterator;
 
         #endif
         };
@@ -172,7 +176,7 @@ namespace easy3d {
     }
 
 
-    void TessellatorGen::add_vertex_data(const float* data, unsigned int size) // to be flexible (any data can be provide)
+    void TessellatorGen::add_vertex(const float* data, unsigned int size) // to be flexible (any data can be provide)
     {
         vertex_data_size_ = size;
         double *newPt = allocate_vertex(vertex_data_size_);

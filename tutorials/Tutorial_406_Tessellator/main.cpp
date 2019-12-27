@@ -29,6 +29,8 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/tessellator_gen.h>
 
+
+
 using namespace easy3d;
 
 
@@ -36,8 +38,8 @@ using namespace easy3d;
 // with concave faces, self−intersecting faces, and faces with holes) using the
 // tessellator of Easy3D.
 //
-// Note: For general rendering puruposes, you can use the tessellator to create a T
-//       rianglesDrawable without modifying the mesh.
+// Note: For general rendering puruposes, you can use the tessellator to create a
+//       trianglesDrawable without modifying the mesh.
 
 typedef std::vector<vec3> Hole;
 
@@ -157,7 +159,7 @@ int main(int /*argc*/, char** /*argv*/) {
         viewer.run();
     }
     catch (const std::runtime_error &e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         std::cerr << error_msg << std::endl;
         return EXIT_FAILURE;
     }
