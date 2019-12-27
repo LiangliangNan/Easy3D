@@ -38,71 +38,57 @@ using namespace easy3d;
 
 typedef std::vector<vec3> Hole;
 
-void create_drawable(SurfaceMesh* mesh) {
+// convert the mesh into triangular mesh using the tessellator
+void triangulate(SurfaceMesh* mesh) {
     if (!mesh)
         return;
 
     std::vector<vec3> points;
-    std::vector<vec3> normals;
-    std::vector<unsigned int> indices;
 
     mesh->update_face_normals();
-    auto f_normals = mesh->face_property<vec3>("f:normal");
-    auto f_holes = mesh->get_face_property<Hole>("f:holes");
+    auto normals = mesh->face_property<vec3>("f:normal");
+    auto holes = mesh->get_face_property<Hole>("f:holes");
 
     TessellatorGen gen;
     for (auto f : mesh->faces()) {
-        gen.begin_polygon();
+        gen.begin_polygon(normals[f]);
 
         gen.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
         gen.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
-            std::vector<vec3> data(2); // 3 (point) + 3 (normal)
-            data[0] = mesh->position(v);
-            data[1] = f_normals[f];
-            gen.add_vertex_data(data[0], 6); // 3 (point) + 3 (normal)
+            gen.add_vertex(mesh->position(v));
         }
         gen.end_contour();
 
-        if (f_holes && f_holes[f].size() > 3) {
+        if (holes && holes[f].size() > 3) { // has a valid hole
             gen.set_winding_rule(TessellatorGen::ODD);
             gen.begin_contour();
-            const auto& hole = f_holes[f];
-            for (auto p : hole) {
-                std::vector<vec3> data(2); // 3 (point) + 3 (normal)
-                data[0] = p;
-                data[1] = f_normals[f];
-                gen.add_vertex_data(data[0], 6); // 3 (point) + 3 (normal)
-            }
+            for (auto p : holes[f])
+                gen.add_vertex(p);
             gen.end_contour();
         }
 
         gen.end_polygon();
     }
 
+    // now the tessellation is done. We can clear the old mesh and
+    // fill it will the new set of triangles
+
+    mesh->clear();
+
     std::size_t num = gen.num_triangles();
     if (num > 0) { // in degenerate cases num can be zero
         const std::vector<const double*>& vts = gen.get_vertices();
-        for (std::size_t i = 0; i < vts.size(); ++i) {
-            points.push_back(vec3(vts[i]));
-            normals.push_back(vec3(vts[i] + 3));
-        }
+        for (std::size_t i = 0; i < vts.size(); ++i)
+            mesh->add_vertex(vec3(vts[i]));
 
         for (std::size_t i = 0; i < num; ++i) {
             std::size_t a, b, c;
             gen.get_triangle(i, a, b, c);
-            indices.push_back(a);
-            indices.push_back(b);
-            indices.push_back(c);
+            mesh->add_triangle(SurfaceMesh::Vertex(a), SurfaceMesh::Vertex(b), SurfaceMesh::Vertex(c));
         }
     }
-
-    TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
-    drawable->update_vertex_buffer(points);
-    drawable->update_normal_buffer(normals);
-    drawable->update_index_buffer(indices);
-    drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
 }
 
 
@@ -158,13 +144,13 @@ int main(int /*argc*/, char** /*argv*/) {
             };
         }
 
-        viewer.add_model(mesh, false);  // I will create my own drawables using the tessellator
+        //-------- Triangulate the mesh using the tessellator ---------
 
-        //-------- Create triangles drawable using the tessellator ---------
+        triangulate(mesh);
 
-        create_drawable(mesh);
+        // ------------------------------------------------------------
 
-        // -----------------------------------------------------------------
+        viewer.add_model(mesh, true, false);
 
         // Run the viewer
         viewer.run();

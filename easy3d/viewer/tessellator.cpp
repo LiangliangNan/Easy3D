@@ -114,8 +114,9 @@ namespace easy3d {
     }
 
 
-    void Tessellator::begin_polygon()
+    void Tessellator::begin_polygon(const vec3 &normal)
     {
+        gluTessNormal(tess_obj_, normal.x, normal.y, normal.z);
         gluTessBeginPolygon(tess_obj_, (void *)this);
     }
 

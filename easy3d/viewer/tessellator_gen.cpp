@@ -175,9 +175,10 @@ namespace easy3d {
     }
 
 
-    void TessellatorGen::begin_polygon()
+    void TessellatorGen::begin_polygon(const vec3 &normal)
     {
         num_triangles_in_polygon_ = 0;
+        gluTessNormal(tess_obj_, normal.x, normal.y, normal.z);
         gluTessBeginPolygon(tess_obj_, (void *)this);
     }
 

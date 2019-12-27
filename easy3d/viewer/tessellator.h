@@ -68,7 +68,23 @@ namespace easy3d {
         void set_polygon_normal(const vec3& normal);
 
         // polygon functions
-        void begin_polygon();
+        /**
+         * \brief Lets the user supply the polygon normal, if known (improve robustness).
+         *        All input data is projected into a plane perpendicular to the normal
+         *        before tesselation.  All output triangles are oriented CCW with respect
+         *        to the normal.
+         *        If the supplied normal is (0,0,0) (the default value), the normal is
+         *        determined as follows. The direction of the normal, up to its sign, is
+         *        found by fitting a plane to the vertices, without regard to how the
+         *        vertices are connected.  It is expected that the input data lies
+         *        approximately in plane; otherwise projection perpendicular to the
+         *        computed normal may substantially change the geometry.  The sign of the
+         *        normal is chosen so that the sum of the signed areas of all input contours
+         *        is non-negative (where a CCW contour has positive area).
+         * \attention The supplied normal persists until it is changed by another call to
+         *            this function.
+         */
+        void begin_polygon(const vec3& normal = vec3(0,0,0));
         void begin_contour();	// a polygon can have multiple contours
         void add_vertex(const vec3& point);
         void add_vertex(const vec3& point, const vec3& color);		// with color
