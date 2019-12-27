@@ -32,11 +32,9 @@
 using namespace easy3d;
 
 
-// This example shows how to tessellate and rendering general
-// polygonal meshes.
-// From this example, you can easily (with minor modifications)
-// render mesh models with concave polygons, self−intersecting
-// polygons, and polygons with holes.
+// This example shows how to tessellate and rendering general polygonal
+// meshes (i.e., meshes with concave faces, self−intersecting faces, and
+// faces with holes).
 
 typedef std::vector<vec3> Hole;
 
@@ -46,115 +44,65 @@ void create_drawable(SurfaceMesh* mesh) {
 
     std::vector<vec3> points;
     std::vector<vec3> normals;
-    std::vector<vec3> colors;    // when color attributes exist
     std::vector<unsigned int> indices;
 
-    bool smooth_shading = false;
-    auto v_normals = mesh->get_vertex_property<vec3>("v:normal");
-    if (smooth_shading && !v_normals) {
-        v_normals = mesh->add_vertex_property<vec3>("v:normal");
-        for (auto v : mesh->vertices())
-            v_normals[v] = mesh->compute_vertex_normal(v);
-    }
-    auto f_normals = mesh->get_face_property<vec3>("f:normal");
-    if (!smooth_shading && !f_normals) {
-        f_normals = mesh->add_face_property<vec3>("f:normal");
-        for (auto f : mesh->faces())
-            f_normals[f] = mesh->compute_face_normal(f);
-    }
-
-    auto v_colors = mesh->get_vertex_property<vec3>("v:color");
-    auto f_colors = mesh->get_face_property<vec3>("f:color");
+    mesh->update_face_normals();
+    auto f_normals = mesh->face_property<vec3>("f:normal");
     auto f_holes = mesh->get_face_property<Hole>("f:holes");
-    const vec3 c(1.0f, 0.67f, 0.5f);
-
-    //std::size_t face_idx = 0;
-    //std::size_t tri_idx = 0;
-    std::size_t index_offset = 0;
-    //std::vector< std::vector<unsigned int> >	triangle_indices(mesh->n_faces());
 
     TessellatorGen gen;
     for (auto f : mesh->faces()) {
-        gen.reset();
-        if (f_holes && f_holes[f].size() > 0) // does have a hole
-            gen.set_winding_rule(TessellatorGen::ODD);
-        else
-            gen.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
         gen.begin_polygon();
 
+        gen.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
         gen.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
-            std::vector<vec3> data(3); // 3 (point) + 3 (normal) + 3 (color)
+            std::vector<vec3> data(2); // 3 (point) + 3 (normal)
             data[0] = mesh->position(v);
-
-            if (smooth_shading)
-                data[1] = v_normals[v];
-            else
-                data[1] = f_normals[f];
-
-            if (v_colors)
-                data[2] = v_colors[v];
-            else if (f_colors)
-                data[2] = f_colors[f];
-            else
-                data[2] = c;
-            gen.add_vertex_data(data[0], 9); // 3 (point) + 3 (normal) + 3 (color)
+            data[1] = f_normals[f];
+            gen.add_vertex_data(data[0], 6); // 3 (point) + 3 (normal)
         }
         gen.end_contour();
 
-
         if (f_holes && f_holes[f].size() > 3) {
+            gen.set_winding_rule(TessellatorGen::ODD);
             gen.begin_contour();
             const auto& hole = f_holes[f];
             for (auto p : hole) {
-                std::vector<vec3> data(3); // 3 (point) + 3 (normal) + 3 (color)
+                std::vector<vec3> data(2); // 3 (point) + 3 (normal)
                 data[0] = p;
-
                 data[1] = f_normals[f];
-
-                if (f_colors)
-                    data[2] = f_colors[f];
-                else
-                    data[2] = c;
-                gen.add_vertex_data(data[0], 9); // 3 (point) + 3 (normal) + 3 (color)
+                gen.add_vertex_data(data[0], 6); // 3 (point) + 3 (normal)
             }
             gen.end_contour();
         }
 
         gen.end_polygon();
+    }
 
-        std::size_t num = gen.num_triangles();
-        if (num > 0) { // in degenerate cases num can be zero
-            const std::vector<const double*>& vts = gen.get_vertices();
-            for (std::size_t i = 0; i < vts.size(); ++i) {
-                points.push_back(vec3(vts[i]));
-                normals.push_back(vec3(vts[i] + 3));
-                colors.push_back(vec3(vts[i] + 6));
-            }
-
-            for (std::size_t i = 0; i < num; ++i) {
-                std::size_t a, b, c;
-                gen.get_triangle(i, a, b, c);
-                indices.push_back(a + index_offset);
-                indices.push_back(b + index_offset);
-                indices.push_back(c + index_offset);
-                //triangle_indices[face_idx].push_back(tri_idx);
-                //++tri_idx;
-            }
-
-            index_offset += vts.size();
+    std::size_t num = gen.num_triangles();
+    if (num > 0) { // in degenerate cases num can be zero
+        const std::vector<const double*>& vts = gen.get_vertices();
+        for (std::size_t i = 0; i < vts.size(); ++i) {
+            points.push_back(vec3(vts[i]));
+            normals.push_back(vec3(vts[i] + 3));
         }
-        //++face_idx;
+
+        for (std::size_t i = 0; i < num; ++i) {
+            std::size_t a, b, c;
+            gen.get_triangle(i, a, b, c);
+            indices.push_back(a);
+            indices.push_back(b);
+            indices.push_back(c);
+        }
     }
 
     TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
     drawable->update_vertex_buffer(points);
     drawable->update_normal_buffer(normals);
-    drawable->update_color_buffer(colors);
     drawable->update_index_buffer(indices);
-    drawable->set_default_color(c);
-    //drawable->set_triangle_indices(triangle_indices);
+    drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
 }
 
 
@@ -191,7 +139,7 @@ int main(int /*argc*/, char** /*argv*/) {
             mesh->add_face(vertices);
         }
 
-        // Face 3: a quad face with holes
+        // Face 3: a quad face with a hole
         {
             std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1800,   0, 0)),
