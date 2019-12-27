@@ -446,7 +446,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         else
             camera()->keyFrameInterpolator()->startInterpolation();
     }
-    else if (e->key() == Qt::Key_Z && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_T && e->modifiers() == Qt::NoModifier) {
         show_camera_path_ = !show_camera_path_;
     }
 

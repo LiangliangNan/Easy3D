@@ -764,7 +764,7 @@ namespace easy3d {
             else
                 camera()->keyFrameInterpolator()->startInterpolation();
         }
-        else if (key == GLFW_KEY_Z && modifiers == 0) {
+        else if (key == GLFW_KEY_T && modifiers == 0) {
             show_camera_path_ = !show_camera_path_;
         }
 
