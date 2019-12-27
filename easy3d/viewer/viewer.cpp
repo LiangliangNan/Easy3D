@@ -764,7 +764,7 @@ namespace easy3d {
             else
                 camera()->keyFrameInterpolator()->startInterpolation();
         }
-        else if (key == GLFW_KEY_R && modifiers == 0) {
+        else if (key == GLFW_KEY_Z && modifiers == 0) {
             show_camera_path_ = !show_camera_path_;
         }
 
@@ -868,6 +868,19 @@ namespace easy3d {
                 }
             }
         }
+
+        else if (key == GLFW_KEY_D && modifiers == 0) {
+            if (current_model()) {
+                std::cout << "Current model has the following drawables:" << std::endl;
+                for (auto d : current_model()->points_drawables())
+                     std::cout << "\tPointsDrawable: " << d->name() << std::endl;
+                for (auto d : current_model()->lines_drawables())
+                     std::cout << "\tLinesDrawable: " << d->name() << std::endl;
+                for (auto d : current_model()->triangles_drawables())
+                     std::cout << "\tTrianglesDrawable: " << d->name() << std::endl;
+            }
+        }
+
         else if (key == GLFW_KEY_R && modifiers == 0) {
             // Reload the shader(s) - useful for writing/debugging shader code.
             ShaderManager::reload();
@@ -1053,6 +1066,7 @@ namespace easy3d {
                     "  'a':                 Toggle axes									\n"
                     "  'w':                 Toggle wireframe							\n"
                     "  'v':                 Toggle vertices                             \n"
+                    "  'd':                 Print drawables attached to current model   \n"
                     " ------------------------------------------------------------------\n"
         );
 	}

@@ -446,7 +446,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         else
             camera()->keyFrameInterpolator()->startInterpolation();
     }
-    else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_Z && e->modifiers() == Qt::NoModifier) {
         show_camera_path_ = !show_camera_path_;
     }
 
@@ -558,6 +558,18 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
         }
     }
 
+    else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
+        if (currentModel()) {
+            std::cout << "Current model has the following drawables:" << std::endl;
+            for (auto d : currentModel()->points_drawables())
+                 std::cout << "\tPointsDrawable: " << d->name() << std::endl;
+            for (auto d : currentModel()->lines_drawables())
+                 std::cout << "\tLinesDrawable: " << d->name() << std::endl;
+            for (auto d : currentModel()->triangles_drawables())
+                 std::cout << "\tTrianglesDrawable: " << d->name() << std::endl;
+        }
+    }
+
     else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
         // Reload the shader(s) - useful for writing/debugging shader code.
         ShaderManager::reload();
@@ -621,6 +633,7 @@ std::string ViewerQt::usage() const {
                 "  'a':                 Toggle axes									\n"
                 "  'w':                 Toggle wireframe							\n"
                 "  'v':                 Toggle vertices                             \n"
+                "  'd':                 Print drawables attached to current model   \n"
                 " ------------------------------------------------------------------\n"
     );
 }
