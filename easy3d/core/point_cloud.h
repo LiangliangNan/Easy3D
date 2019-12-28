@@ -40,7 +40,7 @@
 
 
 // I would like to process/visualize huge scans (tens of millions of points, or even more),
-// an earlier implementation based on double-connected list has the following issues:
+// an earlier implementation based on double-connected list has the following limitations:
 // 	1) no random access of the data;
 //  2) OpenGL renderring overhead (needs packing to transfer data to GPU);
 //  3) hard to employ OMP support;

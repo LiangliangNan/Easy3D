@@ -76,14 +76,14 @@ int main(int /*argc*/, char** /*argv*/) {
 		std::cout << "incident vertices of vertex " << v << ": ";
 #ifdef USE_FOR_LOOP
 		// loop over all incident vertices
-        for (auto v : mesh->vertices(v))
-            std::cout << v << " ";
+        for (auto vv : mesh->vertices(v))
+            std::cout << vv << " ";
 #else   // use circulator
         SurfaceMesh::VertexAroundVertexCirculator cir = mesh->vertices(v);
         SurfaceMesh::VertexAroundVertexCirculator end = cir;
         do {
-            SurfaceMesh::Vertex v = *cir;
-            std::cout << v << " ";
+            SurfaceMesh::Vertex vv = *cir;
+            std::cout << vv << " ";
             ++cir;
         } while (cir != end);
 #endif
