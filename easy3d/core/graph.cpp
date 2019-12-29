@@ -232,7 +232,7 @@ namespace easy3d {
 
     unsigned int Graph::valence(Vertex v) const
     {
-        return vconn_[v].edges_.size();
+        return static_cast<unsigned int>(vconn_[v].edges_.size());
     }
 
 
