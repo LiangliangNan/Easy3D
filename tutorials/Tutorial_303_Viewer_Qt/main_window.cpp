@@ -191,7 +191,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
     const std::string& ext = file_system::extension(file_name, true);
     bool is_ply_mesh = false;
     if (ext == "ply")
-        is_ply_mesh = (io::PlyReader::num_faces(file_name) > 0);
+        is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
     if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
@@ -202,6 +202,13 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
                 << "num vertices: " << mesh->n_vertices() << "; "
                 << "num edges: " << mesh->n_edges() << std::endl;
         }
+    }
+    else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
+        std::cout << "this is a graph. loading not implemented" << std::endl;
+    }
+    else if (ext == "mesh" || ext == "meshb" || ext == "tet") { // cgraph
+//            model = CGraphIO::read(name);
+//            add_model(mesh, create_default_drawables, smooth_shading);
     }
     else { // point cloud
         if (ext == "ptx") {

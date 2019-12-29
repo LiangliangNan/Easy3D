@@ -355,7 +355,7 @@ namespace easy3d {
 		}
 
 
-		std::size_t PlyReader::num_faces(const std::string& file_name) {
+        std::size_t PlyReader::num_instances(const std::string& file_name, const std::string& name) {
 			p_ply ply = ply_open(file_name.c_str(), nullptr, 0, nullptr);
 			if (!ply) {
 				std::cerr << "failed to open ply file \'" << file_name << "\'" << std::endl;
@@ -375,7 +375,7 @@ namespace easy3d {
 				const char *element_name = nullptr;
 				ply_get_element_info(element, &element_name, &num_element);
 
-				if (!strcmp(element_name, FACE)) {
+                if (!strcmp(element_name, name.c_str())) {
 					if (num_element > 0) {
 						ply_close(ply);
 						return static_cast<std::size_t>(num_element);

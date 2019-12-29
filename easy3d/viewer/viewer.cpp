@@ -1083,7 +1083,7 @@ namespace easy3d {
         const std::string& ext = file_system::extension(file_name, true);
         bool is_ply_mesh = false;
         if (ext == "ply")
-            is_ply_mesh = (io::PlyReader::num_faces(file_name) > 0);
+            is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
         if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
             SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
@@ -1095,6 +1095,9 @@ namespace easy3d {
                     << "num edges: " << mesh->n_edges() << std::endl;
                 return mesh;
             }
+        }
+        else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
+            std::cout << "this is a graph. loading not implemented" << std::endl;
         }
         else if (ext == "mesh" || ext == "meshb" || ext == "tet") { // cgraph
 //            model = CGraphIO::read(name);

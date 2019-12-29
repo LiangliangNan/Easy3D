@@ -100,10 +100,16 @@ namespace easy3d {
 		public:
 			bool read(const std::string& file_name, std::vector<Element>& elements);
 
-			// A quick check of the number of faces stored in the ply file (usually
-			// used to see if the model is a mesh or a point cloud).
-			// Internally it only reads the ply file header.
-			static std::size_t num_faces(const std::string& file_name);
+            /**
+             * \brief A quick check of the number of instances of type \c 'element'.
+             *        This is helpfull to determine if a file store a point cloud,
+             *        a graph, or a mesh. Internally it reads the ply file header only
+             *        (without loading the entire file).
+             * \param name A string denoting the type of the element to be checked.
+             *             It must be one of "vertex", "face", or "edge".
+             * \return The number of instances of type \c 'element'.
+             */
+            static std::size_t num_instances(const std::string& file_name, const std::string& name);
 
 		private:
 			// convert the "list" intermediate representation into the user requested format
