@@ -8,6 +8,7 @@ set(${PROJECT_NAME}_HEADERS
     box.h
     constant.h
     eigen_solver.h
+    graph.h
     line.h
     mat.h
     plane.h
@@ -25,6 +26,7 @@ set(${PROJECT_NAME}_HEADERS
     )
 
 set(${PROJECT_NAME}_SOURCES
+    graph.cpp
     point_cloud.cpp
     surface_mesh.cpp
     )
