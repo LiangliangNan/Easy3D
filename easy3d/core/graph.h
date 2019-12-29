@@ -353,7 +353,7 @@ namespace easy3d {
 
 	        /// default constructor
 	        EdgeAroundVertexCirculator(const Graph* g, Vertex v=Vertex())
-				: graph_(g), vertex_(v)
+				: graph_(g), vertex_(v), finished_(false)
 	        {
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
 				end_ = graph_->vconn_[vertex_].edges_.end();
@@ -362,7 +362,8 @@ namespace easy3d {
 	        /// are two circulators equal?
 	        bool operator==(const EdgeAroundVertexCirculator& rhs) const {
 	            assert(graph_);
-				return (graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_);
+				return ((graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_))
+					|| (finished_);	// to behave like a circulator
 	        }
 
 	        /// are two circulators different?
@@ -374,7 +375,11 @@ namespace easy3d {
 	        EdgeAroundVertexCirculator& operator++() {
 	            assert(graph_);
 	            ++iterator_;
-	            return *this;
+				if (iterator_ == end_) {	// to behave like a circulator
+					iterator_ = graph_->vconn_[vertex_].edges_.begin();
+					finished_ = true;
+				}
+				return *this;
 	        }
 
 	        /// pre-decrement
@@ -409,6 +414,7 @@ namespace easy3d {
 			std::vector<Edge>::const_iterator iterator_;
 			// helper for C++11 range-based for-loops
 			std::vector<Edge>::const_iterator end_;
+			bool finished_;	// for the circulator behavior
 	    };
 
 
@@ -422,7 +428,7 @@ namespace easy3d {
 
 			/// default constructor
 			VertexAroundVertexCirculator(const Graph* g, Vertex v = Vertex())
-				: graph_(g), vertex_(v)
+				: graph_(g), vertex_(v), finished_(false)
 			{
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
 				end_ = graph_->vconn_[vertex_].edges_.end();
@@ -431,7 +437,8 @@ namespace easy3d {
 			/// are two circulators equal?
 			bool operator==(const VertexAroundVertexCirculator& rhs) const {
 				assert(graph_);
-				return (graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_);
+				return ((graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_))
+					|| (finished_);	// to behave like a circulator
 			}
 
 			/// are two circulators different?
@@ -443,6 +450,10 @@ namespace easy3d {
 			VertexAroundVertexCirculator& operator++() {
 				assert(graph_);
 				++iterator_;
+				if (iterator_ == end_) {	// to behave like a circulator
+					iterator_ = graph_->vconn_[vertex_].edges_.begin();
+					finished_ = true;
+				}
 				return *this;
 			}
 
@@ -488,6 +499,7 @@ namespace easy3d {
 			std::vector<Edge>::const_iterator iterator_;
 			// helper for C++11 range-based for-loops
 			std::vector<Edge>::const_iterator end_;
+			bool finished_;	// for the circulator behavior
 		};
 
 

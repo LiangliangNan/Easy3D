@@ -29,7 +29,7 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- access the  vertices of each vertex
+//		- access the incident vertices of each vertex
 //		- access the incident outgoing/ingoing edges of each vertex
 //		- access the incident faces of each vertex
 //		- access the incident vertices of each face
@@ -38,12 +38,12 @@ using namespace easy3d;
 //		- access the two faces connected by each edge
 
 
-// There are two way to traverse the incidency entities of an element.
-//   - use a "for" loop;
+// There are two way to traverse the incident entities of an element.
+//   - use a "for" loop (cleaner code);
 //   - use a circulator.
 #define USE_FOR_LOOP
 
-
+// the mesh created in the previous tutorial (so you can skip it)
 SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;
