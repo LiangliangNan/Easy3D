@@ -40,7 +40,8 @@ CameraIntrepolation::CameraIntrepolation(const std::string& title)
 {
     std::cout << "------------ Camera Intrepolation ----------" << std::endl
               << "Press 'K' to add key frames" << std::endl
-              << "Press 'Space' to start/stop the animation" << std::endl;
+              << "Press 'Space' to start/stop the animation" << std::endl
+              << "Press 'D' to delete the camera path" << std::endl;
 }
 
 
@@ -48,7 +49,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame* frame = camera()->frame();
-        camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
+        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
         std::cout << "Key frame added" << std::endl;
 
         // update scene bounding box to make sure the path is within the view frustum

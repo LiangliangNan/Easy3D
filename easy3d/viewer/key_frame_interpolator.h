@@ -172,9 +172,6 @@ namespace easy3d {
         void addKeyFrame(const Frame& frame);
         void addKeyFrame(const Frame& frame, double time);
 
-        void addKeyFrame(const Frame* const frame);
-        void addKeyFrame(const Frame* const frame, double time);
-
         void deletePath();
         //@}
 
@@ -309,22 +306,18 @@ namespace easy3d {
         {
         public:
             KeyFrame(const Frame& fr, double t);
-            KeyFrame(const Frame* fr, double t);
 
             vec3 position() const { return p_; }
             quat orientation() const { return q_; }
             vec3 tgP() const { return tgP_; }
             quat tgQ() const { return tgQ_; }
             double time() const { return time_; }
-            const Frame* frame() const { return frame_; }
-            void updateValuesFromPointer();
             void flipOrientationIfNeeded(const quat& prev);
             void computeTangent(const KeyFrame* const prev, const KeyFrame* const next);
         private:
             vec3 p_, tgP_;
             quat q_, tgQ_;
             double time_;
-            const Frame* const frame_;
         };
 
 

@@ -183,36 +183,6 @@ namespace easy3d {
         setInterpolationTime(firstTime());
     }
 
-    /*! Appends a new keyFrame to the path, with its associated \p time (in seconds).
-
-      The keyFrame is given as a pointer to a Frame, which will be connected to the
-      KeyFrameInterpolator: when \p frame is modified, the KeyFrameInterpolator path is updated
-      accordingly. This allows for dynamic paths, where keyFrame can be edited, even during the
-      interpolation. See the <a href="../examples/keyFrames.html">keyFrames example</a> for an
-      illustration.
-
-      \c nullptr \p frame pointers are silently ignored. The keyFrameTime() has to be monotonously
-      increasing over keyFrames.
-
-      Use addKeyFrame(const Frame&, double) to add keyFrame by values. */
-    void KeyFrameInterpolator::addKeyFrame(const Frame* const frame, double time)
-    {
-        if (!frame)
-            return;
-
-        if (keyFrame_.empty())
-            interpolationTime_ = time;
-
-        if ( (!keyFrame_.empty()) && (keyFrame_.back()->time() > time) )
-            std::cerr << "Error in KeyFrameInterpolator::addKeyFrame: time is not monotone" << std::endl;
-        else
-            keyFrame_.push_back(new KeyFrame(frame, time));
-
-        valuesAreValid_ = false;
-        pathIsValid_ = false;
-        currentFrameValid_ = false;
-        resetInterpolation();
-    }
 
     /*! Appends a new keyFrame to the path, with its associated \p time (in seconds).
 
@@ -235,25 +205,6 @@ namespace easy3d {
         pathIsValid_ = false;
         currentFrameValid_ = false;
         resetInterpolation();
-    }
-
-
-    /*! Appends a new keyFrame to the path.
-
-     Same as addKeyFrame(const Frame* frame, double), except that the keyFrameTime() is set to the
-     previous keyFrameTime() plus one second (or 0.0 if there is no previous keyFrame). */
-    void KeyFrameInterpolator::addKeyFrame(const Frame* const frame)
-    {
-        if (!frame)
-            return;
-
-        double time;
-        if (keyFrame_.empty())
-            time = 0.0;
-        else
-            time = lastTime() + 1.0;
-
-        addKeyFrame(frame, time);
     }
 
     /*! Appends a new keyFrame to the path.
@@ -442,8 +393,6 @@ namespace easy3d {
         for (int i=0; i<keyFrame_.size(); ++i)
         {
             kf = keyFrame_.at(i);
-            if (kf->frame())
-                kf->updateValuesFromPointer();
             kf->flipOrientationIfNeeded(prevQ);
             prevQ = kf->orientation();
         }
@@ -620,22 +569,10 @@ namespace easy3d {
 
     //////////// KeyFrame private class implementation /////////
     KeyFrameInterpolator::KeyFrame::KeyFrame(const Frame& fr, double t)
-        : time_(t), frame_(nullptr)
+        : time_(t)
     {
         p_ = fr.position();
         q_ = fr.orientation();
-    }
-
-    KeyFrameInterpolator::KeyFrame::KeyFrame(const Frame* fr, double t)
-        : time_(t), frame_(fr)
-    {
-        updateValuesFromPointer();
-    }
-
-    void KeyFrameInterpolator::KeyFrame::updateValuesFromPointer()
-    {
-        p_ = frame()->position();
-        q_ = frame()->orientation();
     }
 
     void KeyFrameInterpolator::KeyFrame::computeTangent(const KeyFrame* const prev, const KeyFrame* const next)

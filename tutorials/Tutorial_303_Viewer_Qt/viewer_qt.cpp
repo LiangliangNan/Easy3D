@@ -425,7 +425,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 
     else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
         easy3d::Frame* frame = camera()->frame();
-        camera()->keyFrameInterpolator()->addKeyFrame(new Frame(*frame));
+        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
         // update scene bounding box to make sure the path is within the view frustum
         float old_radius = camera()->sceneRadius();
         float candidate_radius = distance(camera()->sceneCenter(), frame->position());
