@@ -385,19 +385,19 @@ namespace easy3d {
     }
 
 
-    std::vector<Graph::Vertex> Graph::vertices(Vertex v) const {
-        assert(v.is_valid());
-        std::vector<Graph::Vertex> result;
-        for (auto e : edges(v)) {
-            Vertex another = from_vertex(e);
-            if (another != v)
-                result.push_back(another);
-            else
-                result.push_back(to_vertex(e));
-        }
+//    std::vector<Graph::Vertex> Graph::vertices(Vertex v) const {
+//        assert(v.is_valid());
+//        std::vector<Graph::Vertex> result;
+//        for (auto e : edges(v)) {
+//            Vertex another = from_vertex(e);
+//            if (another != v)
+//                result.push_back(another);
+//            else
+//                result.push_back(to_vertex(e));
+//        }
 
-        return result;
-    }
+//        return result;
+//    }
 
 
 } // namespace easy3d

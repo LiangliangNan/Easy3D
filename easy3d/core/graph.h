@@ -402,100 +402,93 @@ namespace easy3d {
 
 
 
-    //    /// this class circulates through all one-ring neighbors of a vertex.
-    //    /// it also acts as a container-concept for C++11 range-based for loops.
-    //    /// \sa HalfedgeAroundVertexCirculator, FaceAroundVertexCirculator, vertices(Vertex)
-    //    class VertexAroundVertexCirculator
-    //    {
-    //    public:
+        /// this class circulates through all one-ring neighbors of a vertex.
+        /// it also acts as a container-concept for C++11 range-based for loops.
+        /// \sa HalfedgeAroundVertexCirculator, FaceAroundVertexCirculator, vertices(Vertex)
+        class VertexAroundVertexCirculator
+        {
+        public:
 
-    //        /// default constructor
-    //        VertexAroundVertexCirculator(const Graph* m=nullptr, Vertex v=Vertex())
-    //        : mesh_(m), vertex_(v), active_(true)
-    //        {
-    //            if (mesh_) {
-    //                iterator_ = mesh_->edges(v).begin();
-    //                end_ = mesh_->edges(v).end();
-    //            }
-    //        }
+            /// default constructor
+            VertexAroundVertexCirculator(const Graph* m=nullptr, Vertex v=Vertex())
+            : mesh_(m), vertex_(v), active_(true)
+            {
+                if (mesh_) {
+                    iterator_ = mesh_->vconn_[v].edges_.begin();
+                    end_ = mesh_->vconn_[v].edges_.end();
+                }
+            }
 
-    //        /// are two circulators equal?
-    //        bool operator==(const VertexAroundVertexCirculator& rhs) const
-    //        {
-    //            assert(mesh_);
-    //            return active_ == rhs.active_ && (mesh_==rhs.mesh_) && (vertex_==rhs.vertex_) && (iterator_==rhs.iterator_);
-    //        }
+            /// are two circulators equal?
+            bool operator==(const VertexAroundVertexCirculator& rhs) const
+            {
+                assert(mesh_);
+				return active_ && (mesh_ == rhs.mesh_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_);
+            }
 
-    //        /// are two circulators different?
-    //        bool operator!=(const VertexAroundVertexCirculator& rhs) const
-    //        {
-    //            return !operator==(rhs);
-    //        }
+            /// are two circulators different?
+            bool operator!=(const VertexAroundVertexCirculator& rhs) const
+            {
+                return !operator==(rhs);
+            }
 
-    //        /// pre-increment (rotate couter-clockwise)
-    //        VertexAroundVertexCirculator& operator++()
-    //        {
-    //            assert(mesh_);
-    //            ++iterator_;
-    //            active_ = true;
-    //            return *this;
-    //        }
+            /// pre-increment (rotate couter-clockwise)
+            VertexAroundVertexCirculator& operator++()
+            {
+                assert(mesh_);
+                ++iterator_;
+                active_ = true;
+                return *this;
+            }
 
-    //        /// pre-decrement (rotate clockwise)
-    //        VertexAroundVertexCirculator& operator--()
-    //        {
-    //            assert(mesh_);
-    //            --iterator_;
-    //            return *this;
-    //        }
+            /// pre-decrement (rotate clockwise)
+            VertexAroundVertexCirculator& operator--()
+            {
+                assert(mesh_);
+                --iterator_;
+                return *this;
+            }
 
-    //        /// get the vertex the circulator refers to
-    //        Vertex operator*()  const
-    //        {
-    //            assert(mesh_);
-    //            if (iterator_ != end_) {
-    //                Vertex v = mesh_->to_vertex(*iterator_);
-    //                if (v != vertex_)
-    //                    return v;
-    //                else
-    //                    mesh_->from_vertex(*iterator_);
-    //            }
-    //            return Vertex();
-    //        }
+            /// get the vertex the circulator refers to
+            Vertex operator*()  const
+            {
+                assert(mesh_);
+                if (iterator_ != end_) {
+                    Vertex v = mesh_->to_vertex(*iterator_);
+                    if (v != vertex_)
+                        return v;
+                    else
+                        return mesh_->from_vertex(*iterator_);
+                }
+                return Vertex();
+            }
 
-    //        /// cast to bool: true if vertex is not isolated
-    //        operator bool() const { return vertex_.is_valid(); }
+//            /// cast to bool: true if vertex is not isolated
+//            operator bool() const { return vertex_.is_valid(); }
 
-    //        /// return current halfedge
-    //        Vertex vertex() const { return vertex_; }
+//            /// return current halfedge
+//            Vertex vertex() const { return vertex_; }
 
-    //        // helper for C++11 range-based for-loops
-    //        VertexAroundVertexCirculator& begin() {
-    ////            VertexAroundVertexCirculator tmp(mesh_, vertex_);
-    ////            tmp.iterator_ = mesh_->edges(vertex_).begin();
-    ////            return tmp;
+            // helper for C++11 range-based for-loops
+            VertexAroundVertexCirculator& begin() {
+                active_ = !vertex_.is_valid();
+                return *this;
+            }
+            // helper for C++11 range-based for-loops
+            VertexAroundVertexCirculator& end()   {
+				iterator_ = end_;
+                active_ = true;
+                return *this;
+            }
 
-    //            active_ = !(*this).vertex().is_valid();
-    //            return *this;
-    //        }
-    //        // helper for C++11 range-based for-loops
-    //        VertexAroundVertexCirculator& end()   {
-    ////            VertexAroundVertexCirculator tmp(mesh_, vertex_);
-    ////            tmp.iterator_ = mesh_->edges(vertex_).end();
-    ////            tmp.active_ = true;
-    ////            return tmp;
-    //            active_ = true;
-    //            return *this;
-    //        }
-
-    //    private:
-    //        const Graph*  mesh_;
-    //        const Vertex  vertex_;
-    //        std::set<Edge>::const_iterator iterator_;
-    //        std::set<Edge>::const_iterator end_;
-    //        // helper for C++11 range-based for-loops
-    //        bool active_;
-    //    };
+        private:
+            const Graph*  mesh_;
+            const Vertex  vertex_;
+            std::vector<Edge>::const_iterator iterator_;
+            std::vector<Edge>::const_iterator end_;
+            // helper for C++11 range-based for-loops
+            bool active_;
+        };
 
 
 
@@ -604,8 +597,8 @@ namespace easy3d {
         /// \name Low-level connectivity
         //@{
 
-        /// returns the incident vertices of vertex \c v.
-        std::vector<Vertex> vertices(Vertex v) const;
+//        /// returns the incident vertices of vertex \c v.
+//        std::vector<Vertex> vertices(Vertex v) const;
 
         /// returns the incident edges of vertex \c v.
         const std::vector<Edge>& edges(Vertex v) const
@@ -802,11 +795,11 @@ namespace easy3d {
             return EdgeContainer(edges_begin(), edges_end());
         }
 
-    //    /// returns circulator for vertices around vertex \c v
-    //    VertexAroundVertexCirculator vertices(Vertex v) const
-    //    {
-    //        return VertexAroundVertexCirculator(this, v);
-    //    }
+        /// returns circulator for vertices around vertex \c v
+        VertexAroundVertexCirculator vertices(Vertex v) const
+        {
+            return VertexAroundVertexCirculator(this, v);
+        }
 
     //    /// returns circulator for outgoing halfedges around vertex \c v
     //    EdgeAroundVertexCirculator edges(Vertex v) const
