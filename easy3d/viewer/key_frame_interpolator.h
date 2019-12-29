@@ -196,7 +196,7 @@ namespace easy3d {
         Frame keyFrame(int index) const;
         double keyFrameTime(int index) const;
         /*! Returns the number of keyFrames used by the interpolation. Use addKeyFrame() to add new keyFrames. */
-        int numberOfKeyFrames() const { return keyFrame_.size(); }
+        std::size_t numberOfKeyFrames() const { return keyFrame_.size(); }
         double duration() const;
         double firstTime() const;
         double lastTime() const;
