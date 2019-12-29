@@ -133,18 +133,14 @@ namespace easy3d {
         // Allocates vertex memory and logs it for deletion later.
         double* allocate_vertex(unsigned int size);
 
-        std::size_t get_vertex_id(const double* vertex);
-
         void add_triangle(std::size_t a, std::size_t b, std::size_t c);
 
         // GLU tessellator callbacks
         static void beginCallback(GLenum w, void *cbdata);
         static void endCallback(void *cbdata);
         static void vertexCallback(GLvoid *vertex, void *cbdata);
-        static void combineCallback(GLdouble coords[3],
-                                    void *vertex_data[4],
-                                    GLfloat weight[4], void **dataOut,
-                                    void *cbdata);
+        static void combineCallback(GLdouble coords[3], void *vertex_data[4], GLdouble weight[4], void **dataOut, void *cbdata);
+
     private:
         GLUtesselator*				tess_obj_;
 
@@ -153,12 +149,14 @@ namespace easy3d {
         GLenum						primitive_type_;
 
         // If true, the orientations of the resulted triangles will comply with the primitive_type_
-        // (decided by the tessellator) used for generating the triangles. Otherwise, their
-        // orientations are consistent with the input polygon.
-        bool						primitive_ware_oriention_;
+        // (decided by the tessellator), which is usefull for rendering as GL_TRIANGLE_STRIP.
+        // However, when tringulating a mesh, the output tringles must have the orientation as
+        // the input polygons. In this case, you should set primitive_aware_oriention_ to false.
+        bool						primitive_aware_oriention_;
 
-        details::VertexManager*		vertex_manager_;
-        std::vector<std::size_t>	intermediate_vertex_ids_;
+        // vertex ids in the last polygon
+        std::vector<std::size_t>	vertex_ids_in_polygon_;
+        // the number of triangles in the last polygon
         std::size_t					num_triangles_in_polygon_;
 
         // List of triangles created over many calls (every consecutive 3 entries form a triangle)
@@ -166,6 +164,8 @@ namespace easy3d {
 
         // vertices allocated due to tesselation (including existing ones and new ones)
         std::vector<double*>		vertex_allocs_;
+
+        details::VertexManager*		vertex_manager_;
 
         unsigned int vertex_data_size_;
     };

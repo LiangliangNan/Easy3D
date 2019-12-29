@@ -75,7 +75,7 @@ namespace easy3d {
 
         private:
 
-#if 1 // duplicated vertices will be removed
+#if 1 // remove duplicated vertices
 
             class CompVec {
             public:
@@ -111,7 +111,7 @@ namespace easy3d {
 
     TessellatorGen::TessellatorGen()
         : primitive_type_(GL_TRIANGLES)
-        , primitive_ware_oriention_(false)
+        , primitive_aware_oriention_(false)
         , vertex_manager_(new details::VertexManager)
         , num_triangles_in_polygon_(0)
         , vertex_data_size_(3)
@@ -166,7 +166,7 @@ namespace easy3d {
     {
         num_triangles_in_polygon_ = 0;
         gluTessNormal(tess_obj_, normal.x, normal.y, normal.z);
-        gluTessBeginPolygon(tess_obj_, (void *)this);
+        gluTessBeginPolygon(tess_obj_, this);
     }
 
 
@@ -301,7 +301,7 @@ namespace easy3d {
 
     bool TessellatorGen::get_triangle(std::size_t t, std::size_t &a, std::size_t &b, std::size_t &c) const
     {
-        bool ret = (t >= 0 && t < triangle_list_.size());
+        bool ret = (t < triangle_list_.size()/3);
         if (ret) {
             a = triangle_list_[t * 3];
             b = triangle_list_[t * 3 + 1];
@@ -314,18 +314,9 @@ namespace easy3d {
     // Allocates vertex memory and logs it for deletion later.
     double * TessellatorGen::allocate_vertex(unsigned int size)
     {
-        double *arr = (double *)malloc(sizeof(double) * size);
+        double *arr = reinterpret_cast<double *>(malloc(sizeof(double) * size));
         vertex_allocs_.push_back(arr);
         return arr;
-    }
-
-
-    std::size_t TessellatorGen::get_vertex_id(const double* vertex)
-    {
-        // Adds a vertex index using the vertex manager. This can
-        // cause the vertex list to grow.
-        std::size_t id = vertex_manager_->get_vertex_id(vertex);
-        return id;
     }
 
 
@@ -350,7 +341,7 @@ namespace easy3d {
         TessellatorGen* tessellator = reinterpret_cast<TessellatorGen*>(cbdata);
 
         tessellator->primitive_type_ = w;
-        tessellator->intermediate_vertex_ids_.clear();
+        tessellator->vertex_ids_in_polygon_.clear();
     }
 
     // ****************************************************************************
@@ -371,12 +362,12 @@ namespace easy3d {
         // get put into the triangle list
         if (tessellator->primitive_type_ == GL_TRIANGLES)
         {
-            for (std::size_t i = 0; i < tessellator->intermediate_vertex_ids_.size(); i += 3)
+            for (std::size_t i = 0; i < tessellator->vertex_ids_in_polygon_.size(); i += 3)
             {
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->intermediate_vertex_ids_[i];
-                std::size_t b = tessellator->intermediate_vertex_ids_[i + 1];
-                std::size_t c = tessellator->intermediate_vertex_ids_[i + 2];
+                std::size_t a = tessellator->vertex_ids_in_polygon_[i];
+                std::size_t b = tessellator->vertex_ids_in_polygon_[i + 1];
+                std::size_t c = tessellator->vertex_ids_in_polygon_[i + 2];
                 if (a == b || b == c || a == c)
                     continue;
 
@@ -385,21 +376,21 @@ namespace easy3d {
         }
         else if (tessellator->primitive_type_ == GL_TRIANGLE_STRIP)
         {
-            for (std::size_t i = 2; i < tessellator->intermediate_vertex_ids_.size(); ++i)
+            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i)
             {
                 std::size_t N = i - 2;
                 std::size_t N_1 = i - 1;
                 std::size_t N_2 = i;
 
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->intermediate_vertex_ids_[N];
-                std::size_t b = tessellator->intermediate_vertex_ids_[N_1];
-                std::size_t c = tessellator->intermediate_vertex_ids_[N_2];
+                std::size_t a = tessellator->vertex_ids_in_polygon_[N];
+                std::size_t b = tessellator->vertex_ids_in_polygon_[N_1];
+                std::size_t c = tessellator->vertex_ids_in_polygon_[N_2];
                 if (a == b || b == c || a == c)
                     continue;
 
                 int flag = (i - 2) % 2;
-                if (tessellator->primitive_ware_oriention_ || flag == 0)
+                if (tessellator->primitive_aware_oriention_ || flag == 0)
                     tessellator->add_triangle(a, b, c);
                 else
                     tessellator->add_triangle(b, a, c);
@@ -407,16 +398,16 @@ namespace easy3d {
         }
         else if (tessellator->primitive_type_ == GL_TRIANGLE_FAN)
         {
-            for (std::size_t i = 2; i < tessellator->intermediate_vertex_ids_.size(); ++i)
+            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i)
             {
                 std::size_t N = 0;
                 std::size_t N_1 = i - 1;
                 std::size_t N_2 = i;
 
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->intermediate_vertex_ids_[N];
-                std::size_t b = tessellator->intermediate_vertex_ids_[N_1];
-                std::size_t c = tessellator->intermediate_vertex_ids_[N_2];
+                std::size_t a = tessellator->vertex_ids_in_polygon_[N];
+                std::size_t b = tessellator->vertex_ids_in_polygon_[N_1];
+                std::size_t c = tessellator->vertex_ids_in_polygon_[N_2];
                 if (a == b || b == c || a == c)
                     continue;
 
@@ -441,8 +432,9 @@ namespace easy3d {
         double* p = reinterpret_cast<double*>(vertex);
         TessellatorGen* tessellator = reinterpret_cast<TessellatorGen*>(cbdata);
 
-        // Add the vertex to the list of vertices.
-        tessellator->intermediate_vertex_ids_.push_back(tessellator->get_vertex_id(p));
+        // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
+        std::size_t id = tessellator->vertex_manager_->get_vertex_id(p);
+        tessellator->vertex_ids_in_polygon_.push_back(id);
     }
 
     // ****************************************************************************
@@ -453,7 +445,7 @@ namespace easy3d {
     // ****************************************************************************
     void TessellatorGen::combineCallback(double coords[3],
         void *vertex_data[4],
-        GLfloat weight[4], void **dataOut, void *cbdata)
+        GLdouble weight[4], void **dataOut, void *cbdata)
     {
         TessellatorGen* tessellator = reinterpret_cast<TessellatorGen*>(cbdata);
         unsigned int size = tessellator->vertex_data_size_;
@@ -462,12 +454,12 @@ namespace easy3d {
             vertex[i] = coords[i];
 
         // Blend the height data for the vertex.
-        double **vd = (double **)vertex_data;
+        double **vd = reinterpret_cast<double **>(vertex_data);
         for (std::size_t i = 3; i < size; ++i) {
-            double a = (vertex_data[0] != 0) ? (weight[0] * vd[0][i]) : 0.;
-            double b = (vertex_data[1] != 0) ? (weight[1] * vd[1][i]) : 0.;
-            double c = (vertex_data[2] != 0) ? (weight[2] * vd[2][i]) : 0.;
-            double d = (vertex_data[3] != 0) ? (weight[3] * vd[3][i]) : 0.;
+            double a = (vertex_data[0]) ? (weight[0] * vd[0][i]) : 0.;
+            double b = (vertex_data[1]) ? (weight[1] * vd[1][i]) : 0.;
+            double c = (vertex_data[2]) ? (weight[2] * vd[2][i]) : 0.;
+            double d = (vertex_data[3]) ? (weight[3] * vd[3][i]) : 0.;
 
             vertex[i] = a + b + c + d;
         }
@@ -484,7 +476,7 @@ namespace easy3d {
         vertex_manager_->clear();
         triangle_list_.clear();
 
-        intermediate_vertex_ids_.clear();
+        vertex_ids_in_polygon_.clear();
         num_triangles_in_polygon_ = 0;
     }
 
