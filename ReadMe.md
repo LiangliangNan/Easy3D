@@ -27,7 +27,7 @@ Point/Line imposters                         |  Surface reconstruction          
 
   
 ### Key features ###
-* Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
+* Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). Easy to add/access arbitrary types of per-element properties.
 * High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed function calls). Users do not need to touch the low-level APIs of OpenGL. 
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average color blending, dual depth peeling), and more ...
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, [Poisson Surface Reconstruction](http://www.cs.jhu.edu/~misha/MyPapers/ToG13.pdf), [RANSAC](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.1514&rep=rep1&type=pdf).
