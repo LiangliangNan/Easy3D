@@ -238,6 +238,14 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
+    float Graph::edge_length(Edge e) const
+    {
+        return norm(vpoint_[from_vertex(e)] - vpoint_[to_vertex(e)]);
+    }
+
+
+    //-----------------------------------------------------------------------------
+
     void Graph::delete_vertex(Vertex v)
     {
     //    if (vdeleted_[v])  return;

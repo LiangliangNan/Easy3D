@@ -29,11 +29,9 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- add per-vertex properties to a graph;
+//		- add per-vertex/per-edge properties to a graph;
 //		- access existing properties.
 //
-// You should be able to add/access per-edge properties also.
-
 
 // the graph created in the previous tutorial (so you can skip it)
 Graph* old_graph_from_previous_example() {
@@ -62,15 +60,22 @@ int main(int /*argc*/, char** /*argv*/) {
 
 	auto points = g->vertex_property<vec3>("v:point");
 
-	// We add a per-vertex property "v:color" to assign a color to each vertex
-	auto colors = g->add_vertex_property<vec3>("v:color");
-	for (auto v : g->vertices()) {
+    // We add a per-vertex property "v:color" to assign a color to each vertex
+    auto colors = g->add_vertex_property<vec3>("v:color");
+    for (auto v : g->vertices()) {
 		// We assign each vertex a color that is equal to his position (you should
 		// assign a more meaningful color in practice).
 		colors[v] = points[v];
-
 		std::cout << "vertex: " << v << ", position: " << points[v] << ", color: " << ": " << colors[v] << std::endl;
 	}
+
+    // We add a per-edge property "e:length" to store the edge lengths
+    auto lengths = g->add_edge_property<float>("e:length");
+    for (auto e : g->edges()) {
+        lengths[e] = g->edge_length(e);
+        std::cout << "edge: " << e << ", length: " << lengths[e] << std::endl;
+    }
+
 
 	delete g;
 
