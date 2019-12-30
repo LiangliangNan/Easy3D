@@ -41,9 +41,6 @@ namespace easy3d {
 
 	/**
 	 * @brief A Graph data structure with easy property management.
-	 *
-	 * @todo 1) replace 'edges(Vertex v)' by 'VertexAroundVertexCirculator vertices(Vertex v) const' (see line 812)
-	 *      
 	 */
 
 

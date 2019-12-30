@@ -147,16 +147,13 @@ namespace easy3d {
 				}
 			}
 
-			std::vector<SurfaceMesh::Vertex> vertices; // used for creating faces;
-			for (auto p : coordinates) {
-				SurfaceMesh::Vertex v = mesh->add_vertex(p);
-				vertices.push_back(v);
-			}
-			std::vector<SurfaceMesh::Face> faces; // used for creating face attributes;
+            for (auto p : coordinates)
+                mesh->add_vertex(p);
+
 			for (auto indices : face_vertex_indices) {
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
-					vts.push_back(vertices[id]);
+                    vts.push_back(SurfaceMesh::Vertex(id));
 				mesh->add_face(vts);
 			}
 
@@ -289,7 +286,7 @@ namespace easy3d {
 			details::collect_face_properties(mesh, element_face.int_list_properties);
 			details::collect_face_properties(mesh, element_face.float_list_properties);
 
-			elements.push_back(element_face);
+            elements.emplace_back(element_face);
 
 			//-----------------------------------------------------
 
@@ -320,7 +317,7 @@ namespace easy3d {
 					edge_vertex_indices.push_back({ id0, id1 });
 				}
 				element_edge.int_list_properties.emplace_back(edge_vertex_indices);
-				elements.push_back(element_edge);
+                elements.emplace_back(element_edge);
 			}
 
 			//-----------------------------------------------------

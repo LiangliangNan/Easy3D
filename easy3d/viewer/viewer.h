@@ -115,6 +115,7 @@ namespace easy3d {
         // By default, this function also It will also creates necessary drawables
         // for visualizing the model. Set create_default_drawables to false if you
         // want to create a customized drawable for a sepcific rendering purpose.
+        // TODO: drawable creation should move to Renderer module.
         Model* open(const std::string& file_name, bool create_default_drawables = true, bool smooth_shading = false);
 
         // Add a model to the viewer to be visualized (the viewer will be incharge

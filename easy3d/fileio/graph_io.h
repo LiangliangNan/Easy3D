@@ -24,17 +24,16 @@
 */
 
 
-#ifndef EASY3D_FILEIO_POINT_CLOUD_IO_H
-#define EASY3D_FILEIO_POINT_CLOUD_IO_H
+#ifndef EASY3D_FILEIO_GRAPH_IO_H
+#define EASY3D_FILEIO_GRAPH_IO_H
 
-#include <iostream>
-#include <vector>
+
+#include <string>
 
 
 namespace easy3d {
 
-
-	class PointCloud;
+    class Graph;
 
     // TODO: add a general purpose file format 'map' capable of storing
     //       point clouds, graphs, and meshes with arbitrary types of
@@ -42,39 +41,24 @@ namespace easy3d {
     //       as a whole. Check PLY and POLY formats as reference.
     //       When this is done, I don't need BIN and POLY any more).
 
-	class PointCloudIO
+
+    class GraphIO
 	{
 	public:
-        // return nullptr if failed
-		static PointCloud* load(const std::string& file_name);
+        // return nullptr if failed. Currently only PLY format is supported.
+        static Graph* load(const std::string& file_name);
 
-		// save the cloud to a file. return false if failed.
-		static bool	save(const std::string& file_name, const PointCloud* point_set);
+        // save the graph to a file. return false if failed.
+        static bool	save(const std::string& file_name, const Graph* graph);
 	};
 
+    namespace io {
 
-	namespace io {
-		// three blocks storing points, colors (optional), and normals (optional)
-		bool load_bin(const std::string& file_name, PointCloud* cloud);
-		bool save_bin(const std::string& file_name, const PointCloud* cloud);
+        bool load_ply(const std::string& file_name, Graph* graph);
+        bool save_ply(const std::string& file_name, const Graph* graph, bool binary = true);
 
-		// each line with only point: (x, y, z)
-		bool load_xyz(const std::string& file_name, PointCloud* cloud);
-		bool save_xyz(const std::string& file_name, const PointCloud* cloud);
-		bool load_bxyz(const std::string& file_name, PointCloud* cloud);
-		bool save_bxyz(const std::string& file_name, const PointCloud* cloud);
-
-		bool load_ply(const std::string& file_name, PointCloud* cloud);
-		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary = true);
-
-		// Read/Write both las and laz formats. Internally it uses the LASlib
-        // of martin.isenburg@rapidlasso.com, see http://rapidlasso.com
-		bool load_las(const std::string& file_name, PointCloud* cloud);
-		bool save_las(const std::string& file_name, const PointCloud* cloud);
-	};
-
+    } // namespace io
 
 } // namespace easy3d
 
-
-#endif
+#endif // EASY3D_FILEIO_GRAPH_IO_H

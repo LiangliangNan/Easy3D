@@ -35,6 +35,7 @@
 #include <QOpenGLFramebufferObject>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
@@ -734,6 +735,34 @@ void ViewerQt::create_drawables(Model* m) {
         }
         surface->update_index_buffer(indices);
 #endif
+    }
+    else if (dynamic_cast<Graph*>(m)) {
+        Graph* graph = dynamic_cast<Graph*>(m);
+
+        // create points drawable for the vertices
+        auto points = graph->get_vertex_property<vec3>("v:point");
+        PointsDrawable* vertices = graph->add_points_drawable("vertices");
+        vertices->update_vertex_buffer(points.vector());
+        vertices->set_per_vertex_color(false);
+        vertices->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+        vertices->set_point_size(15.0f);
+        vertices->set_impostors(true);
+
+        // create liens drawable for the edges
+        LinesDrawable* edges = graph->add_lines_drawable("edges");
+        edges->update_vertex_buffer(points.vector());
+
+        std::vector<unsigned int> indices;
+        for (auto e : graph->edges()) {
+            unsigned int s = graph->from_vertex(e).idx();    indices.push_back(s);
+            unsigned int t = graph->to_vertex(e).idx();      indices.push_back(t);
+        }
+        edges->update_index_buffer(indices);
+
+        edges->set_per_vertex_color(false);
+        edges->set_default_color(vec3(1.0f, 0.67f, 0.5f));
+        edges->set_line_width(3.0f);
+        edges->set_impostor_type(IT_CYLINDERS);
     }
 }
 

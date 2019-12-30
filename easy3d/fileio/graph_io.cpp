@@ -24,11 +24,11 @@
 */
 
 
-#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/graph_io.h>
 
 #include <clocale>
 
-#include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 
@@ -36,66 +36,43 @@
 namespace easy3d {
 
 
-	SurfaceMesh* SurfaceMeshIO::load(const std::string& file_name)
+    Graph* GraphIO::load(const std::string& file_name)
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
-		SurfaceMesh* mesh = new SurfaceMesh;
-		mesh->set_name(file_name);
+        Graph* graph = new Graph;
+        graph->set_name(file_name);
 
-		StopWatch w;
-		bool success = false;
+        StopWatch w;
+        bool success = false;
 
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ply")
-            success = io::load_ply(file_name, mesh);
-        else if (ext == "poly")
-            success = io::load_poly(file_name, mesh);
-        else if (ext == "obj")
-			success = io::load_obj(file_name, mesh);
-		else if (ext == "off")
-			success = io::load_off(file_name, mesh);
-		else if (ext == "stl")
-			success = io::load_stl(file_name, mesh);
-
-		//	else if (ext == "plg")
-		//        serializer = new MeshSerializer_plg();
-		//	else if (ext == "geojson")
-		//        serializer = new MeshSerializer_json();
+            success = io::load_ply(file_name, graph);
         else if (ext.empty()){
             std::cerr << "unknown file format: no extention" << ext << std::endl;
             success = false;
         }
-		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
-			success = false;
-		}
+        else {
+            std::cerr << "unknown file format: " << ext << ". Only PLY format is supported for Graph" << ext << std::endl;
+            return nullptr;
+        }
 
-		if (!success || mesh->n_faces() == 0) {
-			delete mesh;
-			return nullptr;
-		}
+        if (!success || graph->n_vertices() == 0) {
+            delete graph;
+            return nullptr;
+        }
 
 
 #ifndef NDEBUG
-        std::cout << "vertex properties on mesh " << file_system::simple_name(file_name) << std::endl;
-		const auto& vnames = mesh->vertex_properties();
+        std::cout << "vertex properties on graph " << file_system::simple_name(file_name) << std::endl;
+        const auto& vnames = graph->vertex_properties();
 		for (const auto& n : vnames)
 			std::cout << "\t" << n << std::endl;
 
-        std::cout << "face properties on mesh " << file_system::simple_name(file_name) << std::endl;
-		const auto& fnames = mesh->face_properties();
-		for (const auto& n : fnames)
-			std::cout << "\t" << n << std::endl;
-
-        std::cout << "edge properties on mesh " << file_system::simple_name(file_name) << std::endl;
-        const auto& enames = mesh->edge_properties();
+        std::cout << "edge properties on graph " << file_system::simple_name(file_name) << std::endl;
+        const auto& enames = graph->edge_properties();
         for (const auto& n : enames)
-            std::cout << "\t" << n << std::endl;
-
-        std::cout << "halfedge properties on mesh " << file_system::simple_name(file_name) << std::endl;
-        const auto& hnames = mesh->halfedge_properties();
-        for (const auto& n : hnames)
             std::cout << "\t" << n << std::endl;
 #endif
 
@@ -104,14 +81,14 @@ namespace easy3d {
         else
             std::cout << "load model failed" << std::endl;
 
-		return mesh;
+        return graph;
 	}
 
 
-	bool SurfaceMeshIO::save(const std::string& file_name, const SurfaceMesh* mesh)
+    bool GraphIO::save(const std::string& file_name, const Graph* graph)
 	{
-        if (!mesh || mesh->faces_size() == 0) {
-			std::cerr << "surface mesh is null" << std::endl;
+        if (!graph || graph->vertices_size() == 0) {
+            std::cerr << "graph is null" << std::endl;
 			return false;
 		}
 
@@ -126,23 +103,10 @@ namespace easy3d {
                 std::cerr << "No extention specified. Default to ply" << ext << std::endl;
                 final_name = final_name + ".ply";
             }
-            success = io::save_ply(final_name, mesh, true);
+            success = io::save_ply(final_name, graph, true);
         }
-        else if (ext == "poly")
-            success = io::save_poly(final_name, mesh);
-        else if (ext == "obj")
-            success = io::save_obj(final_name, mesh);
-        else if (ext == "off")
-            success = io::save_off(final_name, mesh);
-		else if (ext == "stl")
-            success = io::save_stl(final_name, mesh);
-
-		//	else if (ext == "plg")
-		//        serializer = new MeshSerializer_plg();
-		//	else if (ext == "geojson")
-		//        serializer = new MeshSerializer_json();
 		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
+            std::cerr << "unknown file format: " << ext << ". Only PLY format is supported for Graph" << ext << std::endl;
 			success = false;
 		}
 

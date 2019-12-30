@@ -36,7 +36,7 @@ namespace easy3d {
 	class SurfaceMesh;
 
     // TODO: add a general purpose file format 'map' capable of storing
-    //       both point clouds and meshes with arbitrary types of
+    //       point clouds, graphs, and meshes with arbitrary types of
     //       properties (similar to PLY, each property is read/written
     //       as a whole. Check PLY and POLY formats as reference.
     //       When this is done, I don't need BIN and POLY any more).

@@ -37,9 +37,11 @@
 #include <QColorDialog>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
@@ -166,7 +168,11 @@ bool MainWindow::onSave() {
     }
     else if (dynamic_cast<const SurfaceMesh*>(model)) {
         const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(model);
-        saved = saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
+        saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
+    }
+    else if (dynamic_cast<const Graph*>(model)) {
+        const Graph* graph = dynamic_cast<const Graph*>(model);
+        saved = GraphIO::save(fileName.toStdString(), graph);
     }
 
     if (saved) {
@@ -194,7 +200,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly") { // mesh
         SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
         if (mesh) {
             model = mesh;
@@ -204,11 +210,12 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         }
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
-        std::cout << "this is a graph. loading not implemented" << std::endl;
-    }
-    else if (ext == "mesh" || ext == "meshb" || ext == "tet") { // cgraph
-//            model = CGraphIO::read(name);
-//            add_model(mesh, create_default_drawables, smooth_shading);
+        Graph* graph = GraphIO::load(file_name);
+        if (graph) {
+            model = graph;
+            std::cout << "graph loaded. num vertices: " << graph->n_vertices() << "; "
+                << "num edges: " << graph->n_edges() << std::endl;
+        }
     }
     else { // point cloud
         if (ext == "ptx") {

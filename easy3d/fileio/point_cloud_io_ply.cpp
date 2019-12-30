@@ -59,21 +59,29 @@ namespace easy3d {
 			if (!reader.read(file_name, elements))
 				return false;
 
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				const Element& e = elements[i];
+            for (std::size_t i = 0; i < elements.size(); ++i) {
+                const Element& e = elements[i];
                 if (e.name == "vertex") {
-					cloud->resize(static_cast<unsigned int>(e.num_instances));
-					break;
-				}
-			}
+                    cloud->resize(static_cast<unsigned int>(e.num_instances));
+                    break;
+                }
+            }
 
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				const Element& e = elements[i];
-				details::add_properties<vec3>(cloud, e.vec3_properties);
-				details::add_properties<float>(cloud, e.float_properties);
-				details::add_properties<int>(cloud, e.int_properties);
-				details::add_properties< std::vector<int> >(cloud, e.int_list_properties);
-				details::add_properties< std::vector<float> >(cloud, e.float_list_properties);
+                if (e.name == "vertex") {
+                    details::add_properties<vec3>(cloud, e.vec3_properties);
+                    details::add_properties<float>(cloud, e.float_properties);
+                    details::add_properties<int>(cloud, e.int_properties);
+                    details::add_properties< std::vector<int> >(cloud, e.int_list_properties);
+                    details::add_properties< std::vector<float> >(cloud, e.float_list_properties);
+                }
+                else if (e.name == "edge")
+                    std::cerr << "The PointCloud has edge information (ignored). Is it a graph?" << std::endl;
+                else if (e.name == "face")
+                    std::cerr << "The PointCloud has face information (ignored). Is it a mesh?" << std::endl;
+                else
+                    std::cerr << "The PointCloud has unknown element: " << e.name << " (ignored)" << std::endl;
 			}
 
 			return true;
@@ -114,7 +122,7 @@ namespace easy3d {
 			details::collect_properties(cloud, e.float_list_properties);
 
 			std::vector<Element> elements;
-			elements.push_back(e);
+            elements.emplace_back(e);
 
 			if (!binary)
 				std::cout << "TODO: use binary format" << std::endl;
