@@ -23,44 +23,43 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/core/graph.h>
+#include <easy3d/fileio/graph_io.h>
 #include <easy3d/viewer/setting.h>
 
 using namespace easy3d;
 
 
 // This example shows how to
-//		- load a surface mesh from a file;
-//		- save a surface mesh into a file.
+//		- load a graph from a file;
+//		- save a graph into a file.
 
 
 int main(int /*argc*/, char** /*argv*/) {
-	// Read a mesh specified by its file name
-    const std::string file_name = setting::resource_directory() + "/data/building.off";
-    SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-    if (!mesh) {
+    // Read a graph specified by its file name
+    const std::string file_name = setting::resource_directory() + "/data/graph.ply";
+    Graph* graph = GraphIO::load(file_name);
+    if (!graph) {
         std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
         return EXIT_FAILURE;
 	}
-	std::cout << "mesh loaded. " << std::endl;
-	std::cout << "\tvertices: " << mesh->n_vertices() << std::endl;
-	std::cout << "\tedges: " << mesh->n_edges() << std::endl;
-	std::cout << "\tfaces: " << mesh->n_faces() << std::endl;
+    std::cout << "graph loaded. " << std::endl;
+    std::cout << "\tvertices: " << graph->n_vertices() << std::endl;
+    std::cout << "\tedges: " << graph->n_edges() << std::endl;
 
 	// ...
-	// Do fancy stuff with the mesh
+    // Do fancy stuff with the graph
 	// ...
 
-	// Write the mesh to a new file.
-    const std::string save_file_name = "./building-copy.obj";
-    if (SurfaceMeshIO::save(save_file_name, mesh))
-        std::cout << "mesh saved to \'" << save_file_name << "\'"  << std::endl;
+    // Write the graph to a new file.
+    const std::string save_file_name = "./graph-copy.ply";
+    if (GraphIO::save(save_file_name, graph))
+        std::cout << "graph saved to \'" << save_file_name << "\'"  << std::endl;
 	else
 		std::cerr << "failed create the new file" << std::endl;
 
-	// delete the mesh (i.e., release memory)
-	delete mesh;
+    // delete the graph (i.e., release memory)
+    delete graph;
 
     return EXIT_SUCCESS;
 }

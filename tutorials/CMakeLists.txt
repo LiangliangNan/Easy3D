@@ -15,6 +15,7 @@ add_subdirectory("Tutorial_204_Mesh_IO")
 add_subdirectory("Tutorial_205_Graph")
 add_subdirectory("Tutorial_206_Graph_Connectivity")
 add_subdirectory("Tutorial_207_Graph_Property")
+add_subdirectory("Tutorial_208_Graph_IO")
 
 # viewer & drawing
 add_subdirectory("Tutorial_301_Viewer")
