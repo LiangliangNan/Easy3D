@@ -284,8 +284,8 @@ namespace easy3d {
             intptr_t handle = _findfirst(path.c_str(), &data);
             if (handle != -1) {
                 do {
-                    std::string name = data.name;
-                    if (name != "." && name != "..") // "." and ".." seems always there
+                    // "." and ".." seems always there on Windows
+                    if (std::strcmp(data.name, ".") != 0 && std::strcmp(data.name, "..") != 0)
                         contents.push_back(name);
                 } while (_findnext(handle, &data) != -1);
 
@@ -296,9 +296,10 @@ namespace easy3d {
             if (handle)
             {
                 dirent *rc;
-                while ((rc = readdir(handle)) != nullptr)
-                {
-                    contents.push_back(rc->d_name);
+                while ((rc = readdir(handle)) != nullptr) {
+                    // some OSs (e.g., macOS) may include ".", "..", and ".DS_Store" in directory entries
+                    if (std::strcmp(rc->d_name, ".") != 0 && std::strcmp(rc->d_name, "..") != 0 && std::strcmp(rc->d_name, ".DS_Store") != 0)
+                        contents.push_back(rc->d_name);
                 }
                 closedir(handle);
             }
@@ -593,9 +594,11 @@ namespace easy3d {
             get_directory_entries(dir, result);
             if (recursive) {
                 for (unsigned int i = 0; i < result.size(); i++) {
-                    std::string path = dir + "/" + result[i];
+                    const std::string path = dir + "/" + result[i];
                     if (is_directory(path)) {
                         std::vector<std::string> entries;
+                        // no need recursion because 'result' is continuously growing and
+                        // the new entries are continuously be checked.
                         get_directory_entries(path, entries);
                         for (unsigned int j = 0; j < entries.size(); ++j)
                             result.push_back(result[i] + "/" + entries[j]);
@@ -608,7 +611,7 @@ namespace easy3d {
             std::vector<std::string> entries;
             get_directory_entries(dir, entries, recursive);
             for (unsigned int i = 0; i < entries.size(); i++) {
-                std::string name = dir + "/" + entries[i];
+                const std::string name = dir + "/" + entries[i];
                 if (is_file(name)) {
                     result.push_back(name);
                 }
@@ -619,7 +622,7 @@ namespace easy3d {
             std::vector<std::string> entries;
             get_directory_entries(dir, entries, recursive);
             for (unsigned int i = 0; i < entries.size(); i++) {
-                std::string name = dir + "/" + entries[i];
+                const std::string name = dir + "/" + entries[i];
                 if (is_directory(name)) {
                     result.push_back(name);
                 }

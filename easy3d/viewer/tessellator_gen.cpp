@@ -112,8 +112,8 @@ namespace easy3d {
     TessellatorGen::TessellatorGen()
         : primitive_type_(GL_TRIANGLES)
         , primitive_aware_oriention_(false)
-        , vertex_manager_(new details::VertexManager)
         , num_triangles_in_polygon_(0)
+        , vertex_manager_(new details::VertexManager)
         , vertex_data_size_(3)
     {
         // Create a tessellator object and set up its callbacks.
