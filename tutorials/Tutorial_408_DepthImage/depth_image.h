@@ -39,7 +39,7 @@ namespace easy3d {
 class DepthImage : public easy3d::Viewer
 {
 public:
-    DepthImage(const std::string& title, const std::string& model_file);
+    DepthImage(const std::string& title);
     
 protected:
     void draw() const override;

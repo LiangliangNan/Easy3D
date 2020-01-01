@@ -27,6 +27,7 @@ set(${PROJECT_NAME}_HEADERS
     opengl_info.h
     primitives.h
     read_pixel.h
+    renderer.h
     setting.h
     shader_manager.h
     shader_program.h

@@ -25,6 +25,9 @@
 
 #include "depth_image.h"
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/model.h>
+#include <easy3d/viewer/drawable_points.h>
+
 
 using namespace easy3d;
 
@@ -32,10 +35,18 @@ using namespace easy3d;
 
 int main(int /*argc*/, char** /*argv*/) {
     // the point cloud file.
-    const std::string cloud_file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+    const std::string file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
 
     try {
-        DepthImage viewer("Tutorial_408_DepthImage", cloud_file);
+        DepthImage viewer("Tutorial_408_DepthImage");
+        Model* model = viewer.open(file, true);
+        if (!model) {
+            std::cerr << "failed loading model from \'" << file << "\'" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        auto drawable = model->points_drawable("vertices");
+        drawable->set_point_size(5);
 
         viewer.resize(960, 800);
 

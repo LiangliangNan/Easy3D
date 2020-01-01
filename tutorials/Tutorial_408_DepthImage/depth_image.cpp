@@ -42,13 +42,10 @@
 using namespace easy3d;
 
 
-DepthImage::DepthImage(const std::string& title, const std::string& mesh_file)
+DepthImage::DepthImage(const std::string& title)
     : Viewer(title)
     , fbo_(nullptr)
 {
-    if (!open(mesh_file))
-        std::cerr << "Error: failed load point cloud." << std::endl;
-
     set_background_color(vec3(1, 1, 1));
 
     camera()->setUpVector(vec3(0, 1, 0));

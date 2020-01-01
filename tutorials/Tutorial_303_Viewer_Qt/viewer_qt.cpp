@@ -40,6 +40,7 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/transform.h>
@@ -510,27 +511,12 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
     }
     else if (e->key() == Qt::Key_W && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            SurfaceMesh* m = dynamic_cast<SurfaceMesh*>(currentModel());
-            if (m) {
-                LinesDrawable* wireframe = m->lines_drawable("wireframe");
+            SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(currentModel());
+            if (model) {
+                LinesDrawable* wireframe = model->lines_drawable("wireframe");
                 if (!wireframe) {
-                    makeCurrent();
-                    wireframe = m->add_lines_drawable("wireframe");
-                    std::vector<unsigned int> indices;
-                    for (auto e : m->edges()) {
-                        SurfaceMesh::Vertex s = m->vertex(e, 0);
-                        SurfaceMesh::Vertex t = m->vertex(e, 1);
-                        indices.push_back(s.idx());
-                        indices.push_back(t.idx());
-                    }
-                    auto points = m->get_vertex_property<vec3>("v:point");
-                    wireframe->update_vertex_buffer(points.vector());
-                    wireframe->update_index_buffer(indices);
-                    wireframe->set_default_color(setting::surface_mesh_wireframe_color);
-                    wireframe->set_per_vertex_color(false);
-                    wireframe->set_visible(true);
-                    wireframe->set_line_width(setting::surface_mesh_wireframe_line_width);
-                    doneCurrent();
+                    wireframe = model->add_lines_drawable("wireframe");
+                    renderer::update_data(model, wireframe);
                 }
                 else
                     wireframe->set_visible(!wireframe->is_visible());
@@ -540,18 +526,12 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 
     else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            SurfaceMesh* m = dynamic_cast<SurfaceMesh*>(currentModel());
-            if (m) {
-                PointsDrawable* vertices = m->points_drawable("vertices");
+            SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(currentModel());
+            if (model) {
+                PointsDrawable* vertices = model->points_drawable("vertices");
                 if (!vertices) {
-                    vertices = m->add_points_drawable("vertices");
-                    auto points = m->get_vertex_property<vec3>("v:point");
-                    vertices->update_vertex_buffer(points.vector());
-                    vertices->set_default_color(setting::surface_mesh_vertices_color);
-                    vertices->set_per_vertex_color(false);
-                    vertices->set_visible(true);
-                    vertices->set_impostors(true);
-                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                    vertices = model->add_points_drawable("vertices");
+                    renderer::update_data(model, vertices);
                 }
                 else
                     vertices->set_visible(!vertices->is_visible());
@@ -641,128 +621,27 @@ std::string ViewerQt::usage() const {
 
 
 
-void ViewerQt::create_drawables(Model* m) {
-    if (dynamic_cast<PointCloud*>(m)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(m);
-        // create points drawable
-        auto points = cloud->get_vertex_property<vec3>("v:point");
-        PointsDrawable* drawable = cloud->add_points_drawable("vertices");
-        drawable->update_vertex_buffer(points.vector());
-        auto normals = cloud->get_vertex_property<vec3>("v:normal");
-        if (normals)
-            drawable->update_normal_buffer(normals.vector());
-        auto colors = cloud->get_vertex_property<vec3>("v:color");
-        if (colors) {
-            drawable->update_color_buffer(colors.vector());
-            drawable->set_per_vertex_color(true);
-        }
+void ViewerQt::create_drawables(Model* model, bool smooth_shading) {
+    if (dynamic_cast<PointCloud*>(model)) {
+        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+        PointsDrawable* drawable = model->add_points_drawable("vertices");
+        renderer::update_data(cloud, drawable);
     }
-    else if (dynamic_cast<SurfaceMesh*>(m)) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(m);
+    else if (dynamic_cast<SurfaceMesh*>(model)) {
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
         TrianglesDrawable* surface = mesh->add_triangles_drawable("surface");
-#if 1   // flat shading
-        auto points = mesh->get_vertex_property<vec3>("v:point");
-        auto colors = mesh->get_vertex_property<vec3>("v:color");
-
-        std::vector<vec3> vertices, vertex_normals, vertex_colors;
-        for (auto f : mesh->faces()) {
-            // we assume convex polygonal faces and we render in triangles
-            SurfaceMesh::Halfedge start = mesh->halfedge(f);
-            SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
-            SurfaceMesh::Vertex va = mesh->to_vertex(start);
-            const vec3& pa = points[va];
-            while (cur != start) {
-                SurfaceMesh::Vertex vb = mesh->from_vertex(cur);
-                SurfaceMesh::Vertex vc = mesh->to_vertex(cur);
-                const vec3& pb = points[vb];
-                const vec3& pc = points[vc];
-                vertices.push_back(pa);
-                vertices.push_back(pb);
-                vertices.push_back(pc);
-
-                const vec3& n = geom::triangle_normal(pa, pb, pc);
-                vertex_normals.insert(vertex_normals.end(), 3, n);
-
-                if (colors) {
-                    vertex_colors.push_back(colors[va]);
-                    vertex_colors.push_back(colors[vb]);
-                    vertex_colors.push_back(colors[vc]);
-                }
-                cur = mesh->next_halfedge(cur);
-            }
-        }
-        surface->update_vertex_buffer(vertices);
-        surface->update_normal_buffer(vertex_normals);
-        if (colors) {
-            surface->update_color_buffer(colors.vector());
-            surface->set_per_vertex_color(true);
-        }
-        surface->release_index_buffer();
-#else
-        auto points = mesh->get_vertex_property<vec3>("v:point");
-        surface->update_vertex_buffer(points.vector());
-        auto colors = mesh->get_vertex_property<vec3>("v:color");
-        if (colors)
-            surface->update_color_buffer(colors.vector());
-
-        auto normals = mesh->get_vertex_property<vec3>("v:normal");
-        if (normals)
-             surface->update_normal_buffer(normals.vector());
-        else {
-            std::vector<vec3> normals;
-            normals.reserve(mesh->n_vertices());
-            for (auto v : mesh->vertices()) {
-                const vec3& n = mesh->compute_vertex_normal(v);
-                normals.push_back(n);
-            }
-            surface->update_normal_buffer(normals);
-        }
-
-        std::vector<unsigned int> indices;
-        for (auto f : mesh->faces()) {
-            // we assume convex polygonal faces and we render in triangles
-            SurfaceMesh::Halfedge start = mesh->halfedge(f);
-            SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
-            SurfaceMesh::Vertex va = mesh->to_vertex(start);
-            while (cur != start) {
-                SurfaceMesh::Vertex vb = mesh->from_vertex(cur);
-                SurfaceMesh::Vertex vc = mesh->to_vertex(cur);
-                indices.push_back(static_cast<unsigned int>(va.idx()));
-                indices.push_back(static_cast<unsigned int>(vb.idx()));
-                indices.push_back(static_cast<unsigned int>(vc.idx()));
-                cur = mesh->next_halfedge(cur);
-            }
-        }
-        surface->update_index_buffer(indices);
-#endif
+        renderer::update_data(mesh, surface, smooth_shading);
     }
-    else if (dynamic_cast<Graph*>(m)) {
-        Graph* graph = dynamic_cast<Graph*>(m);
+    else if (dynamic_cast<Graph*>(model)) {
+        Graph* graph = dynamic_cast<Graph*>(model);
 
-        // create points drawable for the vertices
-        auto points = graph->get_vertex_property<vec3>("v:point");
+        // create points drawable for the edges
         PointsDrawable* vertices = graph->add_points_drawable("vertices");
-        vertices->update_vertex_buffer(points.vector());
-        vertices->set_per_vertex_color(false);
-        vertices->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-        vertices->set_point_size(15.0f);
-        vertices->set_impostors(true);
+        renderer::update_data(graph, vertices);
 
         // create liens drawable for the edges
         LinesDrawable* edges = graph->add_lines_drawable("edges");
-        edges->update_vertex_buffer(points.vector());
-
-        std::vector<unsigned int> indices;
-        for (auto e : graph->edges()) {
-            unsigned int s = graph->from_vertex(e).idx();    indices.push_back(s);
-            unsigned int t = graph->to_vertex(e).idx();      indices.push_back(t);
-        }
-        edges->update_index_buffer(indices);
-
-        edges->set_per_vertex_color(false);
-        edges->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-        edges->set_line_width(3.0f);
-        edges->set_impostor_type(IT_CYLINDERS);
+        renderer::update_data(graph, edges);
     }
 }
 

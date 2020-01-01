@@ -223,7 +223,7 @@ namespace easy3d {
         //  - for mesh surfaces, it creates a TrianglesDrawable
         //      - per vertex color will be enabled if vertex property 'v:color' exists
         // TODO: move this function to Renderer module; enable per face color for surface meshes.
-        void create_drawables(Model* m, bool smooth_shading = true);
+        void create_drawables(Model* model, bool smooth_shading = true);
 
         void draw_corner_axes();
 
