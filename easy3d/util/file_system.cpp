@@ -286,7 +286,7 @@ namespace easy3d {
                 do {
                     // "." and ".." seems always there on Windows
                     if (std::strcmp(data.name, ".") != 0 && std::strcmp(data.name, "..") != 0)
-                        contents.push_back(name);
+                        contents.push_back(data.name);
                 } while (_findnext(handle, &data) != -1);
 
                 _findclose(handle);
