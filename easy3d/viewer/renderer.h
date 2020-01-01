@@ -50,8 +50,8 @@ namespace easy3d {
         template <typename MODEL, typename DRAWABLE>
         inline void update_data(MODEL* model, DRAWABLE* drawable);
 
-        template <typename MODEL, typename DRAWABLE>
-        inline void update_data(MODEL* model, DRAWABLE* drawable, bool smooth_shading);
+        template <typename MODEL>
+        inline void update_data(MODEL* model, TrianglesDrawable* drawable, bool smooth_shading);
 
 
         /**
@@ -74,7 +74,7 @@ namespace easy3d {
         inline void update_data<SurfaceMesh, LinesDrawable>(SurfaceMesh* model, LinesDrawable* drawable);
 
         template <>
-        inline void update_data<SurfaceMesh, TrianglesDrawable>(SurfaceMesh* model, TrianglesDrawable* drawable, bool smooth_shading);
+        inline void update_data<SurfaceMesh>(SurfaceMesh* model, TrianglesDrawable* drawable, bool smooth_shading);
 
 
         /**
@@ -141,7 +141,7 @@ namespace easy3d {
         }
 
         template <>
-        inline void update_data<SurfaceMesh, TrianglesDrawable>(SurfaceMesh* model, TrianglesDrawable* drawable, bool smooth_shading) {
+        inline void update_data<SurfaceMesh>(SurfaceMesh* model, TrianglesDrawable* drawable, bool smooth_shading) {
             assert(model);
             assert(drawable);
             if (smooth_shading) {
