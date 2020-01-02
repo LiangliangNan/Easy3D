@@ -43,6 +43,9 @@ namespace easy3d {
      *          with holes, or polygons with intersecting edges into triangles. This
      *          class is based on the GLU tessellator object that can convert polygons
      *          into triangles.
+     * \attention Direct rendering is deprecated. For a better performance, you're
+     *            strongly recommended to use Tessellator_gen to create triangulations
+     *            before sending the data to GPU.
      * @todo Current implementation menages the memory of the new allocated vertices.
      *       Check the GLUtesselator source code if the vertex memory is maintained.
      */
