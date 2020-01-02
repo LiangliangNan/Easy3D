@@ -212,6 +212,9 @@ namespace easy3d {
 	 positioned at a negative z value in the Camera coordinate system. This follows
 	 the \c gluPerspective standard. */
 	float Camera::zNear() const {
+#if 0 // standard camera
+        return 0.001f;
+#else
 		const float zNearScene = zClippingCoefficient() * sceneRadius();
 		float z = distanceToSceneCenter() - zNearScene;
 
@@ -227,6 +230,7 @@ namespace easy3d {
 				break;
 			}
 		return z;
+#endif
 	}
 
 	/*! Returns the far clipping plane distance used by the Camera projection
@@ -238,7 +242,11 @@ namespace easy3d {
 
 	See the zNear() documentation for details. */
 	float Camera::zFar() const {
+#if 0 // standard camera
+        return 1000.0f;
+#else
 		return distanceToSceneCenter() + zClippingCoefficient() * sceneRadius();
+#endif
 	}
 
 	/*! Sets the vertical fieldOfView() of the Camera (in radians).
