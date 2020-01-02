@@ -43,6 +43,7 @@ namespace easy3d {
          *                  or TrianglesDrawable.
          * \param model     The model.
          * \param drawable  The drawable.
+         * \param smooth_shading Phone shading? Valid only for TrianglesDrawable.
          * \attention Actual functions are implemented in the instantiations. These functions
          *            are for *standard* drawables. You may need to implement your own function
          *            for a particular rendering purpose.
@@ -53,6 +54,27 @@ namespace easy3d {
         template <typename MODEL>
         inline void update_data(MODEL* model, TrianglesDrawable* drawable, bool smooth_shading);
 
+//        /**
+//         * \brief Template functions preparing and updating *standard* drawable data to GPU.
+//         *        These two are specialized for scalar and vector fields.
+//         * \tparam MODEL    The model type - must be one of PointCloud, SurfaceMesh, or Graph.
+//         * \tparam DRAWABLE The drawable type - must be one of PointsDrawable, LinesDrawable,
+//         *                  or TrianglesDrawable.
+//         * \tparam PROPERTY_TYPE The property type - must be float (scalar field) or vec3
+//         *                       (vector field).
+//         * \param model     The model.
+//         * \param drawable  The drawable.
+//         * \param prop_name The property name (for scalar or vector fields).
+//         * \param smooth_shading Phone shading? Valid only for TrianglesDrawable.
+//         * \attention Actual functions are implemented in the instantiations. These functions
+//         *            are for *standard* drawables. You may need to implement your own function
+//         *            for a particular rendering purpose.
+//         */
+//        template <typename MODEL, typename DRAWABLE, typename PROPERTY_TYPE>
+//        inline void update_data(MODEL* model, DRAWABLE* drawable, const std::string& prop_name);
+
+//        template <typename MODEL, typename DRAWABLE, typename PROPERTY_TYPE>
+//        inline void update_data(MODEL* model, DRAWABLE* drawable, bool smooth_shading, const std::string& prop_name);
 
         /**
          * \brief Template specializations for point clouds
