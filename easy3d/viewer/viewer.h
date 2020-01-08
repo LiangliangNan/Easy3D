@@ -256,9 +256,6 @@ namespace easy3d {
         OpenGLTimer* gpu_timer_;
         double gpu_time_;
 
-        // key
-        int     key_;
-
 		// mouse
 		int		button_;		// for mouse drag
 		int		modifiers_;		// for mouse drag
@@ -271,13 +268,7 @@ namespace easy3d {
 		//----------------- viewer data -------------------
 
 		// corner axes
-		bool	show_corner_axes_;
         TrianglesDrawable* drawable_axes_;
-
-        // pivot point
-        bool	show_pivot_point_;
-        vec2    pivot_point_;
-		LinesDrawable* drawable_pivot_point_;
 
         // camera path
         bool	show_camera_path_;

@@ -198,7 +198,6 @@ protected:
     easy3d::Camera*	camera_;
     easy3d::vec4	background_color_;
 
-    int pressed_key_;
     Qt::MouseButton pressed_button_;
     QPoint  mouse_pressed_pos_;
     QPoint  mouse_previous_pos_;
@@ -206,13 +205,7 @@ protected:
     //----------------- viewer data -------------------
 
     // corner axes
-    bool	show_corner_axes_;
     easy3d::TrianglesDrawable* drawable_axes_;
-
-    // pivot point
-	bool	show_pivot_point_;
-	QPointF pivot_point_;
-	easy3d::LinesDrawable* drawable_pivot_point_;
 
     // camera path
     bool	show_camera_path_;

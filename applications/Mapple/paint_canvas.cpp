@@ -46,7 +46,6 @@ PaintCanvas::PaintCanvas(QWidget* parent /* = nullptr*/)
     , pressed_button_(Qt::NoButton)
     , mouse_pressed_pos_(0, 0)
     , mouse_previous_pos_(0, 0)
-    , show_corner_axes_(true)
     , drawable_axes_(nullptr)
     , show_camera_path_(false)
     , model_idx_(-1)
@@ -292,7 +291,8 @@ Model* PaintCanvas::currentModel() const {
 
 void PaintCanvas::keyPressEvent(QKeyEvent* e) {
     if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
-        show_corner_axes_ = !show_corner_axes_;
+        if (drawable_axes_)
+            drawable_axes_->set_visible(!drawable_axes_->is_visible());
     }
     else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
@@ -768,6 +768,9 @@ void PaintCanvas::drawCornerAxes() {
         drawable_axes_->update_color_buffer(colors);
         drawable_axes_->set_per_vertex_color(true);
     }
+    if (!drawable_axes_->is_visible())
+        return;
+
     // The viewport and the scissor are changed to fit the lower left corner.
     int viewport[4], scissor[4];
     func_->glGetIntegerv(GL_VIEWPORT, viewport);
@@ -818,10 +821,11 @@ void PaintCanvas::preDraw() {
 
 
 void PaintCanvas::postDraw() {
-    // Visual hints: axis, camera, grid...
-    if (show_corner_axes_)
-        drawCornerAxes();
+    // shown only when it is not animating
+    if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
+        camera()->draw_paths();
 
+    drawCornerAxes();
 
     QPainter painter;
     painter.begin(this);

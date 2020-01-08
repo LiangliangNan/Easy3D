@@ -100,7 +100,6 @@ namespace easy3d {
         , full_screen_(full_screen)
         , process_events_(true)
         , gpu_timer_(nullptr)
-        , key_(-1)
         , button_(-1)
         , modifiers_(-1)
         , drag_active_(false)
@@ -108,10 +107,7 @@ namespace easy3d {
         , mouse_y_(0)
         , mouse_pressed_x_(0)
         , mouse_pressed_y_(0)
-        , show_corner_axes_(true)
         , drawable_axes_(nullptr)
-        , show_pivot_point_(false)
-		, drawable_pivot_point_(nullptr)
         , show_camera_path_(false)
         , model_idx_(-1)
 	{
@@ -479,7 +475,6 @@ namespace easy3d {
 
         if (camera_) { delete camera_; camera_ = nullptr; }
 		if (drawable_axes_) { delete drawable_axes_; drawable_axes_ = nullptr; }
-		if (drawable_pivot_point_) { delete drawable_pivot_point_; drawable_pivot_point_ = nullptr; }
 
         for (auto m : models_)
             delete m;
@@ -538,31 +533,6 @@ namespace easy3d {
                 bool found = false;
                 const vec3& p = point_under_pixel(x, y, found);
                 if (found) {
-                    camera_->setPivotPoint(p);
-
-                    show_pivot_point_ = true;
-                    const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-                    pivot_point_ = vec2(proj.x, proj.y);
-
-                    // show, but hide the visual hint of pivot point after \p delay milliseconds.
-                    const int delay = 3000;
-                    Timer::single_shot(delay, [&]() {
-                        show_pivot_point_ = false;
-                        pivot_point_ = vec2(0, 0);
-                        update();
-                    });
-                }
-            }
-            else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                camera_->setPivotPoint(camera_->sceneCenter());
-                show_pivot_point_ = false;
-            }
-        }
-        else if (key_ == GLFW_KEY_Z) {
-            if (button == GLFW_MOUSE_BUTTON_LEFT) { // zoom to point under pixel
-                bool found = false;
-                const vec3& p = point_under_pixel(x, y, found);
-                if (found) {
                     // zoom to point under pixel
 #if 1   // with animation
                     camera()->interpolateToLookAt(p);
@@ -575,6 +545,9 @@ namespace easy3d {
 #endif
                     camera_->setPivotPoint(p);
                 }
+                else
+                    camera_->setPivotPoint(camera_->sceneCenter());
+
             }
             else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 #if 1   // with animation
@@ -653,10 +626,9 @@ namespace easy3d {
     }
 
 	bool Viewer::key_press_event(int key, int modifiers) {
-        key_ = key;
-
 		if (key == GLFW_KEY_A && modifiers == 0) {
-			show_corner_axes_ = !show_corner_axes_;
+            if (drawable_axes_)
+                drawable_axes_->set_visible(!drawable_axes_->is_visible());
 		}
 		else if (key == GLFW_KEY_C && modifiers == 0) {
             if (current_model())
@@ -887,7 +859,6 @@ namespace easy3d {
 	bool Viewer::key_release_event(int key, int modifiers) {
         (void)key;
         (void)modifiers;
-        key_ = -1;
 		return false;
 	}
 
@@ -1333,6 +1304,8 @@ namespace easy3d {
 			drawable_axes_->update_color_buffer(colors);
 			drawable_axes_->set_per_vertex_color(true);
         }
+        if (!drawable_axes_->is_visible())
+            return;
 
         // The viewport and the scissor are changed to fit the lower left corner.
         int viewport[4], scissor[4];
@@ -1387,44 +1360,7 @@ namespace easy3d {
         if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
             camera()->draw_paths();
 
-		if (show_corner_axes_)
-			draw_corner_axes();
-
-        if (show_pivot_point_) {
-            ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
-            }
-            if (!program)
-                return;
-
-#if defined(__APPLE__)
-            const float size = 10;
-#else
-            const float size = static_cast<float>(10 * dpi_scaling());
-#endif
-			if (!drawable_pivot_point_) 
-				drawable_pivot_point_ = new LinesDrawable("pivot_point");
-
-            std::vector<vec3> points = {
-                vec3(pivot_point_.x - size, pivot_point_.y, 0.5f), vec3(pivot_point_.x + size, pivot_point_.y, 0.5f),
-                vec3(pivot_point_.x, pivot_point_.y - size, 0.5f), vec3(pivot_point_.x, pivot_point_.y + size, 0.5f)
-            };
-			drawable_pivot_point_->update_vertex_buffer(points);
-
-            const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
-            glDisable(GL_DEPTH_TEST);   // always on top
-            program->bind();
-            program->set_uniform("MVP", proj);
-            program->set_uniform("per_vertex_color", false);
-            program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
-			drawable_pivot_point_->gl_draw(false);
-            program->release();
-            glEnable(GL_DEPTH_TEST);   // restore
-        }
+        draw_corner_axes();
 	}
 
 

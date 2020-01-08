@@ -199,7 +199,6 @@ protected:
     //----------------- viewer data -------------------
 
     // corner axes
-    bool	show_corner_axes_;
     easy3d::TrianglesDrawable* drawable_axes_;
 
     // camera path
