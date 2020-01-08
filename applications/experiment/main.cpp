@@ -34,7 +34,7 @@ int main (int argc, char *argv[])
     std::thread t([=]() {
         LOG(WARNING) << "Run in another thread";
     });
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     //------------------------------------------------
 
@@ -42,10 +42,7 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
-    const std::string msg =
-            std::string("Oh sorry, Mapple crashed. ") +
-            "Please contact me (liangliang.nan@gmail.com) for more information.";
-    LOG(FATAL) << msg;
+    LOG(FATAL) << "You should see that the program crashed: this is just a test";
 
   return EXIT_SUCCESS;
 }

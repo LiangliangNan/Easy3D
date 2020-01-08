@@ -68,6 +68,7 @@ else()
     add_executable( ${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
 endif()
 
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -89,7 +90,6 @@ target_link_libraries( ${PROJECT_NAME} Qt5::Widgets )
 target_link_libraries( ${PROJECT_NAME} Qt5::OpenGL )
 target_link_libraries( ${PROJECT_NAME} viewer algo algo_ext)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "demos")
 
 ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
 ## For more information, see: http://doc.qt.io/qt-5/highdpi.html

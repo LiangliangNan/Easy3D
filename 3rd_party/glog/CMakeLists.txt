@@ -17,6 +17,9 @@ set (CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set (CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set (CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 
+#Liangliang: disable
+option (BUILD_TESTING "Build Tests" OFF)
+
 option (WITH_GFLAGS "Use gflags" ON)
 option (WITH_THREADS "Enable multithreading support" ON)
 option (WITH_TLS "Enable Thread Local Storage (TLS) support" ON)
@@ -538,7 +541,12 @@ add_library (glog
 
 add_library(glog::glog ALIAS glog)
 
-set_target_properties (glog PROPERTIES POSITION_INDEPENDENT_CODE ON)
+#Liangliang: put glog in the 3rd_party directory
+set_target_properties (
+	glog PROPERTIES POSITION_INDEPENDENT_CODE ON
+	FOLDER "3rd_party"
+)
+
 
 if (Unwind_FOUND)
   target_link_libraries (glog PUBLIC unwind::unwind)
