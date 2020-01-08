@@ -84,12 +84,12 @@ namespace easy3d {
         operator const T*() const { return data_; }
         operator T*() { return data_; }
 
-        inline T& operator[](int idx) {
+        inline T& operator[](size_t idx) {
             assert(idx < N);
             return data()[idx];
         }
 
-        inline const T& operator[](int idx) const {
+        inline const T& operator[](size_t idx) const {
             assert(idx < N);
             return data()[idx];
         }
@@ -335,12 +335,12 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
+        inline T& operator[](size_t idx) {
             assert(idx < 2);
             return _array[idx];
         }
 
-        inline const T& operator[](int idx) const {
+        inline const T& operator[](size_t idx) const {
             assert(idx < 2);
             return _array[idx];
         }
@@ -443,12 +443,12 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
+        inline T& operator[](size_t idx) {
             assert(idx < 3);
             return _array[idx];
         }
 
-        inline const T& operator[](int idx) const {
+        inline const T& operator[](size_t idx) const {
             assert(idx < 3);
             return _array[idx];
         }
@@ -566,12 +566,12 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
+        inline T& operator[](size_t idx) {
             assert(idx < 4);
             return _array[idx];
         }
 
-        inline const T& operator[](int idx) const {
+        inline const T& operator[](size_t idx) const {
             assert(idx < 4);
             return _array[idx];
         }
