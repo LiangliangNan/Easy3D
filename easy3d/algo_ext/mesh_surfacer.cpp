@@ -29,7 +29,7 @@
 
 #include <easy3d/algo_ext/mesh_surfacer.h>
 
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -51,8 +51,7 @@ namespace easy3d {
         easy3d::DuplicatedFaces rdf;
         return rdf.detect(mesh, exact, dist_threshold);
 #else
-        Logger::warn("detect_duplicated_faces() requires CGAL");
-        //LOG(WARNING) << "detect_duplicated_faces() requires CGAL";
+        LOG(WARNING) << "detect_duplicated_faces() requires CGAL";
         return std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >();
 #endif
     }
@@ -64,8 +63,7 @@ namespace easy3d {
         DuplicatedFaces rdf;
         return rdf.remove(mesh, exact, dist_threshold);
 #else
-        Logger::warn("remove_duplicated_faces() requires CGAL");
-//        LOG(WARNING) << "remove_duplicated_faces() requires CGAL";
+        LOG(WARNING) << "remove_duplicated_faces() requires CGAL";
         return 0;
 #endif
     }
@@ -78,8 +76,7 @@ namespace easy3d {
         SelfIntersection msi;
         return msi.detect(mesh, false);
 #else
-        Logger::warn("detect_self_intersections() requires CGAL");
-//        LOG(WARNING) << "detect_self_intersections() requires CGAL";
+        LOG(WARNING) << "detect_self_intersections() requires CGAL";
         return std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >();
 #endif
     }
@@ -91,8 +88,7 @@ namespace easy3d {
         SelfIntersection msi;
         return msi.remesh(mesh, stitch);
 #else
-        Logger::warn("remesh_self_intersections() requires CGAL");
-//        LOG(WARNING) << "remesh_self_intersections() requires CGAL";
+        LOG(WARNING) << "remesh_self_intersections() requires CGAL";
         return nullptr;
 #endif
     }

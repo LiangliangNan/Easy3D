@@ -31,7 +31,7 @@
 #include <set>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
 
 
@@ -57,7 +57,7 @@ namespace easy3d {
                 triangles.push_back(t);
             }
             else {
-                Logger::warn("only triangular meshes can be processed");
+                LOG(WARNING) << "only triangular meshes can be processed";
 //                LOG_FIRST_N(WARNING, 5) << "only triangular meshes can be processed";
                 return triangles;
             }
@@ -119,8 +119,7 @@ namespace easy3d {
 
         if (!mesh->is_triangle_mesh()) {
             mesh->triangulate();
-            Logger::warn("input mesh triangulated to perform duplication detection");
-//            LOG(WARNING) << "input mesh triangulated to perform duplication detection";
+            LOG(WARNING) << "input mesh triangulated to perform duplication detection";
         }
 
         triangle_faces_ = mesh_to_cgal_triangle_list(mesh);
@@ -185,8 +184,7 @@ namespace easy3d {
                     if (f != face)
                         mesh->delete_face(f);
                     else
-                        Logger::error("a face was marked duplicated with it self");
-//                        LOG(ERROR) << "a face was marked duplicated with it self";
+                        LOG(ERROR) << "a face was marked duplicated with it self";
                 }
             }
         }

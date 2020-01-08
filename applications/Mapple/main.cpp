@@ -12,7 +12,7 @@
 #include <QStyleFactory>
 
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/viewer/setting.h>
 
 
@@ -69,14 +69,14 @@ int main(int argc, char *argv[])
     const std::string log_dir = dir + "/logs/";
     if (!file_system::is_directory(log_dir))
         file_system::create_directory(log_dir);
-    Logger::set_destination(log_dir + "/Mapple.log");
+//    Logger::set_destination(log_dir + "/Mapple.log");
 #ifndef NDEBUG
-    Logger::set_level(LOG_INFO);
+//    Logger::set_level(LOG_INFO);
 #else
     Logger::set_level(LOG_WARN);
 #endif
     std::cout << "Current working directory: " << dir << std::endl;
-//    LOG(INFO) << "Current working directory: " << dir;
+    LOG(INFO) << "Current working directory: " << dir;
 
 #ifdef NDEBUG
     // splash screen
@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
                 std::string("Oh sorry, Mapple crashed.\n") +
                 "Error message: " + e.what() + ".\n"
                 "Please contact me (liangliang.nan@gmail.com) for more information.";
-        Logger::error(msg.c_str());
-        //LOG(ERROR) << msg;
+        LOG(ERROR) << msg;
     }
 
     return status;

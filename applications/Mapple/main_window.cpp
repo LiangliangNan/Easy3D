@@ -24,7 +24,7 @@
 #include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 
@@ -787,8 +787,7 @@ void MainWindow::samplingSurfaceMesh() {
     if (dlg.exec()) {
         int num = dlg.pointNumber();
         if (static_cast<unsigned int>(num) < mesh->n_vertices()) {
-            Logger::warn("point num must be greater than the vertex numer of the input mesh");
-            //LOG(WARNING) << "point num must be greater than the vertex numer of the input mesh";
+            LOG(WARNING) << "point num must be greater than the vertex numer of the input mesh";
             return;
         }
 

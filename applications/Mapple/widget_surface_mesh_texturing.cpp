@@ -9,7 +9,6 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/types.h>
-#include <easy3d/util/logger.h>
 #include <easy3d/viewer/drawable.h>
 #include <easy3d/viewer/setting.h>
 

@@ -21,7 +21,7 @@
 
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/transform.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -33,8 +33,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     int max_samples = 0;
     func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
     if (samples > max_samples) {
-        Logger::warn("requested samples (%n) exceeds the supported maximum samples (%n)", samples, max_samples);
-        //LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples << ")";
+        LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples << ")";
         return false;
     }
 

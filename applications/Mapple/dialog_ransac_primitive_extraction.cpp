@@ -6,7 +6,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -67,8 +67,7 @@ void DialogRansacPrimitiveExtraction::extract() {
     if (selected_only_) {
         auto selected = cloud->get_vertex_property<bool>("v:select");
         if (!selected) {
-            Logger::warn("no points have been selected");
-//            LOG(WARNING) << "no points have been selected";
+            LOG(WARNING) << "no points have been selected";
             return;
         }
         std::vector<int> indices;
@@ -78,12 +77,10 @@ void DialogRansacPrimitiveExtraction::extract() {
         }
 
         int num = ransac.detect(cloud, indices, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
-        Logger::info("%n primitives extracted from the selected points", num);
-        //LOG(INFO) << num << " primitives extracted from the selected points";
+        LOG(INFO) << num << " primitives extracted from the selected points";
     }
     else {
         int num = ransac.detect(cloud, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
-        Logger::info("%n primitives extracted", num);
-//        LOG(INFO) << num << " primitives extracted";
+        LOG(INFO) << num << " primitives extracted";
     }
 }

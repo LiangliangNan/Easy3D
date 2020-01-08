@@ -9,7 +9,7 @@ set(${PROJECT_NAME}_HEADERS
     dialogs.h
     file_system.h
     line_stream.h
-    logger.h
+    logging.h
     stop_watch.h
     string.h
     timer.h
@@ -17,9 +17,9 @@ set(${PROJECT_NAME}_HEADERS
     )
 
 set(${PROJECT_NAME}_SOURCES
+    chrono_watch.cpp
     dialogs.cpp
     file_system.cpp
-    chrono_watch.cpp
     stop_watch.cpp
     string.cpp
     )
@@ -32,7 +32,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} Threads::Threads)
+target_link_libraries(${PROJECT_NAME} Threads::Threads glog)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)

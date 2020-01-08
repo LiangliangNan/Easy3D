@@ -10,7 +10,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -92,8 +92,7 @@ void WidgetPointCloudRenderer::setUseColorProperty(bool b) {
     if (b) { // just check and warn user if color not available
         auto colors = cloud()->get_vertex_property<vec3>("v:color");
         if (!colors)
-            Logger::warn("no color property defined on vertices");
-//            LOG(WARNING) << "no color property defined on vertices";
+            LOG(WARNING) << "no color property defined on vertices";
     }
 
     PointsDrawable* vertices = cloud()->points_drawable("vertices");

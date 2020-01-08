@@ -8,7 +8,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -87,8 +87,7 @@ void DialogPoissonReconstruction::trim() {
 
         auto density = mesh->vertex_property<float>(density_attr_name_);
         if (!density) {
-            Logger::warn("no property \'density\' for trimming");
-            //LOG(WARNING) << "no property \'density\' for trimming";
+            LOG(WARNING) << "no property \'density\' for trimming";
             return;
         }
 
@@ -101,10 +100,9 @@ void DialogPoissonReconstruction::trim() {
         }
 
         if (trim_value <= min_density || trim_value >= max_density) {
-            Logger::warn("trim value (%f) out of density range [%f, %f]", trim_value, min_density, max_density);
-//            LOG(WARNING) << "trim value (" << trim_value
-//                << ") out of density range [" << min_density << ", " << max_density << "]";
-//            return;
+            LOG(WARNING) << "trim value (" << trim_value
+                << ") out of density range [" << min_density << ", " << max_density << "]";
+            return;
         }
 
         SurfaceMesh* trimmed_mesh = PoissonReconstruction::trim(mesh, density_attr_name_, trim_value, area_ratio, triangulate);

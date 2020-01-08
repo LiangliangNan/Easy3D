@@ -9,7 +9,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/types.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -279,8 +279,7 @@ void WidgetSurfaceMeshRenderer::setUseColorProperty(bool b) {
         auto vcolors = mesh()->get_vertex_property<vec3>("v:color");
         auto fcolors = mesh()->get_face_property<vec3>("f:color");
         if (!vcolors && !fcolors)
-            Logger::warn("no color property defined on vertices/faces");
-//            LOG(WARNING) << "no color property defined on vertices/faces";
+            LOG(WARNING) << "no color property defined on vertices/faces";
     }
 
     TrianglesDrawable* surface = mesh()->triangles_drawable("surface");

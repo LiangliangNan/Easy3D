@@ -27,7 +27,7 @@
 
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 #include <map>
 #include <queue>
@@ -298,8 +298,7 @@ namespace easy3d {
 
         if (!mesh->is_triangle_mesh()) {
             mesh->triangulate();
-            Logger::warn("input mesh triangulated to perform self intersection detection");
-//            LOG(WARNING) << "input mesh triangulated to perform self intersection detection";
+            LOG(WARNING) << "input mesh triangulated to perform self intersection detection";
         }
 
         construct_intersection_ = construct;
@@ -338,8 +337,7 @@ namespace easy3d {
             msg += ("Model has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
         if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
             msg += "Remove duplicated faces may produce better result";
-            Logger::warn(msg.c_str());
-//            LOG(WARNING) << msg;
+            LOG(WARNING) << msg;
         }
 
         // collect the result in the requested format
@@ -376,7 +374,7 @@ namespace easy3d {
                 triangles.push_back(t);
             }
             else {
-                Logger::warn("only triangular meshes can be processed");
+                LOG(WARNING) << "only triangular meshes can be processed";
 //                LOG_FIRST_N(WARNING, 5) << "only triangular meshes can be processed";
                 return triangles;
             }
@@ -416,8 +414,7 @@ namespace easy3d {
             }
         }
         else {
-            Logger::error("Unknown intersection object!");
-//            LOG(ERROR) << "Unknown intersection object!";
+            LOG(ERROR) << "Unknown intersection object!";
             throw std::runtime_error("Unknown intersection object!");
         }
     }

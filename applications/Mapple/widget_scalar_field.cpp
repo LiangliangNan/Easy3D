@@ -12,7 +12,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/types.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/viewer/drawable.h>
 #include <easy3d/viewer/setting.h>
@@ -30,8 +30,7 @@ void addColormap(QComboBox* combo, const std::string& baseName) {
        combo->addItem(QIcon(fileName), QString::fromStdString(baseName));
     }
     else
-        Logger::warn("could not find colormap \'%s\' in \'%s\'", baseName.c_str(), dir.c_str());
-//        LOG(WARNING) << "could not find colormap \'" << baseName << "\' in \'" << dir << "\'";
+        LOG(WARNING) << "could not find colormap \'" << baseName << "\' in \'" << dir << "\'";
 }
 
 
@@ -60,8 +59,7 @@ WidgetScalarField::WidgetScalarField(QWidget *parent)
 
     if (colormapStyles.empty()) {
         ui->comboBoxScalarFieldTexture->addItem("not available");
-        Logger::warn("no colormaps available");
-        //LOG(WARNING) << "no colormaps available";
+        LOG(WARNING) << "no colormaps available";
     }
     else {
         connect(ui->comboBoxScalarFieldTexture, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarColormapStyle(const QString&)));
@@ -177,22 +175,19 @@ void WidgetScalarField::updatePanel() {
 
 
 void WidgetScalarField::setScalarColormapStyle(const QString& styleName) {
-    Logger::info("using colormap: %s", styleName.toStdString().c_str());
-//    LOG(INFO) << "using colormap: " << styleName.toStdString();
+    LOG(INFO) << "using colormap: " << styleName.toStdString();
     viewer_->update();
 }
 
 
 void WidgetScalarField::setScalarEdgeStyle(const QString& style) {
-    Logger::info("edge style: %s", style.toStdString().c_str());
-//        LOG(INFO) << "edge style: " << style.toStdString();
+    LOG(INFO) << "edge style: " << style.toStdString();
     viewer_->update();
 }
 
 
 void WidgetScalarField::setScalarField(const QString& field) {
-    Logger::info("scalar filed: %s", field.toStdString().c_str());
-//    LOG(INFO) << "scalar filed: " << field.toStdString();
+    LOG(INFO) << "scalar filed: " << field.toStdString();
 }
 
 

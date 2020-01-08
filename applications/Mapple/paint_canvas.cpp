@@ -30,7 +30,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/logger.h>
+#include <easy3d/util/logging.h>
 
 
 
