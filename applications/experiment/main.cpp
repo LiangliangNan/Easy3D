@@ -23,11 +23,13 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
-    LOG_IF(WARNING, 1 < 2) << "Indeed, 1 < 2";
+    int a = 1;
+    int b = 2;
+    LOG_IF(WARNING, a < b) << "Warning, a < b";
 
     //------------------------------------------------
 
-    LOG_IF(ERROR, !(1 > 2)) << "Error, 1 < 2";
+    LOG_IF(ERROR, a < b) << "Error, a < b";
 
     //------------------------------------------------
 
