@@ -75,7 +75,6 @@ int main(int argc, char *argv[])
 #else
     Logger::set_level(LOG_WARN);
 #endif
-    std::cout << "Current working directory: " << dir << std::endl;
     LOG(INFO) << "Current working directory: " << dir;
 
 #ifdef NDEBUG

@@ -360,7 +360,7 @@ class CERES_EXPORT LoggerVoidify {
 // Log only if condition is met.  Otherwise evaluates to void.
 #define LOG_IF(severity, condition) \
     !(condition) ? (void) 0 : LoggerVoidify() & \
-      MessageLogger((char *)__FILE__, __LINE__, "native", severity).stream()
+      MessageLogger(__FILE__, __LINE__, "native", severity).stream()
 
 // Log only if condition is NOT met.  Otherwise evaluates to void.
 #define LOG_IF_FALSE(severity, condition) LOG_IF(severity, !(condition))
@@ -374,9 +374,9 @@ class CERES_EXPORT LoggerVoidify {
 #  define LG      LOG_IF(INFO, INFO <= MAX_LOG_LEVEL)
 #  define VLOG_IF(n, condition) LOG_IF(n, (n <= MAX_LOG_LEVEL) && condition)
 #else
-#  define LOG(n)  MessageLogger((char *)__FILE__, __LINE__, "native", n).stream()    // NOLINT
-#  define VLOG(n) MessageLogger((char *)__FILE__, __LINE__, "native", n).stream()    // NOLINT
-#  define LG      MessageLogger((char *)__FILE__, __LINE__, "native", INFO).stream() // NOLINT
+#  define LOG(n)  MessageLogger(__FILE__, __LINE__, "native", n).stream()    // NOLINT
+#  define VLOG(n) MessageLogger(__FILE__, __LINE__, "native", n).stream()    // NOLINT
+#  define LG      MessageLogger(__FILE__, __LINE__, "native", INFO).stream() // NOLINT
 #  define VLOG_IF(n, condition) LOG_IF(n, condition)
 #endif
 

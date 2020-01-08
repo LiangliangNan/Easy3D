@@ -7,11 +7,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-pthread_t newTid;
+static pthread_t newTid;
 
 void *ThreadRunnable(void *arg) {
+    (void)arg;
   LOG(WARNING) << "Run in another thread";
-  return ((void *)0);
+  return nullptr;
 }
 
 void TestStopWatch() {
@@ -33,12 +34,12 @@ int main() {
   LOG_IF(ERROR, x > y) << "2 > 1. This should be also OK";
 
   // Test dump log in different thread
-  int err = pthread_create(&newTid, NULL, ThreadRunnable, NULL);
+  int err = pthread_create(&newTid, nullptr, ThreadRunnable, nullptr);
   if (err != 0) {
     LOG(FATAL) << "Unable to create a thread";
     return 1;
   }
-  sleep(1);
+  sleep(3);
   TestStopWatch();
   return 0;
 }
