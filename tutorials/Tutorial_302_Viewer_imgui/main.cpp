@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     try {
-        ViewerImGui viewer("Easy3D ImGui Viewer", 80, 3, 2);
+        ViewerImGui viewer("Easy3D ImGui Viewer");
 
         viewer.resize(800, 600);
         viewer.run();

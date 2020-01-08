@@ -37,6 +37,8 @@ namespace easy3d {
             // Initialize Google's logging library.
             std::string full_path(argv0);
 #ifdef __APPLE__
+            // macOS puts the executable file in an application bundle, e.g.,
+            // "PolyFit.app/⁨Contents/⁨MacOS⁩/PolyFit"
             std::string::size_type pos = full_path.find(".app");
             if (pos != std::string::npos)
                 full_path = full_path.substr(0, pos);
@@ -54,7 +56,8 @@ namespace easy3d {
             FLAGS_colorlogtostderr = true;
             google::InitGoogleLogging(argv0);
 
-            LOG(INFO) << "Current working directory: " << file_system::current_working_directory();
+//            LOG(INFO) << "Executable path: " << file_system::executable_directory();
+//            LOG(INFO) << "Current working dir: " << file_system::current_working_directory();
         }
     }
 
