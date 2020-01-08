@@ -4,3 +4,7 @@ add_subdirectory(fileio)
 add_subdirectory(kdtree)
 add_subdirectory(util)
 add_subdirectory(viewer)
+
+# experimental; not stable
+add_subdirectory(algo_ext)
+

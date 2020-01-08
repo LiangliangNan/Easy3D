@@ -9,6 +9,7 @@ set(${PROJECT_NAME}_HEADERS
     dialogs.h
     file_system.h
     line_stream.h
+    logger.h
     stop_watch.h
     string.h
     timer.h

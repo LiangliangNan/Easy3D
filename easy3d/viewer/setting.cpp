@@ -63,7 +63,7 @@ namespace easy3d {
         // point cloud
         bool    point_cloud_use_color_property = true;
         bool    point_cloud_show_points = true;
-        vec3    point_cloud_default_color = vec3(85 / 255.0f, 170 / 255.0f, 1.0f);
+        vec3    point_cloud_points_color = vec3(85 / 255.0f, 170 / 255.0f, 1.0f);
         float   point_cloud_point_size = 2.0f;
         bool    point_cloud_impostors = false;
 

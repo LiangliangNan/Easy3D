@@ -9,8 +9,6 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
-uniform vec3	defaultColor = vec3(0.4f, 0.8f, 0.8f);
-
 // SSAO
 uniform sampler2D   ssaoTexture;
 uniform bool        ssaoEnabled = false;

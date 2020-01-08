@@ -66,7 +66,7 @@ namespace easy3d {
         // point cloud
         extern bool    point_cloud_use_color_property;
         extern bool    point_cloud_show_points;
-        extern vec3    point_cloud_default_color;
+        extern vec3    point_cloud_points_color;
         extern float   point_cloud_point_size;
         extern bool    point_cloud_impostors;
 

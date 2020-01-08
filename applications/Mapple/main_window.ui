@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>800</width>
+    <height>600</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuRecentFiles">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionClearRecentFiles"/>
+    </widget>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="separator"/>
+    <addaction name="menuRecentFiles"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionSnapshot"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveCameraState"/>
+    <addaction name="actionRestoreCameraState"/>
+    <addaction name="separator"/>
+    <addaction name="actionBackgroundColor"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAboutMapple"/>
+   </widget>
+   <widget class="QMenu" name="menuConversion">
+    <property name="title">
+     <string>Conversion</string>
+    </property>
+    <addaction name="actionPoissonSurfaceReconstruction"/>
+    <addaction name="actionRansacPrimitiveExtraction"/>
+    <addaction name="separator"/>
+    <addaction name="actionSamplingSurfaceMesh"/>
+   </widget>
+   <widget class="QMenu" name="menuTopology">
+    <property name="title">
+     <string>Topology</string>
+    </property>
+    <addaction name="actionTopologyStatistics"/>
+    <addaction name="separator"/>
+    <addaction name="actionDetectDuplicatedFaces"/>
+    <addaction name="actionRemoveDuplicatedFaces"/>
+    <addaction name="separator"/>
+    <addaction name="actionDetectSelfIntersections"/>
+    <addaction name="actionRemeshSelfIntersections"/>
+   </widget>
+   <widget class="QMenu" name="menuOrientation">
+    <property name="title">
+     <string>Orientation</string>
+    </property>
+    <addaction name="actionEstimatePointCloudNormals"/>
+    <addaction name="actionReorientPointCloudNormals"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTopology"/>
+   <addaction name="menuOrientation"/>
+   <addaction name="menuConversion"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionSave"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockWidgetRendering">
+   <property name="minimumSize">
+    <size>
+     <width>180</width>
+     <height>280</height>
+    </size>
+   </property>
+   <property name="windowIcon">
+    <iconset>
+     <normaloff>Resources/options.png</normaloff>Resources/options.png</iconset>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea</set>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>8</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>8</number>
+     </property>
+     <item>
+      <widget class="QToolBox" name="toolBox">
+       <widget class="QWidget" name="toolBoxPageRenderer">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>180</width>
+          <height>332</height>
+         </rect>
+        </property>
+        <attribute name="icon">
+         <iconset>
+          <normaloff>Resources/renderer.png</normaloff>Resources/renderer.png</iconset>
+        </attribute>
+        <attribute name="label">
+         <string>Renderer</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayoutRenderer"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="toolBoxPageScalarField">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>180</width>
+          <height>332</height>
+         </rect>
+        </property>
+        <attribute name="icon">
+         <iconset>
+          <normaloff>Resources/scalar.png</normaloff>Resources/scalar.png</iconset>
+        </attribute>
+        <attribute name="label">
+         <string>Scalar Field</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayoutScalarField"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="toolBoxPageVectorField">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>180</width>
+          <height>332</height>
+         </rect>
+        </property>
+        <attribute name="icon">
+         <iconset>
+          <normaloff>Resources/vector.png</normaloff>Resources/vector.png</iconset>
+        </attribute>
+        <attribute name="label">
+         <string>Vector Field</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_9">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayoutVectorField"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="toolBoxPageTexturing">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>180</width>
+          <height>332</height>
+         </rect>
+        </property>
+        <attribute name="icon">
+         <iconset>
+          <normaloff>Resources/texture.png</normaloff>Resources/texture.png</iconset>
+        </attribute>
+        <attribute name="label">
+         <string>Texturing</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayoutTexturing"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="toolBoxPageLighting">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>180</width>
+          <height>332</height>
+         </rect>
+        </property>
+        <attribute name="icon">
+         <iconset>
+          <normaloff>Resources/light.png</normaloff>Resources/light.png</iconset>
+        </attribute>
+        <attribute name="label">
+         <string>Lighting</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayoutLighting"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetModels">
+   <property name="locale">
+    <locale language="English" country="UnitedStates"/>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContentsModels">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTreeWidget" name="treeWidgetModels">
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="selectionMode">
+        <enum>QAbstractItemView::MultiSelection</enum>
+       </property>
+       <property name="columnCount">
+        <number>3</number>
+       </property>
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">2</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">3</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetLogger">
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContentsLogger">
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTextEdit" name="textEditLogger">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/fileopen.png</normaloff>Resources/fileopen.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/filesave.png</normaloff>Resources/filesave.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveCameraState">
+   <property name="text">
+    <string>Save Camera State</string>
+   </property>
+  </action>
+  <action name="actionRestoreCameraState">
+   <property name="text">
+    <string>Restore Camera State</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset resource="Resources/Mapple.qrc">
+     <normaloff>:/icons/fileopen.png</normaloff>:/icons/fileopen.png</iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionAboutMapple">
+   <property name="text">
+    <string>About Mapple</string>
+   </property>
+  </action>
+  <action name="actionClearRecentFiles">
+   <property name="text">
+    <string>Clear</string>
+   </property>
+  </action>
+  <action name="actionPoissonSurfaceReconstruction">
+   <property name="text">
+    <string>Poisson Surface Reconstruction</string>
+   </property>
+  </action>
+  <action name="actionRansacPrimitiveExtraction">
+   <property name="text">
+    <string>RANSAC Primitive Extraction</string>
+   </property>
+  </action>
+  <action name="actionSnapshot">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/snap_shot.png</normaloff>Resources/snap_shot.png</iconset>
+   </property>
+   <property name="text">
+    <string>Snapshot</string>
+   </property>
+  </action>
+  <action name="actionBackgroundColor">
+   <property name="text">
+    <string>Background Color</string>
+   </property>
+  </action>
+  <action name="actionSamplingSurfaceMesh">
+   <property name="text">
+    <string>Sampling Surface Mesh (as Point Cloud)</string>
+   </property>
+  </action>
+  <action name="actionDetectDuplicatedFaces">
+   <property name="text">
+    <string>Detect Duplicated Faces</string>
+   </property>
+  </action>
+  <action name="actionRemoveDuplicatedFaces">
+   <property name="text">
+    <string>Remove Duplicated Faces</string>
+   </property>
+  </action>
+  <action name="actionTopologyStatistics">
+   <property name="text">
+    <string>Show Statistics</string>
+   </property>
+  </action>
+  <action name="actionDetectSelfIntersections">
+   <property name="text">
+    <string>Detect Self Intersections</string>
+   </property>
+  </action>
+  <action name="actionRemeshSelfIntersections">
+   <property name="text">
+    <string>Remesh Self Intersections</string>
+   </property>
+  </action>
+  <action name="actionEstimatePointCloudNormals">
+   <property name="text">
+    <string>Estimate Point Cloud Normals</string>
+   </property>
+  </action>
+  <action name="actionReorientPointCloudNormals">
+   <property name="text">
+    <string>Re-orient Point Cloud Normals</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="Resources/Mapple.qrc"/>
+ </resources>
+ <connections/>
+</ui>

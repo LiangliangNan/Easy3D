@@ -27,7 +27,10 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Build tutorials
-option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"        ON)
+option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"         ON)
+
+# Build applications
+option(EASY3D_BUILD_APPLICATIONS    "Build Easy3D Applications"     OFF)
 
 ################################################################################
 
@@ -56,6 +59,11 @@ add_subdirectory(easy3d)
 if(EASY3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif()
+
+if(EASY3D_BUILD_APPLICATIONS)
+    add_subdirectory(applications)
+endif()
+
 
 ## Resources
 # Copy resources dirs into our shadow build directory

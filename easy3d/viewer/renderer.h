@@ -141,7 +141,7 @@ namespace easy3d {
                 drawable->set_per_vertex_color(true);
             }
             else {
-                drawable->set_default_color(setting::point_cloud_default_color);
+                drawable->set_default_color(setting::point_cloud_points_color);
                 drawable->set_per_vertex_color(false);
             }
         }
