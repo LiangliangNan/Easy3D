@@ -201,40 +201,15 @@ void ViewerQt::mousePressEvent(QMouseEvent* e) {
             bool found = false;
             const vec3& p = pointUnderPixel(e->pos(), found);
             if (found) {
-                camera_->setPivotPoint(p);
-
-                show_pivot_point_ = true;
-                const vec3& proj = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-                pivot_point_ = QPointF(static_cast<double>(proj.x), static_cast<double>(proj.y));
-
-                // show, but hide the visual hint of pivot point after \p delay milliseconds.
-                const int delay = 2000;
-                QTimer::singleShot(delay, [&]() {
-                    show_pivot_point_ = false;
-                    pivot_point_ = QPointF(0, 0);
-                    update();
-                });
-            }
-        }
-        else if (e->button() == Qt::RightButton) {
-            camera_->setPivotPoint(camera_->sceneCenter());
-            show_pivot_point_ = false;
-        }
-    }
-    else if (pressed_key_ == Qt::Key_Z) {
-        if (e->button() == Qt::LeftButton) { // zoom to point under pixel
-            bool found = false;
-            const vec3& p = pointUnderPixel(e->pos(), found);
-            if (found) {
                 camera()->interpolateToLookAt(p);
                 camera_->setPivotPoint(p);
-                update();
             }
+            else
+                camera_->setPivotPoint(camera_->sceneCenter());
         }
         else if (e->button() == Qt::RightButton) {
             camera()->interpolateToFitScene();
             camera_->setPivotPoint(camera_->sceneCenter());
-            update();
         }
     }
 
@@ -517,7 +492,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 LinesDrawable* wireframe = model->lines_drawable("wireframe");
                 if (!wireframe) {
                     wireframe = model->add_lines_drawable("wireframe");
+                    makeCurrent();
                     renderer::update_data(model, wireframe);
+                    doneCurrent();
                 }
                 else
                     wireframe->set_visible(!wireframe->is_visible());
@@ -532,7 +509,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 PointsDrawable* vertices = model->points_drawable("vertices");
                 if (!vertices) {
                     vertices = model->add_points_drawable("vertices");
+                    makeCurrent();
                     renderer::update_data(model, vertices);
+                    doneCurrent();
                 }
                 else
                     vertices->set_visible(!vertices->is_visible());
@@ -608,8 +587,7 @@ std::string ViewerQt::usage() const {
                 " ------------------------------------------------------------------\n"
                 "  'f':                 Fit screen (all models)                     \n"
                 "  'c':                 Fit screen (current model only)             \n"
-                "  Shift + Left/Right:  Set/Unset pivot point                       \n"
-                "  'z' + Left/Right:    Zoom to target/Zoom to fit screen           \n"
+                "  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
                 " ------------------------------------------------------------------\n"
                 "  '+'/'-':             Increase/Decrease point size (line width)   \n"
                 "  'a':                 Toggle axes									\n"

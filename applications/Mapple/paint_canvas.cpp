@@ -58,15 +58,16 @@ PaintCanvas::PaintCanvas(QWidget* parent /* = nullptr*/)
     , edl_(nullptr)
     , edl_enabled_(false)
 {
-	// like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
+    // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::WheelFocus);
     setMouseTracking(true);
 
     camera_ = new Camera;
     camera_->setType(Camera::PERSPECTIVE);
-    camera_->setScreenWidthAndHeight(width(), height());
-    camera_->setViewDirection(vec3(0.0, 1.0, 0.0));
+    camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
+    camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
+    camera_->connect(this, static_cast<void(PaintCanvas::*)(void)>(&PaintCanvas::update));
 }
 
 
@@ -452,7 +453,9 @@ void PaintCanvas::keyPressEvent(QKeyEvent* e) {
                 LinesDrawable* wireframe = model->lines_drawable("wireframe");
                 if (!wireframe) {
                     wireframe = model->add_lines_drawable("wireframe");
+                    makeCurrent();
                     renderer::update_data(model, wireframe);
+                    doneCurrent();
                 }
                 else
                     wireframe->set_visible(!wireframe->is_visible());
@@ -467,7 +470,9 @@ void PaintCanvas::keyPressEvent(QKeyEvent* e) {
                 PointsDrawable* vertices = model->points_drawable("vertices");
                 if (!vertices) {
                     vertices = model->add_points_drawable("vertices");
+                    makeCurrent();
                     renderer::update_data(model, vertices);
+                    doneCurrent();
                 }
                 else
                     vertices->set_visible(!vertices->is_visible());
@@ -542,8 +547,7 @@ std::string PaintCanvas::usage() const {
                 " ------------------------------------------------------------------\n"
                 "  'f':                 Fit screen (all models)                     \n"
                 "  'c':                 Fit screen (current model only)             \n"
-                "  Shift + Left/Right:  Set/Unset pivot point                       \n"
-                "  'z' + Left/Right:    Zoom to target/Zoom to fit screen           \n"
+                "  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
                 " ------------------------------------------------------------------\n"
                 "  '+'/'-':             Increase/Decrease point size (line width)   \n"
                 "  'a':                 Toggle axes									\n"

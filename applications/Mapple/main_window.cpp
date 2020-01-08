@@ -483,7 +483,7 @@ void MainWindow::readSettings()
 
 void MainWindow::writeSettings()
 {
-    QSettings settings("liangliang.nan@gmail.com", "ViewerQt");
+    QSettings settings("liangliang.nan@gmail.com", "Mapple");
     settings.setValue("recentFiles", recentFiles_);
     if (!curDataDirectory_.isEmpty() && file_system::is_directory(curDataDirectory_.toStdString()))
         settings.setValue("currentDirectory", curDataDirectory_);
