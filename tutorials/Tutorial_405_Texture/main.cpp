@@ -29,8 +29,9 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/setting.h>
-
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
+
 
 
 using namespace easy3d;
@@ -41,7 +42,10 @@ using namespace easy3d;
 //		- render a textured quad using a texture.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.

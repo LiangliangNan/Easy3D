@@ -25,12 +25,17 @@
 
 #include "image_viewer.h"
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
 // This example shows how to render an images.
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     // the image file.
     const std::string image_file = setting::resource_directory() + "/data/fountain/images/0000.jpg";
 

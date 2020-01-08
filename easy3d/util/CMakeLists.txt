@@ -20,6 +20,7 @@ set(${PROJECT_NAME}_SOURCES
     chrono_watch.cpp
     dialogs.cpp
     file_system.cpp
+    logging.cpp
     stop_watch.cpp
     string.cpp
     )

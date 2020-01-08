@@ -25,6 +25,8 @@
 
 #include "camera_interpolation.h"
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 // This example shows how to
 //        - creat an exploration path using the key frame interpolator,
@@ -32,7 +34,10 @@
 
 using namespace easy3d;
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     const std::string& file_name = setting::resource_directory() + "/data/building.off";
 
     try {

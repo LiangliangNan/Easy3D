@@ -27,6 +27,8 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
@@ -34,7 +36,10 @@ using namespace easy3d;
 //		- reconstruct a smooth surface from a point cloud using the Poisson surface reconstruction method
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     const std::string file = setting::resource_directory() + "/data/bunny.bin";
 
     try {

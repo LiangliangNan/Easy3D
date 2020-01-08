@@ -28,6 +28,8 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 
 using namespace easy3d;
@@ -38,7 +40,9 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
 
     try {
         // Create the default Easy3D viewer.

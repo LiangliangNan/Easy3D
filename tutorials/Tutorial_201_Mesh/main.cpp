@@ -24,6 +24,8 @@
 */
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
@@ -33,7 +35,10 @@ using namespace easy3d;
 
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
 	// Create a surface mesh
 	SurfaceMesh* mesh = new SurfaceMesh;
 

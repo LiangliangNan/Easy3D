@@ -28,6 +28,8 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
@@ -40,7 +42,10 @@ using namespace easy3d;
 bool load_obj(const std::string& file_name, SurfaceMesh* mesh);
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.

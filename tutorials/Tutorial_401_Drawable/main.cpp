@@ -29,6 +29,8 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 
 using namespace easy3d;
@@ -39,7 +41,10 @@ using namespace easy3d;
 //		- use the viewer to visualize the drawable.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
 	// Read a mesh specified by its file name
     const std::string file_name = setting::resource_directory() + "/data/building.off";
 

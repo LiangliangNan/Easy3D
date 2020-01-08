@@ -26,6 +26,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
 
 #include <fstream>
 
@@ -38,7 +39,10 @@ using namespace easy3d;
 //		- save a point cloud to a file.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/building_cloud.bin");
     if (!cloud) {

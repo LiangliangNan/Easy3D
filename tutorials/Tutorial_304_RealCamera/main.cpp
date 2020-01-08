@@ -25,6 +25,8 @@
 
 #include "real_camera.h"
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 // This example shows how to
 //        - render a model from the view point given the camera's intrinsic and
@@ -33,8 +35,9 @@
 
 using namespace easy3d;
 
-int main(int /*argc*/, char** /*argv*/) {
-    // Create the viewer.
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
 
     // the bunder file (We use only the camera instric and extrinsic parameters).
     const std::string bundler_file = setting::resource_directory() + "/data/fountain/bundle.out";

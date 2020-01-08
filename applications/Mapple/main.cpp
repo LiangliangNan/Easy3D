@@ -64,18 +64,8 @@ int main(int argc, char *argv[])
 #endif
     QDir::setCurrent(workingDir.absolutePath());
 
-    // Initialize Google's logging library.
-    const std::string dir = workingDir.absolutePath().toStdString();
-    const std::string log_dir = dir + "/logs/";
-    if (!file_system::is_directory(log_dir))
-        file_system::create_directory(log_dir);
-//    Logger::set_destination(log_dir + "/Mapple.log");
-#ifndef NDEBUG
-//    Logger::set_level(LOG_INFO);
-#else
-    Logger::set_level(LOG_WARN);
-#endif
-    LOG(INFO) << "Current working directory: " << dir;
+    // Initialize logging.
+    logging::initialize(argv[0]);
 
 #ifdef NDEBUG
     // splash screen

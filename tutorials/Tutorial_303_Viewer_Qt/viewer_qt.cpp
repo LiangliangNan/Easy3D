@@ -52,6 +52,7 @@
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -141,9 +142,9 @@ void ViewerQt::initializeGL()
 
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
-    std::cout << "OpenGL version requested: " << major_requested << "." << minor_requested << std::endl;
-    std::cout << "OpenGL version received: " << func_->glGetString(GL_VERSION) << std::endl;
-    std::cout << "GLSL version received:   " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    LOG(INFO) << "OpenGL version requested: " << major_requested << "." << minor_requested;
+    LOG(INFO) << "OpenGL version received:  " << func_->glGetString(GL_VERSION);
+    LOG(INFO) << "GLSL version received:    " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     int major = 0;  func_->glGetIntegerv(GL_MAJOR_VERSION, &major);
     int minor = 0;  func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
@@ -779,12 +780,12 @@ void ViewerQt::paintGL() {
         func_->glGetIntegerv(GL_MAX_SAMPLES, &max_num);
         if (samples > 0 && samples_ != samples) {
             if (samples_ == 0)
-                std::cerr << "MSAA is not available (" << samples << " samples requested)" << std::endl;
+                LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
             else
-                std::cerr << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is "<< max_num << ")" << std::endl;
+                LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is "<< max_num << ")";
         }
         else
-            std::cerr << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
+            LOG(INFO) << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")";
 
         std::cout << usage() << std::endl;
 

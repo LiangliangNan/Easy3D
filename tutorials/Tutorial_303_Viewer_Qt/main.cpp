@@ -38,6 +38,7 @@
 #include <QStyleFactory>
 
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
 
 #include "main_window.h"
 
@@ -81,6 +82,9 @@ int main(int argc, char *argv[])
     }
 #endif
     QDir::setCurrent(workingDir.absolutePath());
+
+    // Initialize logging.
+    easy3d::logging::initialize(argv[0]);
 
     int status = 0;
     try {

@@ -28,6 +28,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/tessellator_gen.h>
+#include <easy3d/util/logging.h>
 
 
 
@@ -95,7 +96,10 @@ void triangulate(SurfaceMesh* mesh) {
 }
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.

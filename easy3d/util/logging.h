@@ -28,17 +28,34 @@
 #define EASY3D_LOGGING_H
 
 
-/* Make it easier for including the miniglog header file.
+/* Make it easier for including the Google glog header file.
  *
  * Always include this file, i.e.,
  *      #include <easy3d/util/logging.h>
  * Instead of:
- *      #include <3rd_party/tinyglog/glog/logging.h>
- * or
- *      #include <glog/logging.h>
+ *      #include <3rd_party/glog/glog/logging.h>
  * or any other header file, because the third party library may change.
  */
 
-#include <3rd_party/tinyglog/glog/logging.h>
+#include <3rd_party/glog/glog/logging.h>
+
+
+namespace easy3d {
+
+    namespace logging {
+
+    /**
+         * @brief initialize Google's logging library.
+         * @param argv0     The argv[0] of your main function, which is basically the
+         *                  full path of the executable file.
+         * @param threshold Log messages at a level >= this flag are automatically sent
+         *                  to stderr in addition to log files.
+         */
+        void initialize(const char* argv0, int threshold = google::GLOG_INFO);
+
+    }
+
+}
+
 
 #endif // EASY3D_LOGGING_H

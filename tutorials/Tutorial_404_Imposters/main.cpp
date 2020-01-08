@@ -29,6 +29,8 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
+
 
 
 using namespace easy3d;
@@ -40,7 +42,9 @@ using namespace easy3d;
 //      - lines as cones.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
 
     try {
         // Create the default Easy3D viewer.

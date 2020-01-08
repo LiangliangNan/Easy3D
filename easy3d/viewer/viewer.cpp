@@ -64,6 +64,7 @@
 
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/util/timer.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -196,9 +197,9 @@ namespace easy3d {
     #endif
 
 #if 1
-        std::cout << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
-        std::cout << "OpenGL version received: " << glGetString(GL_VERSION) << std::endl;
-        std::cout << "GLSL version received:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+        LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
+        LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION) << std::endl;
+        LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 #endif
 
         glGetIntegerv(GL_SAMPLES, &samples_);
@@ -208,12 +209,13 @@ namespace easy3d {
         // warn the user if the requests were not satisfied
         if (samples > 0 && samples_ != samples) {
             if (samples_ == 0)
-                printf("MSAA is not available with %i samples\n", samples);
+                LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
             else
-                printf("MSAA is available with %i samples (%i requested, max support is %i)\n", samples_, samples, max_num);
+                LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is "<< max_num << ")";
         }
         else
-            std::cerr << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")" << std::endl;
+            LOG(INFO) << "Samples received: " << samples_ << " (" << samples << " requested, max support is "<< max_num << ")";
+
 
         float xscale, yscale;
         glfwGetWindowContentScale(window_, &xscale, &yscale);

@@ -24,6 +24,8 @@
 */
 
 #include <easy3d/core/graph.h>
+#include <easy3d/util/logging.h>
+
 
 using namespace easy3d;
 
@@ -32,7 +34,10 @@ using namespace easy3d;
 //		- construct a graph from its vertices and edges
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
     // Create a graph
     Graph* g = new Graph;
 

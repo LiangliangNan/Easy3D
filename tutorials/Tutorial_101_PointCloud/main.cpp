@@ -24,6 +24,7 @@
 */
 
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/util/logging.h>
 
 using namespace easy3d;
 
@@ -33,7 +34,10 @@ using namespace easy3d;
 
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
 	// Create a point cloud
 	PointCloud* cloud = new PointCloud;
 
