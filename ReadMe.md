@@ -48,9 +48,9 @@ Of course, you can customize the drawables. For example, the following code rend
 
 ```c++
 	// assume your point cloud has been loaded to the viewer
-        PointsDrawable* points_drawable = cloud->points_drawable("vertices");
-        points_drawable->set_impostors(true);	// draw points as spheres
-	points_drawable->set_point_size(3.0f);	// set point size
+        PointsDrawable* drawable = cloud->points_drawable("vertices");
+	drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+	drawable->set_point_size(3.0f);	// set point size
 ```
 
 By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
