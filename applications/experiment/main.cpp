@@ -55,9 +55,8 @@ int main (int argc, char *argv[])
     //------------------------------------------------
 
     std::vector<vec3> points;
-    points.push_back(vec3(1));
-    points.push_back(vec3(2));
-    points.push_back(vec3(3));
+    for(int i=0; i<200; ++i)
+        points.push_back(vec3(i));
     LOG(INFO) << "std::vector<vec3>: " << points;
 
     //------------------------------------------------
