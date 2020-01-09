@@ -8,6 +8,27 @@
 
 using namespace easy3d;
 
+void test_conditional_ccasional_logging() {
+    for ( int i = 0; i < 10; ++i ) {
+      int old_errno = errno;
+      errno = i;
+      PLOG_EVERY_N(ERROR, 2) << "Plog every 2, iteration " << google::COUNTER;
+      errno = old_errno;
+
+      LOG_FIRST_N(ERROR, 3) << "Log first 3, iteration " << google::COUNTER << std::endl;
+
+      LOG_EVERY_N(ERROR, 3) << "Log every 3, iteration " << google::COUNTER << std::endl;
+      LOG_EVERY_N(ERROR, 4) << "Log every 4, iteration " << google::COUNTER << std::endl;
+
+      LOG_IF_EVERY_N(WARNING, true, 5) << "Log if every 5, iteration " << google::COUNTER;
+      LOG_IF_EVERY_N(WARNING, false, 3)
+          << "Log if every 3, iteration " << google::COUNTER;
+      LOG_IF_EVERY_N(INFO, true, 1) << "Log if every 1, iteration " << google::COUNTER;
+      LOG_IF_EVERY_N(ERROR, (i < 3), 2)
+          << "Log if less than 3 every 2, iteration " << google::COUNTER;
+    }
+}
+
 
 void MyFunction() {
     LOG(WARNING) << "function [" << __FUNCTION__ << "] executed";
@@ -31,6 +52,11 @@ int main (int argc, char *argv[])
     //------------------------------------------------
 
     LOG_IF(ERROR, a < b) << "Error, a < b";
+
+    //------------------------------------------------
+
+//    for (int i=0; i<100; ++i)
+//        LOG_FIRST_N(ERROR, 5) << "LOG_FIRST_N(ERROR, 5): " << i;
 
     //------------------------------------------------
 
@@ -58,6 +84,10 @@ int main (int argc, char *argv[])
     for(int i=0; i<200; ++i)
         points.push_back(vec3(i));
     LOG(INFO) << "std::vector<vec3>: " << points;
+
+    //------------------------------------------------
+
+    test_conditional_ccasional_logging();
 
     //------------------------------------------------
 

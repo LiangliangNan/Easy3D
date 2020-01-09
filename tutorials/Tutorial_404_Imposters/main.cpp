@@ -37,9 +37,86 @@ using namespace easy3d;
 
 
 // This example shows how to render imposters, e.g.,
-//		- points as spheres;
+//		- points as spheres, sufels
 //		- lines as cylinders;
 //      - lines as cones.
+
+
+// render mesh vertices as spheres
+void create_spheres(SurfaceMesh* mesh) {
+    auto points = mesh->get_vertex_property<vec3>("v:point");
+    PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
+    points_drawable->update_vertex_buffer(points.vector());
+    points_drawable->set_per_vertex_color(false);
+    points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+    points_drawable->set_point_size(18.0f);
+    points_drawable->set_impostor_type(PointsDrawable::SPHERE);
+}
+
+
+// render mesh edges as cylinders
+void create_cylinders(SurfaceMesh* mesh) {
+    auto points = mesh->get_vertex_property<vec3>("v:point");
+    LinesDrawable* edges_drawable = mesh->add_lines_drawable("wireframe");
+    std::vector<vec3> edge_points; // each consecutive point pair represents an edge
+    for (auto e : mesh->edges()) {
+        SurfaceMesh::Vertex s = mesh->vertex(e, 0);
+        edge_points.push_back(points[s]);
+        SurfaceMesh::Vertex t = mesh->vertex(e, 1);
+        edge_points.push_back(points[t]);
+    }
+    edges_drawable->update_vertex_buffer(edge_points);
+    edges_drawable->set_per_vertex_color(false);
+    edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
+    edges_drawable->set_impostor_type(LinesDrawable::CYLINDER);
+    edges_drawable->set_line_width(6);
+}
+
+
+// render the vertex normals as cones
+void create_cones(SurfaceMesh* mesh) {
+    auto points = mesh->get_vertex_property<vec3>("v:point");
+    mesh->update_vertex_normals();
+    auto normals = mesh->get_vertex_property<vec3>("v:normal");
+
+    // Get the bounding box of the model. Then we defined the length of the
+    // normal vectors to be 15% of the bounding box diagonal.
+    float length = mesh->bounding_box().diagonal() * 0.15f;
+
+    // Now let collects the two end points of each normal vector. So from
+    // these points we can create a drawable to visualize the normal vectors.
+
+    // Every consecutive two points represent a normal vector.
+    std::vector<vec3> normal_points;
+    for (auto v : mesh->vertices()) {
+        const vec3& s = points[v];
+        const vec3& t = points[v] + normals[v] * length;
+        normal_points.push_back(s);
+        normal_points.push_back(t);
+    }
+
+    LinesDrawable* normals_drawable = mesh->add_lines_drawable("normals");
+    normals_drawable->update_vertex_buffer(normal_points);
+    normals_drawable->set_per_vertex_color(false);
+    normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+    normals_drawable->set_impostor_type(LinesDrawable::CONE);
+    normals_drawable->set_line_width(8);
+}
+
+
+// render mesh vertices as surfels
+void create_surfels(SurfaceMesh* mesh) {
+    auto points = mesh->get_vertex_property<vec3>("v:point");
+    mesh->update_vertex_normals();
+    auto normals = mesh->get_vertex_property<vec3>("v:normal");
+    PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
+    points_drawable->update_vertex_buffer(points.vector());
+    points_drawable->update_normal_buffer(normals.vector());
+    points_drawable->set_per_vertex_color(false);
+    points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+    points_drawable->set_point_size(20.0f);
+    points_drawable->set_impostor_type(PointsDrawable::SURFEL);
+}
 
 
 int main(int argc, char** argv) {
@@ -59,63 +136,35 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
-        auto points = mesh->get_vertex_property<vec3>("v:point");
+        //--------------------- render vertices as spheres ----------------
 
-        //--------------------- render vertices as spheres -----------------------
+        create_spheres(mesh);
 
-        PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
-        points_drawable->update_vertex_buffer(points.vector());
-        points_drawable->set_per_vertex_color(false);
-        points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-        points_drawable->set_point_size(26.0f);
-        points_drawable->set_impostor_type(PointsDrawable::SPHERE);
+        //--------------------- render edges as cylinders -----------------
 
-        //--------------------- render edges as cylinders -----------------------
+        create_cylinders(mesh);
 
-        LinesDrawable* edges_drawable = mesh->add_lines_drawable("edges");
-        std::vector<vec3> edge_points; // each consecutive point pair represents an edge
-        for (auto e : mesh->edges()) {
-            SurfaceMesh::Vertex s = mesh->vertex(e, 0);
-            edge_points.push_back(points[s]);
-            SurfaceMesh::Vertex t = mesh->vertex(e, 1);
-            edge_points.push_back(points[t]);
-        }
-        edges_drawable->update_vertex_buffer(edge_points);
-        edges_drawable->set_per_vertex_color(false);
-        edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-        edges_drawable->set_impostor_type(LinesDrawable::CYLINDER);
-        edges_drawable->set_line_width(8);
+        //--------------------- render normals as cones -------------------
 
-        //--------------------- render normals as cones -----------------------
+        create_cones(mesh);
 
-        // Get the bounding box of the model. Then we defined the length of the
-        // normal vectors to be 10% of the bounding box diagonal.
-        const Box3& box = mesh->bounding_box();
-        float length = norm(box.max() - box.min()) * 0.1f;
+        //-------------------- render vertices as surfels -----------------
 
-        // Now let collects the two end points of each normal vector. So from
-        // these points we can create a drawable to visualize the normal vectors.
+        // make a copy of the mesh
+        SurfaceMesh* copy = new SurfaceMesh(*mesh);
+        // translate the mesh a bit so we can see both
+        const vec3 trans = vec3(0, 1, 0) * mesh->bounding_box().diagonal() * 0.7f;
+        auto points = copy->get_vertex_property<vec3>("v:point");
+        for (auto v : copy->vertices())
+             points[v] += trans;
+        viewer.add_model(copy, false);
 
-        // Every consecutive two points represent a normal vector.
-        std::vector<vec3> normal_points;
-        for (auto v : mesh->vertices()) {
-            const vec3& s = points[v];
-            const vec3& n = mesh->compute_vertex_normal(v);
-            const vec3& t = points[v] + n * length;
-            normal_points.push_back(s);
-            normal_points.push_back(t);
-        }
+        create_surfels(copy);
 
-        LinesDrawable* normals_drawable = mesh->add_lines_drawable("normals");
-        normals_drawable->update_vertex_buffer(normal_points);
-        normals_drawable->set_per_vertex_color(false);
-        normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
-        normals_drawable->set_impostor_type(LinesDrawable::CONE);
-        normals_drawable->set_line_width(15);
-
-        // -----------------------------------------------------------------
+        // ----------------------------------------------------------------
 
         // Run the viewer
+        viewer.fit_screen();
         viewer.run();
     }
     catch (const std::runtime_error &e) {

@@ -31,7 +31,9 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/util/logging.h>
 
+using namespace google;
 
 namespace easy3d {
 
@@ -209,7 +211,44 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_surfels(const Camera *camera, bool with_storage_buffer) const {
-        std::cerr << "to be implemented ..." << std::endl;
+        if (!normal_buffer()) {
+            LOG_FIRST_N(ERROR, 3) << "normal buffer does not exist";
+        }
+
+        ShaderProgram* program = ShaderManager::get_program("points/points_surfel_color");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            program = ShaderManager::create_program_from_files("points/points_surfel_color", attributes, std::vector<std::string>(), true);
+        }
+        if (!program)
+            return;
+
+        easy3d_debug_gl_error;
+
+        const mat4& MVP = camera->modelViewProjectionMatrix();
+        // camera position is defined in world coordinate system.
+        const vec3& wCamPos = camera->position();
+        const vec4& wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
+
+        program->bind();
+        program->set_uniform("MVP", MVP);
+        program->set_uniform("wLightPos", wLightPos);
+        program->set_uniform("wCamPos", wCamPos);
+
+        float ratio = camera->pixelGLRatio(camera->sceneCenter());
+        program->set_uniform("radius", point_size() * ratio);
+
+        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
+        program->set_uniform("default_color", default_color());
+
+        program->set_block_uniform("Material", "ambient", material().ambient);
+        program->set_block_uniform("Material", "specular", material().specular);
+        program->set_block_uniform("Material", "shininess", &material().shininess);
+        gl_draw(with_storage_buffer);
+        program->release();
     }
 
 

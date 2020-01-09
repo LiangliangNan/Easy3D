@@ -2,7 +2,7 @@
 
 in  vec3 vtx_position;	// point position
 in  vec3 vtx_color;	// point color
-in  vec3 vtx_normal;// point normal
+in  vec3 vtx_normal;    // point normal
 
 uniform mat4	MVP;
 uniform vec3	default_color = vec3(0.0f, 1.0f, 0.0f);
