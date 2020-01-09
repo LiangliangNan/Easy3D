@@ -32,12 +32,11 @@
  *
  * Always include this file, i.e.,
  *      #include <easy3d/util/logging.h>
- * Instead of:
- *      #include <3rd_party/glog/glog/logging.h>
- * or any other header file, because the third party library may change.
+ * istead of including any other header files, because the third parties may change.
  */
 
 #include <3rd_party/glog/glog/logging.h>
+#include <3rd_party/glog/glog/stl_logging.h>    // to allow logging STL containers
 
 
 namespace easy3d {

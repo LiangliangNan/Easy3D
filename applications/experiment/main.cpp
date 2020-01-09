@@ -1,7 +1,8 @@
 // this is just for experiment/test on-going functions/classes
 
 #include <easy3d/util/logging.h>
-#include <easy3d/util/file_system.h>
+#include <easy3d/core/types.h>
+
 #include <thread>
 
 
@@ -44,7 +45,24 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
-    LOG(FATAL) << "You should see that the program crashed: this is just a test";
+    LOG(INFO) << "Now test logging STL containers:";
+    std::vector<int> x;
+    x.push_back(1);
+    x.push_back(2);
+    x.push_back(3);
+    LOG(INFO) << "std::vector<int>: " << x;
 
-  return EXIT_SUCCESS;
+    //------------------------------------------------
+
+    std::vector<vec3> points;
+    points.push_back(vec3(1));
+    points.push_back(vec3(2));
+    points.push_back(vec3(3));
+    LOG(INFO) << "std::vector<vec3>: " << points;
+
+    //------------------------------------------------
+
+    LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
+
+    return EXIT_SUCCESS;
 }

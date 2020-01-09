@@ -64,6 +64,9 @@ if(EASY3D_BUILD_APPLICATIONS)
     add_subdirectory(applications)
 endif()
 
+# hide some variables that might be set in 3rd_party libraries
+mark_as_advanced(FORCE BUILD_SHARED_LIBS)
+mark_as_advanced(FORCE BUILD_TESTING)
 
 ## Resources
 # Copy resources dirs into our shadow build directory
