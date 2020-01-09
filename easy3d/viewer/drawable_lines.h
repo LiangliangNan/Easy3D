@@ -31,13 +31,6 @@
 
 namespace easy3d {
 
-    // a line poster can be a cylinder, or a cone
-    enum ImposterType {
-        IT_NULL,
-        IT_CYLINDERS,
-        IT_CONES
-    };
-
     // The drawable for rendering a set of line segments, e.g., wireframe of a mesh, vector fields
 	class LinesDrawable : public Drawable {
 	public:
@@ -45,6 +38,12 @@ namespace easy3d {
 
         DrawableType type() const override;
 
+        // a line poster can be a cylinder, or a cone
+        enum ImposterType {
+            PLAIN,
+            CYLINDER,
+            CONE
+        };
         ImposterType impostor_type() const { return impostor_type_; }
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
@@ -66,8 +65,8 @@ namespace easy3d {
         void _draw_cones_with_texture(const Camera* camera, bool with_storage_buffer) const;
 
     private:
-        ImposterType  impostor_type_;
-        float line_width_;
+        float           line_width_;
+        ImposterType    impostor_type_;
     };
 
 }

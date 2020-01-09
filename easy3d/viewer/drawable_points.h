@@ -39,13 +39,18 @@ namespace easy3d {
 
         DrawableType type() const override;
 
-        // default_color will be ignored if per_vertex_color is true and given.
-		float point_size() const { return point_size_; }
-		void set_point_size(float s) { point_size_ = s; }
+        // a point imposter can be a sphere, or a surfel/disc
+        enum ImposterType {
+            PLAIN,
+            SPHERE,
+            SURFEL
+        };
+        ImposterType impostor_type() const { return impostor_type_; }
+        void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
-        // if ture, points are renderred as shperes
-        bool impostors() const { return impostors_; }
-        void set_impostors(bool b) { impostors_ = b; }
+        // default_color will be ignored if per_vertex_color is true and given.
+        float point_size() const { return point_size_; }
+        void set_point_size(float s) { point_size_ = s; }
 
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
@@ -53,17 +58,19 @@ namespace easy3d {
     protected:
         // without texture
         void _draw_plain_points(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_sprite_spheres(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_geometry_spheres(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_surfels(const Camera* camera, bool with_storage_buffer) const;
 
         // textured
         void _draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_sprite_spheres_with_texture(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_geometry_spheres_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_surfels_with_texture(const Camera* camera, bool with_storage_buffer) const;
 
 	private:
-        float       point_size_;
-        bool        impostors_;
+        float           point_size_;
+        ImposterType    impostor_type_;
 	};
 
 }

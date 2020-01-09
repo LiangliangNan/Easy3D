@@ -159,7 +159,7 @@ namespace easy3d {
             drawable->set_default_color(setting::surface_mesh_vertices_color);
             drawable->set_per_vertex_color(false);
             drawable->set_point_size(setting::surface_mesh_vertices_point_size);
-            drawable->set_impostors(true);
+            drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
 
         template <>
@@ -288,7 +288,7 @@ namespace easy3d {
             drawable->set_per_vertex_color(false);
             drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
             drawable->set_point_size(15.0f);
-            drawable->set_impostors(true);
+            drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
 
         template <>
@@ -306,7 +306,7 @@ namespace easy3d {
             drawable->set_per_vertex_color(false);
             drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
             drawable->set_line_width(3.0f);
-            drawable->set_impostor_type(IT_CYLINDERS);
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
 
 

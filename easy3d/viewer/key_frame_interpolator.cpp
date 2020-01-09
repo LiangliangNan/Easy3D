@@ -354,7 +354,7 @@ namespace easy3d {
                 path_drawable_->update_vertex_buffer(points);
                 path_drawable_->set_default_color(vec3(1.0f, 0.67f, 0.5f));
                 path_drawable_->set_line_width(2);
-                path_drawable_->set_impostor_type(IT_CYLINDERS);
+                path_drawable_->set_impostor_type(LinesDrawable::CYLINDER);
             }
         }
 
@@ -376,7 +376,6 @@ namespace easy3d {
                 cameras_drawable_->update_vertex_buffer(points);
                 cameras_drawable_->set_default_color(vec3(0.0f, 0.0f, 1.0f));
                 cameras_drawable_->set_line_width(2);
-                //cameras_drawable_->set_impostor_type(IT_CYLINDERS);
             }
         }
 

@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         points_drawable->set_per_vertex_color(false);
         points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
         points_drawable->set_point_size(26.0f);
-        points_drawable->set_impostors(true);
+        points_drawable->set_impostor_type(PointsDrawable::SPHERE);
 
         //--------------------- render edges as cylinders -----------------------
 
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         edges_drawable->update_vertex_buffer(edge_points);
         edges_drawable->set_per_vertex_color(false);
         edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-        edges_drawable->set_impostor_type(IT_CYLINDERS);
+        edges_drawable->set_impostor_type(LinesDrawable::CYLINDER);
         edges_drawable->set_line_width(8);
 
         //--------------------- render normals as cones -----------------------
@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
         normals_drawable->update_vertex_buffer(normal_points);
         normals_drawable->set_per_vertex_color(false);
         normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
-        normals_drawable->set_impostor_type(IT_CONES);
+        normals_drawable->set_impostor_type(LinesDrawable::CONE);
         normals_drawable->set_line_width(15);
 
         // -----------------------------------------------------------------

@@ -36,8 +36,8 @@ namespace easy3d {
 
     LinesDrawable::LinesDrawable(const std::string& name /* = ""*/)
         : Drawable(name)
-        , impostor_type_(IT_NULL)
         , line_width_(1.0f)
+        , impostor_type_(PLAIN)
     {
         default_color_ = vec3(0.0f, 0.0f, 0.0f);
     }
@@ -50,21 +50,21 @@ namespace easy3d {
 
     void LinesDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
         switch (impostor_type_) {
-        case IT_NULL:
+        case PLAIN:
             if (texture_)
                 _draw_plain_lines_with_texture(camera, with_storage_buffer);
             else
                 _draw_plain_lines(camera, with_storage_buffer);
             break;
 
-        case IT_CYLINDERS:
+        case CYLINDER:
             if (texture_)
                 _draw_cylinders_with_texture(camera, with_storage_buffer);
             else
                 _draw_cylinders(camera, with_storage_buffer);
             break;
 
-        case IT_CONES:
+        case CONE:
             if (texture_)
                 _draw_cones_with_texture(camera, with_storage_buffer);
             else

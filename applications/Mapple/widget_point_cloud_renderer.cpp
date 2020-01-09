@@ -57,7 +57,7 @@ void WidgetPointCloudRenderer::updatePanel() {
         QPixmap pixmap(ui->toolButtonVerticesDefaultColor->size());
         pixmap.fill(QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonVerticesDefaultColor->setIcon(QIcon(pixmap));
-        ui->toolButtonVerticesImpostors->setChecked(vertices->impostors());
+        ui->toolButtonVerticesImpostors->setChecked(vertices->impostor_type() != PointsDrawable::PLAIN);
         ui->doubleSpinBoxVerticesSize->setValue(vertices->point_size());
     }
     else {
@@ -122,7 +122,7 @@ void WidgetPointCloudRenderer::setShowVertices(bool b) {
         vertices->set_per_vertex_color(setting::point_cloud_use_color_property);
         vertices->set_visible(setting::point_cloud_show_points);
         vertices->set_default_color(setting::point_cloud_points_color);
-        vertices->set_impostors(setting::point_cloud_impostors);
+//        vertices->set_impostors(setting::point_cloud_impostors);
         vertices->set_point_size(setting::point_cloud_point_size);
 
         viewer_->doneCurrent();
@@ -156,7 +156,7 @@ void WidgetPointCloudRenderer::setVerticesDefaultColor() {
 void WidgetPointCloudRenderer::setVerticesImpostors(bool b) {
     PointsDrawable* vertices = cloud()->points_drawable("vertices");
     if (vertices) {
-        vertices->set_impostors(b);
+//        vertices->set_impostors(b);
         viewer_->update();
     }
 }

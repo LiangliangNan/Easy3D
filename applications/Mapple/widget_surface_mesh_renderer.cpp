@@ -105,7 +105,7 @@ void WidgetSurfaceMeshRenderer::updatePanel() {
         QPixmap pixmap(ui->toolButtonVerticesDefaultColor->size());
         pixmap.fill(QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonVerticesDefaultColor->setIcon(QIcon(pixmap));
-        ui->toolButtonVerticesImpostors->setChecked(vertices->impostors());
+        ui->toolButtonVerticesImpostors->setChecked(vertices->impostor_type() != PointsDrawable::PLAIN);
         ui->doubleSpinBoxVerticesSize->setValue(vertices->point_size());
     }
     else {
@@ -365,7 +365,7 @@ void WidgetSurfaceMeshRenderer::setVerticesDefaultColor() {
 void WidgetSurfaceMeshRenderer::setVerticesImpostors(bool b) {
     PointsDrawable* vertices = mesh()->points_drawable("vertices");
     if (vertices) {
-        vertices->set_impostors(b);
+//        vertices->set_impostors(b);
         viewer_->update();
     }
 }
@@ -426,7 +426,7 @@ void WidgetSurfaceMeshRenderer::setWireframeDefaultColor() {
 void WidgetSurfaceMeshRenderer::setWireframeImpostors(bool b) {
     LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
     if (wireframe) {
-        wireframe->set_impostor_type(IT_CYLINDERS);
+        wireframe->set_impostor_type(LinesDrawable::CYLINDER);
         viewer_->update();
     }
 }
@@ -489,7 +489,7 @@ void WidgetSurfaceMeshRenderer::setBordersDefaultColor() {
 void WidgetSurfaceMeshRenderer::setBordersImpostors(bool b) {
     LinesDrawable* borders = mesh()->lines_drawable("borders");
     if (borders) {
-        borders->set_impostor_type(IT_CYLINDERS);
+        borders->set_impostor_type(LinesDrawable::CYLINDER);
         viewer_->update();
     }
 }

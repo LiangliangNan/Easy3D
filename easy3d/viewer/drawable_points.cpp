@@ -38,7 +38,7 @@ namespace easy3d {
     PointsDrawable::PointsDrawable(const std::string& name /*= ""*/)
         : Drawable(name)
         , point_size_(2.0f)
-        , impostors_(false)
+        , impostor_type_(PLAIN)
     {
         default_color_ = vec3(0.0f, 1.0f, 0.0f);
     }
@@ -50,24 +50,34 @@ namespace easy3d {
 
 
     void PointsDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
-        if (impostors_) {
-#if 0
-            if (texture_)
-                _draw_sprite_spheres_with_texture(camera, with_storage_buffer);
-            else
-                _draw_sprite_spheres(camera, with_storage_buffer);
-#else
-            if (texture_)
-                _draw_geometry_spheres_with_texture(camera, with_storage_buffer);
-            else
-                _draw_geometry_spheres(camera, with_storage_buffer);
-#endif
-        }
-        else {
+        switch (impostor_type_) {
+        case PLAIN:
             if (texture_)
                 _draw_plain_points_with_texture(camera, with_storage_buffer);
             else
                 _draw_plain_points(camera, with_storage_buffer);
+            break;
+
+        case SPHERE:
+#if 0
+            if (texture_)
+                _draw_spheres_with_texture_sprite(camera, with_storage_buffer);
+            else
+                _draw_sprite_spheres(camera, with_storage_buffer);
+#else
+            if (texture_)
+                _draw_spheres_with_texture_geometry(camera, with_storage_buffer);
+            else
+                _draw_spheres_geometry(camera, with_storage_buffer);
+#endif
+            break;
+
+        case SURFEL:
+            if (texture_)
+                _draw_surfels_with_texture(camera, with_storage_buffer);
+            else
+                _draw_surfels(camera, with_storage_buffer);
+            break;
         }
     }
 
@@ -110,7 +120,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_sprite_spheres(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const {
         ShaderProgram* program = ShaderManager::get_program("points/points_spheres_sprite_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -149,7 +159,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_geometry_spheres(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const {
         ShaderProgram* program = ShaderManager::get_program("points/points_spheres_geometry_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -184,17 +194,27 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const {
-
+        std::cerr << "to be implemented ..." << std::endl;
     }
 
 
-    void PointsDrawable::_draw_sprite_spheres_with_texture(const Camera* camera, bool with_storage_buffer) const {
-
+    void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const {
+        std::cerr << "to be implemented ..." << std::endl;
     }
 
 
-    void PointsDrawable::_draw_geometry_spheres_with_texture(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const {
+        std::cerr << "to be implemented ..." << std::endl;
+    }
 
+
+    void PointsDrawable::_draw_surfels(const Camera *camera, bool with_storage_buffer) const {
+        std::cerr << "to be implemented ..." << std::endl;
+    }
+
+
+    void PointsDrawable::_draw_surfels_with_texture(const Camera *camera, bool with_storage_buffer) const {
+        std::cerr << "to be implemented ..." << std::endl;
     }
 
 
