@@ -52,6 +52,10 @@ Of course, you can customize the drawables. For example, the following code rend
 	drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
 	drawable->set_point_size(3.0f);	// set point size
 ```
+or as a set of surfels (i.e., 3D discs)
+```c++ 
+	drawable->set_impostor_type(PointsDrawable::SURFEL);
+``` 
 
 By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
 
