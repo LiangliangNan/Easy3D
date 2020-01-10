@@ -47,50 +47,30 @@ namespace easy3d {
     std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
     MeshSurfacer::detect_duplicated_faces(SurfaceMesh* mesh, bool exact, double dist_threshold)
     {
-#ifdef HAS_CGAL
         easy3d::DuplicatedFaces rdf;
         return rdf.detect(mesh, exact, dist_threshold);
-#else
-        LOG(WARNING) << "detect_duplicated_faces() requires CGAL";
-        return std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >();
-#endif
     }
 
 
     unsigned int MeshSurfacer::remove_duplicated_faces(SurfaceMesh* mesh, bool exact, double dist_threshold)
     {
-#ifdef HAS_CGAL
         DuplicatedFaces rdf;
         return rdf.remove(mesh, exact, dist_threshold);
-#else
-        LOG(WARNING) << "remove_duplicated_faces() requires CGAL";
-        return 0;
-#endif
     }
 
 
     std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
     MeshSurfacer::detect_self_intersections(SurfaceMesh* mesh)
     {
-#ifdef HAS_CGAL
         SelfIntersection msi;
         return msi.detect(mesh, false);
-#else
-        LOG(WARNING) << "detect_self_intersections() requires CGAL";
-        return std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >();
-#endif
     }
 
 
     SurfaceMesh* MeshSurfacer::remesh_self_intersections(SurfaceMesh* mesh, bool stitch /* = true */)
     {
-#ifdef HAS_CGAL
         SelfIntersection msi;
         return msi.remesh(mesh, stitch);
-#else
-        LOG(WARNING) << "remesh_self_intersections() requires CGAL";
-        return nullptr;
-#endif
     }
 
 }
