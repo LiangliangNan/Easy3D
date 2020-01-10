@@ -47,15 +47,15 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 Of course, you can customize the drawables. For example, the following code renders a point cloud as a set of spheres
 
 ```c++
-		// assume your point cloud has been loaded to the viewer
-		PointsDrawable* drawable = cloud->points_drawable("vertices");
-		drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-		drawable->set_point_size(3.0f);    // set point size
+        // assume your point cloud has been loaded to the viewer
+        PointsDrawable* drawable = cloud->points_drawable("vertices");
+        drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+        drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 
 ```c++ 
-    	drawable->set_impostor_type(PointsDrawable::SURFEL);
+        drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, scalar fields) can be done very conveniently.
