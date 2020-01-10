@@ -172,7 +172,7 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 
 	for (const auto& c : cameras) {
 		CameraPara cam;
-        cam.fx = cam.fy = c.f;
+        cam.fx = cam.fy = static_cast<float>(c.f);
         cam.cx = 1520.69f;
         cam.cy = 1006.81f;
         cam.w = 3072;
@@ -180,7 +180,7 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 
 		mat3 r;
 		for (int i = 0; i < 9; ++i)
-			r[i] = c.R[i];
+            r[i] = static_cast<float>(c.R[i]);
 		r = transpose(r); // r is column-major
 
 		quat q;
@@ -194,9 +194,9 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 		cam.ry = axis.y;
 		cam.rz = axis.z;
 
-		cam.tx = c.t[0];
-		cam.ty = c.t[1];
-		cam.tz = c.t[2];
+        cam.tx = static_cast<float>(c.t[0]);
+        cam.ty = static_cast<float>(c.t[1]);
+        cam.tz = static_cast<float>(c.t[2]);
 	
 		views_.push_back(cam);
 	}

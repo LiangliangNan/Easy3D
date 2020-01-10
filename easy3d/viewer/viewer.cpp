@@ -480,6 +480,10 @@ namespace easy3d {
             delete m;
         models_.clear();
 
+        for (auto d : drawables_)
+            delete d;
+        drawables_.clear();
+
         if (gpu_timer_) { delete gpu_timer_; gpu_timer_ = nullptr; }
 
         ShaderManager::terminate();
@@ -1147,6 +1151,20 @@ namespace easy3d {
     }
 
 
+    void Viewer::add_drawable(Drawable* drawable) {
+        if (drawable)
+            drawables_.insert(drawable);
+    }
+
+    /**
+     * Delete the drawable from the viewer. The drawable will also be destroyed.
+     */
+    void Viewer::delete_drawable(Drawable* drawable) {
+        if (drawable)
+            drawables_.erase(drawable);
+    }
+
+
     void Viewer::fit_screen(const easy3d::Model *model) {
         if (!model && models_.empty())
             return;
@@ -1365,9 +1383,6 @@ namespace easy3d {
 
 
     void Viewer::draw() const {
-        if (models_.empty())
-            return;
-
         for (const auto m : models_) {
             if (!m->is_visible())
                 continue;
@@ -1399,6 +1414,11 @@ namespace easy3d {
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
 
+        }
+
+        for (auto d : drawables_) {
+            if (d->is_visible())
+                d->draw(camera(), false);
         }
 
         //camera()->draw_paths();

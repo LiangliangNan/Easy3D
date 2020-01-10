@@ -29,6 +29,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <easy3d/core/types.h>
 
@@ -48,6 +49,7 @@ namespace easy3d {
 
 	class Camera;
 	class Model;
+    class Drawable;
     class OpenGLTimer;
 	class LinesDrawable;
     class TrianglesDrawable;
@@ -120,13 +122,24 @@ namespace easy3d {
 
         // Add a model to the viewer to be visualized (the viewer will be incharge
         // of its memory menagement).
-        // By default, this function also It will also creates necessary drawables
-        // for visualizing the model. Set create_default_drawables to false if you
-        // want to create a customized drawable for a sepcific rendering purpose.
+        // By default, this function will creates necessary drawables for visualizing
+        // the model. Set create_default_drawables to false if you want to create
+        // a customized drawable (for a sepcific rendering purpose) by your self.
         void add_model(Model* model, bool create_default_drawables = true, bool smooth_shading = false);
 
         // delete the model from the viewer. The model will also be destroyed.
         void delete_model(Model* model);
+
+        /**
+         * Add a drawable to the viewer to be visualized (the viewer will be incharge
+         * of its memory menagement).
+         */
+        void add_drawable(Drawable* drawable);
+
+        /**
+         * Delete the drawable from the viewer. The drawable will also be destroyed.
+         */
+        void delete_drawable(Drawable* drawable);
 
         // ----------------------------- UI -----------------------------------
 
@@ -275,6 +288,9 @@ namespace easy3d {
 
 		std::vector<Model*> models_;
 		int model_idx_;
+
+        // drawables independent of any model
+        std::set<Drawable*> drawables_;
 	};
 
 }

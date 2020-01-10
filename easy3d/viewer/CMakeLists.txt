@@ -81,11 +81,93 @@ set(${PROJECT_NAME}_SOURCES
     viewer.cpp
     )
 
+set(${PROJECT_NAME}_DATA_FILES
+    bunny.h
+    bunny.cpp
+    )
 
 set(${PROJECT_NAME}_SHADERS
-    )
+    # points
+    ../../resources/shaders/points/points_plain_color.vert
+    ../../resources/shaders/points/points_plain_color.frag
+    ../../resources/shaders/points/points_spheres_geometry_color.vert
+    ../../resources/shaders/points/points_spheres_geometry_color.geom
+    ../../resources/shaders/points/points_spheres_geometry_color.frag
+    ../../resources/shaders/points/points_spheres_sprite_color.vert
+    ../../resources/shaders/points/points_spheres_sprite_color.frag
+    ../../resources/shaders/points/points_surfel_color.vert
+    ../../resources/shaders/points/points_surfel_color.geom
+    ../../resources/shaders/points/points_surfel_color.frag
+    # lines
+    ../../resources/shaders/lines/lines_plain_color.vert
+    ../../resources/shaders/lines/lines_plain_color.frag
+    ../../resources/shaders/lines/lines_plain_color_width_control.vert
+    ../../resources/shaders/lines/lines_plain_color_width_control.geom
+    ../../resources/shaders/lines/lines_plain_color_width_control.frag
+    ../../resources/shaders/lines/lines_cylinders_color.vert
+    ../../resources/shaders/lines/lines_cylinders_color.geom
+    ../../resources/shaders/lines/lines_cylinders_color.frag
+    ../../resources/shaders/lines/lines_cones_color.vert
+    ../../resources/shaders/lines/lines_cones_color.geom
+    ../../resources/shaders/lines/lines_cones_color.frag
+    # surface
+    ../../resources/shaders/surface/surface_color.vert
+    ../../resources/shaders/surface/surface_color.frag
+    ../../resources/shaders/surface/surface_texture.vert
+    ../../resources/shaders/surface/surface_texture.frag
+    # EDL
+    ../../resources/shaders/edl/edl_bilateral_filter.vert
+    ../../resources/shaders/edl/edl_bilateral_filter.frag
+    ../../resources/shaders/edl/edl_compose.vert
+    ../../resources/shaders/edl/edl_compose.frag
+    ../../resources/shaders/edl/edl_shade.vert
+    ../../resources/shaders/edl/edl_shade.frag
+    # screen space
+    ../../resources/shaders/screen_space/lines_color.vert
+    ../../resources/shaders/screen_space/lines_color.frag
+    ../../resources/shaders/screen_space/quad_color_texture.vert
+    ../../resources/shaders/screen_space/quad_color_texture.frag
+    ../../resources/shaders/screen_space/quad_gray_texture.vert
+    ../../resources/shaders/screen_space/quad_gray_texture.frag
+    # shadow
+    ../../resources/shaders/shadow/shadow_generate.vert
+    ../../resources/shaders/shadow/shadow_generate.frag
+    ../../resources/shaders/shadow/shadow_rendering.vert
+    ../../resources/shaders/shadow/shadow_rendering.frag
+    ../../resources/shaders/shadow/soft_shadow_generate.vert
+    ../../resources/shaders/shadow/soft_shadow_generate.frag
+    ../../resources/shaders/shadow/soft_shadow_rendering.vert
+    ../../resources/shaders/shadow/soft_shadow_rendering.frag
+    # ssao
+    ../../resources/shaders/ssao/blur.vert
+    ../../resources/shaders/ssao/blur.frag
+    ../../resources/shaders/ssao/geometry_pass.vert
+    ../../resources/shaders/ssao/geometry_pass.frag
+    ../../resources/shaders/ssao/ssao.vert
+    ../../resources/shaders/ssao/ssao.frag
+    # transparency
+    ../../resources/shaders/transparency/average_color_blend.vert
+    ../../resources/shaders/transparency/average_color_blend.frag
+    ../../resources/shaders/transparency/average_color_init.vert
+    ../../resources/shaders/transparency/average_color_init.frag
+    ../../resources/shaders/transparency/dual_depth_peeling_blend.vert
+    ../../resources/shaders/transparency/dual_depth_peeling_blend.frag
+    ../../resources/shaders/transparency/dual_depth_peeling_final.vert
+    ../../resources/shaders/transparency/dual_depth_peeling_final.frag
+    ../../resources/shaders/transparency/dual_depth_peeling_init.vert
+    ../../resources/shaders/transparency/dual_depth_peeling_init.frag
+    ../../resources/shaders/transparency/dual_depth_peeling_peel_color.vert
+    ../../resources/shaders/transparency/dual_depth_peeling_peel_color.frag
+    ../../resources/shaders/transparency/dual_peeling_peel_texture.vert
+    ../../resources/shaders/transparency/dual_peeling_peel_texture.frag
+     )
 	
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SHADERS} )
+add_library(${PROJECT_NAME} STATIC
+    ${${PROJECT_NAME}_SOURCES}
+    ${${PROJECT_NAME}_HEADERS}
+    ${${PROJECT_NAME}_SHADERS}
+    ${${PROJECT_NAME}_DATA_FILES}
+    )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
