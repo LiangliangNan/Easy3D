@@ -5,7 +5,7 @@ project(${PROJECT_NAME})
 
 include( ../../cmake/qt5.cmake )
 if (NOT QT5_FOUND)
-    message("Warning:" ${PROJECT_NAME} "requires Qt but Qt was not found")
+    message("Warning: " ${PROJECT_NAME} " requires Qt but Qt was not found")
     return()
 endif()
 
