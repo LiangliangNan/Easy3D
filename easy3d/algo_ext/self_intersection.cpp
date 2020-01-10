@@ -23,8 +23,6 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef HAS_CGAL
-
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/logging.h>
@@ -833,6 +831,3 @@ namespace easy3d {
 
 
 } // namespace easy3d
-
-
-#endif

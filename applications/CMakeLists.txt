@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory(Mapple)
+if(EASY3D_ENABLE_QT)
+    find_package(CGAL)
+    if(CGAL_FOUND)
+        add_subdirectory(Mapple)
+    else()
+        message("Warning: Mapple requires CGAL but CGAL was not found")
+    endif()
+endif()
+
+
 add_subdirectory(experiment)

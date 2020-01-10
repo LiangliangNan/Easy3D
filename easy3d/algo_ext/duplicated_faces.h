@@ -27,7 +27,6 @@
 #ifndef ALGO_DUPLICATED_FACES_H
 #define ALGO_DUPLICATED_FACES_H
 
-#ifdef HAS_CGAL
 
 #include <vector>
 
@@ -92,7 +91,5 @@ namespace easy3d {
     };
 
 }
-
-#endif
 
 #endif

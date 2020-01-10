@@ -27,9 +27,6 @@
 #ifndef EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H
 #define EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H
 
-
-#ifdef HAS_CGAL
-
 #include <vector>
 #include <unordered_map>
 
@@ -221,7 +218,5 @@ namespace easy3d {
     };
 
 } // namespace easy3d
-
-#endif
 
 #endif  // EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H

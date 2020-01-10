@@ -27,10 +27,13 @@ endif()
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Build tutorials
-option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"         ON)
+option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
 
-# Build applications
-option(EASY3D_BUILD_APPLICATIONS    "Build Easy3D Applications"     OFF)
+# Build CGAL-based algorithms
+option(EASY3D_ENABLE_CGAL           "Build CGAL-based algorithms"           ON)
+
+# Build Qt-based examples/applications
+option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
 
 ################################################################################
 
@@ -60,9 +63,9 @@ if(EASY3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif()
 
-if(EASY3D_BUILD_APPLICATIONS)
-    add_subdirectory(applications)
-endif()
+
+add_subdirectory(applications)
+
 
 # hide some variables that might be set in 3rd_party libraries
 mark_as_advanced(FORCE BUILD_SHARED_LIBS)

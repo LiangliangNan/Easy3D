@@ -23,8 +23,6 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef HAS_CGAL
-
 #include <easy3d/algo_ext/duplicated_faces.h>
 
 #include <map>
@@ -264,6 +262,3 @@ namespace easy3d {
 
 
 }
-
-
-#endif
