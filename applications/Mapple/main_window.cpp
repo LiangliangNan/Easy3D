@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutVectorField->addWidget(widgetVectorField_);
 
     ui->verticalLayoutLighting->addWidget(new WidgetLighting(this));
-//  ui->toolBox->addItem(new WidgetLighting(this), QIcon("Resources/light.png"), QString("Lighting"));
+//  ui->toolBox->addItem(new WidgetLighting(this), QIcon("Resources/icons/light.png"), QString("Lighting"));
 
     int count = ui->toolBox->count();
     for (int i=0; i<count; ++i)
@@ -93,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
 
-    setWindowIcon(QIcon("Resources/Mapple.png"));
+    setWindowIcon(QIcon("Resources/icons/Mapple.png"));
     setFocusPolicy(Qt::StrongFocus);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);

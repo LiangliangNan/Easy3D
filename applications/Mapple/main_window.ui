@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -108,6 +108,7 @@
    </attribute>
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
+   <addaction name="actionSnapshot"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetRendering">
@@ -119,7 +120,7 @@
    </property>
    <property name="windowIcon">
     <iconset>
-     <normaloff>Resources/options.png</normaloff>Resources/options.png</iconset>
+     <normaloff>Resources/icons/options.png</normaloff>Resources/icons/options.png</iconset>
    </property>
    <property name="features">
     <set>QDockWidget::DockWidgetClosable</set>
@@ -155,12 +156,12 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>332</height>
+          <height>359</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/renderer.png</normaloff>Resources/renderer.png</iconset>
+          <normaloff>Resources/icons/renderer.png</normaloff>Resources/icons/renderer.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Renderer</string>
@@ -189,12 +190,12 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>332</height>
+          <height>359</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/scalar.png</normaloff>Resources/scalar.png</iconset>
+          <normaloff>Resources/icons/scalar.png</normaloff>Resources/icons/scalar.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Scalar Field</string>
@@ -223,12 +224,12 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>332</height>
+          <height>359</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/vector.png</normaloff>Resources/vector.png</iconset>
+          <normaloff>Resources/icons/vector.png</normaloff>Resources/icons/vector.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Vector Field</string>
@@ -257,12 +258,12 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>332</height>
+          <height>359</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/texture.png</normaloff>Resources/texture.png</iconset>
+          <normaloff>Resources/icons/texture.png</normaloff>Resources/icons/texture.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Texturing</string>
@@ -291,12 +292,12 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>332</height>
+          <height>359</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/light.png</normaloff>Resources/light.png</iconset>
+          <normaloff>Resources/icons/light.png</normaloff>Resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Lighting</string>
@@ -422,7 +423,7 @@
   <action name="actionOpen">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/fileopen.png</normaloff>Resources/fileopen.png</iconset>
+     <normaloff>Resources/icons/fileopen.png</normaloff>Resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -434,7 +435,7 @@
   <action name="actionSave">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/filesave.png</normaloff>Resources/filesave.png</iconset>
+     <normaloff>Resources/icons/filesave.png</normaloff>Resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -455,8 +456,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="Resources/Mapple.qrc">
-     <normaloff>:/icons/fileopen.png</normaloff>:/icons/fileopen.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/exit.png</normaloff>Resources/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -466,11 +467,19 @@
    </property>
   </action>
   <action name="actionAboutMapple">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/help.png</normaloff>Resources/icons/help.png</iconset>
+   </property>
    <property name="text">
     <string>About Mapple</string>
    </property>
   </action>
   <action name="actionClearRecentFiles">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/clear.png</normaloff>Resources/icons/clear.png</iconset>
+   </property>
    <property name="text">
     <string>Clear</string>
    </property>
@@ -488,7 +497,7 @@
   <action name="actionSnapshot">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/snap_shot.png</normaloff>Resources/snap_shot.png</iconset>
+     <normaloff>Resources/icons/snap_shot.png</normaloff>Resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
     <string>Snapshot</string>
@@ -541,8 +550,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="Resources/Mapple.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -53,12 +53,12 @@ set(${PROJECT_NAME}_FORMS
     widget_vector_field.ui
     )
 
-set(${PROJECT_NAME}_RESOURCES
-    Resources/Mapple.qrc
-    )
+#set(${PROJECT_NAME}_RESOURCES
+#    Resources/Mapple.qrc
+#    )
 
 if( MSVC )
-    add_executable( ${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
+    add_executable( ${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} )
         # if you want to get rid of the (system) console, use
 #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
 #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
@@ -101,4 +101,4 @@ endif()
 ## Resources
 # Copy resources dirs into our shadow build directory
 #file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_BINARY_DIR}/bin )
+file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )

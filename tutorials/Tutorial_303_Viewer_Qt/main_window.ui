@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -83,12 +83,14 @@
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
    <addaction name="actionSnapshot"/>
+   <addaction name="separator"/>
+   <addaction name="actionAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="viewer_qt.qrc">
-     <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/fileopen.png</normaloff>Resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -99,8 +101,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="viewer_qt.qrc">
-     <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/filesave.png</normaloff>Resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -111,8 +113,8 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="viewer_qt.qrc">
-     <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/exit.png</normaloff>Resources/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -123,8 +125,8 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="viewer_qt.qrc">
-     <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/help.png</normaloff>Resources/icons/help.png</iconset>
    </property>
    <property name="text">
     <string>About Easy3D</string>
@@ -134,14 +136,18 @@
    </property>
   </action>
   <action name="actionClearRecentFiles">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/clear.png</normaloff>Resources/icons/clear.png</iconset>
+   </property>
    <property name="text">
     <string>Clear</string>
    </property>
   </action>
   <action name="actionSnapshot">
    <property name="icon">
-    <iconset resource="viewer_qt.qrc">
-     <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
+    <iconset>
+     <normaloff>Resources/icons/snap_shot.png</normaloff>Resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
     <string>Snapshot</string>
@@ -162,8 +168,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="viewer_qt.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

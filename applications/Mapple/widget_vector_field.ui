@@ -74,7 +74,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>Resources/imposters.png</normaloff>Resources/imposters.png</iconset>
+           <normaloff>Resources/icons/imposters.png</normaloff>Resources/icons/imposters.png</iconset>
          </property>
          <property name="checkable">
           <bool>true</bool>

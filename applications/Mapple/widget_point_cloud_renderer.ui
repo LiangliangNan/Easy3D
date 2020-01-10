@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Point cloud renderer</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>Resources/icons/imposters.png</normaloff>Resources/icons/imposters.png</iconset>
+  </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
   </property>
@@ -40,6 +44,12 @@
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
        </property>
       </spacer>
      </item>
@@ -82,7 +92,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>Resources/imposters.png</normaloff>Resources/imposters.png</iconset>
+           <normaloff>Resources/icons/imposters.png</normaloff>Resources/icons/imposters.png</iconset>
          </property>
          <property name="checkable">
           <bool>true</bool>
