@@ -1,11 +1,11 @@
 <img src="resources/images/logo.jpg" width="400">
 
-### Easy3D is an open source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
-### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
+#### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
+#### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
 
 <center>
-	
+    
 <img src="resources/images/cloud.jpg" height="180">  |  <img src="resources/images/mesh.jpg" height="180">  |  <img src="resources/images/scalar.jpg" height="180">
 :-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
 Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
@@ -17,11 +17,11 @@ Vector field                               |   Rendering a model given camera in
 
 <img src="resources/images/edl.jpg" height="180"> | <img src="resources/images/shadow.jpg" height="180"> |  <img src="resources/images/transparency.jpg" height="180">
 :--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
-Eye-dome lighting                       |  Shadow                                    |   Transparency	
+Eye-dome lighting                       |  Shadow                                    |   Transparency    
 
 <img src="resources/images/imposters.jpg" height="180">| <img src="resources/images/reconstruction.jpg" height="180"> |  <img src="resources/images/planes.jpg" height="180">
 :-------------------------------------------:|:--------------------------------------------------:|:------------------------------------------------:
-Point/Line imposters                         |  Surface reconstruction                            |   Plane extraction                          	    
+Point/Line imposters                         |  Surface reconstruction                            |   Plane extraction                                  
 
 </center>
 
@@ -37,7 +37,7 @@ Point/Line imposters                         |  Surface reconstruction          
  
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. For example, only two lines of code to have a viewer to visualize you meshes or point clouds
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. For example, only two lines of code to have a viewer to visualize you point clouds, meshes, or graphs
 
 ```c++
         Viewer viewer("MyViewer");
@@ -48,22 +48,33 @@ Of course, you can customize the drawables. For example, the following code rend
 
 ```c++
 	// assume your point cloud has been loaded to the viewer
-        PointsDrawable* drawable = cloud->points_drawable("vertices");
+	PointsDrawable* drawable = cloud->points_drawable("vertices");
 	drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-	drawable->set_point_size(3.0f);	// set point size
+	drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 ```c++ 
-	drawable->set_impostor_type(PointsDrawable::SURFEL);
+    	drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
-By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
+By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, scalar fields) can be done very conveniently.
 
 ### Build
+Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. 
 
-Easy3D has been tested on macOS, Linux, and Windows. You should also be able to build it on other platforms.
+To build Easy3D, you must have
+- `CMake >= 3.1
+- a compiler that supports `>= C++11`
 
-Run CMake to generate project files for you IDE. In case you use *Qt Creator* or other IDEs that can handle the CMakeLists.txt file, simply open that file and then all files will be well organized as projects.
+Easy3D has been tested on macOS (Xcode >= 7), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher supports, so you should be able to build Easy3D on almost all platforms.
+
+There are many options to build Easy3D, e.g.,
+- Using an IDE. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). Simply open the `CMakeLists.txt` in the root directory to obtain a usable project.
+- Run CMake to generate project file(s) or Makefile(s) for your build system.
+
+**Optional dependencies**: Easy3D also supports the use of CGAL and Qt for advanced algorithms and UI, respectively. These optional features can be enabled by switching on the corresponding CMake boolean options:
+- `EASY3D_ENABLE_CGAL`     Compile CGAL-based algorithms (see [`./easy3d/algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
+- `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., [`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
@@ -82,7 +93,7 @@ If Easy3D is useful in your research/work, I would be grateful if you show your 
   year = {2018},
 }
 ```
----
+---------
 
 Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
 
