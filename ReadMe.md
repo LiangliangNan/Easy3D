@@ -47,12 +47,13 @@ Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds
 Of course, you can customize the drawables. For example, the following code renders a point cloud as a set of spheres
 
 ```c++
-	// assume your point cloud has been loaded to the viewer
-	PointsDrawable* drawable = cloud->points_drawable("vertices");
-	drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-	drawable->set_point_size(3.0f);    // set point size
+		// assume your point cloud has been loaded to the viewer
+		PointsDrawable* drawable = cloud->points_drawable("vertices");
+		drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+		drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
+
 ```c++ 
     	drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
@@ -63,16 +64,19 @@ By abstracting geometric elements as one of the above drawables, more general vi
 Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. 
 
 To build Easy3D, you must have
-- `CMake >= 3.1
+
+- CMake >= 3.1
 - a compiler that supports `>= C++11`
 
 Easy3D has been tested on macOS (Xcode >= 7), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher supports, so you should be able to build Easy3D on almost all platforms.
 
 There are many options to build Easy3D, e.g.,
+
 - Using an IDE. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). Simply open the `CMakeLists.txt` in the root directory to obtain a usable project.
 - Run CMake to generate project file(s) or Makefile(s) for your build system.
 
 **Optional dependencies**: Easy3D also supports the use of CGAL and Qt for advanced algorithms and UI, respectively. These optional features can be enabled by switching on the corresponding CMake boolean options:
+
 - `EASY3D_ENABLE_CGAL`     Compile CGAL-based algorithms (see [`./easy3d/algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
 - `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., [`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
 
