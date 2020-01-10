@@ -4,6 +4,10 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 include( ../../cmake/qt5.cmake )
+if(NOT QT5_FOUND)
+    return()
+    message("Warning:" ${PROJECT_NAME} "requires Qt but Qt was not found")
+endif()
 
 set(${PROJECT_NAME}_HEADERS
     main_window.h
