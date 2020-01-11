@@ -5,7 +5,7 @@
 
 
 <center>
-<img src="resources/images/overview.jpg" width="800">  
+<img src="resources/images/overview.jpg" width="600">  
 </center>
 
   
