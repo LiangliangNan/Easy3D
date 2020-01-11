@@ -5,7 +5,7 @@ if(EASY3D_ENABLE_QT)
     if(CGAL_FOUND)
         add_subdirectory(Mapple)
     else()
-        message("Warning: Mapple requires CGAL but CGAL was not found")
+        message(WARNING "Mapple requires CGAL but CGAL was not found")
     endif()
 endif()
 

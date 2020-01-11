@@ -16,7 +16,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC GLEW_STATIC GLEW_NO_GLU)
 
 set (OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
-message("OpenGL libraries: " ${OPENGL_LIBRARIES})
+message(STATUS "OpenGL libraries: ${OPENGL_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES})
 
 

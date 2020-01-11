@@ -40,22 +40,22 @@
 
 find_package(CGAL REQUIRED COMPONENTS Core)
 if(CGAL_FOUND)
-    message("Found CGAL-${CGAL_MAJOR_VERSION}.${CGAL_MINOR_VERSION}.${CGAL_BUGFIX_VERSION}")
+    message(STATUS "Found CGAL-${CGAL_MAJOR_VERSION}.${CGAL_MINOR_VERSION}.${CGAL_BUGFIX_VERSION}")
 
-    message("   CGAL_USE_FILE: ${CGAL_USE_FILE}")
+    message(STATUS "   CGAL_USE_FILE: ${CGAL_USE_FILE}")
     include(${CGAL_USE_FILE})
 
-#    message("   CGAL_DEFINITIONS: ${CGAL_DEFINITIONS}")
-#    message("   CGAL_3RD_PARTY_DEFINITIONS: ${CGAL_3RD_PARTY_DEFINITIONS}")
+#    message(STATUS "   CGAL_DEFINITIONS: ${CGAL_DEFINITIONS}")
+#    message(STATUS "   CGAL_3RD_PARTY_DEFINITIONS: ${CGAL_3RD_PARTY_DEFINITIONS}")
 #    target_compile_definitions(${PROJECT_NAME} PRIVATE ${CGAL_DEFINITIONS} ${CGAL_3RD_PARTY_DEFINITIONS})
 
-#    message("   CGAL_INCLUDE_DIRS: ${CGAL_INCLUDE_DIRS}")
-#    message("   CGAL_3RD_PARTY_INCLUDE_DIRS: ${CGAL_3RD_PARTY_INCLUDE_DIRS}")
+#    message(STATUS "   CGAL_INCLUDE_DIRS: ${CGAL_INCLUDE_DIRS}")
+#    message(STATUS "   CGAL_3RD_PARTY_INCLUDE_DIRS: ${CGAL_3RD_PARTY_INCLUDE_DIRS}")
 #    target_include_directories(${PROJECT_NAME} PRIVATE ${CGAL_INCLUDE_DIRS})
 #    target_include_directories(${PROJECT_NAME} PRIVATE ${CGAL_3RD_PARTY_INCLUDE_DIRS} )
 
-    message("   CGAL_LIBRARIES: ${CGAL_LIBRARIES}")
-    message("   CGAL_3RD_PARTY_LIBRARIES: ${CGAL_3RD_PARTY_LIBRARIES}")
+    message(STATUS "   CGAL_LIBRARIES: ${CGAL_LIBRARIES}")
+    message(STATUS "   CGAL_3RD_PARTY_LIBRARIES: ${CGAL_3RD_PARTY_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code lags.
@@ -74,10 +74,10 @@ endif()
 #---------------------------------------------------------------------------------------------
 find_package(GMP REQUIRED)
 if(GMP_FOUND)
-    message("   GMP_INCLUDE_DIR: ${GMP_INCLUDE_DIR}")
+    message(STATUS "   GMP_INCLUDE_DIR: ${GMP_INCLUDE_DIR}")
 #    target_include_directories(${PROJECT_NAME} PRIVATE ${GMP_INCLUDE_DIR})
 
-    message("   GMP_LIBRARIES: ${GMP_LIBRARIES}")
+    message(STATUS "   GMP_LIBRARIES: ${GMP_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code lags.
@@ -95,10 +95,10 @@ endif()
 #---------------------------------------------------------------------------------------------
 find_package(MPFR REQUIRED)
 if(MPFR_FOUND)
-    message("   MPFR_INCLUDE_DIR: ${MPFR_INCLUDE_DIR}")
+    message(STATUS "   MPFR_INCLUDE_DIR: ${MPFR_INCLUDE_DIR}")
 #    target_include_directories(${PROJECT_NAME} PRIVATE ${MPFR_INCLUDE_DIR})
 
-    message("   MPFR_LIBRARIES: ${MPFR_LIBRARIES}")
+    message(STATUS "   MPFR_LIBRARIES: ${MPFR_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code flags.

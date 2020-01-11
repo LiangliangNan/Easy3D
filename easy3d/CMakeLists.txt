@@ -10,7 +10,7 @@ if(EASY3D_ENABLE_CGAL)
     if(CGAL_FOUND)
         add_subdirectory(algo_ext)  # experimental; not stable
     else()
-        message("Warning: CGAL support has been requested but CGAL was not found")
+        message(WARNING "'algo_ext' requires CGAL but CGAL was not found")
     endif()
 endif()
 
