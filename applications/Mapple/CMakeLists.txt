@@ -9,6 +9,11 @@ if (NOT QT5_FOUND)
     return()
 endif()
 
+
+# some algorithms may use OpenMP
+include( ../../cmake/UseOpenMP.cmake )
+
+
 set(${PROJECT_NAME}_HEADERS
     main_window.h
     paint_canvas.h
