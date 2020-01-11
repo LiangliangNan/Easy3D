@@ -4,3 +4,4 @@ x64
 *.log
 build
 .DS_Store
+resources/images/img.pptx

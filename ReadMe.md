@@ -5,24 +5,7 @@
 
 
 <center>
-    
-<img src="resources/images/cloud.jpg" height="180">  |  <img src="resources/images/mesh.jpg" height="180">  |  <img src="resources/images/scalar.jpg" height="180">
-:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
-Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
-
-<img src="resources/images/vector.jpg" height="180"> |   <img src="resources/images/scene.jpg" height="180">
-:-----------------------------------------:|:------------------------------------------:
-Vector field                               |   Rendering a model given camera intrinsic and extrinsic parameters
-
-
-<img src="resources/images/edl.jpg" height="180"> | <img src="resources/images/shadow.jpg" height="180"> |  <img src="resources/images/transparency.jpg" height="180">
-:--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
-Eye-dome lighting                       |  Shadow                                    |   Transparency    
-
-<img src="resources/images/imposters.jpg" height="180">| <img src="resources/images/reconstruction.jpg" height="180"> |  <img src="resources/images/planes.jpg" height="180">
-:-------------------------------------------:|:--------------------------------------------------:|:------------------------------------------------:
-Point/Line imposters                         |  Surface reconstruction                            |   Plane extraction                                  
-
+<img src="resources/images/overview.jpg" width="800">  
 </center>
 
   
