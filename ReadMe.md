@@ -40,9 +40,9 @@ or as a set of surfels (i.e., 3D discs)
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. 
+Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. So you **do NOT** need to anything about collecting and building annoying third-party libraries.
 
-To build Easy3D, you must have
+You do need [CMake](https://cmake.org/download/) and of course a compiler to build Easy3D:
 
 - CMake >= 3.1
 - a compiler that supports `>= C++11`
