@@ -1,2 +1,2 @@
 * easy3d (on going):
-	- add an application Mapple integrate most of the features in Easy3D;
+	- add an application Mapple integrateing most of the features in Easy3D;
