@@ -47,12 +47,13 @@ You do need [CMake](https://cmake.org/download/) and of course a compiler to bui
 - CMake >= 3.1
 - a compiler that supports `>= C++11`
 
-Easy3D has been tested on macOS (Xcode >= 7), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher supports, so you should be able to build Easy3D on almost all platforms.
+Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher supports, so you should be able to build Easy3D on almost all platforms.
 
-There are many options to build Easy3D, e.g.,
+There are many options to build Easy3D. Choose one of the following (or whatever you prefer):
 
-- Using an IDE. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). Simply open the `CMakeLists.txt` in the root directory to obtain a usable project.
-- Run CMake to generate project file(s) or Makefile(s) for your build system.
+- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of Easy3D. Then you should have obtained a usable project and just build. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
+- Option 2: Use CMake to generate project files for you IDE. Then load the project to your IDE and build.
+- Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft Visual Studio).
 
 **Optional dependencies**: Easy3D also supports the use of CGAL and Qt for advanced algorithms and UI, respectively. These optional features can be enabled by switching on the corresponding CMake boolean options:
 
