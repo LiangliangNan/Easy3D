@@ -25,18 +25,24 @@
 
 
 # ------------------------------------------------------------------------------
-# This file sets up Qt for CMake.
+# This file sets up Qt5 for CMake. When Qt5 was setup successfuly, QT5_FOUND
+# will be set.
 #
-# Quite simple, you only need to do the following two steps:
-# -) include this file after you define your project, but before add_executable() or add_library, e.g.,
+# To use QT5_FOUND, you only need to include this file and specifying Qt libraries
+# to link against, e.g.,
+#       ------------------------------------------------------------------------
 #           project(${PROJECT_NAME})
-#           include( ../../cmake/qt5.cmake )
+#           include( ../../cmake/UseQt5.cmake )
 #           add_executable(${PROJECT_NAME}, main.cpp)
-# -) specify the Qt libraries to link against, e.g.,
 #           target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-#    The recommended way to use Qt libraries and headers with CMake is to use the target_link_libraries
-#    command. This command automatically adds appropriate include directories, compile definitions, the
-#    position-independent-code flag, and links to the qtmain.lib library on Windows.
+#       ------------------------------------------------------------------------
+# NOTE: 'UseQt5.cmake' must be included after you define your project but before
+#       'add_executable()' or'add_library()'.
+#
+#   The recommended way to specify libraries and headers with CMake is to use the
+#   target_link_libraries command. This command automatically adds appropriate
+#   include directories, compile definitions, the position-independent-code flag,
+#   and links to the qtmain.lib library on Windows.
 # ------------------------------------------------------------------------------
 
 
@@ -85,5 +91,5 @@ if (QT5_FOUND)
 
 	# turn on QStringBuilder for more efficient string construction
 	#	see https://doc.qt.io/qt-5/qstring.html#more-efficient-string-construction
-	add_definitions( -DQT_USE_QSTRINGBUILDER )
+        add_definitions( -DQT_USE_QSTRINGBUILDER )
 endif()

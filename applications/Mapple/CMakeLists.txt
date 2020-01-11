@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
-include( ../../cmake/qt5.cmake )
+include( ../../cmake/UseQt5.cmake )
 if (NOT QT5_FOUND)
     message("Warning: " ${PROJECT_NAME} " requires Qt but Qt was not found")
     return()
@@ -88,10 +88,7 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif()
 
-target_link_libraries( ${PROJECT_NAME} Qt5::Core )
-target_link_libraries( ${PROJECT_NAME} Qt5::Gui )
-target_link_libraries( ${PROJECT_NAME} Qt5::Widgets )
-target_link_libraries( ${PROJECT_NAME} Qt5::OpenGL )
+target_link_libraries( ${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL )
 target_link_libraries( ${PROJECT_NAME} viewer algo algo_ext)
 
 

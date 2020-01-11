@@ -26,6 +26,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} core)
 
-include( ../../cmake/cgal.cmake )
+include( ../../cmake/UseCGAL.cmake )
 
 
