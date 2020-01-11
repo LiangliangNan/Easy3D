@@ -58,8 +58,7 @@ if(CGAL_FOUND)
     message("   CGAL_3RD_PARTY_LIBRARIES: ${CGAL_3RD_PARTY_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
-#   include directories, compile definitions, the position-independent-code flag,
-#   and links to the qtmain.lib library on Windows.
+#   include directories, compile definitions, the position-independent-code lags.
     target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
 else()
@@ -81,8 +80,7 @@ if(GMP_FOUND)
     message("   GMP_LIBRARIES: ${GMP_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
-#   include directories, compile definitions, the position-independent-code flag,
-#   and links to the qtmain.lib library on Windows.
+#   include directories, compile definitions, the position-independent-code lags.
     target_link_libraries(${PROJECT_NAME} ${GMP_LIBRARIES})
 else()
     message(FATAL_ERROR "GMP was not found.")
@@ -103,8 +101,7 @@ if(MPFR_FOUND)
     message("   MPFR_LIBRARIES: ${MPFR_LIBRARIES}")
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
-#   include directories, compile definitions, the position-independent-code flag,
-#   and links to the qtmain.lib library on Windows.
+#   include directories, compile definitions, the position-independent-code flags.
     target_link_libraries(${PROJECT_NAME} ${MPFR_LIBRARIES})
 else()
     message(FATAL_ERROR "MPFR was not found.")
