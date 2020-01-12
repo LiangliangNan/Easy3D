@@ -116,13 +116,14 @@ namespace easy3d {
 
 		glfwSetErrorCallback(
 			[](int error, const char *descr) {
-			if (error == GLFW_NOT_INITIALIZED)
-                return;  // Ignore
-			std::cerr << "GLFW error " << error << ": " << descr << std::endl;
+            if (error == GLFW_NOT_INITIALIZED)
+                 LOG(ERROR) << "GLFW error " << error << ": " << descr;
 		});
 
-		if (!glfwInit())
+        if (!glfwInit()) {
+            LOG(ERROR) << "Could not initialize GLFW!";
 			throw std::runtime_error("Could not initialize GLFW!");
+        }
 
 		glfwSetTime(0);
 
@@ -172,6 +173,8 @@ namespace easy3d {
 
 		if (!window_) {
 			glfwTerminate();
+            LOG(ERROR) << "Could not create an OpenGL " << std::to_string(gl_major)
+                       << "." << std::to_string(gl_minor) << " context!";
 			throw std::runtime_error("Could not create an OpenGL " +
 				std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
 		}
@@ -348,7 +351,7 @@ namespace easy3d {
 				return mouse_free_move_event(px, py, dx, dy, modifiers_);
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -375,7 +378,7 @@ namespace easy3d {
 			}
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -391,7 +394,7 @@ namespace easy3d {
 			}
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what() << std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -402,8 +405,7 @@ namespace easy3d {
 			return char_input_event(codepoint);
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -417,8 +419,7 @@ namespace easy3d {
 			return drop_event(arg);
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -429,8 +430,7 @@ namespace easy3d {
 			return mouse_scroll_event(mouse_x_, mouse_y_, static_cast<int>(dx), static_cast<int>(dy));
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 			return false;
 		}
 	}
@@ -449,8 +449,7 @@ namespace easy3d {
             post_resize(w, h);
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in event handler: " << e.what()
-				<< std::endl;
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
 		}
 	}
 
@@ -685,11 +684,11 @@ namespace easy3d {
 			if (samples_ > 0) {
 				if (glIsEnabled(GL_MULTISAMPLE)) {
 					glDisable(GL_MULTISAMPLE);
-					std::cout << title_ + ": MSAA disabled" << std::endl;
+                    LOG(INFO) << title_ + ": MSAA disabled";
 				}
 				else {
 					glEnable(GL_MULTISAMPLE);
-					std::cout << title_ + ": MSAA enabled" << std::endl;
+                    LOG(INFO)  << title_ + ": MSAA enabled";
 				}
 			}
 		}
@@ -785,7 +784,7 @@ namespace easy3d {
 				model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
             if (model_idx_ >= 0) {
                 fit_screen(models_[model_idx_]);
-				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
             }
 		}
 		else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
@@ -795,7 +794,7 @@ namespace easy3d {
 				model_idx_ = int((model_idx_ + 1) % models_.size());
             if (model_idx_ >= 0) {
                 fit_screen(models_[model_idx_]);
-				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
             }
 		}
         else if (key == GLFW_KEY_DELETE && modifiers == 0) {
@@ -978,7 +977,7 @@ namespace easy3d {
 			glfwPollEvents();
 		}
 		catch (const std::exception &e) {
-			std::cerr << "Caught exception in main loop: " << e.what() << std::endl;
+            LOG(ERROR) <<"Caught exception in main loop: " << e.what();
 		}
 
 		cleanup();
@@ -1035,7 +1034,7 @@ namespace easy3d {
     Model* Viewer::open(const std::string &file_name, bool create_default_drawables, bool smooth_shading) {
         for (auto m : models_) {
             if (m->name() == file_name) {
-                std::cout << "model alreaded loaded: \'" << file_name << std::endl;
+                LOG(WARNING) << "model alreaded loaded: \'" << file_name;
                 return nullptr;
             }
         }
@@ -1124,7 +1123,7 @@ namespace easy3d {
 
         unsigned int num = model->n_vertices();
         if (num == 0) {
-            std::cerr << "Warning: model does not have vertices. Only complete model can be added to the viewer." << std::endl;
+            LOG(WARNING) <<"Warning: model does not have vertices. Only complete model can be added to the viewer.";
             return;
         }
 
@@ -1147,7 +1146,7 @@ namespace easy3d {
             fit_screen();
         }
         else
-            std::cerr << "no such model: " << model->name() << std::endl;
+            LOG(WARNING) << "no such model: " << model->name();
     }
 
 
