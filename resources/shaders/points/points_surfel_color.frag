@@ -14,6 +14,9 @@ uniform vec3	wLightPos;
 uniform vec3	wCamPos;
 uniform bool    lighting = true;
 
+// two sides
+uniform bool    two_sides_lighting = true;
+
 layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
         vec3	specular;		// in [0, 1], r==g==b;
@@ -35,7 +38,13 @@ void main()
     vec3 color = FragmentIn.color;
     if (lighting) {
         vec3 light_dir = normalize(wLightPos);
-        float df = max(dot(light_dir, normal), 0);
+
+        float df = 0.0;	// diffuse factor
+        if (two_sides_lighting)
+            df = abs(dot(light_dir, normal));
+        else
+            df = max(dot(light_dir, normal), 0);
+
         float sf = 0.0;	// specular factor
         if (df > 0.0) {	// if the vertex is lit compute the specular color
             vec3 half_vector = normalize(light_dir + view_dir);		// compute the half vector

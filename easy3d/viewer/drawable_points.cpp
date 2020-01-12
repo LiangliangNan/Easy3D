@@ -235,14 +235,16 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP);
-        program->set_uniform("wLightPos", wLightPos);
-        program->set_uniform("wCamPos", wCamPos);
+        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
+        program->set_uniform("default_color", default_color());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
         program->set_uniform("radius", point_size() * ratio);
 
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
+        program->set_uniform("wLightPos", wLightPos);
+        program->set_uniform("wCamPos", wCamPos);
+        program->set_uniform("lighting", true);
+        program->set_uniform("two_sides_lighting", false);
 
         program->set_block_uniform("Material", "ambient", material().ambient);
         program->set_block_uniform("Material", "specular", material().specular);
