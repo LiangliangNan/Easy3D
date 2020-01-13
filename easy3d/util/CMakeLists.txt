@@ -10,6 +10,7 @@ set(${PROJECT_NAME}_HEADERS
     file_system.h
     line_stream.h
     logging.h
+    path.h
     stop_watch.h
     string.h
     timer.h
@@ -21,6 +22,7 @@ set(${PROJECT_NAME}_SOURCES
     dialogs.cpp
     file_system.cpp
     logging.cpp
+    path.cpp
     stop_watch.cpp
     string.cpp
     )
