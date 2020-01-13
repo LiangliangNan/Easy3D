@@ -141,8 +141,10 @@ namespace easy3d {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
 
 #ifdef __APPLE__
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	// 3.2+ only
-		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);			// 3.0+ only
+        // The only OpenGL 3.x and 4.x contexts currently supported by macOS are
+        // forward-compatible, core profile contexts.
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #else
 		if (gl_major >= 3) {
 			if (gl_minor >= 2)

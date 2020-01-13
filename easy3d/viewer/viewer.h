@@ -54,15 +54,31 @@ namespace easy3d {
 	class LinesDrawable;
     class TrianglesDrawable;
 
+    /**
+     * @brief The built-in Easy3D Viewer
+     */
 	class Viewer
 	{
 	public:
+        /**
+         * @brief Creating the Viewer
+         * @param title The window title of the viewer.
+         * @param samples The number of samples for multisample antialiasing
+         * @param gl_major/gl_minor The OpenGL version to request. The created context will be
+         *        compatible with the requested version (if the context creation succeeded).
+         * @param full_screen Do you want the viewer to be fullscreen?
+         * @param resizable Whether the viewer will be resizable by the user.
+         * @param depth_bits The desired bit depths of the depth component of the default
+         *        framebuffer.
+         * @param stencil_bits The desired bit depths of the stencil component of the default
+         *        framebuffer.
+         */
 		Viewer(
 			const std::string& title = "Easy3dViewer",
 			int samples = 4,
-			int gl_major = 3,
-			int gl_minor = 2,
-			bool full_screen = false,
+            int gl_major = 3,   // must >= 3
+            int gl_minor = 2,   // must >= 2
+            bool full_screen = false,
 			bool resizable = true,
 			int depth_bits = 24,
 			int stencil_bits = 8
@@ -118,14 +134,22 @@ namespace easy3d {
         // for visualizing the model. Set create_default_drawables to false if you
         // want to create a customized drawable for a sepcific rendering purpose.
         // TODO: drawable creation should move to Renderer module.
-        Model* open(const std::string& file_name, bool create_default_drawables = true, bool smooth_shading = false);
+        Model* open(
+                const std::string& file_name,
+                bool create_default_drawables = true,
+                bool smooth_shading = false
+                );
 
         // Add a model to the viewer to be visualized (the viewer will be incharge
         // of its memory menagement).
         // By default, this function will creates necessary drawables for visualizing
         // the model. Set create_default_drawables to false if you want to create
         // a customized drawable (for a sepcific rendering purpose) by your self.
-        void add_model(Model* model, bool create_default_drawables = true, bool smooth_shading = false);
+        void add_model(
+                Model* model,
+                bool create_default_drawables = true,
+                bool smooth_shading = false
+                );
 
         // delete the model from the viewer. The model will also be destroyed.
         void delete_model(Model* model);
