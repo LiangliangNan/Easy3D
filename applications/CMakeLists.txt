@@ -8,6 +8,3 @@ if(EASY3D_ENABLE_QT)
         message(WARNING "Mapple requires CGAL but CGAL was not found")
     endif()
 endif()
-
-
-add_subdirectory(experiment)

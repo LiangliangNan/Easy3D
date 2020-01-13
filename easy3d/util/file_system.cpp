@@ -214,14 +214,14 @@ namespace easy3d {
         }
 
 
-        std::string executable_directory() {
+        std::string executable() {
             char path[PATH_MAX] = { 0 };
     #ifdef _WIN32
             // When NULL is passed to GetModuleHandle, the handle of the exe itself is returned
             HMODULE hModule = GetModuleHandle(nullptr);
             if (hModule) {
                 GetModuleFileName(hModule, path, MAX_PATH);
-                return parent_directory(path);
+                return path;
             }
     #elif defined (__APPLE__)
             pid_t pid = getpid();
@@ -229,14 +229,19 @@ namespace easy3d {
             // executable and the full executable name.
             int ret = proc_pidpath(pid, path, sizeof(path));
             if (ret > 0)
-                return parent_directory(path);
+                return path;
     #else
             ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
             if (count != -1)
-                return dirname(path);
+                return path;
     #endif // _WIN32
             // If failed, simply returns current working directory.
             return current_working_directory();
+        }
+
+
+        std::string executable_directory() {
+            return parent_directory(executable());
         }
 
 

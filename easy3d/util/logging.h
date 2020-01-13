@@ -38,6 +38,8 @@
 #include <3rd_party/glog/glog/logging.h>
 #include <3rd_party/glog/glog/stl_logging.h>    // to allow logging STL containers
 
+#define CHECK_TRUE(val)     CHECK_EQ((val), true)
+#define CHECK_FALSE(val)    CHECK_EQ((val), false)
 
 namespace easy3d {
 

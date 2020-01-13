@@ -60,7 +60,10 @@ namespace easy3d {
         /** Determines the home path for the current user. */
         std::string home_directory();
 
-        // Gets the directory where the executable file is located
+        /** Gets the executable file, e.g., C:/a/b/c.exe */
+        std::string executable();
+
+        /** Gets the directory where the executable file is located */
         std::string executable_directory();
 
         bool		rename_file(const std::string& old_name, const std::string& new_name);

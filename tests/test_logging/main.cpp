@@ -2,6 +2,7 @@
 
 #include <easy3d/util/logging.h>
 #include <easy3d/core/types.h>
+#include <easy3d/util/file_system.h>
 
 #include <thread>
 
@@ -45,25 +46,46 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
+    // ---------------------------------
+    // CHECK Operation
+    CHECK_NE(1, 2) << ": The world must be ending!";
+    // Check if it is euqual
+    CHECK_EQ(std::string("abc")[1], 'b');
+
     int a = 1;
     int b = 2;
+    int c = 2;
+
+    CHECK_TRUE(b == c) << ": The world must be ending!";
+    CHECK_FALSE(a == b) << ": The world must be ending!";
+
+    CHECK_EQ(std::string("abc")[1], 'b');
+
     LOG_IF(WARNING, a < b) << "Warning, a < b";
-
-    //------------------------------------------------
-
     LOG_IF(ERROR, a < b) << "Error, a < b";
 
+    CHECK_TRUE(b == c);
+    CHECK_FALSE(a == b);
+
     //------------------------------------------------
 
-//    for (int i=0; i<100; ++i)
-//        LOG_FIRST_N(ERROR, 5) << "LOG_FIRST_N(ERROR, 5): " << i;
+    for (int i=0; i<100; ++i) {
+        LOG_FIRST_N(ERROR, 5) << "LOG_FIRST_N(ERROR, 5): " << i;
+    }
 
     //------------------------------------------------
 
     std::thread t([=]() {
         LOG(WARNING) << "Run in another thread";
     });
+    t.detach();
     std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // ---------------------------------
+
+    int *ptr = new int[10];
+    CHECK_NOTNULL(ptr);
+    DLOG(INFO) << "of [" << __func__ << "]";
 
     //------------------------------------------------
 
@@ -91,7 +113,8 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
-    LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
+    LOG(INFO) << "---------- TEST has succeeded!!!!!!!!!!!!!!!!! ----------";
+//    LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
 
     return EXIT_SUCCESS;
 }
