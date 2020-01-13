@@ -33,15 +33,6 @@
 
 #include <easy3d/core/types.h>
 
-/*  Easy3D is really easy to use. That's why it has such a name.
-*
-*   Just create an instance of Viewer, or derive your viewer 
-*   from it by re-implementing its draw() function (and other 
-*   functions if necessary), and run your viewer:
-*		MyViewer viewer("Example");
-*       viewer.run();
-*/
-
 
 struct GLFWwindow;
 
@@ -55,7 +46,17 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * @brief The built-in Easy3D Viewer
+     * @brief The built-in Easy3D Viewer.
+     *
+     * @details Easy3D is really easy to use. That's why it has such a name.
+     *
+     *   To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
+     *   -------------------------------------------------------------------
+     * 		MyViewer viewer("Example");
+     *      viewer.run();
+     *   -------------------------------------------------------------------
+     *   The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
+     *   by re-implementing some of its unctions (see the documentation of Viewer).
      */
 	class Viewer
 	{
@@ -84,117 +85,238 @@ namespace easy3d {
 			int stencil_bits = 8
 		);
 
+        /**
+         * @brief The desctructor of the Viewer.
+         */
 		virtual ~Viewer();
 
-		// Enter the application main loop.
-		void run();
+        /**
+         * Run the viewer.
+         */
+        void run();
 
-        std::string usage() const;
 
-		//-----------------------------------------------------
+        /** -------------------- The viewer properties ---------------------- */
 
+        /**
+         * @brief Set the window title of the viewer.
+         * @param title The string of the title.
+         */
 		void set_title(const std::string &title);
+        /**
+         * @brief Query the window title of the viewer.
+         * @return The string of the window title.
+         */
 		const std::string& title() const { return title_; }
 
-        // explicitly set window size
+        /**
+         * @brief Set/Change the viewer size.
+         * @param w/h The requested width/heigh (in pixels) of the viewer.
+         */
         void resize(int w, int h);
 
+        /**
+         * @brief Query the size of the viewer.
+         * @return The width/height of the viewer.
+         */
         int width() const;
         int height() const;
 
-        // Return the actual samples of the viewer
+        /**
+         * @brief Query the actual samples of the viewer.
+         * @note The requested sample may not be supported by the context or graphics driver. This
+         *       method returns the actual samples that the viewer supports.
+         */
         int	 samples() const { return samples_; }
 
-        // Scaling factor for high DPI devices
+        /**
+         * @brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
+         * @return The high DPI scaling factor.
+         */
         double dpi_scaling() const { return dpi_scaling_; }
 
-        // The background color of the viewer
-        const easy3d::vec4& background_color() const { return background_color_; }
+        /**
+         * @brief Set the background color of the viewer
+         * @param color The background color.
+         */
         void set_background_color(const easy3d::vec4& c) { background_color_ = c; }
 
-        // the camera
+        /**
+         * @brief Query the background color of the viewer.
+         * @return The background color of the viewer
+         */
+        const easy3d::vec4& background_color() const { return background_color_; }
+
+        /**
+         * @brief Returns the camera used by the viewer. See camera.h.
+         */
         Camera* camera() { return camera_; }
         const Camera* camera() const { return camera_; }
 
-        // -------------------- fileIO, model management ----------------------
+        /** -------------------- fileIO, model management ---------------------- */
 
-        // returns all the models managed by this viewer
+        /**
+         * @brief Query the models managed by this viewer.
+         * @return The models managed by this viewer.
+         */
         const std::vector<Model*>& models() const { return models_; }
 
-        // returns the active model
+        /**
+         * @brief Query the active model.
+         * @details The viewer can manage/visiulize/process multiple models. The default behavior
+         *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
+         *          clicked), only the active mdoel is processed. This method is used to identify
+         *          the active model.
+         * @return The active model.
+         */
         Model* current_model() const;
 
-        // Open/Save models specified by using a file dialog.
+        /**
+         * @brief Open a model (PointCloud/SurfaceMesh/Graph) from a file into the viewer. On
+         *        success, the viewer will be in charge of the memory management of the model.
+         * @details This method loads a model into the viewer. Internally, it will pop up a file
+         *          dialog for the user to navigate to the file. After loading the model, the
+         *          necessary drawables (e.g., "vertices" for point clouds, "surface" for surface
+         *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
+         * @return true on success and false otherwise.
+         * @related open(const std::string& file_name, bool create_default_drawables,
+         *          bool smooth_shading).
+         */
         bool open();
+
+        /**
+         * @brief Save the active model (if exists) to a file.
+         * @details This method saves the active model to a file. Internally, it will pop up a file
+         *          dialog for specifying the file name.
+         * @return true on success and false otherwise.
+         */
         bool save() const;
 
-        // Open a file (given the file name) and add the model to the viewer
-        // for visualization (the viewer will be incharge of its memory menagement).
-        // By default, this function also It will also creates necessary drawables
-        // for visualizing the model. Set create_default_drawables to false if you
-        // want to create a customized drawable for a sepcific rendering purpose.
-        // TODO: drawable creation should move to Renderer module.
+        /**
+         * @brief Open a model specified by its file name into the viewer. On success, the viewer
+         *        will be in charge of the memory management of the model.
+         * @details This method loads a model into the viewer. It allows the user to control if
+         *          default drawables will be created. The default drawables are
+         *          - for point clouds, a PointsDrawable (with name "vertices");
+         *          - for surface meshes, a TrianglesDrawable (with name "surface");
+         *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
+         *            name "edges").
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, a user
+         *          can set 'create_default_drawables' to false and create the drawables later on.
+         * @param file_name The string of the file name.
+         * @param create_default_drawables If ture, the default drawables will be created. Users can
+         *        set create_default_drawables to false if a customized drawable will be created for
+         *        a particular rendering purpose.
+         * @return The pointer to the model loaded to the viewer (nullptr if failed).
+         * @related create_drawables(Model* model, bool smooth_shading).
+         */
         Model* open(
                 const std::string& file_name,
                 bool create_default_drawables = true,
                 bool smooth_shading = false
                 );
 
-        // Add a model to the viewer to be visualized (the viewer will be incharge
-        // of its memory menagement).
-        // By default, this function will creates necessary drawables for visualizing
-        // the model. Set create_default_drawables to false if you want to create
-        // a customized drawable (for a sepcific rendering purpose) by your self.
-        void add_model(
+        /**
+         * @brief Add an existing model to the viewer to be visualized. After a model being added
+         *        to the viewer, the viewer will be incharge of its memory menagement.
+         * @details This method adds a model into the viewer. It allows the user to control if
+         *          default drawables will be created. The default drawables are
+         *          - for point clouds, a PointsDrawable (with name "vertices");
+         *          - for surface meshes, a TrianglesDrawable (with name "surface");
+         *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
+         *            name "edges").
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, a user
+         *          can set 'create_default_drawables' to false and create the drawables later on.
+         * @param model The pointer to the model.
+         * @param create_default_drawables If ture, the default drawables will be created. Users can
+         *        set create_default_drawables to false if a customized drawable will be created for
+         *        a particular rendering purpose.
+         * @param smooth_shading true to enable phong shading. This parameter is used for
+         *        TrianglesDrawables only.
+         * @related create_drawables(Model* model, bool smooth_shading).
+         */
+       void add_model(
                 Model* model,
                 bool create_default_drawables = true,
                 bool smooth_shading = false
                 );
 
-        // delete the model from the viewer. The model will also be destroyed.
+       /**
+        * @brief Delete a model. The memory of the model will be released and its existing drawables
+        *        also be deleted.
+        * @param model The pointer to the model.
+        */
         void delete_model(Model* model);
 
         /**
-         * Add a drawable to the viewer to be visualized (the viewer will be incharge
-         * of its memory menagement).
+         * @brief Add a drawable to the viewer to be visualized. After a drawable being added to the
+         *        viewer, the viewer will be incharge of its memory menagement.
+         * @details The use of drawables for visualization is quite flexible. Drawables are
+         *          typically created for rendering 3D models (e.g., point clouds, meshes, graphs)
+         *          and a 3D model is usually loaded from a file or generated by an algorithm. This
+         *          method allows the user to visualize drawables without defining a 3D model.
          */
         void add_drawable(Drawable* drawable);
 
         /**
-         * Delete the drawable from the viewer. The drawable will also be destroyed.
+         * Delete the drawable from the viewer. The related drawables will also be deleted.
          */
         void delete_drawable(Drawable* drawable);
 
-        // ----------------------------- UI -----------------------------------
+        /** ----------------------------- UI ----------------------------------- */
 
-        // moves the camera so that the 'model' is centered on the screen.
-        // if 'model' is NULL, it centers the entire scene (all models).
+        /**
+         * @brief Moves the camera so that the entire scene or the active model is centered on the
+         *        screen at a proper scale.
+         * @param model The pointer to the model to be centered on the screen. If nullptr, the
+         *        entire scene (i.e., all models) will be centered on the screen at a proper scale.
+         */
         virtual void fit_screen(const easy3d::Model* model = nullptr);
 
-        // take a snapshot of the screen and save the snapshot into a file (the file name
-        // specified by using a file dialog)
+        /**
+         * @brief Take a snapshot of the screen and save it to a file.
+         * @details This methodt takes a snapshot of the screen and saves the snapshot into a file
+         *          Internally, it will pop up a file dialog for specifying the file name.
+         * @return true on success and false otherwise.
+         */
         bool snapshot(bool bk_white = true) const;
 
-        // Returns the coordinates of the 3D point located at pixel (x,y) on screen.
-		// x, y: screen point expressed in pixel units with an origin in the upper left corner.
-		// found: indicates whether a point was found or not.
-		// NOTE: This method assumes that a GL context is available, and that its
-		//		 content was drawn using the Camera (i.e. using its projection and modelview
-		//		 matrices). This method hence cannot be used for offscreen Camera computations.
-		//		 Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar 
-		//		 operations in that case.
-		//       The precision of the z-Buffer highly depends on how the zNear() and zFar() 
-		//       values are fitted to your scene. Loose boundaries will result in imprecision 
-		//		 along the viewing direction.
+        /**
+         * @brief Query the XYZ coordinates of the point under the pointer/mouse.
+         * @param (x, y) The screen point expressed in pixel units with an origin in the upper left
+         *        corner.
+         * @param found indicates whether the point was found or not.
+         * @return The coordinates of the 3D point located at pixel (x,y) on screen. The returned
+         *         point is valid only if found was returned true.
+         * @note This method assumes that a GL context is available, and that its content was drawn
+         *       using the Camera (i.e. using its projection and modelview matrices). This method
+         *       hence cannot be used for offscreen Camera computations. Use cameraCoordinatesOf()
+         *       and worldCoordinatesOf() to perform similar operations in that case. The precision
+         *       of the method highly depends on the z-Buffer, i.e., how the zNear() and zFar()
+         *       values are fitted to your scene. Loose boundaries will result in imprecision along
+         *       the viewing direction.
+         */
 		vec3 point_under_pixel(int x, int y, bool &found) const;
+
+        /**
+         * @brief Update the display (i.e., repaint).
+         * @details This method is used to update the display of the rendering. Client should call
+         *          it when your data/view is changed.
+         */
+        void update() const;
+
+        /**
+         * @brief The usage information of the viewer. For the time being, it is the manual of the
+         *        viewer.
+         */
+        std::string usage() const;
+
+	protected:
 
         // rendering. Users can put their additional rendering function here by reimplementing it.
         virtual void draw() const;
-
-        // Update the rendering
-        void update() const;
-
-	protected:
 
 		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when 
 		// there exists a valid rendering context. It is (usually) a bad idea to do 
