@@ -144,7 +144,7 @@ namespace easy3d {
 		}
 
 		in.seekg(0, std::ios::end);
-		std::size_t length = in.tellg();
+        std::fstream::pos_type length = in.tellg();
 		code.resize(length);
 		in.seekg(0, std::ios::beg);
 

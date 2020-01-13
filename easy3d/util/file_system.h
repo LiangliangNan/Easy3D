@@ -28,6 +28,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 // "OpenSceneGraph - <osgDB/FileNameUtils>" has great implementation and documentation
 
@@ -66,6 +67,8 @@ namespace easy3d {
 
         time_t		time_stamp(const std::string& file_or_dir);
         std::string time_string(const std::string& file_or_dir);
+
+        std::ifstream::pos_type file_size(const std::string& filename);
 
         /** Gets the parent path from full name (Ex: /a/b/c.Ext => /a/b). */
         std::string dir_name(const std::string& file_name) ;

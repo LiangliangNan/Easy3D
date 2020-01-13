@@ -267,6 +267,11 @@ namespace easy3d {
                 return "Unknown. Error occurred.";
         }
 
+        std::ifstream::pos_type file_size(const std::string& filename) {
+            std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+            return in.tellg();
+        }
+
         std::string parent_directory(const std::string& path) {
             return dir_name(path); // treat it as a file name;
         }
@@ -670,7 +675,7 @@ namespace easy3d {
             }
 
             in.seekg(0, std::ios::end);
-            std::size_t length = in.tellg();
+            std::fstream::pos_type length = in.tellg();
             in.seekg(0, std::ios::beg);
             data.resize(length);
             in.read(&(data[0]), length);
