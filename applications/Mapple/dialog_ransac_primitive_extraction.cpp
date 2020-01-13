@@ -85,6 +85,9 @@ void DialogRansacPrimitiveExtraction::extract() {
         LOG(INFO) << num << " primitives extracted";
     }
 
+    viewer_->makeCurrent();
     renderer::update_data(cloud, cloud->points_drawable("vertices"));
+    viewer_->doneCurrent();
+
     viewer_->update();
 }

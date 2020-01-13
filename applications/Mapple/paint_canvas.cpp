@@ -560,6 +560,7 @@ std::string PaintCanvas::usage() const {
 
 
 void PaintCanvas::create_drawables(Model* model, bool smooth_shading) {
+    makeCurrent();
     if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
         PointsDrawable* drawable = model->add_points_drawable("vertices");
@@ -581,6 +582,7 @@ void PaintCanvas::create_drawables(Model* model, bool smooth_shading) {
         LinesDrawable* edges = graph->add_lines_drawable("edges");
         renderer::update_data(graph, edges);
     }
+    doneCurrent();
 }
 
 
