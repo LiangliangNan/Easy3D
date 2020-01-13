@@ -22,8 +22,20 @@
 #include <regex>
 
 #if defined(WIN32)
-#   include <utils/compiler.h>
-#   include <utils/win32/stdtypes.h>
+#include <Windows.h>
+
+// Copied from linux libc sys/stat.h:
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#define PATH_MAX (MAX_PATH)
+
+#include <basetsd.h>
+typedef SSIZE_T ssize_t;
+
+// For getcwd
+#include <direct.h>
+#define getcwd _getcwd
+
 #   define SEPARATOR '\\'
 #   define SEPARATOR_STR  "\\"
 #else
