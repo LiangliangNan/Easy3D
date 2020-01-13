@@ -29,6 +29,7 @@
 #include <easy3d/core/random.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -73,16 +74,21 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
 
             // plane extraction results has been stored as properties:
             //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-            //      - "v:primitive_index" (0, 1, 2... -1 indicating unknown)
-            auto indices = cloud->get_vertex_property<int>("v:primitive_index");
+            //      - "v:primitive_index" (0, 1, 2...)
+            auto primitive_type = cloud->get_vertex_property<int>("v:primitive_type");
+            auto primitive_index = cloud->get_vertex_property<int>("v:primitive_index");
             std::vector<vec3> colors;
             for (auto v : cloud->vertices()) {
-                int idx = indices[v];
-                colors.push_back(idx == -1 ? vec3(0, 0, 0) : color_table[idx]); // black for unkonwn type
+                int idx = primitive_index[v];
+                if (primitive_type[v] == PrimitivesRansac::UNKNOWN)
+                    colors.push_back(vec3(0, 0, 0));
+                else
+                    colors.push_back(color_table[idx]); // black for unkonwn type
             }
             auto drawable = cloud->points_drawable("vertices");
-            // Upload the vertex normals to the GPU.
+            // Upload the vertex colors to the GPU.
             drawable->update_color_buffer(colors);
+            drawable->set_per_vertex_color(true);
             update();
         }
 

@@ -6,6 +6,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
 
 
@@ -83,4 +84,7 @@ void DialogRansacPrimitiveExtraction::extract() {
         int num = ransac.detect(cloud, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
         LOG(INFO) << num << " primitives extracted";
     }
+
+    renderer::update_data(cloud, cloud->points_drawable("vertices"));
+    viewer_->update();
 }

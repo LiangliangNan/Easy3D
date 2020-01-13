@@ -45,30 +45,30 @@ namespace easy3d {
 				return false;
 			}
 
-            unsigned int num = 0;
-            input.read((char*)(&num), sizeof(unsigned int));
-			if (num <= 0) {
+            int num = 0;
+            input.read((char*)(&num), sizeof(int));
+            if (num <= 0) {
 				std::cerr << "no point exists in file\'" << file_name << "\'" << std::endl;
 				return false;
 			}
-			cloud->resize(num);
+            cloud->resize(num);
 
 			// read the points block
 			PointCloud::VertexProperty<vec3> points = cloud->vertex_property<vec3>("v:point");
-			input.read((char*)points.data(), num * sizeof(vec3));
+            input.read((char*)points.data(), num * sizeof(vec3));
 
-			// read the colors block if exists
-            input.read((char*)(&num), sizeof(unsigned int));
-			if (num > 0) {
+            // read the colors block if exists
+            input.read((char*)(&num), sizeof(int));
+            if (num > 0) {
 				PointCloud::VertexProperty<vec3> colors = cloud->vertex_property<vec3>("v:color");
-				input.read((char*)colors.data(), num * sizeof(vec3));
+                input.read((char*)colors.data(), num * sizeof(vec3));
 			}
 
-			// read the normals block if exists
-            input.read((char*)(&num), sizeof(unsigned int));
-			if (num > 0) {
+            // read the normals block if exists
+            input.read((char*)(&num), sizeof(int));
+            if (num > 0) {
 				PointCloud::VertexProperty<vec3> normals = cloud->vertex_property<vec3>("v:normal");
-				input.read((char*)normals.data(), num * sizeof(vec3));
+                input.read((char*)normals.data(), num * sizeof(vec3));
 			}
 
 			return cloud->n_vertices() > 0;
@@ -83,31 +83,31 @@ namespace easy3d {
 				return false;
 			}
 
-            unsigned int num = cloud->vertices_size();
+            int num = cloud->vertices_size();
 
 			// write the points block
 			auto points = cloud->get_vertex_property<vec3>("v:point");
-            output.write((char*)&num, sizeof(unsigned int));
+            output.write((char*)&num, sizeof(int));
 			output.write((char*)points.data(), num * sizeof(vec3));
 
 			auto colors = cloud->get_vertex_property<vec3>("v:color");
 			if (colors) {
-                output.write((char*)&num, sizeof(unsigned int));
+                output.write((char*)&num, sizeof(int));
 				output.write((char*)colors.data(), num * sizeof(vec3));
 			}
             else {
-                num = 0;
-                output.write((char*)&num, sizeof(unsigned int));
+                int num_colors = 0;
+                output.write((char*)&num_colors, sizeof(int));
             }
 
 			auto normals = cloud->get_vertex_property<vec3>("v:normal");
 			if (normals) {
-                output.write((char*)&num, sizeof(unsigned int));
+                output.write((char*)&num, sizeof(int));
 				output.write((char*)normals.data(), num * sizeof(vec3));
 			}
             else {
-                num = 0;
-                output.write((char*)&num, sizeof(unsigned int));
+                int num_normals = 0;
+                output.write((char*)&num_normals, sizeof(int));
             }
 
 			return true;

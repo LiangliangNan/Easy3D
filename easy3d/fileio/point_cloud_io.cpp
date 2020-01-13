@@ -29,6 +29,7 @@
 #include <clocale>
 #include <fstream>
 
+#include <easy3d/fileio/point_cloud_io_vg.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
@@ -171,10 +172,10 @@ namespace easy3d {
 			success = io::load_bxyz(file_name, cloud);
 		else if (ext == "las" || ext == "laz")
 			success = io::load_las(file_name, cloud);
-		//	else if (ext == "vg")
-		//		PointSetSerializer_vg::load_vg(file_name, cloud);
-		//	else if (ext == "bvg")
-		//		PointSetSerializer_vg::load_bvg(file_name, cloud);
+        else if (ext == "vg")
+            success = io::PointCloudIO_vg::load_vg(file_name, cloud);
+        else if (ext == "bvg")
+            success = io::PointCloudIO_vg::load_bvg(file_name, cloud);
 
         else if (ext.empty()){
             std::cerr << "unknown file format: no extention" << ext << std::endl;
@@ -232,6 +233,10 @@ namespace easy3d {
             success = io::save_bxyz(final_name, cloud);
 		else if (ext == "las" || ext == "laz")
             success = io::save_las(final_name, cloud);
+        else if (ext == "vg")
+            success = io::PointCloudIO_vg::save_vg(file_name, cloud);
+        else if (ext == "bvg")
+            success = io::PointCloudIO_vg::save_bvg(file_name, cloud);
 		else {
 			std::cerr << "unknown file format: " << ext << std::endl;
             success = false;

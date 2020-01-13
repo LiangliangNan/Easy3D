@@ -205,6 +205,12 @@ namespace easy3d {
             ++index;
         }
 
+        // assign the ungroup points a positive index
+        for (auto v : cloud->vertices()) {
+            if (primitive_indices[v] == -1)
+                primitive_indices[v] = index;
+        }
+
         std::cout << index << " primitives extracted. " << remaining << " points remained" << std::endl;
         return index;
     }

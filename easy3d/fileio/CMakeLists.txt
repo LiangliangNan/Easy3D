@@ -10,7 +10,7 @@ set(${PROJECT_NAME}_HEADERS
     ply_reader_writer.h
     point_cloud_io.h
     point_cloud_io_ptx.h
-#    point_cloud_io_vg.h
+    point_cloud_io_vg.h
     surface_mesh_io.h
     )
 
@@ -24,7 +24,7 @@ set(${PROJECT_NAME}_SOURCES
     point_cloud_io_las.cpp
     point_cloud_io_ply.cpp
     point_cloud_io_ptx.cpp
-#    point_cloud_io_vg.cpp
+    point_cloud_io_vg.cpp
     point_cloud_io_xyz.cpp
     surface_mesh_io.cpp
     surface_mesh_io_obj.cpp

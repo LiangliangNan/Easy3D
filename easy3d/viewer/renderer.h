@@ -26,6 +26,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/random.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -130,19 +131,55 @@ namespace easy3d {
         inline void update_data<PointCloud, PointsDrawable>(PointCloud* model, PointsDrawable* drawable) {
             assert(model);
             assert(drawable);
-            auto points = model->get_vertex_property<vec3>("v:point");
-            drawable->update_vertex_buffer(points.vector());
-            auto normals = model->get_vertex_property<vec3>("v:normal");
-            if (normals)
-                drawable->update_normal_buffer(normals.vector());
-            auto colors = model->get_vertex_property<vec3>("v:color");
-            if (colors) {
-                drawable->update_color_buffer(colors.vector());
+
+            // segmentation information has been stored as properties:
+            //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+            //      - "v:primitive_index" (0, 1, 2...)
+            auto primitive_type = model->get_vertex_property<int>("v:primitive_type");
+            auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
+            if (primitive_type && primitive_index) { // model has segmentation informaiton
+                int num = 0;
+                for (auto v : model->vertices())
+                    num = std::max(num, primitive_index[v]);
+                ++num;
+                // assign each plane a unique color
+                std::vector<vec3> color_table(num);
+                for (auto& c : color_table)
+                    c = random_color();
+
+                std::vector<vec3> colors;
+                for (auto v : model->vertices()) {
+                     int idx = primitive_index[v];
+                    if (primitive_type[v] == -1)
+                        colors.push_back(vec3(0, 0, 0));
+                    else
+                        colors.push_back(color_table[idx]); // black for unkonwn type
+                }
+                drawable->update_color_buffer(colors);
                 drawable->set_per_vertex_color(true);
+
+                auto points = model->get_vertex_property<vec3>("v:point");
+                drawable->update_vertex_buffer(points.vector());
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
             }
+
             else {
-                drawable->set_default_color(setting::point_cloud_points_color);
-                drawable->set_per_vertex_color(false);
+                auto points = model->get_vertex_property<vec3>("v:point");
+                drawable->update_vertex_buffer(points.vector());
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
+                auto colors = model->get_vertex_property<vec3>("v:color");
+                if (colors) {
+                    drawable->update_color_buffer(colors.vector());
+                    drawable->set_per_vertex_color(true);
+                }
+                else {
+                    drawable->set_default_color(setting::point_cloud_points_color);
+                    drawable->set_per_vertex_color(false);
+                }
             }
         }
 

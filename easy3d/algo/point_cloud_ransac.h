@@ -62,7 +62,7 @@ namespace easy3d {
         // returns the nummber of extracted primitives.
         // result will store as properties:
         //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (0, 1, 2... -1 indicating unknown)
+        //      - "v:primitive_index" (0, 1, 2...)
         int detect(
             PointCloud* cloud,
             unsigned int min_support = 1000,	// the minimal number of points required for a primitive
@@ -75,7 +75,7 @@ namespace easy3d {
         // extract primitive from a subset of a point cloud.
         // result will store as properties:
         //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (0, 1, 2... -1 indicating unknown)
+        //      - "v:primitive_index" (0, 1, 2...)
         int detect(
             PointCloud* cloud,
             const std::vector<int>& vertitces,

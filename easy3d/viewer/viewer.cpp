@@ -1188,7 +1188,7 @@ namespace easy3d {
         const std::string& default_path = setting::resource_directory() + "/data/";
         const std::vector<std::string>& filters = {
             "Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
-            "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
+            "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
             "All Files (*.*)", "*"
         };
         const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, true);
@@ -1212,7 +1212,7 @@ namespace easy3d {
         const std::string& title = "Please choose a file name";
         const std::vector<std::string>& filters = {
             "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly" ,
-            "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz)", "*.bin *.ply *.xyz *.bxyz *.las *.laz",
+            "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
             "All Files (*.*)", "*"
         };
 
