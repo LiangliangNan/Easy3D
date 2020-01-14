@@ -47,7 +47,7 @@ You do need [CMake](https://cmake.org/download/) and of course a compiler to bui
 - CMake >= 3.1
 - a compiler that supports `>= C++11`
 
-Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher supports, so you should be able to build Easy3D on almost all platforms.
+Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able to build Easy3D on almost all platforms.
 
 There are many options to build Easy3D. Choose one of the following (or whatever you prefer):
 
