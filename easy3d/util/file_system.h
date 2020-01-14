@@ -58,18 +58,9 @@ namespace easy3d {
         bool	is_directory(const std::string& name);
 
         /**
-         * @brief Creates a file entitled 'name'.
-         * @param name The full path of the file to be created.
-         * @return ture If the file has been successfully created or already exists.
-         * @todo [Liangliang] Not implemented and tested.
-         */
-        bool	create_file(const std::string& name);
-
-        /**
          * @brief Creates a directory entitled 'name'.
          * @param name The full path of the directory to be created.
          * @return ture If the directory has been successfully created or already exists.
-         * @todo [Liangliang] Not implemented and tested.
          */
         bool	create_directory(const std::string& name);
 
