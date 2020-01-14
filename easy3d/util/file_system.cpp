@@ -57,11 +57,6 @@
 #define PATH_MAX 1024
 #endif
 
-/*
-some code are modified from or inspired by:
-"OpenSceneGraph - <osgDB/FileNameUtils>"
-"OpenSceneGraph - <osgDB/FileSystem>"
-*/
 
 
 namespace easy3d {

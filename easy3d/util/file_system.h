@@ -23,27 +23,79 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EASY3D_FILE_H
-#define EASY3D_FILE_H
+#ifndef EASY3D_FILE_SYSTEM_H
+#define EASY3D_FILE_SYSTEM_H
 
 #include <string>
 #include <vector>
 #include <fstream>
 
-// "OpenSceneGraph - <osgDB/FileNameUtils>" has great implementation and documentation
 
 namespace easy3d {
 
+    /**
+     * @brief A very basic file_system implementation.
+     * @attention Functions are not sufficiently tested.
+     * @todo [Liangliang] Comprehensive tests.
+     *
+     * @related ghc::filesystem - A C++17-like filesystem implementation for C++11/C++147/C++17
+     *          https://github.com/gulrak/filesystem/blob/master/include/ghc/filesystem.hpp
+     */
     namespace file_system {
 
-        bool		is_file(const std::string& filename);
-        bool		delete_file(const std::string& filename);
+        /**
+         * @brief Tests if 'name' is an existing file.
+         * @param name The full path of a file (including file extention).
+         * @return ture If the file 'name' exists.
+         */
+        bool    is_file(const std::string& name);
 
-        bool		is_directory(const std::string& filename);
-        bool		create_directory(const std::string& path); // Warning: path should be absolute.
+        /**
+         * @brief Tests if 'name' is an existing directory.
+         * @param name The full path of a directory.
+         * @return ture If the directory 'name' exists.
+         */
+        bool	is_directory(const std::string& name);
 
-        bool		delete_directory(const std::string& path); // all content will be deleted first
-        bool		delete_contents(const std::string& path);	 // delete contents only
+        /**
+         * @brief Creates a file entitled 'name'.
+         * @param name The full path of the file to be created.
+         * @return ture If the file has been successfully created or already exists.
+         * @todo [Liangliang] Not implemented and tested.
+         */
+        bool	create_file(const std::string& name);
+
+        /**
+         * @brief Creates a directory entitled 'name'.
+         * @param name The full path of the directory to be created.
+         * @return ture If the directory has been successfully created or already exists.
+         * @todo [Liangliang] Not implemented and tested.
+         */
+        bool	create_directory(const std::string& name);
+
+        /**
+         * @brief Deletes the file 'name'.
+         * @param name The full path of a file.
+         * @return ture If the file has been successfully deleted or doesn't exist.
+         * @todo [Liangliang] Test if path should be absolute.
+         */
+        bool	delete_file(const std::string& name);
+
+        /**
+         * @brief Deletes the directory 'name' (and its contents will be deleted recursively).
+         * @param name The full path of a directory.
+         * @return ture If the directory has been successfully deleted or doesn't exist.
+         * @todo [Liangliang] Test if path should be absolute.
+         */
+        bool	delete_directory(const std::string& name);
+
+        /**
+         * @brief Deletes the contents of the directory 'name' (the directory will not be deleted).
+         * @param name The full path of a directory.
+         * @return ture If the contents of directory have been successfully deleted or don't exist.
+         * @todo [Liangliang] Test if path should be absolute.
+         */
+        bool	delete_contents(const std::string& path);
 
         std::string parent_directory(const std::string& path);
 
@@ -131,4 +183,4 @@ namespace easy3d {
 } // namespace easy3d
 
 
-#endif	// EASY3D_FILE_H
+#endif	// EASY3D_FILE_SYSTEM_H
