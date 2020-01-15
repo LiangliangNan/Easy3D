@@ -38,19 +38,27 @@
 #include <3rd_party/glog/glog/logging.h>
 #include <3rd_party/glog/glog/stl_logging.h>    // to allow logging STL containers
 
+
+/** If failed, a fatal error will be logged */
 #define CHECK_TRUE(val)     CHECK_EQ((val), true)
 #define CHECK_FALSE(val)    CHECK_EQ((val), false)
+
 
 namespace easy3d {
 
     namespace logging {
 
     /**
-         * @brief initialize Google's logging library.
+         * @brief Initializes Google's logging library.
          * @param argv0     The argv[0] of your main function, which is basically the
          *                  full path of the executable file.
          * @param threshold Log messages at a level >= this flag are automatically sent
          *                  to stderr in addition to log files.
+         * @note Initialization of Google's logging library is not mandatory. Easy3D will
+         *       automatically proivides an initialization with default
+         *          - log file name: Executable_basename-20200113-134747.27618;
+         *          - log level: google::GLOG_INFO.
+         *       However, this function can be used to override the default logging behavior.
          */
         void initialize(const char* argv0, int threshold = google::GLOG_INFO);
 
