@@ -42,11 +42,10 @@ int main (int argc, char *argv[])
 
     //------------------------------------------------
 
-    LOG(INFO) << "exe: " << argv[0];
+    CHECK_EQ(argv[0], file_system::executable());
 
     //------------------------------------------------
 
-    // ---------------------------------
     // CHECK Operation
     CHECK_NE(1, 2) << ": The world must be ending!";
     // Check if it is euqual
