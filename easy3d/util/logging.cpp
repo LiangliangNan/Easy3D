@@ -70,12 +70,12 @@ namespace easy3d {
                 full_path = full_path.substr(0, pos);
 #endif
 
-            full_path = file_system::dir_name(full_path) + "/logs/";
+            full_path = file_system::parent_directory(full_path) + "/logs/";
             if (!easy3d::file_system::is_directory(full_path))
                 easy3d::file_system::create_directory(full_path);
             google::SetLogDestination(threshold, full_path.c_str());
 
-            std::string file_ext = file_system::stripped_name(argv0) + "-";
+            std::string file_ext = file_system::base_name(argv0) + "-";
             google::SetLogFilenameExtension(file_ext.c_str());
 
             FLAGS_stderrthreshold = threshold;

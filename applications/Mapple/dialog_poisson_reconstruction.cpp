@@ -70,7 +70,7 @@ void DialogPoissonReconstruction::reconstruct() {
 
         SurfaceMesh* mesh = recon.apply(cloud, density_attr_name_);
         if (mesh) {
-            std::string name = file_system::dir_name(cloud->name()) + "/" + file_system::stripped_name(cloud->name()) + "_poisson_reconstruction.ply";
+            const std::string& name = file_system::name_less_extension(cloud->name()) + "_poisson_reconstruction.ply";
             mesh->set_name(name);
             viewer_->addModel(mesh);
         }
@@ -107,7 +107,7 @@ void DialogPoissonReconstruction::trim() {
 
         SurfaceMesh* trimmed_mesh = PoissonReconstruction::trim(mesh, density_attr_name_, trim_value, area_ratio, triangulate);
         if (trimmed_mesh) {
-            std::string name = file_system::dir_name(mesh->name()) + "/" + file_system::stripped_name(mesh->name()) + "_trimmed.ply";
+            const std::string& name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
             trimmed_mesh->set_name(name);
             viewer_->addModel(trimmed_mesh);
         }

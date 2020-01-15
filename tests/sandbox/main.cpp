@@ -9,7 +9,7 @@ int main (int argc, char *argv[])
 
     const std::string path("/Users/Liangliang/PolyFit.app");
 
-    CHECK_EQ(file_system::stripped_name(path), "PolyFit");
+    CHECK_EQ(file_system::base_name(path), "PolyFit");
     CHECK_EQ(file_system::parent_directory(path), "/Users/Liangliang");
 
     LOG(INFO) << "Tests succeeded!!!";

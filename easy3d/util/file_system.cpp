@@ -272,10 +272,6 @@ namespace easy3d {
             return in.tellg();
         }
 
-        std::string parent_directory(const std::string& path) {
-            return dir_name(path); // treat it as a file name;
-        }
-
 
         void get_directory_entries(const std::string& dir, std::vector<std::string>& contents) {
             if (!is_directory(dir)) {
@@ -328,12 +324,12 @@ namespace easy3d {
                 return ext;
         }
 
-        std::string stripped_name(const std::string& file_path) {
+        std::string base_name(const std::string& file_path) {
             const std::string& simpleName = simple_name(file_path);
             return name_less_extension(simpleName);
         }
 
-        std::string dir_name(const std::string& file_name) {
+        std::string parent_directory(const std::string& file_name) {
             std::string::size_type slash = file_name.find_last_of(PATH_SEPARATORS);
             if (slash == std::string::npos)
                 return std::string();

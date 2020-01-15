@@ -6,7 +6,9 @@ project(${PROJECT_NAME})
 # One shouldn't generate the BUILD project directly in the SOURCES folder!
 if ( ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR} )
         if ( NOT SAME_BUILD_AND_SOURCE_FOLDER_WARNING_ALREADY_ISSUED )
-                message(FATAL_ERROR "It is not advised to BUILD the binaries directly in the SOURCE folder!\n If you want to proceed with this option, just CONFIGURE the project once again" )
+                message(FATAL_ERROR
+                    "It is not advised to BUILD the binaries directly in the SOURCE folder!\n If
+                    you want to proceed with this option, just CONFIGURE the project once again" )
                 set( SAME_BUILD_AND_SOURCE_FOLDER_WARNING_ALREADY_ISSUED TRUE )
         endif()
 endif()

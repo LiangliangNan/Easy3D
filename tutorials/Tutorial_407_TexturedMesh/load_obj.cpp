@@ -175,7 +175,7 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
             texname = mat.specular_texname;
 
         if (!texname.empty()) {
-            const std::string texture_file = file_system::dir_name(file_name) + "/" + texname;
+            const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
             Texture* tex = Texture::create(texture_file, GL_REPEAT);
             if (tex) {
                 std::cerr << "texture created from " << texname << std::endl;

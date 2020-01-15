@@ -27,6 +27,7 @@
 #include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -35,7 +36,9 @@ namespace easy3d {
     PointCloud* SurfaceMeshSampler::apply(const SurfaceMesh* mesh, int num /* = 1000000 */)
     {
         PointCloud* cloud = new PointCloud;
-        cloud->set_name(mesh->name() + "_sampled");
+        const std::string& name = file_system::name_less_extension(mesh->name()) + "_sampled.ply";
+        cloud->set_name(name);
+
         PointCloud::VertexProperty<vec3> normals = cloud->add_vertex_property<vec3>("v:normal");
 
         std::cout << "sampling surface..." << std::endl;
