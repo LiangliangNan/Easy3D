@@ -38,15 +38,14 @@ endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+################################################################################
+
 # Build tutorials
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
-
 # Build tests
 option(EASY3D_BUILD_TESTS           "Build tests"                          OFF)
-
 # Build CGAL-based algorithms
 option(EASY3D_ENABLE_CGAL           "Build CGAL-based algorithms"           ON)
-
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
 
@@ -84,10 +83,11 @@ endif()
 
 add_subdirectory(applications)
 
-
 # hide some variables that might be set in 3rd_party libraries
 mark_as_advanced(FORCE BUILD_SHARED_LIBS)
 mark_as_advanced(FORCE BUILD_TESTING)
+
+################################################################################
 
 ## Resources
 # Copy resources dirs into our shadow build directory
