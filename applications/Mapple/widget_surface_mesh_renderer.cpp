@@ -42,11 +42,11 @@ WidgetSurfaceMeshRenderer::WidgetSurfaceMeshRenderer(QWidget *parent)
     connect(ui->toolButtonVerticesImpostors, SIGNAL(toggled(bool)), this, SLOT(setVerticesImpostors(bool)));
     connect(ui->doubleSpinBoxVerticesSize, SIGNAL(valueChanged(double)), this, SLOT(setVerticesSize(double)));
 
-    // wireframe
-    connect(ui->checkBoxShowWireframe, SIGNAL(toggled(bool)), this, SLOT(setShowWireframe(bool)));
-    connect(ui->toolButtonWireframeDefaultColor, SIGNAL(clicked()), this, SLOT(setWireframeDefaultColor()));
-    connect(ui->toolButtonWireframeImpostors, SIGNAL(toggled(bool)), this, SLOT(setWireframeImpostors(bool)));
-    connect(ui->doubleSpinBoxWireframeThickness, SIGNAL(valueChanged(double)), this, SLOT(setWireframeThickness(double)));
+    // edges
+    connect(ui->checkBoxShowEdges, SIGNAL(toggled(bool)), this, SLOT(setShowEdges(bool)));
+    connect(ui->toolButtonEdgesDefaultColor, SIGNAL(clicked()), this, SLOT(setEdgesDefaultColor()));
+    connect(ui->toolButtonEdgesImpostors, SIGNAL(toggled(bool)), this, SLOT(setEdgesImpostors(bool)));
+    connect(ui->doubleSpinBoxEdgesThickness, SIGNAL(valueChanged(double)), this, SLOT(setEdgesThickness(double)));
 
     // border
     connect(ui->checkBoxShowBorders, SIGNAL(toggled(bool)), this, SLOT(setShowBorders(bool)));
@@ -118,25 +118,25 @@ void WidgetSurfaceMeshRenderer::updatePanel() {
         ui->doubleSpinBoxVerticesSize->setValue(setting::surface_mesh_vertices_point_size);
     }
 
-    // wireframe
-    LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
-    if (wireframe) {
-        ui->checkBoxShowWireframe->setChecked(wireframe->is_visible());
-        const vec3& c = wireframe->default_color();
-        QPixmap pixmap(ui->toolButtonWireframeDefaultColor->size());
+    // edges
+    LinesDrawable* edges = mesh()->lines_drawable("edges");
+    if (edges) {
+        ui->checkBoxShowEdges->setChecked(edges->is_visible());
+        const vec3& c = edges->default_color();
+        QPixmap pixmap(ui->toolButtonEdgesDefaultColor->size());
         pixmap.fill(QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-        ui->toolButtonWireframeDefaultColor->setIcon(QIcon(pixmap));
-        ui->toolButtonWireframeImpostors->setChecked(wireframe->impostor_type());
-        ui->doubleSpinBoxWireframeThickness->setValue(wireframe->line_width());
+        ui->toolButtonEdgesDefaultColor->setIcon(QIcon(pixmap));
+        ui->toolButtonEdgesImpostors->setChecked(edges->impostor_type());
+        ui->doubleSpinBoxEdgesThickness->setValue(edges->line_width());
     }
     else {
-        ui->checkBoxShowWireframe->setChecked(setting::surface_mesh_show_wireframe);
-        const vec3& c = setting::surface_mesh_wireframe_color;
-        QPixmap pixmap(ui->toolButtonWireframeDefaultColor->size());
+        ui->checkBoxShowEdges->setChecked(setting::surface_mesh_show_edges);
+        const vec3& c = setting::surface_mesh_edges_color;
+        QPixmap pixmap(ui->toolButtonEdgesDefaultColor->size());
         pixmap.fill(QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-        ui->toolButtonWireframeDefaultColor->setIcon(QIcon(pixmap));
-        ui->toolButtonWireframeImpostors->setChecked(setting::surface_mesh_wireframe_imposters);
-        ui->doubleSpinBoxWireframeThickness->setValue(setting::surface_mesh_wireframe_line_width);
+        ui->toolButtonEdgesDefaultColor->setIcon(QIcon(pixmap));
+        ui->toolButtonEdgesImpostors->setChecked(setting::surface_mesh_edges_imposters);
+        ui->doubleSpinBoxEdgesThickness->setValue(setting::surface_mesh_edges_line_width);
     }
 
     // border
@@ -380,11 +380,11 @@ void WidgetSurfaceMeshRenderer::setVerticesSize(double s){
 }
 
 
-// wireframe
-void WidgetSurfaceMeshRenderer::setShowWireframe(bool b) {
-    LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
-    if (b && !wireframe) {
-        wireframe = mesh()->add_lines_drawable("wireframe");
+// edges
+void WidgetSurfaceMeshRenderer::setShowEdges(bool b) {
+    LinesDrawable* edges = mesh()->lines_drawable("edges");
+    if (b && !edges) {
+        edges = mesh()->add_lines_drawable("edges");
         viewer_->makeCurrent();
         auto points = mesh()->get_vertex_property<vec3>("v:point");
         std::vector<vec3> vertices;
@@ -394,48 +394,48 @@ void WidgetSurfaceMeshRenderer::setShowWireframe(bool b) {
             vertices.push_back(points[s]);
             vertices.push_back(points[t]);
         }
-        wireframe->update_vertex_buffer(vertices);
+        edges->update_vertex_buffer(vertices);
         viewer_->doneCurrent();
     }
 
-    if (wireframe) {
-        wireframe->set_visible(b);
+    if (edges) {
+        edges->set_visible(b);
         viewer_->update();
     }
 }
 
 
-void WidgetSurfaceMeshRenderer::setWireframeDefaultColor() {
-    LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
-    if (wireframe) {
-        const vec3& c = wireframe->default_color();
+void WidgetSurfaceMeshRenderer::setEdgesDefaultColor() {
+    LinesDrawable* edges = mesh()->lines_drawable("edges");
+    if (edges) {
+        const vec3& c = edges->default_color();
         QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
         const QColor& color = QColorDialog::getColor(orig, this);
         if (color.isValid()) {
             const vec3 new_color(color.redF(), color.greenF(), color.blueF());
-            wireframe->set_default_color(new_color);
+            edges->set_default_color(new_color);
             viewer_->update();
-            QPixmap pixmap(ui->toolButtonWireframeDefaultColor->size());
+            QPixmap pixmap(ui->toolButtonEdgesDefaultColor->size());
             pixmap.fill(color);
-            ui->toolButtonWireframeDefaultColor->setIcon(QIcon(pixmap));
+            ui->toolButtonEdgesDefaultColor->setIcon(QIcon(pixmap));
         }
     }
 }
 
 
-void WidgetSurfaceMeshRenderer::setWireframeImpostors(bool b) {
-    LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
-    if (wireframe) {
-        wireframe->set_impostor_type(LinesDrawable::CYLINDER);
+void WidgetSurfaceMeshRenderer::setEdgesImpostors(bool b) {
+    LinesDrawable* edges = mesh()->lines_drawable("edges");
+    if (edges) {
+        edges->set_impostor_type(LinesDrawable::CYLINDER);
         viewer_->update();
     }
 }
 
 
-void WidgetSurfaceMeshRenderer::setWireframeThickness(double s){
-    LinesDrawable* wireframe = mesh()->lines_drawable("wireframe");
-    if (wireframe) {
-        wireframe->set_line_width(s);
+void WidgetSurfaceMeshRenderer::setEdgesThickness(double s){
+    LinesDrawable* edges = mesh()->lines_drawable("edges");
+    if (edges) {
+        edges->set_line_width(s);
         viewer_->update();
     }
 }

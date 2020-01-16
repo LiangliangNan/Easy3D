@@ -43,11 +43,11 @@ public slots:
     void setVerticesImpostors(bool);
     void setVerticesSize(double);
 
-    // wireframe
-    void setShowWireframe(bool);
-    void setWireframeDefaultColor();
-    void setWireframeImpostors(bool);
-    void setWireframeThickness(double);
+    // edges
+    void setShowEdges(bool);
+    void setEdgesDefaultColor();
+    void setEdgesImpostors(bool);
+    void setEdgesThickness(double);
 
     // border
     void setShowBorders(bool);

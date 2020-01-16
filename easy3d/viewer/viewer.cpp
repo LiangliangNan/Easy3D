@@ -803,18 +803,15 @@ namespace easy3d {
             if (current_model())
                 delete_model(current_model());
         }
-		else if (key == GLFW_KEY_W && modifiers == 0) {
+		else if (key == GLFW_KEY_E && modifiers == 0) {
             if (current_model()) {
-                SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(current_model());
-                if (model) {
-                    LinesDrawable* wireframe = model->lines_drawable("wireframe");
-					if (!wireframe) {
-                        wireframe = model->add_lines_drawable("wireframe");
-                        renderer::update_data(model, wireframe);
-					}
-					else
-						wireframe->set_visible(!wireframe->is_visible());
-				}
+                LinesDrawable* edges = current_model()->lines_drawable("edges");
+                if (!edges) {
+                    edges = current_model()->add_lines_drawable("edges");
+                    renderer::update_data(current_model(), edges);
+                }
+                else
+                    edges->set_visible(!edges->is_visible());
 			}
 		}
         else if (key == GLFW_KEY_V && modifiers == 0) {
@@ -822,14 +819,7 @@ namespace easy3d {
                 PointsDrawable* vertices = current_model()->points_drawable("vertices");
                 if (!vertices) {
                     vertices = current_model()->add_points_drawable("vertices");
-
-                    // [Liangliang] TODO: use a template to avoid dynamic_cast -> simpler code.
-                    if (dynamic_cast<PointCloud*>(current_model()))
-                        renderer::update_data(dynamic_cast<PointCloud*>(current_model()), vertices);
-                    else if (dynamic_cast<SurfaceMesh*>(current_model()))
-                            renderer::update_data(dynamic_cast<SurfaceMesh*>(current_model()), vertices);
-                    else if (dynamic_cast<Graph*>(current_model()))
-                        renderer::update_data(dynamic_cast<Graph*>(current_model()), vertices);
+                    renderer::update_data(current_model(), vertices);
                 }
                 else
                     vertices->set_visible(!vertices->is_visible());
@@ -1029,7 +1019,7 @@ namespace easy3d {
                     " ------------------------------------------------------------------\n"
                     "  '+'/'-':             Increase/Decrease point size (line width)   \n"
                     "  'a':                 Toggle axes									\n"
-                    "  'w':                 Toggle wireframe							\n"
+                    "  'e':                 Toggle edges							    \n"
                     "  'v':                 Toggle vertices                             \n"
                     "  'd':                 Print drawables attached to current model   \n"
                     " ------------------------------------------------------------------\n"
@@ -1397,7 +1387,7 @@ namespace easy3d {
                     d->draw(camera(), false);
             }
 
-            // Let's check if wireframe and surfaces are both shown. If true, we
+            // Let's check if edges and surfaces are both shown. If true, we
             // make the depth coordinates of the surface smaller, so that displaying
             // the mesh and the surface together does not cause Z-fighting.
             std::size_t count = 0;

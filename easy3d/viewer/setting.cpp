@@ -80,11 +80,11 @@ namespace easy3d {
         bool    surface_mesh_vertices_imposters = true;
         float   surface_mesh_vertices_point_size = 5.0f;
 
-        // surface mesh - wireframe
-        bool    surface_mesh_show_wireframe = false;
-        vec3    surface_mesh_wireframe_color = vec3(0.0f, 0.0f, 0.0f);
-        bool    surface_mesh_wireframe_imposters = false;
-        float   surface_mesh_wireframe_line_width = 1.0f;
+        // surface mesh - edges
+        bool    surface_mesh_show_edges = false;
+        vec3    surface_mesh_edges_color = vec3(0.0f, 0.0f, 0.0f);
+        bool    surface_mesh_edges_imposters = false;
+        float   surface_mesh_edges_line_width = 1.0f;
 
         // surface mesh - borders
         bool    surface_mesh_show_borders = false;

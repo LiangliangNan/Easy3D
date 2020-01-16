@@ -32,6 +32,7 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
 
+#include <cassert>
 
 namespace easy3d {
 
@@ -54,6 +55,16 @@ namespace easy3d {
 
         template <typename MODEL>
         inline void update_data(MODEL* model, TrianglesDrawable* drawable, bool smooth_shading);
+
+        /**
+         * @brief Overload functions
+         * @tparam DRAWABLE The drawable type - must be one of PointsDrawable, LinesDrawable,
+         *         or TrianglesDrawable.
+         * @param model The model (can be a PointCloud, Graph, or SurfaceMesh.
+         * @param drawable The drawable.
+         */
+        template <typename DRAWABLE>
+        inline void update_data(Model* model, DRAWABLE* drawable);
 
 //        /**
 //         * \brief Template functions preparing and updating *standard* drawable data to GPU.
@@ -84,7 +95,7 @@ namespace easy3d {
         inline void update_data<PointCloud, PointsDrawable>(PointCloud* model, PointsDrawable* drawable);
 
         template <>
-        inline void update_data<PointCloud, LinesDrawable>(PointCloud* model, LinesDrawable* drawable);
+        inline void update_data<PointCloud, LinesDrawable>(PointCloud* model, LinesDrawable* drawable) {}
 
 
         /**
@@ -123,6 +134,16 @@ namespace easy3d {
 namespace easy3d {
 
     namespace renderer {
+
+        template <typename DRAWABLE>
+        inline void update_data(Model* model, DRAWABLE* drawable) {
+            if (dynamic_cast<PointCloud*>(model))
+                update_data<PointCloud, DRAWABLE>(dynamic_cast<PointCloud*>(model), drawable);
+            else if (dynamic_cast<Graph*>(model))
+                update_data<Graph, DRAWABLE>(dynamic_cast<Graph*>(model), drawable);
+            else if (dynamic_cast<SurfaceMesh*>(model))
+                update_data<SurfaceMesh, DRAWABLE>(dynamic_cast<SurfaceMesh*>(model), drawable);
+        }
 
         /**
          * \brief Template specializations for point clouds
@@ -308,9 +329,9 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_index_buffer(indices);
-            drawable->set_default_color(setting::surface_mesh_wireframe_color);
+            drawable->set_default_color(setting::surface_mesh_edges_color);
             drawable->set_per_vertex_color(false);
-            drawable->set_line_width(setting::surface_mesh_wireframe_line_width);
+            drawable->set_line_width(setting::surface_mesh_edges_line_width);
         }
 
 

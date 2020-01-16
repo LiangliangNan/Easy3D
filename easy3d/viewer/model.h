@@ -41,7 +41,7 @@ namespace easy3d {
 
     /*
     * Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud.
-    * A Model can have multiple drawables, e.g., faces, vertices, wireframe.
+    * A Model can have multiple drawables, e.g., faces, vertices, edges.
     */
     class Model
     {

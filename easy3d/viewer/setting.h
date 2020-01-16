@@ -83,11 +83,11 @@ namespace easy3d {
         extern bool    surface_mesh_vertices_imposters;
         extern float   surface_mesh_vertices_point_size;
 
-        // surface mesh - wireframe
-        extern bool    surface_mesh_show_wireframe;
-        extern vec3    surface_mesh_wireframe_color;
-        extern bool    surface_mesh_wireframe_imposters;
-        extern float   surface_mesh_wireframe_line_width;
+        // surface mesh - edges
+        extern bool    surface_mesh_show_edges;
+        extern vec3    surface_mesh_edges_color;
+        extern bool    surface_mesh_edges_imposters;
+        extern float   surface_mesh_edges_line_width;
 
         // surface mesh - borders
         extern bool    surface_mesh_show_borders;

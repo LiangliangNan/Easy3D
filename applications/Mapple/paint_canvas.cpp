@@ -446,37 +446,27 @@ void PaintCanvas::keyPressEvent(QKeyEvent* e) {
         if (currentModel())
             deleteModel(currentModel());
     }
-    else if (e->key() == Qt::Key_W && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(currentModel());
-            if (model) {
-                LinesDrawable* wireframe = model->lines_drawable("wireframe");
-                if (!wireframe) {
-                    wireframe = model->add_lines_drawable("wireframe");
-                    makeCurrent();
-                    renderer::update_data(model, wireframe);
-                    doneCurrent();
-                }
-                else
-                    wireframe->set_visible(!wireframe->is_visible());
+            LinesDrawable* edges = currentModel()->lines_drawable("edges");
+            if (!edges) {
+                edges = currentModel()->add_lines_drawable("edges");
+                renderer::update_data(currentModel(), edges);
             }
+            else
+                edges->set_visible(!edges->is_visible());
         }
     }
 
     else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(currentModel());
-            if (model) {
-                PointsDrawable* vertices = model->points_drawable("vertices");
-                if (!vertices) {
-                    vertices = model->add_points_drawable("vertices");
-                    makeCurrent();
-                    renderer::update_data(model, vertices);
-                    doneCurrent();
-                }
-                else
-                    vertices->set_visible(!vertices->is_visible());
+            PointsDrawable* vertices = currentModel()->points_drawable("vertices");
+            if (!vertices) {
+                vertices = currentModel()->add_points_drawable("vertices");
+                renderer::update_data(currentModel(), vertices);
             }
+            else
+                vertices->set_visible(!vertices->is_visible());
         }
     }
 
@@ -551,7 +541,7 @@ std::string PaintCanvas::usage() const {
                 " ------------------------------------------------------------------\n"
                 "  '+'/'-':             Increase/Decrease point size (line width)   \n"
                 "  'a':                 Toggle axes									\n"
-                "  'w':                 Toggle wireframe							\n"
+                "  'e':                 Toggle edges                                \n"
                 "  'v':                 Toggle vertices                             \n"
                 "  'd':                 Print drawables attached to current model   \n"
                 " ------------------------------------------------------------------\n"
@@ -923,7 +913,7 @@ void PaintCanvas::draw() {
     if (models_.empty())
         return;
 
-//    // Let's check if wireframe and surfaces are both shown. If true, we
+//    // Let's check if edges and surfaces are both shown. If true, we
 //    // make the depth coordinates of the surface smaller, so that displaying
 //    // the mesh and the surface together does not cause Z-fighting.
 //    std::size_t count = 0;
@@ -1063,7 +1053,7 @@ void PaintCanvas::draw() {
                 d->draw(camera(), false);
         }
 
-        // Let's check if wireframe and surfaces are both shown. If true, we
+        // Let's check if edges and surfaces are both shown. If true, we
         // make the depth coordinates of the surface smaller, so that displaying
         // the mesh and the surface together does not cause Z-fighting.
         std::size_t count = 0;

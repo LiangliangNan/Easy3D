@@ -57,7 +57,7 @@ void create_spheres(SurfaceMesh* mesh) {
 // render mesh edges as cylinders
 void create_cylinders(SurfaceMesh* mesh) {
     auto points = mesh->get_vertex_property<vec3>("v:point");
-    LinesDrawable* edges_drawable = mesh->add_lines_drawable("wireframe");
+    LinesDrawable* edges_drawable = mesh->add_lines_drawable("edges");
     std::vector<vec3> edge_points; // each consecutive point pair represents an edge
     for (auto e : mesh->edges()) {
         SurfaceMesh::Vertex s = mesh->vertex(e, 0);

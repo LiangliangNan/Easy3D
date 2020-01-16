@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>195</width>
-    <height>224</height>
+    <width>263</width>
+    <height>234</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -212,14 +212,14 @@
      <item row="4" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Wireframe</string>
+        <string>Edges</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QCheckBox" name="checkBoxShowWireframe">
+      <widget class="QCheckBox" name="checkBoxShowEdges">
        <property name="toolTip">
-        <string>Show/Hide wireframe</string>
+        <string>Show/Hide edges</string>
        </property>
        <property name="text">
         <string/>
@@ -227,9 +227,9 @@
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QToolButton" name="toolButtonWireframeDefaultColor">
+      <widget class="QToolButton" name="toolButtonEdgesDefaultColor">
        <property name="toolTip">
-        <string>Wireframe color</string>
+        <string>Edges color</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -237,9 +237,9 @@
       </widget>
      </item>
      <item row="4" column="3">
-      <widget class="QToolButton" name="toolButtonWireframeImpostors">
+      <widget class="QToolButton" name="toolButtonEdgesImpostors">
        <property name="toolTip">
-        <string>Render wireframe as cylinders</string>
+        <string>Render edges as cylinders</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -254,9 +254,9 @@
       </widget>
      </item>
      <item row="4" column="4">
-      <widget class="QDoubleSpinBox" name="doubleSpinBoxWireframeThickness">
+      <widget class="QDoubleSpinBox" name="doubleSpinBoxEdgesThickness">
        <property name="toolTip">
-        <string>Wireframe thickness (valid when rendered as cylinders)</string>
+        <string>Edges thickness</string>
        </property>
        <property name="decimals">
         <number>1</number>
@@ -416,10 +416,10 @@
   <tabstop>toolButtonVerticesDefaultColor</tabstop>
   <tabstop>toolButtonVerticesImpostors</tabstop>
   <tabstop>doubleSpinBoxVerticesSize</tabstop>
-  <tabstop>checkBoxShowWireframe</tabstop>
-  <tabstop>toolButtonWireframeDefaultColor</tabstop>
-  <tabstop>toolButtonWireframeImpostors</tabstop>
-  <tabstop>doubleSpinBoxWireframeThickness</tabstop>
+  <tabstop>checkBoxShowEdges</tabstop>
+  <tabstop>toolButtonEdgesDefaultColor</tabstop>
+  <tabstop>toolButtonEdgesImpostors</tabstop>
+  <tabstop>doubleSpinBoxEdgesThickness</tabstop>
   <tabstop>checkBoxShowBorders</tabstop>
   <tabstop>toolButtonBordersDefaultColor</tabstop>
   <tabstop>toolButtonBordersImpostors</tabstop>
