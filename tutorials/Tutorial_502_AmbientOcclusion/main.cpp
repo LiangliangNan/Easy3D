@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
             std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
             return EXIT_FAILURE;
         }
-        auto drawable = model->triangles_drawable("surface");
+        auto drawable = model->triangles_drawable("faces");
         drawable->set_default_color(vec3(1.0f, 1.0f, 1.0f));
 
         // Run the viewer

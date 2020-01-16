@@ -119,7 +119,7 @@ void TutorialAmbientOcclusion::draw() const {
 		program->set_uniform("ssaoEnabled", true);
 		program->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
-		auto drawable = current_model()->triangles_drawable("surface");
+		auto drawable = current_model()->triangles_drawable("faces");
 		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->default_color());
         drawable->gl_draw(false);

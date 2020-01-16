@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
             normals.insert(normals.end(), 3, n); // each vertex has a normal
         }
 
-		TrianglesDrawable* surface = new TrianglesDrawable("surface");
+		TrianglesDrawable* surface = new TrianglesDrawable("faces");
 		// Upload the vertex positions of the surface to the GPU.
 		surface->update_vertex_buffer(points);
 		// Upload the vertex normals of the surface to the GPU.

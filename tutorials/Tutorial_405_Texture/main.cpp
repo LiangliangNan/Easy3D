@@ -76,11 +76,11 @@ int main(int argc, char** argv) {
         SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, h, 0)); texcoord[v3] = vec2(0, 1);
         mesh->add_quad(v0, v1, v2, v3);
 
-        // add the model to the viewer and create the default drwable "surface"
+        // add the model to the viewer and create the default drwable "faces"
         viewer.add_model(mesh, true, true);
 
-        // set the texture of the default drwable "surface"
-        auto drawable = mesh->triangles_drawable("surface");
+        // set the texture of the default drwable "faces"
+        auto drawable = mesh->triangles_drawable("faces");
         drawable->set_texture(tex);
 
         // -------------------------------------------------------------------------------

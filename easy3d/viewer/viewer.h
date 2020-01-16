@@ -176,7 +176,7 @@ namespace easy3d {
          *        success, the viewer will be in charge of the memory management of the model.
          * @details This method loads a model into the viewer. Internally, it will pop up a file
          *          dialog for the user to navigate to the file. After loading the model, the
-         *          necessary drawables (e.g., "vertices" for point clouds, "surface" for surface
+         *          necessary drawables (e.g., "vertices" for point clouds, "faces" for surface
          *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
          * @return true on success and false otherwise.
          * @related open(const std::string& file_name, bool create_default_drawables,
@@ -198,7 +198,7 @@ namespace easy3d {
          * @details This method loads a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
          *          - for point clouds, a PointsDrawable (with name "vertices");
-         *          - for surface meshes, a TrianglesDrawable (with name "surface");
+         *          - for surface meshes, a TrianglesDrawable (with name "faces");
          *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
          *            name "edges").
          *          These drawables are usually sufficient for basic rendering of the model. In case
@@ -223,7 +223,7 @@ namespace easy3d {
          * @details This method adds a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
          *          - for point clouds, a PointsDrawable (with name "vertices");
-         *          - for surface meshes, a TrianglesDrawable (with name "surface");
+         *          - for surface meshes, a TrianglesDrawable (with name "faces");
          *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
          *            name "edges").
          *          These drawables are usually sufficient for basic rendering of the model. In case

@@ -42,9 +42,9 @@ void WidgetSurfaceMeshTexturing::updatePanel() {
     if (!mesh())
         return;
 
-    // surface
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
+    // faces
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
     }
     else {
     }

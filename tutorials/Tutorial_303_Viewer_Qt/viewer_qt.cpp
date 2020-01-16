@@ -483,7 +483,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             LinesDrawable* edges = currentModel()->lines_drawable("edges");
             if (!edges) {
                 edges = currentModel()->add_lines_drawable("edges");
+                makeCurrent();
                 renderer::update_data(currentModel(), edges);
+                doneCurrent();
             }
             else
                 edges->set_visible(!edges->is_visible());
@@ -495,7 +497,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             PointsDrawable* vertices = currentModel()->points_drawable("vertices");
             if (!vertices) {
                 vertices = currentModel()->add_points_drawable("vertices");
+                makeCurrent();
                 renderer::update_data(currentModel(), vertices);
+                doneCurrent();
             }
             else
                 vertices->set_visible(!vertices->is_visible());
@@ -590,8 +594,8 @@ void ViewerQt::create_drawables(Model* model, bool smooth_shading) {
     }
     else if (dynamic_cast<SurfaceMesh*>(model)) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-        TrianglesDrawable* surface = mesh->add_triangles_drawable("surface");
-        renderer::update_data(mesh, surface, smooth_shading);
+        TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
+        renderer::update_data(mesh, drawable, smooth_shading);
     }
     else if (dynamic_cast<Graph*>(model)) {
         Graph* graph = dynamic_cast<Graph*>(model);

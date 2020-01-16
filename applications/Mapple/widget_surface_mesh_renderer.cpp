@@ -75,16 +75,16 @@ void WidgetSurfaceMeshRenderer::updatePanel() {
         return;
 
     // surface
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
-        ui->checkBoxPhongShading->setChecked(surface->phong_shading());
-        ui->checkBoxUseColorProperty->setChecked(surface->per_vertex_color());
-        ui->checkBoxShowFaces->setChecked(surface->is_visible());
-        const vec3& c = surface->default_color();
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
+        ui->checkBoxPhongShading->setChecked(drawable->phong_shading());
+        ui->checkBoxUseColorProperty->setChecked(drawable->per_vertex_color());
+        ui->checkBoxShowFaces->setChecked(drawable->is_visible());
+        const vec3& c = drawable->default_color();
         QPixmap pixmap(ui->toolButtonFacesDefaultColor->size());
         pixmap.fill(QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonFacesDefaultColor->setIcon(QIcon(pixmap));
-        ui->horizontalSliderFacesOpacity->setValue(surface->opacity() * 100);
+        ui->horizontalSliderFacesOpacity->setValue(drawable->opacity() * 100);
     }
     else {
         ui->checkBoxPhongShading->setChecked(setting::surface_mesh_phong_shading);
@@ -183,25 +183,25 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
     if (!mesh())
         return;
 
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface && surface->phong_shading() == b)
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable && drawable->phong_shading() == b)
         return;
-    else if (!surface)  // make sure the drawable exists
-        surface = mesh()->add_triangles_drawable("surface");
+    else if (!drawable)  // make sure the drawable exists
+        drawable = mesh()->add_triangles_drawable("faces");
 
     std::cout << "executed" << std::endl;
 
     viewer_->makeCurrent();
     if (b) {
         auto points = mesh()->get_vertex_property<vec3>("v:point");
-        surface->update_vertex_buffer(points.vector());
+        drawable->update_vertex_buffer(points.vector());
         auto colors = mesh()->get_vertex_property<vec3>("v:color");
         if (colors)
-            surface->update_color_buffer(colors.vector());
+            drawable->update_color_buffer(colors.vector());
 
         auto normals = mesh()->get_vertex_property<vec3>("v:normal");
         if (normals)
-             surface->update_normal_buffer(normals.vector());
+             drawable->update_normal_buffer(normals.vector());
         else {
             std::vector<vec3> normals;
             normals.reserve(mesh()->n_vertices());
@@ -209,7 +209,7 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
                 const vec3& n = mesh()->compute_vertex_normal(v);
                 normals.push_back(n);
             }
-            surface->update_normal_buffer(normals);
+            drawable->update_normal_buffer(normals);
         }
 
         std::vector<unsigned int> indices;
@@ -227,7 +227,7 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
                 cur = mesh()->next_halfedge(cur);
             }
         }
-        surface->update_index_buffer(indices);
+        drawable->update_index_buffer(indices);
     }
     else {  // flat shading
         auto points = mesh()->get_vertex_property<vec3>("v:point");
@@ -260,14 +260,14 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
                 cur = mesh()->next_halfedge(cur);
             }
         }
-        surface->update_vertex_buffer(vertices);
-        surface->update_normal_buffer(vertex_normals);
+        drawable->update_vertex_buffer(vertices);
+        drawable->update_normal_buffer(vertex_normals);
         if (colors)
-            surface->update_color_buffer(vertex_colors);
-        surface->release_index_buffer();
+            drawable->update_color_buffer(vertex_colors);
+        drawable->release_index_buffer();
     }
 
-    surface->set_phong_shading(b);
+    drawable->set_phong_shading(b);
 
     viewer_->update();
     viewer_->doneCurrent();
@@ -282,32 +282,32 @@ void WidgetSurfaceMeshRenderer::setUseColorProperty(bool b) {
             LOG(WARNING) << "no color property defined on vertices/faces";
     }
 
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
-        surface->set_per_vertex_color(b);
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
+        drawable->set_per_vertex_color(b);
         viewer_->update();
     }
 }
 
 
 void WidgetSurfaceMeshRenderer::setShowFaces(bool b) {
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
-        surface->set_visible(b);
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
+        drawable->set_visible(b);
         viewer_->update();
     }
 }
 
 
 void WidgetSurfaceMeshRenderer::setFacesDefaultColor() {
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
-        const vec3& c = surface->default_color();
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
+        const vec3& c = drawable->default_color();
         QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
         const QColor& color = QColorDialog::getColor(orig, this);
         if (color.isValid()) {
             const vec3 new_color(color.redF(), color.greenF(), color.blueF());
-            surface->set_default_color(new_color);
+            drawable->set_default_color(new_color);
             viewer_->update();
             QPixmap pixmap(ui->toolButtonFacesDefaultColor->size());
             pixmap.fill(color);
@@ -318,9 +318,9 @@ void WidgetSurfaceMeshRenderer::setFacesDefaultColor() {
 
 
 void WidgetSurfaceMeshRenderer::setFacesOpacity(int a) {
-    TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-    if (surface) {
-        surface->set_opacity(a / 100.0f);
+    TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+    if (drawable) {
+        drawable->set_opacity(a / 100.0f);
         viewer_->update();
     }
 }

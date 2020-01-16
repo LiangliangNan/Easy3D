@@ -98,8 +98,8 @@ void WidgetVectorField::updatePanel() {
         addEdgeFields<SurfaceMesh>(ui->comboBoxVectorFieldName, mesh());
 
         // surface
-        TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-        if (surface) {
+        TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+        if (drawable) {
         }
         else {
         }

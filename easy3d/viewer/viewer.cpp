@@ -1091,8 +1091,8 @@ namespace easy3d {
         }
         else if (dynamic_cast<SurfaceMesh*>(model)) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-            TrianglesDrawable* surface = mesh->add_triangles_drawable("surface");
-            renderer::update_data(mesh, surface, smooth_shading);
+            TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
+            renderer::update_data(mesh, drawable, smooth_shading);
         }
         else if (dynamic_cast<Graph*>(model)) {
             Graph* graph = dynamic_cast<Graph*>(model);

@@ -86,13 +86,13 @@ int main(int argc, char** argv) {
         }
 
         // The faces drawable created by default.
-        TrianglesDrawable* surface = mesh->triangles_drawable("surface");
+        TrianglesDrawable* drawable = mesh->triangles_drawable("faces");
         // Note we had already uploaded the vertex positions and the vertex indices
         // to the GPU. Now we only need to transfer the color data to the GPU.
-        surface->update_color_buffer(scalar_field_colors);
+        drawable->update_color_buffer(scalar_field_colors);
 
         // Vertices have varying colors.
-        surface->set_per_vertex_color(true);
+        drawable->set_per_vertex_color(true);
 
         // Run the viewer
         viewer.run();

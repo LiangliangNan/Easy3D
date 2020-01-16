@@ -157,8 +157,8 @@ void WidgetScalarField::updatePanel() {
         addEdgeFields<double, SurfaceMesh>(ui->comboBoxScalarFieldName, mesh());
 
         // surface
-        TrianglesDrawable* surface = mesh()->triangles_drawable("surface");
-        if (surface) {
+        TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
+        if (drawable) {
         }
         else {
         }
