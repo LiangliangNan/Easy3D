@@ -819,16 +819,20 @@ namespace easy3d {
 		}
         else if (key == GLFW_KEY_V && modifiers == 0) {
             if (current_model()) {
-                SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(current_model());
-                if (model) {
-                    PointsDrawable* vertices = model->points_drawable("vertices");
-                    if (!vertices) {
-                        vertices = model->add_points_drawable("vertices");
-                        renderer::update_data(model, vertices);
-                    }
-                    else
-                        vertices->set_visible(!vertices->is_visible());
+                PointsDrawable* vertices = current_model()->points_drawable("vertices");
+                if (!vertices) {
+                    vertices = current_model()->add_points_drawable("vertices");
+
+                    // [Liangliang] TODO: use a template to avoid dynamic_cast -> simpler code.
+                    if (dynamic_cast<PointCloud*>(current_model()))
+                        renderer::update_data(dynamic_cast<PointCloud*>(current_model()), vertices);
+                    else if (dynamic_cast<SurfaceMesh*>(current_model()))
+                            renderer::update_data(dynamic_cast<SurfaceMesh*>(current_model()), vertices);
+                    else if (dynamic_cast<Graph*>(current_model()))
+                        renderer::update_data(dynamic_cast<Graph*>(current_model()), vertices);
                 }
+                else
+                    vertices->set_visible(!vertices->is_visible());
             }
         }
 
