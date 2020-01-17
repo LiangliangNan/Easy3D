@@ -547,7 +547,6 @@ std::string PaintCanvas::usage() const {
 		" ------------------------------------------------------------------\n"
 		"  '+'/'-':             Increase/Decrease point size (line width)   \n"
 		"  'a':                 Toggle axes									\n"
-		"  'f':                 Toggle faces                                \n"
 		"  'e':                 Toggle edges                                \n"
 		"  'v':                 Toggle vertices                             \n"
 		"  'd':                 Print drawables attached to current model   \n"
