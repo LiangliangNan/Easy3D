@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
+add_subdirectory(Easy3DViewer)
+
 if(EASY3D_ENABLE_QT)
     find_package(CGAL)
     if(CGAL_FOUND)
@@ -8,3 +10,4 @@ if(EASY3D_ENABLE_QT)
         message(WARNING "Mapple requires CGAL but CGAL was not found")
     endif()
 endif()
+

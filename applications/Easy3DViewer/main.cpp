@@ -28,9 +28,6 @@
 
 using namespace easy3d;
 
-// This example shows how to
-//		- use the default viewer.
-
 
 int main(int argc, char** argv) {
     // Initialize logging.
@@ -39,13 +36,12 @@ int main(int argc, char** argv) {
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Tutorial_301_Viewer");
+        Viewer viewer("Easy3DViewer");
 
         // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

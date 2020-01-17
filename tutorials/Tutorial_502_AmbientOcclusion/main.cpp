@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
         Model* model = viewer.open(file, true, false);
         if (!model) {
-            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
         auto drawable = model->triangles_drawable("faces");
@@ -59,8 +59,7 @@ int main(int argc, char** argv) {
 
         return EXIT_SUCCESS;
     } catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

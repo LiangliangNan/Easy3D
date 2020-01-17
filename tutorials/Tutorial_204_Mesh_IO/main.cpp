@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     const std::string file_name = setting::resource_directory() + "/data/building.off";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
 	}
 	std::cout << "mesh loaded. " << std::endl;

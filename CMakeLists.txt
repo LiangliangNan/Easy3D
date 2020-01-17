@@ -42,10 +42,10 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Build tutorials
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
-# Build tests
-option(EASY3D_BUILD_TESTS           "Build tests"                          OFF)
+# Build sandbox
+option(EASY3D_BUILD_SANDBOX         "Build sandbox"                         ON)
 # Build CGAL-based algorithms
-option(EASY3D_ENABLE_CGAL           "Build CGAL-based algorithms"           ON)
+option(EASY3D_ENABLE_CGAL           "Build CGAL-based algorithms"          OFF)
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
 
@@ -77,8 +77,8 @@ if(EASY3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif()
 
-if(EASY3D_BUILD_TESTS)
-    add_subdirectory(tests)
+if(EASY3D_BUILD_SANDBOX)
+    add_subdirectory(sandbox)
 endif()
 
 add_subdirectory(applications)

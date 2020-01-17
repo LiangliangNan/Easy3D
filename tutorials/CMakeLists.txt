@@ -17,8 +17,8 @@ add_subdirectory("Tutorial_206_Graph_Connectivity")
 add_subdirectory("Tutorial_207_Graph_Property")
 add_subdirectory("Tutorial_208_Graph_IO")
 
-# viewer & drawing
-add_subdirectory("Tutorial_301_Viewer")
+# ui, viewer, and drawing
+add_subdirectory("Tutorial_301_Logging")
 add_subdirectory("Tutorial_302_Viewer_imgui")
 if(EASY3D_ENABLE_QT)
     add_subdirectory("Tutorial_303_Viewer_Qt")

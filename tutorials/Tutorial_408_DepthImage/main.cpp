@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         DepthImage viewer("Tutorial_408_DepthImage");
         Model* model = viewer.open(file, true);
         if (!model) {
-            std::cerr << "failed loading model from \'" << file << "\'" << std::endl;
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
@@ -57,8 +57,7 @@ int main(int argc, char** argv) {
         // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

@@ -43,14 +43,13 @@ int main(int argc, char** argv) {
     try {
         CameraIntrepolation viewer("Tutorial_305_CameraInterpolation");
         if (!viewer.open(file_name, true)) {
-            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
         viewer.run();
     } catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

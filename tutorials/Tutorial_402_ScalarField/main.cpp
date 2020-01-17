@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
         // Load a mesh model and create a drawable for the faces.
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true, true));
         if (!mesh) {
-            std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
@@ -98,8 +98,7 @@ int main(int argc, char** argv) {
         viewer.run();
     }
     catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

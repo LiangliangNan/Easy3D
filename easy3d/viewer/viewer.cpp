@@ -197,11 +197,11 @@ namespace easy3d {
 		opengl::setup_gl_debug_callback();
 #endif
 
-#if 1
+        LOG(INFO) << "OpenGL vendor:            " << glGetString(GL_VENDOR);
+        LOG(INFO) << "OpenGL renderer:          " << glGetString(GL_RENDERER);
 		LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
 		LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION) << std::endl;
 		LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-#endif
 
 		glGetIntegerv(GL_SAMPLES, &samples_);
 		int max_num = 0;
@@ -215,7 +215,7 @@ namespace easy3d {
 				LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is " << max_num << ")";
 		}
 		else
-			LOG(INFO) << "Samples received: " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
+			LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
 
 
 		float xscale, yscale;

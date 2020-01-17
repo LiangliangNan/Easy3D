@@ -28,8 +28,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#ifdef HAS_QT5
-
 #include <QDir>
 #include <QTime>
 #include <QApplication>
@@ -93,22 +91,9 @@ int main(int argc, char *argv[])
         status = app.exec();
     }
     catch (const std::exception& e) {
-        const std::string msg =
-                std::string("Oh sorry, ViewerQt crashed.\n") +
-                "Error message: " + e.what() + ".\n"
-                "Please contact me (liangliang.nan@gmail.com) for more information.";
-        std::cerr << msg << std::endl;
+        LOG(ERROR) << "Oh sorry, ViewerQt crashed.\nError message: " << e.what()
+        << ".\nPlease contact me (liangliang.nan@gmail.com) for more information.";
     }
 
     return status;
 }
-
-#else
-
-int main(int argc, char *argv[])
-{
-    std::cerr << "The ViewerQt example requires Qt5 which is not availabe/found on this machine" << std::endl;
-    return false;
-}
-
-#endif

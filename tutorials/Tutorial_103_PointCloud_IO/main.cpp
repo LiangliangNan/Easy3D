@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/building_cloud.bin");
     if (!cloud) {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct." << std::endl;
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

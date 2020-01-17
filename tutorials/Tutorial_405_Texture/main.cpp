@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
         const std::string texture_file = setting::resource_directory() + "/images/logo.jpg";
         Texture* tex = Texture::create(texture_file, GL_REPEAT);
         if (!tex) {
-            std::cerr << "Error: failed to create texture. Please make sure the file exists and format is correct." << std::endl;
+            LOG(ERROR) << "Error: failed to create texture. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
@@ -89,8 +89,7 @@ int main(int argc, char** argv) {
         viewer.run();
     }
     catch (const std::runtime_error &e) {
-        const std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 
