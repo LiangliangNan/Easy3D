@@ -55,7 +55,7 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 
 **Optional dependencies**: Easy3D also supports the use of CGAL and Qt for advanced algorithms and UI, respectively. These optional features can be enabled by switching on the corresponding CMake boolean options:
 
-- `EASY3D_ENABLE_CGAL`     Compile CGAL-based algorithms (see [`./easy3d/algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
+- `EASY3D_ENABLE_CGAL`     Compile CGAL-based algorithms (see [`./easy3d/algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/master/easy3d/algo_ext))
 - `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., [`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
 
 ### License
