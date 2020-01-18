@@ -46,8 +46,13 @@ CompositeView::CompositeView(const std::string& title)
 
 
 void CompositeView::draw() const {
+#ifdef __APPLE__
     int w = width() * dpi_scaling();
     int h = height() * dpi_scaling();
+#else
+    int w = width();
+    int h = height();
+#endif
 
     // Enable scissor test
     glEnable(GL_SCISSOR_TEST);
@@ -129,7 +134,7 @@ void CompositeView::draw_grid() const {
 
     program->bind();
     // the translation moves the grid to the view center
-    program->set_uniform("MVP", proj * mat4::translation(w * 0.5, h * 0.5, 0));
+    program->set_uniform("MVP", proj * mat4::translation(w * 0.5f, h * 0.5f, 0.0f));
     program->set_uniform("per_vertex_color", false);
     program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
     grid_->gl_draw(false);
@@ -151,8 +156,8 @@ void CompositeView::cleanup() {
 
 
 void CompositeView::update_grid() {
-    int x_steps = width() * dpi_scaling() * 0.5 / grid_size_;
-    int y_steps = height() * dpi_scaling() * 0.5 / grid_size_;
+    int x_steps = width() * dpi_scaling() * 0.5f / grid_size_;
+    int y_steps = height() * dpi_scaling() * 0.5f / grid_size_;
     std::vector<vec3> points;
     opengl::prepare_grid(x_steps, y_steps, points, grid_size_);
     grid_->update_vertex_buffer(points);
