@@ -314,6 +314,18 @@ namespace easy3d {
         std::string usage() const;
 
 	protected:
+        /**
+         * @brief Create default drawables for rendering
+         * @details For a PointCloud, it creates a PointsDrawable. Per point color will be enabled
+         *          if vertex property 'v:color' exists; nomals (stored in vertex property
+         *          'v:normal') will be used for rendering if exists.
+         *          For a MeshSurface, it creates a TrianglesDrawable; Per vertex color will be
+         *          enabled if vertex property 'v:color' exists.
+         *          For a Graph, it creates a PointsDrawable (phere imposters) for visualizing the
+         *          vertices and a LinesDrawable (cylinder imposters) for visualizing the edges.
+         * @todo TODO: move this function to Renderer module; enable per face color for surface meshes.
+         */
+        virtual void create_drawables(Model* model, bool smooth_shading = true);
 
         // rendering. Users can put their additional rendering function here by reimplementing it.
         virtual void draw() const;
@@ -374,28 +386,26 @@ namespace easy3d {
 		virtual bool focus_event(bool focused);
 
 	protected:
-
-        // Create default drawables for rendering
-        //  - for point clouds, it creates a PointsDrawable
-        //      - per point color will be enabled if vertex property 'v:color' exists
-        //      - nomals (stored in vertex property 'v:normal') will used for rendering if exists.
-        //  - for mesh surfaces, it creates a TrianglesDrawable
-        //      - per vertex color will be enabled if vertex property 'v:color' exists
-        // TODO: move this function to Renderer module; enable per face color for surface meshes.
-        void create_drawables(Model* model, bool smooth_shading = true);
-
-        void draw_corner_axes();
-
-        void setup_callbacks();
+        GLFWwindow*	create_window(const std::string& title,
+                                  int samples,
+                                  int gl_major,   // must >= 3
+                                  int gl_minor,   // must >= 2
+                                  bool full_screen,
+                                  bool resizable,
+                                  int depth_bits = 24,
+                                  int stencil_bits = 8);
+        void setup_callbacks(GLFWwindow*);
 
 		/* Event handlers. Client code should not touch these */
-		virtual bool callback_event_cursor_pos(double x, double y);
-		virtual bool callback_event_mouse_button(int button, int action, int modifiers);
-		virtual bool callback_event_keyboard(int key, int action, int mods);
-		virtual bool callback_event_character(unsigned int codepoint);
-		virtual bool callback_event_drop(int count, const char **filenames);
-		virtual bool callback_event_scroll(double dx, double dy);
+        virtual bool callback_event_cursor_pos(double x, double y);
+        virtual bool callback_event_mouse_button(int button, int action, int modifiers);
+        virtual bool callback_event_keyboard(int key, int action, int mods);
+        virtual bool callback_event_character(unsigned int codepoint);
+        virtual bool callback_event_drop(int count, const char **filenames);
+        virtual bool callback_event_scroll(double dx, double dy);
         virtual void callback_event_resize(int w, int h);
+
+        void draw_corner_axes();
 
 	protected:
 		GLFWwindow*	window_;

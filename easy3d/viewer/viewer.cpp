@@ -114,138 +114,36 @@ namespace easy3d {
 		// Avoid locale-related number parsing issues.
 		setlocale(LC_NUMERIC, "C");
 
-		glfwSetErrorCallback(
-			[](int error, const char *descr) {
-			if (error == GLFW_NOT_INITIALIZED)
-				LOG(ERROR) << "GLFW error " << error << ": " << descr;
-		});
+        // create and setup window
+        window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,
+                                depth_bits, stencil_bits);
+        setup_callbacks(window_);
 
-		if (!glfwInit()) {
-			LOG(ERROR) << "Could not initialize GLFW!";
-			throw std::runtime_error("Could not initialize GLFW!");
-		}
+        // create and setup the camera
+        camera_ = new Camera;
+        camera_->setType(Camera::PERSPECTIVE);
+        camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
+        camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
+        camera_->showEntireScene();
+        camera_->connect(this, &Viewer::update);
 
-		glfwSetTime(0);
+        int fw, fh;
+        glfwGetFramebufferSize(window_, &fw, &fh);
+        // needs to be executed once to ensure the viewer is initialized with correct viewer size
+        callback_event_resize(fw, fh);
 
-		// Reset the hints, allowing viewers to have different hints.
-		glfwDefaultWindowHints();
+        // create a GPU timer
+        gpu_timer_ = new OpenGLTimer(false);
 
-		glfwWindowHint(GLFW_SAMPLES, samples);
+        // initialize various variables
+        background_color_ = vec4(0.9f, 0.9f, 1.0f, 1.0f);
 
-		glfwWindowHint(GLFW_STENCIL_BITS, stencil_bits);
-		glfwWindowHint(GLFW_DEPTH_BITS, depth_bits);
-
-		/* Request a forward compatible OpenGL glMajor.glMinor core profile context.
-		   Default value is an OpenGL 3.2 core profile context. */
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
-
-#ifdef __APPLE__
-		// The only OpenGL 3.x and 4.x contexts currently supported by macOS are
-		// forward-compatible, core profile contexts.
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#else
-		if (gl_major >= 3) {
-			if (gl_minor >= 2)
-				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	// 3.2+ only
-			if (gl_minor >= 0)
-				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);			// 3.0+ only
-		}
-#endif
-
-		// make the whole window transparent
-		//glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
-
-		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-		glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
-
-		int w = 960;
-		int h = 800;
-		if (full_screen) {
-			GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-			const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-			w = mode->width;
-			h = mode->height;
-			window_ = glfwCreateWindow(w, h, title.c_str(), monitor, nullptr);
-		}
-		else {
-			window_ = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
-		}
-
-		if (!window_) {
-			glfwTerminate();
-			LOG(ERROR) << "Could not create an OpenGL " << std::to_string(gl_major)
-				<< "." << std::to_string(gl_minor) << " context!";
-			throw std::runtime_error("Could not create an OpenGL " +
-				std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
-		}
-		glfwSetWindowUserPointer(window_, this);
-
-		glfwMakeContextCurrent(window_);
-		glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-		glfwSwapInterval(1); // Enable vsync
-
-		// Load OpenGL and its extensions
-		if (glewInit() != GLEW_OK) {
-			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-			throw std::runtime_error("Failed to load OpenGL and its extensions!");
-		}
-
-#ifndef NDEBUG
-		opengl::setup_gl_debug_callback();
-#endif
-
-        LOG(INFO) << "OpenGL vendor:            " << glGetString(GL_VENDOR);
-        LOG(INFO) << "OpenGL renderer:          " << glGetString(GL_RENDERER);
-		LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
-		LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION) << std::endl;
-		LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-
-		glGetIntegerv(GL_SAMPLES, &samples_);
-		int max_num = 0;
-		glGetIntegerv(GL_MAX_SAMPLES, &max_num);
-
-		// warn the user if the requests were not satisfied
-		if (samples > 0 && samples_ != samples) {
-			if (samples_ == 0)
-				LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
-			else
-				LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is " << max_num << ")";
-		}
-		else
-			LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
-
-
-		float xscale, yscale;
-		glfwGetWindowContentScale(window_, &xscale, &yscale);
-		dpi_scaling_ = static_cast<double>(xscale + yscale) * 0.5;
-
-		gpu_timer_ = new OpenGLTimer(false);
-
-		background_color_ = vec4(0.9f, 0.9f, 1.0f, 1.0f);
-
-		camera_ = new Camera;
-		camera_->setType(Camera::PERSPECTIVE);
-		camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
-		camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
-		camera_->showEntireScene();
-		camera_->connect(this, &Viewer::update);
-
-		int fw, fh;
-		glfwGetFramebufferSize(window_, &fw, &fh);
-		// needs to be executed once to ensure the viewer is initialized with correct viewer size
-		callback_event_resize(fw, fh);
-
-		mouse_x_ = mouse_y_ = 0;
-		mouse_pressed_x_ = mouse_pressed_y_ = 0;
-		button_ = -1;
-		modifiers_ = 0;
-		drag_active_ = false;
-		process_events_ = true;
-
-		setup_callbacks();
+        mouse_x_ = mouse_y_ = 0;
+        mouse_pressed_x_ = mouse_pressed_y_ = 0;
+        button_ = -1;
+        modifiers_ = 0;
+        drag_active_ = false;
+        process_events_ = true;
 
 		std::cout << usage() << std::endl;
 
@@ -254,8 +152,131 @@ namespace easy3d {
 	}
 
 
-	void Viewer::setup_callbacks() {
-		glfwSetCursorPosCallback(window_, [](GLFWwindow *win, double x, double y)
+    GLFWwindow* Viewer::create_window(
+            const std::string& title,
+            int samples,
+            int gl_major,
+            int gl_minor,
+            bool full_screen,
+            bool resizable,
+            int depth_bits,
+            int stencil_bits)
+    {
+        glfwSetErrorCallback(
+            [](int error, const char *descr) {
+            if (error == GLFW_NOT_INITIALIZED)
+                LOG(ERROR) << "GLFW error " << error << ": " << descr;
+        });
+
+        if (!glfwInit()) {
+            LOG(ERROR) << "Could not initialize GLFW!";
+            throw std::runtime_error("Could not initialize GLFW!");
+        }
+
+        glfwSetTime(0);
+
+        // Reset the hints, allowing viewers to have different hints.
+        glfwDefaultWindowHints();
+
+        glfwWindowHint(GLFW_SAMPLES, samples);
+
+        glfwWindowHint(GLFW_STENCIL_BITS, stencil_bits);
+        glfwWindowHint(GLFW_DEPTH_BITS, depth_bits);
+
+        /* Request a forward compatible OpenGL glMajor.glMinor core profile context.
+           Default value is an OpenGL 3.2 core profile context. */
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
+
+#ifdef __APPLE__
+        // The only OpenGL 3.x and 4.x contexts currently supported by macOS are
+        // forward-compatible, core profile contexts.
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+        if (gl_major >= 3) {
+            if (gl_minor >= 2)
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	// 3.2+ only
+            if (gl_minor >= 0)
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);			// 3.0+ only
+        }
+#endif
+
+        // make the whole window transparent
+        //glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
+
+        int w = 960;
+        int h = 800;
+        GLFWwindow*	window = nullptr;
+        if (full_screen) {
+            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+            w = mode->width;
+            h = mode->height;
+            window = glfwCreateWindow(w, h, title.c_str(), monitor, nullptr);
+        }
+        else {
+            window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
+        }
+
+        if (!window) {
+            glfwTerminate();
+            LOG(ERROR) << "Could not create an OpenGL " << std::to_string(gl_major)
+                << "." << std::to_string(gl_minor) << " context!";
+            throw std::runtime_error("Could not create an OpenGL " +
+                std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
+        }
+        glfwSetWindowUserPointer(window, this);
+
+        glfwMakeContextCurrent(window);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        glfwSwapInterval(1); // Enable vsync
+
+        // Load OpenGL and its extensions
+        if (glewInit() != GLEW_OK) {
+            glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+            throw std::runtime_error("Failed to load OpenGL and its extensions!");
+        }
+
+#ifndef NDEBUG
+        opengl::setup_gl_debug_callback();
+#endif
+
+        LOG(INFO) << "OpenGL vendor:            " << glGetString(GL_VENDOR);
+        LOG(INFO) << "OpenGL renderer:          " << glGetString(GL_RENDERER);
+        LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
+        LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION) << std::endl;
+        LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
+        glGetIntegerv(GL_SAMPLES, &samples_);
+        int max_num = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+
+        // warn the user if the requests were not satisfied
+        if (samples > 0 && samples_ != samples) {
+            if (samples_ == 0)
+                LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
+            else
+                LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is " << max_num << ")";
+        }
+        else
+            LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
+
+        float xscale, yscale;
+        glfwGetWindowContentScale(window, &xscale, &yscale);
+        dpi_scaling_ = static_cast<double>(xscale + yscale) * 0.5;
+
+        return window;
+    }
+
+
+
+    void Viewer::setup_callbacks(GLFWwindow *window) {
+        glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -273,7 +294,7 @@ namespace easy3d {
 			}
 		});
 
-		glfwSetMouseButtonCallback(window_, [](GLFWwindow *win, int button, int action, int modifiers)
+        glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int modifiers)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -281,7 +302,7 @@ namespace easy3d {
 			viewer->callback_event_mouse_button(button, action, modifiers);
 		});
 
-		glfwSetKeyCallback(window_, [](GLFWwindow *win, int key, int scancode, int action, int mods)
+        glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int scancode, int action, int mods)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -290,7 +311,7 @@ namespace easy3d {
 			viewer->callback_event_keyboard(key, action, mods);
 		});
 
-		glfwSetCharCallback(window_, [](GLFWwindow *win, unsigned int codepoint)
+        glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -298,7 +319,7 @@ namespace easy3d {
 			viewer->callback_event_character(codepoint);
 		});
 
-		glfwSetDropCallback(window_, [](GLFWwindow *win, int count, const char **filenames)
+        glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char **filenames)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -306,7 +327,7 @@ namespace easy3d {
 			viewer->callback_event_drop(count, filenames);
 		});
 
-		glfwSetScrollCallback(window_, [](GLFWwindow *win, double dx, double dy)
+        glfwSetScrollCallback(window, [](GLFWwindow *win, double dx, double dy)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -317,7 +338,7 @@ namespace easy3d {
 		/* React to framebuffer size events -- includes window size events and also
 		 * catches things like dragging a window from a Retina-capable screen to a
 		 * normal screen on Mac OS X */
-		glfwSetFramebufferSizeCallback(window_, [](GLFWwindow *win, int width, int height)
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
@@ -326,13 +347,13 @@ namespace easy3d {
 		});
 
 		// notify when the screen has lost focus (e.g. application switch)
-		glfwSetWindowFocusCallback(window_, [](GLFWwindow *win, int focused)
+        glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused)
 		{
 			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			viewer->focus_event(focused != 0);// true for focused
 		});
 
-		glfwSetWindowCloseCallback(window_, [](GLFWwindow *win)
+        glfwSetWindowCloseCallback(window, [](GLFWwindow *win)
 		{
 			glfwSetWindowShouldClose(win, true);
 		});
