@@ -82,7 +82,9 @@ namespace easy3d {
         const Model* model() const { return model_; }
         void set_model(const Model* m) { model_ = m; }
 
-		// ---------------------- buffer access ------------------------------
+        const Box3& bounding_box() const { return bbox_; }
+
+        // ---------------------- buffer access ------------------------------
 
 		unsigned int vertex_buffer() const { return vertex_buffer_; }
 		unsigned int color_buffer() const { return color_buffer_; }
@@ -173,6 +175,8 @@ namespace easy3d {
 	protected:
         std::string	 name_;
         const Model* model_;
+
+        Box3 bbox_;
 
         bool visible_;
         bool per_vertex_color_;

@@ -29,7 +29,7 @@
 #include <easy3d/viewer/viewer.h>
 
 
-// This ImageViewer class visualizes an image in the screen space.
+// This class visualizes an image in the screen space.
 
 namespace easy3d {
     class Texture;

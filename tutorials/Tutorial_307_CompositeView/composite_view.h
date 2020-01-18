@@ -23,32 +23,44 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "image_viewer.h"
-#include <easy3d/viewer/setting.h>
-#include <easy3d/util/logging.h>
+#ifndef EASY3D_TUTORIAL_COMPOSITE_VIEW_H
+#define EASY3D_TUTORIAL_COMPOSITE_VIEW_H
+
+#include <easy3d/viewer/viewer.h>
 
 
-using namespace easy3d;
+// This example uses a "split window" view, rendering four views of the
+// same scene in one window (e.g. uesful for 3D modelling software). This
+// demo uses scissors to separate the four different rendering areas from
+// each other.
 
-// This example shows how to render an images.
-
-int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize(argv[0]);
-
-    // the image file.
-    const std::string image_file = setting::resource_directory() + "/data/fountain/images/0000.jpg";
-
-    try {
-        ImageViewer viewer("Tutorial_306_ImageViewer", image_file);
-
-        // Run the viewer
-        viewer.run();
-    } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+namespace easy3d {
+    class LinesDrawable;
 }
 
+class CompositeView : public easy3d::Viewer
+{
+public:
+    CompositeView(const std::string& title);
+
+protected:
+    void draw() const override;
+
+    // This function will be called after the window size being changed.
+    void post_resize(int w, int h) override;
+
+    void cleanup() override ;
+
+    void draw_grid() const;
+
+    void update_grid();
+
+private:
+    // Active view: -1: none, 0: upper left, 1: upper right, 2: lower left, 3: lower right
+    int active_view_;
+    int grid_size_;
+    easy3d::LinesDrawable* grid_;
+};
+
+
+#endif // EASY3D_TUTORIAL_COMPOSITE_VIEW_H

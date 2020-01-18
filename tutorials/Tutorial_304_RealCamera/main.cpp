@@ -47,8 +47,6 @@ int main(int argc, char** argv) {
     try {
         RealCamera viewer("Tutorial_304_RealCamera", bundler_file, cloud_file);
 
-        viewer.resize(960, 800);
-
         // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {

@@ -327,6 +327,26 @@ namespace easy3d {
 
 		// ---------------------------------------------------------------------------
 
+        void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float scale) {
+            // Horizontal lines
+            float x = scale * 0.5f * (x_steps - 1);
+            float y = -scale * 0.5f * (y_steps - 1);
+            for (int i = 0;  i < y_steps;  i++) {
+                points.push_back(vec3(-x, y, 0.0f));
+                points.push_back(vec3( x, y, 0.0f));
+                y += scale;
+            }
+
+            // Vertical lines
+            x = -scale * 0.5f * (float) (x_steps - 1);
+            y = scale * 0.5f * (float) (y_steps - 1);
+            for (int i = 0;  i < x_steps;  i++) {
+                points.push_back(vec3(x, -y, 0.0f));
+                points.push_back(vec3(x,  y, 0.0f));
+                x += scale;
+            }
+		}
+
 		void prepare_sphere(
 			const vec3& center, double radius, int slices, int stacks, const vec3& color,
 			std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors)
@@ -465,6 +485,58 @@ namespace easy3d {
 				points.push_back(c);	normals.push_back(nc);	colors.push_back(color);
 			}
 		}
+
+
+        void prepare_torus(double major_radius, double minor_radius, int major_slices, int minor_slices,
+                           std::vector<vec3>& points, std::vector<vec3>& normals)
+        {
+		    bool flip = false;
+            const double twopi = 2.0 * M_PI;
+            for (int i = 0; i < minor_slices; i++) {
+                // QUAD STRIPs;
+                std::vector<vec3> tmp_pts, tmp_nms;
+                for (int j = 0; j <= major_slices; j++) {
+                    for (int k = 1; k >= 0; k--) {
+                        double s = (i + k) % minor_slices + 0.5;
+                        double t = j % major_slices;
+
+                        // Calculate point on surface
+                        double x = (major_radius + minor_radius * cos(s * twopi / minor_slices)) *
+                                   cos(t * twopi / major_slices);
+                        double y = minor_radius * sin(s * twopi / minor_slices);
+                        double z = (major_radius + minor_radius * cos(s * twopi / minor_slices)) *
+                                   sin(t * twopi / major_slices);
+
+                        // Calculate surface normal
+                        double nx = x - major_radius * cos(t * twopi / major_slices);
+                        double ny = y;
+                        double nz = z - major_radius * sin(t * twopi / major_slices);
+                        vec3 n(nx, ny, nz);
+                        n.normalize();
+
+                        tmp_pts.push_back(vec3(x, y, z));
+                        tmp_nms.push_back(n);
+
+                        if (tmp_pts.size() <= 3) {
+                            points.push_back(vec3(x, y, z));
+                            normals.push_back(n);
+                        }
+                        else {
+                            points.push_back(vec3(x, y, z)); normals.push_back(n);
+                            if (flip) {
+                                points.push_back(tmp_pts[tmp_pts.size() - 3]);     normals.push_back(tmp_nms[tmp_nms.size() - 3]);
+                                points.push_back(tmp_pts[tmp_pts.size() - 2]);     normals.push_back(tmp_nms[tmp_nms.size() - 2]);
+                            } else {
+                                points.push_back(tmp_pts[tmp_pts.size() - 2]);     normals.push_back(tmp_nms[tmp_nms.size() - 2]);
+                                points.push_back(tmp_pts[tmp_pts.size() - 3]);     normals.push_back(tmp_nms[tmp_nms.size() - 3]);
+                            }
+                            flip = !flip;
+                        }
+                    }
+                }
+                flip = !flip;
+            }
+        }
 
 
         void prepare_camera(std::vector<vec3>& points, float size, float hw_ratio)

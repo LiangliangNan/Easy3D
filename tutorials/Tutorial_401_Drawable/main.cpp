@@ -114,10 +114,10 @@ int main(int argc, char** argv) {
 
 		// Add the drawable to the viewer
 		viewer.add_drawable(bbox_drawable);
+		viewer.fit_screen();
 
-		// Set the scene range so everything is visible in the viewer.
+		// Set the camera's up vector so the bunny has an upright orientation.
 		viewer.camera()->setUpVector(vec3(0, 1, 0));
-		viewer.camera()->setSceneBoundingBox(box.min(), box.max());
 
         // Run the viewer
         viewer.run();

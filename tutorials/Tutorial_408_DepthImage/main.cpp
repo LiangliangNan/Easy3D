@@ -52,8 +52,6 @@ int main(int argc, char** argv) {
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(5);
 
-        viewer.resize(960, 800);
-
         // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {

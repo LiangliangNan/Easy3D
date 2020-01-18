@@ -150,6 +150,11 @@ namespace easy3d {
 		else {
 			num_vertices_ = count;
 		}
+
+        // update bounding box
+        bbox_.clear();
+        for (std::size_t i = 0; i<count * dim; i+=dim)
+            bbox_.add_point(vec3(vertices + i));
 	}
 
 

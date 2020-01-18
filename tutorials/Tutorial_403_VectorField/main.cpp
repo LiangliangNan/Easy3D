@@ -94,8 +94,8 @@ int main(int argc, char** argv) {
             normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
         }
         else {
-            std::cerr << "This point cloud does not have normal information. "
-                "No vector field can be visualized." << std::endl;
+            LOG(ERROR) << "This point cloud does not have normal information. "
+                "No vector field will be visualized.";
         }
 
         // Run the viewer

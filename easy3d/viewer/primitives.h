@@ -104,8 +104,18 @@ namespace easy3d {
         void draw_point(unsigned int positionAttrib, const vec3 &pos);
 
 
-
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----
+
+		/**
+		 * @brief Prepare data for a representing a grid as a set of line segments. The grid is centered at
+		 *        vec3(0, 0, 0) and lies on the XOY plane.
+		 *        and is
+		 * @param x_steps The number of subdivisions along X direction.
+		 * @param y_steps The number of subdivisions along Y direction.
+		 * @param scale The scaling factor
+		 * @param points The points to be returned.
+		 */
+        void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float scale = 0.5f);
 
 		// Prepare data (points, normals, and colors) for a 3D sphere.
 		// radius: the radius of the sphere.
@@ -115,7 +125,6 @@ namespace easy3d {
 			const vec3& center, double radius, int slices, int stacks, const vec3& color, 
 			std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
 		);
-
 
 		// Prepare data (points, normals, and colors) for a 3D checker sphere.
 		// radius: the radius of the sphere.
@@ -129,20 +138,31 @@ namespace easy3d {
 			std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
 		);
 
-
         // Prepare data (points, normals, and colors) for a 3D cylinder defined by two 3D points s and t.
         void prepare_cylinder(
-			double radius, int slices, const vec3& s, const vec3& t, const vec3& color, 
-			std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
+                double radius, int slices, const vec3& s, const vec3& t, const vec3& color,
+                std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
 		);
 
 		// Prepare data (points, normals, and colors) for a 3D cone defined by two 3D points b and t.
 		// s is the base center and t is the tip.
 		void prepare_cone(
-			double radius, int slices, const vec3& s, const vec3& t, const vec3& color,
-			std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
+		        double radius, int slices, const vec3& s, const vec3& t, const vec3& color,
+		        std::vector<vec3>& points, std::vector<vec3>& normals, std::vector<vec3>& colors
 		);
 
+		/**
+		 * @brief Prepare data for representing a torus.
+		 * @param major_radius The radius of major circle.
+		 * @param minor_radius The radius of minor circle.
+		 * @param major_slices The number of subdivisions along the major circle (suggested value 50).
+		 * @param minor_slices The number of subdivisions along the minor circle (suggested value 20).
+		 * @param points Returns the points.
+		 * @param normals Returns the normals.
+         */
+        void prepare_torus(double major_radius, double minor_radius, int major_slices, int minor_slices,
+                std::vector<vec3>& points, std::vector<vec3>& normals
+        );
 
         /**
          * \brief Prepare data (points) for representing a camera in the 3D world as a set of lines.

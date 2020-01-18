@@ -107,6 +107,7 @@ namespace easy3d {
 		, mouse_y_(0)
 		, mouse_pressed_x_(0)
 		, mouse_pressed_y_(0)
+		, show_pivot_point_(false)
 		, drawable_axes_(nullptr)
 		, show_camera_path_(false)
 		, model_idx_(-1)
@@ -230,11 +231,11 @@ namespace easy3d {
                 std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
         }
         glfwSetWindowUserPointer(window, this);
-
-        glfwMakeContextCurrent(window);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-        glfwSwapInterval(1); // Enable vsync
+        // Enable vsync
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1);
 
         // Load OpenGL and its extensions
         if (glewInit() != GLEW_OK) {
@@ -479,7 +480,7 @@ namespace easy3d {
 
 	bool Viewer::focus_event(bool focused) {
 		if (focused) {
-			// ... 
+			// ...
 		}
 		return false;
 	}
@@ -570,10 +571,18 @@ namespace easy3d {
 					camera_->lookAt(p);
 #endif
 					camera_->setPivotPoint(p);
+                    // show, but hide the visual hint of pivot point after \p delay milliseconds.
+                    show_pivot_point_ = true;
+                    const int delay = 10000;
+                    Timer::single_shot(delay, [&]() {
+                        show_pivot_point_ = false;
+                        update();
+                    });
 				}
-				else
-					camera_->setPivotPoint(camera_->sceneCenter());
-
+				else {
+                    camera_->setPivotPoint(camera_->sceneCenter());
+                    show_pivot_point_ = false;
+                }
 			}
 			else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 #if 1   // with animation
@@ -582,6 +591,7 @@ namespace easy3d {
 				camera()->showEntireScene();
 #endif
 				camera_->setPivotPoint(camera_->sceneCenter());
+                show_pivot_point_ = false;
 			}
 		}
 		return false;
@@ -701,8 +711,8 @@ namespace easy3d {
 		}
 
 		else if (key == GLFW_KEY_M && modifiers == 0) {
-			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL 
-			//       is a state machine. For multi-window applications, you have to call 
+			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL
+			//       is a state machine. For multi-window applications, you have to call
 			//		 glDisable()/glEnable() before the individual draw functions.
 			if (samples_ > 0) {
 				if (glIsEnabled(GL_MULTISAMPLE)) {
@@ -757,8 +767,10 @@ namespace easy3d {
 
 			// update scene bounding box
 			Box3 box;
-			for (auto m : models_)
-				box.add_box(m->bounding_box());
+            for (auto m : models_)
+                box.add_box(m->bounding_box());
+            for (auto d : drawables_)
+                box.add_box(d->bounding_box());
 			camera_->setSceneBoundingBox(box.min(), box.max());
 		}
 		else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
@@ -1182,7 +1194,7 @@ namespace easy3d {
 
 
 	void Viewer::fit_screen(const easy3d::Model *model) {
-		if (!model && models_.empty())
+		if (!model && models_.empty() && drawables_.empty())
 			return;
 
 		Box3 box;
@@ -1191,6 +1203,8 @@ namespace easy3d {
 		else {
 			for (auto m : models_)
 				box.add_box(m->bounding_box());
+            for (auto d : drawables_)
+                box.add_box(d->bounding_box());
 		}
 		camera_->setSceneBoundingBox(box.min(), box.max());
 		camera_->showEntireScene();
@@ -1390,12 +1404,47 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() {
-		// shown only when it is not animating
+        // shown only when it is not animating
 		if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
 			camera()->draw_paths();
 
-		draw_corner_axes();
-	}
+        if (show_pivot_point_) {
+            ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+            }
+            if (!program)
+                return;
+
+#if defined(__APPLE__)
+            const float size = 10;
+#else
+            const float size = static_cast<float>(10 * dpi_scaling());
+#endif
+            LinesDrawable drawable("pivot_point");
+            const vec3& pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
+            std::vector<vec3> points = {
+                    vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
+                    vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
+            };
+            drawable.update_vertex_buffer(points);
+
+            const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
+            glDisable(GL_DEPTH_TEST);   // always on top
+            program->bind();
+            program->set_uniform("MVP", proj);
+            program->set_uniform("per_vertex_color", false);
+            program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
+            drawable.gl_draw(false);
+            program->release();
+            glEnable(GL_DEPTH_TEST);   // restore
+        }
+
+        draw_corner_axes();
+    }
 
 
 	void Viewer::draw() const {
@@ -1436,8 +1485,6 @@ namespace easy3d {
 			if (d->is_visible())
 				d->draw(camera(), false);
 		}
-
-		//camera()->draw_paths();
 	}
 
 

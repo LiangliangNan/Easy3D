@@ -23,24 +23,29 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "image_viewer.h"
+#include "composite_view.h"
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
 
-// This example shows how to render an images.
+// This example shows how to render a scene into multiple views within a single window.
+
 
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    // the image file.
-    const std::string image_file = setting::resource_directory() + "/data/fountain/images/0000.jpg";
-
     try {
-        ImageViewer viewer("Tutorial_306_ImageViewer", image_file);
+        CompositeView viewer("Tutorial_307_CompositeView");
+
+        // Load model from a file
+        const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
+        if (!viewer.open(file_name, true)) {
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+            return EXIT_FAILURE;
+        }
 
         // Run the viewer
         viewer.run();
