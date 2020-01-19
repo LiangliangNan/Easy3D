@@ -187,8 +187,10 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
     TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
     if (drawable && drawable->smooth_shading() == b)
         return;
-    else if (!drawable)  // make sure the drawable exists
+    else if (!drawable) {  // make sure the drawable exists
         drawable = mesh()->add_triangles_drawable("faces");
+        renderer::update_data(mesh(), drawable);
+    }
 
     drawable->set_smooth_shading(b);
     viewer_->update();

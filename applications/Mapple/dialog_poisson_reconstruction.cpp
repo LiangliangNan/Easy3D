@@ -72,7 +72,9 @@ void DialogPoissonReconstruction::reconstruct() {
         if (mesh) {
             const std::string& name = file_system::name_less_extension(cloud->name()) + "_poisson_reconstruction.ply";
             mesh->set_name(name);
-            viewer_->addModel(mesh);
+            viewer_->makeCurrent();
+            viewer_->addModel(mesh, true);
+            viewer_->doneCurrent();
         }
     }
 }

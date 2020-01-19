@@ -747,10 +747,10 @@ void MainWindow::reorientPointCloudNormals() {
 
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
     if (normals) {
-//        viewer_->makeCurrent();
+        viewer_->makeCurrent();
         PointsDrawable* vertices = cloud->points_drawable("vertices");
         vertices->update_normal_buffer(normals.vector());
-//        viewer_->doneCurrent();
+        viewer_->doneCurrent();
         viewer_->update();
     }
     viewer_->doneCurrent();
@@ -793,7 +793,10 @@ void MainWindow::samplingSurfaceMesh() {
 
         SurfaceMeshSampler sampler;
         PointCloud* cloud = sampler.apply(mesh, num);
-        if (cloud)
+        if (cloud) {
+            viewer_->makeCurrent();
             viewer_->addModel(cloud);
+            viewer_->doneCurrent();
+        }
     }
 }
