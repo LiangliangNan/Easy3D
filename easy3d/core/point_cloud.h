@@ -478,7 +478,7 @@ private: //------------------------------------------------------- private data
 	PropertyContainer		mprops_;
 
     VertexProperty<bool>	vdeleted_;
-    VertexProperty<vec3>  vpoint_;
+    VertexProperty<vec3>    vpoint_;
 
     unsigned int	deleted_vertices_;
     bool			garbage_;

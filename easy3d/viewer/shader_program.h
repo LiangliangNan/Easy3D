@@ -142,7 +142,6 @@ namespace easy3d {
 		  * \param the name of the vertex attribute
 		*/
 		void set_attrib_name(ShaderProgram::AttribType at, const std::string& name);
-		void set_attrib_name(const ShaderProgram::Attribute& attribute);
 		void set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes);
 
 		/** Prepares program for usage. Links it and collects information

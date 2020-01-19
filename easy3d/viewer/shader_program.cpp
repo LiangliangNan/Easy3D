@@ -283,19 +283,15 @@ namespace easy3d {
 		glBindAttribLocation(program_, at, name.c_str());	
 	}
 
-	void ShaderProgram::set_attrib_name(const ShaderProgram::Attribute& attribute) {
-		set_attrib_name(attribute.first, attribute.second);
-	}
 
 	void ShaderProgram::set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes) {
 		for (std::size_t i = 0; i < attributes.size(); ++i) {
-			set_attrib_name(attributes[i]);
+			set_attrib_name(attributes[i].first, attributes[i].second);
 		}
 	}
 
 	int ShaderProgram::get_attribute_location(const std::string& name) const {
-		int loc = glGetAttribLocation(program_, name.c_str());	
-		return loc;
+        return glGetAttribLocation(program_, name.c_str());
 	}
 
 

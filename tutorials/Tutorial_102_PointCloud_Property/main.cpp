@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 	}
 	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
-	// In Easy3D, all actual 3D data an related information are stored as 
+	// In Easy3D, all actual 3D data and related information are stored as
 	// per-element (e.g., vertex, edge, and face) properties. A model can have 
 	// multiple properties and the properties can be accessed by their names. 
 	// So it is important to give each property a unique name. Easy3D will pop 
