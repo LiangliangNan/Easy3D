@@ -34,9 +34,8 @@
 using namespace easy3d;
 
 TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title) {
-	camera()->setUpVector(vec3(0, 1, 0));
-	camera()->setViewDirection(vec3(0, 0, 1));
-    camera_->showEntireScene();
+    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->setViewDirection(vec3(0, 0, 1));
 
 	shadow_ = new Shadow(camera());
     shadow_->set_background_color(background_color());

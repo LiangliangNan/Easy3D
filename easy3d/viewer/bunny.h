@@ -32,10 +32,14 @@
 
 namespace easy3d {
 
+    // the data representing a bunny model.
+
     namespace data {
 
-        extern std::vector<vec3>            bunny_vertices;
-        extern std::vector<unsigned int>    bunny_indices;
+        // the vertices
+        extern std::vector<vec3>    bunny_vertices;
+        // the triangle faces (each consecutive 3 values denote the vertex indices of a triangle)
+        extern std::vector<int>     bunny_indices;
 
     }
 }

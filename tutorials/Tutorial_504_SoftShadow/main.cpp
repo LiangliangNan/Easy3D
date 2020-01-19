@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file = setting::resource_directory() + "/data/room_thickwalls.obj";
+    const std::string file = setting::resource_directory() + "/data/room.obj";
 
     try {
         // Create the viewer.

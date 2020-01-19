@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         // We use the points and indices of the bunny model.
         const std::vector<vec3>& vertices = data::bunny_vertices;
         // Each consecutive 3 indices represent a triangle.
-        const std::vector<unsigned int>& indices = data::bunny_indices;
+        const std::vector<int>& indices = data::bunny_indices;
 
         // To create a TrianglesDrawable to visualize the surface, we need
 		// to collect the point positions and normals to be sent to the GPU.
