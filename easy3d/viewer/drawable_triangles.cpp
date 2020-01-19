@@ -28,6 +28,7 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/texture.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -99,6 +100,8 @@ namespace easy3d {
 
 
     void TrianglesDrawable::_draw_triangles(const Camera* camera, bool with_storage_buffer) const {
+        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+
         ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -135,6 +138,8 @@ namespace easy3d {
 
 
     void TrianglesDrawable::_draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const {
+        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+
         ShaderProgram* program = ShaderManager::get_program("surface/surface_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
