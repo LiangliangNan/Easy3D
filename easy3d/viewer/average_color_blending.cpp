@@ -103,6 +103,10 @@ namespace easy3d {
 
         for (auto d : surfaces) {
             if (d->is_visible()) {
+                program->set_uniform("smooth_shading", d->smooth_shading());
+                program->set_block_uniform("Material", "ambient", d->material().ambient);
+                program->set_block_uniform("Material", "specular", d->material().specular);
+                program->set_block_uniform("Material", "shininess", &d->material().shininess);
                 program->set_uniform("Alpha", d->opacity());
                 program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
                 program->set_uniform("default_color", d->default_color());

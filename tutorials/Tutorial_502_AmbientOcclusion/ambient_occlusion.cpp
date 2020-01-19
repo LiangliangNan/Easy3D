@@ -119,6 +119,12 @@ void TutorialAmbientOcclusion::draw() const {
 		program->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
 		auto drawable = current_model()->triangles_drawable("faces");
+
+        program->set_uniform("smooth_shading", drawable->smooth_shading());
+        program->set_block_uniform("Material", "ambient", drawable->material().ambient);
+        program->set_block_uniform("Material", "specular", drawable->material().specular);
+        program->set_block_uniform("Material", "shininess", &drawable->material().shininess);
+
 		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->default_color());
         drawable->gl_draw(false);

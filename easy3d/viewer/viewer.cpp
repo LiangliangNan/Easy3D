@@ -662,19 +662,7 @@ namespace easy3d {
 	}
 
 	bool Viewer::key_press_event(int key, int modifiers) {
-		if (key == GLFW_KEY_A && modifiers == 0) {
-			if (drawable_axes_)
-				drawable_axes_->set_visible(!drawable_axes_->is_visible());
-		}
-		else if (key == GLFW_KEY_C && modifiers == 0) {
-			if (current_model())
-				fit_screen(current_model());
-		}
-		else if (key == GLFW_KEY_F && modifiers == 0) {
-			fit_screen();
-		}
-
-		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
+        if (key == GLFW_KEY_LEFT && modifiers == 0) {
 			float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
 			camera_->frame()->action_turn(angle, camera_);
 		}
@@ -710,10 +698,23 @@ namespace easy3d {
 			camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 		}
 
+        else if (key == GLFW_KEY_A && modifiers == 0) {
+            if (drawable_axes_)
+                drawable_axes_->set_visible(!drawable_axes_->is_visible());
+        }
+        else if (key == GLFW_KEY_C && modifiers == 0) {
+            if (current_model())
+                fit_screen(current_model());
+        }
+        else if (key == GLFW_KEY_F && modifiers == 0) {
+            fit_screen();
+        }
+
 		else if (key == GLFW_KEY_M && modifiers == 0) {
-			// NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL
-			//       is a state machine. For multi-window applications, you have to call
-			//		 glDisable()/glEnable() before the individual draw functions.
+#if 0
+            // NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL
+            //       is a state machine. For multi-window applications, you have to call
+            //		 glDisable()/glEnable() before the individual draw functions.
 			if (samples_ > 0) {
 				if (glIsEnabled(GL_MULTISAMPLE)) {
 					glDisable(GL_MULTISAMPLE);
@@ -724,6 +725,13 @@ namespace easy3d {
 					LOG(INFO) << title_ + ": MSAA enabled";
 				}
 			}
+#else
+            if (dynamic_cast<SurfaceMesh*>(current_model())) {
+                auto drawable = current_model()->triangles_drawable("faces");
+                if (drawable)
+                    drawable->set_smooth_shading(!drawable->smooth_shading());
+            }
+#endif
 		}
 		else if (key == GLFW_KEY_F1 && modifiers == 0)
 			std::cout << usage() << std::endl;
@@ -1053,14 +1061,15 @@ namespace easy3d {
 			"  '+'/'-':             Increase/Decrease point size (line width)   \n"
 			"  'a':                 Toggle axes									\n"
 			"  'e':                 Toggle edges							    \n"
-			"  'v':                 Toggle vertices                             \n"
-			"  'd':                 Print drawables attached to current model   \n"
+            "  'v':                 Toggle vertices                             \n"
+            "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
+            "  'd':                 Print drawables attached to current model   \n"
 			" ------------------------------------------------------------------\n"
 		);
 	}
 
 
-	Model* Viewer::open(const std::string &file_name, bool create_default_drawables, bool smooth_shading) {
+    Model* Viewer::open(const std::string &file_name, bool create_default_drawables) {
 		for (auto m : models_) {
 			if (m->name() == file_name) {
 				LOG(WARNING) << "model alreaded loaded: \'" << file_name;
@@ -1076,7 +1085,7 @@ namespace easy3d {
 		if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
 			SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
 			if (mesh) {
-				add_model(mesh, create_default_drawables, smooth_shading);
+                add_model(mesh, create_default_drawables);
 				std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
 					<< "num vertices: " << mesh->n_vertices() << "; "
 					<< "num edges: " << mesh->n_edges() << std::endl;
@@ -1086,7 +1095,7 @@ namespace easy3d {
 		else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
 			Graph* graph = GraphIO::load(file_name);
 			if (graph) {
-				add_model(graph, create_default_drawables, false);
+                add_model(graph, create_default_drawables);
 				std::cout << "graph loaded. num vertices: " << graph->n_vertices() << "; "
 					<< "num edges: " << graph->n_edges() << std::endl;
 				return graph;
@@ -1097,7 +1106,7 @@ namespace easy3d {
 				io::PointCloudIO_ptx serializer(file_name);
 				PointCloud* cloud = nullptr;
 				while ((cloud = serializer.load_next())) {
-					add_model(cloud, create_default_drawables, false);
+                    add_model(cloud, create_default_drawables);
 					std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
 				}
 				return cloud;
@@ -1105,7 +1114,7 @@ namespace easy3d {
 			else {
 				PointCloud* cloud = PointCloudIO::load(file_name);
 				if (cloud) {
-					add_model(cloud, create_default_drawables, smooth_shading);
+                    add_model(cloud, create_default_drawables);
 					std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
 					return cloud;
 				}
@@ -1116,7 +1125,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::create_drawables(Model *model, bool smooth_shading) {
+    void Viewer::create_drawables(Model *model) {
 		if (dynamic_cast<PointCloud*>(model)) {
 			PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 			PointsDrawable* drawable = model->add_points_drawable("vertices");
@@ -1125,7 +1134,7 @@ namespace easy3d {
 		else if (dynamic_cast<SurfaceMesh*>(model)) {
 			SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 			TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
-			renderer::update_data(mesh, drawable, smooth_shading);
+            renderer::update_data(mesh, drawable);
 		}
 		else if (dynamic_cast<Graph*>(model)) {
 			Graph* graph = dynamic_cast<Graph*>(model);
@@ -1141,7 +1150,7 @@ namespace easy3d {
 	}
 
 
-	void Viewer::add_model(Model *model, bool create_default_drawables, bool smooth_shading) {
+    void Viewer::add_model(Model *model, bool create_default_drawables) {
 		if (!model)
 			return;
 
@@ -1157,7 +1166,7 @@ namespace easy3d {
 		}
 
 		if (create_default_drawables)
-			create_drawables(model, smooth_shading);
+            create_drawables(model);
 
 		models_.push_back(model);
 		model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current

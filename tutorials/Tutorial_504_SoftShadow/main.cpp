@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         // Create the viewer.
         TutorialSoftShadow viewer("Tutorial_504_SoftShadow");
 
-        Model* model = viewer.open(file, true, true);
+        Model* model = viewer.open(file, true);
         if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;

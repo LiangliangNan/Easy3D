@@ -39,15 +39,15 @@ namespace easy3d {
 	public:
         TrianglesDrawable(const std::string& name = "")
             : Drawable(name)
-            , phong_shading_(false)
+            , smooth_shading_(true)
             , opacity_(0.6f)
         {
 			default_color_ = vec3(0.4f, 0.8f, 0.8f);
 		}
         DrawableType type() const override;
 
-        bool phong_shading() const { return phong_shading_; }
-        void set_phong_shading(bool b) { phong_shading_ = b; }
+        bool smooth_shading() const { return smooth_shading_; }
+        void set_smooth_shading(bool b) { smooth_shading_ = b; }
 
         float opacity() const { return opacity_; }
         void set_opacity(float a) { opacity_ = a; }
@@ -81,7 +81,7 @@ namespace easy3d {
 	private:
 		std::vector< std::vector<unsigned int> > indices_;
 
-        bool    phong_shading_;
+        bool    smooth_shading_;
         float   opacity_;
 	};
 

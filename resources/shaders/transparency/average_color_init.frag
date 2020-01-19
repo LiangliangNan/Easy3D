@@ -11,9 +11,14 @@ uniform float	Alpha;
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
-uniform vec3	ambient = vec3(0.05f, 0.05f, 0.05f);
-uniform vec3	specular = vec3(0.4f, 0.4f, 0.4f);
-uniform float	shininess = 64.0f;
+layout(std140) uniform Material {
+        vec3	ambient;
+        vec3	specular;
+        float	shininess;
+};
+
+// smooth shading
+uniform bool    smooth_shading = true;
 
 in Data{
 	vec3 color;
@@ -24,20 +29,27 @@ in Data{
 
 vec4 ShadeFragment()
 {
-        vec3 normal = normalize(DataIn.normal);
+    vec3 normal;
+    if (smooth_shading)
+        normal = normalize(DataIn.normal);
+    else {
+        normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+//        if (dot(normal, DataIn.normal) < 0)
+//            normal = -normal;
+    }
 
-	vec3 view_dir = normalize(wCamPos - DataIn.position);
-	vec3 light_dir = normalize(wLightPos);
+    vec3 view_dir = normalize(wCamPos - DataIn.position);
+    vec3 light_dir = normalize(wLightPos);
 
-	// diffuse factor
-	float df = abs(dot(light_dir, normal));				// light up both sides
+    // diffuse factor
+    float df = abs(dot(light_dir, normal));				// light up both sides
 
-	// specular factor
-	vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
-	float sf = max(dot(half_vector, normal), 0.0);		// only the front side can have specular
-	sf = pow(sf, shininess);
+    // specular factor
+    vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
+    float sf = max(dot(half_vector, normal), 0.0);		// only the front side can have specular
+    sf = pow(sf, shininess);
 
-	return vec4(DataIn.color * df + specular * sf + ambient, Alpha);
+    return vec4(DataIn.color * df + specular * sf + ambient, Alpha);
 }
 
 void main(void)

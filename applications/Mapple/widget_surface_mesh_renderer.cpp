@@ -14,6 +14,7 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/renderer.h>
 
 
 using namespace easy3d;
@@ -77,7 +78,7 @@ void WidgetSurfaceMeshRenderer::updatePanel() {
     // surface
     TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
     if (drawable) {
-        ui->checkBoxPhongShading->setChecked(drawable->phong_shading());
+        ui->checkBoxPhongShading->setChecked(drawable->smooth_shading());
         ui->checkBoxUseColorProperty->setChecked(drawable->per_vertex_color());
         ui->checkBoxShowFaces->setChecked(drawable->is_visible());
         const vec3& c = drawable->default_color();
@@ -184,93 +185,13 @@ void WidgetSurfaceMeshRenderer::setPhongShading(bool b) {
         return;
 
     TrianglesDrawable* drawable = mesh()->triangles_drawable("faces");
-    if (drawable && drawable->phong_shading() == b)
+    if (drawable && drawable->smooth_shading() == b)
         return;
     else if (!drawable)  // make sure the drawable exists
         drawable = mesh()->add_triangles_drawable("faces");
 
-    std::cout << "executed" << std::endl;
-
-    viewer_->makeCurrent();
-    if (b) {
-        auto points = mesh()->get_vertex_property<vec3>("v:point");
-        drawable->update_vertex_buffer(points.vector());
-        auto colors = mesh()->get_vertex_property<vec3>("v:color");
-        if (colors)
-            drawable->update_color_buffer(colors.vector());
-
-        auto normals = mesh()->get_vertex_property<vec3>("v:normal");
-        if (normals)
-             drawable->update_normal_buffer(normals.vector());
-        else {
-            std::vector<vec3> normals;
-            normals.reserve(mesh()->n_vertices());
-            for (auto v : mesh()->vertices()) {
-                const vec3& n = mesh()->compute_vertex_normal(v);
-                normals.push_back(n);
-            }
-            drawable->update_normal_buffer(normals);
-        }
-
-        std::vector<unsigned int> indices;
-        for (auto f : mesh()->faces()) {
-            // we assume convex polygonal faces and we render in triangles
-            SurfaceMesh::Halfedge start = mesh()->halfedge(f);
-            SurfaceMesh::Halfedge cur = mesh()->next_halfedge(mesh()->next_halfedge(start));
-            SurfaceMesh::Vertex va = mesh()->to_vertex(start);
-            while (cur != start) {
-                SurfaceMesh::Vertex vb = mesh()->from_vertex(cur);
-                SurfaceMesh::Vertex vc = mesh()->to_vertex(cur);
-                indices.push_back(static_cast<unsigned int>(va.idx()));
-                indices.push_back(static_cast<unsigned int>(vb.idx()));
-                indices.push_back(static_cast<unsigned int>(vc.idx()));
-                cur = mesh()->next_halfedge(cur);
-            }
-        }
-        drawable->update_index_buffer(indices);
-    }
-    else {  // flat shading
-        auto points = mesh()->get_vertex_property<vec3>("v:point");
-        auto colors = mesh()->get_vertex_property<vec3>("v:color");
-
-        std::vector<vec3> vertices, vertex_normals, vertex_colors;
-        for (auto f : mesh()->faces()) {
-            // we assume convex polygonal faces and we render in triangles
-            SurfaceMesh::Halfedge start = mesh()->halfedge(f);
-            SurfaceMesh::Halfedge cur = mesh()->next_halfedge(mesh()->next_halfedge(start));
-            SurfaceMesh::Vertex va = mesh()->to_vertex(start);
-            const vec3& pa = points[va];
-            while (cur != start) {
-                SurfaceMesh::Vertex vb = mesh()->from_vertex(cur);
-                SurfaceMesh::Vertex vc = mesh()->to_vertex(cur);
-                const vec3& pb = points[vb];
-                const vec3& pc = points[vc];
-                vertices.push_back(pa);
-                vertices.push_back(pb);
-                vertices.push_back(pc);
-
-                const vec3& n = geom::triangle_normal(pa, pb, pc);
-                vertex_normals.insert(vertex_normals.end(), 3, n);
-
-                if (colors) {
-                    vertex_colors.push_back(colors[va]);
-                    vertex_colors.push_back(colors[vb]);
-                    vertex_colors.push_back(colors[vc]);
-                }
-                cur = mesh()->next_halfedge(cur);
-            }
-        }
-        drawable->update_vertex_buffer(vertices);
-        drawable->update_normal_buffer(vertex_normals);
-        if (colors)
-            drawable->update_color_buffer(vertex_colors);
-        drawable->release_index_buffer();
-    }
-
-    drawable->set_phong_shading(b);
-
+    drawable->set_smooth_shading(b);
     viewer_->update();
-    viewer_->doneCurrent();
 }
 
 

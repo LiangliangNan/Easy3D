@@ -108,9 +108,9 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
-                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
+                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "All formats (*.*)"
             );
 
@@ -151,9 +151,9 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
-                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz)\n"
+                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "All formats (*.*)"
     );
 

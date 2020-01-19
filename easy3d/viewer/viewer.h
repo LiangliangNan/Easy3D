@@ -178,8 +178,7 @@ namespace easy3d {
          *          necessary drawables (e.g., "vertices" for point clouds, "faces" for surface
          *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
          * @return true on success and false otherwise.
-         * @related open(const std::string& file_name, bool create_default_drawables,
-         *          bool smooth_shading).
+         * @related open(const std::string&, bool).
          */
         bool open();
 
@@ -208,13 +207,9 @@ namespace easy3d {
          *        set create_default_drawables to false if a customized drawable will be created for
          *        a particular rendering purpose.
          * @return The pointer to the model loaded to the viewer (nullptr if failed).
-         * @related create_drawables(Model* model, bool smooth_shading).
+         * @related create_drawables(Model* model).
          */
-	    Model* open(
-                const std::string& file_name,
-                bool create_default_drawables = true,
-                bool smooth_shading = false
-                );
+        Model* open(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
@@ -232,15 +227,9 @@ namespace easy3d {
          * @param create_default_drawables If ture, the default drawables will be created. Users can
          *        set create_default_drawables to false if a customized drawable will be created for
          *        a particular rendering purpose.
-         * @param smooth_shading true to enable phong shading. This parameter is used for
-         *        TrianglesDrawables only.
-         * @related create_drawables(Model* model, bool smooth_shading).
+         * @related create_drawables(Model*, bool).
          */
-	   void add_model(
-                Model* model,
-                bool create_default_drawables = true,
-                bool smooth_shading = false
-                );
+       void add_model(Model* model, bool create_default_drawables = true);
 
        /**
         * @brief Delete a model. The memory of the model will be released and its existing drawables
@@ -324,7 +313,7 @@ namespace easy3d {
          *          vertices and a LinesDrawable (cylinder imposters) for visualizing the edges.
          * @todo TODO: move this function to Renderer module; enable per face color for surface meshes.
          */
-        virtual void create_drawables(Model* model, bool smooth_shading = true);
+        virtual void create_drawables(Model* model);
 
         // rendering. Users can put their additional rendering function here by reimplementing it.
         virtual void draw() const;

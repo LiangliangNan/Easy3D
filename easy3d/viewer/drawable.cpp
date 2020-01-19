@@ -86,55 +86,19 @@ namespace easy3d {
             vao_ = nullptr;
         }
 
-        release_vertex_buffer();
-        release_color_buffer();
-        release_normal_buffer();
-        release_texcoord_buffer();
-        release_index_buffer();
-        release_storage_buffer();
-        release_selection_buffer();
+        VertexArrayObject::release_buffer(vertex_buffer_);
+        VertexArrayObject::release_buffer(color_buffer_);
+        VertexArrayObject::release_buffer(normal_buffer_);
+        VertexArrayObject::release_buffer(texcoord_buffer_);
+        VertexArrayObject::release_buffer(index_buffer_);
+        VertexArrayObject::release_buffer(storage_buffer_);
+        VertexArrayObject::release_buffer(selection_buffer_);
     }
 
-	void Drawable::release_vertex_buffer() {
-		if (vertex_buffer_ != 0)
-			VertexArrayObject::release_buffer(vertex_buffer_);
-	}
 
-
-	void Drawable::release_color_buffer() {
-		if (color_buffer_ != 0)
-			VertexArrayObject::release_buffer(color_buffer_);
-	}
-
-
-	void Drawable::release_normal_buffer() {
-		if (normal_buffer_ != 0)
-			VertexArrayObject::release_buffer(normal_buffer_);
-	}
-
-
-	void Drawable::release_texcoord_buffer() {
-		if (texcoord_buffer_ != 0)
-			VertexArrayObject::release_buffer(texcoord_buffer_);
-	}
-
-
-	void Drawable::release_index_buffer() {
-		if (index_buffer_ != 0)
-			VertexArrayObject::release_buffer(index_buffer_);
-	}
-
-
-	void Drawable::release_storage_buffer() {
-		if (storage_buffer_ != 0)
-			VertexArrayObject::release_buffer(storage_buffer_);
-	}
-
-
-	void Drawable::release_selection_buffer() {
-		if (selection_buffer_ != 0)
-			VertexArrayObject::release_buffer(selection_buffer_);
-	}
+    void Drawable::release_element_buffer() {
+        VertexArrayObject::release_buffer(index_buffer_);
+    }
 
 
 	void Drawable::update_storage_buffer(const void* data, std::size_t datasize, unsigned int index /* = 1*/) {

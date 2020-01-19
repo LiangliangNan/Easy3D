@@ -65,7 +65,7 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
         PoissonReconstruction algo;
         Model* surface = algo.apply(cloud);
         if (surface != nullptr) {
-            add_model(surface, true, true);
+            add_model(surface, true);
             delete_model(cloud);
             update();
         }

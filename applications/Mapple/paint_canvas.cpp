@@ -555,56 +555,54 @@ std::string PaintCanvas::usage() const {
 }
 
 
-void PaintCanvas::create_drawables(Model* model, bool smooth_shading) {
-	makeCurrent();
-	if (dynamic_cast<PointCloud*>(model)) {
-		PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-		PointsDrawable* drawable = model->add_points_drawable("vertices");
-		renderer::update_data(cloud, drawable);
-	}
-	else if (dynamic_cast<SurfaceMesh*>(model)) {
-		SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-		TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
-		renderer::update_data(mesh, drawable, smooth_shading);
-	}
-	else if (dynamic_cast<Graph*>(model)) {
-		Graph* graph = dynamic_cast<Graph*>(model);
+void PaintCanvas::create_drawables(Model* model) {
+    if (dynamic_cast<PointCloud*>(model)) {
+        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+        PointsDrawable* drawable = model->add_points_drawable("vertices");
+        renderer::update_data(cloud, drawable);
+    }
+    else if (dynamic_cast<SurfaceMesh*>(model)) {
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+        TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
+        renderer::update_data(mesh, drawable);
+    }
+    else if (dynamic_cast<Graph*>(model)) {
+        Graph* graph = dynamic_cast<Graph*>(model);
 
-		// create points drawable for the edges
-		PointsDrawable* vertices = graph->add_points_drawable("vertices");
-		renderer::update_data(graph, vertices);
+        // create points drawable for the edges
+        PointsDrawable* vertices = graph->add_points_drawable("vertices");
+        renderer::update_data(graph, vertices);
 
-		// create liens drawable for the edges
-		LinesDrawable* edges = graph->add_lines_drawable("edges");
-		renderer::update_data(graph, edges);
-	}
-	doneCurrent();
+        // create liens drawable for the edges
+        LinesDrawable* edges = graph->add_lines_drawable("edges");
+        renderer::update_data(graph, edges);
+    }
 }
 
 
 void PaintCanvas::addModel(Model* model, bool create_default_drawables /* = true*/) {
-	if (!model)
-		return;
+    if (!model)
+        return;
 
-	int pre_idx = model_idx_;
+    int pre_idx = model_idx_;
 
-	unsigned int num = model->n_vertices();
-	if (num == 0) {
-		std::cerr << "Warning: model does not have vertices. Only complete model can be added to the viewer." << std::endl;
-		return;
-	}
+    unsigned int num = model->n_vertices();
+    if (num == 0) {
+        std::cerr << "Warning: model does not have vertices. Only complete model can be added to the viewer." << std::endl;
+        return;
+    }
 
-	if (create_default_drawables)
-		create_drawables(model);
+    if (create_default_drawables)
+        create_drawables(model);
 
-	models_.push_back(model);
-	model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+    models_.push_back(model);
+    model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
-	if (model_idx_ != pre_idx) {
-		emit currentModelChanged();
-		if (model_idx_ > 0)
-			std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
-	}
+    if (model_idx_ != pre_idx) {
+        emit currentModelChanged();
+        if (model_idx_ > 0)
+            std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+    }
 }
 
 

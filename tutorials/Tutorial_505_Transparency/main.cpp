@@ -57,12 +57,18 @@ SurfaceMesh* bunny_mesh() {
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
+    const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
 
     try {
         // Create the viewer.
         TutorialTransparency viewer("Tutorial_505_Transparency");
 
-        viewer.add_model(bunny_mesh(), true, false);
+        // Load a mesh model and create a drawable for the faces.
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true));
+        if (!mesh) {
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+            return EXIT_FAILURE;
+        }
 
         // Run the viewer
         viewer.run();

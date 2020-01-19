@@ -179,7 +179,7 @@ protected:
     //  - for mesh surfaces, it creates a TrianglesDrawable
     //      - per vertex color will be enabled if vertex property 'v:color' exists
     // TODO: move this function to Renderer module; enable per face color for surface meshes.
-    void create_drawables(easy3d::Model* model, bool smooth_shading = true);
+    void create_drawables(easy3d::Model* model);
 
     void drawCornerAxes();
 
@@ -205,9 +205,6 @@ protected:
 
     // corner axes
     easy3d::TrianglesDrawable* drawable_axes_;
-
-    // camera path
-    bool	show_camera_path_;
 
     std::vector<easy3d::Model*> models_;
     int model_idx_;

@@ -11,9 +11,14 @@ in Data{
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
-uniform vec3	ambient = vec3(0.05f, 0.05f, 0.05f);
-uniform vec3	specular = vec3(0.4f, 0.4f, 0.4f);
-uniform float	shininess = 64.0f;
+layout(std140) uniform Material {
+        vec3	ambient;
+        vec3	specular;
+        float	shininess;
+};
+
+// smooth shading
+uniform bool    smooth_shading = true;
 
 uniform bool    distinct_back_color = false;
 uniform vec3    back_color = vec3(1.0f, 0.0f, 0.0f);
@@ -675,7 +680,14 @@ vec3 shade(vec3 worldPos)
         return DataIn.color;
 
     else {
-        vec3 normal = normalize(DataIn.normal);
+        vec3 normal;
+        if (smooth_shading)
+            normal = normalize(DataIn.normal);
+        else {
+            normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+    //        if (dot(normal, DataIn.normal) < 0)
+    //            normal = -normal;
+        }
 
         vec3 view_dir = normalize(wCamPos - worldPos);
         vec3 light_dir = normalize(wLightPos);	// directional light

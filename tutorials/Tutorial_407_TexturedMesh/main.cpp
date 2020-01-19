@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
-        viewer.add_model(mesh, true, false);
+        viewer.add_model(mesh, true);
 
         // -------------------------------------------------------------------------------
 

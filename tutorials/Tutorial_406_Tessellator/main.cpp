@@ -156,7 +156,7 @@ int main(int argc, char** argv) {
 
         // ------------------------------------------------------------
 
-        viewer.add_model(mesh, true, false);
+        viewer.add_model(mesh, true);
 
         // Run the viewer
         viewer.run();

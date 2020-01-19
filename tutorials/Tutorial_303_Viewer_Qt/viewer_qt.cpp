@@ -65,7 +65,6 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
 	, mouse_pressed_pos_(0, 0)
 	, mouse_previous_pos_(0, 0)
 	, drawable_axes_(nullptr)
-	, show_camera_path_(false)
 	, model_idx_(-1)
 {
 	// like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
@@ -418,10 +417,6 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 		else
 			camera()->keyFrameInterpolator()->startInterpolation();
 	}
-	else if (e->key() == Qt::Key_T && e->modifiers() == Qt::NoModifier) {
-		show_camera_path_ = !show_camera_path_;
-	}
-
 	else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
 		for (auto m : models_) {
 			for (auto d : m->points_drawables()) {
@@ -587,7 +582,7 @@ std::string ViewerQt::usage() const {
 
 
 
-void ViewerQt::create_drawables(Model* model, bool smooth_shading) {
+void ViewerQt::create_drawables(Model* model) {
 	if (dynamic_cast<PointCloud*>(model)) {
 		PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 		PointsDrawable* drawable = model->add_points_drawable("vertices");
@@ -596,7 +591,7 @@ void ViewerQt::create_drawables(Model* model, bool smooth_shading) {
 	else if (dynamic_cast<SurfaceMesh*>(model)) {
 		SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 		TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
-		renderer::update_data(mesh, drawable, smooth_shading);
+        renderer::update_data(mesh, drawable);
 	}
 	else if (dynamic_cast<Graph*>(model)) {
 		Graph* graph = dynamic_cast<Graph*>(model);
@@ -849,10 +844,6 @@ void ViewerQt::preDraw() {
 
 
 void ViewerQt::postDraw() {
-	// shown only when it is not animating
-	if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
-		camera()->draw_paths();
-
 	drawCornerAxes();
 }
 

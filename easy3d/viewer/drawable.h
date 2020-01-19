@@ -88,19 +88,11 @@ namespace easy3d {
 		unsigned int color_buffer() const { return color_buffer_; }
 		unsigned int normal_buffer() const { return normal_buffer_; }
 		unsigned int texcoord_buffer() const { return texcoord_buffer_; }
-		unsigned int index_buffer() const { return index_buffer_; }
+        unsigned int index_buffer() const { return index_buffer_; }
 		unsigned int storage_buffer() const { return storage_buffer_; }
 		unsigned int selection_buffer() const { return selection_buffer_; }
 
-		void release_vertex_buffer();
-		void release_color_buffer();
-		void release_normal_buffer();
-		void release_texcoord_buffer();
-		void release_index_buffer();
-		void release_storage_buffer();
-		void release_selection_buffer();
-
-		// ---------------------- buffer creation -----------------------------
+        // ------------------- buffer creation/update ------------------------
 
 		void update_vertex_buffer(const std::vector<vec3>& vertices);
 		void update_color_buffer(const std::vector<vec3>& colors);
@@ -116,6 +108,8 @@ namespace easy3d {
 		// @param index: the index of the binding point.
 		// NOTE: the buffers should also be bound to this point in all shader code
 		void update_storage_buffer(const void* data, std::size_t datasize, unsigned int index = 0);
+
+        void release_element_buffer();
 
 		// ---------------------- get data from GPU -------------------------
 

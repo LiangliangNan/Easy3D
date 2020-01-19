@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         // Create the viewer.
         TutorialAmbientOcclusion viewer("Tutorial_502_AmbientOcclusion");
 
-        Model* model = viewer.open(file, true, false);
+        Model* model = viewer.open(file, true);
         if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;

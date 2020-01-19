@@ -92,7 +92,7 @@ void CompositeView::draw() const {
     if (!faces) {
         faces = current_model()->add_triangles_drawable("faces");
         if (dynamic_cast<SurfaceMesh*>(current_model()))
-            renderer::update_data(dynamic_cast<SurfaceMesh*>(current_model()), faces, false);
+            renderer::update_data(dynamic_cast<SurfaceMesh*>(current_model()), faces);
     }
     faces->draw(camera(), false);
     draw_grid();

@@ -196,8 +196,10 @@ namespace easy3d {
                          d->gl_draw(false); easy3d_debug_gl_error
                 }
                 for (auto d : model->triangles_drawables()) {
-                    if (d->is_visible())
+                    if (d->is_visible()) {
+                        program->set_uniform("smooth_shading", d->smooth_shading());
                         d->gl_draw(false); easy3d_debug_gl_error
+                    }
                 }
                 for (auto d : model->lines_drawables()) {
                     if (d->is_visible())

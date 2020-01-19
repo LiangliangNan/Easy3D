@@ -2,7 +2,6 @@
 
 uniform vec3	wLightPos;
 uniform vec3	wCamPos;
-
 layout(std140) uniform Material {
         vec3	ambient;
         vec3	specular;
@@ -15,6 +14,9 @@ uniform bool        ssaoEnabled = false;
 
 // two sides
 uniform bool        two_sides_lighting = true;
+
+// smooth shading
+uniform bool        smooth_shading = true;
 
 // backside color
 uniform bool        distinct_back_color = true;
@@ -33,7 +35,14 @@ void main(void) {
     if (!gl_FrontFacing && distinct_back_color)
             color = backside_color;
 
-    vec3 normal = normalize(DataIn.normal);
+    vec3 normal;
+    if (smooth_shading)
+        normal = normalize(DataIn.normal);
+    else {
+        normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+//        if (dot(normal, DataIn.normal) < 0)
+//            normal = -normal;
+    }
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);
     vec3 light_dir = normalize(wLightPos);

@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
         mesh->add_quad(v0, v1, v2, v3);
 
         // add the model to the viewer and create the default drwable "faces"
-        viewer.add_model(mesh, true, true);
+        viewer.add_model(mesh, true);
 
         // set the texture of the default drwable "faces"
         auto drawable = mesh->triangles_drawable("faces");

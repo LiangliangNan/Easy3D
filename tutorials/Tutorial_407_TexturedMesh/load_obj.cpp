@@ -179,10 +179,10 @@ bool load_obj(const std::string& file_name, SurfaceMesh* mesh) {
 
         drawable->update_vertex_buffer(vertices);
         drawable->update_normal_buffer(vertex_normals);
-        drawable->set_phong_shading(false);
+        drawable->set_smooth_shading(false);
         if (prop_texcoords)
             drawable->update_texcoord_buffer(vertex_texcoords);
-        drawable->release_index_buffer();
+        drawable->release_element_buffer();
 
         const tinyobj::material_t& mat = materials[i];
         vec3  ambient(mat.ambient);
