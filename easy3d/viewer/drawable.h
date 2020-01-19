@@ -102,24 +102,11 @@ namespace easy3d {
 
 		// ---------------------- buffer creation -----------------------------
 
-		// dim: number of float components of a point, 3 by default
-		void update_vertex_buffer(const float* vertices, std::size_t count, int dim);
 		void update_vertex_buffer(const std::vector<vec3>& vertices);
-	
-		// dim: number of float components of a color, 3 by default
-		void update_color_buffer(const float* colors, std::size_t count, int dim);
 		void update_color_buffer(const std::vector<vec3>& colors);
-
-		// dim: number of float components of a normal, 3 by default
-		void update_normal_buffer(const float* normals, std::size_t count, int dim);
 		void update_normal_buffer(const std::vector<vec3>& normals);
-
-		// dim: number of float components of a texture coordinate, 2 by default
-		void update_texcoord_buffer(const float* texcoords, std::size_t count, int dim);
 		void update_texcoord_buffer(const std::vector<vec2>& texcoords);
-
 		void update_index_buffer(const std::vector<unsigned int>& indices);
-		void update_index_buffer(const unsigned int* indices, std::size_t count);
 
 		// selection buffer (internally based on a shader storage buffer)
 		// @param index: the index of the binding point.

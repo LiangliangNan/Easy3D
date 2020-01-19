@@ -68,15 +68,25 @@ namespace easy3d {
 		//------------------------- buffer management -------------------
 
 		// @param index: the index of the generic vertex attribute.
-		GLint create_array_buffer(GLuint& handle, GLuint index, const void* data, std::size_t datasize, GLenum data_type, std::size_t vectordim);
-		GLint create_index_buffer(GLuint& handle, const void* data, std::size_t datasize);
+        /**
+         * @brief Creates an OpenGL array buffer and upload data to the buffer.
+         * @param handle The name of the buffer object.
+         * @param index  The index of the generic vertex attribute to be enabled.
+         * @param data   The pointer to the data.
+         * @param size   The size of the data in bytes.
+         * @param dim    The number of components per generic vertex attribute. Must be 1, 2, 3, 4.
+         * @param dynamic The expected usage pattern is GL_STATIC_DRAW or GL_DYNAMIC_DRAW.
+         * @return OpenGL error code.
+         */
+        bool create_array_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size, std::size_t dim, bool dynamic = false);
+        bool create_element_buffer(GLuint& buffer, const void* data, std::size_t size, bool dynamic = false);
 
 		// @param index: the index of the binding point.
-		GLint create_storage_buffer(GLuint& handle, GLuint index, const void* data, std::size_t datasize);
-		GLint update_storage_buffer(GLuint& handle, GLintptr offset, GLsizeiptr size, const void* data);
+        bool create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size);
+        bool update_storage_buffer(GLuint& buffer, GLintptr offset, GLsizeiptr size, const void* data);
 
 		// free the GPU memory of the buffer specified by 'handle'
-		static void release_buffer(GLuint& handle);
+        static void release_buffer(GLuint& buffer);
 
 		// ------------------------- read/write buffer--------------------
 
@@ -87,23 +97,14 @@ namespace easy3d {
 		//				  measured in bytes.
 		// \param size:   the size in bytes of the data store region being returned.
 		// \param data:   a pointer to the location where buffer object data is returned.
-		void get_buffer_data(GLenum target, GLuint handle, GLintptr offset, GLsizeiptr size, void* data);
-
-		// starting from OpenGL 4.5, you don't need to provide the target. 
-		// It internally uses glGetNamedBufferSubData().
-		void get_named_buffer_data(GLuint handle, GLintptr offset, GLsizeiptr size, void* data);
+        void get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
 
 
 		// \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
 		// \param handle: the name of the buffer object for the mapping.
 		// \param access: must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE.
-		static void* map_buffer(GLenum target, GLuint handle, GLenum access);
-		static void  unmap_buffer(GLenum target, GLuint handle);
-
-		// starting from OpenGL 4.5, you don't need to provide the target. 
-		// It internally uses glMapNamedBuffer() and glUnmapNamedBuffer.
-		static void* map_named_buffer(GLuint handle, GLenum access);
-		static void  unmap_named_buffer(GLuint handle);
+        static void* map_buffer(GLenum target, GLuint buffer, GLenum access);
+        static void  unmap_buffer(GLenum target, GLuint buffer);
 
 	private:
 		GLuint	id_;

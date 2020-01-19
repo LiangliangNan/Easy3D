@@ -403,7 +403,7 @@ namespace easy3d {
         points[7] += offset;
         points.push_back(light_pos_); // 8th point
 
-        static const unsigned int indices[24] = {
+        static const std::vector<unsigned int> indices {
             0, 1, 1, 2, 2, 3, 3, 0, // near
             4, 5, 5, 6, 6, 7, 7, 4, // far
             4, 8, 5, 8, 6, 8, 7, 8  // side
@@ -411,7 +411,7 @@ namespace easy3d {
 
         LinesDrawable frustum("frustum");
         frustum.update_vertex_buffer(points);
-        frustum.update_index_buffer(indices, 24);
+        frustum.update_index_buffer(indices);
         frustum.set_per_vertex_color(false);
         frustum.set_default_color(vec3(1.0, 0.0, 0.0));
         frustum.draw(camera_, false);

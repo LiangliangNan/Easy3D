@@ -31,6 +31,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -136,76 +137,18 @@ namespace easy3d {
 	}
 
 
-	void Drawable::update_vertex_buffer(const float* vertices, std::size_t count, int dim) {
-		assert(vao_);
-
-		int status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices, count * sizeof(float) * dim, GL_FLOAT, dim);
-		if (status != GL_NO_ERROR) {
-			num_vertices_ = 0;
-			std::cerr << "failed creating vertex buffer" << std::endl;
-		}
-		else {
-			num_vertices_ = count;
-		}
-
-        // update bounding box
-        bbox_.clear();
-        for (std::size_t i = 0; i<count * dim; i+=dim)
-            bbox_.add_point(vec3(vertices + i));
-	}
-
-
-	void Drawable::update_color_buffer(const float* colors, std::size_t count, int dim) {
-		assert(vao_);
-
-		int status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors, count * sizeof(float) * dim, GL_FLOAT, dim);
-		if (status != GL_NO_ERROR)
-			std::cerr << "failed updating color buffer" << std::endl;
-	}
-
-
-	void Drawable::update_normal_buffer(const float* normals, std::size_t count, int dim) {
-		assert(vao_);
-		int status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals, count * sizeof(float) * dim, GL_FLOAT, dim);
-		if (status != GL_NO_ERROR)
-			std::cerr << "failed updating normal buffer" << std::endl;
-	}
-
-
-	void Drawable::update_texcoord_buffer(const float* texcoords, std::size_t count, int dim) {
-		assert(vao_);
-
-		int status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords, count * sizeof(float) * dim, GL_FLOAT, dim);
-		if (status != GL_NO_ERROR)
-			std::cerr << "failed updating texcoord buffer" << std::endl;
-	}
-
-
-	void Drawable::update_index_buffer(const unsigned int* indices, std::size_t count) {
-		assert(vao_);
-
-		int status = vao_->create_index_buffer(index_buffer_, indices, count * sizeof(unsigned int));
-		if (status != GL_NO_ERROR) {
-			num_indices_ = 0;
-		}
-		else {
-			num_indices_ = count;
-		}
-	}
-
-
 	void Drawable::update_storage_buffer(const void* data, std::size_t datasize, unsigned int index /* = 1*/) {
 		assert(vao_);
 
 		if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
-			int status = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
-			if (status != GL_NO_ERROR)
-				std::cerr << "failed creating storage buffer" << std::endl;
+            bool status = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
+            if (!status)
+                LOG(ERROR) << "failed creating storage buffer";
 		}
 		else {
-			int status = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
-			if (status != GL_NO_ERROR)
-				std::cerr << "failed updating storage buffer" << std::endl;
+            bool status = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
+            if (!status)
+                LOG(ERROR) << "failed updating storage buffer";
 		}
 	}
 
@@ -214,23 +157,23 @@ namespace easy3d {
 		assert(vao_);
 
         //if (selection_buffer_ == 0 || selections_.size() != current_selection_buffer_size_) {
-	 //       int status = vao_->create_storage_buffer(selection_buffer_, index, selections_.data(), selections_.size() * sizeof(int));
-		//	if (status != GL_NO_ERROR)
-		//		std::cerr << "failed creating selection buffer" << std::endl;
+     //       bool status = vao_->create_storage_buffer(selection_buffer_, index, selections_.data(), selections_.size() * sizeof(int));
+        //	if (!status)
+        //		LOG(ERROR) << "failed creating selection buffer";
 		//	else {
 		//		current_selection_buffer_size_ = selections_.size();
 		//		if (t.elapsed_seconds() > 0.1) {
-		//			std::cout << "selection buffer updated. time: " << t.time_string() << std::endl;
+        //			std::cout << "selection buffer updated. time: " << t.time_string();
 		//		}
 		//	}
 		//}
 		//else {
-	 //       int status = vao_->update_storage_buffer(selection_buffer_, 0, selections_.size() * sizeof(int), selections_.data());
-		//	if (status != GL_NO_ERROR)
-		//		std::cerr << "failed updating selection buffer" << std::endl;
+     //       bool status = vao_->update_storage_buffer(selection_buffer_, 0, selections_.size() * sizeof(int), selections_.data());
+        //	if (!status)
+        //		LOG(ERROR) << "failed updating selection buffer";
 		//	else {
 		//		if (t.elapsed_seconds() > 0.1) {
-		//			std::cout << "selection buffer updated. time: " << t.time_string() << std::endl;
+        //			std::cout << "selection buffer updated. time: " << t.time_string();
 		//		}
 		//	}
 		//}
@@ -238,27 +181,58 @@ namespace easy3d {
 
 
 	void Drawable::update_vertex_buffer(const std::vector<vec3>& vertices) {
-		update_vertex_buffer((const float*)vertices.data(), vertices.size(), 3);
+        assert(vao_);
+
+        bool status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(), vertices.size() * sizeof(vec3), 3);
+        if (!status) {
+            num_vertices_ = 0;
+            LOG(ERROR) << "failed creating vertex buffer";
+        }
+        else {
+            num_vertices_ = vertices.size();
+        }
+
+        // update bounding box
+        bbox_.clear();
+        for (const auto& p : vertices)
+            bbox_.add_point(p);
 	}
 
 
 	void Drawable::update_color_buffer(const std::vector<vec3>& colors) {
-		update_color_buffer((const float*)colors.data(), colors.size(), 3);
+        assert(vao_);
+
+        bool status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(), colors.size() * sizeof(vec3), 3);
+        if (!status)
+            LOG(ERROR) << "failed updating color buffer";
 	}
 
 
 	void Drawable::update_normal_buffer(const std::vector<vec3>& normals) {
-		update_normal_buffer((const float*)normals.data(), normals.size(), 3);
+        assert(vao_);
+        bool status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(), normals.size() * sizeof(vec3), 3);
+        if (!status)
+            LOG(ERROR) << "failed updating normal buffer";
 	}
 
 
 	void Drawable::update_texcoord_buffer(const std::vector<vec2>& texcoords) {
-		update_texcoord_buffer((const float*)texcoords.data(), texcoords.size(), 2);
+        assert(vao_);
+
+        bool status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(), texcoords.size() * sizeof(vec2), 2);
+        if (!status)
+            LOG(ERROR) << "failed updating texcoord buffer";
 	}
 
 
 	void Drawable::update_index_buffer(const std::vector<unsigned int>& indices) {
-		update_index_buffer((const unsigned int*)indices.data(), indices.size());
+        assert(vao_);
+
+        bool status = vao_->create_element_buffer(index_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
+        if (!status)
+            num_indices_ = 0;
+        else
+            num_indices_ = indices.size();
 	}
 
 
