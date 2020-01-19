@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file = setting::resource_directory() + "/data/ball.ply";
+    const std::string file = setting::resource_directory() + "/data/cube_points.bin";
 
     try {
         // Create the viewer.
@@ -53,7 +53,8 @@ int main(int argc, char** argv) {
         }
 
         auto drawable = model->points_drawable("vertices");
-        drawable->set_point_size(3.0f);
+        drawable->set_point_size(5.0f);
+        drawable->set_per_vertex_color(false);
         drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));
 
         // Run the viewer

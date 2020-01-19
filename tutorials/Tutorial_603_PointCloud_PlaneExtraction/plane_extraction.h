@@ -23,8 +23,8 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H
-#define EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H
+#ifndef EASY3D_TUTORIAL_PLANE_EXTRACTION_H
+#define EASY3D_TUTORIAL_PLANE_EXTRACTION_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -39,4 +39,4 @@ protected:
 };
 
 
-#endif // EASY3D_TUTORIAL_CLOUD_PLANE_EXTRACTION_H
+#endif // EASY3D_TUTORIAL_PLANE_EXTRACTION_H

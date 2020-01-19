@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
         Viewer viewer("Tutorial_403_VectorField");
 
         // Load point cloud data from a file
-        const std::string file_name = setting::resource_directory() + "/data/building_cloud.bin";
+        const std::string file_name = setting::resource_directory() + "/data/cube_points.bin";
         PointCloud* cloud = dynamic_cast<PointCloud*>(viewer.open(file_name, true));
         if (!cloud) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
@@ -67,9 +67,9 @@ int main(int argc, char** argv) {
             auto points = cloud->get_vertex_property<vec3>("v:point");
 
             // Get the bounding box of the model. Then we defined the length of the
-            // normal vectors to be 1% of the bounding box diagonal.
+            // normal vectors to be 5% of the bounding box diagonal.
             const Box3& box = cloud->bounding_box();
-            float length = norm(box.max() - box.min()) * 0.01f;
+            float length = norm(box.max() - box.min()) * 0.05f;
 
             // Now let collects the two end points of each normal vector. So from
             // these points we can create a drawable to visualize the normal vectors.

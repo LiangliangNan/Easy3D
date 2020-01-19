@@ -23,8 +23,8 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EASY3D_TUTORIAL_CLOUD_SURFACE_RECONSTRUCTION_
-#define EASY3D_TUTORIAL_CLOUD_SURFACE_RECONSTRUCTION_
+#ifndef EASY3D_TUTORIAL_SURFACE_RECONSTRUCTION_
+#define EASY3D_TUTORIAL_SURFACE_RECONSTRUCTION_
 
 #include <easy3d/viewer/viewer.h>
 
@@ -39,4 +39,4 @@ protected:
 };
 
 
-#endif // EASY3D_TUTORIAL_CLOUD_SURFACE_RECONSTRUCTION_
+#endif // EASY3D_TUTORIAL_SURFACE_RECONSTRUCTION_

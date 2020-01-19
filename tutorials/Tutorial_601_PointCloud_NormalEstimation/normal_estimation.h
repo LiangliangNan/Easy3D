@@ -23,8 +23,8 @@
 *	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
-#define EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
+#ifndef EASY3D_TUTORIAL_NORMAL_ESTIMATION_H
+#define EASY3D_TUTORIAL_NORMAL_ESTIMATION_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -43,4 +43,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_CLOUD_NORMAL_ESTIMATION_H
+#endif // EASY3D_TUTORIAL_NORMAL_ESTIMATION_H

@@ -116,9 +116,6 @@ int main(int argc, char** argv) {
 		viewer.add_drawable(bbox_drawable);
 		viewer.fit_screen();
 
-		// Set the camera's up vector so the bunny has an upright orientation.
-		viewer.camera()->setUpVector(vec3(0, 1, 0));
-
         // Run the viewer
         viewer.run();
 

@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
 	// Read the point cloud from a known file. 
-    PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/building_cloud.bin");
+    PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/bunny_with_normals.bin");
     if (!cloud) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     // Now let's save the model into a file with customized format. In each
     // line we store the x, y, z coordinates, followed by the normal (nx, ny,
     // nz) and color (r, g, b) if they exist.
-    std::ofstream output("./building_cloud-copy.txt");
+    std::ofstream output("./bunny_with_normals-copy.txt");
     if (output.is_open()) { // if the file has been successfully created
         // The point coordinates.
         PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");

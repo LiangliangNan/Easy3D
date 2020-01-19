@@ -35,9 +35,6 @@
 using namespace easy3d;
 
 TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
-    // Set the camera's up vector so the bunny has an upright orientation.
-    camera()->setUpVector(vec3(0, 1, 0));
-
 	transparency_ = new AverageColorBlending(camera());
 	std::cout << "method: Average Color Blending" << std::endl;
 	method_ = 1;

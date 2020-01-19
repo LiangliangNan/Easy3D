@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
 	// Read a mesh specified by its file name
-    const std::string file_name = setting::resource_directory() + "/data/building.off";
+    const std::string file_name = setting::resource_directory() + "/data/sphere.obj";
     SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
     if (!mesh) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 	// ...
 
 	// Write the mesh to a new file.
-    const std::string save_file_name = "./building-copy.obj";
+    const std::string save_file_name = "./sphere-copy.obj";
     if (SurfaceMeshIO::save(save_file_name, mesh))
         std::cout << "mesh saved to \'" << save_file_name << "\'"  << std::endl;
 	else

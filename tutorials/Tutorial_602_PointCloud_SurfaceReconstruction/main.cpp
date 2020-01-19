@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file = setting::resource_directory() + "/data/bunny.bin";
+    const std::string file = setting::resource_directory() + "/data/bunny_with_normals.bin";
 
     try {
         // Create the viewer.
