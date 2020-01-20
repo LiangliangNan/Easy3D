@@ -18,7 +18,7 @@ add_subdirectory("Tutorial_207_Graph_Property")
 add_subdirectory("Tutorial_208_Graph_IO")
 
 # ui, viewer, and camera
-add_subdirectory("Tutorial_301_Logging")
+add_subdirectory("Tutorial_301_CompositeView")
 add_subdirectory("Tutorial_302_Viewer_imgui")
 if(EASY3D_ENABLE_QT)
     add_subdirectory("Tutorial_303_Viewer_Qt")
@@ -26,7 +26,6 @@ endif()
 add_subdirectory("Tutorial_304_RealCamera")
 add_subdirectory("Tutorial_305_CameraInterpolation")
 add_subdirectory("Tutorial_306_ImageViewer")
-add_subdirectory("Tutorial_307_CompositeView")
 
 # basic rendering
 add_subdirectory("Tutorial_401_Drawable")

@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     try {
-        CompositeView viewer("Tutorial_307_CompositeView");
+        CompositeView viewer("Tutorial_301_CompositeView");
 
         // Load model from a file
         const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
