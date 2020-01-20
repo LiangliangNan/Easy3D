@@ -60,7 +60,8 @@ namespace easy3d {
     template < class Class, class Function, class... Args >
     void Thread::run(Class&& owner, Function&& func, Args&&... args) {
         std::thread t([=]() {
-            (owner->*func)(std::forward<Args>(args)...);
+            auto f = std::bind(func, owner, std::forward<Args>(args)...);
+            f(std::forward<Args>(args)...);
         });
         t.detach();
     }
