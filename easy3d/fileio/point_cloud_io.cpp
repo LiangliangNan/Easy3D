@@ -76,13 +76,6 @@ namespace easy3d {
 			return nullptr;
 		}
 
-#ifndef NDEBUG
-        std::cout << "vertex properties on point cloud " << file_system::simple_name(file_name) << std::endl;
-		const auto& vnames = cloud->vertex_properties();
-		for (const auto& n : vnames)
-			std::cout << "\t" << n << std::endl;
-#endif
-
         if (success)
             std::cout << "load model done. time: " << w.time_string() << std::endl;
         else

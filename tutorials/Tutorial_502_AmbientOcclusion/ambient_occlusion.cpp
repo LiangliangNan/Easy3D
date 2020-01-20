@@ -39,10 +39,14 @@ using namespace easy3d;
 TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : Viewer(title) {
 	ao_ = new AmbientOcclusion(camera());
 	ao_enabled_ = true;
+}
 
-    std::cout << "------------ Ambient Occlusion ----------" << std::endl
-		<< "Press key 'space' to switch between Ambient Occlusion and normal rendering" << std::endl
-		<< "Press 'up/down' to increase/decrease the radius" << std::endl;
+
+std::string TutorialAmbientOcclusion::usage() const {
+    return ("----------------- Ambient Occlusion usage ----------------- \n"
+            "Press key 'space' to switch between Ambient Occlusion and normal rendering\n"
+            "Press 'up/down' to increase/decrease the radius\n"
+            "----------------------------------------------------------- \n");
 }
 
 

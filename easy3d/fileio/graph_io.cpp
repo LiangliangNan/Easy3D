@@ -61,19 +61,6 @@ namespace easy3d {
             return nullptr;
         }
 
-
-#ifndef NDEBUG
-        std::cout << "vertex properties on graph " << file_system::simple_name(file_name) << std::endl;
-        const auto& vnames = graph->vertex_properties();
-		for (const auto& n : vnames)
-			std::cout << "\t" << n << std::endl;
-
-        std::cout << "edge properties on graph " << file_system::simple_name(file_name) << std::endl;
-        const auto& enames = graph->edge_properties();
-        for (const auto& n : enames)
-            std::cout << "\t" << n << std::endl;
-#endif
-
         if (success)
             std::cout << "load model done. time: " << w.time_string() << std::endl;
         else

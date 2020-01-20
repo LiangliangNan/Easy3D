@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 
 	// loop over all edges
 	for (auto e : mesh->edges()) {
-		std::cout << "the two faces connected edge " << e << ": ";
+        std::cout << "the two faces connected by edge " << e << ": ";
 		SurfaceMesh::Halfedge h0 = mesh->halfedge(e, 0);
 		if (mesh->is_boundary(h0))
 			std::cout << "NULL" << " ";

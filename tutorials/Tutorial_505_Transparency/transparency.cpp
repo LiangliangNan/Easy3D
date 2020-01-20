@@ -37,9 +37,13 @@ TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(ti
 	transparency_ = new AverageColorBlending(camera());
 	std::cout << "method: Average Color Blending" << std::endl;
 	method_ = 1;
+}
 
-	std::cout << "------------ TutorialTransparency ----------" << std::endl
-		<< "Press key 'space' to turn on/off or switch between different transparency techniques" << std::endl;
+
+std::string TutorialTransparency::usage() const {
+    return ("------------------------ Transparency usage ------------------------ \n"
+            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
+            "-------------------------------------------------------------------- \n");
 }
 
 

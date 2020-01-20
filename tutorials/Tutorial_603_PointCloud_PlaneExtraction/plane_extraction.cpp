@@ -35,9 +35,16 @@
 
 using namespace easy3d;
 
-TutorialPlaneExtraction::TutorialPlaneExtraction(const std::string& title) : Viewer(title) {
-    std::cout << "------------ Point cloud plane extraction ----------" << std::endl
-              << "Press key 'e' to extract planes" << std::endl;
+TutorialPlaneExtraction::TutorialPlaneExtraction(const std::string& title)
+    : Viewer(title)
+{
+}
+
+
+std::string TutorialPlaneExtraction::usage() const {
+    return ("---------- Plane Extraction usage ---------- \n"
+            "Press key 'e' to extract planes\n"
+            "-------------------------------------------- \n");
 }
 
 
@@ -64,7 +71,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
         algo.add_primitive_type(PrimitivesRansac::PLANE);
 
         // you can try different parameters of RANSAC (usually you don't need to tune them)
-        int num = algo.detect(cloud, 1000, 0.005f, 0.02f, 0.8f, 0.001f);
+        int num = algo.detect(cloud, 200, 0.005f, 0.02f, 0.8f, 0.001f);
         if (num > 0) {
             // assign each plane a unique color
             std::vector<vec3> color_table(num);

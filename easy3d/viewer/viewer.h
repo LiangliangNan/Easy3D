@@ -297,9 +297,9 @@ namespace easy3d {
 
         /**
          * @brief The usage information of the viewer. For the time being, it is the manual of the
-         *        viewer.
+         *        viewer. User can override the usage.
          */
-	    std::string usage() const;
+	    virtual std::string usage() const;
 
 	protected:
         /**

@@ -39,9 +39,13 @@ TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title)
 	shadow_ = new Shadow(camera());
     shadow_->set_background_color(background_color());
 	shadow_enabled_ = true;
+}
 
-	std::cout << "------------ Hard Shadow ----------" << std::endl
-		<< "Press key 'space' to switch between Hard Shadow and normal rendering" << std::endl;
+
+std::string TutorialHardShadow::usage() const {
+    return ("------------------- Hard Shadow usage ------------------- \n"
+            "Press key 'space' to switch between Shadowing and normal rendering\n"
+            "--------------------------------------------------------- \n");
 }
 
 

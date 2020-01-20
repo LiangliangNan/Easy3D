@@ -160,6 +160,8 @@ void ViewerQt::initializeGL()
 
 	// Calls user defined method.
 	init();
+
+    std::cout << usage() << std::endl;
 }
 
 
@@ -322,17 +324,8 @@ Model* ViewerQt::currentModel() const {
 }
 
 void ViewerQt::keyPressEvent(QKeyEvent* e) {
-	if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
-		if (drawable_axes_)
-			drawable_axes_->set_visible(!drawable_axes_->is_visible());
-	}
-	else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
-		if (currentModel())
-			fitScreen(currentModel());
-	}
-	else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
-		fitScreen();
-	}
+    if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
+        std::cout << usage() << std::endl;
 
 	else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
 		float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
@@ -370,8 +363,18 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
 	}
 
-	else if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
-		std::cout << usage() << std::endl;
+    else if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
+        if (drawable_axes_)
+            drawable_axes_->set_visible(!drawable_axes_->is_visible());
+    }
+    else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
+        if (currentModel())
+            fitScreen(currentModel());
+    }
+    else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
+        fitScreen();
+    }
+
 	else if (e->key() == Qt::Key_P && e->modifiers() == Qt::NoModifier) {
 		if (camera_->type() == Camera::PERSPECTIVE)
 			camera_->setType(Camera::ORTHOGRAPHIC);
@@ -502,6 +505,14 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 		}
 	}
 
+    else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
+        if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+            auto drawable = currentModel()->triangles_drawable("faces");
+            if (drawable)
+                drawable->set_smooth_shading(!drawable->smooth_shading());
+        }
+    }
+
 	else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
 		if (currentModel()) {
 			std::cout << "Current model has the following drawables:" << std::endl;
@@ -545,7 +556,7 @@ void ViewerQt::closeEvent(QCloseEvent* e) {
 std::string ViewerQt::usage() const {
 	return std::string(
 		" ------------------------------------------------------------------\n"
-		"Easy3D viewer usage:                                               \n"
+		" Easy3D viewer usage:                                              \n"
 		" ------------------------------------------------------------------\n"
 		"  F1:                  Help                                        \n"
 		" ------------------------------------------------------------------\n"
@@ -572,10 +583,11 @@ std::string ViewerQt::usage() const {
 		"  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
 		" ------------------------------------------------------------------\n"
 		"  '+'/'-':             Increase/Decrease point size (line width)   \n"
-		"  'a':                 Toggle axes									\n"
-		"  'e':                 Toggle edges                                \n"
-		"  'v':                 Toggle vertices                             \n"
-		"  'd':                 Print drawables attached to current model   \n"
+        "  'a':                 Toggle axes									\n"
+        "  'e':                 Toggle edges							    \n"
+        "  'v':                 Toggle vertices                             \n"
+        "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
+        "  'd':                 Print model info (drawables, properties)    \n"
 		" ------------------------------------------------------------------\n"
 	);
 }
@@ -746,8 +758,6 @@ void ViewerQt::paintGL() {
 		}
 		else
             LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
-
-		std::cout << usage() << std::endl;
 
 		queried = true;
 	}

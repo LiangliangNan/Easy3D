@@ -67,7 +67,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
     QImage image(w, h, QImage::Format_ARGB32);
     if (image.isNull()) {
-        QMessageBox::warning(this, "Image saving error", "Unable to create resulting image", QMessageBox::Ok, QMessageBox::NoButton);
+        QMessageBox::warning(this, "Image saving error", "Failed to allocate the image", QMessageBox::Ok, QMessageBox::NoButton);
         return false;
     }
 

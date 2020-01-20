@@ -36,6 +36,8 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
+    std::string usage() const override;
+
 private:
     void update_rendering();
 

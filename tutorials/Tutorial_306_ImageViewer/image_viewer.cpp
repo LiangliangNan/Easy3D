@@ -44,11 +44,15 @@ ImageViewer::ImageViewer(const std::string& title, const std::string& image_file
 {
     image_file_ = image_file;
     set_background_color(vec3(1, 1, 1));
+}
 
-    std::cout << "------------ Image Viewer ----------" << std::endl
-              << "Press 'Ctrl + O' to open an image" << std::endl
-              << "Press 'Space' to reset the view" << std::endl
-        << std::endl;
+
+std::string ImageViewer::usage() const {
+    return ("------------ Image Viewer usage ---------- \n"
+            "Press 'Ctrl + O' to open an image\n"
+            "Use wheel to zoom in/out\n"
+            "Press 'Space' to reset the view\n"
+            "------------------------------------------ \n");
 }
 
 

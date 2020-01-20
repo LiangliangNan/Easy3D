@@ -74,29 +74,6 @@ namespace easy3d {
 			return nullptr;
 		}
 
-
-#ifndef NDEBUG
-        std::cout << "vertex properties on mesh " << file_system::simple_name(file_name) << std::endl;
-		const auto& vnames = mesh->vertex_properties();
-		for (const auto& n : vnames)
-			std::cout << "\t" << n << std::endl;
-
-        std::cout << "face properties on mesh " << file_system::simple_name(file_name) << std::endl;
-		const auto& fnames = mesh->face_properties();
-		for (const auto& n : fnames)
-			std::cout << "\t" << n << std::endl;
-
-        std::cout << "edge properties on mesh " << file_system::simple_name(file_name) << std::endl;
-        const auto& enames = mesh->edge_properties();
-        for (const auto& n : enames)
-            std::cout << "\t" << n << std::endl;
-
-        std::cout << "halfedge properties on mesh " << file_system::simple_name(file_name) << std::endl;
-        const auto& hnames = mesh->halfedge_properties();
-        for (const auto& n : hnames)
-            std::cout << "\t" << n << std::endl;
-#endif
-
         if (success)
             std::cout << "load model done. time: " << w.time_string() << std::endl;
         else

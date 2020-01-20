@@ -57,12 +57,12 @@ namespace easy3d {
         StopWatch w;
         w.start();
 
-        std::cerr << "building kd_tree..." << std::endl;
+        std::cout << "building kd_tree..." << std::endl;
         KdTreeSearch_NanoFLANN kdtree;
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        std::cout << "done. Time: " << w.time_string() << std::endl;
 
         int num = cloud->vertices_size();
         const std::vector<vec3>& points = cloud->points();
@@ -73,7 +73,7 @@ namespace easy3d {
             curvatures = &(cloud->vertex_property<float>("v:curvature").vector());
 
         w.restart();
-        std::cerr << "estimating normals..." << std::endl;
+        std::cout << "estimating normals..." << std::endl;
 
     #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -98,7 +98,7 @@ namespace easy3d {
                 (*curvatures)[i] = float(pca.eigen_value(2) / (pca.eigen_value(0) + pca.eigen_value(1) + pca.eigen_value(2)));
         }
 
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        std::cout << "done. Time: " << w.time_string() << std::endl;
         return true;
     }
 
@@ -386,15 +386,15 @@ namespace easy3d {
         StopWatch w;
         w.start();
 
-        std::cerr << "building kd_tree..." << std::endl;
+        std::cout << "building kd_tree..." << std::endl;
         KdTreeSearch_NanoFLANN kdtree;
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        std::cout << "done. Time: " << w.time_string() << std::endl;
 
         w.restart();
-        std::cerr << "constructing graph..." << std::endl;
+        std::cout << "constructing graph..." << std::endl;
         details::RiemannianGraph riemannian_graph;
         details::build_graph(cloud, &kdtree, k, riemannian_graph);
 
@@ -402,29 +402,29 @@ namespace easy3d {
         // first. After that, we can reorient all the components one by one.
         std::vector<details::RiemannianGraph> components
                 = details::connected_components(cloud, riemannian_graph);
-        std::cerr << "done. #vertices: " << boost::num_vertices(riemannian_graph)
+        std::cout << "done. #vertices: " << boost::num_vertices(riemannian_graph)
                   << ", #edges: " << boost::num_edges(riemannian_graph)
                   << ", #components: " << components.size()
                   << ". Time: " << w.time_string() << std::endl;
 
         w.restart();
-        std::cerr << "extract minimum spanning tree..." << std::endl;
+        std::cout << "extract minimum spanning tree..." << std::endl;
         std::vector<details::MST_Graph> ms_trees;
         for (const auto& graph : components) {
             ms_trees.emplace_back(cloud->get_vertex_property<vec3>("v:normal"));
             details::MST_Graph& mst = ms_trees.back();
             details::extract_minimum_spanning_tree(graph, mst);
         }
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        std::cout << "done. Time: " << w.time_string() << std::endl;
 
         w.restart();
-        std::cerr << "propagate..." << std::endl;
+        std::cout << "propagate..." << std::endl;
         for (const auto& mst : ms_trees) {
             // Traverse the point set along the MST to propagate source_point's orientation
             details::BfsVisitor<details::MST_Graph> bfsVisitor(details::propagate_normal);
             boost::breadth_first_search(mst, mst.root, boost::visitor(bfsVisitor));
         }
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        std::cout << "done. Time: " << w.time_string() << std::endl;
 
 #ifdef VISUALIZATION_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph

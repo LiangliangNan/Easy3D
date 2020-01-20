@@ -27,7 +27,7 @@ public:
     explicit PaintCanvas(QWidget* parent = nullptr);
     virtual ~PaintCanvas() override;
 
-    std::string usage() const;
+    virtual std::string usage() const;
 
 	// the actual samples received
 	int samples() const { return samples_; }

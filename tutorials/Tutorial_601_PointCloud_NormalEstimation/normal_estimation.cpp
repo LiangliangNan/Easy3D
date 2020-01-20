@@ -37,10 +37,14 @@ TutorialNormalEstimation::TutorialNormalEstimation(const std::string& title) : V
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
     camera_->showEntireScene();
+}
 
-    std::cout << "------------ Point cloud normal estimation ----------" << std::endl
-              << "Press key 'e' to estimation point cloud normals\n"
-              << "press key 'r' to re-orient the normals " << std::endl;
+
+std::string TutorialNormalEstimation::usage() const {
+    return ("----------- Normal Estimation usage ------------ \n"
+            "Press key 'e' to estimation point cloud normals\n"
+            "press key 'r' to re-orient the normals\n"
+            "------------------------------------------------ \n");
 }
 
 

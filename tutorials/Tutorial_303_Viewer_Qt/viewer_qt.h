@@ -48,7 +48,7 @@ public:
     explicit ViewerQt(QWidget* parent = nullptr);
     virtual ~ViewerQt() override;
 
-    std::string usage() const;
+    virtual std::string usage() const;
 
 	// the actual samples received
 	int samples() const { return samples_; }

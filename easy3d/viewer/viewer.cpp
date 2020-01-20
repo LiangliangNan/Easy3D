@@ -145,8 +145,6 @@ namespace easy3d {
         drag_active_ = false;
         process_events_ = true;
 
-		std::cout << usage() << std::endl;
-
 		/* Poll for events once before starting a potentially lengthy loading process.*/
 		glfwPollEvents();
 	}
@@ -662,7 +660,10 @@ namespace easy3d {
 	}
 
 	bool Viewer::key_press_event(int key, int modifiers) {
-        if (key == GLFW_KEY_LEFT && modifiers == 0) {
+        if (key == GLFW_KEY_F1 && modifiers == 0)
+            std::cout << usage() << std::endl;
+
+        else if (key == GLFW_KEY_LEFT && modifiers == 0) {
 			float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
 			camera_->frame()->action_turn(angle, camera_);
 		}
@@ -733,8 +734,7 @@ namespace easy3d {
             }
 #endif
 		}
-		else if (key == GLFW_KEY_F1 && modifiers == 0)
-			std::cout << usage() << std::endl;
+
 		else if (key == GLFW_KEY_P && modifiers == 0) {
 			if (camera_->type() == Camera::PERSPECTIVE)
 				camera_->setType(Camera::ORTHOGRAPHIC);
@@ -869,13 +869,19 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_D && modifiers == 0) {
 			if (current_model()) {
-				std::cout << "Current model has the following drawables:" << std::endl;
+                std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------" << std::endl;
+
+                std::cout << "points drawables:" << std::endl;
 				for (auto d : current_model()->points_drawables())
-					std::cout << "\tPointsDrawable: " << d->name() << std::endl;
+                    std::cout << "\t" << d->name() << std::endl;
+                std::cout << "lines drawables:" << std::endl;
 				for (auto d : current_model()->lines_drawables())
-					std::cout << "\tLinesDrawable: " << d->name() << std::endl;
+                    std::cout << "\t" << d->name() << std::endl;
+                std::cout << "triangles drawables:" << std::endl;
 				for (auto d : current_model()->triangles_drawables())
-					std::cout << "\tTrianglesDrawable: " << d->name() << std::endl;
+                    std::cout << "\t" << d->name() << std::endl;
+
+                current_model()->property_stats();
 			}
 		}
 
@@ -1022,7 +1028,9 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-		glEnable(GL_DEPTH_TEST);
+        std::cout << usage() << std::endl;
+
+        glEnable(GL_DEPTH_TEST);
 
 		glClearDepthf(1.0f);
 		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
@@ -1032,7 +1040,7 @@ namespace easy3d {
 	std::string Viewer::usage() const {
 		return std::string(
 			" ------------------------------------------------------------------\n"
-			"Easy3D viewer usage:                                               \n"
+			" Easy3D viewer usage:                                              \n"
 			" ------------------------------------------------------------------\n"
 			"  F1:                  Help                                        \n"
 			" ------------------------------------------------------------------\n"
@@ -1063,7 +1071,7 @@ namespace easy3d {
 			"  'e':                 Toggle edges							    \n"
             "  'v':                 Toggle vertices                             \n"
             "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
-            "  'd':                 Print drawables attached to current model   \n"
+            "  'd':                 Print model info (drawables, properties)    \n"
 			" ------------------------------------------------------------------\n"
 		);
 	}
@@ -1226,7 +1234,7 @@ namespace easy3d {
 		const std::string& default_path = setting::resource_directory() + "/data/";
 		const std::vector<std::string>& filters = {
 			"Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
-			"Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
+			"Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
 			"All Files (*.*)", "*"
 		};
 		const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, true);

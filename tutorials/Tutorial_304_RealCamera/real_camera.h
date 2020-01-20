@@ -48,6 +48,8 @@ protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
+
+    std::string usage() const override ;
     
 private:
     struct CameraPara {

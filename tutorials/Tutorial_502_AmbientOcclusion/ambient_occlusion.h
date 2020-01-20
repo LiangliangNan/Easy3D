@@ -47,6 +47,8 @@ protected:
 
 	void cleanup() override;
 
+    std::string usage() const override;
+
 private:
 	easy3d::AmbientOcclusion* ao_;
 	bool ao_enabled_;

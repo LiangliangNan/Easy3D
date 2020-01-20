@@ -47,6 +47,8 @@ protected:
 
 	void cleanup() override;
 
+    std::string usage() const override;
+
 private:
 	easy3d::Shadow* shadow_;
 	bool			shadow_enabled_;

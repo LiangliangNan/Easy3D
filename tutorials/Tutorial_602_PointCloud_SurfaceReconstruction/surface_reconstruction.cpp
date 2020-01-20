@@ -27,6 +27,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/camera.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -37,9 +38,13 @@ TutorialSurfaceReconstruction::TutorialSurfaceReconstruction(const std::string& 
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
     camera_->showEntireScene();
+}
 
-    std::cout << "------------ Point cloud surface reconstruction ----------" << std::endl
-              << "Press key 'r' for surface reconstruction" << std::endl;
+
+std::string TutorialSurfaceReconstruction::usage() const {
+    return ("-------------- Surface Reconstruction usage -------------- \n"
+            "Press key 'r' for surface reconstruction\n"
+            "---------------------------------------------------------- \n");
 }
 
 
@@ -66,6 +71,7 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
         Model* surface = algo.apply(cloud);
         if (surface != nullptr) {
             add_model(surface, true);
+            surface->triangles_drawable("faces")->set_smooth_shading(false);
             delete_model(cloud);
             update();
         }

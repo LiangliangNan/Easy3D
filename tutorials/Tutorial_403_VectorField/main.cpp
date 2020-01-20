@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         Viewer viewer("Tutorial_403_VectorField");
 
         // Load point cloud data from a file
-        const std::string file_name = setting::resource_directory() + "/data/cube_points.bin";
+        const std::string file_name = setting::resource_directory() + "/data/polyhedron.bin";
         PointCloud* cloud = dynamic_cast<PointCloud*>(viewer.open(file_name, true));
         if (!cloud) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";

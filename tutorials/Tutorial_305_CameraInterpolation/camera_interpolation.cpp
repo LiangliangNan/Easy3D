@@ -37,10 +37,15 @@ using namespace easy3d;
 CameraIntrepolation::CameraIntrepolation(const std::string& title)
     : Viewer(title)
 {
-    std::cout << "------------ Camera Intrepolation ----------" << std::endl
-              << "Press 'K' to add key frames" << std::endl
-              << "Press 'Space' to start/stop the animation" << std::endl
-              << "Press 'D' to delete the camera path" << std::endl;
+}
+
+
+std::string CameraIntrepolation::usage() const {
+    return ("------------ Camera Interpolation usage ---------- \n"
+            "Press 'K' to add key frames\n"
+            "Press 'Space' to start/stop the animation\n"
+            "Press 'D' to delete the camera path\n"
+            "-------------------------------------------------- \n");
 }
 
 

@@ -50,10 +50,6 @@ RealCamera::RealCamera(const std::string& title,
     , current_view_(0)
     , texture_(nullptr)
 {
-    std::cout << "------------ Real Camera ----------" << std::endl
-              << "Press 'Space' to switch views" << std::endl
-              << "Press 'H' to show/hide the cameras" << std::endl;
-
     // Read the point cloud
     if (open(cloud_file)) {
         auto drawable = current_model()->points_drawable("vertices");
@@ -72,6 +68,14 @@ RealCamera::RealCamera(const std::string& title,
     }
     else
         std::cerr << "Error: failed load point cloud." << std::endl;
+}
+
+
+std::string RealCamera::usage() const {
+    return ("------------ Real Camera usage ---------- \n"
+            "Press 'Space' to switch views\n"
+            "Press 'H' to show/hide the cameras\n"
+            "----------------------------------------- \n");
 }
 
 

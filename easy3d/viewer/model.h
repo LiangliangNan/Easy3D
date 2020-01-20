@@ -81,6 +81,9 @@ namespace easy3d {
         const std::vector<LinesDrawable*>&   lines_drawables() const { return lines_drawables_; }
         const std::vector<TrianglesDrawable*>& triangles_drawables() const { return triangles_drawables_; }
 
+        /// prints the names of all properties
+        virtual void property_stats() const = 0;
+
     protected:
         std::string	name_;
         bool		visible_;

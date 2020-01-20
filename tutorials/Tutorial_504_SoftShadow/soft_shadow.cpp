@@ -39,9 +39,13 @@ TutorialSoftShadow::TutorialSoftShadow(const std::string& title) : Viewer(title)
 	shadow_ = new SoftShadow(camera());
     shadow_->set_background_color(background_color_);
 	shadow_enabled_ = true;
+}
 
-	std::cout << "------------ Soft Shadow ----------" << std::endl
-		<< "Press key 'space' to switch between Soft Shadow and normal rendering" << std::endl;
+
+std::string TutorialSoftShadow::usage() const {
+    return ("------------------- Soft Shadow usage ------------------- \n"
+            "Press key 'space' to switch between Shadowing and normal rendering\n"
+            "--------------------------------------------------------- \n");
 }
 
 
