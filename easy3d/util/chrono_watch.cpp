@@ -47,6 +47,11 @@ namespace easy3d {
         start_time_ = std::chrono::high_resolution_clock::now();
     }
 
+    void ChronoWatch::restart() {
+        started_ = false;
+        start();
+    }
+
     void ChronoWatch::pause() {
         assert(started_);
         paused_ = true;

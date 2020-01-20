@@ -5,25 +5,27 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-    chrono_watch.h
-    dialogs.h
-    file_system.h
-    line_stream.h
-    logging.h
-    stop_watch.h
-    string.h
-    timer.h
-    tokenizer.h
-    )
+        chrono_watch.h
+        dialogs.h
+        file_system.h
+        line_stream.h
+        logging.h
+        stop_watch.h
+        string.h
+        timer.h
+        threading.h
+        tokenizer.h
+        )
 
 set(${PROJECT_NAME}_SOURCES
-    chrono_watch.cpp
-    dialogs.cpp
-    file_system.cpp
-    logging.cpp
-    stop_watch.cpp
-    string.cpp
-    )
+        chrono_watch.cpp
+        dialogs.cpp
+        file_system.cpp
+        logging.cpp
+        stop_watch.cpp
+        string.cpp
+        threading.cpp
+        )
 
 	
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} )

@@ -58,6 +58,7 @@ namespace easy3d {
         ~ChronoWatch() {}
 
         void start();
+        void restart();
 
         void pause();
         void resume();
