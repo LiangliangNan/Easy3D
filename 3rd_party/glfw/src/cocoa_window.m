@@ -1516,6 +1516,13 @@ const char* _glfwPlatformGetScancodeName(int scancode)
 {
     @autoreleasepool {
 
+    if (scancode < 0 || scancode > 0xff ||
+        _glfw.ns.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode");
+        return NULL;
+    }
+
     const int key = _glfw.ns.keycodes[scancode];
 
     UInt32 deadKeyState = 0;
@@ -1715,11 +1722,16 @@ const char* _glfwPlatformGetClipboardString(void)
 
 void _glfwPlatformGetRequiredInstanceExtensions(char** extensions)
 {
-    if (!_glfw.vk.KHR_surface || !_glfw.vk.MVK_macos_surface)
-        return;
-
-    extensions[0] = "VK_KHR_surface";
-    extensions[1] = "VK_MVK_macos_surface";
+    if (_glfw.vk.KHR_surface && _glfw.vk.EXT_metal_surface)
+    {
+        extensions[0] = "VK_KHR_surface";
+        extensions[1] = "VK_EXT_metal_surface";
+    }
+    else if (_glfw.vk.KHR_surface && _glfw.vk.MVK_macos_surface)
+    {
+        extensions[0] = "VK_KHR_surface";
+        extensions[1] = "VK_MVK_macos_surface";
+    }
 }
 
 int _glfwPlatformGetPhysicalDevicePresentationSupport(VkInstance instance,
@@ -1737,19 +1749,6 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
     @autoreleasepool {
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-    VkResult err;
-    VkMacOSSurfaceCreateInfoMVK sci;
-    PFN_vkCreateMacOSSurfaceMVK vkCreateMacOSSurfaceMVK;
-
-    vkCreateMacOSSurfaceMVK = (PFN_vkCreateMacOSSurfaceMVK)
-        vkGetInstanceProcAddr(instance, "vkCreateMacOSSurfaceMVK");
-    if (!vkCreateMacOSSurfaceMVK)
-    {
-        _glfwInputError(GLFW_API_UNAVAILABLE,
-                        "Cocoa: Vulkan instance missing VK_MVK_macos_surface extension");
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-
     // HACK: Dynamically load Core Animation to avoid adding an extra
     //       dependency for the majority who don't use MoltenVK
     NSBundle* bundle = [NSBundle bundleWithPath:@"/System/Library/Frameworks/QuartzCore.framework"];
@@ -1775,11 +1774,49 @@ VkResult _glfwPlatformCreateWindowSurface(VkInstance instance,
     [window->ns.view setLayer:window->ns.layer];
     [window->ns.view setWantsLayer:YES];
 
-    memset(&sci, 0, sizeof(sci));
-    sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
-    sci.pView = window->ns.view;
+    VkResult err;
 
-    err = vkCreateMacOSSurfaceMVK(instance, &sci, allocator, surface);
+    if (_glfw.vk.EXT_metal_surface)
+    {
+        VkMetalSurfaceCreateInfoEXT sci;
+
+        PFN_vkCreateMetalSurfaceEXT vkCreateMetalSurfaceEXT;
+        vkCreateMetalSurfaceEXT = (PFN_vkCreateMetalSurfaceEXT)
+            vkGetInstanceProcAddr(instance, "vkCreateMetalSurfaceEXT");
+        if (!vkCreateMetalSurfaceEXT)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE,
+                            "Cocoa: Vulkan instance missing VK_EXT_metal_surface extension");
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+
+        memset(&sci, 0, sizeof(sci));
+        sci.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+        sci.pLayer = window->ns.layer;
+
+        err = vkCreateMetalSurfaceEXT(instance, &sci, allocator, surface);
+    }
+    else
+    {
+        VkMacOSSurfaceCreateInfoMVK sci;
+
+        PFN_vkCreateMacOSSurfaceMVK vkCreateMacOSSurfaceMVK;
+        vkCreateMacOSSurfaceMVK = (PFN_vkCreateMacOSSurfaceMVK)
+            vkGetInstanceProcAddr(instance, "vkCreateMacOSSurfaceMVK");
+        if (!vkCreateMacOSSurfaceMVK)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE,
+                            "Cocoa: Vulkan instance missing VK_MVK_macos_surface extension");
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+
+        memset(&sci, 0, sizeof(sci));
+        sci.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+        sci.pView = window->ns.view;
+
+        err = vkCreateMacOSSurfaceMVK(instance, &sci, allocator, surface);
+    }
+
     if (err)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,

@@ -622,6 +622,7 @@ static GLFWbool createNativeWindow(_GLFWwindow* window,
 
     _glfwGrabErrorHandlerX11();
 
+    window->x11.parent = _glfw.x11.root;
     window->x11.handle = XCreateWindow(_glfw.x11.display,
                                        _glfw.x11.root,
                                        0, 0,   // Position
@@ -1258,12 +1259,6 @@ static void processEvent(XEvent *event)
 
     switch (event->type)
     {
-        case CreateNotify:
-        {
-            window->x11.parent = event->xcreatewindow.parent;
-            return;
-        }
-
         case ReparentNotify:
         {
             window->x11.parent = event->xreparent.parent;
@@ -2457,7 +2452,7 @@ void _glfwPlatformFocusWindow(_GLFWwindow* window)
 {
     if (_glfw.x11.NET_ACTIVE_WINDOW)
         sendEventToWM(window, _glfw.x11.NET_ACTIVE_WINDOW, 1, 0, 0, 0, 0);
-    else
+    else if (_glfwPlatformWindowVisible(window))
     {
         XRaiseWindow(_glfw.x11.display, window->x11.handle);
         XSetInputFocus(_glfw.x11.display, window->x11.handle,
@@ -2866,6 +2861,13 @@ const char* _glfwPlatformGetScancodeName(int scancode)
 {
     if (!_glfw.x11.xkb.available)
         return NULL;
+
+    if (scancode < 0 || scancode > 0xff ||
+        _glfw.x11.keycodes[scancode] == GLFW_KEY_UNKNOWN)
+    {
+        _glfwInputError(GLFW_INVALID_VALUE, "Invalid scancode");
+        return NULL;
+    }
 
     const int key = _glfw.x11.keycodes[scancode];
     const KeySym keysym = XkbKeycodeToKeysym(_glfw.x11.display,

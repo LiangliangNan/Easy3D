@@ -141,6 +141,13 @@ information on what to include when reporting a bug.
  - [Win32] Bugfix: The window hint `GLFW_MAXIMIZED` did not move or resize the
    window (#1499)
  - [Win32] Bugfix: Disabled cursor mode interfered with some non-client actions
+ - [Win32] Bugfix: Super key was not released after Win+V hotkey (#1622)
+ - [Win32] Bugfix: `glfwGetKeyName` could access out of bounds and return an
+   invalid pointer
+ - [Win32] Bugfix: Some synthetic key events were reported as `GLFW_KEY_UNKNOWN`
+   (#1623)
+ - [Cocoa] Added support for `VK_EXT_metal_surface` (#1619)
+ - [Cocoa] Added locating the Vulkan loader at runtime in an application bundle
  - [Cocoa] Removed dependency on the CoreVideo framework
  - [Cocoa] Bugfix: `glfwSetWindowSize` used a bottom-left anchor point (#1553)
  - [Cocoa] Bugfix: Window remained on screen after destruction until event poll
@@ -158,6 +165,8 @@ information on what to include when reporting a bug.
  - [X11] Bugfix: Disabled cursor mode was interrupted by indicator windows
  - [X11] Bugfix: Monitor physical dimensions could be reported as zero mm
  - [X11] Bugfix: Window position events were not emitted during resizing (#1613)
+ - [X11] Bugfix: `glfwFocusWindow` could terminate on older WMs or without a WM
+ - [X11] Bugfix: Querying a disconnected monitor could segfault (#1602)
  - [Wayland] Removed support for `wl_shell` (#1443)
  - [Wayland] Bugfix: The `GLFW_HAND_CURSOR` shape used the wrong image (#1432)
  - [Wayland] Bugfix: `CLOCK_MONOTONIC` was not correctly enabled
@@ -259,6 +268,7 @@ skills.
  - Cem Karan
  - Osman Keskin
  - Josh Kilmer
+ - Byunghoon Kim
  - Cameron King
  - Peter Knut
  - Christoph Kubisch
@@ -266,6 +276,7 @@ skills.
  - Rokas Kupstys
  - Konstantin Käfer
  - Eric Larson
+ - Francis Lecavalier
  - Robin Leffmann
  - Glenn Lewis
  - Shane Liesegang
@@ -274,6 +285,7 @@ skills.
  - Eyal Lotem
  - Aaron Loucks
  - Luflosi
+ - lukect
  - Tristam MacDonald
  - Hans Mackowiak
  - Дмитри Малышев
@@ -350,6 +362,7 @@ skills.
  - Paul Sultana
  - Nathan Sweet
  - TTK-Bandit
+ - Jared Tiala
  - Sergey Tikhomirov
  - Arthur Tombs
  - Ioannis Tsakpinis
