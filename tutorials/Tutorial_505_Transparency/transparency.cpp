@@ -26,6 +26,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/average_color_blending.h>
 #include <easy3d/viewer/dual_depth_peeling.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/camera.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -34,15 +35,16 @@
 using namespace easy3d;
 
 TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
-	transparency_ = new AverageColorBlending(camera());
-	std::cout << "method: Average Color Blending" << std::endl;
-	method_ = 1;
+	transparency_ = new DualDepthPeeling(camera());
+	std::cout << "method: Dual Depth Peeling" << std::endl;
+	method_ = 2;
 }
 
 
 std::string TutorialTransparency::usage() const {
     return ("------------------------ Transparency usage ------------------------ \n"
             "Press key 'space' to turn on/off or switch between different transparency techniques\n"
+            "Press 'up/down' to increase/decrease the transparency of the current model\n"
             "-------------------------------------------------------------------- \n");
 }
 
@@ -70,6 +72,34 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
 			break;
 		}
 		update();
+        return true;
+    }
+    else if (key == GLFW_KEY_DOWN) {
+        auto drawable = current_model()->triangles_drawable("faces");
+        if (drawable) {
+            float o = drawable->opacity();
+            if (o > 0)
+                drawable->set_opacity(o - 0.1f);
+            // make sure it is valid
+            if (drawable->opacity() <= 0)
+                drawable->set_opacity(0.1f);
+            std::cout << "opacity: " << drawable->opacity() << std::endl;
+            update();
+        }
+        return true;
+    }
+    else if (key == GLFW_KEY_UP) {
+        auto drawable = current_model()->triangles_drawable("faces");
+        if (drawable) {
+            float o = drawable->opacity();
+            if (o > 0)
+                drawable->set_opacity(o + 0.1f);
+            // make sure it is valid
+            if (drawable->opacity() >= 1.0f)
+                drawable->set_opacity(1.0f);
+            std::cout << "opacity: " << drawable->opacity() << std::endl;
+            update();
+        }
         return true;
     }
     else

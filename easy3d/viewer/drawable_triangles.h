@@ -49,8 +49,17 @@ namespace easy3d {
         bool smooth_shading() const { return smooth_shading_; }
         void set_smooth_shading(bool b) { smooth_shading_ = b; }
 
+        /**
+         * @brief Query the opacity of the drawable, in the range [0.0, 1.0].
+         * @return The opacity of the drawable.
+         */
         float opacity() const { return opacity_; }
-        void set_opacity(float a) { opacity_ = a; }
+
+        /**
+         * @brief Set the opacity of the drawable.
+         * @param opacity The new opacity value, in the range [0.0, 1.0].
+         */
+        void set_opacity(float opacity) { opacity_ = opacity; }
 
 		// The selection of a polygonal face is internally implemented by selecting triangle
 		// primitives using shaders. So I need a way to map back to the original polygons.
