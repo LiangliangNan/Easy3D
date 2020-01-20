@@ -298,8 +298,8 @@ namespace easy3d {
         ShaderProgram* program = ShaderManager::get_program(name);
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"));
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC"));
             program = ShaderManager::create_program_from_files(name, attributes);
 		}
         if (!program)

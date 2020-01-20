@@ -42,29 +42,27 @@ namespace easy3d {
 	void TrianglesDrawable::set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices) {
 		indices_ = indices;
 		std::size_t count = 0;
-		for (std::size_t i = 0; i < indices_.size(); ++i) {
-			count += indices_[i].size();
+		for (const auto& ids : indices) {
+			count += ids.size();
 		}
 		//Selectable::set_num_primitives(count);
 	}
 
 
 	void TrianglesDrawable::set_selected(std::size_t face_idx, bool b) {
-		// 	const std::vector<unsigned int>& indices = indices_[face_idx];
-		// 	for (std::size_t i = 0; i < indices.size(); ++i) {
-		// 		unsigned int id = indices[i];
-		// 		Selectable::set_selected(id, b);
-		// 	}
+        const std::vector<unsigned int>& indices = indices_[face_idx];
+        for (auto id : indices) {
+//            Selectable::set_selected(id, b);
+        }
 	}
 
 
 	bool TrianglesDrawable::is_selected(std::size_t face_idx) const {
-		// 	const std::vector<unsigned int>& indices = indices_[face_idx];
-		// 	for (std::size_t i = 0; i < indices.size(); ++i) {
-		// 		unsigned int id = indices[i];
-		// 		if (Selectable::is_selected(id))
-		// 			return false;
-		// 	}
+        const std::vector<unsigned int>& indices = indices_[face_idx];
+        for (auto id : indices) {
+//            if (Selectable::is_selected(id))
+//                return false;
+        }
 		return true;
 	}
 
@@ -105,9 +103,9 @@ namespace easy3d {
         ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
             program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
         }
 
@@ -126,7 +124,8 @@ namespace easy3d {
         program->set_uniform("MVP", MVP);
         program->set_uniform("wLightPos", wLightPos);
         program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("two_sides_lighting", false);
+        program->set_uniform("two_sides_lighting", true);
+        program->set_uniform("distinct_back_color", true);
         program->set_uniform("smooth_shading", smooth_shading());
         program->set_uniform("ssaoEnabled", false);
         program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
@@ -145,9 +144,9 @@ namespace easy3d {
         ShaderProgram* program = ShaderManager::get_program("surface/surface_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
             program = ShaderManager::create_program_from_files("surface/surface_texture", attributes);
         }
 

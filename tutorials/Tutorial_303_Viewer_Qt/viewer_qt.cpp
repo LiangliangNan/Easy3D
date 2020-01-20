@@ -52,6 +52,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 
 using namespace easy3d;
@@ -64,6 +65,7 @@ ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
 	, pressed_button_(Qt::NoButton)
 	, mouse_pressed_pos_(0, 0)
 	, mouse_previous_pos_(0, 0)
+    , show_pivot_point_(false)
 	, drawable_axes_(nullptr)
 	, model_idx_(-1)
 {
@@ -187,30 +189,41 @@ void ViewerQt::setBackgroundColor(const vec4 &c) {
 
 
 void ViewerQt::mousePressEvent(QMouseEvent* e) {
-	pressed_button_ = e->button();
-	mouse_previous_pos_ = e->pos();
-	mouse_pressed_pos_ = e->pos();
+    pressed_button_ = e->button();
+    mouse_previous_pos_ = e->pos();
+    mouse_pressed_pos_ = e->pos();
 
-	camera_->frame()->action_start();
-	if (e->modifiers() == Qt::ShiftModifier) {
-		if (e->button() == Qt::LeftButton) {
-			bool found = false;
-			const vec3& p = pointUnderPixel(e->pos(), found);
-			if (found) {
-				camera()->interpolateToLookAt(p);
-				camera_->setPivotPoint(p);
-			}
-			else
-				camera_->setPivotPoint(camera_->sceneCenter());
-		}
-		else if (e->button() == Qt::RightButton) {
-			camera()->interpolateToFitScene();
-			camera_->setPivotPoint(camera_->sceneCenter());
-		}
-	}
+    camera_->frame()->action_start();
+    if (e->modifiers() == Qt::ShiftModifier) {
+        if (e->button() == Qt::LeftButton) {
+            bool found = false;
+            const vec3& p = pointUnderPixel(e->pos(), found);
+            if (found) {
+                camera()->interpolateToLookAt(p);
+                camera_->setPivotPoint(p);
 
-	QOpenGLWidget::mousePressEvent(e);
-	update();
+                // show, but hide the visual hint of pivot point after \p delay milliseconds.
+                show_pivot_point_ = true;
+                const int delay = 10000;
+                Timer::single_shot(delay, [&]() {
+                    show_pivot_point_ = false;
+                    update();
+                });
+            }
+            else {
+                camera_->setPivotPoint(camera_->sceneCenter());
+                show_pivot_point_ = false;
+            }
+        }
+        else if (e->button() == Qt::RightButton) {
+            camera()->interpolateToFitScene();
+            camera_->setPivotPoint(camera_->sceneCenter());
+            show_pivot_point_ = false;
+        }
+    }
+
+    QOpenGLWidget::mousePressEvent(e);
+    update();
 }
 
 
@@ -479,15 +492,17 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 	}
 	else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
 		if (currentModel()) {
-			LinesDrawable* edges = currentModel()->lines_drawable("edges");
-			if (!edges) {
-				edges = currentModel()->add_lines_drawable("edges");
-				makeCurrent();
-				renderer::update_data(currentModel(), edges);
-				doneCurrent();
-			}
-			else
-				edges->set_visible(!edges->is_visible());
+            LinesDrawable* drawable = currentModel()->lines_drawable("edges");
+            if (!drawable) {
+                if (!dynamic_cast<PointCloud*>(currentModel())) { // no default "edges" drawable for point clouds
+                    drawable = currentModel()->add_lines_drawable("edges");
+                    makeCurrent();
+                    renderer::update_data(currentModel(), drawable);
+                    doneCurrent();
+                }
+            }
+            else
+                drawable->set_visible(!drawable->is_visible());
 		}
 	}
 
@@ -515,13 +530,19 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 
 	else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
 		if (currentModel()) {
-			std::cout << "Current model has the following drawables:" << std::endl;
-			for (auto d : currentModel()->points_drawables())
-				std::cout << "\tPointsDrawable: " << d->name() << std::endl;
-			for (auto d : currentModel()->lines_drawables())
-				std::cout << "\tLinesDrawable: " << d->name() << std::endl;
-			for (auto d : currentModel()->triangles_drawables())
-				std::cout << "\tTrianglesDrawable: " << d->name() << std::endl;
+            std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------" << std::endl;
+
+            std::cout << "points drawables:" << std::endl;
+            for (auto d : currentModel()->points_drawables())
+                std::cout << "\t" << d->name() << std::endl;
+            std::cout << "lines drawables:" << std::endl;
+            for (auto d : currentModel()->lines_drawables())
+                std::cout << "\t" << d->name() << std::endl;
+            std::cout << "triangles drawables:" << std::endl;
+            for (auto d : currentModel()->triangles_drawables())
+                std::cout << "\t" << d->name() << std::endl;
+
+            currentModel()->property_stats();
 		}
 	}
 
@@ -653,7 +674,7 @@ void ViewerQt::deleteModel(Model* model) {
 
 	auto pos = std::find(models_.begin(), models_.end(), model);
 	if (pos != models_.end()) {
-		const std::string& name = model->name();
+        const std::string name = model->name();
 
 		models_.erase(pos);
 		delete model;
@@ -776,9 +797,9 @@ void ViewerQt::drawCornerAxes() {
 	ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
 	if (!program) {
 		std::vector<ShaderProgram::Attribute> attributes;
-		attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-		attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-		attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
 		program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
 	}
 	if (!program)
@@ -828,14 +849,16 @@ void ViewerQt::drawCornerAxes() {
 	const mat4& MV = camera_->modelViewMatrix();
 	const vec4& wLightPos = inverse(MV) * setting::light_position;
 
-	program->bind();
-	program->set_uniform("MVP", MVP);
-	program->set_uniform("wLightPos", wLightPos);
-	program->set_uniform("wCamPos", wCamPos);
-	program->set_uniform("ssaoEnabled", false);
-	program->set_uniform("per_vertex_color", true);
-	drawable_axes_->gl_draw(false);
-	program->release();
+    program->bind();
+    program->set_uniform("MVP", MVP);
+    program->set_uniform("wLightPos", wLightPos);
+    program->set_uniform("wCamPos", wCamPos);
+    program->set_uniform("ssaoEnabled", false);
+    program->set_uniform("per_vertex_color", true);
+    program->set_uniform("two_sides_lighting", true);
+    program->set_uniform("distinct_back_color", false);
+    drawable_axes_->gl_draw(false);
+    program->release();
 
 	// restore
 	func_->glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
@@ -854,6 +877,37 @@ void ViewerQt::preDraw() {
 
 
 void ViewerQt::postDraw() {
+    if (show_pivot_point_) {
+        ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+        }
+        if (!program)
+            return;
+
+        const float size = 10;
+        LinesDrawable drawable("pivot_point");
+        const vec3& pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
+        std::vector<vec3> points = {
+                vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
+                vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
+        };
+        drawable.update_vertex_buffer(points);
+
+        const mat4& proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f, -1.0f);
+        glDisable(GL_DEPTH_TEST);   // always on top
+        program->bind();
+        program->set_uniform("MVP", proj);
+        program->set_uniform("per_vertex_color", false);
+        program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
+        drawable.gl_draw(false);
+        program->release();
+        glEnable(GL_DEPTH_TEST);   // restore
+    }
+
 	drawCornerAxes();
 }
 

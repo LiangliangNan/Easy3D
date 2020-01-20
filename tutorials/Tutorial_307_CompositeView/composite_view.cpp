@@ -117,7 +117,7 @@ void CompositeView::draw_grid() const {
     ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes;
-        attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
         program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
     }
     if (!program)

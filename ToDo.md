@@ -1,20 +1,14 @@
 * easy3d (on going):
-	- data is too big (>100 M). Consider using the bunny for more tutorials;
-	- in the draw() function of drawables, check if necessary buffers are valid;
-	- have fewer functions like
+    - Modify SurfaceMesh to allow non-manifold meshes;
+    - Previous timer events may interrupt the current one when visualizing pivot points;
+	- For drawables, have fewer functions (instead a function for each buffer) like
 			void update_array_buffer(Drawable::Buffer, const std::vector<vec3>& vertices);
 			void update_element_buffer(...);
-	  to replace
-    		void update_vertex_buffer(const std::vector<vec3>& vertices);
-            void update_color_buffer(const std::vector<vec3>& colors);
-            void update_normal_buffer(const std::vector<vec3>& normals);
-     		void update_texcoord_buffer(const std::vector<vec2>& texcoords);
-    		void update_index_buffer(const std::vector<unsigned int>& indices);
-      check VertexArrayObject and the AttribType in ShaderProgram. Maybe inherit Drawable from VAO?
-	- current way handling high-dpi support is not optimal. Maybe always use framebuffer sizes?
-	- add an application 'Mapple' showcasing the features in Easy3D;
-	- use glog;
-	- cross-section; able to be manipulated;
-	- save/load camera/viewer states, and settings (default rendering parameters);
-	- pick/select mechanism;
+      Check VertexArrayObject and the AttribType in ShaderProgram. Maybe inherit Drawable from VAO?
+	- The current way handling high-dpi support is not optimal. Maybe always use framebuffer sizes?
+	- Add an application 'Mapple' showcasing the features in Easy3D;
+	- Use glog;
+	- Cross-section; able to be manipulated;
+	- Save/load camera/viewer states, and settings (default rendering parameters);
+	- Pick/select mechanism;
 	-...

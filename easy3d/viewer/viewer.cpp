@@ -277,7 +277,7 @@ namespace easy3d {
     void Viewer::setup_callbacks(GLFWwindow *window) {
         glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 
@@ -295,7 +295,7 @@ namespace easy3d {
 
         glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int modifiers)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			viewer->callback_event_mouse_button(button, action, modifiers);
@@ -303,7 +303,7 @@ namespace easy3d {
 
         glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int scancode, int action, int mods)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			(void)scancode;
@@ -312,7 +312,7 @@ namespace easy3d {
 
         glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			viewer->callback_event_character(codepoint);
@@ -320,7 +320,7 @@ namespace easy3d {
 
         glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char **filenames)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			viewer->callback_event_drop(count, filenames);
@@ -328,7 +328,7 @@ namespace easy3d {
 
         glfwSetScrollCallback(window, [](GLFWwindow *win, double dx, double dy)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			viewer->callback_event_scroll(dx, dy);
@@ -339,7 +339,7 @@ namespace easy3d {
 		 * normal screen on Mac OS X */
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			if (!viewer->process_events_)
 				return;
 			viewer->callback_event_resize(width, height);
@@ -348,7 +348,7 @@ namespace easy3d {
 		// notify when the screen has lost focus (e.g. application switch)
         glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused)
 		{
-			Viewer* viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
+			auto viewer = reinterpret_cast<Viewer*>(glfwGetWindowUserPointer(win));
 			viewer->focus_event(focused != 0);// true for focused
 		});
 
@@ -847,9 +847,11 @@ namespace easy3d {
 		else if (key == GLFW_KEY_E && modifiers == 0) {
 			if (current_model()) {
 				LinesDrawable* drawable = current_model()->lines_drawable("edges");
-				if (!drawable) {
-					drawable = current_model()->add_lines_drawable("edges");
-					renderer::update_data(current_model(), drawable);
+                if (!drawable) {
+                    if (!dynamic_cast<PointCloud*>(current_model())) { // no default "edges" drawable for point clouds
+                        drawable = current_model()->add_lines_drawable("edges");
+                        renderer::update_data(current_model(), drawable);
+                    }
 				}
 				else
 					drawable->set_visible(!drawable->is_visible());
@@ -961,7 +963,7 @@ namespace easy3d {
 			return point;
 		}
 		else
-			return vec3();
+			return vec3(0);
 	}
 
 
@@ -1272,18 +1274,12 @@ namespace easy3d {
 			return false;
 
 		bool saved = false;
-		if (dynamic_cast<const PointCloud*>(m)) {
-			const PointCloud* cloud = dynamic_cast<const PointCloud*>(m);
-			saved = PointCloudIO::save(file_name, cloud);
-		}
-		else if (dynamic_cast<const SurfaceMesh*>(m)) {
-			const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(m);
-			saved = SurfaceMeshIO::save(file_name, mesh);
-		}
-		else if (dynamic_cast<const Graph*>(m)) {
-			const Graph* graph = dynamic_cast<const Graph*>(m);
-			saved = GraphIO::save(file_name, graph);
-		}
+		if (dynamic_cast<const PointCloud*>(m))
+			saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud*>(m));
+		else if (dynamic_cast<const SurfaceMesh*>(m))
+			saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh*>(m));
+		else if (dynamic_cast<const Graph*>(m))
+			saved = GraphIO::save(file_name, dynamic_cast<const Graph*>(m));
 
 		if (saved)
 			std::cout << "file successfully saved" << std::endl;
@@ -1344,9 +1340,9 @@ namespace easy3d {
 		ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
 			program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
 		}
 		if (!program)
@@ -1401,8 +1397,10 @@ namespace easy3d {
 		program->set_uniform("wLightPos", wLightPos);
 		program->set_uniform("wCamPos", wCamPos);
 		program->set_uniform("ssaoEnabled", false);
-		program->set_uniform("per_vertex_color", true);
-		drawable_axes_->gl_draw(false);
+        program->set_uniform("per_vertex_color", true);
+        program->set_uniform("two_sides_lighting", true);
+        program->set_uniform("distinct_back_color", false);
+        drawable_axes_->gl_draw(false);
 		program->release();
 
 		// restore
@@ -1429,8 +1427,8 @@ namespace easy3d {
             ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
                 program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
             }
             if (!program)

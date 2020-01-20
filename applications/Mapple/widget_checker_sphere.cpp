@@ -190,9 +190,9 @@ void WidgetCheckerSphere::paintGL() {
     ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes;
-        attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-        attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-        attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
         program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
     }
     if (!program)

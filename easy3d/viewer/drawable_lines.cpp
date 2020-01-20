@@ -80,8 +80,8 @@ namespace easy3d {
             ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
                 program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
             }
             if (!program)
@@ -99,8 +99,8 @@ namespace easy3d {
             ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color_width_control");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
                 program = ShaderManager::create_program_from_files("lines/lines_plain_color_width_control", attributes, std::vector<std::string>(), true);
             }
             if (!program)
@@ -130,8 +130,8 @@ namespace easy3d {
         ShaderProgram* program = ShaderManager::get_program("lines/lines_cylinders_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
             program = ShaderManager::create_program_from_files("lines/lines_cylinders_color", attributes, std::vector<std::string>(), true);
         }
         if (!program)
@@ -165,8 +165,8 @@ namespace easy3d {
         ShaderProgram* program = ShaderManager::get_program("lines/lines_cones_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
             program = ShaderManager::create_program_from_files("lines/lines_cones_color", attributes, std::vector<std::string>(), true);
         }
         if (!program)

@@ -83,9 +83,9 @@ void TutorialEyeDomeLighting::draw() const {
         ShaderProgram* program = ShaderManager::get_program("points/points_plain_color");
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-			attributes.push_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
             program = ShaderManager::create_program_from_files("points/points_plain_color", attributes);
 		}
 		if (!program)

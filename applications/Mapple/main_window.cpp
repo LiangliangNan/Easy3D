@@ -16,6 +16,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -661,8 +662,10 @@ void MainWindow::detectDuplicatedFaces() {
 
     MeshSurfacer ms;
     const auto& faces = ms.detect_duplicated_faces(mesh, true);
-
-    std::cerr << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string() << std::endl;
+    if (!faces.empty())
+        std::cerr << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string() << std::endl;
+    else
+        std::cerr << "done. No duplicated faces detected" << w.time_string() << std::endl;
 }
 
 
@@ -677,8 +680,15 @@ void MainWindow::removeDuplicatedFaces() {
 
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
-
-    std::cerr << "done. " << num << " faces deleted. Time: " << w.time_string() << std::endl;
+    if (num > 0) {
+        viewer()->makeCurrent();
+        renderer::update_data(mesh, mesh->triangles_drawable("faces"));
+        viewer()->doneCurrent();
+        update();
+        std::cerr << "done. " << num << " faces deleted. Time: " << w.time_string() << std::endl;
+    }
+    else
+        std::cerr << "done. No duplicated faces detected" << w.time_string() << std::endl;
 }
 
 
@@ -693,9 +703,11 @@ void MainWindow::detectSelfIntersections() {
 
     MeshSurfacer ms;
     const auto& faces = ms.detect_self_intersections(mesh);
-
-    std::cerr << "done. " << faces.size() << " faces intersecting others. Time: " << w.time_string() << std::endl;
-}
+    if (!faces.empty())
+        std::cerr << "done. " << faces.size() << " faces intersecting others. Time: " << w.time_string() << std::endl;
+    else
+        std::cerr << "done. No intersecting faces detected" << w.time_string() << std::endl;
+ }
 
 
 void MainWindow::remeshSelfIntersections() {
@@ -707,11 +719,19 @@ void MainWindow::remeshSelfIntersections() {
     w.start();
     std::cerr << "remeshing intersecting faces..." << std::endl;
 
+    auto size = mesh->faces_size();
     MeshSurfacer ms;
     SurfaceMesh* result = ms.remesh_self_intersections(mesh, true);
-    viewer()->addModel(result);
-
-    std::cerr << "done. Time: " << w.time_string() << std::endl;
+    if (result) {
+        const std::string& name = file_system::name_less_extension(mesh->name()) + "_remeshed." + file_system::extension(mesh->name());
+        result->set_name(name);
+        viewer()->makeCurrent();
+        viewer()->addModel(result);
+        viewer()->doneCurrent();
+        std::cerr << "done. #faces " << size << " -> " << result->faces_size() << ". Time: " << w.time_string() << std::endl;
+    }
+    else
+        std::cerr << "done. No intersecting faces detected" << w.time_string() << std::endl;
 }
 
 

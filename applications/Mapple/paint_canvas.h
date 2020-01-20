@@ -196,6 +196,8 @@ protected:
     QPoint  mouse_pressed_pos_;
     QPoint  mouse_previous_pos_;
 
+    bool    show_pivot_point_;
+
     //----------------- viewer data -------------------
 
     // corner axes
