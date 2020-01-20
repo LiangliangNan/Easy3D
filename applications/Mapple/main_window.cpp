@@ -220,7 +220,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
     auto models = viewer_->models();
     for (auto m : models) {
         if (m->name() == file_name) {
-            std::cerr << "model alreaded loaded: \'" << file_name << "\'" << std::endl;
+            LOG(WARNING) << "model alreaded loaded: " << file_name;
             return nullptr;
         }
     }
@@ -231,22 +231,11 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly") { // mesh
-        SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-        if (mesh) {
-            model = mesh;
-            std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
-                << "num vertices: " << mesh->n_vertices() << "; "
-                << "num edges: " << mesh->n_edges() << std::endl;
-        }
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
+        model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
-        Graph* graph = GraphIO::load(file_name);
-        if (graph) {
-            model = graph;
-            std::cout << "graph loaded. num vertices: " << graph->n_vertices() << "; "
-                << "num edges: " << graph->n_edges() << std::endl;
-        }
+        model = GraphIO::load(file_name);
     }
     else { // point cloud
         if (ext == "ptx") {
@@ -258,16 +247,9 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
                 viewer_->doneCurrent();
                 std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
             }
-            if (cloud)
-                setCurrentFile(QString::fromStdString(file_name));
         }
-        else {
-            PointCloud* cloud = PointCloudIO::load(file_name);
-            if (cloud) {
-                model = cloud;
-                std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
-            }
-        }
+        else
+            model = PointCloudIO::load(file_name);
     }
 
     if (model) {
@@ -276,10 +258,9 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         viewer_->addModel(model, create_default_drawables);
         viewer_->doneCurrent();
         setCurrentFile(QString::fromStdString(file_name));
-        return model;
     }
 
-    return nullptr;
+    return model;
 }
 
 
@@ -807,7 +788,7 @@ void MainWindow::samplingSurfaceMesh() {
     if (dlg.exec()) {
         int num = dlg.pointNumber();
         if (static_cast<unsigned int>(num) < mesh->n_vertices()) {
-            LOG(WARNING) << "point num must be greater than the vertex numer of the input mesh";
+            LOG(WARNING) << "point num must >= the num of vertices of the input mesh";
             return;
         }
 

@@ -77,9 +77,11 @@ namespace easy3d {
 		}
 
         if (success)
-            std::cout << "load model done. time: " << w.time_string() << std::endl;
+            std::cout << "point cloud loaded ("
+                      << "#v: " << cloud->vertices_size() << "). Time: "
+                      << w.time_string() << std::endl;
         else
-            std::cout << "load model failed." << std::endl;
+            std::cout << "load point cloud failed." << std::endl;
 
 		return cloud;
 	}

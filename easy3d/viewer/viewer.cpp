@@ -1082,7 +1082,7 @@ namespace easy3d {
     Model* Viewer::open(const std::string &file_name, bool create_default_drawables) {
 		for (auto m : models_) {
 			if (m->name() == file_name) {
-				LOG(WARNING) << "model alreaded loaded: \'" << file_name;
+                LOG(WARNING) << "model alreaded loaded: " << file_name;
 				return nullptr;
 			}
 		}
@@ -1092,46 +1092,32 @@ namespace easy3d {
 		if (ext == "ply")
 			is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
+        Model* model = nullptr;
 		if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
-			SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-			if (mesh) {
-                add_model(mesh, create_default_drawables);
-				std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
-					<< "num vertices: " << mesh->n_vertices() << "; "
-					<< "num edges: " << mesh->n_edges() << std::endl;
-				return mesh;
-			}
+            model = SurfaceMeshIO::load(file_name);
 		}
 		else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
-			Graph* graph = GraphIO::load(file_name);
-			if (graph) {
-                add_model(graph, create_default_drawables);
-				std::cout << "graph loaded. num vertices: " << graph->n_vertices() << "; "
-					<< "num edges: " << graph->n_edges() << std::endl;
-				return graph;
-			}
+            model = GraphIO::load(file_name);
 		}
 		else { // point cloud
 			if (ext == "ptx") {
 				io::PointCloudIO_ptx serializer(file_name);
-				PointCloud* cloud = nullptr;
-				while ((cloud = serializer.load_next())) {
+                PointCloud* cloud = nullptr;
+                while ((cloud = serializer.load_next())) {
                     add_model(cloud, create_default_drawables);
-					std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
-				}
-				return cloud;
+                    std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+                }
 			}
-			else {
-				PointCloud* cloud = PointCloudIO::load(file_name);
-				if (cloud) {
-                    add_model(cloud, create_default_drawables);
-					std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
-					return cloud;
-				}
-			}
+            else
+                model = PointCloudIO::load(file_name);
 		}
 
-		return nullptr;
+        if (model) {
+            model->set_name(file_name);
+            add_model(model, create_default_drawables);
+        }
+
+        return model;
 	}
 
 
@@ -1161,40 +1147,61 @@ namespace easy3d {
 
 
     void Viewer::add_model(Model *model, bool create_default_drawables) {
-		if (!model)
+        if (!model) {
+            LOG(WARNING) << "model is NULL.";
 			return;
-
+        }
 		for (auto m : models_) {
-			if (model == m) // model alreay added to the viewer
+            if (model == m) {
+                LOG(WARNING) << "model has alreay been added to the viewer.";
 				return;
+            }
 		}
-
-		unsigned int num = model->n_vertices();
+        unsigned int num = model->vertices_size();
 		if (num == 0) {
-			LOG(WARNING) << "Warning: model does not have vertices. Only complete model can be added to the viewer.";
+            LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
 			return;
 		}
 
 		if (create_default_drawables)
             create_drawables(model);
 
+        int pre_idx = model_idx_;
 		models_.push_back(model);
 		model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+
+        if (model_idx_ != pre_idx) {
+            if (model_idx_ >= 0)
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+        }
 
 		fit_screen();
 	}
 
 
 	void Viewer::delete_model(Model* model) {
+        if (!model) {
+            LOG(WARNING) << "model is NULL.";
+            return;
+        }
+
+        int pre_idx = model_idx_;
 		auto pos = std::find(models_.begin(), models_.end(), model);
 		if (pos != models_.end()) {
+            const std::string name = model->name();
 			models_.erase(pos);
 			delete model;
 			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+            std::cout << "model deleted: " << name << std::endl;
 			fit_screen();
 		}
 		else
 			LOG(WARNING) << "no such model: " << model->name();
+
+        if (model_idx_ != pre_idx) {
+            if (model_idx_ >= 0)
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+        }
 	}
 
 

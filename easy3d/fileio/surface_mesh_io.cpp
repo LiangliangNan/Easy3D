@@ -75,9 +75,13 @@ namespace easy3d {
 		}
 
         if (success)
-            std::cout << "load model done. time: " << w.time_string() << std::endl;
+            std::cout << "surface mesh loaded ("
+                      << "#f: " << mesh->faces_size() << ", "
+                      << "#v: " << mesh->vertices_size() << ", "
+                      << "#e: " << mesh->edges_size() << "). Time: "
+                      << w.time_string() << std::endl;
         else
-            std::cout << "load model failed" << std::endl;
+            std::cout << "load surface mesh failed" << std::endl;
 
 		return mesh;
 	}

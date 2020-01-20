@@ -45,6 +45,7 @@
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 #include "viewer_qt.h"
 
@@ -188,7 +189,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
     auto models = viewer_->models();
     for (auto m : models) {
         if (m->name() == file_name) {
-            std::cerr << "model alreaded loaded: \'" << file_name << "\'" << std::endl;
+            LOG(WARNING) << "model alreaded loaded: " << file_name;
             return nullptr;
         }
     }
@@ -199,22 +200,11 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly") { // mesh
-        SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-        if (mesh) {
-            model = mesh;
-            std::cout << "mesh loaded. num faces: " << mesh->n_faces() << "; "
-                << "num vertices: " << mesh->n_vertices() << "; "
-                << "num edges: " << mesh->n_edges() << std::endl;
-        }
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
+        model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
-        Graph* graph = GraphIO::load(file_name);
-        if (graph) {
-            model = graph;
-            std::cout << "graph loaded. num vertices: " << graph->n_vertices() << "; "
-                << "num edges: " << graph->n_edges() << std::endl;
-        }
+        model = GraphIO::load(file_name);
     }
     else { // point cloud
         if (ext == "ptx") {
@@ -226,28 +216,20 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
                 viewer_->doneCurrent();
                 std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
             }
-            if (cloud)
-                setCurrentFile(QString::fromStdString(file_name));
         }
-        else {
-            PointCloud* cloud = PointCloudIO::load(file_name);
-            if (cloud) {
-                model = cloud;
-                std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
-            }
-        }
+        else
+            model = PointCloudIO::load(file_name);
     }
 
     if (model) {
         model->set_name(file_name);
-		viewer_->makeCurrent();
+        viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
-		viewer_->doneCurrent();
+        viewer_->doneCurrent();
         setCurrentFile(QString::fromStdString(file_name));
-        return model;
     }
 
-    return nullptr;
+    return model;
 }
 
 

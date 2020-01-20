@@ -613,41 +613,47 @@ void PaintCanvas::create_drawables(Model* model) {
 
 
 void PaintCanvas::addModel(Model* model, bool create_default_drawables /* = true*/) {
-    if (!model)
+    if (!model) {
+        LOG(WARNING) << "model is NULL.";
         return;
-
-    int pre_idx = model_idx_;
-
-    unsigned int num = model->n_vertices();
+    }
+    for (auto m : models_) {
+        if (model == m) {
+            LOG(WARNING) << "model has alreay been added to the viewer.";
+            return;
+        }
+    }
+    unsigned int num = model->vertices_size();
     if (num == 0) {
-        std::cerr << "Warning: model does not have vertices. Only complete model can be added to the viewer." << std::endl;
+        LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
         return;
     }
 
     if (create_default_drawables)
         create_drawables(model);
 
+    int pre_idx = model_idx_;
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
     if (model_idx_ != pre_idx) {
         emit currentModelChanged();
-        if (model_idx_ > 0)
+        if (model_idx_ >= 0)
             std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
     }
 }
 
 
 void PaintCanvas::deleteModel(Model* model) {
-	if (!model)
-		return;
+    if (!model) {
+        LOG(WARNING) << "model is NULL.";
+        return;
+    }
 
 	int pre_idx = model_idx_;
-
 	auto pos = std::find(models_.begin(), models_.end(), model);
 	if (pos != models_.end()) {
         const std::string name = model->name();
-
 		models_.erase(pos);
 		delete model;
 		model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
@@ -655,11 +661,11 @@ void PaintCanvas::deleteModel(Model* model) {
 		std::cout << "model deleted: " << name << std::endl;
 	}
 	else
-		std::cout << "no such model: " << model->name() << std::endl;
+        LOG(WARNING) << "no such model: " << model->name();
 
 	if (model_idx_ != pre_idx) {
 		emit currentModelChanged();
-		if (model_idx_ > 0)
+        if (model_idx_ >= 0)
 			std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
 	}
 }
