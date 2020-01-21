@@ -1105,8 +1105,9 @@ namespace easy3d {
                 PointCloud* cloud = nullptr;
                 while ((cloud = serializer.load_next())) {
                     add_model(cloud, create_default_drawables);
-                    std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
+                    update();
                 }
+                return cloud;   // returns the last cloud in the file.
 			}
             else
                 model = PointCloudIO::load(file_name);

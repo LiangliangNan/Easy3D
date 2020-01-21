@@ -197,7 +197,7 @@ namespace easy3d {
          *          default drawables will be created. The default drawables are
          *          - for point clouds, a PointsDrawable (with name "vertices");
          *          - for surface meshes, a TrianglesDrawable (with name "faces");
-         *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
+         *          - for graphs, a PointsDrawable (with name "vertices") and a LinesDrawable (with
          *            name "edges").
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, a user
@@ -209,7 +209,7 @@ namespace easy3d {
          * @return The pointer to the model loaded to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        Model* open(const std::string& file_name, bool create_default_drawables = true);
+        virtual Model* open(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added

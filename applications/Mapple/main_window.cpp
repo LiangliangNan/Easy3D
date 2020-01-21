@@ -245,7 +245,6 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
                 viewer_->makeCurrent();
                 viewer_->addModel(cloud, create_default_drawables);
                 viewer_->doneCurrent();
-                std::cout << "cloud loaded. num vertices: " << cloud->n_vertices() << std::endl;
             }
         }
         else

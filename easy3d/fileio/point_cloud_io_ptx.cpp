@@ -30,6 +30,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -57,7 +58,7 @@ namespace easy3d {
 			if (in_ == nullptr) {
 				input_ = new std::ifstream(file_name_.c_str());
 				if (input_->fail()) {
-                    std::cerr << "could not open file \'" << file_name_ << "\'" << std::endl;
+				    LOG(ERROR) << "could not open file: " << file_name_;
 					return nullptr;
 				}
 				in_ = new LineInputStream(*input_);
@@ -81,17 +82,17 @@ namespace easy3d {
 				in >> width;
 
 				if (in.eof() || in.fail()) {
-					if (cloud_index_ == 0)
-						std::cerr << "wrong file format" << std::endl;
+                    LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
 					return nullptr;
 				}
 				if (height == 0 || width == 0) {
-					std::cerr << "height == 0 || width == 0" << std::endl;
+                    LOG(ERROR) << "unrecognized file format: height == 0 || width == 0";
 					return nullptr;
 				}
 
 				num = width * height;
-				std::cout << "Loading scan #" << cloud_index_ << ": " << num << " points " << std::endl;
+                const std::string simple_name = file_system::simple_name(file_name_) + "-#" + std::to_string(cloud_index_);
+                LOG(INFO) << "Loading sub scan " << simple_name  << " with " << num << " points...";
 
 				//read sensor transformation matrix
 				vec3 v3[4];
@@ -99,8 +100,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v3[i];
 					if (in.fail()) {
-						if (cloud_index_ == 0)
-							std::cerr << "wrong file format" << std::endl;
+					    LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
 						return nullptr;
 					}
 				}
@@ -112,8 +112,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v4[i];
 					if (in.fail()) {
-						if (cloud_index_ == 0)
-							std::cerr << "wrong file format" << std::endl;
+                        LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
 						return nullptr;
 					}
 				}
@@ -122,7 +121,7 @@ namespace easy3d {
 
 			//now we can read the grid cells
 			PointCloud* cloud = new PointCloud;
-            const std::string& cloud_name = file_system::base_name(file_name_) + "-#" + std::to_string(cloud_index_) + ".ply";
+            const std::string& cloud_name = file_system::name_less_extension(file_name_) + "-#" + std::to_string(cloud_index_);
 			cloud->set_name(cloud_name);
 
 			PointCloud::VertexProperty<vec3> colors;;
@@ -133,8 +132,7 @@ namespace easy3d {
 			in.get_line();
 			in >> p >> intensity;
 			if (in.fail()) {
-				if (cloud_index_ == 0)
-					std::cerr << "wrong file format" << std::endl;
+                LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
 				delete cloud;
 				return nullptr;
 			}
