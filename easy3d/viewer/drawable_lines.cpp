@@ -74,7 +74,10 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF(ERROR, vertex_buffer() == 0) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         if (line_width() <= 1) {
             ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
@@ -125,7 +128,10 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cylinders(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF(ERROR, vertex_buffer() == 0) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("lines/lines_cylinders_color");
         if (!program) {
@@ -160,7 +166,10 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cones(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF(ERROR, vertex_buffer() == 0) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("lines/lines_cones_color");
         if (!program) {
@@ -195,19 +204,40 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines_with_texture(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 
 
     void LinesDrawable::_draw_cylinders_with_texture(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 
 
     void LinesDrawable::_draw_cones_with_texture(const Camera *camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 

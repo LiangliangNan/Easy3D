@@ -124,8 +124,8 @@ namespace easy3d {
         //-------------------------------------------------------------------------------------
         // clear all recorded data (triangle list and vertices) and restart index counter.
         // This function is useful if you don't want to stitch faces/components. In this case,
-        // call reset() before you process each mesh component or face. Then for each component
-        // or face, you collect the vertices and triangle list from the tessellator.
+        // call reset() before you process each mesh component. Then for each component, you
+        // collect the vertices and triangle list from the tessellator.
         void reset();
 
     private:

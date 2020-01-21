@@ -98,7 +98,10 @@ namespace easy3d {
 
 
     void TrianglesDrawable::_draw_triangles(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
@@ -139,7 +142,14 @@ namespace easy3d {
 
 
     void TrianglesDrawable::_draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("surface/surface_texture");
         if (!program) {

@@ -83,7 +83,10 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_plain_points(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("points/points_plain_color");
         if (!program) {
@@ -123,7 +126,10 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("points/points_spheres_sprite_color");
         if (!program) {
@@ -164,7 +170,10 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("points/points_spheres_geometry_color");
         if (!program) {
@@ -200,26 +209,53 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 
 
     void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 
 
     void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
 
     }
 
 
     void PointsDrawable::_draw_surfels(const Camera *camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
-        LOG_IF_EVERY_N(ERROR, normal_buffer() == 0, 10) << "normal buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (normal_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "normal buffer not created";
+            return;
+        }
 
         ShaderProgram* program = ShaderManager::get_program("points/points_surfel_color");
         if (!program) {
@@ -261,7 +297,18 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_surfels_with_texture(const Camera *camera, bool with_storage_buffer) const {
-        LOG_IF_EVERY_N(ERROR, vertex_buffer() == 0, 10) << "vertex buffer not created";
+        if (vertex_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            return;
+        }
+        if (normal_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "normal buffer not created";
+            return;
+        }
+        if (texcoord_buffer() == 0) {
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            return;
+        }
     }
 
 
