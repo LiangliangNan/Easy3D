@@ -53,6 +53,7 @@ int main(int argc, char** argv) {
 
         auto drawable = model->triangles_drawable("faces");
         drawable->set_default_color(vec3(0.9f, 0.9f, 0.9f));
+        drawable->set_smooth_shading(true);
 
         // Run the viewer
         viewer.run();

@@ -728,9 +728,9 @@ namespace easy3d {
 			}
 #else
             if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                auto drawable = current_model()->triangles_drawable("faces");
-                if (drawable)
-                    drawable->set_smooth_shading(!drawable->smooth_shading());
+			    auto drawables = current_model()->triangles_drawables();
+                for (auto d : drawables)
+                    d->set_smooth_shading(!d->smooth_shading());
             }
 #endif
 		}

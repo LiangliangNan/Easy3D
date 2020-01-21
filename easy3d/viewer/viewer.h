@@ -229,7 +229,7 @@ namespace easy3d {
          *        a particular rendering purpose.
          * @related create_drawables(Model*, bool).
          */
-       void add_model(Model* model, bool create_default_drawables = true);
+        virtual void add_model(Model* model, bool create_default_drawables = true);
 
        /**
         * @brief Delete a model. The memory of the model will be released and its existing drawables

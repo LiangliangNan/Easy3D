@@ -39,7 +39,7 @@ namespace easy3d {
 	public:
         TrianglesDrawable(const std::string& name = "")
             : Drawable(name)
-            , smooth_shading_(true)
+            , smooth_shading_(false)
             , opacity_(0.6f)
         {
 			default_color_ = vec3(0.4f, 0.8f, 0.8f);

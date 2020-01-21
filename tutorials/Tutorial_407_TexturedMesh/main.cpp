@@ -22,9 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/core/surface_mesh.h>
+#include "textured_viewer.h"
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 
@@ -33,11 +31,7 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- load a textured mesh from an obj file using tinyobjloader;
-//		- create drawables for rendering the texture mesh.
-
-
-bool load_obj(const std::string& file_name, SurfaceMesh* mesh);
+//		- override the file loading function of the default easy3d viewer to visualize textured meshes;
 
 
 int main(int argc, char** argv) {
@@ -45,25 +39,17 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     try {
-        // Create the default Easy3D viewer.
-        // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Tutorial_407_TextureDMesh");
-        viewer.camera()->setUpVector(vec3(0, 1, 0));
-        viewer.camera()->setViewDirection(vec3(0, 0, -1));
+        // Create the viewer.
+        TexturedViewer viewer("Tutorial_407_TexturedMesh");
 
-        //----------------------- Load mesh model from a file ------------------------
+        //----------------------- Load a mesh from a file ------------------------
 
-        const std::string& file_name = easy3d::setting::resource_directory() + "/data/domik/domik.obj";
-        //const std::string& file_name = easy3d::setting::resource_directory() + "/data/cube/cube.obj";
-        SurfaceMesh* mesh = new SurfaceMesh;
-        if (!load_obj(file_name, mesh)) {
+        const std::string& file_name = setting::resource_directory() + "/data/domik/domik.obj";
+        //const std::string& file_name = setting::resource_directory() + "/data/cube/cube.obj";
+        if (!viewer.open(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
-
-        viewer.add_model(mesh, true);
-
-        // -------------------------------------------------------------------------------
 
         // Run the viewer
         viewer.run();
