@@ -347,7 +347,8 @@ namespace easy3d {
             }
         }
 
-        if (materials.empty())
+        // since the mesh has been built, skip texturing if material and texcoord information don't exist
+        if (materials.empty() || texcoords.empty())
             return Viewer::add_model(mesh, true);
 
         // ------------- group the faces according to the material -------------
@@ -359,58 +360,57 @@ namespace easy3d {
         int face_idx = 0;
         for (std::size_t i = 0; i < shapes.size(); i++) {
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                if (!materials.empty()) {
-                    // the material id of this face
-                    int material_id = shapes[i].mesh.material_ids[f];
-                    groups[material_id].push_back(easy3d::SurfaceMesh::Face(face_idx));
-                }
+                // the material id of this face
+                int material_id = shapes[i].mesh.material_ids[f];
+                groups[material_id].push_back(easy3d::SurfaceMesh::Face(face_idx));
                 ++face_idx;
             }
         }
 
         auto points = mesh->get_vertex_property<vec3>("v:point");
         mesh->update_vertex_normals();
-        auto normlals = mesh->get_vertex_property<vec3>("v:normal");
+        auto normals = mesh->get_vertex_property<vec3>("v:normal");
+
+        TessellatorGen tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
             const Group &group = groups[i];
             if (group.empty())
                 continue;
-            TrianglesDrawable *drawable = mesh->add_triangles_drawable("faces_" + std::to_string(i));
 
-            std::vector<vec3> vertices, vertex_normals;
-            std::vector<vec2> vertex_texcoords;
+            std::vector<vec3> d_points, d_normals;
+            std::vector<vec2> d_texcoords;
             for (auto f : group) {
-                // we assume convex polygonal faces and we render in triangles
-                SurfaceMesh::Halfedge start = mesh->halfedge(f);
-                SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
-                SurfaceMesh::Vertex va = mesh->to_vertex(start);
-                const vec3 &pa = points[va];
-                const vec3 &na = normlals[va];
-                while (cur != start) {
-                    SurfaceMesh::Vertex vb = mesh->from_vertex(cur);
-                    SurfaceMesh::Vertex vc = mesh->to_vertex(cur);
-                    const vec3 &pb = points[vb];    const vec3 &nb = normlals[vb];
-                    const vec3 &pc = points[vc];    const vec3 &nc = normlals[vc];
-                    vertices.push_back(pa); vertex_normals.push_back(na);
-                    vertices.push_back(pb); vertex_normals.push_back(nb);
-                    vertices.push_back(pc); vertex_normals.push_back(nc);
+                tessellator.reset();
+                tessellator.begin_polygon(mesh->compute_face_normal(f));
+                tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
+                tessellator.begin_contour();
+                for (auto h : mesh->halfedges(f)) {
+                    const vec3& v = points[mesh->to_vertex(h)];
+                    const vec3& n = normals[mesh->to_vertex(h)];
+                    const vec2& t = prop_texcoords[h];
+                    const float data[8] = {v.x, v.y, v.z, n.x, n.y, n.z, t.x, t.y};
+                    tessellator.add_vertex(data, 8);
+                }
+                tessellator.end_contour();
+                tessellator.end_polygon();
 
-                    if (prop_texcoords) {
-                        vertex_texcoords.push_back(prop_texcoords[start]);
-                        vertex_texcoords.push_back(prop_texcoords[mesh->prev_halfedge(cur)]);
-                        vertex_texcoords.push_back(prop_texcoords[cur]);
-                    }
-
-                    cur = mesh->next_halfedge(cur);
+                std::size_t num = tessellator.num_triangles();
+                const std::vector<const double *> &vts = tessellator.get_vertices();
+                for (std::size_t j = 0; j < num; ++j) {
+                    std::size_t a, b, c;
+                    tessellator.get_triangle(j, a, b, c);
+                    d_points.emplace_back(vts[a]);   d_normals.emplace_back(vts[a] + 3);    d_texcoords.emplace_back(vec2(vts[a] + 6));
+                    d_points.emplace_back(vts[b]);   d_normals.emplace_back(vts[b] + 3);    d_texcoords.emplace_back(vec2(vts[b] + 6));
+                    d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);    d_texcoords.emplace_back(vec2(vts[c] + 6));
                 }
             }
 
-            drawable->update_vertex_buffer(vertices);
-            drawable->update_normal_buffer(vertex_normals);
+            TrianglesDrawable *drawable = mesh->add_triangles_drawable("faces_" + std::to_string(i));
+
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_normal_buffer(d_normals);
+            drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_smooth_shading(false);
-            if (prop_texcoords)
-                drawable->update_texcoord_buffer(vertex_texcoords);
-            drawable->release_element_buffer();
 
             const tinyobj::material_t &mat = materials[i];
             vec3 ambient(mat.ambient);
@@ -437,7 +437,8 @@ namespace easy3d {
 
         }
 
-        return Viewer::add_model(mesh);
+        // the drawables have already been created
+        return Viewer::add_model(mesh, false);
     }
 #endif
 
