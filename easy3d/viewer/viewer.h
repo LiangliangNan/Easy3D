@@ -28,7 +28,6 @@
 
 #include <string>
 #include <vector>
-#include <set>
 
 #include <easy3d/core/types.h>
 
@@ -152,23 +151,7 @@ namespace easy3d {
         Camera* camera() { return camera_; }
         const Camera* camera() const { return camera_; }
 
-        /** -------------------- fileIO, model management ---------------------- */
-
-        /**
-         * @brief Query the models managed by this viewer.
-         * @return The models managed by this viewer.
-         */
-        const std::vector<Model*>& models() const { return models_; }
-
-        /**
-         * @brief Query the active model.
-         * @details The viewer can manage/visiulize/process multiple models. The default behavior
-         *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
-         *          clicked), only the active mdoel is processed. This method is used to identify
-         *          the active model.
-         * @return The active model.
-         */
-        Model* current_model() const;
+        /** ------------------------------------ fileIO -------------------------------------- */
 
         /**
          * @brief Open a model (PointCloud/SurfaceMesh/Graph) from a file into the viewer. On
@@ -190,9 +173,12 @@ namespace easy3d {
          */
         bool save() const;
 
+        /** ------------------------------- model management --------------------------------- */
+
         /**
-         * @brief Open a model specified by its file name into the viewer. On success, the viewer
-         *        will be in charge of the memory management of the model.
+         * @brief Add a model from a file to the viewer to be visualized. On success, the viewer
+         *        will be in charge of the memory management of the model. The loaded model can be
+         *        accessed by the 'current_model()' method.
          * @details This method loads a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
          *          - for point clouds, a PointsDrawable (with name "vertices");
@@ -209,7 +195,7 @@ namespace easy3d {
          * @return The pointer to the model loaded to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        virtual Model* open(const std::string& file_name, bool create_default_drawables = true);
+        virtual bool add_model(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
@@ -227,31 +213,66 @@ namespace easy3d {
          * @param create_default_drawables If ture, the default drawables will be created. Users can
          *        set create_default_drawables to false if a customized drawable will be created for
          *        a particular rendering purpose.
-         * @related create_drawables(Model*, bool).
+         * @return True if the model has been added.
+         * @related add_model(const std::string&, bool), create_drawables(Model*, bool).
          */
-        virtual void add_model(Model* model, bool create_default_drawables = true);
+        virtual bool add_model(Model* model, bool create_default_drawables = true);
 
-       /**
-        * @brief Delete a model. The memory of the model will be released and its existing drawables
-        *        also be deleted.
-        * @param model The pointer to the model.
-        */
-	    void delete_model(Model* model);
+        /**
+         * @brief Delete a model. The memory of the model will be released and its existing drawables
+         *        also be deleted.
+         * @param model The pointer to the model.
+         * @return True if the model has been deleted.
+         */
+        bool delete_model(Model* model);
+
+        /**
+         * @brief Query the models managed by this viewer.
+         * @return The models managed by this viewer.
+         */
+        const std::vector<Model*>& models() const { return models_; }
+
+        /**
+         * @brief Query the active model.
+         * @details The viewer can manage/visiulize/process multiple models. The default behavior
+         *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
+         *          clicked), only the active mdoel is processed. This method is used to identify
+         *          the active model.
+         * @return The active model.
+         */
+        Model* current_model() const;
+
+        /** ------------------------------------ drawable management ---------------------------------- */
 
         /**
          * @brief Add a drawable to the viewer to be visualized. After a drawable being added to the
-         *        viewer, the viewer will be incharge of its memory menagement.
+         *        viewer, the viewer will be in charge of its memory management.
          * @details The use of drawables for visualization is quite flexible. Drawables are
          *          typically created for rendering 3D models (e.g., point clouds, meshes, graphs)
          *          and a 3D model is usually loaded from a file or generated by an algorithm. This
          *          method allows the user to visualize drawables without defining a 3D model.
+         * @param drawable The pointer to the drawable.
+         * @return True if the drawable has been added.
          */
-	    void add_drawable(Drawable* drawable);
+	    bool add_drawable(Drawable* drawable);
 
         /**
          * Delete the drawable from the viewer. The related drawables will also be deleted.
+         * @param drawable The pointer to the drawable.
+         * @return True if the drawable has been deleted.
          */
-	    void delete_drawable(Drawable* drawable);
+	    bool delete_drawable(Drawable* drawable);
+
+        /**
+         * @brief Query the drawables managed by this viewer.
+         * @return The drawables managed by this viewer.
+         */
+        const std::vector<Drawable*>& drawables() const { return drawables_; }
+
+        /**
+         * @brief Delete all models and drawables from the viewer.
+         */
+        void clear();
 
         /** ----------------------------- UI ----------------------------------- */
 
@@ -265,7 +286,7 @@ namespace easy3d {
 
         /**
          * @brief Take a snapshot of the screen and save it to a file.
-         * @details This methodt takes a snapshot of the screen and saves the snapshot into a file
+         * @details This method takes a snapshot of the screen and saves the snapshot into a file
          *          Internally, it will pop up a file dialog for specifying the file name.
          * @return true on success and false otherwise.
          */
@@ -436,7 +457,7 @@ namespace easy3d {
 		int model_idx_;
 
         // drawables independent of any model
-        std::set<Drawable*> drawables_;
+        std::vector<Drawable*> drawables_;
 	};
 
 }

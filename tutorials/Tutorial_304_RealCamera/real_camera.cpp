@@ -51,7 +51,7 @@ RealCamera::RealCamera(const std::string& title,
     , texture_(nullptr)
 {
     // Read the point cloud
-    if (open(cloud_file)) {
+    if (add_model(cloud_file)) {
         auto drawable = current_model()->points_drawable("vertices");
         drawable->set_per_vertex_color(true);
         drawable->set_point_size(5.0f);

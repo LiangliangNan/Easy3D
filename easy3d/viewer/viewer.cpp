@@ -929,7 +929,7 @@ namespace easy3d {
 	bool Viewer::drop_event(const std::vector<std::string> & filenames) {
 		int count = 0;
 		for (auto& name : filenames) {
-			if (open(name))
+            if (add_model(name))
 				++count;
 		}
 
@@ -1079,11 +1079,11 @@ namespace easy3d {
 	}
 
 
-    Model* Viewer::open(const std::string &file_name, bool create_default_drawables) {
+    bool Viewer::add_model(const std::string &file_name, bool create_default_drawables) {
 		for (auto m : models_) {
 			if (m->name() == file_name) {
                 LOG(WARNING) << "model alreaded loaded: " << file_name;
-				return nullptr;
+                return false;
 			}
 		}
 
@@ -1147,21 +1147,21 @@ namespace easy3d {
 	}
 
 
-    void Viewer::add_model(Model *model, bool create_default_drawables) {
+    bool Viewer::add_model(Model *model, bool create_default_drawables) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
-			return;
+            return false;
         }
 		for (auto m : models_) {
             if (model == m) {
-                LOG(WARNING) << "model has alreay been added to the viewer.";
-				return;
+                LOG(WARNING) << "model has already been added to the viewer.";
+                return false;
             }
 		}
         unsigned int num = model->vertices_size();
 		if (num == 0) {
             LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
-			return;
+            return false;
 		}
 
 		if (create_default_drawables)
@@ -1176,47 +1176,76 @@ namespace easy3d {
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
         }
 
-		fit_screen();
+        fit_screen();
+        return true;
 	}
 
 
-	void Viewer::delete_model(Model* model) {
+	bool Viewer::delete_model(Model* model) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
-            return;
+            return false;
         }
 
-        int pre_idx = model_idx_;
 		auto pos = std::find(models_.begin(), models_.end(), model);
 		if (pos != models_.end()) {
+            int pre_idx = model_idx_;
             const std::string name = model->name();
 			models_.erase(pos);
 			delete model;
 			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
             std::cout << "model deleted: " << name << std::endl;
-			fit_screen();
-		}
-		else
-			LOG(WARNING) << "no such model: " << model->name();
 
-        if (model_idx_ != pre_idx) {
-            if (model_idx_ >= 0)
-                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            if (model_idx_ != pre_idx) {
+                if (model_idx_ >= 0)
+                    std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
+
+            fit_screen();
+            return true;
+		}
+		else {
+            LOG(WARNING) << "no such model: " << model->name();
+            return false;
         }
 	}
 
 
-	void Viewer::add_drawable(Drawable* drawable) {
-		if (drawable)
-			drawables_.insert(drawable);
+	bool Viewer::add_drawable(Drawable* drawable) {
+        if (!drawable) {
+            LOG(WARNING) << "drawable is NULL.";
+            return false;
+        }
+        for (auto d : drawables_) {
+            if (drawable == d) {
+                LOG(WARNING) << "drawable has already been added to the viewer.";
+                return false;
+            }
+        }
+
+        drawables_.push_back(drawable);
+        fit_screen();
+        return true;
 	}
 
-	/**
-	 * Delete the drawable from the viewer. The drawable will also be destroyed.
-	 */
-	void Viewer::delete_drawable(Drawable* drawable) {
-		if (drawable)
-			drawables_.erase(drawable);
+
+	bool Viewer::delete_drawable(Drawable* drawable) {
+        if (!drawable) {
+            LOG(WARNING) << "drawable is NULL.";
+            return false;
+        }
+
+        auto pos = std::find(drawables_.begin(), drawables_.end(), drawable);
+        if (pos != drawables_.end()) {
+            drawables_.erase(pos);
+            delete drawable;
+            fit_screen();
+            return true;
+        }
+        else {
+            LOG(WARNING) << "no such drawable: " << drawable->name();
+            return false;
+        }
 	}
 
 
@@ -1233,9 +1262,12 @@ namespace easy3d {
             for (auto d : drawables_)
                 box.add_box(d->bounding_box());
 		}
-		camera_->setSceneBoundingBox(box.min(), box.max());
-		camera_->showEntireScene();
-		update();
+
+		if (box.initialized()) {
+            camera_->setSceneBoundingBox(box.min(), box.max());
+            camera_->showEntireScene();
+            update();
+        }
 	}
 
 
@@ -1251,7 +1283,7 @@ namespace easy3d {
 
 		int count = 0;
 		for (const auto& file_name : file_names) {
-			if (open(file_name))
+            if (add_model(file_name))
 				++count;
 		}
 		return count > 0;

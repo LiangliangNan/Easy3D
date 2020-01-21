@@ -30,39 +30,55 @@
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/tessellator_gen.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 
+
+// NOTE: The current SurfaceMesh implementation cannot handle non-manifold surfaces.
+// So for the moment, I add only drawables to the viewer (without creating a mesh).
+// TODO: modify the SurfaceMesh data structure to allow non-manifold surfaces.
+#define DO_NOT_CREATE_SURFACE_MESH
+
 namespace easy3d {
 
 
     TexturedViewer::TexturedViewer(const std::string &title)
-    : Viewer(title)
-    {
+            : Viewer(title) {
         camera()->setUpVector(vec3(0, 1, 0));
     }
 
+#ifdef DO_NOT_CREATE_SURFACE_MESH
 
-    Model* TexturedViewer::open(const std::string &file_name, bool create_default_drawables) {
-        if (file_system::extension(file_name, true) == "obj") {
-            Model* mesh = load_obj(file_name);
-            if (mesh)
-                add_model(mesh, false);
-            return mesh;
+    namespace details {
+
+        struct Face {
+            std::vector<int> vertex_indices;
+            std::vector<int> texcoord_indices;
+            vec3 normal;
+        };
+
+        static inline vec3 compute_face_normal(const Face& f, const std::vector<vec3>& points) {
+            int a = f.vertex_indices[0];
+            int b = f.vertex_indices[1];
+            int c = f.vertex_indices[2];
+            return geom::triangle_normal(points[a], points[b], points[c]);
         }
-        else
-            return Viewer::open(file_name, create_default_drawables);
+
     }
 
 
-    Model* TexturedViewer::load_obj(const std::string& file_name) {
+    bool TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
-            return nullptr;
+            return false;
         }
+
+        if (file_system::extension(file_name, true) != "obj")
+            return Viewer::add_model(file_name, create_default_drawables);
 
         tinyobj::ObjReaderConfig config;
         config.triangulate = false;
@@ -77,7 +93,7 @@ namespace easy3d {
             if (!warning.empty())
                 msg += warning;
             LOG(ERROR) << msg;
-            return nullptr;
+            return false;
         }
 
         // --------------------- collect the data ------------------------
@@ -85,7 +101,192 @@ namespace easy3d {
         const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
         if (shapes.empty()) {
             LOG(WARNING) << "file contains no shape";
-            return nullptr;
+            return false;
+        }
+        const tinyobj::attrib_t &attrib = reader.GetAttrib();
+        const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
+
+        std::vector<vec3> points;
+        for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
+            // Should I create vertices later, to get rid of isolated vertices?
+            points.emplace_back(vec3(attrib.vertices.data() + v));
+        }
+        std::vector<vec2> texcoords;
+        for (std::size_t v = 0; v < attrib.texcoords.size(); v += 2) {
+            texcoords.push_back(vec2(attrib.texcoords.data() + v));
+        }
+
+        std::vector<details::Face> faces;
+
+        for (size_t i = 0; i < shapes.size(); i++) {
+            std::size_t index_offset = 0;
+            LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.material_ids.size());
+            LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size());
+
+            // For each face
+            for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+                details::Face face;
+                const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
+                for (std::size_t v = 0; v < fnum; v++) {
+                    tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
+                    face.vertex_indices.push_back(idx.vertex_index);
+                    if (!texcoords.empty())
+                        face.texcoord_indices.push_back(idx.texcoord_index);
+                }
+                faces.push_back(face);
+
+                //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
+                index_offset += fnum;
+            }
+        }
+
+        // ------------- group the faces according to the material -------------
+        // each group is a set of faces sharing the same material
+
+        typedef std::vector<int> Group; // each element is a face index
+
+        // the extra one is for all faces without material information
+        std::vector<Group> groups(materials.size() + 1);
+
+        int face_idx = 0;
+        int count = 0;
+        for (std::size_t i = 0; i < shapes.size(); i++) {
+            for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+                if (materials.empty()) {
+                    groups[groups.size() - 1].push_back(face_idx);
+                }
+                else {
+                    // the material id of this face
+                    int material_id = shapes[i].mesh.material_ids[f];
+                    groups[material_id].push_back(face_idx);
+                }
+                ++face_idx;
+            }
+        }
+
+        TessellatorGen tessellator;
+        for (std::size_t i = 0; i < groups.size(); ++i) {
+            const Group &group = groups[i];
+            if (group.empty())
+                continue;
+
+            std::vector<vec3> d_points, d_normals;
+            std::vector<vec2> d_texcoords;
+
+             for (auto id : group) {
+                 tessellator.reset();
+                 details::Face& face = faces[id];
+                 face.normal = details::compute_face_normal(face, points);
+                 tessellator.begin_polygon(face.normal);
+                 tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
+                 tessellator.begin_contour();
+                 const auto& vertex_indices = face.vertex_indices;
+                 const auto& texcoord_indices = face.texcoord_indices;
+                 if (texcoords.empty()) {
+                     for (int j = 0; j < vertex_indices.size(); ++j)
+                         tessellator.add_vertex(points[vertex_indices[j]]);
+                 } else {
+                     for (int j = 0; j < vertex_indices.size(); ++j)
+                         tessellator.add_vertex(points[vertex_indices[j]], texcoords[texcoord_indices[j]]);
+                 }
+                 tessellator.end_contour();
+                 tessellator.end_polygon();
+
+                 std::size_t num = tessellator.num_triangles();
+                 const std::vector<const double *> &vts = tessellator.get_vertices();
+                 for (std::size_t j = 0; j < num; ++j) {
+                     std::size_t a, b, c;
+                     tessellator.get_triangle(j, a, b, c);
+                     const vec3 va(vts[a]); d_points.emplace_back(va);
+                     const vec3 vb(vts[b]); d_points.emplace_back(vb);
+                     const vec3 vc(vts[c]); d_points.emplace_back(vc);
+                     d_normals.insert(d_normals.end(), 3, geom::triangle_normal(va, vb, vc));
+                     if (!texcoords.empty()) {
+                         d_texcoords.emplace_back(vec2(vts[a] + 3));
+                         d_texcoords.emplace_back(vec2(vts[b] + 3));
+                         d_texcoords.emplace_back(vec2(vts[c] + 3));
+                     }
+                 }
+            }
+
+            TrianglesDrawable *drawable = new TrianglesDrawable(file_name + "-faces-" + std::to_string(i));
+            add_drawable(drawable);
+            ++count;
+
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_normal_buffer(d_normals);
+            drawable->set_smooth_shading(false);
+            if (!texcoords.empty())
+                drawable->update_texcoord_buffer(d_texcoords);
+
+            if (i == groups.size() - 1)
+                break;  // the last group doesn't have material information
+
+            const tinyobj::material_t &mat = materials[i];
+            vec3 ambient(mat.ambient);
+            vec3 diffuse(mat.diffuse);
+            vec3 specular(mat.specular);
+            float shininess(mat.shininess);
+            drawable->set_material(Material(ambient, specular, shininess));
+            drawable->set_default_color(diffuse);
+
+            std::string texname = mat.ambient_texname;
+            if (texname.empty())
+                texname = mat.diffuse_texname;
+            if (texname.empty())
+                texname = mat.specular_texname;
+
+            if (!texname.empty()) {
+                const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
+                Texture *tex = Texture::create(texture_file, GL_REPEAT);
+                if (tex) {
+                    drawable->set_texture(tex);
+                    LOG(INFO) << "texture created from " << texname;
+                }
+            }
+        }
+
+        if (count > 0) {
+            fit_screen();
+            return true;
+        }
+        else
+            return false;
+    }
+
+#else
+
+    bool TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+        if (!file_system::is_file(file_name)) {
+            LOG(ERROR) << "file does not exist: " << file_name;
+            return false;
+        }
+
+        if (file_system::extension(file_name, true) != "obj")
+            return Viewer::add_model(file_name, create_default_drawables);
+
+        tinyobj::ObjReaderConfig config;
+        config.triangulate = false;
+        config.vertex_color = false;
+        tinyobj::ObjReader reader;
+        if (!reader.ParseFromFile(file_name, config)) {
+            std::string msg = "failed parsing file: " + file_name;
+            const std::string &error = reader.Error();
+            if (!error.empty())
+                msg += error;
+            const std::string &warning = reader.Warning();
+            if (!warning.empty())
+                msg += warning;
+            LOG(ERROR) << msg;
+            return false;
+        }
+
+        // --------------------- collect the data ------------------------
+
+        const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
+        if (shapes.empty()) {
+            LOG(WARNING) << "file contains no shape";
+            return false;
         }
         const tinyobj::attrib_t &attrib = reader.GetAttrib();
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
@@ -146,10 +347,8 @@ namespace easy3d {
             }
         }
 
-        if (materials.empty()) {
-            Viewer::create_drawables(mesh);
-            return mesh;
-        }
+        if (materials.empty())
+            return Viewer::add_model(mesh, true);
 
         // ------------- group the faces according to the material -------------
         // each group is a set of faces sharing the same material
@@ -238,6 +437,8 @@ namespace easy3d {
 
         }
 
-        return mesh;
+        return Viewer::add_model(mesh);
     }
+#endif
+
 }

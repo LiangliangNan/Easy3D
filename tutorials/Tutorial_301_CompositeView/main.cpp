@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
         // Load model from a file
         const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
-        if (!viewer.open(file_name, true)) {
+        if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }

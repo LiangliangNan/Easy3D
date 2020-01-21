@@ -37,23 +37,6 @@ using namespace easy3d;
 //		  - Dual Depth Peeling
 
 
-// create a surface mesh from the vertices and face indices.
-SurfaceMesh* bunny_mesh() {
-    SurfaceMesh* mesh = new SurfaceMesh;
-    mesh->set_name("bunny");
-
-    for (const auto& p : data::bunny_vertices)
-        mesh->add_vertex(p);
-
-    for (std::size_t i=0; i<data::bunny_indices.size(); i+=3)
-        mesh->add_triangle(SurfaceMesh::Vertex(data::bunny_indices[i]),
-                           SurfaceMesh::Vertex(data::bunny_indices[i+1]),
-                           SurfaceMesh::Vertex(data::bunny_indices[i+2]));
-    return mesh;
-}
-
-
-
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
@@ -64,8 +47,7 @@ int main(int argc, char** argv) {
         TutorialTransparency viewer("Tutorial_505_Transparency");
 
         // Load a mesh model and create a drawable for the faces.
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true));
-        if (!mesh) {
+        if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }

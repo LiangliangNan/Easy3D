@@ -42,12 +42,12 @@ int main(int argc, char** argv) {
 
     try {
         DepthImage viewer("Tutorial_408_DepthImage");
-        Model* model = viewer.open(file, true);
-        if (!model) {
+        if (!viewer.add_model(file, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
+        Model* model = viewer.current_model();
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(5);
 

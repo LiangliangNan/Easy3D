@@ -45,12 +45,12 @@ int main(int argc, char** argv) {
         // Create the viewer.
         TutorialSurfaceReconstruction viewer("Tutorial_602_PointCloud_SurfaceReconstruction");
 
-        Model* model = viewer.open(file, true);
-        if (!model) {
+        if (!viewer.add_model(file, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
+        Model* model = viewer.current_model();
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(5.0f);
         drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));

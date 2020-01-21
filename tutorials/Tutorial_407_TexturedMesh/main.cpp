@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
         const std::string& file_name = setting::resource_directory() + "/data/domik/domik.obj";
         //const std::string& file_name = setting::resource_directory() + "/data/cube/cube.obj";
-        if (!viewer.open(file_name, true)) {
+        if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }

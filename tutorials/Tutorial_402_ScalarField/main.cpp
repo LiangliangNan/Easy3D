@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
         Viewer viewer("Tutorial_402_ScalarField");
 
         // Load a mesh model and create a drawable for the faces.
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, true));
-        if (!mesh) {
+        if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.current_model());
 
         // By default, Easy3D renders the model using a uniform color.
         // In this tutorial, let's define a scalar field on the mesh vertices: elevation.

@@ -129,11 +129,11 @@ int main(int argc, char** argv) {
 
         // Load point cloud data from a file
         const std::string file_name = setting::resource_directory() + "/data/sphere.obj";
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.open(file_name, false));
-        if (!mesh) {
+        if (!viewer.add_model(file_name, false)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.current_model());
 
         //--------------------- render vertices as spheres ----------------
 

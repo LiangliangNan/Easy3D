@@ -47,12 +47,12 @@ int main(int argc, char** argv) {
         TutorialEyeDomeLighting viewer("Tutorial_501_EyeDomeLighting");
 
         // Read the point cloud from a known file.
-        Model* model = viewer.open(file, true);
-        if (!model) {
+        if (!viewer.add_model(file, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
+        Model* model = viewer.current_model();
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(5.0f);
         drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));
