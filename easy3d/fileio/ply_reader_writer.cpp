@@ -297,7 +297,7 @@ namespace easy3d {
 					ply_get_property_info(property, &property_name, &type, &length_type, &value_type);
 
 					if (strcmp(element_name, VERTEX) && strcmp(element_name, FACE) && strcmp(element_name, EDGE)) {
-						std::cerr << "unknown element type: " << element_name << std::endl;
+						std::cerr << "unknown element type: " << element_name << " (ignored)" << std::endl;
 						continue;
 					}
 
