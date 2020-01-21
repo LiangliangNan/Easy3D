@@ -11,3 +11,4 @@ cmake-build-release
 cmake-build-minsizerel
 cmake-build-relwithdebinfo
 /resources/data/pump.ptx
+/resources/data/other
