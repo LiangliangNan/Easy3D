@@ -1443,6 +1443,9 @@ namespace easy3d {
         program->set_uniform("per_vertex_color", true);
         program->set_uniform("two_sides_lighting", true);
         program->set_uniform("distinct_back_color", false);
+        program->set_block_uniform("Material", "ambient", setting::material_ambient);
+        program->set_block_uniform("Material", "specular", setting::material_specular);
+        program->set_block_uniform("Material", "shininess", &setting::material_shininess);
         drawable_axes_->gl_draw(false);
 		program->release();
 

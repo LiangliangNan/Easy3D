@@ -61,6 +61,15 @@ namespace easy3d {
             vec3 normal;
         };
 
+        // each group is a set of faces (denoted by their indices) sharing the same material
+        struct Group : public std::vector<int> {
+            vec3        ambient;
+            vec3        diffuse;
+            vec3        specular;
+            float       shininess;
+            std::string tex_file;
+        };
+
         static inline vec3 compute_face_normal(const Face& f, const std::vector<vec3>& points) {
             int a = f.vertex_indices[0];
             int b = f.vertex_indices[1];
@@ -141,24 +150,32 @@ namespace easy3d {
         }
 
         // ------------- group the faces according to the material -------------
-        // each group is a set of faces sharing the same material
-
-        typedef std::vector<int> Group; // each element is a face index
 
         // the extra one is for all faces without material information
-        std::vector<Group> groups(materials.size() + 1);
+        std::vector<details::Group> groups(materials.size() + 1);
 
         int face_idx = 0;
         int count = 0;
         for (std::size_t i = 0; i < shapes.size(); i++) {
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                if (materials.empty()) {
+                if (materials.empty())
                     groups[groups.size() - 1].push_back(face_idx);
-                }
                 else {
                     // the material id of this face
                     int material_id = shapes[i].mesh.material_ids[f];
-                    groups[material_id].push_back(face_idx);
+                    auto& g = groups[material_id];
+                    g.push_back(face_idx);
+
+                    const tinyobj::material_t &mat = materials[material_id];
+                    g.ambient = vec3(mat.ambient);
+                    g.diffuse = vec3(mat.diffuse);
+                    g.specular = vec3(mat.specular);
+                    g.shininess = mat.shininess;                   ;
+                    g.tex_file = mat.ambient_texname;
+                    if (g.tex_file.empty())
+                        g.tex_file = mat.diffuse_texname;
+                    if (g.tex_file.empty())
+                        g.tex_file = mat.specular_texname;
                 }
                 ++face_idx;
             }
@@ -166,7 +183,7 @@ namespace easy3d {
 
         TessellatorGen tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
-            const Group &group = groups[i];
+            const auto &group = groups[i];
             if (group.empty())
                 continue;
 
@@ -222,20 +239,10 @@ namespace easy3d {
             if (i == groups.size() - 1)
                 break;  // the last group doesn't have material information
 
-            const tinyobj::material_t &mat = materials[i];
-            vec3 ambient(mat.ambient);
-            vec3 diffuse(mat.diffuse);
-            vec3 specular(mat.specular);
-            float shininess(mat.shininess);
-            drawable->set_material(Material(ambient, specular, shininess));
-            drawable->set_default_color(diffuse);
+            drawable->set_material(Material(group.ambient, group.specular, group.shininess));
+            drawable->set_default_color(group.diffuse);
 
-            std::string texname = mat.ambient_texname;
-            if (texname.empty())
-                texname = mat.diffuse_texname;
-            if (texname.empty())
-                texname = mat.specular_texname;
-
+            std::string texname = group.tex_file;
             if (!texname.empty()) {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
                 Texture *tex = Texture::create(texture_file, GL_REPEAT);

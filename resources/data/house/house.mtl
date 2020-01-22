@@ -1,0 +1,112 @@
+newmtl chimney
+Kd 0.51 0.51 0.51
+Ka 0.51 0.51 0.51
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl door_frame
+Kd 0.46 0.3 0.22
+Ka 0.46 0.3 0.22
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl door_frame_outer
+Kd 0.28 0.28 0.28
+Ka 0.28 0.28 0.28
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl door_glass
+Kd 0.72 1 1
+Ka 0.72 1 1
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl garage_door_frame
+Kd 1 1 1
+Ka 1 1 1
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl garage_door_glass
+Kd 0.62 0.82 0.87
+Ka 0.62 0.82 0.87
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl ground_base
+Kd 0.28 0.28 0.28
+Ka 0.28 0.28 0.28
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl ledge
+Kd 0.5 0.5 0.5
+Ka 0.5 0.5 0.5
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl pillar
+Kd 0.5 0.5 0.5
+Ka 0.5 0.5 0.5
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl porch_frame
+Kd 0.51 0.52 0.76
+Ka 0.51 0.52 0.76
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl roof
+Kd 0.5 0.5 0.5
+Ka 0.5 0.5 0.5
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl wall
+Kd 0.96 0.95 0.93
+Ka 0.96 0.95 0.93
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl wall_2
+Kd 0.5 0.5 0.5
+Ka 0.5 0.5 0.5
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl window_frame
+Kd 0.46 0.3 0.22
+Ka 0.46 0.3 0.22
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl window_frame_outer
+Kd 0.28 0.28 0.28
+Ka 0.28 0.28 0.28
+Ks 0 0 0
+Ns 0
+d 1
+
+newmtl window_glass
+Kd 0.62 0.82 0.87
+Ka 0.62 0.82 0.87
+Ks 0 0 0
+Ns 0
+d 1
+
