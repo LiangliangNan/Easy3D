@@ -340,7 +340,7 @@ namespace easy3d {
                 }
 
                 SurfaceMesh::Face face = mesh->add_face(vertices);
-                if (prop_texcoords) {
+                if (face.is_valid() && prop_texcoords) {
                     for (auto h : mesh->halfedges(face)) {
                         auto v = mesh->to_vertex(h);
                         int id = texcoord_ids[v.idx()];
@@ -404,9 +404,15 @@ namespace easy3d {
                 for (auto h : mesh->halfedges(face)) {
                     const vec3& v = points[mesh->to_vertex(h)];
                     const vec3& n = normals[mesh->to_vertex(h)];
-                    const vec2& t = prop_texcoords[h];
-                    const float data[8] = {v.x, v.y, v.z, n.x, n.y, n.z, t.x, t.y};
-                    tessellator.add_vertex(data, 8);
+                    if (prop_texcoords) {
+                        const vec2 &t = prop_texcoords[h];
+                        const float data[8] = {v.x, v.y, v.z, n.x, n.y, n.z, t.x, t.y};
+                        tessellator.add_vertex(data, 8);
+                    }
+                    else {
+                        const float data[6] = {v.x, v.y, v.z, n.x, n.y, n.z};
+                        tessellator.add_vertex(data, 6);
+                    }
                 }
                 tessellator.end_contour();
                 tessellator.end_polygon();
@@ -416,9 +422,14 @@ namespace easy3d {
                 for (std::size_t j = 0; j < num; ++j) {
                     std::size_t a, b, c;
                     tessellator.get_triangle(j, a, b, c);
-                    d_points.emplace_back(vts[a]);   d_normals.emplace_back(vts[a] + 3);    d_texcoords.emplace_back(vec2(vts[a] + 6));
-                    d_points.emplace_back(vts[b]);   d_normals.emplace_back(vts[b] + 3);    d_texcoords.emplace_back(vec2(vts[b] + 6));
-                    d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);    d_texcoords.emplace_back(vec2(vts[c] + 6));
+                    d_points.emplace_back(vts[a]);   d_normals.emplace_back(vts[a] + 3);
+                    d_points.emplace_back(vts[b]);   d_normals.emplace_back(vts[b] + 3);
+                    d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);
+                    if (prop_texcoords) {
+                        d_texcoords.emplace_back(vec2(vts[a] + 6));
+                        d_texcoords.emplace_back(vec2(vts[b] + 6));
+                        d_texcoords.emplace_back(vec2(vts[c] + 6));
+                    }
                 }
             }
 
@@ -426,7 +437,8 @@ namespace easy3d {
 
             drawable->update_vertex_buffer(d_points);
             drawable->update_normal_buffer(d_normals);
-            drawable->update_texcoord_buffer(d_texcoords);
+            if (prop_texcoords)
+                drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_smooth_shading(false);
 
             drawable->set_material(Material(group.ambient, group.specular, group.shininess));
