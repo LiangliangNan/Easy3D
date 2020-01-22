@@ -561,7 +561,7 @@ namespace easy3d {
 		/// reserve memory (mainly used in file readers)
 		void reserve(unsigned int nvertices, unsigned int nedges);
 
-		/// resizes space for vertices, halfedges, edges, faces, and their currently
+		/// Resize space for vertices, halfedges, edges, faces, and their currently
 		/// associated properties.
 		/// Note: ne is the number of edges. for halfedges, nh = 2 * ne. */
 		void resize(unsigned int nv, unsigned int ne) {

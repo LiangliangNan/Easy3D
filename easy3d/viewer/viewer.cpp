@@ -976,7 +976,11 @@ namespace easy3d {
 		// initialize before showing the window because it can be slow
 		init();
 
-		glfwShowWindow(window_);
+        // make sure scene fits the screen when the window appears
+        fit_screen();
+
+        // show the window
+        glfwShowWindow(window_);
 
 		// TODO: make it member variable
 		bool is_animating = false;
@@ -1175,8 +1179,6 @@ namespace easy3d {
             if (model_idx_ >= 0)
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
         }
-
-        fit_screen();
         return true;
 	}
 
@@ -1200,8 +1202,6 @@ namespace easy3d {
                 if (model_idx_ >= 0)
                     std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
             }
-
-            fit_screen();
             return true;
 		}
 		else {
@@ -1224,7 +1224,6 @@ namespace easy3d {
         }
 
         drawables_.push_back(drawable);
-        fit_screen();
         return true;
 	}
 
@@ -1239,7 +1238,6 @@ namespace easy3d {
         if (pos != drawables_.end()) {
             drawables_.erase(pos);
             delete drawable;
-            fit_screen();
             return true;
         }
         else {
@@ -1286,7 +1284,12 @@ namespace easy3d {
             if (add_model(file_name))
 				++count;
 		}
-		return count > 0;
+
+        if (count > 0) {
+            fit_screen();
+            return true;
+        }
+        return false;
 	}
 
 

@@ -209,15 +209,15 @@ namespace easy3d {
                  }
             }
 
-            TrianglesDrawable *drawable = new TrianglesDrawable(file_name + "-faces-" + std::to_string(i));
-            add_drawable(drawable);
-            ++count;
-
+            auto drawable = new TrianglesDrawable(file_name + "-faces-" + std::to_string(i));
             drawable->update_vertex_buffer(d_points);
             drawable->update_normal_buffer(d_normals);
             drawable->set_smooth_shading(false);
             if (!texcoords.empty())
                 drawable->update_texcoord_buffer(d_texcoords);
+
+            add_drawable(drawable);
+            ++count;
 
             if (i == groups.size() - 1)
                 break;  // the last group doesn't have material information
