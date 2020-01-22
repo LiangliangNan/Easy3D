@@ -1162,14 +1162,13 @@ namespace easy3d {
                 return false;
             }
 		}
-        unsigned int num = model->vertices_size();
-		if (num == 0) {
-            LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
-            return false;
-		}
 
-		if (create_default_drawables)
-            create_drawables(model);
+        if (create_default_drawables) {
+            if (model->vertices_size() > 0)
+                create_drawables(model);
+            else
+                LOG(WARNING) << "drawable cannot be created due to no vertices.";
+        }
 
         int pre_idx = model_idx_;
 		models_.push_back(model);

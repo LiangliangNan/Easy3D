@@ -51,8 +51,6 @@ namespace easy3d {
         camera()->setUpVector(vec3(0, 1, 0));
     }
 
-#ifdef DO_NOT_CREATE_SURFACE_MESH
-
     namespace details {
 
         struct Face {
@@ -69,16 +67,9 @@ namespace easy3d {
             float       shininess;
             std::string tex_file;
         };
-
-        static inline vec3 compute_face_normal(const Face& f, const std::vector<vec3>& points) {
-            int a = f.vertex_indices[0];
-            int b = f.vertex_indices[1];
-            int c = f.vertex_indices[2];
-            return geom::triangle_normal(points[a], points[b], points[c]);
-        }
-
     }
 
+#ifdef DO_NOT_CREATE_SURFACE_MESH
 
     bool TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
@@ -181,6 +172,14 @@ namespace easy3d {
             }
         }
 
+
+        auto compute_face_normal = [](const details::Face& f, const std::vector<vec3>& points) ->vec3 {
+            int a = f.vertex_indices[0];
+            int b = f.vertex_indices[1];
+            int c = f.vertex_indices[2];
+            return geom::triangle_normal(points[a], points[b], points[c]);
+        };
+
         TessellatorGen tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
             const auto &group = groups[i];
@@ -193,7 +192,7 @@ namespace easy3d {
              for (auto id : group) {
                  tessellator.reset();
                  details::Face& face = faces[id];
-                 face.normal = details::compute_face_normal(face, points);
+                 face.normal = compute_face_normal(face, points);
                  tessellator.begin_polygon(face.normal);
                  tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
                  tessellator.begin_contour();
@@ -354,22 +353,32 @@ namespace easy3d {
             }
         }
 
-        // since the mesh has been built, skip texturing if material and texcoord information don't exist
-        if (materials.empty() || texcoords.empty())
+        // since the mesh has been built, skip texture if material and texcoord information don't exist
+        if (materials.empty())
             return Viewer::add_model(mesh, true);
 
         // ------------- group the faces according to the material -------------
         // each group is a set of faces sharing the same material
-
-        typedef std::vector<easy3d::SurfaceMesh::Face> Group;
-        std::vector<Group> groups(materials.size());
+        std::vector<details::Group> groups(materials.size());
 
         int face_idx = 0;
         for (std::size_t i = 0; i < shapes.size(); i++) {
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
                 // the material id of this face
                 int material_id = shapes[i].mesh.material_ids[f];
-                groups[material_id].push_back(easy3d::SurfaceMesh::Face(face_idx));
+                auto& g = groups[material_id];
+                g.push_back(face_idx);
+
+                const tinyobj::material_t &mat = materials[material_id];
+                g.ambient = vec3(mat.ambient);
+                g.diffuse = vec3(mat.diffuse);
+                g.specular = vec3(mat.specular);
+                g.shininess = mat.shininess;                   ;
+                g.tex_file = mat.ambient_texname;
+                if (g.tex_file.empty())
+                    g.tex_file = mat.diffuse_texname;
+                if (g.tex_file.empty())
+                    g.tex_file = mat.specular_texname;
                 ++face_idx;
             }
         }
@@ -380,18 +389,19 @@ namespace easy3d {
 
         TessellatorGen tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
-            const Group &group = groups[i];
+            const auto &group = groups[i];
             if (group.empty())
                 continue;
 
             std::vector<vec3> d_points, d_normals;
             std::vector<vec2> d_texcoords;
             for (auto f : group) {
+                const auto face = SurfaceMesh::Face(f);
                 tessellator.reset();
-                tessellator.begin_polygon(mesh->compute_face_normal(f));
+                tessellator.begin_polygon(mesh->compute_face_normal(face));
                 tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
-                for (auto h : mesh->halfedges(f)) {
+                for (auto h : mesh->halfedges(face)) {
                     const vec3& v = points[mesh->to_vertex(h)];
                     const vec3& n = normals[mesh->to_vertex(h)];
                     const vec2& t = prop_texcoords[h];
@@ -419,20 +429,10 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_smooth_shading(false);
 
-            const tinyobj::material_t &mat = materials[i];
-            vec3 ambient(mat.ambient);
-            vec3 diffuse(mat.diffuse);
-            vec3 specular(mat.specular);
-            float shininess(mat.shininess);
-            drawable->set_material(Material(ambient, specular, shininess));
-            drawable->set_default_color(diffuse);
+            drawable->set_material(Material(group.ambient, group.specular, group.shininess));
+            drawable->set_default_color(group.diffuse);
 
-            std::string texname = mat.ambient_texname;
-            if (texname.empty())
-                texname = mat.diffuse_texname;
-            if (texname.empty())
-                texname = mat.specular_texname;
-
+            std::string texname = group.tex_file;
             if (!texname.empty()) {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
                 Texture *tex = Texture::create(texture_file, GL_REPEAT);

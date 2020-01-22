@@ -1,145 +1,161 @@
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#ifndef _GEOMETRY_MESH_BUILDER_H_
-#define _GEOMETRY_MESH_BUILDER_H_
+#ifndef EASY3D_CORE_SURFACE_MESH_BUILDER_H
+#define EASY3D_CORE_SURFACE_MESH_BUILDER_H
 
-#include "geometry_common.h"
-#include "mesh.h"
-#include "mesh_attributes.h"
+#include <easy3d/core/surface_mesh.h>
 
 #include <set>
 #include <vector>
 
 
-class GEOM_API MeshBuilder : public MeshMutator {
-private:
-	enum state {initial, surface, facet, final} ;
+namespace easy3d {
 
-public:
-	MeshBuilder(Mesh* target = nil, bool quiet = false) 
-		: MeshMutator(target)
-		, state_(initial)
-		, current_facet_(nil)
-		, current_vertex_(nil)
-		, first_vertex_in_facet_(nil)
-		, first_halfedge_in_facet_(nil)
-		, current_halfedge_(nil)
-		, first_tex_vertex_in_facet_(nil)
-		, quiet_(quiet)
-	{
-	}
+    class SurfaceMeshBuilder {
+    private:
+        enum state {
+            initial, surface, facet, final
+        };
 
-	virtual void begin_surface() ;
-	virtual void end_surface() ;
-	virtual void reset() ;
+    public:
+        SurfaceMeshBuilder(SurfaceMesh *target, bool quiet = false)
+                : mesh_(target)
+                , state_(initial)
+                , quiet_(quiet)
+        {
+        }
 
-	virtual Mesh::Vertex* add_vertex(const vec3& p) ;
-	virtual void add_tex_vertex(const vec2& p) ;
+        virtual void begin_surface();
+        virtual void end_surface();
+        virtual void reset();
 
-	virtual Mesh::Vertex* add_vertex(unsigned int id, const vec3& p) ;
-	virtual void add_tex_vertex(unsigned int id, const vec2& p) ;
+        virtual SurfaceMesh::Vertex add_vertex(const vec3 &p);
+        virtual SurfaceMesh::Vertex add_vertex(unsigned int id, const vec3 &p);
 
-	virtual void begin_facet() ;
-	virtual void end_facet() ;
-	virtual void add_vertex_to_facet(int i) ;
-	virtual void set_corner_tex_vertex(int i) ;
+        virtual void begin_facet();
+        virtual void end_facet();
 
-	virtual void lock_vertex(int i) ;
-	virtual void unlock_vertex(int i) ;
+        virtual void add_vertex_to_facet(int i);
 
-	virtual void set_vertex(unsigned int v, const vec3& p) ;
-	virtual void set_vertex_color(unsigned int v, const vec3& c) ;
+        virtual void set_vertex(unsigned int v, const vec3 &p);
+        virtual void set_vertex_color(unsigned int v, const vec3 &c);
+        virtual void create_vertices(unsigned int nb_vertices, bool with_colors = false);
 
-	virtual void create_vertices(unsigned int nb_vertices, bool with_colors = false) ;
+        SurfaceMesh::Vertex current_vertex();
+        SurfaceMesh::Vertex vertex(int i);
 
-	Mesh::Vertex* current_vertex() ;
-	Mesh::Vertex* vertex(int i) ;
-	Mesh::Facet* current_facet() ;
-	Mesh::TexVertex* current_tex_vertex() ;        
-	Mesh::TexVertex* tex_vertex(int i) ;
+        SurfaceMesh::Face current_facet();
 
-	void set_quiet(bool quiet) { quiet_ = quiet ; }
+        void set_quiet(bool quiet) { quiet_ = quiet; }
 
-protected:
+    protected:
 
-	// Important note: in this class, all the Stars correspond to the
-	// set of halfedges radiating FROM a vertex (i.e. h->vertex() != v
-	// if h belongs to Star(v) ).
+        // Important note: in this class, all the Stars correspond to the
+        // set of halfedges radiating FROM a vertex (i.e. h->vertex() != v
+        // if h belongs to Star(v) ).
 
-	Mesh::Vertex* add_vertex_internal(unsigned int id, const vec3& p) ;
-	Mesh::Vertex* add_vertex_internal(const vec3& p) ;
+        SurfaceMesh::Vertex add_vertex_internal(unsigned int id, const vec3 &p);
+        SurfaceMesh::Vertex add_vertex_internal(const vec3 &p);
 
-	void begin_facet_internal() ;
-	void end_facet_internal() ;
-	void add_vertex_to_facet_internal(Vertex* v) ;
-	void set_corner_tex_vertex_internal(TexVertex* tv) ;
+        void begin_facet_internal();
+        void end_facet_internal();
 
-	Vertex* copy_vertex(Vertex* from_vertex) ;
+        void add_vertex_to_facet_internal(SurfaceMesh::Vertex v);
 
-	std::vector<Vertex*>    facet_vertex_ ;
-	std::vector<TexVertex*> facet_tex_vertex_ ;
+        SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex from_vertex);
 
-private:
+        std::vector<SurfaceMesh::Vertex >   facet_vertex_;
 
-	Mesh::Halfedge* new_halfedge_between(Vertex* from, Vertex* to) ;
-	Mesh::Halfedge* find_halfedge_between(Vertex* from, Vertex* to) ;
+    private:
 
-	/**
-	* Checks whether a vertex is manifold, by
-	* checking that the star_ attribute and the
-	* computed star have the same number of Halfedges.
-	* Note: this test is valid only if the borders
-	* have been constructed.
-	*/
-	bool vertex_is_manifold(Vertex* v) ;
+        SurfaceMesh::Halfedge new_halfedge_between(SurfaceMesh::Vertex from, SurfaceMesh::Vertex to);
+        SurfaceMesh::Halfedge find_halfedge_between(SurfaceMesh::Vertex from, SurfaceMesh::Vertex to);
 
-	/**
-	* splits a non-manifold vertex into several vertices, as
-	* needed. returns true if the vertex was non-manifold.
-	*/
-	bool split_non_manifold_vertex(Vertex* v) ;
+        /**
+        * Checks whether a vertex is manifold, by
+        * checking that the star_ attribute and the
+        * computed star have the same number of Halfedges.
+        * Note: this test is valid only if the borders
+        * have been constructed.
+        */
+        bool vertex_is_manifold(SurfaceMesh::Vertex v);
 
-	/**
-	* used by split_non_manifold_vertex:
-	* sets v's halfedge pointer,
-	* sets the halfedge vertex pointers to v, 
-	* removes the concerned halfedges from star,
-	* updates the star of the concerned vertex,
-	* if borders are found, connects them
-	*/
-	void disconnect_vertex(
-		Mesh::Halfedge* start, Mesh::Vertex* v, 
-		std::set<Mesh::Halfedge*>& star
-		) ;
+        /**
+        * splits a non-manifold vertex into several vertices, as
+        * needed. returns true if the vertex was non-manifold.
+        */
+        bool split_non_manifold_vertex(SurfaceMesh::Vertex v);
 
-	void terminate_surface() ;
-	friend class MeshSerializer_eobj ;
+        /**
+        * used by split_non_manifold_vertex:
+        * sets v's halfedge pointer,
+        * sets the halfedge vertex pointers to v,
+        * removes the concerned halfedges from star,
+        * updates the star of the concerned vertex,
+        * if borders are found, connects them
+        */
+        void disconnect_vertex(
+                SurfaceMesh::Halfedge start, SurfaceMesh::Vertex v,
+                std::set<SurfaceMesh::Halfedge> &star
+        );
 
-	void transition(state from, state to) ;
-	void check_state(state s) ;
-	std::string state_to_string(state s) ;
+        void terminate_surface();
 
-	state state_ ;
-	std::vector<Mesh::Vertex*> vertex_ ;
-	std::vector<MeshTypes::TexVertex::Ptr> tex_vertex_ ;
+        friend class SurfaceMeshSerializer_eobj;
 
-	Mesh::Facet* current_facet_ ;
-	Vertex*		current_vertex_ ;
-	Vertex*		first_vertex_in_facet_ ;
-	Mesh::Halfedge*	first_halfedge_in_facet_ ;
-	Mesh::Halfedge*	current_halfedge_ ;
-	Mesh::TexVertex* first_tex_vertex_in_facet_ ;
+        void transition(state from, state to);
 
-	typedef std::vector<Mesh::Halfedge*> Star ;
-	MeshVertexAttribute<Star>	star_ ;
-	MeshVertexAttribute<vec3>	color_ ;
-	MeshVertexLock				is_locked_ ;
+        void check_state(state s);
 
-	int		nb_isolated_v_ ;
-	int		nb_non_manifold_v_ ;
-	int		nb_duplicate_e_ ;
-	bool	quiet_ ;
-} ;
+        std::string state_to_string(state s);
+
+    private:
+
+        SurfaceMesh* mesh_;
 
 
-#endif // _MESH_BUILDER_
+        state state_;
+        std::vector<SurfaceMesh::Vertex> vertex_;
+
+        SurfaceMesh::Face current_facet_;
+        SurfaceMesh::Vertex current_vertex_;
+        SurfaceMesh::Vertex first_vertex_in_facet_;
+        SurfaceMesh::Halfedge first_halfedge_in_facet_;
+        SurfaceMesh::Halfedge current_halfedge_;
+
+        typedef std::vector<SurfaceMesh::Halfedge> Star;
+        SurfaceMesh::VertexProperty<Star> star_;
+        SurfaceMesh::VertexProperty<vec3> vertices_;
+
+        int nb_isolated_v_;
+        int nb_non_manifold_v_;
+        int nb_duplicate_e_;
+        bool quiet_;
+    };
+
+}
+
+#endif // EASY3D_CORE_SURFACE_MESH_BUILDER_H
 
