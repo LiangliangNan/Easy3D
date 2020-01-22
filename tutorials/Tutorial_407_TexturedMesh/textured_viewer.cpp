@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -298,12 +299,15 @@ namespace easy3d {
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
 
         SurfaceMesh* mesh = new SurfaceMesh;
-        mesh->set_name(file_name);
+		mesh->set_name(file_name);
+
+		SurfaceMeshBuilder builder(mesh);
+		builder.begin_surface();
 
         // add vertices
         for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
             // Should I create vertices later, to get rid of isolated vertices?
-            mesh->add_vertex(vec3(attrib.vertices.data() + v));
+			builder.add_vertex(vec3(attrib.vertices.data() + v));
         }
         // for each texcoord
         std::vector<vec2> texcoords;
@@ -329,17 +333,17 @@ namespace easy3d {
                 const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
 
                 // For each vertex in the face
-                std::vector<SurfaceMesh::Vertex> vertices;
+				builder.begin_facet();
                 std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
                 for (std::size_t v = 0; v < fnum; v++) {
                     tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
-                    SurfaceMesh::Vertex vtx(idx.vertex_index);
-                    vertices.push_back(vtx);
-                    if (prop_texcoords)
-                        texcoord_ids[vtx.idx()] = idx.texcoord_index;
+					builder.add_vertex_to_facet(idx.vertex_index);
+                    //if (prop_texcoords)
+                    //    texcoord_ids[vtx.idx()] = idx.texcoord_index;
                 }
+				builder.end_facet();
 
-                SurfaceMesh::Face face = mesh->add_face(vertices);
+				SurfaceMesh::Face face = builder.current_facet();
                 if (prop_texcoords) {
                     for (auto h : mesh->halfedges(face)) {
                         auto v = mesh->to_vertex(h);
@@ -352,6 +356,8 @@ namespace easy3d {
                 index_offset += fnum;
             }
         }
+
+		builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())

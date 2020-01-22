@@ -1828,6 +1828,8 @@ namespace easy3d {
         std::vector<bool>        add_face_is_new_;
         std::vector<bool>        add_face_needs_adjust_;
         NextCache                add_face_next_cache_;
+
+		friend class SurfaceMeshBuilder;
     };
 
 
