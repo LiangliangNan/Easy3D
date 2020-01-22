@@ -21,7 +21,6 @@ set(${PROJECT_NAME}_HEADERS
         segment.h
         signal.h
         surface_mesh.h
-#        surface_mesh_builder.h
         types.h
         vec.h
         )
@@ -30,7 +29,6 @@ set(${PROJECT_NAME}_SOURCES
         graph.cpp
         point_cloud.cpp
         surface_mesh.cpp
-#        surface_mesh_builder.cpp
         )
 
 

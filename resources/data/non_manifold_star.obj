@@ -1,0 +1,11 @@
+# OBJ exported from Easy3D
+v 0 0 0
+v 1 0 0
+v 2 0 0
+v 0 1 0
+v 0 -1 0
+v 1 -1 0
+v 2 1 0
+f 1 2 4
+f 2 5 6
+f 2 3 7
