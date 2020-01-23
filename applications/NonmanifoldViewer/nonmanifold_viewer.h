@@ -39,6 +39,10 @@ namespace easy3d {
     public:
         NonmanifoldViewer(const std::string& title = "");
 
+    protected:
+        // override for obj format only
+        bool open() override ;
+
         // override the behavior of the 'open(const std::string&)' function of the default viewer
         virtual bool add_model(const std::string& file_name, bool create_default_drawables) override ;
     };

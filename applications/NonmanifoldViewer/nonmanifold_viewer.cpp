@@ -29,9 +29,10 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/tessellator_gen.h>
 #include <easy3d/viewer/texture.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/viewer/setting.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/dialogs.h>
 
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
@@ -45,6 +46,27 @@ namespace easy3d {
     NonmanifoldViewer::NonmanifoldViewer(const std::string &title)
             : Viewer(title)
     {
+    }
+
+    bool NonmanifoldViewer::open() {
+        const std::string& title = "Please choose a file";
+        const std::string& default_path = setting::resource_directory() + "/data/repair/non_manifold";
+        const std::vector<std::string>& filters = {
+                "Mesh Files (*.obj)" , "*.obj"
+        };
+        const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, true);
+
+        int count = 0;
+        for (const auto& file_name : file_names) {
+            if (add_model(file_name, false))
+                ++count;
+        }
+
+        if (count > 0) {
+            fit_screen();
+            return true;
+        }
+        return false;
     }
 
     namespace details {
