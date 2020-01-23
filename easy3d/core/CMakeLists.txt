@@ -29,7 +29,7 @@ set(${PROJECT_NAME}_SOURCES
         graph.cpp
         point_cloud.cpp
         surface_mesh.cpp
-        )
+        manifold_guard.cpp manifold_guard.h)
 
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})

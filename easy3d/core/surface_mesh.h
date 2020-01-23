@@ -45,7 +45,14 @@
 
 namespace easy3d {
 
-    /// A halfedge data structure for polygonal meshes.
+    /**
+     * @brief A halfedge data structure for polygonal meshes.
+     *
+     * @details A surface mesh is a consistent and orientable polygonal mesh that may have one or more boundaries.
+     *          The faces are simple polygons. The edges are line segments. Each edge connects two vertices, and is
+     *          shared by two faces (including the null face for boundary edges). A surface mesh can have any number
+     *          of connected components and also some self-intersections.
+     */
     class SurfaceMesh : public Model
     {
 
