@@ -37,10 +37,12 @@ int main (int argc, char *argv[])
 
     Viewer viewer("Sandbox");
 
-    const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off";
+    //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off";
     //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off";
     //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_2.off";
+    const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off";
     SurfaceMesh* mesh = new SurfaceMesh;
+    mesh->set_name(file_name);
     if (load_off(file_name, mesh)) {
         viewer.add_model(mesh, true);
         viewer.run();

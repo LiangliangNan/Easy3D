@@ -36,34 +36,77 @@ namespace easy3d {
      * Usage example:
      * ---------------------------------------------------------
      *      ManifoldGuard guard(mesh);
-     *      guard.begin_surface();
+     *      guard.begin();
      *      for (auto p : points)
      *          guard.add_vertex(p);
-     *      for (auto f : faces) {
-     *          guard.begin_face();
-     *          for (auto id : f)
-     *              guard.add_vertex_to_face(id);
-     *          guard.end_face();
-     *      }
-     *      guard.end_suface();
+     *      for (auto ids : faces)
+     *          guard.add_face(ids);
+     *      guard.finish();
      * ---------------------------------------------------------
      */
 
     class ManifoldGuard {
     public:
-        ManifoldGuard(SurfaceMesh* mesh);
+        ManifoldGuard(SurfaceMesh* mesh = nullptr);
         ~ManifoldGuard();
 
-        void begin_surface();
+        /**
+         * @brief Set the mesh to be reconstructed. This method allow to construct multiple meshes using the same
+         *        manifold guard.
+         * @param mesh The mesh to be reconstructed.
+         */
+        void set_mesh(SurfaceMesh* mesh);
+
+        /**
+         * @brief Begin surface construction. Must be called at the beginning of the surface construction.
+         */
+        void begin();
+
+        /**
+         * @brief Add a vertex to the mesh.
+         * @param p The 3D coordinates of the vertex.
+         * @return The vertex on success.
+         */
         SurfaceMesh::Vertex add_vertex(const vec3& p);
+
+        /**
+         * @brief Add a face to the mesh.
+         * @param ids The vertex indices of the mesh.
+         * @return The face on success.
+         */
+        SurfaceMesh::Face   add_face(const std::vector<int>& ids);
+
+        /**
+         * @brief Finalize surface construction. Must be called at the end of the surface construction.
+         */
+        void finish();
+
+    private:
         void begin_face();
-        SurfaceMesh::Vertex add_vertex_to_face(int id);
-        SurfaceMesh::Face end_face();   // returns the constructed face
-        void end_suface();
+        void end_face();
+
+        SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
 
     private:
         SurfaceMesh* mesh_;
 
+        // faces with less than three vertices
+        std::size_t num_faces_less_three_vertices_;
+
+        // faces with duplicated vertices
+        std::size_t num_faces_duplicated_vertices_;
+
+        // complex edges (i.e., edges connecting more than two faces)
+        std::size_t num_complex_edges_;
+
+        // non-manifold vertices
+        std::size_t num_non_manifold_vertices_;
+
+        // isolated vertices
+        std::size_t num_isolated_vertices_;
+
+        // the vertices of the current face
+        std::vector<SurfaceMesh::Vertex> face_vertices_ ;
     };
 
 }

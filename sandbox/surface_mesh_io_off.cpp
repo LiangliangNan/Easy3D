@@ -120,22 +120,17 @@ bool load_off(const std::string &file_name, SurfaceMesh *mesh) {
 
     ManifoldGuard guard(mesh);
 
-    guard.begin_surface();
+    guard.begin();
 
     const auto& points = tmp.points;
-    for (auto p : points) {
+    for (auto p : points)
         guard.add_vertex(p);
-    }
 
     const auto& faces = tmp.faces;
-    for (auto face : faces) {
-        guard.begin_face();
-        for (auto id : face)
-            guard.add_vertex_to_face(id);
-        guard.end_face();
-    }
+    for (auto ids : faces)
+        guard.add_face(ids);
 
-    guard.end_suface();
+    guard.finish();
 
-    return mesh->n_faces() > 0;
+    return mesh->vertices_size() > 0;
 }

@@ -23,6 +23,7 @@
  */
 
 #include <easy3d/core/manifold_guard.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -36,28 +37,102 @@ namespace easy3d {
 
     }
 
-    void ManifoldGuard::begin_surface() {
-
+    void ManifoldGuard::begin() {
+        num_faces_less_three_vertices_ = 0;
+        num_faces_duplicated_vertices_= 0;
+        num_complex_edges_= 0;
+        num_non_manifold_vertices_= 0;
+        num_isolated_vertices_= 0;
     }
 
-    void ManifoldGuard::end_suface() {
+    void ManifoldGuard::finish() {
+        bool fixed(false);
+        std::string report = "mesh has: ";
+        if (num_faces_less_three_vertices_ > 0) {
+            fixed = true;
+            report += "\n\t" + std::to_string(num_faces_less_three_vertices_) +
+                      " faces with less than 3 vertices (ignored)";
+        }
+        if (num_faces_duplicated_vertices_ > 0) {
+            fixed = true;
+            report += "\n\t" + std::to_string(num_faces_duplicated_vertices_) +
+                      " faces with duplicated vertices (ignored)";
+        }
+        if (num_complex_edges_ > 0) {
+            fixed = true;
+            report += "\n\t" + std::to_string(num_complex_edges_) + " complex edges (fixed)";
+        }
+        if (num_non_manifold_vertices_ > 0) {
+            fixed = true;
+            report += "\n\t" + std::to_string(num_non_manifold_vertices_) + " non-manifold vertices (fixed)";
+        }
+        if (num_isolated_vertices_ > 0) {
+            fixed = true;
+            report += "\n\t" + std::to_string(num_isolated_vertices_) + " isolated vertices (removed)";
+        }
 
+        LOG_IF(WARNING, fixed) << report;
     }
+
 
     SurfaceMesh::Vertex ManifoldGuard::add_vertex(const vec3 &p) {
         return mesh_->add_vertex(p);
     }
 
+
+    SurfaceMesh::Face ManifoldGuard::add_face(const std::vector<int> &vertices) {
+        std::size_t nb_vertices = vertices.size();
+
+        // check if a face has less than 3 vertices;
+        if (nb_vertices < 3) {
+            ++num_faces_less_three_vertices_;
+            return SurfaceMesh::Face();
+        }
+
+        // check if a face has duplicated vertices
+        for (int i = 0; i < nb_vertices; ++i) {
+            for (int j = i+1; j < nb_vertices; ++j) {
+                if (vertices[i] == vertices[j]) {
+                    ++num_faces_duplicated_vertices_;
+                    return SurfaceMesh::Face();
+                }
+            }
+        }
+
+        begin_face();
+
+        face_vertices_.resize(nb_vertices);
+        for (int i = 0; i < nb_vertices; ++i)
+            face_vertices_[i] = SurfaceMesh::Vertex(vertices[i]);
+
+        // Detect and remove non-manifold edges by duplicating the corresponding vertices.
+        for (int s = 0; s < nb_vertices; s++) {
+            int t = ((s + 1) % nb_vertices);
+            auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+            if (h.is_valid()) {
+                ++num_complex_edges_;
+                face_vertices_[s] = copy_vertex(SurfaceMesh::Vertex(vertices[s]));
+                face_vertices_[t] = copy_vertex(SurfaceMesh::Vertex(vertices[t]));
+            }
+        }
+
+        auto face = mesh_->add_face(face_vertices_);
+        end_face();
+        return face;
+    }
+
+
+    SurfaceMesh::Vertex ManifoldGuard::copy_vertex(SurfaceMesh::Vertex v) {
+        auto points = mesh_->vertex_property<vec3>("v:point");
+        return mesh_->add_vertex(points[v]);
+    }
+
+
     void ManifoldGuard::begin_face() {
-
+        face_vertices_.clear();
     }
 
-    SurfaceMesh::Vertex ManifoldGuard::add_vertex_to_face(int id) {
-
-    }
-
-    SurfaceMesh::Face ManifoldGuard::end_face() {
-
+    void ManifoldGuard::end_face() {
     }
 
 }
