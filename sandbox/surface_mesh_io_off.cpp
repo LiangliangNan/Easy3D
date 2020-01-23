@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/core/manifold_guard.h>
+#include <easy3d/viewer/drawable_lines.h>
 
 #include <fstream>
 #include <cstring> // for strlen()
@@ -131,6 +132,34 @@ bool load_off(const std::string &file_name, SurfaceMesh *mesh) {
         guard.add_face(ids);
 
     guard.finish();
+
+
+
+
+    // visualize the borders
+    auto prop_points = mesh->vertex_property<vec3>("v:point");
+    std::vector<vec3> d_points;
+    for (auto e : mesh->edges()) {
+        if (mesh->is_boundary(e)) {
+            auto s = mesh->vertex(e, 0);
+            auto t = mesh->vertex(e, 1);
+            d_points.push_back(prop_points[s]);
+            d_points.push_back(prop_points[t]);
+        }
+    }
+    if (!d_points.empty()) {
+        auto d = mesh->add_lines_drawable("borders");
+        d->update_vertex_buffer(d_points);
+        d->set_impostor_type(LinesDrawable::CYLINDER);
+        d->set_line_width(3.0f);
+        d->set_default_color(vec3(1, 0, 0));
+    }
+
+
+
+
+
+
 
     return mesh->vertices_size() > 0;
 }

@@ -124,10 +124,11 @@ namespace easy3d {
         for (int s = 0; s < nb_vertices; s++) {
             int t = ((s + 1) % nb_vertices);
             auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            if (h.is_valid()) {
+            if (h.is_valid() && (!mesh_->is_boundary(h))) {
                 ++num_complex_edges_;
-                face_vertices_[s] = copy_vertex(SurfaceMesh::Vertex(vertices[s]));
-                face_vertices_[t] = copy_vertex(SurfaceMesh::Vertex(vertices[t]));
+                //std::cout << "complex edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
+                face_vertices_[s] = copy_vertex(face_vertices_[s]);
+                face_vertices_[t] = copy_vertex(face_vertices_[t]);
             }
         }
 
