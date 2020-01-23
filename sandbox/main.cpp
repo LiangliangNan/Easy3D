@@ -38,6 +38,7 @@ int main (int argc, char *argv[])
     Viewer viewer("Sandbox");
 
     const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off";
+    //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0(my_fixed).off";
     //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off";
     //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_edges_2.off";
     //const std::string& file_name = setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off";

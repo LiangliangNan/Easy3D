@@ -28,6 +28,7 @@
 #include <easy3d/util/line_stream.h>
 #include <easy3d/core/manifold_guard.h>
 #include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_points.h>
 
 #include <fstream>
 #include <cstring> // for strlen()
@@ -153,6 +154,20 @@ bool load_off(const std::string &file_name, SurfaceMesh *mesh) {
         d->set_impostor_type(LinesDrawable::CYLINDER);
         d->set_line_width(3.0f);
         d->set_default_color(vec3(1, 0, 0));
+    }
+
+    // visualize non-manifold vertices
+    d_points.clear();
+    for (auto v : mesh->vertices()) {
+        if (!mesh->is_manifold(v))
+            d_points.push_back(prop_points[v]);
+    }
+    if (!d_points.empty()) {
+        auto d = mesh->add_points_drawable("non_manifold");
+        d->update_vertex_buffer(d_points);
+        d->set_impostor_type(PointsDrawable::SPHERE);
+        d->set_point_size(10.0f);
+        d->set_default_color(vec3(0, 0, 1));
     }
 
 
