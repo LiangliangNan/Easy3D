@@ -63,10 +63,8 @@ namespace easy3d {
 
         // ------- detect/remesh self intersections
 
-        // detect and return the intersecting faces
-        // upon return, the second component of each entry contains the set of faces
-        // intersecting the one stored as the first component.
-        std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+        // detect and return the intersecting face pairs.
+        std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
         detect_self_intersections(SurfaceMesh* mesh);
 
         // detect and remesh the intersecting faces

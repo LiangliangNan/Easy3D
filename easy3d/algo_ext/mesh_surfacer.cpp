@@ -57,7 +57,7 @@ namespace easy3d {
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+    std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
     MeshSurfacer::detect_self_intersections(SurfaceMesh* mesh)
     {
         SelfIntersection msi;

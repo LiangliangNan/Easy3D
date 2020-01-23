@@ -65,11 +65,9 @@ namespace easy3d {
         SelfIntersection() : construct_intersection_(false) {}
         ~SelfIntersection() {}
 
-        // detect and return the intersecting faces
-        // construct == true: also construct the intersecting geometry
-        // upon return, the second component of each entry contains the set of faces
-        // intersecting the one stored as the first component.
-        std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+        // detect and return the intersecting face pairs.
+        // construct == true: also construct the intersecting geometry.
+        std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
         detect(SurfaceMesh* mesh, bool construct = false);
 
         // This function will detect and rememsh the intersecting faces.

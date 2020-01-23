@@ -26,7 +26,6 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/logging.h>
 
-#include <map>
 #include <queue>
 
 //#define REMESH_INTERSECTIONS_TIMING
@@ -286,10 +285,10 @@ namespace easy3d {
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+    std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
     SelfIntersection::detect(SurfaceMesh* mesh, bool construct)
     {
-        std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > result;
+        std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
         if (!mesh)
             return result;
 
@@ -317,14 +316,11 @@ namespace easy3d {
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
-        std::map< SurfaceMesh::Face, std::set<SurfaceMesh::Face> > intersecting_faces;
         for (const auto& b : intersecting_boxes) {
             const Triangle& ta = *b.first;
             const Triangle& tb = *b.second;
-            if (do_intersect(ta, tb)) {
-                intersecting_faces[ta.face].insert(tb.face);
-                intersecting_faces[tb.face].insert(ta.face);
-             }
+            if (do_intersect(ta, tb))
+                result.emplace_back(std::make_pair(ta.face, tb.face));
         }
 
         std::string msg("");
@@ -335,16 +331,6 @@ namespace easy3d {
         if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
             msg += "Remove duplicated faces may produce better result";
             LOG(WARNING) << msg;
-        }
-
-        // collect the result in the requested format
-        result.resize(intersecting_faces.size());
-        std::size_t idx = 0;
-        for (const auto& elem : intersecting_faces) {
-            result[idx].first = elem.first;
-            const auto& faces = elem.second;
-            result[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
-            ++idx;
         }
 
         return result;
