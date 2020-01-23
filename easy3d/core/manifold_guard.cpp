@@ -46,32 +46,47 @@ namespace easy3d {
     }
 
     void ManifoldGuard::finish() {
-        bool fixed(false);
-        std::string report = "mesh has: ";
-        if (num_faces_less_three_vertices_ > 0) {
-            fixed = true;
-            report += "\n\t" + std::to_string(num_faces_less_three_vertices_) +
-                      " faces with less than 3 vertices (ignored)";
+        std::string msg = "mesh has topological issues:";
+        bool report(false);
+
+        for (auto v : mesh_->vertices()) {
+            if (mesh_->is_isolated(v)) {
+                mesh_->delete_vertex(v);
+                ++num_isolated_vertices_;
+            }
         }
-        if (num_faces_duplicated_vertices_ > 0) {
-            fixed = true;
-            report += "\n\t" + std::to_string(num_faces_duplicated_vertices_) +
-                      " faces with duplicated vertices (ignored)";
-        }
-        if (num_complex_edges_ > 0) {
-            fixed = true;
-            report += "\n\t" + std::to_string(num_complex_edges_) + " complex edges (fixed)";
-        }
-        if (num_non_manifold_vertices_ > 0) {
-            fixed = true;
-            report += "\n\t" + std::to_string(num_non_manifold_vertices_) + " non-manifold vertices (fixed)";
-        }
+        mesh_->garbage_collection();
+
         if (num_isolated_vertices_ > 0) {
-            fixed = true;
-            report += "\n\t" + std::to_string(num_isolated_vertices_) + " isolated vertices (removed)";
+            msg += "\n\t" + std::to_string(num_isolated_vertices_) + " isolated vertices (removed)";
+            report = true;
         }
 
-        LOG_IF(WARNING, fixed) << report;
+        for (auto v : mesh_->vertices()) {
+            if (!mesh_->is_manifold(v))
+                ++num_non_manifold_vertices_;
+        }
+        if (num_non_manifold_vertices_ > 0) {
+            msg += "\n\t" + std::to_string(num_non_manifold_vertices_) + " non_manifold vertices (still remain)";
+            report = true;
+        }
+
+        if (num_faces_less_three_vertices_ > 0) {
+            msg += "\n\t" + std::to_string(num_faces_less_three_vertices_) +
+                      " faces with less than 3 vertices (ignored)";
+            report = true;
+        }
+        if (num_faces_duplicated_vertices_ > 0) {
+            msg += "\n\t" + std::to_string(num_faces_duplicated_vertices_) +
+                      " faces with duplicated vertices (ignored)";
+            report = true;
+        }
+        if (num_complex_edges_ > 0) {
+            msg += "\n\t" + std::to_string(num_complex_edges_) + " complex edges (fixed)";
+            report = true;
+        }
+
+        LOG_IF(WARNING, report) << msg;
     }
 
 
