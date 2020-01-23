@@ -108,7 +108,7 @@ namespace easy3d {
         std::size_t num_faces_duplicated_vertices_;
 
         // complex edges (i.e., edges connecting more than two faces)
-        std::size_t num_complex_edges_;
+        std::size_t num_non_manifold_edges_;
 
         // non-manifold vertices
         std::size_t num_non_manifold_vertices_;
@@ -116,7 +116,9 @@ namespace easy3d {
         // isolated vertices
         std::size_t num_isolated_vertices_;
 
-        // the vertices of the current face
+        // the input vertices of the current face
+        std::vector<SurfaceMesh::Vertex> input_face_vertices_ ;
+        // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
         // the copied vertices: vertices in 'second' were copied from 'first'

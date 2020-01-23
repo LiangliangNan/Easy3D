@@ -408,7 +408,7 @@ namespace easy3d {
 
             if (!is_new[i] && !is_boundary(halfedges[i]))
             {
-                std::cerr << "SurfaceMesh::add_face: complex edge\n";
+                std::cerr << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ")\n";
                 return Face();
             }
         }
