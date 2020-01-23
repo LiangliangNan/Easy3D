@@ -22,28 +22,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef EASY3D_NONMANIFOLD_VIEWER_H
+#define EASY3D_NONMANIFOLD_VIEWER_H
+
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/util/logging.h>
-
-using namespace easy3d;
 
 
-int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize(argv[0]);
+namespace easy3d {
 
-    try {
-        // Create the default Easy3D viewer.
-        // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Easy3DViewer");
 
-        // Run the viewer
-        viewer.run();
-    } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
-        return EXIT_FAILURE;
-    }
+    class SurfaceMesh;
 
-    return EXIT_SUCCESS;
+    // An enhanced viewer that can handle textured meshes (now it supports the OBJ format only).
+    class NonmanifoldViewer : public Viewer
+    {
+    public:
+        NonmanifoldViewer(const std::string& title = "");
+
+        // override the behavior of the 'open(const std::string&)' function of the default viewer
+        virtual bool add_model(const std::string& file_name, bool create_default_drawables) override ;
+    };
+
 }
 
+#endif //EASY3D_NONMANIFOLD_VIEWER_H

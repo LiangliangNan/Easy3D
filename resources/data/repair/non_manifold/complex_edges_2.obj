@@ -1,0 +1,32 @@
+# OBJ designed by Liangliang Nan (liangliang.nan@gmail.com) for testing Easy3D
+v 0 0 0
+v 3 2 0
+v 0 4 0
+v 1 2 0
+
+v 0 0 2
+v 3 2 2
+v 0 4 2
+v 1 2 2
+
+v 0 0 4
+v 3 2 4
+v 0 4 4
+v 1 2 4
+
+v 0 0 6
+v 3 2 6
+v 0 4 6
+v 1 2 6
+
+f 1 5 8 4
+f 4 8 7 3
+f 5 9 12 8
+
+f 8 12 11 7
+f 9 13 16 12
+f 12 16 15 11
+
+f 2 6 8 4
+f 6 10 12 8
+f 10 12 16 14

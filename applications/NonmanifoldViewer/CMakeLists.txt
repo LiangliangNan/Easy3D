@@ -5,10 +5,13 @@ project(${PROJECT_NAME})
 
 
 add_executable(${PROJECT_NAME}
-                main.cpp
+        main.cpp
+        nonmanifold_viewer.h
+        nonmanifold_viewer.cpp
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
+set_target_properties(${PROJECT_NAME} PROPERTIES
+                      FOLDER "tutorials")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 

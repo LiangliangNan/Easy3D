@@ -161,9 +161,8 @@ namespace easy3d {
          *          necessary drawables (e.g., "vertices" for point clouds, "faces" for surface
          *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
          * @return true on success and false otherwise.
-         * @related open(const std::string&, bool).
          */
-        bool open();
+        virtual bool open();
 
         /**
          * @brief Save the active model (if exists) to a file.
@@ -171,7 +170,7 @@ namespace easy3d {
          *          dialog for specifying the file name.
          * @return true on success and false otherwise.
          */
-        bool save() const;
+        virtual bool save() const;
 
         /** ------------------------------- model management --------------------------------- */
 
@@ -270,9 +269,9 @@ namespace easy3d {
         const std::vector<Drawable*>& drawables() const { return drawables_; }
 
         /**
-         * @brief Delete all models and drawables from the viewer.
+         * @brief Delete all visual contents of the viewer (all models and drawables).
          */
-        void clear();
+        void clear_scene();
 
         /** ----------------------------- UI ----------------------------------- */
 

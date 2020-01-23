@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-add_subdirectory(Easy3DViewer)
+add_subdirectory(NonmanifoldViewer)
 
 if(EASY3D_ENABLE_QT)
     find_package(CGAL)

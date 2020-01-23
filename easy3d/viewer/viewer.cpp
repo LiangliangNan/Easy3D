@@ -488,6 +488,15 @@ namespace easy3d {
 		cleanup();
 	}
 
+    void Viewer::clear_scene() {
+        for (auto m : models_)
+            delete m;
+        models_.clear();
+
+        for (auto d : drawables_)
+            delete d;
+        drawables_.clear();
+    }
 
 	void Viewer::cleanup() {
 		// viewer may have already been destroyed by the user
@@ -497,13 +506,7 @@ namespace easy3d {
 		if (camera_) { delete camera_; camera_ = nullptr; }
 		if (drawable_axes_) { delete drawable_axes_; drawable_axes_ = nullptr; }
 
-		for (auto m : models_)
-			delete m;
-		models_.clear();
-
-		for (auto d : drawables_)
-			delete d;
-		drawables_.clear();
+		clear_scene();
 
 		if (gpu_timer_) { delete gpu_timer_; gpu_timer_ = nullptr; }
 
@@ -1250,12 +1253,20 @@ namespace easy3d {
 		if (!model && models_.empty() && drawables_.empty())
 			return;
 
+		auto visual_box = [](const Model* m) -> Box3 {
+		    Box3 box = m->bounding_box();
+            for (auto d : m->points_drawables())    box.add_box(d->bounding_box());
+            for (auto d : m->lines_drawables())     box.add_box(d->bounding_box());
+            for (auto d : m->triangles_drawables()) box.add_box(d->bounding_box());
+            return box;
+		};
+
 		Box3 box;
 		if (model)
-			box = model->bounding_box();
+            box = visual_box(model);
 		else {
 			for (auto m : models_)
-				box.add_box(m->bounding_box());
+				box.add_box(visual_box(m));
             for (auto d : drawables_)
                 box.add_box(d->bounding_box());
 		}
