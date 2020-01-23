@@ -153,7 +153,7 @@ bool load_off(const std::string &file_name, SurfaceMesh *mesh) {
         d->update_vertex_buffer(d_points);
         d->set_impostor_type(LinesDrawable::CYLINDER);
         d->set_line_width(3.0f);
-        d->set_default_color(vec3(1, 0, 0));
+        d->set_default_color(vec3(0, 1, 0));
     }
 
     // visualize non-manifold vertices
@@ -166,8 +166,8 @@ bool load_off(const std::string &file_name, SurfaceMesh *mesh) {
         auto d = mesh->add_points_drawable("non_manifold");
         d->update_vertex_buffer(d_points);
         d->set_impostor_type(PointsDrawable::SPHERE);
-        d->set_point_size(10.0f);
-        d->set_default_color(vec3(0, 0, 1));
+        d->set_point_size(15.0f);
+        d->set_default_color(vec3(1, 0, 0));
     }
 
 

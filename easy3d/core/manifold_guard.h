@@ -67,14 +67,14 @@ namespace easy3d {
         /**
          * @brief Add a vertex to the mesh.
          * @param p The 3D coordinates of the vertex.
-         * @return The vertex on success.
+         * @return The added vertex on success.
          */
         SurfaceMesh::Vertex add_vertex(const vec3& p);
 
         /**
          * @brief Add a face to the mesh.
          * @param ids The vertex indices of the mesh.
-         * @return The face on success.
+         * @return The added face on success.
          */
         SurfaceMesh::Face   add_face(const std::vector<int>& ids);
 
@@ -88,6 +88,15 @@ namespace easy3d {
         void end_face();
 
         SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
+
+        // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face, check if adding this edge can
+        // result in a complex edge. If so, check it still happens if using one of the copied vertices. If using
+        // the copied vertex (or vertices) is OK, assign the good edge vertices.
+        void find_or_duplicate_edge(int s, int t);
+
+        // Will adding the halfedge (s -> t) result in a complex edge?
+        // Return true if the edge does not exist or if it is a boundary (i.e., the face is NULL).
+        bool halfedge_is_legel(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
 
     private:
         SurfaceMesh* mesh_;
