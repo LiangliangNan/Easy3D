@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_guard.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -41,7 +42,7 @@
 // NOTE: The current SurfaceMesh implementation cannot handle non-manifold surfaces.
 // So for the moment, I add only drawables to the viewer (without creating a mesh).
 // TODO: modify the SurfaceMesh data structure to allow non-manifold surfaces.
-#define DO_NOT_CREATE_SURFACE_MESH
+//#define DO_NOT_CREATE_SURFACE_MESH
 
 namespace easy3d {
 
@@ -60,7 +61,7 @@ namespace easy3d {
         };
 
         // each group is a set of faces (denoted by their indices) sharing the same material
-        struct Group : public std::vector<int> {
+        struct Group : public std::vector<SurfaceMesh::Face> {
             vec3        ambient;
             vec3        diffuse;
             vec3        specular;
@@ -298,12 +299,18 @@ namespace easy3d {
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
 
         SurfaceMesh* mesh = new SurfaceMesh;
-		mesh->set_name(file_name);
+        mesh->set_name(file_name);
+
+        ManifoldGuard guard(mesh);
+        guard.begin();
+
+        // there might be invalid faces
+        std::vector<SurfaceMesh::Face> faces;
 
         // add vertices
         for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
             // Should I create vertices later, to get rid of isolated vertices?
-            mesh->add_vertex(vec3(attrib.vertices.data() + v));
+            guard.add_vertex(vec3(attrib.vertices.data() + v));
         }
         // for each texcoord
         std::vector<vec2> texcoords;
@@ -329,17 +336,18 @@ namespace easy3d {
                 const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
 
                 // For each vertex in the face
-                std::vector<SurfaceMesh::Vertex> vertices;
+                std::vector<unsigned int> vertices;
                 std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
                 for (std::size_t v = 0; v < fnum; v++) {
                     tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
-                    SurfaceMesh::Vertex vtx(idx.vertex_index);
+                    int vtx = idx.vertex_index;
                     vertices.push_back(vtx);
                     if (prop_texcoords)
-                        texcoord_ids[vtx.idx()] = idx.texcoord_index;
+                        texcoord_ids[vtx] = idx.texcoord_index;
                 }
 
-                SurfaceMesh::Face face = mesh->add_face(vertices);
+                SurfaceMesh::Face face = guard.add_face(vertices);
+                faces.push_back(face);
                 if (face.is_valid() && prop_texcoords) {
                     for (auto h : mesh->halfedges(face)) {
                         auto v = mesh->to_vertex(h);
@@ -353,6 +361,8 @@ namespace easy3d {
             }
         }
 
+        guard.finish();
+
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())
             return Viewer::add_model(mesh, true);
@@ -364,21 +374,23 @@ namespace easy3d {
         int face_idx = 0;
         for (std::size_t i = 0; i < shapes.size(); i++) {
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                // the material id of this face
-                int material_id = shapes[i].mesh.material_ids[f];
-                auto& g = groups[material_id];
-                g.push_back(face_idx);
-
-                const tinyobj::material_t &mat = materials[material_id];
-                g.ambient = vec3(mat.ambient);
-                g.diffuse = vec3(mat.diffuse);
-                g.specular = vec3(mat.specular);
-                g.shininess = mat.shininess;                   ;
-                g.tex_file = mat.ambient_texname;
-                if (g.tex_file.empty())
-                    g.tex_file = mat.diffuse_texname;
-                if (g.tex_file.empty())
-                    g.tex_file = mat.specular_texname;
+                auto face = faces[face_idx];
+                if (face.is_valid()) {
+                    // the material id of this face
+                    int material_id = shapes[i].mesh.material_ids[f];
+                    auto &g = groups[material_id];
+                    g.push_back(face);
+                    const tinyobj::material_t &mat = materials[material_id];
+                    g.ambient = vec3(mat.ambient);
+                    g.diffuse = vec3(mat.diffuse);
+                    g.specular = vec3(mat.specular);
+                    g.shininess = mat.shininess;;
+                    g.tex_file = mat.ambient_texname;
+                    if (g.tex_file.empty())
+                        g.tex_file = mat.diffuse_texname;
+                    if (g.tex_file.empty())
+                        g.tex_file = mat.specular_texname;
+                }
                 ++face_idx;
             }
         }
@@ -396,12 +408,11 @@ namespace easy3d {
             std::vector<vec3> d_points, d_normals;
             std::vector<vec2> d_texcoords;
             for (auto f : group) {
-                const auto face = SurfaceMesh::Face(f);
                 tessellator.reset();
-                tessellator.begin_polygon(mesh->compute_face_normal(face));
+                tessellator.begin_polygon(mesh->compute_face_normal(f));
                 tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
-                for (auto h : mesh->halfedges(face)) {
+                for (auto h : mesh->halfedges(f)) {
                     const vec3& v = points[mesh->to_vertex(h)];
                     const vec3& n = normals[mesh->to_vertex(h)];
                     if (prop_texcoords) {
@@ -459,6 +470,7 @@ namespace easy3d {
         // the drawables have already been created
         return Viewer::add_model(mesh, false);
     }
+
 #endif
 
 }

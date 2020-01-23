@@ -49,7 +49,7 @@ namespace details {
 }
 
 
-struct Face : std::vector<int> {};
+struct Face : std::vector<unsigned int> {};
 
 struct Mesh {
     std::vector<vec3> points;
