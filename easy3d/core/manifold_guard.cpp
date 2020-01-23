@@ -45,6 +45,7 @@ namespace easy3d {
         num_non_manifold_edges_= 0;
         num_non_manifold_vertices_= 0;
         num_isolated_vertices_= 0;
+        num_complex_faces_ = 0;
 
         input_face_vertices_.clear();
         face_vertices_.clear();
@@ -92,6 +93,14 @@ namespace easy3d {
         if (num_non_manifold_vertices_ > 0) {
             msg += "\n\t" + std::to_string(num_non_manifold_vertices_) + " non_manifold vertices (not fixed)";
             report = true;
+        }
+
+        if (num_complex_faces_ > 0) {
+            msg += "\n\t" + std::to_string(num_complex_faces_) + " complex faces (ignored)";
+            report = true;
+
+            msg += "\nTODO: resolve non-manifold vertices. If still error 'SurfaceMesh::add_face: patch re-linking failed'"
+                   "\n\tthen check duplicated faces";
         }
 
 #if 0
@@ -146,10 +155,9 @@ namespace easy3d {
         }
 
         auto face = mesh_->add_face(face_vertices_);
-//        if (!face.is_valid())
-//            std::cout << "   ----- failed add face: " << face_vertices_ << std::endl;
-//        else
-//            std::cout << "   ----- face added: " << face_vertices_ << std::endl;
+        if (!face.is_valid())
+            ++num_complex_faces_;
+
         return face;
     }
 

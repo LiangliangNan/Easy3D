@@ -35,6 +35,8 @@ namespace easy3d {
     /**
      * A manifold guard resolves non-manifoldness when constructing a surface mesh.
      *
+     * TODO: check duplicated faces?
+     *
      * Usage example:
      * ---------------------------------------------------------
      *      ManifoldGuard guard(mesh);
@@ -115,6 +117,9 @@ namespace easy3d {
 
         // isolated vertices
         std::size_t num_isolated_vertices_;
+
+        // complex faces (couldn't be added to the mesh)
+        std::size_t num_complex_faces_;
 
         // the input vertices of the current face
         std::vector<SurfaceMesh::Vertex> input_face_vertices_ ;
