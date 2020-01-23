@@ -50,24 +50,24 @@ int main(int argc, char** argv) {
 
         // Load point cloud data from a file
         const std::string file_name = setting::resource_directory() + "/data/polyhedron.bin";
-        if (!viewer.add_model(file_name, true)) {
+        PointCloud* model = dynamic_cast<PointCloud*>(viewer.add_model(file_name, true));
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
-        PointCloud* cloud = dynamic_cast<PointCloud*>(viewer.current_model());
 
         // The drawable created by default.
-        PointsDrawable* points_drawable = cloud->points_drawable("vertices");
+        auto points_drawable = model->points_drawable("vertices");
         points_drawable->set_point_size(6.0f);
 
         // Now let's create a drawable to visualize the point normals.
-        auto normals = cloud->get_vertex_property<vec3>("v:normal");
+        auto normals = model->get_vertex_property<vec3>("v:normal");
         if (normals) {
-            auto points = cloud->get_vertex_property<vec3>("v:point");
+            auto points = model->get_vertex_property<vec3>("v:point");
 
             // Get the bounding box of the model. Then we defined the length of the
             // normal vectors to be 5% of the bounding box diagonal.
-            const Box3& box = cloud->bounding_box();
+            const Box3& box = model->bounding_box();
             float length = norm(box.max() - box.min()) * 0.05f;
 
             // Now let collects the two end points of each normal vector. So from
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 
             // Every consecutive two points represent a normal vector.
             std::vector<vec3> normal_points;
-            for (auto v : cloud->vertices()) {
+            for (auto v : model->vertices()) {
                 const vec3& s = points[v];
                 vec3 n = normals[v];
                 n.normalize();
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
             }
 
             // Create a drawable for rendering the normal vectors.
-            LinesDrawable* normals_drawable = cloud->add_lines_drawable("normals");
+            auto normals_drawable = model->add_lines_drawable("normals");
             // Upload the data to the GPU.
             normals_drawable->update_vertex_buffer(normal_points);
             // We will draw the normal vectors in green color

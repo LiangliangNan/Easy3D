@@ -73,12 +73,6 @@ namespace easy3d {
 
     namespace details {
 
-        struct Face {
-            std::vector<int> vertex_indices;
-            std::vector<int> texcoord_indices;
-            vec3 normal;
-        };
-
         // each group is a set of faces (denoted by their indices) sharing the same material
         struct Group : public std::vector<SurfaceMesh::Face> {
             vec3        ambient;
@@ -90,10 +84,10 @@ namespace easy3d {
     }
 
 
-    bool NonmanifoldViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model* NonmanifoldViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
-            return false;
+            return nullptr;
         }
 
         if (file_system::extension(file_name, true) != "obj")
@@ -112,7 +106,7 @@ namespace easy3d {
             if (!warning.empty())
                 msg += warning;
             LOG(ERROR) << msg;
-            return false;
+            return nullptr;
         }
 
         // --------------------- collect the data ------------------------
@@ -120,7 +114,7 @@ namespace easy3d {
         const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
         if (shapes.empty()) {
             LOG(WARNING) << "file contains no shape";
-            return false;
+            return nullptr;
         }
         const tinyobj::attrib_t &attrib = reader.GetAttrib();
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();

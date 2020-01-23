@@ -191,10 +191,10 @@ namespace easy3d {
          * @param create_default_drawables If ture, the default drawables will be created. Users can
          *        set create_default_drawables to false if a customized drawable will be created for
          *        a particular rendering purpose.
-         * @return The pointer to the model loaded to the viewer (nullptr if failed).
+         * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        virtual bool add_model(const std::string& file_name, bool create_default_drawables = true);
+        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
@@ -212,10 +212,10 @@ namespace easy3d {
          * @param create_default_drawables If ture, the default drawables will be created. Users can
          *        set create_default_drawables to false if a customized drawable will be created for
          *        a particular rendering purpose.
-         * @return True if the model has been added.
-         * @related add_model(const std::string&, bool), create_drawables(Model*, bool).
+         * @return The pointer to the model added to the viewer (nullptr if failed).
+         * @related add_model(const std::string&, bool).
          */
-        virtual bool add_model(Model* model, bool create_default_drawables = true);
+        virtual Model* add_model(Model* model, bool create_default_drawables = true);
 
         /**
          * @brief Delete a model. The memory of the model will be released and its existing drawables

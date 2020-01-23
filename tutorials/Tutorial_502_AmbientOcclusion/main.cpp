@@ -45,12 +45,12 @@ int main(int argc, char** argv) {
         // Create the viewer.
         TutorialAmbientOcclusion viewer("Tutorial_502_AmbientOcclusion");
 
-        if (!viewer.add_model(file, true)) {
+        Model* model = viewer.add_model(file, true);
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
-        Model* model = viewer.current_model();
         auto drawable = model->triangles_drawable("faces");
         drawable->set_default_color(vec3(1.0f, 1.0f, 1.0f));
 

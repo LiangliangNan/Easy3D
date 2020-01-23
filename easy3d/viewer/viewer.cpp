@@ -1086,11 +1086,11 @@ namespace easy3d {
 	}
 
 
-    bool Viewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model* Viewer::add_model(const std::string &file_name, bool create_default_drawables) {
 		for (auto m : models_) {
 			if (m->name() == file_name) {
-                LOG(WARNING) << "model alreaded loaded: " << file_name;
-                return false;
+                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
+                return m;
 			}
 		}
 
@@ -1124,7 +1124,6 @@ namespace easy3d {
             model->set_name(file_name);
             add_model(model, create_default_drawables);
         }
-
         return model;
 	}
 
@@ -1154,15 +1153,15 @@ namespace easy3d {
 	}
 
 
-    bool Viewer::add_model(Model *model, bool create_default_drawables) {
+    Model* Viewer::add_model(Model *model, bool create_default_drawables) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
-            return false;
+            return nullptr;
         }
 		for (auto m : models_) {
             if (model == m) {
-                LOG(WARNING) << "model has already been added to the viewer.";
-                return false;
+				LOG(WARNING) << "model has already been added to the viewer: " << m->name();
+                return nullptr;
             }
 		}
 
@@ -1181,7 +1180,7 @@ namespace easy3d {
             if (model_idx_ >= 0)
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
         }
-        return true;
+        return model;
 	}
 
 

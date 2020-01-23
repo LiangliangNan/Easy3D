@@ -129,30 +129,30 @@ int main(int argc, char** argv) {
 
         // Load point cloud data from a file
         const std::string file_name = setting::resource_directory() + "/data/sphere.obj";
-        if (!viewer.add_model(file_name, false)) {
+        SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(viewer.add_model(file_name, false));
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.current_model());
 
         //--------------------- render vertices as spheres ----------------
 
-        create_spheres(mesh);
+        create_spheres(model);
 
         //--------------------- render edges as cylinders -----------------
 
-        create_cylinders(mesh);
+        create_cylinders(model);
 
         //--------------------- render normals as cones -------------------
 
-        create_cones(mesh);
+        create_cones(model);
 
         //-------------------- render vertices as surfels -----------------
 
         // make a copy of the mesh
-        SurfaceMesh* copy = new SurfaceMesh(*mesh);
+        SurfaceMesh* copy = new SurfaceMesh(*model);
         // translate the mesh a bit so we can see both
-        const vec3 trans = vec3(0, 1, 0) * mesh->bounding_box().diagonal() * 0.7f;
+        const vec3 trans = vec3(0, 1, 0) * model->bounding_box().diagonal() * 0.7f;
         auto points = copy->get_vertex_property<vec3>("v:point");
         for (auto v : copy->vertices())
              points[v] += trans;

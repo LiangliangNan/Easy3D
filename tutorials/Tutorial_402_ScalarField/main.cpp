@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
         Viewer viewer("Tutorial_402_ScalarField");
 
         // Load a mesh model and create a drawable for the faces.
-        if (!viewer.add_model(file_name, true)) {
+        SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(viewer.add_model(file_name, true));
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer.current_model());
 
         // By default, Easy3D renders the model using a uniform color.
         // In this tutorial, let's define a scalar field on the mesh vertices: elevation.
@@ -64,11 +64,11 @@ int main(int argc, char** argv) {
         // its elevation. The idea is to map the elevation values to a color range
         // (e.g., here from blue to red. To do the mapping, we need to know the
         // min/max value range of the scalar field.
-        auto elevation = mesh->add_vertex_property<float>("v:elevation");
-        auto vertices = mesh->get_vertex_property<vec3>("v:point");
+        auto elevation = model->add_vertex_property<float>("v:elevation");
+        auto vertices = model->get_vertex_property<vec3>("v:point");
         float min_value = std::numeric_limits<float>::max();
         float max_value = -std::numeric_limits<float>::max();
-        for (auto v : mesh->vertices()) {
+        for (auto v : model->vertices()) {
             elevation[v] = vertices[v].z;
             min_value = std::min(min_value, elevation[v]);
             max_value = std::max(max_value, elevation[v]);
@@ -78,14 +78,14 @@ int main(int argc, char** argv) {
         // according to its scalar value. We can use a vertex property or an array
         // to store the colors. Here we use the std::vector array.
         std::vector<vec3> scalar_field_colors;
-        for (auto v : mesh->vertices()) {
+        for (auto v : model->vertices()) {
             float value = elevation[v];
             float r = (value - min_value) / (max_value - min_value);
             scalar_field_colors.push_back(vec3(r, 0.0f, 1.0f -r));
         }
 
         // The faces drawable created by default.
-        TrianglesDrawable* drawable = mesh->triangles_drawable("faces");
+        TrianglesDrawable* drawable = model->triangles_drawable("faces");
         // Note we had already uploaded the vertex positions and the vertex indices
         // to the GPU. Now we only need to transfer the color data to the GPU.
         drawable->update_color_buffer(scalar_field_colors);

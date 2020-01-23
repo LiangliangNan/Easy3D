@@ -38,16 +38,16 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     // the point cloud file.
-    const std::string file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
-
     try {
         DepthImage viewer("Tutorial_408_DepthImage");
-        if (!viewer.add_model(file, true)) {
+
+        const std::string file_name = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+        Model* model = viewer.add_model(file_name, true);
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
-        Model* model = viewer.current_model();
         auto drawable = model->points_drawable("vertices");
         drawable->set_point_size(5);
 

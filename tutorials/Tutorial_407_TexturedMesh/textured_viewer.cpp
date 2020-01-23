@@ -38,11 +38,8 @@
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 
-
-// NOTE: The current SurfaceMesh implementation cannot handle non-manifold surfaces.
-// So for the moment, I add only drawables to the viewer (without creating a mesh).
-// TODO: modify the SurfaceMesh data structure to allow non-manifold surfaces.
-//#define DO_NOT_CREATE_SURFACE_MESH
+// In case the ManifoldGuard failed to handle the mesh
+#define DO_NOT_CREATE_SURFACE_MESH
 
 namespace easy3d {
 
@@ -54,14 +51,8 @@ namespace easy3d {
 
     namespace details {
 
-        struct Face {
-            std::vector<int> vertex_indices;
-            std::vector<int> texcoord_indices;
-            vec3 normal;
-        };
-
         // each group is a set of faces (denoted by their indices) sharing the same material
-        struct Group : public std::vector<SurfaceMesh::Face> {
+        struct Group : public std::vector<int> {
             vec3        ambient;
             vec3        diffuse;
             vec3        specular;
@@ -72,10 +63,10 @@ namespace easy3d {
 
 #ifdef DO_NOT_CREATE_SURFACE_MESH
 
-    bool TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model* TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
-            return false;
+            return nullptr;
         }
 
         if (file_system::extension(file_name, true) != "obj")
@@ -94,7 +85,7 @@ namespace easy3d {
             if (!warning.empty())
                 msg += warning;
             LOG(ERROR) << msg;
-            return false;
+            return nullptr;
         }
 
         // --------------------- collect the data ------------------------
@@ -102,7 +93,7 @@ namespace easy3d {
         const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
         if (shapes.empty()) {
             LOG(WARNING) << "file contains no shape";
-            return false;
+            return nullptr;
         }
         const tinyobj::attrib_t &attrib = reader.GetAttrib();
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
@@ -117,7 +108,12 @@ namespace easy3d {
             texcoords.push_back(vec2(attrib.texcoords.data() + v));
         }
 
-        std::vector<details::Face> faces;
+        struct Face {
+            std::vector<int> vertex_indices;
+            std::vector<int> texcoord_indices;
+            vec3 normal;
+        };
+        std::vector<Face> faces;
 
         for (size_t i = 0; i < shapes.size(); i++) {
             std::size_t index_offset = 0;
@@ -126,7 +122,7 @@ namespace easy3d {
 
             // For each face
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                details::Face face;
+                Face face;
                 const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
                 for (std::size_t v = 0; v < fnum; v++) {
                     tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
@@ -147,7 +143,6 @@ namespace easy3d {
         std::vector<details::Group> groups(materials.size() + 1);
 
         int face_idx = 0;
-        int count = 0;
         for (std::size_t i = 0; i < shapes.size(); i++) {
             for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
                 if (materials.empty())
@@ -174,12 +169,15 @@ namespace easy3d {
         }
 
 
-        auto compute_face_normal = [](const details::Face& f, const std::vector<vec3>& points) ->vec3 {
+        auto compute_face_normal = [](const Face& f, const std::vector<vec3>& points) ->vec3 {
             int a = f.vertex_indices[0];
             int b = f.vertex_indices[1];
             int c = f.vertex_indices[2];
             return geom::triangle_normal(points[a], points[b], points[c]);
         };
+
+        SurfaceMesh* mesh = new SurfaceMesh;
+        mesh->set_name(file_name);
 
         TessellatorGen tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
@@ -192,7 +190,7 @@ namespace easy3d {
 
              for (auto id : group) {
                  tessellator.reset();
-                 details::Face& face = faces[id];
+                 Face& face = faces[id];
                  face.normal = compute_face_normal(face, points);
                  tessellator.begin_polygon(face.normal);
                  tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
@@ -226,15 +224,12 @@ namespace easy3d {
                  }
             }
 
-            auto drawable = new TrianglesDrawable(file_name + "-faces-" + std::to_string(i));
+            auto drawable = mesh->add_triangles_drawable("faces-" + std::to_string(i));
             drawable->update_vertex_buffer(d_points);
             drawable->update_normal_buffer(d_normals);
             drawable->set_smooth_shading(false);
             if (!texcoords.empty())
                 drawable->update_texcoord_buffer(d_texcoords);
-
-            add_drawable(drawable);
-            ++count;
 
             if (i == groups.size() - 1)
                 break;  // the last group doesn't have material information
@@ -253,20 +248,19 @@ namespace easy3d {
             }
         }
 
-        if (count > 0) {
+        if (mesh->triangles_drawables().size() > 0) {
+            Viewer::add_model(mesh, false);
             fit_screen();
-            return true;
         }
-        else
-            return false;
+        return mesh;
     }
 
 #else
 
-    bool TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model* TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
-            return false;
+            return nullptr;
         }
 
         if (file_system::extension(file_name, true) != "obj")
@@ -285,7 +279,7 @@ namespace easy3d {
             if (!warning.empty())
                 msg += warning;
             LOG(ERROR) << msg;
-            return false;
+            return nullptr;
         }
 
         // --------------------- collect the data ------------------------
@@ -293,7 +287,7 @@ namespace easy3d {
         const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
         if (shapes.empty()) {
             LOG(WARNING) << "file contains no shape";
-            return false;
+            return nullptr;
         }
         const tinyobj::attrib_t &attrib = reader.GetAttrib();
         const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
@@ -379,7 +373,7 @@ namespace easy3d {
                     // the material id of this face
                     int material_id = shapes[i].mesh.material_ids[f];
                     auto &g = groups[material_id];
-                    g.push_back(face);
+                    g.push_back(face_idx);
                     const tinyobj::material_t &mat = materials[material_id];
                     g.ambient = vec3(mat.ambient);
                     g.diffuse = vec3(mat.diffuse);
@@ -408,11 +402,14 @@ namespace easy3d {
             std::vector<vec3> d_points, d_normals;
             std::vector<vec2> d_texcoords;
             for (auto f : group) {
+                auto face = faces[f];
+                if (!face.is_valid())
+                    continue;
                 tessellator.reset();
-                tessellator.begin_polygon(mesh->compute_face_normal(f));
+                tessellator.begin_polygon(mesh->compute_face_normal(face));
                 tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
-                for (auto h : mesh->halfedges(f)) {
+                for (auto h : mesh->halfedges(face)) {
                     const vec3& v = points[mesh->to_vertex(h)];
                     const vec3& n = normals[mesh->to_vertex(h)];
                     if (prop_texcoords) {
