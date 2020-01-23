@@ -27,6 +27,8 @@
 
 #include <easy3d/core/surface_mesh.h>
 
+#include <unordered_map>
+
 
 namespace easy3d {
 
@@ -107,6 +109,9 @@ namespace easy3d {
 
         // the vertices of the current face
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
+
+        // the copied vertices: vertices in 'second' were copied from 'first'
+        std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > copies_;
     };
 
 }

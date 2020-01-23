@@ -24,8 +24,8 @@
 
 #include <easy3d/algo_ext/duplicated_faces.h>
 
-#include <map>
 #include <set>
+#include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/logging.h>
@@ -133,7 +133,7 @@ namespace easy3d {
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
-        std::map< SurfaceMesh::Face, std::set<SurfaceMesh::Face> > duplicated_faces;
+        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> duplicated_faces;
         double sqr_eps = dist_threshold * dist_threshold;
         for (const auto& b : intersecting_boxes) {
             const Triangle& ta = *b.first;
