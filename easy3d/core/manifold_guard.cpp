@@ -111,7 +111,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face ManifoldGuard::add_face(const std::vector<int> &vertices) {
+    SurfaceMesh::Face ManifoldGuard::add_face(const std::vector<unsigned int> &vertices) {
         std::size_t nb_vertices = vertices.size();
 
         // check if a face has less than 3 vertices;
@@ -121,8 +121,8 @@ namespace easy3d {
         }
 
         // check if a face has duplicated vertices
-        for (int i = 0; i < nb_vertices; ++i) {
-            for (int j = i+1; j < nb_vertices; ++j) {
+        for (std::size_t i = 0; i < nb_vertices; ++i) {
+            for (std::size_t j = i+1; j < nb_vertices; ++j) {
                 if (vertices[i] == vertices[j]) {
                     ++num_faces_duplicated_vertices_;
                     return SurfaceMesh::Face();
@@ -132,15 +132,15 @@ namespace easy3d {
 
         input_face_vertices_.resize(nb_vertices);
         face_vertices_.resize(nb_vertices);
-        for (int i = 0; i < nb_vertices; ++i)
+        for (std::size_t i = 0; i < nb_vertices; ++i)
             input_face_vertices_[i] = face_vertices_[i] = SurfaceMesh::Vertex(vertices[i]);
 
 //        std::cout << "----------------------------\n";
 //        std::cout << "original vertices: " << face_vertices_ << std::endl;
 
         // Detect and remove non-manifold edges by duplicating the corresponding vertices.
-        for (int s = 0; s < nb_vertices; s++) {
-            int t = ((s + 1) % nb_vertices);
+        for (std::size_t s = 0; s < nb_vertices; s++) {
+            std::size_t t = ((s + 1) % nb_vertices);
             find_or_duplicate_edge(s, t);
             //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
         }
@@ -154,7 +154,7 @@ namespace easy3d {
     }
 
 
-    void ManifoldGuard::find_or_duplicate_edge(int s, int t) {
+    void ManifoldGuard::find_or_duplicate_edge(unsigned int s, unsigned int t) {
         // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face,
         // check if adding this edge can result in an complex edge.
 
