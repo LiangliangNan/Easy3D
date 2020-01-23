@@ -55,11 +55,11 @@ namespace easy3d {
         ~ManifoldGuard();
 
         /**
-         * @brief Set the mesh to be reconstructed. This method allow to construct multiple meshes using the same
+         * @brief Set the mesh to be reconstructed. This method allow constructing multiple meshes using the same
          *        manifold guard.
          * @param mesh The mesh to be reconstructed.
          */
-        void set_mesh(SurfaceMesh* mesh);
+        void set_mesh(SurfaceMesh* mesh) { mesh_ = mesh; }
 
         /**
          * @brief Begin surface construction. Must be called at the beginning of the surface construction.
@@ -86,8 +86,6 @@ namespace easy3d {
         void finish();
 
     private:
-        void begin_face();
-        void end_face();
 
         SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
 
