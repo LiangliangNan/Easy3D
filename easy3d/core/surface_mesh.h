@@ -1190,7 +1190,7 @@ namespace easy3d {
             return Edge(h.idx() >> 1);
         }
 
-        /// returns whether h is a boundary halfege, i.e., if its face does not exist.
+        /// returns whether h is a boundary halfedge, i.e., if its face does not exist.
         bool is_boundary(Halfedge h) const
         {
             return !face(h).is_valid();

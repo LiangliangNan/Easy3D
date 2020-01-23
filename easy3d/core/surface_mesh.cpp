@@ -399,7 +399,7 @@ namespace easy3d {
         {
             if ( !is_boundary(vertices[i]) )
             {
-                std::cerr << "SurfaceMesh::add_face: complex vertex\n";
+                std::cerr << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ")\n";
                 return Face();
             }
 
