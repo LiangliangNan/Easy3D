@@ -81,8 +81,8 @@ namespace easy3d {
         SurfaceMesh::Face   add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
 
         /**
-         * @brief Query the actual vertices of the added face. The order remains the same as the 'ids' when
-         *        constructing this face.
+         * @brief Query the actual vertices of the added face. The order remains the same as those when
+         *        constructing the face.
          */
         std::vector<SurfaceMesh::Vertex> face_vertices() const { return face_vertices_; }
 
