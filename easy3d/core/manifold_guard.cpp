@@ -144,7 +144,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face ManifoldGuard::add_face(const std::vector<unsigned int> &vertices) {
+    SurfaceMesh::Face ManifoldGuard::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
         std::size_t nb_vertices = vertices.size();
 
         // check if a face has less than 3 vertices;
@@ -163,10 +163,7 @@ namespace easy3d {
             }
         }
 
-        input_face_vertices_.resize(nb_vertices);
-        face_vertices_.resize(nb_vertices);
-        for (std::size_t i = 0; i < nb_vertices; ++i)
-            input_face_vertices_[i] = face_vertices_[i] = SurfaceMesh::Vertex(vertices[i]);
+        face_vertices_ = input_face_vertices_ = vertices;
 
 		// Detect and remove non-manifold edges by duplicating the corresponding vertices.
 		for (std::size_t s = 0; s < nb_vertices; s++) {
@@ -318,7 +315,7 @@ namespace easy3d {
                 a->copy(v.idx(), new_v.idx());
             }
         }
-        
+
 		return new_v;
     }
 

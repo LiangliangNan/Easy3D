@@ -75,10 +75,16 @@ namespace easy3d {
 
         /**
          * @brief Add a face to the mesh.
-         * @param ids The vertex indices of the mesh.
+         * @param vertices The vertices of the face.
          * @return The added face on success.
          */
-        SurfaceMesh::Face   add_face(const std::vector<unsigned int>& ids);
+        SurfaceMesh::Face   add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
+
+        /**
+         * @brief Query the actual vertices of the added face. The order remains the same as the 'ids' when
+         *        constructing this face.
+         */
+        std::vector<SurfaceMesh::Vertex> face_vertices() const { return face_vertices_; }
 
         /**
          * @brief Finalize surface construction. Must be called at the end of the surface construction.

@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_guard.h>
 #include <easy3d/util/file_system.h>
 
 
@@ -71,6 +72,8 @@ namespace easy3d {
 
             // clear the mesh in case of existing data
             mesh->clear();
+            ManifoldGuard guard(mesh);
+            guard.begin();
 
             // --------------------- collect the data ------------------------
 
@@ -81,7 +84,7 @@ namespace easy3d {
             // for each vertex
             for (std::size_t  v = 0; v < attrib.vertices.size(); v+=3) {
                 // Should I create vertices later, to get rid of isolated vertices?
-                mesh->add_vertex(vec3(attrib.vertices.data() + v));
+                guard.add_vertex(vec3(attrib.vertices.data() + v));
             }
 
             // for each texcoord
@@ -109,20 +112,25 @@ namespace easy3d {
 
                     // For each vertex in the face
                     std::vector<SurfaceMesh::Vertex> vertices;
-                    std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
+                    std::unordered_map<SurfaceMesh::Vertex, int, SurfaceMesh::Vertex::Hash> texcoord_ids;  // vertex -> texcoord id
                     for (std::size_t  v = 0; v < fnum; v++) {
                         tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
                         SurfaceMesh::Vertex vtx(idx.vertex_index);
                         vertices.push_back(vtx);
                         if (prop_texcoords)
-                            texcoord_ids[vtx.idx()] = idx.texcoord_index;
+                            texcoord_ids[vtx] = idx.texcoord_index;
                     }
 
-                    SurfaceMesh::Face face = mesh->add_face(vertices);
-                    if (prop_texcoords) {
+                    SurfaceMesh::Face face = guard.add_face(vertices);
+                    if (prop_texcoords && face.is_valid()) {
+                        auto vts = guard.face_vertices();
+                        std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
+                        for (int i=0; i<vts.size(); ++i)
+                            original_vertex[ vts[i] ] = vertices[i];
+
                         for (auto h : mesh->halfedges(face)) {
                             auto v = mesh->to_vertex(h);
-                            int id = texcoord_ids[v.idx()];
+                            int id = texcoord_ids[original_vertex[v]];
                             prop_texcoords[h] = texcoords[static_cast<std::size_t>(id)];
                         }
                     }
@@ -131,6 +139,9 @@ namespace easy3d {
                     index_offset += fnum;
                 }
             }
+
+            guard.finish();
+
             return mesh->n_faces() > 0;
         }
     }

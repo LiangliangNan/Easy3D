@@ -31,6 +31,7 @@
 #include <cfloat>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_guard.h>
 
 
 namespace easy3d {
@@ -100,6 +101,8 @@ namespace easy3d {
 			// clear mesh
 			mesh->clear();
 
+            ManifoldGuard guard(mesh);
+            guard.begin();
 
 			// open file (in ASCII mode)
 			FILE* in = fopen(file_name.c_str(), "r");
@@ -146,7 +149,7 @@ namespace easy3d {
 						if ((vMapIt = vMap.find(p)) == vMap.end())
 						{
 							// No : add vertex and remember idx/vector mapping
-							v = mesh->add_vertex(p);
+							v = guard.add_vertex(p);
 							vertices[i] = v;
 							vMap[p] = v;
 						}
@@ -161,7 +164,7 @@ namespace easy3d {
 					if ((vertices[0] != vertices[1]) &&
 						(vertices[0] != vertices[2]) &&
 						(vertices[1] != vertices[2]))
-						mesh->add_face(vertices);
+						guard.add_face(vertices);
 
 					n_items = fread(line, 1, 2, in);
 					assert(n_items > 0);
@@ -200,7 +203,7 @@ namespace easy3d {
 							if ((vMapIt = vMap.find(p)) == vMap.end())
 							{
 								// No : add vertex and remember idx/vector mapping
-								v = mesh->add_vertex(p);
+								v = guard.add_vertex(p);
 								vertices[i] = v;
 								vMap[p] = v;
 							}
@@ -215,13 +218,15 @@ namespace easy3d {
 						if ((vertices[0] != vertices[1]) &&
 							(vertices[0] != vertices[2]) &&
 							(vertices[1] != vertices[2]))
-							mesh->add_face(vertices);
+							guard.add_face(vertices);
 					}
 				}
 			}
 
-
 			fclose(in);
+
+			guard.finish();
+
 			return mesh->n_faces() > 0;
 		}
 

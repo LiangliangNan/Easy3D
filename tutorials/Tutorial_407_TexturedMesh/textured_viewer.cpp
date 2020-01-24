@@ -330,11 +330,11 @@ namespace easy3d {
                 const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
 
                 // For each vertex in the face
-                std::vector<unsigned int> vertices;
-                std::unordered_map<int, int> texcoord_ids;  // vertex id -> texcoord id
+                std::vector<SurfaceMesh::Vertex> vertices;
+                std::unordered_map<SurfaceMesh::Vertex, int, SurfaceMesh::Vertex::Hash> texcoord_ids;  // vertex -> texcoord id
                 for (std::size_t v = 0; v < fnum; v++) {
                     tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
-                    int vtx = idx.vertex_index;
+                    SurfaceMesh::Vertex vtx(idx.vertex_index);
                     vertices.push_back(vtx);
                     if (prop_texcoords)
                         texcoord_ids[vtx] = idx.texcoord_index;
@@ -342,10 +342,15 @@ namespace easy3d {
 
                 SurfaceMesh::Face face = guard.add_face(vertices);
                 faces.push_back(face);
-                if (face.is_valid() && prop_texcoords) {
+                if (prop_texcoords && face.is_valid()) {
+                    auto vts = guard.face_vertices();
+                    std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
+                    for (int i=0; i<vts.size(); ++i)
+                        original_vertex[ vts[i] ] = vertices[i];
+
                     for (auto h : mesh->halfedges(face)) {
                         auto v = mesh->to_vertex(h);
-                        int id = texcoord_ids[v.idx()];
+                        int id = texcoord_ids[original_vertex[v]];
                         prop_texcoords[h] = texcoords[static_cast<std::size_t>(id)];
                     }
                 }

@@ -25,6 +25,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_guard.h>
 #include <easy3d/util/line_stream.h>
 
 #include <fstream>
@@ -63,6 +64,9 @@ namespace easy3d {
 
             mesh->clear();
 
+            ManifoldGuard guard(mesh);
+            guard.begin();
+
             // Vertex index starts by 0 in off format.
 
             LineInputStream input(in) ;
@@ -92,7 +96,7 @@ namespace easy3d {
                 vec3 p;
                 details::get_line(input);
                 input >> p;
-                mesh->add_vertex(p);
+                guard.add_vertex(p);
             }
 
             for (int i = 0; i < nb_facets; i++) {
@@ -106,13 +110,15 @@ namespace easy3d {
                     input >> index;
                     vertices.push_back(SurfaceMesh::Vertex(index));
                 }
-                mesh->add_face(vertices);
+                guard.add_face(vertices);
             }
 
             // for mesh models, we can simply ignore the edges.
 //            for (int i = 0; i < nb_edges; i++) {
 //                // read the edges
 //            }
+
+            guard.finish();
 
             return mesh->n_faces() > 0;
 		}

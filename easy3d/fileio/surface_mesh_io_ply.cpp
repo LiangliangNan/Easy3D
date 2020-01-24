@@ -25,7 +25,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/surface_mesh.h>
-
+#include <easy3d/core/manifold_guard.h>
 
 
 namespace easy3d {
@@ -145,14 +145,19 @@ namespace easy3d {
 				}
 			}
 
+			mesh->clear();
+
+            ManifoldGuard guard(mesh);
+            guard.begin();
+
             for (auto p : coordinates)
-                mesh->add_vertex(p);
+                guard.add_vertex(p);
 
 			for (auto indices : face_vertex_indices) {
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
                     vts.push_back(SurfaceMesh::Vertex(id));
-				mesh->add_face(vts);
+				guard.add_face(vts);
 			}
 
 			// now let's add the properties
@@ -183,6 +188,7 @@ namespace easy3d {
                     std::cerr << "element \'" << e.name << "\' ignored" << std::endl;
 			}
 
+            guard.finish();
 			return mesh->n_faces() > 0;
 		}
 
