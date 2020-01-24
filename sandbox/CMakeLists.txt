@@ -6,7 +6,6 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        surface_mesh_io_off.cpp
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "sandbox")
