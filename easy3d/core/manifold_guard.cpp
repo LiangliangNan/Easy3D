@@ -99,7 +99,7 @@ namespace easy3d {
             msg += "\n\t" + std::to_string(num_complex_faces_) + " complex faces (ignored)";
             report = true;
 
-            msg += "\nTODO: resolve non-manifold vertices. If still error 'SurfaceMesh::add_face: patch re-linking failed'"
+            msg += "\nTODO: resolve non-manifold vertices. If still 'SurfaceMesh::add_face: patch re-linking failed'"
                    "\n\tthen check duplicated faces";
         }
 
@@ -153,6 +153,32 @@ namespace easy3d {
             find_or_duplicate_edge(s, t);
             //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
         }
+
+#define MANIFOLD_ON_THE_FLY 1
+#ifdef MANIFOLD_ON_THE_FLY
+        // Now we don't have a complex edge. Check if adding the face results in non-manifold vertex.
+        // This enforce the mesh is manifold after adding EVERY face. It has two limitations:
+        //  - Sensitive to face orders;
+        //  - It cannot report the actual number of non-manifold vertices (non-manifold vertices are always fixed
+        //    before adding a face).
+        // TODO: A better idea is to resolve non-manifold vertices after the whole mesh is constructed.
+        for (std::size_t cur = 0; cur < nb_vertices; cur++) {
+            std::size_t prev = ((cur + nb_vertices - 1) % nb_vertices);
+            std::size_t next = ((cur + 1) % nb_vertices);
+
+            // a non-manifold vertex may occur if:
+            //  - cur is not isolated and is on boundary.
+            //  - the two new edges both not exist.
+            if ((mesh_->halfedge(face_vertices_[cur]).is_valid()) &&  // not isolated
+                (mesh_->is_boundary(face_vertices_[cur])) &&          // on the boundary
+                (!mesh_->find_halfedge(face_vertices_[prev], face_vertices_[cur]).is_valid()) &&
+                (!mesh_->find_halfedge(face_vertices_[cur], face_vertices_[next]).is_valid()))
+            {
+                //std::cout << "prev -> cur -> next: " << prev << " -> " << cur << " -> " << next << std::endl;
+                face_vertices_[cur] = copy_vertex(input_face_vertices_[cur]);
+            }
+        }
+#endif
 
         auto face = mesh_->add_face(face_vertices_);
         if (!face.is_valid())
