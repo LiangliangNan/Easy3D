@@ -285,7 +285,7 @@ namespace easy3d {
 
 
         /**
-         * \brief Template specializations for graphes
+         * \brief Template specializations for graphs
          */
         template <>
         inline void update_data<Graph, PointsDrawable>(Graph* model, PointsDrawable* drawable) {
