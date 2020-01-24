@@ -298,99 +298,105 @@ namespace easy3d {
 	}
 
 
-	void ShaderProgram::set_block(const std::string& name, const void *value) {
+	ShaderProgram* ShaderProgram::set_block(const std::string& name, const void *value) {
 		if (spBlocks.count(name) == 0) {
 			std::cerr << "warning: block " << name << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		glBindBuffer(GL_UNIFORM_BUFFER, spBlocks[name].buffer);	
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, spBlocks[name].size, value);	
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);	
+		return this;
 	}
 
 
-	void ShaderProgram::set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value) {
+	ShaderProgram* ShaderProgram::set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
 			std::cerr << "warning: block " << blockName << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
 			std::cerr << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		BlockUniform bUni = b.uniformOffsets[uniformName];
 		glBindBuffer(GL_UNIFORM_BUFFER, b.buffer);	
 		glBufferSubData(GL_UNIFORM_BUFFER, bUni.offset, bUni.size, value);	
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);	
+		return this;
 	}
 
 
-	void ShaderProgram::set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void * value) {
+	ShaderProgram* ShaderProgram::set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void * value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
 			std::cerr << "warning: block " << blockName << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
 			std::cerr << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		BlockUniform bUni = b.uniformOffsets[uniformName];
 		glBindBuffer(GL_UNIFORM_BUFFER, b.buffer);	
 		glBufferSubData(GL_UNIFORM_BUFFER, bUni.offset + bUni.arrayStride * arrayIndex, bUni.arrayStride, value);	
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);	
+		return this;
 	}
 
 
-	void ShaderProgram::set_uniform(const std::string& name, int value) {
+	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
 			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		Uniform u = pUniforms[name];
-		glProgramUniform1i(program_, u.location, value);	
+		glProgramUniform1i(program_, u.location, value);
+		return this;
 	}
 
 
-	void ShaderProgram::set_uniform(const std::string& name, unsigned int value) {
+	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, unsigned int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
 			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		Uniform u = pUniforms[name];
 		glProgramUniform1ui(program_, u.location, value);	
+		return this;
 	}
 
 
-	void ShaderProgram::set_uniform(const std::string& name, float value) {
+	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, float value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
 			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		Uniform u = pUniforms[name];
-		glProgramUniform1f(program_, u.location, value);	
+		glProgramUniform1f(program_, u.location, value);
+		return this;
 	}
 
 
-	void ShaderProgram::set_uniform(const std::string& name, const void *value) {
+	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, const void *value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
 			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
-			return;
+			return this;
 		}
 
 		Uniform u = pUniforms[name];
@@ -584,6 +590,8 @@ namespace easy3d {
 			glProgramUniformMatrix4x3dv(program_, u.location, u.size, false, (const GLdouble *)value);	
 			break;
 		}
+
+		return this;
 	}
 
 
@@ -642,17 +650,19 @@ namespace easy3d {
 	}
 
 
-    void ShaderProgram::bind_texture(const std::string& name, unsigned int tex_id, int unit, GLenum tex_target /* = GL_TEXTURE_2D */)
+	ShaderProgram* ShaderProgram::bind_texture(const std::string& name, unsigned int tex_id, int unit, GLenum tex_target /* = GL_TEXTURE_2D */)
 	{
         glActiveTexture(GL_TEXTURE0 + unit);     easy3d_debug_gl_error;
         glBindTexture(tex_target, tex_id);    easy3d_debug_gl_error;
         set_uniform(name, unit);	    easy3d_debug_gl_error;
+		return this;
 	}
 
 
-    void ShaderProgram::release_texture(GLenum tex_target /* = GL_TEXTURE_2D */) {
+	ShaderProgram* ShaderProgram::release_texture(GLenum tex_target /* = GL_TEXTURE_2D */) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(tex_target, 0);
+		return this;
 	}
 
 

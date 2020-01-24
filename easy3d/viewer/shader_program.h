@@ -171,19 +171,19 @@ namespace easy3d {
 		// NOTE: if your uniform is an array type, be careful to use the correct uniform names. For example, you have 
 		//		 'uniform vec2/float values[8]' in your shader code, the uniform name is 'values[0]' (not 'values').	
 		//		 So calling to this function looks like: program->set_uniform("values[0]", valueArray);
-		void set_uniform(const std::string& name, const void *value);
+		ShaderProgram* set_uniform(const std::string& name, const void *value);
 
 		// For int and bool uniforms. Sets the uniform <name> to the int value
-		void set_uniform(const std::string& name, int value);
+		ShaderProgram* set_uniform(const std::string& name, int value);
 
 		// For unsigned int uniforms. Sets the uniform <name> to the unsigned int value
-		void set_uniform(const std::string& name, unsigned int value);
+		ShaderProgram* set_uniform(const std::string& name, unsigned int value);
 
 		// For float uniforms. Sets the uniform <name> to the float value
-		void set_uniform(const std::string& name, float value);
+		ShaderProgram* set_uniform(const std::string& name, float value);
 
 		// sets a uniform block as a whole
-		void set_block(const std::string& name, const void *value);
+		ShaderProgram* set_block(const std::string& name, const void *value);
 
 		/*  Warning: be careful when using uniform blocks. Please refer to OpenGL Specification Version 4.5 (Core Profile) - May 28, 2015
 		*			 (https://www.opengl.org/registry/doc/glspec45.core.pdf#page=159)
@@ -193,15 +193,15 @@ namespace easy3d {
 		*			 So please avoid using vec3/mat3 (use vec4/mat4/mat43 instead) in a uniform block. Otherwise, you have to manually pad your
 		*			 structures/arrays out.	*/
 		// sets a uniform inside a named block
-		void set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value);
+		ShaderProgram* set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value);
 
 		// sets an element of an array of uniforms inside a block
-		void set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void* value);
+		ShaderProgram* set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void* value);
 
 		// tex_target: GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
 		// default value is GL_TEXTURE_2D (0x0DE1, just to eliminate the inclusion of gl header file).
-        void bind_texture(const std::string& name, unsigned int tex_id, int unit, unsigned int tex_target = 0x0DE1);
-        void release_texture(unsigned int tex_target = 0x0DE1);
+		ShaderProgram* bind_texture(const std::string& name, unsigned int tex_id, int unit, unsigned int tex_target = 0x0DE1);
+		ShaderProgram* release_texture(unsigned int tex_target = 0x0DE1);
 
         void release();	// end using the shader
 
