@@ -872,19 +872,57 @@ namespace easy3d {
 			}
 		}
 
+		else if (key == GLFW_KEY_B && modifiers == 0) {
+		SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(current_model());
+		if (mesh) {
+			auto drawable = mesh->lines_drawable("borders");
+			if (!drawable) {
+				auto prop = mesh->get_vertex_property<vec3>("v:point");
+				std::vector<vec3> points;
+				for (auto e : mesh->edges()) {
+					if (mesh->is_boundary(e)) {
+						points.push_back(prop[mesh->vertex(e, 0)]);
+						points.push_back(prop[mesh->vertex(e, 1)]);
+					}
+				}
+				if (!points.empty()) {
+					drawable = mesh->add_lines_drawable("borders");
+					drawable->update_vertex_buffer(points);
+					drawable->set_default_color(setting::surface_mesh_borders_color);
+					drawable->set_per_vertex_color(false);
+					drawable->set_impostor_type(LinesDrawable::CYLINDER);
+					drawable->set_line_width(setting::surface_mesh_borders_line_width);
+				}
+			}
+			else
+				drawable->set_visible(!drawable->is_visible());
+		}
+		}
+
 		else if (key == GLFW_KEY_D && modifiers == 0) {
 			if (current_model()) {
                 std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------" << std::endl;
-
-                std::cout << "points drawables:" << std::endl;
-				for (auto d : current_model()->points_drawables())
-                    std::cout << "\t" << d->name() << std::endl;
-                std::cout << "lines drawables:" << std::endl;
-				for (auto d : current_model()->lines_drawables())
-                    std::cout << "\t" << d->name() << std::endl;
-                std::cout << "triangles drawables:" << std::endl;
-				for (auto d : current_model()->triangles_drawables())
-                    std::cout << "\t" << d->name() << std::endl;
+				if (dynamic_cast<SurfaceMesh*>(current_model())) {
+					auto model = dynamic_cast<SurfaceMesh*>(current_model());
+					std::cout << "model is a surface mesh. #f: " << std::to_string(model->faces_size())
+						<< ", #v: " + std::to_string(model->vertices_size())
+						<< ", #e: " + std::to_string(model->edges_size()) << std::endl;
+				}
+				if (!current_model()->points_drawables().empty()) {
+					std::cout << "points drawables:" << std::endl;
+					for (auto d : current_model()->points_drawables())
+						std::cout << "\t" << d->name() << std::endl;
+				}
+				if (!current_model()->lines_drawables().empty()) {
+					std::cout << "lines drawables:" << std::endl;
+					for (auto d : current_model()->lines_drawables())
+						std::cout << "\t" << d->name() << std::endl;
+				}
+				if (!current_model()->triangles_drawables().empty()) {
+					std::cout << "triangles drawables:" << std::endl;
+					for (auto d : current_model()->triangles_drawables())
+						std::cout << "\t" << d->name() << std::endl;
+				}
 
                 current_model()->property_stats();
 			}
@@ -1077,6 +1115,7 @@ namespace easy3d {
 			" ------------------------------------------------------------------\n"
 			"  '+'/'-':             Increase/Decrease point size (line width)   \n"
 			"  'a':                 Toggle axes									\n"
+			"  'b':                 Toggle borders								\n"
 			"  'e':                 Toggle edges							    \n"
             "  'v':                 Toggle vertices                             \n"
             "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
