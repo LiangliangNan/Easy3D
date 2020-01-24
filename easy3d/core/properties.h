@@ -74,6 +74,9 @@ namespace easy3d {
         /// Let two elements swap their storage place.
         virtual void swap(size_t i0, size_t i1) = 0;
 
+        /// Let copy 'from' -> 'to'.
+        virtual void copy(size_t from, size_t to) = 0;
+
         /// Return a deep copy of self.
         virtual BasePropertyArray* clone () const = 0;
 
@@ -134,6 +137,11 @@ namespace easy3d {
             T d(data_[i0]);
             data_[i0]=data_[i1];
             data_[i1]=d;
+        }
+
+        virtual void copy(size_t from, size_t to)
+        {
+            data_[to]=data_[from];
         }
 
         virtual BasePropertyArray* clone() const
@@ -430,6 +438,15 @@ namespace easy3d {
                 parrays_[i]->swap(i0, i1);
         }
 
+        // copy 'from' -> 'to' in all arrays
+        void copy(size_t from, size_t to) const
+        {
+            for (size_t i=0; i<parrays_.size(); ++i)
+                parrays_[i]->copy(from, to);
+        }
+
+        const std::vector<BasePropertyArray*>& arrays() const { return parrays_; }
+        std::vector<BasePropertyArray*>& arrays() { return parrays_; }
 
     private:
         std::vector<BasePropertyArray*>  parrays_;

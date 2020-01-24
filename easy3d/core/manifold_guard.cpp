@@ -42,15 +42,15 @@ namespace easy3d {
     void ManifoldGuard::begin() {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicated_vertices_= 0;
-        num_non_manifold_edges_= 0;
         num_non_manifold_vertices_= 0;
         num_isolated_vertices_= 0;
-        num_complex_faces_ = 0;
+        num_unknown_complex_faces_ = 0;
 
         input_face_vertices_.clear();
         face_vertices_.clear();
 
-        copies_.clear();
+        copied_vertices_.clear();
+        copied_edges_.clear();
     }
 
 
@@ -81,8 +81,8 @@ namespace easy3d {
                       " faces with duplicated vertices (ignored)";
             report = true;
         }
-        if (num_non_manifold_edges_ > 0) {
-            msg += "\n\t" + std::to_string(num_non_manifold_edges_) + " non_manifold edges (fixed)";
+        if (!copied_edges_.empty()) {
+            msg += "\n\t" + std::to_string(copied_edges_.size()) + " duplicated edges (fixed)";
             report = true;
         }
 
@@ -95,8 +95,8 @@ namespace easy3d {
             report = true;
         }
 
-        if (num_complex_faces_ > 0) {
-            msg += "\n\t" + std::to_string(num_complex_faces_) + " complex faces (ignored)";
+        if (num_unknown_complex_faces_ > 0) {
+            msg += "\n\t" + std::to_string(num_unknown_complex_faces_) + " unknown complex faces (ignored)";
             report = true;
 
             msg += "\nTODO: resolve non-manifold vertices. If still 'SurfaceMesh::add_face: patch re-linking failed'"
@@ -110,12 +110,30 @@ namespace easy3d {
 		}
 
 #if 0
-        for (auto g : copies_) {
-            msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to: ";
+        for (auto g : copied_vertices_) {
+            msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to ";
             for (auto v : g.second)
                 msg += "v" + std::to_string(v.idx()) + " ";
         }
+
+        for (auto e : copied_edges_) {
+            auto s = mesh_->from_vertex(e.first);
+            auto t = mesh_->to_vertex(e.first);
+            msg += "\n\tedge h" + std::to_string(e.first.idx()) + " (v" + std::to_string(s.idx()) + " -> v" + std::to_string(t.idx()) + ") copied to ";
+            s = mesh_->from_vertex(e.second);
+            t = mesh_->to_vertex(e.second);
+            msg += "h" + std::to_string(e.second.idx()) + " (v" + std::to_string(s.idx()) + " -> v" + std::to_string(t.idx()) + ")";
+        }
 #endif
+
+        for (auto v : mesh_->vertices())
+            LOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
+        for (auto f : mesh_->faces())
+            LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
+        for (auto e : mesh_->edges())
+            LOG_IF(ERROR, !mesh_->is_valid(e)) << "edge " << e << " is not valid";
+        for (auto h : mesh_->halfedges())
+            LOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
 
         LOG_IF(WARNING, report) << msg;
     }
@@ -153,12 +171,14 @@ namespace easy3d {
 		// Detect and remove non-manifold edges by duplicating the corresponding vertices.
 		for (std::size_t s = 0; s < nb_vertices; s++) {
 			std::size_t t = ((s + 1) % nb_vertices);
-			find_or_duplicate_edge(s, t);
-			LOG_IF(ERROR, !halfedge_is_legel(face_vertices_[s], face_vertices_[t])) << "edge (" << face_vertices_[s] << ", " << face_vertices_[t] << ") is still complex";
+			if (!halfedge_is_legel(face_vertices_[s], face_vertices_[t])) {
+                resolve_non_manifold_edge(s, t);
+                LOG_IF(ERROR, !halfedge_is_legel(face_vertices_[s], face_vertices_[t])) << "edge (" << face_vertices_[s] << ", " << face_vertices_[t] << ") is still complex";
+			}
 		}
 
-#define MANIFOLD_ON_THE_FLY 1
-#ifdef MANIFOLD_ON_THE_FLY
+#define MANIFOLD_ON_THE_FLY 0
+#if MANIFOLD_ON_THE_FLY
         // Now we don't have a complex edge. Check if adding the face results in non-manifold vertex.
         // This enforce the mesh is manifold after adding EVERY face. It has two limitations:
         //  - Sensitive to face orders;
@@ -184,27 +204,33 @@ namespace easy3d {
 #endif
 
         auto face = mesh_->add_face(face_vertices_);
-        if (!face.is_valid())
-            ++num_complex_faces_;
+        if (face.is_valid()) {
+            // copy edge/halfedge properties
+            for (std::size_t s = 0; s < nb_vertices; s++) {
+                std::size_t t = ((s + 1) % nb_vertices);
+                if ((face_vertices_[s] != input_face_vertices_[s]) || (face_vertices_[t] != input_face_vertices_[t])) {
+                    auto h = mesh_->find_halfedge(input_face_vertices_[s], input_face_vertices_[t]);
+                    if (h.is_valid()) {
+                        auto new_h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+                        if (new_h.is_valid())
+                            copied_edges_.push_back(std::make_pair(h, new_h));
+                    }
+                }
+            }
+        }
+        else
+            ++num_unknown_complex_faces_;
 
         return face;
     }
 
 
-    void ManifoldGuard::find_or_duplicate_edge(std::size_t s, std::size_t t) {
-        // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face,
-        // check if adding this edge can result in an complex edge.
-		if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
-			return;
-
-		// Then it is a non-manifold edge and we have to take care of it.
-		++num_non_manifold_edges_;
-
+    void ManifoldGuard::resolve_non_manifold_edge(std::size_t s, std::size_t t) {
 		// Check the copied vertices until we can find one.
 
 		// for the copies of s
-		if (copies_.find(face_vertices_[s]) != copies_.end()) { // s has copies
-			for (auto v : copies_[face_vertices_[s]]) {
+		if (copied_vertices_.find(face_vertices_[s]) != copied_vertices_.end()) { // s has copies
+			for (auto v : copied_vertices_[face_vertices_[s]]) {
 				if (halfedge_is_legel(v, face_vertices_[t])) {
 					face_vertices_[s] = v;
 					return;
@@ -213,23 +239,23 @@ namespace easy3d {
 		}
 
 		// for the copies of t
-		if (copies_.find(face_vertices_[t]) != copies_.end()) { // t has copies
-			for (auto v : copies_[face_vertices_[t]]) {
+		if (copied_vertices_.find(face_vertices_[t]) != copied_vertices_.end()) { // t has copies
+			for (auto v : copied_vertices_[face_vertices_[t]]) {
 				if (halfedge_is_legel(face_vertices_[s], v)) {
 					face_vertices_[t] = v;
-					return;
+                    return;
 				}
 			}
 		}
 
 		// for the copies of both s and t
-		if (copies_.find(face_vertices_[s]) != copies_.end() && copies_.find(face_vertices_[t]) != copies_.end()) { // both s and t have copies
-			for (auto vs : copies_[face_vertices_[s]]) {
-				for (auto vt : copies_[face_vertices_[t]]) {
+		if (copied_vertices_.find(face_vertices_[s]) != copied_vertices_.end() && copied_vertices_.find(face_vertices_[t]) != copied_vertices_.end()) { // both s and t have copies
+			for (auto vs : copied_vertices_[face_vertices_[s]]) {
+				for (auto vt : copied_vertices_[face_vertices_[t]]) {
 					if (halfedge_is_legel(vs, vt)) {
 						face_vertices_[s] = vs;
 						face_vertices_[t] = vt;
-						return;
+                        return;
 					}
 				}
 			}
@@ -239,19 +265,23 @@ namespace easy3d {
 		if (!mesh_->is_boundary(face_vertices_[s])) {
 			face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
 			if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
-				return;
+                return;
 		}
 		if (!mesh_->is_boundary(face_vertices_[t])) {
 			face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
 			if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
-				return;
+                return;
 		}
 
 		// It must be a very complex situation if we reach here: we simple copy both.
-		if (face_vertices_[s] == input_face_vertices_[s])
-			face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
-		if (face_vertices_[t] == input_face_vertices_[t])
-			face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
+		if (face_vertices_[s] == input_face_vertices_[s]) {
+            face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
+            if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
+                return;
+        }
+		if (face_vertices_[t] == input_face_vertices_[t]) {
+            face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
+        }
     }
 
 
@@ -276,7 +306,19 @@ namespace easy3d {
 		//               is growing.
 		const vec3 p = points[v];
         auto new_v = mesh_->add_vertex(p);
-        copies_[v].push_back(new_v);
+        copied_vertices_[v].push_back(new_v);
+
+        {// copy all vertex properties except "v:connectivity" and "v:deleted"
+            auto &arrays = mesh_->vprops_.arrays();
+            for (auto &a : arrays) {
+                const auto &name = a->name();
+                //std::cout << name << std::endl << std::endl;
+                if (name == "v:connectivity" || name == "v:deleted")
+                    continue;
+                a->copy(v.idx(), new_v.idx());
+            }
+        }
+        
 		return new_v;
     }
 

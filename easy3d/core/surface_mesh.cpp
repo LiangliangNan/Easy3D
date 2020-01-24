@@ -37,6 +37,7 @@
  *----------------------------------------------------------*/
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/util/logging.h>
 
 #include <cmath>
 
@@ -399,7 +400,7 @@ namespace easy3d {
         {
             if ( !is_boundary(vertices[i]) )
             {
-                std::cerr << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ")\n";
+                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ")";
                 return Face();
             }
 
@@ -408,7 +409,7 @@ namespace easy3d {
 
             if (!is_new[i] && !is_boundary(halfedges[i]))
             {
-                std::cerr << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ")\n";
+                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ")";
                 return Face();
             }
         }
@@ -444,7 +445,7 @@ namespace easy3d {
                     // ok ?
                     if (boundary_next == inner_next)
                     {
-                        std::cerr << "SurfaceMesh::add_face: patch re-linking failed\n";
+                        LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: patch re-linking failed";
                         return Face();
                     }
 

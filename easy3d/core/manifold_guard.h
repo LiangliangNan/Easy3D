@@ -89,10 +89,10 @@ namespace easy3d {
 
         SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
 
-        // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face, check if adding this edge can
-        // result in a complex edge. If so, check it still happens if using one of the copied vertices. If using
-        // the copied vertex (or vertices) is OK, assign the good edge vertices.
-        void find_or_duplicate_edge(std::size_t s, std::size_t t);
+        // The edge (face_vertices_[s] -> face_vertices_[t]) of the current face causes a non-manifold edge.
+        // This method tries to resolve it by using the copied vertices. If it work, assign the good edge vertices.
+        // If existing copies still don't work, it makes new copies.
+        void resolve_non_manifold_edge(std::size_t s, std::size_t t);
 
         // Will adding the halfedge (s -> t) result in a complex edge?
         // Return true if the edge does not exist or if it is a boundary (i.e., the face is NULL).
@@ -107,17 +107,14 @@ namespace easy3d {
         // faces with duplicated vertices
         std::size_t num_faces_duplicated_vertices_;
 
-        // complex edges (i.e., edges connecting more than two faces)
-        std::size_t num_non_manifold_edges_;
-
         // non-manifold vertices
         std::size_t num_non_manifold_vertices_;
 
         // isolated vertices
         std::size_t num_isolated_vertices_;
 
-        // complex faces (couldn't be added to the mesh)
-        std::size_t num_complex_faces_;
+        // complex faces that couldn't be added to the mesh (unknow known reason)
+        std::size_t num_unknown_complex_faces_;
 
         // the input vertices of the current face
         std::vector<SurfaceMesh::Vertex> input_face_vertices_ ;
@@ -125,7 +122,10 @@ namespace easy3d {
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
         // the copied vertices: vertices in 'second' were copied from 'first'
-        std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > copies_;
+        std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > copied_vertices_;
+
+        // the copied edges: vertices in 'second' were copied from 'first'
+        std::vector< std::pair<SurfaceMesh::Halfedge, SurfaceMesh::Halfedge> > copied_edges_;
     };
 
 }
