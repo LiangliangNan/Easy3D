@@ -103,6 +103,12 @@ namespace easy3d {
                    "\n\tthen check duplicated faces";
         }
 
+		if (report) {
+			msg += "\n\t#f: " + std::to_string(mesh_->faces_size()) 
+				+ ", #v: " + std::to_string(mesh_->vertices_size())
+				+ ", #e: " + std::to_string(mesh_->edges_size());
+		}
+
 #if 0
         for (auto g : copies_) {
             msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to: ";
@@ -253,10 +259,12 @@ namespace easy3d {
 
     SurfaceMesh::Vertex ManifoldGuard::copy_vertex(SurfaceMesh::Vertex v) {
         auto points = mesh_->vertex_property<vec3>("v:point");
-        auto new_v = mesh_->add_vertex(points[v]);
+		// [Liangliang]: be careful, 'const vec3&' won't work because the vector 
+		//               is growing.
+		const vec3 p = points[v];
+        auto new_v = mesh_->add_vertex(p);
         copies_[v].push_back(new_v);
-        //std::cout << "vertex " << v << " copied to " << new_v << std::endl;
-        return new_v;
+		return new_v;
     }
 
 }
