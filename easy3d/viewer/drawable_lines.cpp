@@ -92,9 +92,9 @@ namespace easy3d {
 
             const mat4& MVP = camera->modelViewProjectionMatrix();
             program->bind();
-            program->set_uniform("MVP", MVP);
-            program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-            program->set_uniform("default_color", default_color());
+            program->set_uniform("MVP", MVP)
+				->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+				->set_uniform("default_color", default_color());
             gl_draw(with_storage_buffer);
             program->release();
         }
@@ -110,16 +110,14 @@ namespace easy3d {
                 return;
 
             program->bind();
-            program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
-
-            program->set_uniform("MV", camera->modelViewMatrix());
-            program->set_uniform("PROJ", camera->projectionMatrix());
+            program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+				->set_uniform("MV", camera->modelViewMatrix())
+				->set_uniform("PROJ", camera->projectionMatrix());
 
             float ratio = camera->pixelGLRatio(camera->sceneCenter());
-            program->set_uniform("radius", line_width_ * ratio);
-
-            program->set_uniform("default_color", default_color());
-            program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
+            program->set_uniform("radius", line_width_ * ratio)
+				->set_uniform("default_color", default_color())
+				->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
 
             gl_draw(with_storage_buffer);
             program->release();
@@ -144,21 +142,19 @@ namespace easy3d {
             return;
 
         program->bind();
-        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
-
-        program->set_uniform("MV", camera->modelViewMatrix());
-        program->set_uniform("PROJ", camera->projectionMatrix());
+        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+			->set_uniform("MV", camera->modelViewMatrix())
+			->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("radius", line_width_ * ratio);
+        program->set_uniform("radius", line_width_ * ratio)
+			->set_uniform("default_color", default_color())
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("eLightPos", setting::light_position);
 
-        program->set_uniform("default_color", default_color());
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("eLightPos", setting::light_position);
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
 
         gl_draw(with_storage_buffer);
         program->release();
@@ -182,21 +178,19 @@ namespace easy3d {
             return;
 
         program->bind();
-        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
-
-        program->set_uniform("MV", camera->modelViewMatrix());
-        program->set_uniform("PROJ", camera->projectionMatrix());
+		program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+			->set_uniform("MV", camera->modelViewMatrix())
+			->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("radius", line_width() * ratio);
+        program->set_uniform("radius", line_width() * ratio)
+			->set_uniform("default_color", default_color())
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("eLightPos", setting::light_position);
 
-        program->set_uniform("default_color", default_color());
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("eLightPos", setting::light_position);
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
 
         gl_draw(with_storage_buffer);
         program->release();
