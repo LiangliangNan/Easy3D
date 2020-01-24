@@ -92,7 +92,7 @@ namespace easy3d {
         // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face, check if adding this edge can
         // result in a complex edge. If so, check it still happens if using one of the copied vertices. If using
         // the copied vertex (or vertices) is OK, assign the good edge vertices.
-        void find_or_duplicate_edge(unsigned int s, unsigned int t);
+        void find_or_duplicate_edge(std::size_t s, std::size_t t);
 
         // Will adding the halfedge (s -> t) result in a complex edge?
         // Return true if the edge does not exist or if it is a boundary (i.e., the face is NULL).
