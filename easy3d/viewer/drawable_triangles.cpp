@@ -124,18 +124,18 @@ namespace easy3d {
         const vec4& wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("wLightPos", wLightPos);
-        program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("two_sides_lighting", true);
-        program->set_uniform("distinct_back_color", true);
-        program->set_uniform("smooth_shading", smooth_shading());
-        program->set_uniform("ssaoEnabled", false);
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_uniform("MVP", MVP)
+			->set_uniform("wLightPos", wLightPos)
+			->set_uniform("wCamPos", wCamPos)
+			->set_uniform("two_sides_lighting", true)
+			->set_uniform("distinct_back_color", true)
+			->set_uniform("smooth_shading", smooth_shading())
+			->set_uniform("ssaoEnabled", false)
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("default_color", default_color())
+			->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -172,24 +172,19 @@ namespace easy3d {
         const vec4& wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("wLightPos", wLightPos);
-        program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("two_sides_lighting", false);
-        program->set_uniform("smooth_shading", smooth_shading());
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
-
-        program->bind_texture("textureID", texture()->id(), 0);
-        program->set_uniform("texture_repeat", 1.0f);      // TODO: make this a parameter
-        program->set_uniform("fractional_repeat", 0.0f);   // TODO: make this a parameter
-
-
+		program->set_uniform("MVP", MVP)
+			->set_uniform("wLightPos", wLightPos)
+			->set_uniform("wCamPos", wCamPos)
+			->set_uniform("two_sides_lighting", false)
+			->set_uniform("smooth_shading", smooth_shading())
+			->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess)
+			->bind_texture("textureID", texture()->id(), 0)
+			->set_uniform("texture_repeat", 1.0f)      // TODO: make this a parameter
+			->set_uniform("fractional_repeat", 0.0f);  // TODO: make this a parameter
         gl_draw(with_storage_buffer);
         program->release_texture();
-
         program->release();
     }
 

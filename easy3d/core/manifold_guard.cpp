@@ -103,6 +103,12 @@ namespace easy3d {
                    "\n\tthen check duplicated faces";
         }
 
+		if (report) {
+			msg += "\n\t#f: " + std::to_string(mesh_->faces_size()) 
+				+ ", #v: " + std::to_string(mesh_->vertices_size())
+				+ ", #e: " + std::to_string(mesh_->edges_size());
+		}
+
 #if 0
         for (auto g : copies_) {
             msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to: ";
@@ -144,15 +150,12 @@ namespace easy3d {
         for (std::size_t i = 0; i < nb_vertices; ++i)
             input_face_vertices_[i] = face_vertices_[i] = SurfaceMesh::Vertex(vertices[i]);
 
-//        std::cout << "----------------------------\n";
-//        std::cout << "original vertices: " << face_vertices_ << std::endl;
-
-        // Detect and remove non-manifold edges by duplicating the corresponding vertices.
-        for (std::size_t s = 0; s < nb_vertices; s++) {
-            std::size_t t = ((s + 1) % nb_vertices);
-            find_or_duplicate_edge(s, t);
-            //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
-        }
+		// Detect and remove non-manifold edges by duplicating the corresponding vertices.
+		for (std::size_t s = 0; s < nb_vertices; s++) {
+			std::size_t t = ((s + 1) % nb_vertices);
+			find_or_duplicate_edge(s, t);
+			LOG_IF(ERROR, !halfedge_is_legel(face_vertices_[s], face_vertices_[t])) << "edge (" << face_vertices_[s] << ", " << face_vertices_[t] << ") is still complex";
+		}
 
 #define MANIFOLD_ON_THE_FLY 1
 #ifdef MANIFOLD_ON_THE_FLY
@@ -188,77 +191,67 @@ namespace easy3d {
     }
 
 
-    void ManifoldGuard::find_or_duplicate_edge(unsigned int s, unsigned int t) {
+    void ManifoldGuard::find_or_duplicate_edge(std::size_t s, std::size_t t) {
         // For the edge (face_vertices_[s] -> face_vertices_[t]) of the current face,
         // check if adding this edge can result in an complex edge.
+		if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
+			return;
 
-        if (!halfedge_is_legel(face_vertices_[s], face_vertices_[t])) { // complex edge expected
-            ++num_non_manifold_edges_;
-//            std::cout << " -- bad edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
+		// Then it is a non-manifold edge and we have to take care of it.
+		++num_non_manifold_edges_;
 
-            // Check the copied vertices until we can find one.
+		// Check the copied vertices until we can find one.
 
-            // for the copies of s
-            if (copies_.find(face_vertices_[s]) != copies_.end()) { // s has copies
-                for (auto v : copies_[face_vertices_[s]]) {
-                    if (halfedge_is_legel(v, face_vertices_[t])) {
-                        face_vertices_[s] = v;
-                        //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
-                        return;
-                    }
-//                    else
-//                        std::cout << " -- bad edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
-                }
-            }
+		// for the copies of s
+		if (copies_.find(face_vertices_[s]) != copies_.end()) { // s has copies
+			for (auto v : copies_[face_vertices_[s]]) {
+				if (halfedge_is_legel(v, face_vertices_[t])) {
+					face_vertices_[s] = v;
+					return;
+				}
+			}
+		}
 
-            // for the copies of t
-            if (copies_.find(face_vertices_[t]) != copies_.end()) { // s has copies
-                for (auto v : copies_[face_vertices_[t]]) {
-                    if (halfedge_is_legel(face_vertices_[s], v)) {
-                        face_vertices_[t] = v;
-                        //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
-                        return;
-                    }
-//                    else
-//                        std::cout << " -- bad edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
-                }
-            }
+		// for the copies of t
+		if (copies_.find(face_vertices_[t]) != copies_.end()) { // t has copies
+			for (auto v : copies_[face_vertices_[t]]) {
+				if (halfedge_is_legel(face_vertices_[s], v)) {
+					face_vertices_[t] = v;
+					return;
+				}
+			}
+		}
 
-            // for the copies of both s and t
-            if (copies_.find(face_vertices_[s]) != copies_.end() && copies_.find(face_vertices_[t]) != copies_.end()) { // both s and t have copies
-                for (auto vs : copies_[face_vertices_[s]]) {
-                    for (auto vt : copies_[face_vertices_[t]]) {
-                        if (halfedge_is_legel(vs, vt)) {
-                            face_vertices_[s] = vs;
-                            face_vertices_[t] = vt;
-                            //std::cout << "edge is ok: " << face_vertices_[s] << " -> " << face_vertices_[t] << std::endl;
-                            return;
-                        }
-//                        else
-//                            std::cout << " -- bad edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
-                    }
-                }
-            }
+		// for the copies of both s and t
+		if (copies_.find(face_vertices_[s]) != copies_.end() && copies_.find(face_vertices_[t]) != copies_.end()) { // both s and t have copies
+			for (auto vs : copies_[face_vertices_[s]]) {
+				for (auto vt : copies_[face_vertices_[t]]) {
+					if (halfedge_is_legel(vs, vt)) {
+						face_vertices_[s] = vs;
+						face_vertices_[t] = vt;
+						return;
+					}
+				}
+			}
+		}
 
-            //std::cout << " -- bad edge (s <-> t): " << face_vertices_[s] << " <-> " << face_vertices_[t] << std::endl;
-            // If we reach here, we must copy at least one of s and t. We try to copy the closed disk one first.
-            if (!mesh_->is_boundary(face_vertices_[s])) {
-                face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
-                if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
-                    return;
-            }
-            if (!mesh_->is_boundary(face_vertices_[t])) {
-                face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
-                if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
-                    return;
-            }
+		// If we reach here, we must copy at least one of s and t. We try to copy the closed disk one first.
+		if (!mesh_->is_boundary(face_vertices_[s])) {
+			face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
+			if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
+				return;
+		}
+		if (!mesh_->is_boundary(face_vertices_[t])) {
+			face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
+			if (halfedge_is_legel(face_vertices_[s], face_vertices_[t]))
+				return;
+		}
 
-            // It must be a very complex situation if we reach here: we simple copy both.
-            if (face_vertices_[s] == input_face_vertices_[s])
-                face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
-            if (face_vertices_[t] == input_face_vertices_[t])
-                face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
-        }
+		// It must be a very complex situation if we reach here: we simple copy both.
+		if (face_vertices_[s] == input_face_vertices_[s])
+			face_vertices_[s] = copy_vertex(input_face_vertices_[s]);
+		if (face_vertices_[t] == input_face_vertices_[t])
+			face_vertices_[t] = copy_vertex(input_face_vertices_[t]);
     }
 
 
@@ -279,10 +272,12 @@ namespace easy3d {
 
     SurfaceMesh::Vertex ManifoldGuard::copy_vertex(SurfaceMesh::Vertex v) {
         auto points = mesh_->vertex_property<vec3>("v:point");
-        auto new_v = mesh_->add_vertex(points[v]);
+		// [Liangliang]: be careful, 'const vec3&' won't work because the vector 
+		//               is growing.
+		const vec3 p = points[v];
+        auto new_v = mesh_->add_vertex(p);
         copies_[v].push_back(new_v);
-        //std::cout << "vertex " << v << " copied to " << new_v << std::endl;
-        return new_v;
+		return new_v;
     }
 
 }

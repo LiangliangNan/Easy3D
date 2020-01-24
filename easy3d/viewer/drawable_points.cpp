@@ -111,15 +111,15 @@ namespace easy3d {
         glPointSize(point_size());
 
         program->bind();
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("wLightPos", wLightPos);
-        program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("lighting", normal_buffer());
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_uniform("MVP", MVP)
+			->set_uniform("wLightPos", wLightPos)
+			->set_uniform("wCamPos", wCamPos)
+			->set_uniform("lighting", normal_buffer())
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("default_color", default_color())
+			->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -146,22 +146,21 @@ namespace easy3d {
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
 
         program->bind();
-        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
 
-        program->set_uniform("MV", camera->modelViewMatrix());
-        program->set_uniform("PROJ", camera->projectionMatrix());
-        program->set_uniform("screen_width", camera->screenWidth());
+		program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+			->set_uniform("MV", camera->modelViewMatrix())
+			->set_uniform("PROJ", camera->projectionMatrix())
+			->set_uniform("screen_width", camera->screenWidth());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("sphere_radius", point_size() * ratio);
+        program->set_uniform("sphere_radius", point_size() * ratio)
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("default_color", default_color())
+			->set_uniform("eLightPos", setting::light_position);
 
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
-        program->set_uniform("eLightPos", setting::light_position);
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
 
@@ -188,21 +187,19 @@ namespace easy3d {
         easy3d_debug_gl_error;
 
         program->bind();
-        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE);
-
-        program->set_uniform("MV", camera->modelViewMatrix());
-        program->set_uniform("PROJ", camera->projectionMatrix());
+        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+			->set_uniform("MV", camera->modelViewMatrix())
+			->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("sphere_radius", point_size() * ratio);
+        program->set_uniform("sphere_radius", point_size() * ratio)
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("default_color", default_color())
+			->set_uniform("eLightPos", setting::light_position);
 
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
-        program->set_uniform("eLightPos", setting::light_position);
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -276,21 +273,20 @@ namespace easy3d {
         const vec4& wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
 
         program->bind();
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
-        program->set_uniform("default_color", default_color());
+		program->set_uniform("MVP", MVP)
+			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+			->set_uniform("default_color", default_color());
 
         float ratio = camera->pixelGLRatio(camera->sceneCenter());
-        program->set_uniform("radius", point_size() * ratio);
+        program->set_uniform("radius", point_size() * ratio)
+			->set_uniform("wLightPos", wLightPos)
+			->set_uniform("wCamPos", wCamPos)
+			->set_uniform("lighting", true)
+			->set_uniform("two_sides_lighting", false);
 
-        program->set_uniform("wLightPos", wLightPos);
-        program->set_uniform("wCamPos", wCamPos);
-        program->set_uniform("lighting", true);
-        program->set_uniform("two_sides_lighting", false);
-
-        program->set_block_uniform("Material", "ambient", material().ambient);
-        program->set_block_uniform("Material", "specular", material().specular);
-        program->set_block_uniform("Material", "shininess", &material().shininess);
+        program->set_block_uniform("Material", "ambient", material().ambient)
+			->set_block_uniform("Material", "specular", material().specular)
+			->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
