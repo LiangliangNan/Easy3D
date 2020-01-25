@@ -21,6 +21,7 @@ set(${PROJECT_NAME}_HEADERS
         segment.h
         signal.h
         surface_mesh.h
+		manifold_builder.h
         types.h
         vec.h
         )
@@ -29,7 +30,8 @@ set(${PROJECT_NAME}_SOURCES
         graph.cpp
         point_cloud.cpp
         surface_mesh.cpp
-        manifold_guard.cpp manifold_guard.h)
+        manifold_builder.cpp
+		)
 
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})

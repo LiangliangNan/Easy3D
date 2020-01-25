@@ -50,8 +50,9 @@ int main(int argc, char** argv) {
                 setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
                 setting::resource_directory() + "/data/domik/domik.obj",
                 setting::resource_directory() + "/data/house/house.obj",
-                setting::resource_directory() + "/data/other/sponza/sponza.obj"
-        };
+				setting::resource_directory() + "/data/other/sponza/sponza.obj",
+				setting::resource_directory() + "/data/tree.obj"
+		};
 
 
 

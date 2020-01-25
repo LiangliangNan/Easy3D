@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_guard.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -38,8 +38,8 @@
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 
-// In case the ManifoldGuard failed to handle the mesh
-#define DO_NOT_CREATE_SURFACE_MESH
+// In case the ManifoldBuilder failed to handle the mesh
+//#define DO_NOT_CREATE_SURFACE_MESH
 
 namespace easy3d {
 
@@ -295,8 +295,8 @@ namespace easy3d {
         SurfaceMesh* mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
-        ManifoldGuard guard(mesh);
-        guard.begin();
+        ManifoldBuilder builder(mesh);
+        builder.begin();
 
         // there might be invalid faces
         std::vector<SurfaceMesh::Face> faces;
@@ -304,7 +304,7 @@ namespace easy3d {
         // add vertices
         for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
             // Should I create vertices later, to get rid of isolated vertices?
-            guard.add_vertex(vec3(attrib.vertices.data() + v));
+            builder.add_vertex(vec3(attrib.vertices.data() + v));
         }
         // for each texcoord
         std::vector<vec2> texcoords;
@@ -340,10 +340,10 @@ namespace easy3d {
                         texcoord_ids[vtx] = idx.texcoord_index;
                 }
 
-                SurfaceMesh::Face face = guard.add_face(vertices);
+                SurfaceMesh::Face face = builder.add_face(vertices);
                 faces.push_back(face);
                 if (prop_texcoords && face.is_valid()) {
-                    auto vts = guard.face_vertices();
+                    auto vts = builder.face_vertices();
                     std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
                     for (int i=0; i<vts.size(); ++i)
                         original_vertex[ vts[i] ] = vertices[i];
@@ -360,7 +360,7 @@ namespace easy3d {
             }
         }
 
-        guard.finish();
+        builder.finish();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())

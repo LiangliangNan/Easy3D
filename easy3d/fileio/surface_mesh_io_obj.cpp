@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_guard.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/file_system.h>
 
 
@@ -72,8 +72,9 @@ namespace easy3d {
 
             // clear the mesh in case of existing data
             mesh->clear();
-            ManifoldGuard guard(mesh);
-            guard.begin();
+
+			ManifoldBuilder builder(mesh);
+			builder.begin();
 
             // --------------------- collect the data ------------------------
 
@@ -84,7 +85,7 @@ namespace easy3d {
             // for each vertex
             for (std::size_t  v = 0; v < attrib.vertices.size(); v+=3) {
                 // Should I create vertices later, to get rid of isolated vertices?
-                guard.add_vertex(vec3(attrib.vertices.data() + v));
+                builder.add_vertex(vec3(attrib.vertices.data() + v));
             }
 
             // for each texcoord
@@ -121,9 +122,9 @@ namespace easy3d {
                             texcoord_ids[vtx] = idx.texcoord_index;
                     }
 
-                    SurfaceMesh::Face face = guard.add_face(vertices);
+                    SurfaceMesh::Face face = builder.add_face(vertices);
                     if (prop_texcoords && face.is_valid()) {
-                        auto vts = guard.face_vertices();
+                        auto vts = builder.face_vertices();
                         std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
                         for (int i=0; i<vts.size(); ++i)
                             original_vertex[ vts[i] ] = vertices[i];
@@ -140,7 +141,7 @@ namespace easy3d {
                 }
             }
 
-            guard.finish();
+            builder.finish();
 
             return mesh->n_faces() > 0;
         }

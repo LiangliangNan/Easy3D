@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_MANIFOLD_GUARD_H
-#define EASY3D_MANIFOLD_GUARD_H
+#ifndef EASY3D_MANIFOLD_BUILDER_H
+#define EASY3D_MANIFOLD_BUILDER_H
 
 #include <easy3d/core/surface_mesh.h>
 
@@ -39,7 +39,7 @@ namespace easy3d {
      *
      * Usage example:
      * ---------------------------------------------------------
-     *      ManifoldGuard builder(mesh);
+     *      ManifoldBuilder builder(mesh);
      *      builder.begin();
      *      for (auto p : points)
      *          builder.add_vertex(p);
@@ -49,10 +49,10 @@ namespace easy3d {
      * ---------------------------------------------------------
      */
 
-    class ManifoldGuard {
+    class ManifoldBuilder {
     public:
-        ManifoldGuard(SurfaceMesh* mesh = nullptr);
-        ~ManifoldGuard();
+        ManifoldBuilder(SurfaceMesh* mesh = nullptr);
+        ~ManifoldBuilder();
 
         /**
          * @brief Set the mesh to be reconstructed. This method allow constructing multiple meshes using the same
@@ -63,14 +63,9 @@ namespace easy3d {
 
         /**
          * @brief Begin surface construction. Must be called at the beginning of the surface construction.
-         *        After 'begin', a vertex property has been added to record the original vertex of each vertex.
-         *        This property is useful when assigning vertex/edge properties afterwards during the construction.
-         *        This property will be destroyed after call to 'finish()'.
-         * @original_vertex A string giving the name of the original vertex property.
-         * @attention This property may be destroyed after call to 'finish()'.
-         * @related finish(bool).
+         * @related finish().
          */
-        void begin(const std::string& original_vertex = "v:original_vertex");
+        void begin();
 
         /**
          * @brief Add a vertex to the mesh.
@@ -94,10 +89,9 @@ namespace easy3d {
 
         /**
          * @brief Finalize the surface construction. Must be called at the end of the surface construction.
-         * @clean True to delete the temporal vertex property.
-         * @related begin(const std::string&).
+         * @related begin().
          */
-        void finish(bool clean = true);
+        void finish();
 
     private:
 
@@ -143,25 +137,21 @@ namespace easy3d {
         // isolated vertices
         std::size_t num_isolated_vertices_;
 
-        // the input vertices of the current face
-        std::vector<SurfaceMesh::Vertex> face_original_vertices_ ;
         // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
         // the copied vertices: vertices in 'second' were copied from 'first'
-        std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > copied_vertices_;
+        std::unordered_map<int, std::vector<SurfaceMesh::Vertex> > copied_vertices_;
 
-        // the copied edges: in each pair, the 'second' was copied from the 'first'.
-        struct Edge {
-            Edge(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) : source(s), target(t) {}
-            SurfaceMesh::Vertex source;
-            SurfaceMesh::Vertex target;
-        };
-        std::vector< std::pair<Edge, Edge> > copied_edges_;
-
+		// A vertex property to record the original vertex of each vertex.
         SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
+
+		// The records of the existing halfedges (each associated with a valid face) used
+		// for fast query of duplicated edges. All vertices are their original indices.
+		// A halfedge is denoted as: i -> outgoing_halfedges_[i][j].
+		std::vector< std::vector<int> > outgoing_halfedges_;
     };
 
 }
 
-#endif //EASY3D_MANIFOLD_GUARD_H
+#endif //EASY3D_MANIFOLD_BUILDER_H

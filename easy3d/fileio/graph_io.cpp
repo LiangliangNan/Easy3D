@@ -63,8 +63,8 @@ namespace easy3d {
 
         if (success)
             std::cout << "graph loaded ("
-                      << "#v: " << graph->vertices_size() << ", "
-                      << "#e: " << graph->edges_size() << "). Time: "
+                      << "#vertex: " << graph->vertices_size() << ", "
+                      << "#edge: " << graph->edges_size() << "). Time: "
                       << w.time_string() << std::endl;
         else
             std::cout << "load graph failed" << std::endl;

@@ -91,7 +91,7 @@ namespace easy3d {
             static VertexGroup read_binary_group(std::istream& input);
             static void write_binary_group(std::ostream& output, const VertexGroup& g);
 
-            static std::size_t num_group_parameters(int type);
+            static int num_group_parameters(int type);
 
             static std::vector<float> get_group_parameters(const VertexGroup& g);
             static void assign_group_parameters(VertexGroup& g, std::vector<float>& para);

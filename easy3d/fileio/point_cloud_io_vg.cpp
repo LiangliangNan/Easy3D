@@ -440,7 +440,7 @@ namespace easy3d {
 
             //////////////////////////////////////////////////////////////////////////
             std::string label = g.label_;
-            int label_size = label.size();
+            int label_size = static_cast<int>(label.size());
             output.write((char*)&label_size, sizeof(int));
             output.write(label.data(), label_size);
             //////////////////////////////////////////////////////////////////////////
@@ -454,7 +454,7 @@ namespace easy3d {
         }
 
 
-        std::size_t PointCloudIO_vg::num_group_parameters(int type) {
+		int PointCloudIO_vg::num_group_parameters(int type) {
             switch (type)
             {
             case VertexGroup::VG_PLANE:
