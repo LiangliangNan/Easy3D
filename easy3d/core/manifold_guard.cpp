@@ -62,6 +62,25 @@ namespace easy3d {
         std::string msg = "mesh \n\t" + name + "\n\thas topological issues:";
         bool report(false);
 
+        // ----------------------------------------------------------------------------------
+
+        if (num_faces_less_three_vertices_ > 0) {
+            msg += "\n\t\t" + std::to_string(num_faces_less_three_vertices_) +
+                   " faces with less than 3 vertices (ignored)";
+            report = true;
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        if (num_faces_duplicated_vertices_ > 0) {
+            msg += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
+                   " faces with duplicated vertices (ignored)";
+            report = true;
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        num_isolated_vertices_ = 0;
         for (auto v : mesh_->vertices()) {
             if (mesh_->is_isolated(v)) {
                 mesh_->delete_vertex(v);
@@ -74,21 +93,9 @@ namespace easy3d {
             report = true;
         }
 
-        if (num_faces_less_three_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_less_three_vertices_) +
-                      " faces with less than 3 vertices (ignored)";
-            report = true;
-        }
-        if (num_faces_duplicated_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
-                      " faces with duplicated vertices (ignored)";
-            report = true;
-        }
-        if (!copied_edges_.empty()) {
-            msg += "\n\t\t" + std::to_string(copied_edges_.size()) + " duplicated edges (fixed)";
-            report = true;
-        }
+        // ----------------------------------------------------------------------------------
 
+        num_non_manifold_vertices_ = 0;
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v))
                 ++num_non_manifold_vertices_;
@@ -98,6 +105,24 @@ namespace easy3d {
             report = true;
         }
 
+        // ----------------------------------------------------------------------------------
+
+        if (!copied_edges_.empty()) {
+            msg += "\n\t\t" + std::to_string(copied_edges_.size()) + " duplicated edges (fixed)";
+            report = true;
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        if (!copied_vertices_.empty()) {
+            int count(0);
+            for (auto copies : copied_vertices_)
+                count += copies.second.size();
+            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) + " copy occurences)";
+        }
+
+        // ----------------------------------------------------------------------------------
+
         if (num_faces_unknown_structure_ > 0) {
             msg += "\n\t\t" + std::to_string(num_faces_unknown_structure_) + " complex faces with unknown structure (ignored)";
             report = true;
@@ -106,11 +131,13 @@ namespace easy3d {
                    "\n\tthen check duplicated faces";
         }
 
-		if (report) {
-			msg += "\n\t#face: " + std::to_string(mesh_->faces_size())
-				+ ", #vertex: " + std::to_string(mesh_->vertices_size())
-				+ ", #edge: " + std::to_string(mesh_->edges_size());
-		}
+        // ----------------------------------------------------------------------------------
+
+        if (report) {
+            msg += "\n\t#face: " + std::to_string(mesh_->faces_size())
+                   + ", #vertex: " + std::to_string(mesh_->vertices_size())
+                   + ", #edge: " + std::to_string(mesh_->edges_size());
+        }
 
 #if 0
         for (auto g : copied_vertices_) {
