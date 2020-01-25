@@ -63,8 +63,14 @@ namespace easy3d {
 
         /**
          * @brief Begin surface construction. Must be called at the beginning of the surface construction.
+         *        After 'begin', a vertex property has been added to record the original vertex of each vertex.
+         *        This property is useful when assigning vertex/edge properties afterwards during the construction.
+         *        This property will be destroyed after call to 'finish()'.
+         * @original_vertex A string giving the name of the original vertex property.
+         * @attention This property may be destroyed after call to 'finish()'.
+         * @related finish(bool).
          */
-        void begin();
+        void begin(const std::string& original_vertex = "v:original_vertex");
 
         /**
          * @brief Add a vertex to the mesh.
@@ -87,22 +93,37 @@ namespace easy3d {
         std::vector<SurfaceMesh::Vertex> face_vertices() const { return face_vertices_; }
 
         /**
-         * @brief Finalize surface construction. Must be called at the end of the surface construction.
+         * @brief Finalize the surface construction. Must be called at the end of the surface construction.
+         * @clean True to delete the temporal vertex property.
+         * @related begin(const std::string&).
          */
-        void finish();
+        void finish(bool clean = true);
 
     private:
 
+        // A face (without duplicating a vertex) cannot be added to a SurfaceMesh if it has less than 3 vertices or it
+        // has self duplicated vertices.
+        bool face_can_be_added(const std::vector<SurfaceMesh::Vertex> &vertices);
+
+        // A halfedge (s -> t) has duplication if
+        //  - there exists a previous halfedge that originates from s and points to t, and
+        //  - the previous halfedge is boudary (i.e., its face is NULL).
+        bool halfedge_has_duplication(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
+
+        // A halfedge (s -> t) is legal if
+        //  - the halfedge does not have duplication, and
+        //  - the two end points are not on a closed disk.
+        bool halfedge_is_legal(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
+
+        // Copy a vertex v and its attributes.
+        // Return the new vertex.
         SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
 
-        // The edge (face_vertices_[s] -> face_vertices_[t]) of the current face causes a non-manifold edge.
-        // This method tries to resolve it by using the copied vertices. If it work, assign the good edge vertices.
-        // If existing copies still don't work, it makes new copies.
-        void resolve_non_manifold_edge(std::size_t s, std::size_t t);
-
-        // Will adding the halfedge (s -> t) result in a complex edge?
-        // Return true if the edge does not exist or if it is a boundary (i.e., the face is NULL).
-        bool halfedge_is_legel(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
+        // A vertex might have been copied a few times. If copies occurred before, the original vertex will never work.
+        // To avoid uncessary duplication, we reuse one of its copy that is not on a closed disk. We test each copy in
+        // the order the copies were made. If no valid copy can be found, we make a new copy.
+        // If no copy exists and v is on a closed disk, we simply copy it.
+        SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
 
     private:
         SurfaceMesh* mesh_;
@@ -113,25 +134,32 @@ namespace easy3d {
         // faces with duplicated vertices
         std::size_t num_faces_duplicated_vertices_;
 
+        // faces with unknown structure
+        std::size_t num_faces_unknown_structure_;
+
         // non-manifold vertices
         std::size_t num_non_manifold_vertices_;
 
         // isolated vertices
         std::size_t num_isolated_vertices_;
 
-        // complex faces that couldn't be added to the mesh (unknow known reason)
-        std::size_t num_unknown_complex_faces_;
-
         // the input vertices of the current face
-        std::vector<SurfaceMesh::Vertex> input_face_vertices_ ;
+        std::vector<SurfaceMesh::Vertex> face_original_vertices_ ;
         // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
         // the copied vertices: vertices in 'second' were copied from 'first'
         std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > copied_vertices_;
 
-        // the copied edges: vertices in 'second' were copied from 'first'
-        std::vector< std::pair<SurfaceMesh::Halfedge, SurfaceMesh::Halfedge> > copied_edges_;
+        // the copied edges: in each pair, the 'second' was copied from the 'first'.
+        struct Edge {
+            Edge(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) : source(s), target(t) {}
+            SurfaceMesh::Vertex source;
+            SurfaceMesh::Vertex target;
+        };
+        std::vector< std::pair<Edge, Edge> > copied_edges_;
+
+        SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
     };
 
 }

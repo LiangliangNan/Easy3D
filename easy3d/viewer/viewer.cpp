@@ -904,9 +904,9 @@ namespace easy3d {
                 std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------" << std::endl;
 				if (dynamic_cast<SurfaceMesh*>(current_model())) {
 					auto model = dynamic_cast<SurfaceMesh*>(current_model());
-					std::cout << "model is a surface mesh. #f: " << std::to_string(model->faces_size())
-						<< ", #v: " + std::to_string(model->vertices_size())
-						<< ", #e: " + std::to_string(model->edges_size()) << std::endl;
+					std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
+						<< ", #vertex: " + std::to_string(model->vertices_size())
+						<< ", #edge: " + std::to_string(model->edges_size()) << std::endl;
 				}
 				if (!current_model()->points_drawables().empty()) {
 					std::cout << "points drawables:" << std::endl;
