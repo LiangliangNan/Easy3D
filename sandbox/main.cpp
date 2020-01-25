@@ -25,16 +25,59 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 
 using namespace easy3d;
 
 
-int main (int argc, char *argv[])
-{
-    easy3d::logging::initialize(argv[0]);
+// This example shows how to
+//		- override the file loading function of the default easy3d viewer to visualize textured meshes;
 
-    Viewer viewer("Sandbox");
-    viewer.run();
+
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize(argv[0]);
+
+    try {
+        const std::vector<std::string> files = {
+                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off",
+                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off",
+                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_2.off",
+                setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off",
+                setting::resource_directory() + "/data/repair/non_manifold/complex_and_isolated_vertices.off",
+                setting::resource_directory() + "/data/repair/non_manifold/2_umbrellas.off",
+                setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
+                setting::resource_directory() + "/data/domik/domik.obj",
+                setting::resource_directory() + "/data/house/house.obj",
+                setting::resource_directory() + "/data/other/sponza/sponza.obj"
+        };
+
+
+
+#if 0
+        for (int i = 0; i < files.size(); ++i) {
+            SurfaceMeshIO::load(files[i]);
+        }
+        return EXIT_SUCCESS;
+#else
+        // Create the viewer.
+        Viewer viewer;
+
+        for (int i = 0; i < files.size(); ++i) {
+            if (!viewer.add_model(files[i], true))
+                LOG(FATAL) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        }
+
+        // Run the viewer
+        viewer.run();
+#endif
+
+    }
+    catch (const std::runtime_error &e) {
+        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
+        return EXIT_FAILURE;
+    }
 
     return EXIT_SUCCESS;
 }
