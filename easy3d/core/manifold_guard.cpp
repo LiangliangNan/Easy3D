@@ -249,7 +249,11 @@ namespace easy3d {
                     // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the
                     // first edge.
                     face_vertices_[t] = copy_vertex(face_original_vertices_[t]);
+                    DLOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
+                                        << "edge is still illegal after duplicating one end point";
                 }
+                DLOG_IF(FATAL, halfedge_has_duplication(face_vertices_[s], face_vertices_[t]))
+                                << "edge is still illegal after duplicating one end point";
 
                 copied_edges_.push_back(std::make_pair(
                         Edge(face_original_vertices_[s], face_original_vertices_[t]),
@@ -261,10 +265,11 @@ namespace easy3d {
 #define MANIFOLD_ON_THE_FLY 0
 #if MANIFOLD_ON_THE_FLY
         // Now we don't have a complex edge. Check if adding the face results in non-manifold vertex.
-        // This enforce the mesh is manifold after adding EVERY face. It has two limitations:
+        // This enforce the mesh is always manifold after adding EVERY face. It has two limitations:
         //  - Sensitive to face orders;
         //  - It cannot report the actual number of non-manifold vertices (non-manifold vertices are always fixed
         //    before adding a face).
+        //  - It creates extra copies of vertices.
         // TODO: A better idea is to resolve non-manifold vertices after the whole mesh is constructed.
         for (std::size_t cur = 0; cur < nb_vertices; cur++) {
             std::size_t prev = ((cur + nb_vertices - 1) % nb_vertices);
@@ -291,12 +296,11 @@ namespace easy3d {
         else {
             ++num_faces_unknown_structure_;
 //            std::cout << "      ERROR: add face failed "<< face_vertices_ <<  std::endl;
-            LOG(ERROR) << "always add the face by duplicating all it vertices";
+            LOG(ERROR) << "always add the face by duplicating all its vertices";
         }
 
         return face;
     }
-
 
 
     SurfaceMesh::Vertex ManifoldGuard::get(SurfaceMesh::Vertex v) {
