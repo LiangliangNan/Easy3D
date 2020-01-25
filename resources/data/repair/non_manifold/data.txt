@@ -1,0 +1,59 @@
+W0125 20:09:43.379750 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_0.off
+	has topological issues:
+		3 duplicated edges (fixed)
+		2 non_manifold vertices (not fixed)
+	#face: 9, #vertex: 18, #edge: 27
+
+
+W0125 20:09:43.392022 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_1.off
+	has topological issues:
+		5 duplicated edges (fixed)
+		4 non_manifold vertices (not fixed)
+	#face: 9, #vertex: 20, #edge: 29
+
+
+W0125 20:09:43.394515 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_2.off
+	has topological issues:
+		4 duplicated edges (fixed)
+		3 non_manifold vertices (not fixed)
+	#face: 9, #vertex: 19, #edge: 28
+
+
+W0125 20:09:43.395305 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_vertices.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+	#face: 3, #vertex: 7, #edge: 9
+
+
+W0125 20:09:43.396184 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_and_isolated_vertices.off
+	has topological issues:
+		2 isolated vertices (removed)
+		1 non_manifold vertices (not fixed)
+	#face: 3, #vertex: 7, #edge: 9
+
+
+
+W0125 20:09:43.842106 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/house/house.obj
+	has topological issues:
+		2302 isolated vertices (removed)
+		2094 duplicated edges (fixed)
+		1444 non_manifold vertices (not fixed)
+		57 complex faces with unknown structure (ignored)
+	#face: 11205, #vertex: 7076, #edge: 19539
+
+
+
+W0125 20:09:45.186429 187987392 manifold_guard.cpp:141] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/other/sponza/sponza.obj
+	has topological issues:
+		4909 non_manifold vertices (not fixed)
+		46 complex faces with unknown structure (ignored)
+	#face: 40165, #vertex: 60850, #edge: 99430
+
+
