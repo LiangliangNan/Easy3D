@@ -39,7 +39,7 @@
 
 
 // In case the ManifoldBuilder failed to handle the mesh
-//#define DO_NOT_CREATE_SURFACE_MESH
+#define DO_NOT_CREATE_SURFACE_MESH
 
 namespace easy3d {
 
