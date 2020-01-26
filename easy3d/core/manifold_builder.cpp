@@ -64,15 +64,11 @@ namespace easy3d {
             report = true;
         }
 
-        // ----------------------------------------------------------------------------------
-
         if (num_faces_duplicated_vertices_ > 0) {
             msg += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
                    " faces with duplicated vertices (ignored)";
             report = true;
         }
-
-        // ----------------------------------------------------------------------------------
 
         if (num_faces_out_of_range_vertices_ > 0) {
             msg += "\n\t\t" + std::to_string(num_faces_out_of_range_vertices_) +
@@ -96,12 +92,11 @@ namespace easy3d {
         std::size_t count_non_manifold_vertices(0);
 
 #if 1   // non-manifold vertices in the original mesh
-        for (int idx = 0; idx < mesh_->vertices_size(); ++idx) {
-            if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx))) {
-                // then check if it has been copied. If so, it must be non-manifold
-                if (copied_vertices_.find(idx) != copied_vertices_.end())
-                    ++count_non_manifold_vertices;
-            }
+        // vertices that have been copied and in current mesh they are closed disks.
+        for (auto v : copied_vertices_) {
+            int idx = v.first;
+            if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx)))
+                ++count_non_manifold_vertices;
         }
 #else // non-manifold vertices in the current mesh
         for (auto v : mesh_->vertices()) {
@@ -136,7 +131,7 @@ namespace easy3d {
             for (auto copies : copied_vertices_)
                 count += copies.second.size();
             msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) +
-                   " copy occurrences) to solve the non-manifoldness";
+                   " occurrences) to solve the non-manifoldness";
         }
 
         // ----------------------------------------------------------------------------------
