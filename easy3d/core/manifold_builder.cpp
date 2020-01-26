@@ -303,7 +303,7 @@ namespace easy3d {
             face_vertices_[i] = get(vertices[i]);
 
         std::vector<SurfaceMesh::Halfedge> halfedges(n);
-        std::vector<bool> is_new(n);
+        std::vector<bool> esist(n);
 
         // Check and resolve duplicate edges.
         // For each edge, we check the 'to' vertex only. The handling of the last edge (i.e., last_vertex -> first_vertex)
@@ -313,15 +313,15 @@ namespace easy3d {
                 face_vertices_[t] = copy_vertex(vertices[t]);
 
             halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            is_new[s] = !halfedges[s].is_valid();
+            esist[s] = halfedges[s].is_valid();
         }
 
         // let's check if the face can be linked to the mesh
         SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
-        for (std::size_t i = 0, ii = 1; i < n; ++i, ++ii, ii %= n) {
-            if (!is_new[i] && !is_new[ii]) {
-                inner_prev = halfedges[i];
-                inner_next = halfedges[ii];
+        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
+            if (esist[s] && esist[t]) {
+                inner_prev = halfedges[s];
+                inner_next = halfedges[t];
 
                 if (mesh_->next_halfedge(inner_prev) != inner_next) {
                     // here comes the ugly part... we have to relink a whole patch
@@ -337,10 +337,8 @@ namespace easy3d {
                     assert(mesh_->is_boundary(boundary_prev));
                     assert(mesh_->is_boundary(boundary_next));
 
-
-                    // ok ?
                     if (boundary_next == inner_next) {
-                        face_vertices_[ii] = copy_vertex(vertices[ii]);
+                        face_vertices_[t] = copy_vertex(vertices[t]);
                     }
                 }
             }
