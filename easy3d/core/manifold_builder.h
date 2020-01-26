@@ -85,8 +85,9 @@ namespace easy3d {
         /**
          * @brief Query the actual vertices of the added face. The order remains the same as those when
          *        constructing the face.
+         * @attention You must query the vertices after add_face() and before the next call to add_face().
          */
-        std::vector<SurfaceMesh::Vertex> face_vertices() const { return face_vertices_; }
+        const std::vector<SurfaceMesh::Vertex>& face_vertices() const { return face_vertices_; }
 
         /**
          * @brief Finalize the surface construction. Must be called at the end of the surface construction.
