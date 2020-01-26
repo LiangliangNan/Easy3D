@@ -33,11 +33,12 @@
 namespace easy3d {
 
     /**
-     * A manifold guard resolves non-manifoldness when constructing a surface mesh.
+     * ManifoldBuilder is a helper class that resolves non-manifoldness of a surface mesh. It is typical used to
+     * ensure a manifold surface mesh constructed from a file (because you don't know if the mesh is manifold or not).
+     * For meshes guaranteed to be manifold (for example, using your algorithm), using ManifoldBuilder is optional. In
+     * this case, you can use the built-in 'add_vertex()' and 'add_face()' functions of SurfaceMesh.
      *
-     * TODO: check duplicated faces?
-     *
-     * Usage example:
+     * Example use:
      * ---------------------------------------------------------
      *      ManifoldBuilder builder(mesh);
      *      builder.begin();
@@ -102,6 +103,7 @@ namespace easy3d {
         // A halfedge (s -> t) has duplication if
         //  - there exists a previous halfedge that originates from s and points to t, and
         //  - the previous halfedge is boudary (i.e., its face is NULL).
+        // NOTE: input must be the original vertices (instead of the copied ones).
         bool halfedge_has_duplication(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
 
         // A halfedge (s -> t) is legal if
@@ -128,19 +130,17 @@ namespace easy3d {
         // faces with duplicated vertices
         std::size_t num_faces_duplicated_vertices_;
 
+        // faces with out-of-range vertex indices
+        std::size_t num_faces_out_of_range_vertices_;
+
         // faces with unknown structure
         std::size_t num_faces_unknown_structure_;
-
-        // non-manifold vertices
-        std::size_t num_non_manifold_vertices_;
-
-        // isolated vertices
-        std::size_t num_isolated_vertices_;
 
         // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
-        // the copied vertices: vertices in 'second' were copied from 'first'
+        // The copied vertices: vertices in 'second' were copied from 'first'
+        // Usually only a small number of vertices will be copied, so no need to use vertex property.
         std::unordered_map<int, std::vector<SurfaceMesh::Vertex> > copied_vertices_;
 
 		// A vertex property to record the original vertex of each vertex.

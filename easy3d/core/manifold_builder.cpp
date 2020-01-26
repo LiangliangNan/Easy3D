@@ -29,8 +29,7 @@
 namespace easy3d {
 
     ManifoldBuilder::ManifoldBuilder(SurfaceMesh *mesh)
-    : mesh_(mesh)
-    {
+            : mesh_(mesh) {
     }
 
 
@@ -42,10 +41,8 @@ namespace easy3d {
     void ManifoldBuilder::begin() {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicated_vertices_ = 0;
+        num_faces_out_of_range_vertices_ = 0;
         num_faces_unknown_structure_ = 0;
-
-        num_non_manifold_vertices_= 0;
-        num_isolated_vertices_= 0;
 
         face_vertices_.clear();
         copied_vertices_.clear();
@@ -77,28 +74,43 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        num_isolated_vertices_ = 0;
-        for (auto v : mesh_->vertices()) {
-            if (mesh_->is_isolated(v)) {
-                mesh_->delete_vertex(v);
-                ++num_isolated_vertices_;
-            }
-        }
-        mesh_->garbage_collection();
-        if (num_isolated_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_isolated_vertices_) + " isolated vertices (removed)";
+        if (num_faces_out_of_range_vertices_ > 0) {
+            msg += "\n\t\t" + std::to_string(num_faces_out_of_range_vertices_) +
+                   " faces with out-of-range vertices (ignored)";
             report = true;
         }
 
         // ----------------------------------------------------------------------------------
 
-        num_non_manifold_vertices_ = 0;
+        if (num_faces_unknown_structure_ > 0) {
+            msg += "\n\t\t" + std::to_string(num_faces_unknown_structure_) +
+                   " complex faces with unknown structure (ignored)";
+            report = true;
+
+            msg += "\nTODO: resolve non-manifold vertices. If still 'SurfaceMesh::add_face: patch re-linking failed'"
+                   "\n\tthen check duplicated faces";
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        std::size_t count_non_manifold_vertices(0);
+
+#if 1   // non-manifold vertices in the original mesh
+        for (int idx = 0; idx < mesh_->vertices_size(); ++idx) {
+            if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx))) {
+                // then check if it has been copied. If so, it must be non-manifold
+                if (copied_vertices_.find(idx) != copied_vertices_.end())
+                    ++count_non_manifold_vertices;
+            }
+        }
+#else // non-manifold vertices in the current mesh
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v))
-                ++num_non_manifold_vertices_;
+                ++count_non_manifold_vertices;
         }
-        if (num_non_manifold_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_non_manifold_vertices_) + " non_manifold vertices (not fixed)";
+#endif
+        if (count_non_manifold_vertices > 0) {
+            msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non_manifold vertices (not fixed)";
             report = true;
         }
 
@@ -106,33 +118,40 @@ namespace easy3d {
 
         // TODO: Traverse all the edge and check the number of occurrences to know where a edge is copied from
 #if 1
-        std::size_t count_duplicated_edges(0);
+        std::size_t count_non_manifold_edges(0);
         for (const auto &targets : outgoing_halfedges_) {
             std::set<int> tmp(targets.begin(), targets.end());
-            count_duplicated_edges += (targets.size() - tmp.size());
+            count_non_manifold_edges += (targets.size() - tmp.size());
         }
-        if (count_duplicated_edges > 0) {
-            msg += "\n\t\t" + std::to_string(count_duplicated_edges) + " duplicated edges (fixed)";
+        if (count_non_manifold_edges > 0) {
+            msg += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
             report = true;
         }
 #endif
+
         // ----------------------------------------------------------------------------------
 
         if (!copied_vertices_.empty()) {
             std::size_t count(0);
             for (auto copies : copied_vertices_)
                 count += copies.second.size();
-            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) + " copy occurrences)";
+            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) +
+                   " copy occurrences) to solve the non-manifoldness";
         }
 
         // ----------------------------------------------------------------------------------
 
-        if (num_faces_unknown_structure_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_unknown_structure_) + " complex faces with unknown structure (ignored)";
+        std::size_t count_isolated_vertices(0);
+        for (auto v : mesh_->vertices()) {
+            if (mesh_->is_isolated(v)) {
+                mesh_->delete_vertex(v);
+                ++count_isolated_vertices;
+            }
+        }
+        if (count_isolated_vertices > 0) {
+            mesh_->garbage_collection();
+            msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices (removed)";
             report = true;
-
-            msg += "\nTODO: resolve non-manifold vertices. If still 'SurfaceMesh::add_face: patch re-linking failed'"
-                   "\n\tthen check duplicated faces";
         }
 
         // ----------------------------------------------------------------------------------
@@ -162,13 +181,14 @@ namespace easy3d {
 
         LOG_IF(WARNING, report) << msg;
 
-		mesh_->remove_vertex_property(original_vertex_);
-		LOG(WARNING) << "the original_vertex_ vertex property was actually not used";
+        outgoing_halfedges_.clear();
+        mesh_->remove_vertex_property(original_vertex_);
+        LOG(WARNING) << "the original_vertex_ vertex property was actually not used";
     }
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
-		LOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
+        LOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
         return mesh_->add_vertex(p);
     }
 
@@ -184,11 +204,19 @@ namespace easy3d {
 
         // Check #2; a face has duplicated vertices
         for (std::size_t i = 0; i < nb_vertices; ++i) {
-            for (std::size_t j = i+1; j < nb_vertices; ++j) {
+            for (std::size_t j = i + 1; j < nb_vertices; ++j) {
                 if (vertices[i] == vertices[j]) {
                     ++num_faces_duplicated_vertices_;
                     return false;
                 }
+            }
+        }
+
+        // Check #3; a face has out-of-range vertices
+        for (auto v : vertices) {
+            if (v.idx() < 0 || v.idx() >= mesh_->vertices_size()) {
+                ++num_faces_out_of_range_vertices_;
+                return false;
             }
         }
 
@@ -202,11 +230,11 @@ namespace easy3d {
 
     bool ManifoldBuilder::halfedge_has_duplication(easy3d::SurfaceMesh::Vertex s, easy3d::SurfaceMesh::Vertex t) const {
 #if 1 // This works perfectly
-		const auto& targets = outgoing_halfedges_[s.idx()];
-		for (auto v : targets) 
-			if (v == t.idx())
-				return true;
-		return false;
+        const auto &targets = outgoing_halfedges_[s.idx()];
+        for (auto v : targets)
+            if (v == t.idx())
+                return true;
+        return false;
 
 #else	// This also works, but slightly slower and longer code.
 
@@ -254,11 +282,11 @@ namespace easy3d {
 
         return false;
 #endif
-	}
+    }
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
-		if (mesh_->faces_size() == 0) // the first face
-			outgoing_halfedges_.resize(mesh_->vertices_size());
+        if (mesh_->faces_size() == 0) // the first face
+            outgoing_halfedges_.resize(mesh_->vertices_size());
 
         if (!face_can_be_added(vertices))
             return SurfaceMesh::Face();
@@ -277,8 +305,8 @@ namespace easy3d {
                     // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the
                     // first edge.
                     face_vertices_[t] = copy_vertex(vertices[t]);
-					DLOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
-						<< "edge is still illegal after duplicating one end point";
+                    DLOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
+                                    << "edge is still illegal after duplicating one end point";
                 }
             }
         }
@@ -312,13 +340,12 @@ namespace easy3d {
 
         auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
-			// put the halfedges into our record (of the original vertex indices)
-			for (std::size_t s = 0; s < nb_vertices; ++s) {
-				std::size_t t = ((s + 1) % nb_vertices);
-				outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
-			}
-        }
-        else {
+            // put the halfedges into our record (of the original vertex indices)
+            for (std::size_t s = 0; s < nb_vertices; ++s) {
+                std::size_t t = ((s + 1) % nb_vertices);
+                outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
+            }
+        } else {
             ++num_faces_unknown_structure_;
             LOG(ERROR) << "always add the face by duplicating all its vertices";
         }
@@ -328,13 +355,12 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::get(SurfaceMesh::Vertex v) {
-		auto pos = copied_vertices_.find(v.idx());
+        auto pos = copied_vertices_.find(v.idx());
         if (pos == copied_vertices_.end()) { // no copies
             if (mesh_->is_boundary(v))
                 return v;
-        }
-        else { // has copies
-            const auto& copies = pos->second;
+        } else { // has copies
+            const auto &copies = pos->second;
             for (auto c : copies) {
                 if (mesh_->is_boundary(c))
                     return c;
@@ -364,7 +390,7 @@ namespace easy3d {
     SurfaceMesh::Vertex ManifoldBuilder::copy_vertex(SurfaceMesh::Vertex v) {
         auto points = mesh_->vertex_property<vec3>("v:point");
 
-		// const vec3 p = points[v]; // [Liangliang]: 'const vec3&' won't work because the vector is growing.
+        // const vec3 p = points[v]; // [Liangliang]: 'const vec3&' won't work because the vector is growing.
         auto new_v = mesh_->add_vertex(points[v]);
 
         original_vertex_[new_v] = v;
@@ -378,7 +404,7 @@ namespace easy3d {
             a->copy(v.idx(), new_v.idx());
         }
 
-		return new_v;
+        return new_v;
     }
 
 }
