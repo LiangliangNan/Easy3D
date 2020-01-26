@@ -168,7 +168,8 @@ namespace easy3d {
             if (!mesh_->is_manifold(v))
                 ++count_non_manifold_vertices;
         }
-        LOG_IF(ERROR, count_non_manifold_vertices > 0) << "mesh still has " << count_non_manifold_vertices << " non-manifold vertices";
+        LOG_IF(ERROR, count_non_manifold_vertices > 0)
+                        << "mesh still has " << count_non_manifold_vertices << " non-manifold vertices";
 
         for (auto f : mesh_->faces())
             LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
@@ -295,8 +296,7 @@ namespace easy3d {
             face_vertices_[i] = get(vertices[i]);
 
         // Check and resolve duplicate edges.
-        for (std::size_t s = 0; s < nb_vertices; ++s) {
-            std::size_t t = ((s + 1) % nb_vertices);
+        for (std::size_t s = 0, t = 1; s < nb_vertices; ++s, ++t, t %= nb_vertices) {
             if (halfedge_has_duplication(vertices[s], vertices[t])) {
                 if (!halfedge_is_legal(face_vertices_[s], face_vertices_[t])) {
                     // In each iteration, we check t only. The handling of the last edge (i.e., last_vertex -> first_vertex)
@@ -309,24 +309,21 @@ namespace easy3d {
             }
         }
 
-        // now let's add this face
-
-        auto face = mesh_->add_face(face_vertices_);
-
-        // If it failed, it must be a complex face with unknown neighboring topology.
-        // We simply duplicate all its vertices (this should always work).
-        if (!face.is_valid()) {
+        // let's check if the face can be linked to the mesh
+        if (!can_link_face(face_vertices_)) {
+            // If it failed, it must have complex neighboring topology.
+            // We simply duplicate all its vertices (this should always work).
             for (std::size_t i = 0; i < nb_vertices; ++i) {
                 if (mesh_->halfedge(face_vertices_[i]).is_valid()) // no need to copy isolated vertices.
                     face_vertices_[i] = copy_vertex(vertices[i]);
             }
-            face = mesh_->add_face(face_vertices_);
         }
 
+        // now let's add this face
+        auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
-            for (std::size_t s = 0; s < nb_vertices; ++s) {
-                std::size_t t = ((s + 1) % nb_vertices);
+            for (std::size_t s = 0, t = 1; s < nb_vertices; ++s, ++t, t %= nb_vertices) {
                 outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
             }
         } else {
@@ -389,6 +386,53 @@ namespace easy3d {
         }
 
         return new_v;
+    }
+
+
+    bool ManifoldBuilder::can_link_face(const std::vector<SurfaceMesh::Vertex> &vertices) const {
+        const std::size_t n(vertices.size());
+
+        // use global arrays to avoid new/delete of local arrays!!!
+        std::vector<SurfaceMesh::Halfedge> halfedges(n);
+        std::vector<bool> is_new(n);
+
+        // test for topological errors
+        for (std::size_t i = 0, ii = 1; i < n; ++i, ++ii, ii %= n) {
+            halfedges[i] = mesh_->find_halfedge(vertices[i], vertices[ii]);
+            is_new[i] = !halfedges[i].is_valid();
+        }
+
+        SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
+
+        // re-link patches if necessary
+        for (std::size_t i = 0, ii = 1; i < n; ++i, ++ii, ii %= n) {
+            if (!is_new[i] && !is_new[ii]) {
+                inner_prev = halfedges[i];
+                inner_next = halfedges[ii];
+
+                if (mesh_->next_halfedge(inner_prev) != inner_next) {
+                    // here comes the ugly part... we have to relink a whole patch
+
+                    // search a free gap
+                    // free gap will be between boundary_prev and boundary_next
+                    outer_prev = mesh_->opposite_halfedge(inner_next);
+                    boundary_prev = outer_prev;
+                    do {
+                        boundary_prev = mesh_->opposite_halfedge(mesh_->next_halfedge(boundary_prev));
+                    } while (!mesh_->is_boundary(boundary_prev) || boundary_prev == inner_prev);
+                    boundary_next = mesh_->next_halfedge(boundary_prev);
+                    assert(mesh_->is_boundary(boundary_prev));
+                    assert(mesh_->is_boundary(boundary_next));
+
+
+                    // ok ?
+                    if (boundary_next == inner_next)
+                        return false;
+                }
+            }
+        }
+
+        return true;
     }
 
 }

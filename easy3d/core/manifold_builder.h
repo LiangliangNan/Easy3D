@@ -122,6 +122,11 @@ namespace easy3d {
         // If no copy exists and v is on a closed disk, we simply copy it.
         SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
 
+        // Test if a face can be linked to the current mesh. It assumes NO topological errors:
+        //  - every vertex is either isolated or on boundary;
+        //  - every halfedge either doesn't exist or is on boundary (i.e., has a NULL face).
+        bool can_link_face(const std::vector<SurfaceMesh::Vertex> &vertices) const;
+
     private:
         SurfaceMesh* mesh_;
 
