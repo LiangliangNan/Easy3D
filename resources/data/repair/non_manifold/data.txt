@@ -161,15 +161,15 @@ surface mesh loaded (#f: 3928140, #v: 2240850, #e: 6168990). Time: 11.3s
 
 
 
------------ Complex faces --------- After duplicating all non-isolated vertices -------
+----------- Complex faces --------- After ensuring re-linking -------
 
-E0126 23:27:44.382004 217208256 manifold_builder.cpp:176] mesh still has 1431 non-manifold vertices
-W0126 23:27:44.384722 217208256 manifold_builder.cpp:186] mesh has topological issues:
+E0126 23:59:07.975666 290403776 manifold_builder.cpp:176] mesh still has 1431 non-manifold vertices
+W0126 23:59:07.985505 290403776 manifold_builder.cpp:186] mesh has topological issues:
 		1885 non-manifold vertices (not fixed)
 		2094 non-manifold edges (fixed)
 		2302 isolated vertices (removed)
 	Solution: 
-		copied 1390 vertices (1448 occurrences) to ensure manifoldness
+		copied 1373 vertices (1448 occurrences) to ensure manifoldness
 		deleted 2302 isolated vertices
 	Result: 
 		11262 faces
@@ -179,8 +179,8 @@ W0126 23:27:44.384722 217208256 manifold_builder.cpp:186] mesh has topological i
 
 
 
-E0126 23:27:45.542379 217208256 manifold_builder.cpp:176] mesh still has 4908 non-manifold vertices
-W0126 23:27:45.552378 217208256 manifold_builder.cpp:186] mesh has topological issues:
+E0126 23:59:09.262509 290403776 manifold_builder.cpp:176] mesh still has 4908 non-manifold vertices
+W0126 23:59:09.270979 290403776 manifold_builder.cpp:186] mesh has topological issues:
 		4910 non-manifold vertices (not fixed)
 	Solution: 
 		copied 48 vertices (48 occurrences) to ensure manifoldness
