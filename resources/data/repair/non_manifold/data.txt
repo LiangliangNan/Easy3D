@@ -163,19 +163,28 @@ surface mesh loaded (#f: 3928140, #v: 2240850, #e: 6168990). Time: 11.3s
 
 ----------- Complex faces --------- After duplicating all non-isolated vertices -------
 
-W0126 19:10:36.947140 183330240 manifold_builder.cpp:180] mesh 
-	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/house/house.obj
-	has topological issues:
-		1940 non_manifold vertices (not fixed)
+E0126 23:14:59.024654 302925248 manifold_builder.cpp:176] mesh still has 1506 non-manifold vertices
+W0126 23:14:59.028141 302925248 manifold_builder.cpp:186] mesh has topological issues:
+		1940 non-manifold vertices (not fixed)
 		2094 non-manifold edges (fixed)
-		1408 vertices copied (1558 occurrences) to solve the non-manifoldness
 		2302 isolated vertices (removed)
-	#face: 11262, #vertex: 7226, #edge: 19767
+	Solution: 
+		copied 1408 vertices (1558 occurrences) to ensure manifoldness
+		deleted 2302 isolated vertices
+	Result: 
+		11262 faces
+		7226 vertices
+		19767 edges
 
 
-W0126 19:10:40.980253 183330240 manifold_builder.cpp:180] mesh 
-	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/other/sponza/sponza.obj
-	has topological issues:
-		4929 non_manifold vertices (not fixed)
-		156 vertices copied (156 occurrences) to solve the non-manifoldness
-	#face: 40211, #vertex: 61004, #edge: 99626
+
+
+E0126 23:15:00.160913 302925248 manifold_builder.cpp:176] mesh still has 4927 non-manifold vertices
+W0126 23:15:00.171241 302925248 manifold_builder.cpp:186] mesh has topological issues:
+		4929 non-manifold vertices (not fixed)
+	Solution: 
+		copied 156 vertices (156 occurrences) to ensure manifoldness
+	Result: 
+		40211 faces
+		61004 vertices
+		99626 edges

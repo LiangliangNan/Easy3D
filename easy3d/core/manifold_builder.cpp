@@ -52,6 +52,16 @@ namespace easy3d {
 
 
     void ManifoldBuilder::end() {
+#if 0
+        for (auto g : copied_vertices_) {
+            std::cout << "\tvertex v" << std::to_string(g.first) << " copied to ";
+            for (auto v : g.second)
+                std::cout << v << " ";
+            std::cout << std::endl;
+        }
+
+#endif
+
         const std::string name = mesh_->name().empty() ? "with unknown name" : mesh_->name();
         std::string msg = "mesh has topological issues:";
         bool report(false);
@@ -108,8 +118,6 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        // TODO: Traverse all the edge and check the number of occurrences to know where a edge is copied from
-#if 1
         std::size_t count_non_manifold_edges(0);
         for (const auto &targets : outgoing_halfedges_) {
             std::set<int> tmp(targets.begin(), targets.end());
@@ -119,7 +127,6 @@ namespace easy3d {
             msg += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
             report = true;
         }
-#endif
 
         // ----------------------------------------------------------------------------------
 
@@ -158,13 +165,7 @@ namespace easy3d {
                     std::to_string(mesh_->edges_size()) + " edges";
         }
 
-#if 0
-        for (auto g : copied_vertices_) {
-            msg += "\n\tvertex v" + std::to_string(g.first) + " copied to ";
-            for (auto v : g.second)
-                msg += "v" + std::to_string(v.idx()) + " ";
-        }
-#endif
+        // ----------------------------------------------------------------------------------
 
         count_non_manifold_vertices = 0;
         for (auto v : mesh_->vertices()) {
@@ -192,7 +193,9 @@ namespace easy3d {
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
         LOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
-        return mesh_->add_vertex(p);
+        SurfaceMesh::Vertex v = mesh_->add_vertex(p);
+        original_vertex_[v] = v;
+        return v;
     }
 
 
