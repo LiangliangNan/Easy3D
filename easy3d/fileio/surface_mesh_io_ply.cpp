@@ -188,7 +188,7 @@ namespace easy3d {
                     std::cerr << "element \'" << e.name << "\' ignored" << std::endl;
 			}
 
-            builder.finish();
+            builder.end();
 			return mesh->n_faces() > 0;
 		}
 

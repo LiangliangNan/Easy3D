@@ -64,7 +64,7 @@ namespace easy3d {
 
         /**
          * @brief Begin surface construction. Must be called at the beginning of the surface construction.
-         * @related finish().
+         * @related end().
          */
         void begin();
 
@@ -93,7 +93,7 @@ namespace easy3d {
          * @brief Finalize the surface construction. Must be called at the end of the surface construction.
          * @related begin().
          */
-        void finish();
+        void end();
 
     private:
 

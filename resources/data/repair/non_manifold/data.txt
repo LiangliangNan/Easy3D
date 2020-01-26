@@ -1,78 +1,152 @@
 (all timings are on Windows Debug mode except for tree.obj which is in Release model).
 
-W0125 21:31:01.589534  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/repair/non_manifold/complex_edges_0.off
-        has topological issues:
-                2 non_manifold vertices (not fixed)
-                3 duplicated edges (fixed)
-                2 vertices copied (2 copy occurences)
-        #face: 9, #vertex: 18, #edge: 27
-surface mesh loaded (#f: 9, #v: 18, #e: 27). Time: 4.7ms
+
+W0126 17:57:09.512959 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_0.off
+	has topological issues:
+		4 non_manifold vertices (not fixed)
+		3 non-manifold edges (fixed)
+		2 vertices copied (2 occurrences) to solve the non-manifoldness
+	#face: 9, #vertex: 18, #edge: 27
 
 
 
-W0125 21:31:01.599508  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/repair/non_manifold/complex_edges_1.off
-        has topological issues:
-                4 non_manifold vertices (not fixed)
-                5 duplicated edges (fixed)
-                3 vertices copied (4 copy occurences)
-        #face: 9, #vertex: 20, #edge: 29
-surface mesh loaded (#f: 9, #v: 20, #e: 29). Time: 3.5ms
+
+W0126 17:57:09.521064 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_1.off
+	has topological issues:
+		6 non_manifold vertices (not fixed)
+		5 non-manifold edges (fixed)
+		3 vertices copied (4 occurrences) to solve the non-manifoldness
+	#face: 9, #vertex: 20, #edge: 29
 
 
 
-W0125 21:31:01.603498  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/repair/non_manifold/complex_edges_2.off
-        has topological issues:
-                3 non_manifold vertices (not fixed)
-                4 duplicated edges (fixed)
-                2 vertices copied (3 copy occurences)
-        #face: 9, #vertex: 19, #edge: 28
-surface mesh loaded (#f: 9, #v: 19, #e: 28). Time: 4.1ms
+W0126 17:57:09.521673 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_2.off
+	has topological issues:
+		5 non_manifold vertices (not fixed)
+		4 non-manifold edges (fixed)
+		2 vertices copied (3 occurrences) to solve the non-manifoldness
+	#face: 9, #vertex: 19, #edge: 28
 
 
 
-W0125 21:31:01.609480  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/repair/non_manifold/complex_vertices.off
-        has topological issues:
-                1 non_manifold vertices (not fixed)
-        #face: 3, #vertex: 7, #edge: 9
-surface mesh loaded (#f: 3, #v: 7, #e: 9). Time: 2.1ms
+W0126 17:57:09.522119 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_vertices.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+	#face: 3, #vertex: 7, #edge: 9
 
 
 
-W0125 21:31:01.612473  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/repair/non_manifold/complex_and_isolated_vertices.off
-        has topological issues:
-                2 isolated vertices (removed)
-                1 non_manifold vertices (not fixed)
-        #face: 3, #vertex: 7, #edge: 9
-surface mesh loaded (#f: 3, #v: 7, #e: 9). Time: 1.9ms
+W0126 17:57:09.522719 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_and_isolated_vertices.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		2 isolated vertices (removed)
+	#face: 3, #vertex: 7, #edge: 9
 
 
 
-W0125 21:31:04.711539  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/house/house.obj
-        has topological issues:
-                2302 isolated vertices (removed)
-                1444 non_manifold vertices (not fixed)
-                2094 duplicated edges (fixed)
-                1350 vertices copied (1408 copy occurences)
-                57 complex faces with unknown structure (ignored)
-        #face: 11205, #vertex: 7076, #edge: 19539
+W0126 17:57:09.523474 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/2_umbrellas.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		1 vertices copied (1 occurrences) to solve the non-manifoldness
+		1 isolated vertices (removed)
+	#face: 10, #vertex: 12, #edge: 20
+
+
+
+W0126 17:57:09.524268 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/3_umbrellas.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		1 vertices copied (2 occurrences) to solve the non-manifoldness
+		2 isolated vertices (removed)
+	#face: 15, #vertex: 18, #edge: 30
+
+
+
+W0126 17:57:09.525297 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/5_umbrellas.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		1 vertices copied (4 occurrences) to solve the non-manifoldness
+		4 isolated vertices (removed)
+	#face: 25, #vertex: 30, #edge: 50
+
+
+
+W0126 17:57:09.526443 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/6_umbrellas.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		1 vertices copied (5 occurrences) to solve the non-manifoldness
+		5 isolated vertices (removed)
+	#face: 30, #vertex: 36, #edge: 60
+
+
+
+W0126 17:57:09.527139 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/2_umbrellas_open.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		1 isolated vertices (removed)
+	#face: 8, #vertex: 11, #edge: 18
+
+
+
+W0126 17:57:09.527915 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/3_umbrellas_open.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		2 isolated vertices (removed)
+	#face: 12, #vertex: 16, #edge: 27
+
+
+
+W0126 17:57:09.528815 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/5_umbrellas_open.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		4 isolated vertices (removed)
+	#face: 20, #vertex: 26, #edge: 45
+
+
+
+W0126 17:57:09.529832 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/6_umbrellas_open.off
+	has topological issues:
+		1 non_manifold vertices (not fixed)
+		5 isolated vertices (removed)
+	#face: 24, #vertex: 31, #edge: 54
+
+
+
+W0126 17:57:09.861397 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/house/house.obj
+	has topological issues:
+		57 complex faces with unknown structure (ignored)
+		1898 non_manifold vertices (not fixed)
+		2094 non-manifold edges (fixed)
+		1350 vertices copied (1408 occurrences) to solve the non-manifoldness
+		2302 isolated vertices (removed)
+	#face: 11205, #vertex: 7076, #edge: 19539
 surface mesh loaded (#f: 11205, #v: 7076, #e: 19539). Time: 2.2s
 
 
 
-W0125 21:31:15.205519  3148 manifold_guard.cpp:168] mesh
-        C:\Research\code\Easy3D-build64\bin/resources/data/other/sponza/sponza.obj
-        has topological issues:
-                4909 non_manifold vertices (not fixed)
-                2 vertices copied (2 copy occurences)
-                46 complex faces with unknown structure (ignored)
-        #face: 40165, #vertex: 60850, #edge: 99430
+W0126 17:57:11.032025 276813248 manifold_builder.cpp:181] mesh 
+	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/other/sponza/sponza.obj
+	has topological issues:
+		46 complex faces with unknown structure (ignored)
+		4911 non_manifold vertices (not fixed)
+		2 vertices copied (2 occurrences) to solve the non-manifoldness
+	#face: 40165, #vertex: 60850, #edge: 99430
 surface mesh loaded (#f: 40165, #v: 60850, #e: 99430). Time: 10.4s (Release 241ms)
+
 
 
 W0125 23:19:06.263723 19384 manifold_guard.cpp:168] mesh 
@@ -81,17 +155,3 @@ W0125 23:19:06.263723 19384 manifold_guard.cpp:168] mesh
 		120 isolated vertices (removed)
 	#face: 3928140, #vertex: 2240850, #edge: 6168990
 surface mesh loaded (#f: 3928140, #v: 2240850, #e: 6168990). Time: 11.3s
-
-
-
-
-Mapple results on umbrellas:
- - 2_umbrellas: 10 faces, 12 vertices, 20 edges (1 non-manifold vertices; 1 isolated vertices).
- - 3_umbrellas: 15 faces, 18 vertices, 30 edges (1 non-manifold vertices; 2 isolated vertices).
- - 5_umbrellas: 25 faces, 30 vertices, 50 edges (1 non-manifold vertices; 4 isolated vertices).
- - 6_umbrellas: 30 faces, 36 vertices, 60 edges (1 non-manifold vertices; 5 isolated vertices).
- 
- - 2_umbrellas_open: 8  faces, 12 vertices, 18 edges (1 non-manifold vertices; 1 isolated vertices).
- - 3_umbrellas_open: 12 faces, 18 vertices, 27 edges (1 non-manifold vertices; 2 isolated vertices).
- - 5_umbrellas_open: 20 faces, 30 vertices, 45 edges (1 non-manifold vertices; 4 isolated vertices).
- - 6_umbrellas_open: 24 faces, 36 vertices, 54 edges (1 non-manifold vertices; 5 isolated vertices).

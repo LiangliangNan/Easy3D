@@ -226,7 +226,7 @@ namespace easy3d {
 
 			fclose(in);
 
-			builder.finish();
+			builder.end();
 
 			return mesh->n_faces() > 0;
 		}

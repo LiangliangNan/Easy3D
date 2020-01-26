@@ -133,7 +133,7 @@ namespace easy3d {
 //                // read the edges
 //            }
 
-            builder.finish();
+            builder.end();
 
             return mesh->n_faces() > 0;
 		}

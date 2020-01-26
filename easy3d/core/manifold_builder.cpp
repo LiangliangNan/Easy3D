@@ -51,7 +51,7 @@ namespace easy3d {
     }
 
 
-    void ManifoldBuilder::finish() {
+    void ManifoldBuilder::end() {
         const std::string name = mesh_->name().empty() ? "with unknown name" : mesh_->name();
         std::string msg = "mesh \n\t" + name + "\n\thas topological issues:";
         bool report(false);
@@ -91,14 +91,14 @@ namespace easy3d {
 
         std::size_t count_non_manifold_vertices(0);
 
-#if 1   // non-manifold vertices in the original mesh
+        // non-manifold vertices in the original mesh
         // vertices that have been copied and in current mesh they are closed disks.
         for (auto v : copied_vertices_) {
             int idx = v.first;
             if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx)))
                 ++count_non_manifold_vertices;
         }
-#else // non-manifold vertices in the current mesh
+#if 1 // non-manifold vertices in the current mesh
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v))
                 ++count_non_manifold_vertices;
@@ -159,14 +159,18 @@ namespace easy3d {
 
 #if 0
         for (auto g : copied_vertices_) {
-            msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to ";
+            msg += "\n\tvertex v" + std::to_string(g.first) + " copied to ";
             for (auto v : g.second)
                 msg += "v" + std::to_string(v.idx()) + " ";
         }
 #endif
 
-        for (auto v : mesh_->vertices())
+        for (auto v : mesh_->vertices()) {
             LOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
+            if (!mesh_->is_manifold(v)) {
+                LOG_FIRST_N(ERROR, 3) << "vertex " << v << " is not manifold. " << google::COUNTER << " of first 3";
+            }
+        }
         for (auto f : mesh_->faces())
             LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
         for (auto e : mesh_->edges())
@@ -300,7 +304,7 @@ namespace easy3d {
                     // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the
                     // first edge.
                     face_vertices_[t] = copy_vertex(vertices[t]);
-                    DLOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
+                    LOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
                                     << "edge is still illegal after duplicating one end point";
                 }
             }
@@ -342,7 +346,7 @@ namespace easy3d {
             }
         } else {
             ++num_faces_unknown_structure_;
-            LOG(ERROR) << "always add the face by duplicating all its vertices";
+            LOG_FIRST_N(ERROR, 3) << "always add the face by duplicating all its vertices. " << google::COUNTER << " of first 3";
         }
 
         return face;
@@ -369,14 +373,14 @@ namespace easy3d {
 
     bool ManifoldBuilder::halfedge_is_legal(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const {
         auto h = mesh_->find_halfedge(s, t);
+        if (!h.is_valid())  // the edge does not exist
+            return true;
 
-        // the edge does not exist or it is a boundary (i.e., the face is NULL)
-        if (h.is_valid() && !mesh_->is_boundary(h))
+        if (!mesh_->is_boundary(h) ||   // is a boundary (i.e., the face is NULL)
+            !mesh_->is_boundary(s) || !mesh_->is_boundary(t)) // one of the vertices is a closed disk
+        {
             return false;
-
-        // one of the vertices is a closed disk
-        if (!mesh_->is_boundary(s) || !mesh_->is_boundary(t))
-            return false;
+        }
 
         return true;
     }
