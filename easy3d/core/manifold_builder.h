@@ -125,7 +125,7 @@ namespace easy3d {
         // Test if a face can be linked to the current mesh. It assumes NO topological errors:
         //  - every vertex is either isolated or on boundary;
         //  - every halfedge either doesn't exist or is on boundary (i.e., has a NULL face).
-        bool can_link_face(const std::vector<SurfaceMesh::Vertex> &vertices) const;
+        void ensure_link_face(const std::vector<SurfaceMesh::Vertex> &vertices);
 
     private:
         SurfaceMesh* mesh_;

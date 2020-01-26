@@ -305,7 +305,8 @@ namespace easy3d {
         // Check and resolve duplicate edges.
         for (std::size_t s = 0, t = 1; s < nb_vertices; ++s, ++t, t %= nb_vertices) {
             if (halfedge_has_duplication(vertices[s], vertices[t])) {
-                if (!halfedge_is_legal(face_vertices_[s], face_vertices_[t])) {
+                if (!halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
+                {
                     // In each iteration, we check t only. The handling of the last edge (i.e., last_vertex -> first_vertex)
                     // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the
                     // first edge.
@@ -315,14 +316,7 @@ namespace easy3d {
         }
 
         // let's check if the face can be linked to the mesh
-        if (!can_link_face(face_vertices_)) {
-            // If it failed, it must have complex neighboring topology.
-            // We simply duplicate all its vertices (this should always work).
-            for (std::size_t i = 0; i < nb_vertices; ++i) {
-                if (mesh_->halfedge(face_vertices_[i]).is_valid()) // no need to copy isolated vertices.
-                    face_vertices_[i] = copy_vertex(vertices[i]);
-            }
-        }
+        ensure_link_face(face_vertices_);
 
         // now let's add this face
         auto face = mesh_->add_face(face_vertices_);
@@ -394,12 +388,24 @@ namespace easy3d {
     }
 
 
-    bool ManifoldBuilder::can_link_face(const std::vector<SurfaceMesh::Vertex> &vertices) const {
+    void ManifoldBuilder::ensure_link_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
         const std::size_t n(vertices.size());
 
         // use global arrays to avoid new/delete of local arrays!!!
         std::vector<SurfaceMesh::Halfedge> halfedges(n);
         std::vector<bool> is_new(n);
+
+//        // test for topological errors
+//        for (std::size_t i = 0, ii = 1; i < n; ++i, ++ii, ii %= n) {
+//            halfedges[i] = mesh_->find_halfedge(face_vertices_[i], face_vertices_[ii]);
+//            is_new[i] = !halfedges[i].is_valid();
+//            if (!is_new[i] && !mesh_->is_boundary(halfedges[i])) {
+//                LOG_FIRST_N(ERROR, 3) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> "
+//                                      << vertices[ii] << ")";
+//                return Face();
+//            }
+//        }
+
 
         // test for topological errors
         for (std::size_t i = 0, ii = 1; i < n; ++i, ++ii, ii %= n) {
@@ -431,13 +437,12 @@ namespace easy3d {
 
 
                     // ok ?
-                    if (boundary_next == inner_next)
-                        return false;
+                    if (boundary_next == inner_next) {
+                        face_vertices_[ii] = copy_vertex(vertices[ii]);
+                    }
                 }
             }
         }
-
-        return true;
     }
 
 }
