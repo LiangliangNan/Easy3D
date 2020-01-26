@@ -59,7 +59,6 @@ namespace easy3d {
                 std::cout << v << " ";
             std::cout << std::endl;
         }
-
 #endif
 
         const std::string name = mesh_->name().empty() ? "with unknown name" : mesh_->name();
@@ -105,12 +104,11 @@ namespace easy3d {
             if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx)))
                 ++count_non_manifold_vertices;
         }
-#if 1 // non-manifold vertices in the current mesh
+        // non-manifold vertices in the current mesh
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v))
                 ++count_non_manifold_vertices;
         }
-#endif
         if (count_non_manifold_vertices > 0) {
             msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (not fixed)";
             report = true;
@@ -199,18 +197,18 @@ namespace easy3d {
     }
 
 
-    bool ManifoldBuilder::face_can_be_added(const std::vector<SurfaceMesh::Vertex> &vertices) {
-        std::size_t nb_vertices = vertices.size();
+    bool ManifoldBuilder::vertices_are_valid(const std::vector<SurfaceMesh::Vertex> &vertices) {
+        std::size_t n = vertices.size();
 
         // Check #1: a face has less than 3 vertices
-        if (nb_vertices < 3) {
+        if (n < 3) {
             ++num_faces_less_three_vertices_;
             return false;
         }
 
         // Check #2; a face has duplicated vertices
-        for (std::size_t i = 0; i < nb_vertices; ++i) {
-            for (std::size_t j = i + 1; j < nb_vertices; ++j) {
+        for (std::size_t i = 0; i < n; ++i) {
+            for (std::size_t j = i + 1; j < n; ++j) {
                 if (vertices[i] == vertices[j]) {
                     ++num_faces_duplicated_vertices_;
                     return false;
@@ -234,67 +232,20 @@ namespace easy3d {
     }
 
 
-    bool ManifoldBuilder::halfedge_has_duplication(easy3d::SurfaceMesh::Vertex s, easy3d::SurfaceMesh::Vertex t) const {
-#if 1 // This works perfectly
-        const auto &targets = outgoing_halfedges_[s.idx()];
-        for (auto v : targets)
-            if (v == t.idx())
-                return true;
-        return false;
+//    bool ManifoldBuilder::halfedge_has_duplication(easy3d::SurfaceMesh::Vertex s, easy3d::SurfaceMesh::Vertex t) const {
+//        const auto &targets = outgoing_halfedges_[s.idx()];
+//        for (auto v : targets)
+//            if (v == t.idx())
+//                return true;
+//        return false;
+//    }
 
-#else	// This also works, but slightly slower and longer code.
-
-        auto h = mesh_->find_halfedge(s, t);
-        if (h.is_valid() && !mesh_->is_boundary(h)) {
-            return true;
-        }
-
-        // test the duplicated edges using EACH copy of s and t
-        auto s_pos = copied_vertices_.find(s.idx());
-        if (s_pos != copied_vertices_.end()) {
-            const auto& s_copies = s_pos->second;
-            for (auto v : s_copies) {
-                h = mesh_->find_halfedge(v, t);
-                if (h.is_valid() && !mesh_->is_boundary(h)) {
-                    return true;
-                }
-            }
-        }
-
-        // test the duplicated edges using s and EACH copy of t
-        auto t_pos = copied_vertices_.find(t.idx());
-        if (t_pos != copied_vertices_.end()) {
-            const auto& t_copies = t_pos->second;
-            for (auto v : t_copies) {
-                h = mesh_->find_halfedge(s, v);
-                if (h.is_valid() && !mesh_->is_boundary(h)) {
-                    return true;
-                }
-            }
-
-            // if reached here, test all combinations of the copies
-            if (s_pos != copied_vertices_.end()) {
-                const auto& s_copies = s_pos->second;
-                for (auto vs : s_copies) {
-                    for (auto vt : t_copies) {
-                        h = mesh_->find_halfedge(vs, vt);
-                        if (h.is_valid() && !mesh_->is_boundary(h)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
-#endif
-    }
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
         if (mesh_->faces_size() == 0) // the first face
             outgoing_halfedges_.resize(mesh_->vertices_size());
 
-        if (!face_can_be_added(vertices))
+        if (!vertices_are_valid(vertices))
             return SurfaceMesh::Face();
 
         std::size_t n = vertices.size();
@@ -302,30 +253,36 @@ namespace easy3d {
         for (std::size_t i = 0; i < n; ++i)
             face_vertices_[i] = get(vertices[i]);
 
-        std::vector<SurfaceMesh::Halfedge> halfedges(n);
-        std::vector<bool> esist(n);
+        // ---------------------------------------------------------------------------------------------------------
 
         // Check and resolve duplicate edges.
+
         // For each edge, we check the 'to' vertex only. The handling of the last edge (i.e., last_vertex -> first_vertex)
         // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the first edge.
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            if (!halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
+            auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+            if (h.is_valid() && !mesh_->is_boundary(h))
                 face_vertices_[t] = copy_vertex(vertices[t]);
-
-            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            esist[s] = halfedges[s].is_valid();
         }
 
-        // let's check if the face can be linked to the mesh
+        // ---------------------------------------------------------------------------------------------------------
+
+        // Check and resolve linking issue.
+
+        std::vector<SurfaceMesh::Halfedge> halfedges(n);
+        std::vector<bool> halfedge_esists(n);
+        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
+            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+            halfedge_esists[s] = halfedges[s].is_valid();
+        }
+
+        // Let's check if the face can be linked to the mesh
         SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            if (esist[s] && esist[t]) {
+            if (halfedge_esists[s] && halfedge_esists[t]) {
                 inner_prev = halfedges[s];
                 inner_next = halfedges[t];
-
                 if (mesh_->next_halfedge(inner_prev) != inner_next) {
-                    // here comes the ugly part... we have to relink a whole patch
-
                     // search a free gap
                     // free gap will be between boundary_prev and boundary_next
                     outer_prev = mesh_->opposite_halfedge(inner_next);
@@ -334,17 +291,18 @@ namespace easy3d {
                         boundary_prev = mesh_->opposite_halfedge(mesh_->next_halfedge(boundary_prev));
                     } while (!mesh_->is_boundary(boundary_prev) || boundary_prev == inner_prev);
                     boundary_next = mesh_->next_halfedge(boundary_prev);
-                    assert(mesh_->is_boundary(boundary_prev));
-                    assert(mesh_->is_boundary(boundary_next));
-
-                    if (boundary_next == inner_next) {
+                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_prev));
+                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_next));
+                    if (boundary_next == inner_next)
                         face_vertices_[t] = copy_vertex(vertices[t]);
-                    }
                 }
             }
         }
 
-        // now let's add this face
+        // ---------------------------------------------------------------------------------------------------------
+
+        // Now we should be able to link the new face to the current mesh.
+
         auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
@@ -375,21 +333,6 @@ namespace easy3d {
 
         // if reached here, we have to make a copy
         return copy_vertex(v);
-    }
-
-
-    bool ManifoldBuilder::halfedge_is_legal(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const {
-        auto h = mesh_->find_halfedge(s, t);
-        if (!h.is_valid())  // the edge does not exist
-            return true;
-
-        if (!mesh_->is_boundary(h) ||   // is a boundary (i.e., the face is NULL)
-            !mesh_->is_boundary(s) || !mesh_->is_boundary(t)) // one of the vertices is a closed disk
-        {
-            return false;
-        }
-
-        return true;
     }
 
 

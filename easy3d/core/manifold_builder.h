@@ -97,20 +97,11 @@ namespace easy3d {
 
     private:
 
-        // A face (without duplicating a vertex) cannot be added to a SurfaceMesh if it has less than 3 vertices or it
-        // has self duplicated vertices.
-        bool face_can_be_added(const std::vector<SurfaceMesh::Vertex> &vertices);
-
-        // A halfedge (s -> t) has duplication if
-        //  - there exists a previous halfedge that originates from s and points to t, and
-        //  - the previous halfedge is boudary (i.e., its face is NULL).
-        // NOTE: input must be the original vertices (instead of the copied ones).
-        bool halfedge_has_duplication(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
-
-        // A halfedge (s -> t) is legal if
-        //  - the halfedge does not have duplication, and
-        //  - the two end points are not on a closed disk.
-        bool halfedge_is_legal(SurfaceMesh::Vertex s, SurfaceMesh::Vertex t) const;
+        // A face (without duplicating a vertex) cannot be added to a SurfaceMesh if
+        //  - it has less than 3 vertices, or
+        //  - it has self duplicated vertices, or
+        //  - one of the vertex is out-of-range.
+        bool vertices_are_valid(const std::vector<SurfaceMesh::Vertex> &vertices);
 
         // Copy a vertex v and its attributes.
         // Return the new vertex.
@@ -121,11 +112,6 @@ namespace easy3d {
         // the order the copies were made. If no valid copy can be found, we make a new copy.
         // If no copy exists and v is on a closed disk, we simply copy it.
         SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
-
-        // Test if a face can be linked to the current mesh. It assumes NO topological errors:
-        //  - every vertex is either isolated or on boundary;
-        //  - every halfedge either doesn't exist or is on boundary (i.e., has a NULL face).
-        void ensure_link_face(const std::vector<SurfaceMesh::Vertex> &vertices);
 
     private:
         SurfaceMesh* mesh_;
