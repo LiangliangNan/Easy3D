@@ -42,7 +42,7 @@ namespace easy3d {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicated_vertices_ = 0;
         num_faces_out_of_range_vertices_ = 0;
-        num_faces_unknown_structure_ = 0;
+        num_faces_unknown_topology_ = 0;
 
         face_vertices_.clear();
         copied_vertices_.clear();
@@ -78,13 +78,10 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        if (num_faces_unknown_structure_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_unknown_structure_) +
-                   " complex faces with unknown structure (ignored)";
+        if (num_faces_unknown_topology_ > 0) {
+            msg += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
+                   " complex faces with unknown topology (ignored)";
             report = true;
-
-            msg += "\nTODO: resolve non-manifold vertices. If still 'SurfaceMesh::add_face: patch re-linking failed'"
-                   "\n\tthen check duplicated faces";
         }
 
         // ----------------------------------------------------------------------------------
@@ -165,12 +162,14 @@ namespace easy3d {
         }
 #endif
 
+        count_non_manifold_vertices = 0;
         for (auto v : mesh_->vertices()) {
             LOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
-            if (!mesh_->is_manifold(v)) {
-                LOG_FIRST_N(ERROR, 3) << "vertex " << v << " is not manifold. " << google::COUNTER << " of first 3";
-            }
+            if (!mesh_->is_manifold(v))
+                ++count_non_manifold_vertices;
         }
+        LOG_IF(ERROR, count_non_manifold_vertices > 0) << "mesh still has " << count_non_manifold_vertices << " non-manifold vertices";
+
         for (auto f : mesh_->faces())
             LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
         for (auto e : mesh_->edges())
@@ -310,34 +309,20 @@ namespace easy3d {
             }
         }
 
-#define MANIFOLD_ON_THE_FLY 0
-#if MANIFOLD_ON_THE_FLY
-        // Now we don't have a complex edge. Check if adding the face results in non-manifold vertex.
-        // This enforce the mesh is always manifold after adding EVERY face. It has two limitations:
-        //  - Sensitive to face orders;
-        //  - It cannot report the actual number of non-manifold vertices (non-manifold vertices are always fixed
-        //    before adding a face).
-        //  - It creates extra copies of vertices.
-        // TODO: A better idea is to resolve non-manifold vertices after the whole mesh is constructed.
-        for (std::size_t cur = 0; cur < nb_vertices; cur++) {
-            std::size_t prev = ((cur + nb_vertices - 1) % nb_vertices);
-            std::size_t next = ((cur + 1) % nb_vertices);
-
-            // a non-manifold vertex may occur if:
-            //  - cur is not isolated and is on boundary.
-            //  - the two new edges both not exist.
-            if ((mesh_->halfedge(face_vertices_[cur]).is_valid()) &&  // not isolated
-                (mesh_->is_boundary(face_vertices_[cur])) &&          // on the boundary
-                (!mesh_->find_halfedge(face_vertices_[prev], face_vertices_[cur]).is_valid()) &&
-                (!mesh_->find_halfedge(face_vertices_[cur], face_vertices_[next]).is_valid()))
-            {
-                //std::cout << "prev -> cur -> next: " << prev << " -> " << cur << " -> " << next << std::endl;
-                face_vertices_[cur] = copy_vertex(vertices[cur]);
-            }
-        }
-#endif
+        // now let's add this face
 
         auto face = mesh_->add_face(face_vertices_);
+
+        // If it failed, it must be a complex face with unknown neighboring topology.
+        // We simply duplicate all its vertices (this should always work).
+        if (!face.is_valid()) {
+            for (std::size_t i = 0; i < nb_vertices; ++i) {
+                if (mesh_->halfedge(face_vertices_[i]).is_valid()) // no need to copy isolated vertices.
+                    face_vertices_[i] = copy_vertex(vertices[i]);
+            }
+            face = mesh_->add_face(face_vertices_);
+        }
+
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0; s < nb_vertices; ++s) {
@@ -345,8 +330,8 @@ namespace easy3d {
                 outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
             }
         } else {
-            ++num_faces_unknown_structure_;
-            LOG_FIRST_N(ERROR, 3) << "always add the face by duplicating all its vertices. " << google::COUNTER << " of first 3";
+            ++num_faces_unknown_topology_;
+            LOG(ERROR) << "fatal error: failed adding an isolated face: " << vertices;
         }
 
         return face;

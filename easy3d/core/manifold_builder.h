@@ -134,8 +134,8 @@ namespace easy3d {
         // faces with out-of-range vertex indices
         std::size_t num_faces_out_of_range_vertices_;
 
-        // faces with unknown structure
-        std::size_t num_faces_unknown_structure_;
+        // faces with unknown topology
+        std::size_t num_faces_unknown_topology_;
 
         // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
