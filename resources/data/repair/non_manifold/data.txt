@@ -91,3 +91,7 @@ Mapple results on umbrellas:
  - 5_umbrellas: 25 faces, 30 vertices, 50 edges (1 non-manifold vertices; 4 isolated vertices).
  - 6_umbrellas: 30 faces, 36 vertices, 60 edges (1 non-manifold vertices; 5 isolated vertices).
  
+ - 2_umbrellas_open: 8  faces, 12 vertices, 18 edges (1 non-manifold vertices; 1 isolated vertices).
+ - 3_umbrellas_open: 12 faces, 18 vertices, 27 edges (1 non-manifold vertices; 2 isolated vertices).
+ - 5_umbrellas_open: 20 faces, 30 vertices, 45 edges (1 non-manifold vertices; 4 isolated vertices).
+ - 6_umbrellas_open: 34 faces, 36 vertices, 54 edges (1 non-manifold vertices; 5 isolated vertices).

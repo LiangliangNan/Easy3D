@@ -104,13 +104,16 @@ namespace easy3d {
                 details::get_line(input);
                 input >> nb_vertices;
 
-                std::vector<SurfaceMesh::Vertex> vertices;
-                for (int j = 0; j < nb_vertices; j++) {
-                    int index;
-                    input >> index;
-                    vertices.push_back(SurfaceMesh::Vertex(index));
-                }
-                builder.add_face(vertices);
+				if (input.ok()) {
+					std::vector<SurfaceMesh::Vertex> vertices;
+					for (int j = 0; j < nb_vertices; j++) {
+						int index;
+						input >> index;
+						if (input.ok())
+							vertices.push_back(SurfaceMesh::Vertex(index));
+					}
+					builder.add_face(vertices);
+				}
             }
 
             // for mesh models, we can simply ignore the edges.

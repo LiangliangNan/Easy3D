@@ -41,17 +41,22 @@ int main(int argc, char** argv) {
 
     try {
         const std::vector<std::string> files = {
-                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off",
-                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off",
-                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_2.off",
-                setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off",
-                setting::resource_directory() + "/data/repair/non_manifold/complex_and_isolated_vertices.off",
-                setting::resource_directory() + "/data/repair/non_manifold/2_umbrellas.off",
-                setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
-                setting::resource_directory() + "/data/domik/domik.obj",
-                setting::resource_directory() + "/data/house/house.obj",
-				setting::resource_directory() + "/data/other/sponza/sponza.obj",
-				setting::resource_directory() + "/data/tree.obj"
+				//setting::resource_directory() + "/data/repair/non_manifold/complex_edges_0.off",
+				//setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off",
+				//setting::resource_directory() + "/data/repair/non_manifold/complex_edges_2.off",
+				//setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off",
+				//setting::resource_directory() + "/data/repair/non_manifold/complex_and_isolated_vertices.off",
+				setting::resource_directory() + "/data/repair/non_manifold/2_umbrellas_open.off",
+				setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas_open.off",
+				setting::resource_directory() + "/data/repair/non_manifold/5_umbrellas_open.off",
+				setting::resource_directory() + "/data/repair/non_manifold/6_umbrellas_open.off",
+				//setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
+			    //setting::resource_directory() + "/data/repair/non_manifold/5_umbrellas.off",
+			    //setting::resource_directory() + "/data/repair/non_manifold/6_umbrellas.off",
+				//setting::resource_directory() + "/data/domik/domik.obj",
+				//setting::resource_directory() + "/data/house/house.obj",
+				//setting::resource_directory() + "/data/other/sponza/sponza.obj",
+				//setting::resource_directory() + "/data/tree.obj"
 		};
 
 
