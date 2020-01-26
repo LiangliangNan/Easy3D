@@ -122,7 +122,7 @@ namespace easy3d {
             std::size_t count(0);
             for (auto copies : copied_vertices_)
                 count += copies.second.size();
-            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) + " copy occurences)";
+            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) + " copy occurrences)";
         }
 
         // ----------------------------------------------------------------------------------
