@@ -104,13 +104,13 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-		// TODO: Traverse all the edge and check the number of occurences to know where a edge is copied from 
+        // TODO: Traverse all the edge and check the number of occurrences to know where a edge is copied from
 #if 1
-		std::size_t count_duplicated_edges(0);
-		for (const auto& targets : outgoing_halfedges_) {
-			std::set<int> tmp(targets.begin(), targets.end());
-			count_duplicated_edges += (targets.size() - tmp.size());
-		}
+        std::size_t count_duplicated_edges(0);
+        for (const auto &targets : outgoing_halfedges_) {
+            std::set<int> tmp(targets.begin(), targets.end());
+            count_duplicated_edges += (targets.size() - tmp.size());
+        }
         if (count_duplicated_edges > 0) {
             msg += "\n\t\t" + std::to_string(count_duplicated_edges) + " duplicated edges (fixed)";
             report = true;
@@ -148,15 +148,6 @@ namespace easy3d {
             msg += "\n\tvertex v" + std::to_string(g.first.idx()) + " copied to ";
             for (auto v : g.second)
                 msg += "v" + std::to_string(v.idx()) + " ";
-        }
-
-        for (auto e : copied_edges_) {
-            auto s = mesh_->from_vertex(e.first);
-            auto t = mesh_->to_vertex(e.first);
-            msg += "\n\tedge h" + std::to_string(e.first.idx()) + " (v" + std::to_string(s.idx()) + " -> v" + std::to_string(t.idx()) + ") copied to ";
-            s = mesh_->from_vertex(e.second);
-            t = mesh_->to_vertex(e.second);
-            msg += "h" + std::to_string(e.second.idx()) + " (v" + std::to_string(s.idx()) + " -> v" + std::to_string(t.idx()) + ")";
         }
 #endif
 
@@ -217,55 +208,51 @@ namespace easy3d {
 				return true;
 		return false;
 
-#else	// This also works, but slightly slower (negligible) and longer code. 
+#else	// This also works, but slightly slower and longer code.
 
-		auto h = mesh_->find_halfedge(s, t);
-		if (h.is_valid() && !mesh_->is_boundary(h)) {
-			//            std::cout << "edge (" << s << " -> " << t << ") already exists"<< std::endl;
-			return true;
-		}
+        auto h = mesh_->find_halfedge(s, t);
+        if (h.is_valid() && !mesh_->is_boundary(h)) {
+            return true;
+        }
 
-		// test the duplicated edges using EACH copy of s and t
-		auto s_pos = copied_vertices_.find(s);
-		if (s_pos != copied_vertices_.end()) {
-			const auto& s_copies = s_pos->second;
-			for (auto v : s_copies) {
-				h = mesh_->find_halfedge(v, t);
-				if (h.is_valid() && !mesh_->is_boundary(h)) {
-					//                    std::cout << "edge (" << s << " -> " << t << ") duplicates existing edge (" << v << " -> " << t << ")" << std::endl;
-					return true;
-				}
-			}
-		}
+        // test the duplicated edges using EACH copy of s and t
+        auto s_pos = copied_vertices_.find(s.idx());
+        if (s_pos != copied_vertices_.end()) {
+            const auto& s_copies = s_pos->second;
+            for (auto v : s_copies) {
+                h = mesh_->find_halfedge(v, t);
+                if (h.is_valid() && !mesh_->is_boundary(h)) {
+                    return true;
+                }
+            }
+        }
 
-		// test the duplicated edges using s and EACH copy of t
-		auto t_pos = copied_vertices_.find(t);
-		if (t_pos != copied_vertices_.end()) {
-			const auto& t_copies = t_pos->second;
-			for (auto v : t_copies) {
-				h = mesh_->find_halfedge(s, v);
-				if (h.is_valid() && !mesh_->is_boundary(h)) {
-					//                    std::cout << "edge (" << s << " -> " << t << ") duplicates existing edge (" << s << " -> " << v << ")" << std::endl;
-					return true;
-				}
-			}
+        // test the duplicated edges using s and EACH copy of t
+        auto t_pos = copied_vertices_.find(t.idx());
+        if (t_pos != copied_vertices_.end()) {
+            const auto& t_copies = t_pos->second;
+            for (auto v : t_copies) {
+                h = mesh_->find_halfedge(s, v);
+                if (h.is_valid() && !mesh_->is_boundary(h)) {
+                    return true;
+                }
+            }
 
-			// if reached here, test all combinations of the copies
-			if (s_pos != copied_vertices_.end()) {
-				const auto& s_copies = s_pos->second;
-				for (auto vs : s_copies) {
-					for (auto vt : t_copies) {
-						h = mesh_->find_halfedge(vs, vt);
-						if (h.is_valid() && !mesh_->is_boundary(h)) {
-							//                            std::cout << "edge (" << s << " -> " << t << ") duplicates existing edge (" << vs << " -> " << vt << ")" << std::endl;
-							return true;
-						}
-					}
-				}
-			}
-		}
+            // if reached here, test all combinations of the copies
+            if (s_pos != copied_vertices_.end()) {
+                const auto& s_copies = s_pos->second;
+                for (auto vs : s_copies) {
+                    for (auto vt : t_copies) {
+                        h = mesh_->find_halfedge(vs, vt);
+                        if (h.is_valid() && !mesh_->is_boundary(h)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
 
-		return false;
+        return false;
 #endif
 	}
 
@@ -275,8 +262,6 @@ namespace easy3d {
 
         if (!face_can_be_added(vertices))
             return SurfaceMesh::Face();
-
-//        std::cout << "\n\n----- add face: original " << vertices << " ---------" << std::endl;
 
         std::size_t nb_vertices = vertices.size();
         face_vertices_.resize(nb_vertices);
@@ -332,12 +317,9 @@ namespace easy3d {
 				std::size_t t = ((s + 1) % nb_vertices);
 				outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
 			}
-
-//            std::cout << "      GOOD: added face "<< face_vertices_ <<  std::endl;
         }
         else {
             ++num_faces_unknown_structure_;
-//            std::cout << "      ERROR: add face failed "<< face_vertices_ <<  std::endl;
             LOG(ERROR) << "always add the face by duplicating all its vertices";
         }
 
@@ -395,8 +377,6 @@ namespace easy3d {
                 continue;
             a->copy(v.idx(), new_v.idx());
         }
-
-//        std::cout << "vertex " << v << " copied to " << new_v << std::endl;
 
 		return new_v;
     }
