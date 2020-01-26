@@ -53,7 +53,7 @@ namespace easy3d {
 
     void ManifoldBuilder::end() {
         const std::string name = mesh_->name().empty() ? "with unknown name" : mesh_->name();
-        std::string msg = "mesh \n\t" + name + "\n\thas topological issues:";
+        std::string msg = "mesh has topological issues:";
         bool report(false);
 
         // ----------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ namespace easy3d {
         }
 #endif
         if (count_non_manifold_vertices > 0) {
-            msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non_manifold vertices (not fixed)";
+            msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (not fixed)";
             report = true;
         }
 
@@ -123,16 +123,6 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        if (!copied_vertices_.empty()) {
-            std::size_t count(0);
-            for (auto copies : copied_vertices_)
-                count += copies.second.size();
-            msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices copied (" + std::to_string(count) +
-                   " occurrences) to solve the non-manifoldness";
-        }
-
-        // ----------------------------------------------------------------------------------
-
         std::size_t count_isolated_vertices(0);
         for (auto v : mesh_->vertices()) {
             if (mesh_->is_isolated(v)) {
@@ -148,10 +138,24 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
+        if (!copied_vertices_.empty()) {
+            std::size_t count(0);
+            for (auto copies : copied_vertices_)
+                count += copies.second.size();
+            msg += "\n\tSolution: \n\t\tcopied " + std::to_string(copied_vertices_.size()) + " vertices (" + std::to_string(count) +
+                   " occurrences) to ensure manifoldness";
+
+            if (count_isolated_vertices > 0)
+                msg += "\n\t\tdeleted " + std::to_string(count_isolated_vertices) + " isolated vertices";
+        }
+
+        // ----------------------------------------------------------------------------------
+
         if (report) {
-            msg += "\n\t#face: " + std::to_string(mesh_->faces_size())
-                   + ", #vertex: " + std::to_string(mesh_->vertices_size())
-                   + ", #edge: " + std::to_string(mesh_->edges_size());
+            msg += "\n\tResult: \n\t\t" +
+                    std::to_string(mesh_->faces_size()) + " faces\n\t\t" +
+                    std::to_string(mesh_->vertices_size()) + " vertices\n\t\t" +
+                    std::to_string(mesh_->edges_size()) + " edges";
         }
 
 #if 0
@@ -303,8 +307,6 @@ namespace easy3d {
                     // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the
                     // first edge.
                     face_vertices_[t] = copy_vertex(vertices[t]);
-                    LOG_IF(FATAL, !halfedge_is_legal(face_vertices_[s], face_vertices_[t]))
-                                    << "edge is still illegal after duplicating one end point";
                 }
             }
         }
