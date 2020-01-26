@@ -39,7 +39,7 @@
 
 
 // In case the ManifoldBuilder failed to handle the mesh
-#define DO_NOT_CREATE_SURFACE_MESH
+//#define DO_NOT_CREATE_SURFACE_MESH
 
 namespace easy3d {
 
@@ -360,7 +360,7 @@ namespace easy3d {
             }
         }
 
-        builder.finish();
+        builder.end();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())
