@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/logging.h>
 
 #include <fstream>
 #include <cstring> // for strlen()
@@ -87,7 +88,7 @@ namespace easy3d {
 
             int nb_vertices, nb_facets, nb_edges;
             input >> nb_vertices >> nb_facets >> nb_edges;
-            if (!input.ok()) {
+            if (input.fail()) {
                 std::cerr << "An error in the file header: " << input.current_line() << std::endl;
                 return false;
             }
@@ -96,7 +97,11 @@ namespace easy3d {
                 vec3 p;
                 details::get_line(input);
                 input >> p;
-                builder.add_vertex(p);
+                if (!input.fail())
+                    builder.add_vertex(p);
+                else {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading the " << i << "_th vertex from file";
+                }
             }
 
             for (int i = 0; i < nb_facets; i++) {
@@ -104,16 +109,23 @@ namespace easy3d {
                 details::get_line(input);
                 input >> nb_vertices;
 
-				if (input.ok()) {
+				if (!input.fail()) {
 					std::vector<SurfaceMesh::Vertex> vertices;
 					for (int j = 0; j < nb_vertices; j++) {
 						int index;
 						input >> index;
-						if (input.ok())
-							vertices.push_back(SurfaceMesh::Vertex(index));
+						if (!input.fail()) {
+                            vertices.push_back(SurfaceMesh::Vertex(index));
+                        }
+                        else {
+                            LOG_FIRST_N(ERROR, 3) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file";
+                        }
 					}
 					builder.add_face(vertices);
 				}
+                else {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading the " << i << "_th face from file";
+                }
             }
 
             // for mesh models, we can simply ignore the edges.

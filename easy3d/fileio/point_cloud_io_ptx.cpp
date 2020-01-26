@@ -72,21 +72,29 @@ namespace easy3d {
 			{
 				unsigned int width = 0, height = 0;
 				in.get_line();
-				if (in.eof())
-					return nullptr;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading file header. Probably wrong file format";
+                    return nullptr;
+                }
+
 				in >> height;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading \'height\' from file header";
+                }
 
 				in.get_line();
-				if (in.eof())
-					return nullptr;
-				in >> width;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading file header. Probably wrong file format";
+                    return nullptr;
+                }
 
-				if (in.eof() || in.fail()) {
-                    LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
-					return nullptr;
-				}
+				in >> width;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading \'width\' from file header";
+                    return nullptr;
+                }
 				if (height == 0 || width == 0) {
-                    LOG(ERROR) << "unrecognized file format: height == 0 || width == 0";
+                    LOG_FIRST_N(ERROR, 3) << "unrecognized file format: height == 0 || width == 0";
 					return nullptr;
 				}
 
@@ -100,7 +108,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v3[i];
 					if (in.fail()) {
-					    LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
+                        LOG_FIRST_N(ERROR, 3) << "failed reading sensor transformation matrix";
 						return nullptr;
 					}
 				}
@@ -112,7 +120,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v4[i];
 					if (in.fail()) {
-                        LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
+                        LOG_FIRST_N(ERROR, 3) << "failed reading point cloud transformation matrix";
 						return nullptr;
 					}
 				}
@@ -132,7 +140,7 @@ namespace easy3d {
 			in.get_line();
 			in >> p >> intensity;
 			if (in.fail()) {
-                LOG_IF(ERROR, cloud_index_ == 0) << "unrecognized file format";
+                LOG_FIRST_N(ERROR, 3) << "failed reading the first point";
 				delete cloud;
 				return nullptr;
 			}
@@ -157,12 +165,24 @@ namespace easy3d {
 
 				in.get_line();
 				in >> p >> intensity;
-				v = cloud->add_vertex(cloudTransD * p);
+                if (!in.fail())
+                    v = cloud->add_vertex(cloudTransD * p);
+                else {
+                    LOG_FIRST_N(ERROR, 3) << "failed reading the " << i << "_th point";
+                    delete cloud;
+                    return nullptr;
+                }
 
 				if (colors) {
 					vec3 c;
 					in >> c;
-					colors[v] = c / 255.0f;
+                    if (!in.fail())
+                        colors[v] = c / 255.0f;
+                    else {
+                        LOG_FIRST_N(ERROR, 3) << "failed reading color of the " << i << "_th point";
+                        delete cloud;
+                        return nullptr;
+                    }
 				}
 			}
 

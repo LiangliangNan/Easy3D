@@ -28,6 +28,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -59,6 +60,9 @@ namespace easy3d {
 
 						//  std::streamoff pos = input.tellg();
 						//	progress.notify(pos);
+					}
+					else {
+						LOG_FIRST_N(ERROR, 3) << "failed reading point";
 					}
 				}
 			}

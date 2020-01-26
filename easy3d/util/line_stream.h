@@ -46,7 +46,6 @@ namespace io {
 		bool eof() const { return in_.eof() ; }
         bool eol() const { return line_in_ == nullptr || line_in_->eof(); }
 		bool fail() const { return in_.fail() || line_in_->fail(); }
-		bool ok() const { return !fail(); }
 
 		void get_line() {
 			getline(in_, buffer_);

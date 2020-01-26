@@ -32,6 +32,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -82,7 +83,7 @@ namespace easy3d {
 		bool load_stl(const std::string& file_name, SurfaceMesh* mesh)
 		{
 			if (!mesh) {
-				std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
 				return false;
 			}
 
@@ -107,7 +108,7 @@ namespace easy3d {
 			// open file (in ASCII mode)
 			FILE* in = fopen(file_name.c_str(), "r");
             if (!in) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -237,13 +238,13 @@ namespace easy3d {
 		bool save_stl(const std::string& file_name, const SurfaceMesh* mesh)
 		{
 			if (!mesh) {
-				std::cerr << "null mesh pointer" << std::endl;
+				LOG(ERROR) << "null mesh pointer";
 				return false;
 			}
 
 			if (!mesh->is_triangle_mesh())
 			{
-				std::cerr << "write_stl: not a triangle mesh!" << std::endl;
+                LOG(ERROR) << "write_stl: not a triangle mesh!";
 				return false;
 			}
 
@@ -257,7 +258,7 @@ namespace easy3d {
 
 			std::ofstream ofs(file_name.c_str());
             if (ofs.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 

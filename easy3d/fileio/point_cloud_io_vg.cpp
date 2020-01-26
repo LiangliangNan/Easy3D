@@ -176,32 +176,63 @@ namespace easy3d {
             std::string dumy;
             unsigned int num;
             input >> dumy >> num;
+            if (input.fail()) {
+                LOG(ERROR) << "failed reading point number";
+                return false;
+            }
 
             cloud->resize(num);
             std::vector<vec3>& points = cloud->points();
-            for (unsigned int i = 0; i < num; ++i)
+            for (unsigned int i = 0; i < num; ++i) {
                 input >> points[i];
-
-            input >> dumy >> num;
-            if (num == points.size()) {
-                auto cls = cloud->add_vertex_property<vec3>("v:color");
-                std::vector<vec3>& colors = cls.vector();
-                for (unsigned int i = 0; i < num; ++i)
-                    input >> colors[i];
+                if (input.fail()) {
+                    LOG(ERROR) << "failed reading the " << i << "_th point";
+                    return false;
+                }
             }
 
             input >> dumy >> num;
+            if (input.fail()) {
+                LOG(ERROR) << "failed reading color number";
+                return false;
+            }
+            if (num == points.size()) {
+                auto cls = cloud->add_vertex_property<vec3>("v:color");
+                std::vector<vec3>& colors = cls.vector();
+                for (unsigned int i = 0; i < num; ++i) {
+                    input >> colors[i];
+                    if (input.fail()) {
+                        LOG(ERROR) << "failed reading the color of the " << i << "_th point";
+                        return false;
+                    }
+                }
+            }
+
+            input >> dumy >> num;
+            if (input.fail()) {
+                LOG(ERROR) << "failed reading normal number";
+                return false;
+            }
             if (num == points.size()) {
                 auto nms = cloud->add_vertex_property<vec3>("v:normal");
                 std::vector<vec3>& normals = nms.vector();
-                for (unsigned int i = 0; i < num; ++i)
+                for (unsigned int i = 0; i < num; ++i) {
                     input >> normals[i];
+                    if (input.fail()) {
+                        LOG(ERROR) << "failed reading the normal of the " << i << "_th point";
+                        return false;
+                    }
+                }
             }
 
             //////////////////////////////////////////////////////////////////////////
 
             std::size_t num_groups = 0;
             input >> dumy >> num_groups;
+            if (input.fail()) {
+                LOG(ERROR) << "failed reading vertex group number";
+                return false;
+            }
             for (unsigned int i = 0; i<num_groups; ++i) {
                 VertexGroup g = read_ascii_group(input);
                 g.primitive_index_ = i;
@@ -217,6 +248,10 @@ namespace easy3d {
 
                 int num_children = 0;
                 input >> dumy >> num_children;
+                if (input.fail()) {
+                    LOG(ERROR) << "failed reading children number";
+                    return false;
+                }
                 for (int j = 0; j<num_children; ++j) {
                     VertexGroup chld = read_ascii_group(input);
                     if (!chld.empty()) {
@@ -233,6 +268,9 @@ namespace easy3d {
             std::string dumy;
             int type;
             input >> dumy >> type;
+            if (input.fail()) {
+                LOG_FIRST_N(ERROR, 3) << "failed reading vertex group type";
+            }
 
             std::size_t num;
             input >> dumy >> num;
