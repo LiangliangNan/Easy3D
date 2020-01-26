@@ -24,7 +24,8 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from Surface_mesh with modifications.
+ * the code is adapted from Surface_mesh with modifications and
+ * significant enhancement.
  *		- Surface_mesh (version 1.1)
  * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
