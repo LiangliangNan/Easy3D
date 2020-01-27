@@ -343,7 +343,7 @@ namespace easy3d {
         const vec3 p = points[v]; // [Liangliang]: 'const vec3&' won't work because the vector is growing.
         auto new_v = mesh_->add_vertex(p);
         original_vertex_[new_v] = v;
-        copied_vertices_[v].insert(new_v);
+        copied_vertices_[v].push_back(new_v);
 
         // copy all vertex properties except "v:connectivity" and "v:deleted"
         auto &arrays = mesh_->vprops_.arrays();
@@ -421,17 +421,18 @@ namespace easy3d {
             }
         }
 
-        for (auto h : non_manifold_cones) {
-            std::size_t nb_new_vertices = resolve_non_manifold_vertex(h, mesh, dmap);
-#if 0
-			for (const auto& copy : dmap) {
-				std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
-				for (auto v : copy.second)
-					std::cout << " " << v;
-				std::cout << std::endl;
-			}
+		// for each umbrella
+        for (auto h : non_manifold_cones)
+			resolve_non_manifold_vertex(h, mesh, dmap);
+
+#if 0	// This is the history how vertices were duplicated.
+		for (const auto& copy : dmap) {
+			std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
+			for (auto v : copy.second)
+				std::cout << " " << v;
+			std::cout << std::endl;
+		}
 #endif
-        }
 
         mesh->remove_vertex_property(known_nm_vertices);
         mesh->remove_vertex_property(visited_vertices);
@@ -445,12 +446,6 @@ namespace easy3d {
     {
         auto has_vertex = [](SurfaceMesh::Vertex v, CopyRecord& record) ->bool {
             return record.find(v) != record.end();
-        };
-        auto collect_vertices = [](SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, CopyRecord& record) -> void {
-            auto& verts = record[v1];
-            if(verts.empty())
-                verts.push_back(v1);
-            verts.push_back(v2);
         };
 
         auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h, SurfaceMesh::Halfedge sector_last_h, SurfaceMesh* mesh) -> SurfaceMesh::Vertex {
@@ -501,7 +496,7 @@ namespace easy3d {
                 // Create a new vertex, and move the whole star to that new vertex
                 auto last_h = mesh->opposite_halfedge(mesh->next_halfedge(h));
                 auto new_v = create_new_vertex_for_sector(h, last_h, mesh);
-                collect_vertices(old_v, new_v, dmap);
+				dmap[old_v].push_back(new_v);
                 nb_new_vertices = 1;
             }
         }
@@ -539,8 +534,8 @@ namespace easy3d {
                 mesh->set_next_halfedge(sector_start_h, mesh->opposite_halfedge(sector_last_h));
 
                 if (must_create_new_vertex) {
-                    SurfaceMesh::Vertex new_v = create_new_vertex_for_sector(sector_start_h, sector_last_h, mesh);
-                    collect_vertices(old_v, new_v, dmap);
+                    auto new_v = create_new_vertex_for_sector(sector_start_h, sector_last_h, mesh);
+					dmap[old_v].push_back(new_v);
                     ++nb_new_vertices;
                 } else {
                     // Ensure that halfedge(old_v, pm) stays valid

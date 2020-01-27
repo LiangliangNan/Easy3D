@@ -28,7 +28,6 @@
 #include <easy3d/core/surface_mesh.h>
 
 #include <map>
-#include <set>
 
 
 namespace easy3d {
@@ -109,18 +108,20 @@ namespace easy3d {
         SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
 
         // A vertex might have been copied a few times. If copies occurred before, the original vertex will never work.
-        // To avoid uncessary duplication, we reuse one of its copy that is not on a closed disk. We test each copy in
+        // To avoid unnecessary duplication, we reuse one of its copy that is not on a closed disk. We test each copy in
         // the order the copies were made. If no valid copy can be found, we make a new copy.
         // If no copy exists and v is on a closed disk, we simply copy it.
         SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
-
-		typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
 
         // Resolve all non-manifold vertices of a mesh.
         // Return the number of non-manifold vertices.
         std::size_t resolve_non_manifold_vertices(SurfaceMesh* mesh);
 
-        // Resolve the non-manifoldness of a vertex that is denoted by an incomping halfedge.
+		// The copied vertices: vertices in 'second' were copied from 'first'.
+		// Usually only a small number of vertices will be copied, so no need to use vertex property.
+		typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
+
+        // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
         std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh, CopyRecord& dmap);
@@ -146,9 +147,9 @@ namespace easy3d {
         // A vertex property to record the original vertex of each vertex.
         SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
 
-        // The copied vertices: vertices in 'second' were copied from 'first'
+        // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
-        std::map<SurfaceMesh::Vertex, std::set<SurfaceMesh::Vertex> > copied_vertices_;
+        CopyRecord copied_vertices_;
 
 		// The records of the existing halfedges (each associated with a valid face) used
 		// for fast query of duplicated edges. All vertices are their original indices.
