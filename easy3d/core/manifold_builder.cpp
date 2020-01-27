@@ -267,43 +267,43 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------------------------------------
 
-        // Check and resolve linking issue.
+		{	// Check and resolve linking issue.
+			std::vector<SurfaceMesh::Halfedge> halfedges(n);
+			std::vector<bool> halfedge_esists(n);
+			for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
+				halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+				halfedge_esists[s] = halfedges[s].is_valid();
+			}
 
-        std::vector<SurfaceMesh::Halfedge> halfedges(n);
-        std::vector<bool> halfedge_esists(n);
-        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            halfedge_esists[s] = halfedges[s].is_valid();
-        }
-
-        // Let's check if the face can be linked to the mesh
-        SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
-        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            if (halfedge_esists[s] && halfedge_esists[t]) {
-                inner_prev = halfedges[s];
-                inner_next = halfedges[t];
-                if (mesh_->next_halfedge(inner_prev) != inner_next) {
-                    // search a free gap
-                    // free gap will be between boundary_prev and boundary_next
-                    outer_prev = mesh_->opposite_halfedge(inner_next);
-                    boundary_prev = outer_prev;
-                    do {
-                        boundary_prev = mesh_->opposite_halfedge(mesh_->next_halfedge(boundary_prev));
-                    } while (!mesh_->is_boundary(boundary_prev) || boundary_prev == inner_prev);
-                    boundary_next = mesh_->next_halfedge(boundary_prev);
-                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_prev));
-                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_next));
-                    if (boundary_next == inner_next)
-                        face_vertices_[t] = copy_vertex(vertices[t]);
-                }
-            }
-        }
+			// Let's check if the face can be linked to the mesh
+			SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
+			for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
+				if (halfedge_esists[s] && halfedge_esists[t]) {
+					inner_prev = halfedges[s];
+					inner_next = halfedges[t];
+					if (mesh_->next_halfedge(inner_prev) != inner_next) {
+						// search a free gap
+						// free gap will be between boundary_prev and boundary_next
+						outer_prev = mesh_->opposite_halfedge(inner_next);
+						boundary_prev = outer_prev;
+						do {
+							boundary_prev = mesh_->opposite_halfedge(mesh_->next_halfedge(boundary_prev));
+						} while (!mesh_->is_boundary(boundary_prev) || boundary_prev == inner_prev);
+						boundary_next = mesh_->next_halfedge(boundary_prev);
+						DLOG_IF(FATAL, !mesh_->is_boundary(boundary_prev));
+						DLOG_IF(FATAL, !mesh_->is_boundary(boundary_next));
+						if (boundary_next == inner_next)
+							face_vertices_[t] = copy_vertex(vertices[t]);
+					}
+				}
+			}
+		}
 
         // ---------------------------------------------------------------------------------------------------------
 
-        // Now we should be able to link the new face to the current mesh.
+		// Now we should be able to link the new face to the current mesh.
+		auto face = mesh_->add_face(face_vertices_);
 
-        auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
