@@ -101,7 +101,7 @@ namespace easy3d {
         //  - it has less than 3 vertices, or
         //  - it has self duplicated vertices, or
         //  - one of the vertex is out-of-range.
-        bool vertices_are_valid(const std::vector<SurfaceMesh::Vertex> &vertices);
+        bool vertices_valid(const std::vector<SurfaceMesh::Vertex> &vertices);
 
         // Copy a vertex v and its attributes.
         // Return the new vertex.

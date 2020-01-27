@@ -197,7 +197,7 @@ namespace easy3d {
     }
 
 
-    bool ManifoldBuilder::vertices_are_valid(const std::vector<SurfaceMesh::Vertex> &vertices) {
+    bool ManifoldBuilder::vertices_valid(const std::vector<SurfaceMesh::Vertex> &vertices) {
         std::size_t n = vertices.size();
 
         // Check #1: a face has less than 3 vertices
@@ -245,7 +245,7 @@ namespace easy3d {
         if (mesh_->faces_size() == 0) // the first face
             outgoing_halfedges_.resize(mesh_->vertices_size());
 
-        if (!vertices_are_valid(vertices))
+        if (!vertices_valid(vertices))
             return SurfaceMesh::Face();
 
         std::size_t n = vertices.size();
@@ -255,26 +255,27 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------------------------------------
 
+        std::vector<SurfaceMesh::Halfedge> halfedges(n);
+        std::vector<bool> halfedge_esists(n);
+
         // Check and resolve duplicate edges.
 
         // For each edge, we check the 'to' vertex only. The handling of the last edge (i.e., last_vertex -> first_vertex)
         // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the first edge.
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            if (h.is_valid() && !mesh_->is_boundary(h))
+            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+            halfedge_esists[s] = halfedges[s].is_valid();
+
+            if (halfedge_esists[s] && !mesh_->is_boundary(halfedges[s])) {
                 face_vertices_[t] = copy_vertex(vertices[t]);
+                halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+                halfedge_esists[s] = halfedges[s].is_valid();
+            }
         }
 
         // ---------------------------------------------------------------------------------------------------------
 
         // Check and resolve linking issue.
-
-        std::vector<SurfaceMesh::Halfedge> halfedges(n);
-        std::vector<bool> halfedge_esists(n);
-        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            halfedge_esists[s] = halfedges[s].is_valid();
-        }
 
         // Let's check if the face can be linked to the mesh
         SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
