@@ -27,7 +27,8 @@
 
 #include <easy3d/core/surface_mesh.h>
 
-#include <unordered_map>
+#include <map>
+#include <set>
 
 
 namespace easy3d {
@@ -140,9 +141,12 @@ namespace easy3d {
         // the vertices of the current face after resolving complex edges and vertices
         std::vector<SurfaceMesh::Vertex> face_vertices_ ;
 
+        // A vertex property to record the original vertex of each vertex.
+        SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
+
         // The copied vertices: vertices in 'second' were copied from 'first'
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
-        std::unordered_map<int, std::vector<SurfaceMesh::Vertex> > copied_vertices_;
+        std::map<SurfaceMesh::Vertex, std::set<SurfaceMesh::Vertex> > copied_vertices_;
 
 		// The records of the existing halfedges (each associated with a valid face) used
 		// for fast query of duplicated edges. All vertices are their original indices.

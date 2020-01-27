@@ -46,21 +46,14 @@ namespace easy3d {
 
         face_vertices_.clear();
         copied_vertices_.clear();
+
+        original_vertex_ = mesh_->vertex_property<SurfaceMesh::Vertex>("v:ManifoldBuilder:original_vertex");
     }
 
 
     void ManifoldBuilder::end() {
-#if 0
-        for (auto g : copied_vertices_) {
-            std::cout << "\tvertex v" << std::to_string(g.first) << " copied to ";
-            for (auto v : g.second)
-                std::cout << v << " ";
-            std::cout << std::endl;
-        }
-#endif
-
         const std::string name = mesh_->name().empty() ? "(with unknown name)" : mesh_->name();
-        std::string msg = "mesh " + name + "\n\tTopological issues:";
+        std::string msg = "mesh " + name + "\n\tTopological issues detected:";
         bool report(false);
 
         // ----------------------------------------------------------------------------------
@@ -98,8 +91,7 @@ namespace easy3d {
         // non-manifold vertices in the original mesh
         // vertices that have been copied and in current mesh they are closed disks.
         for (auto v : copied_vertices_) {
-            int idx = v.first;
-            if (!mesh_->is_boundary(SurfaceMesh::Vertex(idx)))
+            if (!mesh_->is_boundary(v.first))
                 ++count_non_manifold_vertices;
         }
         // resolve non-manifold vertices in the current mesh
@@ -123,6 +115,15 @@ namespace easy3d {
             msg += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
             report = true;
         }
+
+        // ----------------------------------------------------------------------------------
+
+#if 1
+        // ATTENTION: this record is valid only before deleting the isolated vertices.
+        for (auto g : copied_vertices_) {
+            LOG(INFO) << "\tvertex " << g.first << " copied to " << g.second;
+        }
+#endif
 
         // ----------------------------------------------------------------------------------
 
@@ -185,12 +186,15 @@ namespace easy3d {
         LOG_IF(WARNING, report) << msg;
 
         outgoing_halfedges_.clear();
+        mesh_->remove_vertex_property(original_vertex_);
     }
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
         LOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
-        return mesh_->add_vertex(p);
+        SurfaceMesh::Vertex v = mesh_->add_vertex(p);
+        original_vertex_[v] = v;
+        return v;
     }
 
 
@@ -319,7 +323,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::get(SurfaceMesh::Vertex v) {
-        auto pos = copied_vertices_.find(v.idx());
+        auto pos = copied_vertices_.find(v);
         if (pos == copied_vertices_.end()) { // no copies
             if (mesh_->is_boundary(v))
                 return v;
@@ -341,7 +345,8 @@ namespace easy3d {
 
         const vec3 p = points[v]; // [Liangliang]: 'const vec3&' won't work because the vector is growing.
         auto new_v = mesh_->add_vertex(p);
-        copied_vertices_[v.idx()].push_back(new_v);
+        original_vertex_[new_v] = v;
+        copied_vertices_[v].insert(new_v);
 
         // copy all vertex properties except "v:connectivity" and "v:deleted"
         auto &arrays = mesh_->vprops_.arrays();
@@ -432,21 +437,24 @@ namespace easy3d {
 
     std::size_t ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh)
     {
-        typedef std::unordered_map<SurfaceMesh::Vertex, std::set<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash > CopyRecord;
+        typedef std::map<SurfaceMesh::Vertex, std::set<SurfaceMesh::Vertex> > CopyRecord;
 
         auto has_vertex = [](SurfaceMesh::Vertex v, CopyRecord& record) ->bool {
             return record.find(v) != record.end();
         };
-        auto collect_vertices = [&](SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, CopyRecord& record) -> void {
+        auto collect_vertices = [](SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, CopyRecord& record) -> void {
             auto& verts = record[v1];
             if(verts.empty())
                 verts.insert(v1);
             verts.insert(v2);
         };
 
-        auto create_new_vertex_for_sector = [=](SurfaceMesh::Halfedge sector_begin_h, SurfaceMesh::Halfedge sector_last_h, SurfaceMesh* mesh) -> SurfaceMesh::Vertex {
+        auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h, SurfaceMesh::Halfedge sector_last_h, SurfaceMesh* mesh) -> SurfaceMesh::Vertex {
             auto old_vd = mesh->to_vertex(sector_begin_h);
-            auto new_vd = copy_vertex(old_vd);
+
+            auto old_vd_org = original_vertex_[old_vd];
+            auto new_vd = copy_vertex(old_vd_org);
+
             mesh->set_halfedge(new_vd, sector_begin_h);
             auto h = sector_begin_h;
             do {
