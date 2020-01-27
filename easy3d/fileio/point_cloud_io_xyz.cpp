@@ -62,7 +62,7 @@ namespace easy3d {
 						//	progress.notify(pos);
 					}
 					else {
-						LOG_FIRST_N(ERROR, 3) << "failed reading point";
+						LOG_FIRST_N(ERROR, 1) << "failed reading point";
 					}
 				}
 			}
