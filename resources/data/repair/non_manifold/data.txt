@@ -1,6 +1,3 @@
-(all timings are on Windows Debug mode except for tree.obj which is in Release model).
-
-
 W0126 17:57:09.512959 276813248 manifold_builder.cpp:181] mesh 
 	/Users/lnan/Projects/Easy3D/cmake-build-debug/bin/resources/data/repair/non_manifold/complex_edges_0.off
 	has topological issues:
@@ -134,7 +131,7 @@ W0126 17:57:09.861397 276813248 manifold_builder.cpp:181] mesh
 		1350 vertices copied (1408 occurrences) to solve the non-manifoldness
 		2302 isolated vertices (removed)
 	#face: 11205, #vertex: 7076, #edge: 19539
-surface mesh loaded (#f: 11205, #v: 7076, #e: 19539). Time: 2.2s
+surface mesh loaded (#f: 11205, #v: 7076, #e: 19539).
 
 
 
@@ -145,16 +142,17 @@ W0126 17:57:11.032025 276813248 manifold_builder.cpp:181] mesh
 		4911 non_manifold vertices (not fixed)
 		2 vertices copied (2 occurrences) to solve the non-manifoldness
 	#face: 40165, #vertex: 60850, #edge: 99430
-surface mesh loaded (#f: 40165, #v: 60850, #e: 99430). Time: 10.4s (Release 241ms)
+surface mesh loaded (#f: 40165, #v: 60850, #e: 99430). 
 
 
 
-W0125 23:19:06.263723 19384 manifold_guard.cpp:168] mesh 
-	C:\Research\code\Easy3D-build64\bin/resources/data/tree.obj
-	has topological issues:
+W0127 09:38:17.429594 235472320 manifold_builder.cpp:184] mesh has topological issues:
 		120 isolated vertices (removed)
-	#face: 3928140, #vertex: 2240850, #edge: 6168990
-surface mesh loaded (#f: 3928140, #v: 2240850, #e: 6168990). Time: 11.3s
+	Result: 
+		3928140 faces
+		2240850 vertices
+		6168990 edges
+surface mesh loaded (#face: 3928140, #vertex: 2240850, #edge: 6168990). Time: 10.2s (time on macOS, Release mode)
 
 
 
