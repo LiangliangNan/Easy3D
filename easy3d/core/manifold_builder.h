@@ -33,10 +33,10 @@
 namespace easy3d {
 
     /**
-     * ManifoldBuilder is a helper class that resolves non-manifoldness of a surface mesh. It is typical used to
-     * ensure a manifold surface mesh constructed from a file (because you don't know if the mesh is manifold or not).
-     * For meshes guaranteed to be manifold (for example, using your algorithm), using ManifoldBuilder is optional. In
-     * this case, you can use the built-in 'add_vertex()' and 'add_face()' functions of SurfaceMesh.
+     * ManifoldBuilder is a class that resolves non-manifoldness of a surface mesh. It is typical used to ensure a
+     * manifold surface mesh loaded from a file (because you don't know if the mesh is manifold or not).
+     * For meshes guaranteed to be manifold (for example, using your algorithm), using ManifoldBuilder is optional.
+     * In this case, you can use the built-in 'add_vertex()' and 'add_face()' functions of SurfaceMesh.
      *
      * Example use:
      * ---------------------------------------------------------
@@ -52,15 +52,8 @@ namespace easy3d {
 
     class ManifoldBuilder {
     public:
-        ManifoldBuilder(SurfaceMesh* mesh = nullptr);
+        ManifoldBuilder(SurfaceMesh* mesh);
         ~ManifoldBuilder();
-
-        /**
-         * @brief Set the mesh to be reconstructed. This method allow constructing multiple meshes using the same
-         *        manifold guard.
-         * @param mesh The mesh to be reconstructed.
-         */
-        void set_mesh(SurfaceMesh* mesh) { mesh_ = mesh; }
 
         /**
          * @brief Begin surface construction. Must be called at the beginning of the surface construction.

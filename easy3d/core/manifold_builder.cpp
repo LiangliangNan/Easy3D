@@ -145,7 +145,7 @@ namespace easy3d {
                 std::size_t count(0);
                 for (auto copies : copied_vertices_)
                     count += copies.second.size();
-                msg += "\n\t\tcopied " + std::to_string(copied_vertices_.size()) + " vertices (" +
+                msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices duplicated (" +
                        std::to_string(count) +
                        " occurrences) to ensure manifoldness";
             }
@@ -157,9 +157,9 @@ namespace easy3d {
 
         if (report) {
             msg += "\n\tResult: \n\t\t" +
-                    std::to_string(mesh_->faces_size()) + " faces\n\t\t" +
-                    std::to_string(mesh_->vertices_size()) + " vertices\n\t\t" +
-                    std::to_string(mesh_->edges_size()) + " edges";
+                   std::to_string(mesh_->faces_size()) + " faces\n\t\t" +
+                   std::to_string(mesh_->vertices_size()) + " vertices\n\t\t" +
+                   std::to_string(mesh_->edges_size()) + " edges";
         }
 
         // ----------------------------------------------------------------------------------
@@ -302,9 +302,8 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------------------------------------
 
-		// Now we should be able to link the new face to the current mesh.
-		auto face = mesh_->add_face(face_vertices_);
-
+        // Now we should be able to link the new face to the current mesh.
+        auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
@@ -357,42 +356,35 @@ namespace easy3d {
     }
 
 
-    std::size_t ManifoldBuilder::resolve_non_manifold_vertices(SurfaceMesh* mesh)
-    {
+    std::size_t ManifoldBuilder::resolve_non_manifold_vertices(SurfaceMesh *mesh) {
         auto null_h = SurfaceMesh::Halfedge();
 
         auto known_nm_vertices = mesh->add_vertex_property<bool>("v:ManifoldBuilder:known_nm_vertices", false);
-        auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices", null_h);
+        auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices",
+                                                                                 null_h);
         auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_vertices", false);
-		CopyRecord dmap;
-
+        CopyRecord copy_record;
 
         std::vector<SurfaceMesh::Halfedge> non_manifold_cones;
-
-        for( auto h : mesh->halfedges())
-        {
+        for (auto h : mesh->halfedges()) {
             // If 'h' is not visited yet, we walk around the target of 'h' and mark these
             // halfedges as visited. Thus, if we are here and the target is already marked as visited,
             // it means that the vertex is non manifold.
-            if(! visited_halfedges[h])
-            {
+            if (!visited_halfedges[h]) {
                 visited_halfedges[h] = true;
                 bool is_non_manifold = false;
 
                 auto v = mesh->to_vertex(h);
-                if(visited_vertices[v] != null_h) // already seen this vertex, but not from this star
+                if (visited_vertices[v] != null_h) // already seen this vertex, but not from this star
                 {
                     is_non_manifold = true;
                     // if this is the second time we visit that vertex and the first star was manifold, we have
                     // never reported the first star, but we must now
-                    if(!known_nm_vertices[v]) {
-                        non_manifold_cones.push_back(
-                                visited_vertices[v]); // that's a halfedge of the first star we've seen 'v' in
-
+                    if (!known_nm_vertices[v]) {
+                        // that's a halfedge of the first star we've seen 'v' in
+                        non_manifold_cones.push_back(visited_vertices[v]);
                     }
-                }
-                else
-                {
+                } else {
                     // first time we meet this vertex, just mark it so, and keep the halfedge we found the vertex with in memory
                     visited_vertices[v] = h;
                 }
@@ -401,71 +393,66 @@ namespace easy3d {
                 // it means the mesh is pinched and we are also in the case of a non-manifold situation
                 auto ih = h, done = ih;
                 int border_counter = 0;
-                do
-                {
+                do {
                     visited_halfedges[ih] = true;
-                    if(mesh->is_boundary(ih))
+                    if (mesh->is_boundary(ih))
                         ++border_counter;
 
                     ih = mesh->prev_halfedge(mesh->opposite_halfedge(ih));
-                }
-                while(ih != done);
+                } while (ih != done);
 
-                if(border_counter > 1)
+                if (border_counter > 1)
                     is_non_manifold = true;
 
-                if(is_non_manifold) {
+                if (is_non_manifold) {
                     non_manifold_cones.push_back(h);
                     known_nm_vertices[v] = true;
                 }
             }
         }
 
-		// for each umbrella
+        // for each umbrella
         for (auto h : non_manifold_cones)
-			resolve_non_manifold_vertex(h, mesh, dmap);
+            resolve_non_manifold_vertex(h, mesh, copy_record);
 
-#if 0	// This is the history how vertices were duplicated.
-		for (const auto& copy : dmap) {
-			std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
-			for (auto v : copy.second)
-				std::cout << " " << v;
-			std::cout << std::endl;
-		}
+#if 0    // This is the history how vertices were duplicated.
+        for (const auto& copy : dmap) {
+            std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
+            for (auto v : copy.second)
+                std::cout << " " << v;
+            std::cout << std::endl;
+        }
 #endif
 
         mesh->remove_vertex_property(known_nm_vertices);
         mesh->remove_vertex_property(visited_vertices);
         mesh->remove_halfedge_property(visited_halfedges);
 
-        return dmap.size();
+        return copy_record.size();
     }
 
 
-    std::size_t ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh, CopyRecord& dmap)
-    {
-        auto has_vertex = [](SurfaceMesh::Vertex v, CopyRecord& record) ->bool {
-            return record.find(v) != record.end();
-        };
+    std::size_t
+    ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record) {
+        auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h,
+                                                   SurfaceMesh::Halfedge sector_last_h,
+                                                   SurfaceMesh *mesh) -> SurfaceMesh::Vertex {
+            auto old_v = mesh->to_vertex(sector_begin_h);
 
-        auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h, SurfaceMesh::Halfedge sector_last_h, SurfaceMesh* mesh) -> SurfaceMesh::Vertex {
-            auto old_vd = mesh->to_vertex(sector_begin_h);
+            auto old_v_orginal = original_vertex_[old_v];
+            auto new_v = copy_vertex(old_v_orginal);
 
-            auto old_vd_org = original_vertex_[old_vd];
-            auto new_vd = copy_vertex(old_vd_org);
-
-            mesh->set_halfedge(new_vd, sector_begin_h);
+            mesh->set_halfedge(new_v, sector_begin_h);
             auto h = sector_begin_h;
             do {
-                mesh->set_vertex(h, new_vd);
-                if(h == sector_last_h)
+                mesh->set_vertex(h, new_v);
+                if (h == sector_last_h)
                     break;
                 else
                     h = mesh->prev_halfedge(mesh->opposite_halfedge(h));
-            }
-            while(h != sector_begin_h); // for safety
+            } while (h != sector_begin_h); // for safety
             DLOG_ASSERT(h != sector_begin_h);
-            return new_vd;
+            return new_v;
         };
 
         std::size_t nb_new_vertices = 0;
@@ -485,18 +472,17 @@ namespace easy3d {
 
         bool is_non_manifold_within_umbrella = (border_counter > 1);
         if (!is_non_manifold_within_umbrella) {
-            const bool first_time_meeting_v = !has_vertex(old_v, dmap);
-            if (first_time_meeting_v) {
+            if (copy_record.find(old_v) == copy_record.end()) { // first time meeting the vertex
                 // The star is manifold, so if it is the first time we have met that vertex,
                 // there is nothing to do, we just keep the same vertex.
                 mesh->set_halfedge(old_v, h); // to ensure halfedge(old_v, pm) stays valid
-                dmap[old_v]; // so that we know we have met old_v already, next time, we'll have to duplicate
+                copy_record[old_v]; // so that we know we have met old_v already, next time, we'll have to duplicate
             } else {
                 // This is not the canonical star associated to 'v'.
                 // Create a new vertex, and move the whole star to that new vertex
                 auto last_h = mesh->opposite_halfedge(mesh->next_halfedge(h));
                 auto new_v = create_new_vertex_for_sector(h, last_h, mesh);
-				dmap[old_v].push_back(new_v);
+                copy_record[old_v].push_back(new_v);
                 nb_new_vertices = 1;
             }
         }
@@ -528,14 +514,14 @@ namespace easy3d {
                 // there are multiple CCs incident to this particular vertex, and we should create a new vertex
                 // if it's not the first umbrella around 'old_v' or not the first sector, but only not if it's
                 // both the first umbrella and first sector.
-                bool must_create_new_vertex = (!is_main_sector || has_vertex(old_v, dmap));
+                bool must_create_new_vertex = (!is_main_sector || copy_record.find(old_v) != copy_record.end());
 
                 // In any case, we must set up the next pointer correctly
                 mesh->set_next_halfedge(sector_start_h, mesh->opposite_halfedge(sector_last_h));
 
                 if (must_create_new_vertex) {
                     auto new_v = create_new_vertex_for_sector(sector_start_h, sector_last_h, mesh);
-					dmap[old_v].push_back(new_v);
+                    copy_record[old_v].push_back(new_v);
                     ++nb_new_vertices;
                 } else {
                     // Ensure that halfedge(old_v, pm) stays valid
