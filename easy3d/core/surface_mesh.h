@@ -47,13 +47,23 @@
 namespace easy3d {
 
     /**
-     * @brief A halfedge data structure for polygonal meshes.
+     * @brief A halfedge data structure for polygonal meshes of 2-manifold.
      *
      * @details A surface mesh is a consistent and orientable polygonal mesh that may have one or more boundaries.
-     *          The faces are simple polygons. The edges are line segments. Each edge connects two vertices, and is
+     *          The faces are simple polygons and the edges are line segments. Each edge connects two vertices, and is
      *          shared by two faces (including the null face for boundary edges). A surface mesh can have any number
      *          of connected components and also some self-intersections.
+     *
+     *          The construction of a 2-manifold surface mesh can be done by using
+     *              - add_vertex() to create vertices;
+     *              - add_face() to create faces.
+     *          Note: if you're not sure if your mesh is manifold, you should use ManifoldBuilder for the construction.
+     *                The ManifoldBuilder resolves non-manifoldness when constructing a surface mesh and it guarantees
+     *                to result a polygonal mesh of 2-manifold topology.
+     *
+     * @related ManifoldBuilder.
      */
+
     class SurfaceMesh : public Model
     {
 
