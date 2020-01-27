@@ -113,6 +113,15 @@ namespace easy3d {
         // If no copy exists and v is on a closed disk, we simply copy it.
         SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
 
+        // Resolve all non-manifold vertices of a mesh.
+        // Return the number of non-manifold vertices.
+        std::size_t resolve_non_manifold_vertices(SurfaceMesh* mesh);
+
+        // Resolve the non-manifoldness of a vertex that is denoted by an incomping halfedge.
+        // @param h The halfedge pointing to the non-manifold vertex.
+        // Return the number of vertex copies.
+        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh);
+
     private:
         SurfaceMesh* mesh_;
 
@@ -134,9 +143,6 @@ namespace easy3d {
         // The copied vertices: vertices in 'second' were copied from 'first'
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
         std::unordered_map<int, std::vector<SurfaceMesh::Vertex> > copied_vertices_;
-
-		// A vertex property to record the original vertex of each vertex.
-        SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
 
 		// The records of the existing halfedges (each associated with a valid face) used
 		// for fast query of duplicated edges. All vertices are their original indices.
