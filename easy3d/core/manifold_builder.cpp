@@ -118,7 +118,7 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-#if 1
+#if 0
         // ATTENTION: this record is valid only before deleting the isolated vertices.
         for (auto g : copied_vertices_) {
             LOG(INFO) << "\tvertex " << g.first << " copied to " << g.second;
@@ -386,8 +386,11 @@ namespace easy3d {
                     is_non_manifold = true;
                     // if this is the second time we visit that vertex and the first star was manifold, we have
                     // never reported the first star, but we must now
-                    if(!known_nm_vertices[v])
-                        non_manifold_cones.push_back(visited_vertices[v]); // that's a halfedge of the first star we've seen 'v' in
+                    if(!known_nm_vertices[v]) {
+                        non_manifold_cones.push_back(
+                                visited_vertices[v]); // that's a halfedge of the first star we've seen 'v' in
+
+                    }
                 }
                 else
                 {
@@ -412,19 +415,17 @@ namespace easy3d {
                 if(border_counter > 1)
                     is_non_manifold = true;
 
-                if(is_non_manifold)
-                {
+                if(is_non_manifold) {
                     non_manifold_cones.push_back(h);
                     known_nm_vertices[v] = true;
                 }
             }
         }
 
-        if(!non_manifold_cones.empty())
-        {
-            for (auto h : non_manifold_cones) {
-                std::size_t nb_new_vertices = resolve_non_manifold_vertex(h, mesh);
-            }
+        for (auto h : non_manifold_cones) {
+            //std::cout << "vertex " << mesh->to_vertex(h) << " is non-manifold" << std::endl;
+            std::size_t nb_new_vertices = resolve_non_manifold_vertex(h, mesh);
+            std::cout << "vertex " << mesh_->to_vertex(h) << ": num vertices created: " << nb_new_vertices << std::endl;
         }
 
         mesh->remove_vertex_property(known_nm_vertices);
@@ -437,7 +438,7 @@ namespace easy3d {
 
     std::size_t ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh)
     {
-        typedef std::map<SurfaceMesh::Vertex, std::set<SurfaceMesh::Vertex> > CopyRecord;
+        typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
 
         auto has_vertex = [](SurfaceMesh::Vertex v, CopyRecord& record) ->bool {
             return record.find(v) != record.end();
@@ -445,8 +446,8 @@ namespace easy3d {
         auto collect_vertices = [](SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, CopyRecord& record) -> void {
             auto& verts = record[v1];
             if(verts.empty())
-                verts.insert(v1);
-            verts.insert(v2);
+                verts.push_back(v1);
+            verts.push_back(v2);
         };
 
         auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h, SurfaceMesh::Halfedge sector_last_h, SurfaceMesh* mesh) -> SurfaceMesh::Vertex {
