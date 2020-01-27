@@ -302,9 +302,9 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------------------------------------
 
-        // Now we should be able to link the new face to the current mesh.
+		// Now we should be able to link the new face to the current mesh.
+		auto face = mesh_->add_face(face_vertices_);
 
-        auto face = mesh_->add_face(face_vertices_);
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
