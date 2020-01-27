@@ -84,7 +84,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_plain_points(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -127,7 +127,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -170,7 +170,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -207,11 +207,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 
@@ -220,11 +220,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 
@@ -233,11 +233,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 
@@ -246,11 +246,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_surfels(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (normal_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "normal buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "normal buffer not created (logged only first record)";
             return;
         }
 
@@ -294,15 +294,15 @@ namespace easy3d {
 
     void PointsDrawable::_draw_surfels_with_texture(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (normal_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "normal buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "normal buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
     }

@@ -75,7 +75,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_plain_lines(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -127,7 +127,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cylinders(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -163,7 +163,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cones(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
 
@@ -199,11 +199,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_plain_lines_with_texture(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 
@@ -212,11 +212,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cylinders_with_texture(const Camera* camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 
@@ -225,11 +225,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cones_with_texture(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (logged only first record)";
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created";
+            LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (logged only first record)";
             return;
         }
 

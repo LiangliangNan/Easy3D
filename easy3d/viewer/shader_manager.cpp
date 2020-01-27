@@ -59,19 +59,19 @@ namespace easy3d {
         const std::string dir = setting::resource_directory() + "/shaders/";
         const std::string vs_file = dir + base_name + ".vert";
         if (!file_system::is_file(vs_file)) {
-            LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vs_file + " does not exist";
+            LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vs_file + " does not exist (logged only first record)";
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string fs_file = dir + base_name + ".frag";
         if (!file_system::is_file(fs_file)) {
-            LOG_FIRST_N(ERROR, 1) << "fragment shader file \'" << fs_file + " does not exist";
+            LOG_FIRST_N(ERROR, 1) << "fragment shader file \'" << fs_file + " does not exist (logged only first record)";
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
         const std::string gs_file = dir + base_name + ".geom";
         if (geom_shader && !file_system::is_file(gs_file)) {
-            LOG_FIRST_N(ERROR, 1) << "geometry shader file \'" << gs_file + " does not exist";
+            LOG_FIRST_N(ERROR, 1) << "geometry shader file \'" << gs_file + " does not exist (logged only first record)";
             attempt_load_program_[base_name] = false;
             return nullptr;
         }
@@ -136,19 +136,19 @@ namespace easy3d {
 		const std::string dir = setting::resource_directory() + "/shaders/";
 		const std::string vert_file = dir + vert_file_name;
         if (!file_system::is_file(vert_file)) {
-            LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vert_file_name + "\' does not exist";
+            LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vert_file_name + "\' does not exist (logged only first record)";
 			attempt_load_program_[name] = false;
 			return nullptr;
 		}
 		const std::string frag_file = dir + frag_file_name;
         if (!file_system::is_file(frag_file)) {
-            LOG_FIRST_N(ERROR, 1) << "fragment shader file \'" << frag_file_name + "\' does not exist";
+            LOG_FIRST_N(ERROR, 1) << "fragment shader file \'" << frag_file_name + "\' does not exist (logged only first record)";
 			attempt_load_program_[name] = false;
 			return nullptr;
 		}
 		const std::string geom_file = dir + geom_file_name;
         if (!geom_file_name.empty() && !file_system::is_file(geom_file)) {
-            LOG_FIRST_N(ERROR, 1) << "geometry shader file \'" << geom_file_name + "\' does not exist";
+            LOG_FIRST_N(ERROR, 1) << "geometry shader file \'" << geom_file_name + "\' does not exist (logged only first record)";
 			attempt_load_program_[name] = false;
 			return nullptr;
 		}

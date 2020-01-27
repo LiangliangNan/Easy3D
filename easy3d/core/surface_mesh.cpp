@@ -401,7 +401,7 @@ namespace easy3d {
         {
             if ( !is_boundary(vertices[i]) )
             {
-                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ")";
+                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ") (logged only first record)";
                 return Face();
             }
 
@@ -410,7 +410,7 @@ namespace easy3d {
 
             if (!is_new[i] && !is_boundary(halfedges[i]))
             {
-                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ")";
+                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ") (logged only first record)";
                 return Face();
             }
         }
@@ -446,7 +446,7 @@ namespace easy3d {
                     // ok ?
                     if (boundary_next == inner_next)
                     {
-                        LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: patch re-linking failed (" << vertices << ")";
+                        LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: patch re-linking failed (" << vertices << ") (logged only first record)";
                         return Face();
                     }
 

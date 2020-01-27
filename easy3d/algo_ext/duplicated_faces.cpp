@@ -54,8 +54,7 @@ namespace easy3d {
                 triangles.push_back(t);
             }
             else {
-                LOG(WARNING) << "only triangular meshes can be processed";
-//                LOG_FIRST_N(WARNING, 5) << "only triangular meshes can be processed";
+                LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (logged only first record)";
                 return triangles;
             }
         }
