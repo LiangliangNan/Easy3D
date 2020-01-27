@@ -258,7 +258,7 @@ namespace easy3d {
         // ---------------------------------------------------------------------------------------------------------
 
         std::vector<SurfaceMesh::Halfedge> halfedges(n);
-        std::vector<bool> halfedge_esists(n);
+        std::vector<char> halfedge_esists(n);
 
         // Check and resolve duplicate edges.
 
@@ -279,7 +279,6 @@ namespace easy3d {
 
         // Check and resolve linking issue.
 
-#if 1
         // Let's check if the face can be linked to the mesh
         SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
@@ -302,8 +301,6 @@ namespace easy3d {
                 }
             }
         }
-
-#endif
 
         // ---------------------------------------------------------------------------------------------------------
 
