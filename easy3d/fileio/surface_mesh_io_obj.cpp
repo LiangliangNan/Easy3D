@@ -29,6 +29,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 
 // this seems to be more robust and can handle multi-materials
@@ -46,12 +47,12 @@ namespace easy3d {
         bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             if (!file_system::is_file(file_name)) {
-                std::cerr << "file does not exist: \'" << file_system::simple_name(file_name) << "\'" << std::endl;
+                LOG(ERROR) << "file does not exist: " << file_system::simple_name(file_name);
                 return false;
             }
 
@@ -60,13 +61,13 @@ namespace easy3d {
             config.vertex_color = false;
             tinyobj::ObjReader reader;
             if (!reader.ParseFromFile(file_name, config)) {
-                std::cerr << "error occured loading obj file" << std::endl;
+                LOG(ERROR) << "error occured loading obj file";
                 const std::string& error = reader.Error();
                 if (!error.empty())
-                    std::cerr << error << std::endl;
+                    LOG(ERROR) << error;
                 const std::string& warning = reader.Warning();
                 if (!warning.empty())
-                    std::cerr << warning << std::endl;
+                    LOG(ERROR) << warning;
                 return false;
             }
 
@@ -108,8 +109,8 @@ namespace easy3d {
                 assert(shapes[i].mesh.num_face_vertices.size() == shapes[i].mesh.smoothing_group_ids.size());
 
                 // For each face
-                for (std::size_t  f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                    std::size_t  fnum = shapes[i].mesh.num_face_vertices[f];
+                for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+                    std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
 
                     // For each vertex in the face
                     std::vector<SurfaceMesh::Vertex> vertices;
@@ -124,7 +125,7 @@ namespace easy3d {
 
                     SurfaceMesh::Face face = builder.add_face(vertices);
                     if (prop_texcoords && face.is_valid()) {
-                        auto vts = builder.face_vertices();
+                        const auto& vts = builder.face_vertices();
                         std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
                         for (int i=0; i<vts.size(); ++i)
                             original_vertex[ vts[i] ] = vertices[i];

@@ -683,12 +683,8 @@ void MainWindow::detectSelfIntersections() {
 
     MeshSurfacer ms;
     const auto& pairs = ms.detect_self_intersections(mesh);
-    if (!pairs.empty()) {
+    if (!pairs.empty())
         std::cerr << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string() << std::endl;
-        for (auto p : pairs) {
-            std::cout << "\t" << p.first << " <-> " << p.second << std::endl;
-        }
-    }
     else
         std::cerr << "done. No intersecting faces detected" << w.time_string() << std::endl;
  }

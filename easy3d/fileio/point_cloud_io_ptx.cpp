@@ -72,10 +72,8 @@ namespace easy3d {
 			{
 				unsigned int width = 0, height = 0;
 				in.get_line();
-                if (in.fail() || in.eof()) {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading file header. Probably wrong file format (logged only first record)";
+                if (in.eof())
                     return nullptr;
-                }
 
 				in >> height;
                 if (in.fail() || in.eof()) {

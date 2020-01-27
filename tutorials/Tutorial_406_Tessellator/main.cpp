@@ -26,7 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/tessellator_gen.h>
+#include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
 
 
@@ -52,11 +52,11 @@ void triangulate(SurfaceMesh* mesh) {
     auto normals = mesh->face_property<vec3>("f:normal");
     auto holes = mesh->get_face_property<Hole>("f:holes");
 
-    TessellatorGen gen;
+    Tessellator gen;
     for (auto f : mesh->faces()) {
         gen.begin_polygon(normals[f]);
 
-        gen.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
+        gen.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
         gen.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
@@ -65,7 +65,7 @@ void triangulate(SurfaceMesh* mesh) {
         gen.end_contour();
 
         if (holes && holes[f].size() > 3) { // has a valid hole
-            gen.set_winding_rule(TessellatorGen::ODD);
+            gen.set_winding_rule(Tessellator::ODD);
             gen.begin_contour();
             for (auto p : holes[f])
                 gen.add_vertex(p);

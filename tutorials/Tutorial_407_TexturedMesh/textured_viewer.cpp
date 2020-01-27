@@ -31,7 +31,7 @@
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/tessellator_gen.h>
+#include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -179,7 +179,7 @@ namespace easy3d {
         SurfaceMesh* mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
-        TessellatorGen tessellator;
+        Tessellator tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
             const auto &group = groups[i];
             if (group.empty())
@@ -193,7 +193,7 @@ namespace easy3d {
                  Face& face = faces[id];
                  face.normal = compute_face_normal(face, points);
                  tessellator.begin_polygon(face.normal);
-                 tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
+                 tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                  tessellator.begin_contour();
                  const auto& vertex_indices = face.vertex_indices;
                  const auto& texcoord_indices = face.texcoord_indices;
@@ -343,7 +343,7 @@ namespace easy3d {
                 SurfaceMesh::Face face = builder.add_face(vertices);
                 faces.push_back(face);
                 if (prop_texcoords && face.is_valid()) {
-                    auto vts = builder.face_vertices();
+                    const auto& vts = builder.face_vertices();
                     std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
                     for (int i=0; i<vts.size(); ++i)
                         original_vertex[ vts[i] ] = vertices[i];
@@ -398,7 +398,7 @@ namespace easy3d {
         mesh->update_vertex_normals();
         auto normals = mesh->get_vertex_property<vec3>("v:normal");
 
-        TessellatorGen tessellator;
+        Tessellator tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
             const auto &group = groups[i];
             if (group.empty())
@@ -412,7 +412,7 @@ namespace easy3d {
                     continue;
                 tessellator.reset();
                 tessellator.begin_polygon(mesh->compute_face_normal(face));
-                tessellator.set_winding_rule(TessellatorGen::NONZERO);  // or POSITIVE
+                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : mesh->halfedges(face)) {
                     const vec3& v = points[mesh->to_vertex(h)];
