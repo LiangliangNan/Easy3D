@@ -89,7 +89,7 @@ namespace easy3d {
 
         if (num_faces_unknown_topology_ > 0) {
             msg += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
-                   " complex faces with unknown topology (ignored)";
+                   " complex faces with unknown topology (ignored) and only the first record was logged";
             report = true;
         }
 
@@ -250,6 +250,8 @@ namespace easy3d {
 
         std::size_t n = vertices.size();
         face_vertices_.resize(n);
+
+        // try to use the newly copied vertices first to avoid unnecessary copies.
         for (std::size_t i = 0; i < n; ++i)
             face_vertices_[i] = get(vertices[i]);
 
@@ -277,6 +279,7 @@ namespace easy3d {
 
         // Check and resolve linking issue.
 
+#if 0
         // Let's check if the face can be linked to the mesh
         SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
@@ -300,6 +303,8 @@ namespace easy3d {
             }
         }
 
+#endif
+
         // ---------------------------------------------------------------------------------------------------------
 
 		// Now we should be able to link the new face to the current mesh.
@@ -312,7 +317,7 @@ namespace easy3d {
             }
         } else {
             ++num_faces_unknown_topology_;
-            LOG(ERROR) << "fatal error: failed adding an isolated face: " << vertices;
+            LOG_FIRST_N(ERROR, 1) << "fatal error: failed adding face (" << vertices << ")";
         }
 
         return face;
