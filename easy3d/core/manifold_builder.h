@@ -114,6 +114,8 @@ namespace easy3d {
         // If no copy exists and v is on a closed disk, we simply copy it.
         SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
 
+		typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
+
         // Resolve all non-manifold vertices of a mesh.
         // Return the number of non-manifold vertices.
         std::size_t resolve_non_manifold_vertices(SurfaceMesh* mesh);
@@ -121,7 +123,7 @@ namespace easy3d {
         // Resolve the non-manifoldness of a vertex that is denoted by an incomping halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
-        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh);
+        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh, CopyRecord& dmap);
 
     private:
         SurfaceMesh* mesh_;

@@ -98,9 +98,6 @@ namespace easy3d {
         count_non_manifold_vertices += resolve_non_manifold_vertices(mesh_);
         if (count_non_manifold_vertices > 0) {
             msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (fixed)";
-
-            std::size_t count = resolve_non_manifold_vertices(mesh_);
-            LOG_IF(ERROR, count != 0) << count << " more non-manifold vertices resolved in another round";
             report = true;
         }
 
@@ -219,7 +216,7 @@ namespace easy3d {
 
         // Check #3; a face has out-of-range vertices
         for (auto v : vertices) {
-            if (v.idx() < 0 || v.idx() >= mesh_->vertices_size()) {
+            if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->vertices_size())) {
                 ++num_faces_out_of_range_vertices_;
                 return false;
             }
@@ -367,6 +364,8 @@ namespace easy3d {
         auto known_nm_vertices = mesh->add_vertex_property<bool>("v:ManifoldBuilder:known_nm_vertices", false);
         auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices", null_h);
         auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_vertices", false);
+		CopyRecord dmap;
+
 
         std::vector<SurfaceMesh::Halfedge> non_manifold_cones;
 
@@ -423,23 +422,27 @@ namespace easy3d {
         }
 
         for (auto h : non_manifold_cones) {
-            //std::cout << "vertex " << mesh->to_vertex(h) << " is non-manifold" << std::endl;
-            std::size_t nb_new_vertices = resolve_non_manifold_vertex(h, mesh);
-            std::cout << "vertex " << mesh_->to_vertex(h) << ": num vertices created: " << nb_new_vertices << std::endl;
+            std::size_t nb_new_vertices = resolve_non_manifold_vertex(h, mesh, dmap);
+#if 0
+			for (const auto& copy : dmap) {
+				std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
+				for (auto v : copy.second)
+					std::cout << " " << v;
+				std::cout << std::endl;
+			}
+#endif
         }
 
         mesh->remove_vertex_property(known_nm_vertices);
         mesh->remove_vertex_property(visited_vertices);
         mesh->remove_halfedge_property(visited_halfedges);
 
-        return non_manifold_cones.size();
+        return dmap.size();
     }
 
 
-    std::size_t ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh)
+    std::size_t ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh, CopyRecord& dmap)
     {
-        typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
-
         auto has_vertex = [](SurfaceMesh::Vertex v, CopyRecord& record) ->bool {
             return record.find(v) != record.end();
         };
@@ -470,7 +473,6 @@ namespace easy3d {
             return new_vd;
         };
 
-        CopyRecord dmap;
         std::size_t nb_new_vertices = 0;
         auto old_v = mesh_->to_vertex(h);
 
