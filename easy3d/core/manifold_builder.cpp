@@ -265,14 +265,14 @@ namespace easy3d {
         // For each edge, we check the 'to' vertex only. The handling of the last edge (i.e., last_vertex -> first_vertex)
         // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the first edge.
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            halfedge_esists[s] = halfedges[s].is_valid();
-
-            if (halfedge_esists[s] && !mesh_->is_boundary(halfedges[s])) {
+            auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
+            if (h.is_valid() && !mesh_->is_boundary(h)) {
                 face_vertices_[t] = copy_vertex(vertices[t]);
-                halfedges[s] = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-                halfedge_esists[s] = halfedges[s].is_valid();
+                h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
             }
+
+            halfedges[s] = h;
+            halfedge_esists[s] = h.is_valid();
         }
 
         // ---------------------------------------------------------------------------------------------------------
