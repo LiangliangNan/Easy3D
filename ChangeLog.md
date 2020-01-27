@@ -1,3 +1,6 @@
+#### 27/01/2020
+  - now loading models from files is done through ManifoldBuilder that resolves non-manifoldness.
+
 #### 20/12/2019
   - now all image io is managed by ImageIO.
 
