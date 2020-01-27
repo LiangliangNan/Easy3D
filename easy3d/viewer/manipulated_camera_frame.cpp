@@ -78,6 +78,7 @@ namespace easy3d {
         if (has_nan(trans)) {
 #ifndef NDEBUG
             std::cerr << "vector has NaN: " << trans << std::endl;
+            std::cerr << "pivot point: " << pivotPoint() << std::endl;
             std::cerr << "camera position: " << camera->position() << std::endl;
             std::cerr << "camera up vector: " << camera->upVector() << std::endl;
             std::cerr << "camera rightVector: " << camera->rightVector() << std::endl;

@@ -170,6 +170,12 @@ namespace easy3d {
         Point max_;
     };
 
+
+    template <int DIM, typename FT>
+    inline bool has_nan(const GenericBox<DIM, FT>& box) {
+        return has_nan(box.min()) || has_nan(box.max());
+    }
+
 } // namespace easy3d
 
 
