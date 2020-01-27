@@ -1113,6 +1113,9 @@ namespace easy3d {
         /// returns whether \c v is a manifold vertex (not incident to several patches)
         bool is_manifold(Vertex v) const
         {
+            // [Liangliang: I doulbt. It should also check if more than 1 cones meet at the same vertex.
+            //              See the "resolve_non_manifold_vertices()" in manifold_builder.cpp
+
             // The vertex is non-manifold if more than one gap exists, i.e.
             // more than one outgoing boundary halfedge.
             int n(0);
