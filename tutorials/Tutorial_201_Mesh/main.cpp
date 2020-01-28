@@ -34,7 +34,6 @@ using namespace easy3d;
 //		- construct a mesh from its vertices and known connectivity
 
 
-
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
@@ -49,17 +48,17 @@ int main(int argc, char** argv) {
     const int option = 1;
 
     // In this example, we create a surface mesh representing a tetrahedron (i.e., 4 triangle faces, 4 vertices).
-    /*
-     *                          v0
-     *                          /|\
-     *                         / | \
-     *                        /  |  \
-     *                    v1 /_ _|_ _\ v2
-     *                       \   |   /
-     *                        \  |  /
-     *                         \ | /
-     *                           v3
-     */
+    //
+    //                 v0
+    //                /|\
+    //               / | \
+    //              /  |  \
+    //          v1 /_ _|_ _\ v2
+    //             \   |   /
+    //              \  |  /
+    //               \ | /
+    //                 v3
+    //
     const std::vector<vec3> points = {
             vec3(0, 0, 0),
             vec3(1, 0, 0),
@@ -70,7 +69,7 @@ int main(int argc, char** argv) {
     // Create a surface mesh
     SurfaceMesh mesh;
 
-    if (option == 1) {// Option 1: use the built-in functions of SurfaceMesh.
+    if (option == 1) {  // Option 1: use the built-in functions of SurfaceMesh.
         // Add vertices
         SurfaceMesh::Vertex v0 = mesh.add_vertex(points[0]);
         SurfaceMesh::Vertex v1 = mesh.add_vertex(points[1]);
@@ -83,7 +82,7 @@ int main(int argc, char** argv) {
         mesh.add_triangle(v0, v2, v1);
     }
 
-    else if (option == 2) {// Option 2: use ManifoldBuilder.
+    else if (option == 2) { // Option 2: use ManifoldBuilder.
         // Add vertices
         ManifoldBuilder builder(&mesh);
         SurfaceMesh::Vertex v0 = builder.add_vertex(vec3(0, 0, 0));
