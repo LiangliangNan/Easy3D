@@ -23,6 +23,7 @@
  */
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
 
 
@@ -30,7 +31,7 @@ using namespace easy3d;
 
 
 // This example shows how to
-//		- construct a mesh from its vertices and known connectivities
+//		- construct a mesh from its vertices and known connectivity
 
 
 
@@ -38,27 +39,69 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-	// Create a surface mesh
-	SurfaceMesh* mesh = new SurfaceMesh;
+	// Easy3D provides two options to construct a surface mesh.
+    //  - Option 1: use the add_vertex() and add_[face/triangle/quad]() functions of SurfaceMesh. You can only choose
+    //              this option if you are sure that the mesh is manifold.
+    //  - Option 2: use the ManifoldBuilder that can resolve non-manifoldness during the construction of a mesh. This
+    //              is the default option in Easy3D and client code is highly recommended to use ManifoldBuilder.
 
-	// Add 4 vertices
-	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-	SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(1, 0, 0));
-	SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(0, 1, 0));
-	SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, 0, 1));
+    // You can easily change an option.
+    const int option = 1;
 
-	// Add 4 triangular faces
-	mesh->add_triangle(v0, v1, v3);
-	mesh->add_triangle(v1, v2, v3);
-	mesh->add_triangle(v2, v0, v3);
-	mesh->add_triangle(v0, v2, v1);
+    // In this example, we create a surface mesh representing a tetrahedron (i.e., 4 triangle faces, 4 vertices).
+    /*
+     *                          v0
+     *                          /|\
+     *                         / | \
+     *                        /  |  \
+     *                    v1 /_ _|_ _\ v2
+     *                       \   |   /
+     *                        \  |  /
+     *                         \ | /
+     *                           v3
+     */
+    const std::vector<vec3> points = {
+            vec3(0, 0, 0),
+            vec3(1, 0, 0),
+            vec3(0, 1, 0),
+            vec3(0, 0, 1)
+    };
 
-	std::cout << "vertices: " << mesh->n_vertices() << std::endl;
-	std::cout << "edges: " << mesh->n_edges() << std::endl;
-	std::cout << "faces: " << mesh->n_faces() << std::endl;
+    // Create a surface mesh
+    SurfaceMesh mesh;
 
-	// Delete the mesh (i.e., release memory)
-	delete mesh;
+    if (option == 1) {// Option 1: use the built-in functions of SurfaceMesh.
+        // Add vertices
+        SurfaceMesh::Vertex v0 = mesh.add_vertex(points[0]);
+        SurfaceMesh::Vertex v1 = mesh.add_vertex(points[1]);
+        SurfaceMesh::Vertex v2 = mesh.add_vertex(points[2]);
+        SurfaceMesh::Vertex v3 = mesh.add_vertex(points[3]);
+        // Add faces
+        mesh.add_triangle(v0, v1, v3);
+        mesh.add_triangle(v1, v2, v3);
+        mesh.add_triangle(v2, v0, v3);
+        mesh.add_triangle(v0, v2, v1);
+    }
+
+    else if (option == 2) {// Option 2: use ManifoldBuilder.
+        // Add vertices
+        ManifoldBuilder builder(&mesh);
+        SurfaceMesh::Vertex v0 = builder.add_vertex(vec3(0, 0, 0));
+        SurfaceMesh::Vertex v1 = builder.add_vertex(vec3(1, 0, 0));
+        SurfaceMesh::Vertex v2 = builder.add_vertex(vec3(0, 1, 0));
+        SurfaceMesh::Vertex v3 = builder.add_vertex(vec3(0, 0, 1));
+        // Add faces
+        builder.add_triangle(v0, v1, v3);
+        builder.add_triangle(v1, v2, v3);
+        builder.add_triangle(v2, v0, v3);
+        builder.add_triangle(v0, v2, v1);
+    }
+    else
+        LOG(ERROR) << "option must be 1 or 2";
+
+    std::cout << "#face:   " << mesh.faces_size() << std::endl;
+	std::cout << "#vertex: " << mesh.vertices_size() << std::endl;
+	std::cout << "#edge:   " << mesh.edges_size() << std::endl;
 
     return EXIT_SUCCESS;
 }

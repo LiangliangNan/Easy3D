@@ -54,12 +54,10 @@ namespace easy3d {
      *          shared by two faces (including the null face for boundary edges). A surface mesh can have any number
      *          of connected components and also some self-intersections.
      *
-     *          The construction of a 2-manifold surface mesh can be done by using
-     *              - add_vertex() to create vertices;
-     *              - add_face() to create faces.
-     *          Note: if you're not sure if your mesh is manifold, you should use ManifoldBuilder for the construction.
-     *                The ManifoldBuilder resolves non-manifoldness when constructing a surface mesh and it guarantees
-     *                to result a polygonal mesh of 2-manifold topology.
+     * @note    The construction of a manifold surface mesh can be done by iteratively calling add_vertex() and
+     *          add_face(). These two methods can ONLY be used when you're sure that the mesh is manifold. Otherwise,
+     *          ManifoldBuilder should be used for the construction, which guarantees you end up with a polygonal mesh
+     *          of a 2-manifold topology. In any case, client code is highly recommended to use ManifoldBuilder.
      *
      * @related ManifoldBuilder.
      */

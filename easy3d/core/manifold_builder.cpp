@@ -30,15 +30,6 @@ namespace easy3d {
 
     ManifoldBuilder::ManifoldBuilder(SurfaceMesh *mesh)
             : mesh_(mesh) {
-    }
-
-
-    ManifoldBuilder::~ManifoldBuilder() {
-
-    }
-
-
-    void ManifoldBuilder::begin() {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicated_vertices_ = 0;
         num_faces_out_of_range_vertices_ = 0;
@@ -51,7 +42,7 @@ namespace easy3d {
     }
 
 
-    void ManifoldBuilder::end() {
+    ManifoldBuilder::~ManifoldBuilder() {
         const std::string name = mesh_->name().empty() ? "(with unknown name)" : mesh_->name();
         std::string msg = "mesh " + name + "\n\tTopological issues detected:";
         bool report(false);
@@ -188,7 +179,8 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
-        LOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
+        DLOG_IF(ERROR, !original_vertex_) << "you must call begin() before the construction and end() after";
+        DLOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
@@ -196,7 +188,7 @@ namespace easy3d {
 
 
     bool ManifoldBuilder::vertices_valid(const std::vector<SurfaceMesh::Vertex> &vertices) {
-        std::size_t n = vertices.size();
+        const std::size_t n = vertices.size();
 
         // Check #1: a face has less than 3 vertices
         if (n < 3) {
@@ -240,6 +232,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
+        DLOG_IF(ERROR, mesh_->vertices_size() == 0) << "you must add vertices by calling add_vertex() before adding a face";
         if (mesh_->faces_size() == 0) // the first face
             outgoing_halfedges_.resize(mesh_->vertices_size());
 
@@ -315,6 +308,18 @@ namespace easy3d {
         }
 
         return face;
+    }
+
+
+    SurfaceMesh::Face ManifoldBuilder::add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3)
+    {
+        return add_face({ v1, v2, v3 });
+    }
+
+
+    SurfaceMesh::Face ManifoldBuilder::add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4)
+    {
+        return add_face({ v1, v2, v3, v4});
     }
 
 

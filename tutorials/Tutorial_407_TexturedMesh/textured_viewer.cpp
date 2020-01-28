@@ -296,7 +296,6 @@ namespace easy3d {
         mesh->set_name(file_name);
 
         ManifoldBuilder builder(mesh);
-        builder.begin();
 
         // there might be invalid faces
         std::vector<SurfaceMesh::Face> faces;
@@ -359,8 +358,6 @@ namespace easy3d {
                 index_offset += fnum;
             }
         }
-
-        builder.end();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())

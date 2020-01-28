@@ -75,7 +75,6 @@ namespace easy3d {
             mesh->clear();
 
 			ManifoldBuilder builder(mesh);
-			builder.begin();
 
             // --------------------- collect the data ------------------------
 
@@ -141,8 +140,6 @@ namespace easy3d {
                     index_offset += fnum;
                 }
             }
-
-            builder.end();
 
             return mesh->n_faces() > 0;
         }

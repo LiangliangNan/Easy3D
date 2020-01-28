@@ -103,7 +103,6 @@ namespace easy3d {
 			mesh->clear();
 
             ManifoldBuilder builder(mesh);
-            builder.begin();
 
 			// open file (in ASCII mode)
 			FILE* in = fopen(file_name.c_str(), "r");
@@ -225,8 +224,6 @@ namespace easy3d {
 			}
 
 			fclose(in);
-
-			builder.end();
 
 			return mesh->n_faces() > 0;
 		}

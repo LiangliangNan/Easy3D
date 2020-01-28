@@ -46,7 +46,7 @@ namespace easy3d {
      *          builder.add_vertex(p);
      *      for (auto ids : faces)
      *          builder.add_face(ids);
-     *      builder.finish();
+     *      builder.end();
      * ---------------------------------------------------------
      */
 
@@ -54,12 +54,6 @@ namespace easy3d {
     public:
         ManifoldBuilder(SurfaceMesh* mesh);
         ~ManifoldBuilder();
-
-        /**
-         * @brief Begin surface construction. Must be called at the beginning of the surface construction.
-         * @related end().
-         */
-        void begin();
 
         /**
          * @brief Add a vertex to the mesh.
@@ -72,8 +66,23 @@ namespace easy3d {
          * @brief Add a face to the mesh.
          * @param vertices The vertices of the face.
          * @return The added face on success.
+         * @related add_triangle(), add_quad().
          */
         SurfaceMesh::Face   add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
+
+        /**
+         * @brief Add a new triangle face connecting vertices v1, v2, and v3.
+         * @return The added face on success.
+         * @related add_face(), add_quad().
+         */
+        SurfaceMesh::Face add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3);
+
+        /**
+         * @brief Add a new quad face connecting vertices v1, v2, v3, and v4.
+         * @return The added face on success.
+         * @related add_face(), add_triangle().
+         */
+        SurfaceMesh::Face add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4);
 
         /**
          * @brief Query the actual vertices of the added face. The order remains the same as those when
@@ -81,12 +90,6 @@ namespace easy3d {
          * @attention You must query the vertices after add_face() and before the next call to add_face().
          */
         const std::vector<SurfaceMesh::Vertex>& face_vertices() const { return face_vertices_; }
-
-        /**
-         * @brief Finalize the surface construction. Must be called at the end of the surface construction.
-         * @related begin().
-         */
-        void end();
 
     private:
 

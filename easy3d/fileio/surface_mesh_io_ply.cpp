@@ -148,7 +148,6 @@ namespace easy3d {
 			mesh->clear();
 
             ManifoldBuilder builder(mesh);
-            builder.begin();
 
             for (auto p : coordinates)
                 builder.add_vertex(p);
@@ -188,7 +187,6 @@ namespace easy3d {
                     std::cerr << "element \'" << e.name << "\' ignored" << std::endl;
 			}
 
-            builder.end();
 			return mesh->n_faces() > 0;
 		}
 
