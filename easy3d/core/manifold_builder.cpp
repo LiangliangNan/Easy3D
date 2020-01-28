@@ -141,7 +141,7 @@ namespace easy3d {
                        " occurrences) to ensure manifoldness";
             }
             if (count_isolated_vertices > 0)
-                msg += "\n\t\tdeleted " + std::to_string(count_isolated_vertices) + " isolated vertices";
+                msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices deleted";
         }
 
         // ----------------------------------------------------------------------------------
