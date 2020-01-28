@@ -68,7 +68,7 @@ namespace easy3d {
          * @return The added face on success.
          * @related add_triangle(), add_quad().
          */
-        SurfaceMesh::Face   add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
+        SurfaceMesh::Face add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
 
         /**
          * @brief Add a new triangle face connecting vertices v1, v2, and v3.
@@ -149,7 +149,7 @@ namespace easy3d {
 
 		// The records of the existing halfedges (each associated with a valid face) used
 		// for fast query of duplicated edges. All vertices are their original indices.
-		// A halfedge is denoted as: i -> outgoing_halfedges_[i][j].
+		// A halfedge is denoted as: v(i) -> v(outgoing_halfedges_[i][j]).
 		std::vector< std::vector<int> > outgoing_halfedges_;
     };
 
