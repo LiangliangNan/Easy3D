@@ -250,7 +250,6 @@ namespace easy3d {
 
         if (mesh->triangles_drawables().size() > 0) {
             Viewer::add_model(mesh, false);
-            fit_screen();
         }
         return mesh;
     }

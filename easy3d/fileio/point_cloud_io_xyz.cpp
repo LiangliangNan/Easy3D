@@ -62,7 +62,7 @@ namespace easy3d {
 						//	progress.notify(pos);
 					}
 					else {
-						LOG_FIRST_N(ERROR, 1) << "failed reading point (logged only first record)";
+						LOG_FIRST_N(ERROR, 1) << "failed reading point (this is the first record)";
 					}
 				}
 			}

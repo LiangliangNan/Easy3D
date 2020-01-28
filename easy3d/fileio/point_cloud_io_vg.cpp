@@ -269,7 +269,7 @@ namespace easy3d {
             int type;
             input >> dumy >> type;
             if (input.fail()) {
-                LOG_FIRST_N(ERROR, 1) << "failed reading vertex group type (logged only first record)";
+                LOG_FIRST_N(ERROR, 1) << "failed reading vertex group type (this is the first record)";
             }
 
             std::size_t num;

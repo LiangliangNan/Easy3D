@@ -99,7 +99,7 @@ namespace easy3d {
                 if (!input.fail())
                     builder.add_vertex(p);
                 else {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th vertex from file (logged only first record)";
+                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th vertex from file (this is the first record)";
                 }
             }
 
@@ -117,13 +117,13 @@ namespace easy3d {
                             vertices.push_back(SurfaceMesh::Vertex(index));
                         }
                         else {
-                            LOG_FIRST_N(ERROR, 1) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file (logged only first record)";
+                            LOG_FIRST_N(ERROR, 1) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file (this is the first record)";
                         }
 					}
 					builder.add_face(vertices);
 				}
                 else {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th face from file (logged only first record)";
+                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th face from file (this is the first record)";
                 }
             }
 

@@ -43,6 +43,65 @@ namespace easy3d {
 
 
     ManifoldBuilder::~ManifoldBuilder() {
+        // Finalize the mesh
+
+        // ----------------------------------------------------------------------------------
+        // Step 1: resolve non-manifold vertices in the current mesh
+        std::size_t count_non_manifold_vertices(0);
+        // We should count two types of non-manifold vertices:
+        //  - type 1: vertices touching a closed disk (solved already);
+        //  - type 2: multiple umbrellas sharing the same vertex (not solved yet)
+        //
+        // Count the number of type 1 by looking at the record of the vertex copies.
+        for (auto v : copied_vertices_) {
+            if (!mesh_->is_boundary(v.first))
+                ++count_non_manifold_vertices;
+        }
+        // Resolve type.
+        count_non_manifold_vertices += resolve_non_manifold_vertices(mesh_);
+
+        // Now we can delete the original vertex property
+        mesh_->remove_vertex_property(original_vertex_);
+
+        // ----------------------------------------------------------------------------------
+        // Step 2: remove isolated vertices
+        std::size_t count_isolated_vertices(0);
+        for (auto v : mesh_->vertices()) {
+            if (mesh_->is_isolated(v)) {
+                mesh_->delete_vertex(v);
+                ++count_isolated_vertices;
+            }
+        }
+        if (count_isolated_vertices > 0)
+            mesh_->garbage_collection();
+
+        // ----------------------------------------------------------------------------------
+        // Step 3: clean up
+        // query the number of non-manifold edges before clearing outgoing_halfedges_.
+        std::size_t count_non_manifold_edges(0);
+        for (const auto &targets : outgoing_halfedges_) {
+            std::set<int> tmp(targets.begin(), targets.end());
+            count_non_manifold_edges += (targets.size() - tmp.size());
+        }
+        outgoing_halfedges_.clear();
+
+#if 0
+        // ATTENTION: this record is valid only before deleting the isolated vertices.
+        for (auto g : copied_vertices_) {
+            LOG(INFO) << "\tvertex " << g.first << " copied to " << g.second;
+        }
+#endif
+        // query the number of copied vertices before clearing copied_vertices_.
+        std::size_t count_vertex_copies(0);
+        for (auto copies : copied_vertices_)
+            count_vertex_copies += copies.second.size();
+        copied_vertices_.clear();
+
+        // ----------------------------------------------------------------------------------
+
+        // Prepare a brief report on the construction of the mesh
+        // TODO: allow user to disable the report
+
         const std::string name = mesh_->name().empty() ? "(with unknown name)" : mesh_->name();
         std::string msg = "mesh " + name + "\n\tTopological issues detected:";
         bool report(false);
@@ -67,8 +126,6 @@ namespace easy3d {
             report = true;
         }
 
-        // ----------------------------------------------------------------------------------
-
         if (num_faces_unknown_topology_ > 0) {
             msg += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
                    " complex faces with unknown topology (ignored)";
@@ -77,28 +134,11 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        std::size_t count_non_manifold_vertices(0);
-
-        // non-manifold vertices in the original mesh
-        // vertices that have been copied and in current mesh they are closed disks.
-        for (auto v : copied_vertices_) {
-            if (!mesh_->is_boundary(v.first))
-                ++count_non_manifold_vertices;
-        }
-        // resolve non-manifold vertices in the current mesh
-        count_non_manifold_vertices += resolve_non_manifold_vertices(mesh_);
         if (count_non_manifold_vertices > 0) {
             msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (fixed)";
             report = true;
         }
 
-        // ----------------------------------------------------------------------------------
-
-        std::size_t count_non_manifold_edges(0);
-        for (const auto &targets : outgoing_halfedges_) {
-            std::set<int> tmp(targets.begin(), targets.end());
-            count_non_manifold_edges += (targets.size() - tmp.size());
-        }
         if (count_non_manifold_edges > 0) {
             msg += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
             report = true;
@@ -106,39 +146,18 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-#if 0
-        // ATTENTION: this record is valid only before deleting the isolated vertices.
-        for (auto g : copied_vertices_) {
-            LOG(INFO) << "\tvertex " << g.first << " copied to " << g.second;
-        }
-#endif
-
-        // ----------------------------------------------------------------------------------
-
-        std::size_t count_isolated_vertices(0);
-        for (auto v : mesh_->vertices()) {
-            if (mesh_->is_isolated(v)) {
-                mesh_->delete_vertex(v);
-                ++count_isolated_vertices;
-            }
-        }
         if (count_isolated_vertices > 0) {
-            mesh_->garbage_collection();
             msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices (removed)";
             report = true;
         }
 
         // ----------------------------------------------------------------------------------
 
-        if (!copied_vertices_.empty() || count_isolated_vertices > 0) {
+        if (count_vertex_copies >0 || count_isolated_vertices > 0) {
             msg += "\n\tSolution:";
-            if (!copied_vertices_.empty()) {
-                std::size_t count(0);
-                for (auto copies : copied_vertices_)
-                    count += copies.second.size();
-                msg += "\n\t\t" + std::to_string(copied_vertices_.size()) + " vertices duplicated (" +
-                       std::to_string(count) +
-                       " occurrences) to ensure manifoldness";
+            if (count_vertex_copies > 0) {
+                msg += "\n\t\t" + std::to_string(count_vertex_copies) + " vertices duplicated (" +
+                       std::to_string(count_vertex_copies) + " occurrences) to ensure manifoldness";
             }
             if (count_isolated_vertices > 0)
                 msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices deleted";
@@ -155,15 +174,13 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        count_non_manifold_vertices = 0;
-        for (auto v : mesh_->vertices()) {
-            LOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
-            if (!mesh_->is_manifold(v))
-                ++count_non_manifold_vertices;
-        }
-        LOG_IF(ERROR, count_non_manifold_vertices > 0)
-                        << "failed to resolve " << count_non_manifold_vertices << " non-manifold vertices";
+        // Log the report
+        LOG_IF(WARNING, report) << msg;
 
+        // ----------------------------------------------------------------------------------
+        // Let me do some more checks
+
+        // Check if the mesh is valid
         for (auto f : mesh_->faces())
             LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
         for (auto e : mesh_->edges())
@@ -171,10 +188,15 @@ namespace easy3d {
         for (auto h : mesh_->halfedges())
             LOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
 
-        LOG_IF(WARNING, report) << msg;
-
-        outgoing_halfedges_.clear();
-        mesh_->remove_vertex_property(original_vertex_);
+        // Check if there are still non-manifold vertices
+        std::size_t count(0);
+        for (auto v : mesh_->vertices()) {
+            if (!mesh_->is_manifold(v)) {
+                LOG_FIRST_N(ERROR, 1) << "vertex " << v << " is not manifold (this is the first record)";
+                ++count;
+            }
+        }
+        LOG_IF(ERROR, count > 0) << "mesh still have " << count << " non-manifold vertices";
     }
 
 
@@ -304,7 +326,7 @@ namespace easy3d {
             }
         } else {
             ++num_faces_unknown_topology_;
-            LOG_FIRST_N(ERROR, 1) << "fatal error: failed adding face (" << vertices << ") (logged only first record)";
+            LOG_FIRST_N(ERROR, 1) << "fatal error: failed adding face (" << vertices << ") (this is the first record)";
         }
 
         return face;

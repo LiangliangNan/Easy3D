@@ -163,7 +163,6 @@ int main(int argc, char** argv) {
         // ----------------------------------------------------------------
 
         // Run the viewer
-        viewer.fit_screen();
         viewer.run();
     }
     catch (const std::runtime_error &e) {
