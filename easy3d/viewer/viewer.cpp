@@ -1157,10 +1157,10 @@ namespace easy3d {
 				io::PointCloudIO_ptx serializer(file_name);
 				PointCloud* cloud = nullptr;
 				while ((cloud = serializer.load_next())) {
-					add_model(cloud, create_default_drawables);
+					model = add_model(cloud, create_default_drawables);
 					update();
 				}
-				return cloud;   // returns the last cloud in the file.
+				return model;   // returns the last cloud in the file.
 			}
 			else
 				model = PointCloudIO::load(file_name);

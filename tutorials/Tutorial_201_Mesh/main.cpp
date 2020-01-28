@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     //              is the default option in Easy3D and client code is highly recommended to use ManifoldBuilder.
 
     // You can easily change an option.
-    const int option = 1;
+    const int option = 2;
 
     // In this example, we create a surface mesh representing a tetrahedron (i.e., 4 triangle faces, 4 vertices).
     //
@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
     else if (option == 2) { // Option 2: use ManifoldBuilder.
         // Add vertices
         ManifoldBuilder builder(&mesh);
+        builder.begin_surface();
         SurfaceMesh::Vertex v0 = builder.add_vertex(vec3(0, 0, 0));
         SurfaceMesh::Vertex v1 = builder.add_vertex(vec3(1, 0, 0));
         SurfaceMesh::Vertex v2 = builder.add_vertex(vec3(0, 1, 0));
@@ -94,6 +95,7 @@ int main(int argc, char** argv) {
         builder.add_triangle(v1, v2, v3);
         builder.add_triangle(v2, v0, v3);
         builder.add_triangle(v0, v2, v1);
+        builder.end_surface(false);
     }
     else
         LOG(ERROR) << "option must be 1 or 2";

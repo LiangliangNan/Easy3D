@@ -23,6 +23,9 @@
  */
 
 #include "composite_view.h"
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/shader_program.h>

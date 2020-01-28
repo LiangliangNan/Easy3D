@@ -33,20 +33,20 @@
 namespace easy3d {
 
     /**
-     * ManifoldBuilder is a class that resolves non-manifoldness of a surface mesh. It is typical used to ensure a
-     * manifold surface mesh loaded from a file (because you don't know if the mesh is manifold or not).
-     * For meshes guaranteed to be manifold (for example, using your algorithm), using ManifoldBuilder is optional.
-     * In this case, you can use the built-in 'add_vertex()' and 'add_face()' functions of SurfaceMesh.
+     * ManifoldBuilder is a class that resolves non-manifoldness of a surface mesh. It is typically used to loaded a
+     * model from a file (because you don't know if the mesh is manifold or not).
+     * For meshes guaranteed to be manifold, you can also use the built-in add_vertex() and add_[face/triangle/quad]()
+     * functions of SurfaceMesh for their construction.
      *
      * Example use:
      * ---------------------------------------------------------
      *      ManifoldBuilder builder(mesh);
-     *      builder.begin();
-     *      for (auto p : points)
+     *      builder.begin_surface();
+     *      for_each_vertex:
      *          builder.add_vertex(p);
-     *      for (auto ids : faces)
+     *      for_each_face:
      *          builder.add_face(ids);
-     *      builder.end();
+     *      builder.end_surface();
      * ---------------------------------------------------------
      */
 
@@ -54,6 +54,15 @@ namespace easy3d {
     public:
         ManifoldBuilder(SurfaceMesh* mesh);
         ~ManifoldBuilder();
+
+        // -------------------------------------------------------------------------------------------------------------
+
+        /**
+         * @brief Begin surface construction. Must be called at the beginning of the surface construction and used in
+         *        pair with end_surface() at the end of surface mesh construction.
+         * @related end_surface().
+        */
+        void begin_surface();
 
         /**
          * @brief Add a vertex to the mesh.
@@ -85,11 +94,32 @@ namespace easy3d {
         SurfaceMesh::Face add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4);
 
         /**
-         * @brief Query the actual vertices of the added face. The order remains the same as those when
-         *        constructing the face.
-         * @attention You must query the vertices after add_face() and before the next call to add_face().
+         * @brief Finalize surface construction. Must be called at the end of the surface construction and used in
+         *        pair with begin_surface() at the beginning of surface mesh construction.
+         * @param log_issues True to log the issues detected and a report on the process of the issues to the log file.
+         * @related begin_surface().
          */
-        const std::vector<SurfaceMesh::Vertex>& face_vertices() const { return face_vertices_; }
+        void end_surface(bool log_issues = true);
+
+        // -------------------------------------------------------------------------------------------------------------
+
+        /**
+         * @brief The actual vertices of the previously added face. The order of the vertices are the same as those
+         *        provided to add_[face/triangle/quad]() for the construction of the last face.
+         * @attention The result is valid if the face was successfully added, and it will remain valid before the next
+         *            call to add_[face/triangle/quad]().
+         */
+        const std::vector<SurfaceMesh::Vertex> &last_face_vertices() const { return face_vertices_; }
+
+        /**
+         * @brief The halfedge pointing to the vertex corresponding to the first vertex on the list provided to
+         *        add_[face/triangle/quad]() for the construction of the last face.. The pointed-to vertex is identical
+         *        to face_vertices()[0]. This method is typically used for assigning a per halfedge attribute to the
+         *        face, e.g., texture coordinates of vertices that are not shared by adjacent faces.
+         * @attention The result is valid if the face was successfully added, and it will remain valid before the next
+         *            call to add_[face/triangle/quad]().
+         */
+        SurfaceMesh::Halfedge last_face_halfedge() const;
 
     private:
 
@@ -142,6 +172,9 @@ namespace easy3d {
 
         // A vertex property to record the original vertex of each vertex.
         SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
+
+        // A newly added face.
+        SurfaceMesh::Face new_face_;
 
         // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.

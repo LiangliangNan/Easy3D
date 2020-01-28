@@ -39,7 +39,8 @@
 
 
 // In case the ManifoldBuilder failed to handle the mesh
-//#define DO_NOT_CREATE_SURFACE_MESH
+#define DO_NOT_CREATE_SURFACE_MESH
+
 
 namespace easy3d {
 
@@ -215,7 +216,7 @@ namespace easy3d {
                      const vec3 va(vts[a]); d_points.emplace_back(va);
                      const vec3 vb(vts[b]); d_points.emplace_back(vb);
                      const vec3 vc(vts[c]); d_points.emplace_back(vc);
-                     d_normals.insert(d_normals.end(), 3, geom::triangle_normal(va, vb, vc));
+                     d_normals.insert(d_normals.end(), 3, face.normal);
                      if (!texcoords.empty()) {
                          d_texcoords.emplace_back(vec2(vts[a] + 3));
                          d_texcoords.emplace_back(vec2(vts[b] + 3));
@@ -288,35 +289,37 @@ namespace easy3d {
             LOG(WARNING) << "file contains no shape";
             return nullptr;
         }
-        const tinyobj::attrib_t &attrib = reader.GetAttrib();
-        const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
+        const tinyobj::attrib_t& attrib = reader.GetAttrib();
+        const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
 
+        // for each texcoord
+        std::vector<vec2> texcoords;
+        for (std::size_t  v = 0; v < attrib.texcoords.size(); v+=2) {
+            texcoords.push_back(vec2(attrib.texcoords.data() + v));
+        }
+
+        // ------------------------ build the mesh ------------------------
+
+        // clear the mesh in case of existing data
         SurfaceMesh* mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
         ManifoldBuilder builder(mesh);
-
-        // there might be invalid faces
-        std::vector<SurfaceMesh::Face> faces;
+        builder.begin_surface();
 
         // add vertices
         for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
             // Should I create vertices later, to get rid of isolated vertices?
             builder.add_vertex(vec3(attrib.vertices.data() + v));
         }
-        // for each texcoord
-        std::vector<vec2> texcoords;
-        for (std::size_t v = 0; v < attrib.texcoords.size(); v += 2) {
-            texcoords.push_back(vec2(attrib.texcoords.data() + v));
-        }
-
-        // ------------------------ build the mesh ------------------------
 
         // create texture coordinate property if texture coordinates present
         if (!texcoords.empty())
             mesh->add_halfedge_property<vec2>("h:texcoord");
         auto prop_texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
 
+        // invalid face will also be added, to ensure correct face indices
+        std::vector<SurfaceMesh::Face> faces;
         // for each shape
         for (size_t i = 0; i < shapes.size(); i++) {
             std::size_t index_offset = 0;
@@ -324,39 +327,37 @@ namespace easy3d {
             LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size());
 
             // For each face
-            for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                const std::size_t fnum = shapes[i].mesh.num_face_vertices[f];
+            for (std::size_t face_idx = 0; face_idx < shapes[i].mesh.num_face_vertices.size(); ++face_idx) {
+                std::size_t face_size = shapes[i].mesh.num_face_vertices[face_idx];
 
                 // For each vertex in the face
                 std::vector<SurfaceMesh::Vertex> vertices;
-                std::unordered_map<SurfaceMesh::Vertex, int, SurfaceMesh::Vertex::Hash> texcoord_ids;  // vertex -> texcoord id
-                for (std::size_t v = 0; v < fnum; v++) {
-                    tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
-                    SurfaceMesh::Vertex vtx(idx.vertex_index);
-                    vertices.push_back(vtx);
+                std::vector<int> texcoord_ids;
+                for (std::size_t v = 0; v < face_size; v++) {
+                    const tinyobj::index_t& face = shapes[i].mesh.indices[index_offset + v];
+                    vertices.emplace_back(face.vertex_index);
                     if (prop_texcoords)
-                        texcoord_ids[vtx] = idx.texcoord_index;
+                        texcoord_ids.emplace_back(face.texcoord_index);
                 }
 
                 SurfaceMesh::Face face = builder.add_face(vertices);
+                // invalid face will also be added, to ensure correct face indices
                 faces.push_back(face);
                 if (prop_texcoords && face.is_valid()) {
-                    const auto& vts = builder.face_vertices();
-                    std::unordered_map<SurfaceMesh::Vertex, SurfaceMesh::Vertex, SurfaceMesh::Vertex::Hash> original_vertex;
-                    for (int i=0; i<vts.size(); ++i)
-                        original_vertex[ vts[i] ] = vertices[i];
-
-                    for (auto h : mesh->halfedges(face)) {
-                        auto v = mesh->to_vertex(h);
-                        int id = texcoord_ids[original_vertex[v]];
-                        prop_texcoords[h] = texcoords[static_cast<std::size_t>(id)];
-                    }
+                    auto begin = builder.last_face_halfedge();
+                    auto cur = begin;
+                    int idx = 0;
+                    do {
+                        prop_texcoords[cur] = texcoords[texcoord_ids[idx++]];
+                        cur = mesh->next_halfedge(cur);
+                    } while (cur != begin);
                 }
 
                 //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
-                index_offset += fnum;
+                index_offset += face_size;
             }
         }
+        builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())

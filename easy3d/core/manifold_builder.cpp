@@ -28,8 +28,18 @@
 
 namespace easy3d {
 
+
     ManifoldBuilder::ManifoldBuilder(SurfaceMesh *mesh)
             : mesh_(mesh) {
+    }
+
+
+    ManifoldBuilder::~ManifoldBuilder() {
+
+    }
+
+
+    void ManifoldBuilder::begin_surface() {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicated_vertices_ = 0;
         num_faces_out_of_range_vertices_ = 0;
@@ -37,12 +47,12 @@ namespace easy3d {
 
         face_vertices_.clear();
         copied_vertices_.clear();
-
+        outgoing_halfedges_.clear();
         original_vertex_ = mesh_->vertex_property<SurfaceMesh::Vertex>("v:ManifoldBuilder:original_vertex");
     }
 
 
-    ManifoldBuilder::~ManifoldBuilder() {
+    void ManifoldBuilder::end_surface(bool log_issues) {
         // Finalize the mesh
 
         // ----------------------------------------------------------------------------------
@@ -92,92 +102,14 @@ namespace easy3d {
         }
 #endif
         // query the number of copied vertices before clearing copied_vertices_.
-        std::size_t count_vertex_copies(0);
+        std::size_t count_vertex_copied = copied_vertices_.size();
+        std::size_t count_copy_occurances(0);
         for (auto copies : copied_vertices_)
-            count_vertex_copies += copies.second.size();
+            count_copy_occurances += copies.second.size();
         copied_vertices_.clear();
 
-        // ----------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------------------
 
-        // Prepare a brief report on the construction of the mesh
-        // TODO: allow user to disable the report
-
-        const std::string name = mesh_->name().empty() ? "(with unknown name)" : mesh_->name();
-        std::string msg = "mesh " + name + "\n\tTopological issues detected:";
-        bool report(false);
-
-        // ----------------------------------------------------------------------------------
-
-        if (num_faces_less_three_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_less_three_vertices_) +
-                   " faces with less than 3 vertices (ignored)";
-            report = true;
-        }
-
-        if (num_faces_duplicated_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
-                   " faces with duplicated vertices (ignored)";
-            report = true;
-        }
-
-        if (num_faces_out_of_range_vertices_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_out_of_range_vertices_) +
-                   " faces with out-of-range vertices (ignored)";
-            report = true;
-        }
-
-        if (num_faces_unknown_topology_ > 0) {
-            msg += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
-                   " complex faces with unknown topology (ignored)";
-            report = true;
-        }
-
-        // ----------------------------------------------------------------------------------
-
-        if (count_non_manifold_vertices > 0) {
-            msg += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (fixed)";
-            report = true;
-        }
-
-        if (count_non_manifold_edges > 0) {
-            msg += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
-            report = true;
-        }
-
-        // ----------------------------------------------------------------------------------
-
-        if (count_isolated_vertices > 0) {
-            msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices (removed)";
-            report = true;
-        }
-
-        // ----------------------------------------------------------------------------------
-
-        if (count_vertex_copies >0 || count_isolated_vertices > 0) {
-            msg += "\n\tSolution:";
-            if (count_vertex_copies > 0) {
-                msg += "\n\t\t" + std::to_string(count_vertex_copies) + " vertices duplicated (" +
-                       std::to_string(count_vertex_copies) + " occurrences) to ensure manifoldness";
-            }
-            if (count_isolated_vertices > 0)
-                msg += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices deleted";
-        }
-
-        // ----------------------------------------------------------------------------------
-
-        if (report) {
-            msg += "\n\tResult: \n\t\t" +
-                   std::to_string(mesh_->faces_size()) + " faces\n\t\t" +
-                   std::to_string(mesh_->vertices_size()) + " vertices\n\t\t" +
-                   std::to_string(mesh_->edges_size()) + " edges";
-        }
-
-        // ----------------------------------------------------------------------------------
-
-        // Log the report
-        LOG_IF(WARNING, report) << msg;
-
-        // ----------------------------------------------------------------------------------
         // Let me do some more checks
 
         // Check if the mesh is valid
@@ -197,11 +129,80 @@ namespace easy3d {
             }
         }
         LOG_IF(ERROR, count > 0) << "mesh still have " << count << " non-manifold vertices";
+
+        // ----------------------------------------------------------------------------------
+
+        if (!log_issues)
+            return;
+
+        // Prepare a brief report on the construction of the mesh.
+
+        std::string content("");
+        if (num_faces_less_three_vertices_ > 0) {
+            content += "\n\t\t" + std::to_string(num_faces_less_three_vertices_) +
+                       " faces with less than 3 vertices (ignored)";
+        }
+
+        if (num_faces_duplicated_vertices_ > 0) {
+            content += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
+                       " faces with duplicated vertices (ignored)";
+        }
+
+        if (num_faces_out_of_range_vertices_ > 0) {
+            content += "\n\t\t" + std::to_string(num_faces_out_of_range_vertices_) +
+                       " faces with out-of-range vertices (ignored)";
+        }
+
+        if (num_faces_unknown_topology_ > 0) {
+            content += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
+                       " complex faces with unknown topology (ignored)";
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        if (count_non_manifold_vertices > 0) {
+            content += "\n\t\t" + std::to_string(count_non_manifold_vertices) + " non-manifold vertices (fixed)";
+        }
+
+        if (count_non_manifold_edges > 0) {
+            content += "\n\t\t" + std::to_string(count_non_manifold_edges) + " non-manifold edges (fixed)";
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        if (count_isolated_vertices > 0) {
+            content += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices (removed)";
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        if (count_copy_occurances > 0 || count_isolated_vertices > 0) {
+            content += "\n\tSolution:";
+            if (count_copy_occurances > 0) {
+                content += "\n\t\t" + std::to_string(count_vertex_copied) + " vertices duplicated (" +
+                           std::to_string(count_copy_occurances) + " occurrences) to ensure manifoldness";
+            }
+            if (count_isolated_vertices > 0)
+                content += "\n\t\t" + std::to_string(count_isolated_vertices) + " isolated vertices deleted";
+        }
+
+        // ----------------------------------------------------------------------------------
+
+        const std::string header = "mesh \"" + mesh_->name() + "\"";
+        if (!content.empty()) {
+            content = header + " has topological issues:" + content
+                      + "\n\tResult: \n\t\t"
+                      + std::to_string(mesh_->faces_size()) + " faces\n\t\t"
+                      + std::to_string(mesh_->vertices_size()) + " vertices\n\t\t"
+                      + std::to_string(mesh_->edges_size()) + " edges";
+            // Log the report
+            LOG(WARNING) << content;
+        }
     }
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
-        DLOG_IF(ERROR, !original_vertex_) << "you must call begin() before the construction and end() after";
+        DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the construction";
         DLOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding any face";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
@@ -254,7 +255,8 @@ namespace easy3d {
 
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
-        DLOG_IF(ERROR, mesh_->vertices_size() == 0) << "you must add vertices by calling add_vertex() before adding a face";
+        DLOG_IF(ERROR, mesh_->vertices_size() == 0)
+                        << "you must add vertices by calling add_vertex() before adding a face";
         if (mesh_->faces_size() == 0) // the first face
             outgoing_halfedges_.resize(mesh_->vertices_size());
 
@@ -318,8 +320,8 @@ namespace easy3d {
         // ---------------------------------------------------------------------------------------------------------
 
         // Now we should be able to link the new face to the current mesh.
-        auto face = mesh_->add_face(face_vertices_);
-        if (face.is_valid()) {
+        new_face_ = mesh_->add_face(face_vertices_);
+        if (new_face_.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
                 outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
@@ -329,19 +331,33 @@ namespace easy3d {
             LOG_FIRST_N(ERROR, 1) << "fatal error: failed adding face (" << vertices << ") (this is the first record)";
         }
 
-        return face;
+        return new_face_;
     }
 
 
-    SurfaceMesh::Face ManifoldBuilder::add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3)
-    {
-        return add_face({ v1, v2, v3 });
+    SurfaceMesh::Face
+    ManifoldBuilder::add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3) {
+        return add_face({v1, v2, v3});
     }
 
 
-    SurfaceMesh::Face ManifoldBuilder::add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4)
-    {
-        return add_face({ v1, v2, v3, v4});
+    SurfaceMesh::Face ManifoldBuilder::add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3,
+                                                SurfaceMesh::Vertex v4) {
+        return add_face({v1, v2, v3, v4});
+    }
+
+
+    SurfaceMesh::Halfedge ManifoldBuilder::last_face_halfedge() const {
+        if (new_face_.is_valid() && face_vertices_.size() > 0) {
+            const auto v = face_vertices_[0];
+            for (auto h : mesh_->halfedges(new_face_)) {
+                if (mesh_->to_vertex(h) == v)
+                    return h;
+            }
+        }
+
+        LOG(ERROR) << "last face was not valid";
+        return SurfaceMesh::Halfedge();
     }
 
 

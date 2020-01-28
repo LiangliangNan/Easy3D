@@ -66,6 +66,7 @@ namespace easy3d {
             mesh->clear();
 
             ManifoldBuilder builder(mesh);
+            builder.begin_surface();
 
             // Vertex index starts by 0 in off format.
 
@@ -132,6 +133,7 @@ namespace easy3d {
 //                // read the edges
 //            }
 
+            builder.end_surface();
             return mesh->n_faces() > 0;
 		}
 
