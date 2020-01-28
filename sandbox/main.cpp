@@ -35,7 +35,7 @@ using namespace easy3d;
 //		- override the file loading function of the default easy3d viewer to visualize textured meshes;
 
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
@@ -50,10 +50,10 @@ int main(int argc, char** argv) {
 //                setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
 //                setting::resource_directory() + "/data/repair/non_manifold/5_umbrellas.off",
 //                setting::resource_directory() + "/data/repair/non_manifold/6_umbrellas.off",
-//				setting::resource_directory() + "/data/repair/non_manifold/2_umbrellas_open.off",
-//				setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas_open.off",
-//				setting::resource_directory() + "/data/repair/non_manifold/5_umbrellas_open.off",
-//				setting::resource_directory() + "/data/repair/non_manifold/6_umbrellas_open.off",
+//                setting::resource_directory() + "/data/repair/non_manifold/2_umbrellas_open.off",
+//                setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas_open.off",
+//                setting::resource_directory() + "/data/repair/non_manifold/5_umbrellas_open.off",
+//                setting::resource_directory() + "/data/repair/non_manifold/6_umbrellas_open.off",
 //                setting::resource_directory() + "/data/domik/domik.obj",
                 setting::resource_directory() + "/data/house/house.obj",
 //                setting::resource_directory() + "/data/house/house(27_nonmanifold_left).off",
@@ -62,12 +62,11 @@ int main(int argc, char** argv) {
         };
 
 
-
 #if 0
         for (int i = 0; i < files.size(); ++i) {
             auto mesh = SurfaceMeshIO::load(files[i]);
 
-            const std::string nm = files[i] + "_solved.obj";
+            const std::string nm = files[i] + "_solved.off";
             if (SurfaceMeshIO::save(nm, mesh))
                 std::cout << "results saved to: " << nm << std::endl;
         }

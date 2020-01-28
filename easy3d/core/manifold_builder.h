@@ -52,7 +52,8 @@ namespace easy3d {
 
     class ManifoldBuilder {
     public:
-        ManifoldBuilder(SurfaceMesh* mesh);
+        ManifoldBuilder(SurfaceMesh *mesh);
+
         ~ManifoldBuilder();
 
         // -------------------------------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ namespace easy3d {
          * @param p The 3D coordinates of the vertex.
          * @return The added vertex on success.
          */
-        SurfaceMesh::Vertex add_vertex(const vec3& p);
+        SurfaceMesh::Vertex add_vertex(const vec3 &p);
 
         /**
          * @brief Add a face to the mesh.
@@ -77,7 +78,7 @@ namespace easy3d {
          * @return The added face on success.
          * @related add_triangle(), add_quad().
          */
-        SurfaceMesh::Face add_face(const std::vector<SurfaceMesh::Vertex>& vertices);
+        SurfaceMesh::Face add_face(const std::vector<SurfaceMesh::Vertex> &vertices);
 
         /**
          * @brief Add a new triangle face connecting vertices v1, v2, and v3.
@@ -91,7 +92,8 @@ namespace easy3d {
          * @return The added face on success.
          * @related add_face(), add_triangle().
          */
-        SurfaceMesh::Face add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4);
+        SurfaceMesh::Face
+        add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4);
 
         /**
          * @brief Finalize surface construction. Must be called at the end of the surface construction and used in
@@ -105,21 +107,11 @@ namespace easy3d {
 
         /**
          * @brief The actual vertices of the previously added face. The order of the vertices are the same as those
-         *        provided to add_[face/triangle/quad]() for the construction of the last face.
-         * @attention The result is valid if the face was successfully added, and it will remain valid before the next
-         *            call to add_[face/triangle/quad]().
+         *        provided to add_[face/triangle/quad]() for the construction of the face.
+         * @attention The result is valid if the face was successfully added, and it will remain valid until the next
+         *            call to add_[face/triangle/quad]() and end_surface().
          */
-        const std::vector<SurfaceMesh::Vertex> &last_face_vertices() const { return face_vertices_; }
-
-        /**
-         * @brief The halfedge pointing to the vertex corresponding to the first vertex on the list provided to
-         *        add_[face/triangle/quad]() for the construction of the last face.. The pointed-to vertex is identical
-         *        to face_vertices()[0]. This method is typically used for assigning a per halfedge attribute to the
-         *        face, e.g., texture coordinates of vertices that are not shared by adjacent faces.
-         * @attention The result is valid if the face was successfully added, and it will remain valid before the next
-         *            call to add_[face/triangle/quad]().
-         */
-        SurfaceMesh::Halfedge last_face_halfedge() const;
+        const std::vector<SurfaceMesh::Vertex> &face_vertices() const { return face_vertices_; }
 
     private:
 
@@ -141,19 +133,19 @@ namespace easy3d {
 
         // Resolve all non-manifold vertices of a mesh.
         // Return the number of non-manifold vertices.
-        std::size_t resolve_non_manifold_vertices(SurfaceMesh* mesh);
+        std::size_t resolve_non_manifold_vertices(SurfaceMesh *mesh);
 
-		// The copied vertices: vertices in 'second' were copied from 'first'.
-		// Usually only a small number of vertices will be copied, so no need to use vertex property.
-		typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
+        // The copied vertices: vertices in 'second' were copied from 'first'.
+        // Usually only a small number of vertices will be copied, so no need to use vertex property.
+        typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
 
         // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
-        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh* mesh, CopyRecord& dmap);
+        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &dmap);
 
     private:
-        SurfaceMesh* mesh_;
+        SurfaceMesh *mesh_;
 
         // faces with less than three vertices
         std::size_t num_faces_less_three_vertices_;
@@ -168,22 +160,19 @@ namespace easy3d {
         std::size_t num_faces_unknown_topology_;
 
         // the vertices of the current face after resolving complex edges and vertices
-        std::vector<SurfaceMesh::Vertex> face_vertices_ ;
+        std::vector<SurfaceMesh::Vertex> face_vertices_;
 
         // A vertex property to record the original vertex of each vertex.
-        SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> original_vertex_;
-
-        // A newly added face.
-        SurfaceMesh::Face new_face_;
+        SurfaceMesh::VertexProperty <SurfaceMesh::Vertex> original_vertex_;
 
         // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
         CopyRecord copied_vertices_;
 
-		// The records of the existing halfedges (each associated with a valid face) used
-		// for fast query of duplicated edges. All vertices are their original indices.
-		// A halfedge is denoted as: v(i) -> v(outgoing_halfedges_[i][j]).
-		std::vector< std::vector<int> > outgoing_halfedges_;
+        // The records of the existing halfedges (each associated with a valid face) used
+        // for fast query of duplicated edges. All vertices are their original indices.
+        // A halfedge is denoted as: v(i) -> v(outgoing_halfedges_[i][j]).
+        std::vector<std::vector<int> > outgoing_halfedges_;
     };
 
 }

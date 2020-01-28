@@ -39,7 +39,7 @@
 
 
 // In case the ManifoldBuilder failed to handle the mesh
-#define DO_NOT_CREATE_SURFACE_MESH
+//#define DO_NOT_CREATE_SURFACE_MESH
 
 
 namespace easy3d {
@@ -318,6 +318,17 @@ namespace easy3d {
             mesh->add_halfedge_property<vec2>("h:texcoord");
         auto prop_texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
 
+        auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
+                                     SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
+            for (auto h : mesh->halfedges(face)) {
+                if (mesh->to_vertex(h) == v)
+                    return h;
+            }
+            LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
+                                  << " (this is the first record)";
+            return SurfaceMesh::Halfedge();
+        };
+
         // invalid face will also be added, to ensure correct face indices
         std::vector<SurfaceMesh::Face> faces;
         // for each shape
@@ -344,7 +355,7 @@ namespace easy3d {
                 // invalid face will also be added, to ensure correct face indices
                 faces.push_back(face);
                 if (prop_texcoords && face.is_valid()) {
-                    auto begin = builder.last_face_halfedge();
+                    auto begin = find_face_halfedge(mesh, face, builder.face_vertices()[0]);
                     auto cur = begin;
                     int idx = 0;
                     do {
