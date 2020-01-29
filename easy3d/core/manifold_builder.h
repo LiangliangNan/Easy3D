@@ -135,6 +135,11 @@ namespace easy3d {
         // Return the number of non-manifold vertices.
         std::size_t resolve_non_manifold_vertices(SurfaceMesh *mesh);
 
+        // Vertices might be copied, for two reasons:
+        //  - resolve non-manifoldness. In two phases: during the construction of the mesh by call to 'add_face()' and
+        //    in 'resolve_non_manifold_vertices()'.
+        //  - ensure boundary consistency. All happen during the construction of the mesh by call to 'add_face()'.
+        //
         // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
         typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
@@ -142,7 +147,7 @@ namespace easy3d {
         // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
-        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &dmap);
+        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record);
 
     private:
         SurfaceMesh *mesh_;
@@ -159,15 +164,16 @@ namespace easy3d {
         // faces with unknown topology
         std::size_t num_faces_unknown_topology_;
 
-        // the vertices of the current face after resolving complex edges and vertices
+        // record for linking a face to the mesh
+        CopyRecord copied_vertices_for_linking_;
+        // all copy record
+        CopyRecord copied_vertices_;
+
+        // The actual vertices after the face was successfully added to the mesh.
         std::vector<SurfaceMesh::Vertex> face_vertices_;
 
         // A vertex property to record the original vertex of each vertex.
         SurfaceMesh::VertexProperty <SurfaceMesh::Vertex> original_vertex_;
-
-        // The copied vertices: vertices in 'second' were copied from 'first'.
-        // Usually only a small number of vertices will be copied, so no need to use vertex property.
-        CopyRecord copied_vertices_;
 
         // The records of the existing halfedges (each associated with a valid face) used
         // for fast query of duplicated edges. All vertices are their original indices.

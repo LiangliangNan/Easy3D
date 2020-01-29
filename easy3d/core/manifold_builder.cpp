@@ -35,7 +35,7 @@ namespace easy3d {
 
 
     ManifoldBuilder::~ManifoldBuilder() {
-
+        LOG_IF(ERROR, original_vertex_) << "missing call to end_surface(), which must be in pair with begin_surface()";
     }
 
 
@@ -47,6 +47,7 @@ namespace easy3d {
 
         face_vertices_.clear();
         copied_vertices_.clear();
+        copied_vertices_for_linking_.clear();
         outgoing_halfedges_.clear();
 
         original_vertex_ = mesh_->add_vertex_property<SurfaceMesh::Vertex>("v:ManifoldBuilder:original_vertex");
@@ -58,15 +59,10 @@ namespace easy3d {
 
         // Step 1: Resolve non-manifold vertices (also collect data for the report).
         //
-        // Some fact!
-        // Vertices were copied for two reasons:
-        //  - resolve non-manifoldness.
-        //    Non-manifoldness are resolved in two steps: in 'add_face()' and in 'resolve_non_manifold_vertices()'.
-        //  - ensure boundary consistency.
-        //    The vertex copy occurrences to ensure boundary consistency all happened in 'add_face()'. The subsequent
-        //    call to function 'resolve_non_manifold_vertices()' also stores vertex copy history in the same
-        //    variable (i.e, 'copied_vertices_').
-        // TODO: use different variables to store the history of vertex copies of different reasons.
+        // Vertices might be copied, for two reasons:
+        //  - resolve non-manifoldness. In two phases: during the construction of the mesh by call to 'add_face()' and
+        //    in 'resolve_non_manifold_vertices()'.
+        //  - ensure boundary consistency. All happen during the construction of the mesh by call to 'add_face()'.
 
         // Resolve non-manifold vertices.
         resolve_non_manifold_vertices(mesh_);
@@ -76,8 +72,10 @@ namespace easy3d {
         // now all copy occurrences are known
         std::size_t num_non_manifold_vertices = copied_vertices_.size();
         std::size_t num_copy_occurrences(0);
-        for (auto copies : copied_vertices_)
+        for (auto copies : copied_vertices_) {
+            LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
             num_copy_occurrences += copies.second.size();
+        }
         // Release memory immediately when not needed any more.
         copied_vertices_.clear();
 
@@ -176,7 +174,18 @@ namespace easy3d {
             issues += "\n\tSolution:";
             if (num_copy_occurrences > 0) {
                 issues += "\n\t\t" + std::to_string(num_non_manifold_vertices) + " vertices copied ("
-                        + std::to_string(num_copy_occurrences) + " occurrences) to ensure manifoldness";
+                          + std::to_string(num_copy_occurrences) + " occurrences) to ensure manifoldness";
+
+                if (copied_vertices_for_linking_.size() > 0) {
+                    std::size_t occurrences(0);
+                    for (const auto &copies : copied_vertices_for_linking_) {
+                        LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
+                        occurrences += copies.second.size();
+                    }
+                    issues += " (" + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
+                              + std::to_string(occurrences) + " occurrences for linking new faces)";
+                    copied_vertices_for_linking_.clear();
+                }
             }
             if (num_isolated_vertices > 0)
                 issues += "\n\t\t" + std::to_string(num_isolated_vertices) + " isolated vertices deleted";
@@ -312,6 +321,9 @@ namespace easy3d {
                     DLOG_IF(FATAL, !mesh_->is_boundary(boundary_next));
                     if (boundary_next == inner_next) {
                         face_vertices_[t] = copy_vertex(vertices[t]);
+
+                        // keep a record that this copy if for linking a face to the mesh. This is just for the report.
+                        copied_vertices_for_linking_[vertices[t]].push_back(face_vertices_[t]);
                     }
                 }
             }
@@ -398,6 +410,11 @@ namespace easy3d {
         auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices",
                                                                                  null_h);
         auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_vertices", false);
+
+
+        // keep a record that the vertex copies are occurred in the 'resolve_non_manifold_vertices()' phase.
+        // NOTE: not possible to reuse 'copied_vertices_', because this phase requires a clean record but some vertices
+        //       might have already been copied in the previous phase (i.e., in add_face()).
         CopyRecord copy_record;
 
         std::vector<SurfaceMesh::Halfedge> non_manifold_cones;
@@ -474,8 +491,8 @@ namespace easy3d {
                                                    SurfaceMesh *mesh) -> SurfaceMesh::Vertex {
             auto old_v = mesh->to_vertex(sector_begin_h);
 
-            auto old_v_orginal = original_vertex_[old_v];
-            auto new_v = copy_vertex(old_v_orginal);
+            auto old_v_original = original_vertex_[old_v];
+            auto new_v = copy_vertex(old_v_original);
 
             mesh->set_halfedge(new_v, sector_begin_h);
             auto h = sector_begin_h;
