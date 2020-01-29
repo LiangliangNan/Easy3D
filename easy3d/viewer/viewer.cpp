@@ -905,6 +905,32 @@ namespace easy3d {
 			}
 		}
 
+        else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
+            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(current_model());
+            if (mesh) {
+                auto drawable = mesh->points_drawable("locks");
+                if (!drawable) {
+                    auto prop = mesh->get_vertex_property<vec3>("v:point");
+                    auto lock = mesh->get_vertex_property<bool>("v:lock");
+                    std::vector<vec3> points;
+                    for (auto v : mesh->vertices()) {
+                        if (lock[v])
+                            points.push_back(prop[v]);
+                    }
+                    if (!points.empty()) {
+                        drawable = mesh->add_points_drawable("locks");
+                        drawable->update_vertex_buffer(points);
+                        drawable->set_default_color(vec3(1, 1, 0));
+                        drawable->set_per_vertex_color(false);
+                        drawable->set_impostor_type(PointsDrawable::SPHERE);
+                        drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
+                    }
+                }
+                else
+                    drawable->set_visible(!drawable->is_visible());
+            }
+        }
+
 		else if (key == GLFW_KEY_D && modifiers == 0) {
 			if (current_model()) {
 				std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------" << std::endl;

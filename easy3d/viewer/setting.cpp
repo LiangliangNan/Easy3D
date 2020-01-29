@@ -88,7 +88,7 @@ namespace easy3d {
         bool    surface_mesh_show_borders = false;
         vec3    surface_mesh_borders_color = vec3(1.0f, 0.0f, 0.0f);
         bool    surface_mesh_borders_imposters = true;
-        float   surface_mesh_borders_line_width = 3.0f;
+        float   surface_mesh_borders_line_width = 2.0f;
 
 
 		// resource directory (containing color maps, shaders, textures, etc.)
