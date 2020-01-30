@@ -53,8 +53,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
         auto face = picker_->pick_face(model, x, y);
-        if (face.is_valid())
-            model->triangles_drawable("faces")->set_highlight_id(face.idx());
+        model->triangles_drawable("faces")->set_highlight_id(face.idx());
     }
 
     return Viewer::mouse_press_event(x, y, button, modifiers);
