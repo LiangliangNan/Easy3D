@@ -78,15 +78,19 @@ namespace easy3d {
 
 
 	void TrianglesDrawable::get_highlighted_trangles_range(int& tri_min, int& tri_max) const {
-		if (highlight_id_ >= 0 && highlight_id_ < indices_.size()) {
-			tri_min = indices_[highlight_id_].front();
-			tri_max = indices_[highlight_id_].back();
-		}
-		else {
-			tri_min = -1;
-			tri_max = -1;
-		}
-	}
+        tri_min = highlight_id_;
+        tri_max = highlight_id_;
+        LOG(WARNING) << "only triangle meshes are supported";
+
+//		if (highlight_id_ >= 0 && highlight_id_ < indices_.size()) {
+//			tri_min = indices_[highlight_id_].front();
+//			tri_max = indices_[highlight_id_].back();
+//		}
+//		else {
+//			tri_min = -1;
+//			tri_max = -1;
+//		}
+    }
 
 
     void TrianglesDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
@@ -127,16 +131,22 @@ namespace easy3d {
         program->set_uniform("MVP", MVP)
                 ->set_uniform("lighting", lighting())
 			->set_uniform("wLightPos", wLightPos)
-			->set_uniform("wCamPos", wCamPos)
-			->set_uniform("two_sides_lighting", true)
-			->set_uniform("distinct_back_color", true)
-			->set_uniform("smooth_shading", smooth_shading())
-			->set_uniform("ssaoEnabled", false)
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("default_color", default_color())
-			->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("two_sides_lighting", true)
+                ->set_uniform("distinct_back_color", true)
+                ->set_uniform("smooth_shading", smooth_shading())
+                ->set_uniform("ssaoEnabled", false)
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("default_color", default_color())
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
+
+//        int min_id, max_id;
+//        get_highlighted_trangles_range(min_id, max_id);
+        program->set_uniform("hightlight_id_min", highlight_id_);
+        program->set_uniform("hightlight_id_max", highlight_id_);
+
         gl_draw(with_storage_buffer);
         program->release();
     }

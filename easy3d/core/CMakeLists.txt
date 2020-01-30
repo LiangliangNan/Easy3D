@@ -5,22 +5,23 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        box.h
-        constant.h
-        eigen_solver.h
-        graph.h
-        line.h
-        mat.h
-        plane.h
-        point_cloud.h
-        principal_axes.h
-        properties.h
-        quat.h
-        random.h
-        rect.h
-        segment.h
-        signal.h
-        surface_mesh.h
+		box.h
+		constant.h
+		eigen_solver.h
+		graph.h
+		line.h
+		mat.h
+		oriented_line.h
+		plane.h
+		point_cloud.h
+		principal_axes.h
+		properties.h
+		quat.h
+		random.h
+		rect.h
+		segment.h
+		signal.h
+		surface_mesh.h
 		manifold_builder.h
         types.h
         vec.h

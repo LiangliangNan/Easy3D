@@ -31,6 +31,7 @@
 #include <easy3d/core/mat.h>
 #include <easy3d/core/rect.h>
 #include <easy3d/core/line.h>
+#include <easy3d/core/oriented_line.h>
 #include <easy3d/core/segment.h>
 #include <easy3d/core/plane.h>
 #include <easy3d/core/box.h>
@@ -76,6 +77,8 @@ namespace easy3d {
 
     typedef GenericLine<2, float> Line2;
     typedef GenericLine<3, float> Line3;
+
+    typedef GenericOrientedLine<float> OrientedLine3;
 
     typedef GenericSegment<2, float> Segment2;
     typedef GenericSegment<3, float> Segment3;

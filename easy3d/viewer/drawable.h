@@ -118,35 +118,27 @@ namespace easy3d {
         // -------------------------- rendering -----------------------------
 
         void set_highlight_id(int id) { highlight_id_ = id; }
-
         int highlight_id() const { return highlight_id_; }
 
         bool lighting() const { return lighting_; }
-
         void set_lighting(bool l) { lighting_ = l; }
 
         Material &material() { return material_; }
-
         const Material &material() const { return material_; }
-
         void set_material(const Material &m) { material_ = m; }
 
         Texture *texture() const { return texture_; }
-
         // set the texture. Disable texture if tex is NULL.
         void set_texture(Texture *tex) { texture_ = tex; }
 
         bool is_visible() const { return visible_; }
-
         void set_visible(bool v) { visible_ = v; }
 
         bool per_vertex_color() const { return per_vertex_color_; }
-
         void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
 
         // default_color will be ignored if per_vertex_color is true and given.
         const vec4 &default_color() const { return default_color_; }
-
         void set_default_color(const vec4 &c) { default_color_ = c; }
 
         // Rendering

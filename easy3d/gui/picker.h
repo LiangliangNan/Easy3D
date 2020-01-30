@@ -36,7 +36,6 @@ namespace easy3d {
     class Picker {
     public:
         Picker(Camera *cam);
-
         ~Picker();
 
         Camera *camera() const { return camera_; }
