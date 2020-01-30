@@ -4,5 +4,7 @@
 	- Add an application 'Mapple' showcasing the features in Easy3D;
 	- Cross-section; able to be manipulated;
 	- Save/load camera/viewer states, and settings (e.g., default rendering parameters);
-	- Pick/select mechanism; object manipulation;
+	- Pick/select mechanism (points, faces, objects); object manipulation;
+	    * for OpenGL >= 4.3, use GPU;
+	    * otherwise, use multi-thread
 	-...
