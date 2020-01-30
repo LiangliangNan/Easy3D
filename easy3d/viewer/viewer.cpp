@@ -35,7 +35,7 @@
 #endif
 
 
-#include <easy3d/viewer/opengl.h>		// Initialize with glewInit() 
+#include <easy3d/viewer/opengl.h>		// Initialize with glewInit()
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// Include glfw3.h after our OpenGL definitions
 
 #include <easy3d/core/surface_mesh.h>
@@ -588,14 +588,14 @@ namespace easy3d {
 					camera()->interpolateToFitScene();
 #else   // without animation
 					camera()->showEntireScene();
-#endif	
+#endif
 				}
 
 				camera_->setPivotPoint(camera_->sceneCenter());
 				show_pivot_point_ = false;
 			}
 		}
-		
+
 		camera_->frame()->action_start();
 		return false;
 	}
@@ -906,20 +906,22 @@ namespace easy3d {
             if (mesh) {
                 auto drawable = mesh->points_drawable("locks");
                 if (!drawable) {
-                    auto prop = mesh->get_vertex_property<vec3>("v:point");
                     auto lock = mesh->get_vertex_property<bool>("v:lock");
-                    std::vector<vec3> points;
-                    for (auto v : mesh->vertices()) {
-                        if (lock[v])
-                            points.push_back(prop[v]);
-                    }
-                    if (!points.empty()) {
-                        drawable = mesh->add_points_drawable("locks");
-                        drawable->update_vertex_buffer(points);
-                        drawable->set_default_color(vec3(1, 1, 0));
-                        drawable->set_per_vertex_color(false);
-                        drawable->set_impostor_type(PointsDrawable::SPHERE);
-                        drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
+                    if (lock) {
+                        auto prop = mesh->get_vertex_property<vec3>("v:point");
+                        std::vector<vec3> points;
+                        for (auto v : mesh->vertices()) {
+                            if (lock[v])
+                                points.push_back(prop[v]);
+                        }
+                        if (!points.empty()) {
+                            drawable = mesh->add_points_drawable("locks");
+                            drawable->update_vertex_buffer(points);
+                            drawable->set_default_color(vec3(1, 1, 0));
+                            drawable->set_per_vertex_color(false);
+                            drawable->set_impostor_type(PointsDrawable::SPHERE);
+                            drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
+                        }
                     }
                 }
                 else
@@ -1139,7 +1141,7 @@ namespace easy3d {
 			" ------------------------------------------------------------------\n"
 			"  'f':                 Fit screen (all models)                     \n"
 			"  'c':                 Fit screen (current model only)             \n"
-			"  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"	
+			"  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
 			"  Alt + Left/Right:    Define/Undefine a pivot point				\n"
 			" ------------------------------------------------------------------\n"
 			"  '+'/'-':             Increase/Decrease point size (line width)   \n"
