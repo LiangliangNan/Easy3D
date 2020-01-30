@@ -37,12 +37,12 @@
 
 namespace easy3d {
 
-    PickerModel::PickerModel(Camera *cam) : Picker(cam) {
+    ModelPicker::ModelPicker(Camera *cam) : Picker(cam) {
         use_gpu_ = true;
     }
 
 
-    PickerModel::~PickerModel() {
+    ModelPicker::~ModelPicker() {
         if (fbo_) {
             delete fbo_;
             fbo_ = nullptr;
@@ -50,7 +50,7 @@ namespace easy3d {
     }
 
 
-    Model *PickerModel::pick(const std::vector<Model *> &models, int x, int y) {
+    Model *ModelPicker::pick(const std::vector<Model *> &models, int x, int y) {
         if (models.empty())
             return nullptr;
 
@@ -127,7 +127,7 @@ namespace easy3d {
 
 
     // draw the scene
-    void PickerModel::draw(const std::vector<Model *> &models) {
+    void ModelPicker::draw(const std::vector<Model *> &models) {
         for (std::size_t i = 0; i < models.size(); ++i) {
             Model *model = models[i];
             if (!model->is_visible())
@@ -151,7 +151,7 @@ namespace easy3d {
 
 
     // draw a drawable
-    void PickerModel::draw(Drawable *drawable, const vec4 &color) {
+    void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
         // record
         State state;
         state.lighting_ = drawable->lighting();
@@ -169,7 +169,7 @@ namespace easy3d {
     }
 
 
-    void PickerModel::restore(const std::vector<Model *> &models) {
+    void ModelPicker::restore(const std::vector<Model *> &models) {
         for (std::size_t i = 0; i < models.size(); ++i) {
             Model *model = models[i];
             if (!model->is_visible())
@@ -186,7 +186,7 @@ namespace easy3d {
     }
 
 
-    void PickerModel::restore(Drawable *drawable) {
+    void ModelPicker::restore(Drawable *drawable) {
         const State &state = states_[drawable];
         drawable->set_lighting(state.lighting_);
         drawable->set_per_vertex_color(state.per_vertex_color_);

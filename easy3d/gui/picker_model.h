@@ -1,4 +1,3 @@
-
 /**
  * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
  * https://3d.bk.tudelft.nl/liangliang/
@@ -39,12 +38,19 @@ namespace easy3d {
 
     class Drawable;
 
-    class PickerModel : public Picker {
+    class ModelPicker : public Picker {
     public:
-        PickerModel(Camera *cam);
+        ModelPicker(Camera *cam);
 
-        ~PickerModel();
+        ~ModelPicker();
 
+        /**
+         * Pick from a set of models.
+         * @param models The models in the scene.
+         * @param x The cursor x-coordinate, relative to the left edge of the viewer.
+         * @param y	The cursor y-coordinate, relative to the top edge of the viewer.
+         * @return The picked model.
+         */
         Model *pick(const std::vector<Model *> &models, int x, int y);
 
     private:

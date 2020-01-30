@@ -51,7 +51,7 @@ std::string PickerViewer::usage() const {
 
 
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-    PickerModel picker(camera());
+    ModelPicker picker(camera());
     auto model = picker.pick(models(), x, y);
     if (model) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
