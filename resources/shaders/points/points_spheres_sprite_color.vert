@@ -9,22 +9,22 @@ in vec3  vtx_color;
 //in float sphere_radius;
 
 uniform int	screen_width;   // scale to calculate size in pixels
-uniform float	sphere_radius;
-uniform vec3	default_color;
-uniform bool	per_vertex_color;
+uniform float    sphere_radius;
+uniform vec4    default_color;
+uniform bool    per_vertex_color;
 
 
 out Data {
-	vec4	position; // in eye space
-	vec3	sphere_color;
-	//float	sphere_radius;
+    vec4    position;// in eye space
+    vec4    sphere_color;
+//float	sphere_radius;
 } DataOut;
 
 
 void main()
 {
 	if (per_vertex_color)
-            DataOut.sphere_color = vtx_color;
+    DataOut.sphere_color = vec4(vtx_color, 1.0);
         else
             DataOut.sphere_color = default_color;
 	//DataOut.sphere_radius = sphere_radius;

@@ -125,6 +125,7 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP)
+                ->set_uniform("lighting", lighting())
 			->set_uniform("wLightPos", wLightPos)
 			->set_uniform("wCamPos", wCamPos)
 			->set_uniform("two_sides_lighting", true)
@@ -163,26 +164,27 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4& MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->modelViewProjectionMatrix();
         // camera position is defined in world coordinate system.
-        const vec3& wCamPos = camera->position();
+        const vec3 &wCamPos = camera->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4& MV = camera->modelViewMatrix();
-        const vec4& wLightPos = inverse(MV) * setting::light_position;
+        const mat4 &MV = camera->modelViewMatrix();
+        const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         program->bind();
-		program->set_uniform("MVP", MVP)
-			->set_uniform("wLightPos", wLightPos)
-			->set_uniform("wCamPos", wCamPos)
-			->set_uniform("two_sides_lighting", false)
-			->set_uniform("smooth_shading", smooth_shading())
-			->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess)
-			->bind_texture("textureID", texture()->id(), 0)
-			->set_uniform("texture_repeat", 1.0f)      // TODO: make this a parameter
-			->set_uniform("fractional_repeat", 0.0f);  // TODO: make this a parameter
+        program->set_uniform("MVP", MVP)
+                ->set_uniform("lighting", lighting())
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("two_sides_lighting", false)
+                ->set_uniform("smooth_shading", smooth_shading())
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess)
+                ->bind_texture("textureID", texture()->id(), 0)
+                ->set_uniform("texture_repeat", 1.0f)      // TODO: make this a parameter
+                ->set_uniform("fractional_repeat", 0.0f);  // TODO: make this a parameter
         gl_draw(with_storage_buffer);
         program->release_texture();
         program->release();

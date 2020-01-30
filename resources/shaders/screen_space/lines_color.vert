@@ -3,16 +3,16 @@
 in	vec3	vertexMC;
 in  vec3    vertexColor;
 
-uniform vec3	default_color = vec3(0.0f, 0.0f, 0.0f);
+uniform vec4	default_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 uniform bool	per_vertex_color = false;
 
 
-out vec3 vOutColor;
+out vec4 vOutColor;
 
 void main()
 {
 	if (per_vertex_color)
-		vOutColor = vertexColor;
+		vOutColor = vec4(vertexColor, 1.0f);
 	else
 		vOutColor = default_color;
 

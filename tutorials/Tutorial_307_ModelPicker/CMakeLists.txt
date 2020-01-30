@@ -6,12 +6,14 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        #        ThreadPool/example.cpp
-        #        ThreadPool/ThreadPool.h
+        picker_viewer.h
+        picker_viewer.cpp
         )
-
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "sandbox")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} core util fileio algo kdtree viewer gui)
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
+
+target_link_libraries(${PROJECT_NAME} core viewer gui)
+

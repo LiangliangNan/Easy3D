@@ -8,10 +8,10 @@
 uniform mat4    PROJ;
 uniform bool	perspective;
 
-uniform vec3	color;
 uniform float	radius;
 
-uniform vec3	eLightPos;
+uniform vec3    eLightPos;
+uniform bool    lighting = true;
 
 layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
@@ -29,7 +29,7 @@ in Data{
 	vec3 V;
 } DataIn;
 
-in  vec3 gOutColor;
+in  vec4 gOutColor;
 
 out vec4 outputF;
 
@@ -123,11 +123,16 @@ void main()
 
 	// this is a workaround necessary for Mac, otherwise the modified fragment won't clip properly
 	if (depth <= 0.0 || depth >= 1.0)
-		discard;
+	discard;
 
 	gl_FragDepth = depth;
 
-	vec3 light_dir = normalize(eLightPos);
-        vec3 final_color = shade(normal, light_dir, view_dir, ambient, specular, shininess, gOutColor);
-	outputF = vec4(final_color, 1.0);
+	if (lighting) {
+		vec3 light_dir = normalize(eLightPos);
+		vec3 final_color = shade(normal, light_dir, view_dir, ambient, specular, shininess, gOutColor.xyz);
+		outputF = vec4(final_color, gOutColor.a);
+	}
+	else {
+		outputF = gOutColor;
+	}
 }

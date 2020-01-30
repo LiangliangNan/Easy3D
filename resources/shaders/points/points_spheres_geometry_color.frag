@@ -4,7 +4,8 @@
 uniform mat4    PROJ;
 uniform bool	perspective;
 
-uniform vec3	eLightPos;
+uniform vec3    eLightPos;
+uniform bool    lighting = true;
 
 layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
@@ -17,17 +18,17 @@ layout(std140) uniform Material {
 uniform float	sphere_radius;
 
 in Data{
-	flat	vec3	sphere_color;
-	smooth	vec2	tex;
-	flat	vec4	position;
-	//flat	float	sphere_radius;
+	flat    vec4    sphere_color;
+	smooth    vec2    tex;
+	flat    vec4    position;
+//flat	float	sphere_radius;
 } DataIn;
 
 out vec4 outputF;
 
 
-void main()  
-{    
+void main()
+{
 	/*  with perspective correction
 	*   Ref: Learning Modern 3D Graphics Programming, by Jason L. McKesson
 	*	http://alfonse.bitbucket.org/oldtut/Illumination/Tut13%20Correct%20Chicanery.html
@@ -57,19 +58,24 @@ void main()
 		vec2 clipZW = pos.z * PROJ[2].zw + PROJ[3].zw;
 		gl_FragDepth = 0.5 * clipZW.x / clipZW.y + 0.5;
 
+		if (!lighting) {
+			outputF = DataIn.sphere_color;
+			return;
+		}
+
 		// camera pos is (0, 0, 0) in the camera coordinate system
 		vec3 light_dir = normalize(eLightPos);
 		float df = max(dot(normal, light_dir), 0);
 
-		float sf = 0.0;	// specular factor
-		if (df > 0.0) {	// if the vertex is lit compute the specular color
-			view_dir = -view_dir; // '-' because I used the reversed direction 
-			vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
+		float sf = 0.0;// specular factor
+		if (df > 0.0) { // if the vertex is lit compute the specular color
+			view_dir = -view_dir;// '-' because I used the reversed direction
+			vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
 			sf = max(dot(half_vector, normal), 0.0);
 			sf = pow(sf, shininess);
 		}
 
-		outputF = vec4(DataIn.sphere_color * df + specular * sf + ambient, 1.0);
+		outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 
 	// without perspective correction
@@ -92,20 +98,25 @@ void main()
 		vec2 clipZW = pos.z * PROJ[2].zw + PROJ[3].zw;
 		gl_FragDepth = 0.5 * clipZW.x / clipZW.y + 0.5;
 
+		if (!lighting) {
+			outputF = DataIn.sphere_color;
+			return;
+		}
+
 		// camera pos is (0, 0, 0) in the camera coordinate system
 		vec3 view_dir = vec3(0, 0, 1);
 		vec3 light_dir = normalize(eLightPos);
 
-		vec3 normal = vec3(x, y, z); // sure this was normalized because (z = sqrt(1.0 - x*x - y*y))
+		vec3 normal = vec3(x, y, z);// sure this was normalized because (z = sqrt(1.0 - x*x - y*y))
 		float df = max(dot(normal, light_dir), 0);
 
-		float sf = 0.0;	// specular factor
-		if (df > 0.0) {	// if the vertex is lit compute the specular color
-			vec3 half_vector = normalize(light_dir + view_dir);	// compute the half vector
+		float sf = 0.0;// specular factor
+		if (df > 0.0) { // if the vertex is lit compute the specular color
+			vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
 			sf = max(dot(half_vector, normal), 0.0);
 			sf = pow(sf, shininess);
 		}
 
-		outputF = vec4(DataIn.sphere_color * df + specular * sf + ambient, 1.0);
+		outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 }

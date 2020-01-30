@@ -32,27 +32,27 @@ namespace easy3d {
     namespace setting {
 
         // ui
-        vec3	 background_color = vec3(1.0f, 1.0f, 1.0f);
+        vec4 background_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         // lighting
-        vec4     light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
-        bool	 light_surface_distinct_back_color = false;
-        vec3	 light_surface_back_color = vec4(0.67f, 0.67f, 1.0f, 1.0f);
-        bool	 light_two_sides = false;
+        vec4 light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
+        bool light_surface_distinct_back_color = false;
+        vec4 light_surface_back_color = vec4(0.67f, 0.67f, 1.0f, 1.0f);
+        bool light_two_sides = false;
 
         // material
-        vec3     material_ambient = vec3(0.05f, 0.05f, 0.05f);
-        vec3	 material_specular = vec3(0.4f, 0.4f, 0.4f);
-        float	 material_shininess = 64.0f;
+        vec4 material_ambient = vec4(0.05f, 0.05f, 0.05f, 1.0f);
+        vec4 material_specular = vec4(0.4f, 0.4f, 0.4f, 1.0f);
+        float material_shininess = 64.0f;
 
         // effect
-        int		 effect_ssao_algorithm = 0; // disabled
-        float    effect_ssao_radius = 2.0f;
-        float    effect_ssao_intensity = 1.5f;
-        float    effect_ssao_bias = 0.1f;
-        float    effect_ssao_sharpness = 40.0f;
-        bool	 effect_edl_enabled = false;
-        bool	 effect_transparency_enabled = false;
+        int effect_ssao_algorithm = 0; // disabled
+        float effect_ssao_radius = 2.0f;
+        float effect_ssao_intensity = 1.5f;
+        float effect_ssao_bias = 0.1f;
+        float effect_ssao_sharpness = 40.0f;
+        bool effect_edl_enabled = false;
+        bool effect_transparency_enabled = false;
         bool     effect_shadow_enabled = false;
         float    shadow_light_distance = 50.0f;
         float    shadow_softness = 0.5f;
@@ -60,34 +60,34 @@ namespace easy3d {
 
         // point cloud
         bool    point_cloud_use_color_property = true;
-        bool    point_cloud_show_points = true;
-        vec3    point_cloud_points_color = vec3(85 / 255.0f, 170 / 255.0f, 1.0f);
-        float   point_cloud_point_size = 2.0f;
+        bool point_cloud_show_points = true;
+        vec4 point_cloud_points_color = vec4(85 / 255.0f, 170 / 255.0f, 1.0f, 1.0f);
+        float point_cloud_point_size = 2.0f;
         bool    point_cloud_impostors = false;
 
         // surface mesh - surface
         bool    surface_mesh_phong_shading = false;
-        bool    surface_mesh_show_faces = true;
-        vec3    surface_mesh_faces_color = vec3(0.8f, 0.88f, 1.0f);
-        bool    surface_mesh_use_color_property = true;
+        bool surface_mesh_show_faces = true;
+        vec4 surface_mesh_faces_color = vec4(0.8f, 0.88f, 1.0f, 1.0f);
+        bool surface_mesh_use_color_property = true;
         float   surface_mesh_opacity = 0.6f;
 
         // surface mesh - vertices
-        bool    surface_mesh_show_vertices = false;
-        vec3    surface_mesh_vertices_color = vec3(0.0f, 1.0f, 0.0f);
-        bool    surface_mesh_vertices_imposters = true;
+        bool surface_mesh_show_vertices = false;
+        vec4 surface_mesh_vertices_color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+        bool surface_mesh_vertices_imposters = true;
         float   surface_mesh_vertices_point_size = 5.0f;
 
         // surface mesh - edges
-        bool    surface_mesh_show_edges = false;
-        vec3    surface_mesh_edges_color = vec3(0.0f, 0.0f, 0.0f);
-        bool    surface_mesh_edges_imposters = false;
+        bool surface_mesh_show_edges = false;
+        vec4 surface_mesh_edges_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+        bool surface_mesh_edges_imposters = false;
         float   surface_mesh_edges_line_width = 1.0f;
 
         // surface mesh - borders
-        bool    surface_mesh_show_borders = false;
-        vec3    surface_mesh_borders_color = vec3(1.0f, 0.0f, 0.0f);
-        bool    surface_mesh_borders_imposters = true;
+        bool surface_mesh_show_borders = false;
+        vec4 surface_mesh_borders_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+        bool surface_mesh_borders_imposters = true;
         float   surface_mesh_borders_line_width = 2.0f;
 
 

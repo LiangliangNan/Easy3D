@@ -7,20 +7,20 @@
 //#extension GL_EXT_gpu_shader4 : enable
 
 uniform mat4    MV;
-uniform vec3	default_color;
-uniform bool	per_vertex_color;
+uniform vec4    default_color;
+uniform bool    per_vertex_color;
 
-in  vec3 vtx_position;	// point position
-in  vec3 vtx_color;		// point color
+in  vec3 vtx_position;// point position
+in  vec3 vtx_color;// point color
 
-out vec3 vOutColor;
+out vec4 vOutColor;
 
 void main()
 {
-        gl_Position = MV * vec4(vtx_position, 1.0);
+    gl_Position = MV * vec4(vtx_position, 1.0);
 
-	if (per_vertex_color)
-		vOutColor = vtx_color;
-	else
-		vOutColor = default_color;
+    if (per_vertex_color)
+    vOutColor = vec4(vtx_color, 1.0);
+    else
+    vOutColor = default_color;
 }

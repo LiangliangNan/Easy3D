@@ -111,35 +111,46 @@ namespace easy3d {
 
         void release_element_buffer();
 
-		// ---------------------- get data from GPU -------------------------
+        // ---------------------- get data from GPU -------------------------
 
-		void fetch_selection_buffer();
+        void fetch_selection_buffer();
 
-		// -------------------------- rendering -----------------------------
+        // -------------------------- rendering -----------------------------
 
-		void set_highlight_id(int id) { highlight_id_ = id; }
-		int  highlight_id() const { return highlight_id_; }
+        void set_highlight_id(int id) { highlight_id_ = id; }
 
-        Material& material() { return material_; }
-        const Material& material() const { return material_; }
-        void set_material(const Material& m) { material_ = m; }
+        int highlight_id() const { return highlight_id_; }
 
-        Texture* texture() const { return texture_; }
+        bool lighting() const { return lighting_; }
+
+        void set_lighting(bool l) { lighting_ = l; }
+
+        Material &material() { return material_; }
+
+        const Material &material() const { return material_; }
+
+        void set_material(const Material &m) { material_ = m; }
+
+        Texture *texture() const { return texture_; }
+
         // set the texture. Disable texture if tex is NULL.
-        void set_texture(Texture* tex) { texture_ = tex; }
+        void set_texture(Texture *tex) { texture_ = tex; }
 
         bool is_visible() const { return visible_; }
+
         void set_visible(bool v) { visible_ = v; }
 
-        bool per_vertex_color() const { return per_vertex_color_;}
+        bool per_vertex_color() const { return per_vertex_color_; }
+
         void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
 
         // default_color will be ignored if per_vertex_color is true and given.
-        const vec3& default_color() const { return default_color_; }
-        void set_default_color(const vec3& c) { default_color_ = c; }
+        const vec4 &default_color() const { return default_color_; }
+
+        void set_default_color(const vec4 &c) { default_color_ = c; }
 
         // Rendering
-        virtual void draw(const Camera* camera, bool with_storage_buffer = false) const = 0;
+        virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
 
         // The internal draw of this drawable.
         // NOTE: this functions should be called when your shader program is in use,
@@ -159,9 +170,10 @@ namespace easy3d {
 
         bool visible_;
         bool per_vertex_color_;
-        vec3 default_color_;
+        vec4 default_color_;
 
-        int         highlight_id_;
+        bool lighting_;
+        int highlight_id_;
         Material    material_;
         Texture*    texture_;
 

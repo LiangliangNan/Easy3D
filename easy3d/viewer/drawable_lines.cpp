@@ -148,9 +148,10 @@ namespace easy3d {
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width_ * ratio)
-			->set_uniform("default_color", default_color())
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("eLightPos", setting::light_position);
+                ->set_uniform("default_color", default_color())
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("eLightPos", setting::light_position)
+                ->set_uniform("lighting", lighting());
 
         program->set_block_uniform("Material", "ambient", material().ambient)
 			->set_block_uniform("Material", "specular", material().specular)
@@ -184,13 +185,14 @@ namespace easy3d {
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width() * ratio)
-			->set_uniform("default_color", default_color())
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("eLightPos", setting::light_position);
+                ->set_uniform("default_color", default_color())
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("eLightPos", setting::light_position)
+                ->set_uniform("lighting", lighting()),
 
-        program->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                program->set_block_uniform("Material", "ambient", material().ambient)
+                        ->set_block_uniform("Material", "specular", material().specular)
+                        ->set_block_uniform("Material", "shininess", &material().shininess);
 
         gl_draw(with_storage_buffer);
         program->release();

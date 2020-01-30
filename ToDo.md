@@ -1,6 +1,9 @@
 * easy3d (on going):
     - Previous timer events may interrupt the current one when visualizing pivot points;
 	- The current way handling high-dpi support is not optimal. Maybe always use framebuffer sizes?
+	  This will ensure viewport[2] == camera()->screenWidth(), and viewport[3] == camera()->screenHeight():
+	            int viewport[4];
+                glGetIntegerv(GL_VIEWPORT, viewport);
 	- Add an application 'Mapple' showcasing the features in Easy3D;
 	- Cross-section; able to be manipulated;
 	- Save/load camera/viewer states, and settings (e.g., default rendering parameters);

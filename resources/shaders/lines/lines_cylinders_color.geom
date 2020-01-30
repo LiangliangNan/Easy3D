@@ -14,9 +14,9 @@ uniform mat4    PROJ;
 uniform bool	perspective;
 uniform float	radius;
 
-in  vec3 vOutcolor[];
+in  vec4 vOutcolor[];
 
-out vec3 gOutColor;
+out vec4 gOutColor;
 
 out Data{
 	vec3 point;// camera space
@@ -31,27 +31,27 @@ out Data{
 
 void main()
 {
-	vec3  base = gl_in[0].gl_Position.xyz;  // in camera space
-	vec3  top = gl_in[1].gl_Position.xyz;   // in camera space
-	vec3  len_dir = top - base;
-	vec3  view_dir = vec3(0,0,1);	// this is view direction for orthographic mode in camera space
-	if (perspective) {
-		//view_dir = normalize(vec3(0) - 0.5*(base + top));	// camera pos is (0, 0, 0) in camera space
-		view_dir = normalize(vec3(0) - base);	// camera pos is (0, 0, 0) in camera space
-	}
+    vec3  base = gl_in[0].gl_Position.xyz;// in camera space
+    vec3  top = gl_in[1].gl_Position.xyz;// in camera space
+    vec3  len_dir = top - base;
+    vec3  view_dir = vec3(0, 0, 1);// this is view direction for orthographic mode in camera space
+    if (perspective) {
+        //view_dir = normalize(vec3(0) - 0.5*(base + top));	// camera pos is (0, 0, 0) in camera space
+        view_dir = normalize(vec3(0) - base);// camera pos is (0, 0, 0) in camera space
+    }
 
-	vec3 base_color = vOutcolor[0];
-	vec3 top_color = vOutcolor[1];
+    vec4 base_color = vOutcolor[0];
+    vec4 top_color = vOutcolor[1];
 
-	float b = dot(view_dir, len_dir);
-	if (b < 0.0) {// direction vector looks away, so flip
-		len_dir = -len_dir;
-		//swap(base, top);
-		vec3 tmp = base;
-		base = top;
-		top = tmp;
-		
-		base_color = vOutcolor[1];
+    float b = dot(view_dir, len_dir);
+    if (b < 0.0) { // direction vector looks away, so flip
+        len_dir = -len_dir;
+        //swap(base, top);
+        vec3 tmp = base;
+        base = top;
+        top = tmp;
+
+        base_color = vOutcolor[1];
 		top_color = vOutcolor[0];
 	}
 

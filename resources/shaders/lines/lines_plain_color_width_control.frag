@@ -7,17 +7,15 @@
 uniform mat4 PROJ;
 
 in  vec3 gPoint;
-in  vec3 gOutColor;
+in  vec4 gOutColor;
 
 out vec4 outputF;
 
 
 void main()
 {
-    outputF = vec4(gOutColor, 1.0);
+    outputF = gOutColor;
     // compute the depth
     vec4 pos = PROJ * vec4(gPoint, 1.0);
     gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5 - 0.0001;
-
-    return;
 }

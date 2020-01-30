@@ -41,7 +41,6 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -52,15 +51,12 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/key_frame_interpolator.h>
-#include <easy3d/viewer/ambient_occlusion.h>
-#include <easy3d/viewer/dual_depth_peeling.h>
 #include <easy3d/viewer/average_color_blending.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_timer.h>
-
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -1507,34 +1503,35 @@ namespace easy3d {
 
 		const mat4& proj = transform::ortho(-1, 1, -1, 1, -1, 1);
 		const mat4& view = camera_->orientation().inverse().matrix();
-		const mat4& MVP = proj * view;
+        const mat4 &MVP = proj * view;
 
-		// camera position is defined in world coordinate system.
-		const vec3& wCamPos = camera_->position();
-		// it can also be computed as follows:
-		//const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-		const mat4& MV = camera_->modelViewMatrix();
-		const vec4& wLightPos = inverse(MV) * setting::light_position;
+        // camera position is defined in world coordinate system.
+        const vec3 &wCamPos = camera_->position();
+        // it can also be computed as follows:
+        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
+        const mat4 &MV = camera_->modelViewMatrix();
+        const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
-		program->bind();
-		program->set_uniform("MVP", MVP);
-		program->set_uniform("wLightPos", wLightPos);
-		program->set_uniform("wCamPos", wCamPos);
-		program->set_uniform("ssaoEnabled", false);
-		program->set_uniform("per_vertex_color", true);
-		program->set_uniform("two_sides_lighting", true);
-		program->set_uniform("distinct_back_color", false);
-		program->set_block_uniform("Material", "ambient", setting::material_ambient);
-		program->set_block_uniform("Material", "specular", setting::material_specular);
-		program->set_block_uniform("Material", "shininess", &setting::material_shininess);
-		drawable_axes_->gl_draw(false);
-		program->release();
+        program->bind();
+        program->set_uniform("MVP", MVP)
+                ->set_uniform("lighting", true)
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("ssaoEnabled", false)
+                ->set_uniform("per_vertex_color", true)
+                ->set_uniform("two_sides_lighting", true)
+                ->set_uniform("distinct_back_color", false)
+                ->set_block_uniform("Material", "ambient", setting::material_ambient)
+                ->set_block_uniform("Material", "specular", setting::material_specular)
+                ->set_block_uniform("Material", "shininess", &setting::material_shininess);
+        drawable_axes_->gl_draw(false);
+        program->release();
 
-		// restore
-		glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
-		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-		glDepthRangef(0.0f, 1.0f);
-	}
+        // restore
+        glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glDepthRangef(0.0f, 1.0f);
+    }
 
 
 	void Viewer::pre_draw() {

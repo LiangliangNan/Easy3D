@@ -8,16 +8,16 @@ in vec3 vtx_normal;
 uniform mat4 MVP;
 
 out Data{
-	vec2 texcoord;
-	vec3 normal;
-	vec3 position;
+    vec2 texcoord;
+    vec3 normal;
+    vec3 position;
 } DataOut;
 
 void main() {
 
-	DataOut.texcoord = vtx_texcoord;
-        DataOut.normal = vtx_normal;
-        DataOut.position = vtx_position;
+    DataOut.texcoord = vtx_texcoord;
+    DataOut.normal = vtx_normal;
+    DataOut.position = vtx_position;
 
-        gl_Position = MVP * vec4(vtx_position, 1.0);
+    gl_Position = MVP * vec4(vtx_position, 1.0);
 }

@@ -12,6 +12,7 @@ layout(std140) uniform Material {
 uniform sampler2D   ssaoTexture;
 uniform bool        ssaoEnabled = false;
 
+uniform bool        lighting = true;
 // two sides
 uniform bool        two_sides_lighting = true;
 
@@ -23,7 +24,7 @@ uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 in Data{
-    vec3 color;
+    vec4 color;
     vec3 position;
     vec3 normal;
 } DataIn;
@@ -31,7 +32,12 @@ in Data{
 out vec4 outputF;
 
 void main(void) {
-    vec3 color = DataIn.color;
+    if (!lighting) {
+        outputF = DataIn.color;
+        return;
+    }
+
+    vec3 color = DataIn.color.xyz;
     if (!gl_FrontFacing && distinct_back_color)
             color = backside_color;
 
@@ -68,8 +74,8 @@ void main(void) {
     if (ssaoEnabled) {
         vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
         float coeff = texture(ssaoTexture, texCoord).r;
-        outputF = vec4(vec3(color * df + specular * sf + ambient) * coeff, 1.0);
+        outputF = vec4(vec3(color * df + specular * sf + ambient) * coeff, DataIn.color.a);
     }
     else
-         outputF = vec4(color * df + specular * sf + ambient, 1.0);
+         outputF = vec4(color * df + specular * sf + ambient, DataIn.color.a);
 }

@@ -35,11 +35,8 @@ using namespace google;
 
 namespace easy3d {
 
-    PointsDrawable::PointsDrawable(const std::string& name /*= ""*/)
-        : Drawable(name)
-        , point_size_(2.0f)
-        , impostor_type_(PLAIN)
-    {
+    PointsDrawable::PointsDrawable(const std::string &name /*= ""*/)
+            : Drawable(name), point_size_(2.0f), impostor_type_(PLAIN) {
         default_color_ = vec3(0.0f, 1.0f, 0.0f);
     }
 
@@ -49,46 +46,46 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
+    void PointsDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
         switch (impostor_type_) {
-        case PLAIN:
-            if (texture_)
-                _draw_plain_points_with_texture(camera, with_storage_buffer);
-            else
-                _draw_plain_points(camera, with_storage_buffer);
-            break;
+            case PLAIN:
+                if (texture_)
+                    _draw_plain_points_with_texture(camera, with_storage_buffer);
+                else
+                    _draw_plain_points(camera, with_storage_buffer);
+                break;
 
-        case SPHERE:
+            case SPHERE:
 #if 0
-            if (texture_)
-                _draw_spheres_with_texture_sprite(camera, with_storage_buffer);
-            else
-                _draw_sprite_spheres(camera, with_storage_buffer);
+                if (texture_)
+                    _draw_spheres_with_texture_sprite(camera, with_storage_buffer);
+                else
+                    _draw_spheres_sprite(camera, with_storage_buffer);
 #else
-            if (texture_)
-                _draw_spheres_with_texture_geometry(camera, with_storage_buffer);
-            else
-                _draw_spheres_geometry(camera, with_storage_buffer);
+                if (texture_)
+                    _draw_spheres_with_texture_geometry(camera, with_storage_buffer);
+                else
+                    _draw_spheres_geometry(camera, with_storage_buffer);
 #endif
-            break;
+                break;
 
-        case SURFEL:
-            if (texture_)
-                _draw_surfels_with_texture(camera, with_storage_buffer);
-            else
-                _draw_surfels(camera, with_storage_buffer);
-            break;
+            case SURFEL:
+                if (texture_)
+                    _draw_surfels_with_texture(camera, with_storage_buffer);
+                else
+                    _draw_surfels(camera, with_storage_buffer);
+                break;
         }
     }
 
 
-    void PointsDrawable::_draw_plain_points(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_plain_points(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
         }
 
-        ShaderProgram* program = ShaderManager::get_program("points/points_plain_color");
+        ShaderProgram *program = ShaderManager::get_program("points/points_plain_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
@@ -100,38 +97,38 @@ namespace easy3d {
         if (!program)
             return;
 
-        const mat4& MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->modelViewProjectionMatrix();
         // camera position is defined in world coordinate system.
-        const vec3& wCamPos = camera->position();
+        const vec3 &wCamPos = camera->position();
         // it can also be computed as follows:
         //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-        const mat4& MV = camera->modelViewMatrix();
-        const vec4& wLightPos = inverse(MV) * setting::light_position;
+        const mat4 &MV = camera->modelViewMatrix();
+        const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
         glPointSize(point_size());
 
         program->bind();
         program->set_uniform("MVP", MVP)
-			->set_uniform("wLightPos", wLightPos)
-			->set_uniform("wCamPos", wCamPos)
-			->set_uniform("lighting", normal_buffer())
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("default_color", default_color())
-			->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                ->set_uniform("lighting", normal_buffer() && lighting())
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("default_color", default_color())
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
 
 
-    void PointsDrawable::_draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_sprite(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
         }
 
-        ShaderProgram* program = ShaderManager::get_program("points/points_spheres_sprite_color");
+        ShaderProgram *program = ShaderManager::get_program("points/points_spheres_sprite_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
@@ -147,20 +144,21 @@ namespace easy3d {
 
         program->bind();
 
-		program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-			->set_uniform("MV", camera->modelViewMatrix())
-			->set_uniform("PROJ", camera->projectionMatrix())
-			->set_uniform("screen_width", camera->screenWidth());
+        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+                ->set_uniform("MV", camera->modelViewMatrix())
+                ->set_uniform("PROJ", camera->projectionMatrix())
+                ->set_uniform("screen_width", camera->screenWidth());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("sphere_radius", point_size() * ratio)
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("default_color", default_color())
-			->set_uniform("eLightPos", setting::light_position);
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("default_color", default_color())
+                ->set_uniform("eLightPos", setting::light_position)
+                ->set_uniform("lighting", lighting());
 
         program->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
 
@@ -168,18 +166,19 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_geometry(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
         }
 
-        ShaderProgram* program = ShaderManager::get_program("points/points_spheres_geometry_color");
+        ShaderProgram *program = ShaderManager::get_program("points/points_spheres_geometry_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("points/points_spheres_geometry_color", attributes, std::vector<std::string>(), true);
+            program = ShaderManager::create_program_from_files("points/points_spheres_geometry_color", attributes,
+                                                               std::vector<std::string>(), true);
         }
         if (!program)
             return;
@@ -188,24 +187,25 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
-			->set_uniform("MV", camera->modelViewMatrix())
-			->set_uniform("PROJ", camera->projectionMatrix());
+                ->set_uniform("MV", camera->modelViewMatrix())
+                ->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("sphere_radius", point_size() * ratio)
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("default_color", default_color())
-			->set_uniform("eLightPos", setting::light_position);
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("default_color", default_color())
+                ->set_uniform("eLightPos", setting::light_position)
+                ->set_uniform("lighting", lighting());
 
         program->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }
 
 
-    void PointsDrawable::_draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_plain_points_with_texture(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
@@ -218,7 +218,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
@@ -231,7 +231,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera *camera, bool with_storage_buffer) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(ERROR, 1) << "vertex buffer not created (this is the first record)";
             return;
@@ -254,39 +254,40 @@ namespace easy3d {
             return;
         }
 
-        ShaderProgram* program = ShaderManager::get_program("points/points_surfel_color");
+        ShaderProgram *program = ShaderManager::get_program("points/points_surfel_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
             attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("points/points_surfel_color", attributes, std::vector<std::string>(), true);
+            program = ShaderManager::create_program_from_files("points/points_surfel_color", attributes,
+                                                               std::vector<std::string>(), true);
         }
         if (!program)
             return;
 
         easy3d_debug_gl_error;
 
-        const mat4& MVP = camera->modelViewProjectionMatrix();
+        const mat4 &MVP = camera->modelViewProjectionMatrix();
         // camera position is defined in world coordinate system.
-        const vec3& wCamPos = camera->position();
-        const vec4& wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
+        const vec3 &wCamPos = camera->position();
+        const vec4 &wLightPos = inverse(camera->modelViewMatrix()) * setting::light_position;
 
         program->bind();
-		program->set_uniform("MVP", MVP)
-			->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
-			->set_uniform("default_color", default_color());
+        program->set_uniform("MVP", MVP)
+                ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
+                ->set_uniform("default_color", default_color());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", point_size() * ratio)
-			->set_uniform("wLightPos", wLightPos)
-			->set_uniform("wCamPos", wCamPos)
-			->set_uniform("lighting", true)
-			->set_uniform("two_sides_lighting", false);
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("two_sides_lighting", false)
+                ->set_uniform("lighting", lighting());
 
         program->set_block_uniform("Material", "ambient", material().ambient)
-			->set_block_uniform("Material", "specular", material().specular)
-			->set_block_uniform("Material", "shininess", &material().shininess);
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
         gl_draw(with_storage_buffer);
         program->release();
     }

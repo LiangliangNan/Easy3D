@@ -4,6 +4,7 @@ add_subdirectory(fileio)
 add_subdirectory(kdtree)
 add_subdirectory(util)
 add_subdirectory(viewer)
+add_subdirectory(gui)
 
 if(EASY3D_ENABLE_CGAL)
     find_package(CGAL)

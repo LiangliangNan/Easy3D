@@ -9,15 +9,15 @@ uniform mat4    MVP;
 uniform float   radius;
 
 in VertexData {
-      vec3  color;
-      vec3  normal;
+    vec4  color;
+    vec3  normal;
 } VertexIn[];
 
 out FragmentData {
-      vec2 texcoord;
-      vec3 color;
-      vec3 point;
-      vec3 normal;
+    vec2 texcoord;
+    vec4 color;
+    vec3 point;
+    vec3 normal;
 } VertexOut;
 
 
@@ -29,12 +29,12 @@ void main()
     // create tangent space. Helper vectors dependent on major orientation of normal
     vec3 u, v;
     if (abs(normal.y) > abs(normal.x)) {
-      v = cross(normal, vec3(1.0, 0.0, 0.0));
-      u = cross(normal, v);
+        v = cross(normal, vec3(1.0, 0.0, 0.0));
+        u = cross(normal, v);
     }
     else {
-      v = cross(vec3(0.0, 1.0, 0.0), normal);
-      u = cross(normal, v);
+        v = cross(vec3(0.0, 1.0, 0.0), normal);
+        u = cross(normal, v);
     }
 
     // Scale the splat
