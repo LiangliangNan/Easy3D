@@ -116,100 +116,126 @@ namespace easy3d {
              * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
              * for the rendering purpose be shared for selection. Yeah, performance gain!
              */
+            Tessellator tess;
             auto triangle_range = model->face_property< std::pair<int, int> >("f:triangle_range");
             int count_triangles = 0;
 
-            // [Liangliang] How to achieve efficient switch between flat and smooth shading?
-            //      Always transfer vertex normals to GPU and the normals for flat shading are
-            //      computed on the fly in the fragment shader:
-            //              normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-            //     This way, we can use a uniform smooth_shading to switch between flat and smooth
-            //     shading, avoiding transferring different data to the GPU.
+            /**
+             * Efficiency in switching between flat and smooth shading.
+             * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+             * the fragment shader:
+             *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+             * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+             * between flat and smooth shading without transferring different data to the GPU.
+             */
 
             auto points = model->get_vertex_property<vec3>("v:point");
             model->update_vertex_normals();
             auto normals = model->get_vertex_property<vec3>("v:normal");
 
-            Tessellator tessellator;
-
             auto face_colors = model->get_face_property<vec3>("f:color");
-            if (face_colors) {  // rendering with per-face colors
-                std::vector<vec3> d_points, d_normals, d_colors;
-                for (auto face : model->faces()) {
-                    tessellator.reset();
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        const vec3& v = points[model->to_vertex(h)];
-                        const vec3& n = normals[model->to_vertex(h)];
-                        const float data[6] = {v.x, v.y, v.z, n.x, n.y, n.z};
-                        tessellator.add_vertex(data, 6);
-                    }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
+            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
 
-                    std::size_t num = tessellator.num_triangles();
-                    const std::vector<const double *> &vts = tessellator.get_vertices();
-                    for (std::size_t j = 0; j < num; ++j) {
-                        std::size_t a, b, c;
-                        tessellator.get_triangle(j, a, b, c);
-                        d_points.emplace_back(vts[a]);   d_normals.emplace_back(vts[a] + 3);
-                        d_points.emplace_back(vts[b]);   d_normals.emplace_back(vts[b] + 3);
-                        d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);
-                        d_colors.insert(d_colors.end(), 3, face_colors[face]);
+            vec3 c;
+            std::vector<vec3> data;
+            std::vector<vec3> d_points, d_normals, d_colors;
+            for (auto face : model->faces()) {
+                tess.reset();
+                tess.begin_polygon(model->compute_face_normal(face));
+                tess.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                tess.begin_contour();
+                if (face_colors)
+                    c = face_colors[face];
+                for (auto h : model->halfedges(face)) {
+                    auto v = model->to_vertex(h);
+                    const vec3 &p = points[v];
+                    const vec3 &n = normals[v];
+                    if (face_colors) {          // model has per-face colors
+                        data = {p, n, c};
+                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 9);
+                    } else if (vertex_colors) {   // model has per-vertex colors
+                        data = {p, n, vertex_colors[v] };
+                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 9);
                     }
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    else {
+                        data = {p, n};
+                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 6);
+                    }
                 }
+                tess.end_contour();
+                tess.end_polygon();
 
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_normal_buffer(d_normals);
+                std::size_t num = tess.num_triangles();
+                const std::vector<const double *> &vts = tess.get_vertices();
+                for (std::size_t j = 0; j < num; ++j) {
+                    std::size_t a, b, c;
+                    tess.get_triangle(j, a, b, c);
+                    d_points.emplace_back(vts[a]);
+                    d_points.emplace_back(vts[b]);
+                    d_points.emplace_back(vts[c]);
+                    d_normals.emplace_back(vts[a] + 3);
+                    d_normals.emplace_back(vts[b] + 3);
+                    d_normals.emplace_back(vts[c] + 3);
+                    if (face_colors || vertex_colors) {
+                        d_colors.emplace_back(vts[a] + 6);
+                        d_colors.emplace_back(vts[b] + 6);
+                        d_colors.emplace_back(vts[c] + 6);
+                    }
+                }
+                triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                count_triangles += num;
+            }
+
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_normal_buffer(d_normals);
+            if (face_colors || vertex_colors) {
                 drawable->update_color_buffer(d_colors);
                 drawable->set_per_vertex_color(true);
-                drawable->release_element_buffer();
             }
-            else { // rendering with per-vertex colors
-                drawable->update_vertex_buffer(points.vector());
-                auto colors = model->get_vertex_property<vec3>("v:color");
-                if (colors) {
-                    drawable->update_color_buffer(colors.vector());
-                    drawable->set_per_vertex_color(true);
-                }
-                auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
-                if (vertex_texcoords)
-                    drawable->update_texcoord_buffer(vertex_texcoords.vector());
+            else
+                drawable->set_per_vertex_color(false);
 
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-                if (!normals) {
-                    model->update_vertex_normals();
-                    normals = model->get_vertex_property<vec3>("v:normal");
-                }
-
-                drawable->update_normal_buffer(normals.vector());
-
-                std::vector<unsigned int> indices;
-                for (auto face : model->faces()) {
-                    // we assume convex polygonal faces and we render in triangles
-                    SurfaceMesh::Halfedge start = model->halfedge(face);
-                    SurfaceMesh::Halfedge cur = model->next_halfedge(model->next_halfedge(start));
-                    SurfaceMesh::Vertex va = model->to_vertex(start);
-                    int num = 0;
-                    while (cur != start) {
-                        SurfaceMesh::Vertex vb = model->from_vertex(cur);
-                        SurfaceMesh::Vertex vc = model->to_vertex(cur);
-                        indices.push_back(static_cast<unsigned int>(va.idx()));
-                        indices.push_back(static_cast<unsigned int>(vb.idx()));
-                        indices.push_back(static_cast<unsigned int>(vc.idx()));
-                        cur = model->next_halfedge(cur);
-                        ++num;
-                    }
-
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
-                }
-                drawable->update_index_buffer(indices);
-            }
+//            { // rendering with per-vertex colors, with index buffer (so neighboring faces share the same vertices).
+//                drawable->update_vertex_buffer(points.vector());
+//                auto colors = model->get_vertex_property<vec3>("v:color");
+//                if (colors) {
+//                    drawable->update_color_buffer(colors.vector());
+//                    drawable->set_per_vertex_color(true);
+//                }
+//                auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+//                if (vertex_texcoords)
+//                    drawable->update_texcoord_buffer(vertex_texcoords.vector());
+//
+//                auto normals = model->get_vertex_property<vec3>("v:normal");
+//                if (!normals) {
+//                    model->update_vertex_normals();
+//                    normals = model->get_vertex_property<vec3>("v:normal");
+//                }
+//
+//                drawable->update_normal_buffer(normals.vector());
+//
+//                std::vector<unsigned int> indices;
+//                for (auto face : model->faces()) {
+//                    // we assume convex polygonal faces and we render in triangles
+//                    SurfaceMesh::Halfedge start = model->halfedge(face);
+//                    SurfaceMesh::Halfedge cur = model->next_halfedge(model->next_halfedge(start));
+//                    SurfaceMesh::Vertex va = model->to_vertex(start);
+//                    int num = 0;
+//                    while (cur != start) {
+//                        SurfaceMesh::Vertex vb = model->from_vertex(cur);
+//                        SurfaceMesh::Vertex vc = model->to_vertex(cur);
+//                        indices.push_back(static_cast<unsigned int>(va.idx()));
+//                        indices.push_back(static_cast<unsigned int>(vb.idx()));
+//                        indices.push_back(static_cast<unsigned int>(vc.idx()));
+//                        cur = model->next_halfedge(cur);
+//                        ++num;
+//                    }
+//
+//                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+//                    count_triangles += num;
+//                }
+//                drawable->update_index_buffer(indices);
+//            }
         }
 
 

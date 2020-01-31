@@ -58,7 +58,6 @@ namespace easy3d {
         void update_data(Graph* model, LinesDrawable* drawable);
 
 
-
         // a template version
         template <typename DRAWABLE>
         inline void update_data(Model* model, DRAWABLE* drawable) {
