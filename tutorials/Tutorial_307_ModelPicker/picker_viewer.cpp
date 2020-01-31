@@ -51,18 +51,8 @@ std::string PickerViewer::usage() const {
 
 
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-    // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
-    int gl_x = x;
-    int gl_y = camera()->screenHeight() - 1 - y;
-
-    // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
-    gl_x = static_cast<int>(gl_x * dpi_scaling());
-    gl_y = static_cast<int>(gl_y * dpi_scaling());
-#endif
-
     ModelPicker picker(camera());
-    auto model = picker.pick(models(), gl_x, gl_y);
+    auto model = picker.pick(models(), x, y);
     if (model) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
             change_color(model, vec3(1, 0, 0));

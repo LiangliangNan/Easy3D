@@ -50,78 +50,63 @@ namespace easy3d {
 
         /**
          * Pick a face from a surface mesh given the cursor position.
-         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
-         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
-         *                  the one following the OpenGL convention, i.e.,
-         *                          int gl_x = x;
-         *                          int gl_y = screen_height() - 1 - y;
-         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
-         *                          gl_x *= static_cast<int>(glx * 2);
-         *                          gl_y *= static_cast<int>(gly * 2);
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
          * @return The picked face.
          */
-        SurfaceMesh::Face pick_face(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Face pick_face(SurfaceMesh *model, int x, int y);
 
         /**
          * Pick a vertex from a surface mesh given the cursor position.
-         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
-         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
-         *                  the one following the OpenGL convention, i.e.,
-         *                          int gl_x = x;
-         *                          int gl_y = screen_height() - 1 - y;
-         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
-         *                          gl_x *= static_cast<int>(glx * 2);
-         *                          gl_y *= static_cast<int>(gly * 2);
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
          * @return The picked vertex.
          */
-        SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, int x, int y);
 
         /**
          * Pick an edge from a surface mesh given the cursor position.
-         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
-         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
-         *                  the one following the OpenGL convention, i.e.,
-         *                          int gl_x = x;
-         *                          int gl_y = screen_height() - 1 - y;
-         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
-         *                          gl_x *= static_cast<int>(glx * 2);
-         *                          gl_y *= static_cast<int>(gly * 2);
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
          * @return The picked halfedge.
          */
-        SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, int x, int y);
 
         /**
          * Pick a vertex from a surface mesh given the cursor position and a known picked face.
-         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
-         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
-         *                  the one following the OpenGL convention, i.e.,
-         *                          int gl_x = x;
-         *                          int gl_y = screen_height() - 1 - y;
-         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
-         *                          gl_x *= static_cast<int>(glx * 2);
-         *                          gl_y *= static_cast<int>(gly * 2);
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
          * @return The picked vertex.
          * @attention This method must be called after calling to pick_face(). The result is valid only if the
          *            picked_face is valid.
          */
         // @attention call this version if you already picked the face
-        SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y);
+        SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
         /**
          * Pick an edge from a surface mesh given the cursor position and a known picked face.
-         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
-         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
-         *                  the one following the OpenGL convention, i.e.,
-         *                          int gl_x = x;
-         *                          int gl_y = screen_height() - 1 - y;
-         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
-         *                          gl_x *= static_cast<int>(glx * 2);
-         *                          gl_y *= static_cast<int>(gly * 2);
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
          * @return The picked halfedge.
          * @attention This method must be called after calling to pick_face(). The result is valid only if the
          *            picked_face is valid.
          */
-        SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y);
+        SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
         //-------------------- query after picking ----------------------
 
@@ -143,10 +128,10 @@ namespace easy3d {
 
     private:
         // selection implemented in GPU (using shader program)
-        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int x, int y);
 
         // selection implemented in CPU (with OpenMP if supported)
-        SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int x, int y);
 
         Plane3 face_plane(SurfaceMesh *model, SurfaceMesh::Face face) const;
 

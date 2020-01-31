@@ -53,17 +53,7 @@ std::string PickerViewer::usage() const {
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
-        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
-        int gl_x = x;
-        int gl_y = camera()->screenHeight() - 1 - y;
-
-        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
-        gl_x = static_cast<int>(gl_x * dpi_scaling());
-        gl_y = static_cast<int>(gl_y * dpi_scaling());
-#endif
-
-        auto face = picker_->pick_face(model, gl_x, gl_y);
+        auto face = picker_->pick_face(model, x, y);
         auto drawable = model->triangles_drawable("faces");
         auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
         if (triangle_range && face.is_valid()) {

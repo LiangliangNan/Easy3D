@@ -50,7 +50,7 @@ namespace easy3d {
     }
 
 
-    Model *ModelPicker::pick(const std::vector<Model *> &models, int gl_x, int gl_y) {
+    Model *ModelPicker::pick(const std::vector<Model *> &models, int x, int y) {
         if (models.empty())
             return nullptr;
 
@@ -89,6 +89,12 @@ namespace easy3d {
         glFlush();
         glFinish();
         // -----------------------------------------
+
+        float dpi_scaling = viewport[2] / static_cast<float>(camera()->screenWidth());
+        int gl_x = x;
+        int gl_y = camera()->screenHeight() - 1 - y;
+        gl_x *= dpi_scaling;
+        gl_y *= dpi_scaling;
 
         unsigned char c[4];
         fbo_->read_color(c, gl_x, gl_y);

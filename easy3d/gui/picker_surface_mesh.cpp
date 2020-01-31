@@ -46,7 +46,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh *model, int gl_x, int gl_y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh *model, int x, int y) {
         if (!model)
             return SurfaceMesh::Face();
 
@@ -62,14 +62,14 @@ namespace easy3d {
         }
 
         if (use_gpu_)
-            return pick_face_gpu(model, gl_x, gl_y);
+            return pick_face_gpu(model, x, y);
         else // CPU with OpenMP (if supported)
-            return pick_face_cpu(model, gl_x, gl_y);
+            return pick_face_cpu(model, x, y);
     }
 
 
     SurfaceMesh::Vertex
-    SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y) {
+    SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) {
         if (!picked_face.is_valid() || picked_face != picked_face_) {
             LOG(ERROR) << "user provided face is not valid";
             return SurfaceMesh::Vertex();
@@ -94,7 +94,7 @@ namespace easy3d {
 
         const vec3 &p = model->position(closest_vertex);
         const vec2 &q = project(p);
-        float dist = distance(q, vec2(gl_x, gl_y));
+        float dist = distance(q, vec2(x, y));
         if (dist < hit_resolution_)
             return closest_vertex;
         else
@@ -102,14 +102,14 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, int gl_x, int gl_y) {
-        SurfaceMesh::Face face = pick_face(model, gl_x, gl_y);
-        return pick_vertex(model, face, gl_x, gl_y);
+    SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, int x, int y) {
+        SurfaceMesh::Face face = pick_face(model, x, y);
+        return pick_vertex(model, face, x, y);
     }
 
 
     SurfaceMesh::Halfedge
-    SurfaceMeshPicker::pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y) {
+    SurfaceMeshPicker::pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) {
         if (!picked_face.is_valid() || picked_face != picked_face_) {
             LOG(ERROR) << "user provided face is not valid";
             return SurfaceMesh::Halfedge();
@@ -142,7 +142,7 @@ namespace easy3d {
         const vec3 &s = model->position(model->from_vertex(closest_edge));
         const vec3 &t = model->position(model->to_vertex(closest_edge));
         const Segment2 seg(project(s), project(t));
-        float s_dist = seg.squared_ditance(vec2(gl_x, gl_y));
+        float s_dist = seg.squared_ditance(vec2(x, y));
         float dist = std::sqrt(s_dist);
 
         if (dist < hit_resolution_)
@@ -152,9 +152,9 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh *model, int gl_x, int gl_y) {
-        SurfaceMesh::Face facet = pick_face(model, gl_x, gl_y);
-        return pick_edge(model, facet, gl_x, gl_y);
+    SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh *model, int x, int y) {
+        SurfaceMesh::Face facet = pick_face(model, x, y);
+        return pick_edge(model, facet, x, y);
     }
 
 
@@ -181,10 +181,10 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int gl_x, int gl_y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int x, int y) {
         int num = model->faces_size();
-        const vec3 &p_near = unproject(vec2(gl_x, gl_y), 0);
-        const vec3 &p_far = unproject(vec2(gl_x, gl_y), 1);
+        const vec3 &p_near = unproject(x, y, 0);
+        const vec3 &p_far = unproject(x, y, 1);
         const OrientedLine3 oline(p_near, p_far);
 
         StopWatch t;
@@ -199,7 +199,7 @@ namespace easy3d {
 
         picked_face_ = SurfaceMesh::Face();
         double squared_distance = FLT_MAX;
-        const Line3 &line = picker_line(gl_x, gl_y);
+        const Line3 &line = picking_line(x, y);
         for (int i = 0; i < num; ++i) {
             if (status[i]) {
                 const SurfaceMesh::Face face(i);
@@ -226,7 +226,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int gl_x, int gl_y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y) {
         auto drawable = model->triangles_drawable("faces");
         if (!drawable) {
             drawable = model->add_triangles_drawable("faces");
@@ -278,6 +278,12 @@ namespace easy3d {
         glFlush();
         glFinish();
         // -----------------------------------------
+
+        float dpi_scaling = viewport[2] / static_cast<float>(camera()->screenWidth());
+        int gl_x = x;
+        int gl_y = camera()->screenHeight() - 1 - y;
+        gl_x *= dpi_scaling;
+        gl_y *= dpi_scaling;
 
         unsigned char c[4];
         fbo_->read_color(c, gl_x, gl_y);

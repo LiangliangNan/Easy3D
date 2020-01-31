@@ -36,39 +36,68 @@ namespace easy3d {
     class Picker {
     public:
         Picker(Camera *cam);
+
         ~Picker();
 
         Camera *camera() const { return camera_; }
 
-        //------------------------------------------------------
-
-        Line3 picker_line(int x, int y) const {
-            const vec3 p_near = unproject(vec2(float(x), float(y)), 0);
-            const vec3 p_far = unproject(vec2(float(x), float(y)), 1);
+        /**
+         * Construct a picking line.
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
+         */
+        Line3 picking_line(int x, int y) const {
+            const vec3 p_near = unproject(x, y, 0);
+            const vec3 p_far = unproject(x, y, 1);
             return Line3::from_two_points(p_near, p_far);
         }
 
 
-        // pointing into the screen
-        vec3 picker_dir(int x, int y) const {
-            return picker_line(x, y).direction();
+        /**
+         * The picking direction, pointing inside the screen.
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
+         */
+        vec3 picking_dir(int x, int y) const {
+            return picking_line(x, y).direction();
         }
 
 
+        /**
+         * Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
+         * @param p A 3D point in the world coordinate system.
+         * @return The x and y components of the returned value denote the projected screen point expressed in the
+         *         screen coordinate system, with (0, 0) being the upper left corner of the content area. The z
+         *         component ranges between 0.0 (near plane) and 1.0 (excluded, far plane).
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
+         */
         // 3D space to screen
-        vec2 project(const vec3 &p) const {
-            const vec3 q = camera()->projectedCoordinatesOf(p);
-            return vec2(q.x, q.y);
+        vec3 project(const vec3 &p) const {
+            return camera()->projectedCoordinatesOf(p);
         }
 
 
-        // screen to 3D space
-        vec3 unproject(const vec2 &p, float depth) const {
-            float x = p.x / 2.0f;
-            float y = camera()->screenHeight() - 1.0f - p.y / 2.0f;
+        /**
+         * Compute the world coordinates of a point defined in the screen coordinate system.
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @param depth The depth value of the screen point, ranging between 0.0 and 1.0 (excluded).
+         * @return The world unprojected coordinates of the screen point.
+         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
+         *            a Retina display.
+         */
+        vec3 unproject(float x, float y, float depth) const {
             return camera()->unprojectedCoordinatesOf(vec3(x, y, depth));
         }
-
 
     protected:
         Camera *camera_;
