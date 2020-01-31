@@ -228,14 +228,12 @@ namespace easy3d {
         }
 
         // Check #2; a face has duplicated vertices
-        for (std::size_t i = 0; i < n; ++i) {
-            for (std::size_t j = i + 1; j < n; ++j) {
-                if (vertices[i] == vertices[j]) {
-                    LOG_FIRST_N(ERROR, 1) << "face has duplicated vertices: " << vertices
-                                          << " (this is the first record)";
-                    ++num_faces_duplicated_vertices_;
-                    return false;
-                }
+        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
+            if (vertices[s] == vertices[t]) {
+                LOG_FIRST_N(ERROR, 1) << "face has duplicated vertices: " << vertices
+                                      << " (this is the first record)";
+                ++num_faces_duplicated_vertices_;
+                return false;
             }
         }
 

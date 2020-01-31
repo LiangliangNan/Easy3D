@@ -22,35 +22,44 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "picker_viewer.h"
+#include "point_selection.h"
+#include <easy3d/viewer/model.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
 
-// This example shows how to select a model from a set of models by clicking the mouse.
+// This example shows how to select a subset of a point cloud by sketching a rectangle or a lasso
+// using the mouse.
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file_name_0 = setting::resource_directory() + "/data/graph.ply";
-    const std::string file_name_1 = setting::resource_directory() + "/data/torusknot.obj";
+    const std::string file = setting::resource_directory() + "/data/polyhedron.bin";
+
     try {
-        PickerViewer viewer("Tutorial_307_ModelPicker");
-        if (!viewer.add_model(file_name_0) || !viewer.add_model(file_name_1)) {
+        // Create the viewer.
+        PointSelection viewer("Tutorial_309_PointSelection");
+
+        Model* model = viewer.add_model(file, true);
+        if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
         // Run the viewer
         viewer.run();
+
+        return EXIT_SUCCESS;
+
     } catch (const std::runtime_error &e) {
         LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
+
 }
 

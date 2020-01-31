@@ -22,35 +22,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "picker_viewer.h"
-#include <easy3d/viewer/setting.h>
-#include <easy3d/util/logging.h>
+#ifndef EASY3D_TUTORIAL_POINT_SELECTION_H
+#define EASY3D_TUTORIAL_POINT_SELECTION_H
+
+#include <easy3d/viewer/viewer.h>
 
 
-using namespace easy3d;
+class PointSelection : public easy3d::Viewer
+{
+public:
+    PointSelection(const std::string& title = "");
 
-// This example shows how to select a model from a set of models by clicking the mouse.
+protected:
+    /// Mouse button press event handler
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    /// Mouse button release event handler
+    bool mouse_release_event(int x, int y, int button, int modifiers) override;
+    /// Mouse drag (i.e., a mouse button was pressed) event handler
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
-int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize(argv[0]);
+    // This function will be called after the main draw procedure.
+    void post_draw() override;
 
-    const std::string file_name_0 = setting::resource_directory() + "/data/graph.ply";
-    const std::string file_name_1 = setting::resource_directory() + "/data/torusknot.obj";
-    try {
-        PickerViewer viewer("Tutorial_307_ModelPicker");
-        if (!viewer.add_model(file_name_0) || !viewer.add_model(file_name_1)) {
-            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
-            return EXIT_FAILURE;
-        }
+    std::string usage() const override;
 
-        // Run the viewer
-        viewer.run();
-    } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
-        return EXIT_FAILURE;
-    }
+private:
+    std::vector<easy3d::vec2> polygon_;
+};
 
-    return EXIT_SUCCESS;
-}
 
+#endif // EASY3D_TUTORIAL_POINT_SELECTION_H

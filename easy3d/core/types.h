@@ -26,6 +26,7 @@
 #define EASY3D_TYPES_H
 
 #include <cstdint>
+#include <vector>
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/mat.h>
@@ -96,9 +97,9 @@ namespace easy3d {
 
         /* Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
         inline vec3 orthogonal(const vec3 &v) {
-            float absx = std::fabs(v.x);
-            float absy = std::fabs(v.y);
-            float absz = std::fabs(v.z);
+            const float absx = std::fabs(v.x);
+            const float absy = std::fabs(v.y);
+            const float absz = std::fabs(v.z);
             // Find smallest component. Keep equal case for null values.
             if ((absy >= absx) && (absz >= absx))
                 return vec3(0.0, -v.z, v.y);
@@ -147,6 +148,28 @@ namespace easy3d {
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2, const Vec &p3, const Vec &p4) {
             return (p1 + p2 + p3 + p4) * 0.25f;
+        }
+
+        // NOTE: works for both convex and non-convex polygons.
+        inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon) {
+            bool inside = false;
+            std::size_t n = polygon.size();
+            for (std::size_t i = 0, j = n - 1; i < n; j = i, ++i) {
+                const vec2 &u0 = polygon[i];
+                const vec2 &u1 = polygon[j];  // current edge
+
+                if (((u0.y <= p.y) && (p.y < u1.y)) ||  // U1 is above the ray, U0 is on or below the ray
+                    ((u1.y <= p.y) && (p.y < u0.y)))    // U0 is above the ray, U1 is on or below the ray
+                {
+                    // find x-intersection of current edge with the ray.
+                    // Only consider edge crossings on the ray to the right of P.
+                    double x = u0.x + (p.y - u0.y) * (u1.x - u0.x) / (u1.y - u0.y);
+                    if (x > p.x)
+                        inside = !inside;
+                }
+            }
+
+            return inside;
         }
 
         inline float cos_angle(const vec3 &a, const vec3 &b) {

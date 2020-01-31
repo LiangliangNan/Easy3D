@@ -28,6 +28,7 @@ add_subdirectory(Tutorial_305_CameraInterpolation)
 add_subdirectory(Tutorial_306_ImageViewer)
 add_subdirectory(Tutorial_307_ModelPicker)
 add_subdirectory(Tutorial_308_FacePicker)
+add_subdirectory(Tutorial_309_PointSelection)
 
 # basic rendering
 add_subdirectory(Tutorial_401_Drawable)

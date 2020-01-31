@@ -162,6 +162,10 @@ set(${PROJECT_NAME}_SHADERS
         #selection
         ../../resources/shaders/selection/selection_single_primitive.vert
         ../../resources/shaders/selection/selection_single_primitive.frag
+        ../../resources/shaders/selection/selection_pointcloud_rect.vert
+        ../../resources/shaders/selection/selection_pointcloud_rect.frag
+        ../../resources/shaders/selection/selection_pointcloud_lasso.vert
+        ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
 add_library(${PROJECT_NAME} STATIC

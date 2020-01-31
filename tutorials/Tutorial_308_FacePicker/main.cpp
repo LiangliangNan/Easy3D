@@ -29,7 +29,7 @@
 
 using namespace easy3d;
 
-// This example shows how to render an images.
+// This example shows how to select a face of a surface mesh by clicking the mouse.
 
 int main(int argc, char **argv) {
     // Initialize logging.

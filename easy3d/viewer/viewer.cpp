@@ -46,13 +46,13 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/average_color_blending.h>
-#include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>

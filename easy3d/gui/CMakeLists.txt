@@ -7,12 +7,14 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
         picker.h
         picker_model.h
+        picker_point_cloud.h
         picker_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
         picker.cpp
         picker_model.cpp
+        picker_point_cloud.cpp
         picker_surface_mesh.cpp
         )
 
