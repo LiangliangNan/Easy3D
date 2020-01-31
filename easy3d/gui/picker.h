@@ -55,7 +55,6 @@ namespace easy3d {
             return Line3::from_two_points(p_near, p_far);
         }
 
-
         /**
          * The picking direction, pointing inside the screen.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
@@ -67,7 +66,6 @@ namespace easy3d {
         vec3 picking_dir(int x, int y) const {
             return picking_line(x, y).direction();
         }
-
 
         /**
          * Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
@@ -84,7 +82,6 @@ namespace easy3d {
             return camera()->projectedCoordinatesOf(p);
         }
 
-
         /**
          * Compute the world coordinates of a point defined in the screen coordinate system.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
@@ -98,6 +95,19 @@ namespace easy3d {
         vec3 unproject(float x, float y, float depth) const {
             return camera()->unprojectedCoordinatesOf(vec3(x, y, depth));
         }
+
+        /**
+         * Convert a point expressed in the screen coordinate system (with an origin in the upper left corner) into the
+         * OpenGL coordinate system (with an origin in the lower left corner). The high DPI scaling is also taken into
+         * consideration, so the result always corresponds to its image pixel.
+         * @param x The x-coordinate, relative to the left edge of the content area.
+         * @param y The y-coordinate, relative to the top edge of the content area.
+         * @param gl_x Returns the x component of the point in the OpenGL coordinate system.
+         * @param gl_y Returns the y component of the point in the OpenGL coordinate system.
+         * @param width The width of the OpenGL viewport (may not be identical to the width of the screen in pixels).
+         * @param height The width of the OpenGL viewport (may not be identical to the height of the screen in pixels).
+         */
+        void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
         Camera *camera_;

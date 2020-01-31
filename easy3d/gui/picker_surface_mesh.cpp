@@ -31,7 +31,6 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/stop_watch.h>
 
 
 namespace easy3d {
@@ -187,9 +186,6 @@ namespace easy3d {
         const vec3 &p_far = unproject(x, y, 1);
         const OrientedLine3 oline(p_near, p_far);
 
-        StopWatch t;
-        t.start();
-
         std::vector<char> status(num, 0);
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -221,7 +217,6 @@ namespace easy3d {
             }
         }
 
-        //std::cout  << "CPU selection. time: " << t.elapsed_seconds(3) << std::endl;
         return picked_face_;
     }
 
@@ -232,9 +227,6 @@ namespace easy3d {
             drawable = model->add_triangles_drawable("faces");
             renderer::update_data(model, drawable);
         }
-
-        StopWatch t;
-        t.start();
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -248,9 +240,6 @@ namespace easy3d {
             fbo_->add_depth_buffer();
         }
         fbo_->ensure_size(width, height);
-
-        // Get combined model-view and projection matrix
-        const mat4 &MVP = camera()->modelViewProjectionMatrix();
 
         //--------------------------------------------------------------------------
         // render the 'scene' to the new FBO.
@@ -270,7 +259,7 @@ namespace easy3d {
         easy3d_debug_frame_buffer_error;
 
         program_->bind();
-        program_->set_uniform("MVP", MVP);
+        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix());
         drawable->gl_draw(false);
         program_->release();
 
@@ -279,11 +268,8 @@ namespace easy3d {
         glFinish();
         // -----------------------------------------
 
-        float dpi_scaling = viewport[2] / static_cast<float>(camera()->screenWidth());
-        int gl_x = x;
-        int gl_y = camera()->screenHeight() - 1 - y;
-        gl_x *= dpi_scaling;
-        gl_y *= dpi_scaling;
+        int gl_x, gl_y;
+        screen_to_opengl(x, y, gl_x, gl_y, width, height);
 
         unsigned char c[4];
         fbo_->read_color(c, gl_x, gl_y);
@@ -321,7 +307,6 @@ namespace easy3d {
                 const auto &range = triangle_range[SurfaceMesh::Face(face)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = face;
-                    //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
                     return picked_face_;
                 }
             }
@@ -331,14 +316,12 @@ namespace easy3d {
                 const auto &range = triangle_range[SurfaceMesh::Face(face_id)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = SurfaceMesh::Face(face_id);
-                    //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
                     return picked_face_;
                 }
             }
         }
 #endif
 
-        //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
         return SurfaceMesh::Face();
     }
 

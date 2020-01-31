@@ -44,7 +44,18 @@ namespace easy3d {
             delete fbo_;
             fbo_ = 0;
         }
+    }
 
+
+    void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
+        float dpi_scaling = 1.0f;
+        if (width > 0)
+            dpi_scaling = width / static_cast<float>(camera()->screenWidth());
+        else if (height > 0)
+            dpi_scaling = height / static_cast<float>(camera()->screenHeight());
+
+        gl_x = static_cast<int>(dpi_scaling * x);
+        gl_y = static_cast<int>(dpi_scaling * (camera()->screenHeight() - 1 - y));
     }
 
 }

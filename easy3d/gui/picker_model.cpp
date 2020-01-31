@@ -90,11 +90,8 @@ namespace easy3d {
         glFinish();
         // -----------------------------------------
 
-        float dpi_scaling = viewport[2] / static_cast<float>(camera()->screenWidth());
-        int gl_x = x;
-        int gl_y = camera()->screenHeight() - 1 - y;
-        gl_x *= dpi_scaling;
-        gl_y *= dpi_scaling;
+        int gl_x, gl_y;
+        screen_to_opengl(x, y, gl_x, gl_y, width, height);
 
         unsigned char c[4];
         fbo_->read_color(c, gl_x, gl_y);
