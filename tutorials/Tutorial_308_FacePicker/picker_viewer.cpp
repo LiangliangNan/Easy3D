@@ -26,6 +26,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
@@ -44,7 +45,7 @@ PickerViewer::~PickerViewer() {
 
 std::string PickerViewer::usage() const {
     return ("------------ Picker Viewer usage ---------- \n"
-            "Press the left button to pick a face\n"
+            "Press the mouse to pick a face\n"
             "------------------------------------------ \n");
 }
 
@@ -52,8 +53,27 @@ std::string PickerViewer::usage() const {
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
-        auto face = picker_->pick_face(model, x, y);
-        model->triangles_drawable("faces")->set_highlight_id(face.idx());
+        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
+        int gl_x = x;
+        int gl_y = camera()->screenHeight() - 1 - y;
+
+        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
+#if defined(__APPLE__)
+        gl_x = static_cast<int>(gl_x * dpi_scaling());
+        gl_y = static_cast<int>(gl_y * dpi_scaling());
+#endif
+
+        auto face = picker_->pick_face(model, gl_x, gl_y);
+        auto drawable = model->triangles_drawable("faces");
+        auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
+        if (triangle_range && face.is_valid()) {
+            const auto& range = triangle_range[face];
+            drawable->set_highlight_range(range);
+        }
+        else
+            drawable->set_highlight_range(std::make_pair(-1, -1));
+
+        LOG_IF(ERROR, !triangle_range) << "face property 'f:triangle_range' not defined";
     }
 
     return Viewer::mouse_press_event(x, y, button, modifiers);

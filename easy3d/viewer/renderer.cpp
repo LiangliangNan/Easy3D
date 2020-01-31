@@ -110,6 +110,15 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
+            /**
+             * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+             * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+             * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+             * for the rendering purpose be shared for selection. Yeah, performance gain!
+             */
+            auto triangle_range = model->face_property< std::pair<int, int> >("f:triangle_range");
+            int count_triangles = 0;
+
             // [Liangliang] How to achieve efficient switch between flat and smooth shading?
             //      Always transfer vertex normals to GPU and the normals for flat shading are
             //      computed on the fly in the fragment shader:
@@ -150,6 +159,8 @@ namespace easy3d {
                         d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);
                         d_colors.insert(d_colors.end(), 3, face_colors[face]);
                     }
+                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                    count_triangles += num;
                 }
 
                 drawable->update_vertex_buffer(d_points);
@@ -178,11 +189,12 @@ namespace easy3d {
                 drawable->update_normal_buffer(normals.vector());
 
                 std::vector<unsigned int> indices;
-                for (auto f : model->faces()) {
+                for (auto face : model->faces()) {
                     // we assume convex polygonal faces and we render in triangles
-                    SurfaceMesh::Halfedge start = model->halfedge(f);
+                    SurfaceMesh::Halfedge start = model->halfedge(face);
                     SurfaceMesh::Halfedge cur = model->next_halfedge(model->next_halfedge(start));
                     SurfaceMesh::Vertex va = model->to_vertex(start);
+                    int num = 0;
                     while (cur != start) {
                         SurfaceMesh::Vertex vb = model->from_vertex(cur);
                         SurfaceMesh::Vertex vc = model->to_vertex(cur);
@@ -190,7 +202,11 @@ namespace easy3d {
                         indices.push_back(static_cast<unsigned int>(vb.idx()));
                         indices.push_back(static_cast<unsigned int>(vc.idx()));
                         cur = model->next_halfedge(cur);
+                        ++num;
                     }
+
+                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                    count_triangles += num;
                 }
                 drawable->update_index_buffer(indices);
             }

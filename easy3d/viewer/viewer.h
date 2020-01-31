@@ -109,7 +109,7 @@ namespace easy3d {
 
         /**
          * @brief Set/Change the viewer size.
-         * @param w/h The requested width/heigh (in pixels) of the viewer.
+         * @param w/h The requested width/height (in pixels) of the viewer.
          */
         void resize(int w, int h);
 

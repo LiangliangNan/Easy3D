@@ -50,7 +50,7 @@ namespace easy3d {
     }
 
 
-    Model *ModelPicker::pick(const std::vector<Model *> &models, int x, int y) {
+    Model *ModelPicker::pick(const std::vector<Model *> &models, int gl_x, int gl_y) {
         if (models.empty())
             return nullptr;
 
@@ -90,18 +90,8 @@ namespace easy3d {
         glFinish();
         // -----------------------------------------
 
-        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
-        int glx = x;
-        int gly = camera()->screenHeight() - 1 - y;
-
-        // NOTE: when dealing with OpenGL, we alway work in the highdpi screen space
-#if defined(__APPLE__)
-        glx = static_cast<int>(glx * 2);
-        gly = static_cast<int>(gly * 2);
-#endif
-
         unsigned char c[4];
-        fbo_->read_color(c, glx, gly);
+        fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
         fbo_->release();

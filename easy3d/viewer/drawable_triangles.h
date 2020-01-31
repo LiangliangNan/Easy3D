@@ -61,26 +61,10 @@ namespace easy3d {
          */
         void set_opacity(float opacity) { opacity_ = opacity; }
 
-		// The selection of a polygonal face is internally implemented by selecting triangle
-		// primitives using shaders. So I need a way to map back to the original polygons.
-		// \param indices: indices[i] are the triangle indices of the i'th face.
-		void set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices);
-		const std::vector< std::vector<unsigned int> >& triangle_indices() { return indices_; }
-
-		// a face (i.e., polygon) is internally rendered as multiple triangles
-		void get_highlighted_trangles_range(int& tri_min, int& tri_max) const;
-
-		// set/query if a facet is selected.
-		// NOTE: a face is selected if all its vertices are selected.
-		inline void set_selected(std::size_t face_idx, bool b);
-		inline bool is_selected(std::size_t face_idx) const;
-        int num_selected() const;
-
         // Rendering.
         virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
 
     protected:
-
         // without texture
         void _draw_triangles(const Camera* camera, bool with_storage_buffer) const;
 
@@ -88,8 +72,6 @@ namespace easy3d {
         void _draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const;
 
 	private:
-		std::vector< std::vector<unsigned int> > indices_;
-
         bool    smooth_shading_;
         float   opacity_;
 	};

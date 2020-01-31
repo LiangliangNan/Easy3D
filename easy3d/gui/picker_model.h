@@ -45,13 +45,18 @@ namespace easy3d {
         ~ModelPicker();
 
         /**
-         * Pick from a set of models.
-         * @param models The models in the scene.
-         * @param x The cursor x-coordinate, relative to the left edge of the viewer.
-         * @param y	The cursor y-coordinate, relative to the top edge of the viewer.
+         * Pick a model from a set of models given the cursor position.
+         * @param gl_x/gl_y The cursor position, relative to the bottom-left corner of the OpenGL viewport. Client code
+         *                  should convert their viewer-dependent cursor position in the screen coordinate system to
+         *                  the one following the OpenGL convention, i.e.,
+         *                          int gl_x = x;
+         *                          int gl_y = screen_height() - 1 - y;
+         *                  Besides, client code is also responsible for handling high-DPI scaling, i.e.,
+         *                          gl_x *= static_cast<int>(glx * 2);
+         *                          gl_y *= static_cast<int>(gly * 2);
          * @return The picked model.
          */
-        Model *pick(const std::vector<Model *> &models, int x, int y);
+        Model *pick(const std::vector<Model *> &models, int gl_x, int gl_y);
 
     private:
 

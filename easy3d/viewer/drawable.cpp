@@ -37,36 +37,30 @@
 namespace easy3d {
 
     Material::Material()
-        : ambient(setting::material_ambient)
-        , specular(setting::material_specular)
-        , shininess(setting::material_shininess)
-    {
+            : ambient(setting::material_ambient), specular(setting::material_specular),
+              shininess(setting::material_shininess) {
 
     }
 
-    Material::Material(const vec3& ambi, const vec3& spec, float shin)
-        : ambient(ambi)
-        , specular(spec)
-        , shininess(shin)
-    {
+    Material::Material(const vec3 &ambi, const vec3 &spec, float shin)
+            : ambient(ambi), specular(spec), shininess(shin) {
 
     }
 
-    Drawable::Drawable(const std::string& name, const Model* model)
-        : name_(name), model_(model), visible_(true), per_vertex_color_(false), default_color_(0.8f, 0.8f, 0.8f, 1.0f),
-          lighting_(true), highlight_id_(-1), texture_(nullptr), num_vertices_(0), num_indices_(0), vertex_buffer_(0),
-          color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), index_buffer_(0), storage_buffer_(0)
-		, current_storage_buffer_size_(0)
-        , selection_buffer_(0)
-        , current_selection_buffer_size_(0)
-    {
-		vao_ = new VertexArrayObject;
-	}
+    Drawable::Drawable(const std::string &name, const Model *model)
+            : name_(name), model_(model), visible_(true), per_vertex_color_(false),
+              default_color_(0.8f, 0.8f, 0.8f, 1.0f),
+              lighting_(true), highlight_range_(-1, -1), texture_(nullptr), num_vertices_(0),
+              num_indices_(0), vertex_buffer_(0),
+              color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), index_buffer_(0), storage_buffer_(0),
+              current_storage_buffer_size_(0), selection_buffer_(0), current_selection_buffer_size_(0) {
+        vao_ = new VertexArrayObject;
+    }
 
 
-	Drawable::~Drawable() {
+    Drawable::~Drawable() {
         clear();
-	}
+    }
 
     void Drawable::clear() {
         if (vao_) {
@@ -89,95 +83,97 @@ namespace easy3d {
     }
 
 
-	void Drawable::update_storage_buffer(const void* data, std::size_t datasize, unsigned int index /* = 1*/) {
-		assert(vao_);
+    void Drawable::update_storage_buffer(const void *data, std::size_t datasize, unsigned int index /* = 1*/) {
+        assert(vao_);
 
-		if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
+        if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
             bool status = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
             if (!status)
                 LOG(ERROR) << "failed creating storage buffer";
-		}
-		else {
+        } else {
             bool status = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
             if (!status)
                 LOG(ERROR) << "failed updating storage buffer";
-		}
-	}
+        }
+    }
 
 
-	void Drawable::update_selection_buffer(unsigned int index/* = 1*/) {
-		assert(vao_);
-
-        //if (selection_buffer_ == 0 || selections_.size() != current_selection_buffer_size_) {
-     //       bool status = vao_->create_storage_buffer(selection_buffer_, index, selections_.data(), selections_.size() * sizeof(int));
-        //	if (!status)
-        //		LOG(ERROR) << "failed creating selection buffer";
-		//	else {
-		//		current_selection_buffer_size_ = selections_.size();
-		//		if (t.elapsed_seconds() > 0.1) {
-        //			std::cout << "selection buffer updated. time: " << t.time_string();
-		//		}
-		//	}
-		//}
-		//else {
-     //       bool status = vao_->update_storage_buffer(selection_buffer_, 0, selections_.size() * sizeof(int), selections_.data());
-        //	if (!status)
-        //		LOG(ERROR) << "failed updating selection buffer";
-		//	else {
-		//		if (t.elapsed_seconds() > 0.1) {
-        //			std::cout << "selection buffer updated. time: " << t.time_string();
-		//		}
-		//	}
-		//}
-	}
-
-
-	void Drawable::update_vertex_buffer(const std::vector<vec3>& vertices) {
+    void Drawable::update_selection_buffer(unsigned int index/* = 1*/) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(), vertices.size() * sizeof(vec3), 3);
+        //if (selection_buffer_ == 0 || selections_.size() != current_selection_buffer_size_) {
+        //       bool status = vao_->create_storage_buffer(selection_buffer_, index, selections_.data(), selections_.size() * sizeof(int));
+        //	if (!status)
+        //		LOG(ERROR) << "failed creating selection buffer";
+        //	else {
+        //		current_selection_buffer_size_ = selections_.size();
+        //		if (t.elapsed_seconds() > 0.1) {
+        //			std::cout << "selection buffer updated. time: " << t.time_string();
+        //		}
+        //	}
+        //}
+        //else {
+        //       bool status = vao_->update_storage_buffer(selection_buffer_, 0, selections_.size() * sizeof(int), selections_.data());
+        //	if (!status)
+        //		LOG(ERROR) << "failed updating selection buffer";
+        //	else {
+        //		if (t.elapsed_seconds() > 0.1) {
+        //			std::cout << "selection buffer updated. time: " << t.time_string();
+        //		}
+        //	}
+        //}
+    }
+
+
+    void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices) {
+        assert(vao_);
+
+        bool status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
+                                                vertices.size() * sizeof(vec3), 3);
         if (!status) {
             num_vertices_ = 0;
             LOG(ERROR) << "failed creating vertex buffer";
-        }
-        else {
+        } else {
             num_vertices_ = vertices.size();
         }
 
         // update bounding box
         bbox_.clear();
-        for (const auto& p : vertices)
+        for (const auto &p : vertices)
             bbox_.add_point(p);
-	}
+    }
 
 
-	void Drawable::update_color_buffer(const std::vector<vec3>& colors) {
+    void Drawable::update_color_buffer(const std::vector<vec3> &colors) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(), colors.size() * sizeof(vec3), 3);
+        bool status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
+                                                colors.size() * sizeof(vec3), 3);
         if (!status)
             LOG(ERROR) << "failed updating color buffer";
-	}
+    }
 
 
-	void Drawable::update_normal_buffer(const std::vector<vec3>& normals) {
+    void Drawable::update_normal_buffer(const std::vector<vec3> &normals) {
         assert(vao_);
-        bool status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(), normals.size() * sizeof(vec3), 3);
+        bool status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
+                                                normals.size() * sizeof(vec3), 3);
         if (!status)
             LOG(ERROR) << "failed updating normal buffer";
-	}
+    }
 
 
-	void Drawable::update_texcoord_buffer(const std::vector<vec2>& texcoords) {
+    void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(), texcoords.size() * sizeof(vec2), 2);
+        bool status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
+                                                texcoords.size() * sizeof(vec2), 2);
         if (!status)
             LOG(ERROR) << "failed updating texcoord buffer";
-	}
+    }
 
 
-	void Drawable::update_index_buffer(const std::vector<unsigned int>& indices) {
+    void Drawable::update_index_buffer(const std::vector<unsigned int> &indices) {
         assert(vao_);
 
         bool status = vao_->create_element_buffer(index_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
@@ -185,49 +181,54 @@ namespace easy3d {
             num_indices_ = 0;
         else
             num_indices_ = indices.size();
-	}
+    }
 
 
-	void Drawable::fetch_selection_buffer() {
-		//    vao_->get_buffer_data(GL_SHADER_STORAGE_BUFFER, selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
+    void Drawable::fetch_selection_buffer() {
+        //    vao_->get_buffer_data(GL_SHADER_STORAGE_BUFFER, selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
 
-			//starting from OpenGL 4.5, you can use the simpler version
-			//vao_->get_named_buffer_data(selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
-	}
+        //starting from OpenGL 4.5, you can use the simpler version
+        //vao_->get_named_buffer_data(selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
+    }
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
-		vao_->bind();
+        vao_->bind();
 
-		if (with_storage_buffer) {
+        if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);		easy3d_debug_gl_error;
+            //glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);
+            easy3d_debug_gl_error;
 
             GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
             if (index_buffer_ != 0)
                 barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
-            glMemoryBarrier(barriers);		easy3d_debug_gl_error;
-		}
+            glMemoryBarrier(barriers);
+            easy3d_debug_gl_error;
+        }
 
-		// Primitives like lines and triangles can be drawn without the index buffer provided that 
-		// all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v2). This requires
-		// the shared vertices be duplicated in the vertex buffer.
-		if (index_buffer_) {
-			// index buffer must be bound if using glDrawElements()
-            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);	easy3d_debug_gl_error;
-		}
-		else
-            glDrawArrays(type(), 0, GLsizei(num_vertices_));	easy3d_debug_gl_error;
+        // Primitives like lines and triangles can be drawn without the index buffer provided that
+        // all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v2). This requires
+        // the shared vertices be duplicated in the vertex buffer.
+        if (index_buffer_) {
+            // index buffer must be bound if using glDrawElements()
+            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);
+            easy3d_debug_gl_error;
+        } else
+            glDrawArrays(type(), 0, GLsizei(num_vertices_));
+        easy3d_debug_gl_error;
 
-		if (with_storage_buffer) {
-			// Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-			//glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);		easy3d_debug_gl_error;
-		}
+        if (with_storage_buffer) {
+            // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
+            //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
+            easy3d_debug_gl_error;
+        }
 
-        vao_->release();	easy3d_debug_gl_error;
-	}
+        vao_->release();
+        easy3d_debug_gl_error;
+    }
 
 }

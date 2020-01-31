@@ -39,60 +39,6 @@ namespace easy3d {
     }
 
 
-	void TrianglesDrawable::set_triangle_indices(const std::vector< std::vector<unsigned int> >& indices) {
-		indices_ = indices;
-		std::size_t count = 0;
-		for (const auto& ids : indices) {
-			count += ids.size();
-		}
-		//Selectable::set_num_primitives(count);
-	}
-
-
-	void TrianglesDrawable::set_selected(std::size_t face_idx, bool b) {
-        const std::vector<unsigned int>& indices = indices_[face_idx];
-        for (auto id : indices) {
-//            Selectable::set_selected(id, b);
-        }
-	}
-
-
-	bool TrianglesDrawable::is_selected(std::size_t face_idx) const {
-        const std::vector<unsigned int>& indices = indices_[face_idx];
-        for (auto id : indices) {
-//            if (Selectable::is_selected(id))
-//                return false;
-        }
-		return true;
-	}
-
-
-	int TrianglesDrawable::num_selected() const {
-		int count = 0;
-		for (std::size_t i = 0; i < indices_.size(); ++i) {
-			if (is_selected(i))
-				++count;
-		}
-		return count;
-	}
-
-
-	void TrianglesDrawable::get_highlighted_trangles_range(int& tri_min, int& tri_max) const {
-        tri_min = highlight_id_;
-        tri_max = highlight_id_;
-        LOG(WARNING) << "only triangle meshes are supported";
-
-//		if (highlight_id_ >= 0 && highlight_id_ < indices_.size()) {
-//			tri_min = indices_[highlight_id_].front();
-//			tri_max = indices_[highlight_id_].back();
-//		}
-//		else {
-//			tri_min = -1;
-//			tri_max = -1;
-//		}
-    }
-
-
     void TrianglesDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
         if (texture_)
             _draw_triangles_with_texture(camera, with_storage_buffer);
@@ -142,10 +88,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-//        int min_id, max_id;
-//        get_highlighted_trangles_range(min_id, max_id);
-        program->set_uniform("hightlight_id_min", highlight_id_);
-        program->set_uniform("hightlight_id_max", highlight_id_);
+        program->set_uniform("hightlight_id_min", highlight_range_.first);
+        program->set_uniform("hightlight_id_max", highlight_range_.second);
 
         gl_draw(with_storage_buffer);
         program->release();

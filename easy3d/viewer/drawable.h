@@ -117,8 +117,16 @@ namespace easy3d {
 
         // -------------------------- rendering -----------------------------
 
-        void set_highlight_id(int id) { highlight_id_ = id; }
-        int highlight_id() const { return highlight_id_; }
+        /**
+         * Primitives with indices within the range [highlight_id_low_, highlight_id_high_] will be highlighted.
+         * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
+         *              un-highlight any previously highlighted primitives.
+         * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
+         *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
+         *            internally implemented by selecting triangle primitives using program shaders. This allows data
+         *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
+         */
+        void set_highlight_range(const std::pair<int, int>& range) { highlight_range_ = range; }
 
         bool lighting() const { return lighting_; }
         void set_lighting(bool l) { lighting_ = l; }
@@ -165,7 +173,10 @@ namespace easy3d {
         vec4 default_color_;
 
         bool lighting_;
-        int highlight_id_;
+
+        // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
+        std::pair<int, int> highlight_range_;
+
         Material    material_;
         Texture*    texture_;
 
