@@ -64,7 +64,9 @@ namespace easy3d {
 
         // screen to 3D space
         vec3 unproject(const vec2 &p, float depth) const {
-            return camera()->unprojectedCoordinatesOf(vec3(p.x, p.y, depth));
+            float x = p.x / 2.0f;
+            float y = camera()->screenHeight() - 1.0f - p.y / 2.0f;
+            return camera()->unprojectedCoordinatesOf(vec3(x, y, depth));
         }
 
 

@@ -31,6 +31,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stop_watch.h>
 
 
 namespace easy3d {
@@ -61,16 +62,16 @@ namespace easy3d {
         }
 
         if (use_gpu_)
-            return pick_facet_gpu(model, gl_x, gl_y);
+            return pick_face_gpu(model, gl_x, gl_y);
         else // CPU with OpenMP (if supported)
-            return pick_facet_cpu(model, gl_x, gl_y);
+            return pick_face_cpu(model, gl_x, gl_y);
     }
 
 
     SurfaceMesh::Vertex
     SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y) {
         if (!picked_face.is_valid() || picked_face != picked_face_) {
-            LOG(ERROR) << "user provided invalid face";
+            LOG(ERROR) << "user provided face is not valid";
             return SurfaceMesh::Vertex();
         }
 
@@ -110,7 +111,7 @@ namespace easy3d {
     SurfaceMesh::Halfedge
     SurfaceMeshPicker::pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int gl_x, int gl_y) {
         if (!picked_face.is_valid() || picked_face != picked_face_) {
-            LOG(ERROR) << "user provided invalid face";
+            LOG(ERROR) << "user provided face is not valid";
             return SurfaceMesh::Halfedge();
         }
 
@@ -180,14 +181,14 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_facet_cpu(SurfaceMesh *model, int gl_x, int gl_y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int gl_x, int gl_y) {
         int num = model->faces_size();
         const vec3 &p_near = unproject(vec2(gl_x, gl_y), 0);
         const vec3 &p_far = unproject(vec2(gl_x, gl_y), 1);
         const OrientedLine3 oline(p_near, p_far);
 
-        //RealTimer t;
-        //t.start();
+        StopWatch t;
+        t.start();
 
         std::vector<char> status(num, 0);
 #pragma omp parallel for
@@ -220,18 +221,20 @@ namespace easy3d {
             }
         }
 
-        //double elapsed = t.time();
-        //Logger::out(title()) << "CPU selection. time: " << elapsed << " seconds." << std::endl;
+        //std::cout  << "CPU selection. time: " << t.elapsed_seconds(3) << std::endl;
         return picked_face_;
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_facet_gpu(SurfaceMesh *model, int gl_x, int gl_y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int gl_x, int gl_y) {
         auto drawable = model->triangles_drawable("faces");
         if (!drawable) {
             drawable = model->add_triangles_drawable("faces");
             renderer::update_data(model, drawable);
         }
+
+        StopWatch t;
+        t.start();
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -312,6 +315,7 @@ namespace easy3d {
                 const auto &range = triangle_range[SurfaceMesh::Face(face)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = face;
+                    //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
                     return picked_face_;
                 }
             }
@@ -321,12 +325,14 @@ namespace easy3d {
                 const auto &range = triangle_range[SurfaceMesh::Face(face_id)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = SurfaceMesh::Face(face_id);
+                    //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
                     return picked_face_;
                 }
             }
         }
 #endif
 
+        //std::cout  << "GPU selection. time: " << t.elapsed_seconds(3) << std::endl;
         return SurfaceMesh::Face();
     }
 

@@ -143,10 +143,10 @@ namespace easy3d {
 
     private:
         // selection implemented in GPU (using shader program)
-        SurfaceMesh::Face pick_facet_gpu(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int gl_x, int gl_y);
 
         // selection implemented in CPU (with OpenMP if supported)
-        SurfaceMesh::Face pick_facet_cpu(SurfaceMesh *model, int gl_x, int gl_y);
+        SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int gl_x, int gl_y);
 
         Plane3 face_plane(SurfaceMesh *model, SurfaceMesh::Face face) const;
 

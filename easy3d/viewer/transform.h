@@ -96,7 +96,7 @@ namespace easy3d {
         //				viewport[1] = 0;
         //				viewport[2] = screenWidth();
         //				viewport[3] = screenHeight();
-        // OpenGL uses the lower corner for its origin while other softwares (e.g., Qt) may use upper corner
+        // OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner
         // Return the computed window coordinates.
         vec3 project(const vec3& obj, const mat4& model, const mat4& proj, const int viewport[4], bool lowerleft = true);
         vec3 project(const vec3& obj, const mat4& mvp, const int viewport[4], bool lowerleft = true); // mvp = proj * model;
@@ -110,7 +110,7 @@ namespace easy3d {
         //				viewport[1] = 0;
         //				viewport[2] = screenWidth();
         //				viewport[3] = screenHeight();
-        // OpenGL uses the lower corner for its origin while other softwares (e.g., Qt) may use upper corner
+        // OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner
         // Returns the computed object coordinates.
         vec3 unproject(const vec3& win, const mat4& model, const mat4& proj, const int viewport[4], bool lowerleft = true);
         vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft = true); // mvp = proj * model;
