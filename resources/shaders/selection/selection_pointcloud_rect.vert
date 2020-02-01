@@ -3,7 +3,7 @@
 
 in  vec3		vtx_position;	// vertex position
 
-uniform mat4	MVP_MANIP;		// model-view-projection matrix
+uniform mat4	MVP;		// model-view-projection matrix
 uniform ivec4	viewport;		// view port
 uniform vec4	rect;			// the rectangle region
 uniform bool	deselect;		// select or deselect
@@ -15,7 +15,7 @@ layout(std430, binding = 1) buffer selection_t {
 
 void main()
 {
-	vec4 p = MVP_MANIP * vec4(vtx_position, 1.0);
+	vec4 p = MVP * vec4(vtx_position, 1.0);
 	float x = p.x / p.w * 0.5 + 0.5;
 	float y = p.y / p.w * 0.5 + 0.5;
 	x = x * viewport[2] + viewport[0];

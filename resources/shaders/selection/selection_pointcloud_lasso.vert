@@ -3,7 +3,7 @@
 
 in  vec3		vtx_position;	// vertex position
 
-uniform mat4	MVP_MANIP;
+uniform mat4	MVP;
 uniform ivec4	viewport;
 uniform bool	deselect;
 
@@ -44,7 +44,7 @@ bool point_in_polygon(vec2 p)
 
 void main()
 {
-	vec4 p = MVP_MANIP * vec4(vtx_position, 1.0);
+	vec4 p = MVP * vec4(vtx_position, 1.0);
 	float x = p.x / p.w * 0.5 + 0.5;
 	float y = p.y / p.w * 0.5 + 0.5;
 	x = x * viewport[2] + viewport[0];
