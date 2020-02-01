@@ -34,12 +34,10 @@ using namespace easy3d;
 
 PickerViewer::PickerViewer(const std::string &title)
         : Viewer(title) {
-    picker_ = new SurfaceMeshPicker(camera());
 }
 
 
 PickerViewer::~PickerViewer() {
-    delete picker_;
 }
 
 
@@ -53,7 +51,8 @@ std::string PickerViewer::usage() const {
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
-        auto face = picker_->pick_face(model, x, y);
+        SurfaceMeshPicker picker(camera());
+        auto face = picker.pick_face(model, x, y);
         auto drawable = model->triangles_drawable("faces");
         auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
         if (triangle_range && face.is_valid()) {

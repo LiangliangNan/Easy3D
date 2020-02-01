@@ -93,7 +93,7 @@ namespace easy3d {
 
         const vec3 &p = model->position(closest_vertex);
         const vec2 &q = project(p);
-        float dist = distance(q, vec2(x, y));
+        float dist = distance(q, vec2(static_cast<float>(x), static_cast<float>(y)));
         if (dist < hit_resolution_)
             return closest_vertex;
         else
@@ -141,7 +141,7 @@ namespace easy3d {
         const vec3 &s = model->position(model->from_vertex(closest_edge));
         const vec3 &t = model->position(model->to_vertex(closest_edge));
         const Segment2 seg(project(s), project(t));
-        float s_dist = seg.squared_ditance(vec2(x, y));
+        float s_dist = seg.squared_ditance(vec2(static_cast<float>(x), static_cast<float>(y)));
         float dist = std::sqrt(s_dist);
 
         if (dist < hit_resolution_)
@@ -286,6 +286,7 @@ namespace easy3d {
 
         // Convert the color back to an integer ID
         int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        picked_face_ = SurfaceMesh::Face();
 
 #if 0 // If the mesh is a triangle mesh.
         picked_face_ = SurfaceMesh::Face(id);
@@ -295,14 +296,13 @@ namespace easy3d {
             // We draw the polygonal faces as triangles and the picked id is the index of the picked triangle. So we
             // need to figure out from which face this triangle comes from.
             auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
-
             if (!triangle_range) {
                 LOG(ERROR) << "face property 'f:triangle_range' not defined. Selection aborted";
                 return SurfaceMesh::Face();
             }
 
             // Triangle meshes are more common... So treat is as a triangle mesh and check if the id is with the range.
-            if (id < model->faces_size()) {
+            if (static_cast<unsigned int>(id) < model->faces_size()) {
                 auto face = SurfaceMesh::Face(id);
                 const auto &range = triangle_range[SurfaceMesh::Face(face)];
                 if (id >= range.first && id <= range.second) {
@@ -312,7 +312,7 @@ namespace easy3d {
             }
 
             // Now treat the model as a general polygonal mesh.
-            for (int face_id = 0; face_id < model->faces_size(); ++face_id) {
+            for (unsigned int face_id = 0; face_id < model->faces_size(); ++face_id) {
                 const auto &range = triangle_range[SurfaceMesh::Face(face_id)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = SurfaceMesh::Face(face_id);

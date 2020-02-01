@@ -28,12 +28,8 @@
 #include <easy3d/viewer/viewer.h>
 
 
-// This class demonstrate how to pick a model using the mouse
+// This class demonstrate how to pick faces in a surface mesh using the mouse
 
-namespace easy3d {
-    class SurfaceMeshPicker;
-
-}
 
 class PickerViewer : public easy3d::Viewer {
 public:
@@ -45,9 +41,6 @@ protected:
     virtual bool mouse_press_event(int x, int y, int button, int modifiers) override;
 
     std::string usage() const override;
-
-private:
-    easy3d::SurfaceMeshPicker *picker_;
 };
 
 

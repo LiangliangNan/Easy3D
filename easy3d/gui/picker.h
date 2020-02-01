@@ -92,8 +92,8 @@ namespace easy3d {
          *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
          */
-        vec3 unproject(float x, float y, float depth) const {
-            return camera()->unprojectedCoordinatesOf(vec3(x, y, depth));
+        vec3 unproject(int x, int y, float depth) const {
+            return camera()->unprojectedCoordinatesOf(vec3(static_cast<float>(x), static_cast<float>(y), depth));
         }
 
         /**
