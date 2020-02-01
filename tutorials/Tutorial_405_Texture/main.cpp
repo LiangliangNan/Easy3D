@@ -66,8 +66,8 @@ int main(int argc, char** argv) {
         SurfaceMesh* mesh = new SurfaceMesh;
         auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
-        int w = tex->width();
-        int h = tex->height();
+        float w = static_cast<float>(tex->width());
+		float h = static_cast<float>(tex->height());
         // create a quad face having an aspect ratio the same as the texture image
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0)); texcoord[v0] = vec2(0, 0);
         SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(w, 0, 0)); texcoord[v1] = vec2(1, 0);
@@ -75,10 +75,10 @@ int main(int argc, char** argv) {
         SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, h, 0)); texcoord[v3] = vec2(0, 1);
         mesh->add_quad(v0, v1, v2, v3);
 
-        // add the model to the viewer and create the default drwable "faces"
+        // add the model to the viewer and create the default drawable "faces"
         viewer.add_model(mesh, true);
 
-        // set the texture of the default drwable "faces"
+        // set the texture of the default drawable "faces"
         auto drawable = mesh->triangles_drawable("faces");
         drawable->set_texture(tex);
 
