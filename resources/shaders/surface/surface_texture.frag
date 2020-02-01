@@ -46,6 +46,11 @@ void main() {
     float alpha = tmp.a;
 #endif
 
+	if (!lighting) {
+		outputF = vec4(color, alpha);
+		return;
+	}
+
     vec3 normal;
     if (smooth_shading)
         normal = normalize(DataIn.normal);
