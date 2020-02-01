@@ -136,31 +136,52 @@ namespace easy3d {
             auto face_colors = model->get_face_property<vec3>("f:color");
             auto vertex_colors = model->get_vertex_property<vec3>("v:color");
 
-            vec3 c;
-            std::vector<vec3> data;
-            std::vector<vec3> d_points, d_normals, d_colors;
+			auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+			auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
+
+			int length = 6; // point + normal
+			if (face_colors || vertex_colors)
+				length += 3;
+			if (vertex_texcoords || halfedge_texcoords)
+				length += 2;
+
+			std::vector<vec3> data(4);	// at most: point, normal, color, and texcoord 
+			std::vector<vec3> d_points, d_normals, d_colors;
+			std::vector<vec2> d_texcoords;
+			vec3 color;
             for (auto face : model->faces()) {
                 tess.reset();
                 tess.begin_polygon(model->compute_face_normal(face));
                 tess.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tess.begin_contour();
                 if (face_colors)
-                    c = face_colors[face];
+					color = face_colors[face];
                 for (auto h : model->halfedges(face)) {
                     auto v = model->to_vertex(h);
-                    const vec3 &p = points[v];
-                    const vec3 &n = normals[v];
-                    if (face_colors) {          // model has per-face colors
-                        data = {p, n, c};
-                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 9);
-                    } else if (vertex_colors) {   // model has per-vertex colors
-                        data = {p, n, vertex_colors[v] };
-                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 9);
-                    }
-                    else {
-                        data = {p, n};
-                        tess.add_vertex(reinterpret_cast<float*>(data.data()), 6);
-                    }
+                    data[0] = points[v];
+					data[1] = normals[v];
+					if (face_colors) {		// model has per-face colors
+						data[2] = color;
+						if (halfedge_texcoords)
+							data[3] = halfedge_texcoords[h]; // the last float value will be ignored
+						else if (vertex_texcoords)
+							data[3] = vertex_texcoords[v];	 // the last float value will be ignored
+					}
+					else if (vertex_colors) {// model has per-vertex colors
+						data[2] = vertex_colors[v];
+						if (halfedge_texcoords)
+							data[3] = halfedge_texcoords[h]; // the last float value will be ignored
+						else if (vertex_texcoords)
+							data[3] = vertex_texcoords[v];	 // the last float value will be ignored
+					}
+					else {
+						if (halfedge_texcoords)
+							data[2] = halfedge_texcoords[h]; // the last float value will be ignored
+						else if (vertex_texcoords)
+							data[2] = vertex_texcoords[v];	 // the last float value will be ignored
+					}
+
+					tess.add_vertex(data[0], length);
                 }
                 tess.end_contour();
                 tess.end_polygon();
@@ -180,7 +201,17 @@ namespace easy3d {
                         d_colors.emplace_back(vts[a] + 6);
                         d_colors.emplace_back(vts[b] + 6);
                         d_colors.emplace_back(vts[c] + 6);
+						if (halfedge_texcoords || vertex_texcoords) {
+							d_texcoords.emplace_back(vts[a] + 9);
+							d_texcoords.emplace_back(vts[b] + 9);
+							d_texcoords.emplace_back(vts[c] + 9);
+						}
                     }
+					else if (halfedge_texcoords || vertex_texcoords) {
+						d_texcoords.emplace_back(vts[a] + 6);
+						d_texcoords.emplace_back(vts[b] + 6);
+						d_texcoords.emplace_back(vts[c] + 6);
+					}
                 }
                 triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                 count_triangles += num;
@@ -192,7 +223,11 @@ namespace easy3d {
                 drawable->update_color_buffer(d_colors);
                 drawable->set_per_vertex_color(true);
             }
-            else
+			else if (halfedge_texcoords || vertex_texcoords) {
+				drawable->update_texcoord_buffer(d_texcoords);
+				drawable->set_per_vertex_color(true);
+			}
+			else 
                 drawable->set_per_vertex_color(false);
 
 //            { // rendering with per-vertex colors, with index buffer (so neighboring faces share the same vertices).
