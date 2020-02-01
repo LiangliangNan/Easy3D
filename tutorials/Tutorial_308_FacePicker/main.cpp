@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
+    const std::string file_name = setting::resource_directory() + "/data/quad_mesh/P.off";
     try {
         PickerViewer viewer("Tutorial_308_FacePicker");
         if (!viewer.add_model(file_name)) {
