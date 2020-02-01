@@ -50,45 +50,64 @@ int main(int argc, char** argv) {
         // Note: a viewer must be created before creating any drawables.
         Viewer viewer("Tutorial_402_ScalarField");
 
-        // Load a mesh model and create a drawable for the faces.
-        SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(viewer.add_model(file_name, true));
+        // Load a mesh model to the viewer
+        SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(viewer.add_model(file_name, false));
         if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
 
-        // By default, Easy3D renders the model using a uniform color.
-        // In this tutorial, let's define a scalar field on the mesh vertices: elevation.
-        // This is actually the z-value of each vertex.
-        // To visualize the scalar field, we assign each vertex a color according
-        // its elevation. The idea is to map the elevation values to a color range
-        // (e.g., here from blue to red. To do the mapping, we need to know the
-        // min/max value range of the scalar field.
+		auto points = model->get_vertex_property<vec3>("v:point");
+
+		// Add a TrianglesDrawable to visualize the surface.
+		auto drawable = model->add_triangles_drawable("faces");
+
+		// update the vertex coordinates to the GPU.
+		drawable->update_vertex_buffer(points.vector());
+
+        // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex 
+		// color given in the model file.
+        // In this tutorial, let's define a scalar field on the mesh vertices: elevation (here the 
+		// Z-component of each vertex.
+        // To visualize the scalar field, we assign each vertex a color according its elevation. 
+		// The idea is to map the elevation values to a color range, here from blue to red. To do 
+		// the mapping, we need to know the min/max value range of the scalar field.
         auto elevation = model->add_vertex_property<float>("v:elevation");
-        auto vertices = model->get_vertex_property<vec3>("v:point");
         float min_value = std::numeric_limits<float>::max();
         float max_value = -std::numeric_limits<float>::max();
         for (auto v : model->vertices()) {
-            elevation[v] = vertices[v].z;
+            elevation[v] = points[v].z;
             min_value = std::min(min_value, elevation[v]);
             max_value = std::max(max_value, elevation[v]);
         }
 
-        // With the value range of the scalar field, we assign each vertex a color
-        // according to its scalar value. We can use a vertex property or an array
-        // to store the colors. Here we use the std::vector array.
+        // With the value range of the scalar field, we assign each vertex a color according to its 
+		// scalar value. We can use a vertex property or an array to store the colors. Here we use 
+		// the std::vector array.
         std::vector<vec3> scalar_field_colors;
         for (auto v : model->vertices()) {
             float value = elevation[v];
             float r = (value - min_value) / (max_value - min_value);
-            scalar_field_colors.push_back(vec3(r, 0.0f, 1.0f -r));
+            scalar_field_colors.emplace_back(vec3(r, 0.0f, 1.0f -r));
         }
-
-        // The faces drawable created by default.
-        TrianglesDrawable* drawable = model->triangles_drawable("faces");
-        // Note we had already uploaded the vertex positions and the vertex indices
-        // to the GPU. Now we only need to transfer the color data to the GPU.
+        // Now we transfer the color data to the GPU.
         drawable->update_color_buffer(scalar_field_colors);
+
+		// Then the vertex normals to the GPU.
+		auto normals = model->get_vertex_property<vec3>("v:normal");
+        if (!normals) {
+            model->update_vertex_normals();
+            normals = model->get_vertex_property<vec3>("v:normal");
+        }
+		drawable->update_normal_buffer(normals.vector());
+
+		// Lastly, how the triangle vertices are stored, i.e., the index buffer (element buffer).
+		std::vector<unsigned int> indices;
+		for (auto f : model->faces()) {
+			for (auto v : model->vertices(f))	// We assume each face is a triangle.
+				indices.push_back(v.idx());
+		}
+		drawable->update_index_buffer(indices);
 
         // Vertices have varying colors.
         drawable->set_per_vertex_color(true);
