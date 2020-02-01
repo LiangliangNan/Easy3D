@@ -95,6 +95,7 @@ void TutorialAmbientOcclusion::draw() const {
 	if (ao_enabled_) {
 		ao_->generate(models_);
 
+
 		const mat4& MVP = camera_->modelViewProjectionMatrix();
 		// camera position is defined in world coordinate system.
 		const vec3& wCamPos = camera_->position();
@@ -116,21 +117,25 @@ void TutorialAmbientOcclusion::draw() const {
 
 		program->bind();
 		program->bind();
-		program->set_uniform("MVP", MVP);
-		program->set_uniform("wLightPos", wLightPos);
-		program->set_uniform("wCamPos", wCamPos);
-		program->set_uniform("ssaoEnabled", true);
-		program->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
+		program->set_uniform("MVP", MVP)
+			->set_uniform("wLightPos", wLightPos)
+			->set_uniform("wCamPos", wCamPos)
+			->set_uniform("ssaoEnabled", true)
+			->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
 		auto drawable = current_model()->triangles_drawable("faces");
 
-        program->set_uniform("smooth_shading", drawable->smooth_shading());
-        program->set_block_uniform("Material", "ambient", drawable->material().ambient);
-        program->set_block_uniform("Material", "specular", drawable->material().specular);
-        program->set_block_uniform("Material", "shininess", &drawable->material().shininess);
+		program->set_uniform("smooth_shading", drawable->smooth_shading())
+			->set_block_uniform("Material", "ambient", drawable->material().ambient)
+			->set_block_uniform("Material", "specular", drawable->material().specular)
+			->set_block_uniform("Material", "shininess", &drawable->material().shininess)
+			->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer())
+			->set_uniform("default_color", drawable->default_color());
 
-		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
-		program->set_uniform("default_color", drawable->default_color());
+		const auto& range = drawable->highlight_range();
+		program->set_uniform("hightlight_id_min", range.first)
+			->set_uniform("hightlight_id_max", range.second);
+
         drawable->gl_draw(false);
 
 		program->release_texture();

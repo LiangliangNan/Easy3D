@@ -127,6 +127,7 @@ namespace easy3d {
          *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
          */
         void set_highlight_range(const std::pair<int, int>& range) { highlight_range_ = range; }
+		const std::pair<int, int>& highlight_range() const { return highlight_range_; }
 
         bool lighting() const { return lighting_; }
         void set_lighting(bool l) { lighting_ = l; }
