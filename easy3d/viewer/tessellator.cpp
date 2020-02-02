@@ -51,10 +51,22 @@ namespace easy3d {
             VertexManager() {}
             ~VertexManager() {}
 
-            const std::vector<const double*>& vertices() const { return vertices_; }
+            const std::vector<const double*>& vertices() const { return unique_vertices_; }
+
+            // Allocates vertex memory and logs it for deletion later.
+            double * allocate_vertex(unsigned int size) {
+                double *arr = reinterpret_cast<double *>(malloc(sizeof(double) * size));
+                vertex_allocs_.push_back(arr);
+                return arr;
+            }
 
             void clear() {
-                vertices_.clear();
+                // Free all of the vertices that we allocated for the tessellator.
+                for (std::size_t i = 0; i < vertex_allocs_.size(); ++i)
+                    free(vertex_allocs_[i]);
+                vertex_allocs_.clear();
+
+                unique_vertices_.clear();
                 names_to_index_.clear();
             }
 
@@ -64,8 +76,8 @@ namespace easy3d {
                 if (pos != names_to_index_.end())
                     return pos->second;
                 else {
-                    const std::size_t index = vertices_.size();
-                    vertices_.push_back(vert);
+                    const std::size_t index = unique_vertices_.size();
+                    unique_vertices_.push_back(vert);
                     names_to_index_[vert] = index;
                     return index;
                 }
@@ -92,7 +104,12 @@ namespace easy3d {
                 double eps_;
             };
 
-            std::vector<const double*>			vertices_;
+            // vertices allocated due to tesselation (including existing ones and new ones)
+            std::vector<double*>		vertex_allocs_;
+
+            // just the pointers (a subset of vertex_allocs_)
+            std::vector<const double*>	unique_vertices_;
+
             std::map<const double*, std::size_t, CompVec> names_to_index_;
             typedef  std::map<const double*, std::size_t, CompVec>::const_iterator Iterator;
 
@@ -144,13 +161,7 @@ namespace easy3d {
 
 
     Tessellator::~Tessellator() {
-        // Free all of the vertices that we allocated for the tessellator.
-        for (std::size_t i = 0; i < vertex_allocs_.size(); ++i)
-            free(vertex_allocs_[i]);
-        vertex_allocs_.clear();
-
         delete vertex_manager_;
-
         gluDeleteTess(tess_obj_);
     }
 
@@ -177,7 +188,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const float* data, unsigned int size) // to be flexible (any data can be provide)
     {
         vertex_data_size_ = size;
-        double *newPt = allocate_vertex(vertex_data_size_);
+        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
         for (unsigned int i = 0; i < vertex_data_size_; ++i)
             newPt[i] = data[i];
 
@@ -194,7 +205,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const vec3& p)
     {
         vertex_data_size_ = 3;
-        double *newPt = allocate_vertex(vertex_data_size_);
+        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
         for (unsigned int i = 0; i < vertex_data_size_; ++i)
             newPt[i] = p[i];
 
@@ -211,7 +222,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const vec3& p, const vec3& c)
     {
         vertex_data_size_ = 6;
-        double *newPt = allocate_vertex(vertex_data_size_);
+        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
         for (unsigned int i = 0; i < 3; ++i) {
             newPt[i] = p[i];
             newPt[i + 3] = c[i];
@@ -230,7 +241,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const vec3& p, const vec2& tc)
     {
         vertex_data_size_ = 5;
-        double *newPt = allocate_vertex(vertex_data_size_);
+        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
         for (unsigned int i = 0; i < 3; ++i) {
             newPt[i] = p[i];
         }
@@ -250,7 +261,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const vec3& p, const vec3& c, const vec2& tc)
     {
         vertex_data_size_ = 8;
-        double *newPt = allocate_vertex(vertex_data_size_);
+        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
         for (unsigned int i = 0; i < 3; ++i) {
             newPt[i] = p[i];
             newPt[i + 3] = c[i];
@@ -306,15 +317,6 @@ namespace easy3d {
             c = triangle_list_[t * 3 + 2];
         }
         return ret;
-    }
-
-
-    // Allocates vertex memory and logs it for deletion later.
-    double * Tessellator::allocate_vertex(unsigned int size)
-    {
-        double *arr = reinterpret_cast<double *>(malloc(sizeof(double) * size));
-        vertex_allocs_.push_back(arr);
-        return arr;
     }
 
 
@@ -447,7 +449,7 @@ namespace easy3d {
     {
         Tessellator* tessellator = reinterpret_cast<Tessellator*>(cbdata);
         unsigned int size = tessellator->vertex_data_size_;
-        double *vertex = tessellator->allocate_vertex(size);
+        double *vertex = tessellator->vertex_manager_->allocate_vertex(size);
         for (std::size_t i = 0; i < 3; ++i)
             vertex[i] = coords[i];
 
@@ -467,10 +469,6 @@ namespace easy3d {
 
 
     void Tessellator::reset() {
-        for (std::size_t i = 0; i < vertex_allocs_.size(); ++i)
-            free(vertex_allocs_[i]);
-        vertex_allocs_.clear();
-
         vertex_manager_->clear();
         triangle_list_.clear();
 

@@ -40,15 +40,13 @@ namespace easy3d {
     }
 
     /**
-     * @brief Tessellator provides encapsulation and a mechanism for the resulting
-     *        triangles to be read out and used.
-     * @details Tessellation is used for subdividing concave planar polygons, polygons
-     *          with holes, or polygons with intersecting edges into triangles. This
-     *          class is based on the GLU tessellator object that can convert polygons
-     *          into triangles.
-     * @todo Current implementation can get rid of duplicated vertices based on std::map,
-     *       with which the performance is not optimized. Check the GLUtesselator source
-     *       code if the vertex indices are maintained.
+     * @brief Tessellator provides encapsulation and a mechanism for the resulting triangles to be read out and used.
+     * @details It is used for subdividing concave planar polygons, polygons with holes, or polygons with intersecting
+     *          edges into triangles. This class is based on the GLU tessellator.
+     *
+     * @note This implementation is based on unordered_map to keep track of the unique vertices and respective indices,
+     *       allowing client code to take advantage of the index buffer to avoid sending duplicated vertex to GPU (many
+     *       vertices are shared by multiple triangles and Tessellator keep only the unique vertices).
      */
 
     class Tessellator
@@ -129,9 +127,6 @@ namespace easy3d {
         void reset();
 
     private:
-        // Allocates vertex memory and logs it for deletion later.
-        double* allocate_vertex(unsigned int size);
-
         void add_triangle(std::size_t a, std::size_t b, std::size_t c);
 
         // GLU tessellator callbacks
@@ -160,9 +155,6 @@ namespace easy3d {
 
         // List of triangles created over many calls (every consecutive 3 entries form a triangle)
         std::vector<std::size_t>	triangle_list_;
-
-        // vertices allocated due to tesselation (including existing ones and new ones)
-        std::vector<double*>		vertex_allocs_;
 
         details::VertexManager*		vertex_manager_;
 
