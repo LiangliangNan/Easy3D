@@ -111,6 +111,15 @@ namespace easy3d {
             assert(drawable);
 
             /**
+             * TODO:
+             * This implementation does not take advantage of the index buffer yet. The vertices sent to the vertex
+             * buffer contains a lot of duplicated vertex data, because many vertices are shared by multiple triangles.
+             * We should keep only the unique vertices and use the index buffer to reuse them whenever they come up. A
+             * straightforward way to implement this is to use a map or unordered_map to keep track of the unique
+             * vertices and respective indices:
+             */
+
+            /**
              * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
              * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
              * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
