@@ -38,6 +38,7 @@
 
 #ifdef USE_TINY_OBJ_LOADER
 
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 namespace easy3d {
@@ -60,14 +61,7 @@ namespace easy3d {
             config.vertex_color = false;
             tinyobj::ObjReader reader;
             if (!reader.ParseFromFile(file_name, config)) {
-                std::string msg = "failed parsing file: " + file_name;
-                const std::string &error = reader.Error();
-                if (!error.empty())
-                    msg += error;
-                const std::string &warning = reader.Warning();
-                if (!warning.empty())
-                    msg += warning;
-                LOG(ERROR) << msg;
+                LOG(ERROR) << "failed parsing file: " + file_name + ". " << reader.Error() << reader.Warning();
                 return false;
             }
 
