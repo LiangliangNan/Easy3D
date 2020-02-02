@@ -1,5 +1,5 @@
 #version 150
-
+precision highp float;
 
 uniform sampler2D TempTex;
 

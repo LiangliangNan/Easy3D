@@ -1,5 +1,5 @@
 #version 150
-
+precision highp float;
 
 #define MAX_DEPTH 1.0
 

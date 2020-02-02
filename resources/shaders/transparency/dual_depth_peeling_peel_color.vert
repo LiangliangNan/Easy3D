@@ -1,4 +1,5 @@
 #version 150
+precision highp float;
 
 in  vec3 vtx_position;	// vertex position
 in  vec3 vtx_normal;	// vertex normal

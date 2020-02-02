@@ -1,4 +1,5 @@
 #version 150
+precision highp float;
 
 in vec3 vtx_position;
 in vec2 vtx_texcoord;

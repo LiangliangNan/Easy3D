@@ -1,4 +1,5 @@
 #version 150
+precision highp float;
 
 in vec2 texCoord;
 
