@@ -157,8 +157,8 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/transparency/dual_depth_peeling_init.frag
         ../../resources/shaders/transparency/dual_depth_peeling_peel_color.vert
         ../../resources/shaders/transparency/dual_depth_peeling_peel_color.frag
-        ../../resources/shaders/transparency/dual_peeling_peel_texture.vert
-        ../../resources/shaders/transparency/dual_peeling_peel_texture.frag
+        ../../resources/shaders/transparency/dual_depth_peeling_peel_texture.vert
+        ../../resources/shaders/transparency/dual_depth_peeling_peel_texture.frag
         #selection
         ../../resources/shaders/selection/selection_single_primitive.vert
         ../../resources/shaders/selection/selection_single_primitive.frag
