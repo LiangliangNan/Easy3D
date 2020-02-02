@@ -30,6 +30,7 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/core/random.h>
+#include <easy3d/util/logging.h>
 
 #include <cassert>
 
@@ -39,7 +40,7 @@ namespace easy3d {
     namespace renderer {
 
 
-        void update_data(PointCloud* model, PointsDrawable* drawable) {
+        void update_data(PointCloud *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -55,7 +56,7 @@ namespace easy3d {
                 ++num;
                 // assign each plane a unique color
                 std::vector<vec3> color_table(num);
-                for (auto& c : color_table)
+                for (auto &c : color_table)
                     c = random_color();
 
                 std::vector<vec3> colors;
@@ -74,9 +75,7 @@ namespace easy3d {
                 auto normals = model->get_vertex_property<vec3>("v:normal");
                 if (normals)
                     drawable->update_normal_buffer(normals.vector());
-            }
-
-            else {
+            } else {
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 auto normals = model->get_vertex_property<vec3>("v:normal");
@@ -86,8 +85,7 @@ namespace easy3d {
                 if (colors) {
                     drawable->update_color_buffer(colors.vector());
                     drawable->set_per_vertex_color(true);
-                }
-                else {
+                } else {
                     drawable->set_default_color(setting::point_cloud_points_color);
                     drawable->set_per_vertex_color(false);
                 }
@@ -95,8 +93,7 @@ namespace easy3d {
         }
 
 
-
-        void update_data(SurfaceMesh* model, PointsDrawable* drawable) {
+        void update_data(SurfaceMesh *model, PointsDrawable *drawable) {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->set_default_color(setting::surface_mesh_vertices_color);
@@ -106,7 +103,7 @@ namespace easy3d {
         }
 
 
-        void update_data(SurfaceMesh* model, TrianglesDrawable* drawable) {
+        void update_data(SurfaceMesh *model, TrianglesDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -114,10 +111,9 @@ namespace easy3d {
              * TODO:
              * This implementation does not take advantage of the index buffer yet. The vertices sent to the vertex
              * buffer contains a lot of duplicated vertex data, because many vertices are shared by multiple triangles.
-             * We should keep only the unique vertices and use the index buffer to reuse them whenever they come up. A
-             * straightforward way to implement this is to use a map or unordered_map to keep track of the unique
-             * vertices and respective indices:
+             * We should keep only the unique vertices and use the index buffer to reuse them.
              */
+            Tessellator tess;
 
             /**
              * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
@@ -125,8 +121,7 @@ namespace easy3d {
              * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
              * for the rendering purpose be shared for selection. Yeah, performance gain!
              */
-            Tessellator tess;
-            auto triangle_range = model->face_property< std::pair<int, int> >("f:triangle_range");
+            auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
             int count_triangles = 0;
 
             /**
@@ -145,52 +140,50 @@ namespace easy3d {
             auto face_colors = model->get_face_property<vec3>("f:color");
             auto vertex_colors = model->get_vertex_property<vec3>("v:color");
 
-			auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
-			auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
+            auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+            auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
 
-			int length = 6; // point + normal
-			if (face_colors || vertex_colors)
-				length += 3;
-			if (vertex_texcoords || halfedge_texcoords)
-				length += 2;
+            int length = 6; // point + normal
+            if (face_colors || vertex_colors)
+                length += 3;
+            if (vertex_texcoords || halfedge_texcoords)
+                length += 2;
 
-			std::vector<vec3> data(4);	// at most: point, normal, color, and texcoord 
-			std::vector<vec3> d_points, d_normals, d_colors;
-			std::vector<vec2> d_texcoords;
-			vec3 color;
+            std::vector<vec3> data(4);    // at most: point, normal, color, and texcoord
+            std::vector<vec3> d_points, d_normals, d_colors;
+            std::vector<vec2> d_texcoords;
+            vec3 color;
             for (auto face : model->faces()) {
                 tess.reset();
                 tess.begin_polygon(model->compute_face_normal(face));
                 tess.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tess.begin_contour();
                 if (face_colors)
-					color = face_colors[face];
+                    color = face_colors[face];
                 for (auto h : model->halfedges(face)) {
                     auto v = model->to_vertex(h);
                     data[0] = points[v];
-					data[1] = normals[v];
-					if (face_colors) {		// model has per-face colors
-						data[2] = color;
-						if (halfedge_texcoords)
-							data[3] = halfedge_texcoords[h]; // the last float value will be ignored
-						else if (vertex_texcoords)
-							data[3] = vertex_texcoords[v];	 // the last float value will be ignored
-					}
-					else if (vertex_colors) {// model has per-vertex colors
-						data[2] = vertex_colors[v];
-						if (halfedge_texcoords)
-							data[3] = halfedge_texcoords[h]; // the last float value will be ignored
-						else if (vertex_texcoords)
-							data[3] = vertex_texcoords[v];	 // the last float value will be ignored
-					}
-					else {
-						if (halfedge_texcoords)
-							data[2] = halfedge_texcoords[h]; // the last float value will be ignored
-						else if (vertex_texcoords)
-							data[2] = vertex_texcoords[v];	 // the last float value will be ignored
-					}
+                    data[1] = normals[v];
+                    if (face_colors) {        // model has per-face colors
+                        data[2] = color;
+                        if (halfedge_texcoords)
+                            data[3] = halfedge_texcoords[h]; // the last float value will be ignored
+                        else if (vertex_texcoords)
+                            data[3] = vertex_texcoords[v];     // the last float value will be ignored
+                    } else if (vertex_colors) {// model has per-vertex colors
+                        data[2] = vertex_colors[v];
+                        if (halfedge_texcoords)
+                            data[3] = halfedge_texcoords[h]; // the last float value will be ignored
+                        else if (vertex_texcoords)
+                            data[3] = vertex_texcoords[v];     // the last float value will be ignored
+                    } else {
+                        if (halfedge_texcoords)
+                            data[2] = halfedge_texcoords[h]; // the last float value will be ignored
+                        else if (vertex_texcoords)
+                            data[2] = vertex_texcoords[v];     // the last float value will be ignored
+                    }
 
-					tess.add_vertex(data[0], length);
+                    tess.add_vertex(data[0], length);
                 }
                 tess.end_contour();
                 tess.end_polygon();
@@ -210,17 +203,16 @@ namespace easy3d {
                         d_colors.emplace_back(vts[a] + 6);
                         d_colors.emplace_back(vts[b] + 6);
                         d_colors.emplace_back(vts[c] + 6);
-						if (halfedge_texcoords || vertex_texcoords) {
-							d_texcoords.emplace_back(vts[a] + 9);
-							d_texcoords.emplace_back(vts[b] + 9);
-							d_texcoords.emplace_back(vts[c] + 9);
-						}
+                        if (halfedge_texcoords || vertex_texcoords) {
+                            d_texcoords.emplace_back(vts[a] + 9);
+                            d_texcoords.emplace_back(vts[b] + 9);
+                            d_texcoords.emplace_back(vts[c] + 9);
+                        }
+                    } else if (halfedge_texcoords || vertex_texcoords) {
+                        d_texcoords.emplace_back(vts[a] + 6);
+                        d_texcoords.emplace_back(vts[b] + 6);
+                        d_texcoords.emplace_back(vts[c] + 6);
                     }
-					else if (halfedge_texcoords || vertex_texcoords) {
-						d_texcoords.emplace_back(vts[a] + 6);
-						d_texcoords.emplace_back(vts[b] + 6);
-						d_texcoords.emplace_back(vts[c] + 6);
-					}
                 }
                 triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                 count_triangles += num;
@@ -231,59 +223,20 @@ namespace easy3d {
             if (face_colors || vertex_colors) {
                 drawable->update_color_buffer(d_colors);
                 drawable->set_per_vertex_color(true);
-            }
-			else if (halfedge_texcoords || vertex_texcoords) {
-				drawable->update_texcoord_buffer(d_texcoords);
-				drawable->set_per_vertex_color(true);
-			}
-			else 
+            } else if (halfedge_texcoords || vertex_texcoords) {
+                drawable->update_texcoord_buffer(d_texcoords);
+                drawable->set_per_vertex_color(true);
+            } else
                 drawable->set_per_vertex_color(false);
 
-//            { // rendering with per-vertex colors, with index buffer (so neighboring faces share the same vertices).
-//                drawable->update_vertex_buffer(points.vector());
-//                auto colors = model->get_vertex_property<vec3>("v:color");
-//                if (colors) {
-//                    drawable->update_color_buffer(colors.vector());
-//                    drawable->set_per_vertex_color(true);
-//                }
-//                auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
-//                if (vertex_texcoords)
-//                    drawable->update_texcoord_buffer(vertex_texcoords.vector());
-//
-//                auto normals = model->get_vertex_property<vec3>("v:normal");
-//                if (!normals) {
-//                    model->update_vertex_normals();
-//                    normals = model->get_vertex_property<vec3>("v:normal");
-//                }
-//
-//                drawable->update_normal_buffer(normals.vector());
-//
-//                std::vector<unsigned int> indices;
-//                for (auto face : model->faces()) {
-//                    // we assume convex polygonal faces and we render in triangles
-//                    SurfaceMesh::Halfedge start = model->halfedge(face);
-//                    SurfaceMesh::Halfedge cur = model->next_halfedge(model->next_halfedge(start));
-//                    SurfaceMesh::Vertex va = model->to_vertex(start);
-//                    int num = 0;
-//                    while (cur != start) {
-//                        SurfaceMesh::Vertex vb = model->from_vertex(cur);
-//                        SurfaceMesh::Vertex vc = model->to_vertex(cur);
-//                        indices.push_back(static_cast<unsigned int>(va.idx()));
-//                        indices.push_back(static_cast<unsigned int>(vb.idx()));
-//                        indices.push_back(static_cast<unsigned int>(vc.idx()));
-//                        cur = model->next_halfedge(cur);
-//                        ++num;
-//                    }
-//
-//                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-//                    count_triangles += num;
-//                }
-//                drawable->update_index_buffer(indices);
-//            }
+            DLOG_IF(ERROR, model->vertices_size() < d_points.size())
+                            << "TODO: use index buffer to reduce num of vertices sent to GPU. Info:"
+                            << "\n\tnum of vertices in model:    " << model->vertices_size()
+                            << "\n\tnum of vertices sent to GPU: " << d_points.size();
         }
 
 
-        void update_data(SurfaceMesh* model, LinesDrawable* drawable) {
+        void update_data(SurfaceMesh *model, LinesDrawable *drawable) {
             std::vector<unsigned int> indices;
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
@@ -300,8 +253,7 @@ namespace easy3d {
         }
 
 
-
-        void update_data(Graph* model, PointsDrawable* drawable) {
+        void update_data(Graph *model, PointsDrawable *drawable) {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->set_per_vertex_color(false);
@@ -311,14 +263,16 @@ namespace easy3d {
         }
 
 
-        void update_data(Graph* model, LinesDrawable* drawable) {
+        void update_data(Graph *model, LinesDrawable *drawable) {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
 
             std::vector<unsigned int> indices;
             for (auto e : model->edges()) {
-                unsigned int s = model->from_vertex(e).idx();    indices.push_back(s);
-                unsigned int t = model->to_vertex(e).idx();      indices.push_back(t);
+                unsigned int s = model->from_vertex(e).idx();
+                indices.push_back(s);
+                unsigned int t = model->to_vertex(e).idx();
+                indices.push_back(t);
             }
             drawable->update_index_buffer(indices);
 

@@ -54,10 +54,10 @@ namespace easy3d {
 
         // each group is a set of faces (denoted by their indices) sharing the same material
         struct Group : public std::vector<int> {
-            vec3        ambient;
-            vec3        diffuse;
-            vec3        specular;
-            float       shininess;
+            vec3 ambient;
+            vec3 diffuse;
+            vec3 specular;
+            float shininess;
             std::string tex_file;
         };
     }
@@ -257,7 +257,7 @@ namespace easy3d {
 
 #else
 
-    Model* TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model *TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
             return nullptr;
@@ -282,19 +282,19 @@ namespace easy3d {
             LOG(WARNING) << "file contains no shape";
             return nullptr;
         }
-        const tinyobj::attrib_t& attrib = reader.GetAttrib();
-        const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
+        const tinyobj::attrib_t &attrib = reader.GetAttrib();
+        const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
 
         // for each texcoord
         std::vector<vec2> texcoords;
-        for (std::size_t  v = 0; v < attrib.texcoords.size(); v+=2) {
+        for (std::size_t v = 0; v < attrib.texcoords.size(); v += 2) {
             texcoords.push_back(vec2(attrib.texcoords.data() + v));
         }
 
         // ------------------------ build the mesh ------------------------
 
         // clear the mesh in case of existing data
-        SurfaceMesh* mesh = new SurfaceMesh;
+        SurfaceMesh *mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
         ManifoldBuilder builder(mesh);
@@ -338,7 +338,7 @@ namespace easy3d {
                 std::vector<SurfaceMesh::Vertex> vertices;
                 std::vector<int> texcoord_ids;
                 for (std::size_t v = 0; v < face_size; v++) {
-                    const tinyobj::index_t& face = shapes[i].mesh.indices[index_offset + v];
+                    const tinyobj::index_t &face = shapes[i].mesh.indices[index_offset + v];
                     vertices.emplace_back(face.vertex_index);
                     if (prop_texcoords)
                         texcoord_ids.emplace_back(face.texcoord_index);
@@ -416,14 +416,13 @@ namespace easy3d {
                 tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : mesh->halfedges(face)) {
-                    const vec3& v = points[mesh->to_vertex(h)];
-                    const vec3& n = normals[mesh->to_vertex(h)];
+                    const vec3 &v = points[mesh->to_vertex(h)];
+                    const vec3 &n = normals[mesh->to_vertex(h)];
                     if (prop_texcoords) {
                         const vec2 &t = prop_texcoords[h];
                         const float data[8] = {v.x, v.y, v.z, n.x, n.y, n.z, t.x, t.y};
                         tessellator.add_vertex(data, 8);
-                    }
-                    else {
+                    } else {
                         const float data[6] = {v.x, v.y, v.z, n.x, n.y, n.z};
                         tessellator.add_vertex(data, 6);
                     }
@@ -436,9 +435,12 @@ namespace easy3d {
                 for (std::size_t j = 0; j < num; ++j) {
                     std::size_t a, b, c;
                     tessellator.get_triangle(j, a, b, c);
-                    d_points.emplace_back(vts[a]);   d_normals.emplace_back(vts[a] + 3);
-                    d_points.emplace_back(vts[b]);   d_normals.emplace_back(vts[b] + 3);
-                    d_points.emplace_back(vts[c]);   d_normals.emplace_back(vts[c] + 3);
+                    d_points.emplace_back(vts[a]);
+                    d_normals.emplace_back(vts[a] + 3);
+                    d_points.emplace_back(vts[b]);
+                    d_normals.emplace_back(vts[b] + 3);
+                    d_points.emplace_back(vts[c]);
+                    d_normals.emplace_back(vts[c] + 3);
                     if (prop_texcoords) {
                         d_texcoords.emplace_back(vec2(vts[a] + 6));
                         d_texcoords.emplace_back(vec2(vts[b] + 6));
@@ -454,6 +456,11 @@ namespace easy3d {
             if (prop_texcoords)
                 drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_smooth_shading(false);
+
+            DLOG_IF(ERROR, mesh->vertices_size() < d_points.size())
+                            << "TODO: use index buffer to reduce num of vertices sent to GPU. Info:"
+                            << "\n\tnum of vertices in model:    " << mesh->vertices_size()
+                            << "\n\tnum of vertices sent to GPU: " << d_points.size();
 
             drawable->set_material(Material(group.ambient, group.specular, group.shininess));
             drawable->set_default_color(group.diffuse);

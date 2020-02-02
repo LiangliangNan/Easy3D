@@ -44,9 +44,9 @@ namespace easy3d {
      * @details It is used for subdividing concave planar polygons, polygons with holes, or polygons with intersecting
      *          edges into triangles. This class is based on the GLU tessellator.
      *
-     * @note This implementation is based on unordered_map to keep track of the unique vertices and respective indices,
-     *       allowing client code to take advantage of the index buffer to avoid sending duplicated vertex to GPU (many
-     *       vertices are shared by multiple triangles and Tessellator keep only the unique vertices).
+     * @TODO Use unordered_map to keep track of the unique vertices and respective indices, so as to allow client code
+     *       to take advantage of the index buffer to avoid sending duplicated vertex to GPU (many vertices are shared
+     *       by multiple triangles and Tessellator keep only the unique vertices).
      */
 
     class Tessellator
@@ -69,20 +69,16 @@ namespace easy3d {
 
         // polygon functions
         /**
-         * \brief Let the user supply the polygon normal, if known (to improve robustness).
-         *        All input data is projected into a plane perpendicular to the normal
-         *        before tesselation.  All output triangles are oriented CCW with respect
-         *        to the normal.
-         *        If the supplied normal is (0,0,0) (the default value), the normal is
-         *        determined as follows. The direction of the normal, up to its sign, is
-         *        found by fitting a plane to the vertices, without regard to how the
-         *        vertices are connected.  It is expected that the input data lies
-         *        approximately in plane; otherwise projection perpendicular to the
-         *        computed normal may substantially change the geometry.  The sign of the
-         *        normal is chosen so that the sum of the signed areas of all input contours
-         *        is non-negative (where a CCW contour has positive area).
-         * \attention The supplied normal persists until it is changed by another call to
-         *            this function.
+         * \brief Let the user supply the polygon normal, if known (to improve robustness). All input data is projected
+         *        into a plane perpendicular to the normal before tesselation.  All output triangles are oriented CCW
+         *        with respect to the normal.
+         *        If the supplied normal is (0,0,0) (the default value), the normal is determined as follows. The
+         *        direction of the normal, up to its sign, is found by fitting a plane to the vertices, without regard
+         *        to how the vertices are connected.  It is expected that the input data lies approximately in plane;
+         *        otherwise projection perpendicular to the computed normal may substantially change the geometry. The
+         *        sign of the normal is chosen so that the sum of the signed areas of all input contours is non-negative
+         *        (where a CCW contour has positive area).
+         * \attention The supplied normal persists until it is changed by another call to this function.
          */
         void begin_polygon(const vec3& normal = vec3(0,0,0));
         void begin_contour();	// a polygon can have multiple contours
