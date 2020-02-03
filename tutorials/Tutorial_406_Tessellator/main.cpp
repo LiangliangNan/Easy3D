@@ -52,27 +52,27 @@ void triangulate(SurfaceMesh* mesh) {
     auto normals = mesh->face_property<vec3>("f:normal");
     auto holes = mesh->get_face_property<Hole>("f:holes");
 
-    Tessellator gen;
+    Tessellator tessellator;
     for (auto f : mesh->faces()) {
-        gen.begin_polygon(normals[f]);
+        tessellator.begin_polygon(normals[f]);
 
-        gen.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-        gen.begin_contour();
+        tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+        tessellator.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
-            gen.add_vertex(mesh->position(v));
+            tessellator.add_vertex(mesh->position(v));
         }
-        gen.end_contour();
+        tessellator.end_contour();
 
         if (holes && holes[f].size() > 3) { // has a valid hole
-            gen.set_winding_rule(Tessellator::ODD);
-            gen.begin_contour();
+            tessellator.set_winding_rule(Tessellator::ODD);
+            tessellator.begin_contour();
             for (auto p : holes[f])
-                gen.add_vertex(p);
-            gen.end_contour();
+                tessellator.add_vertex(p);
+            tessellator.end_contour();
         }
 
-        gen.end_polygon();
+        tessellator.end_polygon();
     }
 
     // now the tessellation is done. We can clear the old mesh and
@@ -80,15 +80,16 @@ void triangulate(SurfaceMesh* mesh) {
 
     mesh->clear();
 
-    std::size_t num = gen.num_triangles();
+    std::size_t num = tessellator.num_triangles();
     if (num > 0) { // in degenerate cases num can be zero
-        const std::vector<const double*>& vts = gen.get_vertices();
-        for (std::size_t i = 0; i < vts.size(); ++i)
-            mesh->add_vertex(vec3(vts[i]));
+        const std::vector<Tessellator::Vertex*>& vts = tessellator.vertices();
+        for (auto v : vts) {
+            mesh->add_vertex(vec3(v->data()));
+        }
 
         for (std::size_t i = 0; i < num; ++i) {
-            std::size_t a, b, c;
-            gen.get_triangle(i, a, b, c);
+            unsigned int a, b, c;
+            tessellator.get_triangle(i, a, b, c);
             mesh->add_triangle(SurfaceMesh::Vertex(a), SurfaceMesh::Vertex(b), SurfaceMesh::Vertex(c));
         }
     }

@@ -1,4 +1,7 @@
 * easy3d (on going):
+    - Rendering performance can still be improved
+        * Drawables (e.g., faces, edges, and vertices) of the same model can share the same vertex buffer;
+        * Use index buffer to reduce the num of vertices sent to GPU.
     - Previous timer events may interrupt the current one when visualizing pivot points;
 	- The current way handling high-dpi support is not optimal. Maybe always use framebuffer sizes?
 	  This will ensure viewport[2] == camera()->screenWidth(), and viewport[3] == camera()->screenHeight():

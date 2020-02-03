@@ -108,12 +108,10 @@ namespace easy3d {
             assert(drawable);
 
             /**
-             * TODO:
-             * This implementation does not take advantage of the index buffer yet. The vertices sent to the vertex
-             * buffer contains a lot of duplicated vertex data, because many vertices are shared by multiple triangles.
-             * We should keep only the unique vertices and use the index buffer to reuse them.
+             * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
+             * to minimize the number of vertices sent to the GPU.
              */
-            Tessellator tess;
+            Tessellator tessellator;
 
             /**
              * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
@@ -143,96 +141,72 @@ namespace easy3d {
             auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
             auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
 
-            int length = 6; // point + normal
-            if (face_colors || vertex_colors)
-                length += 3;
-            if (vertex_texcoords || halfedge_texcoords)
-                length += 2;
-
-            std::vector<vec3> data(4);    // at most: point, normal, color, and texcoord
-            std::vector<vec3> d_points, d_normals, d_colors;
-            std::vector<vec2> d_texcoords;
             vec3 color;
             for (auto face : model->faces()) {
-                tess.reset();
-                tess.begin_polygon(model->compute_face_normal(face));
-                tess.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                tess.begin_contour();
+                tessellator.begin_polygon(model->compute_face_normal(face));
+                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                tessellator.begin_contour();
                 if (face_colors)
                     color = face_colors[face];
                 for (auto h : model->halfedges(face)) {
+                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    data[0] = points[v];
-                    data[1] = normals[v];
-                    if (face_colors) {        // model has per-face colors
-                        data[2] = color;
-                        if (halfedge_texcoords)
-                            data[3] = halfedge_texcoords[h]; // the last float value will be ignored
-                        else if (vertex_texcoords)
-                            data[3] = vertex_texcoords[v];     // the last float value will be ignored
-                    } else if (vertex_colors) {// model has per-vertex colors
-                        data[2] = vertex_colors[v];
-                        if (halfedge_texcoords)
-                            data[3] = halfedge_texcoords[h]; // the last float value will be ignored
-                        else if (vertex_texcoords)
-                            data[3] = vertex_texcoords[v];     // the last float value will be ignored
-                    } else {
-                        if (halfedge_texcoords)
-                            data[2] = halfedge_texcoords[h]; // the last float value will be ignored
-                        else if (vertex_texcoords)
-                            data[2] = vertex_texcoords[v];     // the last float value will be ignored
-                    }
+                    vertex.append(points[v]);
+                    vertex.append(normals[v]);
+                    if (face_colors)        // model has per-face colors
+                        vertex.append(color);
+                    else if (vertex_colors) // model has per-vertex colors
+                        vertex.append(vertex_colors[v]);
 
-                    tess.add_vertex(data[0], length);
-                }
-                tess.end_contour();
-                tess.end_polygon();
+                    if (halfedge_texcoords)
+                        vertex.append(halfedge_texcoords[h]);
+                    else if (vertex_texcoords)
+                        vertex.append(vertex_texcoords[v]);
 
-                std::size_t num = tess.num_triangles();
-                const std::vector<const double *> &vts = tess.get_vertices();
-                for (std::size_t j = 0; j < num; ++j) {
-                    std::size_t a, b, c;
-                    tess.get_triangle(j, a, b, c);
-                    d_points.emplace_back(vts[a]);
-                    d_points.emplace_back(vts[b]);
-                    d_points.emplace_back(vts[c]);
-                    d_normals.emplace_back(vts[a] + 3);
-                    d_normals.emplace_back(vts[b] + 3);
-                    d_normals.emplace_back(vts[c] + 3);
-                    if (face_colors || vertex_colors) {
-                        d_colors.emplace_back(vts[a] + 6);
-                        d_colors.emplace_back(vts[b] + 6);
-                        d_colors.emplace_back(vts[c] + 6);
-                        if (halfedge_texcoords || vertex_texcoords) {
-                            d_texcoords.emplace_back(vts[a] + 9);
-                            d_texcoords.emplace_back(vts[b] + 9);
-                            d_texcoords.emplace_back(vts[c] + 9);
-                        }
-                    } else if (halfedge_texcoords || vertex_texcoords) {
-                        d_texcoords.emplace_back(vts[a] + 6);
-                        d_texcoords.emplace_back(vts[b] + 6);
-                        d_texcoords.emplace_back(vts[c] + 6);
-                    }
+                    tessellator.add_vertex(vertex);
                 }
+                tessellator.end_contour();
+                tessellator.end_polygon();
+
+                std::size_t num = tessellator.num_triangles_in_last_polygon();
                 triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                 count_triangles += num;
             }
 
+            std::vector<vec3> d_points, d_normals, d_colors;
+            std::vector<vec2> d_texcoords;
+            const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+            for (auto v :vts) {
+                std::size_t offset = 0;
+                d_points.emplace_back(v->data() + offset);
+                offset += 3;
+                d_normals.emplace_back(v->data() + offset);
+                offset += 3;
+                if (face_colors || vertex_colors) {
+                    d_colors.emplace_back(v->data() + offset);
+                    offset += 3;
+                }
+                if (halfedge_texcoords || vertex_texcoords)
+                    d_texcoords.emplace_back(v->data() + offset);
+            }
+
+            const std::vector<unsigned int> &indices = tessellator.indices();
+
             drawable->update_vertex_buffer(d_points);
+            drawable->update_index_buffer(indices);
             drawable->update_normal_buffer(d_normals);
-            if (face_colors || vertex_colors) {
+
+            drawable->set_per_vertex_color(false);
+            if (!d_colors.empty()) {
                 drawable->update_color_buffer(d_colors);
                 drawable->set_per_vertex_color(true);
-            } else if (halfedge_texcoords || vertex_texcoords) {
+            }
+            if (!d_texcoords.empty()) {
                 drawable->update_texcoord_buffer(d_texcoords);
                 drawable->set_per_vertex_color(true);
-            } else
-                drawable->set_per_vertex_color(false);
+            }
 
-            DLOG_IF(ERROR, model->vertices_size() < d_points.size())
-                            << "TODO: use index buffer to reduce num of vertices sent to GPU. Info:"
-                            << "\n\tnum of vertices in model:    " << model->vertices_size()
-                            << "\n\tnum of vertices sent to GPU: " << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
 

@@ -23,137 +23,192 @@
  */
 
 #include <easy3d/viewer/tessellator.h>
+#include <easy3d/util/logging.h>
 
-#ifdef _WIN32 
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #define CALLBACK
 #endif
 
 #  if defined(__APPLE__) && defined(__MACH__)
+
 #    include <OpenGL/glu.h>
+
 #  else
 #    include <GL/glu.h>
 #  endif
 
-#include <iostream>
-#include <map>
+#include <vector>
+#include <unordered_map>
+#include <functional>
+
 
 namespace easy3d {
 
 
     namespace details {
 
-        // VertexManager manages the actual vertices to make sure that the points are unique.
-        class VertexManager
-        {
+#if 0   // [Liangliang]:
+        // Same vertex data (xyz, normal, color...) -> same hash value -> but unordered_map couldn't find the key.
+        // Why explicitly computing the hash (see below) works? A bug in std::unordered_map?
+
+        class VertexManager {
         public:
             VertexManager() {}
-            ~VertexManager() {}
+            ~VertexManager() { clear(); }
 
-            const std::vector<const double*>& vertices() const { return unique_vertices_; }
-
-            // Allocates vertex memory and logs it for deletion later.
-            double * allocate_vertex(unsigned int size) {
-                double *arr = reinterpret_cast<double *>(malloc(sizeof(double) * size));
-                vertex_allocs_.push_back(arr);
-                return arr;
+            const std::vector<Tessellator::Vertex*>& vertices() const {
+                return unique_vertices_;
             }
+
+            Tessellator::Vertex* find_or_allocate_vertex(Tessellator::Vertex* v) {
+                auto pos = pointer_to_index_.find(v);
+                if (pos == pointer_to_index_.end()) {
+                    auto new_v = new Tessellator::Vertex(v);
+                    pointer_to_index_[new_v] = unique_vertices_.size();
+                    unique_vertices_.push_back(new_v);
+//                    LOG(WARNING) << "new vertex " << pointer_to_index_[new_v] << ", " << new_v << ", " << *(new_v);
+                    return new_v;
+                }
+                else {
+                    return pos->first;
+                }
+            }
+
 
             void clear() {
-                // Free all of the vertices that we allocated for the tessellator.
-                for (std::size_t i = 0; i < vertex_allocs_.size(); ++i)
-                    free(vertex_allocs_[i]);
-                vertex_allocs_.clear();
-
+                for (auto v : unique_vertices_)
+                    delete v;
                 unique_vertices_.clear();
-                names_to_index_.clear();
+                pointer_to_index_.clear();
             }
 
-            std::size_t get_vertex_id(const double *vert)
-            {
-                Iterator pos = names_to_index_.find(vert);
-                if (pos != names_to_index_.end())
-                    return pos->second;
-                else {
-                    const std::size_t index = unique_vertices_.size();
-                    unique_vertices_.push_back(vert);
-                    names_to_index_[vert] = index;
-                    return index;
+            std::size_t vertex_id(Tessellator::Vertex *v) {
+                return pointer_to_index_[v];
+            }
+
+        private:
+            struct Hash {
+                template <class T>
+                inline void hash_combine(std::size_t& seed, T const& v) const {
+                    std::hash<T> hasher;
+                    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
                 }
+
+                inline std::size_t operator()(const Tessellator::Vertex *v) const {
+                    std::size_t seed = 0;
+                    std::hash<double> hasher;
+                    for (auto f : *v) {
+                        hash_combine(seed, hasher(f));
+                    }
+                    return seed;
+                }
+            };
+
+            std::vector<Tessellator::Vertex*> unique_vertices_;
+
+            // vertex -> index
+            std::unordered_map<Tessellator::Vertex*, std::size_t, Hash> pointer_to_index_;
+        };
+    }
+#else
+
+        // VertexManager manages the actual vertices to make sure that the points are unique.
+        class VertexManager {
+        public:
+            VertexManager() {}
+
+            ~VertexManager() {
+                clear();
+            }
+
+            const std::vector<Tessellator::Vertex *> &vertices() const {
+                return unique_vertices_;
+            }
+
+            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex *v) {
+                std::size_t key = hash(v);
+                auto pos = hash_table_.find(key);
+                if (pos == hash_table_.end()) {
+                    auto vertex = new Tessellator::Vertex(v);
+                    vertex->index = unique_vertices_.size();
+                    hash_table_[key] = vertex;
+                    unique_vertices_.push_back(vertex);
+                    return vertex;
+                } else {
+                    return pos->second;
+                }
+            }
+
+
+            void clear() {
+                for (auto vertex : unique_vertices_)
+                    delete vertex;
+                unique_vertices_.clear();
+                hash_table_.clear();
+            }
+
+            std::size_t vertex_id(const Tessellator::Vertex *v) {
+                return hash_table_[hash(v)]->index;
+            }
+
+        private:
+            template<class T>
+            inline void hash_combine(std::size_t &seed, T const &v) const {
+                std::hash<T> hasher;
+                seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+
+            inline std::size_t hash(const Tessellator::Vertex *v) const {
+                std::size_t seed = 0;
+                std::hash<double> hasher;
+                for (auto f : *v) {
+                    hash_combine(seed, hasher(f));
+                }
+                return seed;
             }
 
         private:
 
-#if 1 // remove duplicated vertices
+            std::vector<Tessellator::Vertex *> unique_vertices_;
 
-            class CompVec {
-            public:
-                CompVec(double _eps = DBL_MIN) : eps_(_eps) {}
-                bool operator()(const double* v0, const double* v1) const {
-                    if (fabs(v0[0] - v1[0]) <= eps_) {
-                        if (fabs(v0[1] - v1[1]) <= eps_)
-                            return (v0[2] < v1[2] - eps_);
-                        else
-                            return (v0[1] < v1[1] - eps_);
-                    }
-                    else
-                        return (v0[0] < v1[0] - eps_);
-                }
-            private:
-                double eps_;
-            };
-
-            // vertices allocated due to tesselation (including existing ones and new ones)
-            std::vector<double*>		vertex_allocs_;
-
-            // just the pointers (a subset of vertex_allocs_)
-            std::vector<const double*>	unique_vertices_;
-
-            std::map<const double*, std::size_t, CompVec> names_to_index_;
-            typedef  std::map<const double*, std::size_t, CompVec>::const_iterator Iterator;
-
-        #else  // duplicated vertices will NOT be removed
-
-            std::vector<const double*>				vertices_;
-            std::map<const double*, std::size_t>	names_to_index_;
-            typedef  std::map<const double*, std::size_t>::const_iterator Iterator;
-
-        #endif
+            // vertex -> index
+            std::unordered_map<std::size_t, Tessellator::Vertex *> hash_table_;
         };
     }
 
+#endif
+
 
     Tessellator::Tessellator()
-        : primitive_type_(GL_TRIANGLES)
-        , primitive_aware_oriention_(false)
-        , num_triangles_in_polygon_(0)
-        , vertex_manager_(new details::VertexManager)
-        , vertex_data_size_(3)
-    {
-        // Create a tessellator object and set up its callbacks.
-        tess_obj_ = gluNewTess();
+            : primitive_type_(GL_TRIANGLES)
+            , primitive_aware_orientation_(false)
+            , num_triangles_in_polygon_(0)
+            , vertex_manager_(new details::VertexManager)
+            , vertex_data_size_(3) {
+        tess_obj_ = gluNewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
-            std::cerr << "failed to create a tessellator object" << std::endl;
+            LOG(ERROR) << "failed to create a tessellator object";
             return;
         }
 
-    #if defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ == 0)
+#if defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ == 0)
         gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)(...))vertexCallback);
         gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)(...))beginCallback);
         gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)(...))endCallback);
         gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)(...))combineCallback);
-    #elif defined(_WIN32)
+#elif defined(_WIN32)
         gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (VOID(CALLBACK *)())vertexCallback);
         gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (VOID(CALLBACK *)())beginCallback);
         gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (VOID(CALLBACK *)())endCallback);
         gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (VOID(CALLBACK *)())combineCallback);
-    #else
-        gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)())vertexCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)())beginCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)())endCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)())combineCallback);
-    #endif
+#else
+        gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)()) vertexCallback);
+        gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)()) beginCallback);
+        gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)()) endCallback);
+        gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)()) combineCallback);
+#endif
 
         gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
         gluTessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
@@ -171,157 +226,124 @@ namespace easy3d {
     }
 
 
-    void Tessellator::begin_polygon(const vec3 &normal)
-    {
+    void Tessellator::begin_polygon(const vec3 &normal) {
         num_triangles_in_polygon_ = 0;
         gluTessNormal(tess_obj_, normal.x, normal.y, normal.z);
         gluTessBeginPolygon(tess_obj_, this);
     }
 
 
-    void Tessellator::begin_contour()
-    {
+    void Tessellator::begin_contour() {
         gluTessBeginContour(tess_obj_);
     }
 
 
-    void Tessellator::add_vertex(const float* data, unsigned int size) // to be flexible (any data can be provide)
-    {
-        vertex_data_size_ = size;
-        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
-        for (unsigned int i = 0; i < vertex_data_size_; ++i)
-            newPt[i] = data[i];
-
+    void Tessellator::add_vertex(const Vertex &v) {
+        Vertex *new_v = vertex_manager_->find_or_allocate_vertex(&v);
         // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
         // param is the actual vertex data to draw. It is usually same as the second
         // param, but It can be more than vertex coord, for example, color, normal
         // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, newPt, newPt);
+        gluTessVertex(tess_obj_, new_v->data(), new_v);
     }
 
 
-    void Tessellator::add_vertex(const vec3& p)
+    void Tessellator::add_vertex(const float *data, unsigned int size) // to be flexible (any data can be provide)
     {
-        vertex_data_size_ = 3;
-        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
-        for (unsigned int i = 0; i < vertex_data_size_; ++i)
-            newPt[i] = p[i];
-
-        // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
-        // and pointer to vertex data to be passed to vertex callback.
-        // The second param is used only to perform tessellation, and the third
-        // param is the actual vertex data to draw. It is usually same as the second
-        // param, but It can be more than vertex coord, for example, color, normal
-        // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, newPt, newPt);
+        Vertex vertex(size);
+        for (unsigned int i = 0; i < size; ++i)
+            vertex[i] = data[i];
+        add_vertex(vertex);
     }
 
 
-    void Tessellator::add_vertex(const vec3& p, const vec3& c)
-    {
-        vertex_data_size_ = 6;
-        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
-        for (unsigned int i = 0; i < 3; ++i) {
-            newPt[i] = p[i];
-            newPt[i + 3] = c[i];
-        }
+    void Tessellator::add_vertex(const vec3 &v0) {
+        Vertex v;
+        v.append(v0);
+        add_vertex(v);
+    }
 
-        // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
-        // and pointer to vertex data to be passed to vertex callback.
-        // The second param is used only to perform tessellation, and the third
-        // param is the actual vertex data to draw. It is usually same as the second
-        // param, but It can be more than vertex coord, for example, color, normal
-        // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, newPt, newPt);
+    void Tessellator::add_vertex(const vec3 &v0, const vec2 &t) {
+        Vertex v;
+        v.append(v0);
+        v.append(t);
+        add_vertex(v);
+    }
+
+    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1) {
+        Vertex v;
+        v.append(v0);
+        v.append(v1);
+        add_vertex(v);
+    }
+
+    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec2 &t) {
+        Vertex v;
+        v.append(v0);
+        v.append(v1);
+        v.append(t);
+        add_vertex(v);
+    }
+
+    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2) {
+        Vertex v;
+        v.append(v0);
+        v.append(v1);
+        v.append(v2);
+        add_vertex(v);
+    }
+
+    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec2 &t) {
+        Vertex v;
+        v.append(v0);
+        v.append(v1);
+        v.append(v2);
+        v.append(t);
+        add_vertex(v);
     }
 
 
-    void Tessellator::add_vertex(const vec3& p, const vec2& tc)
-    {
-        vertex_data_size_ = 5;
-        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
-        for (unsigned int i = 0; i < 3; ++i) {
-            newPt[i] = p[i];
-        }
-        newPt[3] = tc[0];
-        newPt[4] = tc[1];
-
-        // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
-        // and pointer to vertex data to be passed to vertex callback.
-        // The second param is used only to perform tessellation, and the third
-        // param is the actual vertex data to draw. It is usually same as the second
-        // param, but It can be more than vertex coord, for example, color, normal
-        // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, newPt, newPt);
-    }
-
-
-    void Tessellator::add_vertex(const vec3& p, const vec3& c, const vec2& tc)
-    {
-        vertex_data_size_ = 8;
-        double *newPt = vertex_manager_->allocate_vertex(vertex_data_size_);
-        for (unsigned int i = 0; i < 3; ++i) {
-            newPt[i] = p[i];
-            newPt[i + 3] = c[i];
-        }
-        newPt[6] = tc[0];
-        newPt[7] = tc[1];
-
-        // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
-        // and pointer to vertex data to be passed to vertex callback.
-        // The second param is used only to perform tessellation, and the third
-        // param is the actual vertex data to draw. It is usually same as the second
-        // param, but It can be more than vertex coord, for example, color, normal
-        // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, newPt, newPt);
-    }
-
-
-    void Tessellator::end_contour()
-    {
+    void Tessellator::end_contour() {
         gluTessEndContour(tess_obj_);
     }
 
 
-    void Tessellator::end_polygon()
-    {
+    void Tessellator::end_polygon() {
         gluTessEndPolygon(tess_obj_);
     }
 
 
-    std::size_t Tessellator::num_triangles_in_last_polygon() const
-    {
+    unsigned int Tessellator::num_triangles_in_last_polygon() const {
         return num_triangles_in_polygon_;
     }
 
 
-    const std::vector<const double*>& Tessellator::get_vertices() const {
+    const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
         return vertex_manager_->vertices();
     }
 
 
-    std::size_t Tessellator::num_triangles() const
-    {
+    unsigned int Tessellator::num_triangles() const {
         return triangle_list_.size() / 3;
     }
 
 
-    bool Tessellator::get_triangle(std::size_t t, std::size_t &a, std::size_t &b, std::size_t &c) const
-    {
-        bool ret = (t < triangle_list_.size()/3);
+    bool Tessellator::get_triangle(unsigned int t, unsigned int &a, unsigned int &b, unsigned int &c) const {
+        bool ret = (t < triangle_list_.size() / 3);
         if (ret) {
             a = triangle_list_[t * 3];
             b = triangle_list_[t * 3 + 1];
             c = triangle_list_[t * 3 + 2];
-        }
+        } else
+            LOG(ERROR) << "triangle index " << t << " out of range [0, " << num_triangles() << "]";
+
         return ret;
     }
 
 
-    void Tessellator::add_triangle(std::size_t a, std::size_t b, std::size_t c)
-    {
+    void Tessellator::add_triangle(unsigned int a, unsigned int b, unsigned int c) {
         triangle_list_.push_back(a);
         triangle_list_.push_back(b);
         triangle_list_.push_back(c);
@@ -336,9 +358,8 @@ namespace easy3d {
     //   w: The type of primitives being created (TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN)
     //   cbdata: Callback data that points to "this".
     // ****************************************************************************
-    void Tessellator::beginCallback(GLenum w, void *cbdata)
-    {
-        Tessellator* tessellator = reinterpret_cast<Tessellator*>(cbdata);
+    void Tessellator::beginCallback(GLenum w, void *cbdata) {
+        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         tessellator->primitive_type_ = w;
         tessellator->vertex_ids_in_polygon_.clear();
@@ -354,60 +375,51 @@ namespace easy3d {
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
 
-    void Tessellator::endCallback(void *cbdata)
-    {
-        Tessellator* tessellator = reinterpret_cast<Tessellator*>(cbdata);
+    void Tessellator::endCallback(void *cbdata) {
+        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         // Use the primitive type and intermediate vertex ids to create triangles that
         // get put into the triangle list
-        if (tessellator->primitive_type_ == GL_TRIANGLES)
-        {
-            for (std::size_t i = 0; i < tessellator->vertex_ids_in_polygon_.size(); i += 3)
-            {
+        if (tessellator->primitive_type_ == GL_TRIANGLES) {
+            for (std::size_t i = 0; i < tessellator->vertex_ids_in_polygon_.size(); i += 3) {
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->vertex_ids_in_polygon_[i];
-                std::size_t b = tessellator->vertex_ids_in_polygon_[i + 1];
-                std::size_t c = tessellator->vertex_ids_in_polygon_[i + 2];
+                unsigned int a = tessellator->vertex_ids_in_polygon_[i];
+                unsigned int b = tessellator->vertex_ids_in_polygon_[i + 1];
+                unsigned int c = tessellator->vertex_ids_in_polygon_[i + 2];
                 if (a == b || b == c || a == c)
                     continue;
 
                 tessellator->add_triangle(a, b, c);
             }
-        }
-        else if (tessellator->primitive_type_ == GL_TRIANGLE_STRIP)
-        {
-            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i)
-            {
+        } else if (tessellator->primitive_type_ == GL_TRIANGLE_STRIP) {
+            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i) {
                 std::size_t N = i - 2;
                 std::size_t N_1 = i - 1;
                 std::size_t N_2 = i;
 
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->vertex_ids_in_polygon_[N];
-                std::size_t b = tessellator->vertex_ids_in_polygon_[N_1];
-                std::size_t c = tessellator->vertex_ids_in_polygon_[N_2];
+                unsigned int a = tessellator->vertex_ids_in_polygon_[N];
+                unsigned int b = tessellator->vertex_ids_in_polygon_[N_1];
+                unsigned int c = tessellator->vertex_ids_in_polygon_[N_2];
                 if (a == b || b == c || a == c)
                     continue;
 
                 int flag = (i - 2) % 2;
-                if (tessellator->primitive_aware_oriention_ || flag == 0)
+                if (tessellator->primitive_aware_orientation_ || flag == 0)
                     tessellator->add_triangle(a, b, c);
                 else
                     tessellator->add_triangle(b, a, c);
             }
-        }
-        else if (tessellator->primitive_type_ == GL_TRIANGLE_FAN)
-        {
-            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i)
-            {
+        } else if (tessellator->primitive_type_ == GL_TRIANGLE_FAN) {
+            for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i) {
                 std::size_t N = 0;
                 std::size_t N_1 = i - 1;
                 std::size_t N_2 = i;
 
                 // Prevent degenerate triangles
-                std::size_t a = tessellator->vertex_ids_in_polygon_[N];
-                std::size_t b = tessellator->vertex_ids_in_polygon_[N_1];
-                std::size_t c = tessellator->vertex_ids_in_polygon_[N_2];
+                unsigned int a = tessellator->vertex_ids_in_polygon_[N];
+                unsigned int b = tessellator->vertex_ids_in_polygon_[N_1];
+                unsigned int c = tessellator->vertex_ids_in_polygon_[N_2];
                 if (a == b || b == c || a == c)
                     continue;
 
@@ -427,13 +439,11 @@ namespace easy3d {
     //   vertex : The triangle vertex.
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
-    void Tessellator::vertexCallback(GLvoid *vertex, void *cbdata)
-    {
-        double* p = reinterpret_cast<double*>(vertex);
-        Tessellator* tessellator = reinterpret_cast<Tessellator*>(cbdata);
-
+    void Tessellator::vertexCallback(GLvoid *vertex, void *cbdata) {
+        Vertex *v = reinterpret_cast<Vertex *>(vertex);
+        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
-        std::size_t id = tessellator->vertex_manager_->get_vertex_id(p);
+        std::size_t id = tessellator->vertex_manager_->vertex_id(v);
         tessellator->vertex_ids_in_polygon_.push_back(id);
     }
 
@@ -444,14 +454,14 @@ namespace easy3d {
     //   to be combined.
     // ****************************************************************************
     void Tessellator::combineCallback(double coords[3],
-        void *vertex_data[4],
-        GLdouble weight[4], void **dataOut, void *cbdata)
-    {
-        Tessellator* tessellator = reinterpret_cast<Tessellator*>(cbdata);
+                                      void *vertex_data[4],
+                                      GLdouble weight[4], void **dataOut, void *cbdata) {
+        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
+
         unsigned int size = tessellator->vertex_data_size_;
-        double *vertex = tessellator->vertex_manager_->allocate_vertex(size);
+        Vertex v(size);
         for (std::size_t i = 0; i < 3; ++i)
-            vertex[i] = coords[i];
+            v[i] = coords[i];
 
         // Blend the height data for the vertex.
         double **vd = reinterpret_cast<double **>(vertex_data);
@@ -460,11 +470,10 @@ namespace easy3d {
             double b = (vertex_data[1]) ? (weight[1] * vd[1][i]) : 0.;
             double c = (vertex_data[2]) ? (weight[2] * vd[2][i]) : 0.;
             double d = (vertex_data[3]) ? (weight[3] * vd[3][i]) : 0.;
-
-            vertex[i] = a + b + c + d;
+            v[i] = a + b + c + d;
         }
 
-        *dataOut = vertex;
+        *dataOut = tessellator->vertex_manager_->find_or_allocate_vertex(&v);
     }
 
 
