@@ -27,6 +27,9 @@
 #include <cstring>
 #include <iostream>
 
+
+// This PLY reader/writer is based on rply. Here is a simple benchmark comparing various libraries for ply file i/o
+// https://github.com/mhalber/ply_io_benchmark
 #include <3rd_party/rply/rply.h>
 
 
