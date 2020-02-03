@@ -100,7 +100,7 @@ namespace easy3d {
 
             /**
              * \brief A quick check of the number of instances of type \c 'element'.
-             *        This is helpfull to determine if a file store a point cloud,
+             *        This is helpful to determine if a file store a point cloud,
              *        a graph, or a mesh. Internally it reads the ply file header only
              *        (without loading the entire file).
              * \param name A string denoting the type of the element to be checked.

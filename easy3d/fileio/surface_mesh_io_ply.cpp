@@ -26,6 +26,7 @@
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -156,7 +157,7 @@ namespace easy3d {
 			for (auto indices : face_vertex_indices) {
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
-                    vts.push_back(SurfaceMesh::Vertex(id));
+                    vts.emplace_back(SurfaceMesh::Vertex(id));
 				builder.add_face(vts);
 			}
 
@@ -204,8 +205,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "v:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("vertex", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>("vertex", name, prop.vector()));
 					}
 				}
 			}
@@ -218,8 +218,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "f:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("face", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>("face", name, prop.vector()));
 					}
 				}
 			}
@@ -233,8 +232,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "e:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("edge", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>("edge", name, prop.vector()));
 					}
 				}
 			}
@@ -326,8 +324,7 @@ namespace easy3d {
 
 			//-----------------------------------------------------
 
-			if (!binary)
-				std::cout << "TODO: use binary format" << std::endl;
+			DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance" << std::endl;
 
 			PlyWriter writer;
 			return writer.write(file_name, elements, "", binary);

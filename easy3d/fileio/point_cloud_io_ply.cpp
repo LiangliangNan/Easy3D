@@ -29,6 +29,7 @@
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/types.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -96,8 +97,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "v:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("vertex", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>("vertex", name, prop.vector()));
 					}
 				}
 			}
@@ -122,8 +122,7 @@ namespace easy3d {
 			std::vector<Element> elements;
             elements.emplace_back(e);
 
-			if (!binary)
-				std::cout << "TODO: use binary format" << std::endl;
+            DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance" << std::endl;
 
 			PlyWriter writer;
 			return writer.write(file_name, elements, "", binary);
