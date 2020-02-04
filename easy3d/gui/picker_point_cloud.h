@@ -39,10 +39,25 @@ namespace easy3d {
     public:
         PointCloudPicker(Camera *cam);
 
-        // returns the number of points picked
+        /**
+         * @brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex property
+         * "v:select".
+         * @param min_x The min_x component of the rectangle.
+         * @param max_x The max_x component of the rectangle.
+         * @param min_y The min_y component of the rectangle.
+         * @param max_y The max_y component of the rectangle.
+         * @param deselect True to perform an inverse operation.
+         * @return The number of vertices selected during this operation (despite their previous status).
+         */
         int pick_vertices(PointCloud *model, int min_x, int max_x, int min_y, int max_y, bool deselect);
 
-        // returns the number of points picked
+        /**
+         * @brief Pick vertices of a point cloud by a polygon/lasso. The selected vertices will be marked in vertex
+         * property "v:select".
+         * @param plg The polygon stored as a 1D array.
+         * @param deselect True to perform an inverse operation.
+         * @return The number of vertices selected during this operation (despite their previous status).
+         */
         int pick_vertices(PointCloud *model, const std::vector<vec2> &plg, bool deselect);
 
     private:

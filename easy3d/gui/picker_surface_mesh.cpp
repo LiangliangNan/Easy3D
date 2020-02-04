@@ -37,7 +37,7 @@ namespace easy3d {
 
     SurfaceMeshPicker::SurfaceMeshPicker(Camera *cam)
             : Picker(cam), hit_resolution_(15), program_(nullptr) {
-        use_gpu_ = true;
+        use_gpu_if_supported_ = true;
     }
 
 
@@ -49,18 +49,20 @@ namespace easy3d {
         if (!model)
             return SurfaceMesh::Face();
 
-        if (use_gpu_) {
+        if (use_gpu_if_supported_) {
             program_ = ShaderManager::get_program("selection/selection_single_primitive");
             if (!program_) {
                 std::vector<ShaderProgram::Attribute> attributes;
                 attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
                 program_ = ShaderManager::create_program_from_files("selection/selection_single_primitive", attributes);
             }
-            if (!program_)
-                use_gpu_ = false;
+            if (!program_) {
+                use_gpu_if_supported_ = false;
+                LOG_FIRST_N(ERROR, 1) << "shader program not available, default to CPU implementation (this is the first record)";
+            }
         }
 
-        if (use_gpu_)
+        if (use_gpu_if_supported_)
             return pick_face_gpu(model, x, y);
         else // CPU with OpenMP (if supported)
             return pick_face_cpu(model, x, y);
@@ -324,5 +326,148 @@ namespace easy3d {
 
         return SurfaceMesh::Face();
     }
+
+
+    int	SurfaceMeshPicker::pick_faces(SurfaceMesh *model, int min_x, int max_x, int min_y, int max_y, bool deselect) {
+        if (!model)
+            return 0;
+
+        int win_width = camera()->screenWidth();
+        int win_height = camera()->screenHeight();
+
+        float minX = min_x / float(win_width - 1);
+        float minY = 1.0f - min_y / float(win_height - 1);
+        float maxX = max_x / float(win_width - 1);
+        float maxY = 1.0f - max_y / float(win_height - 1);
+        if (minX > maxX)	std::swap(minX, maxX);
+        if (minY > maxY)	std::swap(minY, maxY);
+
+        // Get combined model-view and projection matrix
+        const mat4& m = camera()->modelViewProjectionMatrix();
+        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
+        int num = model->vertices_size();
+
+        // because in rendering vertices maybe duplicated, so I first test for each vertex.
+        std::vector<bool> status(num);
+
+#pragma omp parallel for
+        for (int i = 0; i < num; ++i) {
+            const vec3& p = points[i];
+            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
+            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
+            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
+            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
+            x /= w;
+            y /= w;
+            x = 0.5f * x + 0.5f;
+            y = 0.5f * y + 0.5f;
+
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                status[i] = true;
+            }
+        }
+
+        auto select = model->face_property<bool>("v:select");
+        // a face is selected if all its vertices are selected
+        int count(0);
+        for (auto f : model->faces()) {
+            bool selected = true;
+            for (auto v : model->vertices(f)) {
+                if (!status[v.idx()]) {
+                    selected = false;
+                    break;
+                }
+            }
+
+            if (selected) {
+                select[f] = !deselect;
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
+
+    int SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const std::vector<vec2> &plg, bool deselect) {
+        if (!model)
+            return 0;
+
+        int win_width = camera()->screenWidth();
+        int win_height = camera()->screenHeight();
+
+        float minX = FLT_MAX;
+        float minY = FLT_MAX;
+        float maxX = -FLT_MAX;
+        float maxY = -FLT_MAX;
+        std::vector<vec2> region; // the transformed selection region
+        for (std::size_t i = 0; i < plg.size(); ++i) {
+            const vec2 &p = plg[i];
+            minX = std::min(minX, p.x);
+            minY = std::min(minY, p.y);
+            maxX = std::max(maxX, p.x);
+            maxY = std::max(maxY, p.y);
+
+            float x = p.x / float(win_width - 1);
+            float y = 1.0f - p.y / float(win_height - 1);
+            region.push_back(vec2(x, y));
+        }
+
+        minX = minX / float(win_width - 1);
+        minY = 1.0f - minY / float(win_height - 1);
+        maxX = maxX / float(win_width - 1);
+        maxY = 1.0f - maxY / float(win_height - 1);
+        if (minX > maxX)
+            std::swap(minX, maxX);
+        if (minY > maxY)
+            std::swap(minY, maxY);
+
+        // Get combined model-view and projection matrix
+        const mat4& m = camera()->modelViewProjectionMatrix();
+        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
+        int num = model->vertices_size();
+
+        // because in rendering vertices maybe duplicated, so I first test for each vertex.
+        std::vector<bool> status(num);
+
+#pragma omp parallel for
+        for (int i = 0; i < num; ++i) {
+            const vec3& p = points[i];
+            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
+            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
+            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
+            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
+            x /= w;
+            y /= w;
+            x = 0.5f * x + 0.5f;
+            y = 0.5f * y + 0.5f;
+
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                if (geom::point_in_polygon(vec2(x, y), region))
+                    status[i] = true;
+            }
+        }
+
+        auto select = model->face_property<bool>("v:select");
+        // a face is selected if all its vertices are selected
+        int count(0);
+        for (auto f : model->faces()) {
+            bool selected = true;
+            for (auto v : model->vertices(f)) {
+                if (!status[v.idx()]) {
+                    selected = false;
+                    break;
+                }
+            }
+
+            if (selected) {
+                select[f] = !deselect;
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
 
 }

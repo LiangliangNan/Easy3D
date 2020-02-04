@@ -112,7 +112,7 @@ namespace easy3d {
     protected:
         Camera *camera_;
 
-        bool use_gpu_; // use GPU if supported
+        bool use_gpu_if_supported_; // use GPU if supported
 
         // Only one fbo is required for all the picking tasks
         static FramebufferObject *fbo_;

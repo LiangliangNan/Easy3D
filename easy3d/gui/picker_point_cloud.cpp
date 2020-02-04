@@ -39,7 +39,7 @@ namespace easy3d {
 
     PointCloudPicker::PointCloudPicker(Camera *cam)
             : Picker(cam) {
-        use_gpu_ = false;
+        use_gpu_if_supported_ = true;
     }
 
 
@@ -47,20 +47,27 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        if (use_gpu_ && OpenglInfo::gl_version_number() >= 4.3) {
-            auto program = ShaderManager::get_program("selection/selection_pointcloud_rect");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                program = ShaderManager::create_program_from_files("selection/selection_pointcloud_rect", attributes);
+        if (use_gpu_if_supported_) {
+            if (OpenglInfo::gl_version_number() >= 4.3) {
+                auto program = ShaderManager::get_program("selection/selection_pointcloud_rect");
+                if (!program) {
+                    std::vector<ShaderProgram::Attribute> attributes;
+                    attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                    program = ShaderManager::create_program_from_files("selection/selection_pointcloud_rect",
+                                                                       attributes);
+                }
+                if (program)
+                    return pick_vertices_gpu(model, min_x, max_x, min_y, max_y, deselect, program);
+                else {
+                    LOG_FIRST_N(ERROR, 1)
+                        << "shader program not available, default to CPU implementation (this is the first record)";
+                }
             }
-            if (program)
-                return pick_vertices_gpu(model, min_x, max_x, min_y, max_y, deselect, program);
-            else
-                LOG(WARNING) << "shader program not found, default to CPU implementation";
+            else {
+                LOG_FIRST_N(ERROR, 1)
+                    << "shader program not available, default to CPU implementation (this is the first record)";
+            }
         }
-
-        LOG_IF(WARNING, use_gpu_ && OpenglInfo::gl_version_number() < 4.3) << "GPU implementation requires OpenGL >= 4.3. Default to CPU implementation";
 
         // CPU with OpenMP (if supported)
         return pick_vertices_cpu(model, min_x, max_x, min_y, max_y, deselect);
@@ -74,20 +81,27 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        if (use_gpu_ && OpenglInfo::gl_version_number() >= 4.3) {
-            auto program = ShaderManager::get_program("selection/selection_pointcloud_lasso");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                program = ShaderManager::create_program_from_files("selection/selection_pointcloud_lasso", attributes);
+        if (use_gpu_if_supported_) {
+            if (OpenglInfo::gl_version_number() >= 4.3) {
+                auto program = ShaderManager::get_program("selection/selection_pointcloud_lasso");
+                if (!program) {
+                    std::vector<ShaderProgram::Attribute> attributes;
+                    attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                    program = ShaderManager::create_program_from_files("selection/selection_pointcloud_lasso",
+                                                                       attributes);
+                }
+                if (program)
+                    return pick_vertices_gpu(model, plg, deselect, program);
+                else {
+                    LOG_FIRST_N(ERROR, 1)
+                        << "shader program not available, default to CPU implementation (this is the first record)";
+                }
             }
-            if (program)
-                return pick_vertices_gpu(model, plg, deselect, program);
-            else
-                LOG(WARNING) << "shader program not found, default to CPU implementation";
+            else {
+                LOG_FIRST_N(WARNING, 1)
+                                << "GPU implementation requires OpenGL >= 4.3, default to CPU implementation (this is the first record)";
+            }
         }
-
-        LOG_IF(WARNING, use_gpu_ && OpenglInfo::gl_version_number() < 4.3) << "GPU implementation requires OpenGL >= 4.3. Default to CPU implementation";
 
         // CPU with OpenMP (if supported)
         return pick_vertices_cpu(model, plg, deselect);
@@ -108,11 +122,11 @@ namespace easy3d {
         if (minX > maxX) std::swap(minX, maxX);
         if (minY > maxY) std::swap(minY, maxY);
 
-        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
+        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
         const mat4 &m = camera()->modelViewProjectionMatrix();
 
-        auto& select = model->vertex_property<bool>("v:select").vector();
+        auto &select = model->vertex_property<bool>("v:select").vector();
 
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -135,12 +149,10 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, int xmin, int xmax, int ymin, int ymax, bool deselect, ShaderProgram *program) {
+    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, int xmin, int xmax, int ymin, int ymax, bool deselect,
+                                            ShaderProgram *program) {
         if (!model)
             return 0;
-
-        LOG(WARNING) << "not implemented yet";
-        return 0;
 
         auto drawable = model->points_drawable("vertices");
 //        int num_before = drawable->num_selected();
@@ -211,11 +223,11 @@ namespace easy3d {
         if (minY > maxY)
             std::swap(minY, maxY);
 
-        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
+        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
         const mat4 &m = camera()->modelViewProjectionMatrix();
 
-        auto& select = model->vertex_property<bool>("v:select").vector();
+        auto &select = model->vertex_property<bool>("v:select").vector();
 
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -244,12 +256,10 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect, ShaderProgram *program) {
+    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect,
+                                            ShaderProgram *program) {
         if (!model)
             return 0;
-
-        LOG(WARNING) << "not implemented yet";
-        return 0;
 
         auto drawable = model->points_drawable("vertices");
 //        int num_before = drawable->num_selected();

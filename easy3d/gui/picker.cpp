@@ -35,7 +35,7 @@ namespace easy3d {
 
 
     Picker::Picker(Camera *cam)
-            : camera_(cam), use_gpu_(true) {
+            : camera_(cam), use_gpu_if_supported_(true) {
     }
 
 
