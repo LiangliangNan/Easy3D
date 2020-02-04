@@ -132,12 +132,13 @@ namespace easy3d {
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
                     auto vertex = new Tessellator::Vertex(v);
-                    vertex->index = unique_vertices_.size();
-                    hash_table_[key] = vertex;
+                    hash_table_[key] = unique_vertices_.size();
+//                    std::cout << "new: " << key << ", index: " << unique_vertices_.size() << ", xyz: " << *v << std::endl;
                     unique_vertices_.push_back(vertex);
                     return vertex;
                 } else {
-                    return pos->second;
+//                    std::cout << "old: " << key << ", index: " << hash_table_[key] << ", xyz: " << *v << std::endl;
+                    return unique_vertices_[pos->second];
                 }
             }
 
@@ -150,7 +151,7 @@ namespace easy3d {
             }
 
             std::size_t vertex_id(const Tessellator::Vertex *v) {
-                return hash_table_[hash(v)]->index;
+                return hash_table_[hash(v)];
             }
 
         private:
@@ -173,8 +174,8 @@ namespace easy3d {
 
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
-            // vertex -> index
-            std::unordered_map<std::size_t, Tessellator::Vertex *> hash_table_;
+            // key -> index
+            std::unordered_map<std::size_t, std::size_t> hash_table_;
         };
     }
 

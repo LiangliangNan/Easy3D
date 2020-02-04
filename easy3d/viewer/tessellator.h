@@ -63,8 +63,6 @@ namespace easy3d {
                 for (int i=0; i<v.size(); ++i)
                     push_back(v[i]);
             }
-
-            std::size_t index;
         };
 
     public:
