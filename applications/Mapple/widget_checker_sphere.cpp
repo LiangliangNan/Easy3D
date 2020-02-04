@@ -168,7 +168,6 @@ void WidgetCheckerSphere::createSpheres() {
     checkerSphere_->update_vertex_buffer(vertices);
     checkerSphere_->update_normal_buffer(normals);
     checkerSphere_->update_color_buffer(colors);
-    checkerSphere_->set_per_vertex_color(true);
 
     // light
     vertices.clear();
@@ -179,7 +178,6 @@ void WidgetCheckerSphere::createSpheres() {
     lightSphere_->update_vertex_buffer(vertices);
     lightSphere_->update_normal_buffer(normals);
     lightSphere_->update_color_buffer(colors);
-    lightSphere_->set_per_vertex_color(true);
 }
 
 
@@ -207,18 +205,24 @@ void WidgetCheckerSphere::paintGL() {
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-    program->set_uniform("two_sides_lighting", false);
-    program->set_uniform("MVP", MVP);
-    program->set_uniform("wLightPos", wLightPos);
-    program->set_uniform("wCamPos", wCamPos);
-    program->set_uniform("ssaoEnabled", false);
-    program->set_uniform("per_vertex_color", true);
-    program->set_block_uniform("Material", "ambient", setting::material_ambient);
-    program->set_block_uniform("Material", "specular", setting::material_specular);
-    program->set_block_uniform("Material", "shininess", &setting::material_shininess);
+    program->set_uniform("MVP", MVP)
+            ->set_uniform("lighting", true)
+            ->set_uniform("wLightPos", wLightPos)
+            ->set_uniform("wCamPos", wCamPos)
+            ->set_uniform("two_sides_lighting", false)
+            ->set_uniform("distinct_back_color", false)
+            ->set_uniform("smooth_shading", true)
+            ->set_uniform("ssaoEnabled", false)
+            ->set_uniform("per_vertex_color", true)
+            ->set_block_uniform("Material", "ambient", setting::material_ambient)
+            ->set_block_uniform("Material", "specular", setting::material_specular)
+            ->set_block_uniform("Material", "shininess", &setting::material_shininess);
+
     program->set_uniform("MANIP", mat4::translation(lightPos_));
-    lightSphere_->draw(camera_, false);
+    lightSphere_->gl_draw(false);
+
     program->set_uniform("MANIP", mat4::identity());
-    checkerSphere_->draw(camera_, false);
+    checkerSphere_->gl_draw(false);
+
     program->release();
 }
