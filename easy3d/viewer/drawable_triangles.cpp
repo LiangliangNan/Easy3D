@@ -137,8 +137,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
                 ->bind_texture("textureID", texture()->id(), 0)
-                ->set_uniform("texture_repeat", 1.0f)      // TODO: make this a parameter
-                ->set_uniform("fractional_repeat", 0.0f);  // TODO: make this a parameter
+                ->set_uniform("texture_repeat", texture()->repeat())
+                ->set_uniform("fractional_repeat", texture()->fractional_repeat());
         gl_draw(with_storage_buffer);
         program->release_texture();
         program->release();

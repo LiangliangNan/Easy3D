@@ -29,6 +29,7 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/tessellator.h>
+#include <easy3d/viewer/texture.h>
 #include <easy3d/core/random.h>
 #include <easy3d/util/logging.h>
 
@@ -204,6 +205,13 @@ namespace easy3d {
             if (!d_texcoords.empty()) {
                 drawable->update_texcoord_buffer(d_texcoords);
                 drawable->set_per_vertex_color(true);
+
+#if 0 // Model has texture coordinates, should we put a default texture?
+                const std::string texture_file = setting::resource_directory() + "/textures/checkerboard_gray.png";
+                auto tex = Texture::create(texture_file, GL_REPEAT);
+                tex->set_repeat(10);
+                drawable->set_texture(tex);
+#endif
             }
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();

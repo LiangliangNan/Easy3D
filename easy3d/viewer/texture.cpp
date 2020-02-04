@@ -34,6 +34,8 @@ namespace easy3d {
 
     Texture::Texture()
         : id_(0)
+        , repeat_(1.0f)
+        , fractional_repeat_(0.0f)
     {
         sizes_[0] = 0;
         sizes_[1] = 0;
