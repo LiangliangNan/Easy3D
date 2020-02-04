@@ -29,6 +29,7 @@
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
@@ -68,6 +69,11 @@ namespace easy3d {
             vao_ = nullptr;
         }
 
+        if (texture_) {
+            delete texture_;
+            texture_ = nullptr;
+        }
+
         VertexArrayObject::release_buffer(vertex_buffer_);
         VertexArrayObject::release_buffer(color_buffer_);
         VertexArrayObject::release_buffer(normal_buffer_);
@@ -87,12 +93,23 @@ namespace easy3d {
         std::cout << "\t" << name() << std::endl;
 
         if (vertex_buffer()) {
-            std::cout << "\t\tVertex buffer: " << num_vertices_ << " vertices, "
+            std::cout << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
                       << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
-
+        if (normal_buffer()) {
+            std::cout << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+        if (color_buffer()) {
+            std::cout << "\t\tColor buffer:      " << num_vertices_ << " colors, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+        if (texcoord_buffer()) {
+            std::cout << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
+                      << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
+        }
         if (index_buffer()) {
-            std::cout << "\t\tIndex buffer:  " << num_indices_ << " indices, "
+            std::cout << "\t\tIndex buffer:      " << num_indices_ << " indices, "
                       << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
         }
     }

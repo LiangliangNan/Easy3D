@@ -155,8 +155,7 @@ namespace easy3d {
 
             // now the material
             if (!materials.empty()) {
-                mesh->add_face_property<vec3>("f:color");
-                auto face_color = mesh->get_face_property<vec3>("f:color");
+                auto face_color = mesh->add_face_property<vec3>("f:color");
                 int face_idx = 0;
                 for (std::size_t i = 0; i < shapes.size(); i++) {
                     for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
