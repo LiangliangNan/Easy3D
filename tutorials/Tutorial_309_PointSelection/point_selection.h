@@ -47,7 +47,7 @@ protected:
     std::string usage() const override;
 
 private:
-    std::vector<easy3d::vec2> polygon_;
+    easy3d::Polygon2 polygon_;
 };
 
 

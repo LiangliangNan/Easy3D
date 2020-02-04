@@ -42,33 +42,27 @@ namespace easy3d {
         /**
          * @brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex property
          * "v:select".
-         * @param min_x The min_x component of the rectangle.
-         * @param max_x The max_x component of the rectangle.
-         * @param min_y The min_y component of the rectangle.
-         * @param max_y The max_y component of the rectangle.
+         * @param rect The rectangle region.
          * @param deselect True to perform an inverse operation.
          * @return The number of vertices selected during this operation (despite their previous status).
          */
-        int pick_vertices(PointCloud *model, int min_x, int max_x, int min_y, int max_y, bool deselect);
+        int pick_vertices(PointCloud *model, const Rect& rect, bool deselect);
 
         /**
          * @brief Pick vertices of a point cloud by a polygon/lasso. The selected vertices will be marked in vertex
          * property "v:select".
-         * @param plg The polygon stored as a 1D array.
+         * @param plg The polygon region.
          * @param deselect True to perform an inverse operation.
          * @return The number of vertices selected during this operation (despite their previous status).
          */
-        int pick_vertices(PointCloud *model, const std::vector<vec2> &plg, bool deselect);
+        int pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 
     private:
-        int pick_vertices_cpu(PointCloud *model, int min_x, int max_x, int min_y, int max_y, bool deselect);
+        int pick_vertices_cpu(PointCloud *model, const Rect& rect, bool deselect);
+        int pick_vertices_gpu(PointCloud *model, const Rect& rect, bool deselect, ShaderProgram *program);
 
-        int pick_vertices_cpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect);
-
-        int pick_vertices_gpu(PointCloud *model, int min_x, int max_x, int min_y, int max_y, bool deselect,
-                              ShaderProgram *program);
-
-        int pick_vertices_gpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect, ShaderProgram *program);
+        int pick_vertices_cpu(PointCloud *model, const Polygon2 &plg, bool deselect);
+        int pick_vertices_gpu(PointCloud *model, const Polygon2 &plg, bool deselect, ShaderProgram *program);
     };
 
 }

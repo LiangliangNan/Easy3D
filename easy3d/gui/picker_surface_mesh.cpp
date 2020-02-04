@@ -328,19 +328,19 @@ namespace easy3d {
     }
 
 
-    int	SurfaceMeshPicker::pick_faces(SurfaceMesh *model, int min_x, int max_x, int min_y, int max_y, bool deselect) {
+    int	SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect) {
         if (!model)
             return 0;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
-        float minX = min_x / float(win_width - 1);
-        float minY = 1.0f - min_y / float(win_height - 1);
-        float maxX = max_x / float(win_width - 1);
-        float maxY = 1.0f - max_y / float(win_height - 1);
-        if (minX > maxX)	std::swap(minX, maxX);
-        if (minY > maxY)	std::swap(minY, maxY);
+        float xmin = rect.left() / (win_width - 1.0f);
+        float ymin = 1.0f - rect.top() / (win_height - 1.0f);
+        float xmax = rect.right() / (win_width - 1);
+        float ymax = 1.0f - rect.bottom() / (win_height - 1.0f);
+        if (xmin > xmax) std::swap(xmin, xmax);
+        if (ymin > ymax) std::swap(ymin, ymax);
 
         // Get combined model-view and projection matrix
         const mat4& m = camera()->modelViewProjectionMatrix();
@@ -362,7 +362,7 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 status[i] = true;
             }
         }
@@ -389,38 +389,28 @@ namespace easy3d {
     }
 
 
-    int SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const std::vector<vec2> &plg, bool deselect) {
+    int SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect) {
         if (!model)
             return 0;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
-        float minX = FLT_MAX;
-        float minY = FLT_MAX;
-        float maxX = -FLT_MAX;
-        float maxY = -FLT_MAX;
         std::vector<vec2> region; // the transformed selection region
         for (std::size_t i = 0; i < plg.size(); ++i) {
             const vec2 &p = plg[i];
-            minX = std::min(minX, p.x);
-            minY = std::min(minY, p.y);
-            maxX = std::max(maxX, p.x);
-            maxY = std::max(maxY, p.y);
-
             float x = p.x / float(win_width - 1);
             float y = 1.0f - p.y / float(win_height - 1);
             region.push_back(vec2(x, y));
         }
 
-        minX = minX / float(win_width - 1);
-        minY = 1.0f - minY / float(win_height - 1);
-        maxX = maxX / float(win_width - 1);
-        maxY = 1.0f - maxY / float(win_height - 1);
-        if (minX > maxX)
-            std::swap(minX, maxX);
-        if (minY > maxY)
-            std::swap(minY, maxY);
+        const Box2& box = plg.bbox();
+        float xmin = box.min().x / (win_width - 1.0f);
+        float ymin = 1.0f - box.min().y / (win_height - 1.0f);
+        float xmax = box.max().x / (win_width - 1);
+        float ymax = 1.0f - box.max().y / (win_height - 1.0f);
+        if (xmin > xmax) std::swap(xmin, xmax);
+        if (ymin > ymax) std::swap(ymin, ymax);
 
         // Get combined model-view and projection matrix
         const mat4& m = camera()->modelViewProjectionMatrix();
@@ -442,7 +432,7 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 if (geom::point_in_polygon(vec2(x, y), region))
                     status[i] = true;
             }

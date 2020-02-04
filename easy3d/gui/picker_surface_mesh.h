@@ -132,23 +132,20 @@ namespace easy3d {
         /**
          * @brief Pick faces of a surface mesh by a rectangle. The selected faces will be marked in face property
          * "f:select".
-         * @param min_x The min_x component of the rectangle.
-         * @param max_x The max_x component of the rectangle.
-         * @param min_y The min_y component of the rectangle.
-         * @param max_y The max_y component of the rectangle.
+         * @param rect The rectangle region.
          * @param deselect True to perform an inverse operation.
          * @return The number of faces selected during this operation (despite their previous status).
          */
-        int pick_faces(SurfaceMesh *model, int min_x, int max_x, int min_y, int max_y, bool deselect);
+        int pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect);
 
         /**
          * @brief Pick faces of a surface mesh by a polygon/lasso. The selected faces will be marked in face property
          * "f:select".
-         * @param plg The polygon stored as a 1D array.
+         * @param plg The polygon region.
          * @param deselect True to perform an inverse operation.
          * @return The number of faces selected during this operation (despite their previous status).
          */
-        int pick_faces(SurfaceMesh *model, const std::vector<vec2> &plg, bool deselect);
+        int pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect);
 
     private:
         // selection implemented in GPU (using shader program)

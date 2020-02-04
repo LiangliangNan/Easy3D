@@ -43,7 +43,7 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices(PointCloud *model, int min_x, int max_x, int min_y, int max_y, bool deselect) {
+    int PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
         if (!model)
             return 0;
 
@@ -57,7 +57,7 @@ namespace easy3d {
                                                                        attributes);
                 }
                 if (program)
-                    return pick_vertices_gpu(model, min_x, max_x, min_y, max_y, deselect, program);
+                    return pick_vertices_gpu(model, rect, deselect, program);
                 else {
                     LOG_FIRST_N(ERROR, 1)
                         << "shader program not available, default to CPU implementation (this is the first record)";
@@ -70,11 +70,11 @@ namespace easy3d {
         }
 
         // CPU with OpenMP (if supported)
-        return pick_vertices_cpu(model, min_x, max_x, min_y, max_y, deselect);
+        return pick_vertices_cpu(model, rect, deselect);
     }
 
 
-    int PointCloudPicker::pick_vertices(PointCloud *model, const std::vector<vec2> &plg, bool deselect) {
+    int PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
         if (!model)
             return 0;
 
@@ -108,19 +108,19 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, int xmin, int xmax, int ymin, int ymax, bool deselect) {
+    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, const Rect& rect, bool deselect) {
         if (!model)
             return 0;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
-        float minX = xmin / float(win_width - 1);
-        float minY = 1.0f - ymin / float(win_height - 1);
-        float maxX = xmax / float(win_width - 1);
-        float maxY = 1.0f - ymax / float(win_height - 1);
-        if (minX > maxX) std::swap(minX, maxX);
-        if (minY > maxY) std::swap(minY, maxY);
+        float xmin = rect.left() / (win_width - 1.0f);
+        float ymin = 1.0f - rect.top() / (win_height - 1.0f);
+        float xmax = rect.right() / (win_width - 1);
+        float ymax = 1.0f - rect.bottom() / (win_height - 1.0f);
+        if (xmin > xmax) std::swap(xmin, xmax);
+        if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
@@ -140,7 +140,7 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 select[i] = true;
             }
         }
@@ -149,8 +149,7 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, int xmin, int xmax, int ymin, int ymax, bool deselect,
-                                            ShaderProgram *program) {
+    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const Rect& rect, bool deselect, ShaderProgram *program) {
         if (!model)
             return 0;
 
@@ -161,13 +160,13 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         int width = viewport[2];
         int height = viewport[3];
-        vec4 rect((float) xmin, (float) xmax, (float) ymin, (float) ymax);
+        vec4 rectangle(rect.x_min(), rect.x_max(), rect.y_min(), rect.y_max());
         const mat4 &MVP = camera()->modelViewProjectionMatrix();
 
         program->bind();
         program->set_uniform("viewport", viewport);
         program->set_uniform("MVP", MVP);
-        program->set_uniform("rect", rect);
+        program->set_uniform("rect", rectangle);
         program->set_uniform("deselect", deselect);
         drawable->gl_draw(true);
         program->release();
@@ -190,38 +189,28 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect) {
+    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, const Polygon2 &plg, bool deselect) {
         if (!model)
             return 0;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
-        float minX = FLT_MAX;
-        float minY = FLT_MAX;
-        float maxX = -FLT_MAX;
-        float maxY = -FLT_MAX;
         std::vector<vec2> region; // the transformed selection region
         for (std::size_t i = 0; i < plg.size(); ++i) {
             const vec2 &p = plg[i];
-            minX = std::min(minX, p.x);
-            minY = std::min(minY, p.y);
-            maxX = std::max(maxX, p.x);
-            maxY = std::max(maxY, p.y);
-
             float x = p.x / float(win_width - 1);
             float y = 1.0f - p.y / float(win_height - 1);
             region.push_back(vec2(x, y));
         }
 
-        minX = minX / float(win_width - 1);
-        minY = 1.0f - minY / float(win_height - 1);
-        maxX = maxX / float(win_width - 1);
-        maxY = 1.0f - maxY / float(win_height - 1);
-        if (minX > maxX)
-            std::swap(minX, maxX);
-        if (minY > maxY)
-            std::swap(minY, maxY);
+        const Box2& box = plg.bbox();
+        float xmin = box.min().x / (win_width - 1.0f);
+        float ymin = 1.0f - box.min().y / (win_height - 1.0f);
+        float xmax = box.max().x / (win_width - 1);
+        float ymax = 1.0f - box.max().y / (win_height - 1.0f);
+        if (xmin > xmax) std::swap(xmin, xmax);
+        if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
@@ -241,7 +230,7 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 if (geom::point_in_polygon(vec2(x, y), region))
                     select[i] = true;
             }
@@ -256,8 +245,7 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const std::vector<vec2> &plg, bool deselect,
-                                            ShaderProgram *program) {
+    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const Polygon2 &plg, bool deselect, ShaderProgram *program) {
         if (!model)
             return 0;
 

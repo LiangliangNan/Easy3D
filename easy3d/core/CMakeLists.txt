@@ -32,7 +32,7 @@ set(${PROJECT_NAME}_SOURCES
         point_cloud.cpp
         surface_mesh.cpp
         manifold_builder.cpp
-		)
+        polygon.h)
 
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})

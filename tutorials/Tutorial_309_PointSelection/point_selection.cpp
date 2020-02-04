@@ -34,7 +34,7 @@
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
-#define  TEST_LASSO 1
+#define  TEST_LASSO     1
 
 using namespace easy3d;
 
@@ -70,9 +70,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 #if TEST_LASSO
                 picker.pick_vertices(model, polygon_, false);
 #else
-                const vec2& minp = polygon_[0];
-                const vec2& maxp = polygon_[2];
-                picker.pick_vertices(model, minp.x, maxp.x, minp.y, maxp.y, false);
+                picker.pick_vertices(model, Rect(polygon_[0], polygon_[2]), false);
 #endif
 
                 auto select = model->vertex_property<bool>("v:select");

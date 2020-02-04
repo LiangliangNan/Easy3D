@@ -37,6 +37,7 @@
 #include <easy3d/core/plane.h>
 #include <easy3d/core/box.h>
 #include <easy3d/core/quat.h>
+#include <easy3d/core/polygon.h>
 
 
 /**
@@ -91,6 +92,8 @@ namespace easy3d {
 
     typedef GenericRect<float> Rect;
     typedef GenericRect<int32_t> iRect;
+
+    typedef GenericPolygon<float> Polygon2;
 
 
     namespace geom {
