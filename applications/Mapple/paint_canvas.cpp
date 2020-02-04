@@ -508,13 +508,13 @@ void PaintCanvas::keyPressEvent(QKeyEvent* e) {
 
             std::cout << "points drawables:" << std::endl;
             for (auto d : currentModel()->points_drawables())
-                std::cout << "\t" << d->name() << std::endl;
+                d->drawable_stats();
             std::cout << "lines drawables:" << std::endl;
             for (auto d : currentModel()->lines_drawables())
-                std::cout << "\t" << d->name() << std::endl;
+                d->drawable_stats();
             std::cout << "triangles drawables:" << std::endl;
             for (auto d : currentModel()->triangles_drawables())
-                std::cout << "\t" << d->name() << std::endl;
+                d->drawable_stats();
 
             currentModel()->property_stats();
 		}
@@ -834,7 +834,7 @@ void PaintCanvas::drawCornerAxes() {
     program->set_uniform("wCamPos", wCamPos);
     program->set_uniform("ssaoEnabled", false);
     program->set_uniform("per_vertex_color", true);
-    program->set_uniform("two_sides_lighting", true);
+    program->set_uniform("two_sides_lighting", false);
     program->set_uniform("distinct_back_color", false);
     drawable_axes_->gl_draw(false);
     program->release();
