@@ -41,7 +41,7 @@ namespace easy3d {
             x_min_ = std::min(q.x, p.x);
             y_min_ = std::min(q.y, p.y);
             x_max_ = std::max(q.x, p.x);
-            y_max_ = std::max(q.x, p.y);
+            y_max_ = std::max(q.y, p.y);
 
         }
 

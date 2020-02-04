@@ -69,8 +69,7 @@ namespace easy3d {
 
         inline bool initialized() const {
             return (max_.x >= min_.x - std::numeric_limits<FT>::epsilon() ||
-                    max_.y >= min_.y - std::numeric_limits<FT>::epsilon() ||
-                    max_.z >= min_.z - std::numeric_limits<FT>::epsilon() );
+                    max_.y >= min_.y - std::numeric_limits<FT>::epsilon() );
         }
 
         inline void clear() {
