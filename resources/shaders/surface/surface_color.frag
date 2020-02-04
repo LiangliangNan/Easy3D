@@ -49,7 +49,7 @@ void main(void) {
 
     vec3 normal;
     if (smooth_shading)
-    normal = normalize(DataIn.normal);
+        normal = normalize(DataIn.normal);
     else {
         normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
         //        if (dot(normal, DataIn.normal) < 0)
