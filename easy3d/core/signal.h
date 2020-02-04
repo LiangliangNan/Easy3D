@@ -34,14 +34,14 @@ namespace easy3d {
 
     /**
      * \brief Implementation of a simple signal-slot mechanism.
-     *        Mulitple slots (a class and it member fujction) can be connected
+     *        Multiple slots (a class and it member function) can be connected
      *        to a signal object.
      *        You can connect functions to the signal which will be called when
      *        the trigger() method on the signal object is invoked. Any argument
      *        passed to emit() will be passed to the given functions.
      *        A typical usage of Signal in Easy3D is camera manipulation. When
      *        the camera has been manipulated, the viewer should be notified (e.g.,
-     *        a repaint event should be triggered). This is usually done by calling
+     *        a repaint event should be triggered). This is done by calling
      *        to the viewer's update() function. So in Easy3D, the viewer's update
      *        function is connected to the camera.
      * \attention Current implementation can hold only one single function of each owner.
@@ -54,9 +54,9 @@ namespace easy3d {
          * \brief Connect a slot to this signal.
          * \example
          *        - If no overloaded function:
-         *              camera()->connet(this, &Viewer::update);
+         *              camera()->connect(this, &Viewer::update);
          *        - If the function has been overloaded (of course you can always treat it this way):
-         *              camera()->connet(this, static_cast<void(Viewer::*)(void) const>(&Viewer::update));
+         *              camera()->connect(this, static_cast<void(Viewer::*)(void) const>(&Viewer::update));
          */
         template < class Class, class Function, class... Args >
         void connect(Class&& owner, Function&& func, Args&&... args)  {

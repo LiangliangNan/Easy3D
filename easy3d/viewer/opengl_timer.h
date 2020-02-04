@@ -27,7 +27,7 @@
 
 namespace easy3d {
 
-    // OpenGLTimer: Accurate timing of GPU operations. Because the GPU is a based
+    // OpenGLTimer: Accurate timing of GPU operations. Because the GPU is based
     // on an asynchronously processed command stream that is implicitly generated
     // by OpenGL calls, it is not possible to determine the amount of time spent
     // processing a set of OpenGL calls by timing the calls themselves at the
