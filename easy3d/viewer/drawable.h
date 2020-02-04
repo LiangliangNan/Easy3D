@@ -135,6 +135,9 @@ namespace easy3d {
         bool lighting() const { return lighting_; }
         void set_lighting(bool l) { lighting_ = l; }
 
+        bool lighting_two_sides() const { return lighting_two_sides_; }
+        void set_lighting_two_sides(bool b) { lighting_two_sides_ = b; }
+
         Material &material() { return material_; }
         const Material &material() const { return material_; }
         void set_material(const Material &m) { material_ = m; }
@@ -177,6 +180,7 @@ namespace easy3d {
         vec4 default_color_;
 
         bool lighting_;
+        bool lighting_two_sides_;
 
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
         std::pair<int, int> highlight_range_;
