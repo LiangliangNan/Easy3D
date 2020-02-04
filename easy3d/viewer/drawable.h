@@ -111,6 +111,9 @@ namespace easy3d {
 
         void release_element_buffer();
 
+        // print statistics, e.g., memory usage
+        void drawable_stats() const;
+
         // ---------------------- get data from GPU -------------------------
 
         void fetch_selection_buffer();
@@ -161,7 +164,7 @@ namespace easy3d {
     protected:
         void clear();
 
-        VertexArrayObject* vao() { return vao_; }
+        VertexArrayObject* vao() const { return vao_; }
 
 	protected:
         std::string	 name_;

@@ -941,17 +941,17 @@ namespace easy3d {
 				if (!current_model()->points_drawables().empty()) {
 					std::cout << "points drawables:" << std::endl;
 					for (auto d : current_model()->points_drawables())
-						std::cout << "\t" << d->name() << std::endl;
+						d->drawable_stats();
 				}
 				if (!current_model()->lines_drawables().empty()) {
 					std::cout << "lines drawables:" << std::endl;
 					for (auto d : current_model()->lines_drawables())
-						std::cout << "\t" << d->name() << std::endl;
+                        d->drawable_stats();
 				}
 				if (!current_model()->triangles_drawables().empty()) {
 					std::cout << "triangles drawables:" << std::endl;
 					for (auto d : current_model()->triangles_drawables())
-						std::cout << "\t" << d->name() << std::endl;
+                        d->drawable_stats();
 				}
 
 				current_model()->property_stats();

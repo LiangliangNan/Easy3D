@@ -83,6 +83,21 @@ namespace easy3d {
     }
 
 
+    void Drawable::drawable_stats() const {
+        std::cout << "\t" << name() << std::endl;
+
+        if (vertex_buffer()) {
+            std::cout << "\t\tVertex buffer: " << num_vertices_ << " vertices, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+
+        if (index_buffer()) {
+            std::cout << "\t\tIndex buffer:  " << num_indices_ << " indices, "
+                      << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
+        }
+    }
+
+
     void Drawable::update_storage_buffer(const void *data, std::size_t datasize, unsigned int index /* = 1*/) {
         assert(vao_);
 
