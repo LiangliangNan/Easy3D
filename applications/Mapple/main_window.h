@@ -18,11 +18,10 @@ class PaintCanvas;
 class DialogSnapshot;
 class DialogPoissonReconstruction;
 class DialogRansacPrimitiveExtraction;
-class WidgetPointCloudRenderer;
-class WidgetSurfaceMeshRenderer;
-class WidgetSurfaceMeshTexturing;
-class WidgetScalarField;
-class WidgetVectorField;
+
+class WidgetPointsDrawable;
+class WidgetLinesDrawable;
+class WidgetTrianglesDrawable;
 
 class MainWindow : public QMainWindow
 {
@@ -109,11 +108,10 @@ private:
     DialogSnapshot*                 dialogSanpshot_;
     DialogPoissonReconstruction*    dialogPoissonReconstruction_;
     DialogRansacPrimitiveExtraction*dialogRansacPrimitiveExtraction_;
-    WidgetPointCloudRenderer*       widgetCloudRenderer_;
-    WidgetSurfaceMeshRenderer*      widgetMeshRenderer_;
-    WidgetSurfaceMeshTexturing*     widgetMeshTexturing_;
-    WidgetScalarField*              widgetScalarField_;
-    WidgetVectorField*              widgetVectorField_;
+
+    WidgetPointsDrawable*       widgetPointsDrawable_;
+    WidgetLinesDrawable*        widgetLinesDrawable_;
+    WidgetTrianglesDrawable*    widgetTrianglesDrawable_;
 
 private:
     Ui::MainWindow* ui;

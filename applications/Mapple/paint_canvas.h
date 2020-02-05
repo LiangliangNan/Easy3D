@@ -42,7 +42,7 @@ public:
 	void deleteModel(easy3d::Model* model);
 
 	const std::vector<easy3d::Model*>& models() const { return models_; }
-	easy3d::Model* currentModel() const;
+    easy3d::Model* currentModel();
 
     // the camera
     easy3d::Camera* camera() const { return camera_; }

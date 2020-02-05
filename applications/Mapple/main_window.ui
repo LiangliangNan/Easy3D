@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>17</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -150,21 +150,21 @@
      </property>
      <item>
       <widget class="QToolBox" name="toolBox">
-       <widget class="QWidget" name="toolBoxPageRenderer">
+       <widget class="QWidget" name="toolBoxTrianglesDrawable">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>359</height>
+          <height>362</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/renderer.png</normaloff>Resources/icons/renderer.png</iconset>
+          <normaloff>Resources/icons/drawable_triangles.png</normaloff>Resources/icons/drawable_triangles.png</iconset>
         </attribute>
         <attribute name="label">
-         <string>Renderer</string>
+         <string>Surface</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <property name="leftMargin">
@@ -180,25 +180,25 @@
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayoutRenderer"/>
+          <layout class="QVBoxLayout" name="verticalLayoutTrianglesDrawable"/>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="toolBoxPageScalarField">
+       <widget class="QWidget" name="toolBoxLinesDrawable">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>359</height>
+          <height>362</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/scalar.png</normaloff>Resources/icons/scalar.png</iconset>
+          <normaloff>Resources/icons/drawable_lines.png</normaloff>Resources/icons/drawable_lines.png</iconset>
         </attribute>
         <attribute name="label">
-         <string>Scalar Field</string>
+         <string>Lines</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <property name="leftMargin">
@@ -214,25 +214,25 @@
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayoutScalarField"/>
+          <layout class="QVBoxLayout" name="verticalLayoutLinesDrawable"/>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="toolBoxPageVectorField">
+       <widget class="QWidget" name="toolBoxPointsDrawable">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>359</height>
+          <height>362</height>
          </rect>
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/vector.png</normaloff>Resources/icons/vector.png</iconset>
+          <normaloff>Resources/icons/drawable_points.png</normaloff>Resources/icons/drawable_points.png</iconset>
         </attribute>
         <attribute name="label">
-         <string>Vector Field</string>
+         <string>Points</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_9">
          <property name="leftMargin">
@@ -248,41 +248,7 @@
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayoutVectorField"/>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="toolBoxPageTexturing">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>180</width>
-          <height>359</height>
-         </rect>
-        </property>
-        <attribute name="icon">
-         <iconset>
-          <normaloff>Resources/icons/texture.png</normaloff>Resources/icons/texture.png</iconset>
-        </attribute>
-        <attribute name="label">
-         <string>Texturing</string>
-        </attribute>
-        <layout class="QVBoxLayout" name="verticalLayout_11">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayoutTexturing"/>
+          <layout class="QVBoxLayout" name="verticalLayoutPointsDrawable"/>
          </item>
         </layout>
        </widget>
@@ -292,7 +258,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>359</height>
+          <height>362</height>
          </rect>
         </property>
         <attribute name="icon">

@@ -298,7 +298,7 @@ void PaintCanvas::wheelEvent(QWheelEvent* e) {
 }
 
 
-Model* PaintCanvas::currentModel() const {
+Model* PaintCanvas::currentModel() {
 	if (models_.empty())
 		return nullptr;
 	if (model_idx_ < models_.size())
@@ -829,13 +829,16 @@ void PaintCanvas::drawCornerAxes() {
 	const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-    program->set_uniform("MVP", MVP);
-    program->set_uniform("wLightPos", wLightPos);
-    program->set_uniform("wCamPos", wCamPos);
-    program->set_uniform("ssaoEnabled", false);
-    program->set_uniform("per_vertex_color", true);
-    program->set_uniform("two_sides_lighting", false);
-    program->set_uniform("distinct_back_color", false);
+
+    program->set_uniform("MVP", MVP)
+            ->set_uniform("lighting", true)
+            ->set_uniform("two_sides_lighting", false)
+            ->set_uniform("smooth_shading", true)
+            ->set_uniform("wLightPos", wLightPos)
+            ->set_uniform("wCamPos", wCamPos)
+            ->set_uniform("ssaoEnabled", false)
+            ->set_uniform("per_vertex_color", true)
+            ->set_uniform("distinct_back_color", false);
     drawable_axes_->gl_draw(false);
     program->release();
 

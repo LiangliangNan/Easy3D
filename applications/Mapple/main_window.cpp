@@ -30,16 +30,16 @@
 #include <easy3d/util/stop_watch.h>
 
 #include "paint_canvas.h"
-#include "dialog_snapshot.h"
-#include "dialog_poisson_reconstruction.h"
-#include "dialog_surface_sampling.h"
-#include "dialog_ransac_primitive_extraction.h"
-#include "widget_lighting.h"
-#include "widget_point_cloud_renderer.h"
-#include "widget_surface_mesh_renderer.h"
-#include "widget_surface_mesh_texturing.h"
-#include "widget_scalar_field.h"
-#include "widget_vector_field.h"
+
+#include "dialogs/dialog_snapshot.h"
+#include "dialogs/dialog_poisson_reconstruction.h"
+#include "dialogs/dialog_surface_sampling.h"
+#include "dialogs/dialog_ransac_primitive_extraction.h"
+
+#include "widgets/widget_lighting.h"
+#include "widgets/widget_drawable_points.h"
+#include "widgets/widget_drawable_lines.h"
+#include "widgets/widget_drawable_triangles.h"
 
 #include <ui_main_window.h>
 
@@ -67,28 +67,19 @@ MainWindow::MainWindow(QWidget *parent)
 
     // ----- rendering panel ------
 
-    widgetCloudRenderer_ = new WidgetPointCloudRenderer(this);
-    ui->verticalLayoutRenderer->addWidget(widgetCloudRenderer_);
-    widgetCloudRenderer_->hide();
+    widgetTrianglesDrawable_ = new WidgetTrianglesDrawable(this);
+    ui->verticalLayoutTrianglesDrawable->addWidget(widgetTrianglesDrawable_);
+    widgetTrianglesDrawable_->setEnabled(false);
 
-    widgetMeshRenderer_ = new WidgetSurfaceMeshRenderer(this);
-    ui->verticalLayoutRenderer->addWidget(widgetMeshRenderer_);
+    widgetLinesDrawable_ = new WidgetLinesDrawable(this);
+    ui->verticalLayoutLinesDrawable->addWidget(widgetLinesDrawable_);
+    widgetLinesDrawable_->setEnabled(false);
 
-    widgetMeshTexturing_ = new WidgetSurfaceMeshTexturing(this);
-    ui->verticalLayoutTexturing->addWidget(widgetMeshTexturing_);
-
-    widgetScalarField_ = new WidgetScalarField(this);
-    ui->verticalLayoutScalarField->addWidget(widgetScalarField_);
-
-    widgetVectorField_ = new WidgetVectorField(this);
-    ui->verticalLayoutVectorField->addWidget(widgetVectorField_);
+    widgetPointsDrawable_ = new WidgetPointsDrawable(this);
+    ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
+    widgetPointsDrawable_->setEnabled(false);
 
     ui->verticalLayoutLighting->addWidget(new WidgetLighting(this));
-//  ui->toolBox->addItem(new WidgetLighting(this), QIcon("Resources/icons/light.png"), QString("Lighting"));
-
-    int count = ui->toolBox->count();
-    for (int i=0; i<count; ++i)
-        ui->toolBox->widget(i)->setEnabled(false);
 
     // ---------------------------
 
@@ -264,54 +255,20 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
 
 void MainWindow::onCurrentModelChanged() {
-    const Model* m = viewer_->currentModel();
-    if (m) {
-
-
+    const Model* model = viewer_->currentModel();
+    if (model) {
 
         if (true) {
-            viewer_->fitScreen(m);
+            viewer_->fitScreen(model);
         }
 
-
-
-
-
-
-        const std::string& name = m->name();
+        const std::string& name = model->name();
         setCurrentFile(QString::fromStdString(name));
-
-        if (dynamic_cast<const PointCloud*>(m)) {
-            if (widgetMeshRenderer_)
-                widgetMeshRenderer_->hide();
-            widgetCloudRenderer_->show();
-            widgetCloudRenderer_->ensureBuffers();
-            widgetCloudRenderer_->updatePanel();
-         }
-        else if (dynamic_cast<const SurfaceMesh*>(m)) {
-            if (widgetCloudRenderer_)
-                widgetCloudRenderer_->hide();
-            widgetMeshRenderer_->show();
-            widgetMeshRenderer_->ensureBuffers();
-            widgetMeshRenderer_->updatePanel();
-        }
-
-        widgetScalarField_->updatePanel();
-        widgetVectorField_->updatePanel();
-
-        int count = ui->toolBox->count();
-        for (int i=0; i<count; ++i)
-             ui->toolBox->widget(i)->setEnabled(true);
     }
-    else {
-        setCurrentFile(QString(""));
 
-        widgetCloudRenderer_->hide();
-        widgetMeshRenderer_->show();
-        int count = ui->toolBox->count();
-        for (int i=0; i<count; ++i)
-            ui->toolBox->widget(i)->setEnabled(false);
-    }
+    widgetTrianglesDrawable_->updatePanel();
+    widgetLinesDrawable_->updatePanel();
+    widgetPointsDrawable_->updatePanel();
 }
 
 

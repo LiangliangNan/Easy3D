@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>147</width>
-    <height>523</height>
+    <width>178</width>
+    <height>594</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -654,7 +654,7 @@
   <customwidget>
    <class>WidgetCheckerSphere</class>
    <extends>QOpenGLWidget</extends>
-   <header>widget_checker_sphere.h</header>
+   <header>widgets/widget_checker_sphere.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
