@@ -50,12 +50,30 @@ namespace easy3d {
     }
 
     Drawable::Drawable(const std::string &name, const Model *model)
-            : name_(name), model_(model), visible_(true), per_vertex_color_(false),
-              default_color_(0.8f, 0.8f, 0.8f, 1.0f),
-              lighting_(true), lighting_two_sides_(true), highlight_range_(-1, -1), texture_(nullptr), num_vertices_(0),
-              num_indices_(0), vertex_buffer_(0),
-              color_buffer_(0), normal_buffer_(0), texcoord_buffer_(0), index_buffer_(0), storage_buffer_(0),
-              current_storage_buffer_size_(0), selection_buffer_(0), current_selection_buffer_size_(0) {
+            : name_(name)
+            , model_(model)
+            , visible_(true)
+            , per_vertex_color_(false)
+            , default_color_(0.8f, 0.8f, 0.8f, 1.0f)
+            , lighting_(true)
+            , lighting_two_sides_(true)
+            , highlight_range_(-1, -1)
+            , use_texture_(false)
+            , texture_(nullptr)
+            , texture_repeat_(1.0f)
+            , texture_fractional_repeat_(0.0f)
+            , num_vertices_(0)
+            , num_indices_(0)
+            , vertex_buffer_(0)
+            , color_buffer_(0)
+            , normal_buffer_(0)
+            , texcoord_buffer_(0)
+            , index_buffer_(0)
+            , storage_buffer_(0)
+            , current_storage_buffer_size_(0)
+            , selection_buffer_(0)
+            , current_selection_buffer_size_(0)
+    {
         vao_ = new VertexArrayObject;
     }
 

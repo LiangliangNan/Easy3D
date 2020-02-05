@@ -50,21 +50,21 @@ namespace easy3d {
     void LinesDrawable::draw(const Camera* camera, bool  with_storage_buffer /* = false */) const {
         switch (impostor_type_) {
         case PLAIN:
-            if (texture_)
+            if (use_texture_ && texture_)
                 _draw_plain_lines_with_texture(camera, with_storage_buffer);
             else
                 _draw_plain_lines(camera, with_storage_buffer);
             break;
 
         case CYLINDER:
-            if (texture_)
+            if (use_texture_ && texture_)
                 _draw_cylinders_with_texture(camera, with_storage_buffer);
             else
                 _draw_cylinders(camera, with_storage_buffer);
             break;
 
         case CONE:
-            if (texture_)
+            if (use_texture_ && texture_)
                 _draw_cones_with_texture(camera, with_storage_buffer);
             else
                 _draw_cones(camera, with_storage_buffer);

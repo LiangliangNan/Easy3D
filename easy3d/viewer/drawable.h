@@ -120,6 +120,16 @@ namespace easy3d {
 
         // -------------------------- rendering -----------------------------
 
+		bool is_visible() const { return visible_; }
+		void set_visible(bool v) { visible_ = v; }
+
+		bool per_vertex_color() const { return per_vertex_color_; }
+		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
+
+		// default_color will be ignored if per_vertex_color is true and given.
+		const vec4 &default_color() const { return default_color_; }
+		void set_default_color(const vec4 &c) { default_color_ = c; }
+
         /**
          * Primitives with indices within the range [highlight_id_low_, highlight_id_high_] will be highlighted.
          * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
@@ -142,19 +152,19 @@ namespace easy3d {
         const Material &material() const { return material_; }
         void set_material(const Material &m) { material_ = m; }
 
+		bool use_texture() const { return use_texture_; }
+		void set_use_texture(bool b) { use_texture_ = b; }
+
         Texture *texture() const { return texture_; }
-        // set the texture. Disable texture if tex is NULL.
         void set_texture(Texture *tex) { texture_ = tex; }
 
-        bool is_visible() const { return visible_; }
-        void set_visible(bool v) { visible_ = v; }
+		// How many time do you want to repeat the texture?
+		float texture_repeat() const { return texture_repeat_; };
+		void set_texture_repeat(float r) { texture_repeat_ = r; };
 
-        bool per_vertex_color() const { return per_vertex_color_; }
-        void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
-
-        // default_color will be ignored if per_vertex_color is true and given.
-        const vec4 &default_color() const { return default_color_; }
-        void set_default_color(const vec4 &c) { default_color_ = c; }
+		// Control at a finer level: 100 fractional repeat == repeat.
+		float texture_fractional_repeat() const { return texture_fractional_repeat_; };
+		void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; };
 
         // Rendering
         virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
@@ -186,7 +196,14 @@ namespace easy3d {
         std::pair<int, int> highlight_range_;
 
         Material    material_;
+
+        // texture
+        bool 		use_texture_;
         Texture*    texture_;
+		// How many times do you want to repeat the texture?
+		float texture_repeat_;
+		// Control at a finer level: 100 fractional repeat == repeat.
+		float texture_fractional_repeat_;
 
         // vertex array object
 		VertexArrayObject*	vao_;

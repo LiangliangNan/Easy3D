@@ -1517,11 +1517,12 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MVP", MVP)
                 ->set_uniform("lighting", true)
+                ->set_uniform("two_sides_lighting", true)
+                ->set_uniform("smooth_shading", true)
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("ssaoEnabled", false)
                 ->set_uniform("per_vertex_color", true)
-                ->set_uniform("two_sides_lighting", true)
                 ->set_uniform("distinct_back_color", false)
                 ->set_block_uniform("Material", "ambient", setting::material_ambient)
                 ->set_block_uniform("Material", "specular", setting::material_specular)

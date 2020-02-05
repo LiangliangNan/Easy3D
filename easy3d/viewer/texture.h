@@ -51,24 +51,13 @@ namespace easy3d {
         int height() const { return sizes_[1]; }
         int channels() const { return sizes_[2]; }
 
-        // Rendering property
-
-        // How many time do you want to repeat the texture?
-        float repeat() const { return repeat_; };
-        void set_repeat(float r) { repeat_ = r; };
-
-        // Control at a finer level: 100 fractional repeat == repeat.
-        float fractional_repeat() const { return fractional_repeat_; };
-        void set_fractional_repeat(float fr) { fractional_repeat_ = fr; };
+        const std::string& file_name() const { return file_name_; }
 
     private:
         GLuint	id_;
         int sizes_[3];
 
-        // How many time do you want to repeat the texture?
-        float repeat_;
-        // Control at a finer level: 100 fractional repeat == repeat.
-        float fractional_repeat_;
+        std::string file_name_;
 
     private:
         //can only be created by using the create() function

@@ -34,8 +34,6 @@ namespace easy3d {
 
     Texture::Texture()
         : id_(0)
-        , repeat_(1.0f)
-        , fractional_repeat_(0.0f)
     {
         sizes_[0] = 0;
         sizes_[1] = 0;
@@ -96,6 +94,7 @@ namespace easy3d {
         result->sizes_[1] = height;
         result->sizes_[2] = comp;
         result->id_ = tex;
+        result->file_name_ = file_name;
 
         return result;
     }

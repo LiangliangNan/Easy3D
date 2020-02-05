@@ -49,7 +49,7 @@ namespace easy3d {
     void PointsDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
         switch (impostor_type_) {
             case PLAIN:
-                if (texture_)
+                if (use_texture_ && texture_)
                     _draw_plain_points_with_texture(camera, with_storage_buffer);
                 else
                     _draw_plain_points(camera, with_storage_buffer);
@@ -57,12 +57,12 @@ namespace easy3d {
 
             case SPHERE:
 #if 0
-                if (texture_)
+                if (use_texture_ && texture_)
                     _draw_spheres_with_texture_sprite(camera, with_storage_buffer);
                 else
                     _draw_spheres_sprite(camera, with_storage_buffer);
 #else
-                if (texture_)
+                if (use_texture_ && texture_)
                     _draw_spheres_with_texture_geometry(camera, with_storage_buffer);
                 else
                     _draw_spheres_geometry(camera, with_storage_buffer);
@@ -70,7 +70,7 @@ namespace easy3d {
                 break;
 
             case SURFEL:
-                if (texture_)
+                if (use_texture_ && texture_)
                     _draw_surfels_with_texture(camera, with_storage_buffer);
                 else
                     _draw_surfels(camera, with_storage_buffer);
@@ -282,7 +282,7 @@ namespace easy3d {
         program->set_uniform("radius", point_size() * ratio)
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
-                ->set_uniform("two_sides_lighting", false)
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
                 ->set_uniform("lighting", lighting());
 
         program->set_block_uniform("Material", "ambient", material().ambient)

@@ -40,7 +40,7 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
-        if (texture_)
+        if (use_texture_ && texture_)
             _draw_triangles_with_texture(camera, with_storage_buffer);
         else
             _draw_triangles(camera, with_storage_buffer);
@@ -78,7 +78,7 @@ namespace easy3d {
                 ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
-                ->set_uniform("two_sides_lighting", true)
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
                 ->set_uniform("distinct_back_color", true)
                 ->set_uniform("smooth_shading", smooth_shading())
                 ->set_uniform("ssaoEnabled", false)
@@ -131,15 +131,17 @@ namespace easy3d {
                 ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
-                ->set_uniform("two_sides_lighting", false)
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
                 ->set_uniform("smooth_shading", smooth_shading())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
                 ->bind_texture("textureID", texture()->id(), 0)
-                ->set_uniform("texture_repeat", texture()->repeat())
-                ->set_uniform("fractional_repeat", texture()->fractional_repeat());
+                ->set_uniform("texture_repeat", texture_repeat())
+                ->set_uniform("fractional_repeat", texture_fractional_repeat());
+
         gl_draw(with_storage_buffer);
+
         program->release_texture();
         program->release();
     }
