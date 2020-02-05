@@ -33,12 +33,15 @@ public slots:
     virtual void setUseColorProperty(bool) override;
     virtual void setHighlight(bool) override;
 
-    void setLighting(bool b) override;
+    virtual void setLighting(bool) override;
+    virtual void setLightingTwoSides(int) override;
+    virtual void setBackColor() override;
+
+    virtual void setUseTexture(bool) override;
+    virtual void setTextureFile() override;
 
     void setPhongShading(bool);
     void setTransparency(int);
-
-    virtual void setUseTexture(bool) override;
 
 private:
     Ui::WidgetTrianglesDrawable*  ui;

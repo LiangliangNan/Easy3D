@@ -33,10 +33,12 @@ public slots:
     virtual void setDrawableVisible(bool);
     virtual void setHighlightLow(int);
     virtual void setHighlightHigh(int);
+
     virtual void setLightingTwoSides(int);
+    virtual void setDistinctBackColor(bool);
+    virtual void setBackColor();
 
     virtual void setUseTexture(bool);
-
     virtual void setTextureFile();
     virtual void setTextureRepeat(int);
     virtual void setTextureFractionalRepeat(int);

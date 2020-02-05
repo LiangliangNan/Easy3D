@@ -17,15 +17,6 @@ WidgetLighting::WidgetLighting(QWidget *parent)
     ui->setupUi(this);
     viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
 
-    // two sides lighting
-    ui->checkBoxLightTwoSides->setChecked(setting::light_two_sides);
-    ui->checkBoxLightDistinctBackColor->setChecked(setting::light_surface_distinct_back_color);
-    ui->toolButtonLightDistinctBackColor->setVisible(setting::light_surface_distinct_back_color);
-    const vec4& color = setting::light_surface_back_color;
-    QPixmap pixmap/*(25, 19)*/;
-    pixmap.fill(QColor(color.r * 255, color.g * 255, color.b * 255));
-    ui->toolButtonLightDistinctBackColor->setIcon(QIcon(pixmap));
-
     // SSAO
     ui->comboBoxSSAOAlgorithm->addItem("None");
     ui->comboBoxSSAOAlgorithm->addItem("Classic");
@@ -73,12 +64,9 @@ WidgetLighting::WidgetLighting(QWidget *parent)
     connect(ui->checkBoxTransparency, SIGNAL(toggled(bool)), this, SLOT(setTransparency(bool)));
     connect(ui->checkBoxShadow, SIGNAL(toggled(bool)), this, SLOT(setShadow(bool)));
 
-    connect(ui->checkBoxLightTwoSides, SIGNAL(toggled(bool)), this, SLOT(setTwoSidesLighting(bool)));
-    connect(ui->checkBoxLightDistinctBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
     connect(ui->horizontalSliderShadowLightDistance, SIGNAL(valueChanged(int)), this, SLOT(setLightDistance(int)));
     connect(ui->horizontalSliderShadowSoftness, SIGNAL(valueChanged(int)), this, SLOT(setShadowSoftness(int)));
     connect(ui->horizontalSliderShadowDarkness, SIGNAL(valueChanged(int)), this, SLOT(setShadowDarkness(int)));
-    connect(ui->toolButtonLightDistinctBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 }
 
 
@@ -178,20 +166,3 @@ void WidgetLighting::setShadowDarkness(int v) {
 void WidgetLighting::setImposterShadows(bool) {
 
 }
-
-
-void WidgetLighting::setTwoSidesLighting(bool) {
-
-}
-
-
-void WidgetLighting::setDistinctBackColor(bool) {
-
-}
-
-
-void WidgetLighting::setBackColor() {
-
-}
-
-

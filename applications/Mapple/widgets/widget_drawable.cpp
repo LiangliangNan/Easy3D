@@ -84,6 +84,30 @@ void WidgetDrawable::setLightingTwoSides(int b) {
 }
 
 
+void WidgetDrawable::setDistinctBackColor(bool b) {
+    if (!drawable())
+        return;
+
+    if (drawable()->distinct_back_color() != b) {
+        drawable()->set_distinct_back_color(b);
+        viewer_->update();
+    }
+}
+
+
+
+void WidgetDrawable::setBackColor() {
+    const vec3 &c = drawable()->back_color();
+    QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
+    const QColor &color = QColorDialog::getColor(orig, this);
+    if (color.isValid()) {
+        const vec3 new_color(color.redF(), color.greenF(), color.blueF());
+        drawable()->set_back_color(new_color);
+        viewer_->update();
+    }
+}
+
+
 void WidgetDrawable::setDefaultColor() {
     const vec3 &c = drawable()->default_color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
@@ -143,7 +167,6 @@ void WidgetDrawable::setTextureRepeat(int r) {
         return;
 
     if (drawable()->texture_repeat() != r) {
-        std::cout << "repeat: " << r << std::endl;
         drawable()->set_texture_repeat(r);
         viewer_->update();
     }

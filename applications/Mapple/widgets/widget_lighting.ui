@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>178</width>
-    <height>594</height>
+    <width>199</width>
+    <height>767</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,15 +39,15 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="labelShadowDiffuse">
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelSSAORadius">
        <property name="text">
-        <string>Diffuse</string>
+        <string>Radius</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderLightDiffuse">
+     <item row="8" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderSSAOBias">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -55,7 +55,10 @@
         </sizepolicy>
        </property>
        <property name="toolTip">
-        <string>The diffuse component of the light source (r=g=b)</string>
+        <string>Distance of light source to the scene center (relative to scene radius)</string>
+       </property>
+       <property name="minimum">
+        <number>0</number>
        </property>
        <property name="maximum">
         <number>100</number>
@@ -64,49 +67,10 @@
         <number>5</number>
        </property>
        <property name="value">
-        <number>50</number>
+        <number>10</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelShadowAmbient">
-       <property name="text">
-        <string>Ambient</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderLightAmbient">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>The ambient component of the light source (r=g=b)</string>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="pageStep">
-        <number>5</number>
-       </property>
-       <property name="value">
-        <number>5</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="labelShadowSpecular">
-       <property name="text">
-        <string>Specular</string>
        </property>
       </widget>
      </item>
@@ -135,145 +99,25 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelShadowShininess">
+     <item row="11" column="0">
+      <widget class="QLabel" name="labelTransparent">
        <property name="text">
-        <string>Shininess</string>
+        <string>Transparent</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderLightShininess">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+     <item row="13" column="1">
+      <widget class="QCheckBox" name="checkBoxShadow">
        <property name="toolTip">
-        <string>Specular exponent</string>
-       </property>
-       <property name="maximum">
-        <number>128</number>
-       </property>
-       <property name="pageStep">
-        <number>5</number>
-       </property>
-       <property name="value">
-        <number>64</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0" colspan="5">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="labelTwoSides">
-       <property name="text">
-        <string>2-Sides</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1" colspan="2">
-      <widget class="QCheckBox" name="checkBoxLightTwoSides">
-       <property name="toolTip">
-        <string>Shading for both sides</string>
+        <string>Enable/Disable shadowing</string>
        </property>
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="5" column="3" colspan="2">
-      <spacer name="horizontalSpacer_4">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>68</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="labelHighlighBack">
-       <property name="text">
-        <string>High back </string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1" colspan="2">
-      <widget class="QCheckBox" name="checkBoxLightDistinctBackColor">
-       <property name="toolTip">
-        <string>Distinct color for the back side</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="3">
-      <widget class="QToolButton" name="toolButtonLightDistinctBackColor">
-       <property name="toolTip">
-        <string>The color of the back side</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="4">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>38</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="7" column="0" colspan="5">
-      <widget class="Line" name="line_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="labelSSAO">
-       <property name="text">
-        <string>SSAO</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1" colspan="4">
-      <widget class="QComboBox" name="comboBoxSSAOAlgorithm">
-       <property name="toolTip">
-        <string>Smooth pattern for soft shadow</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="labelSSAORadius">
-       <property name="text">
-        <string>Radius</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderSSAORadius">
+     <item row="15" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderShadowLightDistance">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -284,33 +128,72 @@
         <string>Distance of light source to the scene center (relative to scene radius)</string>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>3</number>
        </property>
        <property name="maximum">
-        <number>400</number>
-       </property>
-       <property name="singleStep">
-        <number>5</number>
+        <number>50</number>
        </property>
        <property name="pageStep">
-        <number>10</number>
+        <number>5</number>
        </property>
        <property name="value">
-        <number>200</number>
+        <number>50</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="labelSSAOIntensity">
-       <property name="text">
-        <string>Intensity</string>
+     <item row="1" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderLightAmbient">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>The ambient component of the light source (r=g=b)</string>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="pageStep">
+        <number>5</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="10" column="1" colspan="4">
+     <item row="14" column="1" colspan="4">
+      <widget class="QComboBox" name="comboBoxShadowSmoothPattern">
+       <property name="toolTip">
+        <string>Smooth pattern for soft shadow</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1" colspan="2">
+      <widget class="QCheckBox" name="checkBoxEyeDomeLighting">
+       <property name="toolTip">
+        <string>Enable/Disable eye dome lighting for point clouds</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0">
+      <widget class="QLabel" name="labelShadowDarkness">
+       <property name="text">
+        <string>Darkness</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1" colspan="4">
       <widget class="QSlider" name="horizontalSliderSSAOIntensity">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -341,15 +224,32 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="11" column="1" colspan="2">
+      <widget class="QCheckBox" name="checkBoxTransparency">
+       <property name="toolTip">
+        <string>Enable/Disable transparency effect</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
       <widget class="QLabel" name="labelSSAOBias">
        <property name="text">
         <string>Bias</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderSSAOBias">
+     <item row="5" column="0">
+      <widget class="QLabel" name="labelSSAO">
+       <property name="text">
+        <string>SSAO</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderLightDiffuse">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -357,10 +257,7 @@
         </sizepolicy>
        </property>
        <property name="toolTip">
-        <string>Distance of light source to the scene center (relative to scene radius)</string>
-       </property>
-       <property name="minimum">
-        <number>0</number>
+        <string>The diffuse component of the light source (r=g=b)</string>
        </property>
        <property name="maximum">
         <number>100</number>
@@ -369,21 +266,60 @@
         <number>5</number>
        </property>
        <property name="value">
-        <number>10</number>
+        <number>50</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="12" column="0">
-      <widget class="QLabel" name="labelSSAOSharpness">
+     <item row="14" column="0">
+      <widget class="QLabel" name="labelShadowSmoothPattern">
        <property name="text">
-        <string>Sharpness</string>
+        <string>PCF filter</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1" colspan="4">
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelSSAOIntensity">
+       <property name="text">
+        <string>Intensity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0">
+      <widget class="QLabel" name="labelShadow">
+       <property name="text">
+        <string>Shadow</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderLightShininess">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Specular exponent</string>
+       </property>
+       <property name="maximum">
+        <number>128</number>
+       </property>
+       <property name="pageStep">
+        <number>5</number>
+       </property>
+       <property name="value">
+        <number>64</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1" colspan="4">
       <widget class="QSlider" name="horizontalSliderSSAOSharpness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -411,7 +347,63 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelShadowDiffuse">
+       <property name="text">
+        <string>Diffuse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="0">
+      <widget class="QLabel" name="labelShadowLightDistance">
+       <property name="text">
+        <string>Distance</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0" colspan="5">
+      <widget class="Line" name="line_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelShadowSpecular">
+       <property name="text">
+        <string>Specular</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderShadowDarkness">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>The darkness of the umbra region</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="pageStep">
+        <number>5</number>
+       </property>
+       <property name="value">
+        <number>60</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
       <widget class="QLabel" name="labelEDL">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -424,119 +416,8 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1" colspan="2">
-      <widget class="QCheckBox" name="checkBoxEyeDomeLighting">
-       <property name="toolTip">
-        <string>Enable/Disable eye dome lighting for point clouds</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="3" colspan="2">
-      <spacer name="horizontalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>63</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="14" column="0">
-      <widget class="QLabel" name="labelTransparent">
-       <property name="text">
-        <string>Transparent</string>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="1" colspan="2">
-      <widget class="QCheckBox" name="checkBoxTransparency">
-       <property name="toolTip">
-        <string>Enable/Disable transparency effect</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="3" colspan="2">
-      <spacer name="horizontalSpacer_6">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>63</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="15" column="0" colspan="5">
-      <widget class="Line" name="line_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="0">
-      <widget class="QLabel" name="labelShadow">
-       <property name="text">
-        <string>Shadow</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="1">
-      <widget class="QCheckBox" name="checkBoxShadow">
-       <property name="toolTip">
-        <string>Enable/Disable shadowing</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="2" colspan="3">
-      <spacer name="horizontalSpacer_7">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>58</width>
-         <height>17</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="17" column="0">
-      <widget class="QLabel" name="labelShadowSmoothPattern">
-       <property name="text">
-        <string>PCF filter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="17" column="1" colspan="4">
-      <widget class="QComboBox" name="comboBoxShadowSmoothPattern">
-       <property name="toolTip">
-        <string>Smooth pattern for soft shadow</string>
-       </property>
-      </widget>
-     </item>
-     <item row="18" column="0">
-      <widget class="QLabel" name="labelShadowLightDistance">
-       <property name="text">
-        <string>Distance</string>
-       </property>
-      </widget>
-     </item>
-     <item row="18" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderShadowLightDistance">
+     <item row="6" column="1" colspan="4">
+      <widget class="QSlider" name="horizontalSliderSSAORadius">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -547,30 +428,26 @@
         <string>Distance of light source to the scene center (relative to scene radius)</string>
        </property>
        <property name="minimum">
-        <number>3</number>
+        <number>0</number>
        </property>
        <property name="maximum">
-        <number>50</number>
+        <number>400</number>
        </property>
-       <property name="pageStep">
+       <property name="singleStep">
         <number>5</number>
        </property>
+       <property name="pageStep">
+        <number>10</number>
+       </property>
        <property name="value">
-        <number>50</number>
+        <number>200</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="19" column="0">
-      <widget class="QLabel" name="labelShadowSoftness">
-       <property name="text">
-        <string>Softness</string>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="1" colspan="4">
+     <item row="16" column="1" colspan="4">
       <widget class="QSlider" name="horizontalSliderShadowSoftness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -598,38 +475,84 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="0">
-      <widget class="QLabel" name="labelShadowDarkness">
+     <item row="11" column="3" colspan="2">
+      <spacer name="horizontalSpacer_6">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>63</width>
+         <height>17</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="10" column="3" colspan="2">
+      <spacer name="horizontalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>63</width>
+         <height>17</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelShadowShininess">
        <property name="text">
-        <string>Darkness</string>
+        <string>Shininess</string>
        </property>
       </widget>
      </item>
-     <item row="20" column="1" colspan="4">
-      <widget class="QSlider" name="horizontalSliderShadowDarkness">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>The darkness of the umbra region</string>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="pageStep">
-        <number>5</number>
-       </property>
-       <property name="value">
-        <number>60</number>
-       </property>
+     <item row="13" column="2" colspan="3">
+      <spacer name="horizontalSpacer_7">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>58</width>
+         <height>17</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelShadowAmbient">
+       <property name="text">
+        <string>Ambient</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0">
+      <widget class="QLabel" name="labelShadowSoftness">
+       <property name="text">
+        <string>Softness</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="labelSSAOSharpness">
+       <property name="text">
+        <string>Sharpness</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="5">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1" colspan="4">
+      <widget class="QComboBox" name="comboBoxSSAOAlgorithm">
+       <property name="toolTip">
+        <string>Smooth pattern for soft shadow</string>
        </property>
       </widget>
      </item>
@@ -662,9 +585,6 @@
   <tabstop>horizontalSliderLightAmbient</tabstop>
   <tabstop>horizontalSliderLightSpecular</tabstop>
   <tabstop>horizontalSliderLightShininess</tabstop>
-  <tabstop>checkBoxLightTwoSides</tabstop>
-  <tabstop>checkBoxLightDistinctBackColor</tabstop>
-  <tabstop>toolButtonLightDistinctBackColor</tabstop>
   <tabstop>comboBoxSSAOAlgorithm</tabstop>
   <tabstop>horizontalSliderSSAORadius</tabstop>
   <tabstop>horizontalSliderSSAOIntensity</tabstop>

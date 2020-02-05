@@ -34,9 +34,6 @@ private slots:
     void setShadowSoftness(int);
     void setShadowDarkness(int);
     void setImposterShadows(bool);
-    void setTwoSidesLighting(bool);
-    void setDistinctBackColor(bool);
-    void setBackColor();
 
 private:
     Ui::WidgetLighting* ui;
