@@ -73,7 +73,7 @@ namespace easy3d {
 		// accept  values are: GL_POINTS, GL_LINES, GL_TRIANGLES
 		virtual DrawableType type() const = 0;
 
-		const std::string name() const { return name_; }
+        const std::string& name() const { return name_; }
 		void set_name(const std::string n) { name_ = n; }
 
         // the model to which the drawable is attached to (can be NULL).
