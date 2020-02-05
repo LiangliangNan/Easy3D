@@ -39,8 +39,8 @@ namespace easy3d {
 
         // lighting
         extern vec4 light_position;  // light poistion defined in camera coordinate system
-        extern bool light_surface_distinct_back_color;
-        extern vec4 light_surface_back_color;
+        extern bool light_distinct_back_color;
+        extern vec4 light_back_color;
         extern bool light_two_sides;
 
         // material

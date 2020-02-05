@@ -36,8 +36,8 @@ namespace easy3d {
 
         // lighting
         vec4 light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
-        bool light_surface_distinct_back_color = false;
-        vec4 light_surface_back_color = vec4(0.67f, 0.67f, 1.0f, 1.0f);
+        bool light_distinct_back_color = false;
+        vec4 light_back_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
         bool light_two_sides = false;
 
         // material
@@ -53,46 +53,46 @@ namespace easy3d {
         float effect_ssao_sharpness = 40.0f;
         bool effect_edl_enabled = false;
         bool effect_transparency_enabled = false;
-        bool     effect_shadow_enabled = false;
-        float    shadow_light_distance = 50.0f;
-        float    shadow_softness = 0.5f;
-        float    shadow_darkness = 0.6f;
+        bool effect_shadow_enabled = false;
+        float shadow_light_distance = 50.0f;
+        float shadow_softness = 0.5f;
+        float shadow_darkness = 0.6f;
 
         // point cloud
-        bool    point_cloud_use_color_property = true;
+        bool point_cloud_use_color_property = true;
         bool point_cloud_show_points = true;
         vec4 point_cloud_points_color = vec4(85 / 255.0f, 170 / 255.0f, 1.0f, 1.0f);
         float point_cloud_point_size = 2.0f;
-        bool    point_cloud_impostors = false;
+        bool point_cloud_impostors = false;
 
         // surface mesh - surface
-        bool    surface_mesh_phong_shading = false;
+        bool surface_mesh_phong_shading = false;
         bool surface_mesh_show_faces = true;
         vec4 surface_mesh_faces_color = vec4(0.8f, 0.88f, 1.0f, 1.0f);
         bool surface_mesh_use_color_property = true;
-        float   surface_mesh_opacity = 0.6f;
+        float surface_mesh_opacity = 0.6f;
 
         // surface mesh - vertices
         bool surface_mesh_show_vertices = false;
         vec4 surface_mesh_vertices_color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
         bool surface_mesh_vertices_imposters = true;
-        float   surface_mesh_vertices_point_size = 5.0f;
+        float surface_mesh_vertices_point_size = 5.0f;
 
         // surface mesh - edges
         bool surface_mesh_show_edges = false;
         vec4 surface_mesh_edges_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
         bool surface_mesh_edges_imposters = false;
-        float   surface_mesh_edges_line_width = 1.0f;
+        float surface_mesh_edges_line_width = 1.0f;
 
         // surface mesh - borders
         bool surface_mesh_show_borders = false;
         vec4 surface_mesh_borders_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
         bool surface_mesh_borders_imposters = true;
-        float   surface_mesh_borders_line_width = 2.0f;
+        float surface_mesh_borders_line_width = 2.0f;
 
 
-		// resource directory (containing color maps, shaders, textures, etc.)
-		std::string resource_directory() {
+        // resource directory (containing color maps, shaders, textures, etc.)
+        std::string resource_directory() {
             std::string parent = file_system::executable_directory();
             std::string dir = parent + "/resources";
             if (file_system::is_directory(dir))
@@ -107,7 +107,7 @@ namespace easy3d {
                 if (file_system::is_directory(dir))
                     return dir;
                 else {
-                    for (int i = 0; i<4; ++i) {
+                    for (int i = 0; i < 4; ++i) {
                         parent = file_system::parent_directory(parent);
                         std::string dir = parent + "/resources";
                         if (file_system::is_directory(dir))
@@ -117,7 +117,7 @@ namespace easy3d {
                 // if still could not find it, return the current working directory
                 return file_system::current_working_directory();
             }
-		}
+        }
 
     } // namespace setting
 

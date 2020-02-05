@@ -148,6 +148,14 @@ namespace easy3d {
         bool lighting_two_sides() const { return lighting_two_sides_; }
         void set_lighting_two_sides(bool b) { lighting_two_sides_ = b; }
 
+        // use a different color for the back side, valid only if two-side lighting is enabled
+        bool distinct_back_color() const { return distinct_back_color_; }
+        void set_distinct_back_color(bool b) { distinct_back_color_ = b; }
+
+        // the back side color, valid only if two-side lighting is enabled and distinct back color is true
+        const vec4 &back_color() const { return back_color_; }
+        void set_back_color(const vec4 &c) { back_color_ = c; }
+
         Material &material() { return material_; }
         const Material &material() const { return material_; }
         void set_material(const Material &m) { material_ = m; }
@@ -191,6 +199,8 @@ namespace easy3d {
 
         bool lighting_;
         bool lighting_two_sides_;
+        bool distinct_back_color_;
+        vec4 back_color_;
 
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
         std::pair<int, int> highlight_range_;
