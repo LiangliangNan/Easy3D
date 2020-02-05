@@ -14,6 +14,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/viewer/setting.h>
+#include <QElapsedTimer>
 
 
 using namespace easy3d;
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
     const std::string file = setting::resource_directory() + "/images/splash.png";
     QPixmap pixmap(QString::fromStdString(file));
     QSplashScreen splash(pixmap, Qt::WindowStaysOnTopHint);
-    QTime splashTimer;
+    QElapsedTimer splashTimer;
     splashTimer.start();
     splash.show();
     splash.showMessage("  Starting Mapple...");

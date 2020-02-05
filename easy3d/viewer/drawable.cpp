@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include <easy3d/viewer/opengl.h>
+#include <easy3d/viewer/model.h>
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/texture.h>
@@ -119,13 +120,11 @@ namespace easy3d {
         assert(vao_);
 
         if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
-            bool status = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
-            if (!status)
-                LOG(ERROR) << "failed creating storage buffer";
+            bool success = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
+            LOG_IF(ERROR, !success) << "failed creating storage buffer";
         } else {
-            bool status = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
-            if (!status)
-                LOG(ERROR) << "failed updating storage buffer";
+            bool success = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
+            LOG_IF(ERROR, !success) << "failed updating storage buffer";
         }
     }
 
@@ -160,48 +159,51 @@ namespace easy3d {
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
-                                                vertices.size() * sizeof(vec3), 3);
-        if (!status) {
-            num_vertices_ = 0;
-            LOG(ERROR) << "failed creating vertex buffer";
-        } else {
-            num_vertices_ = vertices.size();
-        }
+        bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
+                                                 vertices.size() * sizeof(vec3), 3);
 
-        // update bounding box
-        bbox_.clear();
-        for (const auto &p : vertices)
-            bbox_.add_point(p);
+        LOG_IF(ERROR, !success) << "failed creating vertex buffer";
+
+        if (!success)
+            num_vertices_ = 0;
+        else {
+            num_vertices_ = vertices.size();
+
+            if (model())
+                bbox_ = model()->bounding_box();
+            else {
+                // update bounding box
+                bbox_.clear();
+                for (const auto &p : vertices)
+                    bbox_.add_point(p);
+            }
+        }
     }
 
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
-                                                colors.size() * sizeof(vec3), 3);
-        if (!status)
-            LOG(ERROR) << "failed updating color buffer";
+        bool success = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
+                                                 colors.size() * sizeof(vec3), 3);
+        LOG_IF(ERROR, !success) << "failed updating color buffer";
     }
 
 
     void Drawable::update_normal_buffer(const std::vector<vec3> &normals) {
         assert(vao_);
-        bool status = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
-                                                normals.size() * sizeof(vec3), 3);
-        if (!status)
-            LOG(ERROR) << "failed updating normal buffer";
+        bool success = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
+                                                 normals.size() * sizeof(vec3), 3);
+        LOG_IF(ERROR, !success) << "failed updating normal buffer";
     }
 
 
     void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords) {
         assert(vao_);
 
-        bool status = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
-                                                texcoords.size() * sizeof(vec2), 2);
-        if (!status)
-            LOG(ERROR) << "failed updating texcoord buffer";
+        bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
+                                                 texcoords.size() * sizeof(vec2), 2);
+        LOG_IF(ERROR, !success) << "failed updating texcoord buffer";
     }
 
 

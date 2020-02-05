@@ -33,7 +33,7 @@ namespace easy3d {
     class Camera;
     class TrianglesDrawable;
 
-    // base class for rendering with tranparency
+    // base class for rendering with transparency
 
     class Transparency
     {

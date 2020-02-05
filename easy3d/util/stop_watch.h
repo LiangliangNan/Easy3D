@@ -29,8 +29,8 @@
 
 #ifdef _WIN32
 #include <cstdint>
-#else 
-#	include <sys/time.h>
+#else
+#include <sys/time.h>
 #endif // _WIN32
 
 
@@ -51,13 +51,13 @@ namespace easy3d {
      *
      */
 
-    class StopWatch
-    {
+    class StopWatch {
     public:
         StopWatch(); // the watch will automatically start in construction
         ~StopWatch();
 
         void start();
+
         void restart(); // the same as start()
 
         // returns user elapsed time since the construction / start in seconds.
@@ -68,12 +68,12 @@ namespace easy3d {
     private:
         double seconds() const;
 
-    #ifdef _WIN32
+#ifdef _WIN32
         int64_t  freq_;
-		int64_t  start_count_;
-    #else
-        timeval	 start_time_;
-    #endif
+        int64_t  start_count_;
+#else
+        timeval start_time_;
+#endif
 
     };
 
