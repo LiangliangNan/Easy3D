@@ -52,8 +52,8 @@ void main(void) {
         normal = normalize(DataIn.normal);
     else {
         normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-        //        if (dot(normal, DataIn.normal) < 0)
-        //            normal = -normal;
+        if (dot(normal, DataIn.normal) < 0)
+            normal = -normal;
     }
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);

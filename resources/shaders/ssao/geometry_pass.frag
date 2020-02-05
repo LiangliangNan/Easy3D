@@ -19,8 +19,8 @@ void main()
         gNormal = normalize(Normal);
     else {
         gNormal = normalize(cross(dFdx(FragPos), dFdy(FragPos)));
-//        if (dot(gNormal, DataIn.normal) < 0)
-//            gNormal = -gNormal;
+        if (dot(gNormal, DataIn.normal) < 0)
+            gNormal = -gNormal;
     }
 
     // to handle two sided lighting
