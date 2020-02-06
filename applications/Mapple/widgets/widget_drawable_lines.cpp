@@ -5,6 +5,7 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
 
@@ -88,6 +89,26 @@ LinesDrawable* WidgetLinesDrawable::currentDrawable() {
 }
 
 
+void WidgetLinesDrawable::setActiveDrawable(const QString &text) {
+    auto model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    const std::string& name = text.toStdString();
+    if (model->lines_drawable(name)) {
+        active_lines_drawable_[model] = name;
+    }
+    else {
+        LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
+        const auto& drawables = model->lines_drawables();
+        if (drawables.empty())
+            LOG(ERROR) << "no lines drawable defined on model: " << model->name();
+        else
+            active_lines_drawable_[model] = drawables[0]->name();
+    }
+}
+
+
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetLinesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
@@ -114,22 +135,6 @@ void WidgetLinesDrawable::updatePanel() {
     }
 
     setEnabled(false);
-}
-
-
-void WidgetLinesDrawable::setUseColorProperty(bool b) {
-//    if (b) { // just check and warn user if color not available
-//        auto vcolors = drawable_->get_vertex_property<vec3>("v:color");
-//        auto fcolors = drawable_->get_face_property<vec3>("f:color");
-//        if (!vcolors && !fcolors)
-//            LOG(WARNING) << "no color property defined on vertices/faces";
-//    }
-//
-//    TrianglesDrawable* drawable = drawable_->triangles_drawable("faces");
-//    if (drawable) {
-//        drawable->set_per_vertex_color(b);
-//        viewer_->update();
-//    }
 }
 
 

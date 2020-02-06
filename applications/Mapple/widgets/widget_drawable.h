@@ -2,9 +2,10 @@
 #define WIDGET_DRAWABLE_H
 
 #include <QWidget>
-
+#include <unordered_map>
 
 namespace easy3d {
+    class Model;
     class Drawable;
 }
 
@@ -24,27 +25,35 @@ public:
     virtual easy3d::Drawable* drawable() = 0;
 
 public slots:
-    virtual void setUseColorProperty(bool) = 0;
-    virtual void setHighlight(bool) = 0;
+    virtual void setActiveDrawable(const QString &) = 0;
 
-    virtual void setLighting(bool);
+    void setDrawableVisible(bool);
+    void setColorScheme(const QString &);
+    void setLighting(bool);
+    void setLightingTwoSides(int);
+
     virtual void setDefaultColor();
 
-    virtual void setDrawableVisible(bool);
+    void setDistinctBackColor(bool);
+    virtual void setBackColor();
+
+    void setUseTexture(bool);
+    virtual void setTextureFile();
+    void setTextureRepeat(int);
+    void setTextureFractionalRepeat(int);
+
+    virtual void setHighlight(bool) = 0;
     virtual void setHighlightLow(int);
     virtual void setHighlightHigh(int);
 
-    virtual void setLightingTwoSides(int);
-    virtual void setDistinctBackColor(bool);
-    virtual void setBackColor();
-
-    virtual void setUseTexture(bool);
-    virtual void setTextureFile();
-    virtual void setTextureRepeat(int);
-    virtual void setTextureFractionalRepeat(int);
-
 protected:
     PaintCanvas* viewer_;
+
+    // on the rendering panel, the rendering of only the selected drawable can be changed.
+    // this is used to keep the history so the user can switch between different models.
+    std::unordered_map<easy3d::Model*, std::string> active_points_drawable_;
+    std::unordered_map<easy3d::Model*, std::string> active_lines_drawable_;
+    std::unordered_map<easy3d::Model*, std::string> active_triangles_drawable_;
 };
 
 #endif // WIDGET_DRAWABLE_H

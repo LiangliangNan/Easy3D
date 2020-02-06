@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>390</width>
-    <height>434</height>
+    <width>384</width>
+    <height>429</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>50</width>
+    <height>0</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Surface mesh renderer</string>
@@ -19,24 +31,57 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="8" column="1">
-      <widget class="QCheckBox" name="checkBoxDistinctBackColor">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Check to enable Phong shading</string>
-       </property>
+     <item row="10" column="0">
+      <widget class="QLabel" name="labelHighlight">
        <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
+        <string>Highlight</string>
        </property>
       </widget>
+     </item>
+     <item row="8" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_17">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLineEdit" name="lineEditTextureFile">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>The image file of the texture</string>
+         </property>
+         <property name="text">
+          <string>texture image</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonTextureFile">
+         <property name="toolTip">
+          <string>Click to choose a texture image</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="labelName">
@@ -51,27 +96,280 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QComboBox" name="comboBoxDrawables">
+     <item row="6" column="1">
+      <widget class="QCheckBox" name="checkBoxDistinctBackColor">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>20</height>
+        </size>
+       </property>
        <property name="toolTip">
-        <string>Select the scalar field to visualize</string>
+        <string>Enable/Disable distinct coloring for the back side of this drawable</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
-      <spacer name="horizontalSpacer">
+     <item row="9" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QSpinBox" name="spinBoxTextureRepeat">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>How many times this texture is repeated?</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="readOnly">
+          <bool>false</bool>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>99</number>
+         </property>
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>18</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBoxTextureFractionalRepeat">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Fractional repeat (100 fractional repeat is equivalent to 1 repeat)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="checkBoxVisible">
+       <property name="toolTip">
+        <string>Show/Hide this drawable</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QToolButton" name="toolButtonDefaultColor">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Click to set a uniform color for this drawable</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../Resources/icons/transparency.png</normaloff>../Resources/icons/transparency.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="spacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="2">
+      <spacer name="spacer_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>239</width>
-         <height>20</height>
+         <width>127</width>
+         <height>13</height>
         </size>
        </property>
       </spacer>
      </item>
-     <item row="13" column="0">
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelPhongShading">
+       <property name="text">
+        <string>Phong</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QComboBox" name="comboBoxColorScheme">
+       <property name="toolTip">
+        <string>Select how color is assigned to each face</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>uniform color</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>use color property</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="checkBoxPhongShading">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Enable/Disable Phong shading</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <spacer name="horizontalSpacer_9">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>13</width>
+           <height>19</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelDefaultColor">
+         <property name="text">
+          <string>Default</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="7" column="2">
+      <widget class="QComboBox" name="comboBoxTexture">
+       <property name="toolTip">
+        <string>Choose the texture coordinate property </string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <spacer name="spacer_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>127</width>
+         <height>13</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="7" column="1">
+      <widget class="QCheckBox" name="checkBoxTexture">
+       <property name="toolTip">
+        <string>Enable/Disable texturing</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout_5">
        <item>
         <spacer name="horizontalSpacer_8">
@@ -79,7 +377,7 @@
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
+          <enum>QSizePolicy::Fixed</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -110,71 +408,14 @@
        </item>
       </layout>
      </item>
-     <item row="12" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_17">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QLineEdit" name="lineEditTextureFile">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>50</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>texture image</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QToolButton" name="toolButtonTextureFile">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="11" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="labelTexture">
        <property name="text">
         <string>Texture</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="3" column="0">
       <widget class="QLabel" name="labelLighting">
        <property name="maximumSize">
         <size>
@@ -187,372 +428,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QSpinBox" name="spinBoxHighlightLow">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>999999999</number>
-         </property>
-         <property name="value">
-          <number>-1</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_6">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>18</width>
-           <height>17</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="spinBoxHighlightHigh">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>999999999</number>
-         </property>
-         <property name="value">
-          <number>-1</number>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelVisible">
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Visible</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="labelTransparency">
-       <property name="text">
-        <string>Transparency</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QCheckBox" name="checkBoxLighting">
-       <property name="toolTip">
-        <string>Show/Hide surface</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>239</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="labelDefaultColor">
-       <property name="text">
-        <string>Default Color</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="checkBoxVisible">
-       <property name="toolTip">
-        <string>Show/Hide surface</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QComboBox" name="comboBoxColorProperty">
-       <property name="toolTip">
-        <string>Select the scalar field to visualize</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="labelColorProperty">
-       <property name="text">
-        <string>Color Property</string>
-       </property>
-      </widget>
-     </item>
      <item row="8" column="0">
-      <widget class="QLabel" name="labelBackColor">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>30</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Back Color </string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="2">
-      <widget class="QSlider" name="horizontalSliderTransparency">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>The opacity of the surface</string>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>60</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="1">
-      <widget class="QCheckBox" name="checkBoxHighlight">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Check to enable Phong shading</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
-      <widget class="QCheckBox" name="checkBoxTexture">
-       <property name="toolTip">
-        <string>Use texture for color mapping</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QSpinBox" name="spinBoxTextureRepeat">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-         <property name="readOnly">
-          <bool>false</bool>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>99</number>
-         </property>
-         <property name="value">
-          <number>1</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>18</width>
-           <height>17</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="spinBoxTextureFractionalRepeat">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>22</height>
-          </size>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="labelPhongShading">
-       <property name="text">
-        <string>Phong Shading</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QToolButton" name="toolButtonDefaultColor">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Default surface color</string>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../Resources/icons/transparency.png</normaloff>../Resources/icons/transparency.png</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>108</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item row="11" column="2">
-      <widget class="QComboBox" name="comboBoxTexture">
-       <property name="toolTip">
-        <string>Colormap style</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <spacer name="horizontalSpacer_7">
@@ -560,7 +436,7 @@
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
+          <enum>QSizePolicy::Fixed</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -591,33 +467,62 @@
        </item>
       </layout>
      </item>
-     <item row="4" column="2">
-      <widget class="QComboBox" name="comboBoxLightingOptions">
-       <property name="toolTip">
-        <string>Select the scalar field to visualize</string>
-       </property>
+     <item row="6" column="0">
+      <layout class="QHBoxLayout" name="horizontalLayout_9">
        <item>
-        <property name="text">
-         <string>front only</string>
-        </property>
+        <spacer name="horizontalSpacer_11">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>12</width>
+           <height>19</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item>
-        <property name="text">
-         <string>front and back</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="8" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_6">
-       <item>
-        <widget class="QToolButton" name="toolButtonBackColor">
+        <widget class="QLabel" name="labelBackColor">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>30</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Backside </string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="1">
+      <widget class="QCheckBox" name="checkBoxLighting">
+       <property name="toolTip">
+        <string>Enable/Disable lighting for this drawable</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="QToolButton" name="toolButtonBackColor">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -631,7 +536,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Default surface color</string>
+          <string>Click to set the backside color for this drawable</string>
          </property>
          <property name="text">
           <string>...</string>
@@ -649,29 +554,49 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_5">
+        <spacer name="spacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>108</width>
-           <height>20</height>
+           <width>0</width>
+           <height>0</height>
           </size>
          </property>
         </spacer>
        </item>
       </layout>
      </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="labelHighlight">
+     <item row="11" column="0">
+      <widget class="QLabel" name="labelTransparency">
        <property name="text">
-        <string>Highlight</string>
+        <string>Transparency</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="checkBoxPhongShading">
+     <item row="11" column="2">
+      <widget class="QSlider" name="horizontalSliderTransparency">
+       <property name="toolTip">
+        <string>The opacity of the surface</string>
+       </property>
+       <property name="value">
+        <number>60</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="labelColorScheme">
+       <property name="text">
+        <string>Color Scheme</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QCheckBox" name="checkBoxHighlight">
        <property name="minimumSize">
         <size>
          <width>0</width>
@@ -679,31 +604,131 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Check to enable Phong shading</string>
+        <string>Enable/Disable highlighting a set of triangles</string>
        </property>
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QCheckBox" name="checkBoxColorProperty">
-       <property name="minimumSize">
+     <item row="3" column="2">
+      <widget class="QComboBox" name="comboBoxLightingOptions">
+       <property name="toolTip">
+        <string>Select how lighting is implemented</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>front only</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>front and back</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelVisible">
+       <property name="maximumSize">
         <size>
-         <width>0</width>
+         <width>16777215</width>
          <height>20</height>
         </size>
        </property>
-       <property name="toolTip">
-        <string>Check to enable Phong shading</string>
-       </property>
        <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
+        <string>Visible</string>
        </property>
       </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QComboBox" name="comboBoxDrawables">
+       <property name="toolTip">
+        <string>Select the drawable to be visualized</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="2">
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QSpinBox" name="spinBoxHighlightLow">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>The lower bound of the triange range to be highlighted.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="minimum">
+          <number>-1</number>
+         </property>
+         <property name="maximum">
+          <number>999999999</number>
+         </property>
+         <property name="value">
+          <number>-1</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>18</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBoxHighlightHigh">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>The upper bound of the triange range to be highlighted.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="minimum">
+          <number>-1</number>
+         </property>
+         <property name="maximum">
+          <number>999999999</number>
+         </property>
+         <property name="value">
+          <number>-1</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>

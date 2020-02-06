@@ -5,7 +5,7 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/util/file_system.h>
-
+#include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
 
@@ -83,6 +83,26 @@ PointsDrawable* WidgetPointsDrawable::currentDrawable() {
 }
 
 
+void WidgetPointsDrawable::setActiveDrawable(const QString & text) {
+    auto model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    const std::string& name = text.toStdString();
+    if (model->points_drawable(name)) {
+        active_points_drawable_[model] = name;
+    }
+    else {
+        LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
+        const auto& drawables = model->points_drawables();
+        if (drawables.empty())
+            LOG(ERROR) << "no points drawable defined on model: " << model->name();
+        else
+            active_points_drawable_[model] = drawables[0]->name();
+    }
+}
+
+
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetPointsDrawable::updatePanel() {
     auto model = viewer_->currentModel();
@@ -110,24 +130,6 @@ void WidgetPointsDrawable::updatePanel() {
 
     setEnabled(false);
 }
-
-
-
-void WidgetPointsDrawable::setUseColorProperty(bool b) {
-//    if (b) { // just check and warn user if color not available
-//        auto vcolors = drawable_->get_vertex_property<vec3>("v:color");
-//        auto fcolors = drawable_->get_face_property<vec3>("f:color");
-//        if (!vcolors && !fcolors)
-//            LOG(WARNING) << "no color property defined on vertices/faces";
-//    }
-//
-//    TrianglesDrawable* drawable = drawable_->triangles_drawable("faces");
-//    if (drawable) {
-//        drawable->set_per_vertex_color(b);
-//        viewer_->update();
-//    }
-}
-
 
 
 void WidgetPointsDrawable::setDefaultColor() {

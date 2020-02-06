@@ -25,22 +25,19 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
 
-    easy3d::TrianglesDrawable* currentDrawable();
+    easy3d::TrianglesDrawable* activeDrawable();
     easy3d::Drawable* drawable() override;
 
 public slots:
-    virtual void setDefaultColor() override;
-    virtual void setUseColorProperty(bool) override;
-    virtual void setHighlight(bool) override;
-
-    virtual void setLighting(bool) override;
-    virtual void setLightingTwoSides(int) override;
-    virtual void setBackColor() override;
-
-    virtual void setUseTexture(bool) override;
-    virtual void setTextureFile() override;
+    void setActiveDrawable(const QString &) override;
 
     void setPhongShading(bool);
+    void setDefaultColor() override;
+    void setBackColor() override;
+    void setTextureFile() override;
+
+    void setHighlight(bool) override;
+
     void setTransparency(int);
 
 private:

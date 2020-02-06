@@ -38,26 +38,15 @@ void WidgetDrawable::setDrawableVisible(bool b) {
 }
 
 
-void WidgetDrawable::setHighlightLow(int v) {
-    if (!drawable())
-        return;
+void WidgetDrawable::setColorScheme(const QString& text) {
+    if (text == "uniform color") {
 
-    const auto &range = drawable()->highlight_range();
-    if (range.first != v) {
-        drawable()->set_highlight_range(std::make_pair(v, range.second));
-        viewer_->update();
     }
-}
+    else if (text == "v:color") {
 
+    }
+    else if (text == "f:color") {
 
-void WidgetDrawable::setHighlightHigh(int v) {
-    if (!drawable())
-        return;
-
-    const auto &range = drawable()->highlight_range();
-    if (range.second != v) {
-        drawable()->set_highlight_range(std::make_pair(range.first, v));
-        viewer_->update();
     }
 }
 
@@ -182,3 +171,28 @@ void WidgetDrawable::setTextureFractionalRepeat(int r) {
         viewer_->update();
     }
 }
+
+
+void WidgetDrawable::setHighlightLow(int v) {
+    if (!drawable())
+        return;
+
+    const auto &range = drawable()->highlight_range();
+    if (range.first != v) {
+        drawable()->set_highlight_range(std::make_pair(v, range.second));
+        viewer_->update();
+    }
+}
+
+
+void WidgetDrawable::setHighlightHigh(int v) {
+    if (!drawable())
+        return;
+
+    const auto &range = drawable()->highlight_range();
+    if (range.second != v) {
+        drawable()->set_highlight_range(std::make_pair(range.first, v));
+        viewer_->update();
+    }
+}
+

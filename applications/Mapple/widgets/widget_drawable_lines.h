@@ -29,10 +29,9 @@ public:
     easy3d::Drawable* drawable() override;
 
 public slots:
-    virtual void setDefaultColor() override;
-    virtual void setUseColorProperty(bool) override;
-    virtual void setHighlight(bool) override;
-
+    void setActiveDrawable(const QString &) override;
+    void setDefaultColor() override;
+    void setHighlight(bool) override;
 
 private:
     Ui::WidgetLinesDrawable*  ui;
