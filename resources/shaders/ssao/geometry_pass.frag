@@ -1,7 +1,9 @@
 #version 150
 
-in vec3 FragPos;
-in vec3 Normal;
+in Data{
+    vec3 position;
+    vec3 normal;
+} DataIn;
 
 // smooth shading
 uniform bool        smooth_shading = true;
@@ -12,13 +14,13 @@ out vec3 gNormal;
 void main()
 {    
     // store the fragment position vector in the first gbuffer texture
-    gPosition = FragPos;
+    gPosition = DataIn.position;
 
     vec3 normal;
     if (smooth_shading)
-        gNormal = normalize(Normal);
+        gNormal = normalize(DataIn.normal);
     else {
-        gNormal = normalize(cross(dFdx(FragPos), dFdy(FragPos)));
+        gNormal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
         if (dot(gNormal, DataIn.normal) < 0)
             gNormal = -gNormal;
     }
