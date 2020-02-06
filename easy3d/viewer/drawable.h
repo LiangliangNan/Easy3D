@@ -123,10 +123,17 @@ namespace easy3d {
 		bool is_visible() const { return visible_; }
 		void set_visible(bool v) { visible_ = v; }
 
+		// if true, one of the color properties (e.g., "v:color", "f:color", or "e:color") will be active for rendering.
 		bool per_vertex_color() const { return per_vertex_color_; }
 		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
 
-		// default_color will be ignored if per_vertex_color is true and given.
+		// a drawable may have multiple color properties (e.g., "v:color", "f:color", or "e:color"),
+		// this is the one used for rendering. A color property is active only if per_vertex_color()
+		// is set true.
+        const std::string& active_color_property() const { return active_color_property_; }
+        void set_active_color_property(const std::string& prop) { active_color_property_ = prop; }
+
+        // default_color will be ignored if per_vertex_color is true and given.
 		const vec4 &default_color() const { return default_color_; }
 		void set_default_color(const vec4 &c) { default_color_ = c; }
 
@@ -195,6 +202,7 @@ namespace easy3d {
 
         bool visible_;
         bool per_vertex_color_;
+        std::string active_color_property_;
         vec4 default_color_;
 
         bool lighting_;
