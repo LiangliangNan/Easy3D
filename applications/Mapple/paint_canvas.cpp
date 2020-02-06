@@ -829,16 +829,20 @@ void PaintCanvas::drawCornerAxes() {
 	const vec4& wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-
     program->set_uniform("MVP", MVP)
             ->set_uniform("lighting", true)
-            ->set_uniform("two_sides_lighting", false)
+            ->set_uniform("two_sides_lighting", true)
             ->set_uniform("smooth_shading", true)
             ->set_uniform("wLightPos", wLightPos)
             ->set_uniform("wCamPos", wCamPos)
             ->set_uniform("ssaoEnabled", false)
             ->set_uniform("per_vertex_color", true)
-            ->set_uniform("distinct_back_color", false);
+            ->set_uniform("distinct_back_color", false)
+            ->set_block_uniform("Material", "ambient", setting::material_ambient)
+            ->set_block_uniform("Material", "specular", setting::material_specular)
+            ->set_block_uniform("Material", "shininess", &setting::material_shininess)
+            ->set_uniform("hightlight_id_min", -1)
+            ->set_uniform("hightlight_id_max", -1);
     drawable_axes_->gl_draw(false);
     program->release();
 

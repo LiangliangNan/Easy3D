@@ -201,6 +201,11 @@ namespace easy3d {
             if (!d_colors.empty()) {
                 drawable->update_color_buffer(d_colors);
                 drawable->set_per_vertex_color(true);
+
+                if (face_colors)
+                    drawable->set_color_scheme("f:color");
+                else if(vertex_colors)
+                    drawable->set_color_scheme("v:color");
             }
             if (!d_texcoords.empty()) {
                 drawable->update_texcoord_buffer(d_texcoords);
@@ -209,8 +214,13 @@ namespace easy3d {
 #if 0 // Model has texture coordinates, should we put a default texture?
                 const std::string texture_file = setting::resource_directory() + "/textures/checkerboard_gray.png";
                 auto tex = Texture::create(texture_file, GL_REPEAT);
-                tex->set_repeat(10);
                 drawable->set_texture(tex);
+                drawable->set_texture_repeat(10);
+
+                if (halfedge_texcoords)
+                    drawable->set_color_scheme("h:texcoord");
+                else if (vertex_texcoords)
+                    drawable->set_color_scheme("v:texcoord");
 #endif
             }
 

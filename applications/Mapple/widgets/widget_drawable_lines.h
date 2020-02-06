@@ -25,13 +25,15 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
 
-    easy3d::LinesDrawable* currentDrawable();
-    easy3d::Drawable* drawable() override;
+    easy3d::LinesDrawable* drawable();
 
 public slots:
-    void setActiveDrawable(const QString &) override;
-    void setDefaultColor() override;
-    void setHighlight(bool) override;
+    void setActiveDrawable(const QString &);
+    void setDistinctBackColor(bool) {}
+    void setLighting(int);
+    void setBackColor() {}
+    void setDefaultColor();
+    void setHighlight(bool);
 
 private:
     Ui::WidgetLinesDrawable*  ui;

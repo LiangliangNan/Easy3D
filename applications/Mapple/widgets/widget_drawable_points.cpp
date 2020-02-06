@@ -132,6 +132,39 @@ void WidgetPointsDrawable::updatePanel() {
 }
 
 
+void WidgetPointsDrawable::setLighting(int b) {
+//    switch (b) {
+//        case 0:
+//            drawable()->set_lighting(true);
+//            drawable()->set_lighting_two_sides(true);
+//            ui->labelDefaultColor->setEnabled(true);
+//            ui->labelDefaultColorFront->setEnabled(true);
+//            ui->labelDefaultColorBack->setEnabled(true);
+//            ui->checkBoxDistinctBackColor->setEnabled(true);
+//            ui->toolButtonBackColor->setChecked(true);
+//            break;
+//        case 1:
+//            drawable()->set_lighting(true);
+//            drawable()->set_lighting_two_sides(false);
+//            ui->labelDefaultColor->setEnabled(true);
+//            ui->labelDefaultColorFront->setEnabled(true);
+//            ui->labelDefaultColorBack->setEnabled(false);
+//            ui->checkBoxDistinctBackColor->setEnabled(false);
+//            ui->toolButtonBackColor->setChecked(false);
+//            break;
+//        case 2:
+//            drawable()->set_lighting(false);
+//            ui->labelDefaultColor->setEnabled(false);
+//            ui->labelDefaultColorFront->setEnabled(false);
+//            ui->labelDefaultColorBack->setEnabled(false);
+//            ui->checkBoxDistinctBackColor->setEnabled(false);
+//            ui->toolButtonBackColor->setChecked(false);
+//            break;
+//    }
+//    viewer_->update();
+}
+
+
 void WidgetPointsDrawable::setDefaultColor() {
     const vec3 &c = drawable()->default_color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));

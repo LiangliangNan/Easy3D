@@ -25,13 +25,15 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
 
-    easy3d::PointsDrawable* currentDrawable();
-    easy3d::Drawable* drawable() override;
+    easy3d::PointsDrawable* drawable();
 
 public slots:
-    void setActiveDrawable(const QString &) override;
-    void setDefaultColor() override;
-    void setHighlight(bool) override;
+    void setActiveDrawable(const QString &);
+    void setLighting(int);
+    void setDefaultColor();
+    void setHighlight(bool);
+    void setDistinctBackColor(bool) {}
+    void setBackColor() {}
 
 private:
     Ui::WidgetPointsDrawable*   ui;
