@@ -44,7 +44,7 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 
 std::string PointSelection::usage() const {
     return ("-------------- Surface Reconstruction usage -------------- \n"
-            "Press and drag the mouse for point selection\n"
+            "Press the ALT key, then drag the mouse for point selection \n"
             "---------------------------------------------------------- \n");
 }
 
