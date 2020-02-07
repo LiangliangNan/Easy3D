@@ -203,9 +203,9 @@ namespace easy3d {
                 drawable->set_per_vertex_color(true);
 
                 if (face_colors)
-                    drawable->set_color_scheme("f:color");
+                    model->set_color_scheme(drawable, "f:color");
                 else if(vertex_colors)
-                    drawable->set_color_scheme("v:color");
+                    model->set_color_scheme(drawable, "v:color");
             }
             if (!d_texcoords.empty()) {
                 drawable->update_texcoord_buffer(d_texcoords);
@@ -216,11 +216,12 @@ namespace easy3d {
                 auto tex = Texture::create(texture_file, GL_REPEAT);
                 drawable->set_texture(tex);
                 drawable->set_texture_repeat(10);
+                drawable->set_use_texture(true);
 
                 if (halfedge_texcoords)
-                    drawable->set_color_scheme("h:texcoord");
+                    model->set_color_scheme(drawable, "h:texcoord");
                 else if (vertex_texcoords)
-                    drawable->set_color_scheme("v:texcoord");
+                    model->set_color_scheme(drawable, "v:texcoord");
 #endif
             }
 

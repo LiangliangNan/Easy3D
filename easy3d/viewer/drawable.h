@@ -127,31 +127,9 @@ namespace easy3d {
 		bool per_vertex_color() const { return per_vertex_color_; }
 		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
 
-		/**
-		 * A drawable can be colored in the following ways:
-		 *      - using one of the color properties (e.g., "v:color", "f:color", or "e:color");
-		 *      - textured using one of the texture coordinates (e.g., "v:texcoord", "h:texcoord").
-		 * The active color is a string denoting how this drawable is colored.
-		 * @return The string denoting the current color scheme.
-		 */
-        const std::string& color_scheme() const { return color_scheme_; }
-        void set_color_scheme(const std::string& s) { color_scheme_ = s; }
-
         // default_color will be ignored if per_vertex_color is true and given.
 		const vec4 &default_color() const { return default_color_; }
 		void set_default_color(const vec4 &c) { default_color_ = c; }
-
-        /**
-         * Primitives with indices within the range [highlight_id_low_, highlight_id_high_] will be highlighted.
-         * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
-         *              un-highlight any previously highlighted primitives.
-         * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
-         *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
-         *            internally implemented by selecting triangle primitives using program shaders. This allows data
-         *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
-         */
-        void set_highlight_range(const std::pair<int, int>& range) { highlight_range_ = range; }
-		const std::pair<int, int>& highlight_range() const { return highlight_range_; }
 
         bool lighting() const { return lighting_; }
         void set_lighting(bool l) { lighting_ = l; }
@@ -185,6 +163,21 @@ namespace easy3d {
 		float texture_fractional_repeat() const { return texture_fractional_repeat_; };
 		void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; };
 
+        /**
+         * Highlight a subset of primitives of this drawable. Primitives with indices within the range
+         * [highlight_id_low_, highlight_id_high_] will be highlighted.
+         * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
+         *              un-highlight any previously highlighted primitives.
+         * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
+         *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
+         *            internally implemented by selecting triangle primitives using program shaders. This allows data
+         *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
+         */
+        bool highlight() const { return highlight_; };
+        void set_highlight(bool b) { highlight_ = b; }
+        void set_highlight_range(const std::pair<int, int>& range) { highlight_range_ = range; }
+        const std::pair<int, int>& highlight_range() const { return highlight_range_; }
+
         // Rendering
         virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
 
@@ -206,7 +199,6 @@ namespace easy3d {
 
         bool visible_;
         bool per_vertex_color_;
-        std::string color_scheme_;
         vec4 default_color_;
 
         bool lighting_;
@@ -215,6 +207,7 @@ namespace easy3d {
         vec4 back_color_;
 
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
+        bool highlight_;
         std::pair<int, int> highlight_range_;
 
         Material    material_;

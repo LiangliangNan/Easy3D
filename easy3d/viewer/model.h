@@ -28,12 +28,14 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <easy3d/core/types.h>
 
 
 namespace easy3d {
 
+    class Drawable;
     class PointsDrawable;
     class LinesDrawable;
     class TrianglesDrawable;
@@ -81,6 +83,19 @@ namespace easy3d {
         const std::vector<LinesDrawable*>&   lines_drawables() const { return lines_drawables_; }
         const std::vector<TrianglesDrawable*>& triangles_drawables() const { return triangles_drawables_; }
 
+        /**
+         * The color scheme of a drawable.
+         * Each drawable of a model can be colored in multiple ways, e.g.,
+         *      - using a uniform color, by Drawable::set_default_color() and Drawable::set_per_vertex_color(false);
+         *      - using one of the color properties (e.g., "v:color", "f:color", "e:color", or whatever);
+         *      - textured using one of the texture coordinates (e.g., "v:texcoord", "h:texcoord", or whatever);
+         *      - using scalar properties (e.g., "v:height", "f:area", or whatever), either textured or not.
+         * @param The drawable to be queried.
+         * @return The string denoting the current color scheme of the concerned drawable.
+         */
+        std::string color_scheme(const Drawable* d) const;
+        void set_color_scheme(const Drawable* d, const std::string& scheme);
+
         /// prints the names of all properties
         virtual void property_stats() const = 0;
 
@@ -93,7 +108,28 @@ namespace easy3d {
         std::vector<PointsDrawable*>    points_drawables_;
         std::vector<LinesDrawable*>     lines_drawables_;
         std::vector<TrianglesDrawable*> triangles_drawables_;
+
+        // helper for rendering
+        // A string denoting the current color scheme of a drawable.
+        std::unordered_map<const Drawable*, std::string> color_scheme_;
     };
+
+
+
+    inline std::string Model::color_scheme(const Drawable* d) const {
+        auto pos = color_scheme_.find(d);
+        if (pos == color_scheme_.end()) {
+            auto model = const_cast<Model*>(this);
+            model->set_color_scheme(d, "uniform color");
+            return color_scheme(d);
+        }
+        else
+            return pos->second;
+    }
+
+    inline void Model::set_color_scheme(const Drawable* d, const std::string& scheme) {
+        color_scheme_[d] = scheme;
+    }
 }
 
 #endif  // EASY3D_MODEL_H
