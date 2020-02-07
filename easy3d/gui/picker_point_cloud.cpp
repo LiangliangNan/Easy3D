@@ -64,8 +64,9 @@ namespace easy3d {
                 }
             }
             else {
-                LOG_FIRST_N(ERROR, 1)
-                    << "shader program not available, default to CPU implementation (this is the first record)";
+                LOG_FIRST_N(WARNING, 1)
+                    << "GPU implementation requires OpenGL 4.3 or higher (available is "
+                    << OpenglInfo::gl_version_number() << "), default to CPU implementation (this is the first record)";
             }
         }
 

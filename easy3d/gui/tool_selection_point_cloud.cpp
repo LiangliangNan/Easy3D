@@ -26,12 +26,7 @@
 #include <easy3d/gui/tool_selection_point_cloud.h>
 #include <easy3d/gui/tool_manager.h>
 #include <easy3d/gui/canvas.h>
-#include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/opengl.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>
 
@@ -39,10 +34,6 @@
 namespace easy3d {
 
     namespace tools {
-
-        static const float hint_line_width = 1.0f;
-        static const vec4 hint_line_color(0.0f, 0.9f, 0.9f, 0.6f);
-        static const vec4 hint_area_color(0.0f, 0.0f, 0.4f, 0.3f);
 
         // -------------------- PointCloudSelectTool ----------------------
 
@@ -107,77 +98,13 @@ namespace easy3d {
         }
 
         void PointCloudRectSelect::clear_hint() {
-            start_ = vec2(0, 0);
-            end_ = vec2(0, 0);
+            start_ = vec2(-1, -1);
+            end_ = vec2(-1, -1);
         }
 
         void PointCloudRectSelect::draw_hint() const {
-            auto program = ShaderManager::get_program("screen_space/lines_color");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
-                };
-                program = ShaderManager::create_program_from_files("screen_space/lines_color", attributes);
-            }
-            if (!program)
-                return;
-
-            Rect rect(start_, end_);
-            int w = rect.width();
-            int h = rect.height();
-            if (w <= 0 || h <=0)
-                return;
-
-            int width = tool_manager()->viewer()->camera()->screenWidth();
-            int height = tool_manager()->viewer()->camera()->screenHeight();
-
-            // draw_quad_wire() requires the lower left corner
-            float x0 = rect.x_min();
-            float y0 = rect.y_max();
-
-            program->bind();
-            program->set_uniform("per_vertex_color", false);
-            program->set_uniform("default_color", vec3(0.0f, 0.0f, 0.0f));
-            opengl::draw_quad_wire(ShaderProgram::POSITION, x0, height - y0 - 1, w, h, width, height, -1.0f);
-            program->release();
-
-
-
-//            tool_manager()->canvas()->startScreenCoordinatesSystem();
-//
-//            glDisable(GL_LIGHTING);
-//
-//            // draw the frame of the rectangle
-//            glLineWidth(hint_line_width);
-//            glColor4fv(hint_line_color);
-//            glBegin(GL_LINE_LOOP);
-//            glVertex2i(start_x_, start_y_);
-//            glVertex2i(start_x_, end_y_);
-//            glVertex2i(end_x_, end_y_);
-//            glVertex2i(end_x_, start_y_);
-//            glEnd();
-//
-//            // draw the transparent inner region of the rectangle
-//            glDepthMask(GL_FALSE);
-//            glEnable(GL_BLEND);
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //GL_ONE_MINUS_DST_ALPHA
-//
-//            glColor4fv(hint_area_color);
-//            glBegin(GL_QUADS);
-//            glVertex2i(start_x_, start_y_);
-//            glVertex2i(start_x_, end_y_);
-//            glVertex2i(end_x_, end_y_);
-//            glVertex2i(end_x_, start_y_);
-//            glEnd();
-//
-//            glDepthMask(GL_TRUE);
-//            glDisable(GL_BLEND);
-//
-//            glEnable(GL_LIGHTING);
-//            tool_manager()->canvas()->stopScreenCoordinatesSystem();
+            draw_rect(Rect(start_, end_));
         }
-
 
         // ------------------ Lasso Select -----------------------
 
@@ -243,6 +170,9 @@ namespace easy3d {
         }
 
         void PointCloudLassoSelect::draw_hint() const {
+            draw_lasso(lasso_);
+
+
 //            tool_manager()->canvas()->startScreenCoordinatesSystem();
 //            glDisable(GL_LIGHTING);
 //

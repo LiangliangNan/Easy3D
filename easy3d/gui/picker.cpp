@@ -48,14 +48,11 @@ namespace easy3d {
 
 
     void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        float dpi_scaling = 1.0f;
-        if (width > 0)
-            dpi_scaling = width / static_cast<float>(camera()->screenWidth());
-        else if (height > 0)
-            dpi_scaling = height / static_cast<float>(camera()->screenHeight());
+        float dpi_scaling_y = width / static_cast<float>(camera()->screenWidth());
+        float dpi_scaling_x = height / static_cast<float>(camera()->screenHeight());
 
-        gl_x = static_cast<int>(dpi_scaling * x);
-        gl_y = static_cast<int>(dpi_scaling * (camera()->screenHeight() - 1 - y));
+        gl_x = static_cast<int>(dpi_scaling_x * x);
+        gl_y = static_cast<int>(dpi_scaling_y * (camera()->screenHeight() - 1 - y));
     }
 
 }

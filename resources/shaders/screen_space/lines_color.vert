@@ -1,6 +1,6 @@
 #version 150
 
-in	vec3	vertexMC;
+in  vec3    vertexMC;
 in  vec3    vertexColor;
 
 uniform vec4	default_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);

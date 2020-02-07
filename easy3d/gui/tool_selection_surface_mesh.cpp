@@ -28,6 +28,7 @@
 #include <easy3d/gui/canvas.h>
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/util/logging.h>
 
 
@@ -123,71 +124,28 @@ namespace easy3d {
 
 
         void MeshFacetClickSelect::prepare_hint(ToolButton button, int x, int y) {
-//            clear_hint();
-//            if (button == NO_BUTTON && picker_) {
-//                MeshTypes::Facet *picked_facet = nil;
-//                SurfaceMesh *mesh = dynamic_cast<MeshFacetClickSelectTool *>(get_tool(LEFT_BUTTON))->multiple_pick(
-//                        picked_facet, x,
-//                        y);
-//                if (mesh && picked_facet) {
-//                    int id = picker_->picked_facet_id();
-//                    mesh->drawable(DT_FACES, "surface")->set_highlight_id(id);
-//                }
-//            }
+            clear_hint();
+            if (button == NO_BUTTON && picker_) {
+                SurfaceMesh::Face face;
+                auto *mesh = dynamic_cast<MeshFacetClickSelectTool *>(get_tool(LEFT_BUTTON))->multiple_pick(face, x, y);
+                if (mesh && face.is_valid()) {
+                    auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
+                    auto drawable = mesh->triangles_drawable("faces");
+                    drawable->set_highlight(true);
+                    drawable->set_highlight_range(triangle_range[face]);
+                }
+            }
         }
 
         void MeshFacetClickSelect::clear_hint() {
-//            const std::vector<Model *> &models = tool_manager()->models();
-//            for (std::size_t i = 0; i < models.size(); ++i) {
-//                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(models[i]);
-//                if (mesh)
-//                    mesh->drawable(DT_FACES, "surface")->set_highlight_id(-1);
-//            }
+            for (auto model : tool_manager()->viewer()->models()) {
+                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+                if (mesh) {
+                    auto drawable = mesh->triangles_drawable("faces");
+                    drawable->set_highlight(false);
+                }
+            }
         }
-
-
-        //void MeshFacetClickSelect::draw_hint() const {
-        //	SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(tool_manager()->model());
-        //	if (!model)
-        //		return;
-
-        //	// transformation introduced by manipulation
-        //	const mat4& MANIP = model->manipulated_matrix();
-
-        //	glEnable(GL_LIGHTING);
-
-        //	if (hint_facet_) {
-        //		MeshFacetAttribute<bool> status(model, select_attr_name);
-        //		if (status[hint_facet_])
-        //			return; // no need to draw if the face is already selected.
-
-        //		// Makes the depth coordinates of the filled primitives larger, so that
-        //		// the highlighted facet is always on top of the original facet.
-        //		glEnable(GL_POLYGON_OFFSET_FILL);
-        //		glPolygonOffset(-0.5f, 0.0001f);
-        //		mpl_debug_gl_error;
-
-        //		glColor3fv(hint_facet_color);
-        //		mpl_debug_gl_error;
-        //		// The GL_POLYGON primitive type is deprecated, and not available in the OpenGL Core Profile.
-        //		// Fortunately it can easily be replaced with GL_TRIANGLE_FAN. GL_TRIANGLE_FAN uses the same vertex
-        //		// order, so you can directly replace GL_POLYGON with GL_TRIANGLE_FAN, without changing anything else.
-        //		glBegin(GL_TRIANGLE_FAN);
-        //		const vec3& n = Geom::facet_normal(hint_facet_);
-        //		glNormal3fv(n);
-        //		SurfaceMesh::Halfedge* jt = hint_facet_->halfedge();
-        //		do {
-        //			const vec3& p = jt->vertex()->point();
-        //			glVertex3fv(MANIP * p);
-        //			jt = jt->next();
-        //		} while (jt != hint_facet_->halfedge());
-        //		glEnd();
-        //		mpl_debug_gl_error;
-
-        //		glDisable(GL_POLYGON_OFFSET_FILL);
-        //		mpl_debug_gl_error;
-        //	}
-        //}
 
 
         // -------------------- Rect Select ----------------------
@@ -276,38 +234,7 @@ namespace easy3d {
         }
 
         void MeshFacetRectSelect::draw_hint() const {
-//            tool_manager()->canvas()->startScreenCoordinatesSystem();
-//
-//            glDisable(GL_LIGHTING);
-//
-//            // draw the frame of the rectangle
-//            glLineWidth(hint_line_width);
-//            glColor4fv(hint_line_color);
-//            glBegin(GL_LINE_LOOP);
-//            glVertex2i(start_x_, start_y_);
-//            glVertex2i(start_x_, end_y_);
-//            glVertex2i(end_x_, end_y_);
-//            glVertex2i(end_x_, start_y_);
-//            glEnd();
-//
-//            // draw the transparent inner region of the rectangle
-//            glDepthMask(GL_FALSE);
-//            glEnable(GL_BLEND);
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //GL_ONE_MINUS_DST_ALPHA
-//
-//            glColor4fv(hint_area_color);
-//            glBegin(GL_QUADS);
-//            glVertex2i(start_x_, start_y_);
-//            glVertex2i(start_x_, end_y_);
-//            glVertex2i(end_x_, end_y_);
-//            glVertex2i(end_x_, start_y_);
-//            glEnd();
-//
-//            glDepthMask(GL_TRUE);
-//            glDisable(GL_BLEND);
-//
-//            glEnable(GL_LIGHTING);
-//            tool_manager()->canvas()->stopScreenCoordinatesSystem();
+            draw_rect(Rect(start_, end_));
         }
 
         // ------------------ Lasso Select -----------------------
@@ -401,58 +328,7 @@ namespace easy3d {
         }
 
         void MeshFacetLassoSelect::draw_hint() const {
-//            tool_manager()->canvas()->startScreenCoordinatesSystem();
-//            glDisable(GL_LIGHTING);
-//
-//            glLineWidth(hint_line_width);
-//            glColor4fv(hint_line_color);
-//
-//            // draw the strokes that have been finished.
-//            if (lasso_.size() > 1) {
-//                glBegin(GL_LINE_STRIP);
-//                for (std::size_t i = 0; i < lasso_.size(); ++i) {
-//                    const vec2 &p = lasso_[i];
-//                    glVertex2fv(p);
-//                }
-//                glEnd();
-//            }
-//
-//            // make the polygon closed
-//            if (lasso_.size() >= 3) {
-//                const vec2 &p = lasso_.front();
-//                const vec2 &q = lasso_.back();
-//                glBegin(GL_LINES);
-//                glVertex2fv(p);
-//                glVertex2fv(q);
-//                glEnd();
-//            }
-//
-//            //////////////////////////////////////////////////////////////////////////
-//
-//            // draw the transparent lasso region.
-//            // Liangliang: the region could be non-convex, so I use my tessellator.
-//            glDepthMask(GL_FALSE);
-//            glEnable(GL_BLEND);
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //GL_ONE_MINUS_DST_ALPHA
-//
-//            glColor4fv(hint_area_color);
-//
-//            Tessellator tess;
-//            tess.begin_polygon();
-//            tess.begin_contour();
-//            // Liangliang: the region could be non-convex, so I use my tessellator.
-//            for (std::size_t i = 0; i < lasso_.size(); ++i) {
-//                const vec2 &p = lasso_[i];
-//                tess.add_vertex(vec3(p.x, p.y, 0));
-//            }
-//            tess.end_contour();
-//            tess.end_polygon();
-//
-//            glDepthMask(GL_TRUE);
-//            glDisable(GL_BLEND);
-//
-//            glEnable(GL_LIGHTING);
-//            tool_manager()->canvas()->stopScreenCoordinatesSystem();
+            draw_lasso(lasso_);
         }
 
     }

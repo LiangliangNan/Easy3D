@@ -24,6 +24,14 @@
 
 
 #include <easy3d/gui/tool.h>
+#include <easy3d/gui/tool_manager.h>
+#include <easy3d/gui/canvas.h>
+#include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/shader_manager.h>
+#include <easy3d/viewer/primitives.h>
+#include <easy3d/viewer/opengl_error.h>
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/camera.h>
 
 
 namespace easy3d {
@@ -69,6 +77,81 @@ namespace easy3d {
 
         TaskTool *MultiTool::get_tool(ToolButton button) {
             return tools_[button];
+        }
+
+        void MultiTool::draw_rect(const Rect& rect) const {
+            int w = rect.width();
+            int h = rect.height();
+            if (w <= 0 || h <=0)
+                return;
+
+            auto program = ShaderManager::get_program("screen_space/lines_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes = {
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
+                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
+                };
+                program = ShaderManager::create_program_from_files("screen_space/lines_color", attributes);
+            }
+            if (!program)
+                return;
+
+            int width = tool_manager()->viewer()->camera()->screenWidth();
+            int height = tool_manager()->viewer()->camera()->screenHeight();
+
+            // draw_quad_wire() requires the lower left corner
+            float x0 = rect.x_min();
+            float y0 = rect.y_max();
+
+            program->bind();
+            program->set_uniform("per_vertex_color", false);
+            program->set_uniform("default_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            opengl::draw_quad_wire(ShaderProgram::POSITION, x0, height - y0 - 1, w, h, width, height, -1.0f);
+            program->release();
+        }
+
+
+        void MultiTool::draw_lasso(const Polygon2& lasso) const {
+            auto program = ShaderManager::get_program("screen_space/lines_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes = {
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
+                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
+                };
+                program = ShaderManager::create_program_from_files("screen_space/lines_color", attributes);
+            }
+            if (!program)
+                return;
+
+            if (lasso.size() < 3)
+                return;
+
+            int width = tool_manager()->viewer()->camera()->screenWidth();
+            int height = tool_manager()->viewer()->camera()->screenHeight();
+
+            std::vector<vec3> points(lasso.size());
+            std::vector<unsigned int> indices(lasso.size() * 2);
+            for (std::size_t i = 0; i < lasso.size(); ++i) {
+                const auto& p = lasso[i];
+                // to use the screen space shaders, I need to convert the point coordinates into the NDC space.
+                // also have to follow the OpenGL coordinates rule.
+                points[i].x = {2.0f * p.x / width - 1.0f};
+                points[i].y = {2.0f * (height - p.y - 1)/ height - 1.0f};
+                points[i].z = 0.0f;
+
+                indices[i*2] = i;
+                indices[i*2+1] = (i+ 1) % lasso.size();
+            }
+
+            LinesDrawable drawable;
+            drawable.update_vertex_buffer(points);                                  easy3d_debug_gl_error;
+            drawable.update_index_buffer(indices);                                  easy3d_debug_gl_error;
+
+            program->bind();                                                        easy3d_debug_gl_error;
+            program->set_uniform("per_vertex_color", false);                        easy3d_debug_gl_error;
+            program->set_uniform("default_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            drawable.gl_draw(false);                                                easy3d_debug_gl_error;
+            program->release();                                                     easy3d_debug_gl_error;
         }
 
     }

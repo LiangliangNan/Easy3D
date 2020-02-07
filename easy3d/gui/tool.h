@@ -53,17 +53,13 @@ namespace easy3d {
         class TaskTool {
         public:
             TaskTool(ToolManager *mgr) : tool_manager_(mgr) {}
-
             virtual ~TaskTool() {}
 
             ToolManager *tool_manager() const { return tool_manager_; }
 
             virtual void press(int x, int y) {}
-
             virtual void drag(int x, int y) {}
-
             virtual void release(int x, int y) {}
-
             virtual void reset() {}
 
         protected:
@@ -73,23 +69,18 @@ namespace easy3d {
         };
 
 
-
         //___________________________________________________________________
 
         class MultiTool {
         public:
             MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
-
             virtual ~MultiTool() {}
 
             ToolManager *tool_manager() const { return tool_manager_; }
 
             virtual void press(ToolButton button, int x, int y);
-
             virtual void drag(ToolButton button, int x, int y);
-
             virtual void release(ToolButton button, int x, int y);
-
             virtual void reset();
 
             virtual std::string instruction() const = 0;
@@ -97,20 +88,18 @@ namespace easy3d {
             // ------------- visual hint -----------
             // these are only for visual hint during user interaction
             virtual void set_hint() = 0;
-
             virtual void prepare_hint(ToolButton button, int x, int y) = 0;
-
             virtual void clear_hint() = 0;
-
             virtual void draw_hint() const = 0;
 
         protected:
 
             void set_tool(ToolButton button, TaskTool *tool);
-
             TaskTool *get_tool(ToolButton button);
-
             const TaskTool *get_tool(ToolButton button) const;
+
+            void draw_rect(const Rect& rect) const;
+            void draw_lasso(const Polygon2& lasso) const;
 
         protected:
             ToolManager *tool_manager_;

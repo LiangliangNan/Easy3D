@@ -157,6 +157,7 @@ void PaintCanvas::initializeGL() {
 #else
     dpi_scaling_ = devicePixelRatio();
 #endif
+    LOG(INFO) << "DPI scaling: " << dpi_scaling();
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
@@ -296,10 +297,10 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
         } else
             camera_->frame()->action_end();
-
-        pressed_button_ = Qt::NoButton;
-        mouse_pressed_pos_ = QPoint(0, 0);
     }
+
+    pressed_button_ = Qt::NoButton;
+    mouse_pressed_pos_ = QPoint(0, 0);
 
     QOpenGLWidget::mouseReleaseEvent(e);
     update();
@@ -321,8 +322,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        if (bt != tools::NO_BUTTON)
-            tool_manager()->drag(bt, e->pos().x(), e->pos().y());
+        tool_manager()->drag(bt, e->pos().x(), e->pos().y());
     }
     else {
         if (pressed_button_ != Qt::NoButton) { // button pressed
@@ -359,11 +359,17 @@ void PaintCanvas::mouseDoubleClickEvent(QMouseEvent *e) {
 
 
 void PaintCanvas::wheelEvent(QWheelEvent *e) {
-    if (e->delta() == 0)
-        e->ignore();
-    int dy = e->delta() > 0 ? 1 : -1;
+    if (tool_manager()->current_tool()) {
+    }
+    else {
+        if (e->delta() == 0)
+            e->ignore();
+        int dy = e->delta() > 0 ? 1 : -1;
 
-    camera_->frame()->action_zoom(dy, camera_);
+        camera_->frame()->action_zoom(dy, camera_);
+    }
+
+    QOpenGLWidget::wheelEvent(e);
     update();
 }
 
