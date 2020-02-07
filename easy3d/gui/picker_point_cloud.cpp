@@ -39,7 +39,7 @@ namespace easy3d {
 
     PointCloudPicker::PointCloudPicker(const Camera *cam)
             : Picker(cam) {
-        use_gpu_if_supported_ = true;
+        use_gpu_if_supported_ = false;
     }
 
 
