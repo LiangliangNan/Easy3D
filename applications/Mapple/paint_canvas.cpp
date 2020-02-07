@@ -205,8 +205,11 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        if (bt != tools::NO_BUTTON)
+        if (bt != tools::NO_BUTTON) {
+            makeCurrent();
             tool_manager()->press(bt, e->pos().x(), e->pos().y());
+            doneCurrent();
+        }
     }
     else {
         camera_->frame()->action_start();
@@ -251,8 +254,11 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        if (bt != tools::NO_BUTTON)
+        if (bt != tools::NO_BUTTON) {
+            makeCurrent();
             tool_manager()->release(bt, e->pos().x(), e->pos().y());
+            doneCurrent();
+        }
 
 #if 1
 
@@ -269,7 +275,10 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             mesh->garbage_collection();
             LOG(INFO) << count << " faces deleted" << std::endl;
             auto drawable = mesh->triangles_drawable("faces");
+
+            makeCurrent();
             renderer::update_data(mesh, drawable);
+            doneCurrent();
         } else if (dynamic_cast<PointCloud*>(currentModel())) {
             auto cloud = dynamic_cast<PointCloud*>(currentModel());
             auto select = cloud->vertex_property<bool>("v:select");
@@ -283,7 +292,9 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             cloud->garbage_collection();
             LOG(INFO) << count << " points deleted" << std::endl;
             auto drawable = cloud->points_drawable("vertices");
+            makeCurrent();
             renderer::update_data(cloud, drawable);
+            doneCurrent();
         }
 
 #endif
@@ -322,7 +333,10 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
+
+        makeCurrent();
         tool_manager()->drag(bt, e->pos().x(), e->pos().y());
+        doneCurrent();
     }
     else {
         if (pressed_button_ != Qt::NoButton) { // button pressed
