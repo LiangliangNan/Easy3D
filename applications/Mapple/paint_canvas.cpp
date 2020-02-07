@@ -204,7 +204,8 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        tool_manager()->press(bt, e->pos().x(), e->pos().y());
+        if (bt != tools::NO_BUTTON)
+            tool_manager()->press(bt, e->pos().x(), e->pos().y());
     }
     else {
         camera_->frame()->action_start();
@@ -249,7 +250,8 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        tool_manager()->release(bt, e->pos().x(), e->pos().y());
+        if (bt != tools::NO_BUTTON)
+            tool_manager()->release(bt, e->pos().x(), e->pos().y());
 
 #if 1
 
@@ -319,7 +321,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             bt = tools::RIGHT_BUTTON;
         else if (pressed_button_ == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
-        tool_manager()->drag(bt, e->pos().x(), e->pos().y());
+        if (bt != tools::NO_BUTTON)
+            tool_manager()->drag(bt, e->pos().x(), e->pos().y());
     }
     else {
         if (pressed_button_ != Qt::NoButton) { // button pressed
@@ -949,6 +952,10 @@ void PaintCanvas::postDraw() {
     painter.endNativePainting();
     painter.end();
     func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
+
+    // ------------------ draw elements from the tool --------------------------
+
+    tool_manager()->draw_hint();
 }
 
 
