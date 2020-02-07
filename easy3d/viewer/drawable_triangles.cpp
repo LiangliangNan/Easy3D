@@ -87,10 +87,10 @@ namespace easy3d {
                 ->set_uniform("default_color", default_color())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
-                ->set_block_uniform("Material", "shininess", &material().shininess);
-
-        program->set_uniform("hightlight_id_min", highlight_range_.first);
-        program->set_uniform("hightlight_id_max", highlight_range_.second);
+                ->set_block_uniform("Material", "shininess", &material().shininess)
+                ->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range_.first)
+                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
         gl_draw(with_storage_buffer);
         program->release();
@@ -133,13 +133,18 @@ namespace easy3d {
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("two_sides_lighting", lighting_two_sides())
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
                 ->bind_texture("textureID", texture()->id(), 0)
                 ->set_uniform("texture_repeat", texture_repeat())
-                ->set_uniform("fractional_repeat", texture_fractional_repeat());
+                ->set_uniform("fractional_repeat", texture_fractional_repeat())
+                ->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range_.first)
+                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
         gl_draw(with_storage_buffer);
 

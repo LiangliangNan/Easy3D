@@ -23,6 +23,7 @@ uniform bool        smooth_shading = true;
 uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
+uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
@@ -42,10 +43,12 @@ void main(void) {
 
     vec3 color = DataIn.color.xyz;
     if (!gl_FrontFacing && distinct_back_color)
-    color = backside_color;
+        color = backside_color;
 
-    if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
-    color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+    if (highlight) {
+        if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+    }
 
     vec3 normal;
     if (smooth_shading)

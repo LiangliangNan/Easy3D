@@ -15,6 +15,14 @@ uniform bool lighting = true;
 uniform bool two_sides_lighting = true;
 uniform bool smooth_shading;
 
+// backside color
+uniform bool distinct_back_color = true;
+uniform vec3 backside_color = vec3(0.8f, 0.4f, 0.4f);
+
+uniform bool highlight;
+uniform int  hightlight_id_min;
+uniform int  hightlight_id_max;
+
 in Data{
     vec2 texcoord;
     vec3 normal;
@@ -50,6 +58,14 @@ void main() {
 		outputF = vec4(color, alpha);
 		return;
 	}
+
+    if (!gl_FrontFacing && distinct_back_color)
+        color = backside_color;
+
+    if (highlight) {
+        if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+    }
 
     vec3 normal;
     if (smooth_shading)
