@@ -266,6 +266,7 @@ namespace easy3d {
                 Texture *tex = Texture::create(texture_file, GL_REPEAT);
                 if (tex) {
                     drawable->set_texture(tex);
+                    drawable->set_use_texture(true);
                     LOG(INFO) << "texture created from " << texname;
                 }
             }

@@ -81,6 +81,7 @@ int main(int argc, char** argv) {
         // set the texture of the default drawable "faces"
         auto drawable = mesh->triangles_drawable("faces");
         drawable->set_texture(tex);
+        drawable->set_use_texture(true);
 
         // -------------------------------------------------------------------------------
 
