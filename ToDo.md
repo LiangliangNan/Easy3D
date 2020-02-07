@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Module dependence is bad (core <- viewer; viewer <- core);  The IO example should not depend on viewer module.
     - Rendering performance can still be improved
         * Drawables (e.g., faces, edges, and vertices) of the same model can share the same vertex buffer;
         * Use index buffer to reduce the num of vertices sent to GPU (already done).
