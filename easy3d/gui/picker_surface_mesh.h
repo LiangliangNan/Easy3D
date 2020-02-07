@@ -85,6 +85,7 @@ namespace easy3d {
          * Pick a vertex from a surface mesh given the cursor position and a known picked face.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @param picked_face The picked face.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
          *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
@@ -99,6 +100,7 @@ namespace easy3d {
          * Pick an edge from a surface mesh given the cursor position and a known picked face.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @param picked_face The picked face.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
          *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
@@ -119,12 +121,16 @@ namespace easy3d {
         SurfaceMesh::Face picked_face() const;
 
         /**
-         * Query the coordinate of the previously picked position.
+         * Query the coordinate of the previously picked position, which is the intersection between the picking line
+         * and the picked face.
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @param picked_face The picked face.
          * @return The xyz coordinate of the picked position.
-         * @attention This method must be called after calling to one of the above pick element methods. The results is
-         *            valid only if a face has been picked.
+         * @attention This method must be called after calling to pick_face(). The result is valid only if the
+         *            picked_face is valid.
          */
-        vec3 picked_point() const;
+        vec3 picked_point(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) const;
 
 
         //------------------ multiple selection of faces ------------------
@@ -136,7 +142,7 @@ namespace easy3d {
          * @param deselect True to perform an inverse operation.
          * @return The number of faces selected during this operation (despite their previous status).
          */
-        int pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect);
+        int pick_faces(SurfaceMesh *model, const Rect &rect, bool deselect);
 
         /**
          * @brief Pick faces of a surface mesh by a polygon/lasso. The selected faces will be marked in face property
@@ -177,13 +183,9 @@ namespace easy3d {
         }
 
     private:
-        unsigned int hit_resolution_;     // in pixels
-
         ShaderProgram *program_;
-
-        vec3 picked_point_;
+        unsigned int hit_resolution_;     // in pixels
         SurfaceMesh::Face picked_face_;
-
     };
 
 }

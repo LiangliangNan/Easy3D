@@ -76,11 +76,12 @@ namespace easy3d {
             return SurfaceMesh::Vertex();
         }
 
+        const vec3& point = picked_point(model, picked_face, x, y);
         double squared_distance = FLT_MAX;
         SurfaceMesh::Vertex closest_vertex;
         for (auto h : model->halfedges(picked_face)) {
             SurfaceMesh::Vertex v = model->to_vertex(h);
-            double s = distance2(model->position(v), picked_point_);
+            double s = distance2(model->position(v), point);
             if (s < squared_distance) {
                 squared_distance = s;
                 closest_vertex = v;
@@ -116,6 +117,8 @@ namespace easy3d {
             return SurfaceMesh::Halfedge();
         }
 
+        const vec3& point = picked_point(model, picked_face, x, y);
+
         double squared_distance = FLT_MAX;
         SurfaceMesh::Halfedge closest_edge;
 
@@ -126,7 +129,7 @@ namespace easy3d {
             const vec3 &t = model->position(model->to_vertex(h));
             if (distance2(s, t) > threshold) {
                 Segment3 seg(s, t);
-                double d = seg.squared_ditance(picked_point_);
+                double d = seg.squared_ditance(point);
                 if (d < squared_distance/* && seg.projected_inside(point)*/) {
                     squared_distance = d;
                     closest_edge = h;
@@ -174,11 +177,22 @@ namespace easy3d {
     }
 
 
-    vec3 SurfaceMeshPicker::picked_point() const {
-        if (!picked_face_.is_valid()) {
+    vec3 SurfaceMeshPicker::picked_point(SurfaceMesh *model, SurfaceMesh::Face face, int x, int y) const {
+        if (!picked_face_.is_valid() || !face.is_valid() || picked_face_ != face) {
             LOG(ERROR) << "no face has been picked";
+            return vec3();
         }
-        return picked_point_;
+
+        const Line3 &line = picking_line(x, y);
+        const Plane3 plane = face_plane(model, face);
+
+        vec3 p;
+        if (plane.intersect(line, p))
+            return p;
+        else {
+            LOG(ERROR) << "should have intersection";
+            return vec3();
+        }
     }
 
 
@@ -209,7 +223,6 @@ namespace easy3d {
                     if (s < squared_distance) {
                         squared_distance = s;
                         picked_face_ = face;
-                        picked_point_ = p;
                     }
                 } else {
                     // If reached here, a parallel facet with distance less than hit resolution should be
