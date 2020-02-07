@@ -37,7 +37,7 @@
 
 namespace easy3d {
 
-    ModelPicker::ModelPicker(Camera *cam) : Picker(cam) {
+    ModelPicker::ModelPicker(const Camera *cam) : Picker(cam) {
         use_gpu_if_supported_ = true;
     }
 

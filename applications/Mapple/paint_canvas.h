@@ -4,6 +4,7 @@
 #include <QOpenGLWidget>
 
 #include <easy3d/core/types.h>
+#include <easy3d/gui/canvas.h>
 
 
 namespace easy3d {
@@ -20,7 +21,7 @@ namespace easy3d {
 class QWidget;
 class QOpenGLFunctions;
 
-class PaintCanvas : public QOpenGLWidget
+class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
 {
        Q_OBJECT
 public:
@@ -41,11 +42,12 @@ public:
     void addModel(easy3d::Model* model, bool create_default_drawables = true);
 	void deleteModel(easy3d::Model* model);
 
-	const std::vector<easy3d::Model*>& models() const { return models_; }
+	const std::vector<easy3d::Model*>& models() const override { return models_; }
     easy3d::Model* currentModel();
 
     // the camera
-    easy3d::Camera* camera() const { return camera_; }
+    easy3d::Camera* camera() override { return camera_; }
+    const easy3d::Camera* camera() const override { return camera_; }
 
 	// moves the camera so that the 'model' is centered on the screen.
 	// if 'model' is NULL, it centers the entire scene (all models).
@@ -81,6 +83,10 @@ public:
 
     easy3d::EyeDomeLighting* edl();
     void enableEyeDomeLighting(bool b);
+
+public slots:
+    void invertSelection();
+    void deleteSelectedPrimitives();
 
 protected:
 

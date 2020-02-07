@@ -493,6 +493,9 @@ void MainWindow::createActions() {
     // view menu
     createActionsForViewMenu();
 
+    // edit menu
+    createActionsForEditMenu();
+
     // topology menu
     createActionsForTopologyMenu();
 
@@ -548,6 +551,45 @@ void MainWindow::createActionsForViewMenu() {
     ui->menuView->addAction(actionToggleDockWidgetLogger);
 
     connect(ui->actionBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
+}
+
+
+void MainWindow::createActionsForEditMenu() {
+    connect(ui->actionInvertSelection, SIGNAL(triggered()), viewer_, SLOT(invertSelection()));
+    connect(ui->actionDeleteSelectedPrimitives, SIGNAL(triggered()), viewer_, SLOT(deleteSelectedPrimitives()));
+
+    //////////////////////////////////////////////////////////////////////////
+
+    QActionGroup* actionGroup = new QActionGroup(this);
+    actionGroup->addAction(ui->actionCameraManipulation);
+    actionGroup->addAction(ui->actionSelectClick);
+    actionGroup->addAction(ui->actionSelectRect);
+    actionGroup->addAction(ui->actionSelectLasso);
+
+    connect(actionGroup, SIGNAL(triggered(QAction*)), this, SLOT(operationModeChanged(QAction*)));
+}
+
+
+void MainWindow::operationModeChanged(QAction* act) {
+    if (act == ui->actionCameraManipulation) {
+        viewer()->tool_manager()->set_tool(tools::ToolManager::EMPTY_TOOL);
+    }
+    else if (act == ui->actionSelectClick) {
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
+    }
+    else if (act == ui->actionSelectRect) {
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_RECT_TOOL);
+        else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
+            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_RECT_TOOL);
+    }
+    else if (act == ui->actionSelectLasso) {
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_LASSO_TOOL);
+        else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
+            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
+    }
 }
 
 

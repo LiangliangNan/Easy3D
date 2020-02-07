@@ -35,11 +35,11 @@ namespace easy3d {
 
     class Picker {
     public:
-        Picker(Camera *cam);
+        Picker(const Camera *cam);
 
         ~Picker();
 
-        Camera *camera() const { return camera_; }
+        const Camera *camera() const { return camera_; }
 
         /**
          * Construct a picking line.
@@ -110,7 +110,7 @@ namespace easy3d {
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
-        Camera *camera_;
+        const Camera *camera_;
 
         bool use_gpu_if_supported_; // use GPU if supported
 

@@ -35,7 +35,7 @@
 
 namespace easy3d {
 
-    SurfaceMeshPicker::SurfaceMeshPicker(Camera *cam)
+    SurfaceMeshPicker::SurfaceMeshPicker(const Camera *cam)
             : Picker(cam), hit_resolution_(15), program_(nullptr) {
         use_gpu_if_supported_ = true;
     }
@@ -367,7 +367,7 @@ namespace easy3d {
             }
         }
 
-        auto select = model->face_property<bool>("v:select");
+        auto select = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
         int count(0);
         for (auto f : model->faces()) {
@@ -438,7 +438,7 @@ namespace easy3d {
             }
         }
 
-        auto select = model->face_property<bool>("v:select");
+        auto select = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
         int count(0);
         for (auto f : model->faces()) {

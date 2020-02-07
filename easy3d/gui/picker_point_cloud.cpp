@@ -37,7 +37,7 @@
 namespace easy3d {
 
 
-    PointCloudPicker::PointCloudPicker(Camera *cam)
+    PointCloudPicker::PointCloudPicker(const Camera *cam)
             : Picker(cam) {
         use_gpu_if_supported_ = true;
     }
@@ -75,9 +75,6 @@ namespace easy3d {
 
 
     int PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        if (!model)
-            return 0;
-
         if (!model)
             return 0;
 

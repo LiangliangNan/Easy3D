@@ -92,8 +92,17 @@
     <addaction name="actionEstimatePointCloudNormals"/>
     <addaction name="actionReorientPointCloudNormals"/>
    </widget>
+   <widget class="QMenu" name="menuSelect">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionInvertSelection"/>
+    <addaction name="separator"/>
+    <addaction name="actionDeleteSelectedPrimitives"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuSelect"/>
    <addaction name="menuTopology"/>
    <addaction name="menuOrientation"/>
    <addaction name="menuConversion"/>
@@ -109,6 +118,12 @@
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
    <addaction name="actionSnapshot"/>
+   <addaction name="separator"/>
+   <addaction name="actionCameraManipulation"/>
+   <addaction name="separator"/>
+   <addaction name="actionSelectClick"/>
+   <addaction name="actionSelectRect"/>
+   <addaction name="actionSelectLasso"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetRendering">
@@ -156,7 +171,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>362</height>
+          <height>333</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -190,7 +205,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>362</height>
+          <height>333</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -224,7 +239,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>362</height>
+          <height>333</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -258,7 +273,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>362</height>
+          <height>333</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -512,6 +527,82 @@
   <action name="actionReorientPointCloudNormals">
    <property name="text">
     <string>Re-orient Point Cloud Normals</string>
+   </property>
+  </action>
+  <action name="actionSelectLasso">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/select_lasso.png</normaloff>Resources/icons/select_lasso.png</iconset>
+   </property>
+   <property name="text">
+    <string>Select Using the Lasso Tool</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Using the Lasso Tool</string>
+   </property>
+  </action>
+  <action name="actionInvertSelection">
+   <property name="text">
+    <string>Invert Selection</string>
+   </property>
+   <property name="toolTip">
+    <string>Invert Selection</string>
+   </property>
+  </action>
+  <action name="actionDeleteSelectedPrimitives">
+   <property name="text">
+    <string>Delete Selected Primitives</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete Selected Primitives</string>
+   </property>
+  </action>
+  <action name="actionSelectRect">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/select_rect.png</normaloff>Resources/icons/select_rect.png</iconset>
+   </property>
+   <property name="text">
+    <string>Select Using the Sketch Tool</string>
+   </property>
+   <property name="toolTip">
+    <string>Select Using the Sketch Tool</string>
+   </property>
+  </action>
+  <action name="actionCameraManipulation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/manipulation.png</normaloff>Resources/icons/manipulation.png</iconset>
+   </property>
+   <property name="text">
+    <string>Camera Manipulation</string>
+   </property>
+   <property name="toolTip">
+    <string>Camera Manipulation</string>
+   </property>
+  </action>
+  <action name="actionSelectClick">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/select_click.png</normaloff>Resources/icons/select_click.png</iconset>
+   </property>
+   <property name="text">
+    <string>Select by Clicking</string>
+   </property>
+   <property name="toolTip">
+    <string>Select by Clicking</string>
    </property>
   </action>
  </widget>

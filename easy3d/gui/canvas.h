@@ -22,40 +22,42 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef EASY3D_GUI_CANVAS_H
+#define EASY3D_GUI_CANVAS_H
 
-#include <easy3d/gui/picker.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/framebuffer_object.h>
+#include <vector>
 
+#include <easy3d/gui/tool_manager.h>
 
 namespace easy3d {
 
+    class Camera;
+    class Model;
 
-    FramebufferObject *Picker::fbo_ = 0;
-
-
-    Picker::Picker(const Camera *cam)
-            : camera_(cam), use_gpu_if_supported_(true) {
+    namespace tools {
+        class ToolManager;
     }
 
-
-    Picker::~Picker() {
-        if (fbo_) {
-            delete fbo_;
-            fbo_ = 0;
+    // Canvas defined the basic interface for interactive tools
+    class Canvas {
+    public:
+        Canvas() {
+            tool_manager_ = new tools::ToolManager(this);
         }
-    }
+        ~Canvas() { delete tool_manager_; }
 
+        virtual Camera *camera() = 0;
+        virtual const Camera *camera() const = 0;
 
-    void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        float dpi_scaling = 1.0f;
-        if (width > 0)
-            dpi_scaling = width / static_cast<float>(camera()->screenWidth());
-        else if (height > 0)
-            dpi_scaling = height / static_cast<float>(camera()->screenHeight());
+        virtual const std::vector<Model*>& models() const = 0;
 
-        gl_x = static_cast<int>(dpi_scaling * x);
-        gl_y = static_cast<int>(dpi_scaling * (camera()->screenHeight() - 1 - y));
-    }
+        tools::ToolManager* tool_manager() const { return tool_manager_; }
+
+    private:
+        tools::ToolManager* tool_manager_;
+    };
 
 }
+
+
+#endif //EASY3D_GUI_CANVAS_H

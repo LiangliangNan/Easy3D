@@ -32,12 +32,11 @@
 namespace easy3d {
 
     class PointCloud;
-
     class ShaderProgram;
 
     class PointCloudPicker : public Picker {
     public:
-        PointCloudPicker(Camera *cam);
+        PointCloudPicker(const Camera *cam);
 
         /**
          * @brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex property

@@ -35,13 +35,11 @@
 namespace easy3d {
 
     class Model;
-
     class Drawable;
 
     class ModelPicker : public Picker {
     public:
-        ModelPicker(Camera *cam);
-
+        ModelPicker(const Camera *cam);
         ~ModelPicker();
 
         /**
@@ -59,13 +57,10 @@ namespace easy3d {
 
         // render each model of the scene with a unique color
         void draw(const std::vector<Model *> &models);
-
         // render the drawable with color
         void draw(Drawable *drawable, const vec4 &color);
-
         // restore each model's original rendering state
         void restore(const std::vector<Model *> &models);
-
         // restore drawable's original rendering state
         void restore(Drawable *drawable);
 

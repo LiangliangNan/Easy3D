@@ -5,10 +5,15 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+        canvas.h
         picker.h
         picker_model.h
         picker_point_cloud.h
         picker_surface_mesh.h
+        tool.h
+        tool_manager.h
+        tool_selection_point_cloud.h
+        tool_selection_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -16,6 +21,10 @@ set(${PROJECT_NAME}_SOURCES
         picker_model.cpp
         picker_point_cloud.cpp
         picker_surface_mesh.cpp
+        tool.cpp
+        tool_manager.cpp
+        tool_selection_point_cloud.cpp
+        tool_selection_surface_mesh.cpp
         )
 
 add_library(${PROJECT_NAME} STATIC

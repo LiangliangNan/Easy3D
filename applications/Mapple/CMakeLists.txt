@@ -99,7 +99,7 @@ if (MSVC)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} viewer algo algo_ext)
+target_link_libraries(${PROJECT_NAME} viewer algo algo_ext gui)
 
 
 ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.

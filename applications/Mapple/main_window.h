@@ -66,6 +66,8 @@ private slots:
 
     void onCurrentModelChanged();
 
+    void operationModeChanged(QAction* act);
+
 protected:
     void dragEnterEvent(QDragEnterEvent *e) override;
     void dropEvent(QDropEvent *) override;
@@ -81,6 +83,7 @@ private:
 
     void createActionsForFileMenu();
     void createActionsForViewMenu();
+    void createActionsForEditMenu();
     void createActionsForTopologyMenu();
     void createActionsForOrientationMenu();
     void createActionsForConversionMenu();

@@ -36,7 +36,7 @@ namespace easy3d {
 
     class SurfaceMeshPicker : public Picker {
     public:
-        SurfaceMeshPicker(Camera *cam);
+        SurfaceMeshPicker(const Camera *cam);
 
         ~SurfaceMeshPicker();
 
