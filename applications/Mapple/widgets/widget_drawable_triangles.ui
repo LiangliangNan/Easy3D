@@ -32,7 +32,7 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="labelName">
+      <widget class="QLabel" name="labelDrawableName">
        <property name="maximumSize">
         <size>
          <width>16777215</width>
@@ -49,6 +49,11 @@
        <property name="toolTip">
         <string>Select the drawable to be visualized</string>
        </property>
+       <item>
+        <property name="text">
+         <string>not available</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="0">
@@ -164,7 +169,7 @@
        </item>
        <item>
         <property name="text">
-         <string>none</string>
+         <string>disabled</string>
         </property>
        </item>
       </widget>
@@ -209,7 +214,7 @@
         </spacer>
        </item>
        <item alignment="Qt::AlignRight">
-        <widget class="QLabel" name="labelDefaultColor">
+        <widget class="QLabel" name="labelColor">
          <property name="text">
           <string>Color</string>
          </property>
@@ -233,7 +238,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="labelDefaultColorFront">
+        <widget class="QLabel" name="labelDefaultColor">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -247,12 +252,12 @@
           </size>
          </property>
          <property name="text">
-          <string>front</string>
+          <string>default</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="toolButtonFrontColor">
+        <widget class="QToolButton" name="toolButtonDefaultColor">
          <property name="minimumSize">
           <size>
            <width>20</width>
@@ -297,7 +302,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="labelDefaultColorBack">
+        <widget class="QLabel" name="labelBackColor">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -316,7 +321,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBoxDistinctBackColor">
+        <widget class="QCheckBox" name="checkBoxBackColor">
          <property name="minimumSize">
           <size>
            <width>0</width>
@@ -384,7 +389,7 @@
         </spacer>
        </item>
        <item alignment="Qt::AlignRight">
-        <widget class="QLabel" name="labelTextureFile">
+        <widget class="QLabel" name="labelTexture">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -427,7 +432,7 @@
           <string>The image file of the texture</string>
          </property>
          <property name="text">
-          <string>texture image</string>
+          <string>not available</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -693,13 +698,14 @@
   <tabstop>checkBoxPhongShading</tabstop>
   <tabstop>comboBoxLightingOptions</tabstop>
   <tabstop>comboBoxColorScheme</tabstop>
-  <tabstop>toolButtonFrontColor</tabstop>
-  <tabstop>checkBoxDistinctBackColor</tabstop>
+  <tabstop>toolButtonDefaultColor</tabstop>
+  <tabstop>checkBoxBackColor</tabstop>
   <tabstop>toolButtonBackColor</tabstop>
   <tabstop>lineEditTextureFile</tabstop>
   <tabstop>toolButtonTextureFile</tabstop>
   <tabstop>spinBoxTextureRepeat</tabstop>
   <tabstop>spinBoxTextureFractionalRepeat</tabstop>
+  <tabstop>checkBoxHighlight</tabstop>
   <tabstop>spinBoxHighlightLow</tabstop>
   <tabstop>spinBoxHighlightHigh</tabstop>
   <tabstop>horizontalSliderOpacity</tabstop>

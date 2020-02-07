@@ -36,18 +36,18 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(int)),
-            this, SLOT(setLighting(int)));
+    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
+            this, SLOT(setLighting(const QString &)));
 
     // color scheme
     connect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
             this, SLOT(setColorScheme(const QString &)));
 
     // default color
-    connect(ui->toolButtonFrontColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+    connect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
     // default color
-    connect(ui->checkBoxDistinctBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    connect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
     connect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // texture
@@ -78,18 +78,18 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(int)),
-               this, SLOT(setLighting(int)));
+    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
+               this, SLOT(setLighting(const QString &)));
 
     // color scheme
     disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
                this, SLOT(setColorScheme(const QString &)));
 
     // default color
-    disconnect(ui->toolButtonFrontColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+    disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
     // default color
-    disconnect(ui->checkBoxDistinctBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    disconnect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
     disconnect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // texture
@@ -121,9 +121,9 @@ void WidgetTrianglesDrawable::updatePanel() {
         return;
     }
 
-    disconnectAll();
-
     setEnabled(true);
+
+    disconnectAll();
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->triangles_drawables();
@@ -138,31 +138,13 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     {   // lighting
         if (drawable()->lighting()) {
-            if (drawable()->lighting_two_sides()) {
-                ui->comboBoxLightingOptions->setCurrentIndex(0);
-                ui->labelDefaultColorBack->setEnabled(true);
-                ui->checkBoxDistinctBackColor->setEnabled(true);
-                ui->toolButtonBackColor->setEnabled(drawable()->distinct_back_color());
-            }
-            else {
-                ui->comboBoxLightingOptions->setCurrentIndex(1);
-                ui->labelDefaultColorBack->setEnabled(false);
-                ui->checkBoxDistinctBackColor->setEnabled(false);
-                ui->toolButtonBackColor->setEnabled(false);
-            }
-            ui->labelHighlight->setEnabled(true);
-            ui->spinBoxHighlightLow->setEnabled(true);
-            ui->spinBoxHighlightHigh->setEnabled(true);
+            if (drawable()->lighting_two_sides())
+                ui->comboBoxLightingOptions->setCurrentText("front and back");
+            else
+                ui->comboBoxLightingOptions->setCurrentText("front only");
         }
-        else {
-            ui->comboBoxLightingOptions->setCurrentIndex(2);
-            ui->labelDefaultColorBack->setEnabled(false);
-            ui->checkBoxDistinctBackColor->setEnabled(false);
-            ui->toolButtonBackColor->setEnabled(false);
-            ui->labelHighlight->setEnabled(false);
-            ui->spinBoxHighlightLow->setEnabled(false);
-            ui->spinBoxHighlightHigh->setEnabled(false);
-        }
+        else
+            ui->comboBoxLightingOptions->setCurrentText("disabled");
     }
 
     {   // color scheme
@@ -183,67 +165,45 @@ void WidgetTrianglesDrawable::updatePanel() {
             ui->comboBoxColorScheme->addItem("h:texcoord");
 
         if (drawable()->per_vertex_color()) {
-            const auto &name = drawable()->color_scheme();
+            const auto &name = model->color_scheme(drawable());
             ui->comboBoxColorScheme->setCurrentText(QString::fromStdString(name));
-
-            ui->labelDefaultColor->setEnabled(false);
-            ui->labelDefaultColorFront->setEnabled(false);
-            ui->toolButtonFrontColor->setEnabled(false);
-
-            bool texturing = ui->comboBoxColorScheme->currentText().endsWith("texcoord");
-            ui->labelTextureFile->setEnabled(texturing);
-            ui->lineEditTextureFile->setEnabled(texturing);
-            ui->toolButtonTextureFile->setEnabled(texturing);
-            ui->labelTextureRepeat->setEnabled(texturing);
-            ui->spinBoxTextureRepeat->setEnabled(texturing);
-            ui->spinBoxTextureFractionalRepeat->setEnabled(texturing);
-        } else {
-            ui->labelDefaultColor->setEnabled(true);
-            ui->labelDefaultColorFront->setEnabled(true);
-            ui->toolButtonFrontColor->setEnabled(true);
-
-            ui->comboBoxColorScheme->setCurrentIndex(0);
-            ui->labelTextureFile->setEnabled(false);
-            ui->lineEditTextureFile->setEnabled(false);
-            ui->toolButtonTextureFile->setEnabled(false);
-            ui->labelTextureRepeat->setEnabled(false);
-            ui->spinBoxTextureRepeat->setEnabled(false);
-            ui->spinBoxTextureFractionalRepeat->setEnabled(false);
         }
 
         // default color
         vec3 c = drawable()->default_color();
-        QPixmap pixmap(ui->toolButtonFrontColor->size());
+        QPixmap pixmap(ui->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-        ui->toolButtonFrontColor->setIcon(QIcon(pixmap));
+        ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
 
         // back side color
-        ui->checkBoxDistinctBackColor->setChecked(drawable()->distinct_back_color());
+        ui->checkBoxBackColor->setChecked(drawable()->distinct_back_color());
         c = drawable()->back_color();
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonBackColor->setIcon(QIcon(pixmap));
-        ui->toolButtonBackColor->setEnabled(drawable()->distinct_back_color());
 
         // texture
         if (drawable()->texture()) {
             const auto &file = drawable()->texture()->file_name();
             ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file)));
-        }
+        } else
+            ui->lineEditTextureFile->setText("not available");
+
         ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
         ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
     }
 
     {   // highlight
+        bool highlight = drawable()->highlight();
+        ui->checkBoxHighlight->setChecked(highlight);
+
         const auto &range = drawable()->highlight_range();
-        bool can_modify = range.first != -1 && range.second != -1;
-        ui->checkBoxHighlight->setChecked(can_modify);
         ui->spinBoxHighlightLow->setValue(range.first);
         ui->spinBoxHighlightHigh->setValue(range.second);
-        ui->spinBoxHighlightLow->setEnabled(can_modify);
-        ui->spinBoxHighlightHigh->setEnabled(can_modify);
     }
+
+    disableUnnecessaryWidgets();
 
     connectAll();
 }
@@ -269,6 +229,12 @@ TrianglesDrawable *WidgetTrianglesDrawable::drawable() {
 void WidgetTrianglesDrawable::setActiveDrawable(const QString &text) {
     auto model = viewer_->currentModel();
     const std::string &name = text.toStdString();
+
+    if (active_triangles_drawable_.find(model) != active_triangles_drawable_.end()) {
+        if (active_triangles_drawable_[model] == name)
+            return; // already active
+    }
+
     if (model->triangles_drawable(name)) {
         active_triangles_drawable_[model] = name;
     } else {
@@ -279,6 +245,8 @@ void WidgetTrianglesDrawable::setActiveDrawable(const QString &text) {
         else
             active_triangles_drawable_[model] = drawables[0]->name();
     }
+
+    updatePanel();
 }
 
 
@@ -287,6 +255,7 @@ void WidgetTrianglesDrawable::setDrawableVisible(bool b) {
         drawable()->set_visible(b);
         viewer_->update();
     }
+    disableUnnecessaryWidgets();
 }
 
 
@@ -298,96 +267,41 @@ void WidgetTrianglesDrawable::setPhongShading(bool b) {
 }
 
 
-void WidgetTrianglesDrawable::setLighting(int b) {
-    switch (b) {
-        case 0: {
+void WidgetTrianglesDrawable::setLighting(const QString & text) {
+    if (text == "front and back") {
+        if (!drawable()->lighting())
             drawable()->set_lighting(true);
+        if (!drawable()->lighting_two_sides())
             drawable()->set_lighting_two_sides(true);
-
-            bool coloring = (ui->comboBoxColorScheme->currentIndex() == 0);
-            ui->labelDefaultColor->setEnabled(coloring);
-            ui->labelDefaultColorFront->setEnabled(coloring);
-            ui->toolButtonFrontColor->setEnabled(coloring);
-            ui->labelDefaultColorBack->setEnabled(coloring);
-            ui->checkBoxDistinctBackColor->setEnabled(coloring);
-            ui->toolButtonBackColor->setEnabled(coloring && drawable()->distinct_back_color());
-
-            ui->labelHighlight->setEnabled(true);
-            ui->spinBoxHighlightLow->setEnabled(true);
-            ui->spinBoxHighlightHigh->setEnabled(true);
-            break;
-        }
-        case 1: {
-            drawable()->set_lighting(true);
-            drawable()->set_lighting_two_sides(false);
-            ui->labelDefaultColorBack->setEnabled(false);
-            ui->checkBoxDistinctBackColor->setEnabled(false);
-            ui->toolButtonBackColor->setEnabled(false);
-            ui->labelHighlight->setEnabled(true);
-            ui->spinBoxHighlightLow->setEnabled(true);
-            ui->spinBoxHighlightHigh->setEnabled(true);
-            break;
-        }
-        case 2: {
-            drawable()->set_lighting(false);
-            ui->labelDefaultColorBack->setEnabled(false);
-            ui->checkBoxDistinctBackColor->setEnabled(false);
-            ui->toolButtonBackColor->setEnabled(false);
-            ui->labelHighlight->setEnabled(false);
-            ui->spinBoxHighlightLow->setEnabled(false);
-            ui->spinBoxHighlightHigh->setEnabled(false);
-            break;
-        }
     }
+    else if (text == "front only") {
+        if (!drawable()->lighting())
+            drawable()->set_lighting(true);
+        if (drawable()->lighting_two_sides())
+            drawable()->set_lighting_two_sides(false);
+    }
+    else if (text == "disabled") {
+        if (drawable()->lighting())
+            drawable()->set_lighting(false);
+    }
+
     viewer_->update();
+    disableUnnecessaryWidgets();
 }
 
 
 void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
-    if (text == "uniform color") {
-        drawable()->set_per_vertex_color(false);
-        ui->labelDefaultColor->setEnabled(true);
-        ui->labelDefaultColorFront->setEnabled(true);
-        ui->toolButtonFrontColor->setEnabled(true);
-
-        bool can_change_back = (ui->comboBoxLightingOptions->currentIndex() == 0);
-        ui->labelDefaultColorBack->setEnabled(can_change_back);
-        ui->checkBoxDistinctBackColor->setEnabled(can_change_back);
-        ui->toolButtonBackColor->setEnabled(can_change_back && drawable()->distinct_back_color());
-
-        bool texturing = false;
-        drawable()->set_use_texture(texturing);
-        ui->labelTextureFile->setEnabled(texturing);
-        ui->lineEditTextureFile->setEnabled(texturing);
-        ui->toolButtonTextureFile->setEnabled(texturing);
-        ui->labelTextureRepeat->setEnabled(texturing);
-        ui->spinBoxTextureRepeat->setEnabled(texturing);
-        ui->spinBoxTextureFractionalRepeat->setEnabled(texturing);
-
-    } else {
-        drawable()->set_per_vertex_color(true);
-        drawable()->set_per_vertex_color(true);
-
-        bool coloring = false;
-        ui->labelDefaultColor->setEnabled(coloring);
-        ui->labelDefaultColorFront->setEnabled(coloring);
-        ui->toolButtonFrontColor->setEnabled(coloring);
-
-        bool can_change_back = coloring && (ui->comboBoxLightingOptions->currentIndex() == 0);
-        ui->labelDefaultColorBack->setEnabled(can_change_back);
-        ui->checkBoxDistinctBackColor->setEnabled(can_change_back);
-        ui->toolButtonBackColor->setEnabled(can_change_back && drawable()->distinct_back_color());
-
-        bool texturing = ui->comboBoxColorScheme->currentText().contains(":texcoord");
-        drawable()->set_use_texture(texturing);
-        ui->labelTextureFile->setEnabled(texturing);
-        ui->lineEditTextureFile->setEnabled(texturing);
-        ui->toolButtonTextureFile->setEnabled(texturing);
-        ui->labelTextureRepeat->setEnabled(texturing);
-        ui->spinBoxTextureRepeat->setEnabled(texturing);
-        ui->spinBoxTextureFractionalRepeat->setEnabled(texturing);
+    bool expected = text != "uniform color";
+    if (drawable()->per_vertex_color() != expected) {
+        drawable()->set_per_vertex_color(expected);
     }
+
+    bool use_texture = text.contains(":texcoord");
+    if (drawable()->use_texture() != use_texture)
+        drawable()->set_use_texture(use_texture);
+
     viewer_->update();
+    disableUnnecessaryWidgets();
 }
 
 
@@ -400,9 +314,9 @@ void WidgetTrianglesDrawable::setDefaultColor() {
         drawable()->set_default_color(new_color);
         viewer_->update();
 
-        QPixmap pixmap(ui->toolButtonFrontColor->size());
+        QPixmap pixmap(ui->toolButtonDefaultColor->size());
         pixmap.fill(color);
-        ui->toolButtonFrontColor->setIcon(QIcon(pixmap));
+        ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
     }
 }
 
@@ -427,7 +341,7 @@ void WidgetTrianglesDrawable::setDistinctBackColor(bool b) {
     if (drawable()->distinct_back_color() != b) {
         drawable()->set_distinct_back_color(b);
         viewer_->update();
-        ui->toolButtonBackColor->setEnabled(b);
+        disableUnnecessaryWidgets();
     }
 }
 
@@ -454,10 +368,13 @@ void WidgetTrianglesDrawable::setTextureFile() {
     tex = Texture::create(file_name, GL_REPEAT);
     if (tex) {
         drawable()->set_texture(tex);
+        drawable()->set_use_texture(true);
         viewer_->update();
         ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file_name)));
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
+
+    disableUnnecessaryWidgets();
 }
 
 
@@ -478,14 +395,11 @@ void WidgetTrianglesDrawable::setTextureFractionalRepeat(int r) {
 
 
 void WidgetTrianglesDrawable::setHighlight(bool b) {
-    if (!b) {
-        if (ui->spinBoxHighlightLow->value() != -1)
-            ui->spinBoxHighlightLow->setValue(-1);
-        if (ui->spinBoxHighlightHigh->value() != -1)
-            ui->spinBoxHighlightHigh->setValue(-1);
+    if (drawable()->highlight() != b) {
+        drawable()->set_highlight(b);
+        viewer_->update();
+        disableUnnecessaryWidgets();
     }
-    ui->spinBoxHighlightLow->setEnabled(b);
-    ui->spinBoxHighlightHigh->setEnabled(b);
 }
 
 
@@ -513,3 +427,46 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 }
 
 
+void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
+    bool visible = ui->checkBoxVisible->isChecked();
+    ui->labelPhongShading->setEnabled(visible);
+    ui->checkBoxPhongShading->setEnabled(visible);
+    ui->labelLighting->setEnabled(visible);
+    ui->comboBoxLightingOptions->setEnabled(visible);
+    ui->labelColorScheme->setEnabled(visible);
+    ui->comboBoxColorScheme->setEnabled(visible);
+    ui->comboBoxLightingOptions->setEnabled(visible);
+    ui->comboBoxLightingOptions->setEnabled(visible);
+
+    bool can_modify_default_color = visible && (ui->comboBoxColorScheme->currentText() == "uniform color");
+    ui->labelColor->setEnabled(can_modify_default_color);
+    ui->labelDefaultColor->setEnabled(can_modify_default_color);
+    ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
+
+    const auto& lighting_option = ui->comboBoxLightingOptions->currentText();
+    bool can_modify_back_color = visible && lighting_option == "front and back";
+    ui->labelBackColor->setEnabled(can_modify_back_color);
+    ui->checkBoxBackColor->setEnabled(can_modify_back_color);
+    ui->toolButtonBackColor->setEnabled(can_modify_back_color && drawable()->distinct_back_color());
+
+    bool can_create_texture = visible && ui->comboBoxColorScheme->currentText().contains(":texcoord");
+    ui->labelTexture->setEnabled(can_create_texture);
+    ui->lineEditTextureFile->setEnabled(can_create_texture);
+    ui->toolButtonTextureFile->setEnabled(can_create_texture);
+
+    bool can_modify_texture = can_create_texture && drawable()->texture();
+    ui->labelTextureRepeat->setEnabled(can_modify_texture);
+    ui->spinBoxTextureRepeat->setEnabled(can_modify_texture);
+    ui->spinBoxTextureFractionalRepeat->setEnabled(can_modify_texture);
+
+    bool can_modify_highlight = visible && lighting_option != "disabled";
+    ui->labelHighlight->setEnabled(can_modify_highlight);
+    ui->checkBoxHighlight->setEnabled(can_modify_highlight);
+    bool can_modify_highlight_range = can_modify_highlight && ui->checkBoxHighlight->isChecked();
+    ui->spinBoxHighlightLow->setEnabled(can_modify_highlight_range);
+    ui->spinBoxHighlightHigh->setEnabled(can_modify_highlight_range);
+
+    bool can_modify_opacity = visible && false;
+    ui->labelOpacity->setEnabled(can_modify_opacity);
+    ui->horizontalSliderOpacity->setEnabled(can_modify_opacity);
+}

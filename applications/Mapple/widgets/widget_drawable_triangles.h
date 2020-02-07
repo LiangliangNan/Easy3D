@@ -33,7 +33,7 @@ public slots:
     void setDrawableVisible(bool);
     void setActiveDrawable(const QString &);
     void setPhongShading(bool);
-    void setLighting(int);
+    void setLighting(const QString &);
     void setDistinctBackColor(bool);
     void setColorScheme(const QString &);
     void setDefaultColor();
@@ -49,6 +49,7 @@ public slots:
 private:
     void connectAll();
     void disconnectAll();
+    void disableUnnecessaryWidgets();
 
 private:
     Ui::WidgetTrianglesDrawable*  ui;
