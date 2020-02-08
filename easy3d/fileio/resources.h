@@ -22,26 +22,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_VIEWER_BUNNY_H
-#define EASY3D_VIEWER_BUNNY_H
+#ifndef EASY3D_FILEIO_RESOURCES_H
+#define EASY3D_FILEIO_RESOURCES_H
 
-#include <vector>
+
 #include <easy3d/core/types.h>
 
 
 namespace easy3d {
 
-    // the data representing a bunny model.
+    namespace resource {
 
-    namespace data {
-
+        // the data representing a bunny model.
         // the vertices
         extern std::vector<vec3>    bunny_vertices;
         // the triangle faces (each consecutive 3 values denote the vertex indices of a triangle)
         extern std::vector<int>     bunny_indices;
 
-    }
-}
+
+		// resource directory (containing color maps, shaders, textures, etc.)
+        extern std::string directory();
+
+    } // namespace resource
+
+} // namespace easy3d
 
 
-#endif // EASY3D_VIEWER_BUNNY_H
+#endif // EASY3D_FILEIO_RESOURCES_H

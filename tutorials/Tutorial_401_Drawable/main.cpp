@@ -26,7 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/bunny.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/core/types.h>
 #include <easy3d/util/logging.h>
 
@@ -57,9 +57,9 @@ int main(int argc, char** argv) {
         Viewer viewer("Tuturial_302_Drawables");
 
         // We use the points and indices of the bunny model.
-        const std::vector<vec3>& vertices = data::bunny_vertices;
+        const std::vector<vec3>& vertices = resource::bunny_vertices;
         // Each consecutive 3 indices represent a triangle.
-        const std::vector<int>& indices = data::bunny_indices;
+        const std::vector<int>& indices = resource::bunny_indices;
 
         // To create a TrianglesDrawable to visualize the surface, we need
 		// to collect the point positions and normals to be sent to the GPU.

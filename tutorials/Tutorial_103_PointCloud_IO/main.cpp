@@ -24,7 +24,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 #include <fstream>
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
 	// Read the point cloud from a known file. 
-    PointCloud* cloud = PointCloudIO::load(setting::resource_directory() + "/data/bunny.bin");
+    PointCloud* cloud = PointCloudIO::load(resource::directory() + "/data/bunny.bin");
     if (!cloud) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

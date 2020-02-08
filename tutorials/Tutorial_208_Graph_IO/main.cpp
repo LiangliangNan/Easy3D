@@ -24,7 +24,7 @@
 
 #include <easy3d/core/graph.h>
 #include <easy3d/fileio/graph_io.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     // Read a graph specified by its file name
-    const std::string file_name = setting::resource_directory() + "/data/graph.ply";
+    const std::string file_name = resource::directory() + "/data/graph.ply";
     Graph* graph = GraphIO::load(file_name);
     if (!graph) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";

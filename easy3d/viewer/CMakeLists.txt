@@ -80,10 +80,6 @@ set(${PROJECT_NAME}_SOURCES
         viewer.cpp
         )
 
-set(${PROJECT_NAME}_DATA_FILES
-        bunny.h
-        bunny.cpp
-        )
 
 set(${PROJECT_NAME}_SHADERS
         # points
@@ -172,7 +168,6 @@ add_library(${PROJECT_NAME} STATIC
         ${${PROJECT_NAME}_SOURCES}
         ${${PROJECT_NAME}_HEADERS}
         ${${PROJECT_NAME}_SHADERS}
-        ${${PROJECT_NAME}_DATA_FILES}
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")

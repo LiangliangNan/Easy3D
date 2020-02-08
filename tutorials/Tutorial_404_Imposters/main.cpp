@@ -27,7 +27,7 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
         Viewer viewer("Tutorial_404_Imposters");
 
         // Load point cloud data from a file
-        const std::string file_name = setting::resource_directory() + "/data/sphere.obj";
+        const std::string file_name = resource::directory() + "/data/sphere.obj";
         SurfaceMesh* model = dynamic_cast<SurfaceMesh*>(viewer.add_model(file_name, false));
         if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";

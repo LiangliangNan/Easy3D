@@ -23,7 +23,7 @@
  */
 
 #include "real_camera.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -39,9 +39,9 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     // the bunder file (We use only the camera instric and extrinsic parameters).
-    const std::string bundler_file = setting::resource_directory() + "/data/fountain/bundle.out";
+    const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";
     // the point cloud file.
-    const std::string cloud_file = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+    const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
 
     try {
         RealCamera viewer("Tutorial_304_RealCamera", bundler_file, cloud_file);

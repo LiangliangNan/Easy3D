@@ -212,7 +212,7 @@ namespace easy3d {
                 drawable->set_per_vertex_color(true);
 
 #if 0 // Model has texture coordinates, should we put a default texture?
-                const std::string texture_file = setting::resource_directory() + "/textures/checkerboard_gray.png";
+                const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
                 auto tex = Texture::create(texture_file, GL_REPEAT);
                 drawable->set_texture(tex);
                 drawable->set_texture_repeat(10);

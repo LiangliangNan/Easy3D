@@ -23,7 +23,7 @@
  */
 
 #include "composite_view.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         CompositeView viewer("Tutorial_301_CompositeView");
 
         // Load model from a file
-        const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
+        const std::string file_name = resource::directory() + "/data/torusknot.obj";
         if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;

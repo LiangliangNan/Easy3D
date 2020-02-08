@@ -23,7 +23,7 @@
  */
 
 #include "textured_viewer.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
 
         //----------------------- Load a mesh from a file ------------------------
 
-        const std::string& file_name = setting::resource_directory() + "/data/domik/domik.obj";
-        //const std::string& file_name = setting::resource_directory() + "/data/cube/cube.obj";
+        const std::string& file_name = resource::directory() + "/data/domik/domik.obj";
+        //const std::string& file_name = resource::directory() + "/data/cube/cube.obj";
         if (!viewer.add_model(file_name, true)) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;

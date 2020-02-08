@@ -55,12 +55,13 @@
 #include <easy3d/viewer/average_color_blending.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_timer.h>
+#include <easy3d/viewer/setting.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/timer.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -1350,7 +1351,7 @@ namespace easy3d {
 
 	bool Viewer::open() {
 		const std::string& title = "Please choose a file";
-		const std::string& default_path = setting::resource_directory() + "/data/";
+		const std::string& default_path = resource::directory() + "/data/";
 		const std::vector<std::string>& filters = {
 			"Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
 			"Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",

@@ -26,7 +26,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file_name = setting::resource_directory() + "/data/torusknot.obj";
+    const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
     try {
         // Create the default Easy3D viewer.

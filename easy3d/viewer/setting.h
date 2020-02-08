@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_OPENGL_DSETTING_H
-#define EASY3D_OPENGL_DSETTING_H
+#ifndef EASY3D_VIEWER_SETTING_H
+#define EASY3D_VIEWER_SETTING_H
 
 
 #include <easy3d/core/types.h>
@@ -93,12 +93,9 @@ namespace easy3d {
         extern bool surface_mesh_borders_imposters;
         extern float   surface_mesh_borders_line_width;
 
-		// resource directory (containing color maps, shaders, textures, etc.)
-		extern std::string resource_directory();
-
-    } // namespace setting {
+    } // namespace setting
 
 } // namespace easy3d
 
 
-#endif // EASY3D_OPENGL_DSETTING_H
+#endif // EASY3D_VIEWER_SETTING_H

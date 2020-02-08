@@ -23,7 +23,7 @@
  */
 
 #include "picker_viewer.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize(argv[0]);
 
-    const std::string file_name_0 = setting::resource_directory() + "/data/graph.ply";
-    const std::string file_name_1 = setting::resource_directory() + "/data/torusknot.obj";
+    const std::string file_name_0 = resource::directory() + "/data/graph.ply";
+    const std::string file_name_1 = resource::directory() + "/data/torusknot.obj";
     try {
         PickerViewer viewer("Tutorial_307_ModelPicker");
         if (!viewer.add_model(file_name_0) || !viewer.add_model(file_name_1)) {

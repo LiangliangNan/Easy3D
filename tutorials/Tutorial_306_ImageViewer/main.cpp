@@ -23,7 +23,7 @@
  */
 
 #include "image_viewer.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     logging::initialize(argv[0]);
 
     // the image file.
-    const std::string image_file = setting::resource_directory() + "/data/fountain/images/0000.jpg";
+    const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
 
     try {
         ImageViewer viewer("Tutorial_306_ImageViewer", image_file);

@@ -23,7 +23,7 @@
  */
 
 #include "depth_image.h"
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/util/logging.h>
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     try {
         DepthImage viewer("Tutorial_408_DepthImage");
 
-        const std::string file_name = setting::resource_directory() + "/data/fountain/pointcloud.ply";
+        const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";
         Model* model = viewer.add_model(file_name, true);
         if (!model) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";

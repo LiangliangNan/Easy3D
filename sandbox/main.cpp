@@ -23,7 +23,7 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -42,9 +42,9 @@ int main(int argc, char **argv) {
 
     try {
         const std::vector<std::string> files = {
-//                setting::resource_directory() + "/data/repair/non_manifold/complex_edges_1.off",
-                setting::resource_directory() + "/data/repair/non_manifold/complex_vertices.off",
-                setting::resource_directory() + "/data/repair/non_manifold/3_umbrellas.off",
+//                resource::directory() + "/data/repair/non_manifold/complex_edges_1.off",
+                resource::directory() + "/data/repair/non_manifold/complex_vertices.off",
+                resource::directory() + "/data/repair/non_manifold/3_umbrellas.off",
         };
 
         // Create the viewer.

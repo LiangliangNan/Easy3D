@@ -37,7 +37,7 @@ namespace easy3d
         /**
          * \brief Open a native file open dialog.
          * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
-         * \param default_path The default file path, e.g., setting::resource_directory() + "/data/".
+         * \param default_path The default file path, e.g., resource::directory() + "/data/".
          * \param filters The accepted file filters, e.g.,
          *              const std::vector<std::string> filters = {
          *                  "Mesh Files (*.obj *.ply)", "*.obj *.ply",
@@ -57,7 +57,7 @@ namespace easy3d
         /**
          * \brief Open a native file open dialog.
          * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
-         * \param default_path The default file path, e.g., setting::resource_directory() + "/data/".
+         * \param default_path The default file path, e.g., resource::directory() + "/data/".
          * \param filters The accepted file filters. For each filter, the string you see in the file
          *                dialog and the actual filter always come in pairs, e.g.,
          *                      const std::vector<std::string> filters = {

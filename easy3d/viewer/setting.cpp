@@ -90,35 +90,6 @@ namespace easy3d {
         bool surface_mesh_borders_imposters = true;
         float surface_mesh_borders_line_width = 2.0f;
 
-
-        // resource directory (containing color maps, shaders, textures, etc.)
-        std::string resource_directory() {
-            std::string parent = file_system::executable_directory();
-            std::string dir = parent + "/resources";
-            if (file_system::is_directory(dir))
-                return dir;
-            else {
-                // For macOS, if reached here, we may need to move "up" three times, because
-                // macOS puts the executable file in an application bundle, e.g.,
-                // "PolyFit.app/⁨Contents/⁨MacOS⁩/PolyFit". Some IDEs may also put the 'ext' in
-                // Debug/Release subfolder, so we may to try four times up at most.
-                parent = file_system::parent_directory(parent);
-                std::string dir = parent + "/resources";
-                if (file_system::is_directory(dir))
-                    return dir;
-                else {
-                    for (int i = 0; i < 4; ++i) {
-                        parent = file_system::parent_directory(parent);
-                        std::string dir = parent + "/resources";
-                        if (file_system::is_directory(dir))
-                            return dir;
-                    }
-                }
-                // if still could not find it, return the current working directory
-                return file_system::current_working_directory();
-            }
-        }
-
     } // namespace setting
 
 } // namespace easy3d

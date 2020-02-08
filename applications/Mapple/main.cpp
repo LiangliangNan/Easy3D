@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
 #ifdef NDEBUG
     // splash screen
-    const std::string file = setting::resource_directory() + "/images/splash.png";
+    const std::string file = resource::directory() + "/images/splash.png";
     QPixmap pixmap(QString::fromStdString(file));
     QSplashScreen splash(pixmap, Qt::WindowStaysOnTopHint);
     QElapsedTimer splashTimer;

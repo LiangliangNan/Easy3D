@@ -5,11 +5,11 @@
 
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/fileio/resources.h>
 
 #include "paint_canvas.h"
 
@@ -347,7 +347,7 @@ void WidgetTrianglesDrawable::setDistinctBackColor(bool b) {
 
 
 void WidgetTrianglesDrawable::setTextureFile() {
-    const std::string dir = setting::resource_directory() + "/textures/";
+    const std::string dir = resource::directory() + "/textures/";
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Choose an image file"), QString::fromStdString(dir),
                                                     tr("Image format (*.xpm *.png *.jpg *.bmp *.ppm)")

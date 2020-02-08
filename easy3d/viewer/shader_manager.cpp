@@ -24,7 +24,7 @@
 
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/logging.h>
@@ -56,7 +56,7 @@ namespace easy3d {
         else if (!attempt_load_program_[base_name])
             return nullptr;
 
-        const std::string dir = setting::resource_directory() + "/shaders/";
+        const std::string dir = resource::directory() + "/shaders/";
         const std::string vs_file = dir + base_name + ".vert";
         if (!file_system::is_file(vs_file)) {
             LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vs_file + " does not exist (this is the first record)";
@@ -133,7 +133,7 @@ namespace easy3d {
 		else if (!attempt_load_program_[name])
 			return nullptr;
 
-		const std::string dir = setting::resource_directory() + "/shaders/";
+        const std::string dir = resource::directory() + "/shaders/";
 		const std::string vert_file = dir + vert_file_name;
         if (!file_system::is_file(vert_file)) {
             LOG_FIRST_N(ERROR, 1) << "vertex shader file \'" << vert_file_name + "\' does not exist (this is the first record)";
