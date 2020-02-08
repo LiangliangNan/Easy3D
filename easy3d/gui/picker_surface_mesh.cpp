@@ -183,7 +183,7 @@ namespace easy3d {
             return vec3();
         }
 
-        const Line3 &line = picking_line(x, y);
+        const Line3 line = picking_line(x, y);
         const Plane3 plane = face_plane(model, face);
 
         vec3 p;
