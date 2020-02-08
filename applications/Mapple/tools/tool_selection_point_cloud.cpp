@@ -23,9 +23,10 @@
  */
 
 
-#include <easy3d/gui/tool_selection_point_cloud.h>
-#include <easy3d/gui/tool_manager.h>
-#include <easy3d/gui/canvas.h>
+#include "tools/tool_selection_point_cloud.h"
+#include "tools/tool_manager.h"
+#include "tools/canvas.h"
+
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>

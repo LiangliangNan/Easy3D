@@ -27,7 +27,7 @@
 
 #include <vector>
 
-#include <easy3d/gui/tool_manager.h>
+#include "tools/tool_manager.h"
 
 namespace easy3d {
 

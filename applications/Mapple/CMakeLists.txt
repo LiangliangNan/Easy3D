@@ -28,10 +28,16 @@ set(${PROJECT_NAME}_HEADERS
 
         widgets/widget_checker_sphere.h
         widgets/widget_drawable.h
-#        widgets/widget_drawable_points.h
-#        widgets/widget_drawable_lines.h
+#       widgets/widget_drawable_points.h
+#       widgets/widget_drawable_lines.h
         widgets/widget_drawable_triangles.h
         widgets/widget_lighting.h
+
+        tools/canvas.h
+        tools/tool.h
+        tools/tool_manager.h
+        tools/tool_selection_point_cloud.h
+        tools/tool_selection_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -51,6 +57,11 @@ set(${PROJECT_NAME}_SOURCES
 #        widgets/widget_drawable_lines.cpp
         widgets/widget_drawable_triangles.cpp
         widgets/widget_lighting.cpp
+
+        tools/tool.cpp
+        tools/tool_manager.cpp
+        tools/tool_selection_point_cloud.cpp
+        tools/tool_selection_surface_mesh.cpp
         )
 
 set(${PROJECT_NAME}_FORMS

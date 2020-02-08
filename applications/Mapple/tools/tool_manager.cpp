@@ -23,9 +23,9 @@
  */
 
 
-#include <easy3d/gui/tool_manager.h>
-#include <easy3d/gui/tool_selection_point_cloud.h>
-#include <easy3d/gui/tool_selection_surface_mesh.h>
+#include "tools/tool_manager.h"
+#include "tools/tool_selection_point_cloud.h"
+#include "tools/tool_selection_surface_mesh.h"
 #include <easy3d/util/logging.h>
 
 

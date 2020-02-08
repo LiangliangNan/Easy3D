@@ -4,7 +4,7 @@
 #include <QOpenGLWidget>
 
 #include <easy3d/core/types.h>
-#include <easy3d/gui/canvas.h>
+#include "tools/canvas.h"
 
 
 namespace easy3d {

@@ -9,12 +9,10 @@
 #include <QApplication>
 #include <QSplashScreen>
 #include <QSurfaceFormat>
-#include <QStyleFactory>
-
-#include <easy3d/util/file_system.h>
-#include <easy3d/util/logging.h>
-#include <easy3d/viewer/setting.h>
 #include <QElapsedTimer>
+
+#include <easy3d/util/logging.h>
+#include <easy3d/fileio/resources.h>
 
 
 using namespace easy3d;

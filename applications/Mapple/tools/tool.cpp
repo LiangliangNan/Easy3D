@@ -23,9 +23,10 @@
  */
 
 
-#include <easy3d/gui/tool.h>
-#include <easy3d/gui/tool_manager.h>
-#include <easy3d/gui/canvas.h>
+#include "tools/tool.h"
+#include "tools/tool_manager.h"
+#include "tools/canvas.h"
+
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/primitives.h>

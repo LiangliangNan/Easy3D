@@ -23,9 +23,10 @@
  */
 
 
-#include <easy3d/gui/tool_selection_surface_mesh.h>
-#include <easy3d/gui/tool_manager.h>
-#include <easy3d/gui/canvas.h>
+#include "tools/tool_selection_surface_mesh.h"
+#include "tools/tool_manager.h"
+#include "tools/canvas.h"
+
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
@@ -36,18 +37,7 @@ namespace easy3d {
 
     namespace tools {
 
-        static const std::string select_attr_name = "select";
-
-        static const vec4 hint_facet_color(0.3f, 1.0f, 1.0f, 1.0f);
-
-        static const float hint_line_width = 1.0f;
-        static const vec4 hint_line_color(0.0f, 0.9f, 0.9f, 0.6f);
-        static const vec4 hint_area_color(0.0f, 0.0f, 0.4f, 0.3f);
-
-
-
         // -------------------- ToolSurfaceMeshFaceSelection ----------------------
-
 
         ToolSurfaceMeshFaceSelection::ToolSurfaceMeshFaceSelection(ToolManager *mgr)
                 : Tool(mgr) {

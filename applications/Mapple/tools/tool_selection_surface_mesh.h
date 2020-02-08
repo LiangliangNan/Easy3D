@@ -26,7 +26,7 @@
 #define EASY3D_GUI_TOOL_SELECTION_SURFACE_MESH_H
 
 
-#include <easy3d/gui/tool.h>
+#include "tools/tool.h"
 #include <easy3d/core/surface_mesh.h>
 
 
