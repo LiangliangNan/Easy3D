@@ -1701,6 +1701,7 @@ namespace easy3d {
 #if 1
         // [Liangliang]: It seems the outgoing halfedges of the vertices may be broken after garbage collection, e.g.,
         // the index of a vertex's outgoing halfedge may go out of range in some cases (e.g., after deleting faces).
+        // The reason was that the mesh may have an invalid state when elements were marked deleted but still exist.
         // This can be easily fixed by assigning a correct outgoing halfedge to each vertex.
 
         // We need to take care of isolated vertices
