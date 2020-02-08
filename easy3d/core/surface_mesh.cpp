@@ -1566,30 +1566,6 @@ namespace easy3d {
     SurfaceMesh::
     garbage_collection()
     {
-#define detect_and_delete_isolated_vertices 0
-#if detect_and_delete_isolated_vertices
-        // [Liangliang] The original implementation has a bug: an actual isolated vertex may still have a valid outgoing
-        //              halfedge. Isolated vertices should be identified (by traversing all faces) if they can be
-        //              reached from any of the faces. If a vertex cannot be reached, it should be marked as isolated by
-        //              assined an invalid outgoing halfedge, e.g., "set_halfedge(v, Halfedge())". Here I also remove
-        //              the isolated vertices.
-        VertexProperty<bool> reachable = add_vertex_property<bool>("v:vertex-reachable", false);
-        for (auto f : faces()) {
-            for (auto h : halfedges(f))
-                reachable[to_vertex(h)] = true;
-        }
-        for (auto v : vertices()) {
-            if (!reachable[v]) {
-               // mark this vertex isolated (by assigning an invalid halfedge)
-                set_halfedge(v, Halfedge());
-                // delete them
-                vdeleted_[v] = true;
-                ++deleted_vertices_;
-            }
-        }
-#endif
-        //------------------------------------------------------------------------------------------------------------
-
         int  i, i0, i1,
         nV(vertices_size()),
         nE(edges_size()),
@@ -1712,9 +1688,6 @@ namespace easy3d {
         remove_vertex_property(vmap);
         remove_halfedge_property(hmap);
         remove_face_property(fmap);
-#if detect_and_delete_isolated_vertices
-        remove_vertex_property(reachable);
-#endif
 
         // finally resize arrays
         vprops_.resize(nV); vprops_.free_memory();
@@ -1724,6 +1697,35 @@ namespace easy3d {
 
         deleted_vertices_ = deleted_edges_ = deleted_faces_ = 0;
         garbage_ = false;
+
+#if 1
+        // [Liangliang]: It seems the outgoing halfedges of the vertices may be broken after garbage collection, e.g.,
+        // the index of a vertex's outgoing halfedge may go out of range in some cases (e.g., after deleting faces).
+        // This can be easily fixed by assigning a correct outgoing halfedge to each vertex.
+
+        // We need to take care of isolated vertices
+        VertexProperty<bool> reachable = add_vertex_property<bool>("v:vertex-reachable", false);
+
+        for (auto f : faces()) {
+            for (auto h : halfedges(f)) {
+                auto v = from_vertex(h);
+                set_halfedge(v, h);
+                adjust_outgoing_halfedge(v);
+                reachable[to_vertex(h)] = true;
+            }
+        }
+
+        int num = 0;
+        for (auto v : vertices()) {
+            if (!reachable[v]) {
+                set_halfedge(v, Halfedge());// mark this vertex isolated (by assigning an invalid halfedge)
+                ++num;
+            }
+        }
+        LOG_IF(WARNING, num > 0) << "model has " << num << " isolated vertices after garbage collection";
+        remove_vertex_property(reachable);
+#endif
+
     }
 
 } // namespace easy3d

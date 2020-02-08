@@ -1,9 +1,6 @@
 * easy3d (on going):
-    - It seems the ManifoldBuilder doesn't maintain the hconn_ property? It may happen in resolve_non_manifold_vertex().
-      If one randomly deletes some faces (e.g., the house.obj model), a halfedge index maybe out of the legal range at 
-      some point. 
     - The Graph data structure is not ready, not tested yet.
-    - Module dependence is bad (core <- viewer; viewer <- core);  The IO example should not depend on viewer module.
+    - Module dependence can be improved (core <- viewer; viewer <- core);  The IO examples should not depend on viewer.
     - Rendering performance can still be improved
         * Drawables (e.g., faces, edges, and vertices) of the same model can share the same vertex buffer;
         * Use index buffer to reduce the num of vertices sent to GPU (already done).
