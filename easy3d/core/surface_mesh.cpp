@@ -1566,6 +1566,30 @@ namespace easy3d {
     SurfaceMesh::
     garbage_collection()
     {
+        //------------------------------------------------------------------------------------------------------------
+        // [Liangliang] The original implementation has a bug: an actual isolated vertex may still have a valid outgoing
+        //              halfedge. Isolated vertices should be identified (by traversing all edges) if they can be
+        //              reached from any of the edges. If a vertex cannot be reached, it should be marked as isolated by
+        //              assined an invalid outgoing halfedge, e.g., "set_halfedge(v, Halfedge())". Here I simply remove
+        //              the isolated vertices.
+        VertexProperty<bool> reachable = add_vertex_property<bool>("v:vertex-reachable", false);
+        for (auto e : edges()) {
+            reachable[vertex(e, 0)] = true;
+            reachable[vertex(e, 1)] = true;
+        }
+        for (auto v : vertices()) {
+            if (!reachable[v]) {
+#if 0
+                // assign an invalid halfedge (this marks the vertex isolated)
+                set_halfedge(v, Halfedge());
+#else
+                vdeleted_[v] = true;
+                ++deleted_vertices_;
+#endif
+            }
+        }
+        //------------------------------------------------------------------------------------------------------------
+
         int  i, i0, i1,
         nV(vertices_size()),
         nE(edges_size()),
@@ -1688,7 +1712,7 @@ namespace easy3d {
         remove_vertex_property(vmap);
         remove_halfedge_property(hmap);
         remove_face_property(fmap);
-
+        remove_vertex_property(reachable);
 
         // finally resize arrays
         vprops_.resize(nV); vprops_.free_memory();
