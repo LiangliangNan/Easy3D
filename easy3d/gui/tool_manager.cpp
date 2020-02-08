@@ -53,22 +53,22 @@ namespace easy3d {
             switch (name) {
                 //------------------- Surface Mesh Face Selection Tools ---------------------
                 case SELECT_SURFACE_MESH_FACE_CLICK_TOOL:
-                    tool = new MeshFacetClickSelect(this);
+                    tool = new MultitoolSurfaceMeshFaceSelectionClick(this);
                     break;
                 case SELECT_SURFACE_MESH_FACE_RECT_TOOL:
-                    tool = new MeshFacetRectSelect(this);
+                    tool = new MultitoolSurfaceMeshFaceSelectionRect(this);
                     break;
                 case SELECT_SURFACE_MESH_FACE_LASSO_TOOL:
-                    tool = new MeshFacetLassoSelect(this);
+                    tool = new MultitoolSurfaceMeshFaceSelectionLasso(this);
                     break;
 
                     //------------------- Point Cloud Vertices Select Tools ---------------------
 
                 case SELECT_POINT_CLOUD_RECT_TOOL:
-                    tool = new PointCloudRectSelect(this);
+                    tool = new MultitoolPointCloudSelectionRect(this);
                     break;
                 case SELECT_POINT_CLOUD_LASSO_TOOL:
-                    tool = new PointCloudLassoSelect(this);
+                    tool = new MultitoolPointCloudSelectionLasso(this);
                     break;
 
                 default:

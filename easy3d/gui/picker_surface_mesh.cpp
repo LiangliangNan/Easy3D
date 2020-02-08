@@ -260,8 +260,8 @@ namespace easy3d {
         // render the 'scene' to the new FBO.
 
         // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
-        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the canvas
-        //       size is changed.
+        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
+        //       of the viewer changed.
 
         // Bind the offscreen fbo for drawing
         fbo_->bind();

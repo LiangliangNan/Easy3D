@@ -71,11 +71,11 @@ namespace easy3d {
             }
         }
 
-        void MultiTool::set_tool(ToolButton button, TaskTool *tool) {
+        void MultiTool::set_tool(ToolButton button, Tool *tool) {
             tools_[button] = tool;
         }
 
-        TaskTool *MultiTool::get_tool(ToolButton button) {
+        Tool *MultiTool::get_tool(ToolButton button) {
             return tools_[button];
         }
 

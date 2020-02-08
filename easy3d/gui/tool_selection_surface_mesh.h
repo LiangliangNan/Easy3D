@@ -40,18 +40,18 @@ namespace easy3d {
 
         class ToolManager;
 
-        class MeshFacetSelectTool : public TaskTool {
+        class ToolSurfaceMeshFaceSelection : public Tool {
         public:
-            MeshFacetSelectTool(ToolManager *mgr);
-            virtual ~MeshFacetSelectTool() {}
+            ToolSurfaceMeshFaceSelection(ToolManager *mgr);
+            virtual ~ToolSurfaceMeshFaceSelection() {}
         };
 
         // -------------------- Click Select ----------------------
 
-        class MeshFacetClickSelectTool : public MeshFacetSelectTool {
+        class ToolSurfaceMeshFaceSelectionClick : public ToolSurfaceMeshFaceSelection {
         public:
-            MeshFacetClickSelectTool(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
-            virtual ~MeshFacetClickSelectTool();
+            ToolSurfaceMeshFaceSelectionClick(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
+            virtual ~ToolSurfaceMeshFaceSelectionClick();
 
             virtual void press(int x, int y);
 
@@ -65,9 +65,9 @@ namespace easy3d {
 
         // -------------------- Rect Select ----------------------
 
-        class MeshFacetRectSelectTool : public MeshFacetSelectTool {
+        class ToolSurfaceMeshFaceSelectionRect : public ToolSurfaceMeshFaceSelection {
         public:
-            MeshFacetRectSelectTool(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
+            ToolSurfaceMeshFaceSelectionRect(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
             virtual void press(int x, int y);
             virtual void drag(int x, int y);
@@ -81,9 +81,9 @@ namespace easy3d {
 
         // -------------------- Lasso Select ----------------------
 
-        class MeshFacetLassoSelectTool : public MeshFacetSelectTool {
+        class ToolSurfaceMeshFaceSelectionLasso : public ToolSurfaceMeshFaceSelection {
         public:
-            MeshFacetLassoSelectTool(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
+            ToolSurfaceMeshFaceSelectionLasso(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
             virtual void press(int x, int y);
             virtual void drag(int x, int y);
@@ -99,10 +99,10 @@ namespace easy3d {
         //_____________________________________________________
 
         // (message, "btn1: select point; btn3: deselect point");
-        class MeshFacetClickSelect : public MultiTool {
+        class MultitoolSurfaceMeshFaceSelectionClick : public MultiTool {
         public:
-            MeshFacetClickSelect(ToolManager *mgr);
-            ~MeshFacetClickSelect();
+            MultitoolSurfaceMeshFaceSelectionClick(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionClick();
 
             virtual void set_hint() {} // point is the only thing to show
 
@@ -120,10 +120,10 @@ namespace easy3d {
 
 
         // (message, "btn1: select point; btn3: deselect point");
-        class MeshFacetRectSelect : public MultiTool {
+        class MultitoolSurfaceMeshFaceSelectionRect : public MultiTool {
         public:
-            MeshFacetRectSelect(ToolManager *mgr);
-            ~MeshFacetRectSelect();
+            MultitoolSurfaceMeshFaceSelectionRect(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionRect();
 
             virtual void set_hint() {} // point is the only thing to show
 
@@ -143,10 +143,10 @@ namespace easy3d {
 
 
         // (message, "btn1: select point; btn3: deselect point");
-        class MeshFacetLassoSelect : public MultiTool {
+        class MultitoolSurfaceMeshFaceSelectionLasso : public MultiTool {
         public:
-            MeshFacetLassoSelect(ToolManager *mgr);
-            ~MeshFacetLassoSelect();
+            MultitoolSurfaceMeshFaceSelectionLasso(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionLasso();
 
             virtual void set_hint() {} // point is the only thing to show
 

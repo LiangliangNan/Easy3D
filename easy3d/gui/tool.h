@@ -27,6 +27,7 @@
 
 
 #include <map>
+#include <string>
 
 #include <easy3d/core/types.h>
 
@@ -50,10 +51,10 @@ namespace easy3d {
 
         class ToolManager;
 
-        class TaskTool {
+        class Tool {
         public:
-            TaskTool(ToolManager *mgr) : tool_manager_(mgr) {}
-            virtual ~TaskTool() {}
+            Tool(ToolManager *mgr) : tool_manager_(mgr) {}
+            virtual ~Tool() {}
 
             ToolManager *tool_manager() const { return tool_manager_; }
 
@@ -94,9 +95,9 @@ namespace easy3d {
 
         protected:
 
-            void set_tool(ToolButton button, TaskTool *tool);
-            TaskTool *get_tool(ToolButton button);
-            const TaskTool *get_tool(ToolButton button) const;
+            void set_tool(ToolButton button, Tool *tool);
+            Tool *get_tool(ToolButton button);
+            const Tool *get_tool(ToolButton button) const;
 
             void draw_rect(const Rect& rect) const;
             void draw_lasso(const Polygon2& lasso) const;
@@ -104,8 +105,8 @@ namespace easy3d {
         protected:
             ToolManager *tool_manager_;
 
-            typedef std::map<ToolButton, TaskTool *> TaskToolMap;
-            TaskToolMap tools_;
+            typedef std::map<ToolButton, Tool *> ToolMap;
+            ToolMap tools_;
 
             friend class ToolManager;
 

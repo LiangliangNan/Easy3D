@@ -38,21 +38,19 @@ namespace easy3d {
 
         class ToolManager;
 
-        class PointCloudSelectTool : public TaskTool {
+        class ToolPointCloudSelection : public Tool {
         public:
-            PointCloudSelectTool(ToolManager *mgr);
-
-            virtual ~PointCloudSelectTool() {}
-
-            static std::string title() { return "PointCloudSelect"; }
+            ToolPointCloudSelection(ToolManager *mgr);
+            virtual ~ToolPointCloudSelection() {}
+            std::string name() const { return "PointCloudSelect"; }
         };
         
 
         // -------------------- Rect Select ----------------------
 
-        class PointCloudRectSelectTool : public PointCloudSelectTool {
+        class ToolPointCloudSelectionRect : public ToolPointCloudSelection {
         public:
-            PointCloudRectSelectTool(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
+            ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
             virtual void press(int x, int y);
             virtual void drag(int x, int y);
             virtual void release(int x, int y);
@@ -65,9 +63,9 @@ namespace easy3d {
 
         // -------------------- Lasso Select ----------------------
 
-        class PointCloudLassoSelectTool : public PointCloudSelectTool {
+        class ToolPointCloudSelectionLasso : public ToolPointCloudSelection {
         public:
-            PointCloudLassoSelectTool(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
+            ToolPointCloudSelectionLasso(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
             virtual void press(int x, int y);
             virtual void drag(int x, int y);
             virtual void release(int x, int y);
@@ -82,10 +80,10 @@ namespace easy3d {
         //_____________________________________________________
 
         // (message, "btn1: select point; btn3: deselect point");
-        class PointCloudRectSelect : public MultiTool {
+        class MultitoolPointCloudSelectionRect : public MultiTool {
         public:
-            PointCloudRectSelect(ToolManager *mgr);
-            ~PointCloudRectSelect();
+            MultitoolPointCloudSelectionRect(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionRect();
 
             virtual void set_hint() {} // point is the only thing to show
             void press(ToolButton button, int x, int y);
@@ -104,10 +102,10 @@ namespace easy3d {
 
 
         // (message, "btn1: select point; btn3: deselect point");
-        class PointCloudLassoSelect : public MultiTool {
+        class MultitoolPointCloudSelectionLasso : public MultiTool {
         public:
-            PointCloudLassoSelect(ToolManager *mgr);
-            ~PointCloudLassoSelect();
+            MultitoolPointCloudSelectionLasso(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionLasso();
 
             virtual void set_hint() {} // point is the only thing to show
 

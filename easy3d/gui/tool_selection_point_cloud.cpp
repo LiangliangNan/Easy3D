@@ -35,30 +35,30 @@ namespace easy3d {
 
     namespace tools {
 
-        // -------------------- PointCloudSelectTool ----------------------
+        // -------------------- ToolPointCloudSelection ----------------------
 
 
-        PointCloudSelectTool::PointCloudSelectTool(ToolManager *mgr)
-                : TaskTool(mgr) {
+        ToolPointCloudSelection::ToolPointCloudSelection(ToolManager *mgr)
+                : Tool(mgr) {
         }
 
         // -------------------- Rect Select ----------------------
 
-        PointCloudRectSelectTool::PointCloudRectSelectTool(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
-                : PointCloudSelectTool(mgr), picker_(picker), select_mode_(mode) {
+        ToolPointCloudSelectionRect::ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
+                : ToolPointCloudSelection(mgr), picker_(picker), select_mode_(mode) {
         }
 
 
-        void PointCloudRectSelectTool::press(int x, int y) {
+        void ToolPointCloudSelectionRect::press(int x, int y) {
             start_ = vec2(x,y);
         }
 
 
-        void PointCloudRectSelectTool::drag(int x, int y) {
+        void ToolPointCloudSelectionRect::drag(int x, int y) {
         }
 
 
-        void PointCloudRectSelectTool::release(int x, int y) {
+        void ToolPointCloudSelectionRect::release(int x, int y) {
             int num(0);
             for (auto model : tool_manager()->viewer()->models()) {
                 auto cloud = dynamic_cast<PointCloud*>(model);
@@ -68,62 +68,62 @@ namespace easy3d {
         }
 
 
-        PointCloudRectSelect::PointCloudRectSelect(ToolManager *mgr)
+        MultitoolPointCloudSelectionRect::MultitoolPointCloudSelectionRect(ToolManager *mgr)
                 : MultiTool(mgr) {
             picker_ = new PointCloudPicker(mgr->viewer()->camera());
 
-            set_tool(LEFT_BUTTON, new PointCloudRectSelectTool(mgr, picker_, SM_SELECT));
-            set_tool(RIGHT_BUTTON, new PointCloudRectSelectTool(mgr, picker_, SM_DESELECT));
+            set_tool(LEFT_BUTTON, new ToolPointCloudSelectionRect(mgr, picker_, SM_SELECT));
+            set_tool(RIGHT_BUTTON, new ToolPointCloudSelectionRect(mgr, picker_, SM_DESELECT));
 
             clear_hint();
         }
 
 
-        PointCloudRectSelect::~PointCloudRectSelect() {
+        MultitoolPointCloudSelectionRect::~MultitoolPointCloudSelectionRect() {
             delete picker_;
         }
 
 
-        void PointCloudRectSelect::press(ToolButton button, int x, int y) {
+        void MultitoolPointCloudSelectionRect::press(ToolButton button, int x, int y) {
             MultiTool::press(button, x, y);
             start_ = vec2(x, y);
             end_ = vec2(x, y);
         }
 
 
-        void PointCloudRectSelect::prepare_hint(ToolButton button, int x, int y) {
+        void MultitoolPointCloudSelectionRect::prepare_hint(ToolButton button, int x, int y) {
             if (button != NO_BUTTON && picker_) {
                 end_ = vec2(x, y);
             }
         }
 
-        void PointCloudRectSelect::clear_hint() {
+        void MultitoolPointCloudSelectionRect::clear_hint() {
             start_ = vec2(-1, -1);
             end_ = vec2(-1, -1);
         }
 
-        void PointCloudRectSelect::draw_hint() const {
+        void MultitoolPointCloudSelectionRect::draw_hint() const {
             draw_rect(Rect(start_, end_));
         }
 
         // ------------------ Lasso Select -----------------------
 
-        PointCloudLassoSelectTool::PointCloudLassoSelectTool(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
-                : PointCloudSelectTool(mgr), picker_(picker), select_mode_(mode) {
+        ToolPointCloudSelectionLasso::ToolPointCloudSelectionLasso(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
+                : ToolPointCloudSelection(mgr), picker_(picker), select_mode_(mode) {
         }
 
-        void PointCloudLassoSelectTool::press(int x, int y) {
+        void ToolPointCloudSelectionLasso::press(int x, int y) {
             lasso_.clear();
             lasso_.push_back(vec2(float(x), float(y)));
         }
 
 
-        void PointCloudLassoSelectTool::drag(int x, int y) {
+        void ToolPointCloudSelectionLasso::drag(int x, int y) {
             lasso_.push_back(vec2(float(x), float(y)));
         }
 
 
-        void PointCloudLassoSelectTool::release(int x, int y) {
+        void ToolPointCloudSelectionLasso::release(int x, int y) {
             if (lasso_.size() < 3)
                 return;
 
@@ -138,38 +138,38 @@ namespace easy3d {
         }
 
 
-        PointCloudLassoSelect::PointCloudLassoSelect(ToolManager *mgr)
+        MultitoolPointCloudSelectionLasso::MultitoolPointCloudSelectionLasso(ToolManager *mgr)
                 : MultiTool(mgr) {
             picker_ = new PointCloudPicker(mgr->viewer()->camera());
-            set_tool(LEFT_BUTTON, new PointCloudLassoSelectTool(mgr, picker_, SM_SELECT));
-            set_tool(RIGHT_BUTTON, new PointCloudLassoSelectTool(mgr, picker_, SM_DESELECT));
+            set_tool(LEFT_BUTTON, new ToolPointCloudSelectionLasso(mgr, picker_, SM_SELECT));
+            set_tool(RIGHT_BUTTON, new ToolPointCloudSelectionLasso(mgr, picker_, SM_DESELECT));
 
             clear_hint();
         }
 
 
-        PointCloudLassoSelect::~PointCloudLassoSelect() {
+        MultitoolPointCloudSelectionLasso::~MultitoolPointCloudSelectionLasso() {
             delete picker_;
         }
 
 
-        void PointCloudLassoSelect::press(ToolButton button, int x, int y) {
+        void MultitoolPointCloudSelectionLasso::press(ToolButton button, int x, int y) {
             MultiTool::press(button, x, y);
             lasso_.clear();
             lasso_.push_back(vec2(float(x), float(y)));
         }
 
 
-        void PointCloudLassoSelect::prepare_hint(ToolButton button, int x, int y) {
+        void MultitoolPointCloudSelectionLasso::prepare_hint(ToolButton button, int x, int y) {
             if (button != NO_BUTTON)
                 lasso_.push_back(vec2(float(x), float(y)));
         }
 
-        void PointCloudLassoSelect::clear_hint() {
+        void MultitoolPointCloudSelectionLasso::clear_hint() {
             lasso_.clear();
         }
 
-        void PointCloudLassoSelect::draw_hint() const {
+        void MultitoolPointCloudSelectionLasso::draw_hint() const {
             draw_lasso(lasso_);
 
 
