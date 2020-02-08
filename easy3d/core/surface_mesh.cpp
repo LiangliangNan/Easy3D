@@ -1566,27 +1566,28 @@ namespace easy3d {
     SurfaceMesh::
     garbage_collection()
     {
-        //------------------------------------------------------------------------------------------------------------
+#define detect_and_delete_isolated_vertices 0
+#if detect_and_delete_isolated_vertices
         // [Liangliang] The original implementation has a bug: an actual isolated vertex may still have a valid outgoing
-        //              halfedge. Isolated vertices should be identified (by traversing all edges) if they can be
-        //              reached from any of the edges. If a vertex cannot be reached, it should be marked as isolated by
-        //              assined an invalid outgoing halfedge, e.g., "set_halfedge(v, Halfedge())". Here I simply remove
+        //              halfedge. Isolated vertices should be identified (by traversing all faces) if they can be
+        //              reached from any of the faces. If a vertex cannot be reached, it should be marked as isolated by
+        //              assined an invalid outgoing halfedge, e.g., "set_halfedge(v, Halfedge())". Here I also remove
         //              the isolated vertices.
         VertexProperty<bool> reachable = add_vertex_property<bool>("v:vertex-reachable", false);
-        for (auto e : edges()) {
-            reachable[vertex(e, 0)] = true;
-            reachable[vertex(e, 1)] = true;
+        for (auto f : faces()) {
+            for (auto h : halfedges(f))
+                reachable[to_vertex(h)] = true;
         }
         for (auto v : vertices()) {
             if (!reachable[v]) {
-#if 0           // mark this vertex isolated (by assigning an invalid halfedge)
+               // mark this vertex isolated (by assigning an invalid halfedge)
                 set_halfedge(v, Halfedge());
-#else
+                // delete them
                 vdeleted_[v] = true;
                 ++deleted_vertices_;
-#endif
             }
         }
+#endif
         //------------------------------------------------------------------------------------------------------------
 
         int  i, i0, i1,
@@ -1711,7 +1712,9 @@ namespace easy3d {
         remove_vertex_property(vmap);
         remove_halfedge_property(hmap);
         remove_face_property(fmap);
+#if detect_and_delete_isolated_vertices
         remove_vertex_property(reachable);
+#endif
 
         // finally resize arrays
         vprops_.resize(nV); vprops_.free_memory();
