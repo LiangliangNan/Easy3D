@@ -18,9 +18,34 @@
 
 using namespace easy3d;
 
+
+std::vector<WidgetTrianglesDrawable::ColorMap> WidgetTrianglesDrawable::colormap_files_;
+
 WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
-        : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable) {
+        : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable)
+{
     ui->setupUi(this);
+
+    if (colormap_files_.empty()) {
+        const std::string dir = resource::directory() + "/colormaps/";
+        if (file_system::is_file(dir + "default.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "default.xpm", "default"));
+        if (file_system::is_file(dir + "rainbow.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow.xpm", "rainbow"));
+        if (file_system::is_file(dir + "blue_red.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.xpm", "blue_red"));
+        if (file_system::is_file(dir + "blue_white.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.xpm", "blue_white"));
+        if (file_system::is_file(dir + "blue_yellow.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.xpm", "blue_yellow"));
+        if (file_system::is_file(dir + "black_white.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.xpm", "black_white"));
+        if (file_system::is_file(dir + "ceil.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.xpm", "ceil"));
+        if (file_system::is_file(dir + "rainbow_iso.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow_iso.xpm", "rainbow_iso"));
+        if (file_system::is_file(dir + "random.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "random.xpm", "random"));
+    }
+
+
+    if (colormap_files_.empty())
+        ui->comboBoxScalarFieldStyle->addItem("not available");
+    else {
+        for (const auto& colormap : colormap_files_)
+            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)), QString::fromStdString(colormap.name));
+    }
 }
 
 
@@ -58,11 +83,15 @@ void WidgetTrianglesDrawable::connectAll() {
 
     // highlight
     connect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
-    connect(ui->spinBoxHighlightLow, SIGNAL(valueChanged(int)), this, SLOT(setHighlightLow(int)));
-    connect(ui->spinBoxHighlightHigh, SIGNAL(valueChanged(int)), this, SLOT(setHighlightHigh(int)));
+    connect(ui->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
+    connect(ui->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
 
     // transparency
     connect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+
+    // scalar field
+    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldColormapStyle(const QString&)));
+
 }
 
 
@@ -100,11 +129,15 @@ void WidgetTrianglesDrawable::disconnectAll() {
 
     // highlight
     disconnect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
-    disconnect(ui->spinBoxHighlightLow, SIGNAL(valueChanged(int)), this, SLOT(setHighlightLow(int)));
-    disconnect(ui->spinBoxHighlightHigh, SIGNAL(valueChanged(int)), this, SLOT(setHighlightHigh(int)));
+    disconnect(ui->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
+    disconnect(ui->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
 
     // transparency
     disconnect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+
+    // scalar field
+    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldColormapStyle(const QString&)));
+
 }
 
 
@@ -163,6 +196,7 @@ void WidgetTrianglesDrawable::updatePanel() {
         auto htexcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
         if (htexcoords)
             ui->comboBoxColorScheme->addItem("h:texcoord");
+        ui->comboBoxColorScheme->addItem("scalar field");
 
         if (drawable()->per_vertex_color()) {
             const auto &name = model->color_scheme(drawable());
@@ -199,8 +233,16 @@ void WidgetTrianglesDrawable::updatePanel() {
         ui->checkBoxHighlight->setChecked(highlight);
 
         const auto &range = drawable()->highlight_range();
-        ui->spinBoxHighlightLow->setValue(range.first);
-        ui->spinBoxHighlightHigh->setValue(range.second);
+        ui->spinBoxHighlightMin->setValue(range.first);
+        ui->spinBoxHighlightMax->setValue(range.second);
+    }
+
+    {   // scalar field
+        
+    }
+
+    {   // vector field
+
     }
 
     disableUnnecessaryWidgets();
@@ -403,7 +445,7 @@ void WidgetTrianglesDrawable::setHighlight(bool b) {
 }
 
 
-void WidgetTrianglesDrawable::setHighlightLow(int v) {
+void WidgetTrianglesDrawable::setHighlightMin(int v) {
     const auto &range = drawable()->highlight_range();
     if (range.first != v) {
         drawable()->set_highlight_range(std::make_pair(v, range.second));
@@ -412,7 +454,7 @@ void WidgetTrianglesDrawable::setHighlightLow(int v) {
 }
 
 
-void WidgetTrianglesDrawable::setHighlightHigh(int v) {
+void WidgetTrianglesDrawable::setHighlightMax(int v) {
     const auto &range = drawable()->highlight_range();
     if (range.second != v) {
         drawable()->set_highlight_range(std::make_pair(range.first, v));
@@ -424,6 +466,11 @@ void WidgetTrianglesDrawable::setHighlightHigh(int v) {
 void WidgetTrianglesDrawable::setOpacity(int a) {
     drawable()->set_opacity(a / 100.0f);
     viewer_->update();
+}
+
+
+void WidgetTrianglesDrawable::setScalarFieldColormapStyle(const QString& text) {
+    std::cout << "colormap style: " << text.toStdString() << std::endl;
 }
 
 
@@ -439,7 +486,6 @@ void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
     ui->comboBoxLightingOptions->setEnabled(visible);
 
     bool can_modify_default_color = visible && (ui->comboBoxColorScheme->currentText() == "uniform color");
-    ui->labelColor->setEnabled(can_modify_default_color);
     ui->labelDefaultColor->setEnabled(can_modify_default_color);
     ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
 
@@ -463,10 +509,34 @@ void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
     ui->labelHighlight->setEnabled(can_modify_highlight);
     ui->checkBoxHighlight->setEnabled(can_modify_highlight);
     bool can_modify_highlight_range = can_modify_highlight && ui->checkBoxHighlight->isChecked();
-    ui->spinBoxHighlightLow->setEnabled(can_modify_highlight_range);
-    ui->spinBoxHighlightHigh->setEnabled(can_modify_highlight_range);
+    ui->spinBoxHighlightMin->setEnabled(can_modify_highlight_range);
+    ui->spinBoxHighlightMax->setEnabled(can_modify_highlight_range);
 
     bool can_modify_opacity = visible && false;
     ui->labelOpacity->setEnabled(can_modify_opacity);
     ui->horizontalSliderOpacity->setEnabled(can_modify_opacity);
+
+    // scalar field
+    bool can_show_scalar = visible && ui->comboBoxColorScheme->currentText() == "scalar field";
+    ui->labelScalarField->setEnabled(can_show_scalar);
+    ui->comboBoxScalarField->setEnabled(can_show_scalar);
+    bool can_modify_scalar_style = can_show_scalar && ui->comboBoxScalarField->currentText() != "disabled";
+    ui->labelScalarFieldStyle->setEnabled(can_modify_scalar_style);
+    ui->comboBoxScalarFieldStyle->setEnabled(can_modify_scalar_style);
+    ui->labelScalarFieldAutoRange->setEnabled(can_modify_scalar_style);
+    ui->checkBoxScalarFieldAutoRange->setEnabled(can_modify_scalar_style);
+    ui->doubleSpinBoxScalarFieldAutoRangeMin->setEnabled(can_modify_scalar_style);
+    ui->doubleSpinBoxScalarFieldAutoRangeMax->setEnabled(can_modify_scalar_style);
+
+    // vector field
+    bool can_show_vector = visible;
+    ui->labelVectorField->setEnabled(can_show_vector);
+    ui->comboBoxVectorField->setEnabled(can_show_vector);
+    bool can_modify_vector_style = can_show_vector && ui->comboBoxVectorField->currentText() != "disabled";
+    ui->labelVectorFieldColor->setEnabled(can_modify_vector_style);
+    ui->toolButtonVectorFieldColor->setEnabled(can_modify_vector_style);
+    ui->labelVectorFieldThickness->setEnabled(can_modify_vector_style);
+    ui->doubleSpinBoxVectorFieldThickness->setEnabled(can_modify_vector_style);
+    ui->labelVectorFieldLength->setEnabled(can_modify_vector_style);
+    ui->doubleSpinBoxVectorFieldLength->setEnabled(can_modify_vector_style);
 }

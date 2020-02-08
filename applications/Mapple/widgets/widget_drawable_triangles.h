@@ -42,9 +42,11 @@ public slots:
     void setTextureRepeat(int);
     void setTextureFractionalRepeat(int);
     void setHighlight(bool);
-    void setHighlightLow(int);
-    void setHighlightHigh(int);
+    void setHighlightMin(int);
+    void setHighlightMax(int);
     void setOpacity(int);
+
+    void setScalarFieldColormapStyle(const QString &);
 
 private:
     void connectAll();
@@ -57,6 +59,13 @@ private:
     // on the rendering panel, the rendering of only the selected drawable can be changed.
     // this is used to keep the history so the user can switch between different models.
     std::unordered_map<easy3d::Model*, std::string> active_triangles_drawable_;
+
+    struct ColorMap {
+        ColorMap(const std::string& f, const std::string& n) : file(f), name(n) {}
+        std::string file;
+        std::string name;
+    };
+    static std::vector<ColorMap> colormap_files_;
 };
 
 #endif // WIDGET_DRAWABLE_TRIANGLES_H
