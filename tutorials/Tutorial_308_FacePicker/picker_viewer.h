@@ -30,15 +30,19 @@
 
 // This class demonstrate how to pick faces in a surface mesh using the mouse
 
+namespace easy3d {
+    class Model;
+}
 
 class PickerViewer : public easy3d::Viewer {
 public:
     PickerViewer(const std::string &title);
-
     ~PickerViewer();
 
+    easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+
 protected:
-    virtual bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
 
     std::string usage() const override;
 };

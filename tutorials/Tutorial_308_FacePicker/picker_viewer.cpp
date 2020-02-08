@@ -26,6 +26,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
 
 
@@ -34,6 +35,8 @@ using namespace easy3d;
 
 PickerViewer::PickerViewer(const std::string &title)
         : Viewer(title) {
+    camera()->setUpVector(vec3(0, 1, 0));
+    camera()->setViewDirection(vec3(0, 0, -1));
 }
 
 
@@ -66,4 +69,15 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     }
 
     return Viewer::mouse_press_event(x, y, button, modifiers);
+}
+
+
+Model* PickerViewer::add_model(const std::string& file_name, bool create_default_drawables) {
+    Model* model = Viewer::add_model(file_name, create_default_drawables);
+
+    // let's also create a drawable to visualize the edges
+    LinesDrawable* drawable = current_model()->add_lines_drawable("edges");
+    renderer::update_data(current_model(), drawable);
+
+    return model;
 }
