@@ -1579,8 +1579,7 @@ namespace easy3d {
         }
         for (auto v : vertices()) {
             if (!reachable[v]) {
-#if 0
-                // assign an invalid halfedge (this marks the vertex isolated)
+#if 0           // mark this vertex isolated (by assigning an invalid halfedge)
                 set_halfedge(v, Halfedge());
 #else
                 vdeleted_[v] = true;
