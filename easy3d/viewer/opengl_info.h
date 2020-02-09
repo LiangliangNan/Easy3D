@@ -135,7 +135,7 @@ namespace easy3d {
         static std::unordered_map<int, int>			spBoundBuffer;
         static std::unordered_map<int, std::string>	spDataF;
         static std::unordered_map<int, std::string>	spGLSLType;
-        static std::unordered_map<int, int> 			spGLSLTypeSize;
+        static std::unordered_map<int, int> 		spGLSLTypeSize;
         static std::unordered_map<int, std::string>	spShaderType;
         static std::unordered_map<int, std::string>	spTransFeedBufferMode;
         static std::unordered_map<int, std::string>	spGLSLPrimitives;
