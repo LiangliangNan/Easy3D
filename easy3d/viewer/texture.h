@@ -39,7 +39,7 @@ namespace easy3d {
     public:
         // wrap: GL_CLAMP_TO_EDGE, GL_REPEAT
         // filter: GL_NEAREST, GL_LINEAR
-        static Texture* create(const std::string& image_file, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_NEAREST);
+        static Texture* create(const std::string& image_file, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_LINEAR);
         ~Texture();
 
         GLuint id() const { return id_; }

@@ -484,8 +484,8 @@ namespace easy3d {
             model->update_vertex_normals();
             auto normals = model->get_vertex_property<vec3>("v:normal");
 
-            float min_value = FLT_MAX;
-            float max_value = -FLT_MAX;
+            float min_value = std::numeric_limits<float>::max();
+            float max_value = -std::numeric_limits<float>::max();
             for (auto v : model->vertices()) {
                 float value = vscalar[v];
                 min_value = std::min(value, min_value);

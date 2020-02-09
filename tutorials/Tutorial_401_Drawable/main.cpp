@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Tuturial_302_Drawables");
+        Viewer viewer("Tutorial_401_Drawable");
 
         // We use the points and indices of the bunny model.
         const std::vector<vec3>& vertices = resource::bunny_vertices;

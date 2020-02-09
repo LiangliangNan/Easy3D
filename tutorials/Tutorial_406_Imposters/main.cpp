@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Tutorial_404_Imposters");
+        Viewer viewer("Tutorial_406_Imposters");
 
         // Load point cloud data from a file
         const std::string file_name = resource::directory() + "/data/sphere.obj";

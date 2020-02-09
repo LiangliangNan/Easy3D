@@ -48,14 +48,14 @@ int main(int argc, char** argv) {
     try {
         // Create the default Easy3D viewer.
         // Note: a viewer must be created before creating any drawables.
-        Viewer viewer("Tutorial_405_Texture");
+        Viewer viewer("Tutorial_403_Texture");
         viewer.camera()->setUpVector(vec3(0, 1, 0));
         viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
         //----------------------- Load texture from an image file ------------------------
 
         const std::string texture_file = resource::directory() + "/images/logo.jpg";
-        Texture* tex = Texture::create(texture_file, GL_REPEAT);
+        Texture* tex = Texture::create(texture_file);
         if (!tex) {
             LOG(ERROR) << "Error: failed to create texture. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
@@ -82,6 +82,7 @@ int main(int argc, char** argv) {
         auto drawable = mesh->triangles_drawable("faces");
         drawable->set_texture(tex);
         drawable->set_use_texture(true);
+        drawable->set_per_vertex_color(true);
 
         // -------------------------------------------------------------------------------
 

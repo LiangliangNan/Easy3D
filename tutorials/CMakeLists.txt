@@ -32,11 +32,11 @@ add_subdirectory(Tutorial_309_PointSelection)
 
 # basic rendering
 add_subdirectory(Tutorial_401_Drawable)
-add_subdirectory(Tutorial_402_ScalarField)
-add_subdirectory(Tutorial_403_VectorField)
-add_subdirectory(Tutorial_404_Imposters)
-add_subdirectory(Tutorial_405_Texture)
-add_subdirectory(Tutorial_406_Tessellator)
+add_subdirectory(Tutorial_402_Tessellator)
+add_subdirectory(Tutorial_403_Texture)
+add_subdirectory(Tutorial_404_VectorField)
+add_subdirectory(Tutorial_405_ScalarField)
+add_subdirectory(Tutorial_406_Imposters)
 add_subdirectory(Tutorial_407_TexturedMesh)
 add_subdirectory(Tutorial_408_DepthImage)
 
