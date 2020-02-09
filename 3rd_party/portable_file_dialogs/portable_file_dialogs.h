@@ -133,8 +133,8 @@ protected:
     // Static array of flags for internal state
     bool const &flags(flag in_flag) const
     {
-        static bool flags[(size_t)flag::max_flag];
-        return flags[(size_t)in_flag];
+        static bool flags[size_t(flag::max_flag)];
+        return flags[size_t(in_flag)];
     }
 
     // Non-const getter for the static array of flags
