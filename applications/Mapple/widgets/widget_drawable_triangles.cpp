@@ -505,10 +505,11 @@ void WidgetTrianglesDrawable::setScalarField(const QString& text) {
     if (!mesh)
         return;
 
+    disableUnnecessaryWidgets();
+
     if (text == "disabled") {
         drawable()->set_texture(nullptr);
         drawable()->set_use_texture(false);
-        disableUnnecessaryWidgets();
         viewer_->update();
     }
     else {
@@ -520,7 +521,6 @@ void WidgetTrianglesDrawable::setScalarField(const QString& text) {
                     drawable()->set_texture(createColormapTexture());
                     drawable()->set_use_texture(true);
                     LOG(INFO) << "rendering scalar field defined on faces: " << name;
-                    disableUnnecessaryWidgets();
                     viewer_->update();
                     return;
                 }
@@ -535,7 +535,6 @@ void WidgetTrianglesDrawable::setScalarField(const QString& text) {
                     drawable()->set_texture(createColormapTexture());
                     drawable()->set_use_texture(true);
                     LOG(INFO) << "rendering scalar field defined on vertices: " << name;
-                    disableUnnecessaryWidgets();
                     viewer_->update();
                     return;
                 }
@@ -624,6 +623,9 @@ void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
     ui->doubleSpinBoxVectorFieldThickness->setEnabled(can_modify_vector_style);
     ui->labelVectorFieldLength->setEnabled(can_modify_vector_style);
     ui->doubleSpinBoxVectorFieldLength->setEnabled(can_modify_vector_style);
+
+    update();
+    qApp->processEvents();
 }
 
 

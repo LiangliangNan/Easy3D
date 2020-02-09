@@ -254,9 +254,12 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             auto fscalar = dynamic_cast<SurfaceMesh*>(model)->add_face_property<float>("f:height");
             for (auto f : dynamic_cast<SurfaceMesh*>(model)->faces()) {
                 vec3 pos(0,0,0);
-                for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices(f))
-                    pos += dynamic_cast<SurfaceMesh*>(model)->position(v);
-                fscalar[f] = pos.z / dynamic_cast<SurfaceMesh*>(model)->valence(f);
+                float count = 0.0f;
+                for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices(f)) {
+                    pos += dynamic_cast<SurfaceMesh *>(model)->position(v);
+                    ++count;
+                }
+                fscalar[f] = pos.z / count;
             }
         }
 #endif

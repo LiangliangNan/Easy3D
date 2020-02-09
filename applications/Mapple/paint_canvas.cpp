@@ -105,6 +105,8 @@ void PaintCanvas::cleanup() {
     if (edl_)
         delete edl_;
 
+    if (gpu_timer_) { delete gpu_timer_; gpu_timer_ = nullptr; }
+
     ShaderManager::terminate();
 }
 
@@ -128,6 +130,9 @@ void PaintCanvas::initializeGL() {
     if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
+
+    // create a GPU timer
+    gpu_timer_ = new OpenGLTimer(false);
 
     background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -884,7 +889,10 @@ void PaintCanvas::paintGL() {
 
     preDraw();
 
+    gpu_timer_->start();
     draw();
+    gpu_timer_->stop();
+    gpu_time_ = gpu_timer_->time();
 
     // Add visual hints: axis, camera, grid...
     postDraw();
