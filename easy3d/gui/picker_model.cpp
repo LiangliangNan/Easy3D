@@ -59,20 +59,7 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         int width = viewport[2];
         int height = viewport[3];
-
-        // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
-        if (!fbo_) {
-            fbo_ = new FramebufferObject(width, height, 0); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
-            fbo_->add_color_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
-            fbo_->add_depth_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
-
-#if 0
-            fbo_->print_attachments();
-            fbo_->print_draw_buffers();
-            fbo_->print_read_buffer();
-#endif
-        }
-        fbo_->ensure_size(width, height); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+        setup_framebuffer(width, height);
 
         //--------------------------------------------------------------------------
         // render the 'scene' into the new FBO.

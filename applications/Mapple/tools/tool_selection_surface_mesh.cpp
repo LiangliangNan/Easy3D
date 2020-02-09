@@ -100,7 +100,6 @@ namespace easy3d {
 
         MultitoolSurfaceMeshFaceSelectionClick::MultitoolSurfaceMeshFaceSelectionClick(ToolManager *mgr)
                 : MultiTool(mgr)
-        //, hint_facet_(nil)
         {
             picker_ = new SurfaceMeshPicker(mgr->viewer()->camera());
             set_tool(LEFT_BUTTON, new ToolSurfaceMeshFaceSelectionClick(mgr, picker_, SM_SELECT));

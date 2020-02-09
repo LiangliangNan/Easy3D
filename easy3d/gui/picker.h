@@ -110,11 +110,16 @@ namespace easy3d {
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
+
+        // prepare a frame buffer for the offscreen rendering
+        void setup_framebuffer(int width, int height);
+
+    protected:
         const Camera *camera_;
 
         bool use_gpu_if_supported_; // use GPU if supported
 
-        // Only one fbo is required for all the picking tasks
+        // All the picking tasks can share the same framebuffer
         static FramebufferObject *fbo_;
     };
 
