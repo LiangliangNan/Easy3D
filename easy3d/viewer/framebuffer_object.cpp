@@ -25,13 +25,13 @@
 #include <easy3d/viewer/framebuffer_object.h>
 
 #include <algorithm>
-#include <iostream>
 #include <cstring>
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -47,7 +47,7 @@ namespace easy3d {
     FramebufferObject::FramebufferObject(int w, int h, int samples /* = 0 */)
     {
         if (!is_supported()) {
-            std::cerr << "frame buffer object not supported on this platform" << std::endl;
+            LOG_FIRST_N(WARNING, 1) << "frame buffer object not supported on this platform";
             return;
         }
 
@@ -79,31 +79,20 @@ namespace easy3d {
 
         if (samples > 0) {// multismaple requested
             // using the core prifile, multisampling is for sure supported.
-//            bool multisample = (OpenglInfo::is_supported("GL_ARB_framebuffer_multisample") || OpenglInfo::is_supported("GL_EXT_framebuffer_multisample"));
-//            bool blit = (OpenglInfo::is_supported("GL_ARB_framebuffer_blit") || OpenglInfo::is_supported("GL_EXT_framebuffer_blit"));
-//            if (!multisample) {
-//                samples = 0;
-//                std::cerr << "GL_ARB_framebuffer_multisample and GL_EXT_framebuffer_multisample not supported. Multisample disabled." << std::endl;
-//            }
-//            else if (!blit) {
-//                samples = 0;
-//                std::cerr << "GL_ARB_framebuffer_blit and GL_EXT_framebuffer_blit not supported. Multisample disabled." << std::endl;
-//            }
-
-			// if supported, check the number
 			if (samples > 0) {
 				GLint max_samples;
 				glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 				samples_ = std::max(0, std::min(samples, max_samples));
 
-				// warn the user if the expected request was not satisfied
-				if (samples_ != samples)
-					std::cerr << "MSAA is available with "
-					<< samples_ << " samples (" << samples << " requested, max support is " << max_samples << ")" << std::endl;
+                // warn the user if the expected request was not satisfied
+                if (samples_ != samples)
+                    LOG_IF(WARNING, samples != samples_) << "MSAA is available with "
+                                                         << samples_ << " samples (" << samples
+                                                         << " requested, max support is " << max_samples << ")";
 			}
         }
 
-        glGenFramebuffers(1, &fbo_id_);		easy3d_debug_gl_error;
+        glGenFramebuffers(1, &fbo_id_);		easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
     }
 
 
@@ -191,7 +180,7 @@ namespace easy3d {
     static bool color_format_compatible(GLenum internal_format, GLenum format, GLenum type)
     {
         if (format != GL_RED && format != GL_RG && format != GL_RGB && format != GL_BGR && format != GL_RGBA && format != GL_BGRA) {
-            std::cerr << "the provided format is not accepted" << std::endl;
+            LOG(ERROR) << "the provided format is not accepted";
             return false;
         }
 
@@ -203,7 +192,7 @@ namespace easy3d {
             type != GL_UNSIGNED_SHORT_5_5_5_1 && type != GL_UNSIGNED_SHORT_1_5_5_5_REV && type != GL_UNSIGNED_INT_8_8_8_8 &&
             type != GL_UNSIGNED_INT_8_8_8_8_REV && type != GL_UNSIGNED_INT_10_10_10_2 && type != GL_UNSIGNED_INT_2_10_10_10_REV)
         {
-            std::cerr << "the provided type is not accepted" << std::endl;
+            LOG(ERROR) << "the provided type is not accepted";
             return false;
         }
 
@@ -223,7 +212,7 @@ namespace easy3d {
             internal_format != GL_RGBA32I && internal_format != GL_RGBA32UI && internal_format != GL_RGBA32F
             )
         {
-            std::cerr << "internal format must be in GL_[components][size][type] format" << std::endl;
+            LOG(ERROR) << "internal format must be in GL_[components][size][type] format";
             return false;
         }
 
@@ -235,7 +224,7 @@ namespace easy3d {
             )
         {
             if (format != GL_RED) {
-                std::cerr << "color format must be GL_R" << std::endl;
+                LOG(ERROR) << "color format must be GL_R";
                 return false;
             }
         }
@@ -245,7 +234,7 @@ namespace easy3d {
             )
         {
             if (format != GL_RG) {
-                std::cerr << "color format must be GL_RG" << std::endl;
+                LOG(ERROR) << "color format must be GL_RG";
                 return false;
             }
         }
@@ -255,7 +244,7 @@ namespace easy3d {
             )
         {
             if (format != GL_RGB) {
-                std::cerr << "color format must be GL_RGB" << std::endl;
+                LOG(ERROR) << "color format must be GL_RGB";
                 return false;
             }
         }
@@ -265,7 +254,7 @@ namespace easy3d {
             )
         {
             if (format != GL_RGBA) {
-                std::cerr << "color format must be GL_RGBA" << std::endl;
+                LOG(ERROR) << "color format must be GL_RGBA";
                 return false;
             }
         }
@@ -286,13 +275,13 @@ namespace easy3d {
     )
     {
         if (fbo_id_ == 0) {
-            std::cerr << "fbo not generated" << std::endl;
+            LOG(ERROR) << "fbo not created";
             return false;
         }
 
         // check the compatibility of the provided parameters.
         if (!color_format_compatible(internal_format, format, type)) {
-            std::cerr << "attaching color buffer failed" << std::endl;
+            LOG(ERROR) << "attaching color buffer failed";
             return false;
         }
 
@@ -300,7 +289,7 @@ namespace easy3d {
         // How many color attachment points an FBO can have.
         glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &max_attachments);
         if (color_attachments_.size() >= max_attachments) {
-            std::cerr << "maximum color attachment reached" << std::endl;
+            LOG(ERROR) << "maximum color attachment reached";
             return false;
         }
 
@@ -367,13 +356,13 @@ namespace easy3d {
         GLenum type /* = GL_UNSIGNED_BYTE*/)	// The data type of the pixel data (GL_BYTE, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT ...)
     {
         if (fbo_id_ == 0) {
-            std::cerr << "fbo not generated" << std::endl;
+            LOG(ERROR) << "fbo not generated";
             return false;
         }
 
         // check the compatibility of the provided parameters.
         if (!color_format_compatible(internal_format, format, type)) {
-            std::cerr << "attaching color buffer failed" << std::endl;
+            LOG(ERROR) << "attaching color buffer failed";
             return false;
         }
 
@@ -381,7 +370,7 @@ namespace easy3d {
         // How many color attachment points an FBO can have.
         glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &max_attachments);
         if (color_attachments_.size() >= max_attachments) {
-            std::cerr << "maximum color attachment reached" << std::endl;
+            LOG(ERROR) << "maximum color attachment reached";
             return false;
         }
 
@@ -448,7 +437,7 @@ namespace easy3d {
         GLenum compare_func /* = GL_LEQUAL*/)
     {
         if (fbo_id_ == 0) {
-            std::cerr << "fbo not generated" << std::endl;
+            LOG(ERROR) << "fbo not generated";
             return false;
         }
 
@@ -541,7 +530,7 @@ namespace easy3d {
     // GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F, GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8, GL_DEPTH_COMPONENT16
     bool FramebufferObject::add_depth_buffer(GLenum internal_format /* = GL_DEPTH24_STENCIL8*/) {
         if (fbo_id_ == 0) {
-            std::cerr << "fbo not generated" << std::endl;
+            LOG(ERROR) << "fbo not created";
             return false;
         }
 
@@ -620,7 +609,7 @@ namespace easy3d {
 //        attach.format = format;
 //        attach.type = type;
 //        attach.texture_filter = GL_NEAREST;
-        std::cout << "attach an externally created texture not fully supported" << std::endl;
+        LOG(WARNING) << "attach an externally created texture not fully supported";
         color_attachments_.push_back(attach);
 
 		//----------------------------------------------------------------------------------------------
@@ -677,46 +666,46 @@ namespace easy3d {
             complete = true;
             break;
         case GL_FRAMEBUFFER_UNSUPPORTED:
-            std::cerr << "Unsupported framebuffer format." << std::endl;
+            LOG(ERROR) << "Unsupported framebuffer format.";
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-            std::cerr << "Framebuffer incomplete attachment." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete attachment.";
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-            std::cerr << "Framebuffer incomplete, missing attachment." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, missing attachment.";
             break;
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT
         case GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT:
-            std::cerr << "Framebuffer incomplete, duplicate attachment." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, duplicate attachment.";
             break;
     #endif
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
         case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-            std::cerr << "Framebuffer incomplete, attached images must have same dimensions." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, attached images must have same dimensions.";
             break;
     #endif
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_FORMATS
         case GL_FRAMEBUFFER_INCOMPLETE_FORMATS:
-            std::cerr << "Framebuffer incomplete, attached images must have same format." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, attached images must have same format.";
             break;
     #endif
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER
         case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-            std::cerr << "Framebuffer incomplete, missing draw buffer." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, missing draw buffer.";
             break;
     #endif
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER
         case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-            std::cerr << "Framebuffer incomplete, missing read buffer." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, missing read buffer.";
             break;
     #endif
     #ifdef GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE
         case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-            std::cerr << "Framebuffer incomplete, attachments must have same number of samples per pixel." << std::endl;
+            LOG(ERROR) << "Framebuffer incomplete, attachments must have same number of samples per pixel.";
             break;
     #endif
         default:
-            std::cerr << "An undefined error has occurred: " << status << std::endl;
+            LOG(ERROR) << "An undefined error has occurred: " << status;
             break;
         }
 
@@ -752,7 +741,7 @@ namespace easy3d {
     bool FramebufferObject::is_bound(GLenum target /* = GL_FRAMEBUFFER */) const
     {
         if (!is_valid()) {
-            std::cerr << "framebuffer not valid" << std::endl;
+            LOG(ERROR) << "framebuffer not valid";
             return false;
         }
 
@@ -780,7 +769,7 @@ namespace easy3d {
     bool FramebufferObject::bind(GLenum target /* = GL_FRAMEBUFFER */)
     {
         if (!is_valid()) {
-            std::cerr << "framebuffer not valid" << std::endl;
+            LOG(ERROR) << "framebuffer not valid";
             return false;
         }
 
@@ -1040,7 +1029,7 @@ namespace easy3d {
 
     GLuint FramebufferObject::color_texture(unsigned int index /* = 0 */, bool resolve /* = true */) const {
         if (!has_color_attachment(index)) {
-            std::cerr << "color attachment " << index << " does not exist" << std::endl;
+            LOG(ERROR) << "color attachment " << index << " does not exist";
             return 0;
         }
 
@@ -1055,7 +1044,7 @@ namespace easy3d {
             }
         }
         else {
-            std::cerr << "color attachment " << index << " is not a texture" << std::endl;
+            LOG(ERROR) << "color attachment " << index << " is not a texture";
             return 0;
         }
     }
@@ -1072,7 +1061,7 @@ namespace easy3d {
             }
         }
         else {
-            std::cerr << "depth attachment is not a texture" << std::endl;
+            LOG(ERROR) << "depth attachment is not a texture";
             return 0;
         }
     }
@@ -1112,7 +1101,7 @@ namespace easy3d {
             return 32;
         }
 
-        std::cerr << "unknown depth internal format" << std::endl;
+        LOG(ERROR) << "unknown depth internal format";
         return 0; // should not reach here
     }
 
@@ -1125,21 +1114,21 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
-        std::cout << "Current framebuffer is bind to framebuffer object " << fbo_id_ << std::endl;
+        LOG(INFO) << "Current framebuffer is bind to framebuffer object " << fbo_id_;
 
         GLint maxColorAttachments;
         glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
         int index = 0;
         while (index < maxColorAttachments) {
-            std::cout << "color attachment " << index << ":" << std::endl;
+            LOG(INFO) << "color attachment " << index << ":";
             _print_attachment(GL_COLOR_ATTACHMENT0 + index);
             ++index;
         }
 
-        std::cout << "depth attachment:" << std::endl;
+        LOG(INFO) << "depth attachment:";
         _print_attachment(GL_DEPTH_ATTACHMENT);
 
-        std::cout << "stencil attachment:" << std::endl;
+        LOG(INFO) << "stencil attachment:";
         _print_attachment(GL_STENCIL_ATTACHMENT);
 
         //////////////////////////////////////////////////////////////////////////
@@ -1165,71 +1154,71 @@ namespace easy3d {
         switch (params)
         {
         case GL_NONE:
-            std::cout << "\tthis attachment is empty" << std::endl;
+            LOG(INFO) << "\tthis attachment is empty";
             break;
 
         case GL_TEXTURE:
             glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &params);
-            std::cout << "\tthis attachment is a texture with name: " << params << std::endl;
+            LOG(INFO) << "\tthis attachment is a texture with name: " << params;
 
             glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL, &params);
-            std::cout << "\tits mipmap level is: " << params << std::endl;
+            LOG(INFO) << "\tits mipmap level is: " << params;
 
             glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE, &params);
             if (params == 0)
-                std::cout << "\tthis is not a cube map texture." << std::endl;
+                LOG(INFO) << "\tthis is not a cube map texture.";
             else
-                std::cout << "\tthis is a cube map texture and the image is contained in face " << params << std::endl;
+                LOG(INFO) << "\tthis is a cube map texture and the image is contained in face " << params;
 
     #ifdef GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET
             glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET, &params);
             if (params == 0)
-                std::cout << "\tthis is not 3D texture." << std::endl;
+                LOG(INFO) << "\tthis is not 3D texture.";
             else
-                std::cout << "\tthis is a 3D texture and the z-offset of the attached image is " << params << std::endl;
+                LOG(INFO) << "\tthis is a 3D texture and the z-offset of the attached image is " << params;
             break;
     #endif
 
         case GL_RENDERBUFFER:
-            std::cout << "\tthis attachment is a render buffer" << std::endl;
+            LOG(INFO) << "\tthis attachment is a render buffer";
 
             glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &params);
-            std::cout << "\tthis attachment is a render buffer with name: " << params << std::endl;
+            LOG(INFO) << "\tthis attachment is a render buffer with name: " << params;
 
             glBindRenderbuffer(GL_RENDERBUFFER, params);
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &params);
-            std::cout << "\trender buffer width = " << params << std::endl;
+            LOG(INFO) << "\trender buffer width = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &params);
-            std::cout << "\trender buffer height = " << params << std::endl;
+            LOG(INFO) << "\trender buffer height = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &params);
-            std::cout << "\trender buffer samples = " << params << std::endl;
+            LOG(INFO) << "\trender buffer samples = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_INTERNAL_FORMAT, &params);
-            std::cout << "\trender buffer internal format = 0x" << std::hex << params << std::dec << std::endl;
+            LOG(INFO) << "\trender buffer internal format = 0x" << std::hex << params << std::dec;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_RED_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the red component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the red component = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_GREEN_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the green component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the green component = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_BLUE_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the blue component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the blue component = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_ALPHA_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the alpha component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the alpha component = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_DEPTH_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the depth component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the depth component = " << params;
 
             glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_STENCIL_SIZE, &params);
-            std::cout << "\trender buffer actual resolution for the stencil component = " << params << std::endl;
+            LOG(INFO) << "\trender buffer actual resolution for the stencil component = " << params;
             break;
 
         default:
-            std::cout << "\tunexcepted value." << std::endl;
+            LOG(INFO) << "\tunexpected value.";
             break;
         }
 
@@ -1251,25 +1240,15 @@ namespace easy3d {
         GLint ivalue = 1;
         glGetIntegerv(GL_MAX_DRAW_BUFFERS, &ivalue);
 
-        std::cout << "there ";
-        if (ivalue == 1)
-            std::cout << "is ";
-        else
-            std::cout << "are ";
-
-        std::cout << ivalue << " draw buffer";
-        if (ivalue != 1)
-            std::cout << "s";
-        std::cout << ". " << std::endl;
+        LOG(INFO) << "num of draw buffers: " << ivalue;
 
         GLint index = 0;
         int c = ivalue;
         while (index < c) {
             glGetIntegerv(GL_DRAW_BUFFER0 + index, &ivalue);
 
-            std::cout << "draw buffer[" << index << "] = ";
+            LOG(INFO) << "draw buffer[" << index << "] = ";
             _print_buffer(ivalue);
-            std::cout << std::endl;
             ++index;
         }
 
@@ -1291,9 +1270,9 @@ namespace easy3d {
         GLint ivalue;
         glGetIntegerv(GL_READ_BUFFER, &ivalue);
 
-        std::cout << "read buffer = ";
+        LOG(INFO) << "read buffer = ";
         _print_buffer(ivalue);
-        std::cout << std::endl;
+        LOG(INFO);
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -1306,7 +1285,7 @@ namespace easy3d {
         if (value >= static_cast<int>(GL_COLOR_ATTACHMENT0) &&
             value <= static_cast<int>(GL_COLOR_ATTACHMENT0 + 15))
         {
-            std::cout << "GL_COLOR_ATTACHMENT" << (value - GL_COLOR_ATTACHMENT0);
+            LOG(INFO) << "\tGL_COLOR_ATTACHMENT" << (value - GL_COLOR_ATTACHMENT0);
         }
         else {
             if (value >= GL_AUX0) {
@@ -1314,10 +1293,10 @@ namespace easy3d {
                 GLint ivalue;
                 glGetIntegerv(GL_AUX_BUFFERS, &ivalue);
                 if (b < ivalue) {
-                    std::cout << "GL_AUX" << b;
+                    LOG(INFO) << "\tGL_AUX" << b;
                 }
                 else {
-                    std::cout << "invalid aux buffer: " << b << ", upper limit is "
+                    LOG(INFO) << "\tinvalid aux buffer: " << b << ", upper limit is "
                         << (ivalue - 1) << ", raw value is 0x" << std::hex << (GL_AUX0 + b)
                         << std::dec;
                 }
@@ -1326,37 +1305,37 @@ namespace easy3d {
                 switch (value)
                 {
                 case GL_NONE:
-                    std::cout << "GL_NONE";
+                    LOG(INFO) << "\tGL_NONE";
                     break;
                 case GL_FRONT_LEFT:
-                    std::cout << "GL_FRONT_LEFT";
+                    LOG(INFO) << "\tGL_FRONT_LEFT";
                     break;
                 case GL_FRONT_RIGHT:
-                    std::cout << "GL_FRONT_RIGHT";
+                    LOG(INFO) << "\tGL_FRONT_RIGHT";
                     break;
                 case GL_BACK_LEFT:
-                    std::cout << "GL_BACK_LEFT";
+                    LOG(INFO) << "\tGL_BACK_LEFT";
                     break;
                 case GL_BACK_RIGHT:
-                    std::cout << "GL_BACK_RIGHT";
+                    LOG(INFO) << "\tGL_BACK_RIGHT";
                     break;
                 case GL_FRONT:
-                    std::cout << "GL_FRONT";
+                    LOG(INFO) << "\tGL_FRONT";
                     break;
                 case GL_BACK:
-                    std::cout << "GL_BACK";
+                    LOG(INFO) << "\tGL_BACK";
                     break;
                 case GL_LEFT:
-                    std::cout << "GL_LEFT";
+                    LOG(INFO) << "\tGL_LEFT";
                     break;
                 case GL_RIGHT:
-                    std::cout << "GL_RIGHT";
+                    LOG(INFO) << "\tGL_RIGHT";
                     break;
                 case GL_FRONT_AND_BACK:
-                    std::cout << "GL_FRONT_AND_BACK";
+                    LOG(INFO) << "\tGL_FRONT_AND_BACK";
                     break;
                 default:
-                    std::cout << "unknown 0x" << std::hex << value << std::dec;
+                    LOG(INFO) << "\tunknown 0x" << std::hex << value << std::dec;
                     break;
                 }
             }
@@ -1367,7 +1346,7 @@ namespace easy3d {
     bool FramebufferObject::read_color(unsigned int index, unsigned char* buffer, unsigned int format, bool flip_vertically /* = true */) const
     {
         if (!has_color_attachment(index)) {
-            std::cerr << "color attachment " << index << " does not exist" << std::endl;
+            LOG(ERROR) << "color attachment " << index << " does not exist";
             return false;
         }
 
@@ -1377,7 +1356,7 @@ namespace easy3d {
         else if (format == GL_RGBA || format == GL_BGRA)
             bytes_per_pixel = 4;
         else {
-            std::cerr << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA." << std::endl;
+            LOG(ERROR) << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.";
             return false;
         }
 
@@ -1449,7 +1428,7 @@ namespace easy3d {
         else if (format == GL_RGBA || format == GL_BGRA)
             bytes_per_pixel = 4;
         else {
-            std::cerr << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA." << std::endl;
+            LOG(ERROR) << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.";
             return false;
         }
 
@@ -1460,7 +1439,7 @@ namespace easy3d {
 
     bool FramebufferObject::snapshot_color(unsigned int index, const std::string& file_name) const {
         if (!is_valid()) {
-            std::cerr << "framebuffer not valid" << std::endl;
+            LOG(ERROR) << "framebuffer not valid";
             return false;
         }
 
@@ -1493,7 +1472,7 @@ namespace easy3d {
             return io::save_tga(file_name, bits, width_, height_);
         }
         else {
-            std::cerr << "unknown file format: " << ext << std::endl;
+            LOG(ERROR) << "unknown file format: " << ext;
             return false;
         }
     }
@@ -1503,7 +1482,7 @@ namespace easy3d {
     bool FramebufferObject::read_depth(float* buffer, bool flip_vertically /* = true */) const
     {
         if (!has_depth_attachment()) {
-            std::cerr << "depth attachment does not exist" << std::endl;
+            LOG(ERROR) << "depth attachment does not exist";
             return false;
         }
 
@@ -1577,7 +1556,7 @@ namespace easy3d {
 
     bool FramebufferObject::read_color(unsigned char rgba[4], int x, int y, int index /* = 0*/) const {
         if (!has_color_attachment(index)) {
-            std::cerr << "color attachment " << index << " does not exist" << std::endl;
+            LOG(ERROR) << "color attachment " << index << " does not exist";
             return false;
         }
 
@@ -1615,7 +1594,7 @@ namespace easy3d {
     // read the depth at pixel (x, y).
     bool FramebufferObject::read_depth(float& depth, int x, int y) const {
         if (!has_depth_attachment()) {
-            std::cerr << "depth attachment does not exist" << std::endl;
+            LOG(ERROR) << "depth attachment does not exist";
             return false;
         }
 
@@ -1697,17 +1676,17 @@ namespace easy3d {
         GLenum filter /* = GL_NEAREST*/)
     {
         if (!source->is_valid()) {
-            std::cerr << "source framebuffer not valid" << std::endl;
+            LOG(ERROR) << "source framebuffer not valid";
             return;
         }
 
         if (!target->is_valid()) {
-            std::cerr << "target framebuffer not valid" << std::endl;
+            LOG(ERROR) << "target framebuffer not valid";
             return;
         }
 
 //        if (!GLEW_EXT_framebuffer_blit) {
-//            std::cerr << "FramebufferBlit not supported" << std::endl;
+//            LOG(ERROR) << "FramebufferBlit not supported";
 //            return;
 //        }
 
@@ -1723,11 +1702,11 @@ namespace easy3d {
             )
         {
             if (source_color_attachment_index >= source->num_color_attachements()) {
-                std::cerr << "source color attachment " << source_color_attachment_index << " does not exist" << std::endl;
+                LOG(ERROR) << "source color attachment " << source_color_attachment_index << " does not exist";
                 return;
             }
             if (target_color_attachment_index >= target->num_color_attachements()) {
-                std::cerr << "target color attachment " << target_color_attachment_index << " does not exist" << std::endl;
+                LOG(ERROR) << "target color attachment " << target_color_attachment_index << " does not exist";
                 return;
             }
 
@@ -1741,21 +1720,21 @@ namespace easy3d {
             )
         {
             if (!source->has_depth_attachment()) {
-                std::cerr << "the source FBO does not have depth attachment" << std::endl;
+                LOG(ERROR) << "the source FBO does not have depth attachment";
                 return;
             }
             if (!target->has_depth_attachment()) {
-                std::cerr << "the target FBO does not have depth attachment" << std::endl;
+                LOG(ERROR) << "the target FBO does not have depth attachment";
                 return;
             }
             if (tx1 - tx0 != sx1 - sx0 || ty1 - ty0 != sy1 - sy0) {
-                std::cerr << "source and target FBO regions should have the same size" << std::endl;
+                LOG(ERROR) << "source and target FBO regions should have the same size";
                 return;
             }
 
             //For GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT, the filter parameter must be GL_NEAREST.
             if (filter != GL_NEAREST) {
-                std::cerr << "filter must be GL_NEAREST for depth blit" << std::endl;
+                LOG(ERROR) << "filter must be GL_NEAREST for depth blit";
                 filter = GL_NEAREST;
             }
         }
@@ -1767,21 +1746,21 @@ namespace easy3d {
             )
         {
             if (!source->has_stencil()) {
-                std::cerr << "the source FBO doesn't have a stencil buffer" << std::endl;
+                LOG(ERROR) << "the source FBO doesn't have a stencil buffer";
                 return;
             }
             if (!target->has_stencil()) {
-                std::cerr << "the target FBO doesn't have a stencil buffer" << std::endl;
+                LOG(ERROR) << "the target FBO doesn't have a stencil buffer";
                 return;
             }
             if (tx1 - tx0 != sx1 - sx0 || ty1 - ty0 != sy1 - sy0) {
-                std::cerr << "source and target FBO regions should have the same size" << std::endl;
+                LOG(ERROR) << "source and target FBO regions should have the same size";
                 return;
             }
 
             //For GL_DEPTH_BUFFER_BIT or GL_STENCIL_BUFFER_BIT, the filter parameter must be GL_NEAREST.
             if (filter != GL_NEAREST) {
-                std::cerr << "filter must be GL_NEAREST for stencil blit" << std::endl;
+                LOG(ERROR) << "filter must be GL_NEAREST for stencil blit";
                 filter = GL_NEAREST;
             }
         }
@@ -1789,7 +1768,7 @@ namespace easy3d {
         // The sizes must also be the same if any of the framebuffer objects are multisample framebuffers.
         if (source->samaples() > 0 || target->samaples() > 0) {
             if (tx1 - tx0 != sx1 - sx0 || ty1 - ty0 != sy1 - sy0) {
-                std::cerr << "source and target FBO regions should have the same size" << std::endl;
+                LOG(ERROR) << "source and target FBO regions should have the same size";
                 return;
             }
         }
@@ -1830,7 +1809,7 @@ namespace easy3d {
         GLenum filter /* = GL_NEAREST*/)
     {
         if (!has_color_attachment(index)) {
-            std::cerr << "color attachment " << index << " does not exist" << std::endl;
+            LOG(ERROR) << "color attachment " << index << " does not exist";
             return false;
         }
 
@@ -1880,7 +1859,7 @@ namespace easy3d {
         GLenum filter /* = GL_NEAREST */ )
     {
         if (!has_depth_attachment()) {
-            std::cerr << "depth attachment does not exist" << std::endl;
+            LOG(ERROR) << "depth attachment does not exist";
             return false;
         }
 

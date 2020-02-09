@@ -250,11 +250,17 @@ namespace easy3d {
 
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {
-            fbo_ = new FramebufferObject(width, height, 0);
-            fbo_->add_color_buffer();
-            fbo_->add_depth_buffer();
+            fbo_ = new FramebufferObject(width, height, 0); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+            fbo_->add_color_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+            fbo_->add_depth_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+
+#if 0
+            fbo_->print_attachments();
+            fbo_->print_draw_buffers();
+            fbo_->print_read_buffer();
+#endif
         }
-        fbo_->ensure_size(width, height);
+        fbo_->ensure_size(width, height); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
 
         //--------------------------------------------------------------------------
         // render the 'scene' to the new FBO.
@@ -264,7 +270,7 @@ namespace easy3d {
         //       of the viewer changed.
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind();
+        fbo_->bind(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
@@ -290,9 +296,7 @@ namespace easy3d {
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release();
-        easy3d_debug_gl_error;
-        easy3d_debug_frame_buffer_error;
+        fbo_->release(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
 
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);
