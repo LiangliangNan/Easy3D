@@ -1114,7 +1114,7 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
-        LOG(INFO) << "Current framebuffer is bind to framebuffer object " << fbo_id_;
+        LOG(INFO) << "current framebuffer is bound to framebuffer object " << fbo_id_;
 
         GLint maxColorAttachments;
         glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAttachments);
