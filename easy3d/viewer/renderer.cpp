@@ -118,7 +118,7 @@ namespace easy3d {
             }
 
             auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
-            if (halfedge_texcoords) {
+            if (vertex_texcoords) {
                 update_buffer(model, drawable, vertex_texcoords);
                 return;
             }
