@@ -590,6 +590,7 @@ void MainWindow::operationModeChanged(QAction* act) {
         else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
     }
+    viewer()->update();
 }
 
 

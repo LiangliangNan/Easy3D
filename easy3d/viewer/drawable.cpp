@@ -59,7 +59,7 @@ namespace easy3d {
             , lighting_two_sides_(setting::light_two_sides)
             , distinct_back_color_(setting::light_distinct_back_color)
             , back_color_(setting::light_back_color)
-            , highlight_(true)
+            , highlight_(false)
             , highlight_range_(-1, -1)
             , use_texture_(false)
             , texture_(nullptr)

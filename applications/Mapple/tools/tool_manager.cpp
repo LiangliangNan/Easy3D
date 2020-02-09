@@ -88,21 +88,23 @@ namespace easy3d {
                 if (current_tool_)
                     current_tool_->set_hint();
             } else if (current_tool_ != nullptr) {
-                current_tool_->clear_hint();
                 last_tool_ = current_tool_;
                 last_tool_name_ = current_tool_name_;
+                last_tool_->clear_hint();
                 current_tool_ = nullptr;
                 current_tool_name_ = EMPTY_TOOL;
             }
 
             if (current_tool_)
                 std::cout << current_tool_->instruction() << std::endl;
+
+
         }
 
 
         void ToolManager::set_tool(ToolName name) {
             ToolMap::iterator it = tools_.find(name);
-            if (it == tools_.end()) {
+            if (it == tools_.end() && name != EMPTY_TOOL) {
                 MultiTool *tool = create_new_tool(name);
                 if (tool)
                     tools_[name] = tool;
@@ -110,13 +112,10 @@ namespace easy3d {
 
             it = tools_.find(name);
             if (it == tools_.end()) {
-                if (name != EMPTY_TOOL)
-                    LOG(WARNING) << "no such tool" << std::endl;
                 last_tool_ = current_tool_;
                 last_tool_name_ = current_tool_name_;
                 current_tool_ = nullptr;
                 current_tool_name_ = EMPTY_TOOL;
-                return;
             } else {
                 last_tool_ = current_tool_;
                 last_tool_name_ = current_tool_name_;
@@ -125,6 +124,9 @@ namespace easy3d {
                 current_tool_->set_hint();
                 std::cout << current_tool_->instruction() << std::endl;
             }
+
+            if (last_tool_)
+                last_tool_->clear_hint();
         }
 
 

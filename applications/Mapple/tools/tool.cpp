@@ -39,6 +39,12 @@ namespace easy3d {
 
     namespace tools {
 
+        MultiTool::~MultiTool() {
+            for (auto tool : tools_)
+                delete tool.second;
+            tools_.clear();
+        }
+
         void MultiTool::press(ToolButton button, int x, int y) {
             auto pos = tools_.find(button);
             if (pos != tools_.end()) {

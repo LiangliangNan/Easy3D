@@ -75,7 +75,7 @@ namespace easy3d {
         class MultiTool {
         public:
             MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
-            virtual ~MultiTool() {}
+            virtual ~MultiTool();
 
             ToolManager *tool_manager() const { return tool_manager_; }
 

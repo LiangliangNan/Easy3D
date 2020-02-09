@@ -133,6 +133,7 @@ namespace easy3d {
                 if (mesh) {
                     auto drawable = mesh->triangles_drawable("faces");
                     drawable->set_highlight(false);
+                    drawable->set_highlight_range({-1, -1});
                 }
             }
         }

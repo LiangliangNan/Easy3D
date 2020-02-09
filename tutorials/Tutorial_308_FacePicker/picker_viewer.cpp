@@ -61,9 +61,12 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         if (triangle_range && face.is_valid()) {
             const auto& range = triangle_range[face];
             drawable->set_highlight_range(range);
+            drawable->set_highlight(true);
         }
-        else
+        else {
             drawable->set_highlight_range(std::make_pair(-1, -1));
+            drawable->set_highlight(false);
+        }
 
         LOG_IF(ERROR, !triangle_range) << "face property 'f:triangle_range' not defined";
     }
