@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
         return EXIT_SUCCESS;
 
     } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
+        LOG(ERROR) << "caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

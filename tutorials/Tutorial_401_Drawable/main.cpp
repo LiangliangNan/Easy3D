@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
         // Delete the mesh (i.e., release memory)? No. The viewer will do this.
         // delete mesh;
     } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
+        LOG(ERROR) << "caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 

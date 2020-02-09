@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
         // Run the viewer
         viewer.run();
     } catch (const std::runtime_error &e) {
-        LOG(ERROR) << "Caught a fatal error: " + std::string(e.what());
+        LOG(ERROR) << "caught a fatal error: " + std::string(e.what());
         return EXIT_FAILURE;
     }
 
