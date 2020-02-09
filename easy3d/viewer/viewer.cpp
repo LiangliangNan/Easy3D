@@ -158,14 +158,14 @@ namespace easy3d {
 		int stencil_bits)
 	{
 		glfwSetErrorCallback(
-			[](int error, const char *descr) {
+			[](int error, const char *desc) {
 			if (error == GLFW_NOT_INITIALIZED)
-				LOG(ERROR) << "GLFW error " << error << ": " << descr;
+				LOG(ERROR) << "GLFW error " << error << ": " << desc;
 		});
 
 		if (!glfwInit()) {
-			LOG(ERROR) << "Could not initialize GLFW!";
-			throw std::runtime_error("Could not initialize GLFW!");
+			LOG(ERROR) << "could not initialize GLFW!";
+			throw std::runtime_error("could not initialize GLFW!");
 		}
 
 		glfwSetTime(0);
@@ -219,9 +219,9 @@ namespace easy3d {
 
 		if (!window) {
 			glfwTerminate();
-			LOG(ERROR) << "Could not create an OpenGL " << std::to_string(gl_major)
+			LOG(ERROR) << "could not create an OpenGL " << std::to_string(gl_major)
 				<< "." << std::to_string(gl_minor) << " context!";
-			throw std::runtime_error("Could not create an OpenGL " +
+			throw std::runtime_error("could not create an OpenGL " +
 				std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
 		}
 		glfwSetWindowUserPointer(window, this);
@@ -234,7 +234,7 @@ namespace easy3d {
 		// Load OpenGL and its extensions
 		if (glewInit() != GLEW_OK) {
 			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-			throw std::runtime_error("Failed to load OpenGL and its extensions!");
+			throw std::runtime_error("failed to load OpenGL and its extensions!");
 		}
 
 #ifndef NDEBUG
@@ -259,7 +259,7 @@ namespace easy3d {
 				LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples << " requested but max support is " << max_num << ")";
 		}
 		else
-			LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
+			LOG(INFO) << "samples received:         " << samples_ << " (" << samples << " requested, max support is " << max_num << ")";
 
 		float xscale, yscale;
 		glfwGetWindowContentScale(window, &xscale, &yscale);
@@ -856,7 +856,7 @@ namespace easy3d {
 				if (!drawable) {
 					if (!dynamic_cast<PointCloud*>(current_model())) { // no default "edges" drawable for point clouds
 						drawable = current_model()->add_lines_drawable("edges");
-						renderer::update_data(current_model(), drawable);
+						renderer::update_buffer(current_model(), drawable);
 					}
 				}
 				else
@@ -868,7 +868,7 @@ namespace easy3d {
 				PointsDrawable* drawable = current_model()->points_drawable("vertices");
 				if (!drawable) {
 					drawable = current_model()->add_points_drawable("vertices");
-					renderer::update_data(current_model(), drawable);
+					renderer::update_buffer(current_model(), drawable);
 				}
 				else
 					drawable->set_visible(!drawable->is_visible());
@@ -1203,23 +1203,23 @@ namespace easy3d {
 		if (dynamic_cast<PointCloud*>(model)) {
 			PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 			PointsDrawable* drawable = model->add_points_drawable("vertices");
-			renderer::update_data(cloud, drawable);
+			renderer::update_buffer(cloud, drawable);
 		}
 		else if (dynamic_cast<SurfaceMesh*>(model)) {
 			SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 			TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
-			renderer::update_data(mesh, drawable);
+			renderer::update_buffer(mesh, drawable);
 		}
 		else if (dynamic_cast<Graph*>(model)) {
 			Graph* graph = dynamic_cast<Graph*>(model);
 
 			// create points drawable for the edges
 			PointsDrawable* vertices = graph->add_points_drawable("vertices");
-			renderer::update_data(graph, vertices);
+			renderer::update_buffer(graph, vertices);
 
 			// create liens drawable for the edges
 			LinesDrawable* edges = graph->add_lines_drawable("edges");
-			renderer::update_data(graph, edges);
+			renderer::update_buffer(graph, edges);
 		}
 	}
 

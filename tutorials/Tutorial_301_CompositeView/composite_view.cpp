@@ -67,7 +67,7 @@ void CompositeView::draw() const {
     LinesDrawable* edges = current_model()->lines_drawable("edges");
     if (!edges) {
         edges = current_model()->add_lines_drawable("edges");
-        renderer::update_data(current_model(), edges);
+        renderer::update_buffer(current_model(), edges);
     }
     edges->draw(camera(), false);
     draw_grid();
@@ -80,7 +80,7 @@ void CompositeView::draw() const {
     PointsDrawable* vertices = current_model()->points_drawable("vertices");
     if (!vertices) {
         vertices = current_model()->add_points_drawable("vertices");
-        renderer::update_data(current_model(), vertices);
+        renderer::update_buffer(current_model(), vertices);
     }
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
@@ -95,7 +95,7 @@ void CompositeView::draw() const {
     if (!faces) {
         faces = current_model()->add_triangles_drawable("faces");
         if (dynamic_cast<SurfaceMesh*>(current_model()))
-            renderer::update_data(dynamic_cast<SurfaceMesh*>(current_model()), faces);
+            renderer::update_buffer(dynamic_cast<SurfaceMesh*>(current_model()), faces);
     }
     faces->draw(camera(), false);
     draw_grid();

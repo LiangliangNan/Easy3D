@@ -12,6 +12,7 @@ namespace Ui {
 
 namespace easy3d {
     class Model;
+    class Texture;
     class TrianglesDrawable;
 }
 
@@ -46,12 +47,15 @@ public slots:
     void setHighlightMax(int);
     void setOpacity(int);
 
+    void setScalarField(const QString &);
     void setScalarFieldColormapStyle(const QString &);
 
 private:
     void connectAll();
     void disconnectAll();
     void disableUnnecessaryWidgets();
+
+    easy3d::Texture* createColormapTexture();
 
 private:
     Ui::WidgetTrianglesDrawable*  ui;

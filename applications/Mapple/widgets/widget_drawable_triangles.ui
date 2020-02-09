@@ -710,11 +710,6 @@
        <property name="toolTip">
         <string>Select the drawable to be visualized</string>
        </property>
-       <item>
-        <property name="text">
-         <string>disabled</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item row="11" column="0">

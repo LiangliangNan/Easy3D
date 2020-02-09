@@ -86,7 +86,7 @@ void DialogRansacPrimitiveExtraction::extract() {
     }
 
     viewer_->makeCurrent();
-    renderer::update_data(cloud, cloud->points_drawable("vertices"));
+    renderer::update_buffer(cloud, cloud->points_drawable("vertices"));
     viewer_->doneCurrent();
 
     viewer_->update();

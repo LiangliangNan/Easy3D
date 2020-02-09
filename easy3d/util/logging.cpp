@@ -81,8 +81,8 @@ namespace easy3d {
             google::InitGoogleLogging(argv0);
 
             DLOG(INFO) << "logger initialized";
-            DLOG(INFO) << "Executable path: " << file_system::executable_directory();
-            DLOG(INFO) << "Current working dir: " << file_system::current_working_directory();
+            DLOG(INFO) << "executable path: " << file_system::executable_directory();
+            DLOG(INFO) << "current working dir: " << file_system::current_working_directory();
         }
     }
 

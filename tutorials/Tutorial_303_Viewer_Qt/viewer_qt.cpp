@@ -497,7 +497,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 if (!dynamic_cast<PointCloud*>(currentModel())) { // no default "edges" drawable for point clouds
                     drawable = currentModel()->add_lines_drawable("edges");
                     makeCurrent();
-                    renderer::update_data(currentModel(), drawable);
+                    renderer::update_buffer(currentModel(), drawable);
                     doneCurrent();
                 }
             }
@@ -512,7 +512,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 			if (!vertices) {
 				vertices = currentModel()->add_points_drawable("vertices");
 				makeCurrent();
-				renderer::update_data(currentModel(), vertices);
+				renderer::update_buffer(currentModel(), vertices);
 				doneCurrent();
 			}
 			else
@@ -619,23 +619,23 @@ void ViewerQt::create_drawables(Model* model) {
 	if (dynamic_cast<PointCloud*>(model)) {
 		PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 		PointsDrawable* drawable = model->add_points_drawable("vertices");
-		renderer::update_data(cloud, drawable);
+		renderer::update_buffer(cloud, drawable);
 	}
 	else if (dynamic_cast<SurfaceMesh*>(model)) {
 		SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 		TrianglesDrawable* drawable = mesh->add_triangles_drawable("faces");
-        renderer::update_data(mesh, drawable);
+        renderer::update_buffer(mesh, drawable);
 	}
 	else if (dynamic_cast<Graph*>(model)) {
 		Graph* graph = dynamic_cast<Graph*>(model);
 
 		// create points drawable for the edges
 		PointsDrawable* vertices = graph->add_points_drawable("vertices");
-		renderer::update_data(graph, vertices);
+		renderer::update_buffer(graph, vertices);
 
 		// create liens drawable for the edges
 		LinesDrawable* edges = graph->add_lines_drawable("edges");
-		renderer::update_data(graph, edges);
+		renderer::update_buffer(graph, edges);
 	}
 }
 

@@ -80,7 +80,7 @@ Model* PickerViewer::add_model(const std::string& file_name, bool create_default
 
     // let's also create a drawable to visualize the edges
     LinesDrawable* drawable = current_model()->add_lines_drawable("edges");
-    renderer::update_data(current_model(), drawable);
+    renderer::update_buffer(current_model(), drawable);
 
     return model;
 }

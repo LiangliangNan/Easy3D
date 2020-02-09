@@ -27,6 +27,7 @@
 #include <iostream>
 
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <3rd_party/stb/stb_image.h>
@@ -57,7 +58,10 @@ namespace easy3d {
             stbi_image_free(pixels);
             return true;
         }
-        return false;
+        else {
+            LOG(ERROR) << "failed load image file: " << file_name << ". " << stbi_failure_reason();
+            return false;
+        }
     }
 
 

@@ -244,6 +244,23 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
     if (model) {
         model->set_name(file_name);
+
+#if 0   // add two scalar fields defined on vertices and faces respectively.
+        if (dynamic_cast<SurfaceMesh*>(model)) {
+            auto vscalar = dynamic_cast<SurfaceMesh*>(model)->add_vertex_property<float>("v:height");
+            for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices())
+                vscalar[v] = dynamic_cast<SurfaceMesh*>(model)->position(v).z;
+
+            auto fscalar = dynamic_cast<SurfaceMesh*>(model)->add_face_property<float>("f:height");
+            for (auto f : dynamic_cast<SurfaceMesh*>(model)->faces()) {
+                vec3 pos(0,0,0);
+                for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices(f))
+                    pos += dynamic_cast<SurfaceMesh*>(model)->position(v);
+                fscalar[f] = pos.z / dynamic_cast<SurfaceMesh*>(model)->valence(f);
+            }
+        }
+#endif
+
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
         viewer_->doneCurrent();
@@ -662,7 +679,7 @@ void MainWindow::removeDuplicatedFaces() {
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
     if (num > 0) {
         viewer()->makeCurrent();
-        renderer::update_data(mesh, mesh->triangles_drawable("faces"));
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
         viewer()->doneCurrent();
         update();
         std::cerr << "done. " << num << " faces deleted. Time: " << w.time_string() << std::endl;

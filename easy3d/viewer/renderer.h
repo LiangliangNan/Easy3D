@@ -44,29 +44,63 @@ namespace easy3d {
          *            for a particular rendering purpose.
          */
 
+        // ------------------------------------------------------------------------------------------------------------
 
         // for point clouds
-        void update_data(PointCloud* model, PointsDrawable* drawable);
+        void update_buffer(PointCloud* model, PointsDrawable* drawable);
+
+        // ------------------------------------------------------------------------------------------------------------
 
         // for meshes
-        void update_data(SurfaceMesh* model, PointsDrawable* drawable);
-        void update_data(SurfaceMesh* model, LinesDrawable* drawable);
-        void update_data(SurfaceMesh* model, TrianglesDrawable* drawable);
+
+        void update_buffer(SurfaceMesh* model, PointsDrawable* drawable);
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable);
+
+        /**
+         * A TrianglesDrawable may have different color properties (per-face/vertex color) and different texture
+         * coordinates (e.g., per-halfedge/vertex texture coordinates). Usually models has only one of them. In case of
+         * multiple coloring possibilities, the following priority applies:
+         *  1. per-halfedge/vertex texture coordinates
+         *  2. per-vertex texture coordinates
+         *  3: per-face color
+         *  4: per-vertex color
+         *  5: uniform color
+         * @param model
+         * @param drawable
+         */
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable);
+
+        // face color property
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<vec3> fcolor);
+        // scalar field defined on faces
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<float> fscalar);
+
+        // vertex color property
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> vcolor);
+        // scalar field defined on vertices
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<float> vscalar);
+
+        // vertex texcoord property
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> vtexcoords);
+        // halfedge texcoord property
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::HalfedgeProperty<vec2> htexcoords);
+
+        // ------------------------------------------------------------------------------------------------------------
 
         // for graphs
-        void update_data(Graph* model, PointsDrawable* drawable);
-        void update_data(Graph* model, LinesDrawable* drawable);
+        void update_buffer(Graph* model, PointsDrawable* drawable);
+        void update_buffer(Graph* model, LinesDrawable* drawable);
 
 
         // a template version
         template <typename DRAWABLE>
-        inline void update_data(Model* model, DRAWABLE* drawable) {
+        inline void update_buffer(Model* model, DRAWABLE* drawable) {
             if (dynamic_cast<PointCloud*>(model))
-                update_data(dynamic_cast<PointCloud*>(model), drawable);
+                update_buffer(dynamic_cast<PointCloud*>(model), drawable);
             else if (dynamic_cast<Graph*>(model))
-                update_data(dynamic_cast<Graph*>(model), drawable);
+                update_buffer(dynamic_cast<Graph*>(model), drawable);
             else if (dynamic_cast<SurfaceMesh*>(model))
-                update_data(dynamic_cast<SurfaceMesh*>(model), drawable);
+                update_buffer(dynamic_cast<SurfaceMesh*>(model), drawable);
         }
     }
 
