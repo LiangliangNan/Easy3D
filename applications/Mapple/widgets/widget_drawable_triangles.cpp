@@ -30,15 +30,15 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
 
     if (colormap_files_.empty()) {
         const std::string dir = resource::directory() + "/colormaps/";
-        if (file_system::is_file(dir + "default.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "default.xpm", "default"));
+        if (file_system::is_file(dir + "default.png"))  colormap_files_.emplace_back(ColorMap(dir + "default.png", "default"));
         if (file_system::is_file(dir + "rainbow.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow.png", "rainbow"));
-        if (file_system::is_file(dir + "blue_red.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.xpm", "blue_red"));
-        if (file_system::is_file(dir + "blue_white.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.xpm", "blue_white"));
-        if (file_system::is_file(dir + "blue_yellow.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.xpm", "blue_yellow"));
-        if (file_system::is_file(dir + "black_white.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.xpm", "black_white"));
-        if (file_system::is_file(dir + "ceil.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.xpm", "ceil"));
-        if (file_system::is_file(dir + "rainbow_iso.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow_iso.xpm", "rainbow_iso"));
-        if (file_system::is_file(dir + "random.xpm"))  colormap_files_.emplace_back(ColorMap(dir + "random.xpm", "random"));
+        if (file_system::is_file(dir + "blue_red.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.png", "blue_red"));
+        if (file_system::is_file(dir + "blue_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.png", "blue_white"));
+        if (file_system::is_file(dir + "blue_yellow.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
+        if (file_system::is_file(dir + "black_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
+        if (file_system::is_file(dir + "ceil.png"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
+        if (file_system::is_file(dir + "rainbow_iso.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow_iso.png", "rainbow_iso"));
+        if (file_system::is_file(dir + "random.png"))  colormap_files_.emplace_back(ColorMap(dir + "random.png", "random"));
     }
 
 
@@ -92,9 +92,7 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    connect(ui->comboBoxScalarField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarField(const QString &)));
-    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldColormapStyle(const QString&)));
-
+    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
 }
 
 
@@ -139,8 +137,7 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    disconnect(ui->comboBoxScalarField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarField(const QString &)));
-    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldColormapStyle(const QString&)));
+    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
 }
 
 
@@ -199,7 +196,21 @@ void WidgetTrianglesDrawable::updatePanel() {
         auto htexcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
         if (htexcoords)
             ui->comboBoxColorScheme->addItem("h:texcoord");
-        ui->comboBoxColorScheme->addItem("scalar");
+
+        {   // color schemes from scalar fields
+            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+
+            // scalar fields defined on faces
+            for (const auto& name : mesh->face_properties()) {
+                if (mesh->get_face_property<float>(name))
+                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
+            }
+            // scalar fields defined on vertices
+            for (const auto& name : mesh->vertex_properties()) {
+                if (mesh->get_vertex_property<float>(name))
+                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
+            }
+        }
 
         if (drawable()->per_vertex_color()) {
             const auto &name = model->color_scheme(drawable());
@@ -241,26 +252,10 @@ void WidgetTrianglesDrawable::updatePanel() {
     }
 
     {   // scalar field
-        ui->comboBoxScalarField->clear();
-        ui->comboBoxScalarField->addItem("disabled");
-
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-        // scalar fields defined on faces
-        for (const auto& name : mesh->face_properties()) {
-            if (mesh->get_face_property<float>(name))
-                ui->comboBoxScalarField->addItem(QString::fromStdString(name));
-        }
-        // scalar fields defined on vertices
-        for (const auto& name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<float>(name))
-                ui->comboBoxScalarField->addItem(QString::fromStdString(name));
-        }
     }
 
     {   // vector field
         ui->comboBoxVectorField->clear();
-        ui->comboBoxVectorField->addItem("disabled");
 
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 
@@ -269,10 +264,13 @@ void WidgetTrianglesDrawable::updatePanel() {
             if (mesh->get_face_property<vec3>(name))
                 ui->comboBoxVectorField->addItem(QString::fromStdString(name));
         }
-        // vector fields defined on vertices
-        for (const auto& name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<vec3>(name))
-                ui->comboBoxVectorField->addItem(QString::fromStdString(name));
+
+        // if no vector fields found, add a "not available" item
+        if (ui->comboBoxVectorField->count() == 0)
+            ui->comboBoxVectorField->addItem("not available");
+        else {  // add one allowing to disable vector fields
+            ui->comboBoxVectorField->insertItem(0, "disabled");
+            ui->comboBoxVectorField->setCurrentIndex(0);
         }
     }
 
@@ -364,17 +362,53 @@ void WidgetTrianglesDrawable::setLighting(const QString & text) {
 
 
 void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
-    bool expected = text != "uniform color";
-    if (drawable()->per_vertex_color() != expected) {
-        drawable()->set_per_vertex_color(expected);
+    disableUnnecessaryWidgets();
+
+    bool per_vertex_color = text != "uniform color";
+    if (drawable()->per_vertex_color() != per_vertex_color) {
+        drawable()->set_per_vertex_color(per_vertex_color);
     }
 
-    bool use_texture = text.contains(":texcoord");
-    if (drawable()->use_texture() != use_texture)
-        drawable()->set_use_texture(use_texture);
+    bool is_scalar_field = text.contains("scalar - ");
+    bool use_texture = text.contains(":texcoord") || is_scalar_field;
 
-    viewer_->update();
-    disableUnnecessaryWidgets();
+    if (drawable()->use_texture() != use_texture) {
+        drawable()->set_use_texture(use_texture);
+        viewer_->update();
+    }
+
+    if (is_scalar_field) {
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+        if (mesh) {
+            for (const auto &name : mesh->face_properties()) {
+                if (text.contains(QString::fromStdString(name))) {
+                    auto prop = mesh->get_face_property<float>(name);
+                    if (prop) {
+                        renderer::update_buffer(mesh, drawable(), prop);
+                        drawable()->set_texture(createColormapTexture());
+                        drawable()->set_use_texture(true);
+                        LOG(INFO) << "rendering scalar field defined on faces: " << name;
+                        viewer_->update();
+                        return;
+                    }
+                }
+            }
+
+            for (const auto &name : mesh->vertex_properties()) {
+                if (text.contains(QString::fromStdString(name))) {
+                    auto prop = mesh->get_vertex_property<float>(name);
+                    if (prop) {
+                        renderer::update_buffer(mesh, drawable(), prop);
+                        drawable()->set_texture(createColormapTexture());
+                        drawable()->set_use_texture(true);
+                        LOG(INFO) << "rendering scalar field defined on vertices: " << name;
+                        viewer_->update();
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -500,51 +534,7 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 }
 
 
-void WidgetTrianglesDrawable::setScalarField(const QString& text) {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    disableUnnecessaryWidgets();
-
-    if (text == "disabled") {
-        drawable()->set_texture(nullptr);
-        drawable()->set_use_texture(false);
-        viewer_->update();
-    }
-    else {
-        for (const auto &name : mesh->face_properties()) {
-            if (name == text.toStdString()) {
-                auto prop = mesh->get_face_property<float>(name);
-                if (prop) {
-                    renderer::update_buffer(mesh, drawable(), prop);
-                    drawable()->set_texture(createColormapTexture());
-                    drawable()->set_use_texture(true);
-                    LOG(INFO) << "rendering scalar field defined on faces: " << name;
-                    viewer_->update();
-                    return;
-                }
-            }
-        }
-
-        for (const auto &name : mesh->vertex_properties()) {
-            if (name == text.toStdString()) {
-                auto prop = mesh->get_vertex_property<float>(name);
-                if (prop) {
-                    renderer::update_buffer(mesh, drawable(), prop);
-                    drawable()->set_texture(createColormapTexture());
-                    drawable()->set_use_texture(true);
-                    LOG(INFO) << "rendering scalar field defined on vertices: " << name;
-                    viewer_->update();
-                    return;
-                }
-            }
-        }
-    }
-}
-
-
-void WidgetTrianglesDrawable::setScalarFieldColormapStyle(const QString& text) {
+void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& text) {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
     if (!mesh)
         return;
@@ -553,8 +543,6 @@ void WidgetTrianglesDrawable::setScalarFieldColormapStyle(const QString& text) {
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
-    if (tex)
-        std::cout << "colormap style: " << text.toStdString() << std::endl;
 }
 
 
@@ -601,22 +589,21 @@ void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
     ui->horizontalSliderOpacity->setEnabled(can_modify_opacity);
 
     // scalar field
-    bool can_show_scalar = visible && ui->comboBoxColorScheme->currentText() == "scalar";
-    ui->labelScalarField->setEnabled(can_show_scalar);
-    ui->comboBoxScalarField->setEnabled(can_show_scalar);
-    bool can_modify_scalar_style = can_show_scalar && ui->comboBoxScalarField->currentText() != "disabled";
-    ui->labelScalarFieldStyle->setEnabled(can_modify_scalar_style);
-    ui->comboBoxScalarFieldStyle->setEnabled(can_modify_scalar_style);
-    ui->labelScalarFieldAutoRange->setEnabled(can_modify_scalar_style);
-    ui->checkBoxScalarFieldAutoRange->setEnabled(can_modify_scalar_style);
-    ui->doubleSpinBoxScalarFieldAutoRangeMin->setEnabled(can_modify_scalar_style);
-    ui->doubleSpinBoxScalarFieldAutoRangeMax->setEnabled(can_modify_scalar_style);
+    bool can_show_scalar = visible &&
+            ui->comboBoxColorScheme->currentText().contains("scalar - ");
+    ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
+    ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
+    ui->labelScalarFieldAutoRange->setEnabled(can_show_scalar);
+    ui->checkBoxScalarFieldAutoRange->setEnabled(can_show_scalar);
+    ui->doubleSpinBoxScalarFieldAutoRangeMin->setEnabled(can_show_scalar);
+    ui->doubleSpinBoxScalarFieldAutoRangeMax->setEnabled(can_show_scalar);
 
     // vector field
-    bool can_show_vector = visible;
+    bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";
     ui->labelVectorField->setEnabled(can_show_vector);
     ui->comboBoxVectorField->setEnabled(can_show_vector);
-    bool can_modify_vector_style = can_show_vector && ui->comboBoxVectorField->currentText() != "disabled";
+    bool can_modify_vector_style = can_show_vector &&
+            ui->comboBoxVectorField->currentText() != "disabled";
     ui->labelVectorFieldColor->setEnabled(can_modify_vector_style);
     ui->toolButtonVectorFieldColor->setEnabled(can_modify_vector_style);
     ui->labelVectorFieldThickness->setEnabled(can_modify_vector_style);

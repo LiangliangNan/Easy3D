@@ -47,8 +47,7 @@ public slots:
     void setHighlightMax(int);
     void setOpacity(int);
 
-    void setScalarField(const QString &);
-    void setScalarFieldColormapStyle(const QString &);
+    void setScalarFieldStyle(const QString &);
 
 private:
     void connectAll();
