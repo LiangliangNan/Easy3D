@@ -411,7 +411,7 @@ namespace easy3d {
         auto known_nm_vertices = mesh->add_vertex_property<bool>("v:ManifoldBuilder:known_nm_vertices", false);
         auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices",
                                                                                  null_h);
-        auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_vertices", false);
+        auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_halfedges", false);
 
 
         // keep a record that the vertex copies are occurred in the 'resolve_non_manifold_vertices()' phase.
