@@ -490,7 +490,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
     const std::string dir = resource::directory() + "/textures/";
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     tr("Choose an image file"), QString::fromStdString(dir),
-                                                    tr("Image format (*.xpm *.png *.jpg *.bmp *.ppm)")
+                                                    tr("Image format (*.png *.jpg *.bmp *.tga)")
     );
 
     if (fileName.isEmpty())
