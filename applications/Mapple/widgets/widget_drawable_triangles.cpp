@@ -30,14 +30,14 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
 
     if (colormap_files_.empty()) {
         const std::string dir = resource::directory() + "/colormaps/";
-        if (file_system::is_file(dir + "default.png"))  colormap_files_.emplace_back(ColorMap(dir + "default.png", "default"));
-        if (file_system::is_file(dir + "rainbow.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow.png", "rainbow"));
-        if (file_system::is_file(dir + "blue_red.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.png", "blue_red"));
-        if (file_system::is_file(dir + "blue_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.png", "blue_white"));
-        if (file_system::is_file(dir + "blue_yellow.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
-        if (file_system::is_file(dir + "black_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
-        if (file_system::is_file(dir + "ceil.png"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
-        if (file_system::is_file(dir + "random.png"))  colormap_files_.emplace_back(ColorMap(dir + "random.png", "random"));
+        if (file_system::is_file(dir + "default.png"))  colormap_files_.emplace_back(ColorMap(dir + "default.png", "  default"));
+        if (file_system::is_file(dir + "rainbow.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow.png", "  rainbow"));
+        if (file_system::is_file(dir + "blue_red.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.png", "  blue_red"));
+        if (file_system::is_file(dir + "blue_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.png", "  blue_white"));
+        if (file_system::is_file(dir + "blue_yellow.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.png", "  blue_yellow"));
+        if (file_system::is_file(dir + "black_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.png", "  black_white"));
+        if (file_system::is_file(dir + "ceil.png"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.png", "  ceil"));
+        if (file_system::is_file(dir + "random.png"))  colormap_files_.emplace_back(ColorMap(dir + "random.png", "  random"));
     }
 
 
@@ -203,10 +203,14 @@ void WidgetTrianglesDrawable::updatePanel() {
             for (const auto& name : mesh->face_properties()) {
                 if (mesh->get_face_property<float>(name))
                     ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
+                else if (mesh->get_face_property<int>(name))
+                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
             }
             // scalar fields defined on vertices
             for (const auto& name : mesh->vertex_properties()) {
                 if (mesh->get_vertex_property<float>(name))
+                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
+                else if (mesh->get_vertex_property<int>(name))
                     ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
             }
         }
@@ -360,6 +364,62 @@ void WidgetTrianglesDrawable::setLighting(const QString & text) {
 }
 
 
+
+namespace details {
+
+    inline void setup_scalar_field(SurfaceMesh* mesh, TrianglesDrawable* drawable, const std::string& color_scheme) {
+        for (const auto &name : mesh->face_properties()) {
+            if (color_scheme.find(name) != std::string::npos) {
+                if (mesh->get_face_property<float>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<float>(name));
+                    return;
+                }
+                if (mesh->get_face_property<double>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<double>(name));
+                    return;
+                }
+                if (mesh->get_face_property<unsigned int>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<unsigned int>(name));
+                    return;
+                }
+                if (mesh->get_face_property<int>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<int>(name));
+                    return;
+                }
+                if (mesh->get_face_property<bool>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<bool>(name));
+                    return;
+                }
+            }
+        }
+
+        for (const auto &name : mesh->vertex_properties()) {
+            if (color_scheme.find(name) != std::string::npos) {
+                if (mesh->get_vertex_property<float>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<float>(name));
+                    return;
+                }
+                if (mesh->get_vertex_property<double>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<double>(name));
+                    return;
+                }
+                if (mesh->get_vertex_property<unsigned int>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<unsigned int>(name));
+                    return;
+                }
+                if (mesh->get_vertex_property<int>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<int>(name));
+                    return;
+                }
+                if (mesh->get_vertex_property<bool>(name)) {
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<bool>(name));
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
     disableUnnecessaryWidgets();
 
@@ -369,45 +429,19 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
     }
 
     bool is_scalar_field = text.contains("scalar - ");
-    bool use_texture = text.contains(":texcoord") || is_scalar_field;
-
-    if (drawable()->use_texture() != use_texture) {
-        drawable()->set_use_texture(use_texture);
-        viewer_->update();
-    }
-
     if (is_scalar_field) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
         if (mesh) {
-            for (const auto &name : mesh->face_properties()) {
-                if (text.contains(QString::fromStdString(name))) {
-                    auto prop = mesh->get_face_property<float>(name);
-                    if (prop) {
-                        renderer::update_buffer(mesh, drawable(), prop);
-                        drawable()->set_texture(createColormapTexture());
-                        drawable()->set_use_texture(true);
-                        LOG(INFO) << "rendering scalar field defined on faces: " << name;
-                        viewer_->update();
-                        return;
-                    }
-                }
-            }
-
-            for (const auto &name : mesh->vertex_properties()) {
-                if (text.contains(QString::fromStdString(name))) {
-                    auto prop = mesh->get_vertex_property<float>(name);
-                    if (prop) {
-                        renderer::update_buffer(mesh, drawable(), prop);
-                        drawable()->set_texture(createColormapTexture());
-                        drawable()->set_use_texture(true);
-                        LOG(INFO) << "rendering scalar field defined on vertices: " << name;
-                        viewer_->update();
-                        return;
-                    }
-                }
-            }
+            ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            drawable()->set_texture(createColormapTexture());
         }
     }
+
+    bool use_texture = text.contains(":texcoord") || is_scalar_field;
+    if (drawable()->use_texture() != use_texture)
+        drawable()->set_use_texture(use_texture);
+
+    viewer_->update();
 }
 
 

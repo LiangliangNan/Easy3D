@@ -1,13 +1,13 @@
 #include "dialog_ransac_primitive_extraction.h"
-#include "main_window.h"
-#include "paint_canvas.h"
-#include "ui_dialog_ransac_primitive_extraction.h"
-
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
+
+#include "main_window.h"
+#include "paint_canvas.h"
+#include "ui_dialog_ransac_primitive_extraction.h"
 
 
 using namespace easy3d;

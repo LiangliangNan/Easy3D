@@ -28,12 +28,10 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/tessellator.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/core/random.h>
-#include <easy3d/util/logging.h>
 
-#include <cassert>
+
 
 
 namespace easy3d {
@@ -285,95 +283,6 @@ namespace easy3d {
         }
 
 
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<float> fscalar) {
-            assert(model);
-            assert(drawable);
-            assert(fscalar);
-
-            /**
-             * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-             * to minimize the number of vertices sent to the GPU.
-             */
-            Tessellator tessellator;
-
-            /**
-             * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-             * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-             * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
-             * for the rendering purpose be shared for selection. Yeah, performance gain!
-             */
-            auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-            int count_triangles = 0;
-
-            /**
-             * Efficiency in switching between flat and smooth shading.
-             * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-             * the fragment shader:
-             *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-             * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-             * between flat and smooth shading without transferring different data to the GPU.
-             */
-
-            auto points = model->get_vertex_property<vec3>("v:point");
-            model->update_vertex_normals();
-            auto normals = model->get_vertex_property<vec3>("v:normal");
-
-            float min_value = FLT_MAX;
-            float max_value = -FLT_MAX;
-            for (auto f : model->faces()) {
-                float value = fscalar[f];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
-
-            for (auto face : model->faces()) {
-                tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                tessellator.begin_contour();
-                float coord = (fscalar[face] - min_value) / (max_value - min_value);
-
-                for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
-                    auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
-                    vertex.append(normals[v]);
-                    vertex.append(vec2(coord, 0.5));
-                    tessellator.add_vertex(vertex);
-                }
-                tessellator.end_contour();
-                tessellator.end_polygon();
-
-                std::size_t num = tessellator.num_triangles_in_last_polygon();
-                triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                count_triangles += num;
-            }
-
-            std::vector<vec3> d_points, d_normals;
-            std::vector<vec2> d_texcoords;
-            const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-            for (auto v :vts) {
-                std::size_t offset = 0;
-                d_points.emplace_back(v->data() + offset);
-                offset += 3;
-                d_normals.emplace_back(v->data() + offset);
-                offset += 3;
-                d_texcoords.emplace_back(v->data() + offset);
-            }
-
-            const std::vector<unsigned int> &d_indices = tessellator.indices();
-
-            drawable->update_vertex_buffer(d_points);
-            drawable->update_index_buffer(d_indices);
-            drawable->update_normal_buffer(d_normals);
-            drawable->update_texcoord_buffer(d_texcoords);
-
-            drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "scalar");
-
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
-        }
-
-
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
             assert(model);
             assert(drawable);
@@ -446,95 +355,6 @@ namespace easy3d {
 
             drawable->set_per_vertex_color(true);
             model->set_color_scheme(drawable, "v:color");
-
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
-        }
-
-
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<float> vscalar) {
-            assert(model);
-            assert(drawable);
-            assert(vscalar);
-
-            /**
-             * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-             * to minimize the number of vertices sent to the GPU.
-             */
-            Tessellator tessellator;
-
-            /**
-             * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-             * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-             * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
-             * for the rendering purpose be shared for selection. Yeah, performance gain!
-             */
-            auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-            int count_triangles = 0;
-
-            /**
-             * Efficiency in switching between flat and smooth shading.
-             * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-             * the fragment shader:
-             *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-             * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-             * between flat and smooth shading without transferring different data to the GPU.
-             */
-
-            auto points = model->get_vertex_property<vec3>("v:point");
-            model->update_vertex_normals();
-            auto normals = model->get_vertex_property<vec3>("v:normal");
-
-            float min_value = std::numeric_limits<float>::max();
-            float max_value = -std::numeric_limits<float>::max();
-            for (auto v : model->vertices()) {
-                float value = vscalar[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
-
-            for (auto face : model->faces()) {
-                tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                tessellator.begin_contour();
-                for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
-                    auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
-                    vertex.append(normals[v]);
-
-                    float coord = (vscalar[v] - min_value) / (max_value - min_value);
-                    vertex.append(vec2(coord, 0.5));
-                    tessellator.add_vertex(vertex);
-                }
-                tessellator.end_contour();
-                tessellator.end_polygon();
-
-                std::size_t num = tessellator.num_triangles_in_last_polygon();
-                triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                count_triangles += num;
-            }
-
-            std::vector<vec3> d_points, d_normals;
-            std::vector<vec2> d_texcoords;
-            const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-            for (auto v :vts) {
-                std::size_t offset = 0;
-                d_points.emplace_back(v->data() + offset);
-                offset += 3;
-                d_normals.emplace_back(v->data() + offset);
-                offset += 3;
-                d_texcoords.emplace_back(v->data() + offset);
-            }
-
-            const std::vector<unsigned int> &d_indices = tessellator.indices();
-
-            drawable->update_vertex_buffer(d_points);
-            drawable->update_index_buffer(d_indices);
-            drawable->update_normal_buffer(d_normals);
-            drawable->update_texcoord_buffer(d_texcoords);
-
-            drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "scalar");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }

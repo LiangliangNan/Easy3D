@@ -1,13 +1,5 @@
 #include "paint_canvas.h"
 
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QKeyEvent>
-#include <QPainter>
-#include <QTimer>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
@@ -33,6 +25,12 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+
+#include <QKeyEvent>
+#include <QPainter>
+#include <QTimer>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
 
 
 using namespace easy3d;
