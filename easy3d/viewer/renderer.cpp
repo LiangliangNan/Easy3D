@@ -198,7 +198,6 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
 
             drawable->set_per_vertex_color(false);
-            model->set_color_scheme(drawable, "uniform color");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
@@ -277,7 +276,6 @@ namespace easy3d {
             drawable->update_color_buffer(d_colors);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "f:color");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
@@ -354,7 +352,6 @@ namespace easy3d {
             drawable->update_color_buffer(d_colors);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "v:color");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
@@ -433,7 +430,6 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "v:texcoord");
 
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
@@ -520,7 +516,6 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "h:texcoord");
 
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";

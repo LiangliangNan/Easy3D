@@ -40,8 +40,8 @@ namespace easy3d {
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a point cloud.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(PointCloud* model, PointsDrawable* drawable);
 
@@ -50,15 +50,15 @@ namespace easy3d {
         
         /**
          * @brief Update render buffers for the default "vertices" drawable of a surface mesh.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(SurfaceMesh* model, PointsDrawable* drawable);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a surface mesh.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable);
 
@@ -72,16 +72,16 @@ namespace easy3d {
          *              3: per-face color
          *              4: per-vertex color
          *              5: uniform color
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable);
 
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the face property 
          *        "f:color".
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The face property "f:color"
          */
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<vec3> prop);
@@ -89,8 +89,8 @@ namespace easy3d {
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the scalar field 
          *        defined one faces.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The face property that defines the scalar field.
          */
         template <typename FT>
@@ -99,8 +99,8 @@ namespace easy3d {
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the vertex property 
          *        "v:color".
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The vertex property "v:color"
          */
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop);
@@ -108,8 +108,8 @@ namespace easy3d {
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the scalar field 
          *        defined one vertices.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
@@ -118,8 +118,8 @@ namespace easy3d {
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the texture coordinates
          *        defined on vertices.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The vertex property (i.e., "v:texcoord") that defines the texture coordinates.
          */
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop);
@@ -127,8 +127,8 @@ namespace easy3d {
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the texture coordinates
          *        defined on halfedges.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          * @param prop      The halfedge property (i.e., "h:texcoord") that defines the texture coordinates.
          */
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::HalfedgeProperty<vec2> prop);
@@ -137,15 +137,15 @@ namespace easy3d {
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a graph.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(Graph* model, PointsDrawable* drawable);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a graph.
-         * @param  model     The model.
-         * @param  drawable  The drawable.
+         * @param model     The model.
+         * @param drawable  The drawable.
          */
         void update_buffer(Graph* model, LinesDrawable* drawable);
 
@@ -261,7 +261,6 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "scalar");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
@@ -351,7 +350,6 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             drawable->set_per_vertex_color(true);
-            model->set_color_scheme(drawable, "scalar");
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
