@@ -37,7 +37,6 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
         if (file_system::is_file(dir + "blue_yellow.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
         if (file_system::is_file(dir + "ceil.png"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
-        if (file_system::is_file(dir + "rainbow_iso.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow_iso.png", "rainbow_iso"));
         if (file_system::is_file(dir + "random.png"))  colormap_files_.emplace_back(ColorMap(dir + "random.png", "random"));
     }
 
