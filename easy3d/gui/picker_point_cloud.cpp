@@ -156,8 +156,7 @@ namespace easy3d {
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        int width = viewport[2];
-        int height = viewport[3];
+
         vec4 rectangle(rect.x_min(), rect.x_max(), rect.y_min(), rect.y_max());
         const mat4 &MVP = camera()->modelViewProjectionMatrix();
 
@@ -259,8 +258,6 @@ namespace easy3d {
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        int width = viewport[2];
-        int height = viewport[3];
 
         program->bind();
         program->set_uniform("viewport", viewport);

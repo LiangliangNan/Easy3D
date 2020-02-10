@@ -36,7 +36,10 @@
 namespace easy3d {
 
     SurfaceMeshPicker::SurfaceMeshPicker(const Camera *cam)
-            : Picker(cam), hit_resolution_(15), program_(nullptr) {
+            : Picker(cam)
+            , program_(nullptr)
+            , hit_resolution_(15)
+    {
         use_gpu_if_supported_ = true;
     }
 

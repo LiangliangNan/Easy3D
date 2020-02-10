@@ -36,8 +36,8 @@ namespace easy3d {
         ToolManager::ToolManager(Canvas* cvs)
                 : viewer_(cvs)
                 , current_tool_(nullptr)
-                , last_tool_(nullptr)
                 , current_tool_name_(EMPTY_TOOL)
+                , last_tool_(nullptr)
                 , last_tool_name_(EMPTY_TOOL)
         {
         }
