@@ -141,14 +141,14 @@ namespace easy3d {
     void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
         // record
         State state;
-        state.lighting_ = drawable->lighting();
-        state.per_vertex_color_ = drawable->per_vertex_color();
-        state.default_color_ = drawable->default_color();
+        state.lighting = drawable->lighting();
+        state.use_texture = drawable->use_texture();
+        state.default_color = drawable->default_color();
         states_[drawable] = state;
 
         // change
         drawable->set_lighting(false);
-        drawable->set_per_vertex_color(false);
+        drawable->set_use_texture(false);
         drawable->set_default_color(color);
 
         // render
@@ -175,9 +175,9 @@ namespace easy3d {
 
     void ModelPicker::restore(Drawable *drawable) {
         const State &state = states_[drawable];
-        drawable->set_lighting(state.lighting_);
-        drawable->set_per_vertex_color(state.per_vertex_color_);
-        drawable->set_default_color(state.default_color_);
+        drawable->set_lighting(state.lighting);
+        drawable->set_use_texture(state.use_texture);
+        drawable->set_default_color(state.default_color);
     }
 
 }
