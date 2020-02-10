@@ -728,7 +728,7 @@
        </property>
        <item>
         <property name="text">
-         <string>disabled</string>
+         <string>not available</string>
         </property>
        </item>
       </widget>
