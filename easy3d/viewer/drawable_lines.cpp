@@ -210,7 +210,53 @@ namespace easy3d {
             return;
         }
 
+        if (line_width() <= 1) {
+            ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_texture");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_texture", attributes);
+            }
+            if (!program)
+                return;
 
+            const mat4 &MVP = camera->modelViewProjectionMatrix();
+            program->bind();
+            program->set_uniform("MVP", MVP);
+
+//      program->set_uniform("highlight", highlight())
+//                ->set_uniform("hightlight_id_min", highlight_range_.first)
+//                ->set_uniform("hightlight_id_max", highlight_range_.second);
+
+            gl_draw(with_storage_buffer);
+            program->release();
+        }
+        else {  // use geometry shader to be able to control the line width
+            ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_texture_width_control");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_texture_width_control", attributes, std::vector<std::string>(), true);
+            }
+            if (!program)
+                return;
+
+            const mat4 &MVP = camera->modelViewProjectionMatrix();
+            program->bind();
+            program->set_uniform("MV", camera->modelViewMatrix())
+                    ->set_uniform("PROJ", camera->projectionMatrix());
+            float ratio = camera->pixelGLRatio(camera->pivotPoint());
+            program->set_uniform("radius", line_width() * ratio);
+
+    //      program->set_uniform("highlight", highlight())
+    //                ->set_uniform("hightlight_id_min", highlight_range_.first)
+    //                ->set_uniform("hightlight_id_max", highlight_range_.second);
+
+            gl_draw(with_storage_buffer);
+            program->release();
+        }
     }
 
 

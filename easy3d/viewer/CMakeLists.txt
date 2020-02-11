@@ -96,16 +96,27 @@ set(${PROJECT_NAME}_SHADERS
         # lines
         ../../resources/shaders/lines/lines_plain_color.vert
         ../../resources/shaders/lines/lines_plain_color.frag
+        ../../resources/shaders/lines/lines_plain_texture.vert
+        ../../resources/shaders/lines/lines_plain_texture.frag
         ../../resources/shaders/lines/lines_plain_color_width_control.vert
         ../../resources/shaders/lines/lines_plain_color_width_control.geom
         ../../resources/shaders/lines/lines_plain_color_width_control.frag
+        ../../resources/shaders/lines/lines_plain_texture_width_control.vert
+        ../../resources/shaders/lines/lines_plain_texture_width_control.geom
+        ../../resources/shaders/lines/lines_plain_texture_width_control.frag
         ../../resources/shaders/lines/lines_cylinders_color.vert
         ../../resources/shaders/lines/lines_cylinders_color.geom
         ../../resources/shaders/lines/lines_cylinders_color.frag
+        ../../resources/shaders/lines/lines_cylinders_texture.vert
+        ../../resources/shaders/lines/lines_cylinders_texture.geom
+        ../../resources/shaders/lines/lines_cylinders_texture.frag
         ../../resources/shaders/lines/lines_cones_color.vert
         ../../resources/shaders/lines/lines_cones_color.geom
         ../../resources/shaders/lines/lines_cones_color.frag
-        # surface
+        ../../resources/shaders/lines/lines_cones_texture.vert
+        ../../resources/shaders/lines/lines_cones_texture.geom
+        ../../resources/shaders/lines/lines_cones_texture.frag
+       # surface
         ../../resources/shaders/surface/surface_color.vert
         ../../resources/shaders/surface/surface_color.frag
         ../../resources/shaders/surface/surface_texture.vert
