@@ -229,7 +229,10 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_min", highlight_range_.first)
 //                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
+            program->bind_texture("textureID", texture()->id(), 0);
             gl_draw(with_storage_buffer);
+            program->release_texture();
+            
             program->release();
         }
         else {  // use geometry shader to be able to control the line width
@@ -254,7 +257,10 @@ namespace easy3d {
     //                ->set_uniform("hightlight_id_min", highlight_range_.first)
     //                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
+            program->bind_texture("textureID", texture()->id(), 0);
             gl_draw(with_storage_buffer);
+            program->release_texture();
+
             program->release();
         }
     }
@@ -294,11 +300,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
-        program->bind_texture("textureID", texture()->id(), 0);
 //      program->set_uniform("highlight", highlight())
 //                ->set_uniform("hightlight_id_min", highlight_range_.first)
 //                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
+        program->bind_texture("textureID", texture()->id(), 0);
         gl_draw(with_storage_buffer);
         program->release_texture();
 
