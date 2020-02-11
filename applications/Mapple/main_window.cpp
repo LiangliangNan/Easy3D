@@ -91,7 +91,10 @@ MainWindow::MainWindow(QWidget *parent)
     setAcceptDrops(true);
 
     setBaseSize(1280, 960);
-//    setWindowState(Qt::WindowMaximized);
+
+#ifdef NDEBUG
+    setWindowState(Qt::WindowMaximized);
+#endif
 
     readSettings();
     updateWindowTitle();
@@ -247,8 +250,9 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
 #if 1
         // add 3 scalar fields defined on vertices, edges, and faces respectively.
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-        if (mesh) {
+        if (dynamic_cast<SurfaceMesh*>(model)) {
+            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+
             auto vscalar = mesh->add_vertex_property<float>("v:height");
             for (auto v : mesh->vertices())
                 vscalar[v] = mesh->position(v).z;
@@ -291,6 +295,35 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
                     count += 1.0f;
                 }
                 enormals[e] = n/count;
+            }
+        }
+
+        if (dynamic_cast<PointCloud*>(model)) {
+            PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+
+            auto vscalar = cloud->add_vertex_property<float>("v:height");
+            for (auto v : cloud->vertices())
+                vscalar[v] = cloud->position(v).z;
+        }
+
+        if (dynamic_cast<Graph*>(model)) {
+            Graph* graph = dynamic_cast<Graph*>(model);
+
+            auto vscalar = graph->add_vertex_property<float>("v:height");
+            for (auto v : graph->vertices())
+                vscalar[v] = graph->position(v).z;
+
+            auto escalar = graph->add_edge_property<float>("e:height");
+            for (auto e : graph->edges()) {
+                auto s = graph->from_vertex(e);
+                auto t = graph->to_vertex(e);
+                escalar[e] = 0.5 * (graph->position(s).z + graph->position(t).z);
+            }
+
+            // add a vector field to the edges
+            auto enormals = graph->add_edge_property<vec3>("e:normal");
+            for (auto e : graph->edges()) {
+                enormals[e] = vec3(1,1,1);
             }
         }
 #endif

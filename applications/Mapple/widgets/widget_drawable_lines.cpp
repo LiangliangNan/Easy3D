@@ -134,39 +134,9 @@ void WidgetLinesDrawable::updatePanel() {
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
-        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        ui->comboBoxColorScheme->addItem("uniform color");
-        auto vcolors = mesh->get_vertex_property<vec3>("v:color");
-        if (vcolors)
-            ui->comboBoxColorScheme->addItem("v:color");
-        auto ecolors = mesh->get_edge_property<vec3>("e:color");
-        if (ecolors)
-            ui->comboBoxColorScheme->addItem("e:color");
-        auto vtexcoords = mesh->get_vertex_property<vec2>("v:texcoord");
-        if (vtexcoords)
-            ui->comboBoxColorScheme->addItem("v:texcoord");
-        auto htexcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
-        if (htexcoords)
-            ui->comboBoxColorScheme->addItem("h:texcoord");
-
-        {   // color schemes from scalar fields
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-            // scalar fields defined on edges
-            for (const auto& name : mesh->edge_properties()) {
-                if (mesh->get_edge_property<float>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-                else if (mesh->get_face_property<int>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-            }
-            // scalar fields defined on vertices
-            for (const auto& name : mesh->vertex_properties()) {
-                if (mesh->get_vertex_property<float>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-                else if (mesh->get_vertex_property<int>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-            }
-        }
+        const std::vector<std::string>& schemes = colorSchemes(viewer_->currentModel());
+        for (const auto& scheme : schemes)
+            ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
 
         if (drawable()->per_vertex_color()) {
             const auto &name = model->color_scheme(drawable());
@@ -190,27 +160,11 @@ void WidgetLinesDrawable::updatePanel() {
         ui->spinBoxHighlightMax->setValue(range.second);
     }
 
-    {   // scalar field
-    }
-
     {   // vector field
         ui->comboBoxVectorField->clear();
-
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-        // vector fields defined on faces
-        for (const auto& name : mesh->face_properties()) {
-            if (mesh->get_face_property<vec3>(name))
-                ui->comboBoxVectorField->addItem(QString::fromStdString(name));
-        }
-
-        // if no vector fields found, add a "not available" item
-        if (ui->comboBoxVectorField->count() == 0)
-            ui->comboBoxVectorField->addItem("not available");
-        else {  // add one allowing to disable vector fields
-            ui->comboBoxVectorField->insertItem(0, "disabled");
-            ui->comboBoxVectorField->setCurrentIndex(0);
-        }
+        const std::vector<std::string>& fields = vectorFields(viewer_->currentModel());
+        for (auto name : fields)
+            ui->comboBoxVectorField->addItem(QString::fromStdString(name));
     }
 
     disableUnavailableOptions();
@@ -480,3 +434,120 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
 }
 
 
+std::vector<std::string> WidgetLinesDrawable::colorSchemes(const easy3d::Model* model) {
+    std::vector<std::string> schemes;
+    schemes.push_back("uniform color");
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
+        if (mesh->get_vertex_property<vec3>("v:color"))
+            schemes.push_back("v:color");
+        if (mesh->get_edge_property<vec3>("e:color"))
+            schemes.push_back("e:color");
+        if (mesh->get_vertex_property<vec2>("v:texcoord"))
+            schemes.push_back("v:texcoord");
+        if (mesh->get_halfedge_property<vec2>("h:texcoord"))
+            schemes.push_back("h:texcoord");
+
+        // color schemes from scalar fields
+        // scalar fields defined on edges
+        for (const auto &name : mesh->edge_properties()) {
+            if (mesh->get_edge_property<float>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_face_property<double>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_face_property<unsigned int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_face_property<int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_face_property<bool>(name))
+                schemes.push_back("scalar - " + name);
+        }
+        // scalar fields defined on vertices
+        for (const auto &name : mesh->vertex_properties()) {
+            if (mesh->get_vertex_property<float>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_vertex_property<double>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_vertex_property<unsigned int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_vertex_property<int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (mesh->get_vertex_property<bool>(name))
+                schemes.push_back("scalar - " + name);
+        }
+    }
+
+    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+    if (graph) {
+        if (graph->get_vertex_property<vec3>("v:color"))
+            schemes.push_back("v:color");
+        if (graph->get_edge_property<vec3>("e:color"))
+            schemes.push_back("e:color");
+        if (graph->get_vertex_property<vec2>("v:texcoord"))
+            schemes.push_back("v:texcoord");
+        if (graph->get_edge_property<vec2>("e:texcoord"))
+            schemes.push_back("e:texcoord");
+
+        // color schemes from scalar fields
+        // scalar fields defined on edges
+        for (const auto &name : graph->edge_properties()) {
+            if (graph->get_edge_property<float>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_edge_property<double>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_edge_property<unsigned int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_edge_property<int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_edge_property<bool>(name))
+                schemes.push_back("scalar - " + name);
+        }
+        // scalar fields defined on vertices
+        for (const auto &name : graph->vertex_properties()) {
+            if (graph->get_vertex_property<float>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_vertex_property<double>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_vertex_property<unsigned int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_vertex_property<int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (graph->get_vertex_property<bool>(name))
+                schemes.push_back("scalar - " + name);
+        }
+    }
+
+    return schemes;
+}
+
+
+std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model* model) {
+    std::vector<std::string> fields;
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
+        // vector fields defined on edges
+        for (const auto& name : mesh->edge_properties()) {
+            if (mesh->get_edge_property<vec3>(name))
+                fields.push_back(name);
+        }
+    }
+
+    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+    if (graph) {
+        // vector fields defined on edges
+        for (const auto& name : graph->edge_properties()) {
+            if (graph->get_edge_property<vec3>(name))
+                fields.push_back(name);
+        }
+    }
+
+    // if no vector fields found, add a "not available" item
+    if (fields.empty())
+        fields.push_back("not available");
+    else   // add one allowing to disable vector fields
+        fields.insert(fields.begin(), "disabled");
+
+    return fields;
+}

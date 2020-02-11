@@ -40,10 +40,45 @@ namespace easy3d {
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a point cloud.
+         *        The "vertices" drawable of a point cloud may have both per-vertex color and per-vertex texture
+         *        coordinate, it may also have segmentation information.
+         *        In case of multiple coloring possibilities, the following priority applies:
+         *              1. segmentation-based colors
+         *              2. per-vertex texture coordinates
+         *              3: per-vertex color
+         *              4: uniform color
          * @param model     The model.
          * @param drawable  The drawable.
          */
         void update_buffer(PointCloud* model, PointsDrawable* drawable);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a point cloud using the vertex property
+         *        "v:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property "v:color"
+         */
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a point cloud using the scalar field
+         *        defined one vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a point cloud using the texture
+         *        coordinates defined on vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property (i.e., "v:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop);
 
         
         // SurfaceMesh ------------------------------------------------------------------------------------------------
@@ -234,10 +269,43 @@ namespace easy3d {
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a graph.
+         *        The "vertices" drawable of a graph may have both per-vertex color and per-vertex texture coordinate.
+         *        In case of multiple coloring possibilities, the following priority applies:
+         *              1. per-vertex texture coordinates
+         *              2: per-vertex color
+         *              3: uniform color
          * @param model     The model.
          * @param drawable  The drawable.
          */
         void update_buffer(Graph* model, PointsDrawable* drawable);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a graph using the vertex property
+         *        "v:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property "v:color"
+         */
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a graph using the scalar field
+         *        defined one vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "vertices" drawable of a graph using the texture
+         *        coordinates defined on vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property (i.e., "v:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a graph.
@@ -245,6 +313,7 @@ namespace easy3d {
          * @param drawable  The drawable.
          */
         void update_buffer(Graph* model, LinesDrawable* drawable);
+
 
 
         // a template version
@@ -256,6 +325,16 @@ namespace easy3d {
                 update_buffer(dynamic_cast<Graph*>(model), drawable);
             else if (dynamic_cast<SurfaceMesh*>(model))
                 update_buffer(dynamic_cast<SurfaceMesh*>(model), drawable);
+        }
+
+        template <typename MODEL, typename FT>
+        inline void update_buffer(MODEL* model, PointsDrawable* drawable, typename MODEL::template VertexProperty<FT> prop) {
+            if (dynamic_cast<PointCloud*>(model))
+                update_buffer(dynamic_cast<PointCloud*>(model), drawable, prop);
+            else if (dynamic_cast<Graph*>(model))
+                update_buffer(dynamic_cast<Graph*>(model), drawable, prop);
+            else if (dynamic_cast<SurfaceMesh*>(model))
+                update_buffer(dynamic_cast<SurfaceMesh*>(model), drawable, prop);
         }
     }
 
@@ -358,6 +437,52 @@ namespace easy3d {
             drawable->set_use_texture(true);
             drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
+        }
+
+
+        template <typename FT>
+        inline void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto v : model->vertices()) {
+                float value = prop[v];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->vertices_size());
+            for (auto v : model->vertices()) {
+                float coord = (prop[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5));
+            }
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
+        }
+
+
+        template <typename FT>
+        inline void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto v : model->vertices()) {
+                float value = prop[v];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->vertices_size());
+            for (auto v : model->vertices()) {
+                float coord = (prop[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5));
+            }
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
         }
 
 

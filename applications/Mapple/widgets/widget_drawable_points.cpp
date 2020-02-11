@@ -101,6 +101,86 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 }
 
 
+namespace details {
+
+    template<typename MODEL>
+    inline void setup_scalar_field(MODEL* model, PointsDrawable* drawable, const std::string& color_scheme) {
+        for (const auto &name : model->vertex_properties()) {
+            if (color_scheme.find(name) != std::string::npos) {
+                if (model->template get_vertex_property<float>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<float>(name));
+                    return;
+                }
+                if (model->template get_vertex_property<double>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<double>(name));
+                    return;
+                }
+                if (model->template get_vertex_property<unsigned int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<unsigned int>(name));
+                    return;
+                }
+                if (model->template get_vertex_property<int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<int>(name));
+                    return;
+                }
+                if (model->template get_vertex_property<bool>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<bool>(name));
+                    return;
+                }
+            }
+        }
+    }
+
+
+    template<typename MODEL>
+    inline std::vector<std::string> color_schemes(const MODEL* model) {
+        std::vector<std::string> schemes;
+        schemes.push_back("uniform color");
+
+        if (model->template get_vertex_property<vec3>("v:color"))
+            schemes.push_back("v:color");
+        if (model->template get_vertex_property<vec2>("v:texcoord"))
+            schemes.push_back("v:texcoord");
+
+        // scalar fields defined on vertices
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<float>(name))
+                schemes.push_back("scalar - " + name);
+            else if (model->template get_vertex_property<double>(name))
+                schemes.push_back("scalar - " + name);
+            else if (model->template get_vertex_property<unsigned int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (model->template get_vertex_property<int>(name))
+                schemes.push_back("scalar - " + name);
+            else if (model->template get_vertex_property<bool>(name))
+                schemes.push_back("scalar - " + name);
+        }
+
+        return schemes;
+    }
+
+
+    template<typename MODEL>
+    inline std::vector<std::string> vector_fields(const MODEL* model) {
+        std::vector<std::string> fields;
+
+        // vector fields defined on vertices
+        for (const auto &name : model->template vertex_properties()) {
+            if (model->template get_vertex_property<vec3>(name))
+                fields.push_back(name);
+        }
+
+        // if no vector fields found, add a "not available" item
+        if (fields.empty())
+            fields.push_back("not available");
+        else   // add one allowing to disable vector fields
+            fields.insert(fields.begin(), "disabled");
+
+        return fields;
+    }
+}
+
+
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetPointsDrawable::updatePanel() {
     auto model = viewer_->currentModel();
@@ -134,26 +214,15 @@ void WidgetPointsDrawable::updatePanel() {
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
-        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        ui->comboBoxColorScheme->addItem("uniform color");
-        auto vcolors = mesh->get_vertex_property<vec3>("v:color");
-        if (vcolors)
-            ui->comboBoxColorScheme->addItem("v:color");
-        auto vtexcoords = mesh->get_vertex_property<vec2>("v:texcoord");
-        if (vtexcoords)
-            ui->comboBoxColorScheme->addItem("v:texcoord");
-
-        {   // color schemes from scalar fields
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-            // scalar fields defined on vertices
-            for (const auto& name : mesh->vertex_properties()) {
-                if (mesh->get_vertex_property<float>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-                else if (mesh->get_vertex_property<int>(name))
-                    ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
-            }
-        }
+        std::vector<std::string> schemes;
+        if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
+            schemes = ::details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
+        else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
+            schemes = ::details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
+        else if (dynamic_cast<Graph*>(viewer_->currentModel()))
+            schemes = ::details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
+        for (const auto& scheme : schemes)
+            ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
 
         if (drawable()->per_vertex_color()) {
             const auto &name = model->color_scheme(drawable());
@@ -177,27 +246,17 @@ void WidgetPointsDrawable::updatePanel() {
         ui->spinBoxHighlightMax->setValue(range.second);
     }
 
-    {   // scalar field
-    }
-
     {   // vector field
         ui->comboBoxVectorField->clear();
-
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-        // vector fields defined on faces
-        for (const auto& name : mesh->face_properties()) {
-            if (mesh->get_face_property<vec3>(name))
-                ui->comboBoxVectorField->addItem(QString::fromStdString(name));
-        }
-
-        // if no vector fields found, add a "not available" item
-        if (ui->comboBoxVectorField->count() == 0)
-            ui->comboBoxVectorField->addItem("not available");
-        else {  // add one allowing to disable vector fields
-            ui->comboBoxVectorField->insertItem(0, "disabled");
-            ui->comboBoxVectorField->setCurrentIndex(0);
-        }
+        std::vector<std::string> fields;
+        if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
+            fields = ::details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
+        else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
+            fields = ::details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
+        else if (dynamic_cast<Graph*>(viewer_->currentModel()))
+            fields = ::details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
+        for (auto name : fields)
+            ui->comboBoxVectorField->addItem(QString::fromStdString(name));
     }
 
     disableUnavailableOptions();
@@ -275,16 +334,30 @@ void WidgetPointsDrawable::setImposterStyle(const QString & style) {
     }
     else if (style == "surfel") {
         if (drawable()->impostor_type() != PointsDrawable::SURFEL) {
-            drawable()->set_impostor_type(PointsDrawable::SURFEL);
             if (drawable()->normal_buffer() == 0) { // surfel requires point normals
-                SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-                auto normals = mesh->get_vertex_property<vec3>("v:normal");
-                if (!normals) {
-                    mesh->update_vertex_normals();
-                    normals = mesh->get_vertex_property<vec3>("v:normal");
+                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+                if (mesh) {
+                    auto normals = mesh->get_vertex_property<vec3>("v:normal");
+                    if (!normals) {
+                        mesh->update_vertex_normals();
+                        normals = mesh->get_vertex_property<vec3>("v:normal");
+                    }
+                    drawable()->update_normal_buffer(normals.vector());
                 }
-                drawable()->update_normal_buffer(normals.vector());
+                else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
+                    if (drawable()->normal_buffer() == 0) { // surfel requires point normals
+                        PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+                        auto normals = cloud->get_vertex_property<vec3>("v:normal");
+                        if (normals)
+                            drawable()->update_normal_buffer(normals.vector());
+                    }
+                }
             }
+
+            if (drawable()->normal_buffer())
+                drawable()->set_impostor_type(PointsDrawable::SURFEL);
+            else
+                LOG(WARNING) << "point imposter SURFEL requires normal information";
         }
     }
 
@@ -292,37 +365,6 @@ void WidgetPointsDrawable::setImposterStyle(const QString & style) {
     disableUnavailableOptions();
 }
 
-
-
-namespace details {
-
-    inline void setup_scalar_field(SurfaceMesh* mesh, PointsDrawable* drawable, const std::string& color_scheme) {
-        for (const auto &name : mesh->vertex_properties()) {
-            if (color_scheme.find(name) != std::string::npos) {
-                if (mesh->get_vertex_property<float>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<float>(name));
-                    return;
-                }
-                if (mesh->get_vertex_property<double>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<double>(name));
-                    return;
-                }
-                if (mesh->get_vertex_property<unsigned int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<unsigned int>(name));
-                    return;
-                }
-                if (mesh->get_vertex_property<int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<int>(name));
-                    return;
-                }
-                if (mesh->get_vertex_property<bool>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<bool>(name));
-                    return;
-                }
-            }
-        }
-    }
-}
 
 void WidgetPointsDrawable::setColorScheme(const QString& text) {
     disableUnavailableOptions();
@@ -334,9 +376,19 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-        if (mesh) {
+        if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
+            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
             ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+        }
+        else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
+            Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
+            ::details::setup_scalar_field(graph, drawable(), text.toStdString());
+            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+        }
+        else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
+            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+            ::details::setup_scalar_field(cloud, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
     }
@@ -450,5 +502,6 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     update();
     qApp->processEvents();
 }
+
 
 

@@ -46,6 +46,10 @@ private:
     void disconnectAll();
     void disableUnavailableOptions();
 
+    // model depended stuff
+    std::vector<std::string> colorSchemes(const easy3d::Model* model);
+    std::vector<std::string> vectorFields(const easy3d::Model* model);
+
 private:
     Ui::WidgetLinesDrawable*  ui;
 };

@@ -232,7 +232,7 @@ namespace easy3d {
             program->bind_texture("textureID", texture()->id(), 0);
             gl_draw(with_storage_buffer);
             program->release_texture();
-            
+
             program->release();
         }
         else {  // use geometry shader to be able to control the line width

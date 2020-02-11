@@ -73,20 +73,49 @@ namespace easy3d {
                 if (normals)
                     drawable->update_normal_buffer(normals.vector());
             } else {
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-                if (normals)
-                    drawable->update_normal_buffer(normals.vector());
+                auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
+                if (texcoord) {
+                    update_buffer(model, drawable, texcoord);
+                    return;
+                }
+
                 auto colors = model->get_vertex_property<vec3>("v:color");
                 if (colors) {
-                    drawable->update_color_buffer(colors.vector());
-                    drawable->set_per_vertex_color(true);
-                } else {
-                    drawable->set_default_color(setting::point_cloud_points_color);
-                    drawable->set_per_vertex_color(false);
+                    update_buffer(model, drawable, colors);
+                    return;
                 }
+
+                // if reached here, render with uniform color
+                auto points = model->get_vertex_property<vec3>("v:point");
+                drawable->update_vertex_buffer(points.vector());
+                drawable->set_default_color(setting::point_cloud_points_color);
+                drawable->set_per_vertex_color(false);
             }
+        }
+
+
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+            auto normals = model->get_vertex_property<vec3>("v:normal");
+            if (normals)
+                drawable->update_normal_buffer(normals.vector());
+
+            drawable->update_texcoord_buffer(prop.vector());
+            drawable->set_per_vertex_color(true);
+            drawable->set_use_texture(true);
+        }
+
+
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+            auto normals = model->get_vertex_property<vec3>("v:normal");
+            if (normals)
+                drawable->update_normal_buffer(normals.vector());
+
+            drawable->update_color_buffer(prop.vector());
+            drawable->set_per_vertex_color(true);
         }
 
 
@@ -682,10 +711,45 @@ namespace easy3d {
 
 
         void update_buffer(Graph *model, PointsDrawable *drawable) {
+            auto texcoords = model->get_vertex_property<vec2>("v:texcoord");
+            if (texcoords) {
+                update_buffer(model, drawable, texcoords);
+                return;
+            }
+
+            auto colors = model->get_vertex_property<vec3>("v:color");
+            if (colors) {
+                update_buffer(model, drawable, colors);
+                return;
+            }
+
+            // if reached here, render with uniform color
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->set_per_vertex_color(false);
             drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+            drawable->set_point_size(15.0f);
+            drawable->set_impostor_type(PointsDrawable::SPHERE);
+        }
+
+
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_color_buffer(prop.vector());
+            drawable->set_per_vertex_color(true);
+            drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+            drawable->set_point_size(15.0f);
+            drawable->set_impostor_type(PointsDrawable::SPHERE);
+        }
+
+
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_texcoord_buffer(prop.vector());
+            drawable->set_per_vertex_color(true);
+            drawable->set_use_texture(true);
             drawable->set_point_size(15.0f);
             drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
