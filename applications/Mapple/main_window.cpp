@@ -75,9 +75,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutLinesDrawable->addWidget(widgetLinesDrawable_);
     widgetLinesDrawable_->setEnabled(false);
 
-//    widgetPointsDrawable_ = new WidgetPointsDrawable(this);
-//    ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
-//    widgetPointsDrawable_->setEnabled(false);
+    widgetPointsDrawable_ = new WidgetPointsDrawable(this);
+    ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
+    widgetPointsDrawable_->setEnabled(false);
 
     ui->verticalLayoutLighting->addWidget(new WidgetLighting(this));
 
@@ -319,7 +319,7 @@ void MainWindow::onCurrentModelChanged() {
 
     widgetTrianglesDrawable_->updatePanel();
     widgetLinesDrawable_->updatePanel();
-//    widgetPointsDrawable_->updatePanel();
+    widgetPointsDrawable_->updatePanel();
 }
 
 

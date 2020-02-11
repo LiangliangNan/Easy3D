@@ -6,7 +6,7 @@ uniform vec3    wCamPos;
 layout(std140) uniform Material {
     vec3    ambient;// in [0, 1], r==g==b;
     vec3    specular;// in [0, 1], r==g==b;
-    float    shininess;
+    float   shininess;
 };
 
 uniform bool    lighting = true;

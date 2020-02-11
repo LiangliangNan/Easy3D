@@ -1,6 +1,7 @@
 #ifndef WIDGET_DRAWABLE_POINTS_H
 #define WIDGET_DRAWABLE_POINTS_H
 
+#include <unordered_map>
 #include <QWidget>
 
 #include "widgets/widget_drawable.h"
@@ -28,15 +29,25 @@ public:
     easy3d::PointsDrawable* drawable();
 
 public slots:
+    void setDrawableVisible(bool);
     void setActiveDrawable(const QString &);
-    void setLighting(int);
+    void setPointSize(double);
+    void setImposterStyle(const QString &);
+    void setColorScheme(const QString &);
     void setDefaultColor();
     void setHighlight(bool);
-    void setDistinctBackColor(bool) {}
-    void setBackColor() {}
+    void setHighlightMin(int);
+    void setHighlightMax(int);
+
+    void setScalarFieldStyle(const QString &);
 
 private:
-    Ui::WidgetPointsDrawable*   ui;
+    void connectAll();
+    void disconnectAll();
+    void disableUnavailableOptions();
+
+private:
+    Ui::WidgetPointsDrawable*  ui;
 };
 
 #endif // WIDGET_DRAWABLE_POINTS_H

@@ -28,10 +28,6 @@ in Data{
 	vec3 normal;
 } DataIn;
 
-layout(std430, binding = 1) buffer selection_t {
-	uint data[];
-} selection;
-
 
 out vec4 outputF;	// Ouput data
 

@@ -558,6 +558,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 drawable = currentModel()->add_points_drawable("vertices");
                 makeCurrent();
                 renderer::update_buffer(currentModel(), drawable);
+                drawable->set_impostor_type(PointsDrawable::SPHERE);
                 doneCurrent();
                 currentModelChanged();
             } else {

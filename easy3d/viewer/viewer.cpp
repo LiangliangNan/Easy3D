@@ -869,6 +869,8 @@ namespace easy3d {
 				if (!drawable) {
 					drawable = current_model()->add_points_drawable("vertices");
 					renderer::update_buffer(current_model(), drawable);
+                    drawable->set_impostor_type(PointsDrawable::SPHERE);
+                    drawable->set_point_size(setting::surface_mesh_vertices_point_size);
 				}
 				else
 					drawable->set_visible(!drawable->is_visible());

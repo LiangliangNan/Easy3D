@@ -85,6 +85,8 @@ set(${PROJECT_NAME}_SHADERS
         # points
         ../../resources/shaders/points/points_plain_color.vert
         ../../resources/shaders/points/points_plain_color.frag
+        ../../resources/shaders/points/points_plain_texture.vert
+        ../../resources/shaders/points/points_plain_texture.frag
         ../../resources/shaders/points/points_spheres_geometry_color.vert
         ../../resources/shaders/points/points_spheres_geometry_color.geom
         ../../resources/shaders/points/points_spheres_geometry_color.frag
