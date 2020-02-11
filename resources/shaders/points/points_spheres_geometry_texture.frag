@@ -1,28 +1,15 @@
-#version 430 core
+#version 330 core
 // please send comments or report bug to: liangliang.nan@gmail.com
 
-layout(std140) uniform Matrices {
-	mat4 MV;
-	mat4 invMV;
-	mat4 PROJ;
-	mat4 MVP;
-	mat4 MANIP;
-	mat3 NORMAL;
-	mat4 SHADOW;
-	bool clippingPlaneEnabled;
-	bool crossSectionEnabled;
-	vec4 clippingPlane0;
-	vec4 clippingPlane1;
-};
-
+uniform mat4    PROJ;
 uniform bool	perspective;
+
+uniform vec3    eLightPos;
+uniform bool    lighting = true;
 
 uniform sampler2D	textureID;
 
-layout(std140) uniform Lighting {
-	vec3	wLightPos;
-	vec3	eLightPos;
-	vec3	wCamPos;
+layout(std140) uniform Material {
 	vec3	ambient;		// in [0, 1], r==g==b;
 	vec3	specular;		// in [0, 1], r==g==b;
 	float	shininess;
@@ -30,12 +17,9 @@ layout(std140) uniform Lighting {
 
 uniform float	sphere_radius;
 
-uniform int	 hightlight_id;
-uniform bool selected;
-
-layout(std430, binding = 1) buffer selection_t {
-	uint data[];
-} selection;
+uniform bool highlight;
+uniform int  hightlight_id_min;
+uniform int  hightlight_id_max;
 
 in Data{
 	flat	vec2	texcoord;
@@ -45,7 +29,6 @@ in Data{
 } DataIn;
 
 out vec4 outputF;
-
 
 
 void main() 
@@ -92,18 +75,22 @@ void main()
 		}
 
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
-
-		//uint addr = gl_PrimitiveID / 32;
-		//uint offs = gl_PrimitiveID % 32;
-		uint addr = gl_PrimitiveID >> 5;
-		uint offs = gl_PrimitiveID & 31;
-		if ((selection.data[addr] & (1 << offs)) != 0)
+		if (highlight) {
+			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
 			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
-		else if (gl_PrimitiveID == hightlight_id)
-			color = vec3(1.0, 0.0, 0.0);
+		}
 
-		if (selected)
-			color = vec3(1.0, 0.0, 0.0);
+//		//uint addr = gl_PrimitiveID / 32;
+//		//uint offs = gl_PrimitiveID % 32;
+//		uint addr = gl_PrimitiveID >> 5;
+//		uint offs = gl_PrimitiveID & 31;
+//		if ((selection.data[addr] & (1 << offs)) != 0)
+//			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+//		else if (gl_PrimitiveID == hightlight_id)
+//			color = vec3(1.0, 0.0, 0.0);
+//
+//		if (selected)
+//			color = vec3(1.0, 0.0, 0.0);
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
@@ -139,18 +126,22 @@ void main()
 		}
 
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
-
-		//uint addr = gl_PrimitiveID / 32;
-		//uint offs = gl_PrimitiveID % 32;
-		uint addr = gl_PrimitiveID >> 5;
-		uint offs = gl_PrimitiveID & 31;
-		if ((selection.data[addr] & (1 << offs)) != 0)
+		if (highlight) {
+			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
 			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
-		else if (gl_PrimitiveID == hightlight_id)
-			color = vec3(1.0, 0.0, 0.0);
+		}
 
-		if (selected)
-			color = vec3(1.0, 0.0, 0.0);
+//		//uint addr = gl_PrimitiveID / 32;
+//		//uint offs = gl_PrimitiveID % 32;
+//		uint addr = gl_PrimitiveID >> 5;
+//		uint offs = gl_PrimitiveID & 31;
+//		if ((selection.data[addr] & (1 << offs)) != 0)
+//			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+//		else if (gl_PrimitiveID == hightlight_id)
+//			color = vec3(1.0, 0.0, 0.0);
+//
+//		if (selected)
+//			color = vec3(1.0, 0.0, 0.0);
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}

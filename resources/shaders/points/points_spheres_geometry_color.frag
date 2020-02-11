@@ -13,13 +13,11 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
-
-
 uniform float	sphere_radius;
 
 in Data{
 	flat    vec4    sphere_color;
-	smooth    vec2    tex;
+	smooth  vec2    tex;
 	flat    vec4    position;
 //flat	float	sphere_radius;
 } DataIn;

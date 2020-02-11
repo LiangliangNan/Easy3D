@@ -16,7 +16,7 @@ in vec4    sphere_color_in[];
 
 out Data {
     flat    vec4    sphere_color;
-    smooth    vec2    tex;
+    smooth  vec2    tex;
     flat    vec4    position;
 //flat	float	sphere_radius;
 } DataOut;

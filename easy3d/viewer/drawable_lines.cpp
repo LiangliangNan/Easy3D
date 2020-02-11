@@ -300,6 +300,8 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
         gl_draw(with_storage_buffer);
+        program->release_texture();
+
         program->release();
     }
 
@@ -344,6 +346,8 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
         gl_draw(with_storage_buffer);
+        program->release_texture();
+
         program->release();
     }
 
