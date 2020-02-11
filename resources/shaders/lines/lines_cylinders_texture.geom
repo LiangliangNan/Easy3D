@@ -74,6 +74,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = base_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 2
@@ -85,6 +90,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = base_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 3
@@ -96,6 +106,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = top_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 4
@@ -107,6 +122,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = top_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 5
@@ -118,6 +138,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = top_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	// Vertex 6
@@ -129,6 +154,11 @@ void main()
 //			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 //	}
 	gOutTexcoord = top_texcoord;
+	// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+	// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+	// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+	// of gl_PrimitiveID in the fragment shader is undefined.
+	gl_PrimitiveID = gl_PrimitiveIDIn;
 	EmitVertex();
 
 	EndPrimitive();

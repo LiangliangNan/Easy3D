@@ -49,23 +49,43 @@ void main()
 
     VertexOut.point = center.xyz;
     VertexOut.normal = normal;
+    VertexOut.color = VertexIn[0].color;
 
     // transform the four points. Note the order of output
     gl_Position = MVP * b;
     VertexOut.texcoord = vec2(-1.0, 1.0);
-    VertexOut.color = VertexIn[0].color;
+    // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+    // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+    // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+    // of gl_PrimitiveID in the fragment shader is undefined.
+    gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
     gl_Position = MVP * a;
     VertexOut.texcoord = vec2(-1.0, -1.0);
+    // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+    // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+    // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+    // of gl_PrimitiveID in the fragment shader is undefined.
+    gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
     gl_Position = MVP * c;
     VertexOut.texcoord = vec2(1.0, 1.0);
+    // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+    // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+    // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+    // of gl_PrimitiveID in the fragment shader is undefined.
+    gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
     gl_Position = MVP * d;
     VertexOut.texcoord = vec2(1.0, -1.0);
+    // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
+    // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
+    // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
+    // of gl_PrimitiveID in the fragment shader is undefined.
+    gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
     EndPrimitive();

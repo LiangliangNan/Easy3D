@@ -1,41 +1,59 @@
-#version 150
+#version 330   // for geometry shader to work
 // please send comments or report bug to: liangliang.nan@gmail.com
 
-// It uses geometry shader for vertex generation.
-// The code does not cover round caps.
+// we accept points and render quads
+layout (points) in;
+layout (triangle_strip, max_vertices=4) out;
 
-//#extension GL_EXT_geometry_shader4 : enable
-
-layout(lines) in;
-layout(triangle_strip, max_vertices = 4) out;
-
-
-uniform mat4    PROJ;
-uniform bool    perspective;
+uniform mat4    MVP;
 uniform float   radius;
 
-in  vec2 vOutTexcoord[];
+in VertexData {
+    vec2  texcoord;
+    vec3  normal;
+} VertexIn[];
 
-out vec3 gPoint;
-out vec2 gOutTexcoord;
+out FragmentData {
+    vec2 texcoord;  // the point's
+    vec2 tex;       // the local
+    vec3 point;
+    vec3 normal;
+} VertexOut;
 
 
 void main()
 {
-    vec3  base = gl_in[0].gl_Position.xyz;// in camera space
-    vec3  top = gl_in[1].gl_Position.xyz;// in camera space
-    vec3  axes = top - base;
-    vec3  view_dir = vec3(0, 0, 1);// this is view direction for orthographic mode in camera space
-    if (perspective)
-        view_dir = normalize(vec3(0) - 0.5*(base + top));// camera pos is (0, 0, 0) in camera space
+    vec4 center = gl_in[0].gl_Position;
+    vec3 normal = VertexIn[0].normal;
 
-    vec3 offset = cross(view_dir, axes);
-    offset = radius * normalize(offset) * 0.5;
+    // create tangent space. Helper vectors dependent on major orientation of normal
+    vec3 u, v;
+    if (abs(normal.y) > abs(normal.x)) {
+        v = cross(normal, vec3(1.0, 0.0, 0.0));
+        u = cross(normal, v);
+    }
+    else {
+        v = cross(vec3(0.0, 1.0, 0.0), normal);
+        u = cross(normal, v);
+    }
 
-    // Vertex 1
-    gPoint = (base - offset);
-    gl_Position = PROJ  * vec4(gPoint, 1.0);
-    gOutTexcoord = vOutTexcoord[0];
+    // Scale the splat
+    u *= radius;
+    v *= radius;
+
+    // Calculate the four corner vertices of the quad
+    vec4 a = center + vec4(-u-v, 0.0);
+    vec4 b = center + vec4(-u+v, 0.0);
+    vec4 c = center + vec4(+u+v, 0.0);
+    vec4 d = center + vec4(+u-v, 0.0);
+
+    VertexOut.point = center.xyz;
+    VertexOut.normal = normal;
+    VertexOut.texcoord = VertexIn[0].texcoord;
+
+    // transform the four points. Note the order of output
+    gl_Position = MVP * b;
+    VertexOut.tex = vec2(-1.0, 1.0);
     // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
     // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
     // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -43,10 +61,8 @@ void main()
     gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
-    // Vertex 2
-    gPoint = (top - offset);
-    gl_Position = PROJ  * vec4(gPoint, 1.0);
-    gOutTexcoord = vOutTexcoord[1];
+    gl_Position = MVP * a;
+    VertexOut.tex = vec2(-1.0, -1.0);
     // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
     // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
     // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -54,10 +70,8 @@ void main()
     gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
-    // Vertex 3
-    gPoint = (base + offset);
-    gl_Position = PROJ  * vec4(gPoint, 1.0);
-    gOutTexcoord = vOutTexcoord[0];
+    gl_Position = MVP * c;
+    VertexOut.tex = vec2(1.0, 1.0);
     // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
     // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
     // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -65,10 +79,8 @@ void main()
     gl_PrimitiveID = gl_PrimitiveIDIn;
     EmitVertex();
 
-    // Vertex 4
-    gPoint = (top + offset);
-    gl_Position = PROJ  * vec4(gPoint, 1.0);
-    gOutTexcoord = vOutTexcoord[1];
+    gl_Position = MVP * d;
+    VertexOut.tex = vec2(1.0, -1.0);
     // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
     // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
     // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value

@@ -90,11 +90,17 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/points/points_spheres_geometry_color.vert
         ../../resources/shaders/points/points_spheres_geometry_color.geom
         ../../resources/shaders/points/points_spheres_geometry_color.frag
+        ../../resources/shaders/points/points_spheres_geometry_texture.vert
+        ../../resources/shaders/points/points_spheres_geometry_texture.geom
+        ../../resources/shaders/points/points_spheres_geometry_texture.frag
         ../../resources/shaders/points/points_spheres_sprite_color.vert
         ../../resources/shaders/points/points_spheres_sprite_color.frag
         ../../resources/shaders/points/points_surfel_color.vert
         ../../resources/shaders/points/points_surfel_color.geom
         ../../resources/shaders/points/points_surfel_color.frag
+        ../../resources/shaders/points/points_surfel_texture.vert
+        ../../resources/shaders/points/points_surfel_texture.geom
+        ../../resources/shaders/points/points_surfel_texture.frag
         # lines
         ../../resources/shaders/lines/lines_plain_color.vert
         ../../resources/shaders/lines/lines_plain_color.frag
