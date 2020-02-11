@@ -11,7 +11,7 @@ layout(triangle_strip, max_vertices = 5) out;
 
 uniform mat4    PROJ;
 uniform bool    perspective;
-uniform float    radius;
+uniform float   radius;
 
 in  vec4 vOutColor[];
 

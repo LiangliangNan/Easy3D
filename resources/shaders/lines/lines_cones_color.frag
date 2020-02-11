@@ -7,7 +7,6 @@
 
 uniform mat4    PROJ;
 uniform bool	perspective;
-
 uniform float	radius;
 
 uniform vec3    eLightPos;

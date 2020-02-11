@@ -268,6 +268,37 @@ namespace easy3d {
             return;
         }
 
+        ShaderProgram* program = ShaderManager::get_program("lines/lines_cones_texture");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+            program = ShaderManager::create_program_from_files("lines/lines_cones_texture", attributes, std::vector<std::string>(), true);
+        }
+        if (!program)
+            return;
+
+        program->bind();
+        program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
+                ->set_uniform("MV", camera->modelViewMatrix())
+                ->set_uniform("PROJ", camera->projectionMatrix());
+
+        float ratio = camera->pixelGLRatio(camera->pivotPoint());
+        program->set_uniform("radius", line_width_ * ratio)
+                ->set_uniform("eLightPos", setting::light_position)
+                ->set_uniform("lighting", lighting());
+
+        program->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        program->bind_texture("textureID", texture()->id(), 0);
+//      program->set_uniform("highlight", highlight())
+//                ->set_uniform("hightlight_id_min", highlight_range_.first)
+//                ->set_uniform("hightlight_id_max", highlight_range_.second);
+
+        gl_draw(with_storage_buffer);
+        program->release();
     }
 
 
