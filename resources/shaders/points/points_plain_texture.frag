@@ -1,7 +1,8 @@
-#version 430
+#version 150
 // please send comments or report bug to: liangliang.nan@gmail.com
 
-uniform sampler2D	textureID;	
+uniform sampler2D	textureID;
+
 uniform bool lighting;	// true if lighting is on
 uniform bool two_sides_lighting;
 
@@ -16,8 +17,11 @@ layout(std140) uniform Material {
 };
 
 
-uniform int  hightlight_id;
-uniform bool selected;
+uniform bool highlight;
+uniform int  hightlight_id_min;
+uniform int  hightlight_id_max;
+
+//uniform bool selected;
 
 uniform bool distinct_back_color;
 uniform vec3 back_color;
@@ -35,6 +39,11 @@ out vec4 outputF;	// Ouput data
 void main() 
 {
 	vec3 color = texture(textureID, DataIn.texcoord).rgb;
+
+        if (highlight) {
+            if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+                color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+        }
 
 	if (lighting) {
 		vec3 normal = normalize(DataIn.normal);
@@ -67,18 +76,18 @@ void main()
 		color = color * df + specular * sf + ambient;
 	}
 
-	//uint addr = gl_PrimitiveID / 32;
-	//uint offs = gl_PrimitiveID % 32;
-	uint addr = gl_PrimitiveID >> 5;
-	uint offs = gl_PrimitiveID & 31;
-	if ((selection.data[addr] & (1 << offs)) != 0)
-		color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
-	else if (gl_PrimitiveID == hightlight_id)
-		color = vec3(1.0, 0.0, 0.0);
+//	//uint addr = gl_PrimitiveID / 32;
+//	//uint offs = gl_PrimitiveID % 32;
+//	uint addr = gl_PrimitiveID >> 5;
+//	uint offs = gl_PrimitiveID & 31;
+//	if ((selection.data[addr] & (1 << offs)) != 0)
+//		color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+//	else if (gl_PrimitiveID == hightlight_id)
+//		color = vec3(1.0, 0.0, 0.0);
 
-	if (selected) {
-		color = vec3(1.0, 0.0, 0.0);
-	}
+//	if (selected) {
+//		color = vec3(1.0, 0.0, 0.0);
+//	}
 
 	outputF = vec4(color, 1.0);
 }

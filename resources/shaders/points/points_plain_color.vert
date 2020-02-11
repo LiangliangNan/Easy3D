@@ -21,9 +21,9 @@ void main(void) {
     DataOut.normal = vtx_normal;
 
     if (per_vertex_color)
-    DataOut.color = vec4(vtx_color, 1.0);
+        DataOut.color = vec4(vtx_color, 1.0);
     else
-    DataOut.color = default_color;
+        DataOut.color = default_color;
 
     gl_Position = MVP * vec4(vtx_position, 1.0);
 }

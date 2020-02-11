@@ -26,6 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
+#include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>
@@ -214,7 +215,46 @@ namespace easy3d {
             LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (this is the first record)";
             return;
         }
+        
+        ShaderProgram *program = ShaderManager::get_program("points/points_plain_texture");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+            program = ShaderManager::create_program_from_files("points/points_plain_texture", attributes);
+        }
 
+        if (!program)
+            return;
+
+        const mat4 &MVP = camera->modelViewProjectionMatrix();
+        // camera position is defined in world coordinate system.
+        const vec3 &wCamPos = camera->position();
+        // it can also be computed as follows:
+        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
+        const mat4 &MV = camera->modelViewMatrix();
+        const vec4 &wLightPos = inverse(MV) * setting::light_position;
+
+        glPointSize(point_size());
+
+        program->bind();
+        program->set_uniform("MVP", MVP)
+                ->set_uniform("lighting", normal_buffer() && lighting())
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
+                ->set_block_uniform("Material", "shininess", &material().shininess)
+                ->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range_.first)
+                ->set_uniform("hightlight_id_max", highlight_range_.second)
+                ->bind_texture("textureID", texture()->id(), 0);
+
+        gl_draw(with_storage_buffer);
+        program->release();
     }
 
 
