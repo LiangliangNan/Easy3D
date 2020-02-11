@@ -70,7 +70,7 @@
       </widget>
      </item>
      <item row="1" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <layout class="QHBoxLayout" name="horizontalLayoutVisible">
        <property name="spacing">
         <number>-1</number>
        </property>
@@ -88,7 +88,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_4">
+        <spacer name="spacerVisible">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -105,12 +105,12 @@
      <item row="2" column="0">
       <widget class="QLabel" name="labelPhongShading">
        <property name="text">
-        <string>Phong</string>
+        <string>Phong Shading</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_18">
+      <layout class="QHBoxLayout" name="horizontalLayoutPhone">
        <property name="spacing">
         <number>-1</number>
        </property>
@@ -131,7 +131,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_3">
+        <spacer name="spacerPhong">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -165,12 +165,12 @@
        </property>
        <item>
         <property name="text">
-         <string>front and back</string>
+         <string>front only</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>front only</string>
+         <string>front and back</string>
         </property>
        </item>
        <item>
@@ -205,9 +205,9 @@
       </widget>
      </item>
      <item row="5" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelDefaultColor">
        <item>
-        <spacer name="horizontalSpacer_9">
+        <spacer name="horizontalSpaceLabelDefaultColor">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -229,26 +229,10 @@
       </layout>
      </item>
      <item row="5" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QHBoxLayout" name="horizontalLayoutDefaultColor">
        <property name="spacing">
         <number>0</number>
        </property>
-       <item>
-        <spacer name="spacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Minimum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item>
         <widget class="QToolButton" name="toolButtonDefaultColor">
          <property name="minimumSize">
@@ -312,7 +296,7 @@
           </size>
          </property>
          <property name="text">
-          <string>back </string>
+          <string>high back </string>
          </property>
         </widget>
        </item>
@@ -336,7 +320,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_6">
+        <spacer name="spacerBackColor">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -388,7 +372,7 @@
      <item row="6" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <spacer name="horizontalSpacer_7">
+        <spacer name="horizontalSpacerTexture">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -422,7 +406,7 @@
       </layout>
      </item>
      <item row="6" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_17">
+      <layout class="QHBoxLayout" name="horizontalLayoutTexture">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -485,9 +469,9 @@
       </layout>
      </item>
      <item row="7" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_9">
+      <layout class="QHBoxLayout" name="horizontalLayoutLayoutTextureRepeat">
        <item>
-        <spacer name="horizontalSpacer_8">
+        <spacer name="horizontalSpacerTextureRepeat">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -521,7 +505,7 @@
       </layout>
      </item>
      <item row="7" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <layout class="QHBoxLayout" name="horizontalLayoutTextureRepeat">
        <item>
         <widget class="QSpinBox" name="spinBoxTextureRepeat">
          <property name="sizePolicy">
@@ -584,9 +568,9 @@
       </layout>
      </item>
      <item row="8" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_10">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelScalarStyle">
        <item>
-        <spacer name="horizontalSpacer_10">
+        <spacer name="horizontalSpacerScalarStyle">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -630,9 +614,9 @@
       </widget>
      </item>
      <item row="9" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_13">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelAutoRange">
        <item>
-        <spacer name="horizontalSpacer_11">
+        <spacer name="horizontalSpacerLabelAutoRange">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -734,9 +718,9 @@
       </widget>
      </item>
      <item row="11" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelVectorFieldColor">
        <item>
-        <spacer name="horizontalSpacer_12">
+        <spacer name="horizontalSpacerLabelVectorFieldColor">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -758,7 +742,7 @@
       </layout>
      </item>
      <item row="11" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <layout class="QHBoxLayout" name="horizontalLayoutVectorFieldColor">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -795,7 +779,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_5">
+        <spacer name="spacerVectorFieldColor">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -810,9 +794,9 @@
       </layout>
      </item>
      <item row="12" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_12">
+      <layout class="QHBoxLayout" name="horizontalLayoutThickness">
        <item>
-        <spacer name="horizontalSpacer_13">
+        <spacer name="horizontalSpacerThickness">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -825,21 +809,21 @@
         </spacer>
        </item>
        <item alignment="Qt::AlignRight">
-        <widget class="QLabel" name="labelVectorFieldThickness">
+        <widget class="QLabel" name="labelVectorFieldWidth">
          <property name="text">
-          <string>Thickness</string>
+          <string>Width</string>
          </property>
         </widget>
        </item>
       </layout>
      </item>
      <item row="12" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_11">
+      <layout class="QHBoxLayout" name="horizontalLayoutVectorFieldWidth">
        <property name="spacing">
         <number>0</number>
        </property>
        <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxVectorFieldThickness">
+        <widget class="QDoubleSpinBox" name="doubleSpinBoxVectorFieldWidth">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -855,7 +839,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_8">
+        <spacer name="spacerWidth">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -873,9 +857,9 @@
       </layout>
      </item>
      <item row="13" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_16">
+      <layout class="QHBoxLayout" name="horizontalLayoutScale">
        <item>
-        <spacer name="horizontalSpacer_14">
+        <spacer name="horizontalSpacerVectorFieldLabelScale">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -888,7 +872,7 @@
         </spacer>
        </item>
        <item alignment="Qt::AlignRight">
-        <widget class="QLabel" name="labelVectorFieldLength">
+        <widget class="QLabel" name="labelVectorFieldScale">
          <property name="text">
           <string>Length</string>
          </property>
@@ -897,12 +881,12 @@
       </layout>
      </item>
      <item row="13" column="1" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_15">
+      <layout class="QHBoxLayout" name="horizontalLayoutVectorFieldLength">
        <property name="spacing">
         <number>0</number>
        </property>
        <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxVectorFieldLength">
+        <widget class="QDoubleSpinBox" name="doubleSpinBoxVectorFieldScale">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -918,7 +902,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="spacer_9">
+        <spacer name="spacerVectorFieldLength">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -950,7 +934,7 @@
       </widget>
      </item>
      <item row="14" column="2">
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <layout class="QHBoxLayout" name="horizontalLayoutHighlight">
        <item>
         <widget class="QSpinBox" name="spinBoxHighlightMin">
          <property name="sizePolicy">
@@ -1071,18 +1055,18 @@
   <tabstop>toolButtonTextureFile</tabstop>
   <tabstop>spinBoxTextureRepeat</tabstop>
   <tabstop>spinBoxTextureFractionalRepeat</tabstop>
-  <tabstop>checkBoxHighlight</tabstop>
-  <tabstop>spinBoxHighlightMin</tabstop>
-  <tabstop>spinBoxHighlightMax</tabstop>
-  <tabstop>horizontalSliderOpacity</tabstop>
   <tabstop>comboBoxScalarFieldStyle</tabstop>
   <tabstop>checkBoxScalarFieldAutoRange</tabstop>
   <tabstop>doubleSpinBoxScalarFieldAutoRangeMin</tabstop>
   <tabstop>doubleSpinBoxScalarFieldAutoRangeMax</tabstop>
   <tabstop>comboBoxVectorField</tabstop>
   <tabstop>toolButtonVectorFieldColor</tabstop>
-  <tabstop>doubleSpinBoxVectorFieldThickness</tabstop>
-  <tabstop>doubleSpinBoxVectorFieldLength</tabstop>
+  <tabstop>doubleSpinBoxVectorFieldWidth</tabstop>
+  <tabstop>doubleSpinBoxVectorFieldScale</tabstop>
+  <tabstop>checkBoxHighlight</tabstop>
+  <tabstop>spinBoxHighlightMin</tabstop>
+  <tabstop>spinBoxHighlightMax</tabstop>
+  <tabstop>horizontalSliderOpacity</tabstop>
  </tabstops>
  <resources/>
  <connections/>

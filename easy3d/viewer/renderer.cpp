@@ -25,8 +25,6 @@
 
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/core/random.h>
@@ -530,6 +528,37 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh *model, LinesDrawable *drawable) {
+            // Priority:
+            //  1. per-edge texture coordinates
+            //  2. per-vertex texture coordinates
+            //  3: per-edge color
+            //  4: per-vertex color
+            //  5: uniform color
+            auto edge_texcoords = model->get_edge_property<vec2>("e:texcoord");
+            if (edge_texcoords) {
+                update_buffer(model, drawable, edge_texcoords);
+                return;
+            }
+
+            auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+            if (vertex_texcoords) {
+                update_buffer(model, drawable, vertex_texcoords);
+                return;
+            }
+
+            auto edge_colors = model->get_edge_property<vec3>("e:color");
+            if (edge_colors) {
+                update_buffer(model, drawable, edge_colors);
+                return;
+            }
+
+            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
+            if (vertex_colors) {
+                update_buffer(model, drawable, vertex_colors);
+                return;
+            }
+
+            // if reached here, we choose a uniform color.
             std::vector<unsigned int> indices;
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
@@ -540,9 +569,7 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_index_buffer(indices);
-            drawable->set_default_color(setting::surface_mesh_edges_color);
             drawable->set_per_vertex_color(false);
-            drawable->set_line_width(setting::surface_mesh_edges_line_width);
         }
 
 

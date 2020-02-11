@@ -63,6 +63,62 @@ namespace easy3d {
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable);
 
         /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the edge property
+         *        "e:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property "e:color" the defined a per-edge color.
+         */
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the scalar field
+         *        defined one edges.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the vertex property
+         *        "v:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property "v:color"
+         */
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the scalar field
+         *        defined one vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the texture coordinates
+         *        defined on vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property (i.e., "v:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a surface mesh using the texture coordinates
+         *        defined on edges.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property (i.e., "e:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop);
+
+        /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh.
          *        A surface mesh may have different color properties (per-face/vertex color) and different texture
          *        coordinates (e.g., per-halfedge/vertex texture coordinates).  
@@ -169,6 +225,7 @@ namespace easy3d {
 
 #include <cassert>
 
+#include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
@@ -177,8 +234,145 @@ namespace easy3d {
 
     namespace renderer {
 
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points, d_colors;
+            d_points.reserve(model->edges_size() * 2);
+            d_colors.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_colors.push_back(prop[e]);
+                d_colors.push_back(prop[e]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_color_buffer(d_colors);
+            drawable->set_use_texture(false);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> fscalar) {
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto e : model->edges()) {
+                float value = prop[e];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                float coord = (prop[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5));
+                d_texcoords.emplace_back(vec2(coord, 0.5));
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points, d_colors;
+            d_points.reserve(model->edges_size() * 2);
+            d_colors.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_colors.push_back(prop[s]);
+                d_colors.push_back(prop[t]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_color_buffer(d_colors);
+            drawable->set_use_texture(false);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
+        template <typename FT>
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto v : model->vertices()) {
+                float value = prop[v];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                float coord_s = (prop[s] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_s, 0.5));
+                float coord_t = (prop[t] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_t, 0.5));
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_texcoords.push_back(prop[s]);
+                d_texcoords.push_back(prop[t]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                SurfaceMesh::Vertex s = model->vertex(e, 0);
+                SurfaceMesh::Vertex t = model->vertex(e, 1);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_texcoords.push_back(prop[e]);
+                d_texcoords.push_back(prop[e]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+        }
+
+        template <typename FT>
+        inline void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> fscalar) {
             assert(model);
             assert(drawable);
             assert(fscalar);

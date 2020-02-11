@@ -38,7 +38,7 @@ namespace easy3d {
         vec4 light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
         bool light_distinct_back_color = false;
         vec4 light_back_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
-        bool light_two_sides = true;
+        bool light_two_sides = false;
 
         // material
         vec4 material_ambient = vec4(0.05f, 0.05f, 0.05f, 1.0f);

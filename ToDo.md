@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Let each drawable remember how the buffer data was created (the property and the update_buffer() function);
     - The Graph data structure is not ready, not tested yet.
     - Module dependence can be improved (core <- viewer; viewer <- core);  The IO examples should not depend on viewer.
     - Rendering performance can still be improved

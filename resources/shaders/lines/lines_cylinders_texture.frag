@@ -4,31 +4,16 @@
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-layout(std140) uniform Matrices {
-	mat4 MV;
-	mat4 invMV;
-	mat4 PROJ;
-	mat4 MVP;
-	mat4 MANIP;
-	mat3 NORMAL;
-	mat4 SHADOW;
-	bool clippingPlaneEnabled;
-	bool crossSectionEnabled;
-	vec4 clippingPlane0;
-	vec4 clippingPlane1;
-};
+uniform mat4    PROJ;
+uniform bool	perspective;
+uniform float	radius;
+
+uniform vec3    eLightPos;
+uniform bool    lighting = true;
 
 uniform sampler2D	textureID;
 
-uniform bool	perspective;
-
-uniform vec3	color;
-uniform float	radius;
-
-layout(std140) uniform Lighting {
-	vec3	wLightPos;
-	vec3	eLightPos;
-	vec3	wCamPos;
+layout(std140) uniform Material {
 	vec3	ambient;		// in [0, 1], r==g==b;
 	vec3	specular;		// in [0, 1], r==g==b;
 	float	shininess;

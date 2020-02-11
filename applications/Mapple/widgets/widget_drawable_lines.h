@@ -1,6 +1,7 @@
 #ifndef WIDGET_DRAWABLE_LINES_H
 #define WIDGET_DRAWABLE_LINES_H
 
+#include <unordered_map>
 #include <QWidget>
 
 #include "widgets/widget_drawable.h"
@@ -28,12 +29,22 @@ public:
     easy3d::LinesDrawable* drawable();
 
 public slots:
+    void setDrawableVisible(bool);
     void setActiveDrawable(const QString &);
-    void setDistinctBackColor(bool) {}
-    void setLighting(int);
-    void setBackColor() {}
+    void setLineWidth(double);
+    void setImposterStyle(const QString &);
+    void setColorScheme(const QString &);
     void setDefaultColor();
     void setHighlight(bool);
+    void setHighlightMin(int);
+    void setHighlightMax(int);
+
+    void setScalarFieldStyle(const QString &);
+
+private:
+    void connectAll();
+    void disconnectAll();
+    void disableUnavailableOptions();
 
 private:
     Ui::WidgetLinesDrawable*  ui;

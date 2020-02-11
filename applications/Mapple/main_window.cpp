@@ -71,10 +71,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutTrianglesDrawable->addWidget(widgetTrianglesDrawable_);
     widgetTrianglesDrawable_->setEnabled(false);
 
-//    widgetLinesDrawable_ = new WidgetLinesDrawable(this);
-//    ui->verticalLayoutLinesDrawable->addWidget(widgetLinesDrawable_);
-//    widgetLinesDrawable_->setEnabled(false);
-//
+    widgetLinesDrawable_ = new WidgetLinesDrawable(this);
+    ui->verticalLayoutLinesDrawable->addWidget(widgetLinesDrawable_);
+    widgetLinesDrawable_->setEnabled(false);
+
 //    widgetPointsDrawable_ = new WidgetPointsDrawable(this);
 //    ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
 //    widgetPointsDrawable_->setEnabled(false);
@@ -245,21 +245,52 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
     if (model) {
         model->set_name(file_name);
 
-#if 0   // add two scalar fields defined on vertices and faces respectively.
-        if (dynamic_cast<SurfaceMesh*>(model)) {
-            auto vscalar = dynamic_cast<SurfaceMesh*>(model)->add_vertex_property<float>("v:height");
-            for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices())
-                vscalar[v] = dynamic_cast<SurfaceMesh*>(model)->position(v).z;
+#if 1
+        // add 3 scalar fields defined on vertices, edges, and faces respectively.
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+        if (mesh) {
+            auto vscalar = mesh->add_vertex_property<float>("v:height");
+            for (auto v : mesh->vertices())
+                vscalar[v] = mesh->position(v).z;
 
-            auto fscalar = dynamic_cast<SurfaceMesh*>(model)->add_face_property<float>("f:height");
-            for (auto f : dynamic_cast<SurfaceMesh*>(model)->faces()) {
+            auto escalar = mesh->add_edge_property<float>("e:height");
+            for (auto e : mesh->edges()) {
+                auto s = mesh->vertex(e, 0);
+                auto t = mesh->vertex(e, 1);
+                escalar[e] = 0.5 * (mesh->position(s).z + mesh->position(t).z);
+            }
+
+            auto fscalar = mesh->add_face_property<float>("f:height");
+            for (auto f : mesh->faces()) {
                 vec3 pos(0,0,0);
                 float count = 0.0f;
-                for (auto v : dynamic_cast<SurfaceMesh*>(model)->vertices(f)) {
-                    pos += dynamic_cast<SurfaceMesh *>(model)->position(v);
+                for (auto v : mesh->vertices(f)) {
+                    pos += mesh->position(v);
                     ++count;
                 }
                 fscalar[f] = pos.z / count;
+            }
+
+            // add a vector field to the faces
+            mesh->update_face_normals();
+            auto fnormals = mesh->get_face_property<vec3>("f:normal");
+
+            // add a vector field to the edges
+            auto enormals = mesh->add_edge_property<vec3>("e:normal");
+            for (auto e : mesh->edges()) {
+                vec3 n(0,0,0);
+                float count(0.0f);
+                auto f = mesh->face(e, 0);
+                if (f.is_valid()) {
+                    n += fnormals[f];
+                    count += 1.0f;
+                }
+                f = mesh->face(e, 1);
+                if (f.is_valid()) {
+                    n += fnormals[f];
+                    count += 1.0f;
+                }
+                enormals[e] = n/count;
             }
         }
 #endif
@@ -287,7 +318,7 @@ void MainWindow::onCurrentModelChanged() {
     }
 
     widgetTrianglesDrawable_->updatePanel();
-//    widgetLinesDrawable_->updatePanel();
+    widgetLinesDrawable_->updatePanel();
 //    widgetPointsDrawable_->updatePanel();
 }
 

@@ -487,12 +487,14 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_point_size(size);
+                currentModelChanged();
             }
             for (auto d : m->lines_drawables()) {
                 float size = d->line_width() - 1.0f;
                 if (size < 1)
                     size = 1;
                 d->set_line_width(size);
+                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
@@ -500,10 +502,12 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
                 d->set_point_size(size);
+                currentModelChanged();
             }
             for (auto d : m->lines_drawables()) {
                 float size = d->line_width() + 1.0f;
                 d->set_line_width(size);
+                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
@@ -540,9 +544,12 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     makeCurrent();
                     renderer::update_buffer(currentModel(), drawable);
                     doneCurrent();
+                    currentModelChanged();
                 }
-            } else
+            } else {
                 drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
@@ -552,8 +559,11 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 makeCurrent();
                 renderer::update_buffer(currentModel(), drawable);
                 doneCurrent();
-            } else
+                currentModelChanged();
+            } else {
                 drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
@@ -576,10 +586,13 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
                     drawable->set_line_width(setting::surface_mesh_borders_line_width);
+                    currentModelChanged();
                 }
             }
-            else
+            else {
                 drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
@@ -602,18 +615,23 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                         drawable->set_per_vertex_color(false);
                         drawable->set_impostor_type(PointsDrawable::SPHERE);
                         drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
+                        currentModelChanged();
                     }
                 }
             }
-            else
+            else {
                 drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
         if (dynamic_cast<SurfaceMesh *>(currentModel())) {
             auto drawable = currentModel()->triangles_drawable("faces");
-            if (drawable)
+            if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
+                currentModelChanged();
+            }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {

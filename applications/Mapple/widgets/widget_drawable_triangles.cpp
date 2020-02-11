@@ -7,7 +7,6 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/renderer.h>
-#include <easy3d/viewer/texture.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -21,25 +20,10 @@
 using namespace easy3d;
 
 
-std::vector<WidgetTrianglesDrawable::ColorMap> WidgetTrianglesDrawable::colormap_files_;
-
 WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
         : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable)
 {
     ui->setupUi(this);
-
-    if (colormap_files_.empty()) {
-        const std::string dir = resource::directory() + "/colormaps/";
-        if (file_system::is_file(dir + "default.png"))  colormap_files_.emplace_back(ColorMap(dir + "default.png", "  default"));
-        if (file_system::is_file(dir + "rainbow.png"))  colormap_files_.emplace_back(ColorMap(dir + "rainbow.png", "  rainbow"));
-        if (file_system::is_file(dir + "blue_red.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_red.png", "  blue_red"));
-        if (file_system::is_file(dir + "blue_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_white.png", "  blue_white"));
-        if (file_system::is_file(dir + "blue_yellow.png"))  colormap_files_.emplace_back(ColorMap(dir + "blue_yellow.png", "  blue_yellow"));
-        if (file_system::is_file(dir + "black_white.png"))  colormap_files_.emplace_back(ColorMap(dir + "black_white.png", "  black_white"));
-        if (file_system::is_file(dir + "ceil.png"))  colormap_files_.emplace_back(ColorMap(dir + "ceil.png", "  ceil"));
-        if (file_system::is_file(dir + "random.png"))  colormap_files_.emplace_back(ColorMap(dir + "random.png", "  random"));
-    }
-
 
     if (colormap_files_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
@@ -165,6 +149,7 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     // visible
     ui->checkBoxVisible->setChecked(drawable()->is_visible());
+
     // phong shading
     ui->checkBoxPhongShading->setChecked(drawable()->smooth_shading());
 
@@ -277,7 +262,7 @@ void WidgetTrianglesDrawable::updatePanel() {
         }
     }
 
-    disableUnnecessaryWidgets();
+    disableUnavailableOptions();
 
     connectAll();
 }
@@ -285,15 +270,15 @@ void WidgetTrianglesDrawable::updatePanel() {
 
 TrianglesDrawable *WidgetTrianglesDrawable::drawable() {
     auto model = viewer_->currentModel();
-    auto pos = active_triangles_drawable_.find(model);
-    if (pos != active_triangles_drawable_.end())
+    auto pos = active_drawable_.find(model);
+    if (pos != active_drawable_.end())
         return model->triangles_drawable(pos->second);
     else {
         const auto& drawables = model->triangles_drawables();
         if (drawables.empty())
             return nullptr;
         else {
-            active_triangles_drawable_[model] = drawables[0]->name();
+            active_drawable_[model] = drawables[0]->name();
             return drawables[0];
         }
     }
@@ -304,20 +289,20 @@ void WidgetTrianglesDrawable::setActiveDrawable(const QString &text) {
     auto model = viewer_->currentModel();
     const std::string &name = text.toStdString();
 
-    if (active_triangles_drawable_.find(model) != active_triangles_drawable_.end()) {
-        if (active_triangles_drawable_[model] == name)
+    if (active_drawable_.find(model) != active_drawable_.end()) {
+        if (active_drawable_[model] == name)
             return; // already active
     }
 
     if (model->triangles_drawable(name)) {
-        active_triangles_drawable_[model] = name;
+        active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
         const auto &drawables = model->triangles_drawables();
         if (drawables.empty())
             LOG(ERROR) << "no triangles drawable defined on model: " << model->name();
         else
-            active_triangles_drawable_[model] = drawables[0]->name();
+            active_drawable_[model] = drawables[0]->name();
     }
 
     updatePanel();
@@ -329,7 +314,7 @@ void WidgetTrianglesDrawable::setDrawableVisible(bool b) {
         drawable()->set_visible(b);
         viewer_->update();
     }
-    disableUnnecessaryWidgets();
+    disableUnavailableOptions();
 }
 
 
@@ -360,7 +345,7 @@ void WidgetTrianglesDrawable::setLighting(const QString & text) {
     }
 
     viewer_->update();
-    disableUnnecessaryWidgets();
+    disableUnavailableOptions();
 }
 
 
@@ -421,7 +406,7 @@ namespace details {
 }
 
 void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
-    disableUnnecessaryWidgets();
+    disableUnavailableOptions();
 
     bool per_vertex_color = text != "uniform color";
     if (drawable()->per_vertex_color() != per_vertex_color) {
@@ -433,7 +418,7 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
         if (mesh) {
             ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture());
+            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
     }
 
@@ -481,7 +466,7 @@ void WidgetTrianglesDrawable::setDistinctBackColor(bool b) {
     if (drawable()->distinct_back_color() != b) {
         drawable()->set_distinct_back_color(b);
         viewer_->update();
-        disableUnnecessaryWidgets();
+        disableUnavailableOptions();
     }
 }
 
@@ -514,7 +499,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
-    disableUnnecessaryWidgets();
+    disableUnavailableOptions();
 }
 
 
@@ -538,7 +523,7 @@ void WidgetTrianglesDrawable::setHighlight(bool b) {
     if (drawable()->highlight() != b) {
         drawable()->set_highlight(b);
         viewer_->update();
-        disableUnnecessaryWidgets();
+        disableUnavailableOptions();
     }
 }
 
@@ -572,14 +557,14 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& text) {
     if (!mesh)
         return;
 
-    auto tex = createColormapTexture();
+    auto tex = createColormapTexture(ui->comboBoxScalarFieldStyle->currentText());
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
 }
 
 
-void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
+void WidgetTrianglesDrawable::disableUnavailableOptions() {
     bool visible = ui->checkBoxVisible->isChecked();
     ui->labelPhongShading->setEnabled(visible);
     ui->checkBoxPhongShading->setEnabled(visible);
@@ -639,22 +624,11 @@ void WidgetTrianglesDrawable::disableUnnecessaryWidgets() {
             ui->comboBoxVectorField->currentText() != "disabled";
     ui->labelVectorFieldColor->setEnabled(can_modify_vector_style);
     ui->toolButtonVectorFieldColor->setEnabled(can_modify_vector_style);
-    ui->labelVectorFieldThickness->setEnabled(can_modify_vector_style);
-    ui->doubleSpinBoxVectorFieldThickness->setEnabled(can_modify_vector_style);
-    ui->labelVectorFieldLength->setEnabled(can_modify_vector_style);
-    ui->doubleSpinBoxVectorFieldLength->setEnabled(can_modify_vector_style);
+    ui->labelVectorFieldWidth->setEnabled(can_modify_vector_style);
+    ui->doubleSpinBoxVectorFieldWidth->setEnabled(can_modify_vector_style);
+    ui->labelVectorFieldScale->setEnabled(can_modify_vector_style);
+    ui->doubleSpinBoxVectorFieldScale->setEnabled(can_modify_vector_style);
 
     update();
     qApp->processEvents();
-}
-
-
-Texture* WidgetTrianglesDrawable::createColormapTexture() {
-    const std::string colormap = ui->comboBoxScalarFieldStyle->currentText().toStdString();
-    for (const auto& info : colormap_files_) {
-        if (info.name == colormap) {
-            return Texture::create(info.file, GL_CLAMP_TO_EDGE, GL_LINEAR);
-        }
-    }
-    return nullptr;
 }

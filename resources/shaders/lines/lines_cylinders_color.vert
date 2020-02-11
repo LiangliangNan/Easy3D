@@ -17,10 +17,10 @@ out vec4 vOutcolor;
 
 void main()
 {
-        gl_Position = MV * vec4(vtx_position, 1.0);
+    gl_Position = MV * vec4(vtx_position, 1.0);
 
     if (per_vertex_color)
-    vOutcolor = vec4(vtx_color, 1.0f);
+        vOutcolor = vec4(vtx_color, 1.0f);
     else
-    vOutcolor = default_color;
+        vOutcolor = default_color;
 }
