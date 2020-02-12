@@ -93,6 +93,16 @@ namespace easy3d {
         extern bool surface_mesh_borders_imposters;
         extern float   surface_mesh_borders_line_width;
 
+        // graph - vertices
+        extern bool graph_show_vertices;
+        extern vec4 graph_vertices_color;
+        extern float   graph_vertices_point_size;
+
+        // surface mesh - edges
+        extern bool graph_show_edges;
+        extern vec4 graph_edges_color;
+        extern float   graph_edges_line_width;
+
     } // namespace setting
 
 } // namespace easy3d

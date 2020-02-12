@@ -65,7 +65,6 @@ namespace easy3d {
                         colors.push_back(color_table[idx]); // black for unkonwn type
                 }
                 drawable->update_color_buffer(colors);
-                drawable->set_per_vertex_color(true);
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
@@ -88,8 +87,10 @@ namespace easy3d {
                 // if reached here, render with uniform color
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
                 drawable->set_default_color(setting::point_cloud_points_color);
-                drawable->set_per_vertex_color(false);
             }
         }
 
@@ -102,8 +103,6 @@ namespace easy3d {
                 drawable->update_normal_buffer(normals.vector());
 
             drawable->update_texcoord_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
-            drawable->set_use_texture(true);
         }
 
 
@@ -115,7 +114,6 @@ namespace easy3d {
                 drawable->update_normal_buffer(normals.vector());
 
             drawable->update_color_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -135,7 +133,6 @@ namespace easy3d {
             // if reached here, we choose a uniform color.
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
-            drawable->set_per_vertex_color(false);
         }
 
 
@@ -143,7 +140,6 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_color_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -151,7 +147,6 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -250,8 +245,6 @@ namespace easy3d {
             drawable->update_index_buffer(indices);
             drawable->update_normal_buffer(d_normals);
 
-            drawable->set_per_vertex_color(false);
-
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
@@ -328,8 +321,6 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_color_buffer(d_colors);
 
-            drawable->set_per_vertex_color(true);
-
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
@@ -403,8 +394,6 @@ namespace easy3d {
             drawable->update_index_buffer(d_indices);
             drawable->update_normal_buffer(d_normals);
             drawable->update_color_buffer(d_colors);
-
-            drawable->set_per_vertex_color(true);
 
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
@@ -481,8 +470,6 @@ namespace easy3d {
             drawable->update_index_buffer(d_indices);
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
-
-            drawable->set_per_vertex_color(true);
 
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
@@ -568,8 +555,6 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
 
-            drawable->set_per_vertex_color(true);
-
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
             auto tex = Texture::create(texture_file, GL_REPEAT);
@@ -624,7 +609,6 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_index_buffer(indices);
-            drawable->set_per_vertex_color(false);
         }
 
 
@@ -643,8 +627,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_color_buffer(d_colors);
-            drawable->set_use_texture(false);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
         }
 
@@ -664,8 +646,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_color_buffer(d_colors);
-            drawable->set_use_texture(false);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
         }
 
@@ -684,8 +664,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
         }
 
@@ -704,8 +682,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
         }
 
@@ -726,9 +702,6 @@ namespace easy3d {
             // if reached here, render with uniform color
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
-            drawable->set_per_vertex_color(false);
-            drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-            drawable->set_point_size(15.0f);
             drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
 
@@ -737,9 +710,6 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_color_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
-            drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-            drawable->set_point_size(15.0f);
             drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
 
@@ -748,9 +718,6 @@ namespace easy3d {
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
-            drawable->set_use_texture(true);
-            drawable->set_point_size(15.0f);
             drawable->set_impostor_type(PointsDrawable::SPHERE);
         }
 
@@ -798,10 +765,6 @@ namespace easy3d {
                 indices.push_back(t);
             }
             drawable->update_index_buffer(indices);
-
-            drawable->set_per_vertex_color(false);
-            drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-            drawable->set_line_width(3.0f);
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
 
@@ -821,8 +784,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_color_buffer(d_colors);
-            drawable->set_use_texture(false);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
@@ -832,7 +793,6 @@ namespace easy3d {
             drawable->update_vertex_buffer(points.vector());
 
             drawable->update_texcoord_buffer(prop.vector());
-            drawable->set_use_texture(true);
 
             std::vector<unsigned int> indices;
             for (auto e : model->edges()) {
@@ -862,7 +822,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
             drawable->release_element_buffer();
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
@@ -873,7 +832,6 @@ namespace easy3d {
             drawable->update_vertex_buffer(points.vector());
 
             drawable->update_color_buffer(prop.vector());
-            drawable->set_per_vertex_color(true);
 
             std::vector<unsigned int> indices;
             for (auto e : model->edges()) {

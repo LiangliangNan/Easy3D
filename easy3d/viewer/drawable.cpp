@@ -53,7 +53,7 @@ namespace easy3d {
             : name_(name)
             , model_(model)
             , visible_(true)
-            , per_vertex_color_(false)
+            , per_vertex_color_(true)
             , default_color_(0.8f, 0.8f, 0.8f, 1.0f)
             , lighting_(true)
             , lighting_two_sides_(setting::light_two_sides)

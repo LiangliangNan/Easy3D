@@ -35,7 +35,7 @@ namespace easy3d {
     class TrianglesDrawable;
 
     namespace renderer {
-        
+
         // PointCloud -------------------------------------------------------------------------------------------------
 
         /**
@@ -387,16 +387,6 @@ namespace easy3d {
             else if (dynamic_cast<SurfaceMesh*>(model))
                 update_buffer(dynamic_cast<SurfaceMesh*>(model), drawable);
         }
-
-        template <typename MODEL, typename FT>
-        inline void update_buffer(MODEL* model, PointsDrawable* drawable, typename MODEL::template VertexProperty<FT> prop) {
-            if (dynamic_cast<PointCloud*>(model))
-                update_buffer(dynamic_cast<PointCloud*>(model), drawable, prop);
-            else if (dynamic_cast<Graph*>(model))
-                update_buffer(dynamic_cast<Graph*>(model), drawable, prop);
-            else if (dynamic_cast<SurfaceMesh*>(model))
-                update_buffer(dynamic_cast<SurfaceMesh*>(model), drawable, prop);
-        }
     }
 
 }
@@ -435,8 +425,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -464,8 +452,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
             drawable->release_element_buffer();
         }
 
@@ -490,7 +476,6 @@ namespace easy3d {
                 d_texcoords.emplace_back(vec2(coord, 0.5));
             }
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
 
             std::vector<unsigned int> indices;
             indices.reserve(model->edges_size() * 2);
@@ -522,8 +507,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -545,8 +528,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
         }
 
 
@@ -632,9 +613,6 @@ namespace easy3d {
             drawable->update_index_buffer(d_indices);
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
-
-            drawable->set_per_vertex_color(true);
-
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
@@ -722,8 +700,6 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
 
-            drawable->set_per_vertex_color(true);
-
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
@@ -755,7 +731,6 @@ namespace easy3d {
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
             drawable->release_element_buffer();
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
@@ -781,7 +756,6 @@ namespace easy3d {
                 d_texcoords.emplace_back(vec2(coord, 0.5));
             }
             drawable->update_texcoord_buffer(d_texcoords);
-            drawable->set_use_texture(true);
 
             std::vector<unsigned int> indices;
             indices.reserve(model->edges_size() * 2);

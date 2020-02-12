@@ -1218,10 +1218,16 @@ namespace easy3d {
 			// create points drawable for the edges
 			PointsDrawable* vertices = graph->add_points_drawable("vertices");
 			renderer::update_buffer(graph, vertices);
+            vertices->set_default_color(setting::graph_vertices_color);
+            vertices->set_point_size(setting::graph_vertices_point_size);
+            vertices->set_impostor_type(PointsDrawable::SPHERE);
 
 			// create liens drawable for the edges
 			LinesDrawable* edges = graph->add_lines_drawable("edges");
 			renderer::update_buffer(graph, edges);
+            edges->set_default_color(setting::graph_edges_color);
+            edges->set_line_width(setting::graph_edges_line_width);
+            edges->set_impostor_type(LinesDrawable::CYLINDER);
 		}
 	}
 

@@ -24,6 +24,7 @@
 
 #include "point_selection.h"
 #include <easy3d/viewer/model.h>
+#include <easy3d/viewer/drawable_points.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -48,6 +49,9 @@ int main(int argc, char** argv) {
             LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;
         }
+
+        auto drawable = model->points_drawable("vertices");
+        drawable->set_point_size(5.0f);
 
         // Run the viewer
         viewer.run();

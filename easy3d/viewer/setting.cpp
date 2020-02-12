@@ -90,6 +90,16 @@ namespace easy3d {
         bool surface_mesh_borders_imposters = true;
         float surface_mesh_borders_line_width = 2.0f;
 
+        // graph - vertices
+        bool graph_show_vertices = true;
+        vec4 graph_vertices_color = vec4(0.8f, 0.0f, 0.5f, 1.0f);
+        float   graph_vertices_point_size = 15;
+
+        // surface mesh - edges
+        bool graph_show_edges = true;
+        vec4 graph_edges_color = vec4(1.0f, 0.67f, 0.5f, 1.0f);
+        float   graph_edges_line_width = 3.0f;
+
     } // namespace setting
 
 } // namespace easy3d
