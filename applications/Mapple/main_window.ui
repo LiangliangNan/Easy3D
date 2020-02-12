@@ -100,9 +100,16 @@
     <addaction name="separator"/>
     <addaction name="actionDeleteSelectedPrimitives"/>
    </widget>
+   <widget class="QMenu" name="menuProperty">
+    <property name="title">
+     <string>Property</string>
+    </property>
+    <addaction name="actionComputeHeightField"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuSelect"/>
+   <addaction name="menuProperty"/>
    <addaction name="menuTopology"/>
    <addaction name="menuOrientation"/>
    <addaction name="menuConversion"/>
@@ -603,6 +610,11 @@
    </property>
    <property name="toolTip">
     <string>Select by Clicking</string>
+   </property>
+  </action>
+  <action name="actionComputeHeightField">
+   <property name="text">
+    <string>Compute Height Field</string>
    </property>
   </action>
  </widget>

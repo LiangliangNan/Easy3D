@@ -45,6 +45,9 @@ private slots:
     void saveSnapshot();
     void setBackgroundColor();
 
+    // property
+    void computeHeightField();
+
     // topology
     void reportTopologyStatistics();
     void detectDuplicatedFaces();
@@ -84,6 +87,7 @@ private:
     void createActionsForFileMenu();
     void createActionsForViewMenu();
     void createActionsForEditMenu();
+    void createActionsForPropertyMenu();
     void createActionsForTopologyMenu();
     void createActionsForOrientationMenu();
     void createActionsForConversionMenu();
