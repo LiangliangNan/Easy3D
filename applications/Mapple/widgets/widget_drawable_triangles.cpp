@@ -553,10 +553,6 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 
 
 void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& text) {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
     auto tex = createColormapTexture(ui->comboBoxScalarFieldStyle->currentText());
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);

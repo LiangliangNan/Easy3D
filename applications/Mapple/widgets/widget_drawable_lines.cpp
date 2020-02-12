@@ -253,52 +253,53 @@ void WidgetLinesDrawable::setImposterStyle(const QString & style) {
 
 namespace details {
 
-    inline void setup_scalar_field(SurfaceMesh* mesh, LinesDrawable* drawable, const std::string& color_scheme) {
-        for (const auto &name : mesh->edge_properties()) {
+    template<typename MODEL>
+    inline void setup_scalar_field(MODEL* model, LinesDrawable* drawable, const std::string& color_scheme) {
+        for (const auto &name : model->edge_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
-                if (mesh->get_edge_property<float>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_edge_property<float>(name));
+                if (model->template get_edge_property<float>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_edge_property<float>(name));
                     return;
                 }
-                if (mesh->get_edge_property<double>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_edge_property<double>(name));
+                if (model->template get_edge_property<double>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_edge_property<double>(name));
                     return;
                 }
-                if (mesh->get_edge_property<unsigned int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_edge_property<unsigned int>(name));
+                if (model->template get_edge_property<unsigned int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_edge_property<unsigned int>(name));
                     return;
                 }
-                if (mesh->get_edge_property<int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_edge_property<int>(name));
+                if (model->template get_edge_property<int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_edge_property<int>(name));
                     return;
                 }
-                if (mesh->get_edge_property<bool>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_edge_property<bool>(name));
+                if (model->template get_edge_property<bool>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_edge_property<bool>(name));
                     return;
                 }
             }
         }
 
-        for (const auto &name : mesh->vertex_properties()) {
+        for (const auto &name : model->vertex_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
-                if (mesh->get_vertex_property<float>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<float>(name));
+                if (model->template get_vertex_property<float>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<float>(name));
                     return;
                 }
-                if (mesh->get_vertex_property<double>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<double>(name));
+                if (model->template get_vertex_property<double>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<double>(name));
                     return;
                 }
-                if (mesh->get_vertex_property<unsigned int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<unsigned int>(name));
+                if (model->template get_vertex_property<unsigned int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<unsigned int>(name));
                     return;
                 }
-                if (mesh->get_vertex_property<int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<int>(name));
+                if (model->template get_vertex_property<int>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<int>(name));
                     return;
                 }
-                if (mesh->get_vertex_property<bool>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<bool>(name));
+                if (model->template get_vertex_property<bool>(name)) {
+                    renderer::update_buffer(model, drawable, model->template get_vertex_property<bool>(name));
                     return;
                 }
             }
@@ -316,11 +317,21 @@ void WidgetLinesDrawable::setColorScheme(const QString& text) {
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-        if (mesh) {
+        if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
+            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
             ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
+        else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
+            Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
+            ::details::setup_scalar_field(graph, drawable(), text.toStdString());
+            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+        }
+//        else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
+//            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+//            ::details::setup_scalar_field(cloud, drawable(), text.toStdString());
+//            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+//        }
     }
 
     bool use_texture = text.contains(":texcoord") || is_scalar_field;
@@ -375,10 +386,6 @@ void WidgetLinesDrawable::setHighlightMax(int v) {
 
 
 void WidgetLinesDrawable::setScalarFieldStyle(const QString& text) {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
     auto tex = createColormapTexture(ui->comboBoxScalarFieldStyle->currentText());
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);

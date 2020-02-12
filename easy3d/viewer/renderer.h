@@ -309,11 +309,72 @@ namespace easy3d {
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a graph.
+         *        The "edges" drawable (i.e., wireframe) of a graph may have different color properties
+         *        (per-edge/vertex color) and different texture coordinates (e.g., per-edge/vertex texture coordinates).
+         *        In case of multiple coloring possibilities, the following priority applies:
+         *              1. per-edge texture coordinates
+         *              2. per-vertex texture coordinates
+         *              3: per-edge color
+         *              4: per-vertex color
+         *              5: uniform color
          * @param model     The model.
          * @param drawable  The drawable.
          */
         void update_buffer(Graph* model, LinesDrawable* drawable);
 
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the edge property "e:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property "e:color" the defined a per-edge color.
+         */
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the scalar field
+         *        defined one edges.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the vertex property "v:color".
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property "v:color"
+         */
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the scalar field defined one
+         *        vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property that defines the scalar field.
+         */
+        template <typename FT>
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the texture coordinates
+         *        defined on vertices.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The vertex property (i.e., "v:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop);
+
+        /**
+         * @brief Update render buffers for the default "edges" drawable of a graph using the texture coordinates
+         *        defined on edges.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param prop      The edge property (i.e., "e:texcoord") that defines the texture coordinates.
+         */
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop);
 
 
         // a template version
@@ -420,23 +481,26 @@ namespace easy3d {
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->edges_size() * 2);
-            for (auto e : model->edges()) {
-                SurfaceMesh::Vertex s = model->vertex(e, 0);
-                SurfaceMesh::Vertex t = model->vertex(e, 1);
-                d_points.push_back(points[s]);
-                d_points.push_back(points[t]);
-                float coord_s = (prop[s] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord_s, 0.5));
-                float coord_t = (prop[t] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord_t, 0.5));
+            drawable->update_vertex_buffer(points.vector());
+
+            std::vector<vec2> d_texcoords;
+            d_texcoords.reserve(model->vertices_size());
+            for (auto v : model->vertices()) {
+                float coord = (prop[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5));
             }
-            drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_use_texture(true);
-            drawable->set_per_vertex_color(true);
-            drawable->release_element_buffer();
+
+            std::vector<unsigned int> indices;
+            indices.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                auto s = model->vertex(e, 0);
+                auto t = model->vertex(e, 1);
+                indices.push_back(s.idx());
+                indices.push_back(t.idx());
+            }
+            drawable->update_index_buffer(indices);
         }
 
 
@@ -663,5 +727,72 @@ namespace easy3d {
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
         }
 
+
+        template <typename FT>
+        void update_buffer(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto e : model->edges()) {
+                float value = prop[e];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;
+            d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;
+            d_texcoords.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                Graph::Vertex s = model->from_vertex(e);
+                Graph::Vertex t = model->to_vertex(e);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                float coord_s = (prop[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_s, 0.5));
+                float coord_t = (prop[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_t, 0.5));
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->release_element_buffer();
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
+
+
+        template <typename FT>
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop) {
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            for (auto v : model->vertices()) {
+                float value = prop[v];
+                min_value = std::min(value, min_value);
+                max_value = std::max(value, max_value);
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+
+            std::vector<vec2> d_texcoords;
+            d_texcoords.reserve(model->vertices_size());
+            for (auto v : model->vertices()) {
+                float coord = (prop[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5));
+            }
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+
+            std::vector<unsigned int> indices;
+            indices.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                auto s = model->from_vertex(e);
+                auto t = model->to_vertex(e);
+                indices.push_back(s.idx());
+                indices.push_back(t.idx());
+            }
+            drawable->update_index_buffer(indices);
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
     }
 }

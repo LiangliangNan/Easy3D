@@ -756,6 +756,37 @@ namespace easy3d {
 
 
         void update_buffer(Graph *model, LinesDrawable *drawable) {
+            // Priority:
+            //  1. per-edge texture coordinates
+            //  2. per-vertex texture coordinates
+            //  3: per-edge color
+            //  4: per-vertex color
+            //  5: uniform color
+            auto edge_texcoords = model->get_edge_property<vec2>("e:texcoord");
+            if (edge_texcoords) {
+                update_buffer(model, drawable, edge_texcoords);
+                return;
+            }
+
+            auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+            if (vertex_texcoords) {
+                update_buffer(model, drawable, vertex_texcoords);
+                return;
+            }
+
+            auto edge_colors = model->get_edge_property<vec3>("e:color");
+            if (edge_colors) {
+                update_buffer(model, drawable, edge_colors);
+                return;
+            }
+
+            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
+            if (vertex_colors) {
+                update_buffer(model, drawable, vertex_colors);
+                return;
+            }
+
+            // if reached here, we choose a uniform color.
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
 
@@ -773,6 +804,88 @@ namespace easy3d {
             drawable->set_line_width(3.0f);
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
         }
+
+
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points, d_colors;
+            d_points.reserve(model->edges_size() * 2);
+            d_colors.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                Graph::Vertex s = model->from_vertex(e);
+                Graph::Vertex t = model->to_vertex(e);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_colors.emplace_back(prop[e]);
+                d_colors.emplace_back(prop[e]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_color_buffer(d_colors);
+            drawable->set_use_texture(false);
+            drawable->set_per_vertex_color(true);
+            drawable->release_element_buffer();
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
+
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+
+            drawable->update_texcoord_buffer(prop.vector());
+            drawable->set_use_texture(true);
+
+            std::vector<unsigned int> indices;
+            for (auto e : model->edges()) {
+                unsigned int s = model->from_vertex(e).idx();
+                indices.push_back(s);
+                unsigned int t = model->to_vertex(e).idx();
+                indices.push_back(t);
+            }
+            drawable->update_index_buffer(indices);
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
+
+
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> d_points;
+            d_points.reserve(model->edges_size() * 2);
+            std::vector<vec2> d_texcoords;
+            d_texcoords.reserve(model->edges_size() * 2);
+            for (auto e : model->edges()) {
+                Graph::Vertex s = model->from_vertex(e);
+                Graph::Vertex t = model->to_vertex(e);
+                d_points.push_back(points[s]);
+                d_points.push_back(points[t]);
+                d_texcoords.emplace_back(prop[e]);
+                d_texcoords.emplace_back(prop[e]);
+            }
+            drawable->update_vertex_buffer(d_points);
+            drawable->update_texcoord_buffer(d_texcoords);
+            drawable->set_use_texture(true);
+            drawable->release_element_buffer();
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
+
+
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            auto points = model->get_vertex_property<vec3>("v:point");
+            drawable->update_vertex_buffer(points.vector());
+
+            drawable->update_color_buffer(prop.vector());
+            drawable->set_per_vertex_color(true);
+
+            std::vector<unsigned int> indices;
+            for (auto e : model->edges()) {
+                unsigned int s = model->from_vertex(e).idx();
+                indices.push_back(s);
+                unsigned int t = model->to_vertex(e).idx();
+                indices.push_back(t);
+            }
+            drawable->update_index_buffer(indices);
+            drawable->set_impostor_type(LinesDrawable::CYLINDER);
+        }
+
 
     }
 
