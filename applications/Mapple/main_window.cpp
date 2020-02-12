@@ -247,6 +247,19 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
     if (model) {
         model->set_name(file_name);
+#if 0
+        if (dynamic_cast<SurfaceMesh*>(model)) {
+            auto mesh = dynamic_cast<SurfaceMesh*>(model);
+            auto labels = mesh->get_face_property<int>("f:label");
+            if (labels) {
+                for (auto f : mesh->faces()) {
+                    if (labels[f] == 0)
+                        mesh->delete_face(f);
+                }
+                mesh->garbage_collection();
+            }
+        }
+#endif
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
         viewer_->doneCurrent();
