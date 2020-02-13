@@ -99,6 +99,8 @@
     <addaction name="actionInvertSelection"/>
     <addaction name="separator"/>
     <addaction name="actionDeleteSelectedPrimitives"/>
+    <addaction name="separator"/>
+    <addaction name="actionDownSampling"/>
    </widget>
    <widget class="QMenu" name="menuProperty">
     <property name="title">
@@ -615,6 +617,11 @@
   <action name="actionComputeHeightField">
    <property name="text">
     <string>Compute Height Field</string>
+   </property>
+  </action>
+  <action name="actionDownSampling">
+   <property name="text">
+    <string>Down Sampling</string>
    </property>
   </action>
  </widget>

@@ -5,20 +5,22 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-    point_cloud_normals.h
-    point_cloud_poisson_reconstruction.h
-    point_cloud_ransac.h
-    surface_mesh_sampler.h
-    )
+        point_cloud_normals.h
+        point_cloud_poisson_reconstruction.h
+        point_cloud_ransac.h
+        point_cloud_simplification.h
+        surface_mesh_sampler.h
+        )
 
 set(${PROJECT_NAME}_SOURCES
-    point_cloud_normals.cpp
-    point_cloud_poisson_reconstruction.cpp
-    point_cloud_ransac.cpp
-    surface_mesh_sampler.cpp
-    )
-	
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} )
+        point_cloud_normals.cpp
+        point_cloud_poisson_reconstruction.cpp
+        point_cloud_ransac.cpp
+        point_cloud_simplification.cpp
+        surface_mesh_sampler.cpp
+        )
+
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
@@ -32,5 +34,5 @@ find_package(Boost)
 if (Boost_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
-endif()
+endif ()
 

@@ -18,6 +18,8 @@ class PaintCanvas;
 class DialogSnapshot;
 class DialogPoissonReconstruction;
 class DialogRansacPrimitiveExtraction;
+class DialogPointCloudSimplification;
+class DialogSurfaceMeshSampling;
 
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
@@ -44,6 +46,9 @@ private slots:
     // view
     void saveSnapshot();
     void setBackgroundColor();
+
+    // edit
+    void downsampling();
 
     // property
     void computeHeightField();
@@ -115,6 +120,8 @@ private:
     DialogSnapshot*                 dialogSanpshot_;
     DialogPoissonReconstruction*    dialogPoissonReconstruction_;
     DialogRansacPrimitiveExtraction*dialogRansacPrimitiveExtraction_;
+    DialogPointCloudSimplification* dialogPointCloudSimplification_;
+    DialogSurfaceMeshSampling*      dialogSurfaceMeshSampling_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

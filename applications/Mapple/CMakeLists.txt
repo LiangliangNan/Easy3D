@@ -23,8 +23,9 @@ set(${PROJECT_NAME}_HEADERS
 
         dialogs/dialog_poisson_reconstruction.h
         dialogs/dialog_ransac_primitive_extraction.h
-        dialogs/dialog_surface_sampling.h
+        dialogs/dialog_surface_mesh_sampling.h
         dialogs/dialog_snapshot.h
+        dialogs/dialog_point_cloud_simplification.h
 
         widgets/widget_checker_sphere.h
         widgets/widget_drawable.h
@@ -48,8 +49,9 @@ set(${PROJECT_NAME}_SOURCES
 
         dialogs/dialog_poisson_reconstruction.cpp
         dialogs/dialog_ransac_primitive_extraction.cpp
-        dialogs/dialog_surface_sampling.cpp
+        dialogs/dialog_surface_mesh_sampling.cpp
         dialogs/dialog_snapshot.cpp
+        dialogs/dialog_point_cloud_simplification.cpp
 
         widgets/widget_checker_sphere.cpp
         widgets/widget_drawable.cpp
@@ -69,10 +71,11 @@ set(${PROJECT_NAME}_FORMS
 
         dialogs/dialog_poisson_reconstruction.ui
         dialogs/dialog_ransac_primitive_extraction.ui
-        dialogs/dialog_surface_sampling.ui
+        dialogs/dialog_surface_mesh_sampling.ui
         dialogs/dialog_snapshot.ui
+        dialogs/dialog_point_cloud_simplification.ui
 
-#        widgets/widget_drawable_points.ui
+        widgets/widget_drawable_points.ui
         widgets/widget_drawable_lines.ui
         widgets/widget_drawable_triangles.ui
         widgets/widget_lighting.ui

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogSurfaceSampling</class>
- <widget class="QDialog" name="DialogSurfaceSampling">
+ <class>DialogSurfaceMeshSampling</class>
+ <widget class="QDialog" name="DialogSurfaceMeshSampling">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -72,7 +72,7 @@
   <connection>
    <sender>okButton</sender>
    <signal>clicked()</signal>
-   <receiver>DialogSurfaceSampling</receiver>
+   <receiver>DialogSurfaceMeshSampling</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">

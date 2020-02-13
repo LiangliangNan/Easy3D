@@ -22,7 +22,6 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
@@ -33,8 +32,9 @@
 
 #include "dialogs/dialog_snapshot.h"
 #include "dialogs/dialog_poisson_reconstruction.h"
-#include "dialogs/dialog_surface_sampling.h"
+#include "dialogs/dialog_surface_mesh_sampling.h"
 #include "dialogs/dialog_ransac_primitive_extraction.h"
+#include "dialogs/dialog_point_cloud_simplification.h"
 
 #include "widgets/widget_lighting.h"
 #include "widgets/widget_drawable_points.h"
@@ -51,6 +51,8 @@ MainWindow::MainWindow(QWidget *parent)
     , dialogSanpshot_(nullptr)
     , dialogPoissonReconstruction_(nullptr)
     , dialogRansacPrimitiveExtraction_(nullptr)
+    , dialogPointCloudSimplification_(nullptr)
+    , dialogSurfaceMeshSampling_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -104,6 +106,9 @@ MainWindow::~MainWindow()
 {
     if (dialogSanpshot_)                delete dialogSanpshot_;
     if (dialogPoissonReconstruction_)   delete dialogPoissonReconstruction_;
+    if (dialogRansacPrimitiveExtraction_)   delete dialogRansacPrimitiveExtraction_;
+    if (dialogPointCloudSimplification_)    delete dialogPointCloudSimplification_;
+    if (dialogSurfaceMeshSampling_)     delete dialogSurfaceMeshSampling_;
 }
 
 
@@ -573,6 +578,8 @@ void MainWindow::createActionsForEditMenu() {
     connect(ui->actionInvertSelection, SIGNAL(triggered()), viewer_, SLOT(invertSelection()));
     connect(ui->actionDeleteSelectedPrimitives, SIGNAL(triggered()), viewer_, SLOT(deleteSelectedPrimitives()));
 
+    connect(ui->actionDownSampling, SIGNAL(triggered()), this, SLOT(downsampling()));
+
     //////////////////////////////////////////////////////////////////////////
 
     QActionGroup* actionGroup = new QActionGroup(this);
@@ -799,26 +806,22 @@ void MainWindow::ransacPrimitiveExtraction() {
 
 
 void MainWindow::samplingSurfaceMesh() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
+    if (!dialogSurfaceMeshSampling_)
+        dialogSurfaceMeshSampling_ = new DialogSurfaceMeshSampling(this);
 
-    DialogSurfaceSampling dlg;
-    if (dlg.exec()) {
-        int num = dlg.pointNumber();
-        if (static_cast<unsigned int>(num) < mesh->n_vertices()) {
-            LOG(WARNING) << "point num must >= the num of vertices of the input mesh";
-            return;
-        }
+    dialogSurfaceMeshSampling_->show();
+    dialogSurfaceMeshSampling_->raise();
+    dialogSurfaceMeshSampling_->activateWindow();
+}
 
-        SurfaceMeshSampler sampler;
-        PointCloud* cloud = sampler.apply(mesh, num);
-        if (cloud) {
-            viewer_->makeCurrent();
-            viewer_->addModel(cloud);
-            viewer_->doneCurrent();
-        }
-    }
+
+void MainWindow::downsampling() {
+    if (!dialogPointCloudSimplification_)
+        dialogPointCloudSimplification_ = new DialogPointCloudSimplification(this);
+
+    dialogPointCloudSimplification_->show();
+    dialogPointCloudSimplification_->raise();
+    dialogPointCloudSimplification_->activateWindow();
 }
 
 
