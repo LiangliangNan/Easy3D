@@ -160,6 +160,7 @@ void DialogPointCloudSimplification::apply() {
             viewer_->makeCurrent();
             renderer::update_buffer(cloud, cloud->points_drawable("vertices"));
             viewer_->doneCurrent();
+            viewer_->update();
         }
 
         delete kdtree_;
