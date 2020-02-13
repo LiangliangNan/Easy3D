@@ -58,7 +58,7 @@ void DialogPointCloudSimplification::closeEvent(QCloseEvent *e) {
 void DialogPointCloudSimplification::showEvent(QShowEvent *e) {
     PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        int num = cloud->n_vertices();
+        int num = cloud->vertices_size();
         ui->lineEditExpectedPointNumber->setText(QString("%1").arg(num));
     }
     QDialog::showEvent(e);
@@ -125,7 +125,7 @@ void DialogPointCloudSimplification::query() {
             else
                 points_to_remove_ = PointCloudSimplification::grid_simplification(cloud, threshold);
         }
-        LOG(INFO) << cloud->n_vertices() - points_to_remove_.size() << " points will remain";
+        LOG(INFO) << cloud->vertices_size() - points_to_remove_.size() << " points will remain";
     }
 }
 
