@@ -246,7 +246,6 @@ namespace easy3d {
             if (!program)
                 return;
 
-            const mat4 &MVP = camera->modelViewProjectionMatrix();
             program->bind();
             program->set_uniform("MV", camera->modelViewMatrix())
                     ->set_uniform("PROJ", camera->projectionMatrix());
