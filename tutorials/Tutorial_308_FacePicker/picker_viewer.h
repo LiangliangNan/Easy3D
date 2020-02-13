@@ -37,7 +37,7 @@ namespace easy3d {
 class PickerViewer : public easy3d::Viewer {
 public:
     PickerViewer(const std::string &title);
-    ~PickerViewer();
+    ~PickerViewer() override;
 
     easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
 
