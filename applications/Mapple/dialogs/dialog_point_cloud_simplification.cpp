@@ -87,16 +87,10 @@ void DialogPointCloudSimplification::constructKdTree() {
     if (cloud) {
         if (kdtree_)
             delete kdtree_;
-
-        LOG(INFO) << "building kd-tree ...";
-        StopWatch t;
-        t.start();
-
         kdtree_ = new KdTreeSearch_ETH;
         kdtree_->begin();
         kdtree_->add_point_cloud(cloud);
         kdtree_->end();
-        LOG(INFO) << "done. time: " << t.time_string();
     }
 }
 
