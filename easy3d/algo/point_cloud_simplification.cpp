@@ -28,23 +28,27 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/stop_watch.h>
 #include <easy3d/kdtree/kdtree_search_eth.h>
 
 
 namespace easy3d {
 
-    double PointCloudSimplification::average_spacing(PointCloud *cloud, KdTreeSearch *kdtree, int k/* = 6*/,
-                                                   bool accurate /* = false*/, int samples /* = 200000*/) {
-        double total = 0;
+    float PointCloudSimplification::average_spacing(PointCloud *cloud, KdTreeSearch *tree, int k, bool accurate,
+                                                    int samples) {
+        KdTreeSearch *kdtree = tree;
+        bool need_delete(false);
+        if (!kdtree) {
+            kdtree = new KdTreeSearch_ETH;
+            kdtree->begin();
+            kdtree->add_point_cloud(cloud);
+            kdtree->end();
+            need_delete = true;
+        }
+
+        double total = 0.0;
         const std::vector<vec3> &points = cloud->points();
-        int num = cloud->n_vertices();
+        int num = cloud->vertices_size();
 
-        StopWatch t;
-        t.start();
-        LOG(INFO) << "computing average spacing ...";
-
-//        ProgressLogger progress(cloud->n_vertices());
         int step = 1;
         if (!accurate && num > samples)
             step = num / samples;
@@ -58,33 +62,19 @@ namespace easy3d {
                 continue;
             }
 
-            double avg = 0;
+            double avg = 0.0;
             for (unsigned int i = 1; i < sqr_distances.size(); ++i) { // starts from 1 to exclude itself
                 avg += std::sqrt(sqr_distances[i]);
             }
 
             total += (avg / neighbors.size());
             ++count;
-//            progress.next();
         }
 
-        LOG(INFO) << "done. time: " << t.time_string();
-        return (total / count);
-    }
+        if (need_delete)
+            delete kdtree;
 
-
-    double PointCloudSimplification::average_spacing(PointCloud *cloud, int k /* = 6 */, bool accurate /* = false */,
-                                                   int samples /* = 200000 */) {
-        StopWatch t;
-        t.start();
-        LOG(INFO) << "building kd-tree ...";
-        KdTreeSearch_ETH kdtree;
-        kdtree.begin();
-        kdtree.add_point_cloud(cloud);
-        kdtree.end();
-        LOG(INFO) << "done. time: " << t.time_string();
-
-        return average_spacing(cloud, &kdtree, k, accurate, samples);
+        return static_cast<float>(total / count);
     }
 
 
@@ -136,63 +126,54 @@ namespace easy3d {
     }
 
 
-//////////////////////////////////////////////////////////////////////////
-
-
-    std::vector<int> PointCloudSimplification::grid_simplification(PointCloud *cloud, float epsilon) {
+    std::vector<PointCloud::Vertex> PointCloudSimplification::grid_simplification(PointCloud *cloud, float epsilon) {
         assert(epsilon > 0);
 
         struct Point {
             const vec3 *pos;
-            std::size_t idx;
+            PointCloud::Vertex vertex;
         };
-
-        LOG(INFO) << "querying points ...";
-
-        StopWatch t;
-        t.start();
-
-//        ProgressLogger progress(cloud->n_vertices());
 
         // Merges points which belong to the same cell of a grid of cell size = epsilon.
         // points_to_keep will contain 1 point per cell; the others will be in points_to_remove.
         std::set<Point, internal::LessEpsilonPoints<Point> > points_to_keep(epsilon);
-        std::vector<int> points_to_remove;
+        std::vector<PointCloud::Vertex> points_to_remove;
 
-        const std::vector<vec3> &points = cloud->points();
-        for (std::size_t i = 0; i < points.size(); ++i) {
+        const auto &points = cloud->points();
+        for (auto v : cloud->vertices()) {
             Point p;
-            p.pos = &(points[i]);
-            p.idx = i;
-            std::pair<std::set<Point, internal::LessEpsilonPoints<Point> >::iterator, bool> result = points_to_keep.insert(
-                    p);
+            p.pos = &(points[v.idx()]);
+            p.vertex = v;
+            const auto &result = points_to_keep.insert(p);
             if (!result.second) // if not inserted
-                points_to_remove.push_back(int(p.idx));
-
-//            progress.next();
+                points_to_remove.push_back(v);
         }
 
-        LOG(INFO) << "done. time: " << t.time_string();
         return points_to_remove;
     }
 
 
-    std::vector<int>
-    PointCloudSimplification::uniform_simplification(PointCloud *cloud, KdTreeSearch *kdtree, float epsilon) {
-        LOG(INFO) << "querying points ...";
+    std::vector<PointCloud::Vertex>
+    PointCloudSimplification::uniform_simplification(PointCloud *cloud, float epsilon, KdTreeSearch *tree) {
+        KdTreeSearch *kdtree = tree;
+        bool need_delete(false);
+        if (!kdtree) {
+            kdtree = new KdTreeSearch_ETH;
+            kdtree->begin();
+            kdtree->add_point_cloud(cloud);
+            kdtree->end();
+            need_delete = true;
+        }
 
-        StopWatch t;
-        t.start();
-
-        std::vector<char> keep(cloud->n_vertices(), 1);
+        std::vector<bool> keep(cloud->vertices_size(), true);
         const std::vector<vec3> &points = cloud->points();
 
-//        ProgressLogger progress(cloud->n_vertices());
+        double radius = epsilon * epsilon;
         for (std::size_t i = 0; i < points.size(); ++i) {
             if (keep[i]) {
                 const vec3 &p = points[i];
                 std::vector<int> neighbors;
-                kdtree->find_points_in_radius(p, epsilon, neighbors);
+                kdtree->find_points_in_radius(p, radius, neighbors);
                 if (neighbors.size() > 1) {
                     for (std::size_t j = 1; j < neighbors.size(); ++j) {
                         int idx = neighbors[j];
@@ -200,35 +181,22 @@ namespace easy3d {
                     }
                 }
             }
-//            progress.next();
         }
 
-        std::vector<int> points_to_remove;
+        std::vector<PointCloud::Vertex> points_to_remove;
         for (std::size_t i = 0; i < keep.size(); ++i) {
             if (!keep[i])
-                points_to_remove.push_back(int(i));
+                points_to_remove.push_back(PointCloud::Vertex(i));
         }
 
-        LOG(INFO) << "done. time: " << t.time_string();
+        if (need_delete)
+            delete kdtree;
+
         return points_to_remove;
     }
 
 
-    std::vector<int> PointCloudSimplification::uniform_simplification(PointCloud *cloud, float epsilon) {
-        StopWatch t;
-        t.start();
-        LOG(INFO) << "building kd-tree ...";
-        KdTreeSearch_ETH kdtree;
-        kdtree.begin();
-        kdtree.add_point_cloud(cloud);
-        kdtree.end();
-        LOG(INFO) << "done. time: " << t.time_string();
-
-        return uniform_simplification(cloud, &kdtree, epsilon);
-    }
-
-
-//----- uniform simplification (specifying expected point number) ---------------------------------
+    //----- uniform simplification (specifying expected point number) ---------------------------------
 
 
     namespace internal {
@@ -262,7 +230,7 @@ namespace easy3d {
         // NOTE: the returned indices are w.r.t. the new point cloud (a subset of the original point cloud). 
         static std::vector<int> uniform_simplification(PointCloud *cloud, unsigned int expected_num) {
             const std::vector<vec3> &points = cloud->points();
-            unsigned int num = cloud->n_vertices();
+            unsigned int num = cloud->vertices_size();
 
             std::vector<int> points_to_delete;
             if (expected_num >= num)
@@ -274,7 +242,7 @@ namespace easy3d {
             kdtree.end();
 
             // the average squared distance to its nearest neighbor; smaller value means highter density
-            std::vector<float> sqr_distance(cloud->n_vertices());
+            std::vector<float> sqr_distance(cloud->vertices_size());
             std::set<internal::PointPair, internal::LessDistPointPair> point_pairs;
             for (unsigned int i = 0; i < num; ++i) {
                 const vec3 &p = points[i];
@@ -316,15 +284,16 @@ namespace easy3d {
     }
 
 
-    std::vector<int> PointCloudSimplification::uniform_simplification(PointCloud *cloud, unsigned int num_expected) {
-        std::vector<int> points_to_delete;
+    std::vector<PointCloud::Vertex>
+    PointCloudSimplification::uniform_simplification(PointCloud *cloud, unsigned int num_expected) {
+        std::vector<PointCloud::Vertex> points_to_delete;
 
-        int num_original = cloud->n_vertices();
+        int num_original = cloud->vertices_size();
         int num_should_delete = num_original - num_expected;
         if (num_should_delete <= 0)
             return points_to_delete;
 
-        std::vector<char> remain(cloud->n_vertices(), 1);    // 1: keep this point; 0: delete this point
+        std::vector<bool> remain(cloud->vertices_size(), true);    // 1: keep this point; 0: delete this point
         const std::vector<vec3> &points = cloud->points();
 
         //---------------------------------------------------------------
@@ -336,7 +305,6 @@ namespace easy3d {
         PointCloud *point_cloud = cloud;
         bool cloud_is_new = false;
 
-//        ProgressLogger progress(num_should_delete);
         while (points_to_delete.size() < num_should_delete) {
             const std::vector<int> &to_delete = internal::uniform_simplification(point_cloud, num_expected);
 
@@ -344,15 +312,14 @@ namespace easy3d {
                 int new_id = to_delete[i];
                 int orig_id = original_index[new_id];
                 if (remain[orig_id]) {
-                    points_to_delete.push_back(orig_id);
+                    points_to_delete.push_back(PointCloud::Vertex(orig_id));
                     remain[orig_id] = 0;
                 }
             }
-//            progress.notify(points_to_delete.size());
 
-            // Now we have some points to delete, but the remaining point number may still be greater than the expected number. 
-            // We create a new point cloud from the remaining points and run the same algorithm again. We have to know the original
-            // indices of the points in the new point cloud.
+            // Now we have some points to delete, but the remaining point number may still be greater than the expected
+            // number. We create a new point cloud from the remaining points and run the same algorithm again. We have
+            // to know the original indices of the points in the new point cloud.
             if (cloud_is_new)
                 delete point_cloud;
 

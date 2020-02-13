@@ -1,7 +1,6 @@
 #include "dialogs/dialog_point_cloud_simplification.h"
 
 #include <easy3d/kdtree/kdtree_search_eth.h>
-#include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_simplification.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
@@ -124,14 +123,13 @@ void DialogPointCloudSimplification::query() {
             points_to_remove_ = PointCloudSimplification::uniform_simplification(cloud, expected_number);
         } else {
             float threshold = ui->lineEditDistanceThreshold->text().toFloat();
-            if (ui->checkBoxUniform->isChecked())
-                points_to_remove_ = PointCloudSimplification::grid_simplification(cloud, threshold);
-            else {
+            if (ui->checkBoxUniform->isChecked()) {
                 if (!kdtree_)
                     constructKdTree();
-                if (kdtree_)
-                    points_to_remove_ = PointCloudSimplification::uniform_simplification(cloud, kdtree_, threshold);
+                points_to_remove_ = PointCloudSimplification::uniform_simplification(cloud, threshold, kdtree_);
             }
+            else
+                points_to_remove_ = PointCloudSimplification::grid_simplification(cloud, threshold);
         }
         LOG(INFO) << cloud->n_vertices() - points_to_remove_.size() << " points will remain";
     }
