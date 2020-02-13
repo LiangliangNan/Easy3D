@@ -730,16 +730,22 @@ std::string PaintCanvas::usage() const {
 
 
 void PaintCanvas::create_drawables(Model *model) {
-    if (dynamic_cast<PointCloud *>(model)) {
-        PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-        PointsDrawable *drawable = model->add_points_drawable("vertices");
-        renderer::update_buffer(cloud, drawable);
-    } else if (dynamic_cast<SurfaceMesh *>(model)) {
-        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-        TrianglesDrawable *drawable = mesh->add_triangles_drawable("faces");
-        renderer::update_buffer(mesh, drawable);
-    } else if (dynamic_cast<Graph *>(model)) {
-        Graph *graph = dynamic_cast<Graph *>(model);
+    if (dynamic_cast<PointCloud*>(model)) {
+        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+        renderer::update_buffer(cloud, cloud->add_points_drawable("vertices"));
+    }
+    else if (dynamic_cast<SurfaceMesh*>(model)) {
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+        renderer::update_buffer(mesh, mesh->add_triangles_drawable("faces"));
+
+        if (setting::surface_mesh_show_edges)
+            renderer::update_buffer(mesh, mesh->add_lines_drawable("edges"));
+
+        if (setting::surface_mesh_show_vertices)
+            renderer::update_buffer(mesh, mesh->add_points_drawable("edges"));
+    }
+    else if (dynamic_cast<Graph*>(model)) {
+        Graph* graph = dynamic_cast<Graph*>(model);
 
         // create points drawable for the edges
         PointsDrawable* vertices = graph->add_points_drawable("vertices");
