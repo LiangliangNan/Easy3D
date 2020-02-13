@@ -520,6 +520,66 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 		}
 	}
 
+    else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        if (mesh) {
+            auto drawable = mesh->lines_drawable("borders");
+            if (!drawable) {
+                auto prop = mesh->get_vertex_property<vec3>("v:point");
+                std::vector<vec3> points;
+                for (auto e : mesh->edges()) {
+                    if (mesh->is_boundary(e)) {
+                        points.push_back(prop[mesh->vertex(e, 0)]);
+                        points.push_back(prop[mesh->vertex(e, 1)]);
+                    }
+                }
+                if (!points.empty()) {
+                    drawable = mesh->add_lines_drawable("borders");
+                    drawable->update_vertex_buffer(points);
+                    drawable->set_default_color(setting::surface_mesh_borders_color);
+                    drawable->set_per_vertex_color(false);
+                    drawable->set_impostor_type(LinesDrawable::CYLINDER);
+                    drawable->set_line_width(setting::surface_mesh_borders_line_width);
+                    currentModelChanged();
+                }
+            }
+            else {
+                drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
+        }
+    }
+    else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
+        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        if (mesh) {
+            auto drawable = mesh->points_drawable("locks");
+            if (!drawable) {
+                auto lock = mesh->get_vertex_property<bool>("v:lock");
+                if (lock) {
+                    auto prop = mesh->get_vertex_property<vec3>("v:point");
+                    std::vector<vec3> points;
+                    for (auto v : mesh->vertices()) {
+                        if (lock[v])
+                            points.push_back(prop[v]);
+                    }
+                    if (!points.empty()) {
+                        drawable = mesh->add_points_drawable("locks");
+                        drawable->update_vertex_buffer(points);
+                        drawable->set_default_color(vec3(1, 1, 0));
+                        drawable->set_per_vertex_color(false);
+                        drawable->set_impostor_type(PointsDrawable::SPHERE);
+                        drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
+                        currentModelChanged();
+                    }
+                }
+            }
+            else {
+                drawable->set_visible(!drawable->is_visible());
+                currentModelChanged();
+            }
+        }
+    }
+
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
         if (dynamic_cast<SurfaceMesh*>(currentModel())) {
             auto drawable = currentModel()->triangles_drawable("faces");
@@ -605,6 +665,7 @@ std::string ViewerQt::usage() const {
 		" ------------------------------------------------------------------\n"
 		"  '+'/'-':             Increase/Decrease point size (line width)   \n"
         "  'a':                 Toggle axes									\n"
+        "  'b':                 Toggle borders								\n"
         "  'e':                 Toggle edges							    \n"
         "  'v':                 Toggle vertices                             \n"
         "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"

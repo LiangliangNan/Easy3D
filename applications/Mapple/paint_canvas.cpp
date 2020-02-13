@@ -720,6 +720,7 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  '+'/'-':             Increase/Decrease point size (line width)   \n"
             "  'a':                 Toggle axes									\n"
+            "  'b':                 Toggle borders								\n"
             "  'e':                 Toggle edges							    \n"
             "  'v':                 Toggle vertices                             \n"
             "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
@@ -871,9 +872,7 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     found = depth < 1.0f;
     if (found) {
         // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-        vec3 point(p.x(), p.y(), depth);
-        point = camera_->unprojectedCoordinatesOf(point);
-        return point;
+        return camera_->unprojectedCoordinatesOf(vec3(p.x(), p.y(), depth));
     }
 
     return vec3();
