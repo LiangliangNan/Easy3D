@@ -847,18 +847,18 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<SurfaceMesh*>(model)) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 
-        auto vscalar = mesh->add_vertex_property<float>("v:height");
+        auto vscalar = mesh->vertex_property<float>("v:height");
         for (auto v : mesh->vertices())
             vscalar[v] = mesh->position(v).z;
 
-        auto escalar = mesh->add_edge_property<float>("e:height");
+        auto escalar = mesh->edge_property<float>("e:height");
         for (auto e : mesh->edges()) {
             auto s = mesh->vertex(e, 0);
             auto t = mesh->vertex(e, 1);
             escalar[e] = 0.5 * (mesh->position(s).z + mesh->position(t).z);
         }
 
-        auto fscalar = mesh->add_face_property<float>("f:height");
+        auto fscalar = mesh->face_property<float>("f:height");
         for (auto f : mesh->faces()) {
             vec3 pos(0,0,0);
             float count = 0.0f;
@@ -874,7 +874,7 @@ void MainWindow::computeHeightField() {
         auto fnormals = mesh->get_face_property<vec3>("f:normal");
 
         // add a vector field to the edges
-        auto enormals = mesh->add_edge_property<vec3>("e:normal");
+        auto enormals = mesh->edge_property<vec3>("e:normal");
         for (auto e : mesh->edges()) {
             vec3 n(0,0,0);
             float count(0.0f);
@@ -895,7 +895,7 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 
-        auto vscalar = cloud->add_vertex_property<float>("v:height");
+        auto vscalar = cloud->vertex_property<float>("v:height");
         for (auto v : cloud->vertices())
             vscalar[v] = cloud->position(v).z;
     }
@@ -903,11 +903,11 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<Graph*>(model)) {
         Graph* graph = dynamic_cast<Graph*>(model);
 
-        auto vscalar = graph->add_vertex_property<float>("v:height");
+        auto vscalar = graph->vertex_property<float>("v:height");
         for (auto v : graph->vertices())
             vscalar[v] = graph->position(v).z;
 
-        auto escalar = graph->add_edge_property<float>("e:height");
+        auto escalar = graph->edge_property<float>("e:height");
         for (auto e : graph->edges()) {
             auto s = graph->from_vertex(e);
             auto t = graph->to_vertex(e);
@@ -915,7 +915,7 @@ void MainWindow::computeHeightField() {
         }
 
         // add a vector field to the edges
-        auto enormals = graph->add_edge_property<vec3>("e:normal");
+        auto enormals = graph->edge_property<vec3>("e:normal");
         for (auto e : graph->edges()) {
             enormals[e] = vec3(1,1,1);
         }
