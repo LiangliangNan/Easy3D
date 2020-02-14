@@ -68,7 +68,8 @@ namespace easy3d {
         //----- uniform simplification (specifying distance threshold) ------------------------------------
 
         /**
-         * @brief Uniformly downsample a point cloud based on a distance criterion.
+         * @brief Uniformly downsample a point cloud based on a distance criterion. This function can also be used for
+         *        removing duplicated points of a point cloud.
          * @param cloud: The point cloud.
          * @param epsilon: The minimum allowed distance between points. Two points with a distance smaller than this
          *                 value are considered identical. After simplification, the distance of any point pair is

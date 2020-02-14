@@ -57,7 +57,7 @@ namespace easy3d {
             const vec3 &p = points[i];
             std::vector<int> neighbors;
             std::vector<float> sqr_distances;
-            kdtree->find_closest_K_points(p, k + 1, neighbors, sqr_distances);  // k+1 to exclude itself
+            kdtree->find_closest_k_points(p, k + 1, neighbors, sqr_distances);  // k+1 to exclude itself
             if (neighbors.size() <= 1) {// in case we get less than k+1 neighbors
                 continue;
             }
@@ -168,12 +168,12 @@ namespace easy3d {
         std::vector<bool> keep(cloud->vertices_size(), true);
         const std::vector<vec3> &points = cloud->points();
 
-        double radius = epsilon * epsilon;
+        double sqr_dist = epsilon * epsilon;
         for (std::size_t i = 0; i < points.size(); ++i) {
             if (keep[i]) {
                 const vec3 &p = points[i];
                 std::vector<int> neighbors;
-                kdtree->find_points_in_radius(p, radius, neighbors);
+                kdtree->find_points_in_range(p, sqr_dist, neighbors);
                 if (neighbors.size() > 1) {
                     for (std::size_t j = 1; j < neighbors.size(); ++j) {
                         int idx = neighbors[j];
@@ -248,7 +248,7 @@ namespace easy3d {
                 const vec3 &p = points[i];
                 std::vector<int> neighbors;
                 std::vector<float> sqr_dists;
-                kdtree.find_closest_K_points(p, 2, neighbors, sqr_dists); // the first one is itself
+                kdtree.find_closest_k_points(p, 2, neighbors, sqr_dists); // the first one is itself
                 if (neighbors.size() == 2) {
                     sqr_distance[i] = sqr_dists[1];
 

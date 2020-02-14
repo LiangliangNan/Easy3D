@@ -97,7 +97,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ETH::find_closest_K_points(
+    void KdTreeSearch_ETH::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -116,7 +116,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ETH::find_closest_K_points(
+    void KdTreeSearch_ETH::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -137,7 +137,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ETH::find_points_in_radius(
+    void KdTreeSearch_ETH::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -151,7 +151,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ETH::find_points_in_radius(
+    void KdTreeSearch_ETH::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );

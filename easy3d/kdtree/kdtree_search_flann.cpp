@@ -94,7 +94,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_FLANN::find_closest_K_points(
+    void KdTreeSearch_FLANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const
     {
@@ -110,16 +110,16 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_FLANN::find_closest_K_points(
+    void KdTreeSearch_FLANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors
     )  const
     {
         std::vector<float> squared_distances;
-        return find_closest_K_points(p, k, neighbors, squared_distances);
+        return find_closest_k_points(p, k, neighbors, squared_distances);
     }
 
 
-    void KdTreeSearch_FLANN::find_points_in_radius(
+    void KdTreeSearch_FLANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
         flann::Matrix<float> query(const_cast<float*>(p.data()), 1, 3);
@@ -139,12 +139,12 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_FLANN::find_points_in_radius(
+    void KdTreeSearch_FLANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors
     )  const
     {
         std::vector<float> squared_distances;
-        return find_points_in_radius(p, squared_radius, neighbors, squared_distances);
+        return find_points_in_range(p, squared_radius, neighbors, squared_distances);
     }
 
 

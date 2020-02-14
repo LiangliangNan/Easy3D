@@ -79,7 +79,7 @@ namespace easy3d {
         for (int i = 0; i < num; ++i) {
             const vec3& p = points[i];
             std::vector<int> neighbors;
-            kdtree.find_closest_K_points(p, k, neighbors);
+            kdtree.find_closest_k_points(p, k, neighbors);
 
             PrincipalAxes<3, float> pca;
             pca.begin() ;
@@ -151,7 +151,7 @@ namespace easy3d {
 
                 // The indices of the neighbors of v (NOTE: the result include v itself).
                 std::vector<int> neighbor_indices;
-                tree->find_closest_K_points(p, k, neighbor_indices);
+                tree->find_closest_k_points(p, k, neighbor_indices);
                 if (neighbor_indices.size() < k)
                     continue; // in extreme cases, a point cloud can have less than K points
 

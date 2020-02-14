@@ -61,12 +61,12 @@ namespace easy3d {
         //_________________ K-nearest neighbors ____________________
 
         // NOTE: *squared* distances are returned
-        virtual void find_closest_K_points(
+        virtual void find_closest_k_points(
             const vec3& p, int k,
             std::vector<int>& neighbors, std::vector<float>& squared_distances
             ) const ;
 
-        virtual void find_closest_K_points(
+        virtual void find_closest_k_points(
             const vec3& p, int k,
             std::vector<int>& neighbors
             ) const ;
@@ -75,14 +75,14 @@ namespace easy3d {
 
         // fixed-radius search. Search for all points in the range.
         // NOTE: the range must be *squared* radius and *squared* distances are returned
-        virtual void find_points_in_radius(
+        virtual void find_points_in_range(
             const vec3& p, float squared_radius,
             std::vector<int>& neighbors, std::vector<float>& squared_distances
         ) const;
 
         // fixed-radius search. Search for all points in the range.
         // NOTE: the range must be *squared* radius
-        virtual void find_points_in_radius(
+        virtual void find_points_in_range(
             const vec3& p, float squared_radius,
             std::vector<int>& neighbors
         ) const;
