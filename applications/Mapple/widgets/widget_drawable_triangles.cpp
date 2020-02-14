@@ -417,7 +417,7 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
     if (is_scalar_field) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
         if (mesh) {
-            ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
     }

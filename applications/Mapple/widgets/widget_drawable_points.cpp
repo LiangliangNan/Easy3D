@@ -216,11 +216,11 @@ void WidgetPointsDrawable::updatePanel() {
         ui->comboBoxColorScheme->clear();
         std::vector<std::string> schemes;
         if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
-            schemes = ::details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
+            schemes = details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
         else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
-            schemes = ::details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
+            schemes = details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
         else if (dynamic_cast<Graph*>(viewer_->currentModel()))
-            schemes = ::details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
+            schemes = details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
         for (const auto& scheme : schemes)
             ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
 
@@ -250,11 +250,11 @@ void WidgetPointsDrawable::updatePanel() {
         ui->comboBoxVectorField->clear();
         std::vector<std::string> fields;
         if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
-            fields = ::details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
+            fields = details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
         else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
-            fields = ::details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
+            fields = details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
         else if (dynamic_cast<Graph*>(viewer_->currentModel()))
-            fields = ::details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
+            fields = details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
         for (auto name : fields)
             ui->comboBoxVectorField->addItem(QString::fromStdString(name));
     }
@@ -378,17 +378,17 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
     if (is_scalar_field) {
         if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-            ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
         else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
             Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
-            ::details::setup_scalar_field(graph, drawable(), text.toStdString());
+            details::setup_scalar_field(graph, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
         else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
             PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
-            ::details::setup_scalar_field(cloud, drawable(), text.toStdString());
+            details::setup_scalar_field(cloud, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
     }

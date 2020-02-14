@@ -319,17 +319,17 @@ void WidgetLinesDrawable::setColorScheme(const QString& text) {
     if (is_scalar_field) {
         if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-            ::details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
         else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
             Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
-            ::details::setup_scalar_field(graph, drawable(), text.toStdString());
+            details::setup_scalar_field(graph, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
 //        else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
 //            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
-//            ::details::setup_scalar_field(cloud, drawable(), text.toStdString());
+//            details::setup_scalar_field(cloud, drawable(), text.toStdString());
 //            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
 //        }
     }

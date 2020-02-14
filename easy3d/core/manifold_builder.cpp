@@ -186,8 +186,8 @@ namespace easy3d {
                         LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
                         occurrences += copies.second.size();
                     }
-                    issues += " (" + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
-                              + std::to_string(occurrences) + " occurrences for linking new faces)";
+                    issues += " (among which " + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
+                              + std::to_string(occurrences) + " occurrences are for linking new faces)";
                     copied_vertices_for_linking_.clear();
                 }
             }

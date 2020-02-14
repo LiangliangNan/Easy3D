@@ -35,10 +35,6 @@ class GLUtesselator;
 
 namespace easy3d {
 
-    namespace details {
-        class VertexManager;
-    }
-
     /**
      * @brief Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges
      *        into triangles. This implementation also keeps track of the unique vertices and respective indices, so as
@@ -50,17 +46,14 @@ namespace easy3d {
      *          - Stitch patches of a triangle meshes.
      */
 
-    class Tessellator
-    {
+    class Tessellator {
     public:
         struct Vertex : std::vector<double> {
             Vertex(std::size_t size = 0) : std::vector<double>(size) {}
-
-            explicit Vertex(const Vertex* v) : std::vector<double>(v->data(), v->data() + v->size()) {}
-
-            template <typename Vec>
-            inline void append(const Vec& v) {
-                for (int i=0; i<v.size(); ++i)
+            explicit Vertex(const Vertex *v) : std::vector<double>(v->data(), v->data() + v->size()) {}
+            template<typename Vec>
+            inline void append(const Vec &v) {
+                for (int i = 0; i < v.size(); ++i)
                     push_back(v[i]);
             }
         };
@@ -71,12 +64,13 @@ namespace easy3d {
 
         // Set the winding rule (default rule is ODD, modify if needed)
         enum WindingRule {
-            ODD         = 100130,   // These values are the same as in GLU.
-            NONZERO     = 100131,
-            POSITIVE    = 100132,
-            NEGATIVE    = 100133,
+            ODD = 100130,   // These values are the same as in GLU.
+            NONZERO = 100131,
+            POSITIVE = 100132,
+            NEGATIVE = 100133,
             ABS_GEQ_TWO = 100134
         };
+
         void set_winding_rule(WindingRule rule);
 
         /**
@@ -91,30 +85,32 @@ namespace easy3d {
          *        (where a CCW contour has positive area).
          * \attention The supplied normal persists until it is changed by another call to this function.
          */
-        void begin_polygon(const vec3& normal = vec3(0,0,0));
-        void begin_contour();	// a polygon can have multiple contours
+        void begin_polygon(const vec3 &normal = vec3(0, 0, 0));
+
+        void begin_contour();    // a polygon can have multiple contours
 
         // general data
-        void add_vertex(const Vertex& data);
-        void add_vertex(const float* data, unsigned int size);
+        void add_vertex(const Vertex &data);
+        void add_vertex(const float *data, unsigned int size);
 
         // commonly used data
-        void add_vertex(const vec3& v0);
-        void add_vertex(const vec3& v0, const vec2& t);
-        void add_vertex(const vec3& v0, const vec3& v1);
-        void add_vertex(const vec3& v0, const vec3& v1, const vec2& t);
-        void add_vertex(const vec3& v0, const vec3& v1, const vec3& v2);
-        void add_vertex(const vec3& v0, const vec3& v1, const vec3& v2, const vec2& t);
+        void add_vertex(const vec3 &v0);
+        void add_vertex(const vec3 &v0, const vec2 &t);
+        void add_vertex(const vec3 &v0, const vec3 &v1);
+        void add_vertex(const vec3 &v0, const vec3 &v1, const vec2 &t);
+        void add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2);
+        void add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec2 &t);
 
         void end_contour();
+
         void end_polygon();
 
-        // the vertices (including the new created ones) of the triangles
-        const std::vector<Vertex*>& vertices() const;
+        // the vertices of the resulted triangle set.
+        const std::vector<Vertex *> &vertices() const;
 
         // list of triangle indices created over many calls (every consecutive 3 entries form a triangle)
         // NOTE: the indices are w.r.t. the vertex list returned by 'vertices()'
-        const std::vector<unsigned int>& indices() const { return triangle_list_; }
+        const std::vector<unsigned int> &indices() const { return triangle_list_; }
 
         // get the vertex indices of the i'th triangle in the triangle list.
         // NOTE: the indices are w.r.t. the vertex list returned by 'vertices()'
@@ -142,30 +138,31 @@ namespace easy3d {
         static void beginCallback(GLenum w, void *cbdata);
         static void endCallback(void *cbdata);
         static void vertexCallback(GLvoid *vertex, void *cbdata);
-        static void combineCallback(GLdouble coords[3], void *vertex_data[4], GLdouble weight[4], void **dataOut, void *cbdata);
+        static void
+        combineCallback(GLdouble coords[3], void *vertex_data[4], GLdouble weight[4], void **dataOut, void *cbdata);
 
     private:
-        GLUtesselator*	tess_obj_;
+        GLUtesselator *tess_obj_;
 
         // The tessellator decides the most efficient primitive type while performing tessellation,
         // e.g., GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP.
-        GLenum	primitive_type_;
+        GLenum primitive_type_;
 
         // If true, the orientations of the resulted triangles will comply with the primitive_type_
         // (decided by the tessellator), which is useful for rendering as GL_TRIANGLE_STRIP.
         // However, when tringulating a mesh, the output triangles must have the orientation as
         // the input polygons. In this case, you should set primitive_aware_orientation_ to false.
-        bool	primitive_aware_orientation_;
+        bool primitive_aware_orientation_;
 
         // vertex ids in the last polygon
-        std::vector<unsigned int>	vertex_ids_in_polygon_;
+        std::vector<unsigned int> vertex_ids_in_polygon_;
         // the number of triangles in the last polygon
-        unsigned int				num_triangles_in_polygon_;
+        unsigned int num_triangles_in_polygon_;
 
         // List of triangles created over many calls (every consecutive 3 entries form a triangle)
-        std::vector<unsigned int>	triangle_list_;
+        std::vector<unsigned int> triangle_list_;
 
-        details::VertexManager*		vertex_manager_;
+        void *vertex_manager_;
 
         unsigned int vertex_data_size_;
     };

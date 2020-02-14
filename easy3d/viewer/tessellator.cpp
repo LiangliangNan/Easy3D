@@ -240,7 +240,7 @@ namespace easy3d {
 
 
     void Tessellator::add_vertex(const Vertex &v) {
-        Vertex *new_v = vertex_manager_->find_or_allocate_vertex(&v);
+        Vertex *new_v = reinterpret_cast<details::VertexManager*>(vertex_manager_)->find_or_allocate_vertex(&v);
         // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
@@ -322,7 +322,7 @@ namespace easy3d {
 
 
     const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
-        return vertex_manager_->vertices();
+        return reinterpret_cast<details::VertexManager*>(vertex_manager_)->vertices();
     }
 
 
@@ -444,7 +444,7 @@ namespace easy3d {
         Vertex *v = reinterpret_cast<Vertex *>(vertex);
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
-        std::size_t id = tessellator->vertex_manager_->vertex_id(v);
+        std::size_t id = reinterpret_cast<details::VertexManager*>(tessellator->vertex_manager_)->vertex_id(v);
         tessellator->vertex_ids_in_polygon_.push_back(id);
     }
 
@@ -474,12 +474,12 @@ namespace easy3d {
             v[i] = a + b + c + d;
         }
 
-        *dataOut = tessellator->vertex_manager_->find_or_allocate_vertex(&v);
+        *dataOut = reinterpret_cast<details::VertexManager*>(tessellator->vertex_manager_)->find_or_allocate_vertex(&v);
     }
 
 
     void Tessellator::reset() {
-        vertex_manager_->clear();
+        reinterpret_cast<details::VertexManager*>(vertex_manager_)->clear();
         triangle_list_.clear();
 
         vertex_ids_in_polygon_.clear();
