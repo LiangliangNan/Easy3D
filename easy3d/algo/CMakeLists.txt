@@ -5,6 +5,7 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+        gaussian_noise.h
         point_cloud_normals.h
         point_cloud_poisson_reconstruction.h
         point_cloud_ransac.h
@@ -13,6 +14,7 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
+        gaussian_noise.cpp
         point_cloud_normals.cpp
         point_cloud_poisson_reconstruction.cpp
         point_cloud_ransac.cpp

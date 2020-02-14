@@ -57,6 +57,8 @@
     <addaction name="actionRestoreCameraState"/>
     <addaction name="separator"/>
     <addaction name="actionBackgroundColor"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -101,6 +103,7 @@
     <addaction name="actionDeleteSelectedPrimitives"/>
     <addaction name="separator"/>
     <addaction name="actionDownSampling"/>
+    <addaction name="actionAddGaussianNoise"/>
    </widget>
    <widget class="QMenu" name="menuProperty">
     <property name="title">
@@ -620,8 +623,30 @@
    </property>
   </action>
   <action name="actionDownSampling">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/down_sample.png</normaloff>Resources/icons/down_sample.png</iconset>
+   </property>
    <property name="text">
     <string>Down Sampling</string>
+   </property>
+  </action>
+  <action name="actionAddGaussianNoise">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/noise.png</normaloff>Resources/icons/noise.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add Gaussian Noise</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset>
+     <normaloff>Resources/icons/options.png</normaloff>Resources/icons/options.png</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

@@ -1,21 +1,20 @@
-#ifndef DLG_SAMPLING_RESOLUTION_H
-#define DLG_SAMPLING_RESOLUTION_H
+#ifndef DIALOG_SAMPLING_RESOLUTION_H
+#define DIALOG_SAMPLING_RESOLUTION_H
 
 #include <easy3d/core/point_cloud.h>
 
 #include <QDialog>
-#include "ui_dialog_point_cloud_simplification.h"
+
 
 namespace Ui {
-    class DialogSurfaceMeshSampling;
+    class DialogPointCloudSimplification;
 }
-
-class PaintCanvas;
 
 namespace easy3d {
     class KdTreeSearch;
 }
 
+class PaintCanvas;
 
 class DialogPointCloudSimplification : public QDialog
 {

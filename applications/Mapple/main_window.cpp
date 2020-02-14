@@ -35,6 +35,7 @@
 #include "dialogs/dialog_surface_mesh_sampling.h"
 #include "dialogs/dialog_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
+#include "dialogs/dialog_gaussian_noise.h"
 
 #include "widgets/widget_lighting.h"
 #include "widgets/widget_drawable_points.h"
@@ -53,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     , dialogRansacPrimitiveExtraction_(nullptr)
     , dialogPointCloudSimplification_(nullptr)
     , dialogSurfaceMeshSampling_(nullptr)
+    , dialogGaussianNoise_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -109,6 +111,7 @@ MainWindow::~MainWindow()
     if (dialogRansacPrimitiveExtraction_)   delete dialogRansacPrimitiveExtraction_;
     if (dialogPointCloudSimplification_)    delete dialogPointCloudSimplification_;
     if (dialogSurfaceMeshSampling_)     delete dialogSurfaceMeshSampling_;
+    if (dialogGaussianNoise_)     delete dialogGaussianNoise_;
 }
 
 
@@ -580,6 +583,8 @@ void MainWindow::createActionsForEditMenu() {
 
     connect(ui->actionDownSampling, SIGNAL(triggered()), this, SLOT(downsampling()));
 
+    connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
+
     //////////////////////////////////////////////////////////////////////////
 
     QActionGroup* actionGroup = new QActionGroup(this);
@@ -822,6 +827,16 @@ void MainWindow::downsampling() {
     dialogPointCloudSimplification_->show();
     dialogPointCloudSimplification_->raise();
     dialogPointCloudSimplification_->activateWindow();
+}
+
+
+void MainWindow::addGaussianNoise() {
+    if (!dialogGaussianNoise_)
+        dialogGaussianNoise_ = new DialogGaussianNoise(this);
+
+    dialogGaussianNoise_->show();
+    dialogGaussianNoise_->raise();
+    dialogGaussianNoise_->activateWindow();
 }
 
 

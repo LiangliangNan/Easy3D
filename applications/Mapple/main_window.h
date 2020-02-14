@@ -20,6 +20,7 @@ class DialogPoissonReconstruction;
 class DialogRansacPrimitiveExtraction;
 class DialogPointCloudSimplification;
 class DialogSurfaceMeshSampling;
+class DialogGaussianNoise;
 
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
@@ -49,6 +50,7 @@ private slots:
 
     // edit
     void downsampling();
+    void addGaussianNoise();
 
     // property
     void computeHeightField();
@@ -122,6 +124,7 @@ private:
     DialogRansacPrimitiveExtraction*dialogRansacPrimitiveExtraction_;
     DialogPointCloudSimplification* dialogPointCloudSimplification_;
     DialogSurfaceMeshSampling*      dialogSurfaceMeshSampling_;
+    DialogGaussianNoise*            dialogGaussianNoise_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;
