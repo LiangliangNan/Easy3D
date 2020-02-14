@@ -102,6 +102,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     readSettings();
     updateWindowTitle();
+
+#ifdef NDEBUG
+    QMessageBox::warning(this, "Mapple is not ready yet!",
+                         "Mapple is still under development. This version is nether feature complete nor fully tested.",
+                         QMessageBox::Ok);
+#endif
 }
 
 MainWindow::~MainWindow()
