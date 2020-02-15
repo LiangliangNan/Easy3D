@@ -57,16 +57,16 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/dialogs.h>
-#include <easy3d/util/file_system.h>
-#include <easy3d/util/logging.h>
-#include <easy3d/util/timer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
+#include <easy3d/util/dialogs.h>
+#include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/util/timer.h>
 
 
  // enforce the same behavior on macOS and other platforms (i.e., Windows, Linux)
@@ -1249,8 +1249,9 @@ namespace easy3d {
 		}
 
 		if (create_default_drawables) {
-			if (model->vertices_size() > 0)
-				create_drawables(model);
+			if (model->vertices_size() > 0) {
+                create_drawables(model);
+            }
 			else
 				LOG(WARNING) << "drawable cannot be created due to no vertices.";
 		}
