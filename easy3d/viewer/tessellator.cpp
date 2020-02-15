@@ -32,9 +32,7 @@
 #endif
 
 #  if defined(__APPLE__) && defined(__MACH__)
-
 #    include <OpenGL/glu.h>
-
 #  else
 #    include <GL/glu.h>
 #  endif
@@ -49,76 +47,10 @@ namespace easy3d {
 
     namespace details {
 
-#if 0   // [Liangliang]:
-        // Same vertex data (xyz, normal, color...) -> same hash value -> but unordered_map couldn't find the key.
-        // Why explicitly computing the hash (see below) works? A bug in std::unordered_map?
-
-        class VertexManager {
-        public:
-            VertexManager() {}
-            ~VertexManager() { clear(); }
-
-            const std::vector<Tessellator::Vertex*>& vertices() const {
-                return unique_vertices_;
-            }
-
-            Tessellator::Vertex* find_or_allocate_vertex(Tessellator::Vertex* v) {
-                auto pos = pointer_to_index_.find(v);
-                if (pos == pointer_to_index_.end()) {
-                    auto new_v = new Tessellator::Vertex(v);
-                    pointer_to_index_[new_v] = unique_vertices_.size();
-                    unique_vertices_.push_back(new_v);
-//                    LOG(WARNING) << "new vertex " << pointer_to_index_[new_v] << ", " << new_v << ", " << *(new_v);
-                    return new_v;
-                }
-                else {
-                    return pos->first;
-                }
-            }
-
-
-            void clear() {
-                for (auto v : unique_vertices_)
-                    delete v;
-                unique_vertices_.clear();
-                pointer_to_index_.clear();
-            }
-
-            std::size_t vertex_id(Tessellator::Vertex *v) {
-                return pointer_to_index_[v];
-            }
-
-        private:
-            struct Hash {
-                template <class T>
-                inline void hash_combine(std::size_t& seed, T const& v) const {
-                    std::hash<T> hasher;
-                    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-                }
-
-                inline std::size_t operator()(const Tessellator::Vertex *v) const {
-                    std::size_t seed = 0;
-                    std::hash<double> hasher;
-                    for (auto f : *v) {
-                        hash_combine(seed, hasher(f));
-                    }
-                    return seed;
-                }
-            };
-
-            std::vector<Tessellator::Vertex*> unique_vertices_;
-
-            // vertex -> index
-            std::unordered_map<Tessellator::Vertex*, std::size_t, Hash> pointer_to_index_;
-        };
-    }
-#else
-
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
         public:
             VertexManager() {}
-
             ~VertexManager() {
                 clear();
             }
@@ -127,21 +59,17 @@ namespace easy3d {
                 return unique_vertices_;
             }
 
-            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex *v) {
+            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex& v) {
                 std::size_t key = hash(v);
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
                     auto vertex = new Tessellator::Vertex(v);
                     hash_table_[key] = unique_vertices_.size();
-//                    std::cout << "new: " << key << ", index: " << unique_vertices_.size() << ", xyz: " << *v << std::endl;
                     unique_vertices_.push_back(vertex);
                     return vertex;
-                } else {
-//                    std::cout << "old: " << key << ", index: " << hash_table_[key] << ", xyz: " << *v << std::endl;
+                } else
                     return unique_vertices_[pos->second];
-                }
             }
-
 
             void clear() {
                 for (auto vertex : unique_vertices_)
@@ -150,7 +78,7 @@ namespace easy3d {
                 hash_table_.clear();
             }
 
-            std::size_t vertex_id(const Tessellator::Vertex *v) {
+            std::size_t vertex_id(const Tessellator::Vertex& v) {
                 return hash_table_[hash(v)];
             }
 
@@ -161,10 +89,10 @@ namespace easy3d {
                 seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
 
-            inline std::size_t hash(const Tessellator::Vertex *v) const {
+            inline std::size_t hash(const Tessellator::Vertex& v) const {
                 std::size_t seed = 0;
                 std::hash<double> hasher;
-                for (auto f : *v) {
+                for (auto f : v) {
                     hash_combine(seed, hasher(f));
                 }
                 return seed;
@@ -179,15 +107,9 @@ namespace easy3d {
         };
     }
 
-#endif
-
-
     Tessellator::Tessellator()
-            : primitive_type_(GL_TRIANGLES)
-            , primitive_aware_orientation_(false)
-            , num_triangles_in_polygon_(0)
-            , vertex_manager_(new details::VertexManager)
-            , vertex_data_size_(3) {
+            : primitive_type_(GL_TRIANGLES), primitive_aware_orientation_(false), num_triangles_in_polygon_(0),
+              vertex_manager_(new details::VertexManager), vertex_data_size_(3) {
         tess_obj_ = gluNewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
             LOG(ERROR) << "failed to create a tessellator object";
@@ -215,17 +137,14 @@ namespace easy3d {
         gluTessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
     }
 
-
     Tessellator::~Tessellator() {
         delete vertex_manager_;
         gluDeleteTess(tess_obj_);
     }
 
-
     void Tessellator::set_winding_rule(WindingRule rule) {
         gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, rule);
     }
-
 
     void Tessellator::begin_polygon(const vec3 &normal) {
         num_triangles_in_polygon_ = 0;
@@ -233,14 +152,12 @@ namespace easy3d {
         gluTessBeginPolygon(tess_obj_, this);
     }
 
-
     void Tessellator::begin_contour() {
         gluTessBeginContour(tess_obj_);
     }
 
-
     void Tessellator::add_vertex(const Vertex &v) {
-        Vertex *new_v = reinterpret_cast<details::VertexManager*>(vertex_manager_)->find_or_allocate_vertex(&v);
+        Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_allocate_vertex(v);
         // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
@@ -250,7 +167,6 @@ namespace easy3d {
         gluTessVertex(tess_obj_, new_v->data(), new_v);
     }
 
-
     void Tessellator::add_vertex(const float *data, unsigned int size) // to be flexible (any data can be provide)
     {
         Vertex vertex(size);
@@ -258,7 +174,6 @@ namespace easy3d {
             vertex[i] = data[i];
         add_vertex(vertex);
     }
-
 
     void Tessellator::add_vertex(const vec3 &v0) {
         Vertex v;
@@ -305,31 +220,25 @@ namespace easy3d {
         add_vertex(v);
     }
 
-
     void Tessellator::end_contour() {
         gluTessEndContour(tess_obj_);
     }
-
 
     void Tessellator::end_polygon() {
         gluTessEndPolygon(tess_obj_);
     }
 
-
     unsigned int Tessellator::num_triangles_in_last_polygon() const {
         return num_triangles_in_polygon_;
     }
 
-
     const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
-        return reinterpret_cast<details::VertexManager*>(vertex_manager_)->vertices();
+        return reinterpret_cast<details::VertexManager *>(vertex_manager_)->vertices();
     }
-
 
     unsigned int Tessellator::num_triangles() const {
         return triangle_list_.size() / 3;
     }
-
 
     bool Tessellator::get_triangle(unsigned int t, unsigned int &a, unsigned int &b, unsigned int &c) const {
         bool ret = (t < triangle_list_.size() / 3);
@@ -343,14 +252,12 @@ namespace easy3d {
         return ret;
     }
 
-
     void Tessellator::add_triangle(unsigned int a, unsigned int b, unsigned int c) {
         triangle_list_.push_back(a);
         triangle_list_.push_back(b);
         triangle_list_.push_back(c);
         ++num_triangles_in_polygon_;
     }
-
 
     // ****************************************************************************
     // Method: Tessellator::beginCallback
@@ -444,7 +351,7 @@ namespace easy3d {
         Vertex *v = reinterpret_cast<Vertex *>(vertex);
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
-        std::size_t id = reinterpret_cast<details::VertexManager*>(tessellator->vertex_manager_)->vertex_id(v);
+        std::size_t id = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->vertex_id(*v);
         tessellator->vertex_ids_in_polygon_.push_back(id);
     }
 
@@ -474,12 +381,11 @@ namespace easy3d {
             v[i] = a + b + c + d;
         }
 
-        *dataOut = reinterpret_cast<details::VertexManager*>(tessellator->vertex_manager_)->find_or_allocate_vertex(&v);
+        *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_allocate_vertex(v);
     }
 
-
     void Tessellator::reset() {
-        reinterpret_cast<details::VertexManager*>(vertex_manager_)->clear();
+        reinterpret_cast<details::VertexManager *>(vertex_manager_)->clear();
         triangle_list_.clear();
 
         vertex_ids_in_polygon_.clear();
