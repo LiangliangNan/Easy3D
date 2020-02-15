@@ -558,8 +558,8 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 drawable = currentModel()->add_points_drawable("vertices");
                 makeCurrent();
                 renderer::update_buffer(currentModel(), drawable);
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
                 doneCurrent();
+                drawable->set_impostor_type(PointsDrawable::SPHERE);
                 currentModelChanged();
             } else {
                 drawable->set_visible(!drawable->is_visible());
@@ -582,7 +582,9 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 }
                 if (!points.empty()) {
                     drawable = mesh->add_lines_drawable("borders");
+                    makeCurrent();
                     drawable->update_vertex_buffer(points);
+                    doneCurrent();
                     drawable->set_default_color(setting::surface_mesh_borders_color);
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
@@ -611,7 +613,9 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     }
                     if (!points.empty()) {
                         drawable = mesh->add_points_drawable("locks");
+                        makeCurrent();
                         drawable->update_vertex_buffer(points);
+                        doneCurrent();
                         drawable->set_default_color(vec3(1, 1, 0));
                         drawable->set_per_vertex_color(false);
                         drawable->set_impostor_type(PointsDrawable::SPHERE);

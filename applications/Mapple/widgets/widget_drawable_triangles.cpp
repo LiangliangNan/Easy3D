@@ -417,8 +417,10 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
     if (is_scalar_field) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
         if (mesh) {
+            viewer_->makeCurrent();
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+            viewer_->doneCurrent();
         }
     }
 
@@ -490,7 +492,10 @@ void WidgetTrianglesDrawable::setTextureFile() {
         delete tex;
     }
 
+    viewer_->makeCurrent();
     tex = Texture::create(file_name, GL_REPEAT);
+    viewer_->doneCurrent();
+
     if (tex) {
         drawable()->set_texture(tex);
         drawable()->set_use_texture(true);

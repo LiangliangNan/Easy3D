@@ -342,14 +342,19 @@ void WidgetPointsDrawable::setImposterStyle(const QString & style) {
                         mesh->update_vertex_normals();
                         normals = mesh->get_vertex_property<vec3>("v:normal");
                     }
+                    viewer_->makeCurrent();
                     drawable()->update_normal_buffer(normals.vector());
+                    viewer_->doneCurrent();
                 }
                 else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
                     if (drawable()->normal_buffer() == 0) { // surfel requires point normals
                         PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
                         auto normals = cloud->get_vertex_property<vec3>("v:normal");
-                        if (normals)
+                        if (normals) {
+                            viewer_->makeCurrent();
                             drawable()->update_normal_buffer(normals.vector());
+                            viewer_->doneCurrent();
+                        }
                     }
                 }
             }
@@ -376,6 +381,7 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
+        viewer_->makeCurrent();
         if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
@@ -391,6 +397,7 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
             details::setup_scalar_field(cloud, drawable(), text.toStdString());
             drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
         }
+        viewer_->doneCurrent();
     }
 
     bool use_texture = text.contains(":texcoord") || is_scalar_field;

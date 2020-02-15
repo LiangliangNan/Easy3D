@@ -317,6 +317,7 @@ void WidgetLinesDrawable::setColorScheme(const QString& text) {
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
+        viewer_->makeCurrent();
         if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
@@ -332,6 +333,7 @@ void WidgetLinesDrawable::setColorScheme(const QString& text) {
 //            details::setup_scalar_field(cloud, drawable(), text.toStdString());
 //            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
 //        }
+        viewer_->doneCurrent();
     }
 
     bool use_texture = text.contains(":texcoord") || is_scalar_field;
