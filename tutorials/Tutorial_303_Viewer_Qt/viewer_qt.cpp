@@ -513,6 +513,8 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 				vertices = currentModel()->add_points_drawable("vertices");
 				makeCurrent();
 				renderer::update_buffer(currentModel(), vertices);
+                vertices->set_impostor_type(PointsDrawable::SPHERE);
+                vertices->set_point_size(setting::surface_mesh_vertices_point_size);
 				doneCurrent();
 			}
 			else
