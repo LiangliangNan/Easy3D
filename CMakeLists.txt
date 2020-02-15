@@ -18,9 +18,9 @@ endif()
 #math(EXPR EASY3D_OS_BITS "8 * ${CMAKE_SIZEOF_VOID_P}")
 #message(STATUS "Easy3d: I'am woking on ${EASY3D_OS_BITS}-bit ${CMAKE_SYSTEM_NAME}")
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "Easy3D: I'am woking on a 64-bit ${CMAKE_SYSTEM_NAME}")
+    message(STATUS "Easy3D: I'am working on a 64-bit ${CMAKE_SYSTEM_NAME}")
 else()
-    message(STATUS "Easy3D: I'am woking on a 32-bit ${CMAKE_SYSTEM_NAME}")
+    message(STATUS "Easy3D: I'am working on a 32-bit ${CMAKE_SYSTEM_NAME}")
 endif()
 
 # specify the C++ standard

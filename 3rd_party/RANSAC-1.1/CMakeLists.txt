@@ -226,16 +226,16 @@ endif()
 # Liangliang: In the original RANSAC implementation, OpenMP is enabled if the
 #             DOPARALLEL micro can be set. But the code with OpenMP enabled
 #             causes the process loops infinitely on Windows and Ubuntu (not
-#             works for macOS). So I just disable OpenMP on Windows and Linux.
-if((NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows") AND (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"))
+#             tested yet on macOS). So I just disable OpenMP on Windows and Linux.
+if((${CMAKE_SYSTEM_NAME} STREQUAL "Windows") OR (${CMAKE_SYSTEM_NAME} STREQUAL "Linux"))
+    message(STATUS "OpenMP support disabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
+else()
     include( ../../cmake/UseOpenMP.cmake )
-    # define DOPARALLEL to enable OpenMP
     if (OPENMP_FOUND)
+        # define DOPARALLEL to enable OpenMP
         target_compile_definitions(${PROJECT_NAME} PRIVATE DOPARALLEL)
         message(STATUS "OpenMP support enabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
     endif()
-else()
-    message(STATUS "OpenMP support disabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
 endif()
 
 
