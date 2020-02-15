@@ -29,6 +29,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -61,11 +62,11 @@ namespace easy3d {
 		//	else if (ext == "geojson")
 		//        serializer = new MeshSerializer_json();
         else if (ext.empty()){
-            std::cerr << "unknown file format: no extention" << ext << std::endl;
+            LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
         }
 		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
+			LOG(ERROR) << "unknown file format: " << ext;
 			success = false;
 		}
 
@@ -75,13 +76,13 @@ namespace easy3d {
 		}
 
         if (success)
-            std::cout << "surface mesh loaded ("
+            LOG(INFO) << "surface mesh loaded ("
                       << "#face: " << mesh->faces_size() << ", "
                       << "#vertex: " << mesh->vertices_size() << ", "
                       << "#edge: " << mesh->edges_size() << "). Time: "
-                      << w.time_string() << std::endl;
+                      << w.time_string();
         else
-            std::cout << "load surface mesh failed" << std::endl;
+            LOG(INFO) << "load surface mesh failed";
 
 		return mesh;
 	}
@@ -90,7 +91,7 @@ namespace easy3d {
 	bool SurfaceMeshIO::save(const std::string& file_name, const SurfaceMesh* mesh)
 	{
         if (!mesh || mesh->faces_size() == 0) {
-			std::cerr << "surface mesh is null" << std::endl;
+			LOG(ERROR) << "surface mesh is null";
 			return false;
 		}
 
@@ -102,7 +103,7 @@ namespace easy3d {
 
         if (ext == "ply" || ext.empty()) {
             if (ext.empty()) {
-                std::cerr << "No extention specified. Default to ply" << ext << std::endl;
+                LOG(ERROR) << "No extention specified. Default to ply" << ext;
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, mesh, true);
@@ -121,16 +122,16 @@ namespace easy3d {
 		//	else if (ext == "geojson")
 		//        serializer = new MeshSerializer_json();
 		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
+			LOG(ERROR) << "unknown file format: " << ext;
 			success = false;
 		}
 
         if (success) {
-            std::cout << "save model done. time: " << w.time_string() << std::endl;
+            LOG(INFO) << "save model done. time: " << w.time_string();
             return true;
         }
         else {
-            std::cout << "save model failed" << std::endl;
+            LOG(INFO) << "save model failed";
             return false;
         }
 	}

@@ -513,9 +513,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
 				vertices = currentModel()->add_points_drawable("vertices");
 				makeCurrent();
 				renderer::update_buffer(currentModel(), vertices);
+                doneCurrent();
                 vertices->set_impostor_type(PointsDrawable::SPHERE);
                 vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-				doneCurrent();
 			}
 			else
 				vertices->set_visible(!vertices->is_visible());
@@ -537,7 +537,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 }
                 if (!points.empty()) {
                     drawable = mesh->add_lines_drawable("borders");
+                    makeCurrent();
                     drawable->update_vertex_buffer(points);
+                    doneCurrent();
                     drawable->set_default_color(setting::surface_mesh_borders_color);
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
@@ -566,7 +568,9 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                     }
                     if (!points.empty()) {
                         drawable = mesh->add_points_drawable("locks");
+                        makeCurrent();
                         drawable->update_vertex_buffer(points);
+                        doneCurrent();
                         drawable->set_default_color(vec3(1, 1, 0));
                         drawable->set_per_vertex_color(false);
                         drawable->set_impostor_type(PointsDrawable::SPHERE);

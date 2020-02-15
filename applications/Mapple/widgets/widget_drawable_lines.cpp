@@ -463,13 +463,13 @@ std::vector<std::string> WidgetLinesDrawable::colorSchemes(const easy3d::Model* 
         for (const auto &name : mesh->edge_properties()) {
             if (mesh->get_edge_property<float>(name))
                 schemes.push_back("scalar - " + name);
-            else if (mesh->get_face_property<double>(name))
+            else if (mesh->get_edge_property<double>(name))
                 schemes.push_back("scalar - " + name);
-            else if (mesh->get_face_property<unsigned int>(name))
+            else if (mesh->get_edge_property<unsigned int>(name))
                 schemes.push_back("scalar - " + name);
-            else if (mesh->get_face_property<int>(name))
+            else if (mesh->get_edge_property<int>(name))
                 schemes.push_back("scalar - " + name);
-            else if (mesh->get_face_property<bool>(name))
+            else if (mesh->get_edge_property<bool>(name))
                 schemes.push_back("scalar - " + name);
         }
         // scalar fields defined on vertices
