@@ -274,9 +274,11 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             }
         }
 #endif
+        StopWatch w;
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
         viewer_->doneCurrent();
+        LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
         setCurrentFile(QString::fromStdString(file_name));
         viewer_->fitScreen(model);
     }
