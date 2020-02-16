@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>363</width>
+    <width>473</width>
     <height>590</height>
    </rect>
   </property>
@@ -659,6 +659,18 @@
            <height>0</height>
           </size>
          </property>
+         <property name="decimals">
+          <number>3</number>
+         </property>
+         <property name="minimum">
+          <double>-999999999999.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>999999999999.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>0.000000000000000</double>
+         </property>
         </widget>
        </item>
        <item row="0" column="2">
@@ -674,6 +686,18 @@
            <width>60</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="decimals">
+          <number>3</number>
+         </property>
+         <property name="minimum">
+          <double>-999999999999.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>999999999999.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>1.000000000000000</double>
          </property>
         </widget>
        </item>
@@ -836,6 +860,18 @@
            <height>0</height>
           </size>
          </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>1.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>20.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>1.000000000000000</double>
+         </property>
         </widget>
        </item>
        <item>
@@ -874,7 +910,7 @@
        <item alignment="Qt::AlignRight">
         <widget class="QLabel" name="labelVectorFieldScale">
          <property name="text">
-          <string>Length</string>
+          <string>Scale (%)</string>
          </property>
         </widget>
        </item>
@@ -898,6 +934,18 @@
            <width>60</width>
            <height>0</height>
           </size>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>0.100000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>50.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>5.000000000000000</double>
          </property>
         </widget>
        </item>
