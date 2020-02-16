@@ -165,9 +165,11 @@ namespace details {
         std::vector<std::string> fields;
 
         // vector fields defined on vertices
-        for (const auto &name : model->template vertex_properties()) {
-            if (model->template get_vertex_property<vec3>(name))
-                fields.push_back(name);
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<vec3>(name)) {
+                if (name != "v:point" && name != "v:color")
+                    fields.push_back(name);
+            }
         }
 
         // if no vector fields found, add a "not available" item
@@ -250,11 +252,11 @@ void WidgetPointsDrawable::updatePanel() {
         ui->comboBoxVectorField->clear();
         std::vector<std::string> fields;
         if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
-            fields = details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
+            fields = details::vector_fields(dynamic_cast<PointCloud*>(viewer_->currentModel()));
         else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
-            fields = details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
+            fields = details::vector_fields(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
         else if (dynamic_cast<Graph*>(viewer_->currentModel()))
-            fields = details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
+            fields = details::vector_fields(dynamic_cast<Graph*>(viewer_->currentModel()));
         for (auto name : fields)
             ui->comboBoxVectorField->addItem(QString::fromStdString(name));
     }

@@ -538,8 +538,10 @@ std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model* 
     if (mesh) {
         // vector fields defined on edges
         for (const auto& name : mesh->edge_properties()) {
-            if (mesh->get_edge_property<vec3>(name))
-                fields.push_back(name);
+            if (mesh->get_edge_property<vec3>(name)) {
+                if (name != "e:color")
+                    fields.push_back(name);
+            }
         }
     }
 
@@ -547,8 +549,10 @@ std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model* 
     if (graph) {
         // vector fields defined on edges
         for (const auto& name : graph->edge_properties()) {
-            if (graph->get_edge_property<vec3>(name))
-                fields.push_back(name);
+            if (graph->get_edge_property<vec3>(name)) {
+                if (name != "e:color")
+                    fields.push_back(name);
+            }
         }
     }
 
