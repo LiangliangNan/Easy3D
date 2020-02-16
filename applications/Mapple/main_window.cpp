@@ -685,7 +685,7 @@ void MainWindow::detectDuplicatedFaces() {
     if (!faces.empty())
         std::cerr << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string() << std::endl;
     else
-        std::cerr << "done. No duplicated faces detected" << w.time_string() << std::endl;
+        std::cerr << "done. No duplicated faces detected. " << w.time_string() << std::endl;
 }
 
 
@@ -708,7 +708,7 @@ void MainWindow::removeDuplicatedFaces() {
         std::cerr << "done. " << num << " faces deleted. Time: " << w.time_string() << std::endl;
     }
     else
-        std::cerr << "done. No duplicated faces detected" << w.time_string() << std::endl;
+        std::cerr << "done. No duplicated faces detected. " << w.time_string() << std::endl;
 }
 
 
@@ -726,7 +726,7 @@ void MainWindow::detectSelfIntersections() {
     if (!pairs.empty())
         std::cerr << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string() << std::endl;
     else
-        std::cerr << "done. No intersecting faces detected" << w.time_string() << std::endl;
+        std::cerr << "done. No intersecting faces detected. " << w.time_string() << std::endl;
  }
 
 
@@ -751,7 +751,7 @@ void MainWindow::remeshSelfIntersections() {
         std::cerr << "done. #faces " << size << " -> " << result->faces_size() << ". Time: " << w.time_string() << std::endl;
     }
     else
-        std::cerr << "done. No intersecting faces detected" << w.time_string() << std::endl;
+        std::cerr << "done. No intersecting faces detected. " << w.time_string() << std::endl;
 }
 
 
