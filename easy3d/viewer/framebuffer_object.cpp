@@ -1272,7 +1272,6 @@ namespace easy3d {
 
         LOG(INFO) << "read buffer = ";
         _print_buffer(ivalue);
-        LOG(INFO);
 
         //////////////////////////////////////////////////////////////////////////
 

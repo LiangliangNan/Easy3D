@@ -63,11 +63,11 @@ namespace easy3d {
             success = io::PointCloudIO_vg::load_bvg(file_name, cloud);
 
         else if (ext.empty()){
-            std::cerr << "unknown file format: no extention" << ext << std::endl;
+            LOG(ERROR) << "unknown file format: no extention";
             success = false;
         }
 		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
+			LOG(ERROR) << "unknown file format: " << ext;
 			success = false;
 		}
 
@@ -77,11 +77,11 @@ namespace easy3d {
 		}
 
         if (success)
-            std::cout << "point cloud loaded ("
+            LOG(INFO) << "point cloud loaded ("
                       << "#vertex: " << cloud->vertices_size() << "). Time: "
-                      << w.time_string() << std::endl;
+                      << w.time_string();
         else
-            std::cout << "load point cloud failed." << std::endl;
+            LOG(INFO) << "load point cloud failed.";
 
 		return cloud;
 	}
@@ -89,7 +89,7 @@ namespace easy3d {
 
 	bool PointCloudIO::save(const std::string& file_name, const PointCloud* cloud) {
 		if (!cloud) {
-			std::cerr << "Point cloud is null" << std::endl;
+			LOG(ERROR) << "Point cloud is null";
 			return false;
 		}
 
@@ -100,7 +100,7 @@ namespace easy3d {
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ply" || ext.empty()) {
             if (ext.empty()) {
-                std::cerr << "No extention specified. Default to ply" << ext << std::endl;
+                LOG(ERROR) << "No extension specified. Default to ply";
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, cloud, true);
@@ -118,16 +118,16 @@ namespace easy3d {
         else if (ext == "bvg")
             success = io::PointCloudIO_vg::save_bvg(file_name, cloud);
 		else {
-			std::cerr << "unknown file format: " << ext << std::endl;
+			LOG(ERROR) << "unknown file format: " << ext;
             success = false;
 		}
 
         if (success) {
-            std::cout << "save model done. time: " << w.time_string() << std::endl;
+            LOG(INFO) << "save model done. time: " << w.time_string();
             return true;
         }
         else {
-            std::cout << "save model failed" << std::endl;
+            LOG(INFO) << "save model failed";
             return false;
         }
 

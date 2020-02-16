@@ -42,7 +42,7 @@ namespace easy3d {
         points_num_ = 0;
         tree_ = nullptr;
         k_for_radius_search_ = 32;
-        std::cerr << "KdTreeSearch_ANN: k = 32 for radius search" << std::endl;
+        LOG(INFO) << "KdTreeSearch_ANN: k = 32 for radius search";
     }
 
 

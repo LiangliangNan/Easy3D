@@ -50,19 +50,19 @@ namespace easy3d {
     bool PointCloudNormals::estimate(PointCloud* cloud, unsigned int k /* = 16 */, bool compute_curvature /* = false */) const
     {
         if (!cloud) {
-            std::cerr << "empty input point cloud" << std::endl;
+            LOG(ERROR) << "empty input point cloud";
             return false;
         }
 
         StopWatch w;
         w.start();
 
-        std::cout << "building kd_tree..." << std::endl;
+        LOG(INFO) << "building kd_tree...";
         KdTreeSearch_NanoFLANN kdtree;
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        std::cout << "done. Time: " << w.time_string() << std::endl;
+        LOG(INFO) << "done. Time: " << w.time_string();
 
         int num = cloud->vertices_size();
         const std::vector<vec3>& points = cloud->points();
@@ -73,7 +73,7 @@ namespace easy3d {
             curvatures = &(cloud->vertex_property<float>("v:curvature").vector());
 
         w.restart();
-        std::cout << "estimating normals..." << std::endl;
+        LOG(INFO) << "estimating normals...";
 
     #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -98,7 +98,7 @@ namespace easy3d {
                 (*curvatures)[i] = float(pca.eigen_value(2) / (pca.eigen_value(0) + pca.eigen_value(1) + pca.eigen_value(2)));
         }
 
-        std::cout << "done. Time: " << w.time_string() << std::endl;
+        LOG(INFO) << "done. Time: " << w.time_string();
         return true;
     }
 
@@ -373,28 +373,28 @@ namespace easy3d {
     bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
     {
         if (!cloud) {
-            std::cerr << "empty input point cloud" << std::endl;
+            LOG(ERROR) << "empty input point cloud";
             return false;
         }
 
         auto normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
-            std::cerr << "normal information does not exist" << std::endl;
+            LOG(ERROR) << "normal information does not exist";
             return false;
         }
 
         StopWatch w;
         w.start();
 
-        std::cout << "building kd_tree..." << std::endl;
+        LOG(INFO) << "building kd_tree...";
         KdTreeSearch_NanoFLANN kdtree;
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        std::cout << "done. Time: " << w.time_string() << std::endl;
+        LOG(INFO) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cout << "constructing graph..." << std::endl;
+        LOG(INFO) << "constructing graph...";
         details::RiemannianGraph riemannian_graph;
         details::build_graph(cloud, &kdtree, k, riemannian_graph);
 
@@ -402,29 +402,29 @@ namespace easy3d {
         // first. After that, we can reorient all the components one by one.
         std::vector<details::RiemannianGraph> components
                 = details::connected_components(cloud, riemannian_graph);
-        std::cout << "done. #vertices: " << boost::num_vertices(riemannian_graph)
+        LOG(INFO) << "done. #vertices: " << boost::num_vertices(riemannian_graph)
                   << ", #edges: " << boost::num_edges(riemannian_graph)
                   << ", #components: " << components.size()
-                  << ". Time: " << w.time_string() << std::endl;
+                  << ". Time: " << w.time_string();
 
         w.restart();
-        std::cout << "extract minimum spanning tree..." << std::endl;
+        LOG(INFO) << "extract minimum spanning tree...";
         std::vector<details::MST_Graph> ms_trees;
         for (const auto& graph : components) {
             ms_trees.emplace_back(cloud->get_vertex_property<vec3>("v:normal"));
             details::MST_Graph& mst = ms_trees.back();
             details::extract_minimum_spanning_tree(graph, mst);
         }
-        std::cout << "done. Time: " << w.time_string() << std::endl;
+        LOG(INFO) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cout << "propagate..." << std::endl;
+        LOG(INFO) << "propagate...";
         for (const auto& mst : ms_trees) {
             // Traverse the point set along the MST to propagate source_point's orientation
             details::BfsVisitor<details::MST_Graph> bfsVisitor(details::propagate_normal);
             boost::breadth_first_search(mst, mst.root, boost::visitor(bfsVisitor));
         }
-        std::cout << "done. Time: " << w.time_string() << std::endl;
+        LOG(INFO) << "done. Time: " << w.time_string();
 
 #ifdef VISUALIZATION_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph
@@ -460,7 +460,7 @@ namespace easy3d {
 
     bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
     {
-        std::cerr << "reorient point cloud normals requires boost" << std::endl;
+        LOG(ERROR) << "reorient point cloud normals requires boost";
         return false;
     }
 

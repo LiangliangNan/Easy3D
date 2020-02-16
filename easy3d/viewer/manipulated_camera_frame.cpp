@@ -77,13 +77,13 @@ namespace easy3d {
         const vec3& trans = camera->projectedCoordinatesOf(pivotPoint());
         if (has_nan(trans)) {
 #ifndef NDEBUG
-            std::cerr << "vector has NaN: " << trans << std::endl;
-            std::cerr << "pivot point: " << pivotPoint() << std::endl;
-            std::cerr << "camera position: " << camera->position() << std::endl;
-            std::cerr << "camera up vector: " << camera->upVector() << std::endl;
-            std::cerr << "camera rightVector: " << camera->rightVector() << std::endl;
-            std::cerr << "camera viewDirection: " << camera->viewDirection() << std::endl;
-            std::cerr << "camera orientation: " << camera->orientation() << std::endl;
+            LOG(ERROR) << "vector has NaN: " << trans;
+            LOG(ERROR) << "pivot point: " << pivotPoint();
+            LOG(ERROR) << "camera position: " << camera->position();
+            LOG(ERROR) << "camera up vector: " << camera->upVector();
+            LOG(ERROR) << "camera rightVector: " << camera->rightVector();
+            LOG(ERROR) << "camera viewDirection: " << camera->viewDirection();
+            LOG(ERROR) << "camera orientation: " << camera->orientation();
 #endif
             return;
         }

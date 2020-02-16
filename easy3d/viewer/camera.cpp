@@ -524,7 +524,7 @@ namespace easy3d {
 	tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
 	void Camera::setSceneRadius(float radius) {
 		if (radius <= 0.0f) {
-			std::cerr << "Scene radius must be positive (value is: " << radius << ")" << std::endl;
+			LOG(ERROR) << "Scene radius must be positive (value is: " << radius << ")";
 			return;
 		}
 
@@ -1191,12 +1191,12 @@ namespace easy3d {
 //            (fabs(projectionMatrix[3]) > 1E-3) || (fabs(projectionMatrix[4]) > 1E-3) ||
 //            (fabs(projectionMatrix[6]) > 1E-3) || (fabs(projectionMatrix[7]) > 1E-3) ||
 //            (fabs(projectionMatrix[8]) > 1E-3) || (fabs(projectionMatrix[9]) > 1E-3))
-//            std::cerr << "Non null coefficient in projection matrix" << std::endl;
+//            LOG(ERROR) << "Non null coefficient in projection matrix";
 //        else {
 //            if ((fabs(projectionMatrix[11] + 1.0) < 1E-5) && (fabs(projectionMatrix[15]) < 1E-5))
 //            {
 //                if (projectionMatrix[5] < 1E-4) {
-//                    std::cerr << "Negative field of view in Camera::setFromProjectionMatrix" << std::endl;
+//                    LOG(ERROR) << "Negative field of view in Camera::setFromProjectionMatrix";
 //                    return false;
 //                }
 //                else
@@ -1206,7 +1206,7 @@ namespace easy3d {
 //                if ((fabs(projectionMatrix[11]) < 1E-5) && (fabs(projectionMatrix[15] - 1.0) < 1E-5))
 //                    setType(Camera::ORTHOGRAPHIC);
 //                else {
-//                    std::cerr << "Unable to determine camera type in setFromProjectionMatrix" << std::endl;
+//                    LOG(ERROR) << "Unable to determine camera type in setFromProjectionMatrix";
 //                    return false;
 //                }
 //            }

@@ -29,6 +29,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -48,11 +49,11 @@ namespace easy3d {
         if (ext == "ply")
             success = io::load_ply(file_name, graph);
         else if (ext.empty()){
-            std::cerr << "unknown file format: no extention" << ext << std::endl;
+            LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
         }
         else {
-            std::cerr << "unknown file format: " << ext << ". Only PLY format is supported for Graph" << ext << std::endl;
+            LOG(ERROR) << "unknown file format: " << ext << ". Only PLY format is supported for Graph" << ext;
             return nullptr;
         }
 
@@ -62,12 +63,12 @@ namespace easy3d {
         }
 
         if (success)
-            std::cout << "graph loaded ("
+            LOG(INFO) << "graph loaded ("
                       << "#vertex: " << graph->vertices_size() << ", "
                       << "#edge: " << graph->edges_size() << "). Time: "
-                      << w.time_string() << std::endl;
+                      << w.time_string();
         else
-            std::cout << "load graph failed" << std::endl;
+            LOG(INFO) << "load graph failed";
 
         return graph;
 	}
@@ -76,7 +77,7 @@ namespace easy3d {
     bool GraphIO::save(const std::string& file_name, const Graph* graph)
 	{
         if (!graph || graph->vertices_size() == 0) {
-            std::cerr << "graph is null" << std::endl;
+            LOG(ERROR) << "graph is null";
 			return false;
 		}
 
@@ -88,22 +89,22 @@ namespace easy3d {
 
         if (ext == "ply" || ext.empty()) {
             if (ext.empty()) {
-                std::cerr << "No extention specified. Default to ply" << ext << std::endl;
+                LOG(ERROR) << "No extension specified. Default to ply";
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, graph, true);
         }
 		else {
-            std::cerr << "unknown file format: " << ext << ". Only PLY format is supported for Graph" << ext << std::endl;
+            LOG(ERROR) << "unknown file format: " << ext << ". Only PLY format is supported for Graph";
 			success = false;
 		}
 
         if (success) {
-            std::cout << "save model done. time: " << w.time_string() << std::endl;
+            LOG(INFO) << "save model done. time: " << w.time_string();
             return true;
         }
         else {
-            std::cout << "save model failed" << std::endl;
+            LOG(INFO) << "save model failed";
             return false;
         }
 	}

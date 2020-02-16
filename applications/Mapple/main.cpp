@@ -11,8 +11,8 @@
 #include <QSurfaceFormat>
 #include <QElapsedTimer>
 
-#include <easy3d/util/logging.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;

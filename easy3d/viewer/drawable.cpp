@@ -112,27 +112,27 @@ namespace easy3d {
 
 
     void Drawable::drawable_stats() const {
-        std::cout << "\t" << name() << std::endl;
+        LOG(INFO) << "\t" << name();
 
         if (vertex_buffer()) {
-            std::cout << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            LOG(INFO) << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
+                      << num_vertices_ * sizeof(vec3) << " bytes";
         }
         if (normal_buffer()) {
-            std::cout << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            LOG(INFO) << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
+                      << num_vertices_ * sizeof(vec3) << " bytes";
         }
         if (color_buffer()) {
-            std::cout << "\t\tColor buffer:      " << num_vertices_ << " colors, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            LOG(INFO) << "\t\tColor buffer:      " << num_vertices_ << " colors, "
+                      << num_vertices_ * sizeof(vec3) << " bytes";
         }
         if (texcoord_buffer()) {
-            std::cout << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
-                      << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
+            LOG(INFO) << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
+                      << num_vertices_ * sizeof(vec2) << " bytes";
         }
         if (index_buffer()) {
-            std::cout << "\t\tIndex buffer:      " << num_indices_ << " indices, "
-                      << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
+            LOG(INFO) << "\t\tIndex buffer:      " << num_indices_ << " indices, "
+                      << num_indices_ * sizeof(unsigned int) << " bytes";
         }
     }
 
@@ -160,7 +160,7 @@ namespace easy3d {
         //	else {
         //		current_selection_buffer_size_ = selections_.size();
         //		if (t.elapsed_seconds() > 0.1) {
-        //			std::cout << "selection buffer updated. time: " << t.time_string();
+        //			LOG(INFO) << "selection buffer updated. time: " << t.time_string();
         //		}
         //	}
         //}
@@ -170,7 +170,7 @@ namespace easy3d {
         //		LOG(ERROR) << "failed updating selection buffer";
         //	else {
         //		if (t.elapsed_seconds() > 0.1) {
-        //			std::cout << "selection buffer updated. time: " << t.time_string();
+        //			LOG(INFO) << "selection buffer updated. time: " << t.time_string();
         //		}
         //	}
         //}

@@ -91,7 +91,7 @@ namespace easy3d {
             squared_distance = get_tree(tree_)->getSquaredDistance(0);
             return get_tree(tree_)->getNeighbourPositionIndex(0);
         } else {
-            std::cerr << "no point found" << std::endl;
+            LOG(ERROR) << "no point found";
             return 0;
         }
     }
@@ -112,7 +112,7 @@ namespace easy3d {
                 }
             }
     // 		else
-    // 			std::cerr << "less than " << k << " points found" << std::endl;
+    // 			LOG(ERROR) << "less than " << k << " points found";
     }
 
 
@@ -133,7 +133,7 @@ namespace easy3d {
                 }
             }
     // 		else
-    // 			std::cerr << "less than " << k << " points found" << std::endl;
+    // 			LOG(ERROR) << "less than " << k << " points found";
     }
 
 

@@ -67,7 +67,7 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
-        std::cout << "detecting primitives..." << std::endl;
+        LOG(INFO) << "detecting primitives...";
 //        StopWatch w;
 
         RansacShapeDetector::Options ransacOptions;
@@ -209,7 +209,7 @@ namespace easy3d {
                 primitive_indices[v] = index;
         }
 
-        std::cout << index << " primitives extracted. " << remaining << " points remained" << std::endl;
+        LOG(INFO) << index << " primitives extracted. " << remaining << " points remained";
         return index;
     }
 
@@ -233,23 +233,23 @@ namespace easy3d {
         float overlook_prob /* = 0.001 */ )
     {
         if (!cloud) {
-            std::cerr << "no data exists" << std::endl;
+            LOG(ERROR) << "no data exists";
             return 0;
         }
 
         if (cloud->n_vertices() < 3) {
-            std::cerr << "point set has less than 3 points" << std::endl;
+            LOG(ERROR) << "point set has less than 3 points";
             return 0;
         }
 
         if (types_.empty()) {
-            std::cerr << "no primitive types specified" << std::endl;
+            LOG(ERROR) << "no primitive types specified";
             return 0;
         }
 
         PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
-            std::cerr << "RANSAC Detector requires point cloud normals" << std::endl;
+            LOG(ERROR) << "RANSAC Detector requires point cloud normals";
             return 0;
         }
 
@@ -284,23 +284,23 @@ namespace easy3d {
         float overlook_prob /* = 0.001 */ )
     {
         if (!cloud) {
-            std::cerr << "no data exists" << std::endl;
+            LOG(ERROR) << "no data exists";
             return 0;
         }
 
         if (cloud->n_vertices() < 3) {
-            std::cerr << "point set has less than 3 points" << std::endl;
+            LOG(ERROR) << "point set has less than 3 points";
             return 0;
         }
 
         if (types_.empty()) {
-            std::cerr << "no primitive types specified" << std::endl;
+            LOG(ERROR) << "no primitive types specified";
             return 0;
         }
 
         PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
-            std::cerr << "RANSAC Detector requires point cloud normals" << std::endl;
+            LOG(ERROR) << "RANSAC Detector requires point cloud normals";
             return 0;
         }
 

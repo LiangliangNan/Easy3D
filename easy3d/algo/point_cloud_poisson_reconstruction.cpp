@@ -109,7 +109,7 @@ PoissonReconstruction::PoissonReconstruction(void)
 	pointWeight_ = 4.0f;
 	gsIter_ = 8;
 	threads_ = omp_get_num_procs();
-    std::cout << "number of threads: " << threads_ << std::endl;
+    LOG(INFO) << "number of threads: " << threads_;
 
 	confidence_ = false;
 	normalWeight_ = false;
@@ -126,7 +126,7 @@ SurfaceMesh* convert_to_mesh(CoredFileMeshData<Vertex>& mesh, const XForm4x4< RE
 	int num_ooc_pts = mesh.outOfCorePointCount();
 	int num_face = mesh.polygonCount();
 	if (num_face <= 0) {
-        std::cerr << "reconstructed mesh has 0 facet" << std::endl;
+        LOG(ERROR) << "reconstructed mesh has 0 facet";
         return nullptr;
 	}
 
@@ -186,11 +186,11 @@ SurfaceMesh* convert_to_mesh(CoredFileMeshData<Vertex>& mesh, const XForm4x4< RE
         result->add_face(face_vts);
 	}
 
-    std::cout
+    LOG(INFO)
         << "vertex property \'" << density_attr_name << "\' added with range ["
-        << min_density << ", " << max_density << "]" << std::endl;
+        << min_density << ", " << max_density << "]";
 	if (has_colors)
-        std::cout << "vertex property 'v:color' added." << std::endl;
+        LOG(INFO) << "vertex property 'v:color' added.";
 
 	return result;
 }
@@ -198,13 +198,13 @@ SurfaceMesh* convert_to_mesh(CoredFileMeshData<Vertex>& mesh, const XForm4x4< RE
 
 SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::string& density_attr_name) {
     if (!cloud) {
-        std::cerr << "nullptr point cloud" << std::endl;
+        LOG(ERROR) << "nullptr point cloud";
         return nullptr;
 	}
 
     PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
 	if (!normals) {
-        std::cerr << "normals are required" << std::endl;
+        LOG(ERROR) << "normals are required";
         return nullptr;
 	}
 
@@ -224,13 +224,13 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	int maxSolveDepth = depth_;
 	int kernelDepth = depth_ - 2;
 	if (kernelDepth > depth_) {
-        std::cerr << "kernelDepth (" << kernelDepth << ") cannot be greater than tree depth (" << depth_ << ")" << std::endl;
+        LOG(ERROR) << "kernelDepth (" << kernelDepth << ") cannot be greater than tree depth (" << depth_ << ")";
 		kernelDepth = depth_;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 
-    std::cout << "Screened Poisson Reconstruction (V9.0.1)" << std::endl;
+    LOG(INFO) << "Screened Poisson Reconstruction (V9.0.1)";
     StopWatch t, w;
 
 	//////////////////////////////////////////////////////////////////////////	
@@ -246,7 +246,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 	XForm4x4< REAL > xForm, iXForm;
 
 	{ // Load the samples (and color data)
-        std::cout << "loading data into tree... ";
+        LOG(INFO) << "loading data into tree... ";
         t.restart();
         profiler.start();
         const float* pts = cloud->points()[0];
@@ -284,8 +284,8 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 		if (verbose_)
 			profiler.print(" - Load input into tree: ");
 
-        std::cout << "input points/samples: " << pointCount << "/" << samples->size() <<
-                     ". memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
+        LOG(INFO) << "input points/samples: " << pointCount << "/" << samples->size() <<
+                     ". memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -309,7 +309,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 
 		// Transform the Hermite samples into a vector field [If discarding, compute anew. Otherwise, compute once.]
 		{
-            std::cout << "setting normal field... ";
+            LOG(INFO) << "setting normal field... ";
             t.restart();
             profiler.start();
 			normalInfo = new SparseNodeData< Point3D< REAL >, NORMAL_DEGREE >();
@@ -317,12 +317,12 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 			if (verbose_)
 				profiler.print(" - Got normal field:     ");
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
+            LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
         }
 
 		// Trim the tree and prepare for multi-grid
 		{
-            std::cout << "trimming tree and preparing for multi-grid... ";
+            LOG(INFO) << "trimming tree and preparing for multi-grid... ";
 
             t.restart();
 			profiler.start();
@@ -338,7 +338,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 			if (verbose_)
 				profiler.print(" - Finalized tree:       ");
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
+            LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
 		}
 
 		// Add the FEM constraints
@@ -368,12 +368,12 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 		}
 
 		if (verbose_) {
-			std::cout << " - Leaf Nodes / Active Nodes / Ghost Nodes: " << (int)tree.leaves() << " / " << (int)tree.nodes() << " / " << (int)tree.ghostNodes() << std::endl;
+			LOG(INFO) << " - Leaf Nodes / Active Nodes / Ghost Nodes: " << (int)tree.leaves() << " / " << (int)tree.nodes() << " / " << (int)tree.ghostNodes();
 		}
 
 		// Solve the linear system
 		{
-            std::cout << "solving the linear system... ";
+            LOG(INFO) << "solving the linear system... ";
 
             t.restart();
             profiler.start();
@@ -389,7 +389,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 			if (iInfo)
                 delete iInfo, iInfo = nullptr;
 
-            std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
+            LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
 		}
 	}
 
@@ -416,12 +416,12 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
             delete samples, samples = nullptr;
 		if (verbose_) {
 			profiler.print(" - Got average:          ");
-			std::cout << " - Iso-Value: " << isoValue << std::endl;
+			LOG(INFO) << " - Iso-Value: " << isoValue;
 		}
 	}
 
 	{
-        std::cout << "extracting mesh... ";
+        LOG(INFO) << "extracting mesh... ";
 
         t.restart();
         profiler.start();
@@ -445,7 +445,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
 		tree.getMCIsoSurface< DEGREE, BType, WEIGHT_DEGREE, DATA_DEGREE >(density, colorData, solution, isoValue, mesh, nonLinearFit, addBarycenter, !triangulate_mesh_);
 
 		if (verbose_) {
-			std::cout << " - Vertices / Polygons: " << mesh.outOfCorePointCount() + mesh.inCorePoints.size() << " / " << mesh.polygonCount() << std::endl;
+			LOG(INFO) << " - Vertices / Polygons: " << mesh.outOfCorePointCount() + mesh.inCorePoints.size() << " / " << mesh.polygonCount();
 			if (!triangulate_mesh_)
 				profiler.print(" - Got polygons:         ");
 			else
@@ -462,7 +462,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
             delete samples; samples = nullptr;
         }
 
-        std::cout << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string() << std::endl;
+        LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -471,7 +471,7 @@ SurfaceMesh* PoissonReconstruction::apply(const PointCloud* cloud, const std::st
     SurfaceMesh* result = convert_to_mesh(mesh, iXForm, density_attr_name, colors);
     const std::string& file_name = file_system::name_less_extension(cloud->name()) + "_Poisson.ply";
     result->set_name(file_name);
-    std::cout << "total reconstruction time: " << w.time_string() << std::endl;
+    LOG(INFO) << "total reconstruction time: " << w.time_string();
 
 	return result;
 }
@@ -489,7 +489,7 @@ SurfaceMesh* PoissonReconstruction::trim(
 
     auto density = mesh->get_vertex_property<float>(density_attr_name);
     if (!density) {
-        std::cerr << "density is not available" << std::endl;
+        LOG(ERROR) << "density is not available";
         return nullptr;
 	}
 
@@ -527,7 +527,7 @@ SurfaceMesh* PoissonReconstruction::trim(
 	}
 
 //	StopWatch t; t.start();
-    std::cout << "Surface Trimmer (V5)" << std::endl;
+    LOG(INFO) << "Surface Trimmer (V5)";
     trim_mesh(vertices, polygons, REAL(trim_value), REAL(area_ratio), triangulate);
 
 	//////////////////////////////////////////////////////////////////////////
@@ -559,7 +559,7 @@ SurfaceMesh* PoissonReconstruction::trim(
         trimmed_mesh->add_face(face_vts);
 	}
 
-//    std::cout << "done. time: " << t.time_string() << std::endl;
+//    LOG(INFO) << "done. time: " << t.time_string();
 
 	return trimmed_mesh;
 }

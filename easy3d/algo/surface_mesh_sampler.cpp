@@ -39,7 +39,7 @@ namespace easy3d {
 
         PointCloud::VertexProperty<vec3> normals = cloud->add_vertex_property<vec3>("v:normal");
 
-        std::cout << "sampling surface..." << std::endl;
+        LOG(INFO) << "sampling surface...";
 
         // add all mesh vertices (even the requestred number is smaller than the
         // number of vertices in the mesh.
@@ -140,7 +140,7 @@ namespace easy3d {
 //            progress.next();
         }
 
-        std::cout << "done. resulted point cloud has " << cloud->n_vertices() << " points" << std::endl;
+        LOG(INFO) << "done. resulted point cloud has " << cloud->n_vertices() << " points";
         return cloud;
     }
 

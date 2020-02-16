@@ -105,7 +105,7 @@ namespace easy3d {
         // Convert the color back to an integer ID
         int id = rgb::rgba(c[0], c[1], c[2], c[3]);
         if (id >= 0 && id < models.size()) {
-            //std::cout << "selected model " << models[id]->name() << std::endl;
+            //LOG(INFO) << "selected model " << models[id]->name();
             return models[id];
         }
 

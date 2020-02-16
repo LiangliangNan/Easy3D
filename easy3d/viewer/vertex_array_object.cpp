@@ -28,6 +28,7 @@
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_info.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -44,7 +45,7 @@ namespace easy3d {
 		: id_(0)
 	{
         if (!is_supported()) {
-            std::cerr << "vertex array object not supported on this platform" << std::endl;
+            LOG(ERROR) << "vertex array object not supported on this platform";
             return;
         }
 
@@ -53,7 +54,7 @@ namespace easy3d {
         //             follow the "create when needed" rule.
         // glGenVertexArrays(1, &id_);	easy3d_debug_gl_error;
         // if (id_ == 0) {
-        //     std::cerr << "generating VertexArrayObject failed" << std::endl;
+        //     LOG(ERROR) << "generating VertexArrayObject failed";
 		//}
 	}
 
@@ -70,7 +71,7 @@ namespace easy3d {
 		if (id_ == 0) {
 			glGenVertexArrays(1, &id_);	easy3d_debug_gl_error;
 			if (id_ == 0) {
-				std::cerr << "generating VertexArrayObject failed" << std::endl;
+				LOG(ERROR) << "generating VertexArrayObject failed";
 				return;
 			}
 		}
@@ -133,7 +134,7 @@ namespace easy3d {
 
     bool VertexArrayObject::create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size) {
         if (!OpenglInfo::is_supported("GL_ARB_shader_storage_buffer_object")) {
-            std::cerr << "shader storage buffer object not supported on this platform" << std::endl;
+            LOG(ERROR) << "shader storage buffer object not supported on this platform";
             return false;
         }
         release_buffer(buffer);

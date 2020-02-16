@@ -54,14 +54,14 @@ namespace easy3d {
         bool load_poly(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             // open file (in binary mode)
             std::ifstream input(file_name.c_str(), std::fstream::binary);
             if (input.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -104,14 +104,14 @@ namespace easy3d {
         bool save_poly(const std::string& file_name, const SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             // open file (in binary mode)
             std::ofstream output(file_name.c_str(), std::fstream::binary);
             if (output.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 

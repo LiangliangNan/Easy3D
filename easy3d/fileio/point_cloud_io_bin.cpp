@@ -39,14 +39,14 @@ namespace easy3d {
 		bool load_bin(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str(), std::fstream::binary);
 			if (input.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 
             int num = 0;
             input.read((char*)(&num), sizeof(int));
             if (num <= 0) {
-				std::cerr << "no point exists in file\'" << file_name << "\'" << std::endl;
+				LOG(ERROR) << "no point exists in file: " << file_name;
 				return false;
 			}
             cloud->resize(num);
@@ -77,7 +77,7 @@ namespace easy3d {
 			// open file
 			std::ofstream output(file_name.c_str(), std::fstream::binary);
 			if (output.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 

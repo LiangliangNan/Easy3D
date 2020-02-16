@@ -230,7 +230,7 @@ namespace easy3d {
                 } else {
                     // If reached here, a parallel facet with distance less than hit resolution should be
                     // the candidate. However, the picking line does not intersect the facet.
-                    // Logger::err(title()) << "should have intersection" << std::endl;
+                    // Logger::err(title()) << "should have intersection";
                 }
             }
         }

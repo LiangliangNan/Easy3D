@@ -74,7 +74,7 @@ namespace easy3d {
             bool flip_vertically)
     {
         if (data.empty()) {
-            std::cerr << "image data is empty" << std::endl;
+            LOG(ERROR) << "image data is empty";
             return false;
         }
 
@@ -86,7 +86,7 @@ namespace easy3d {
 
         if (ext == "png" || ext.empty()) {
             if (ext.empty()) {
-                std::cerr << "No extention specified. Default to png" << ext << std::endl;
+                LOG(ERROR) << "No extension specified. Default to png";
                 final_name = final_name + ".png";
             }
 
@@ -104,7 +104,7 @@ namespace easy3d {
         else if (ext == "tga")
             return ::stbi_write_tga(final_name.c_str(), width, height, channels, data.data());
         else {
-            std::cerr << "unsupported file format: " << ext << std::endl;
+            LOG(ERROR) << "unsupported file format: " << ext;
             return false;
         }
 
@@ -122,7 +122,7 @@ namespace easy3d {
         {
             FILE* fptr = fopen(file_name.c_str(), "wb");
             if (!fptr) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -198,7 +198,7 @@ namespace easy3d {
         {
             FILE* fptr = fopen(file_name.c_str(), "wb");
             if (!fptr) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 

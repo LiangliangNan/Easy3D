@@ -38,7 +38,7 @@ namespace easy3d {
 		bool load_xyz(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str());
 			if (input.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 
@@ -74,7 +74,7 @@ namespace easy3d {
 		bool save_xyz(const std::string& file_name, const PointCloud* cloud) {
 			std::ofstream output(file_name.c_str());
 			if (output.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 			output.precision(16);
@@ -83,7 +83,7 @@ namespace easy3d {
 
 			//   ProgressLogger progress(cloud->n_vertices());
 			for (auto v : cloud->vertices()) {
-				output << points[v] << std::endl;
+				output << points[v];
 				//		progress.next();
 			}
 
@@ -94,7 +94,7 @@ namespace easy3d {
 		bool load_bxyz(const std::string& file_name, PointCloud* cloud) {
 			std::ifstream input(file_name.c_str(), std::fstream::binary);
 			if (input.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 
@@ -102,7 +102,7 @@ namespace easy3d {
 			std::size_t element_size = sizeof(float) * element_per_point;
 			// check size of types
 			if (sizeof(vec3) != sizeof(float) * 3) {
-				std::cerr << "point coordinates must be \'float\'" << std::endl;
+				LOG(ERROR) << "point coordinates must be \'float\'";
 				return false;
 			}
 
@@ -122,8 +122,8 @@ namespace easy3d {
 
 			input.read((char*)points.data(), num * element_size);	// read the entire blocks
 			if (input.fail()) {
-				std::cerr
-					<< input.gcount() << " bytes of the block could not be read" << std::endl;
+				LOG(ERROR)
+					<< input.gcount() << " bytes of the block could not be read";
 				return false;
 			}
 			return true;
@@ -134,13 +134,13 @@ namespace easy3d {
 			// open file
 			std::ofstream output(file_name.c_str(), std::fstream::binary);
 			if (output.fail()) {
-				std::cerr << "could not open file\'" << file_name << "\'" << std::endl;
+				LOG(ERROR) << "could not open file: " << file_name;
 				return false;
 			}
 
 			// check size of types
 			if (sizeof(vec3) != sizeof(float) * 3) {
-				std::cerr << "point coordinates must be \'float\'" << std::endl;
+				LOG(ERROR) << "point coordinates must be \'float\'";
 				return false;
 			}
 

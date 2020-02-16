@@ -44,9 +44,9 @@
 #include <fstream>
 
 #include <easy3d/viewer/opengl.h>
-
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -91,7 +91,7 @@ namespace easy3d {
         , name_(name)
 	{
         if (!is_supported()) {
-            std::cerr << "shader program not supported on this platform" << std::endl;
+            LOG(ERROR) << "shader program not supported on this platform";
             return;
         }
 
@@ -124,7 +124,7 @@ namespace easy3d {
 #if 0 // line by line
 		std::ifstream in(file_name.c_str());
 		if (in.fail()) {
-			std::cerr "could not open file \'" << file_name << "\'" << std::endl;
+			LOG(ERROR) "could not open file \'" << file_name << "\'";
 			return false;
 		}
 
@@ -137,7 +137,7 @@ namespace easy3d {
 		//must read files as binary to prevent problems from newline translation
 		std::ifstream in(file_name.c_str(), std::ios::binary);
 		if (in.fail()) {
-			std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+			LOG(ERROR) << "could not open file: " << file_name;
 			return code;
 		}
 
@@ -158,7 +158,7 @@ namespace easy3d {
 	bool ShaderProgram::load_shader_from_file(ShaderType type, const std::string& file_name) {
 		std::string code = _read_file(file_name);
 		if (code.empty()) {
-			std::cerr << "failed reading shader file \'" << file_name << "\'" << std::endl;
+			LOG(ERROR) << "failed reading shader file \'" << file_name << "\'";
 			return false;
 		}
 		return load_shader_from_code(type, code);
@@ -167,13 +167,13 @@ namespace easy3d {
 
 	bool ShaderProgram::load_shader_from_code(ShaderType type, const std::string& str) {
 		if (str.empty()) {
-			std::cerr << "NULL code for " << spStringShaderTypes[type] << std::endl;
+			LOG(ERROR) << "NULL code for " << spStringShaderTypes[type];
 			return false;
 		}
         unsigned int shader = glCreateShader(spGLShaderTypes[type]);
 		if (!glIsShader(shader)) {
 			
-			std::cerr << "failed creating shader" << std::endl;
+			LOG(ERROR) << "failed creating shader";
 			return false;
 		}
 
@@ -184,7 +184,7 @@ namespace easy3d {
 		//we must check the compilation result
 		std::string log;
 		if (!shader_info_log(log, shader)) {
-			std::cerr << log << std::endl;
+			LOG(ERROR) << log;
 			glDeleteShader(shader);	
             shader = 0;
 			return false;
@@ -209,7 +209,7 @@ namespace easy3d {
 		//we must check the linkage result
 		std::string log;
 		if (!program_info_log(log)) {
-			std::cerr << log << std::endl;
+			LOG(ERROR) << log;
 			clear(); // we don't need the program anymore; Also don't leak shaders either.
 			return false;
 		}
@@ -220,7 +220,7 @@ namespace easy3d {
 #if 0
 		// print some hints for user
 		if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
-			std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
+			LOG(INFO) << "--------------- shader program: " << name() << " ---------------";
 			print_active_attributes();
 			print_active_uniforms();
 			print_active_uniform_blocks();
@@ -300,7 +300,7 @@ namespace easy3d {
 
 	ShaderProgram* ShaderProgram::set_block(const std::string& name, const void *value) {
 		if (spBlocks.count(name) == 0) {
-			std::cerr << "warning: block " << name << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: block " << name << " does not exist or is not active";
 			return this;
 		}
 
@@ -314,13 +314,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			std::cerr << "warning: block " << blockName << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: block " << blockName << " does not exist or is not active";
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			std::cerr << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
 			return this;
 		}
 
@@ -335,13 +335,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void * value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			std::cerr << "warning: block " << blockName << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: block " << blockName << " does not exist or is not active";
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			std::cerr << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
 			return this;
 		}
 
@@ -356,7 +356,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
 			return this;
 		}
 
@@ -369,7 +369,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, unsigned int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
 			return this;
 		}
 
@@ -382,7 +382,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, float value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
 			return this;
 		}
 
@@ -395,7 +395,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, const void *value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			std::cerr << "warning: uniform " << name << " does not exist or is not active" << std::endl;
+			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
 			return this;
 		}
 
@@ -597,7 +597,7 @@ namespace easy3d {
 
 	bool ShaderProgram::is_program_valid() {
         if (!program_) {
-            std::cerr << "program does not exist" << std::endl;
+            LOG(ERROR) << "program does not exist";
             return false;
         }
 
@@ -611,7 +611,7 @@ namespace easy3d {
             if (log_length > 0) {
                 std::string log(log_length + 1, '\0');
                 glGetProgramInfoLog(program_, log_length, 0, &log[0]);
-                std::cerr << log << std::endl;
+                LOG(ERROR) << log;
             }
 		}
 		return (b != GL_FALSE);
@@ -640,7 +640,7 @@ namespace easy3d {
         // the bindings (VAO, textures) set. Its purpose is to ensure
         // that the shader can execute given the current GL state.
 //        if (!is_program_valid())
-//            std::cerr << "program exists but not valid" << std::endl;
+//            LOG(ERROR) << "program exists but not valid";
 		glUseProgram(program_);	
 	}
 
@@ -668,12 +668,12 @@ namespace easy3d {
 
 	bool ShaderProgram::is_attribute_used(const std::string& name) {
 		if (name.empty()) {
-			std::cerr << "empty attribute name" << std::endl;
+			LOG(ERROR) << "empty attribute name";
 			return false;
 		}
 
 		if (!is_program_linked()) {
-			std::cerr << "program not linked" << std::endl;
+			LOG(ERROR) << "program not linked";
 			return false;
 		}
 
@@ -684,12 +684,12 @@ namespace easy3d {
 
 	bool ShaderProgram::is_uniform_used(const std::string& name) {
 		if (name.empty()) {
-			std::cerr << "empty uniform name" << std::endl;
+			LOG(ERROR) << "empty uniform name";
 			return false;
 		}
 
 		if (!is_program_linked()) {
-			std::cerr << "program not linked" << std::endl;
+			LOG(ERROR) << "program not linked";
 			return false;
 		}
 
@@ -700,12 +700,12 @@ namespace easy3d {
 
 	void ShaderProgram::print_active_attributes() {
 		if (!is_program_linked()) {
-			std::cerr << "program not linked" << std::endl;
+			LOG(ERROR) << "program not linked";
 			return;
 		}
 
         if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
-            std::cerr << "querying active attributes requires OpenGL >= 4.3" << std::endl;
+            LOG(ERROR) << "querying active attributes requires OpenGL >= 4.3";
             return;
         }
 
@@ -714,7 +714,7 @@ namespace easy3d {
 
 		GLenum properties[] = { GL_NAME_LENGTH, GL_TYPE, GL_LOCATION };
 
-		std::cout << "Active attributes:" << std::endl;
+		LOG(INFO) << "Active attributes:";
 		for (int i = 0; i < numAttribs; ++i) {
             int results[3];
             glGetProgramResourceiv(program_, GL_PROGRAM_INPUT, i, 3, properties, 3, nullptr, results);
@@ -722,7 +722,7 @@ namespace easy3d {
             int nameBufSize = results[0] + 1;
 			char * name = new char[nameBufSize];
             glGetProgramResourceName(program_, GL_PROGRAM_INPUT, i, nameBufSize, nullptr, name);
-			std::cout << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << std::endl;
+			LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]);
 			delete[] name;
 		}
 	}
@@ -730,12 +730,12 @@ namespace easy3d {
 
 	void ShaderProgram::print_active_uniforms() {
 		if (!is_program_linked()) {
-			std::cerr << "program not linked" << std::endl;
+			LOG(ERROR) << "program not linked";
 			return;
 		}
 
         if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
-            std::cerr << "querying active uniforms requires OpenGL >= 4.3" << std::endl;
+            LOG(ERROR) << "querying active uniforms requires OpenGL >= 4.3";
             return;
         }
 
@@ -744,7 +744,7 @@ namespace easy3d {
 
 		GLenum properties[] = { GL_NAME_LENGTH, GL_TYPE, GL_LOCATION, GL_BLOCK_INDEX };
 
-		std::cout << "Active uniforms:" << std::endl;
+		LOG(INFO) << "Active uniforms:";
 		for (int i = 0; i < numUniforms; ++i) {
             int results[4];
             glGetProgramResourceiv(program_, GL_UNIFORM, i, 4, properties, 4, nullptr, results);
@@ -753,7 +753,7 @@ namespace easy3d {
             int nameBufSize = results[0] + 1;
 			char * name = new char[nameBufSize];
             glGetProgramResourceName(program_, GL_UNIFORM, i, nameBufSize, nullptr, name);
-			std::cout << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "" << std::endl;
+			LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "";
 			delete[] name;
 		}
 	}
@@ -761,12 +761,12 @@ namespace easy3d {
 
 	void ShaderProgram::print_active_uniform_blocks() {
 		if (!is_program_linked()) {
-			std::cerr << "program not linked" << std::endl;
+			LOG(ERROR) << "program not linked";
 			return;
 		}
 
         if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
-            std::cerr << "querying active uniform blocks requires OpenGL >= 4.3" << std::endl;
+            LOG(ERROR) << "querying active uniform blocks requires OpenGL >= 4.3";
             return;
         }
 
@@ -784,7 +784,7 @@ namespace easy3d {
 
 			char * blockName = new char[blockInfo[1] + 1];
             glGetProgramResourceName(program_, GL_UNIFORM_BLOCK, block, blockInfo[1] + 1, nullptr, blockName);
-			std::cout << "Uniform block \"" << blockName << "\"\t" << std::endl;
+			LOG(INFO) << "Uniform block \"" << blockName << "\"\t";
 			delete[] blockName;
 
             int * unifIndexes = new int[numUnis];
@@ -798,7 +798,7 @@ namespace easy3d {
                 int nameBufSize = results[0] + 1;
 				char * name = new char[nameBufSize];
                 glGetProgramResourceName(program_, GL_UNIFORM, uniIndex, nameBufSize, nullptr, name);
-				std::cout << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "" << std::endl;
+				LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "";
 				delete[] name;
 			}
 
@@ -1354,13 +1354,13 @@ namespace easy3d {
 
 	bool ShaderProgram::load_binary(const std::string& file_name) {
         if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
-            std::cerr << "load binary program requires OpenGL >= 4.1" << std::endl;
+            LOG(ERROR) << "load binary program requires OpenGL >= 4.1";
             return false;
         }
 
 		std::string code = _read_file(file_name);
 		if (code.empty()) {
-			std::cerr << "empty program in file: " << file_name << std::endl;
+			LOG(ERROR) << "empty program in file: " << file_name;
 			return false;
 		}
 
@@ -1368,7 +1368,7 @@ namespace easy3d {
 			clear();
 		program_ = glCreateProgram();
 		if (!program_) {
-			std::cerr << "failed create program" << std::endl;
+			LOG(ERROR) << "failed create program";
 			return false;
 		}
 
@@ -1384,7 +1384,7 @@ namespace easy3d {
 #ifndef NDEBUG
             // print some hints for user
             if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
-                std::cout << "--------------- shader program: " << name() << " ---------------" << std::endl;
+                LOG(INFO) << "--------------- shader program: " << name() << " ---------------";
                 print_active_attributes();
                 print_active_uniforms();
                 print_active_uniform_blocks();
@@ -1393,7 +1393,7 @@ namespace easy3d {
 			return true;
 		}
 		else {
-			std::cerr << "load program failed: " << log << std::endl;
+			LOG(ERROR) << "load program failed: " << log;
 			clear(); // we don't need the program anymore; Also don't leak shaders either.
 			return false;
 		}
@@ -1402,15 +1402,15 @@ namespace easy3d {
 
     bool ShaderProgram::save_binary(const std::string& file_name) {
         if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
-            std::cerr << "save binary program requires OpenGL >= 4.1" << std::endl;
+            LOG(ERROR) << "save binary program requires OpenGL >= 4.1";
             return false;
         }
 
 		// check the program linked or not
 		std::string log;
 		if (!program_info_log(log)) {
-            std::cerr << "program not linked yet." <<
-                         (!log.empty() ? " " + log  : "") << std::endl;
+            LOG(ERROR) << "program not linked yet." <<
+                         (!log.empty() ? " " + log  : "");
             return false;
 		}
 

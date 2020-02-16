@@ -201,7 +201,7 @@ namespace easy3d {
 
         mat4 pick_matrix(const vec2& center, const vec2& delta, const vec4& viewport) {
             //assert(delta.x > 0.0f && delta.y > 0.0f);
-            std::cerr << "Warning: not sure if pick_matrix() works for lowerleft or upperleft origined viewport." << std::endl;
+            LOG(ERROR) << "Warning: not sure if pick_matrix() works for lowerleft or upperleft origined viewport.";
 
             mat4 pick(1.0f);
 

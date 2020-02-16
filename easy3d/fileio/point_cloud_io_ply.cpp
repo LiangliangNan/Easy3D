@@ -76,11 +76,11 @@ namespace easy3d {
                     details::add_properties< std::vector<float> >(cloud, e.float_list_properties);
                 }
                 else if (e.name == "edge")
-                    std::cerr << "The PointCloud has edge information (ignored). Is it a graph?" << std::endl;
+                    LOG(ERROR) << "The PointCloud has edge information (ignored). Is it a graph?";
                 else if (e.name == "face")
-                    std::cerr << "The PointCloud has face information (ignored). Is it a mesh?" << std::endl;
+                    LOG(ERROR) << "The PointCloud has face information (ignored). Is it a mesh?";
                 else
-                    std::cerr << "The PointCloud has unknown element: " << e.name << " (ignored)" << std::endl;
+                    LOG(ERROR) << "The PointCloud has unknown element: " << e.name << " (ignored)";
 			}
 
 			return true;
@@ -106,7 +106,7 @@ namespace easy3d {
 
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary/* = true*/) {
 			if (!cloud || cloud->n_vertices() == 0) {
-				std::cerr << "empty point cloud data" << std::endl;
+				LOG(ERROR) << "empty point cloud data";
 				return false;
 			}
 
@@ -122,7 +122,7 @@ namespace easy3d {
 			std::vector<Element> elements;
             elements.emplace_back(e);
 
-            DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance" << std::endl;
+            DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
 
 			PlyWriter writer;
 			return writer.write(file_name, elements, "", binary);

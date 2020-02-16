@@ -194,7 +194,7 @@ namespace easy3d {
         bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
@@ -213,7 +213,7 @@ namespace easy3d {
             // open file (in ASCII mode)
             FILE* in = fopen(file_name.c_str(), "r");
             if (!in) {
-                std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "count not open file \'" << file_name << "\'";
                 return false;
             }
 
@@ -366,14 +366,14 @@ namespace easy3d {
         bool load_obj(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             // open file (in binary mode)
             FILE* fp = fopen(file_name.c_str(), "rb");
             if (fp == nullptr) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -612,7 +612,7 @@ namespace easy3d {
                     tok.consumeToEOL();
                 }
             }
-            std::cout << "read file done" << std::endl;
+            LOG(INFO) << "read file done";
             return mesh->n_faces() > 0;
         }
     }
@@ -628,13 +628,13 @@ namespace easy3d {
 
         bool save_obj(const std::string &file_name, const SurfaceMesh *mesh) {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             FILE *out = fopen(file_name.c_str(), "w");
             if (!out) {
-                std::cerr << "count not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "count not open file \'" << file_name << "\'";
                 return false;
             }
 

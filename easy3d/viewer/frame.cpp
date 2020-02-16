@@ -239,7 +239,7 @@ namespace easy3d {
 	void Frame::setFromMatrix(const mat4& m) {
 		float w = m(3, 3);
 		if (fabs(w) < 1e-8) {
-			std::cerr << "Frame::setFromMatrix: Null homogeneous coefficient" << std::endl;
+			LOG(ERROR) << "Frame::setFromMatrix: Null homogeneous coefficient";
 			return;
 		}
 
@@ -534,7 +534,7 @@ namespace easy3d {
 	settingAsReferenceFrameWillCreateALoop()). */
 	void Frame::setReferenceFrame(const Frame *const refFrame) {
 		if (settingAsReferenceFrameWillCreateALoop(refFrame))
-			std::cerr << "Frame::setReferenceFrame would create a loop in Frame hierarchy" << std::endl;
+			LOG(ERROR) << "Frame::setReferenceFrame would create a loop in Frame hierarchy";
 		else {
 			bool identical = (referenceFrame_ == refFrame);
 			referenceFrame_ = refFrame;

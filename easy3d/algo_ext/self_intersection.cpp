@@ -200,7 +200,7 @@ namespace easy3d {
                 return true;
             }
             else {
-                std::cerr << "Segment ∩ triangle neither point nor segment?" << std::endl;
+                LOG(ERROR) << "Segment ∩ triangle neither point nor segment?";
                 assert(false);
             }
         }
@@ -441,17 +441,17 @@ namespace easy3d {
 #ifdef REMESH_INTERSECTIONS_TIMING
         StopWatch w;
         w.start();
-        std::cerr << "detecting intersections... ";
+        LOG(ERROR) << "detecting intersections... ";
 #endif
 
         const auto& intersecting_faces = detect(mesh, true);
 
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. " << intersecting_faces.size()
-                  << " pairs of intersecting triangles. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. " << intersecting_faces.size()
+                  << " pairs of intersecting triangles. Time: " << w.time_string();
 
         w.restart();
-        std::cerr << "overlap analysis... ";
+        LOG(ERROR) << "overlap analysis... ";
 #endif
 
         if (intersecting_faces.empty())
@@ -495,10 +495,10 @@ namespace easy3d {
             }
         }
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cerr << "preprocess... ";
+        LOG(ERROR) << "preprocess... ";
 #endif
 
         std::vector<std::vector<int> > resolved_faces;
@@ -742,10 +742,10 @@ namespace easy3d {
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cerr << "CDT... ";
+        LOG(ERROR) << "CDT... ";
 #endif
 
         const std::size_t num_cdts = cdt_inputs.size();
@@ -768,10 +768,10 @@ namespace easy3d {
         }
         //,1000);
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cerr << "stitching... ";
+        LOG(ERROR) << "stitching... ";
 #endif
 
         for (std::size_t i = 0; i < num_cdts; i++)
@@ -782,10 +782,10 @@ namespace easy3d {
             post_triangulation_process(vertices, faces, involved_faces);
         }
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. Time: " << w.time_string();
 
         w.restart();
-        std::cerr << "store results... ";
+        LOG(ERROR) << "store results... ";
 #endif
 
         // Output resolved mesh.
@@ -807,7 +807,7 @@ namespace easy3d {
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
-        std::cerr << "done. Time: " << w.time_string() << std::endl;
+        LOG(ERROR) << "done. Time: " << w.time_string();
 #endif
 
         return result;

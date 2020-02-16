@@ -57,7 +57,7 @@ namespace easy3d {
 				for (const auto& p : properties) {
                     std::string name = p.name;
 					if (p.size() != mesh->vertices_size()) {
-                        std::cerr << "vertex property size (" << p.size() << ") does not match number of vertices (" << mesh->vertices_size() << ")" << std::endl;
+                        LOG(ERROR) << "vertex property size (" << p.size() << ") does not match number of vertices (" << mesh->vertices_size() << ")";
 						continue;
 					}
 					if (name.find("v:") == std::string::npos)
@@ -74,7 +74,7 @@ namespace easy3d {
 				for (const auto& p : properties) {
                     std::string name = p.name;
 					if (p.size() != mesh->faces_size()) {
-                        std::cerr << "face property size (" << p.size() << ") does not match number of faces (" << mesh->faces_size() << ")" << std::endl;
+                        LOG(ERROR) << "face property size (" << p.size() << ") does not match number of faces (" << mesh->faces_size() << ")";
 						continue;
 					}
 					if (name.find("f:") == std::string::npos)
@@ -91,7 +91,7 @@ namespace easy3d {
 				for (const auto& p : properties) {
                     std::string name = p.name;
 					if (p.size() != mesh->edges_size()) {
-                        std::cerr << "edge property size (" << p.size() << ") does not match number of edges (" << mesh->edges_size() << ")" << std::endl;
+                        LOG(ERROR) << "edge property size (" << p.size() << ") does not match number of edges (" << mesh->edges_size() << ")";
 						continue;
 					}
 					if (name.find("e:") == std::string::npos)
@@ -107,7 +107,7 @@ namespace easy3d {
 		bool load_ply(const std::string& file_name, SurfaceMesh* mesh)
 		{
 			if (!mesh) {
-				std::cerr << "null mesh pointer" << std::endl;
+				LOG(ERROR) << "null mesh pointer";
 				return false;
 			}
 
@@ -126,7 +126,7 @@ namespace easy3d {
 					if (details::extract_named_property(e.vec3_properties, coordinates, "point"))
 						continue;
 					else {
-						std::cerr << "vertex coordinates (x, y, z properties) do not exist" << std::endl;
+						LOG(ERROR) << "vertex coordinates (x, y, z properties) do not exist";
 						return false;
 					}
 				}
@@ -134,7 +134,7 @@ namespace easy3d {
 					if (details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_indices"))
 						continue;
 					else {
-						std::cerr << "\'vertex_indices\' does not defined on faces" << std::endl;
+						LOG(ERROR) << "\'vertex_indices\' does not defined on faces";
 						return false;
 					}
 				}
@@ -142,7 +142,7 @@ namespace easy3d {
 					if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices"))
 						continue;
 					else
-						std::cerr << "edge properties might not be parsed correctly because \'vertex_indices\' does not defined on edges" << std::endl;
+						LOG(ERROR) << "edge properties might not be parsed correctly because \'vertex_indices\' does not defined on edges";
 				}
 			}
 
@@ -186,7 +186,7 @@ namespace easy3d {
 					details::add_edge_properties< std::vector<float> >(mesh, e.float_list_properties);
 				}
 				else
-                    std::cerr << "element \'" << e.name << "\' ignored" << std::endl;
+                    LOG(ERROR) << "element \'" << e.name << "\' ignored";
 			}
 
 			builder.end_surface();
@@ -243,7 +243,7 @@ namespace easy3d {
 
 		bool save_ply(const std::string& file_name, const SurfaceMesh* mesh, bool binary) {
 			if (!mesh || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
-				std::cerr << "empty mesh data" << std::endl;
+				LOG(ERROR) << "empty mesh data";
 				return false;
 			}
 
@@ -324,7 +324,7 @@ namespace easy3d {
 
 			//-----------------------------------------------------
 
-			DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance" << std::endl;
+			DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
 
 			PlyWriter writer;
 			return writer.write(file_name, elements, "", binary);

@@ -341,10 +341,10 @@ namespace easy3d {
     #ifdef SHOW_DEBUG_INFO
         int w = fbo_->width();
         int h = fbo_->height();
-        std::cout << "Depth peel done:" << std::endl
-            << "  - Number of peels: " << current_peel_ << std::endl
-            << "  - Number of geometry passes: " << num_geom_passes_ << std::endl
-            << "  - Occlusion Ratio: " << static_cast<float>(num_written_pixels_) / static_cast<float>(w * h) << std::endl;;
+        LOG(INFO) << "Depth peel done:"
+            << "  - Number of peels: " << current_peel_
+            << "  - Number of geometry passes: " << num_geom_passes_
+            << "  - Occlusion Ratio: " << static_cast<float>(num_written_pixels_) / static_cast<float>(w * h);;
     #endif
     }
 
@@ -413,7 +413,7 @@ namespace easy3d {
 
         if (use_occlusion_query_) {
             end_occlusion_query();
-            //std::cout << "samples written: " << num_written_pixels_ << std::endl;
+            //LOG(INFO) << "samples written: " << num_written_pixels_;
         }
 
         ++current_peel_;

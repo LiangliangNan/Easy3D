@@ -87,7 +87,7 @@ namespace easy3d {
 	PointsDrawable* Model::add_points_drawable(const std::string& name) {
 		for (auto d : points_drawables_) {
 			if (d->name() == name) {
-				std::cerr << "drawable \'" << name << "\' already exists" << std::endl;
+				LOG(ERROR) << "drawable already exists: " << name;
 				return d;
 			}
 		}
@@ -101,7 +101,7 @@ namespace easy3d {
 	LinesDrawable* Model::add_lines_drawable(const std::string& name) {
 		for (auto d : lines_drawables_) {
 			if (d->name() == name) {
-				std::cerr << "drawable \'" << name << "\' already exists" << std::endl;
+                LOG(ERROR) << "drawable already exists: " << name;
 				return d;
 			}
 		}
@@ -115,7 +115,7 @@ namespace easy3d {
     TrianglesDrawable* Model::add_triangles_drawable(const std::string& name) {
         for (auto d : triangles_drawables_) {
 			if (d->name() == name) {
-				std::cerr << "drawable \'" << name << "\' already exists" << std::endl;
+                LOG(ERROR) << "drawable already exists: " << name;
 				return d;
 			}
 		}

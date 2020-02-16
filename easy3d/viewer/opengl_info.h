@@ -73,7 +73,7 @@ namespace easy3d {
         // ----------------- print information  -------------------
 
         // sets the output stream for the messages.
-        // if null, std::cout is the default output stream
+        // if null, LOG(INFO) is the default output stream
         static void set_output(std::ostream* out);
 
 		// --------------- buffer information ----------------

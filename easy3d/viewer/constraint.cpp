@@ -88,8 +88,8 @@ namespace easy3d {
 			(translationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
 			const float norm = direction.norm();
 			if (norm < 1E-8) {
-				std::cerr << "AxisPlaneConstraint::setTranslationConstraintDir: null vector "
-					"for translation constraint" << std::endl;
+				LOG(ERROR) << "AxisPlaneConstraint::setTranslationConstraintDir: null vector "
+					"for translation constraint";
 				translationConstraintType_ = AxisPlaneConstraint::FREE;
 			}
 			else
@@ -112,8 +112,8 @@ namespace easy3d {
 			(rotationConstraintType() != AxisPlaneConstraint::FORBIDDEN)) {
 			const float norm = direction.norm();
 			if (norm < 1E-8) {
-				std::cerr << "AxisPlaneConstraint::setRotationConstraintDir: null vector for "
-					"rotation constraint" << std::endl;
+				LOG(ERROR) << "AxisPlaneConstraint::setRotationConstraintDir: null vector for "
+					"rotation constraint";
 				rotationConstraintType_ = AxisPlaneConstraint::FREE;
 			}
 			else
@@ -136,8 +136,8 @@ namespace easy3d {
 	 rotational constraints and will be ignored. */
 	void AxisPlaneConstraint::setRotationConstraintType(Type type) {
 		if (rotationConstraintType() == AxisPlaneConstraint::PLANE) {
-			std::cerr << "AxisPlaneConstraint::setRotationConstraintType: the PLANE type "
-				"cannot be used for a rotation constraints" << std::endl;
+			LOG(ERROR) << "AxisPlaneConstraint::setRotationConstraintType: the PLANE type "
+				"cannot be used for a rotation constraints";
 			return;
 		}
 

@@ -236,7 +236,7 @@ namespace easy3d {
     //				duplication_set.push_back(FaceAndComponent(f, face_comp[f]));
     //			}
     //			else {
-    //				std::cerr << "error: a face was marked duplicated with it self" << std::endl;
+    //				LOG(ERROR) << "error: a face was marked duplicated with it self";
     //			}
     //		}
     //		if (had_processed)

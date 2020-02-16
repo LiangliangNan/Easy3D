@@ -243,9 +243,9 @@ namespace easy3d {
 
 		LOG(INFO) << "OpenGL vendor:            " << glGetString(GL_VENDOR);
 		LOG(INFO) << "OpenGL renderer:          " << glGetString(GL_RENDERER);
-		LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor << std::endl;
-		LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION) << std::endl;
-		LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+		LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor;
+		LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION);
+		LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
 		glGetIntegerv(GL_SAMPLES, &samples_);
 		int max_num = 0;
@@ -392,7 +392,7 @@ namespace easy3d {
 			}
 			else {
 				drag_active_ = false;
-				std::cout << "GLFW_REPEAT? Seems never happen" << std::endl;
+				LOG(INFO) << "GLFW_REPEAT? Seems never happen";
 				return false;
 			}
 		}
@@ -667,7 +667,7 @@ namespace easy3d {
 
 	bool Viewer::key_press_event(int key, int modifiers) {
 		if (key == GLFW_KEY_F1 && modifiers == 0)
-			std::cout << usage() << std::endl;
+			LOG(INFO) << usage();
 
 		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
 			float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
@@ -934,25 +934,25 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_D && modifiers == 0) {
 			if (current_model()) {
-				std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------" << std::endl;
+				LOG(INFO) << "----------- " << file_system::simple_name(current_model()->name()) << " -----------";
 				if (dynamic_cast<SurfaceMesh*>(current_model())) {
 					auto model = dynamic_cast<SurfaceMesh*>(current_model());
-					std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
+					LOG(INFO) << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
 						<< ", #vertex: " + std::to_string(model->vertices_size())
-						<< ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+						<< ", #edge: " + std::to_string(model->edges_size());
 				}
 				if (!current_model()->points_drawables().empty()) {
-					std::cout << "points drawables:" << std::endl;
+					LOG(INFO) << "points drawables:";
 					for (auto d : current_model()->points_drawables())
 						d->drawable_stats();
 				}
 				if (!current_model()->lines_drawables().empty()) {
-					std::cout << "lines drawables:" << std::endl;
+					LOG(INFO) << "lines drawables:";
 					for (auto d : current_model()->lines_drawables())
                         d->drawable_stats();
 				}
 				if (!current_model()->triangles_drawables().empty()) {
-					std::cout << "triangles drawables:" << std::endl;
+					LOG(INFO) << "triangles drawables:";
 					for (auto d : current_model()->triangles_drawables())
                         d->drawable_stats();
 				}
@@ -1108,7 +1108,7 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-		std::cout << usage() << std::endl;
+		LOG(INFO) << usage();
 
 		glEnable(GL_DEPTH_TEST);
 
@@ -1262,7 +1262,7 @@ namespace easy3d {
 
 		if (model_idx_ != pre_idx) {
 			if (model_idx_ >= 0)
-				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
 		}
 		return model;
 	}
@@ -1281,11 +1281,11 @@ namespace easy3d {
 			models_.erase(pos);
 			delete model;
 			model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-			std::cout << "model deleted: " << name << std::endl;
+			LOG(INFO) << "model deleted: " << name;
 
 			if (model_idx_ != pre_idx) {
 				if (model_idx_ >= 0)
-					std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+					LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
 			}
 			return true;
 		}
@@ -1389,7 +1389,7 @@ namespace easy3d {
 	bool Viewer::save() const {
 		const Model* m = current_model();
 		if (!m) {
-			std::cerr << "no model exists" << std::endl;
+			LOG(ERROR) << "no model exists";
 			return false;
 		}
 
@@ -1418,7 +1418,7 @@ namespace easy3d {
 			saved = GraphIO::save(file_name, dynamic_cast<const Graph*>(m));
 
 		if (saved)
-			std::cout << "file successfully saved" << std::endl;
+			LOG(INFO) << "file successfully saved";
 
 		return saved;
 	}
@@ -1441,7 +1441,7 @@ namespace easy3d {
 
 		const std::string& ext = file_system::extension(file_name, true);
 		if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "ppm" && ext != "tga") {
-			std::cerr << "snapshot format must be png, jpg, bmp, ppm, or tga" << std::endl;
+			LOG(ERROR) << "snapshot format must be png, jpg, bmp, ppm, or tga";
 			return false;
 		}
 

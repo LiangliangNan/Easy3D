@@ -31,6 +31,7 @@
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/image_io.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -62,7 +63,7 @@ namespace easy3d {
 			GLint current_fbo;
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
 			if (!current_fbo) {
-				std::cerr << "no framebuffer is bound. You might missed makeCurrent()?" << std::endl;
+				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
 			}
 
@@ -143,7 +144,7 @@ namespace easy3d {
 			GLint current_fbo;
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
 			if (!current_fbo) {
-				std::cerr << "no framebuffer is bound. You might missed makeCurrent()?" << std::endl;
+				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
 			}
 
@@ -210,7 +211,7 @@ namespace easy3d {
 			else if (format == GL_RGBA || format == GL_BGRA)
 				bytes_per_pixel = 4;
 			else {
-				std::cerr << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA." << std::endl;
+				LOG(ERROR) << "to read color buffer, the format must be one of GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.";
 				return;
 			}
 
@@ -270,7 +271,7 @@ namespace easy3d {
 			GLint current_fbo;
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
 			if (!current_fbo) {
-				std::cerr << "no framebuffer is bound. You might missed makeCurrent()?" << std::endl;
+				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
 			}
 
@@ -358,7 +359,7 @@ namespace easy3d {
                 io::save_tga(file_name, bits, w, h);
             }
             else
-                std::cerr << "unknown file format: " << ext << std::endl;
+                LOG(ERROR) << "unknown file format: " << ext;
 		}
 
 
@@ -393,7 +394,7 @@ namespace easy3d {
                 io::save_tga(file_name, bits, w, h);
             }
             else
-                std::cerr << "unknown file format: " << ext << std::endl;
+                LOG(ERROR) << "unknown file format: " << ext;
 		}
 
 
@@ -438,7 +439,7 @@ namespace easy3d {
 			GLint current_fbo;
 			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
 			if (!current_fbo) {
-				std::cerr << "no framebuffer is bound. You might missed makeCurrent()?" << std::endl;
+				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
 			}
 

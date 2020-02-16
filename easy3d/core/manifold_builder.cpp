@@ -471,7 +471,7 @@ namespace easy3d {
 
 #if 0    // This is the history how vertices were duplicated.
         for (const auto& copy : dmap) {
-            std::cout << "Non-manifold vertex " << copy.first << " was fixed by creating";
+            LOG(INFO) << "Non-manifold vertex " << copy.first << " was fixed by creating";
             for (auto v : copy.second)
                 std::cout << " " << v;
             std::cout << std::endl;

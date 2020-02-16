@@ -30,6 +30,7 @@
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/constant.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -958,7 +959,7 @@ namespace easy3d {
 
             //	check for singular matrix:
             if (std::abs(result(maxc, maxc)) < epsilon<T>()) {
-                std::cerr << "input matrix is singular" << std::endl;
+                LOG(ERROR) << "input matrix is singular";
                 return result; // return partial result
             }
 
@@ -1737,7 +1738,7 @@ namespace easy3d {
             case 231:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
-                std::cerr << "invalid rotation order" << std::endl;
+                LOG(ERROR) << "invalid rotation order";
                 return rx * rz * ry;
         }
     }
@@ -2068,7 +2069,7 @@ namespace easy3d {
             case 231:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
-                std::cerr << "invalid rotation order" << std::endl;
+                LOG(ERROR) << "invalid rotation order";
                 return rx * rz * ry;
         }
     }

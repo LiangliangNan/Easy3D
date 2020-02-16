@@ -73,14 +73,9 @@ namespace easy3d {
 
     template<int DIM, typename FT> inline
     GenericSegment<DIM, FT>::GenericSegment(const Point& s, const Point& t) : s_(s), t_(t) {
-    #ifndef NDEBUG // degenerate case
-        if (distance2(s, t) < 1e-15) {
-            std::cerr << "degenerate segment constructed from 2 points:" << std::endl
-                << "\t(" << s << ")" << std::endl
-                << "\t(" << t << ")" << std::endl;
-        }
-
-    #endif
+      DLOG_IF(ERROR, distance2(s, t) < 1e-15) << "degenerate segment constructed from 2 points:"
+                                              << "\t(" << s << ")"
+                                              << "\t(" << t << ")";
     }
 
 
