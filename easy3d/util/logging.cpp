@@ -55,7 +55,7 @@ namespace easy3d
 				if (pos != std::string::npos)
 					log_path = log_path.substr(0, pos);
 #endif
-				log_path = file_system::parent_directory(log_path) + "/logs/";
+				log_path = file_system::parent_directory(log_path) + "/logs";
 			}
             else    // always append a separator in case the user forgot it
                 log_path = log_dir + file_system::native_path_separator();
@@ -67,9 +67,8 @@ namespace easy3d
 			if (severity_dependent) // create a log file for each severity level
 				FLAGS_log_dir = log_path;
 			else {
-				google::SetLogDestination(google::INFO, log_path.c_str());
-				std::string extension = file_system::base_name(app_path) + "-";
-				google::SetLogFilenameExtension(extension.c_str());
+			    const std::string& dest = log_path + "/" + file_system::base_name(app_path) + "-";
+                google::SetLogDestination(google::INFO, dest.c_str());
 			}
 
 			FLAGS_stderrthreshold = google::INFO;
