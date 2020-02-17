@@ -805,7 +805,7 @@ void PaintCanvas::addModel(Model *model, bool create_default_drawables /* = true
     if (model_idx_ != pre_idx) {
         emit currentModelChanged();
         if (model_idx_ >= 0)
-            std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
     }
 }
 
@@ -831,7 +831,7 @@ void PaintCanvas::deleteModel(Model *model) {
     if (model_idx_ != pre_idx) {
         emit currentModelChanged();
         if (model_idx_ >= 0)
-            std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+			LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
     }
 }
 

@@ -28,7 +28,7 @@
 
 #include <queue>
 
-//#define REMESH_INTERSECTIONS_TIMING
+#define REMESH_INTERSECTIONS_TIMING
 
 #ifdef REMESH_INTERSECTIONS_TIMING
 #include <easy3d/util/stop_watch.h>
