@@ -60,7 +60,7 @@ void MyFunction() {
 
 int main (int argc, char *argv[])
 {
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     //------------------------------------------------
 

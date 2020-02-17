@@ -24,8 +24,8 @@
 
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
+#include <easy3d/util/logging.h>
 
-#include <iostream>
 #include <fstream>
 #include <cassert>
 #include <algorithm>
@@ -100,7 +100,7 @@ namespace easy3d {
 
         bool create_directory(const std::string& dir) {
             if (is_directory(dir)) {
-                std::cout << "directory \'" << dir << "\' already exists" << std::endl;
+                LOG(WARNING) << "directory already exists: " << dir;
                 return true;
             }
 
@@ -117,7 +117,7 @@ namespace easy3d {
                 return true;
             }
 
-            //std::cerr << "could not create directory: " << dir << std::endl;
+			LOG(WARNING) << "could not create directory: " << dir;
             return false;
         }
 
@@ -131,13 +131,13 @@ namespace easy3d {
                 const std::string& entry = path + "/" + entries[i];
                 if (is_directory(entry)) {
                     if (!delete_directory(entry)) {
-                        std::cerr << "could not delete subdirectory \'" << entry << "\'" << std::endl;
+						LOG(WARNING) << "could not delete subdirectory: " << entry;
                         return false;
                     }
                 }
                 else {
                     if (!delete_file(entry)) {
-                        std::cerr << "could not delete file \'" << entry << "\'" << std::endl;
+						LOG(WARNING) << "could not delete file: " << entry;
                         return false;
                     }
                 }
@@ -195,12 +195,12 @@ namespace easy3d {
             // http://msdn.microsoft.com/en-us/library/bb762181(VS.85).aspx
             // FIXME: Max length of home path?
             if (!SUCCEEDED(::SHGetFolderPathA(nullptr, CSIDL_APPDATA, nullptr, 0, path)))
-                std::cerr << "Cannot determine home directory" << std::endl;
+                LOG(WARNING) << "could not determine home directory";
     #else // _WIN32
             uid_t user_id = ::geteuid();
             struct passwd* user_info = ::getpwuid(user_id);
             if (user_info == nullptr || user_info->pw_dir == nullptr)
-                std::cerr << "Cannot determine home directory" << std::endl;
+				LOG(WARNING) << "could not determine home directory";
             std::strncpy(path, user_info->pw_dir, PATH_MAX);
     #endif // _WIN32
 
@@ -274,7 +274,7 @@ namespace easy3d {
 
         void get_directory_entries(const std::string& dir, std::vector<std::string>& contents) {
             if (!is_directory(dir)) {
-                std::cerr << "directory \'" << dir << " \' does not exist" << std::endl;
+                LOG(WARNING) << "directory does not exist: " << dir;
             }
 
     #if defined(WIN32) && !defined(__CYGWIN__)
@@ -491,8 +491,7 @@ namespace easy3d {
 
             const std::string root = path_root(from);
             if (root != path_root(to)) {
-                std::cerr << "Cannot relativise paths. From=" << from << ", To=" << to << ". Returning 'to' unchanged." << std::endl;
-                //return to;
+				LOG(WARNING) << "could not relativise paths. From=" << from << ", To=" << to << ". Returning 'to' unchanged.";
                 return simple_name(to);
             }
 
@@ -525,7 +524,7 @@ namespace easy3d {
             if (_fullpath(resolved_path, path.c_str(), PATH_MAX) != 0)
                 return resolved_path;
             else {
-                std::cerr << "invalid path. Returning 'path' unchanged." << std::endl;
+                LOG(WARNING) << "invalid path: " << path;
                 return path;
             }
     #else
@@ -632,12 +631,12 @@ namespace easy3d {
         bool copy_file(const std::string& original, const std::string& copy) {
             std::ifstream in(original.c_str());
             if (in.fail()) {
-                std::cerr << "could not open file \'" << original << "\'" << std::endl;
+                LOG(WARNING) << "could not open file: " << original;
                 return false;
             }
             std::ofstream out(copy.c_str());
             if (in.fail()) {
-                std::cerr << "could not open file \'" << copy << "\'" << std::endl;
+				LOG(WARNING) << "could not open file: " << copy;
                 return false;
             }
 
@@ -665,7 +664,7 @@ namespace easy3d {
         void read_file_to_string(const std::string& filename, std::string& data) {
             std::ifstream in(filename.c_str(), std::fstream::binary);
             if (in.fail()) {
-                std::cerr << "Could not open file \'" << filename << "\'" << std::endl;
+				LOG(WARNING) << "could not open file: " << filename;
                 return;
             }
 
@@ -680,7 +679,7 @@ namespace easy3d {
         void write_string_to_file(const std::string& data, const std::string& filename) {
 			std::ofstream out(filename.c_str(), std::ios::binary);
 			if (out.fail()) {
-				std::cerr << "Could not open file \'" << filename << "\'" << std::endl;
+				LOG(WARNING) << "could not open file: " << filename;
 				return;
 			}
 			out.write(data.c_str(), data.length());

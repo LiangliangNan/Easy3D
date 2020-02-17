@@ -230,30 +230,45 @@ namespace easy3d {
     {
         std::vector<std::string> props;
 
-        LOG(INFO) << "vertex properties:\n";
-        props = vertex_properties();
-        for (unsigned int i=0; i<props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = vertex_properties();
+		if (!props.empty())
+		{
+			std::cout << "vertex properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
 
-        LOG(INFO) << "halfedge properties:\n";
-        props = halfedge_properties();
-        for (unsigned int i=0; i<props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = halfedge_properties();
+		if (!props.empty())
+		{
+			std::cout << "halfedge properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
 
-        LOG(INFO) << "edge properties:\n";
-        props = edge_properties();
-        for (unsigned int i=0; i<props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = edge_properties();
+		if (!props.empty())
+		{
+			std::cout << "edge properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
 
-        LOG(INFO) << "face properties:\n";
-        props = face_properties();
-        for (unsigned int i=0; i<props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = face_properties();
+		if (!props.empty())
+		{
+			std::cout << "face properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
 
-        LOG(INFO) << "model properties:\n";
-        props = model_properties();
-        for (unsigned int i = 0; i < props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = model_properties();
+		if (!props.empty())
+		{
+			std::cout << "model properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
     }
 
 

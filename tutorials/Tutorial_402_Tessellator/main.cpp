@@ -98,7 +98,7 @@ void triangulate(SurfaceMesh* mesh) {
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     try {
         // Create the default Easy3D viewer.

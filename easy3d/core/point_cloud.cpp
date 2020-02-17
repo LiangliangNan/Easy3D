@@ -151,14 +151,20 @@ namespace easy3d {
     {
         std::vector<std::string> props = vertex_properties();
 
-        LOG(INFO) << "vertex properties:\n";
-        for (unsigned int i=0; i<props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		if (!props.empty())
+		{
+			std::cout << "vertex properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
 
-        LOG(INFO) << "model properties:\n";
-        props = model_properties();
-        for (unsigned int i = 0; i < props.size(); ++i)
-            LOG(INFO) << "\t" << props[i];
+		props = model_properties();
+		if (!props.empty())
+		{
+			std::cout << "model properties:\n";
+			for (unsigned int i = 0; i < props.size(); ++i)
+				std::cout << "\t" << props[i] << std::endl;
+		}
     }
 
 

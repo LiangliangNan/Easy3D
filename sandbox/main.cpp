@@ -38,7 +38,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     try {
         const std::vector<std::string> files = {

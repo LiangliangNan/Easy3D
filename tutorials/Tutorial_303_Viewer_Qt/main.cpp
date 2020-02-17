@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     QDir::setCurrent(workingDir.absolutePath());
 
     // Initialize logging.
-    easy3d::logging::initialize(argv[0]);
+    easy3d::logging::initialize();
 
     int status = 0;
     try {

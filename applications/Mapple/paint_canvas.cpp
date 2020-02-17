@@ -519,7 +519,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         if (model_idx_ != pre_idx) {
             emit currentModelChanged();
             if (model_idx_ >= 0)
-                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
     } else if (e->key() == Qt::Key_Period && e->modifiers() == Qt::NoModifier) {
         int pre_idx = model_idx_;
@@ -530,7 +530,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         if (model_idx_ != pre_idx) {
             emit currentModelChanged();
             if (model_idx_ >= 0)
-                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
     } else if (e->key() == Qt::Key_Delete && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
@@ -639,32 +639,41 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
-        if (currentModel()) {
-            std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------" << std::endl;
-            if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-                auto model = dynamic_cast<SurfaceMesh*>(currentModel());
-                std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
-                          << ", #vertex: " + std::to_string(model->vertices_size())
-                          << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
-            }
-            if (!currentModel()->points_drawables().empty()) {
-                std::cout << "points drawables:" << std::endl;
-                for (auto d : currentModel()->points_drawables())
-                    d->drawable_stats();
-            }
-            if (!currentModel()->lines_drawables().empty()) {
-                std::cout << "lines drawables:" << std::endl;
-                for (auto d : currentModel()->lines_drawables())
-                    d->drawable_stats();
-            }
-            if (!currentModel()->triangles_drawables().empty()) {
-                std::cout << "triangles drawables:" << std::endl;
-                for (auto d : currentModel()->triangles_drawables())
-                    d->drawable_stats();
-            }
+		if (currentModel()) {
+			std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------\n";
+			if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+				auto model = dynamic_cast<SurfaceMesh*>(currentModel());
+				std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
+						  << ", #vertex: " + std::to_string(model->vertices_size())
+						  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+			}
+			else if (dynamic_cast<PointCloud*>(currentModel())) {
+				auto model = dynamic_cast<PointCloud*>(currentModel());
+				std::cout << "model is a point cloud. #vertex: " + std::to_string(model->vertices_size()) << std::endl;
+			}
+			else if (dynamic_cast<Graph*>(currentModel())) {
+				auto model = dynamic_cast<Graph*>(currentModel());
+				std::cout << "model is a graph. #vertex: " + std::to_string(model->vertices_size())
+						  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+			}
+			if (!currentModel()->points_drawables().empty()) {
+				std::cout << "points drawables:\n";
+				for (auto d : currentModel()->points_drawables())
+					d->drawable_stats();
+			}
+			if (!currentModel()->lines_drawables().empty()) {
+				std::cout << "lines drawables:\n";
+				for (auto d : currentModel()->lines_drawables())
+					d->drawable_stats();
+			}
+			if (!currentModel()->triangles_drawables().empty()) {
+				std::cout << "triangles drawables:\n";
+				for (auto d : currentModel()->triangles_drawables())
+					d->drawable_stats();
+			}
 
-            currentModel()->property_stats();
-        }
+			currentModel()->property_stats();
+		}
     } else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
         // Reload the shader(s) - useful for writing/debugging shader code.
         ShaderManager::reload();

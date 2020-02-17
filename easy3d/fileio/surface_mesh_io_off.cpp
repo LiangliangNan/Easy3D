@@ -53,13 +53,13 @@ namespace easy3d {
 		bool load_off(const std::string& file_name, SurfaceMesh* mesh)
 		{
 			if (!mesh) {
-				std::cerr << "null mesh pointer" << std::endl;
+				LOG(ERROR) << "null mesh pointer";
 				return false;
 			}
 
             std::ifstream in(file_name.c_str()) ;
             if(in.fail()) {
-                std::cerr << "Could not open file \'" << file_name << "\'" << std::endl ;
+				LOG(ERROR) << "Could not open file: " << file_name;
                 return false ;
             }
 
@@ -78,7 +78,7 @@ namespace easy3d {
 
             // NOFF is for Grimage "visual shapes".
             if(magic != "OFF" && magic != "NOFF") {
-                std::cerr << "Not an OFF file. Key word is: " << magic << std::endl ;
+				LOG(ERROR) << "Not an OFF file. Key word is: " << magic;
                 return false;
             }
 
@@ -89,7 +89,7 @@ namespace easy3d {
             int nb_vertices, nb_facets, nb_edges;
             input >> nb_vertices >> nb_facets >> nb_edges;
             if (input.fail()) {
-                std::cerr << "An error in the file header: " << input.current_line() << std::endl;
+				LOG(ERROR) << "An error in the file header: " << input.current_line();
                 return false;
             }
 
@@ -144,13 +144,13 @@ namespace easy3d {
 		bool save_off(const std::string& file_name, const SurfaceMesh* mesh)
 		{
 			if (!mesh) {
-				std::cerr << "null mesh pointer" << std::endl;
+				LOG(ERROR) << "null mesh pointer";
 				return false;
 			}
 
             std::ofstream out(file_name.c_str()) ;
             if(out.fail()) {
-                std::cerr << "Could not open file\'" << file_name << "\'" << std::endl ;
+				LOG(ERROR) << "could not open file: " << file_name;
                 return false ;
             }
             out.precision(10) ;

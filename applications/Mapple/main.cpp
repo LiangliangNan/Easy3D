@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     QDir::setCurrent(workingDir.absolutePath());
 
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
 #ifdef NDEBUG
     // splash screen

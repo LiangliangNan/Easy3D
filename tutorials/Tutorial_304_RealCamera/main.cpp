@@ -36,7 +36,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     // the bunder file (We use only the camera instric and extrinsic parameters).
     const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";

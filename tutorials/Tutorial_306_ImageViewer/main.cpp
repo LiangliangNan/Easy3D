@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     // the image file.
     const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";

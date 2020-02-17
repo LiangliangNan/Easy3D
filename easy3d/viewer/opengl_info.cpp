@@ -31,7 +31,7 @@
 
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl.h>
-
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -53,7 +53,7 @@ namespace easy3d {
 
         if (GLEW_OK != status) {
             // Problem: glewInit failed, something is seriously wrong.
-            std::cerr << glewGetErrorString(status) << std::endl;
+            LOG(ERROR) << glewGetErrorString(status);
             return false;
         }
 

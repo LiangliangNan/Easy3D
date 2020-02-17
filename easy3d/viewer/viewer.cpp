@@ -934,25 +934,34 @@ namespace easy3d {
 
 		else if (key == GLFW_KEY_D && modifiers == 0) {
 			if (current_model()) {
-				LOG(INFO) << "----------- " << file_system::simple_name(current_model()->name()) << " -----------";
+				std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
 				if (dynamic_cast<SurfaceMesh*>(current_model())) {
 					auto model = dynamic_cast<SurfaceMesh*>(current_model());
-					LOG(INFO) << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
-						<< ", #vertex: " + std::to_string(model->vertices_size())
-						<< ", #edge: " + std::to_string(model->edges_size());
+					std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
+							  << ", #vertex: " + std::to_string(model->vertices_size())
+							  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+				}
+				else if (dynamic_cast<PointCloud*>(current_model())) {
+					auto model = dynamic_cast<PointCloud*>(current_model());
+					std::cout << "model is a point cloud. #vertex: " + std::to_string(model->vertices_size()) << std::endl;
+				}
+				else if (dynamic_cast<Graph*>(current_model())) {
+					auto model = dynamic_cast<Graph*>(current_model());
+					std::cout << "model is a graph. #vertex: " + std::to_string(model->vertices_size())
+							  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
 				}
 				if (!current_model()->points_drawables().empty()) {
-					LOG(INFO) << "points drawables:";
+					std::cout << "points drawables:\n";
 					for (auto d : current_model()->points_drawables())
 						d->drawable_stats();
 				}
 				if (!current_model()->lines_drawables().empty()) {
-					LOG(INFO) << "lines drawables:";
+					std::cout << "lines drawables:\n";
 					for (auto d : current_model()->lines_drawables())
                         d->drawable_stats();
 				}
 				if (!current_model()->triangles_drawables().empty()) {
-					LOG(INFO) << "triangles drawables:";
+					std::cout << "triangles drawables:\n";
 					for (auto d : current_model()->triangles_drawables())
                         d->drawable_stats();
 				}
@@ -1108,7 +1117,7 @@ namespace easy3d {
 
 
 	void Viewer::init() {
-		LOG(INFO) << usage();
+		std::cout << usage() << std::endl;
 
 		glEnable(GL_DEPTH_TEST);
 

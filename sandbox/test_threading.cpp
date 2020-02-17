@@ -878,7 +878,7 @@ void test_thread_test_get_effective_num_threads() {
 
 
 int main(int argc, char** argv) {
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     test_thread_wait();
     test_thread_pause();

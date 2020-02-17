@@ -176,7 +176,7 @@ bool MainWindow::onSave() {
     }
 
     if (saved) {
-        std::cout << "model successfully saved to: \'" << fileName.toStdString() << "\'" << std::endl;
+        std::cout << "model successfully saved to: " << fileName.toStdString();
         setCurrentFile(fileName);
         return true;
     }
@@ -189,7 +189,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
     auto models = viewer_->models();
     for (auto m : models) {
         if (m->name() == file_name) {
-            LOG(WARNING) << "model alreaded loaded: " << file_name;
+            LOG(WARNING) << "model already loaded: " << file_name;
             return nullptr;
         }
     }

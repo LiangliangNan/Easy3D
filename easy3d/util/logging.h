@@ -41,24 +41,24 @@
 #define CHECK_TRUE(val)     CHECK_EQ((val), true)
 #define CHECK_FALSE(val)    CHECK_EQ((val), false)
 
+namespace easy3d
+{
 
-namespace easy3d {
+	namespace logging
+	{
 
-    namespace logging {
+		/**
+		 * @brief Initializes Google's logging library.
+		 * @param severity_dependent True to create a log file for each severity, otherwise a single log file each run.
+		 * @param log_dir The directory where the log files will be created. If it is empty (default value), the log
+		 * 				  files will be created in the "logs" directory next the executable file.
+		 * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
+		 * 		 written to STDERR.
+		 */
+		void initialize(bool severity_dependent = false, const std::string& log_dir = "");
 
-    /**
-         * @brief Initializes Google's logging library. A log file will be created in the directory "logs" next to the
-         * 				  executable file, with a file name in the format "Executable_basename-time_stamp", e.g.,
-         * 				  Mapple-20200113-134747.27618.
-         * @param argv0 The argv[0] argument of the main function, which is the full path of the executable file.
-         * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
-         * 		 written to STDERR.
-         */
-        void initialize(const char* argv0);
-
-    }
+	}
 
 }
-
 
 #endif // EASY3D_LOGGING_H

@@ -112,27 +112,27 @@ namespace easy3d {
 
 
     void Drawable::drawable_stats() const {
-        LOG(INFO) << "\t" << name();
+       std::cout << "\t" << name() << std::endl;
 
         if (vertex_buffer()) {
-            LOG(INFO) << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
-                      << num_vertices_ * sizeof(vec3) << " bytes";
+           std::cout << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (normal_buffer()) {
-            LOG(INFO) << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
-                      << num_vertices_ * sizeof(vec3) << " bytes";
+           std::cout << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (color_buffer()) {
-            LOG(INFO) << "\t\tColor buffer:      " << num_vertices_ << " colors, "
-                      << num_vertices_ * sizeof(vec3) << " bytes";
+           std::cout << "\t\tColor buffer:      " << num_vertices_ << " colors, "
+                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (texcoord_buffer()) {
-            LOG(INFO) << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
-                      << num_vertices_ * sizeof(vec2) << " bytes";
+           std::cout << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
+                      << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
         }
         if (index_buffer()) {
-            LOG(INFO) << "\t\tIndex buffer:      " << num_indices_ << " indices, "
-                      << num_indices_ * sizeof(unsigned int) << " bytes";
+           std::cout << "\t\tIndex buffer:      " << num_indices_ << " indices, "
+                      << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
         }
     }
 

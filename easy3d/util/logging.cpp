@@ -29,60 +29,52 @@
 
 #include <iostream>
 
+
 namespace easy3d
 {
 
 	namespace logging
 	{
 
-
-		// I thought it might be possible to avoid calling the initialize() at the begining of
-		// the main function to initialize glob. But it seems unused static variables will not
-		// be initialized (depends on compilers). I am not sure!!!
-//        static class init_easy3d_logging
-//        {
-//        public:
-//            init_easy3d_logging() {
-//                // Ensures the library will be initialized only once.
-//                if (!google::glog_internal_namespace_::IsGoogleLoggingInitialized())
-//                    initialize(file_system::executable().c_str(), google::GLOG_INFO);
-//            }
-//            ~init_easy3d_logging() {
-//            }
-//        } init;
-
-
-
-		void initialize(const char* argv0)
+		void initialize(bool severity_dependent, const std::string& log_dir)
 		{
 			// Ensures the library will not be initialized more than once.
 			if (google::glog_internal_namespace_::IsGoogleLoggingInitialized())
 				return;
 
-			std::string log_path = argv0;
+			// use "static" to make sure the string still exist outside this function (glog is multi threaded).
+            static std::string app_path = file_system::executable();
+
+			std::string log_path = log_dir;
+			if (log_path.empty())
+			{
+				log_path = app_path;
 #ifdef __APPLE__
-			// macOS may put the executable file in an application bundle, e.g., "PolyFit.app/Contents/MacOS/PolyFit"
-			std::string::size_type pos = log_path.find(".app");
-			if (pos != std::string::npos)
-				log_path = log_path.substr(0, pos);
+				// macOS may put the executable file in an application bundle, e.g., "PolyFit.app/Contents/MacOS/PolyFit"
+				std::string::size_type pos = log_path.find(".app");
+				if (pos != std::string::npos)
+					log_path = log_path.substr(0, pos);
 #endif
-			log_path = file_system::parent_directory(log_path) + "/logs/";
+				log_path = file_system::parent_directory(log_path) + "/logs/";
+			}
+            else    // always append a separator in case the user forgot it
+                log_path = log_dir + file_system::native_path_separator();
 
 			if (!file_system::is_directory(log_path))
 				file_system::create_directory(log_path);
 			LOG_IF(ERROR, !file_system::is_directory(log_path)) << "could not create log directory: " << log_path;
 
-			if (1) {
+			if (severity_dependent) // create a log file for each severity level
+				FLAGS_log_dir = log_path;
+			else {
 				google::SetLogDestination(google::INFO, log_path.c_str());
-				std::string extension = file_system::base_name(argv0) + "-";
+				std::string extension = file_system::base_name(app_path) + "-";
 				google::SetLogFilenameExtension(extension.c_str());
 			}
-			else // create a log file for each severity level
-				FLAGS_log_dir = log_path;
 
 			FLAGS_stderrthreshold = google::INFO;
 			FLAGS_colorlogtostderr = true;
-			google::InitGoogleLogging(argv0);
+			google::InitGoogleLogging(app_path.c_str());
 
 			DLOG(INFO) << "logger initialized";
 			DLOG(INFO) << "executable path: " << file_system::executable_directory();

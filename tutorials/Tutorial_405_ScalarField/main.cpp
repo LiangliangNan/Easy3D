@@ -42,7 +42,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     const std::string file_name = resource::directory() + "/data/building.off";
 

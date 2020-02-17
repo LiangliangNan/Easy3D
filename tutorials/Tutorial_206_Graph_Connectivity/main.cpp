@@ -62,7 +62,7 @@ Graph* old_graph_from_previous_example() {
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     Graph* g = old_graph_from_previous_example();
 

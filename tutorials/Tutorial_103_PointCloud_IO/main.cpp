@@ -40,7 +40,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(resource::directory() + "/data/bunny.bin");
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
+    std::cout << "point cloud has " << cloud->vertices_size() << " points" << std::endl;
 
     // Now let's save the model into a file with customized format. In each
     // line we store the x, y, z coordinates, followed by the normal (nx, ny,

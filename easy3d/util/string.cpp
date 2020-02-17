@@ -104,12 +104,10 @@ namespace easy3d {
 			const std::string& old_substr,
 			const std::string& new_substr
 		) {
-			//std::cout << "n\n\before -----\n" << in << std::endl;
 			std::size_t pos = in.find(old_substr);
 			if (pos != std::string::npos) {
 				in.replace(pos, old_substr.length(), new_substr);
 			}
-			//std::cout << "n\n\after -----\n" << in << std::endl;
 		}
 
 #if 1

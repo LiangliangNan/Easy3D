@@ -38,7 +38,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
 	// Read a mesh specified by its file name
     const std::string file_name = resource::directory() + "/data/sphere.obj";
@@ -48,9 +48,9 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 	}
 	std::cout << "mesh loaded. " << std::endl;
-	std::cout << "\tvertices: " << mesh->n_vertices() << std::endl;
-	std::cout << "\tedges: " << mesh->n_edges() << std::endl;
-	std::cout << "\tfaces: " << mesh->n_faces() << std::endl;
+	std::cout << "\tvertices: " << mesh->vertices_size() << std::endl;
+	std::cout << "\tedges: " << mesh->edges_size() << std::endl;
+	std::cout << "\tfaces: " << mesh->faces_size() << std::endl;
 
 	// ...
 	// Do fancy stuff with the mesh

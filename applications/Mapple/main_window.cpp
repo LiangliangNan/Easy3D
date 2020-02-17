@@ -215,7 +215,7 @@ bool MainWindow::onSave() {
     }
 
     if (saved) {
-        std::cout << "model successfully saved to: \'" << fileName.toStdString() << "\'" << std::endl;
+        LOG(INFO) << "model successfully saved to: " << fileName.toStdString();
         setCurrentFile(fileName);
         return true;
     }
@@ -678,14 +678,14 @@ void MainWindow::detectDuplicatedFaces() {
 
     StopWatch w;
     w.start();
-    std::cerr << "detecting duplicated faces..." << std::endl;
+    LOG(INFO) << "detecting duplicated faces...";
 
     MeshSurfacer ms;
     const auto& faces = ms.detect_duplicated_faces(mesh, true);
     if (!faces.empty())
-        std::cerr << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string() << std::endl;
+		LOG(INFO) << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string();
     else
-        std::cerr << "done. No duplicated faces detected. " << w.time_string() << std::endl;
+		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
 }
 
 
@@ -696,7 +696,7 @@ void MainWindow::removeDuplicatedFaces() {
 
     StopWatch w;
     w.start();
-    std::cerr << "removing duplicated faces..." << std::endl;
+	LOG(INFO) << "removing duplicated faces...";
 
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
@@ -705,10 +705,10 @@ void MainWindow::removeDuplicatedFaces() {
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
         viewer()->doneCurrent();
         update();
-        std::cerr << "done. " << num << " faces deleted. Time: " << w.time_string() << std::endl;
+		LOG(INFO) << "done. " << num << " faces deleted. Time: " << w.time_string();
     }
     else
-        std::cerr << "done. No duplicated faces detected. " << w.time_string() << std::endl;
+		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
 }
 
 
@@ -719,14 +719,14 @@ void MainWindow::detectSelfIntersections() {
 
     StopWatch w;
     w.start();
-    std::cerr << "detecting intersecting faces..." << std::endl;
+	LOG(INFO) << "detecting intersecting faces...";
 
     MeshSurfacer ms;
     const auto& pairs = ms.detect_self_intersections(mesh);
     if (!pairs.empty())
-        std::cerr << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string() << std::endl;
+		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string();
     else
-        std::cerr << "done. No intersecting faces detected. " << w.time_string() << std::endl;
+		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
  }
 
 
@@ -737,7 +737,7 @@ void MainWindow::remeshSelfIntersections() {
 
     StopWatch w;
     w.start();
-    std::cerr << "remeshing intersecting faces..." << std::endl;
+	LOG(INFO) << "remeshing intersecting faces...";
 
     auto size = mesh->faces_size();
     MeshSurfacer ms;
@@ -748,10 +748,10 @@ void MainWindow::remeshSelfIntersections() {
         viewer()->makeCurrent();
         viewer()->addModel(result);
         viewer()->doneCurrent();
-        std::cerr << "done. #faces " << size << " -> " << result->faces_size() << ". Time: " << w.time_string() << std::endl;
+		LOG(INFO) << "done. #faces " << size << " -> " << result->faces_size() << ". Time: " << w.time_string();
     }
     else
-        std::cerr << "done. No intersecting faces detected. " << w.time_string() << std::endl;
+		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
 }
 
 

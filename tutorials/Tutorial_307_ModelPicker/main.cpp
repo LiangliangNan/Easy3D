@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     const std::string file_name_0 = resource::directory() + "/data/graph.ply";
     const std::string file_name_1 = resource::directory() + "/data/torusknot.obj";

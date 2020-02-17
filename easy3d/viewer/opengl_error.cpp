@@ -24,11 +24,10 @@
 
 #include <easy3d/viewer/opengl_error.h>
 
-#include <iostream>
-
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -71,11 +70,11 @@ namespace easy3d {
             if (error_code != GL_NO_ERROR) {
                 const char* msg = gl_error_string(error_code);
                 if (msg) {
-                    std::cerr << "GL error: \n"
-                              << "\tfile: " << file_system::simple_name(file) << std::endl
-                              << "\tline: " << line << std::endl
-                              << "\tinfo: " << msg << std::endl;
-                    return false;
+					LOG(ERROR) << "GL error: \n"
+							   << "\tfile: " << file_system::simple_name(file) << std::endl
+							   << "\tline: " << line << std::endl
+							   << "\tinfo: " << msg << std::endl;
+					return false;
                 }
             }
             return true;
@@ -86,11 +85,11 @@ namespace easy3d {
             if (error_code != GL_NO_ERROR) {
                 const char* msg = gl_error_string(error_code);
                 if (msg) {
-                    std::cerr << "GL error: \n"
-                              << "\tfile: " << file_system::simple_name(file) << std::endl
-                              << "\tline: " << line << std::endl
-                              << "\tfunction: " << function << std::endl
-                              << "\tinfo: " << msg << std::endl;
+					LOG(ERROR) << "GL error: \n"
+							   << "\tfile: " << file_system::simple_name(file) << std::endl
+							   << "\tline: " << line << std::endl
+							   << "\tfunction: " << function << std::endl
+							   << "\tinfo: " << msg << std::endl;
                     return false;
                 }
             }
@@ -113,11 +112,11 @@ namespace easy3d {
         bool check_frame_buffer_error(const std::string& file, int line) {
             std::string msg;
             if (frame_buffer_error(msg) && !msg.empty()) {
-                std::cerr << "GL framebuffer error: \n"
-                          << "\tfile: " << file_system::simple_name(file) << std::endl
-                          << "\tline: " << line << std::endl
-                          << "\tinfo: " << msg << std::endl;
-                return false;
+				LOG(ERROR) << "GL framebuffer error: \n"
+						   << "\tfile: " << file_system::simple_name(file) << std::endl
+						   << "\tline: " << line << std::endl
+						   << "\tinfo: " << msg << std::endl;
+				return false;
             }
             return true;
         }
@@ -126,11 +125,11 @@ namespace easy3d {
         bool check_frame_buffer_error(const std::string& file, const std::string& function, int line) {
             std::string msg;
             if (frame_buffer_error(msg) && !msg.empty()) {
-                std::cerr << "GL framebuffer error: \n"
-                          << "\tfile: " << file_system::simple_name(file) << std::endl
-                          << "\tline: " << line << std::endl
-                          << "\tfunction: " << function << std::endl
-                          << "\tinfo: " << msg << std::endl;
+				LOG(ERROR) << "GL framebuffer error: \n"
+						   << "\tfile: " << file_system::simple_name(file) << std::endl
+						   << "\tline: " << line << std::endl
+						   << "\tfunction: " << function << std::endl
+						   << "\tinfo: " << msg << std::endl;
                 return false;
             }
             return true;
@@ -180,7 +179,7 @@ namespace easy3d {
         // OpenGL debug callback
         //------------------------------------------------------------------------------
 
-        static void GLAPIENTRY easy3dOpenGLCallback(GLenum source,
+        static void GLAPIENTRY opengl_debug_callback(GLenum source,
           GLenum type,
           GLuint id,
           GLenum severity,
@@ -275,7 +274,7 @@ namespace easy3d {
                 glEnable(GL_DEBUG_OUTPUT);
                 glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
                 glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-                glDebugMessageCallback(easy3dOpenGLCallback, nullptr);  // no user data
+                glDebugMessageCallback(opengl_debug_callback, nullptr);  // no user data
             }
         }
 

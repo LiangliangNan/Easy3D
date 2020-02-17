@@ -34,7 +34,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(argv[0]);
+    logging::initialize();
 
     try {
         ViewerImGui viewer("Easy3D ImGui Viewer");
