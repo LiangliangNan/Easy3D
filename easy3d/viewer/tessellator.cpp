@@ -138,7 +138,7 @@ namespace easy3d {
     }
 
     Tessellator::~Tessellator() {
-        delete vertex_manager_;
+        delete reinterpret_cast<details::VertexManager *>(vertex_manager_);
         gluDeleteTess(tess_obj_);
     }
 
