@@ -27,17 +27,18 @@
 
 #include <3rd_party/glog/src/utilities.h>
 
-
 #include <iostream>
 
-namespace easy3d {
+namespace easy3d
+{
 
-    namespace logging {
+	namespace logging
+	{
 
 
-        // I thought it might be possible to avoid calling the initialize() at the begining of
-        // the main function to initialize glob. But it seems unused static variables will not
-        // be initialized (depends on compilers). I am not sure!!!
+		// I thought it might be possible to avoid calling the initialize() at the begining of
+		// the main function to initialize glob. But it seems unused static variables will not
+		// be initialized (depends on compilers). I am not sure!!!
 //        static class init_easy3d_logging
 //        {
 //        public:
@@ -52,39 +53,42 @@ namespace easy3d {
 
 
 
-        void initialize(const char* argv0, int threshold)
-        {
-            // Ensures the library will not be initialized more than once.
-            if (google::glog_internal_namespace_::IsGoogleLoggingInitialized())
-                return;
+		void initialize(const char* argv0)
+		{
+			// Ensures the library will not be initialized more than once.
+			if (google::glog_internal_namespace_::IsGoogleLoggingInitialized())
+				return;
 
-            // Initialize Google's logging library.
-            std::string full_path(argv0);
+			std::string log_path = argv0;
 #ifdef __APPLE__
-            // macOS puts the executable file in an application bundle, e.g.,
-            // "PolyFit.app/⁨Contents/⁨MacOS⁩/PolyFit"
-            std::string::size_type pos = full_path.find(".app");
-            if (pos != std::string::npos)
-                full_path = full_path.substr(0, pos);
+			// macOS may put the executable file in an application bundle, e.g., "PolyFit.app/Contents/MacOS/PolyFit"
+			std::string::size_type pos = log_path.find(".app");
+			if (pos != std::string::npos)
+				log_path = log_path.substr(0, pos);
 #endif
+			log_path = file_system::parent_directory(log_path) + "/logs/";
 
-            full_path = file_system::parent_directory(full_path) + "/logs/";
-            if (!easy3d::file_system::is_directory(full_path))
-                easy3d::file_system::create_directory(full_path);
-            google::SetLogDestination(threshold, full_path.c_str());
+			if (!file_system::is_directory(log_path))
+				file_system::create_directory(log_path);
+			LOG_IF(ERROR, !file_system::is_directory(log_path)) << "could not create log directory: " << log_path;
 
-            std::string file_ext = file_system::base_name(argv0) + "-";
-            google::SetLogFilenameExtension(file_ext.c_str());
+			if (1) {
+				google::SetLogDestination(google::INFO, log_path.c_str());
+				std::string extension = file_system::base_name(argv0) + "-";
+				google::SetLogFilenameExtension(extension.c_str());
+			}
+			else // create a log file for each severity level
+				FLAGS_log_dir = log_path;
 
-            FLAGS_stderrthreshold = threshold;
-            FLAGS_colorlogtostderr = true;
-            google::InitGoogleLogging(argv0);
+			FLAGS_stderrthreshold = google::INFO;
+			FLAGS_colorlogtostderr = true;
+			google::InitGoogleLogging(argv0);
 
-            DLOG(INFO) << "logger initialized";
-            DLOG(INFO) << "executable path: " << file_system::executable_directory();
-            DLOG(INFO) << "current working dir: " << file_system::current_working_directory();
-        }
-    }
+			DLOG(INFO) << "logger initialized";
+			DLOG(INFO) << "executable path: " << file_system::executable_directory();
+			DLOG(INFO) << "current working dir: " << file_system::current_working_directory();
+		}
+	}
 
 }
 

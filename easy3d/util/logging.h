@@ -47,17 +47,14 @@ namespace easy3d {
     namespace logging {
 
     /**
-         * @brief Initializes Google's logging library. Default behavior:
-         *          - log file: Executable_basename-time_stamp, e.g., Mapple-20200113-134747.27618;
-         *          - log level: google::GLOG_INFO.
-         * @param argv0 The argv[0] argument of your main function, which is basically the full path
-         *        of the executable file.
-         * @param threshold Log messages at a level >= this flag are automatically sent to stderr
-         *        in addition to log files.
-         * @note Initialization of Google's logging library is not mandatory. Logging before
-         *       initialize() will be written to STDERR.
+         * @brief Initializes Google's logging library. A log file will be created in the directory "logs" next to the
+         * 				  executable file, with a file name in the format "Executable_basename-time_stamp", e.g.,
+         * 				  Mapple-20200113-134747.27618.
+         * @param argv0 The argv[0] argument of the main function, which is the full path of the executable file.
+         * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
+         * 		 written to STDERR.
          */
-        void initialize(const char* argv0, int threshold = google::GLOG_INFO);
+        void initialize(const char* argv0);
 
     }
 
