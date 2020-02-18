@@ -69,7 +69,7 @@ namespace easy3d {
          *                        is convenient for OpenGL applications where the first pixel in the
          *                        output array is expected to be the bottom left corner of the image.
          *
-         * \return Return true on succee or false if failed.
+         * \return Return true on success or false if failed.
          *
          * \example
          *    int width, height, channels;
