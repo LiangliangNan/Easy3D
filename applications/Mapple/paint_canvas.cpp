@@ -160,7 +160,7 @@ void PaintCanvas::initializeGL() {
 #else
     dpi_scaling_ = devicePixelRatio();
 #endif
-    LOG(INFO) << "DPI scaling: " << dpi_scaling();
+    LOG(INFO) << "DPI scaling:              " << dpi_scaling();
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We

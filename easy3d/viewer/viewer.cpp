@@ -264,7 +264,7 @@ namespace easy3d {
 		float xscale, yscale;
 		glfwGetWindowContentScale(window, &xscale, &yscale);
 		dpi_scaling_ = static_cast<double>(xscale + yscale) * 0.5;
-		LOG(INFO) << "DPI scaling: " << dpi_scaling();
+		LOG(INFO) << "DPI scaling:              " << dpi_scaling();
 
 		return window;
 	}
