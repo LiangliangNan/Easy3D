@@ -41,7 +41,7 @@ namespace easy3d {
          *        determined by the file extension given in the file name.
          *
          * \param file_name The image file to load.
-         * \param data  Outputs the image data. Data will beempty if the specified image file
+         * \param data  Outputs the image data. Data will be empty if the specified image file
          *              doesn't exist, allocation failed, or the image is corrupt or invalid.
          *              The image data returned is an 1D array of 'unsigned char' which points
          *              to the pixel data, or empty when failed. The pixel data consists of
@@ -126,17 +126,17 @@ namespace easy3d {
 
 
         /**
-         * \attention This function assumes that each pixel has 3 chanels in RGB order.
+         * \attention This function assumes that each pixel has 3 channels in RGB order.
          */
         bool save_ppm(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
         /**
-         * \attention This function assumes that each pixel has 4 chanels in BGRA order.
+         * \attention This function assumes that each pixel has 4 channels in BGRA order.
          */
         bool save_bmp(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
         /**
-         * \attention This function assumes that each pixel has 4 chanels in BGRA order.
+         * \attention This function assumes that each pixel has 4 channels in BGRA order.
          */
         bool save_tga(const std::string& file_name, const std::vector<unsigned char>& bits, int width, int height);
 
