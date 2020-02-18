@@ -60,8 +60,8 @@
  2.2   0.76   1.88   |  2.61  1.84  11.8   |  20.8   13.5  22.0  |  8.75  4.79  15.1
  --------------------------------------------------------------------------------------
 
- TODO: Thread safe?
- FLANN is. Others have not been tested yet.
+ TODO: Thread-safe?
+ FLANN and nanoflann are thread-safe. Others have not been tested yet.
 ************************************************************************/
 
 
