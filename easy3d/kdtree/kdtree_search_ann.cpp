@@ -34,6 +34,10 @@ using namespace ANN;
 
 #define get_tree(x) (reinterpret_cast<ANNkd_tree*>(x))
 
+// ANN uses a bad storage for the points. People usually copy the entire point cloud.
+// Here I create an array to store the pointer of each point to save memory.
+// You can define COPY_POINT_CLOUD to 1 to allow copy of the entire point cloud.
+#define     COPY_POINT_CLOUD     0
 
 namespace easy3d {
 
@@ -47,8 +51,13 @@ namespace easy3d {
 
 
     KdTreeSearch_ANN::~KdTreeSearch_ANN() {
+#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
+#else
+        if (points_)
+            delete[] points_;
+#endif
 
         delete get_tree(tree_);
         annClose();
@@ -58,8 +67,13 @@ namespace easy3d {
     void KdTreeSearch_ANN::begin()  {
         points_num_ = 0;
 
+#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
+#else
+        if (points_)
+            delete[] points_;
+#endif
 
         delete get_tree(tree_);
         tree_ = nullptr;
@@ -73,8 +87,9 @@ namespace easy3d {
 
     void KdTreeSearch_ANN::add_point_cloud(PointCloud* cloud)  {
         points_num_ = int(cloud->n_vertices());
-        points_ = annAllocPts(points_num_, 3);
 
+#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+        points_ = annAllocPts(points_num_, 3);
         const std::vector<vec3>& pts = cloud->points();
         for (int i = 0; i < points_num_; ++i) {
             const vec3& p = pts[i];
@@ -82,6 +97,12 @@ namespace easy3d {
             points_[i][1] = p[1];
             points_[i][2] = p[2];
         }
+#else
+        points_ = new float*[points_num_];
+        std::vector<vec3>& pts = cloud->points();
+        for (int i = 0; i < points_num_; ++i)
+            points_[i] = pts[i];
+#endif
     }
 
 
