@@ -56,7 +56,7 @@ Easy3D depends on some third-party libraries and **all dependencies are included
 need to do anything about third-party libraries. But you do need [CMake](https://cmake.org/download/) and, of course, 
 a compiler to build Easy3D:
 
-- CMake >= 3.1
+- CMake `>= 3.1`
 - a compiler that supports `>= C++11`
 
 Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
