@@ -83,7 +83,7 @@ namespace easy3d {
 
 			//   ProgressLogger progress(cloud->n_vertices());
 			for (auto v : cloud->vertices()) {
-				output << points[v];
+                output << points[v] << std::endl;
 				//		progress.next();
 			}
 
