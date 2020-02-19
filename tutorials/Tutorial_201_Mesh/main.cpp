@@ -100,9 +100,9 @@ int main(int argc, char** argv) {
     else
         LOG(ERROR) << "option must be 1 or 2";
 
-    std::cout << "#face:   " << mesh.faces_size() << std::endl;
-	std::cout << "#vertex: " << mesh.vertices_size() << std::endl;
-	std::cout << "#edge:   " << mesh.edges_size() << std::endl;
+    std::cout << "#face:   " << mesh.n_faces() << std::endl;
+	std::cout << "#vertex: " << mesh.n_vertices() << std::endl;
+	std::cout << "#edge:   " << mesh.n_edges() << std::endl;
 
     return EXIT_SUCCESS;
 }

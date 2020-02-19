@@ -78,7 +78,7 @@ namespace easy3d {
 
         if (success)
             LOG(INFO) << "point cloud loaded ("
-                      << "#vertex: " << cloud->vertices_size() << "). Time: "
+                      << "#vertex: " << cloud->n_vertices() << "). Time: "
                       << w.time_string();
         else
             LOG(INFO) << "load point cloud failed.";

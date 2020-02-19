@@ -48,9 +48,9 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 	}
 	std::cout << "mesh loaded. " << std::endl;
-	std::cout << "\tvertices: " << mesh->vertices_size() << std::endl;
-	std::cout << "\tedges: " << mesh->edges_size() << std::endl;
-	std::cout << "\tfaces: " << mesh->faces_size() << std::endl;
+	std::cout << "\tvertices: " << mesh->n_vertices() << std::endl;
+	std::cout << "\tedges: " << mesh->n_edges() << std::endl;
+	std::cout << "\tfaces: " << mesh->n_faces() << std::endl;
 
 	// ...
 	// Do fancy stuff with the mesh

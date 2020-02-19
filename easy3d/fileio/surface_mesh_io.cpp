@@ -77,9 +77,9 @@ namespace easy3d {
 
         if (success)
             LOG(INFO) << "surface mesh loaded ("
-                      << "#face: " << mesh->faces_size() << ", "
-                      << "#vertex: " << mesh->vertices_size() << ", "
-                      << "#edge: " << mesh->edges_size() << "). Time: "
+                      << "#face: " << mesh->n_faces() << ", "
+                      << "#vertex: " << mesh->n_vertices() << ", "
+                      << "#edge: " << mesh->n_edges() << "). Time: "
                       << w.time_string();
         else
             LOG(INFO) << "load surface mesh failed";
@@ -90,7 +90,7 @@ namespace easy3d {
 
 	bool SurfaceMeshIO::save(const std::string& file_name, const SurfaceMesh* mesh)
 	{
-        if (!mesh || mesh->faces_size() == 0) {
+        if (!mesh || mesh->n_faces() == 0) {
 			LOG(ERROR) << "surface mesh is null";
 			return false;
 		}

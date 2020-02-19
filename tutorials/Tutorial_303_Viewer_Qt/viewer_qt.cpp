@@ -728,7 +728,7 @@ void ViewerQt::addModel(Model* model, bool create_default_drawables /* = true*/)
             return;
         }
     }
-    unsigned int num = model->vertices_size();
+    unsigned int num = model->n_vertices();
     if (num == 0) {
         LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
         return;

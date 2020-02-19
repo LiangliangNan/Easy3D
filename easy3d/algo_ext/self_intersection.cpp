@@ -465,8 +465,8 @@ namespace easy3d {
         };
         typedef std::unordered_map<Edge, std::vector<int>, EdgeHash > EdgeMap;
 
-        const std::size_t num_faces = mesh->faces_size();
-        const std::size_t num_base_vertices = mesh->vertices_size();
+        const std::size_t num_faces = mesh->n_faces();
+        const std::size_t num_base_vertices = mesh->n_vertices();
         assert(num_faces == triangle_faces_.size());
 
         std::vector<bool> is_offending(num_faces, false);

@@ -56,7 +56,7 @@ namespace easy3d {
         virtual const Box3& bounding_box() const;
 
         /// returns number of vertices in the model
-        virtual unsigned int vertices_size() const = 0;
+        virtual unsigned int n_vertices() const = 0;
 
         /// vector of vertex positions (read only)
         virtual const std::vector<vec3>& points() const = 0;

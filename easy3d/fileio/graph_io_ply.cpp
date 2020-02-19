@@ -54,8 +54,8 @@ namespace easy3d {
 			{
 				for (const auto& p : properties) {
                     std::string name = p.name;
-                    if (p.size() != graph->vertices_size()) {
-                        LOG(ERROR) << "vertex property size (" << p.size() << ") does not match number of vertices (" << graph->vertices_size() << ")";
+                    if (p.size() != graph->n_vertices()) {
+                        LOG(ERROR) << "vertex property size (" << p.size() << ") does not match number of vertices (" << graph->n_vertices() << ")";
 						continue;
 					}
 					if (name.find("v:") == std::string::npos)
@@ -71,8 +71,8 @@ namespace easy3d {
 			{
 				for (const auto& p : properties) {
                     std::string name = p.name;
-                    if (p.size() != graph->edges_size()) {
-                        LOG(ERROR) << "edge property size (" << p.size() << ") does not match number of edges (" << graph->edges_size() << ")";
+                    if (p.size() != graph->n_edges()) {
+                        LOG(ERROR) << "edge property size (" << p.size() << ") does not match number of edges (" << graph->n_edges() << ")";
 						continue;
 					}
 					if (name.find("e:") == std::string::npos)
@@ -224,7 +224,7 @@ namespace easy3d {
             // vertex_indices
             IntListProperty edge_vertex_indices;
             edge_vertex_indices.name = "vertex_indices";
-            edge_vertex_indices.reserve(graph->edges_size());
+            edge_vertex_indices.reserve(graph->n_edges());
             for (auto e : graph->edges()) {
                 int id0 = graph->from_vertex(e).idx();
                 int id1 = graph->to_vertex(e).idx();

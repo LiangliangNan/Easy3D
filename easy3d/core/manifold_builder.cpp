@@ -201,16 +201,16 @@ namespace easy3d {
         if (!issues.empty()) {
             LOG(WARNING) << header << " has topological issues:" << issues
                          << "\n\tResult: \n\t\t"
-                         << std::to_string(mesh_->faces_size()) + " faces\n\t\t"
-                         << std::to_string(mesh_->vertices_size()) + " vertices\n\t\t"
-                         << std::to_string(mesh_->edges_size()) + " edges";
+                         << std::to_string(mesh_->n_faces()) + " faces\n\t\t"
+                         << std::to_string(mesh_->n_vertices()) + " vertices\n\t\t"
+                         << std::to_string(mesh_->n_edges()) + " edges";
         }
     }
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
         DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the construction";
-        DLOG_IF(ERROR, mesh_->faces_size() > 0) << "vertices should be added before adding faces";
+        DLOG_IF(ERROR, mesh_->n_faces() > 0) << "vertices should be added before adding faces";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
@@ -239,9 +239,9 @@ namespace easy3d {
 
         // Check #3; a face has out-of-range vertices
         for (auto v : vertices) {
-            if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->vertices_size())) {
+            if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->n_vertices())) {
                 LOG_FIRST_N(ERROR, 1) << "face has out-of-range vertices: " << vertices << " (number of vertices is "
-                                      << mesh_->vertices_size() << ") (this is the first record)";
+                                      << mesh_->n_vertices() << ") (this is the first record)";
                 ++num_faces_out_of_range_vertices_;
                 return false;
             }
@@ -265,10 +265,10 @@ namespace easy3d {
 
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
-        DLOG_IF(ERROR, mesh_->vertices_size() == 0)
+        DLOG_IF(ERROR, mesh_->n_vertices() == 0)
                         << "you must add vertices by calling add_vertex() before adding a face";
-        if (mesh_->faces_size() == 0) // the first face
-            outgoing_halfedges_.resize(mesh_->vertices_size());
+        if (mesh_->n_faces() == 0) // the first face
+            outgoing_halfedges_.resize(mesh_->n_vertices());
 
         if (!vertices_valid(vertices))
             return SurfaceMesh::Face();

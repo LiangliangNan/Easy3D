@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "point cloud has " << cloud->vertices_size() << " points" << std::endl;
+    std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
     // Now let's save the model into a file with customized format. In each
     // line we store the x, y, z coordinates, followed by the normal (nx, ny,

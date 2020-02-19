@@ -663,9 +663,9 @@ void MainWindow::reportTopologyStatistics() {
     if (!mesh)
         return;
 
-    std::cout << "#face:   " << mesh->faces_size() << std::endl;
-    std::cout << "#vertex: " << mesh->vertices_size() << std::endl;
-    std::cout << "#edge:   " << mesh->edges_size() << std::endl;
+    std::cout << "#face:   " << mesh->n_faces() << std::endl;
+    std::cout << "#vertex: " << mesh->n_vertices() << std::endl;
+    std::cout << "#edge:   " << mesh->n_edges() << std::endl;
     std::cout << "#connected component:   " << "not implemented yet" << std::endl;
     std::cout << "..." << std::endl;
 }
@@ -739,7 +739,7 @@ void MainWindow::remeshSelfIntersections() {
     w.start();
 	LOG(INFO) << "remeshing intersecting faces...";
 
-    auto size = mesh->faces_size();
+    auto size = mesh->n_faces();
     MeshSurfacer ms;
     SurfaceMesh* result = ms.remesh_self_intersections(mesh, true);
     if (result) {
@@ -748,7 +748,7 @@ void MainWindow::remeshSelfIntersections() {
         viewer()->makeCurrent();
         viewer()->addModel(result);
         viewer()->doneCurrent();
-		LOG(INFO) << "done. #faces " << size << " -> " << result->faces_size() << ". Time: " << w.time_string();
+		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". Time: " << w.time_string();
     }
     else
 		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();

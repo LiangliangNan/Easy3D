@@ -47,7 +47,7 @@ namespace easy3d {
 
         double total = 0.0;
         const std::vector<vec3> &points = cloud->points();
-        int num = cloud->vertices_size();
+        int num = cloud->n_vertices();
 
         int step = 1;
         if (!accurate && num > samples)
@@ -165,7 +165,7 @@ namespace easy3d {
             need_delete = true;
         }
 
-        std::vector<bool> keep(cloud->vertices_size(), true);
+        std::vector<bool> keep(cloud->n_vertices(), true);
         const std::vector<vec3> &points = cloud->points();
 
         double sqr_dist = epsilon * epsilon;
@@ -230,7 +230,7 @@ namespace easy3d {
         // NOTE: the returned indices are w.r.t. the new point cloud (a subset of the original point cloud). 
         static std::vector<int> uniform_simplification(PointCloud *cloud, unsigned int expected_num) {
             const std::vector<vec3> &points = cloud->points();
-            unsigned int num = cloud->vertices_size();
+            unsigned int num = cloud->n_vertices();
 
             std::vector<int> points_to_delete;
             if (expected_num >= num)
@@ -242,7 +242,7 @@ namespace easy3d {
             kdtree.end();
 
             // the average squared distance to its nearest neighbor; smaller value means highter density
-            std::vector<float> sqr_distance(cloud->vertices_size());
+            std::vector<float> sqr_distance(cloud->n_vertices());
             std::set<internal::PointPair, internal::LessDistPointPair> point_pairs;
             for (unsigned int i = 0; i < num; ++i) {
                 const vec3 &p = points[i];
@@ -288,12 +288,12 @@ namespace easy3d {
     PointCloudSimplification::uniform_simplification(PointCloud *cloud, unsigned int num_expected) {
         std::vector<PointCloud::Vertex> points_to_delete;
 
-        int num_original = cloud->vertices_size();
+        int num_original = cloud->n_vertices();
         int num_should_delete = num_original - num_expected;
         if (num_should_delete <= 0)
             return points_to_delete;
 
-        std::vector<bool> remain(cloud->vertices_size(), true);    // 1: keep this point; 0: delete this point
+        std::vector<bool> remain(cloud->n_vertices(), true);    // 1: keep this point; 0: delete this point
         const std::vector<vec3> &points = cloud->points();
 
         //---------------------------------------------------------------

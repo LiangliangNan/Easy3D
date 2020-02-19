@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
     g->add_edge(v3, v0); // e3
     g->add_edge(v1, v3); // e4
 
-    std::cout << "vertices: " << g->vertices_size() << std::endl;
-    std::cout << "edges: " << g->edges_size() << std::endl;
+    std::cout << "vertices: " << g->n_vertices() << std::endl;
+    std::cout << "edges: " << g->n_edges() << std::endl;
 
     // Delete the graph (i.e., release memory)
     delete g;

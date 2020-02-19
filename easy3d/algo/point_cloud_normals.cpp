@@ -64,7 +64,7 @@ namespace easy3d {
         kdtree.end();
         LOG(INFO) << "done. Time: " << w.time_string();
 
-        int num = cloud->vertices_size();
+        int num = cloud->n_vertices();
         const std::vector<vec3>& points = cloud->points();
         std::vector<vec3>& normals = cloud->vertex_property<vec3>("v:normal").vector();
 

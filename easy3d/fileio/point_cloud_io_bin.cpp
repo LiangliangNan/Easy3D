@@ -81,7 +81,7 @@ namespace easy3d {
 				return false;
 			}
 
-            int num = cloud->vertices_size();
+            int num = cloud->n_vertices();
 
 			// write the points block
 			auto points = cloud->get_vertex_property<vec3>("v:point");

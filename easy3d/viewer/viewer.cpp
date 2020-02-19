@@ -937,18 +937,18 @@ namespace easy3d {
 				std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
 				if (dynamic_cast<SurfaceMesh*>(current_model())) {
 					auto model = dynamic_cast<SurfaceMesh*>(current_model());
-					std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
-							  << ", #vertex: " + std::to_string(model->vertices_size())
-							  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+					std::cout << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+							  << ", #vertex: " + std::to_string(model->n_vertices())
+							  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 				}
 				else if (dynamic_cast<PointCloud*>(current_model())) {
 					auto model = dynamic_cast<PointCloud*>(current_model());
-					std::cout << "model is a point cloud. #vertex: " + std::to_string(model->vertices_size()) << std::endl;
+					std::cout << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
 				}
 				else if (dynamic_cast<Graph*>(current_model())) {
 					auto model = dynamic_cast<Graph*>(current_model());
-					std::cout << "model is a graph. #vertex: " + std::to_string(model->vertices_size())
-							  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+					std::cout << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+							  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 				}
 				if (!current_model()->points_drawables().empty()) {
 					std::cout << "points drawables:\n";
@@ -1258,7 +1258,7 @@ namespace easy3d {
 		}
 
 		if (create_default_drawables) {
-			if (model->vertices_size() > 0) {
+			if (model->n_vertices() > 0) {
                 create_drawables(model);
             }
 			else

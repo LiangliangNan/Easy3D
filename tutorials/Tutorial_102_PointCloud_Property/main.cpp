@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 		for (float j = -5; j < 5; ++j) 
 			cloud->add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane.
 	}
-	std::cout << "point cloud has " << cloud->vertices_size() << " points" << std::endl;
+	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
 	// In Easy3D, all actual 3D data and related information are stored as
 	// per-element (e.g., vertex, edge, and face) properties. A model can have 

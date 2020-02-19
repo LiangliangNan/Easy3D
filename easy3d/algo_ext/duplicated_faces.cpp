@@ -163,7 +163,7 @@ namespace easy3d {
         if (duplicated_faces.empty())
             return 0;
 
-        unsigned int prev_num_faces = mesh->faces_size();
+        unsigned int prev_num_faces = mesh->n_faces();
 
         // in each duplication set, we keep only one of the duplicated faces
         // we create a new property to mark if the face should be deleted.
@@ -255,7 +255,7 @@ namespace easy3d {
 
         mesh->garbage_collection();
 
-        return prev_num_faces - mesh->faces_size();
+        return prev_num_faces - mesh->n_faces();
     }
 
 

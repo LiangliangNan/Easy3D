@@ -490,9 +490,9 @@ void MainWindow::reportTopologyStatistics() {
     if (!mesh)
         return;
 
-    std::cout << "#face:   " << mesh->faces_size() << std::endl;
-    std::cout << "#vertex: " << mesh->vertices_size() << std::endl;
-    std::cout << "#edge:   " << mesh->edges_size() << std::endl;
+    std::cout << "#face:   " << mesh->n_faces() << std::endl;
+    std::cout << "#vertex: " << mesh->n_vertices() << std::endl;
+    std::cout << "#edge:   " << mesh->n_edges() << std::endl;
     std::cout << "#connected component:   " << "not implemented yet" << std::endl;
     std::cout << "..." << std::endl;
 }

@@ -56,8 +56,8 @@ namespace easy3d {
 			{
 				for (const auto& p : properties) {
                     std::string name = p.name;
-					if (p.size() != mesh->vertices_size()) {
-                        LOG(ERROR) << "vertex property size (" << p.size() << ") does not match number of vertices (" << mesh->vertices_size() << ")";
+					if (p.size() != mesh->n_vertices()) {
+                        LOG(ERROR) << "vertex property size (" << p.size() << ") does not match number of vertices (" << mesh->n_vertices() << ")";
 						continue;
 					}
 					if (name.find("v:") == std::string::npos)
@@ -73,8 +73,8 @@ namespace easy3d {
 			{
 				for (const auto& p : properties) {
                     std::string name = p.name;
-					if (p.size() != mesh->faces_size()) {
-                        LOG(ERROR) << "face property size (" << p.size() << ") does not match number of faces (" << mesh->faces_size() << ")";
+					if (p.size() != mesh->n_faces()) {
+                        LOG(ERROR) << "face property size (" << p.size() << ") does not match number of faces (" << mesh->n_faces() << ")";
 						continue;
 					}
 					if (name.find("f:") == std::string::npos)
@@ -90,8 +90,8 @@ namespace easy3d {
 			{
 				for (const auto& p : properties) {
                     std::string name = p.name;
-					if (p.size() != mesh->edges_size()) {
-                        LOG(ERROR) << "edge property size (" << p.size() << ") does not match number of edges (" << mesh->edges_size() << ")";
+					if (p.size() != mesh->n_edges()) {
+                        LOG(ERROR) << "edge property size (" << p.size() << ") does not match number of edges (" << mesh->n_edges() << ")";
 						continue;
 					}
 					if (name.find("e:") == std::string::npos)
@@ -312,7 +312,7 @@ namespace easy3d {
 				// vertex_indices
 				IntListProperty edge_vertex_indices;
                 edge_vertex_indices.name = "vertex_indices";
-				edge_vertex_indices.reserve(mesh->edges_size());
+				edge_vertex_indices.reserve(mesh->n_edges());
 				for (auto e : mesh->edges()) {
 					int id0 = mesh->vertex(e, 0).idx();
 					int id1 = mesh->vertex(e, 1).idx();

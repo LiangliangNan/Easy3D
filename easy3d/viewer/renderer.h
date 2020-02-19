@@ -418,7 +418,7 @@ namespace easy3d {
 
             auto points = model->get_vertex_property<vec3>("v:point");
 
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->vertices_size());
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
                 float coord = (prop[v] - min_value) / (max_value - min_value);
                 d_texcoords.emplace_back(vec2(coord, 0.5));
@@ -439,8 +439,8 @@ namespace easy3d {
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->edges_size() * 2);
+            std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -470,7 +470,7 @@ namespace easy3d {
             drawable->update_vertex_buffer(points.vector());
 
             std::vector<vec2> d_texcoords;
-            d_texcoords.reserve(model->vertices_size());
+            d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
                 float coord = (prop[v] - min_value) / (max_value - min_value);
                 d_texcoords.emplace_back(vec2(coord, 0.5));
@@ -478,7 +478,7 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             std::vector<unsigned int> indices;
-            indices.reserve(model->edges_size() * 2);
+            indices.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 auto s = model->vertex(e, 0);
                 auto t = model->vertex(e, 1);
@@ -500,7 +500,7 @@ namespace easy3d {
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->vertices_size());
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
                 float coord = (prop[v] - min_value) / (max_value - min_value);
                 d_texcoords.emplace_back(vec2(coord, 0.5));
@@ -521,7 +521,7 @@ namespace easy3d {
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->vertices_size());
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
                 float coord = (prop[v] - min_value) / (max_value - min_value);
                 d_texcoords.emplace_back(vec2(coord, 0.5));
@@ -613,7 +613,7 @@ namespace easy3d {
             drawable->update_index_buffer(d_indices);
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -700,7 +700,7 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -716,9 +716,9 @@ namespace easy3d {
 
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;
-            d_points.reserve(model->edges_size() * 2);
+            d_points.reserve(model->n_edges() * 2);
             std::vector<vec2> d_texcoords;
-            d_texcoords.reserve(model->edges_size() * 2);
+            d_texcoords.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 Graph::Vertex s = model->from_vertex(e);
                 Graph::Vertex t = model->to_vertex(e);
@@ -750,7 +750,7 @@ namespace easy3d {
             drawable->update_vertex_buffer(points.vector());
 
             std::vector<vec2> d_texcoords;
-            d_texcoords.reserve(model->vertices_size());
+            d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
                 float coord = (prop[v] - min_value) / (max_value - min_value);
                 d_texcoords.emplace_back(vec2(coord, 0.5));
@@ -758,7 +758,7 @@ namespace easy3d {
             drawable->update_texcoord_buffer(d_texcoords);
 
             std::vector<unsigned int> indices;
-            indices.reserve(model->edges_size() * 2);
+            indices.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 auto s = model->from_vertex(e);
                 auto t = model->to_vertex(e);

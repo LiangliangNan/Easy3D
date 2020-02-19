@@ -245,7 +245,7 @@ namespace easy3d {
             drawable->update_index_buffer(indices);
             drawable->update_normal_buffer(d_normals);
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
         // with a per-face color
@@ -321,7 +321,7 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_color_buffer(d_colors);
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -395,7 +395,7 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_color_buffer(d_colors);
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -479,7 +479,7 @@ namespace easy3d {
             drawable->set_use_texture(true);
 #endif
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -563,7 +563,7 @@ namespace easy3d {
             drawable->set_use_texture(true);
 #endif
 
-            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->vertices_size() << "/" << d_points.size();
+            DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
@@ -615,8 +615,8 @@ namespace easy3d {
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
-            d_points.reserve(model->edges_size() * 2);
-            d_colors.reserve(model->edges_size() * 2);
+            d_points.reserve(model->n_edges() * 2);
+            d_colors.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -634,8 +634,8 @@ namespace easy3d {
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
-            d_points.reserve(model->edges_size() * 2);
-            d_colors.reserve(model->edges_size() * 2);
+            d_points.reserve(model->n_edges() * 2);
+            d_colors.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -652,8 +652,8 @@ namespace easy3d {
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
-            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -670,8 +670,8 @@ namespace easy3d {
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec3> d_points;     d_points.reserve(model->edges_size() * 2);
-            std::vector<vec2> d_texcoords;  d_points.reserve(model->edges_size() * 2);
+            std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
+            std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 SurfaceMesh::Vertex s = model->vertex(e, 0);
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -772,8 +772,8 @@ namespace easy3d {
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
-            d_points.reserve(model->edges_size() * 2);
-            d_colors.reserve(model->edges_size() * 2);
+            d_points.reserve(model->n_edges() * 2);
+            d_colors.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 Graph::Vertex s = model->from_vertex(e);
                 Graph::Vertex t = model->to_vertex(e);
@@ -809,9 +809,9 @@ namespace easy3d {
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;
-            d_points.reserve(model->edges_size() * 2);
+            d_points.reserve(model->n_edges() * 2);
             std::vector<vec2> d_texcoords;
-            d_texcoords.reserve(model->edges_size() * 2);
+            d_texcoords.reserve(model->n_edges() * 2);
             for (auto e : model->edges()) {
                 Graph::Vertex s = model->from_vertex(e);
                 Graph::Vertex t = model->to_vertex(e);

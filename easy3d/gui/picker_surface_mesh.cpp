@@ -200,7 +200,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int x, int y) {
-        int num = model->faces_size();
+        int num = model->n_faces();
         const vec3 &p_near = unproject(x, y, 0);
         const vec3 &p_far = unproject(x, y, 1);
         const OrientedLine3 oline(p_near, p_far);
@@ -311,7 +311,7 @@ namespace easy3d {
             }
 
             // Triangle meshes are more common... So treat is as a triangle mesh and check if the id is with the range.
-            if (static_cast<unsigned int>(id) < model->faces_size()) {
+            if (static_cast<unsigned int>(id) < model->n_faces()) {
                 auto face = SurfaceMesh::Face(id);
                 const auto &range = triangle_range[SurfaceMesh::Face(face)];
                 if (id >= range.first && id <= range.second) {
@@ -321,7 +321,7 @@ namespace easy3d {
             }
 
             // Now treat the model as a general polygonal mesh.
-            for (unsigned int face_id = 0; face_id < model->faces_size(); ++face_id) {
+            for (unsigned int face_id = 0; face_id < model->n_faces(); ++face_id) {
                 const auto &range = triangle_range[SurfaceMesh::Face(face_id)];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = SurfaceMesh::Face(face_id);
@@ -352,7 +352,7 @@ namespace easy3d {
         // Get combined model-view and projection matrix
         const mat4& m = camera()->modelViewProjectionMatrix();
         const auto& points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = model->vertices_size();
+        int num = model->n_vertices();
 
         // because in rendering vertices maybe duplicated, so I first test for each vertex.
         std::vector<bool> status(num);
@@ -422,7 +422,7 @@ namespace easy3d {
         // Get combined model-view and projection matrix
         const mat4& m = camera()->modelViewProjectionMatrix();
         const auto& points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = model->vertices_size();
+        int num = model->n_vertices();
 
         // because in rendering vertices maybe duplicated, so I first test for each vertex.
         std::vector<bool> status(num);

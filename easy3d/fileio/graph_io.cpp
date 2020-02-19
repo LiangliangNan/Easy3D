@@ -64,8 +64,8 @@ namespace easy3d {
 
         if (success)
             LOG(INFO) << "graph loaded ("
-                      << "#vertex: " << graph->vertices_size() << ", "
-                      << "#edge: " << graph->edges_size() << "). Time: "
+                      << "#vertex: " << graph->n_vertices() << ", "
+                      << "#edge: " << graph->n_edges() << "). Time: "
                       << w.time_string();
         else
             LOG(INFO) << "load graph failed";
@@ -76,7 +76,7 @@ namespace easy3d {
 
     bool GraphIO::save(const std::string& file_name, const Graph* graph)
 	{
-        if (!graph || graph->vertices_size() == 0) {
+        if (!graph || graph->n_vertices() == 0) {
             LOG(ERROR) << "graph is null";
 			return false;
 		}

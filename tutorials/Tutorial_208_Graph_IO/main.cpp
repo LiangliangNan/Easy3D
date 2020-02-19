@@ -48,8 +48,8 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 	}
     std::cout << "graph loaded. " << std::endl;
-    std::cout << "\tvertices: " << graph->vertices_size() << std::endl;
-    std::cout << "\tedges: " << graph->edges_size() << std::endl;
+    std::cout << "\tvertices: " << graph->n_vertices() << std::endl;
+    std::cout << "\tedges: " << graph->n_edges() << std::endl;
 
 	// ...
     // Do fancy stuff with the graph

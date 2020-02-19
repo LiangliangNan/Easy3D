@@ -643,18 +643,18 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
 			std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------\n";
 			if (dynamic_cast<SurfaceMesh*>(currentModel())) {
 				auto model = dynamic_cast<SurfaceMesh*>(currentModel());
-				std::cout << "model is a surface mesh. #face: " << std::to_string(model->faces_size())
-						  << ", #vertex: " + std::to_string(model->vertices_size())
-						  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+				std::cout << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+						  << ", #vertex: " + std::to_string(model->n_vertices())
+						  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 			}
 			else if (dynamic_cast<PointCloud*>(currentModel())) {
 				auto model = dynamic_cast<PointCloud*>(currentModel());
-				std::cout << "model is a point cloud. #vertex: " + std::to_string(model->vertices_size()) << std::endl;
+				std::cout << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
 			}
 			else if (dynamic_cast<Graph*>(currentModel())) {
 				auto model = dynamic_cast<Graph*>(currentModel());
-				std::cout << "model is a graph. #vertex: " + std::to_string(model->vertices_size())
-						  << ", #edge: " + std::to_string(model->edges_size()) << std::endl;
+				std::cout << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+						  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 			}
 			if (!currentModel()->points_drawables().empty()) {
 				std::cout << "points drawables:\n";
@@ -789,7 +789,7 @@ void PaintCanvas::addModel(Model *model, bool create_default_drawables /* = true
             return;
         }
     }
-    unsigned int num = model->vertices_size();
+    unsigned int num = model->n_vertices();
     if (num == 0) {
         LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
         return;
