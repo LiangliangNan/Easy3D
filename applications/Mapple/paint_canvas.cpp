@@ -480,6 +480,24 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             camera()->keyFrameInterpolator()->startInterpolation();
     } else if (e->key() == Qt::Key_T && e->modifiers() == Qt::NoModifier) {
         show_camera_path_ = !show_camera_path_;
+    } else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() - 1.0f;
+                if (size < 1)
+                    size = 1;
+                d->set_line_width(size);
+                currentModelChanged();
+            }
+        }
+    } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() + 1.0f;
+                d->set_line_width(size);
+                currentModelChanged();
+            }
+        }
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->points_drawables()) {
@@ -489,24 +507,12 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 d->set_point_size(size);
                 currentModelChanged();
             }
-            for (auto d : m->lines_drawables()) {
-                float size = d->line_width() - 1.0f;
-                if (size < 1)
-                    size = 1;
-                d->set_line_width(size);
-                currentModelChanged();
-            }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
                 d->set_point_size(size);
-                currentModelChanged();
-            }
-            for (auto d : m->lines_drawables()) {
-                float size = d->line_width() + 1.0f;
-                d->set_line_width(size);
                 currentModelChanged();
             }
         }
@@ -731,7 +737,8 @@ std::string PaintCanvas::usage() const {
             "  'c':                 Fit screen (current model only)             \n"
             "  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
             " ------------------------------------------------------------------\n"
-            "  '+'/'-':             Increase/Decrease point size (line width)   \n"
+            "  '-'/'=':             Decrease/Increase point size                \n"
+            "  '{'/'}':             Decrease/Increase line width                \n"
             "  'a':                 Toggle axes									\n"
             "  'b':                 Toggle borders								\n"
             "  'e':                 Toggle edges							    \n"

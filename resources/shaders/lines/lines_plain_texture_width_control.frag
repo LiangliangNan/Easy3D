@@ -19,5 +19,5 @@ void main()
     outputF = texture(textureID, gOutTexcoord);
     // compute the depth
     vec4 pos = PROJ * vec4(gPoint, 1.0);
-    gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5 - 0.0001;
+    gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5;
 }

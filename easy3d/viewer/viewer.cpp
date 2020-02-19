@@ -797,6 +797,24 @@ namespace easy3d {
 			show_camera_path_ = !show_camera_path_;
 		}
 
+		else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->lines_drawables()) {
+                    float size = d->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_line_width(size);
+                }
+            }
+        } if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->lines_drawables()) {
+                    float size = d->line_width() + 1.0f;
+                    d->set_line_width(size);
+                }
+            }
+        }
+
 		else if (key == GLFW_KEY_MINUS && modifiers == 0) {
 			for (auto m : models_) {
 				for (auto d : m->points_drawables()) {
@@ -805,12 +823,6 @@ namespace easy3d {
 						size = 1;
 					d->set_point_size(size);
 				}
-				for (auto d : m->lines_drawables()) {
-					float size = d->line_width() - 1.0f;
-					if (size < 1)
-						size = 1;
-					d->set_line_width(size);
-				}
 			}
 		}
 		else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
@@ -818,10 +830,6 @@ namespace easy3d {
 				for (auto d : m->points_drawables()) {
 					float size = d->point_size() + 1.0f;
 					d->set_point_size(size);
-				}
-				for (auto d : m->lines_drawables()) {
-					float size = d->line_width() + 1.0f;
-					d->set_line_width(size);
 				}
 			}
 		}
@@ -1156,7 +1164,8 @@ namespace easy3d {
 			"  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
 			"  Alt + Left/Right:    Define/Undefine a pivot point				\n"
 			" ------------------------------------------------------------------\n"
-			"  '+'/'-':             Increase/Decrease point size (line width)   \n"
+			"  '-'/'=':             Decrease/Increase point size                \n"
+            "  '{'/'}':             Decrease/Increase line width                \n"
 			"  'a':                 Toggle axes									\n"
 			"  'b':                 Toggle borders								\n"
 			"  'e':                 Toggle edges							    \n"
