@@ -1,11 +1,15 @@
 #include "widget_lighting.h"
-#include "main_window.h"
-#include "paint_canvas.h"
-#include <ui_widget_lighting.h>
 
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/soft_shadow.h>
 #include <easy3d/viewer/ambient_occlusion.h>
+#include <easy3d/viewer/clipping_plane.h>
+#include <easy3d/viewer/camera.h>
+
+#include "main_window.h"
+#include "paint_canvas.h"
+
+#include <ui_widget_lighting.h>
 
 
 using namespace easy3d;
@@ -53,6 +57,9 @@ WidgetLighting::WidgetLighting(QWidget *parent)
     ui->checkerSphere->setBackgroundColor(bc);
     connect(ui->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
 
+    connect(ui->checkBoxClippingPlane, SIGNAL(toggled(bool)), this, SLOT(setClippingPlane(bool)));
+    connect(ui->checkBoxCrossSection, SIGNAL(toggled(bool)), this, SLOT(setCrossSection(bool)));
+    connect(ui->doubleSpinBoxCrossSectionThickness, SIGNAL(valueChanged(double)), this, SLOT(setCrossSectionThickness(double)));
 
     connect(ui->comboBoxSSAOAlgorithm, SIGNAL(currentIndexChanged(int)), this, SLOT(setSSAOAlgorithm(int)));
     connect(ui->horizontalSliderSSAORadius, SIGNAL(valueChanged(int)), this, SLOT(setSSAORadius(int)));
@@ -73,6 +80,50 @@ WidgetLighting::WidgetLighting(QWidget *parent)
 WidgetLighting::~WidgetLighting()
 {
     delete ui;
+
+    if (setting::clipping_plane)
+        delete setting::clipping_plane;
+}
+
+
+void WidgetLighting::setClippingPlane(bool b) {
+    if (!setting::clipping_plane) {
+        setting::clipping_plane = new ClippingPlane;
+        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+    }
+    setting::clipping_plane->set_enabled(b);
+    viewer_->update();
+
+    if (b)
+        LOG(INFO) << "clipping plane enabled";
+    else
+        LOG(INFO) << "clipping plane disabled";
+}
+
+
+void WidgetLighting::setCrossSection(bool b) {
+    if (!setting::clipping_plane) {
+        setting::clipping_plane = new ClippingPlane;
+        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+    }
+    setting::clipping_plane->set_cross_section(b);
+    viewer_->update();
+
+    if (b)
+        LOG(INFO) << "cross-section view enabled";
+    else
+        LOG(INFO) << "cross-section view disabled";
+}
+
+
+void WidgetLighting::setCrossSectionThickness(double w) {
+    if (!setting::clipping_plane) {
+        setting::clipping_plane = new ClippingPlane;
+        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+    }
+    setting::clipping_plane->set_cross_section_width(w);
+    viewer_->update();
+    LOG(INFO) << "cross-section thickness: " << w;
 }
 
 

@@ -8,6 +8,7 @@ set(${PROJECT_NAME}_HEADERS
         ambient_occlusion.h
         average_color_blending.h
         camera.h
+        clipping_plane.h
         constraint.h
         drawable.h
         drawable_lines.h
@@ -47,6 +48,7 @@ set(${PROJECT_NAME}_SOURCES
         ambient_occlusion.cpp
         average_color_blending.cpp
         camera.cpp
+        clipping_plane.cpp
         constraint.cpp
         drawable.cpp
         drawable_lines.cpp
@@ -137,12 +139,12 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/edl/edl_shade.vert
         ../../resources/shaders/edl/edl_shade.frag
         # screen space
-        ../../resources/shaders/screen_space/lines_color.vert
-        ../../resources/shaders/screen_space/lines_color.frag
-        ../../resources/shaders/screen_space/quad_color_texture.vert
-        ../../resources/shaders/screen_space/quad_color_texture.frag
-        ../../resources/shaders/screen_space/quad_gray_texture.vert
-        ../../resources/shaders/screen_space/quad_gray_texture.frag
+        ../../resources/shaders/screen_space/screen_space_color.vert
+        ../../resources/shaders/screen_space/screen_space_color.frag
+        ../../resources/shaders/screen_space/screen_space_texture.frag
+        ../../resources/shaders/screen_space/screen_space_texture.vert
+        ../../resources/shaders/screen_space/screen_space_depth_texture.vert
+        ../../resources/shaders/screen_space/screen_space_depth_texture.frag
         # shadow
         ../../resources/shaders/shadow/shadow_generate.vert
         ../../resources/shaders/shadow/shadow_generate.frag

@@ -30,9 +30,9 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/util/logging.h>
 
-using namespace google;
 
 namespace easy3d {
 
@@ -118,6 +118,10 @@ namespace easy3d {
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -160,6 +164,10 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         gl_draw(with_storage_buffer);
         program->release();
 
@@ -201,6 +209,10 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -252,6 +264,9 @@ namespace easy3d {
                 ->set_uniform("hightlight_id_min", highlight_range_.first)
                 ->set_uniform("hightlight_id_max", highlight_range_.second)
                 ->bind_texture("textureID", texture()->id(), 0);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
 
         gl_draw(with_storage_buffer);
         program->release_texture();
@@ -314,6 +329,9 @@ namespace easy3d {
                 ->set_uniform("hightlight_id_min", highlight_range_.first)
                 ->set_uniform("hightlight_id_max", highlight_range_.second);
 
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         program->bind_texture("textureID", texture()->id(), 0);
         gl_draw(with_storage_buffer);
         program->release_texture();
@@ -366,6 +384,10 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -417,6 +439,9 @@ namespace easy3d {
         program->set_uniform("highlight", highlight())
                 ->set_uniform("hightlight_id_min", highlight_range_.first)
                 ->set_uniform("hightlight_id_max", highlight_range_.second);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
 
         program->bind_texture("textureID", texture()->id(), 0);
         gl_draw(with_storage_buffer);

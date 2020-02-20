@@ -90,6 +90,9 @@ public slots:
     void invertSelection();
     void deleteSelectedPrimitives();
 
+    void copyCamera();
+    void pasteCamera();
+
 protected:
 
     /* Set up required OpenGL resources/state and then calls user-defined init().

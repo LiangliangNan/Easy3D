@@ -31,6 +31,8 @@
 
 namespace easy3d {
 
+    class ClippingPlane;
+
     // the default parameters used for initialization of both ui and rendering
     namespace setting {
 
@@ -102,6 +104,8 @@ namespace easy3d {
         extern bool graph_show_edges;
         extern vec4 graph_edges_color;
         extern float graph_edges_line_width;
+
+        extern ClippingPlane* clipping_plane;
 
     } // namespace setting
 

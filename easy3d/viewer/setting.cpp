@@ -100,6 +100,8 @@ namespace easy3d {
         vec4 graph_edges_color = vec4(1.0f, 0.67f, 0.5f, 1.0f);
         float   graph_edges_line_width = 3.0f;
 
+        ClippingPlane* clipping_plane = nullptr;
+
     } // namespace setting
 
 } // namespace easy3d

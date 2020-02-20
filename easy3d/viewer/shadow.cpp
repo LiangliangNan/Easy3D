@@ -162,7 +162,11 @@ namespace easy3d {
         render_pass(surfaces);      easy3d_debug_gl_error;
 
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
-        draw_shadow_map(w, h);      easy3d_debug_gl_error;
+        const Rect quad(20, 20 + 500, 20, 20 + 500);
+        opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
+        opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
+        easy3d_debug_gl_error;
+
         draw_light_frustum();		easy3d_debug_gl_error;
     #endif
     }
@@ -417,50 +421,8 @@ namespace easy3d {
         frustum.update_vertex_buffer(points);
         frustum.update_index_buffer(indices);
         frustum.set_per_vertex_color(false);
-        frustum.set_default_color(vec3(1.0, 0.0, 0.0));
+        frustum.set_default_color(vec3(0.0, 0.0, 1.0));
         frustum.draw(camera_, false);
-        return;
-    }
-
-
-    void Shadow::draw_shadow_map(int w, int h) {
-        static const std::string quad_name = "screen_space/quad_gray_texture";
-        ShaderProgram* program = ShaderManager::get_program(quad_name);
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
-            };
-            program = ShaderManager::create_program_from_files(quad_name, attributes, std::vector<std::string>(), false);
-        }
-		if (!program)
-			return;
-
-        int x0 = 200, y0 = 10, size = 500;
-        program->bind();			easy3d_debug_gl_error;
-        program->bind_texture("textureID", fbo_->depth_texture(), 0);
-        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x0, y0, size, size, w, h, -0.9f); easy3d_debug_gl_error;
-        program->release_texture();
-        program->release();		easy3d_debug_gl_error;
-
-        // draw the boundary
-        static const std::string wire_name = "screen_space/lines_color";
-        program = ShaderManager::get_program(wire_name);
-		if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-                ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
-            };
-            program = ShaderManager::create_program_from_files(wire_name, attributes);
-		}
-		if (!program)
-			return; 
-
-		program->bind();		easy3d_debug_gl_error;
-		program->set_uniform("per_vertex_color", false);
-		program->set_uniform("default_color", vec3(0.0f, 0.0f, 0.0f));
-        opengl::draw_quad_wire(ShaderProgram::POSITION, x0, y0, size, size, w, h, -1.0f); easy3d_debug_gl_error;
-        program->release();
     }
 
 }

@@ -32,7 +32,6 @@
 #include <easy3d/util/logging.h>
 
 
-
 using namespace easy3d;
 
 

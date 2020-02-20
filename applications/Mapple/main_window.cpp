@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
     widgetPointsDrawable_->setEnabled(false);
 
-    ui->verticalLayoutLighting->addWidget(new WidgetLighting(this));
+    ui->verticalLayoutGlobalSetting->addWidget(new WidgetLighting(this));
 
     // ---------------------------
 
@@ -568,6 +568,9 @@ void MainWindow::createActionsForViewMenu() {
     connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
 
     ui->menuView->addSeparator();
+
+    connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));
+    connect(ui->actionPasteCamera, SIGNAL(triggered()), viewer_, SLOT(pasteCamera()));
 
     QAction* actionToggleDockWidgetRendering = ui->dockWidgetRendering->toggleViewAction();
     actionToggleDockWidgetRendering->setText("Rendering Panel");

@@ -25,12 +25,9 @@
 #include "image_viewer.h"
 
 #include <easy3d/viewer/texture.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/fileio/resources.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -140,24 +137,9 @@ void ImageViewer::draw() const {
 	if (texture_ == nullptr)
 		return;
 
-    static const std::string quad_name = "screen_space/quad_color_texture";
-    ShaderProgram* program = ShaderManager::get_program(quad_name);
-    if (!program) {
-        std::vector<ShaderProgram::Attribute> attributes = {
-            ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-            ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
-        };
-        program = ShaderManager::create_program_from_files(quad_name, attributes);
-    }
-    if (!program)
-        return;
-
     int x, y, w, h;
     compute_image_region(x, y, w, h);
 
-    program->bind();
-    program->bind_texture("textureID", texture_->id(), 0);
-    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x, y, w, h, width(), height(), -0.9f);
-    program->release_texture();
-    program->release();
+    const Rect quad(x, x + w, y, y + h);
+    opengl::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }

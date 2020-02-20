@@ -5,7 +5,6 @@ in  vec3 vtx_position;  // point position
 in  vec2 vtx_texcoord;  // texture coordinate
 in  vec3 vtx_normal;    // point normal
 
-
 out VertexData
 {
     vec2  texcoord;

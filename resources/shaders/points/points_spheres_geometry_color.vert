@@ -14,11 +14,11 @@ out vec4    sphere_color_in;
 void main()
 {  
 	if (per_vertex_color)
-    sphere_color_in = vec4(vtx_color, 1.0);
-        else
-            sphere_color_in = default_color;
+        sphere_color_in = vec4(vtx_color, 1.0);
+    else
+        sphere_color_in = default_color;
 
 	//sphere_radius_in = sphere_radius;
 
-        gl_Position = vec4(vtx_position, 1.0);
+    gl_Position = vec4(vtx_position, 1.0);
 }

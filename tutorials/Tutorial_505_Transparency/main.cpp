@@ -51,6 +51,9 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
+        auto drawable = viewer.current_model()->triangles_drawable("faces");
+        drawable->set_smooth_shading(true);
+
         // Run the viewer
         viewer.run();
 

@@ -34,6 +34,8 @@
 
 namespace easy3d {
 
+    class ShaderProgram;
+
     namespace tools {
 
         enum ToolButton {
@@ -42,7 +44,6 @@ namespace easy3d {
             RIGHT_BUTTON,
             NO_BUTTON
         };
-
 
         enum SelectMode {
             SM_SELECT,
@@ -74,7 +75,7 @@ namespace easy3d {
 
         class MultiTool {
         public:
-            MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
+            MultiTool(ToolManager *mgr) : tool_manager_(mgr), wire_program_(nullptr), face_program_(nullptr) {}
             virtual ~MultiTool();
 
             ToolManager *tool_manager() const { return tool_manager_; }
@@ -107,6 +108,9 @@ namespace easy3d {
 
             typedef std::map<ToolButton, Tool *> ToolMap;
             ToolMap tools_;
+
+            ShaderProgram* wire_program_;
+            ShaderProgram* face_program_;
 
             friend class ToolManager;
 

@@ -23,6 +23,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -31,6 +32,8 @@
 #include <QTimer>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
+#include <QApplication>
+#include <QClipboard>
 
 
 using namespace easy3d;
@@ -1096,6 +1099,10 @@ void PaintCanvas::postDraw() {
     // ------------------ draw elements from the tool --------------------------
 
     tool_manager()->draw_hint();
+
+    //
+    if (setting::clipping_plane && setting::clipping_plane->is_enabled())
+        setting::clipping_plane->draw(camera());
 }
 
 
@@ -1158,6 +1165,66 @@ void PaintCanvas::invertSelection() {
 
 void PaintCanvas::deleteSelectedPrimitives() {
     std::cout << "not implemented yet" << std::endl;
+}
+
+
+void PaintCanvas::copyCamera() {
+    if (camera()->frame()) {
+        const vec3 pos = camera()->position();
+        const quat q = camera()->orientation();
+        const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")
+                .arg(pos[0])
+                .arg(pos[1])
+                .arg(pos[2])
+                .arg(q[0])
+                .arg(q[1])
+                .arg(q[2])
+                .arg(q[3]);
+        qApp->clipboard()->setText(cam_str);
+    }
+}
+
+
+void PaintCanvas::pasteCamera() {
+    // get the camera parameters from clipboard string
+    const QString str = qApp->clipboard()->text();
+    const QStringList list = str.split(" ", QString::SkipEmptyParts);
+    if (list.size() != 7) {
+        LOG(WARNING) << "camera not available in clipboard";
+        return;
+    }
+
+    vec3 pos;
+    for (int i = 0; i < 3; ++i) {
+        bool ok;
+        pos[i] = list[i].toFloat(&ok);
+        if (!ok) {
+            LOG(WARNING) << "camera not available in clipboard";
+            return;
+        }
+    }
+
+    quat orient;
+    for (int i = 0; i < 4; ++i) {
+        bool ok;
+        orient[i] = list[i + 3].toDouble(&ok);
+        if (!ok) {
+            LOG(WARNING) << "camera not available in clipboard";
+            return;
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // change view
+    // 	camera()->setPosition(pos);
+    // 	camera()->setOrientation(orient);
+    // I prefer to make animation
+    Frame new_frame;
+    new_frame.setPosition(pos);
+    new_frame.setOrientation(orient);
+    const float duration = 0.5f;
+    camera()->interpolateTo(new_frame, duration);
+    update();
 }
 
 

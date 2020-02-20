@@ -8,11 +8,15 @@ in vec3  vtx_position;
 in vec3  vtx_color;
 //in float sphere_radius;
 
-uniform int	screen_width;   // scale to calculate size in pixels
-uniform float    sphere_radius;
+uniform int	    screen_width;   // scale to calculate size in pixels
+uniform float   sphere_radius;
 uniform vec4    default_color;
 uniform bool    per_vertex_color;
 
+uniform bool clippingPlaneEnabled = false;
+uniform bool crossSectionEnabled = false;
+uniform vec4 clippingPlane0;
+uniform vec4 clippingPlane1;
 
 out Data {
     vec4    position;// in eye space

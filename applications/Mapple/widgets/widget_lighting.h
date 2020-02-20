@@ -19,6 +19,11 @@ public:
     ~WidgetLighting();
 
 private slots:
+    void setClippingPlane(bool);
+    void setCrossSection(bool);
+    void setCrossSectionThickness(double);
+
+
     void setSSAOAlgorithm(int);
     void setSSAORadius(int);
     void setSSAOIntensity(int);

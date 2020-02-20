@@ -53,6 +53,9 @@
     </property>
     <addaction name="actionSnapshot"/>
     <addaction name="separator"/>
+    <addaction name="actionPasteCamera"/>
+    <addaction name="actionCopyCamera"/>
+    <addaction name="separator"/>
     <addaction name="actionSaveCameraState"/>
     <addaction name="actionRestoreCameraState"/>
     <addaction name="separator"/>
@@ -279,7 +282,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="toolBoxPageLighting">
+       <widget class="QWidget" name="toolBoxPageGlobalSetting">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -293,7 +296,7 @@
           <normaloff>Resources/icons/light.png</normaloff>Resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
-         <string>Lighting</string>
+         <string>Global Setting</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_7">
          <property name="leftMargin">
@@ -309,7 +312,7 @@
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayoutLighting"/>
+          <layout class="QVBoxLayout" name="verticalLayoutGlobalSetting"/>
          </item>
         </layout>
        </widget>
@@ -647,6 +650,22 @@
    </property>
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionCopyCamera">
+   <property name="text">
+    <string>Copy Camera</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPasteCamera">
+   <property name="text">
+    <string>Paste Camera</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
    </property>
   </action>
  </widget>

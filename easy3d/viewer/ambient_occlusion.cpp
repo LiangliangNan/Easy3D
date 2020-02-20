@@ -251,7 +251,8 @@ namespace easy3d {
         program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);		// normal
         program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_gl_error
 
-        opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f); easy3d_debug_gl_error
+        opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        easy3d_debug_log_gl_error;
 
         program->release_texture(); easy3d_debug_gl_error
         program->release(); easy3d_debug_gl_error
@@ -294,23 +295,8 @@ namespace easy3d {
 
 
 	void AmbientOcclusion::draw_occlusion(int x, int y, int w, int h) {
-        static const std::string name = "screen_space/quad_gray_texture";
-        ShaderProgram* program = ShaderManager::get_program(name);
-		if (!program) {
-			std::vector<ShaderProgram::Attribute> attributes;
-			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"));
-			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC"));
-            program = ShaderManager::create_program_from_files(name, attributes);
-		}
-        if (!program)
-            return;
-
-        program->bind();		easy3d_debug_gl_error;
-
-        program->bind_texture("textureID", ssao_texture(), 0);
-        opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, x, y, w, h, width_, height_, -1.0f); easy3d_debug_gl_error;
-        program->release_texture();
-        program->release();		easy3d_debug_gl_error;
+        const Rect quad(x, x+w, y, y+h);
+        opengl::draw_depth_texture(quad, ssao_texture(), width_, height_, -1.0f); easy3d_debug_gl_error;
 	}
 
 

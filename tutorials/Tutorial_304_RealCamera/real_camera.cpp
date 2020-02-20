@@ -30,10 +30,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/texture.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -212,34 +209,19 @@ void RealCamera::draw_image() const {
     if (texture_ == nullptr)
         return;
 
-    static const std::string quad_name = "screen_space/quad_color_texture";
-    ShaderProgram* program = ShaderManager::get_program(quad_name);
-    if (!program) {
-        std::vector<ShaderProgram::Attribute> attributes = {
-            ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-            ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
-        };
-        program = ShaderManager::create_program_from_files(quad_name, attributes);
-    }
-    if (!program)
-        return;
-
     int w = texture_->width();
     int h = texture_->height();
     float image_as = w / static_cast<float>(h);
     float viewer_as = width() / static_cast<float>(height());
     if (image_as < viewer_as) {// thin
-        h = static_cast<int>(height() * 0.5f);
+        h = static_cast<int>(height() * 0.3f);
         w = static_cast<int>(h * image_as);
     }
     else {
-        w = static_cast<int>(width() * 0.5f);
+        w = static_cast<int>(width() * 0.3f);
         h = static_cast<int>(w / image_as);
     }
 
-    program->bind();
-    program->bind_texture("textureID", texture_->id(), 0);
-    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, w, h, width(), height(), -0.9f);
-    program->release_texture();
-    program->release();
+    const Rect quad(20, w, 20, h);
+    opengl::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }

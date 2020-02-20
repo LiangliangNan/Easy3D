@@ -33,10 +33,6 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
-#include <easy3d/util/file_system.h>
-
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -122,23 +118,7 @@ void DepthImage::draw_depth() const {
     // generate
     viewer->generate_depth();
 
-    static const std::string quad_name = "screen_space/quad_gray_texture";
-    ShaderProgram* program = ShaderManager::get_program(quad_name);
-    if (!program) {
-        std::vector<ShaderProgram::Attribute> attributes = {
-            ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-            ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
-        };
-        program = ShaderManager::create_program_from_files(quad_name, attributes);
-    }
-    if (!program)
-        return;
-
-    int sw = w / 2;
-    int sh = h / 2;
-    program->bind();
-    program->bind_texture("textureID", fbo_->depth_texture(), 0);
-    opengl::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 20, 20, sw, sh, w, h, -0.9f);
-    program->release_texture();
-    program->release();
+    const Rect quad(20, 20 + w/3, 20, 20 + h/3);
+    opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
+    opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
 }

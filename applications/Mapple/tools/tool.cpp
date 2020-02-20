@@ -32,7 +32,10 @@
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/camera.h>
+#include <easy3d/viewer/opengl.h>
+#include <easy3d/viewer/tessellator.h>
 
 
 namespace easy3d {
@@ -92,73 +95,82 @@ namespace easy3d {
             if (w <= 0 || h <=0)
                 return;
 
-            auto program = ShaderManager::get_program("screen_space/lines_color");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
-                };
-                program = ShaderManager::create_program_from_files("screen_space/lines_color", attributes);
-            }
-            if (!program)
-                return;
-
             int width = tool_manager()->viewer()->camera()->screenWidth();
             int height = tool_manager()->viewer()->camera()->screenHeight();
 
-            // draw_quad_wire() requires the lower left corner
-            float x0 = rect.x_min();
-            float y0 = rect.y_max();
+            // draw the boundary of the rect
+            opengl::draw_quad_wire(rect, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
 
-            program->bind();
-            program->set_uniform("per_vertex_color", false);
-            program->set_uniform("default_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
-            opengl::draw_quad_wire(ShaderProgram::POSITION, x0, height - y0 - 1, w, h, width, height, -1.0f);
-            program->release();
+            // draw the transparent face
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            opengl::draw_quad_filled(rect, vec4(1.0f, 0.0f, 0.0f, 0.2f), width, height, -0.9f);
+            glDisable(GL_BLEND);
         }
 
 
         void MultiTool::draw_lasso(const Polygon2& lasso) const {
-            auto program = ShaderManager::get_program("screen_space/lines_color");
+            const std::string name = "screen_space/screen_space_color";
+            auto program = ShaderManager::get_program(name);
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
-                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vertexColor")
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position")
                 };
-                program = ShaderManager::create_program_from_files("screen_space/lines_color", attributes);
+                program = ShaderManager::create_program_from_files(name, attributes);
             }
-            if (!program)
-                return;
-
-            if (lasso.size() < 3)
+            if (!program || lasso.size() < 3)
                 return;
 
             int width = tool_manager()->viewer()->camera()->screenWidth();
             int height = tool_manager()->viewer()->camera()->screenHeight();
 
-            std::vector<vec3> points(lasso.size());
-            std::vector<unsigned int> indices(lasso.size() * 2);
+            std::vector<vec3> wire_points(lasso.size());
+            std::vector<unsigned int> wire_indices(lasso.size() * 2);
             for (std::size_t i = 0; i < lasso.size(); ++i) {
                 const auto& p = lasso[i];
                 // to use the screen space shaders, I need to convert the point coordinates into the NDC space.
                 // also have to follow the OpenGL coordinates rule.
-                points[i].x = {2.0f * p.x / width - 1.0f};
-                points[i].y = {2.0f * (height - p.y - 1)/ height - 1.0f};
-                points[i].z = 0.0f;
+                wire_points[i].x = {2.0f * p.x / width - 1.0f};
+                wire_points[i].y = {2.0f * (height - p.y - 1)/ height - 1.0f};
+                wire_points[i].z = 0.0f;
 
-                indices[i*2] = i;
-                indices[i*2+1] = (i+ 1) % lasso.size();
+                wire_indices[i*2] = i;
+                wire_indices[i*2+1] = (i+ 1) % lasso.size();
             }
 
             LinesDrawable drawable;
-            drawable.update_vertex_buffer(points);                                  easy3d_debug_gl_error;
-            drawable.update_index_buffer(indices);                                  easy3d_debug_gl_error;
+            drawable.update_vertex_buffer(wire_points);                                  easy3d_debug_gl_error;
+            drawable.update_index_buffer(wire_indices);                                  easy3d_debug_gl_error;
 
             program->bind();                                                        easy3d_debug_gl_error;
-            program->set_uniform("per_vertex_color", false);                        easy3d_debug_gl_error;
-            program->set_uniform("default_color", vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            program->set_uniform("screen_color", vec4(1.0f, 0.0f, 0.0f, 1.0f));
             drawable.gl_draw(false);                                                easy3d_debug_gl_error;
             program->release();                                                     easy3d_debug_gl_error;
+
+            // draw the face
+            Tessellator tess;
+            tess.begin_polygon(vec3(0, 0, 1));
+            tess.begin_contour();
+            for (const auto& v : wire_points)
+                tess.add_vertex(v);
+            tess.end_contour();
+            tess.end_polygon();
+            const auto& vts = tess.vertices();
+            std::vector<vec3> face_points(vts.size());
+            for (std::size_t i=0; i<vts.size(); ++i)
+                face_points[i] = vec3(vts[i]->data());
+            const std::vector<unsigned int>& face_indices = tess.indices();
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            TrianglesDrawable face;
+            face.update_vertex_buffer(face_points);
+            face.update_index_buffer(face_indices);
+            program->bind();                                                        easy3d_debug_gl_error;
+            program->set_uniform("screen_color", vec4(1.0f, 0.0f, 0.0f, 0.2f));
+            face.gl_draw(false);                                                easy3d_debug_gl_error;
+            program->release();
+            glDisable(GL_BLEND);    easy3d_debug_gl_error;
         }
 
     }

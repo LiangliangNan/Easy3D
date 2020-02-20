@@ -4,7 +4,7 @@
 in vec3  vtx_position;
 in vec2  vtx_texcoord;
 //in float sphere_radius;
- 
+
 out		vec2	texcoord;
 //out float	sphere_radius_in;
 

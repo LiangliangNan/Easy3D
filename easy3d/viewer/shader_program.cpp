@@ -184,7 +184,7 @@ namespace easy3d {
 		//we must check the compilation result
 		std::string log;
 		if (!shader_info_log(log, shader)) {
-			LOG(ERROR) << log;
+			LOG(ERROR) << "[" << spStringShaderTypes[type] << "] " << log;
 			glDeleteShader(shader);	
             shader = 0;
 			return false;

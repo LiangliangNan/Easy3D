@@ -30,76 +30,70 @@
 #include <easy3d/core/types.h>
 
 
-// Functions to draw/create basic shapes, allowing the application to provide its own shader.
-
 namespace easy3d {
 
     namespace opengl
     {
+        /**
+         * Draw a quad defined in the screen space.
+         * @param rect The quad.
+         * @param color The color.
+         * @param texture The texture.
+         * @param width The width of the viewer.
+         * @param height The height of the viewer.
+         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_quad_wire(const Rect& rect, const vec4& color, int width, int height, float depth);
+        void draw_quad_filled(const Rect& rect, const vec4& color, int width, int height, float depth);
+        void draw_quad_filled(const Rect& rect, int texture, int width, int height, float depth);
 
-        // Draw a 2D quad with a single vertex attribute.
-        // Renders a quad at (x, y) and of size (w, h) using the currently-bound shader
-        // Binds the vertex position array to the given attribute array index and draws the object
-        // using the bound shader
-        // \param[in] positionAttrib the vertex attribute array index that represents position in the current shader
-        // \param[in] (x, y)		  the position (i.e., min corner) of the quad.
-        // \param[in] (w, h)		  the size (i.e., width and height) of the quad.
-        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport (of the viewer).
-        void draw_quad(unsigned int posIndex, int x, int y, int w, int h, int vpw, int vph, float depth);
-        void draw_quad_wire(unsigned int posIndex, int x, int y, int w, int h, int vpw, int vph, float depth);
+        /**
+         * Draw a full screen textured quad.
+         * @param rect The quad.
+         * @param texture The texture.
+         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_full_screen_quad(int texture, float depth);
 
-        // Draw a 2D quad with positions and UVs.
-        // Renders a quad at (x, y) and of size (w, h) using the currently-bound shader
-        // Binds the vertex position and UVs arrays to the given attribute array indices and draws the object
-        // using the bound shader
-        // \param[in] positionAttrib the vertex attribute array index that represents position in the current shader
-        // \param[in] texcoordAttrib the vertex attribute array index that represents 2D UVs in the current shader
-        // \param[in] (x, y)		  the position (i.e., min corner) of the quad.
-        // \param[in] (w, h)		  the size (i.e., width and height) of the quad.
-        // \param[in] (vpw, vph)	  the size (i.e., width and height) of the viewport (of the viewer).
-        // \param[in] depth	the depth at which the quad will be drawn (in Normalized Device Coordinates, i.e., [-1.0, 1.0])
-        // NOTE: After clipping and division by w, depth coordinates range from −1 to 1, corresponding to the near and far clipping planes.
-        void draw_quad(unsigned int posIndex, unsigned int texcoordAttrib, int x, int y, int w, int h, int vpw, int vph, float depth);
+        /**
+         * draw a quad visualizing a depth texture in a region. This is function is similar to
+         * draw_quad_filled(... int texture...). The only difference is that a depth texture is rendered as a gray
+         * scale image. For depth textures from off-screen rendering (usually from an FBO), the depth values are stored
+         * in the R component of the texture.
+         * @param rect The quad.
+         * @param color The color.
+         * @param texture The texture.
+         * @param width The width of the viewer.
+         * @param height The height of the viewer.
+         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_depth_texture(const Rect& rect, int texture, int width, int height, float depth);
 
-        // Draw a 2D quad with a single vertex attribute.
-        // Renders a normalized quad ([-1.0, 1.0] in X and Y) using the currently-bound shader
-        // Binds the vertex position array to the given attribute array index and draws the object
-        // using the bound shader
-        // \param[in] positionAttrib the vertex attribute array index that represents position in the current shader
-        void draw_full_screen_quad(unsigned int posIndex);
+        /**
+         * Draw a quad  defined in the screen space using a bound shader. It binds the vertex position and UVs arrays
+         * to the given attribute array indices and draws the quad.
+         * @param position_attrib The vertex attribute array index that represents position in the current shader.
+         * @param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
+         * @param (x, y) The position (i.e., min corner) of the quad.
+         * @param (w, h) The size (i.e., width and height) of the quad.
+         * @param (vpw, vph) The size (i.e., width and height) of the viewport (of the viewer).
+         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_quad(unsigned int position_attrib, unsigned int texcoord_attrib, int x, int y, int w, int h, int vpw, int vph, float depth);
 
-        // Draw a 2D quad with positions and UVs.
-        // Renders a normalized quad ([-1.0, 1.0] in X and Y) with normalized UVs [0.0, 1.0]
-        // using the currently-bound shader
-        // Binds the vertex position and UVs arrays to the given attribute array indices and draws the object
-        // using the bound shader
-        // \param[in] positionAttrib the vertex attribute array index that represents position in the current shader
-        // \param[in] texcoordAttrib the vertex attribute array index that represents 2D UVs in the current shader
-        // \param[in] depth	the depth at which the quad will be drawn (in Normalized Device Coordinates, i.e., [-1.0, 1.0])
-        // NOTE: After clipping and division by w, depth coordinates range from −1 to 1, corresponding to the near and far clipping planes.
-        void draw_full_screen_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, float depth);
-
-        // Draw a cube with positions.
-        // Renders a normalized cube ([-1.0, 1.0] in X, Y, and Z) using the currently-bound shader
-        // Binds the vertex position array to the given attribute array index and draws the object
-        // using the bound shader
-        // \param[in] posIndex the vertex attribute array index that represents position in the current shader
-        void draw_cube(unsigned int posIndex);
-
-        // Draw a wireframe cube with positions.
-        // Renders a normalized cube ([-1.0, 1.0] in X, Y, and Z) as lines using the currently-bound shader
-        // Binds the vertex position array to the given attribute array index and draws the object
-        // using the bound shader
-        // \param[in] posIndex the vertex attribute array index that represents position in the current shader
-        void draw_cube_wire(unsigned int posIndex);
-
-        // Draw a single point with given position.
-        // Renders a single point (GL_POINTS) using the currently-bound shader
-        // Binds the vertex position array to the given attribute array index and draws one point
-        // using the bound shader
-        // \param[in] pos the point to be drawn
-        // \param[in] posIndex the vertex attribute array index that represents position in the current shader
-        void draw_point(unsigned int positionAttrib, const vec3 &pos);
+        /**
+         * Draw a full screen quad using the bound shader. It binds the vertex position and UVs arrays to the given
+         * attribute array indices and draws the quad.
+         * @param position_attrib The vertex attribute array index that represents position in the current shader.
+         * @param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
+         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_full_screen_quad(unsigned int position_attrib, unsigned int texcoord_attrib, float depth);
 
 
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----

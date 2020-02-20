@@ -81,8 +81,7 @@ namespace easy3d {
         void clear();
         void init();
 
-        // visualize the shadow map/frustum (useful for debugging)
-        void draw_shadow_map(int w, int h);
+        // visualize the frustum (useful for debugging)
         void draw_light_frustum();
 
         void compute_camera_frustum();
