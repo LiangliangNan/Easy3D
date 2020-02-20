@@ -32,40 +32,44 @@
 namespace easy3d {
 
 
-#define easy3d_gl_error {\
-    opengl::check_gl_error(__FILE__, __FUNCTION__, __LINE__) ;\
+#define easy3d_gl_error {                                                   \
+    opengl::check_gl_error(__FILE__, __FUNCTION__, __LINE__) ;              \
 }
 
-#define easy3d_frame_buffer_error {\
-    opengl::check_frame_buffer_error(__FILE__, __FUNCTION__, __LINE__) ;\
+#define easy3d_frame_buffer_error {                                         \
+    opengl::check_frame_buffer_error(__FILE__, __FUNCTION__, __LINE__) ;    \
 }
 
-
-#define easy3d_log_gl_error {                                   \
-    std::string log("");                                        \
-    LOG_IF(ERROR, opengl::gl_error(log)) << "GL error: \n"      \
-    << "\tfile: " << __FILE__ << "\n"                           \
-    << "\tline: " << __LINE__ << "\n"                           \
-    << "\tfunction: " << __FUNCTION__ << "\n"                   \
-    << "\tinfo: " << log;                                       \
+#define easy3d_log_gl_error {                                               \
+    std::string log("");                                                    \
+    LOG_IF(ERROR, opengl::gl_error(log)) << "GL error: \n"                  \
+    << "\tfile: " << __FILE__ << "\n"                                       \
+    << "\tline: " << __LINE__ << "\n"                                       \
+    << "\tfunction: " << __FUNCTION__ << "\n"                               \
+    << "\tinfo: " << log;                                                   \
 }
+
+#define easy3d_log_frame_buffer_error {                                     \
+    std::string log("");                                                    \
+    LOG_IF(ERROR, opengl::frame_buffer_error(log)) << "GL error: \n"        \
+    << "\tfile: " << __FILE__ << "\n"                                       \
+    << "\tline: " << __LINE__ << "\n"                                       \
+    << "\tfunction: " << __FUNCTION__ << "\n"                               \
+    << "\tinfo: " << log;                                                   \
+}
+
 
 #ifndef NDEBUG
 #define easy3d_debug_gl_error				easy3d_gl_error
 #define easy3d_debug_frame_buffer_error		easy3d_frame_buffer_error
-
 #define easy3d_debug_log_gl_error			easy3d_log_gl_error
 #define easy3d_debug_log_frame_buffer_error	easy3d_log_frame_buffer_error
 #else
 #define easy3d_debug_gl_error
 #define easy3d_debug_frame_buffer_error
+#define easy3d_debug_log_gl_error
+#define easy3d_debug_log_frame_buffer_error
 #endif
-
-
-
-
-
-
 
 
     namespace opengl {
