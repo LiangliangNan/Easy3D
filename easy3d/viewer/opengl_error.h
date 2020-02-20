@@ -42,7 +42,7 @@ namespace easy3d {
 
 #define easy3d_log_gl_error {                                               \
     std::string log("");                                                    \
-    LOG_IF(ERROR, opengl::gl_error(log)) << "GL error: \n"                  \
+    LOG_IF(ERROR, !opengl::gl_error(log)) << "GL error: \n"                  \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
@@ -51,7 +51,7 @@ namespace easy3d {
 
 #define easy3d_log_frame_buffer_error {                                     \
     std::string log("");                                                    \
-    LOG_IF(ERROR, opengl::frame_buffer_error(log)) << "GL error: \n"        \
+    LOG_IF(ERROR, !opengl::frame_buffer_error(log)) << "GL error: \n"        \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
@@ -74,13 +74,13 @@ namespace easy3d {
 
     namespace opengl {
 
-        // Prints the last GL error to the Logger.
-        bool check_gl_error(const std::string& file, int line);
+        // Prints the last GL error to the logger.
+        // returns false if an error occurred.
         bool check_gl_error(const std::string& file, const std::string& function, int line);
-        bool check_frame_buffer_error(const std::string& file, int line);
         bool check_frame_buffer_error(const std::string& file, const std::string& function, int line);
 
         // Check if there was an error. The error message will be stored in "log" if provided.
+        // returns false if an error occurred.
         bool gl_error(std::string& log);
         bool frame_buffer_error(std::string& log);
 
