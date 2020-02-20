@@ -41,7 +41,7 @@ void main()
   if (clippingPlaneEnabled) {
     gl_ClipDistance[0] = dot(gl_in[0].gl_Position, clippingPlane0);
     if (crossSectionEnabled)
-    gl_ClipDistance[1] = dot(gl_in[0].gl_Position, clippingPlane1);
+      gl_ClipDistance[1] = dot(gl_in[0].gl_Position, clippingPlane1);
   }
   // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
   // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in

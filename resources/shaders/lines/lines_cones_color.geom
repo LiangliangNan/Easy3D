@@ -10,8 +10,14 @@ layout(lines) in;
 layout(triangle_strip, max_vertices = 5) out;
 
 uniform mat4    PROJ;
+uniform mat4    invMV;
 uniform bool    perspective;
 uniform float   radius;
+
+uniform bool clippingPlaneEnabled = false;
+uniform bool crossSectionEnabled = false;
+uniform vec4 clippingPlane0;
+uniform vec4 clippingPlane1;
 
 in  vec4 vOutColor[];
 
@@ -53,6 +59,11 @@ void main()
         DataOut.point = top;
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[1];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -64,6 +75,11 @@ void main()
         DataOut.point = (base + left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -75,6 +91,11 @@ void main()
         DataOut.point = (base - left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -86,6 +107,11 @@ void main()
         DataOut.point = (base + left + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -97,6 +123,11 @@ void main()
         DataOut.point = (base - left + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -109,6 +140,11 @@ void main()
         DataOut.point = top;
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[1];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -124,6 +160,11 @@ void main()
         DataOut.point = (base - left * factor + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -135,6 +176,11 @@ void main()
         DataOut.point = (base + left * factor + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -146,6 +192,11 @@ void main()
         DataOut.point = (base - left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -157,6 +208,11 @@ void main()
         DataOut.point = (base + left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        if (clippingPlaneEnabled) {
+            gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
+            if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+        }
         // In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
         // the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
         // the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value

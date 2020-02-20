@@ -28,6 +28,7 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/util/logging.h>
 
 
@@ -92,6 +93,9 @@ namespace easy3d {
                 ->set_uniform("hightlight_id_min", highlight_range_.first)
                 ->set_uniform("hightlight_id_max", highlight_range_.second);
 
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
+
         gl_draw(with_storage_buffer);
         program->release();
     }
@@ -145,6 +149,9 @@ namespace easy3d {
                 ->set_uniform("highlight", highlight())
                 ->set_uniform("hightlight_id_min", highlight_range_.first)
                 ->set_uniform("hightlight_id_max", highlight_range_.second);
+
+        if (setting::clipping_plane)
+            setting::clipping_plane->set_program(program);
 
         gl_draw(with_storage_buffer);
 

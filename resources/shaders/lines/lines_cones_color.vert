@@ -20,7 +20,7 @@ void main()
     gl_Position = MV * vec4(vtx_position, 1.0);
 
     if (per_vertex_color)
-    vOutColor = vec4(vtx_color, 1.0);
+        vOutColor = vec4(vtx_color, 1.0);
     else
-    vOutColor = default_color;
+        vOutColor = default_color;
 }

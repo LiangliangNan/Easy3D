@@ -49,6 +49,7 @@ PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
         , mouse_pressed_pos_(0, 0)
         , mouse_previous_pos_(0, 0)
         , show_pivot_point_(false)
+        , manipulated_frame_(nullptr)
         , drawable_axes_(nullptr)
         , show_camera_path_(false)
         , model_idx_(-1)
@@ -87,6 +88,9 @@ PaintCanvas::~PaintCanvas() {
 void PaintCanvas::cleanup() {
     if (camera_)
         delete camera_;
+
+    if (manipulated_frame_)
+        delete manipulated_frame_;
 
     if (drawable_axes_)
         delete drawable_axes_;
@@ -1225,6 +1229,41 @@ void PaintCanvas::pasteCamera() {
     const float duration = 0.5f;
     camera()->interpolateTo(new_frame, duration);
     update();
+}
+
+
+void PaintCanvas::configureManipulation() {
+    Frame* frame = nullptr; // the actual frame to be manipulated
+    if (setting::clipping_plane && setting::clipping_plane->is_enabled()) {
+        frame = setting::clipping_plane->manipulated_frame();
+    }
+//    else if (currentModel() && currentModel()->is_visible() && currentModel()->is_selected()) {
+//        // we allow only one model (i.e., the current model) to be manipulated
+//        int num_selected = 0;
+//        for (std::size_t i = 0; i < models().size(); ++i) {
+//            Model* m = models()[i];
+//            num_selected += m->is_selected() ? 1 : 0;
+//        }
+//        if (num_selected == 1)
+//            frame = model()->manipulated_frame();
+//    }
+
+    if (frame) {
+        if (!manipulated_frame_)
+            manipulated_frame_ = new ManipulatedFrame;
+        manipulated_frame_->setFromMatrix(frame->matrix());
+//        if (!manipulation_agent_)
+//            manipulation_agent_ = new ManipulationAgent;
+//
+//        manipulatedFrame()->setConstraint(manipulation_agent_);
+//        manipulation_agent_->clear();
+//        manipulation_agent_->add_frame(frame);
+//        manipulatedFrame()->setFromMatrix(frame->matrix());
+    }
+    else { // disable manipulation
+        delete manipulated_frame_;
+        manipulated_frame_ = nullptr;
+    }
 }
 
 
