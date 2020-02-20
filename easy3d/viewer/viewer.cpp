@@ -1044,8 +1044,8 @@ namespace easy3d {
 		gly = static_cast<int>(gly * dpi_scaling());
 #endif
 		float depth = std::numeric_limits<float>::max();
-		glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
-		glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);					easy3d_debug_gl_error;
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
+		glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);					easy3d_debug_log_gl_error;
 		found = depth < 1.0f;
 		if (found) {
 			vec3 point(float(x), float(y), depth);

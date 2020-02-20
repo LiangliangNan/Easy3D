@@ -154,20 +154,20 @@ namespace easy3d {
         // generate shadow map
 
         glViewport(0, 0, shadow_map_size_, shadow_map_size_);
-        shadow_map_pass(surfaces);          easy3d_debug_gl_error;
+        shadow_map_pass(surfaces);          easy3d_debug_log_gl_error;
 
         // rendering
 
         glViewport(0, 0, w, h);
-        render_pass(surfaces);      easy3d_debug_gl_error;
+        render_pass(surfaces);      easy3d_debug_log_gl_error;
 
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
         const Rect quad(20, 20 + 500, 20, 20 + 500);
         opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
         opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
 
-        draw_light_frustum();		easy3d_debug_gl_error;
+        draw_light_frustum();		easy3d_debug_log_gl_error;
     #endif
     }
 
@@ -188,7 +188,7 @@ namespace easy3d {
         fbo_->deactivate_draw_buffers();
         glClear(GL_DEPTH_BUFFER_BIT);
         program->bind();
-        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_gl_error;
+        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 d->gl_draw(false);
@@ -221,19 +221,19 @@ namespace easy3d {
         // camera position is defined in world coordinate system.
         const vec3& wCamPos = camera_->position();
         program->bind();
-        program->set_uniform("MVP", MVP);                                  easy3d_debug_gl_error;
-        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_gl_error;
-        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_gl_error;
-        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_gl_error;
-        program->set_uniform("darkness", darkness_);                       easy3d_debug_gl_error;
-        program->bind_texture("shadowMap", fbo_->depth_texture(), 0);      easy3d_debug_gl_error;
+        program->set_uniform("MVP", MVP);                                  easy3d_debug_log_gl_error;
+        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error;
+        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error;
+        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error;
+        program->set_uniform("darkness", darkness_);                       easy3d_debug_log_gl_error;
+        program->bind_texture("shadowMap", fbo_->depth_texture(), 0);      easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 program->set_uniform("smooth_shading", d->smooth_shading());
                 program->set_block_uniform("Material", "ambient", d->material().ambient);
                 program->set_block_uniform("Material", "specular", d->material().specular);
                 program->set_block_uniform("Material", "shininess", &d->material().shininess);
-                program->set_uniform("default_color", d->default_color());				easy3d_debug_gl_error;
+                program->set_uniform("default_color", d->default_color());				easy3d_debug_log_gl_error;
                 program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
                 program->set_uniform("is_background", false);
                 d->gl_draw(false);
@@ -241,7 +241,7 @@ namespace easy3d {
         }
 
         // draw the background plane
-        program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
+        program->set_uniform("default_color", background_color_);				easy3d_debug_log_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
         background_->gl_draw(false);

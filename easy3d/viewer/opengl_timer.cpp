@@ -36,7 +36,7 @@ namespace easy3d {
         : query_id_(0)
         , running_(false)
     {
-        glGenQueries(1, &query_id_); easy3d_debug_gl_error;
+        glGenQueries(1, &query_id_); easy3d_debug_log_gl_error;
 
         if (start_timing)
             start();
@@ -45,14 +45,14 @@ namespace easy3d {
 
     OpenGLTimer::~OpenGLTimer() {
         if (query_id_) {
-            glDeleteQueries(1, &query_id_); easy3d_debug_gl_error;
+            glDeleteQueries(1, &query_id_); easy3d_debug_log_gl_error;
         }
     }
 
 
     void OpenGLTimer::start() {
         assert(!running_);
-        glBeginQuery(GL_TIME_ELAPSED, query_id_);	easy3d_debug_gl_error;
+        glBeginQuery(GL_TIME_ELAPSED, query_id_);	easy3d_debug_log_gl_error;
         running_ = true;
     }
 
@@ -78,7 +78,7 @@ namespace easy3d {
         } while (!queryReady);
 
         GLuint query_time = 0;
-        glGetQueryObjectuiv(query_id_, GL_QUERY_RESULT, &query_time);   easy3d_debug_gl_error
+        glGetQueryObjectuiv(query_id_, GL_QUERY_RESULT, &query_time);   easy3d_debug_log_gl_error
 
         return static_cast<double>(query_time) / 1000000.0; // in milliseconds
     }

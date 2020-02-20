@@ -160,7 +160,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        glDisable(GL_BLEND);	easy3d_debug_gl_error;
+        glDisable(GL_BLEND);	easy3d_debug_log_gl_error;
         glEnable(GL_DEPTH_TEST);
 
         program->bind();

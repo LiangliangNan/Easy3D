@@ -172,8 +172,8 @@ namespace easy3d {
         // Liangliang: this is not needed for rendering purpose, but just to keep the CPU data up to date. A better
         //             choice could be retrieving the data only if needed.
         drawable->fetch_selection_buffer();
-        easy3d_debug_gl_error;
-        easy3d_debug_frame_buffer_error;
+        easy3d_debug_log_gl_error;
+        easy3d_debug_log_frame_buffer_error;
         //-----------------------------------------------------------------
 
 //        int num_changed = std::abs(drawable->num_selected() - num_before);
@@ -270,8 +270,8 @@ namespace easy3d {
         // Liangliang: this is not needed for rendering purpose, but just to keep the CPU data up to date. A better
         //             choice could be retrieving the data only if needed.
         drawable->fetch_selection_buffer();
-        easy3d_debug_gl_error;
-        easy3d_debug_frame_buffer_error;
+        easy3d_debug_log_gl_error;
+        easy3d_debug_log_frame_buffer_error;
         //-----------------------------------------------------------------
 
 //        int num_changed = std::abs(drawable->num_selected() - num_before);

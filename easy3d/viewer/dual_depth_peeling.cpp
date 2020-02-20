@@ -244,7 +244,7 @@ namespace easy3d {
                 }
             }
             program->release_texture();
-            program->release();   easy3d_debug_gl_error;
+            program->release();   easy3d_debug_log_gl_error;
         }
 
         ++num_geom_passes_;
@@ -264,12 +264,12 @@ namespace easy3d {
             static_cast<unsigned int>(Back),
             static_cast<unsigned int>(front_source_)
         };
-        fbo_->activate_draw_buffers(2, targets);	easy3d_debug_gl_error;
+        fbo_->activate_draw_buffers(2, targets);	easy3d_debug_log_gl_error;
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Render target depth_source_ stores (-minDepth, maxDepth, alphaMultiplier)
-        fbo_->activate_draw_buffer(depth_source_);	easy3d_debug_gl_error;
+        fbo_->activate_draw_buffer(depth_source_);	easy3d_debug_log_gl_error;
         glClearColor(-1, -1, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         glBlendEquation(GL_MAX);
@@ -312,7 +312,7 @@ namespace easy3d {
 
         // Since we cannot blend the back colors in the geometry passes,
         // we use another render target to do the alpha blending
-        fbo_->activate_draw_buffer(Back);	easy3d_debug_gl_error;
+        fbo_->activate_draw_buffer(Back);	easy3d_debug_log_gl_error;
         glClearColor(bkg_color_[0], bkg_color_[1], bkg_color_[2], 0);
         glClear(GL_COLOR_BUFFER_BIT);
 

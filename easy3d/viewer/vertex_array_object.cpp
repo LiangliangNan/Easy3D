@@ -52,7 +52,7 @@ namespace easy3d {
         // Liangliang: it is a bad idea to initialize OpenGL stuff in the constructors
         //			   because the OpenGL context may not exist. In Easy3D, I alway
         //             follow the "create when needed" rule.
-        // glGenVertexArrays(1, &id_);	easy3d_debug_gl_error;
+        // glGenVertexArrays(1, &id_);	easy3d_debug_log_gl_error;
         // if (id_ == 0) {
         //     LOG(ERROR) << "generating VertexArrayObject failed";
 		//}
@@ -61,7 +61,7 @@ namespace easy3d {
 
 	VertexArrayObject::~VertexArrayObject() {
 		if (id_ != 0) {
-			glDeleteVertexArrays(1, &id_);	easy3d_debug_gl_error;
+			glDeleteVertexArrays(1, &id_);	easy3d_debug_log_gl_error;
 			id_ = 0;
 		}
 	}
@@ -69,27 +69,27 @@ namespace easy3d {
 
 	void VertexArrayObject::bind() {
 		if (id_ == 0) {
-			glGenVertexArrays(1, &id_);	easy3d_debug_gl_error;
+			glGenVertexArrays(1, &id_);	easy3d_debug_log_gl_error;
 			if (id_ == 0) {
 				LOG(ERROR) << "generating VertexArrayObject failed";
 				return;
 			}
 		}
 
-		glBindVertexArray(id_);		easy3d_debug_gl_error;
+		glBindVertexArray(id_);		easy3d_debug_log_gl_error;
 	}
 
 
     void VertexArrayObject::release() {
 		assert(id_ != 0);
-		glBindVertexArray(0);		easy3d_debug_gl_error;
+		glBindVertexArray(0);		easy3d_debug_log_gl_error;
 	}
 
 
     void VertexArrayObject::release_buffer(GLuint& buffer) {
         if (buffer != 0) {
-			glBindVertexArray(0);			easy3d_debug_gl_error;
-            glDeleteBuffers(1, &buffer);	easy3d_debug_gl_error;
+			glBindVertexArray(0);			easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &buffer);	easy3d_debug_log_gl_error;
             buffer = 0;
 		}
 	}
@@ -98,17 +98,17 @@ namespace easy3d {
     bool VertexArrayObject::create_array_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size, std::size_t dim, bool dynamic) {
         release_buffer(buffer);
 		bind();
-        glGenBuffers(1, &buffer);                       easy3d_debug_gl_error;
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);			easy3d_debug_gl_error;
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_gl_error;
-        glEnableVertexAttribArray(index);               easy3d_debug_gl_error;
-        glVertexAttribPointer(index, int(dim), GL_FLOAT, GL_FALSE, 0, nullptr);		easy3d_debug_gl_error;
+        glGenBuffers(1, &buffer);                       easy3d_debug_log_gl_error;
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);			easy3d_debug_log_gl_error;
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_log_gl_error;
+        glEnableVertexAttribArray(index);               easy3d_debug_log_gl_error;
+        glVertexAttribPointer(index, int(dim), GL_FLOAT, GL_FALSE, 0, nullptr);		easy3d_debug_log_gl_error;
         if (glGetError() != GL_NO_ERROR) {
-            glBindBuffer(GL_ARRAY_BUFFER, 0);           easy3d_debug_gl_error;
-            glDeleteBuffers(1, &buffer);                easy3d_debug_gl_error;
+            glBindBuffer(GL_ARRAY_BUFFER, 0);           easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &buffer);                easy3d_debug_log_gl_error;
             buffer = 0;
 		}
-        glBindBuffer(GL_ARRAY_BUFFER, 0);               easy3d_debug_gl_error;
+        glBindBuffer(GL_ARRAY_BUFFER, 0);               easy3d_debug_log_gl_error;
         release();
         return (glGetError() == GL_NO_ERROR);
 	}
@@ -117,16 +117,16 @@ namespace easy3d {
     bool VertexArrayObject::create_element_buffer(GLuint &buffer, const void *data, std::size_t size, bool dynamic) {
         release_buffer(buffer);
 		bind();
-        glGenBuffers(1, &buffer);                                           easy3d_debug_gl_error;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);                      easy3d_debug_gl_error;
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_gl_error;
+        glGenBuffers(1, &buffer);                                           easy3d_debug_log_gl_error;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);                      easy3d_debug_log_gl_error;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_log_gl_error;
         if (glGetError() != GL_NO_ERROR) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);                       easy3d_debug_gl_error;
-            glDeleteBuffers(1, &buffer);                                    easy3d_debug_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);                       easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &buffer);                                    easy3d_debug_log_gl_error;
             buffer = 0;
 		}
         // Otherwise (if you uncoment this line), you will have to bind the buffer before drawing
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_gl_error;
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
         release();
         return (glGetError() == GL_NO_ERROR);
 	}
@@ -139,55 +139,55 @@ namespace easy3d {
         }
         release_buffer(buffer);
 		bind();
-        glGenBuffers(1, &buffer);                                                   easy3d_debug_gl_error;
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);                             easy3d_debug_gl_error;
-        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<GLsizeiptr>(size), data, GL_DYNAMIC_DRAW);		easy3d_debug_gl_error;
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);                   easy3d_debug_gl_error;
+        glGenBuffers(1, &buffer);                                                   easy3d_debug_log_gl_error;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);                             easy3d_debug_log_gl_error;
+        glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<GLsizeiptr>(size), data, GL_DYNAMIC_DRAW);		easy3d_debug_log_gl_error;
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);                   easy3d_debug_log_gl_error;
         if (glGetError() != GL_NO_ERROR) {
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                              easy3d_debug_gl_error;
-            glDeleteBuffers(1, &buffer);                                            easy3d_debug_gl_error;
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                              easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &buffer);                                            easy3d_debug_log_gl_error;
             buffer = 0;
 		}
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                                  easy3d_debug_gl_error;
-        release();                                                                  easy3d_debug_gl_error;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                                  easy3d_debug_log_gl_error;
+        release();                                                                  easy3d_debug_log_gl_error;
         return (glGetError() == GL_NO_ERROR);
 	}
 
 
     bool VertexArrayObject::update_storage_buffer(GLuint& buffer, GLintptr offset, GLsizeiptr size, const void* data) {
 		bind();
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);                     easy3d_debug_gl_error;
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);		easy3d_debug_gl_error;
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                          easy3d_debug_gl_error;
-        release();                                                          easy3d_debug_gl_error;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);                     easy3d_debug_log_gl_error;
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);		easy3d_debug_log_gl_error;
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                          easy3d_debug_log_gl_error;
+        release();                                                          easy3d_debug_log_gl_error;
         return (glGetError() == GL_NO_ERROR);
 	}
 
 
     void* VertexArrayObject::map_buffer(GLenum target, GLuint buffer, GLenum access) {
 		// Liangliang: should work, but haven't tested yet.
-        glBindBuffer(target, buffer);                   easy3d_debug_gl_error;
+        glBindBuffer(target, buffer);                   easy3d_debug_log_gl_error;
 		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);	easy3d_debug_gl_error;
-        void* ptr = glMapBuffer(buffer, access);        easy3d_debug_gl_error;
-        glBindBuffer(target, 0);                        easy3d_debug_gl_error;
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);	easy3d_debug_log_gl_error;
+        void* ptr = glMapBuffer(buffer, access);        easy3d_debug_log_gl_error;
+        glBindBuffer(target, 0);                        easy3d_debug_log_gl_error;
 		return ptr;
 	}
 
 
     void VertexArrayObject::unmap_buffer(GLenum target, GLuint buffer) {
 		// Liangliang: should work, but haven't tested yet.
-        glBindBuffer(target, buffer);	easy3d_debug_gl_error;
-        glUnmapBuffer(buffer);          easy3d_debug_gl_error;
-        glBindBuffer(target, 0);        easy3d_debug_gl_error;
+        glBindBuffer(target, buffer);	easy3d_debug_log_gl_error;
+        glUnmapBuffer(buffer);          easy3d_debug_log_gl_error;
+        glBindBuffer(target, 0);        easy3d_debug_log_gl_error;
 	}
 
 
     void VertexArrayObject::get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data) {
-        glBindBuffer(target, buffer);                   easy3d_debug_gl_error;
+        glBindBuffer(target, buffer);                   easy3d_debug_log_gl_error;
 		// Liangliang: Finally, I found this is the place to call glMemoryBarrier()
-		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);	easy3d_debug_gl_error;
-		glGetBufferSubData(target, offset, size, data);	easy3d_debug_gl_error;
-        glBindBuffer(target, 0);                        easy3d_debug_gl_error;
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);	easy3d_debug_log_gl_error;
+		glGetBufferSubData(target, offset, size, data);	easy3d_debug_log_gl_error;
+        glBindBuffer(target, 0);                        easy3d_debug_log_gl_error;
 	}
 }

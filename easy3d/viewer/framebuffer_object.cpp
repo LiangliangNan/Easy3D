@@ -92,7 +92,7 @@ namespace easy3d {
 			}
         }
 
-        glGenFramebuffers(1, &fbo_id_);		easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+        glGenFramebuffers(1, &fbo_id_);		easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
     }
 
 
@@ -109,31 +109,31 @@ namespace easy3d {
         for (std::size_t i = 0; i < color_attachments_.size(); ++i) {
             GLuint color_texture = color_attachments_[i].texture;
             if (glIsTexture(color_texture))
-                glDeleteTextures(1, &color_texture);		easy3d_debug_gl_error;
+                glDeleteTextures(1, &color_texture);		easy3d_debug_log_gl_error;
 
             GLuint color_buffer = color_attachments_[i].buffer;
             if (color_buffer)
-                glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_gl_error;
+                glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_log_gl_error;
         }
         color_attachments_.clear();
 
         if (glIsTexture(depth_texture_)) {
-            glDeleteTextures(1, &depth_texture_);		easy3d_debug_gl_error;
+            glDeleteTextures(1, &depth_texture_);		easy3d_debug_log_gl_error;
             depth_texture_ = 0;
         }
 
         if (depth_buffer_) {
-            glDeleteRenderbuffers(1, &depth_buffer_);	easy3d_debug_gl_error;
+            glDeleteRenderbuffers(1, &depth_buffer_);	easy3d_debug_log_gl_error;
             depth_buffer_ = 0;
         }
 
         if (fbo_id_) {
-            glDeleteFramebuffers(1, &fbo_id_);			easy3d_debug_gl_error;
+            glDeleteFramebuffers(1, &fbo_id_);			easy3d_debug_log_gl_error;
             fbo_id_ = 0;
         }
 
         if (resolved_fbo_) {
-            delete resolved_fbo_;						easy3d_debug_gl_error;
+            delete resolved_fbo_;						easy3d_debug_log_gl_error;
             resolved_fbo_ = nullptr;
         }
     }
@@ -172,7 +172,7 @@ namespace easy3d {
 
         valid_ = check_status();
         if (!valid_) {
-            glDeleteFramebuffers(1, &fbo_id_);		easy3d_debug_gl_error;
+            glDeleteFramebuffers(1, &fbo_id_);		easy3d_debug_log_gl_error;
         }
     }
 
@@ -305,36 +305,36 @@ namespace easy3d {
         // color render buffer bound to texture
 
         // see https://www.khronos.org/opengl/wiki/Framebuffer_Object_Extension_Examples#Quick_example.2C_render_to_texture_.282D.29
-        glGenTextures(1, &(attachment.texture));		easy3d_debug_gl_error;
+        glGenTextures(1, &(attachment.texture));		easy3d_debug_log_gl_error;
 
         if (samples_ > 0) {
             texture_target_ = GL_TEXTURE_2D_MULTISAMPLE;
-            glBindTexture(texture_target_, attachment.texture);		easy3d_debug_gl_error;
-            glTexImage2DMultisample(texture_target_, samples_, internal_format, width_, height_, GL_TRUE);		easy3d_debug_gl_error;
+            glBindTexture(texture_target_, attachment.texture);		easy3d_debug_log_gl_error;
+            glTexImage2DMultisample(texture_target_, samples_, internal_format, width_, height_, GL_TRUE);		easy3d_debug_log_gl_error;
         }
         else {
             texture_target_ = GL_TEXTURE_2D;
-            glBindTexture(texture_target_, attachment.texture);		easy3d_debug_gl_error;
+            glBindTexture(texture_target_, attachment.texture);		easy3d_debug_log_gl_error;
 
-            glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_gl_error;
-            glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_gl_error;
-            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-            glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_log_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_log_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+            glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
          }
 
         //----------------------------------------------------------------------------------------------
 
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
         // attach texture
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, texture_target_, attachment.texture, 0);		easy3d_debug_gl_error;
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, texture_target_, attachment.texture, 0);		easy3d_debug_log_gl_error;
 
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_log_gl_error;
 
         //----------------------------------------------------------------------------------------------
 
@@ -342,9 +342,9 @@ namespace easy3d {
         if (valid_) 
 			color_attachments_.push_back(attachment);
 		else
-			glDeleteTextures(1, &(attachment.texture));		easy3d_debug_gl_error;
+			glDeleteTextures(1, &(attachment.texture));		easy3d_debug_log_gl_error;
 
-        glBindTexture(texture_target_, 0);		easy3d_debug_gl_error;
+        glBindTexture(texture_target_, 0);		easy3d_debug_log_gl_error;
 
         return valid_;
     }
@@ -386,28 +386,28 @@ namespace easy3d {
 
         // color render buffer not bound to texture
 
-        glGenRenderbuffers(1, &(attachment.buffer));				easy3d_debug_gl_error;
-        glBindRenderbuffer(GL_RENDERBUFFER, attachment.buffer);		easy3d_debug_gl_error;
+        glGenRenderbuffers(1, &(attachment.buffer));				easy3d_debug_log_gl_error;
+        glBindRenderbuffer(GL_RENDERBUFFER, attachment.buffer);		easy3d_debug_log_gl_error;
 
         if (samples_ > 0) {
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples_, internal_format, width_, height_);	easy3d_debug_gl_error;
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples_, internal_format, width_, height_);	easy3d_debug_log_gl_error;
         }
         else {
-            glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width_, height_);						easy3d_debug_gl_error;
+            glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width_, height_);						easy3d_debug_log_gl_error;
         }
 
         //----------------------------------------------------------------------------------------------
 
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
         // attach color render buffer
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, attachment.buffer);		easy3d_debug_gl_error;
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, attachment.buffer);		easy3d_debug_log_gl_error;
 
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_log_gl_error;
 
         //----------------------------------------------------------------------------------------------
 
@@ -416,14 +416,14 @@ namespace easy3d {
             // Query the actual number of samples. This can be greater than the requested
             // value since the typically supported values are 0, 4, 8, ..., and the
             // requests are mapped to the next supported value.
-            glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);	easy3d_debug_gl_error;
+            glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);	easy3d_debug_log_gl_error;
 			color_attachments_.push_back(attachment);
        }
         else {
-            glDeleteRenderbuffers(1, &(attachment.buffer));	easy3d_debug_gl_error;
+            glDeleteRenderbuffers(1, &(attachment.buffer));	easy3d_debug_log_gl_error;
         }
 
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);		easy3d_debug_gl_error;
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);		easy3d_debug_log_gl_error;
 
         return valid_;
     }
@@ -467,61 +467,61 @@ namespace easy3d {
         // depth render buffer bound to texture
 
         // see https://www.khronos.org/opengl/wiki/Framebuffer_Object_Extension_Examples#Quick_example.2C_render_to_texture_.282D.29
-        glGenTextures(1, &depth_texture_);		easy3d_debug_gl_error;
+        glGenTextures(1, &depth_texture_);		easy3d_debug_log_gl_error;
 
         if (samples_ > 0) {
             texture_target_ = GL_TEXTURE_2D_MULTISAMPLE;
 
-            glBindTexture(texture_target_, depth_texture_);		easy3d_debug_gl_error;
+            glBindTexture(texture_target_, depth_texture_);		easy3d_debug_log_gl_error;
             // Liangliang: It seems no parameters need to be set for multisample depth texture.
-            //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);		easy3d_debug_gl_error;
+            //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);		easy3d_debug_log_gl_error;
 
-            glTexImage2DMultisample(texture_target_, samples_, internal_format, width_, height_, GL_TRUE);		easy3d_debug_gl_error;
+            glTexImage2DMultisample(texture_target_, samples_, internal_format, width_, height_, GL_TRUE);		easy3d_debug_log_gl_error;
          }
         else {
             texture_target_ = GL_TEXTURE_2D;
 
-            glBindTexture(texture_target_, depth_texture_);		easy3d_debug_gl_error;
+            glBindTexture(texture_target_, depth_texture_);		easy3d_debug_log_gl_error;
 
-            glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_gl_error;
-            glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_log_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_log_gl_error;
 
-            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-            //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);	easy3d_debug_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+            //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);	easy3d_debug_log_gl_error;
 
-            glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_MODE, compare_mode);		easy3d_debug_gl_error;
+            glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_MODE, compare_mode);		easy3d_debug_log_gl_error;
             if (compare_mode != GL_NONE) {
-                glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_FUNC, compare_func);	easy3d_debug_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_FUNC, compare_func);	easy3d_debug_log_gl_error;
                 // GL_COMPARE_REF_TO_TEXTURE sets the comparison function to 'less than or equal', so the
                 // result of the sample operation will be 1.0 if the reference value is less than or equal
                 // to the value in the texture and zero otherwise.
             }
 
-            glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
+            glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
         }
 
         //----------------------------------------------------------------------------------------------
 
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
         // attach texture
-        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture_target_, depth_texture_, 0);		easy3d_debug_gl_error;
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, texture_target_, depth_texture_, 0);		easy3d_debug_log_gl_error;
 
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_log_gl_error;
 
         //----------------------------------------------------------------------------------------------
 
         valid_ = check_status();
         if (!valid_) {
-            glDeleteTextures(1, &depth_texture_);	easy3d_debug_gl_error;
+            glDeleteTextures(1, &depth_texture_);	easy3d_debug_log_gl_error;
         }
 
-        glBindTexture(texture_target_, 0);			easy3d_debug_gl_error;
+        glBindTexture(texture_target_, 0);			easy3d_debug_log_gl_error;
 
         return valid_;
     }
@@ -549,42 +549,42 @@ namespace easy3d {
 
         // depth render buffer not bound to texture
 
-        glGenRenderbuffers(1, &depth_buffer_);				easy3d_debug_gl_error;
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_);	easy3d_debug_gl_error;
+        glGenRenderbuffers(1, &depth_buffer_);				easy3d_debug_log_gl_error;
+        glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer_);	easy3d_debug_log_gl_error;
 
         // In practice, a combined depth-stencil buffer is supported by all desktop platforms, while a
         // separate stencil buffer is not. On embedded devices however, a combined depth-stencil buffer
         // might not be supported while separate buffers are, according to QTBUG-12861.
 
         if (samples_ > 0) {
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples_, internal_format, width_, height_);		easy3d_debug_gl_error;
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples_, internal_format, width_, height_);		easy3d_debug_log_gl_error;
         }
         else {
-            glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width_, height_);		easy3d_debug_gl_error;
+            glRenderbufferStorage(GL_RENDERBUFFER, internal_format, width_, height_);		easy3d_debug_log_gl_error;
         }
 
         //----------------------------------------------------------------------------------------------
 
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
         // attach depth render buffer
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, depth_buffer_);		easy3d_debug_gl_error;
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, depth_buffer_);		easy3d_debug_log_gl_error;
 
         if (fbo_id_ != currentFbo)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);	easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);	easy3d_debug_log_gl_error;
 
         //----------------------------------------------------------------------------------------------
 
         valid_ = check_status();
         if (!valid_) {
-            glDeleteRenderbuffers(1, &depth_buffer_);		easy3d_debug_gl_error;
+            glDeleteRenderbuffers(1, &depth_buffer_);		easy3d_debug_log_gl_error;
             depth_buffer_ = 0;
         }
 
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);		easy3d_debug_gl_error;
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);		easy3d_debug_log_gl_error;
 
         return valid_;
     }
@@ -593,15 +593,15 @@ namespace easy3d {
 	// attach an existing color texture to the framebuffer
 	bool FramebufferObject::attach_color_texture(GLenum target, GLuint texture_id, GLenum attachment) {
 		GLuint currentFbo = 0;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
 		if (fbo_id_ != currentFbo)
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
 		// attach texture
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texture_id, 0);		easy3d_debug_gl_error;
+		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texture_id, 0);		easy3d_debug_log_gl_error;
 
 		if (fbo_id_ != currentFbo)
-			glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_log_gl_error;
 
         ColorAttachment attach;
         attach.texture = texture_id;
@@ -616,7 +616,7 @@ namespace easy3d {
 
 		valid_ = check_status();
 		if (!valid_) 
-			glDeleteTextures(1, &texture_id);	easy3d_debug_gl_error;
+			glDeleteTextures(1, &texture_id);	easy3d_debug_log_gl_error;
 
 		return valid_;
 	}
@@ -627,21 +627,21 @@ namespace easy3d {
 		//----------------------------------------------------------------------------------------------
 
 		GLuint currentFbo = 0;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
 		if (fbo_id_ != currentFbo)
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
 
 		// attach texture
-		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texture_id, 0);		easy3d_debug_gl_error;
+		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, texture_id, 0);		easy3d_debug_log_gl_error;
 
 		if (fbo_id_ != currentFbo)
-			glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);			easy3d_debug_log_gl_error;
 
 		//----------------------------------------------------------------------------------------------
 
 		valid_ = check_status();
 		if (!valid_)
-			glDeleteTextures(1, &texture_id);	easy3d_debug_gl_error;
+			glDeleteTextures(1, &texture_id);	easy3d_debug_log_gl_error;
 
 		return valid_;
 	}
@@ -650,9 +650,9 @@ namespace easy3d {
     bool FramebufferObject::check_status() const
     {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -712,7 +712,7 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
 
         return complete;
     }
@@ -749,16 +749,16 @@ namespace easy3d {
         switch (target)
         {
         case GL_DRAW_FRAMEBUFFER:
-            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             break;
 
         case GL_READ_FRAMEBUFFER:
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             break;
 
         case GL_FRAMEBUFFER:
         default:
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_gl_error;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_log_gl_error;
             break;
         }
 
@@ -777,26 +777,26 @@ namespace easy3d {
         switch (target)
         {
         case GL_DRAW_FRAMEBUFFER:
-            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (fbo_id_ != currentFbo) {
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
                 prev_draw_fbo_ = currentFbo;
             }
             break;
 
         case GL_READ_FRAMEBUFFER:
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (fbo_id_ != currentFbo) {
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
                 prev_read_fbo_ = currentFbo;
             }
             break;
 
         case GL_FRAMEBUFFER:
         default:
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_gl_error;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_log_gl_error;
             if (fbo_id_ != currentFbo) {
-                glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_gl_error;
+                glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);				easy3d_debug_log_gl_error;
                 prev_draw_fbo_ = currentFbo;
                 prev_read_fbo_ = currentFbo;
             }
@@ -816,16 +816,16 @@ namespace easy3d {
         switch (target)
         {
         case GL_DRAW_FRAMEBUFFER:
-            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             break;
 
         case GL_READ_FRAMEBUFFER:
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             break;
 
         case GL_FRAMEBUFFER:
         default:
-            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_gl_error;
+            glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);			easy3d_debug_log_gl_error;
             break;
         }
 
@@ -833,10 +833,10 @@ namespace easy3d {
         GLuint prevFbo = (drawing ? prev_draw_fbo_ : prev_read_fbo_);
         if (currentFbo != prevFbo) {
             if (glIsFramebuffer(prevFbo)) { // always test in case prevFbo has been deleted
-                glBindFramebuffer(target, prevFbo);	easy3d_debug_gl_error;
+                glBindFramebuffer(target, prevFbo);	easy3d_debug_log_gl_error;
             }
             else {
-                glBindFramebuffer(target, 0);	easy3d_debug_gl_error;
+                glBindFramebuffer(target, 0);	easy3d_debug_log_gl_error;
             }
         }
 
@@ -848,27 +848,27 @@ namespace easy3d {
         //activate_draw_buffers(1, &index);
 
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         index += GL_COLOR_ATTACHMENT0;
-        glDrawBuffers(1, &index);			easy3d_debug_gl_error;
+        glDrawBuffers(1, &index);			easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::activate_draw_buffers(unsigned int numbuffers, unsigned int indices[]) {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -882,22 +882,22 @@ namespace easy3d {
             count++;
         }
 
-        glDrawBuffers(count, buffers);			easy3d_debug_gl_error;
+        glDrawBuffers(count, buffers);			easy3d_debug_log_gl_error;
 
         delete[] buffers;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::activate_draw_buffers(unsigned int minId, unsigned int maxId) {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -911,69 +911,69 @@ namespace easy3d {
             count++;
         }
 
-        glDrawBuffers(count, buffers);			easy3d_debug_gl_error;
+        glDrawBuffers(count, buffers);			easy3d_debug_log_gl_error;
 
         delete[] buffers;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::deactivate_draw_buffers() {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         GLenum att = GL_NONE;
-        glDrawBuffers(1, &att);	easy3d_debug_gl_error;
+        glDrawBuffers(1, &att);	easy3d_debug_log_gl_error;
         // or
-        //glDrawBuffer(GL_NONE);	easy3d_debug_gl_error;
+        //glDrawBuffer(GL_NONE);	easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::activate_read_buffer(unsigned int index) {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         index += GL_COLOR_ATTACHMENT0;
-        glReadBuffer((GLenum)index);			easy3d_debug_gl_error;
+        glReadBuffer((GLenum)index);			easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::deactivate_read_buffer() {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
-        glReadBuffer(GL_NONE);	easy3d_debug_gl_error;
+        glReadBuffer(GL_NONE);	easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
@@ -999,7 +999,7 @@ namespace easy3d {
 
     void FramebufferObject::_prepare_resolve_fbo() {
         if (!resolved_fbo_) {
-            resolved_fbo_ = new FramebufferObject(width(), height(), 0);	easy3d_debug_gl_error;
+            resolved_fbo_ = new FramebufferObject(width(), height(), 0);	easy3d_debug_log_gl_error;
             for (std::size_t i = 0; i < color_attachments_.size(); ++i) {
                 const ColorAttachment& att = color_attachments_[i];
                 if (att.texture)
@@ -1023,7 +1023,7 @@ namespace easy3d {
             _prepare_resolve_fbo();
         }
 
-        resolved_fbo_->ensure_size(width(), height());	easy3d_debug_gl_error;
+        resolved_fbo_->ensure_size(width(), height());	easy3d_debug_log_gl_error;
     }
 
 
@@ -1039,7 +1039,7 @@ namespace easy3d {
                 return texture;
             else { // resolve
                 const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-                blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_gl_error;
+                blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_log_gl_error;
                 return resolved_fbo_->color_texture(index);
             }
         }
@@ -1056,7 +1056,7 @@ namespace easy3d {
                 return depth_texture_;
             else { // resolve
                 const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-                blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_gl_error;
+                blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error;
                 return resolved_fbo_->depth_texture();
             }
         }
@@ -1108,9 +1108,9 @@ namespace easy3d {
 
     void FramebufferObject::print_attachments() const {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -1134,15 +1134,15 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::_print_attachment(unsigned int index) const {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -1225,15 +1225,15 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::print_draw_buffers() const {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -1255,15 +1255,15 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
     void FramebufferObject::print_read_buffer() const {
         GLuint currentFbo = 0;
-        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -1276,7 +1276,7 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         if (currentFbo != fbo_id_)
-            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+            glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
     }
 
 
@@ -1362,24 +1362,24 @@ namespace easy3d {
         glFinish();
         if (samples_ <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             const_cast<FramebufferObject*>(this)->activate_read_buffer(index);
 
             // We need to configure how glReadPixels will behave with respect to memory alignment.
             // See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
             // and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
             // Bind to 0 for conventional pixel operation. See http://www.songho.ca/opengl/gl_pbo.html
             // I don't need it because no PBO is used.
-            //glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);				easy3d_debug_gl_error;
+            //glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);				easy3d_debug_log_gl_error;
 
-            glReadPixels(0, 0, width_, height_, format, GL_UNSIGNED_BYTE, buffer);	easy3d_debug_gl_error;
+            glReadPixels(0, 0, width_, height_, format, GL_UNSIGNED_BYTE, buffer);	easy3d_debug_log_gl_error;
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
 
             // flip vertically
             if (flip_vertically) {
@@ -1412,7 +1412,7 @@ namespace easy3d {
 
         else {
             const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_gl_error;
+            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_log_gl_error;
             resolved_fbo_->read_color(index, buffer, format, flip_vertically);
         }
 
@@ -1488,18 +1488,18 @@ namespace easy3d {
         glFinish();
         if (samples_ <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             // We need to configure how glReadPixels will behave with respect to memory alignment.
             // See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
             // and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
-            glReadPixels(0, 0, width_, height_, GL_DEPTH_COMPONENT, GL_FLOAT, buffer);	easy3d_debug_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
+            glReadPixels(0, 0, width_, height_, GL_DEPTH_COMPONENT, GL_FLOAT, buffer);	easy3d_debug_log_gl_error;
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
 
             // flip vertically
             if (flip_vertically) {
@@ -1518,7 +1518,7 @@ namespace easy3d {
 
         else {
             const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_gl_error;
+            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error;
             resolved_fbo_->read_depth(buffer, flip_vertically);
         }
 
@@ -1562,9 +1562,9 @@ namespace easy3d {
         glFinish();
         if (samples_ <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             //////////////////////////////////////////////////////////////////////////
 
@@ -1573,16 +1573,16 @@ namespace easy3d {
             // We need to configure how glReadPixels will behave with respect to memory alignment.
             // See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
             // and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
-            glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);	easy3d_debug_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
+            glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);	easy3d_debug_log_gl_error;
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
         }
 
         else {
             const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_gl_error;
+            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, index, index, GL_COLOR_BUFFER_BIT);	easy3d_debug_log_gl_error;
             resolved_fbo_->read_color(rgba, x, y, index);
         }
 
@@ -1600,23 +1600,23 @@ namespace easy3d {
         glFinish();
         if (samples_ <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             // We need to configure how glReadPixels will behave with respect to memory alignment.
             // See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
             // and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
-            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	easy3d_debug_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
+            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);	easy3d_debug_log_gl_error;
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
         }
 
         else {
             const_cast<FramebufferObject*>(this)->_prepare_resolve_fbo();
-            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_gl_error;
+            blit_framebuffer(const_cast<FramebufferObject*>(resolved_fbo_), this, GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error;
             resolved_fbo_->read_depth(depth, x, y);
         }
 
@@ -1773,29 +1773,29 @@ namespace easy3d {
         }
 
         GLuint prevReadFbo, prevDrawFbo;
-        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&prevReadFbo);	easy3d_debug_gl_error;
-        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&prevDrawFbo);	easy3d_debug_gl_error;
+        glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&prevReadFbo);	easy3d_debug_log_gl_error;
+        glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&prevDrawFbo);	easy3d_debug_log_gl_error;
 
         // Bind the source FBO for reading
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, source ? source->handle() : prevReadFbo);	easy3d_debug_gl_error;
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, source ? source->handle() : prevReadFbo);	easy3d_debug_log_gl_error;
         // Bind the target FBO for reading
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target ? target->handle() : prevDrawFbo);	easy3d_debug_gl_error;
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target ? target->handle() : prevDrawFbo);	easy3d_debug_log_gl_error;
 
         if (blit_color) {
-            glReadBuffer(GL_COLOR_ATTACHMENT0 + source_color_attachment_index);	easy3d_debug_gl_error;
+            glReadBuffer(GL_COLOR_ATTACHMENT0 + source_color_attachment_index);	easy3d_debug_log_gl_error;
             if (target) {
                 GLenum drawBuf = GL_COLOR_ATTACHMENT0 + target_color_attachment_index;
-                glDrawBuffers(1, &drawBuf);		easy3d_debug_gl_error;
+                glDrawBuffers(1, &drawBuf);		easy3d_debug_log_gl_error;
                 // or
-                //glDrawBuffer(GL_COLOR_ATTACHMENT0 + target_color_attachment_index);	easy3d_debug_gl_error;
+                //glDrawBuffer(GL_COLOR_ATTACHMENT0 + target_color_attachment_index);	easy3d_debug_log_gl_error;
             }
         }
 
-        glBlitFramebuffer(sx0, sy0, sx1, sy1, tx0, ty0, tx1, ty1, buffers, filter);			easy3d_debug_gl_error;
+        glBlitFramebuffer(sx0, sy0, sx1, sy1, tx0, ty0, tx1, ty1, buffers, filter);			easy3d_debug_log_gl_error;
 
         // restore both READ and DRAW
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo); 	easy3d_debug_gl_error;
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo); 	easy3d_debug_gl_error;
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo); 	easy3d_debug_log_gl_error;
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo); 	easy3d_debug_log_gl_error;
     }
 
 
@@ -1814,34 +1814,34 @@ namespace easy3d {
 
         if (samaples() <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             //////////////////////////////////////////////////////////////////////////
 
             if (!glIsTexture(texture_handle)) {
-                glGenTextures(1, &texture_handle);				easy3d_debug_gl_error;
-                glBindTexture(texture_target_, texture_handle);	easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-                glTexImage2D(texture_target_, 0, internalFormat, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
+                glGenTextures(1, &texture_handle);				easy3d_debug_log_gl_error;
+                glBindTexture(texture_target_, texture_handle);	easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+                glTexImage2D(texture_target_, 0, internalFormat, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
             }
             else
-                glBindTexture(texture_target_, texture_handle);	easy3d_debug_gl_error;
+                glBindTexture(texture_target_, texture_handle);	easy3d_debug_log_gl_error;
 
             // if the format has changed, you have to call glTexImage2D() again.
-            // glTexImage2D(texture_target_, 0, internalFormat, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
-            glCopyTexSubImage2D(texture_target_, 0, 0, 0, 0, 0, width_, height_);		easy3d_debug_gl_error;
+            // glTexImage2D(texture_target_, 0, internalFormat, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
+            glCopyTexSubImage2D(texture_target_, 0, 0, 0, 0, 0, width_, height_);		easy3d_debug_log_gl_error;
 
-            glBindTexture(texture_target_, 0);	easy3d_debug_gl_error;
+            glBindTexture(texture_target_, 0);	easy3d_debug_log_gl_error;
 
             //////////////////////////////////////////////////////////////////////////
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
 
             return true;
         }
@@ -1864,9 +1864,9 @@ namespace easy3d {
 
         if (samaples() <= 0) {
             GLuint currentFbo = 0;
-            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_gl_error;
+            glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, (GLint*)&currentFbo);	easy3d_debug_log_gl_error;
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id_);		easy3d_debug_log_gl_error;
 
             //----------------------------------------------------------------------------------------------
 
@@ -1882,31 +1882,31 @@ namespace easy3d {
             //----------------------------------------------------------------------------------------------
 
             if (!glIsTexture(texture_handle)) {
-                glGenTextures(1, &texture_handle);				easy3d_debug_gl_error;
-                glBindTexture(texture_target_, texture_handle);	easy3d_debug_gl_error;
+                glGenTextures(1, &texture_handle);				easy3d_debug_log_gl_error;
+                glBindTexture(texture_target_, texture_handle);	easy3d_debug_log_gl_error;
 
-                glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_gl_error;
-                //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);	easy3d_debug_gl_error;
-                glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_MODE, GL_NONE);		easy3d_debug_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_MIN_FILTER, filter);		easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, filter);		easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error;
+                //glTexParameteri(texture_target_, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);	easy3d_debug_log_gl_error;
+                glTexParameteri(texture_target_, GL_TEXTURE_COMPARE_MODE, GL_NONE);		easy3d_debug_log_gl_error;
 
-                glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
+                glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
             }
             else
-                glBindTexture(texture_target_, texture_handle);	easy3d_debug_gl_error;
+                glBindTexture(texture_target_, texture_handle);	easy3d_debug_log_gl_error;
 
             // if the format has changed, you have to call glTexImage2D() again.
-            //glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_gl_error;
-            glCopyTexSubImage2D(texture_target_, 0, 0, 0, 0, 0, width_, height_);		easy3d_debug_gl_error;
+            //glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error;
+            glCopyTexSubImage2D(texture_target_, 0, 0, 0, 0, 0, width_, height_);		easy3d_debug_log_gl_error;
 
-            glBindTexture(texture_target_, 0);	easy3d_debug_gl_error;
+            glBindTexture(texture_target_, 0);	easy3d_debug_log_gl_error;
 
             //////////////////////////////////////////////////////////////////////////
 
             if (currentFbo != fbo_id_)
-                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_gl_error;
+                glBindFramebuffer(GL_READ_FRAMEBUFFER, currentFbo);		easy3d_debug_log_gl_error;
 
             return true;
         }

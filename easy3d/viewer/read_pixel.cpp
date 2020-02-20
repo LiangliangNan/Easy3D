@@ -47,9 +47,9 @@ namespace easy3d {
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
 			// and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
 
-			glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);	easy3d_debug_gl_error;
+			glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, rgba);	easy3d_debug_log_gl_error;
 		}
 
 
@@ -61,7 +61,7 @@ namespace easy3d {
 			glFinish();
 
 			GLint current_fbo;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_log_gl_error;
 			if (!current_fbo) {
 				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
@@ -70,38 +70,38 @@ namespace easy3d {
 			GLuint fbo = 0;
             GLuint color_buffer = 0;
 
-			glGenFramebuffers(1, &fbo);					easy3d_debug_gl_error;
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glGenFramebuffers(1, &fbo);					easy3d_debug_log_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			// create a render buffer object to store color info.
-			glGenRenderbuffers(1, &color_buffer);								easy3d_debug_gl_error;
-			glBindRenderbuffer(GL_RENDERBUFFER, color_buffer);					easy3d_debug_gl_error;
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 1, 1);				easy3d_debug_gl_error;
+			glGenRenderbuffers(1, &color_buffer);								easy3d_debug_log_gl_error;
+			glBindRenderbuffer(GL_RENDERBUFFER, color_buffer);					easy3d_debug_log_gl_error;
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 1, 1);				easy3d_debug_log_gl_error;
 
 			// attach a render buffer to color attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_frame_buffer_error;
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the multisample FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for drawing
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Blit the multisample FBO to the normal FBO
 
 			// we only need a single pixel (x, y)
-			glBlitFramebuffer(x, y, x + 1, y + 1, 0, 0, 1, 1, GL_COLOR_BUFFER_BIT, GL_NEAREST);		easy3d_debug_gl_error;
+			glBlitFramebuffer(x, y, x + 1, y + 1, 0, 0, 1, 1, GL_COLOR_BUFFER_BIT, GL_NEAREST);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
@@ -109,10 +109,10 @@ namespace easy3d {
 			read_color(rgba, 0, 0);
 
 			// clean
-			glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_gl_error;
-			glDeleteFramebuffers(1, &fbo);				easy3d_debug_gl_error;
+			glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_log_gl_error;
+			glDeleteFramebuffers(1, &fbo);				easy3d_debug_log_gl_error;
 
-			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_log_gl_error;
 		}
 
 
@@ -126,11 +126,11 @@ namespace easy3d {
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
 			// and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
 
 			// The performance could be improved if you read for many pixels.
 			// See here: https://www.opengl.org/wiki/Common_Mistakes#Depth_Buffer_Precision
-			glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);		easy3d_debug_gl_error;
+			glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);		easy3d_debug_log_gl_error;
 		}
 
 
@@ -142,7 +142,7 @@ namespace easy3d {
 			glFinish();
 
 			GLint current_fbo;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_log_gl_error;
 			if (!current_fbo) {
 				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
@@ -151,41 +151,41 @@ namespace easy3d {
 			GLuint fbo = 0;
 			GLuint depth_buffer = 0;
 
-			glGenFramebuffers(1, &fbo);					easy3d_debug_gl_error;
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glGenFramebuffers(1, &fbo);					easy3d_debug_log_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			// create a render buffer object to store depth info.
-			glGenRenderbuffers(1, &depth_buffer);								easy3d_debug_gl_error;
-			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);					easy3d_debug_gl_error;
+			glGenRenderbuffers(1, &depth_buffer);								easy3d_debug_log_gl_error;
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);					easy3d_debug_log_gl_error;
 
 			// Should the internal format of the blit FBO be exactly the same
 			// as the current FBO? I have to check the specifications.
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1, 1);	easy3d_debug_gl_error;
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 1, 1);	easy3d_debug_log_gl_error;
 
 			// attach a render buffer to depth attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);		easy3d_debug_frame_buffer_error;
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);		easy3d_debug_log_frame_buffer_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the multisample FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for drawing
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Blit the multisample FBO to the normal FBO
 
 			// we only need a single pixel (x, y)
-			glBlitFramebuffer(x, y, x + 1, y + 1, 0, 0, 1, 1, GL_DEPTH_BUFFER_BIT, GL_NEAREST);		easy3d_debug_gl_error;
+			glBlitFramebuffer(x, y, x + 1, y + 1, 0, 0, 1, 1, GL_DEPTH_BUFFER_BIT, GL_NEAREST);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
@@ -193,10 +193,10 @@ namespace easy3d {
 			read_depth(depth, 0, 0);
 
 			// clean
-			glDeleteRenderbuffers(1, &depth_buffer);	easy3d_debug_gl_error;
-			glDeleteFramebuffers(1, &fbo);				easy3d_debug_gl_error;
+			glDeleteRenderbuffers(1, &depth_buffer);	easy3d_debug_log_gl_error;
+			glDeleteFramebuffers(1, &fbo);				easy3d_debug_log_gl_error;
 
-			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);						easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);						easy3d_debug_log_gl_error;
 		}
 
 
@@ -223,13 +223,13 @@ namespace easy3d {
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
 			// and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
 			// Bind to 0 for conventional pixel operation. See http://www.songho.ca/opengl/gl_pbo.html
 			// I don't need it because no PBO is used.
-			//glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);				easy3d_debug_gl_error;
+			//glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);				easy3d_debug_log_gl_error;
 
 			buffer.resize(bytes_per_pixel * w * h);
-			glReadPixels(0, 0, w, h, format, GL_UNSIGNED_BYTE, buffer.data());	easy3d_debug_gl_error;
+			glReadPixels(0, 0, w, h, format, GL_UNSIGNED_BYTE, buffer.data());	easy3d_debug_log_gl_error;
 
 			// --------------------------------------------------------------------------------------
 
@@ -269,7 +269,7 @@ namespace easy3d {
 			glFinish();
 
 			GLint current_fbo;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_log_gl_error;
 			if (!current_fbo) {
 				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
@@ -283,48 +283,48 @@ namespace easy3d {
 			GLuint fbo = 0;
 			GLuint color_buffer = 0;
 
-			glGenFramebuffers(1, &fbo);					easy3d_debug_gl_error;
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glGenFramebuffers(1, &fbo);					easy3d_debug_log_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			// create a render buffer object to store color info.
-			glGenRenderbuffers(1, &color_buffer);								easy3d_debug_gl_error;
-			glBindRenderbuffer(GL_RENDERBUFFER, color_buffer);					easy3d_debug_gl_error;
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);				easy3d_debug_gl_error;
+			glGenRenderbuffers(1, &color_buffer);								easy3d_debug_log_gl_error;
+			glBindRenderbuffer(GL_RENDERBUFFER, color_buffer);					easy3d_debug_log_gl_error;
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);				easy3d_debug_log_gl_error;
 
 			// attach a render buffer to color attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_frame_buffer_error;
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the multisample FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for drawing
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Blit the multisample FBO to the normal FBO
 
-			glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);		easy3d_debug_gl_error;
+			glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			read_color(buffer, format, flip_vertically);
 
 			// clean
-			glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_gl_error;
-			glDeleteFramebuffers(1, &fbo);				easy3d_debug_gl_error;
+			glDeleteRenderbuffers(1, &color_buffer);	easy3d_debug_log_gl_error;
+			glDeleteFramebuffers(1, &fbo);				easy3d_debug_log_gl_error;
 
 			// bind the current fbo
-			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_log_gl_error;
 		}
 
 
@@ -409,10 +409,10 @@ namespace easy3d {
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
 			// and: https://www.khronos.org/opengl/wiki/Common_Mistakes
-			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_gl_error;
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);				easy3d_debug_log_gl_error;
 
 			buffer.resize(w * h);
-			glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());	easy3d_debug_gl_error;
+			glReadPixels(0, 0, w, h, GL_DEPTH_COMPONENT, GL_FLOAT, buffer.data());	easy3d_debug_log_gl_error;
 
 			// --------------------------------------------------------------------------------------
 
@@ -437,7 +437,7 @@ namespace easy3d {
 			glFinish();
 
 			GLint current_fbo;
-			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_gl_error;
+			glGetIntegerv(GL_FRAMEBUFFER_BINDING, &current_fbo); easy3d_debug_log_gl_error;
 			if (!current_fbo) {
 				LOG(ERROR) << "no framebuffer is bound. You might missed makeCurrent()?";
 				return;
@@ -451,51 +451,51 @@ namespace easy3d {
 			GLuint fbo = 0;
 			GLuint depth_buffer = 0;
 
-			glGenFramebuffers(1, &fbo);					easy3d_debug_gl_error;
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glGenFramebuffers(1, &fbo);					easy3d_debug_log_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			// create a render buffer object to store depth info.
-			glGenRenderbuffers(1, &depth_buffer);								easy3d_debug_gl_error;
-			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);					easy3d_debug_gl_error;
+			glGenRenderbuffers(1, &depth_buffer);								easy3d_debug_log_gl_error;
+			glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);					easy3d_debug_log_gl_error;
 
 			// Should the internal format of the blit FBO be exactly the same
 			// as the current FBO? I have to check the specifications.
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);	easy3d_debug_gl_error;
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);	easy3d_debug_log_gl_error;
 
 			// attach a render buffer to depth attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);		easy3d_debug_frame_buffer_error;
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);		easy3d_debug_log_frame_buffer_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the multisample FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, current_fbo);	easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for drawing
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_gl_error;
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo);			easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Blit the multisample FBO to the normal FBO
 
-			glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);		easy3d_debug_gl_error;
+			glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			// Bind the normal FBO for reading
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_gl_error;
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);		easy3d_debug_log_gl_error;
 
 			//--------------------------------------------------------------------------
 
 			read_depth(buffer, flip_vertically);
 
 			// clean
-			glDeleteRenderbuffers(1, &depth_buffer);	easy3d_debug_gl_error;
-			glDeleteFramebuffers(1, &fbo);				easy3d_debug_gl_error;
+			glDeleteRenderbuffers(1, &depth_buffer);	easy3d_debug_log_gl_error;
+			glDeleteFramebuffers(1, &fbo);				easy3d_debug_log_gl_error;
 
 			// bind the current fbo
-			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_gl_error;
+			glBindFramebuffer(GL_FRAMEBUFFER, current_fbo);				easy3d_debug_log_gl_error;
 		}
 
 

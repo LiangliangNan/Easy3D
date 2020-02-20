@@ -98,11 +98,11 @@ namespace easy3d {
             }
         }
 
-        program->set_attrib_names(attributes);	easy3d_debug_gl_error;
+        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
         for (std::size_t i = 0; i < outputs.size(); ++i)
             program->set_program_output(static_cast<int>(i), outputs[i]);
 
-        success = program->link_program();	easy3d_debug_gl_error;
+        success = program->link_program();	easy3d_debug_log_gl_error;
         if (!success) {
             delete program;
             return nullptr;
@@ -187,11 +187,11 @@ namespace easy3d {
             }
 		}
 
-		program->set_attrib_names(attributes);	easy3d_debug_gl_error;
+		program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
 		for (std::size_t i = 0; i < outputs.size(); ++i)
 			program->set_program_output(static_cast<int>(i), outputs[i]);
 
-        success = program->link_program();	easy3d_debug_gl_error;
+        success = program->link_program();	easy3d_debug_log_gl_error;
         if (!success) {
             delete program;
             return nullptr;

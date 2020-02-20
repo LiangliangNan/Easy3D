@@ -295,9 +295,9 @@ namespace easy3d {
                 last_depth = depth;
             }
             glBindVertexArray(vao_handle);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
             glBindVertexArray(0);
         }
 
@@ -363,9 +363,9 @@ namespace easy3d {
             }
 
             glBindVertexArray(vao_handle);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
             glBindVertexArray(0);
         }
 

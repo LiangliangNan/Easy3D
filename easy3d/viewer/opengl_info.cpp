@@ -98,7 +98,7 @@ namespace easy3d {
         //Detect which profile the context supports:
         int profile = -1;
         glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profile); // GL_CONTEXT_CORE_PROFILE_BIT  or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
         return profile;
     }
 

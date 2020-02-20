@@ -50,9 +50,9 @@ namespace easy3d {
     void Picker::setup_framebuffer(int width, int height) {
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {
-            fbo_ = new FramebufferObject(width, height, 0); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
-            fbo_->add_color_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
-            fbo_->add_depth_buffer(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+            fbo_ = new FramebufferObject(width, height, 0); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+            fbo_->add_color_buffer(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+            fbo_->add_depth_buffer(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
 #if 0
             fbo_->print_attachments();
@@ -60,7 +60,7 @@ namespace easy3d {
             fbo_->print_read_buffer();
 #endif
         }
-        fbo_->ensure_size(width, height); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+        fbo_->ensure_size(width, height); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
     }
 
 

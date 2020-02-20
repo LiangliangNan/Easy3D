@@ -108,13 +108,13 @@ namespace easy3d {
         }
 
         program->set_uniform("clippingPlaneEnabled", enabled_);
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
         program->set_uniform("crossSectionEnabled", cross_section_);
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
         program->set_uniform("clippingPlane0", plane0());
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
         program->set_uniform("clippingPlane1", plane1());
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
     }
 
 
@@ -142,7 +142,7 @@ namespace easy3d {
         wireframe.update_index_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
         wireframe.set_default_color(vec4(1, 0, 0, 1));
-        wireframe.draw(cam, false);  easy3d_debug_gl_error;
+        wireframe.draw(cam, false);  easy3d_debug_log_gl_error;
 
         // draw the face of the clipping plane
         //glDisable(GL_DEPTH_TEST);
@@ -153,7 +153,7 @@ namespace easy3d {
         face.update_index_buffer(face_indices);
         face.set_default_color(vec4(1, 0, 0, 0.2));
         face.draw(cam, false);
-        glDisable(GL_BLEND);    easy3d_debug_gl_error;
+        glDisable(GL_BLEND);    easy3d_debug_log_gl_error;
     }
 
 }

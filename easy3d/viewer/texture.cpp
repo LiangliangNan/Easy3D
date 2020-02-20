@@ -74,20 +74,20 @@ namespace easy3d {
         }
 
         GLuint tex = 0;
-        glGenTextures(1, &tex);	easy3d_debug_gl_error;
-        glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_gl_error;
+        glGenTextures(1, &tex);	easy3d_debug_log_gl_error;
+        glBindTexture(GL_TEXTURE_2D, tex);	easy3d_debug_log_gl_error;
 
         // To be robust to handle
         // - R, RG or RGB textures which are not 4-bytes floats, or the width is not divisible by 4.
         // - image pixels are tightly packed.
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);	easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);	easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);	easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);	easy3d_debug_log_gl_error;
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data.data());	easy3d_debug_gl_error;
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, data.data());	easy3d_debug_log_gl_error;
         glBindTexture(GL_TEXTURE_2D, 0);
 
         Texture* result = new Texture;

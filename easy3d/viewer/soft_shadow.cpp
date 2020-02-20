@@ -87,7 +87,7 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program->bind();
-        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_gl_error;
+        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 d->gl_draw(false);
@@ -124,10 +124,10 @@ namespace easy3d {
         // camera position is defined in world coordinate system.
         const vec3& wCamPos = camera_->position();
         program->bind();
-        program->set_uniform("MVP", MVP);                                  easy3d_debug_gl_error;
-        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_gl_error;
-        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_gl_error;
-        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_gl_error;
+        program->set_uniform("MVP", MVP);                                  easy3d_debug_log_gl_error;
+        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error;
+        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error;
+        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error;
 
         program->set_uniform("samplePattern", sample_pattern_);
         program->set_uniform("darkness", darkness_);
@@ -148,15 +148,15 @@ namespace easy3d {
                 program->set_block_uniform("Material", "ambient", d->material().ambient);
                 program->set_block_uniform("Material", "specular", d->material().specular);
                 program->set_block_uniform("Material", "shininess", &d->material().shininess);
-                program->set_uniform("default_color", d->default_color());				easy3d_debug_gl_error;
-                program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());		easy3d_debug_gl_error;
+                program->set_uniform("default_color", d->default_color());				easy3d_debug_log_gl_error;
+                program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());		easy3d_debug_log_gl_error;
                 program->set_uniform("is_background", false);
                 d->gl_draw(false);
             }
         }
 
         // draw the background plane
-        program->set_uniform("default_color", background_color_);				easy3d_debug_gl_error;
+        program->set_uniform("default_color", background_color_);				easy3d_debug_log_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
         background_->gl_draw(false);

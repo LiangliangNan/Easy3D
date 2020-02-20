@@ -877,20 +877,20 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
 
     int samples = 0;
     func_->glGetIntegerv(GL_SAMPLES, &samples);
-    easy3d_debug_gl_error;
+    easy3d_debug_log_gl_error;
 
     float depth = 1.0f;
     if (samples > 0) {
         opengl::read_depth_ms(depth, glx, gly);
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
     } else {
         opengl::read_depth(depth, glx, gly);
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
     }
 
     const_cast<PaintCanvas *>(this)->doneCurrent();
     // here the glGetError() won't work because the OpenGL context is not current.
-    // easy3d_debug_gl_error;
+    // easy3d_debug_log_gl_error;
 
     found = depth < 1.0f;
     if (found) {
@@ -903,7 +903,7 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
 
 
 void PaintCanvas::paintGL() {
-    easy3d_debug_gl_error;
+    easy3d_debug_log_gl_error;
 
 #if 1
     // QOpenGLWidget renders everything into a FBO. Internally it changes
@@ -916,9 +916,9 @@ void PaintCanvas::paintGL() {
     if (!queried) {
 #if 1
         func_->glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
-        easy3d_debug_frame_buffer_error;
+        easy3d_debug_log_frame_buffer_error;
 #else   // the samples can also be retrieved using glGetIntegerv()
-        func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_gl_error;
+        func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error;
 #endif
         // warn the user if the expected request was not satisfied
         int samples = QSurfaceFormat::defaultFormat().samples();

@@ -139,13 +139,13 @@ namespace easy3d {
             }
 
             LinesDrawable drawable;
-            drawable.update_vertex_buffer(wire_points);                                  easy3d_debug_gl_error;
-            drawable.update_index_buffer(wire_indices);                                  easy3d_debug_gl_error;
+            drawable.update_vertex_buffer(wire_points);                                  easy3d_debug_log_gl_error;
+            drawable.update_index_buffer(wire_indices);                                  easy3d_debug_log_gl_error;
 
-            program->bind();                                                        easy3d_debug_gl_error;
+            program->bind();                                                        easy3d_debug_log_gl_error;
             program->set_uniform("screen_color", vec4(1.0f, 0.0f, 0.0f, 1.0f));
-            drawable.gl_draw(false);                                                easy3d_debug_gl_error;
-            program->release();                                                     easy3d_debug_gl_error;
+            drawable.gl_draw(false);                                                easy3d_debug_log_gl_error;
+            program->release();                                                     easy3d_debug_log_gl_error;
 
             // draw the face
             Tessellator tess;
@@ -166,11 +166,11 @@ namespace easy3d {
             TrianglesDrawable face;
             face.update_vertex_buffer(face_points);
             face.update_index_buffer(face_indices);
-            program->bind();                                                        easy3d_debug_gl_error;
+            program->bind();                                                        easy3d_debug_log_gl_error;
             program->set_uniform("screen_color", vec4(1.0f, 0.0f, 0.0f, 0.2f));
-            face.gl_draw(false);                                                easy3d_debug_gl_error;
+            face.gl_draw(false);                                                easy3d_debug_log_gl_error;
             program->release();
-            glDisable(GL_BLEND);    easy3d_debug_gl_error;
+            glDisable(GL_BLEND);    easy3d_debug_log_gl_error;
         }
 
     }

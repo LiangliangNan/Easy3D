@@ -260,14 +260,14 @@ namespace easy3d {
         //       of the viewer changed.
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        easy3d_debug_gl_error;
-        easy3d_debug_frame_buffer_error;
+        easy3d_debug_log_gl_error;
+        easy3d_debug_log_frame_buffer_error;
 
         program_->bind();
         program_->set_uniform("MVP", camera()->modelViewProjectionMatrix());
@@ -286,7 +286,7 @@ namespace easy3d {
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release(); easy3d_debug_gl_error; easy3d_debug_frame_buffer_error;
+        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);

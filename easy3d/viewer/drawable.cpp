@@ -254,14 +254,14 @@ namespace easy3d {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
             //glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
 
             GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
             if (index_buffer_ != 0)
                 barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
             glMemoryBarrier(barriers);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
         }
 
         // Primitives like lines and triangles can be drawn without the index buffer provided that
@@ -270,20 +270,20 @@ namespace easy3d {
         if (index_buffer_) {
             // index buffer must be bound if using glDrawElements()
             glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
         } else
             glDrawArrays(type(), 0, GLsizei(num_vertices_));
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
 
         if (with_storage_buffer) {
             // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
             //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-            easy3d_debug_gl_error;
+            easy3d_debug_log_gl_error;
         }
 
         vao_->release();
-        easy3d_debug_gl_error;
+        easy3d_debug_log_gl_error;
     }
 
 }

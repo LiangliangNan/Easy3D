@@ -75,7 +75,7 @@ namespace easy3d {
             noise_texture_ = 0;
         }
 		
-		easy3d_debug_gl_error;
+		easy3d_debug_log_gl_error;
     }
 
 
@@ -177,7 +177,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        geom_fbo_->bind(); easy3d_debug_gl_error
+        geom_fbo_->bind(); easy3d_debug_log_gl_error
         geom_fbo_->activate_draw_buffers(0, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -187,29 +187,29 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MV", MV);
         program->set_uniform("invMV", transform::normal_matrix(MV));
-        program->set_uniform("PROJ", PROJ); easy3d_debug_gl_error
+        program->set_uniform("PROJ", PROJ); easy3d_debug_log_gl_error
 
         for (auto model : models) {
             if (model->is_visible()) {
                 for (auto d : model->points_drawables()) {
                     if (d->is_visible())
-                         d->gl_draw(false); easy3d_debug_gl_error
+                         d->gl_draw(false); easy3d_debug_log_gl_error
                 }
                 for (auto d : model->triangles_drawables()) {
                     if (d->is_visible()) {
                         program->set_uniform("smooth_shading", d->smooth_shading());
-                        d->gl_draw(false); easy3d_debug_gl_error
+                        d->gl_draw(false); easy3d_debug_log_gl_error
                     }
                 }
                 for (auto d : model->lines_drawables()) {
                     if (d->is_visible())
-                        d->gl_draw(false); easy3d_debug_gl_error
+                        d->gl_draw(false); easy3d_debug_log_gl_error
                 }
             }
         }
 
         program->release();
-        geom_fbo_->release(); easy3d_debug_gl_error;
+        geom_fbo_->release(); easy3d_debug_log_gl_error;
 
 #ifdef SNAPSHOT_BUFFERS
         geom_fbo_->snapshot_color_ppm(0, "ssao_gPosition.ppm");
@@ -232,30 +232,30 @@ namespace easy3d {
         if (!program)
             return;
 
-        ssao_fbo_->bind(); easy3d_debug_gl_error
-        ssao_fbo_->activate_draw_buffer(0); easy3d_debug_gl_error
+        ssao_fbo_->bind(); easy3d_debug_log_gl_error
+        ssao_fbo_->activate_draw_buffer(0); easy3d_debug_log_gl_error
         glClear(GL_COLOR_BUFFER_BIT);
 
-        program->bind(); easy3d_debug_gl_error
+        program->bind(); easy3d_debug_log_gl_error
 
         // Send kernel + rotation
         if (ssao_kernel_.empty())
             generate_noise(NOISE_RES, NOISE_RES);
 
-        program->set_uniform("samples[0]", ssao_kernel_.data()); easy3d_debug_gl_error
+        program->set_uniform("samples[0]", ssao_kernel_.data()); easy3d_debug_log_gl_error
         const mat4& PROJ = camera_->projectionMatrix();
         program->set_uniform("PROJ", PROJ);
         program->set_uniform("radius", camera_->sceneRadius() * radius_);
         program->set_uniform("bias", bias_);
         program->bind_texture("gPosition", geom_fbo_->color_texture(0), 0);	// position
         program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);		// normal
-        program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_gl_error
+        program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_log_gl_error
 
         opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         easy3d_debug_log_gl_error;
 
-        program->release_texture(); easy3d_debug_gl_error
-        program->release(); easy3d_debug_gl_error
+        program->release_texture(); easy3d_debug_log_gl_error
+        program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFERS
@@ -277,15 +277,15 @@ namespace easy3d {
         if (!program)
             return;
 
-        ssao_fbo_->bind(); easy3d_debug_gl_error
+        ssao_fbo_->bind(); easy3d_debug_log_gl_error
         ssao_fbo_->activate_draw_buffer(1);
-        glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_gl_error
+        glClear(GL_COLOR_BUFFER_BIT); easy3d_debug_log_gl_error
 
-        program->bind(); easy3d_debug_gl_error
+        program->bind(); easy3d_debug_log_gl_error
         program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 0);
         opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
-        program->release_texture(); easy3d_debug_gl_error
-        program->release(); easy3d_debug_gl_error
+        program->release_texture(); easy3d_debug_log_gl_error
+        program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();
 
 #ifdef SNAPSHOT_BUFFERS
@@ -296,7 +296,7 @@ namespace easy3d {
 
 	void AmbientOcclusion::draw_occlusion(int x, int y, int w, int h) {
         const Rect quad(x, x+w, y, y+h);
-        opengl::draw_depth_texture(quad, ssao_texture(), width_, height_, -1.0f); easy3d_debug_gl_error;
+        opengl::draw_depth_texture(quad, ssao_texture(), width_, height_, -1.0f); easy3d_debug_log_gl_error;
 	}
 
 
