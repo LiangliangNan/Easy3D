@@ -69,6 +69,7 @@ namespace easy3d {
         struct State {
             bool lighting;
             bool use_texture;
+            bool per_vertex_color;
             vec4 default_color;
         };
         std::unordered_map<Drawable *, State> states_;
