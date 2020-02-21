@@ -27,13 +27,20 @@
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/dialogs.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
 
 using namespace easy3d;
+
+
+// enforce the same behavior on macOS and other platforms (i.e., Windows, Linux)
+#ifdef __APPLE__
+#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
+#else
+#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
+#endif
 
 
 ImageViewer::ImageViewer(const std::string& title, const std::string& image_file)
@@ -77,20 +84,20 @@ void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
 
 
 bool ImageViewer::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_O && modifiers == GLFW_MOD_CONTROL) {
+    if (key == GLFW_KEY_O && modifiers == EASY3D_MOD_CONTROL) {
         const std::string title = "Please choose an image file";
         const std::string default_path = resource::directory() + "/data/";
         const std::vector<std::string> filters = {
             "Image Files (*.png *.jpg *.bmp *.ppm *.tga)", "*.png *.jpg *.bmp *.ppm *.tga"
         };
 
-        const std::vector<std::string>& file_names = dialog::open(title, default_path, filters, false);
-        if (file_names.size() != 1 && !file_system::is_file(file_names[0]))
+        const std::string& file_name = dialog::open(title, default_path, filters);
+        if (file_name.empty())
             return false;
 
         if (texture_)
             delete texture_;
-        texture_ = Texture::create(file_names[0]);
+        texture_ = Texture::create(file_name);
         fit_screen();
         return texture_ != nullptr;
     }
