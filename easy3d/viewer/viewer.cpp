@@ -483,6 +483,7 @@ namespace easy3d {
 
 	Viewer::~Viewer() {
 		cleanup();
+        LOG(INFO) << "viewer terminated";
 	}
 
 	void Viewer::clear_scene() {
