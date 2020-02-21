@@ -26,6 +26,7 @@
 #include <easy3d/util/logging.h>
 
 #include <cstring>
+#include <unordered_map>
 
 
 // This PLY reader/writer is based on rply. Here is a simple benchmark comparing various libraries for ply file i/o
@@ -272,6 +273,14 @@ namespace easy3d {
         }
 
 
+        PlyReader::~PlyReader() {
+            for (auto prop : list_properties_)
+                delete prop;
+            for (auto prop : value_properties_)
+                delete prop;
+        }
+
+
         bool PlyReader::read(const std::string &file_name, std::vector<Element> &elements) {
             p_ply ply = ply_open(file_name.c_str(), nullptr, 0, nullptr);
             if (!ply) {
@@ -352,9 +361,7 @@ namespace easy3d {
                     // the same callback function to handle all the properties. But the performance is low. So I handle
                     // list properties and value properties separately.
                     if (type == PLY_LIST) {
-                        ListProperty *prop = new ListProperty;
-                        prop->element_name = element_name;
-                        prop->name = property_name;
+                        ListProperty *prop = new ListProperty(element_name, property_name);
                         prop->orig_value_type = value_type;
                         prop->resize(num_instances);
                         list_properties_.push_back(prop);
@@ -364,9 +371,7 @@ namespace easy3d {
                             return false;
                         }
                     } else {
-                        ValueProperty *prop = new ValueProperty;
-                        prop->element_name = element_name;
-                        prop->name = property_name;
+                        ValueProperty *prop = new ValueProperty(element_name, property_name);
                         prop->orig_value_type = type;
                         prop->resize(num_instances);
                         value_properties_.push_back(prop);
@@ -438,7 +443,6 @@ namespace easy3d {
             template<typename VT_Input, typename VT_Output>
             inline void convert(const GenericProperty<VT_Input> &input, GenericProperty<VT_Output> &output) {
                 output.resize(input.size());
-                output.element_name = input.element_name;
                 output.name = input.name;
                 for (std::size_t i = 0; i < input.size(); ++i) {
                     output[i] = static_cast<VT_Output>(input[i]);
@@ -449,7 +453,6 @@ namespace easy3d {
             inline void convert(const GenericProperty<std::vector<VT_Input> > &input,
                                 GenericProperty<std::vector<VT_Output> > &output) {
                 output.resize(input.size());
-                output.element_name = input.element_name;
                 output.name = input.name;
                 for (std::size_t i = 0; i < input.size(); ++i) {
                     const auto &v_in = input[i];
@@ -504,23 +507,28 @@ namespace easy3d {
         void PlyReader::collect_elements(std::vector<Element> &elements) const {
             elements.clear();
 
+            // collect all element names and num of instances
+            std::unordered_map<std::string, std::size_t> element_sizes;
             for (auto prop : list_properties_) {
-                std::size_t num_instances = prop->size();
-                if (num_instances <= 0)
-                    continue;
+                if (element_sizes.find(prop->element_name) == element_sizes.end())
+                    element_sizes[prop->element_name] = prop->size();
+            }
+            for (auto prop : value_properties_) {
+                if (element_sizes.find(prop->element_name) == element_sizes.end())
+                    element_sizes[prop->element_name] = prop->size();
+            }
 
-                // the intermediate results are just a set of properties.
-                Element *element = nullptr;
-                for (auto &e : elements) {
-                    if (e.name == prop->element_name) {
-                        element = &e;
-                        break;
-                    }
-                }
-                if (!element) {
-                    elements.push_back(Element(prop->element_name, num_instances));
-                    element = &elements.back();
-                }
+            // create all the elements
+            for (const auto& element : element_sizes)
+                elements.emplace_back(Element(element.first, element.second));
+
+            // a mapping from element name to its pointer
+            std::unordered_map<std::string, Element*> name_to_element;
+            for (auto& element : elements)
+                name_to_element[element.name] = &element;
+
+            for (auto prop : list_properties_) {
+                Element *element = name_to_element[prop->element_name];
 
                 e_ply_type type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
@@ -537,22 +545,7 @@ namespace easy3d {
             }
 
             for (auto prop : value_properties_) {
-                std::size_t num_instances = prop->size();
-                if (num_instances <= 0)
-                    continue;
-
-                // the intermediate results are just a set of properties.
-                Element *element = nullptr;
-                for (auto &e : elements) {
-                    if (e.name == prop->element_name) {
-                        element = &e;
-                        break;
-                    }
-                }
-                if (!element) {
-                    elements.push_back(Element(prop->element_name, num_instances));
-                    element = &elements.back();
-                }
+                Element *element = name_to_element[prop->element_name];
 
                 e_ply_type type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
@@ -570,17 +563,17 @@ namespace easy3d {
 
             // extract some standard vec3 properties, e.g., points, normals, colors, texture coords
             for (auto &element : elements) {
-                Vec3Property prop_point(element.name, "point");
+                Vec3Property prop_point("point");
                 if (details::extract_vector_property(element.float_properties, "x", "y", "z", prop_point) ||
                     details::extract_vector_property(element.float_properties, "X", "Y", "Z", prop_point)) {
                     element.vec3_properties.push_back(prop_point);
                 }
 
-                Vec3Property prop_normal(element.name, "normal");
+                Vec3Property prop_normal("normal");
                 if (details::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal))
                     element.vec3_properties.push_back(prop_normal);
 
-                Vec3Property prop_color(element.name, "color");
+                Vec3Property prop_color("color");
                 if (details::extract_vector_property(element.float_properties, "r", "g", "b", prop_color))
                     element.vec3_properties.push_back(prop_color);
                 else if (details::extract_vector_property(element.int_properties, "red", "green", "blue", prop_color) ||
@@ -592,12 +585,12 @@ namespace easy3d {
                 }
 
                 // "alpha" property is stored speperately (if exists)
-                FloatProperty prop_alpha(element.name, "alpha");
+                FloatProperty prop_alpha("alpha");
                 if (details::extract_named_property(element.float_properties, prop_alpha, "a"))
                     element.float_properties.push_back(prop_alpha);
 
                 else { // might be in Int format
-                    IntProperty temp(element.name, "alpha");
+                    IntProperty temp("alpha");
                     if (details::extract_named_property(element.int_properties, temp, "alpha")) {
                         prop_alpha.resize(temp.size());
                         for (std::size_t i = 0; i < prop_alpha.size(); ++i)

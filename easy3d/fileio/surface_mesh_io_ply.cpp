@@ -210,7 +210,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "v:")
 							name = name.substr(2, name.length() - 1);
-						properties.emplace_back(GenericProperty<T>("vertex", name, prop.vector()));
+						properties.emplace_back(GenericProperty<T>(name, prop.vector()));
 					}
 				}
 			}
@@ -223,7 +223,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "f:")
 							name = name.substr(2, name.length() - 1);
-						properties.emplace_back(GenericProperty<T>("face", name, prop.vector()));
+						properties.emplace_back(GenericProperty<T>(name, prop.vector()));
 					}
 				}
 			}
@@ -237,7 +237,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "e:")
 							name = name.substr(2, name.length() - 1);
-						properties.emplace_back(GenericProperty<T>("edge", name, prop.vector()));
+						properties.emplace_back(GenericProperty<T>(name, prop.vector()));
 					}
 				}
 			}
@@ -275,7 +275,6 @@ namespace easy3d {
 
 			// vertex_indices
 			IntListProperty face_vertex_indices;
-			face_vertex_indices.element_name = "face";
             face_vertex_indices.name = "vertex_indices";
 			face_vertex_indices.reserve(mesh->n_faces());
 			for (auto f : mesh->faces()) {

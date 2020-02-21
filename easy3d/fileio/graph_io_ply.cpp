@@ -175,8 +175,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "v:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("vertex", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>(name, prop.vector()));
 					}
 				}
 			}
@@ -189,8 +188,7 @@ namespace easy3d {
 					if (prop) {
 						if (name.substr(0, 2) == "e:")
 							name = name.substr(2, name.length() - 1);
-						GenericProperty<T> p("edge", name, prop.vector());
-						properties.push_back(p);
+						properties.emplace_back(GenericProperty<T>(name, prop.vector()));
 					}
 				}
 			}
