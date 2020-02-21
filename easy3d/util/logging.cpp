@@ -75,6 +75,13 @@ namespace easy3d
 			FLAGS_colorlogtostderr = true;
 			google::InitGoogleLogging(app_path.c_str());
 
+//            auto failure_dump = [](const char* data, int size) -> void {
+//                LOG(ERROR) << std::string(data, size)
+//                << "\n-----------------------------------------\n"
+//                   "Oh, Easy3D crashed. Please contact me (liangliang.nan@gmail.com) for more information.";
+//            };
+//            google::InstallFailureWriter(failure_dump);
+
 			DLOG(INFO) << "logger initialized";
 			DLOG(INFO) << "executable path: " << file_system::executable_directory();
 			DLOG(INFO) << "current working dir: " << file_system::current_working_directory();

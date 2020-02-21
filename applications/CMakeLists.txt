@@ -9,3 +9,5 @@ if(EASY3D_ENABLE_QT)
     endif()
 endif()
 
+
+add_subdirectory(SomeTest)
