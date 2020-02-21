@@ -58,10 +58,7 @@ namespace easy3d {
 
 		// model element (e.g., faces, vertices, edges) with optional properties
 		struct Element {
-            Element(const std::string& elem_name, std::size_t n_instances = 0)
-                : name(elem_name)
-                , num_instances(n_instances)
-            {}
+            Element(const std::string& elem_name, std::size_t n_instances = 0) : name(elem_name), num_instances(n_instances) {}
 
             std::string name;           // e.g., "vertex", "face", "edge"
             std::size_t num_instances;  // number of instances
@@ -72,6 +69,8 @@ namespace easy3d {
 
             std::vector<FloatListProperty>  float_list_properties;	// for properties of a list of float values
             std::vector<IntListProperty>	int_list_properties;    // for properties of a list of integer values
+
+            std::string property_statistics() const;
 		};
 
 		// A general purpose PLY file writer

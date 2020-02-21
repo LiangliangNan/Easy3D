@@ -154,7 +154,9 @@ namespace easy3d {
                 else {
                     const std::string name = "element-" + e.name;
                     graph->add_model_property<Element>(name, e);
-                    LOG(ERROR) << "unknown element '" << e.name << "' stored in model property '" << name << "'";
+                    LOG(WARNING) << "unknown element '" << e.name
+                                 << "' with the following properties has been stored as model property '" << name << "'"
+                                 << e.property_statistics();
                 }
 			}
 

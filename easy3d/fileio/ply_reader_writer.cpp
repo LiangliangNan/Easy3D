@@ -38,9 +38,40 @@ namespace easy3d {
     namespace io {
 
 
-#define    VERTEX    "vertex"
+#define VERTEX  "vertex"
 #define FACE    "face"
 #define EDGE    "edge"
+
+
+        std::string Element::property_statistics() const {
+            std::string str;
+            if (!vec3_properties.empty()) {
+                str += "\n\tvec3_properties";
+                for (const auto &prop : vec3_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
+            if (!float_properties.empty()) {
+                str += "\n\tfloat_properties";
+                for (const auto &prop : float_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
+            if (!int_properties.empty()) {
+                str += "\n\tint_properties";
+                for (const auto &prop : int_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
+            if (!float_list_properties.empty()) {
+                str += "\n\tfloat_list_properties";
+                for (const auto &prop : float_list_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
+            if (!int_list_properties.empty()) {
+                str += "\n\tint_list_properties";
+                for (const auto &prop : int_list_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
+            return str;
+        }
 
 
         bool PlyWriter::is_big_endian() {
