@@ -78,7 +78,7 @@ namespace easy3d {
             // for each texcoord
             std::vector<vec2> texcoords;
             for (std::size_t v = 0; v < attrib.texcoords.size(); v += 2) {
-                texcoords.push_back(vec2(attrib.texcoords.data() + v));
+                texcoords.emplace_back(vec2(attrib.texcoords.data() + v));
             }
 
             // ------------------------ build the mesh ------------------------
@@ -251,7 +251,7 @@ namespace easy3d {
                 {
                     if (sscanf(s, "vt %f %f", &x, &y))
                     {
-                        all_tex_coords.push_back(vec2(x, y));
+                        all_tex_coords.emplace_back(vec2(x, y));
                     }
                 }
 
@@ -303,7 +303,7 @@ namespace easy3d {
                             {
                             case 0: // vertex
                             {
-                                vertices.push_back(SurfaceMesh::Vertex(atoi(p0) - 1));
+                                vertices.emplace_back(SurfaceMesh::Vertex(atoi(p0) - 1));
                                 break;
                             }
                             case 1: // texture coord
@@ -444,7 +444,7 @@ namespace easy3d {
                     case 't': //texcoord, 2 or 3 components
                         val[2] = 0.0f;  //default r coordinate
                         match = tok.getTokenFloatArray(val, 3);
-                        all_tex_coords.push_back(vec2(val[0], val[1]));
+                        all_tex_coords.emplace_back(vec2(val[0], val[1]));
                         tex3Comp |= (match == 3);
                         assert(match > 1 && match < 4);
                         break;
@@ -502,7 +502,7 @@ namespace easy3d {
                             //add the indices
                             vertices.clear();
                             for (unsigned char ii = 0; ii < 3; ii++) {
-                                vertices.push_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
+                                vertices.emplace_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
                             }
                             //prepare for the next iteration
                             idx[1][0] = idx[2][0];
@@ -522,7 +522,7 @@ namespace easy3d {
                             vertices.clear();
                             halfedge_tex_idx.clear();
                             for (unsigned char ii = 0; ii < 3; ii++) {
-                                vertices.push_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
+                                vertices.emplace_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
                                 halfedge_tex_idx.push_back(idx[ii][1] - 1);
                             }
                             //prepare for the next iteration
@@ -547,7 +547,7 @@ namespace easy3d {
                             vertices.clear();
                             halfedge_tex_idx.clear();
                             for (unsigned char ii = 0; ii < 3; ii++) {
-                                vertices.push_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
+                                vertices.emplace_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
                                 halfedge_tex_idx.push_back(idx[ii][1] - 1);
                                 //_nIndex.push_back( idx[ii][2]);
                             }
@@ -574,7 +574,7 @@ namespace easy3d {
                             //add the indices
                             vertices.clear();
                             for (unsigned char ii = 0; ii < 3; ii++) {
-                                vertices.push_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
+                                vertices.emplace_back(SurfaceMesh::Vertex(idx[ii][0] - 1));
                             }
                             //prepare for the next iteration
                             idx[1][0] = idx[2][0];

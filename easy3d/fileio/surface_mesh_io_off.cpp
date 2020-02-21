@@ -115,7 +115,7 @@ namespace easy3d {
 						int index;
 						input >> index;
 						if (!input.fail()) {
-                            vertices.push_back(SurfaceMesh::Vertex(index));
+                            vertices.emplace_back(SurfaceMesh::Vertex(index));
                         }
                         else {
                             LOG_FIRST_N(ERROR, 1) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file (this is the first record)";
