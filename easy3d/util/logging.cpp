@@ -36,7 +36,7 @@ namespace easy3d
 	namespace logging
 	{
 
-		void initialize(bool severity_dependent, const std::string& log_dir)
+		void initialize(bool severity_dependent, const std::string& log_dir, int stderr_threshold)
 		{
 			// Ensures the library will not be initialized more than once.
 			if (google::glog_internal_namespace_::IsGoogleLoggingInitialized())
@@ -71,7 +71,7 @@ namespace easy3d
                 google::SetLogDestination(google::INFO, dest.c_str());
 			}
 
-			FLAGS_stderrthreshold = google::INFO;
+			FLAGS_stderrthreshold = stderr_threshold;
 			FLAGS_colorlogtostderr = true;
 			google::InitGoogleLogging(app_path.c_str());
 
