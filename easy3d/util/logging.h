@@ -52,10 +52,10 @@ namespace easy3d
 		 * @param severity_dependent True to create a log file for each severity, otherwise a single log file each run.
 		 * @param log_dir The directory where the log files will be created. If it is empty (default value), the log
 		 * 		  files will be created in the "logs" directory next the executable file.
-		 * @param stderr_threshold Log messages at a level >= this flag are automatically sent to stderr in addition to
-		 *        log files.
+		 * @param stderr_threshold Log messages at a level >= this flag are automatically sent to standard error
+		 *        (stderr) in addition to log files.
 		 * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
-		 * 		 written to STDERR.
+		 * 		 written to stderr.
 		 */
 		void initialize(bool severity_dependent = false, const std::string& log_dir = "", int stderr_threshold = google::WARNING);
 
