@@ -51,7 +51,7 @@ namespace easy3d
                 const std::string& title,
                 const std::string& default_directory,
                 const std::vector<std::string>& filters,
-                bool multiple = false
+                bool multiple
                 );
 
         /**
