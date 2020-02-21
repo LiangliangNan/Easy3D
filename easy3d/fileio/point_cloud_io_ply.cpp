@@ -75,12 +75,11 @@ namespace easy3d {
                     details::add_properties< std::vector<int> >(cloud, e.int_list_properties);
                     details::add_properties< std::vector<float> >(cloud, e.float_list_properties);
                 }
-                else if (e.name == "edge")
-                    LOG(ERROR) << "The PointCloud has edge information (ignored). Is it a graph?";
-                else if (e.name == "face")
-                    LOG(ERROR) << "The PointCloud has face information (ignored). Is it a mesh?";
-                else
-                    LOG(ERROR) << "The PointCloud has unknown element: " << e.name << " (ignored)";
+                else {
+                    const std::string name = "element-" + e.name;
+                    cloud->add_model_property<Element>(name, e);
+                    LOG(ERROR) << "unknown element '" << e.name << "' stored in model property '" << name << "'";
+                }
 			}
 
 			return true;

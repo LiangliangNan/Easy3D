@@ -185,8 +185,11 @@ namespace easy3d {
 					details::add_edge_properties< std::vector<int> >(mesh, e.int_list_properties);
 					details::add_edge_properties< std::vector<float> >(mesh, e.float_list_properties);
 				}
-				else
-                    LOG(ERROR) << "element \'" << e.name << "\' ignored";
+				else {
+				    const std::string name = "element-" + e.name;
+				    mesh->add_model_property<Element>(name, e);
+                    LOG(ERROR) << "unknown element '" << e.name << "' stored in model property '" << name << "'";
+                }
 			}
 
 			builder.end_surface();

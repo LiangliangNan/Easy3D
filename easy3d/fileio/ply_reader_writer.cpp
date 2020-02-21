@@ -299,10 +299,10 @@ namespace easy3d {
                 if (num_instances <= 0)
                     continue;
 
-                if (strcmp(element_name, VERTEX) && strcmp(element_name, FACE) && strcmp(element_name, EDGE)) {
-                    LOG(ERROR) << "unknown element: " << element_name << " (ignored)";
-                    continue;
-                }
+//                if (strcmp(element_name, VERTEX) && strcmp(element_name, FACE) && strcmp(element_name, EDGE)) {
+//                    LOG(ERROR) << "unknown element: " << element_name << " (ignored)";
+//                    continue;
+//                }
 
                 p_ply_property property = nullptr;
                 /* iterate over all properties of current element */
@@ -311,11 +311,11 @@ namespace easy3d {
                     e_ply_type type, length_type, value_type;
                     ply_get_property_info(property, &property_name, &type, &length_type, &value_type);
 
-                    if (strcmp(element_name, VERTEX) && strcmp(element_name, FACE) && strcmp(element_name, EDGE)) {
-                        LOG(ERROR) << "property '" << property_name << "' on unknown element '" << element_name
-                                   << "' (ignored)";
-                        continue;
-                    }
+//                    if (strcmp(element_name, VERTEX) && strcmp(element_name, FACE) && strcmp(element_name, EDGE)) {
+//                        LOG(ERROR) << "property '" << property_name << "' on unknown element '" << element_name
+//                                   << "' (ignored)";
+//                        continue;
+//                    }
 
                     // It is possible to save all properties as PLY_LIST of value type double. This allows me to use
                     // the same callback function to handle all the properties. But the performance is low. So I handle
