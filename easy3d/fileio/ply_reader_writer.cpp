@@ -570,8 +570,16 @@ namespace easy3d {
                 }
 
                 Vec3Property prop_normal("normal");
-                if (details::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal))
+                if (details::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal)) {
                     element.vec3_properties.push_back(prop_normal);
+                    // check if the normals are normalized
+                    if (!prop_normal.empty()) {
+                        const float len = length(prop_normal[0]);
+                        LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                                        << "normals (defined on element '" << element.name
+                                        << "') not normalized (length of the first normal vector is " << len << ")";
+                    }
+                }
 
                 Vec3Property prop_color("color");
                 if (details::extract_vector_property(element.float_properties, "r", "g", "b", prop_color))
@@ -584,7 +592,7 @@ namespace easy3d {
                     element.vec3_properties.push_back(prop_color);
                 }
 
-                // "alpha" property is stored speperately (if exists)
+                // "alpha" property is stored separately (if exists)
                 FloatProperty prop_alpha("alpha");
                 if (details::extract_named_property(element.float_properties, prop_alpha, "a"))
                     element.float_properties.push_back(prop_alpha);

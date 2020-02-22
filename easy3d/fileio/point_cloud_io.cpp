@@ -63,7 +63,7 @@ namespace easy3d {
             success = io::PointCloudIO_vg::load_bvg(file_name, cloud);
 
         else if (ext.empty()){
-            LOG(ERROR) << "unknown file format: no extention";
+            LOG(ERROR) << "unknown file format: no extension";
             success = false;
         }
 		else {

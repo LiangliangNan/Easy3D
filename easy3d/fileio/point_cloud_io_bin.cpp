@@ -67,6 +67,10 @@ namespace easy3d {
             if (num > 0) {
 				PointCloud::VertexProperty<vec3> normals = cloud->vertex_property<vec3>("v:normal");
                 input.read((char*)normals.data(), num * sizeof(vec3));
+                // check if the normals are normalized
+                const float len = length(normals[PointCloud::Vertex(0)]);
+                LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                                << "normals not normalized (length of the first normal vector is " << len << ")";
 			}
 
 			return cloud->n_vertices() > 0;
