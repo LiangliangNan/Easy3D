@@ -213,7 +213,7 @@ namespace easy3d {
             // open file (in ASCII mode)
             FILE* in = fopen(file_name.c_str(), "r");
             if (!in) {
-                LOG(ERROR) << "count not open file \'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -634,7 +634,7 @@ namespace easy3d {
 
             FILE *out = fopen(file_name.c_str(), "w");
             if (!out) {
-                LOG(ERROR) << "count not open file \'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 

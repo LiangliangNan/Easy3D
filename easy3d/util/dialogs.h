@@ -182,7 +182,7 @@ namespace easy3d
 
         /**
          * \brief Open a native file open dialog.
-         * \param filetypes The accepted file extentions, e.g., "{"*.jpg","*.png"}"
+         * \param filetypes The accepted file extensions, e.g., "{"*.jpg","*.png"}"
          * \param default_path The default file path.
          */
         static std::string open(
@@ -192,7 +192,7 @@ namespace easy3d
 
         /**
          * \brief Open a native file open dialog, which allows multiple selection.
-         * \param filetypes The accepted file extentions, e.g., "{"*.jpg","*.png"}"
+         * \param filetypes The accepted file extensions, e.g., "{"*.jpg","*.png"}"
          * \param default_path The default file path.
          * \param multiple Set to ``true`` if you would like to be able to select multiple
          *     files at once.

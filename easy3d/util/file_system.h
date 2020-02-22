@@ -44,7 +44,7 @@ namespace easy3d {
 
         /**
          * @brief Tests if 'path' is an existing file.
-         * @param path The full path of a file (including file extention).
+         * @param path The full path of a file (including file extension).
          * @return ture If the file 'path' exists.
          */
         bool    is_file(const std::string& path);

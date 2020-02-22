@@ -145,7 +145,7 @@ bool MainWindow::onSave() {
     }
 
     std::string default_file_name = model->name();
-    if (file_system::extension(default_file_name).empty()) // no extention?
+    if (file_system::extension(default_file_name).empty()) // no extension?
         default_file_name += ".ply"; // default to ply
 
     const QString& fileName = QFileDialog::getSaveFileName(

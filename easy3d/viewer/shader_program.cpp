@@ -124,7 +124,7 @@ namespace easy3d {
 #if 0 // line by line
 		std::ifstream in(file_name.c_str());
 		if (in.fail()) {
-			LOG(ERROR) "could not open file \'" << file_name << "\'";
+			LOG(ERROR) << "could not open file: " << file_name;
 			return false;
 		}
 

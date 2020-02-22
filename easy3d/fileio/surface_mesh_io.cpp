@@ -103,7 +103,7 @@ namespace easy3d {
 
         if (ext == "ply" || ext.empty()) {
             if (ext.empty()) {
-                LOG(ERROR) << "No extention specified. Default to ply" << ext;
+                LOG(ERROR) << "no extension specified, default to ply" << ext;
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, mesh, true);
