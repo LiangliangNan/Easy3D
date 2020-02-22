@@ -184,7 +184,7 @@ bool MainWindow::onSave() {
     }
 
     std::string default_file_name = model->name();
-    if (file_system::extension(default_file_name).empty()) // no extention?
+    if (file_system::extension(default_file_name).empty()) // no extension?
         default_file_name += ".ply"; // default to ply
 
     const QString& fileName = QFileDialog::getSaveFileName(
@@ -651,6 +651,7 @@ void MainWindow::createActionsForTopologyMenu() {
 void MainWindow::createActionsForOrientationMenu() {
     connect(ui->actionEstimatePointCloudNormals, SIGNAL(triggered()), this, SLOT(estimatePointCloudNormals()));
     connect(ui->actionReorientPointCloudNormals, SIGNAL(triggered()), this, SLOT(reorientPointCloudNormals()));
+    connect(ui->actionNormalizePointCloudNormals, SIGNAL(triggered()), this, SLOT(normalizePointCloudNormals()));
 }
 
 
@@ -783,7 +784,6 @@ void MainWindow::reorientPointCloudNormals() {
     if (!cloud)
         return;
 
-    viewer_->makeCurrent();
     PointCloudNormals pcn;
     std::cout << "show the parameter dialog" << std::endl;
     pcn.reorient(cloud);
@@ -796,7 +796,29 @@ void MainWindow::reorientPointCloudNormals() {
         viewer_->doneCurrent();
         viewer_->update();
     }
+}
+
+
+void MainWindow::normalizePointCloudNormals() {
+    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    if (!cloud)
+        return;
+
+    auto prop = cloud->get_vertex_property<vec3>("v:normal");
+    if (!prop) {
+        LOG(WARNING) << "point cloud does not have normal information";
+        return;
+    }
+
+    auto &normals = prop.vector();
+    for (auto &n : normals)
+        n.normalize();
+
+    viewer_->makeCurrent();
+    PointsDrawable *vertices = cloud->points_drawable("vertices");
+    vertices->update_normal_buffer(normals);
     viewer_->doneCurrent();
+    viewer_->update();
 }
 
 
@@ -899,7 +921,7 @@ void MainWindow::computeHeightField() {
                 n += fnormals[f];
                 count += 1.0f;
             }
-            enormals[e] = n/count;
+            enormals[e].normalize();
         }
     }
 

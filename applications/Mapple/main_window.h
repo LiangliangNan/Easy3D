@@ -65,6 +65,7 @@ private slots:
     // orientation
     void estimatePointCloudNormals();
     void reorientPointCloudNormals();
+    void normalizePointCloudNormals();
 
     // conversion
     void poissonSurfaceReconstruction();

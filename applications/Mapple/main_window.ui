@@ -96,6 +96,8 @@
     </property>
     <addaction name="actionEstimatePointCloudNormals"/>
     <addaction name="actionReorientPointCloudNormals"/>
+    <addaction name="separator"/>
+    <addaction name="actionNormalizePointCloudNormals"/>
    </widget>
    <widget class="QMenu" name="menuSelect">
     <property name="title">
@@ -666,6 +668,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="actionNormalizePointCloudNormals">
+   <property name="text">
+    <string>Normalize Point Cloud Normals</string>
    </property>
   </action>
  </widget>
