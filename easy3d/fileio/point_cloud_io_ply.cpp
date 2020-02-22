@@ -77,7 +77,8 @@ namespace easy3d {
                 }
                 else {
                     const std::string name = "element-" + e.name;
-                    cloud->add_model_property<Element>(name, e);
+                    auto prop = cloud->add_model_property<Element>(name, Element(""));
+                    prop.vector().push_back(e);
                     LOG(WARNING) << "unknown element '" << e.name
                                  << "' with the following properties has been stored as model property '" << name << "'"
                                  << e.property_statistics();

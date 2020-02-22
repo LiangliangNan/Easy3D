@@ -80,8 +80,6 @@ namespace easy3d {
             for (auto d : candidate_faces_)
                 d->set_visible(false);
             update();
-
-            LOG(FATAL) << "bad";
             return true;
         }
         else if (key == GLFW_KEY_E) {
@@ -196,17 +194,18 @@ namespace easy3d {
             if (!prop)
                 return;
 
-            const std::vector<io::Element>& elements = prop.vector();
+            const std::vector<io::Element>& elements= prop.vector();
             if (elements.empty())
                 return;
-            const auto& element = elements[0];
-            const int* edge_labels = nullptr;
+
+            const io::Element& element = elements[0];
+            std::vector<int> edge_labels;
             for (const auto& p : element.int_properties) {
                 if (p.name == "label") {
-                    edge_labels = p.data();
+                    edge_labels = p;
                 }
             }
-            if (!edge_labels)
+            if (edge_labels.empty())
                 return;;
 
             const auto& points = mesh->points();
@@ -216,7 +215,7 @@ namespace easy3d {
                     for (int i=0; i<indices.size(); ++i) {
                         if (edge_labels[i]) {
                             int s = indices[i][0];
-                            int t = indices[i][0];
+                            int t = indices[i][1];
                             pts.push_back(points[s]);
                             pts.push_back(points[t]);
                         }
@@ -226,6 +225,8 @@ namespace easy3d {
 
             auto* edges = mesh->add_lines_drawable("ground_truth_edges");
             edges->update_vertex_buffer(pts);
+            edges->set_default_color(setting::surface_mesh_borders_color);
+            edges->set_per_vertex_color(false);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_line_width(setting::surface_mesh_borders_line_width);
             edges->set_visible(false);
