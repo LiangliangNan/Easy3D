@@ -55,8 +55,9 @@ namespace easy3d {
             class VertexGroup : public std::vector<int>
             {
             public:
-                VertexGroup(int type = VG_UNKNOWN)
+                VertexGroup(int type = UNKNOWN)
                     : primitive_type_(type)
+                    , primitive_index_(-1)
                     , label_("unknown")
                     , color_(0.3f, 0.6f, 1.0f)
                     , parent_(nullptr)
@@ -64,17 +65,19 @@ namespace easy3d {
                 }
                 ~VertexGroup() {}
 
-                enum {  // primitive type
-                    VG_PLANE = 0,
-                    VG_SPHERE = 1,
-                    VG_CYLINDER = 2,
-                    VG_CONE = 3,
-                    VG_TORUS = 4,
-                    VG_GENERAL = 5,
-                    VG_UNKNOWN = 6
+                enum PrimType { // keep the values the same as in RANSAC
+                    PLANE = 0,
+                    SPHERE = 1,
+                    CYLINDER = 2,
+                    CONE = 3,
+                    TORUS = 4,
+                    GENERAL = 5,
+                    UNKNOWN = -1
                 };
+
                 //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-                //      - "v:primitive_index" (0, 1, 2...)
+                //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+                //        primtive_type must be UNKNOWN.
                 int primitive_type_;
                 int primitive_index_;
 
@@ -85,10 +88,10 @@ namespace easy3d {
             };
 
 
-            static VertexGroup read_ascii_group(std::istream& input);
+            static void read_ascii_group(std::istream& input, VertexGroup& g);
             static void write_ascii_group(std::ostream& output, const VertexGroup& g);
 
-            static VertexGroup read_binary_group(std::istream& input);
+            static void read_binary_group(std::istream& input, VertexGroup& g);
             static void write_binary_group(std::ostream& output, const VertexGroup& g);
 
             static int num_group_parameters(int type);
@@ -96,7 +99,7 @@ namespace easy3d {
             static std::vector<float> get_group_parameters(const VertexGroup& g);
             static void assign_group_parameters(VertexGroup& g, std::vector<float>& para);
 
-            static std::vector<VertexGroup> collect_groups(const PointCloud* cloud);
+            static void collect_groups(const PointCloud* cloud, std::vector<VertexGroup>& groups);
         };
 
     } // namespace io

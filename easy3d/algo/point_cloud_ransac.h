@@ -57,10 +57,11 @@ namespace easy3d {
         void remove_primitive_type(PrimType t);
 
         // extract primitive from the entire point cloud.
-        // returns the nummber of extracted primitives.
+        // returns the number of extracted primitives.
         // result will store as properties:
         //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (0, 1, 2...)
+        //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+        //        primtive_type must be UNKNOWN.
         int detect(
             PointCloud* cloud,
             unsigned int min_support = 1000,	// the minimal number of points required for a primitive
@@ -73,7 +74,8 @@ namespace easy3d {
         // extract primitive from a subset of a point cloud.
         // result will store as properties:
         //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (0, 1, 2...)
+        //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+        //        primtive_type must be UNKNOWN.
         int detect(
             PointCloud* cloud,
             const std::vector<int>& vertitces,

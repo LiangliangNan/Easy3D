@@ -86,7 +86,7 @@ namespace easy3d {
             {
             case PrimitivesRansac::PLANE:		detector.Add(new PlanePrimitiveShapeConstructor());		break;
             case PrimitivesRansac::CYLINDER:	detector.Add(new CylinderPrimitiveShapeConstructor());	break;
-            case PrimitivesRansac::SPHERE:      detector.Add(new SpherePrimitiveShapeConstructor());	break;
+            case PrimitivesRansac::SPHERE:      detector.Add(new SpherePrimitiveShapeConstructor());    	break;
             case PrimitivesRansac::CONE:		detector.Add(new ConePrimitiveShapeConstructor());		break;
             case PrimitivesRansac::TORUS:		detector.Add(new TorusPrimitiveShapeConstructor());		break;
             case PrimitivesRansac::UNKNOWN:     break;

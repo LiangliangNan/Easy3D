@@ -45,7 +45,7 @@ nx  ny  nz
 
 num_groups: num		// can be 0
 
-group_type: type (integer: 	VG_PLANE = 0, VG_CYLINDER = 1, VG_SPHERE = 2, VG_CONE = 3, VG_TORUS = 4, VG_GENERAL = 5)
+group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
 num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
 group_parameters: float[NUM_GROUP_PARAMETERS]
 group_label: label  // the first group info
@@ -55,7 +55,7 @@ idx ...
 
 num_children: num		// can be 0
 
-group_type: type (integer: 	VG_PLANE = 0, VG_CYLINDER = 1, VG_SPHERE = 2, VG_CONE = 3, VG_TORUS = 4, VG_GENERAL = 5)
+group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
 num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
 group_parameters: float[NUM_GROUP_PARAMETERS]
 group_label: label  // 0th child of group 0
@@ -63,7 +63,7 @@ group_color: color (r, g, b)
 group_num_points: num
 idx ...
 
-group_type: type (integer: 	VG_PLANE = 0, VG_CYLINDER = 1, VG_SPHERE = 2, VG_CONE = 3, VG_TORUS = 4, VG_GENERAL = 5)
+group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
 num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
 group_parameters: float[NUM_GROUP_PARAMETERS]
 group_label: label  // 1st child of group 0
@@ -82,7 +82,7 @@ namespace easy3d {
             // open file
             std::ofstream output(file_name.c_str());
             if (output.fail()) {
-                LOG(ERROR) << "Could not open file\'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
             output.precision(16);
@@ -94,7 +94,8 @@ namespace easy3d {
             auto nms = cloud->get_vertex_property<vec3>("v:normal");
 
 
-            const std::vector<VertexGroup>& groups = collect_groups(cloud);
+            std::vector<VertexGroup> groups;
+            collect_groups(cloud, groups);
             output << "num_points: " << points.size() << std::endl;
             for (std::size_t i = 0; i < points.size(); ++i)
                 output << points[i] << " ";
@@ -132,7 +133,7 @@ namespace easy3d {
         }
 
         /*
-        group_type: type (integer: 	VG_PLANE = 0, VG_CYLINDER = 1, VG_SPHERE = 2, VG_CONE = 3, VG_TORUS = 4, VG_GENERAL = 5)
+        group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
         num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
         group_parameters: float[NUM_GROUP_PARAMETERS]
         group_label: label  // the first group info
@@ -169,21 +170,25 @@ namespace easy3d {
         bool PointCloudIO_vg::load_vg(const std::string& file_name, PointCloud* cloud) {
             std::ifstream input(file_name.c_str());
             if (input.fail()) {
-                LOG(ERROR) << "Could not open file\'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
-            std::string dumy;
-            unsigned int num;
-            input >> dumy >> num;
+            std::string dummy;
+            std::size_t num;
+            input >> dummy >> num;
             if (input.fail()) {
                 LOG(ERROR) << "failed reading point number";
+                return false;
+            }
+            if (num <= 0) {
+                LOG(ERROR) << "invalid point number (must be positive): " << num;
                 return false;
             }
 
             cloud->resize(num);
             std::vector<vec3>& points = cloud->points();
-            for (unsigned int i = 0; i < num; ++i) {
+            for (std::size_t i = 0; i < num; ++i) {
                 input >> points[i];
                 if (input.fail()) {
                     LOG(ERROR) << "failed reading the " << i << "_th point";
@@ -191,7 +196,7 @@ namespace easy3d {
                 }
             }
 
-            input >> dumy >> num;
+            input >> dummy >> num;
             if (input.fail()) {
                 LOG(ERROR) << "failed reading color number";
                 return false;
@@ -199,7 +204,7 @@ namespace easy3d {
             if (num == points.size()) {
                 auto cls = cloud->add_vertex_property<vec3>("v:color");
                 std::vector<vec3>& colors = cls.vector();
-                for (unsigned int i = 0; i < num; ++i) {
+                for (std::size_t i = 0; i < num; ++i) {
                     input >> colors[i];
                     if (input.fail()) {
                         LOG(ERROR) << "failed reading the color of the " << i << "_th point";
@@ -208,7 +213,7 @@ namespace easy3d {
                 }
             }
 
-            input >> dumy >> num;
+            input >> dummy >> num;
             if (input.fail()) {
                 LOG(ERROR) << "failed reading normal number";
                 return false;
@@ -216,46 +221,53 @@ namespace easy3d {
             if (num == points.size()) {
                 auto nms = cloud->add_vertex_property<vec3>("v:normal");
                 std::vector<vec3>& normals = nms.vector();
-                for (unsigned int i = 0; i < num; ++i) {
+                for (std::size_t i = 0; i < num; ++i) {
                     input >> normals[i];
                     if (input.fail()) {
                         LOG(ERROR) << "failed reading the normal of the " << i << "_th point";
                         return false;
                     }
                 }
+                // check if the normals are normalized
+                const float len = length(normals[0]);
+                LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                                << "normals not normalized (length of the first normal vector is " << len << ")";
             }
 
             //////////////////////////////////////////////////////////////////////////
 
             std::size_t num_groups = 0;
-            input >> dumy >> num_groups;
+            input >> dummy >> num_groups;
             if (input.fail()) {
                 LOG(ERROR) << "failed reading vertex group number";
                 return false;
             }
-            for (unsigned int i = 0; i<num_groups; ++i) {
-                VertexGroup g = read_ascii_group(input);
+
+            for (std::size_t i = 0; i<num_groups; ++i) {
+                VertexGroup g;
+                read_ascii_group(input, g);
                 g.primitive_index_ = i;
 
                 if (!g.empty()) {
-                    auto prim_type = cloud->vertex_property<int>("v:primitive_type");
-                    auto prim_index = cloud->vertex_property<int>("v:primitive_index");
+                    auto prim_type = cloud->vertex_property<int>("v:primitive_type", VertexGroup::UNKNOWN);
+                    auto prim_index = cloud->vertex_property<int>("v:primitive_index", -1);
                     for (auto v : g) {
                         prim_type[PointCloud::Vertex(v)] = g.primitive_type_;
                         prim_index[PointCloud::Vertex(v)] = g.primitive_index_;
                     }
                 }
 
-                int num_children = 0;
-                input >> dumy >> num_children;
+                std::size_t num_children = 0;
+                input >> dummy >> num_children;
                 if (input.fail()) {
                     LOG(ERROR) << "failed reading children number";
                     return false;
                 }
-                for (int j = 0; j<num_children; ++j) {
-                    VertexGroup chld = read_ascii_group(input);
-                    if (!chld.empty()) {
-                        g.children_.push_back(chld);
+                for (std::size_t j = 0; j<num_children; ++j) {
+                    VertexGroup child;
+                    read_ascii_group(input, child);
+                    if (!child.empty()) {
+                        g.children_.push_back(child);
                     }
                 }
             }
@@ -264,58 +276,66 @@ namespace easy3d {
         }
 
 
-        PointCloudIO_vg::VertexGroup PointCloudIO_vg::read_ascii_group(std::istream& input) {
-            std::string dumy;
+        void PointCloudIO_vg::read_ascii_group(std::istream& input, VertexGroup& group) {
+            group.clear();
+
+            std::string dummy;
             int type;
-            input >> dumy >> type;
+            input >> dummy >> type;
             if (input.fail()) {
                 LOG_FIRST_N(ERROR, 1) << "failed reading vertex group type (this is the first record)";
             }
 
             std::size_t num;
-            input >> dumy >> num;
+            input >> dummy >> num;
             LOG_IF(ERROR, num != num_group_parameters(type)) << "sizes don't match";
             std::vector<float> para(num);
-            input >> dumy;
-            for (std::size_t i = 0; i < num; ++i)
-                input >> para[i];
-
-            std::string label;
-            input >> dumy >> label;
-
-            vec3 color;
-            input >> dumy >> color;
-
-            int num_points;
-            input >> dumy >> num_points;
-
-            VertexGroup grp(type);
-            assign_group_parameters(grp, para);
-
-            for (int i = 0; i < num_points; ++i) {
-                int idx;
-                input >> idx;
-                grp.push_back(idx);
+            input >> dummy;
+            double v;
+            for (std::size_t i = 0; i < num; ++i) {
+                input >> v;
+                if (input.fail()) {
+                    LOG_FIRST_N(ERROR, 1) << "failed reading vertex group parameters (this is the first record)";
+                } else
+                    para[i] = v;
             }
 
-            grp.label_ = label;
-            grp.color_ = color;
+            std::string label;
+            input >> dummy >> label;
+            if (input.fail()) {
+                LOG_FIRST_N(ERROR, 1) << "failed reading vertex group label (this is the first record)";
+            }
 
-            return grp;
+            vec3 color;
+            input >> dummy >> color;
+
+            std::size_t num_points;
+            input >> dummy >> num_points;
+
+            group.primitive_type_ = type;
+            assign_group_parameters(group, para);
+
+            group.resize(num_points);
+            for (std::size_t i = 0; i < num_points; ++i) {
+                input >> group[i];
+            }
+
+            group.label_ = label;
+            group.color_ = color;
         }
 
 
         bool PointCloudIO_vg::load_bvg(const std::string& file_name, PointCloud* cloud) {
             std::ifstream input(file_name.c_str(), std::fstream::binary);
             if (input.fail()) {
-                LOG(ERROR) << "Could not open file\'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
             int num;
             input.read((char*)(&num), sizeof(int));
             if (num <= 0) {
-                LOG(ERROR) << "no point exists in file\'" << file_name << "\'";
+                LOG(ERROR) << "no point exists in file'" << file_name << "'";
                 return false;
             }
 
@@ -344,12 +364,13 @@ namespace easy3d {
             int num_groups = 0;
             input.read((char*)&num_groups, sizeof(int));
             for (int i = 0; i<num_groups; ++i) {
-                VertexGroup g = read_binary_group(input);
+                VertexGroup g;
+                read_binary_group(input, g);
                 g.primitive_index_ = i;
 
                 if (!g.empty()) {
-                    auto prim_type = cloud->vertex_property<int>("v:primitive_type");
-                    auto prim_index = cloud->vertex_property<int>("v:primitive_index");
+                    auto prim_type = cloud->vertex_property<int>("v:primitive_type", VertexGroup::UNKNOWN);
+                    auto prim_index = cloud->vertex_property<int>("v:primitive_index", -1);
                     for (auto v : g) {
                         prim_type[PointCloud::Vertex(v)] = g.primitive_type_;
                         prim_index[PointCloud::Vertex(v)] = g.primitive_index_;
@@ -359,9 +380,10 @@ namespace easy3d {
                 int num_children = 0;
                 input.read((char*)&num_children, sizeof(int));
                 for (int j = 0; j<num_children; ++j) {
-                    VertexGroup chld = read_binary_group(input);
-                    if (!chld.empty()) {
-                        g.children_.push_back(chld);
+                    VertexGroup child;
+                    read_binary_group(input, child);
+                    if (!child.empty()) {
+                        g.children_.push_back(child);
                     }
                 }
             }
@@ -374,7 +396,7 @@ namespace easy3d {
             // open file
             std::ofstream output(file_name.c_str(), std::fstream::binary);
             if (output.fail()) {
-                LOG(ERROR) << "Could not open file\'" << file_name << "\'";
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -409,7 +431,8 @@ namespace easy3d {
 
             //////////////////////////////////////////////////////////////////////////
 
-            const std::vector<VertexGroup>& groups = collect_groups(cloud);
+            std::vector<VertexGroup> groups;
+            collect_groups(cloud, groups);
             std::size_t num_groups = groups.size();
             output.write((char*)&num_groups, sizeof(int));
 
@@ -430,7 +453,9 @@ namespace easy3d {
 
 
         // for binary file format, no string stuff except labels. we add size info before each label
-        PointCloudIO_vg::VertexGroup PointCloudIO_vg::read_binary_group(std::istream& input) {
+        void PointCloudIO_vg::read_binary_group(std::istream& input, VertexGroup& group) {
+            group.clear();
+
             int type;
             input.read((char*)&type, sizeof(int));
 
@@ -441,27 +466,25 @@ namespace easy3d {
             std::vector<float> para(num);
             input.read((char*)para.data(), num * sizeof(float));
 
-            VertexGroup grp(type);
-            assign_group_parameters(grp, para);
+            group.primitive_type_ = type;
+            assign_group_parameters(group, para);
 
             //////////////////////////////////////////////////////////////////////////
             int label_size = 0;
             input.read((char*)&label_size, sizeof(int));
             std::vector<char> label(label_size);
             input.read(label.data(), label_size);
-            grp.label_ = std::string(label.begin(), label.end());
+            group.label_ = std::string(label.begin(), label.end());
             //////////////////////////////////////////////////////////////////////////
 
             vec3 color;
             input.read((char*)color.data(), 3 * sizeof(float));
-            grp.color_ = color;
+            group.color_ = color;
 
             int num_points = 0;
             input.read((char*)&num_points, sizeof(int));
-            grp.resize(num_points);
-            input.read((char*)grp.data(), num_points * sizeof(int));
-
-            return grp;
+            group.resize(num_points);
+            input.read((char*)group.data(), num_points * sizeof(int));
         }
 
 
@@ -495,22 +518,22 @@ namespace easy3d {
 		int PointCloudIO_vg::num_group_parameters(int type) {
             switch (type)
             {
-            case VertexGroup::VG_PLANE:
+            case VertexGroup::PLANE:
                 return 4;
-            case VertexGroup::VG_CYLINDER:
-                LOG(WARNING) << "not implemented for VG_CYLINDER";
+            case VertexGroup::CYLINDER:
+                LOG(WARNING) << "not implemented for CYLINDER";
                 return 0;
-            case VertexGroup::VG_SPHERE:
-                LOG(WARNING)  << "not implemented for VG_SPHERE";
+            case VertexGroup::SPHERE:
+                LOG(WARNING)  << "not implemented for SPHERE";
                 return 0;
-            case VertexGroup::VG_CONE:
-                LOG(WARNING)  << "not implemented for VG_CONE";
+            case VertexGroup::CONE:
+                LOG(WARNING)  << "not implemented for CONE";
                 return 0;
-            case VertexGroup::VG_TORUS:
-                LOG(WARNING)  << "not implemented for VG_TORUS";
+            case VertexGroup::TORUS:
+                LOG(WARNING)  << "not implemented for TORUS";
                 return 0;
-            case VertexGroup::VG_GENERAL:
-                LOG(WARNING)  << "not implemented for VG_GENERAL";
+            case VertexGroup::GENERAL:
+                LOG(WARNING)  << "not implemented for GENERAL";
                 return 0;
             }
 
@@ -524,7 +547,7 @@ namespace easy3d {
 
             switch (group.primitive_type_)
             {
-            case VertexGroup::VG_PLANE: {
+            case VertexGroup::PLANE: {
 //                VertexGroupPlane* g = dynamic_cast<VertexGroupPlane*>(group);
 //                para[0] = static_cast<float>(g->plane().a());
 //                para[1] = static_cast<float>(g->plane().b());
@@ -532,20 +555,20 @@ namespace easy3d {
 //                para[3] = static_cast<float>(g->plane().d());
                 return para;
             }
-            case VertexGroup::VG_CYLINDER:
-                LOG(WARNING) << "not implemented for VG_CYLINDER";
+            case VertexGroup::CYLINDER:
+                LOG(WARNING) << "not implemented for CYLINDER";
                 return para;
-            case VertexGroup::VG_SPHERE:
-                LOG(WARNING)  << "not implemented for VG_SPHERE";
+            case VertexGroup::SPHERE:
+                LOG(WARNING)  << "not implemented for SPHERE";
                 return para;
-            case VertexGroup::VG_CONE:
-                LOG(WARNING)  << "not implemented for VG_CONE";
+            case VertexGroup::CONE:
+                LOG(WARNING)  << "not implemented for CONE";
                 return para;
-            case VertexGroup::VG_TORUS:
-                LOG(WARNING)  << "not implemented for VG_TORUS";
+            case VertexGroup::TORUS:
+                LOG(WARNING)  << "not implemented for TORUS";
                 return para;
-            case VertexGroup::VG_GENERAL:
-                LOG(WARNING)  << "not implemented for VG_GENERAL";
+            case VertexGroup::GENERAL:
+                LOG(WARNING)  << "not implemented for GENERAL";
                 return para;
             }
 
@@ -559,60 +582,71 @@ namespace easy3d {
 
             switch (group.primitive_type_)
             {
-            case VertexGroup::VG_PLANE: {
+            case VertexGroup::PLANE: {
 //                VertexGroupPlane* g = dynamic_cast<VertexGroupPlane*>(group);
 //                g->set_plane(Plane3(para[0], para[1], para[2], para[3]));
                 return;
             }
-            case VertexGroup::VG_CYLINDER:
-                LOG(WARNING) << "not implemented for VG_CYLINDER";
+            case VertexGroup::CYLINDER:
+                LOG(WARNING) << "not implemented for CYLINDER";
                 return;
-            case VertexGroup::VG_SPHERE:
-                LOG(WARNING)  << "not implemented for VG_SPHERE";
+            case VertexGroup::SPHERE:
+                LOG(WARNING)  << "not implemented for SPHERE";
                 return;
-            case VertexGroup::VG_CONE:
-                LOG(WARNING)  << "not implemented for VG_CONE";
+            case VertexGroup::CONE:
+                LOG(WARNING)  << "not implemented for CONE";
                 return;
-            case VertexGroup::VG_TORUS:
-                LOG(WARNING)  << "not implemented for VG_TORUS";
+            case VertexGroup::TORUS:
+                LOG(WARNING)  << "not implemented for TORUS";
                 return;
-            case VertexGroup::VG_GENERAL:
-                LOG(WARNING)  << "not implemented for VG_GENERAL";
+            case VertexGroup::GENERAL:
+                LOG(WARNING)  << "not implemented for GENERAL";
                 return;
             }
         }
 
 
-        std::vector<PointCloudIO_vg::VertexGroup> PointCloudIO_vg::collect_groups(const PointCloud* model) {
-            auto primitve_type = model->get_vertex_property<int>("v:primitive_type");
-            auto primitve_index = model->get_vertex_property<int>("v:primitive_index");
-            int num = 0;
-            for (auto v : model->vertices())
-                num = std::max(num, primitve_index[v]);
-            ++num;
-            // assign each plane a unique color
-            std::vector<vec3> color_table(num);
-            for (auto& c : color_table)
-                c = random_color();
+        void PointCloudIO_vg::collect_groups(const PointCloud* cloud, std::vector<VertexGroup>& groups) {
+            auto primitve_type = cloud->get_vertex_property<int>("v:primitive_type");
+            auto primitve_index = cloud->get_vertex_property<int>("v:primitive_index");
 
-            std::vector<PointCloudIO_vg::VertexGroup> groups(num);
-
-            for (auto v : model->vertices()) {
+            // each type has a number of groups; primitive type may not be continuous, e.g., 1, 2, 5, 6
+            std::unordered_map<int, std::unordered_map<int, VertexGroup> > temp_groups;    // groups[primitive type][primitive index]
+            for (auto v : cloud->vertices()) {
+                int type = primitve_type[v];
                 int index = primitve_index[v];
-                VertexGroup& g = groups[index];
-                g.push_back(v.idx());
+                if (index >= 0)
+                    temp_groups[type][index].push_back(v.idx());
             }
 
+            groups.clear();
+
+            int index = 0;
+            for (const auto& type_groups : temp_groups) {
+                int type = type_groups.first;
+                for (const auto& index_group : type_groups.second) {
+                    groups.push_back(index_group.second);
+                    VertexGroup& g = groups.back();
+                    g.primitive_type_ = type;
+                    g.primitive_index_ = index;
+                    ++index;
+                }
+            }
+
+            // assign each vertex group a unique color
             for (std::size_t i = 0; i<groups.size(); ++i) {
                 VertexGroup& g = groups[i];
-                auto v = PointCloud::Vertex(g[0]);
-                g.primitive_type_ = primitve_type[v];
-                g.primitive_index_ = primitve_index[v];
-                g.color_ = color_table[i];
+                g.color_ = random_color();
                 g.label_ = "group_" + std::to_string(i);
              }
 
-            return groups;
+            // sort the vertex groups according to the number of points (not necessary but useful)
+            struct VertexGroupCmpDecreasing {
+                bool operator()(const VertexGroup& g0, const VertexGroup& g1) const {
+                    return g0.size() > g1.size();
+                }
+            };
+            std::sort(groups.begin(), groups.end(), VertexGroupCmpDecreasing());
         }
 
     } // namespace io
