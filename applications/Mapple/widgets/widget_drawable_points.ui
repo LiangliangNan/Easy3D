@@ -121,6 +121,9 @@
            <height>0</height>
           </size>
          </property>
+         <property name="minimum">
+          <double>1.000000000000000</double>
+         </property>
         </widget>
        </item>
        <item>
