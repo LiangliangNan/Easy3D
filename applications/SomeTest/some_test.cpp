@@ -73,12 +73,12 @@ namespace easy3d {
     bool SomeTest::key_press_event(int key, int modifiers) {
         if (key == GLFW_KEY_G) {
             std::cout << "Now I am showing ground truth" << std::endl;
-            for (auto d : faces_ground_truth_)
-                d->set_visible(true);
             for (auto d : edges_ground_truth_)
                 d->set_visible(false);
             for (auto d : candidate_faces_)
                 d->set_visible(false);
+            for (auto d : faces_ground_truth_)
+                d->set_visible(true);
             update();
             return true;
         }
@@ -86,10 +86,10 @@ namespace easy3d {
             std::cout << "Now I am showing edges" << std::endl;
             for (auto d : faces_ground_truth_)
                 d->set_visible(false);
-            for (auto d : edges_ground_truth_)
-                d->set_visible(true);
             for (auto d : candidate_faces_)
                 d->set_visible(false);
+            for (auto d : edges_ground_truth_)
+                d->set_visible(true);
             update();
             return true;
         }
