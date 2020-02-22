@@ -57,10 +57,10 @@ namespace easy3d {
     template <typename FT> inline FT epsilon_sqr();
 
     // Template specializations for float and double
-    template <> inline float  epsilon<float>() { return 1.0e-7f; }
-    template <> inline float  epsilon_sqr<float>() { return 1.0e-14f; }
-    template <> inline double epsilon<double>() { return 1.0e-14; }
-    template <> inline double epsilon_sqr<double>() { return 1.0e-28; }
+    template <> inline float  epsilon<float>() { return 1.0e-6f; }
+    template <> inline float  epsilon_sqr<float>() { return 1.0e-12f; }
+    template <> inline double epsilon<double>() { return 1.0e-12; }
+    template <> inline double epsilon_sqr<double>() { return 1.0e-24; }
 }
 
 
