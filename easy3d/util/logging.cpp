@@ -68,7 +68,7 @@ namespace easy3d
 				FLAGS_log_dir = log_path;
 			else {
 			    const std::string& dest = log_path + "/" + file_system::base_name(app_path) + "-";
-                google::SetLogDestination(google::INFO, dest.c_str());
+                google::SetLogDestination(google::GLOG_INFO, dest.c_str());
 			}
 
 			FLAGS_stderrthreshold = stderr_threshold;

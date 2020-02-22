@@ -57,7 +57,7 @@ namespace easy3d
 		 * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
 		 * 		 written to stderr.
 		 */
-		void initialize(bool severity_dependent = false, const std::string& log_dir = "", int stderr_threshold = google::WARNING);
+		void initialize(bool severity_dependent = false, const std::string& log_dir = "", int stderr_threshold = google::GLOG_WARNING);
 
 	}
 

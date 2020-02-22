@@ -64,9 +64,9 @@ int main(int argc, char *argv[])
     QDir::setCurrent(workingDir.absolutePath());
 
 #ifdef NDEBUG
-    logging::initialize(true, "", google::WARNING);
+    logging::initialize(true, "", google::GLOG_WARNING);
 #else
-    logging::initialize(true, "", google::INFO);
+    logging::initialize(true, "", google::GLOG_INFO);
 #endif
 
 #ifdef NDEBUG
