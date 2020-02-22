@@ -292,11 +292,12 @@ void MainWindow::onCurrentModelChanged() {
     if (model) {
         const std::string& name = model->name();
         setCurrentFile(QString::fromStdString(name));
+    } else
+        updateWindowTitle();
 
-        widgetTrianglesDrawable_->updatePanel();
-        widgetLinesDrawable_->updatePanel();
-        widgetPointsDrawable_->updatePanel();
-    }
+    widgetTrianglesDrawable_->updatePanel();
+    widgetLinesDrawable_->updatePanel();
+    widgetPointsDrawable_->updatePanel();
 }
 
 
