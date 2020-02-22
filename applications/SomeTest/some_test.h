@@ -46,7 +46,7 @@ namespace easy3d {
 
         std::string usage() const override;
 
-        void create_drawables();
+        void create_drawables(Model* model) override;
 
     private:
         std::vector<Drawable*> faces_ground_truth_;

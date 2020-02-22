@@ -28,7 +28,6 @@
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/fileio/ply_reader_writer.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/util/dialogs.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -52,6 +51,7 @@ namespace easy3d {
 
     }
 
+
     bool SomeTest::open() {
         const std::string& title = "Please choose a file";
         const std::string& default_path = "";
@@ -63,7 +63,6 @@ namespace easy3d {
 
         const std::string& file_name = dialog::open(title, default_path, filters);
         if (add_model(file_name, true)) {
-            create_drawables();
             fit_screen();
             return true;
         }
@@ -110,8 +109,8 @@ namespace easy3d {
     }
 
 
-    void SomeTest::create_drawables() {
-        auto mesh = dynamic_cast<SurfaceMesh*>(current_model());
+    void SomeTest::create_drawables(Model* model) {
+        auto mesh = dynamic_cast<SurfaceMesh*>(model);
         if (!mesh)
             return;
 
@@ -120,12 +119,13 @@ namespace easy3d {
         candidate_faces_.clear();
 
         {   // candidate faces
-            auto faces = mesh->triangles_drawable("faces");
+            auto faces = mesh->add_triangles_drawable("faces");
+            renderer::update_buffer(mesh, faces);
             faces->set_lighting_two_sides(true);
             candidate_faces_.push_back(faces);
 
-            auto* edges = current_model()->add_lines_drawable("edges");
-            renderer::update_buffer(current_model(), edges);
+            auto* edges = mesh->add_lines_drawable("edges");
+            renderer::update_buffer(mesh, edges);
             candidate_faces_.push_back(edges);
 
             auto borders = mesh->add_lines_drawable("borders");
@@ -166,7 +166,7 @@ namespace easy3d {
             faces_ground_truth_.push_back(faces);
 
             auto* edges = copy->add_lines_drawable("edges");
-            renderer::update_buffer(current_model(), edges);
+            renderer::update_buffer(copy, edges);
             edges->set_visible(false);
             faces_ground_truth_.push_back(edges);
 
