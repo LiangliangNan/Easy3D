@@ -209,6 +209,14 @@ namespace easy3d {
 		void showEntireScene();
 		void fitSphere(const vec3 &center, float radius);
 		void fitBoundingBox(const vec3 &min, const vec3 &max);
+        /*! Moves the Camera so that the rectangular screen region defined by \p
+          rectangle (pixel units, with origin in the upper left corner) fits the screen.
+
+          The Camera is translated (its orientation() is unchanged) so that \p rectangle
+          is entirely visible. Since the pixel coordinates only define a \e frustum in
+          3D, it's the intersection of this frustum with a plane (orthogonal to the
+          viewDirection() and passing through the sceneCenter()) that is used to define
+          the 3D rectangle that is eventually fitted. */
 		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax);
 		void centerScene();
 
