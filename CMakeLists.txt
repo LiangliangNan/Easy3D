@@ -48,13 +48,13 @@ option(EASY3D_BUILD_SANDBOX         "Build sandbox"                         ON)
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
 
 
-find_package(CGAL)
+find_package(CGAL QUIET)
 if (CGAL_FOUND)
     set(EASY3D_HAS_CGAL TRUE)
     add_definitions(-DHAS_CGAL)
 else ()
     set(EASY3D_HAS_CGAL FALSE)
-    message(WARNING "Some advanced features require CGAL but CGAL was not found. Thus these features are disabled.")
+    message(WARNING "Some advanced features require CGAL but CGAL was not found. Easy3D will be built without these features")
 endif ()
 
 ################################################################################
