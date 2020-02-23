@@ -30,7 +30,7 @@
  *
  * Always include this file, i.e.,
  *      #include <easy3d/util/logging.h>
- * istead of including any other header files, because the third parties may change.
+ * instead of including any other header files, because the third parties may change.
  */
 
 #include <3rd_party/glog/glog/logging.h>
