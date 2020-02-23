@@ -1378,7 +1378,7 @@ namespace easy3d {
 
 
 	bool Viewer::open() {
-		const std::string& title = "Please choose a file";
+		const std::string title("Please choose a file");
 		const std::string& default_path = resource::directory() + "/data/";
 		const std::vector<std::string>& filters = {
 			"Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,

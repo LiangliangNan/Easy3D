@@ -54,8 +54,8 @@ namespace easy3d {
 
 
     bool SomeTest::open() {
-        const std::string& title = "Please choose a file";
-        const std::string& default_path = "";
+        const std::string title("Please choose a file");
+        const std::string default_path("");
         const std::vector<std::string>& filters = {
                 "Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
                 "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
