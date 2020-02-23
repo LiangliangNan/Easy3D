@@ -705,6 +705,15 @@ namespace easy3d {
         return is >> Q[0] >> Q[1] >> Q[2] >> Q[3];
     }
 
+    template <class FT> inline
+    bool has_nan(const Quat<FT>& Q) {
+        for (int i=0; i<4; ++i) {
+            if (std::isnan(Q[i]) || std::isinf(Q[i]))
+                return true;
+        }
+        return false;
+    }
+
 }
 
 

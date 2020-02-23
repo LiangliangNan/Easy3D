@@ -144,7 +144,10 @@ namespace easy3d {
 	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
 	{
 		if (screen) {
-            const vec3& trans = camera->projectedCoordinatesOf(position());
+            const vec3 &trans = camera->projectedCoordinatesOf(position());
+            DLOG_IF(ERROR, has_nan(trans))
+                            << "camera->projectedCoordinatesOf(position()): " << trans << ", position(): "
+                            << position();
 
 			float pre_x = float(x - dx);
 			float pre_y = float(y - dy);
@@ -158,6 +161,10 @@ namespace easy3d {
 		}
 		else {
             vec3 trans = camera->projectedCoordinatesOf(position());
+            DLOG_IF(ERROR, has_nan(trans))
+                            << "camera->projectedCoordinatesOf(position()): " << trans << ", position(): "
+                            << position();
+
 			int pre_x = x - dx;
 			int pre_y = y - dy;
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
