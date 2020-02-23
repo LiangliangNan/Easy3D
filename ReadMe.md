@@ -72,10 +72,9 @@ Easy3D. Then you should have obtained a usable project and just build. I recomme
 - Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio).
 
-**Optional dependencies**: Easy3D also supports the use of CGAL and Qt for advanced algorithms and UI. These optional 
-features can be enabled by switching on the corresponding CMake boolean options:
+**Optional dependencies**: Easy3D also supports the use of Qt for advanced UI. This can be enabled by switching on the 
+corresponding CMake boolean options:
 
-- `EASY3D_ENABLE_CGAL`     Compile CGAL-based algorithms (see [`./easy3d/algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/master/easy3d/algo_ext))
 - `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., [`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_303_Viewer_Qt))
 
 ### License
