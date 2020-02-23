@@ -44,10 +44,18 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
 # Build sandbox
 option(EASY3D_BUILD_SANDBOX         "Build sandbox"                         ON)
-# Build CGAL-based algorithms
-option(EASY3D_ENABLE_CGAL           "Build CGAL-based algorithms"          OFF)
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
+
+
+find_package(CGAL)
+if (CGAL_FOUND)
+    set(EASY3D_HAS_CGAL TRUE)
+    add_definitions(-DHAS_CGAL)
+else ()
+    set(EASY3D_HAS_CGAL FALSE)
+    message(WARNING "Some advanced features require CGAL but CGAL was not found. Thus these features are disabled.")
+endif ()
 
 ################################################################################
 

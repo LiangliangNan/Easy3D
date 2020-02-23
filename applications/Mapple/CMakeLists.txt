@@ -101,22 +101,25 @@ endif ()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
+
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS GLEW_NO_GLU)
 
-
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
-
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} viewer algo algo_ext gui)
+target_link_libraries(${PROJECT_NAME} viewer algo gui)
+
+if (EASY3D_HAS_CGAL)
+    target_link_libraries(${PROJECT_NAME} algo_ext)
+endif ()
 
 
 ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.

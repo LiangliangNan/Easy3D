@@ -681,6 +681,7 @@ void MainWindow::detectDuplicatedFaces() {
     if (!mesh)
         return;
 
+#if HAS_CGAL
     StopWatch w;
     w.start();
     LOG(INFO) << "detecting duplicated faces...";
@@ -691,6 +692,9 @@ void MainWindow::detectDuplicatedFaces() {
 		LOG(INFO) << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string();
     else
 		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
+#else
+    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+#endif
 }
 
 
@@ -699,6 +703,7 @@ void MainWindow::removeDuplicatedFaces() {
     if (!mesh)
         return;
 
+#if HAS_CGAL
     StopWatch w;
     w.start();
 	LOG(INFO) << "removing duplicated faces...";
@@ -714,6 +719,9 @@ void MainWindow::removeDuplicatedFaces() {
     }
     else
 		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
+#else
+    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+#endif
 }
 
 
@@ -722,6 +730,7 @@ void MainWindow::detectSelfIntersections() {
     if (!mesh)
         return;
 
+#if HAS_CGAL
     StopWatch w;
     w.start();
 	LOG(INFO) << "detecting intersecting faces...";
@@ -732,6 +741,9 @@ void MainWindow::detectSelfIntersections() {
 		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string();
     else
 		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
+#else
+    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+#endif
  }
 
 
@@ -740,6 +752,7 @@ void MainWindow::remeshSelfIntersections() {
     if (!mesh)
         return;
 
+#if HAS_CGAL
     StopWatch w;
     w.start();
 	LOG(INFO) << "remeshing intersecting faces...";
@@ -757,6 +770,9 @@ void MainWindow::remeshSelfIntersections() {
     }
     else
 		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
+#else
+    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+#endif
 }
 
 
