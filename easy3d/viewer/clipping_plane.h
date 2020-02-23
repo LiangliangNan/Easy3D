@@ -30,7 +30,7 @@
 
 namespace easy3d {
 
-    class Frame;
+    class ManipulatedFrame;
     class Camera;
     class ShaderProgram;
 
@@ -62,11 +62,11 @@ namespace easy3d {
         // arrow = true: also draw an arrow in the center of the plane.
         void draw(Camera* cam) const;
 
-        virtual Frame *manipulated_frame();
-        virtual const Frame *manipulated_frame() const;
+        virtual ManipulatedFrame *manipulated_frame();
+        virtual const ManipulatedFrame *manipulated_frame() const;
 
     protected:
-        Frame *manipulated_frame_;
+        ManipulatedFrame *manipulated_frame_;
         bool enabled_;
         bool cross_section_;
         float cross_section_width_;

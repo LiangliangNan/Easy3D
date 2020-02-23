@@ -23,7 +23,7 @@
  */
 
 #include <easy3d/viewer/clipping_plane.h>
-#include <easy3d/viewer/frame.h>
+#include <easy3d/viewer/manipulated_frame.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/constraint.h>
@@ -31,6 +31,7 @@
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include "setting.h"
 
 
 namespace easy3d {
@@ -48,9 +49,9 @@ namespace easy3d {
     }
 
 
-    Frame *ClippingPlane::manipulated_frame() {
+    ManipulatedFrame *ClippingPlane::manipulated_frame() {
         if (manipulated_frame_ == 0) {
-            manipulated_frame_ = new Frame;
+            manipulated_frame_ = new ManipulatedFrame;
 
             static LocalConstraint constaint;
             //constaint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
@@ -61,7 +62,7 @@ namespace easy3d {
     }
 
 
-    const Frame *ClippingPlane::manipulated_frame() const {
+    const ManipulatedFrame *ClippingPlane::manipulated_frame() const {
         return const_cast<ClippingPlane *>(this)->manipulated_frame();
     }
 
@@ -122,7 +123,12 @@ namespace easy3d {
         if (!enabled_)
             return;
 
-        static std::vector<vec3> corners = {
+        // To use the standard drawable to visualize the clipping plane, I have to temporally disable clipping plane
+        // to avoid the clipping plane being clipped by itself.
+        bool status = enabled_;
+        const_cast<ClippingPlane*>(this)->set_enabled(false);
+
+        std::vector<vec3> corners = {
                 vec3(-size_, -size_, 0),
                 vec3(size_, -size_, 0),
                 vec3(size_, size_, 0),
@@ -154,6 +160,8 @@ namespace easy3d {
         face.set_default_color(vec4(1, 0, 0, 0.2));
         face.draw(cam, false);
         glDisable(GL_BLEND);    easy3d_debug_log_gl_error;
+
+        const_cast<ClippingPlane*>(this)->set_enabled(status);
     }
 
 }

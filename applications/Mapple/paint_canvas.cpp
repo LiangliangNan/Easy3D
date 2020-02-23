@@ -71,6 +71,8 @@ PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
     camera_->connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
+
+    setupManipulation();
 }
 
 
@@ -90,9 +92,6 @@ PaintCanvas::~PaintCanvas() {
 void PaintCanvas::cleanup() {
     if (camera_)
         delete camera_;
-
-    if (manipulated_frame_)
-        delete manipulated_frame_;
 
     if (drawable_axes_)
         delete drawable_axes_;
@@ -361,12 +360,12 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                 int dx = x - mouse_previous_pos_.x();
                 int dy = y - mouse_previous_pos_.y();
                 if (pressed_button_ == Qt::LeftButton)
-                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
+                    manipulated_frame_->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
                 else if (pressed_button_ == Qt::RightButton)
-                    camera_->frame()->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
+                    manipulated_frame_->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
                 else if (pressed_button_ == Qt::MidButton) {
-                    if (dy != 0)
-                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
+                    if (dy != 0 && manipulated_frame_ == camera_->frame()) // zoom is intended for cmanipulation only
+                        manipulated_frame_->action_zoom(dy > 0 ? 1 : -1, camera_);
                 }
             }
         }
@@ -1029,7 +1028,9 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "specular", setting::material_specular)
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("hightlight_id_min", -1)
-            ->set_uniform("hightlight_id_max", -1);
+            ->set_uniform("hightlight_id_max", -1)
+            ->set_uniform("clippingPlaneEnabled", false);
+
     drawable_axes_->gl_draw(false);
     program->release();
 
@@ -1234,10 +1235,9 @@ void PaintCanvas::pasteCamera() {
 }
 
 
-void PaintCanvas::configureManipulation() {
-    Frame* frame = nullptr; // the actual frame to be manipulated
+void PaintCanvas::setupManipulation() {
     if (setting::clipping_plane && setting::clipping_plane->is_enabled()) {
-        frame = setting::clipping_plane->manipulated_frame();
+        manipulated_frame_ = setting::clipping_plane->manipulated_frame();
     }
 //    else if (currentModel() && currentModel()->is_visible() && currentModel()->is_selected()) {
 //        // we allow only one model (i.e., the current model) to be manipulated
@@ -1249,23 +1249,8 @@ void PaintCanvas::configureManipulation() {
 //        if (num_selected == 1)
 //            frame = model()->manipulated_frame();
 //    }
-
-    if (frame) {
-        if (!manipulated_frame_)
-            manipulated_frame_ = new ManipulatedFrame;
-        manipulated_frame_->setFromMatrix(frame->matrix());
-//        if (!manipulation_agent_)
-//            manipulation_agent_ = new ManipulationAgent;
-//
-//        manipulatedFrame()->setConstraint(manipulation_agent_);
-//        manipulation_agent_->clear();
-//        manipulation_agent_->add_frame(frame);
-//        manipulatedFrame()->setFromMatrix(frame->matrix());
-    }
-    else { // disable manipulation
-        delete manipulated_frame_;
-        manipulated_frame_ = nullptr;
-    }
+    else
+        manipulated_frame_ = camera()->frame();
 }
 
 

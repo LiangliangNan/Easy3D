@@ -87,11 +87,14 @@ WidgetLighting::~WidgetLighting()
 
 
 void WidgetLighting::setClippingPlane(bool b) {
-    if (!setting::clipping_plane) {
+    if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
-        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
-    }
+
     setting::clipping_plane->set_enabled(b);
+    if (b)
+        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+
+    viewer_->setupManipulation();
     viewer_->update();
 
     if (b)
@@ -102,10 +105,9 @@ void WidgetLighting::setClippingPlane(bool b) {
 
 
 void WidgetLighting::setCrossSection(bool b) {
-    if (!setting::clipping_plane) {
+    if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
-        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
-    }
+
     setting::clipping_plane->set_cross_section(b);
     viewer_->update();
 
@@ -117,10 +119,9 @@ void WidgetLighting::setCrossSection(bool b) {
 
 
 void WidgetLighting::setCrossSectionThickness(double w) {
-    if (!setting::clipping_plane) {
+    if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
-        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
-    }
+
     setting::clipping_plane->set_cross_section_width(w);
     viewer_->update();
     LOG(INFO) << "cross-section thickness: " << w;

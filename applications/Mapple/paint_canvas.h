@@ -87,7 +87,7 @@ public:
     easy3d::EyeDomeLighting* edl();
     void enableEyeDomeLighting(bool b);
 
-    void configureManipulation();
+    void setupManipulation();
 
 public slots:
     void invertSelection();
@@ -182,7 +182,7 @@ protected:
     // Create default drawables for rendering
     //  - for point clouds, it creates a PointsDrawable
     //      - per point color will be enabled if vertex property 'v:color' exists
-    //      - nomals (stored in vertex property 'v:normal') will used for rendering if exists.
+    //      - normals (stored in vertex property 'v:normal') will be used for rendering if exists.
     //  - for mesh surfaces, it creates a TrianglesDrawable
     //      - per vertex color will be enabled if vertex property 'v:color' exists
     // TODO: move this function to Renderer module; enable per face color for surface meshes.
