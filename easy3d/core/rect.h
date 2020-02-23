@@ -39,17 +39,17 @@ namespace easy3d {
     public:
         GenericRect(const Vec<2, FT>& p, const Vec<2, FT>& q) {
             x_min_ = std::min(q.x, p.x);
-            y_min_ = std::min(q.y, p.y);
             x_max_ = std::max(q.x, p.x);
+            y_min_ = std::min(q.y, p.y);
             y_max_ = std::max(q.y, p.y);
 
         }
 
         GenericRect(FT xmin, FT xmax, FT ymin, FT ymax)
-            : x_min_(xmin)
-            , x_max_(xmax)
-            , y_min_(ymin)
-            , y_max_(ymax)
+            : x_min_(std::min(xmin, xmax))
+            , x_max_(std::max(xmin, xmax))
+            , y_min_(std::min(ymin, ymax))
+            , y_max_(std::max(ymin, ymax))
         {
         }
 
