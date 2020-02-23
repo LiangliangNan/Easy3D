@@ -53,7 +53,10 @@ namespace easy3d
 		 * @param log_dir The directory where the log files will be created. If it is empty (default value), the log
 		 * 		  files will be created in the "logs" directory next the executable file.
 		 * @param stderr_threshold Log messages at a level >= this flag are automatically sent to standard error
-		 *        (stderr) in addition to log files.
+		 *        (stderr) in addition to log files. Acceptable values are
+		 *          - google::GLOG_INFO
+		 *          - google::GLOG_WARNING
+		 *          - google::GLOG_ERROR
 		 * @note Initialization of Google's logging library is not mandatory. Logging before initialize() will be
 		 * 		 written to stderr.
 		 */
