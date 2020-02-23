@@ -18,7 +18,6 @@ namespace easy3d {
     class Transparency;
     class EyeDomeLighting;
     class OpenGLTimer;
-    class ManipulatedFrame;
 }
 
 class QWidget;
@@ -86,8 +85,6 @@ public:
 
     easy3d::EyeDomeLighting* edl();
     void enableEyeDomeLighting(bool b);
-
-    void setupManipulation();
 
 public slots:
     void invertSelection();
@@ -207,12 +204,9 @@ protected:
     easy3d::vec4	background_color_;
 
     Qt::MouseButton pressed_button_;
-    QPoint  mouse_pressed_pos_;
     QPoint  mouse_previous_pos_;
 
     bool    show_pivot_point_;
-
-    easy3d::ManipulatedFrame* manipulated_frame_;
 
     //----------------- viewer data -------------------
 

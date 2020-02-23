@@ -93,8 +93,6 @@ void WidgetLighting::setClippingPlane(bool b) {
     setting::clipping_plane->set_enabled(b);
     if (b)
         setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
-
-    viewer_->setupManipulation();
     viewer_->update();
 
     if (b)

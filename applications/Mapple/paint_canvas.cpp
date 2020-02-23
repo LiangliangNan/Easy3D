@@ -46,10 +46,8 @@ PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
         , gpu_time_(0.0)
         , camera_(nullptr)
         , pressed_button_(Qt::NoButton)
-        , mouse_pressed_pos_(0, 0)
         , mouse_previous_pos_(0, 0)
         , show_pivot_point_(false)
-        , manipulated_frame_(nullptr)
         , drawable_axes_(nullptr)
         , show_camera_path_(false)
         , model_idx_(-1)
@@ -71,8 +69,6 @@ PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
     camera_->connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
-
-    setupManipulation();
 }
 
 
@@ -206,7 +202,6 @@ void PaintCanvas::setBackgroundColor(const vec4 &c) {
 void PaintCanvas::mousePressEvent(QMouseEvent *e) {
     pressed_button_ = e->button();
     mouse_previous_pos_ = e->pos();
-    mouse_pressed_pos_ = e->pos();
 
     if (tool_manager()->current_tool()) {
         tools::ToolButton bt = tools::NO_BUTTON;
@@ -310,20 +305,10 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 
 #endif
     }
-    else {
-        if (e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier) { // ZOOM_ON_REGION
-            int xmin = std::min(mouse_pressed_pos_.x(), e->pos().x());
-            int xmax = std::max(mouse_pressed_pos_.x(), e->pos().x());
-            int ymin = std::min(mouse_pressed_pos_.y(), e->pos().y());
-            int ymax = std::max(mouse_pressed_pos_.y(), e->pos().y());
-            camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
-        } else
-            camera_->frame()->action_end();
-    }
+    else
+        camera_->frame()->action_end();
 
     pressed_button_ = Qt::NoButton;
-    mouse_pressed_pos_ = QPoint(0, 0);
-
     QOpenGLWidget::mouseReleaseEvent(e);
     update();
 }
@@ -351,22 +336,23 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     }
     else {
         if (pressed_button_ != Qt::NoButton) { // button pressed
-            // Restrict the cursor to be within the client area during dragging
-            if (e->modifiers() == Qt::ControlModifier) {
-                // zoom on region
-            } else {
-                int x = e->pos().x();
-                int y = e->pos().y();
-                int dx = x - mouse_previous_pos_.x();
-                int dy = y - mouse_previous_pos_.y();
-                if (pressed_button_ == Qt::LeftButton)
-                    manipulated_frame_->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
-                else if (pressed_button_ == Qt::RightButton)
-                    manipulated_frame_->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
-                else if (pressed_button_ == Qt::MidButton) {
-                    if (dy != 0 && manipulated_frame_ == camera_->frame()) // zoom is intended for cmanipulation only
-                        manipulated_frame_->action_zoom(dy > 0 ? 1 : -1, camera_);
-                }
+            ManipulatedFrame *frame = camera()->frame();
+            if (e->modifiers() == Qt::AltModifier) {
+                if (setting::clipping_plane && setting::clipping_plane->is_enabled())
+                    frame = setting::clipping_plane->manipulated_frame();
+            }
+
+            int x = e->pos().x();
+            int y = e->pos().y();
+            int dx = x - mouse_previous_pos_.x();
+            int dy = y - mouse_previous_pos_.y();
+            if (pressed_button_ == Qt::LeftButton)
+                frame->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::ControlModifier);
+            else if (pressed_button_ == Qt::RightButton)
+                frame->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::ControlModifier);
+            else if (pressed_button_ == Qt::MidButton) {
+                if (dy != 0 && frame == camera_->frame()) // zoom is intended for camera manipulation only
+                    frame->action_zoom(dy > 0 ? 1 : -1, camera_);
             }
         }
 
@@ -730,12 +716,12 @@ std::string PaintCanvas::usage() const {
             "  's':                 Snapshot                                    \n"
             " ------------------------------------------------------------------\n"
             "  'p':                 Toggle perspective/orthographic projection)	\n"
-            "  Left:                Orbit-rotate the camera                     \n"
-            "  Right:               Move up/down/left/right                     \n"
+            "  Left mouse:          Orbit-rotate the camera                     \n"
+            "  Right mouse:         Pan-move the camera                         \n"
+            "  Ctrl + Left mouse:   Orbit-rotate the camera (screen based)      \n"
+            "  Ctrl + Right mouse:  Pan-move camera vertically or horizontally  \n"
             "  Middle or Wheel:     Zoom in/out                                 \n"
             "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
-            "  Alt + Left:          Orbit-rotate the camera (screen based)      \n"
-            "  Alt + Right:         Move up/down/left/right (screen based)      \n"
             "  Left/Right           Turn camera left/right                      \n"
             "  Ctrl + Left/Right:   Move camera left/right                      \n"
             "  Up/Down:             Move camera forward/backward                \n"
@@ -743,7 +729,8 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  'f':                 Fit screen (all models)                     \n"
             "  'c':                 Fit screen (current model only)             \n"
-            "  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
+            "  Shift + Left mouse:  Zoom to target point on model               \n"
+            "  Shift + Right mouse: Zoom o fit screen                           \n"
             " ------------------------------------------------------------------\n"
             "  '-'/'=':             Decrease/Increase point size                \n"
             "  '{'/'}':             Decrease/Increase line width                \n"
@@ -1232,25 +1219,6 @@ void PaintCanvas::pasteCamera() {
     const float duration = 0.5f;
     camera()->interpolateTo(new_frame, duration);
     update();
-}
-
-
-void PaintCanvas::setupManipulation() {
-    if (setting::clipping_plane && setting::clipping_plane->is_enabled()) {
-        manipulated_frame_ = setting::clipping_plane->manipulated_frame();
-    }
-//    else if (currentModel() && currentModel()->is_visible() && currentModel()->is_selected()) {
-//        // we allow only one model (i.e., the current model) to be manipulated
-//        int num_selected = 0;
-//        for (std::size_t i = 0; i < models().size(); ++i) {
-//            Model* m = models()[i];
-//            num_selected += m->is_selected() ? 1 : 0;
-//        }
-//        if (num_selected == 1)
-//            frame = model()->manipulated_frame();
-//    }
-    else
-        manipulated_frame_ = camera()->frame();
 }
 
 
