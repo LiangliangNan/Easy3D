@@ -553,7 +553,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
-		if (modifiers == GLFW_MOD_SHIFT || modifiers == GLFW_MOD_ALT) {
+		if (modifiers == GLFW_MOD_SHIFT) {
 			if (button == GLFW_MOUSE_BUTTON_LEFT) {
 				bool found = false;
 				const vec3& p = point_under_pixel(x, y, found);
@@ -567,17 +567,15 @@ namespace easy3d {
 						update();
 					});
 
-					if (modifiers == GLFW_MOD_SHIFT) {	// zoom to point under pixel
 #if 1   // with animation
-						camera()->interpolateToLookAt(p);
+                    camera()->interpolateToLookAt(p);
 #else   // without animation
-						const float coef = 0.1f;
-						const vec3& pos = coef * camera()->frame()->position() + (1.0f - coef)*p;
-						const quat& ori = camera()->frame()->orientation();
-						camera_->frame()->setPositionAndOrientation(pos, ori);
-						camera_->lookAt(p);
+                    const float coef = 0.1f;
+                    const vec3& pos = coef * camera()->frame()->position() + (1.0f - coef)*p;
+                    const quat& ori = camera()->frame()->orientation();
+                    camera_->frame()->setPositionAndOrientation(pos, ori);
+                    camera_->lookAt(p);
 #endif
-					}
 				}
 				else {
 					camera_->setPivotPoint(camera_->sceneCenter());
@@ -585,18 +583,15 @@ namespace easy3d {
 				}
 			}
 			else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-				if (modifiers == GLFW_MOD_SHIFT) {
 #if 1   // with animation
-					camera()->interpolateToFitScene();
+                camera()->interpolateToFitScene();
 #else   // without animation
-					camera()->showEntireScene();
+                camera()->showEntireScene();
 #endif
-				}
-
-				camera_->setPivotPoint(camera_->sceneCenter());
-				show_pivot_point_ = false;
-			}
-		}
+                camera_->setPivotPoint(camera_->sceneCenter());
+                show_pivot_point_ = false;
+            }
+        }
 
 		camera_->frame()->action_start();
 		return false;
@@ -604,7 +599,7 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == EASY3D_MOD_CONTROL) { // ZOOM_ON_REGION
+		if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == GLFW_MOD_ALT) { // ZOOM_ON_REGION
 			int xmin = std::min(mouse_pressed_x_, x);	int xmax = std::max(mouse_pressed_x_, x);
 			int ymin = std::min(mouse_pressed_y_, y);	int ymax = std::max(mouse_pressed_y_, y);
 			camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
@@ -618,14 +613,14 @@ namespace easy3d {
 
 
 	bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-		if (modifiers != EASY3D_MOD_CONTROL) { // EASY3D_MOD_CONTROL is reserved for zoom on region
+		if (modifiers != GLFW_MOD_ALT) { // GLFW_MOD_ALT is reserved for zoom on region
 			switch (button)
 			{
 			case GLFW_MOUSE_BUTTON_LEFT:
-				camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+				camera_->frame()->action_rotate(x, y, dx, dy, camera_, modifiers == EASY3D_MOD_CONTROL);
 				break;
 			case GLFW_MOUSE_BUTTON_RIGHT:
-				camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == GLFW_MOD_ALT);
+				camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == EASY3D_MOD_CONTROL);
 				break;
 			case GLFW_MOUSE_BUTTON_MIDDLE:
 				if (dy != 0)
@@ -1137,43 +1132,44 @@ namespace easy3d {
 
 	std::string Viewer::usage() const {
 		return std::string(
-			" ------------------------------------------------------------------\n"
-			" Easy3D viewer usage:                                              \n"
-			" ------------------------------------------------------------------\n"
-			"  F1:                  Help                                        \n"
-			" ------------------------------------------------------------------\n"
-			"  Ctrl + 'o':          Open file                                   \n"
-			"  Ctrl + 's':          Save file                                   \n"
-			"  Fn + Delete:         Delete current model                        \n"
-			"  '<' or '>':          Switch between models                       \n"
-			"  's':                 Snapshot                                    \n"
-			" ------------------------------------------------------------------\n"
-			"  'p':                 Toggle perspective/orthographic projection)	\n"
-			"  Left:                Orbit-rotate the camera                     \n"
-			"  Right:               Move up/down/left/right                     \n"
-			"  Middle or Wheel:     Zoom in/out                                 \n"
-			"  Ctrl + '+'/'-':      Zoom in/out                                 \n"
-			"  Alt + Left:          Orbit-rotate the camera (screen based)      \n"
-			"  Alt + Right:         Move up/down/left/right (screen based)      \n"
-			"  Left/Right           Turn camera left/right                      \n"
-			"  Ctrl + Left/Right:   Move camera left/right                      \n"
-			"  Up/Down:             Move camera forward/backward                \n"
-			"  Ctrl + Up/Down:      Move camera up/down                         \n"
-			" ------------------------------------------------------------------\n"
-			"  'f':                 Fit screen (all models)                     \n"
-			"  'c':                 Fit screen (current model only)             \n"
-			"  Shift + Left/Right:  Zoom to target/Zoom to fit screen           \n"
-			"  Alt + Left/Right:    Define/Undefine a pivot point				\n"
-			" ------------------------------------------------------------------\n"
-			"  '-'/'=':             Decrease/Increase point size                \n"
-            "  '{'/'}':             Decrease/Increase line width                \n"
-			"  'a':                 Toggle axes									\n"
-			"  'b':                 Toggle borders								\n"
-			"  'e':                 Toggle edges							    \n"
-			"  'v':                 Toggle vertices                             \n"
-			"  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
-			"  'd':                 Print model info (drawables, properties)    \n"
-			" ------------------------------------------------------------------\n"
+                " ------------------------------------------------------------------\n"
+                " Easy3D viewer usage:                                              \n"
+                " ------------------------------------------------------------------\n"
+                "  F1:                  Help                                        \n"
+                " ------------------------------------------------------------------\n"
+                "  Ctrl + 'o':          Open file                                   \n"
+                "  Ctrl + 's':          Save file                                   \n"
+                "  Fn + Delete:         Delete current model                        \n"
+                "  '<' or '>':          Switch between models                       \n"
+                "  's':                 Snapshot                                    \n"
+                " ------------------------------------------------------------------\n"
+                "  'p':                 Toggle perspective/orthographic projection)	\n"
+                "  Left mouse:          Orbit-rotate the camera                     \n"
+                "  Right mouse:         Pan-move the camera                         \n"
+                "  Ctrl + Left mouse:   Orbit-rotate the camera (screen based)      \n"
+                "  Ctrl + Right mouse:  Pan-move camera vertically or horizontally  \n"
+                "  Middle or Wheel:     Zoom in/out                                 \n"
+                "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
+                "  Left/Right           Turn camera left/right                      \n"
+                "  Ctrl + Left/Right:   Move camera left/right                      \n"
+                "  Up/Down:             Move camera forward/backward                \n"
+                "  Ctrl + Up/Down:      Move camera up/down                         \n"
+                " ------------------------------------------------------------------\n"
+                "  'f':                 Fit screen (all models)                     \n"
+                "  'c':                 Fit screen (current model only)             \n"
+                "  Shift + Left mouse:  Zoom to target point on model               \n"
+                "  Shift + Right mouse: Zoom too fit screen                         \n"
+                "  Alt + Left mouse:    Zoom too fit region                         \n"
+                " ------------------------------------------------------------------\n"
+                "  '-'/'=':             Decrease/Increase point size                \n"
+                "  '{'/'}':             Decrease/Increase line width                \n"
+                "  'a':                 Toggle axes									\n"
+                "  'b':                 Toggle borders								\n"
+                "  'e':                 Toggle edges							    \n"
+                "  'v':                 Toggle vertices                             \n"
+                "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
+                "  'd':                 Print model info (drawables, properties)    \n"
+                " ------------------------------------------------------------------\n"
 		);
 	}
 
@@ -1619,6 +1615,19 @@ namespace easy3d {
 			program->release();
 			glEnable(GL_DEPTH_TEST);   // restore
 		}
+
+		if (button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == GLFW_MOD_ALT) {
+		    const Rect rect(mouse_pressed_x_, mouse_x_, mouse_pressed_y_, mouse_y_);
+            if (rect.width() > 0 || rect.height() > 0) {
+                // draw the boundary of the rect
+                opengl::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
+                // draw the transparent face
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                opengl::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
+                glDisable(GL_BLEND);
+            }
+        }
 
 		draw_corner_axes();
 	}
