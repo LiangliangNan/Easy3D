@@ -938,7 +938,7 @@ void ViewerQt::drawCornerAxes() {
     program->set_uniform("wCamPos", wCamPos);
     program->set_uniform("ssaoEnabled", false);
     program->set_uniform("per_vertex_color", true);
-    program->set_uniform("two_sides_lighting", true);
+    program->set_uniform("two_sides_lighting", false);
     program->set_uniform("distinct_back_color", false);
     drawable_axes_->gl_draw(false);
     program->release();

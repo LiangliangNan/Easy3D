@@ -1546,7 +1546,7 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MVP", MVP)
                 ->set_uniform("lighting", true)
-                ->set_uniform("two_sides_lighting", true)
+                ->set_uniform("two_sides_lighting", false)
                 ->set_uniform("smooth_shading", true)
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
