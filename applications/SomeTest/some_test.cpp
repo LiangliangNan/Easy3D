@@ -24,10 +24,11 @@
 
 #include "some_test.h"
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/core/random.h>
 #include <easy3d/fileio/ply_reader_writer.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/dialogs.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -49,7 +50,6 @@ namespace easy3d {
                 "\tE: Edges\n"
                 "\tC: All candidate faces\n"
                 " ---------------------------------------------------------------- \n");
-
     }
 
 
@@ -63,7 +63,10 @@ namespace easy3d {
         };
 
         const std::string& file_name = dialog::open(title, default_path, filters);
-        if (add_model(file_name, true)) {
+        auto mesh = SurfaceMeshIO::load(file_name);
+        if (mesh) {
+            clear_scene();
+            add_model(mesh, true);
             fit_screen();
             return true;
         }
@@ -121,12 +124,18 @@ namespace easy3d {
 
         {   // candidate faces
             auto faces = mesh->add_triangles_drawable("faces");
+            auto colors = mesh->face_property<vec3>("f:color");
+            for (auto f : mesh->faces())
+                colors[f] = random_color();
             renderer::update_buffer(mesh, faces);
             faces->set_lighting_two_sides(true);
+            faces->set_visible(false);
             candidate_faces_.push_back(faces);
 
             auto* edges = mesh->add_lines_drawable("edges");
             renderer::update_buffer(mesh, edges);
+            edges->set_visible(false);
+            edges->set_line_width(2.0f);
             candidate_faces_.push_back(edges);
 
             auto borders = mesh->add_lines_drawable("borders");
@@ -143,6 +152,7 @@ namespace easy3d {
             borders->set_per_vertex_color(false);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
+            borders->set_visible(false);
             candidate_faces_.push_back(borders);
         }
 
@@ -163,12 +173,10 @@ namespace easy3d {
             auto faces = copy->add_triangles_drawable("faces");
             renderer::update_buffer(copy, faces);
             faces->set_lighting_two_sides(true);
-            faces->set_visible(false);
             faces_ground_truth_.push_back(faces);
 
             auto* edges = copy->add_lines_drawable("edges");
             renderer::update_buffer(copy, edges);
-            edges->set_visible(false);
             faces_ground_truth_.push_back(edges);
 
             auto borders = copy->add_lines_drawable("borders");
@@ -185,7 +193,6 @@ namespace easy3d {
             borders->set_per_vertex_color(false);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
-            borders->set_visible(false);
             faces_ground_truth_.push_back(borders);
         }
 
