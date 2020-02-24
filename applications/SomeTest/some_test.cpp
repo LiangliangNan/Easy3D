@@ -218,7 +218,7 @@ namespace easy3d {
                 return;;
 
             const auto& points = mesh->points();
-            std::vector<vec3> pts;
+            std::vector<vec3> pts, cls;
             for (auto indices : element.int_list_properties) {
                 if (indices.name == "vertex_indices") {
                     for (int i=0; i<indices.size(); ++i) {
@@ -227,6 +227,8 @@ namespace easy3d {
                             int t = indices[i][1];
                             pts.push_back(points[s]);
                             pts.push_back(points[t]);
+                            const auto& c = random_color();
+                            cls.insert(cls.end(), 2, c);
                         }
                     }
                 }
@@ -234,8 +236,9 @@ namespace easy3d {
 
             auto* edges = mesh->add_lines_drawable("ground_truth_edges");
             edges->update_vertex_buffer(pts);
+            edges->update_color_buffer(cls);
             edges->set_default_color(setting::surface_mesh_borders_color);
-            edges->set_per_vertex_color(false);
+            edges->set_per_vertex_color(true);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_line_width(setting::surface_mesh_borders_line_width);
             edges->set_visible(false);
