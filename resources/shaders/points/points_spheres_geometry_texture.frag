@@ -75,6 +75,11 @@ void main()
 		}
 
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
+		if (!lighting) {
+			outputF = vec4(color, 1.0);
+			return;
+		}
+
 		if (highlight) {
 			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
 			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
@@ -126,9 +131,14 @@ void main()
 		}
 
 		vec3 color = texture(textureID, DataIn.texcoord).rgb;
+		if (!lighting) {
+			outputF = vec4(color, 1.0);
+			return;
+		}
+
 		if (highlight) {
 			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
-			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+				color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
 		}
 
 //		//uint addr = gl_PrimitiveID / 32;

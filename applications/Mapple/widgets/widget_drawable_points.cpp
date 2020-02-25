@@ -559,7 +559,7 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
 
     const auto& lighting_option = ui->comboBoxLightingOptions->currentText();
-    bool can_modify_back_color = visible && lighting_option == "front and back";
+    bool can_modify_back_color = visible && lighting_option == "front and back" && ui->comboBoxImposterStyle->currentText() != "sphere";
     ui->labelBackColor->setEnabled(can_modify_back_color);
     ui->checkBoxBackColor->setEnabled(can_modify_back_color);
     ui->toolButtonBackColor->setEnabled(can_modify_back_color && drawable()->distinct_back_color());
