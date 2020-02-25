@@ -32,9 +32,9 @@ public slots:
     void setActiveDrawable(const QString &);
     void setPhongShading(bool);
     void setLighting(const QString &);
-    void setDistinctBackColor(bool);
     void setColorScheme(const QString &);
     void setDefaultColor();
+    void setDistinctBackColor(bool);
     void setBackColor();
     void setTextureFile();
     void setTextureRepeat(int);

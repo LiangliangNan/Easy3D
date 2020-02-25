@@ -56,7 +56,7 @@ void WidgetTrianglesDrawable::connectAll() {
     // default color
     connect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
-    // default color
+    // back color
     connect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
     connect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
@@ -101,7 +101,7 @@ void WidgetTrianglesDrawable::disconnectAll() {
     // default color
     disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
-    // default color
+    // back color
     disconnect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
     disconnect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
@@ -573,8 +573,6 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->comboBoxLightingOptions->setEnabled(visible);
     ui->labelColorScheme->setEnabled(visible);
     ui->comboBoxColorScheme->setEnabled(visible);
-    ui->comboBoxLightingOptions->setEnabled(visible);
-    ui->comboBoxLightingOptions->setEnabled(visible);
 
     bool can_modify_default_color = visible && (ui->comboBoxColorScheme->currentText() == "uniform color");
     ui->labelDefaultColor->setEnabled(can_modify_default_color);

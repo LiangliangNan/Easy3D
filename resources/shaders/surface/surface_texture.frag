@@ -64,7 +64,7 @@ void main() {
 
     if (highlight) {
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
-        color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
 
     vec3 normal;
@@ -90,9 +90,9 @@ void main() {
         vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
 
         if (two_sides_lighting)
-        sf = abs(dot(half_vector, normal));
+            sf = abs(dot(half_vector, normal));
         else
-        sf = max(dot(half_vector, normal), 0.0);
+            sf = max(dot(half_vector, normal), 0.0);
 
         sf = pow(sf, shininess);
     }

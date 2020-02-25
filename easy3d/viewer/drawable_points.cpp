@@ -111,10 +111,13 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MVP", MVP)
                 ->set_uniform("lighting", normal_buffer() && lighting())
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
                 ->set_uniform("default_color", default_color())
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
@@ -257,6 +260,7 @@ namespace easy3d {
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
                 ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
@@ -378,8 +382,14 @@ namespace easy3d {
         program->set_uniform("radius", point_size() * ratio)
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("lighting", lighting())
                 ->set_uniform("two_sides_lighting", lighting_two_sides())
-                ->set_uniform("lighting", lighting());
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color());
+
+        program->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range_.first)
+                ->set_uniform("hightlight_id_max", highlight_range_.second);
 
         program->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
@@ -433,8 +443,10 @@ namespace easy3d {
         program->set_uniform("radius", point_size() * ratio)
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("lighting", lighting())
                 ->set_uniform("two_sides_lighting", lighting_two_sides())
-                ->set_uniform("lighting", lighting());
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color());
 
         program->set_uniform("highlight", highlight())
                 ->set_uniform("hightlight_id_min", highlight_range_.first)

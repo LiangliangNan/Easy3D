@@ -33,8 +33,11 @@ public slots:
     void setActiveDrawable(const QString &);
     void setPointSize(double);
     void setImposterStyle(const QString &);
+    void setLighting(const QString &);
     void setColorScheme(const QString &);
     void setDefaultColor();
+    void setDistinctBackColor(bool);
+    void setBackColor();
     void setHighlight(bool);
     void setHighlightMin(int);
     void setHighlightMax(int);

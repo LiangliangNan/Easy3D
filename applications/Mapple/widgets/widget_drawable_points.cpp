@@ -47,12 +47,20 @@ void WidgetPointsDrawable::connectAll() {
     connect(ui->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
             this, SLOT(setImposterStyle(const QString &)));
 
+    // lighting
+    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
+            this, SLOT(setLighting(const QString &)));
+
     // color scheme
     connect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
             this, SLOT(setColorScheme(const QString &)));
 
     // default color
     connect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+
+    // back color
+    connect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    connect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // highlight
     connect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
@@ -79,12 +87,20 @@ void WidgetPointsDrawable::disconnectAll() {
     disconnect(ui->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
             this, SLOT(setImposterStyle(const QString &)));
 
+    // lighting
+    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
+            this, SLOT(setLighting(const QString &)));
+
     // color scheme
     disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
             this, SLOT(setColorScheme(const QString &)));
 
     // default color
     disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+
+    // back color
+    disconnect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    disconnect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // highlight
     disconnect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
@@ -214,6 +230,17 @@ void WidgetPointsDrawable::updatePanel() {
         case PointsDrawable::SURFEL:   ui->comboBoxImposterStyle->setCurrentText("surfel");  break;
     }
 
+    {   // lighting
+        if (drawable()->lighting()) {
+            if (drawable()->lighting_two_sides())
+                ui->comboBoxLightingOptions->setCurrentText("front and back");
+            else
+                ui->comboBoxLightingOptions->setCurrentText("front only");
+        }
+        else
+            ui->comboBoxLightingOptions->setCurrentText("disabled");
+    }
+
     {   // color scheme
         ui->comboBoxColorScheme->clear();
         std::vector<std::string> schemes;
@@ -237,6 +264,13 @@ void WidgetPointsDrawable::updatePanel() {
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
+
+        // back side color
+        ui->checkBoxBackColor->setChecked(drawable()->distinct_back_color());
+        c = drawable()->back_color();
+        pixmap.fill(
+                QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
+        ui->toolButtonBackColor->setIcon(QIcon(pixmap));
     }
 
     {   // highlight
@@ -322,6 +356,29 @@ void WidgetPointsDrawable::setPointSize(double s) {
         drawable()->set_point_size(s);
         viewer_->update();
     }
+}
+
+
+void WidgetPointsDrawable::setLighting(const QString & text) {
+    if (text == "front and back") {
+        if (!drawable()->lighting())
+            drawable()->set_lighting(true);
+        if (!drawable()->lighting_two_sides())
+            drawable()->set_lighting_two_sides(true);
+    }
+    else if (text == "front only") {
+        if (!drawable()->lighting())
+            drawable()->set_lighting(true);
+        if (drawable()->lighting_two_sides())
+            drawable()->set_lighting_two_sides(false);
+    }
+    else if (text == "disabled") {
+        if (drawable()->lighting())
+            drawable()->set_lighting(false);
+    }
+
+    viewer_->update();
+    disableUnavailableOptions();
 }
 
 
@@ -426,6 +483,31 @@ void WidgetPointsDrawable::setDefaultColor() {
 }
 
 
+void WidgetPointsDrawable::setBackColor() {
+    const vec3 &c = drawable()->back_color();
+    QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
+    const QColor &color = QColorDialog::getColor(orig, this);
+    if (color.isValid()) {
+        const vec3 new_color(color.redF(), color.greenF(), color.blueF());
+        drawable()->set_back_color(new_color);
+        viewer_->update();
+
+        QPixmap pixmap(ui->toolButtonBackColor->size());
+        pixmap.fill(color);
+        ui->toolButtonBackColor->setIcon(QIcon(pixmap));
+    }
+}
+
+
+void WidgetPointsDrawable::setDistinctBackColor(bool b) {
+    if (drawable()->distinct_back_color() != b) {
+        drawable()->set_distinct_back_color(b);
+        viewer_->update();
+        disableUnavailableOptions();
+    }
+}
+
+
 void WidgetPointsDrawable::setHighlight(bool b) {
     if (drawable()->highlight() != b) {
         drawable()->set_highlight(b);
@@ -467,12 +549,20 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     ui->doubleSpinBoxPointSize->setEnabled(visible);
     ui->labelImposterStyle->setEnabled(visible);
     ui->comboBoxImposterStyle->setEnabled(visible);
+    ui->labelLighting->setEnabled(visible);
+    ui->comboBoxLightingOptions->setEnabled(visible);
     ui->labelColorScheme->setEnabled(visible);
     ui->comboBoxColorScheme->setEnabled(visible);
 
     bool can_modify_default_color = visible && (ui->comboBoxColorScheme->currentText() == "uniform color");
     ui->labelDefaultColor->setEnabled(can_modify_default_color);
     ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
+
+    const auto& lighting_option = ui->comboBoxLightingOptions->currentText();
+    bool can_modify_back_color = visible && lighting_option == "front and back";
+    ui->labelBackColor->setEnabled(can_modify_back_color);
+    ui->checkBoxBackColor->setEnabled(can_modify_back_color);
+    ui->toolButtonBackColor->setEnabled(can_modify_back_color && drawable()->distinct_back_color());
 
     bool can_modify_highlight = visible;
     ui->labelHighlight->setEnabled(can_modify_highlight);

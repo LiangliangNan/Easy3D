@@ -10,6 +10,11 @@ layout(std140) uniform Material {
 };
 
 uniform bool    lighting = true;
+uniform bool    two_sides_lighting = true;
+
+// backside color
+uniform bool        distinct_back_color = true;
+uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 in Data{
     vec4 color;
@@ -25,15 +30,31 @@ void main(void) {
         return;
     }
 
+    vec3 color = DataIn.color.xyz;
+    if (!gl_FrontFacing && distinct_back_color)
+        color = backside_color;
+
     vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it
     vec3 normal = DataIn.normal;
-    vec3 color = DataIn.color.xyz;
     vec3 light_dir = normalize(wLightPos);
-    float df = max(dot(light_dir, normal), 0);
+    if (distinct_back_color) {
+        if (dot(normal, view_dir) < 0)
+            color = backside_color;
+    }
+
+    float df = 0.0;	// diffuse factor
+    if (two_sides_lighting)
+        df = abs(dot(light_dir, normal));
+    else
+        df = max(dot(light_dir, normal), 0);
+
     float sf = 0.0;// specular factor
     if (df > 0.0) { // if the vertex is lit compute the specular color
         vec3 half_vector = normalize(light_dir + view_dir);// compute the half vector
-        sf = max(dot(half_vector, normal), 0.0);
+        if (two_sides_lighting)
+            sf = abs(dot(half_vector, normal));
+        else
+            sf = max(dot(half_vector, normal), 0.0);
         sf = pow(sf, shininess);
     }
 

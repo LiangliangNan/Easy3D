@@ -17,6 +17,10 @@ uniform bool    lighting = true;
 // two sides
 uniform bool    two_sides_lighting = true;
 
+// backside color
+uniform bool    distinct_back_color = true;
+uniform vec3    backside_color = vec3(0.8f, 0.4f, 0.4f);
+
 uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
@@ -52,6 +56,10 @@ void main()
     vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
     vec3 normal = FragmentIn.normal;
     vec3 light_dir = normalize(wLightPos);
+    if (distinct_back_color) {
+        if (dot(normal, view_dir) < 0)
+            color = backside_color;
+    }
 
     float df = 0.0;// diffuse factor
     if (two_sides_lighting)
