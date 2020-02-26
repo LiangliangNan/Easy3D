@@ -20,7 +20,7 @@ NOTE: There are usually many options to set up a development environment on each
      
      `sudo apt-get install build-essential manpages-dev`
 
-**Step #2. Build the software.** Choose **ONE** of the following (or whatever you think is better):
+**Step #2. Build the software.** Choose **ONE** of the following (or whatever you are familiar with):
 
  - Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of the software. Then you should have obtained a usable project and just build. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
 

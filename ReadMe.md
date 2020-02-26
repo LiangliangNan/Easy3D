@@ -64,7 +64,7 @@ Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (
 nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
 to build Easy3D on almost all platforms.
 
-There are many options to build Easy3D. Choose one of the following (or whatever you think is better):
+There are many options to build Easy3D. Choose one of the following (or whatever you are familiar with):
 
 - Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
 Easy3D. Then you should have obtained a usable project and just build. I recommend using 
