@@ -359,6 +359,12 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         mouse_previous_pos_ = e->pos();
     }
     QOpenGLWidget::mouseMoveEvent(e);
+
+//    bool found = false;
+//    easy3d::vec3 p = pointUnderPixel(e->pos(), found);
+//    if (found)
+//        std::cout << "point under mouse: " << p << std::endl;
+
     update();
 }
 
