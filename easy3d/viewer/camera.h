@@ -158,10 +158,12 @@ namespace easy3d {
 		vec3 rightVector() const;
 		quat orientation() const;
 
+        // -----------------------------------------------------------------
+
 		void setFromModelViewMatrix(const mat4& mv);
         
         /*! Defines the position(), orientation() and fieldOfView() of the camera from calibrated
-         *  camera instrinc and extrinsic parameters.
+         *  camera intrinsic and extrinsic parameters.
          *  \param fx and fy: the focal length
          *  \param cx and cy: the principal point
          *  \param skew: distortion
@@ -180,19 +182,28 @@ namespace easy3d {
          *              from vision convention to OpenGL convention, i.e., inverting Y and Z axes.
          */
         void set_from_projection_matrix(const mat34& proj);
-        
+
         // -----------------------------------------------------------------
-        // Change the matrices directly and temporally.
-        // NOTE: This is only useful if you want to temporally use different
-        //       matrices for rendering (e.g., grabbing a large snapshot from
-        //       the framebuffer. etc.). It actually doesn't change any
-        //       parameters (position, orientation, fov, zFar, zNear, etc.) of
-        //       the camera.
-        // TODO: Modify the camera parameters accordingly (This is actually the
-        //         reverse version of the two "compute" functions. See
-        //         setFromModelViewMatrix(), and setFromProjectionMatrix()).
+
+        /**
+         * Temporally change the projection matrix.
+         * @param proj The projection matrix.
+         * @attention This function directly changes the projection matrix. It actually doesn't change any of the camera
+         *      parameters (i.e., position, orientation, fov, zFar, zNear, etc.). This is only useful if you want to
+         *      temporally use a different projection matrix for rendering (e.g., grabbing a large snapshot from the
+         *      framebuffer).
+         */
         void set_projection_matrix(const mat4& proj);
+        /**
+         * Temporally change the modelview matrix.
+         * @param mv The modelview matrix.
+         * @attention This function directly changes the modelview matrix. It actually doesn't change any of the camera
+         *      parameters (i.e., position, orientation, fov, zFar, zNear, etc.). This is only useful if you want to
+         *      temporally use a different projection matrix for rendering (e.g., grabbing a large snapshot from the
+         *      framebuffer).
+         */
         void set_modelview_matrix(const mat4& mv);
+
         // -----------------------------------------------------------------
 
 	public:
