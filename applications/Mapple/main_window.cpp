@@ -110,6 +110,7 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 }
 
+
 MainWindow::~MainWindow()
 {
     if (dialogSanpshot_)                delete dialogSanpshot_;
