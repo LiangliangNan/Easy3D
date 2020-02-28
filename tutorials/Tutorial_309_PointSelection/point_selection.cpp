@@ -117,7 +117,7 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 
 // This function will be called after the main draw procedure.
 void PointSelection::post_draw() {
-    Viewer::post_draw();
+    Viewer::draw_corner_axes();
 
     if (polygon_.size() >= 3) {
         ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
