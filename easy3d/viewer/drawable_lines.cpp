@@ -119,7 +119,7 @@ namespace easy3d {
                     ->set_uniform("PROJ", camera->projectionMatrix());
 
             float ratio = camera->pixelGLRatio(camera->pivotPoint());
-            program->set_uniform("radius", line_width_ * ratio)
+            program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                     ->set_uniform("default_color", default_color())
                     ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer());
 
@@ -156,7 +156,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio)
+        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("default_color", default_color())
                 ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -198,7 +198,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width() * ratio)
+        program->set_uniform("radius", line_width() * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("default_color", default_color())
                 ->set_uniform("per_vertex_color", per_vertex_color() && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
@@ -269,7 +269,7 @@ namespace easy3d {
                     ->set_uniform("invMV", inverse(camera->modelViewMatrix()))
                     ->set_uniform("PROJ", camera->projectionMatrix());
             float ratio = camera->pixelGLRatio(camera->pivotPoint());
-            program->set_uniform("radius", line_width() * ratio);
+            program->set_uniform("radius", line_width() * ratio * 0.5f);  // 0.5f from width -> radius
 
             //      program->set_uniform("highlight", highlight())
             //                ->set_uniform("hightlight_id_min", highlight_range_.first)
@@ -314,7 +314,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio)
+        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting());
 
@@ -364,7 +364,7 @@ namespace easy3d {
                 ->set_uniform("PROJ", camera->projectionMatrix());
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
-        program->set_uniform("radius", line_width_ * ratio)
+        program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("eLightPos", setting::light_position)
                 ->set_uniform("lighting", lighting());
 
