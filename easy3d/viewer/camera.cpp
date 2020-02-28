@@ -1050,7 +1050,7 @@ namespace easy3d {
 
         /**-------------------------------------------------------------------
          * For pin-hole cameras, this following function has higher accuracy than
-         * this function (I actually doubt the implmentation of this function).
+         * this function (I actually doubt the implementation of this function).
          *-------------------------------------------------------------------*/
         //const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
         //const float angle = rot_vec.length();
@@ -1061,7 +1061,7 @@ namespace easy3d {
         //const float proj_5th = 2.0 * fy / cam.h;
         //c->setFieldOfView(2.0 * atan(1.0 / proj_5th));
         
-        // I doubt the implmentation of this function.
+        // I doubt the implementation of this function.
         const mat3 K(
                     fx, skew, cx,
                     0,  fy,   cy,
