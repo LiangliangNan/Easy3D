@@ -1698,10 +1698,10 @@ namespace easy3d {
     inline Mat3<T> Mat3<T>::rotation(const Quat<T> &q) {
         // input must be unit quaternion
         assert(std::abs(q.length() - 1) < epsilon<T>());
-        const T x = q.x();
-        const T y = q.y();
-        const T z = q.z();
-        const T w = q.w();
+        const T x = q.x;
+        const T y = q.y;
+        const T z = q.z;
+        const T w = q.w;
         Mat3<T> m;
         m(0, 0) = 1.0 - 2.0 * (y*y + z*z);    m(0, 1) = 2.0 * (x*y - w*z);          m(0, 2) = 2.0 * (x*z + w*y);
         m(1, 0) = 2.0 * (x*y + w*z);          m(1, 1) = 1.0 - 2.0 * (x*x + z*z);    m(1, 2) = 2.0 * (y*z - w*x);
@@ -2025,10 +2025,10 @@ namespace easy3d {
     inline Mat4<T> Mat4<T>::rotation(const Quat<T> &q) {
         // input must be unit quaternion
         assert(std::abs(q.length() - 1) < epsilon<T>());
-        const T x = q.x();
-        const T y = q.y();
-        const T z = q.z();
-        const T w = q.w();
+        const T x = q.x;
+        const T y = q.y;
+        const T z = q.z;
+        const T w = q.w;
         Mat4<T> m;
         m(0, 0) = 1.0 - 2.0 * (y*y + z*z);    m(0, 1) = 2.0 * (x*y - w*z);          m(0, 2) = 2.0 * (x*z + w*y);          m(0, 3) = 0.0;
         m(1, 0) = 2.0 * (x*y + w*z);          m(1, 1) = 1.0 - 2.0 * (x*x + z*z);    m(1, 2) = 2.0 * (y*z - w*x);          m(1, 3) = 0.0;
