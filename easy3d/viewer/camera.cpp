@@ -1046,31 +1046,6 @@ namespace easy3d {
         //                0.0,            0.0,            -1.0,                       0.0
         //                );
         //
-        //const mat4 mv = mat4::translation(cam.tx, cam.ty, cam.tz) * mat4::rotation(vec3(cam.rx, cam.ry, cam.rz));
-
-        /**-------------------------------------------------------------------
-         * For pin-hole cameras, this following function has higher accuracy than
-         * this function (I actually doubt the implementation of this function).
-         *-------------------------------------------------------------------*/
-        //const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
-        //const float angle = rot_vec.length();
-        //const quat q(rot_vec / angle, angle);
-        //c->setOrientation(q);
-        //const vec3 pos(cam.tx, cam.ty, cam.tz);
-        //c->setPosition(-q.rotate(pos));
-        //const float proj_5th = 2.0 * fy / cam.h;
-        //c->setFieldOfView(2.0 * atan(1.0 / proj_5th));
-
-#if 0
-        const vec3 rot_vec = -rot;
-        const float angle = rot_vec.length();
-        const quat q(rot_vec / angle, angle);
-        setOrientation(q);
-        setPosition(-q.rotate(vec3(t.x, t.y, t.z)));
-        const float proj_5th = 2.0 * fy / image_width;
-        setFieldOfView(2.0 * atan(1.0 / proj_5th));
-#else
-
         // I doubt the implementation of this function.
         const mat3 K(
                     fx, skew, cx,
@@ -1079,13 +1054,8 @@ namespace easy3d {
         const mat4 R = mat4::rotation(rot);
         const mat4 T = mat4::translation(t);
 
-        mat34 M(1.0);
-        M(1, 1) = -1;// invert the y axis
-        M(2, 2) = -1;// invert the z axis
-
-        const mat34& proj = K * M * T * R;
+        const mat34& proj = K * mat34(1.0) * T * R;
         set_from_projection_matrix(proj);
-#endif
     }
 
 
@@ -1193,60 +1163,6 @@ namespace easy3d {
 		setPosition(cam_pos);
 		setFieldOfView(fov);
 	}
-
-
-	// persp : projectionMatrix_[0]  = f/aspectRatio();
-//    bool Camera::setFromProjectionMatrix(const mat4& projectionMatrix)
-//    {
-//        if ((fabs(projectionMatrix[1]) > 1E-3) || (fabs(projectionMatrix[2]) > 1E-3) ||
-//            (fabs(projectionMatrix[3]) > 1E-3) || (fabs(projectionMatrix[4]) > 1E-3) ||
-//            (fabs(projectionMatrix[6]) > 1E-3) || (fabs(projectionMatrix[7]) > 1E-3) ||
-//            (fabs(projectionMatrix[8]) > 1E-3) || (fabs(projectionMatrix[9]) > 1E-3))
-//            LOG(ERROR) << "Non null coefficient in projection matrix";
-//        else {
-//            if ((fabs(projectionMatrix[11] + 1.0) < 1E-5) && (fabs(projectionMatrix[15]) < 1E-5))
-//            {
-//                if (projectionMatrix[5] < 1E-4) {
-//                    LOG(ERROR) << "Negative field of view in Camera::setFromProjectionMatrix";
-//                    return false;
-//                }
-//                else
-//                    setType(Camera::PERSPECTIVE);
-//            }
-//            else {
-//                if ((fabs(projectionMatrix[11]) < 1E-5) && (fabs(projectionMatrix[15] - 1.0) < 1E-5))
-//                    setType(Camera::ORTHOGRAPHIC);
-//                else {
-//                    LOG(ERROR) << "Unable to determine camera type in setFromProjectionMatrix";
-//                    return false;
-//                }
-//            }
-//        }
-//
-//        if (type() == Camera::PERSPECTIVE) {
-//            setFieldOfView(2.0 * atan(1.0 / projectionMatrix[5]));
-//            const double far = projectionMatrix[14] / (2.0 * (1.0 + projectionMatrix[10]));
-//            const double near = (projectionMatrix[10] + 1.0) / (projectionMatrix[10] - 1.0) * far;
-//            setSceneRadius((far - near) / 2.0);
-//            setSceneCenter(position() + (near + sceneRadius())*viewDirection());
-//        }
-//        else {
-//            const float ZNear = zNear();
-//            const float ZFar = zFar();
-//            float w, h;
-//            getOrthoWidthHeight(w, h);
-//            projectionMatrix_[0] = 1.0 / w;
-//            projectionMatrix_[5] = 1.0 / h;
-//            projectionMatrix_[10] = -2.0 / (ZFar - ZNear);
-//            projectionMatrix_[11] = 0.0;
-//            projectionMatrix_[14] = -(ZFar + ZNear) / (ZFar - ZNear);
-//            projectionMatrix_[15] = 1.0;
-//            // same as glOrtho( -w, w, -h, h, zNear(), zFar() );
-//            projectionMatrixIsUpToDate_ = true;
-//        }
-//        return true;
-//    }
-//
 
 	///////////////////////// Camera to world transform ///////////////////////
 

@@ -152,11 +152,17 @@ bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
     float cy = cam.cy;
     
     if (method == 1) {
-        c->set_from_calibration(
-                    fx, fy, 0.0f, cx, cy,
-                    vec3(cam.rx, cam.ry, cam.rz),
-                    vec3(cam.tx, cam.ty, cam.tz)
-                    );
+        const mat3 K(
+                fx, 0.0, cx,
+                0,  fy,   cy,
+                0,  0,    1);
+        const mat4 R = mat4::rotation(cam.rx, cam.ry, cam.rz);
+        const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
+        mat34 M(1.0);
+        M(1, 1) = -1;// invert the y axis
+        M(2, 2) = -1;// invert the z axis
+        const mat34& proj = K * M * T * R;
+        c->set_from_projection_matrix(proj);
     }
     else if (method == 2) {
         const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
