@@ -52,7 +52,6 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/key_frame_interpolator.h>
-#include <easy3d/viewer/average_color_blending.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_timer.h>
@@ -69,7 +68,7 @@
 #include <easy3d/util/timer.h>
 
 
- // enforce the same behavior on macOS and other platforms (i.e., Windows, Linux)
+ // To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
 #ifdef __APPLE__
 #define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
 #else
