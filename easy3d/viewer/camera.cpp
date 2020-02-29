@@ -1060,7 +1060,17 @@ namespace easy3d {
         //c->setPosition(-q.rotate(pos));
         //const float proj_5th = 2.0 * fy / cam.h;
         //c->setFieldOfView(2.0 * atan(1.0 / proj_5th));
-        
+
+#if 0
+        const vec3 rot_vec = -rot;
+        const float angle = rot_vec.length();
+        const quat q(rot_vec / angle, angle);
+        setOrientation(q);
+        setPosition(-q.rotate(vec3(t.x, t.y, t.z)));
+        const float proj_5th = 2.0 * fy / image_width;
+        setFieldOfView(2.0 * atan(1.0 / proj_5th));
+#else
+
         // I doubt the implementation of this function.
         const mat3 K(
                     fx, skew, cx,
@@ -1075,6 +1085,7 @@ namespace easy3d {
 
         const mat34& proj = K * M * T * R;
         set_from_projection_matrix(proj);
+#endif
     }
 
 
@@ -1107,9 +1118,9 @@ namespace easy3d {
     void Camera::set_from_projection_matrix(const mat34 &proj) {
 		// The 3 lines of the matrix are the normals to the planes x=0, y=0, z=0
 		// in the camera CS. As we normalize them, we do not need the 4th coordinate.
-		vec3 line_0(proj(0, 0), proj(0, 1), proj(0, 2));	line_0 = normalize(line_0);
-		vec3 line_1(proj(1, 0), proj(1, 1), proj(1, 2));	line_1 = normalize(line_1);
-		vec3 line_2(proj(2, 0), proj(2, 1), proj(2, 2));	line_2 = normalize(line_2);
+        vec3 line_0 = proj.row(0);	line_0.normalize();
+        vec3 line_1 = proj.row(1);	line_1.normalize();
+        vec3 line_2 = proj.row(2);	line_2.normalize();
 
 		// The camera position is at (0,0,0) in the camera CS so it is the
 		// intersection of the 3 planes. It can be seen as the kernel
