@@ -36,8 +36,9 @@
 namespace easy3d {
 
 
-    /*	NOTE: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR
-              is defined.*/
+    /**
+     * @Attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
+     **/
     //#define MATRIX_ROW_MAJOR
 
     template <typename T>	class Mat2;
@@ -45,14 +46,15 @@ namespace easy3d {
     template <typename T>	class Mat4;
 
 
-    /**	Base class for matrix types. Provides generic functionality for N by M matrices.
-    *		N: The number of rows in this matrix.
-    *		M: The number of columns in this matrix.
-    *		T: The scalar type for vector elements.
-    *		NOTE: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR
-    *			  is defined.
-    *		TODO: Add a transform() method or overload operator* so as to allow matrices to
-    *			  transform vectors that are M-1 in size, as vectors in	homogeneous space. */
+    /**
+     * Base class for matrix types. Provides generic functionality for N by M matrices.
+     *      N: The number of rows in this matrix.
+     *		M: The number of columns in this matrix.
+     *		T: The scalar type for vector elements.
+     *	@note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
+     *	TODO: Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
+     *	    M-1 in size, as vectors in	homogeneous space.
+     */
     template <size_t N, size_t M, typename T>
     class Mat
     {
@@ -61,8 +63,8 @@ namespace easy3d {
 
         /**	Default constructor.
          * Note: The matrix elements are intentionally not initialized. This is efficient
-         *       if the user assigns their values from subsequent compuations. Use Mat(T s)
-         *       to initialize the elmentment during construction. */
+         *       if the user assigns their values from subsequent computations. Use Mat(T s)
+         *       to initialize the elements during construction. */
         Mat();
 
         /**	Initialized with diagonal as s and others zeros. */

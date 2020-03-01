@@ -76,8 +76,8 @@ namespace easy3d {
 
         const vec3& trans = camera->projectedCoordinatesOf(pivotPoint());
         DLOG_IF(ERROR, has_nan(trans))
-                        << "camera->projectedCoordinatesOf(position()): " << trans << ", position(): "
-                        << position();
+                        << "camera->projectedCoordinatesOf(pivotPoint()): " << trans << ", pivotPoint(): "
+                        << pivotPoint();
 
 		if (screen) {
             const float pre_x = float(x - dx);
