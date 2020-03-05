@@ -1,4 +1,6 @@
-#include "widget_lighting.h"
+#include "widget_global_setting.h"
+
+#include <QColorDialog>
 
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/soft_shadow.h>
@@ -9,14 +11,14 @@
 #include "main_window.h"
 #include "paint_canvas.h"
 
-#include <ui_widget_lighting.h>
+#include <ui_widget_global_setting.h>
 
 
 using namespace easy3d;
 
-WidgetLighting::WidgetLighting(QWidget *parent)
+WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::WidgetLighting)
+    , ui(new Ui::WidgetGlobalSetting)
 {
     ui->setupUi(this);
     viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
@@ -57,9 +59,20 @@ WidgetLighting::WidgetLighting(QWidget *parent)
     ui->checkerSphere->setBackgroundColor(bc);
     connect(ui->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
 
-    connect(ui->checkBoxClippingPlane, SIGNAL(toggled(bool)), this, SLOT(setClippingPlane(bool)));
-    connect(ui->checkBoxCrossSection, SIGNAL(toggled(bool)), this, SLOT(setCrossSection(bool)));
+    connect(ui->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
+    connect(ui->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));
+    connect(ui->toolButtonClippingPlaneColor, SIGNAL(clicked()), this, SLOT(setClippingPlaneColor()));
+    connect(ui->checkBoxCrossSectionEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableCrossSection(bool)));
     connect(ui->doubleSpinBoxCrossSectionThickness, SIGNAL(valueChanged(double)), this, SLOT(setCrossSectionThickness(double)));
+
+    // visible
+    ui->checkBoxClippingPlaneVisible->setChecked(true);
+    // default color
+    const vec3& c = setting::clipping_plane_color;
+    QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
+    pixmap.fill(
+            QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
+    ui->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
 
     connect(ui->comboBoxSSAOAlgorithm, SIGNAL(currentIndexChanged(int)), this, SLOT(setSSAOAlgorithm(int)));
     connect(ui->horizontalSliderSSAORadius, SIGNAL(valueChanged(int)), this, SLOT(setSSAORadius(int)));
@@ -77,7 +90,7 @@ WidgetLighting::WidgetLighting(QWidget *parent)
 }
 
 
-WidgetLighting::~WidgetLighting()
+WidgetGlobalSetting::~WidgetGlobalSetting()
 {
     delete ui;
 
@@ -86,7 +99,7 @@ WidgetLighting::~WidgetLighting()
 }
 
 
-void WidgetLighting::setClippingPlane(bool b) {
+void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
     if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
 
@@ -102,7 +115,35 @@ void WidgetLighting::setClippingPlane(bool b) {
 }
 
 
-void WidgetLighting::setCrossSection(bool b) {
+void WidgetGlobalSetting::setClippingPlaneVisible(bool b) {
+    if (!setting::clipping_plane)
+        setting::clipping_plane = new ClippingPlane;
+
+    setting::clipping_plane->set_visible(b);
+    viewer_->update();
+}
+
+
+void WidgetGlobalSetting::setClippingPlaneColor() {
+    if (!setting::clipping_plane)
+        setting::clipping_plane = new ClippingPlane;
+
+    const vec4 &c = setting::clipping_plane->color();
+    QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
+    const QColor &color = QColorDialog::getColor(orig, this);
+    if (color.isValid()) {
+        const vec4 new_color(color.redF(), color.greenF(), color.blueF(), c.a);
+        setting::clipping_plane->set_color(new_color);
+        viewer_->update();
+
+        QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
+        pixmap.fill(color);
+        ui->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
+    }
+}
+
+
+void WidgetGlobalSetting::setEnableCrossSection(bool b) {
     if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
 
@@ -116,7 +157,7 @@ void WidgetLighting::setCrossSection(bool b) {
 }
 
 
-void WidgetLighting::setCrossSectionThickness(double w) {
+void WidgetGlobalSetting::setCrossSectionThickness(double w) {
     if (!setting::clipping_plane)
         setting::clipping_plane = new ClippingPlane;
 
@@ -126,7 +167,7 @@ void WidgetLighting::setCrossSectionThickness(double w) {
 }
 
 
-void WidgetLighting::setSSAOAlgorithm(int algo) {
+void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
 //    if (algo != AmbientOcclusion_HBAO::SSAO_NONE && ui->checkBoxTransparency->isChecked())
 //        ui->checkBoxTransparency->setChecked(false);  // ssao and tranparency cannot co-exist
 //    viewer_->ssao()->set_algorithm(AmbientOcclusion_HBAO::Algorithm(algo));
@@ -134,37 +175,37 @@ void WidgetLighting::setSSAOAlgorithm(int algo) {
 }
 
 
-void WidgetLighting::setSSAORadius(int v) {
+void WidgetGlobalSetting::setSSAORadius(int v) {
     viewer_->ssao()->set_radius(v / 100.0f);
     viewer_->update();
 }
 
 
-void WidgetLighting::setSSAOIntensity(int v) {
+void WidgetGlobalSetting::setSSAOIntensity(int v) {
 //    viewer_->ssao()->set_intensity(v / 100.0f);
 //    viewer_->update();
 }
 
 
-void WidgetLighting::setSSAOBias(int v) {
+void WidgetGlobalSetting::setSSAOBias(int v) {
     viewer_->ssao()->set_bias(v / 100.0f);
     viewer_->update();
 }
 
 
-void WidgetLighting::setSSAOSharpness(int v) {
+void WidgetGlobalSetting::setSSAOSharpness(int v) {
 //    viewer_->ssao()->set_sharpness(v / 100.0f);
 //    viewer_->update();
 }
 
 
-void WidgetLighting::setEyeDomeLighting(bool b) {
+void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
     viewer_->enableEyeDomeLighting(b);
     viewer_->update();
 }
 
 
-void WidgetLighting::setTransparency(bool b) {
+void WidgetGlobalSetting::setTransparency(bool b) {
     if (b && ui->checkBoxShadow->isChecked())
         ui->checkBoxShadow->setChecked(false);  // shadow and tranparency cannot co-exist
 //    if (b && (ui->comboBoxSSAOAlgorithm->currentIndex() != 0 || viewer_->ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE))
@@ -175,7 +216,7 @@ void WidgetLighting::setTransparency(bool b) {
 }
 
 
-void WidgetLighting::setShadow(bool b) {
+void WidgetGlobalSetting::setShadow(bool b) {
     if (b && ui->checkBoxTransparency->isChecked())
         ui->checkBoxTransparency->setChecked(false);  // shadow and tranparency cannot co-exist
     viewer_->enableShadow(b);
@@ -183,13 +224,13 @@ void WidgetLighting::setShadow(bool b) {
 }
 
 
-void WidgetLighting::setLightDistance(int d) {
+void WidgetGlobalSetting::setLightDistance(int d) {
     viewer_->shadow()->set_light_distance(d);
     viewer_->update();
 }
 
 
-void WidgetLighting::setShadowSmoothPattern(int v) {
+void WidgetGlobalSetting::setShadowSmoothPattern(int v) {
     SoftShadow* shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
     if (shadow) {
         shadow->set_sample_pattern(SoftShadow::SamplePattern(v));
@@ -198,7 +239,7 @@ void WidgetLighting::setShadowSmoothPattern(int v) {
 }
 
 
-void WidgetLighting::setShadowSoftness(int v) {
+void WidgetGlobalSetting::setShadowSoftness(int v) {
     SoftShadow* shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
     if (shadow) {
         shadow->set_softness(static_cast<float>(v) / 100.0f);
@@ -207,12 +248,12 @@ void WidgetLighting::setShadowSoftness(int v) {
 }
 
 
-void WidgetLighting::setShadowDarkness(int v) {
+void WidgetGlobalSetting::setShadowDarkness(int v) {
     viewer_->shadow()->set_darkness(static_cast<float>(v) / 100.0f);
     viewer_->update();
 }
 
 
-void WidgetLighting::setImposterShadows(bool) {
+void WidgetGlobalSetting::setImposterShadows(bool) {
 
 }

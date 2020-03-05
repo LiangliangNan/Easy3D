@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WidgetLighting</class>
- <widget class="QWidget" name="WidgetLighting">
+ <class>WidgetGlobalSetting</class>
+ <widget class="QWidget" name="WidgetGlobalSetting">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>283</width>
-    <height>843</height>
+    <width>278</width>
+    <height>879</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Lighting</string>
+   <string>Global Setting</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
@@ -221,7 +221,7 @@
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="labelCrossSection_2">
+      <widget class="QLabel" name="labelClippingPlaneEnable">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -229,14 +229,14 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Clipping</string>
+        <string>Clipping Plane</string>
        </property>
       </widget>
      </item>
      <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QCheckBox" name="checkBoxClippingPlane">
+        <widget class="QCheckBox" name="checkBoxClippingPlaneEnable">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -251,37 +251,6 @@
          </property>
          <property name="text">
           <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxCrossSectionWidth_2">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>0.001000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>100.000000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.100000000000000</double>
-         </property>
-         <property name="value">
-          <double>0.001000000000000</double>
          </property>
         </widget>
        </item>
@@ -304,7 +273,7 @@
       </layout>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="labelCrossSection">
+      <widget class="QLabel" name="labelClippingPlaneVisible">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -312,14 +281,98 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Cross-Section</string>
+        <string>Visible</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QCheckBox" name="checkBoxCrossSection">
+        <widget class="QCheckBox" name="checkBoxClippingPlaneVisible">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonClippingPlaneColor">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Click to set the backside color for this drawable</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../Resources/icons/transparency.png</normaloff>../Resources/icons/transparency.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_23">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>38</width>
+           <height>19</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelCrossSectionEnable">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Cross-section</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_10">
+       <item>
+        <widget class="QCheckBox" name="checkBoxCrossSectionEnable">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -369,7 +422,7 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_23">
+        <spacer name="horizontalSpacer_24">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -386,35 +439,35 @@
        </item>
       </layout>
      </item>
-     <item row="7" column="0" colspan="2">
+     <item row="8" column="0" rowspan="2" colspan="2">
       <widget class="Line" name="line_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="labelSSAO">
-       <property name="text">
-        <string>SSAO</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1">
+     <item row="9" column="1" rowspan="2">
       <widget class="QComboBox" name="comboBoxSSAOAlgorithm">
        <property name="toolTip">
         <string>Smooth pattern for soft shadow</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
+      <widget class="QLabel" name="labelSSAO">
+       <property name="text">
+        <string>SSAO</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
       <widget class="QLabel" name="labelSSAORadius">
        <property name="text">
         <string>Radius</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="11" column="1">
       <widget class="QSlider" name="horizontalSliderSSAORadius">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -445,14 +498,14 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="labelSSAOIntensity">
        <property name="text">
         <string>Intensity</string>
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="12" column="1">
       <widget class="QSlider" name="horizontalSliderSSAOIntensity">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -483,14 +536,14 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="13" column="0">
       <widget class="QLabel" name="labelSSAOBias">
        <property name="text">
         <string>Bias</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="13" column="1">
       <widget class="QSlider" name="horizontalSliderSSAOBias">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -518,14 +571,14 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0">
+     <item row="14" column="0">
       <widget class="QLabel" name="labelSSAOSharpness">
        <property name="text">
         <string>Sharpness</string>
        </property>
       </widget>
      </item>
-     <item row="12" column="1">
+     <item row="14" column="1">
       <widget class="QSlider" name="horizontalSliderSSAOSharpness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -553,7 +606,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="labelEDL">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -566,7 +619,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="15" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_9">
        <item>
         <widget class="QCheckBox" name="checkBoxEyeDomeLighting">
@@ -593,14 +646,14 @@
        </item>
       </layout>
      </item>
-     <item row="14" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="labelTransparent">
        <property name="text">
         <string>Transparent</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="16" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
         <widget class="QCheckBox" name="checkBoxTransparency">
@@ -627,21 +680,21 @@
        </item>
       </layout>
      </item>
-     <item row="15" column="0" colspan="2">
+     <item row="17" column="0" colspan="2">
       <widget class="Line" name="line_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="16" column="0">
+     <item row="18" column="0">
       <widget class="QLabel" name="labelShadow">
        <property name="text">
         <string>Shadow</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
+     <item row="18" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
         <widget class="QCheckBox" name="checkBoxShadow">
@@ -668,28 +721,28 @@
        </item>
       </layout>
      </item>
-     <item row="17" column="0">
+     <item row="19" column="0">
       <widget class="QLabel" name="labelShadowSmoothPattern">
        <property name="text">
         <string>PCF filter</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
+     <item row="19" column="1">
       <widget class="QComboBox" name="comboBoxShadowSmoothPattern">
        <property name="toolTip">
         <string>Smooth pattern for soft shadow</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="0">
+     <item row="20" column="0">
       <widget class="QLabel" name="labelShadowLightDistance">
        <property name="text">
         <string>Distance</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="20" column="1">
       <widget class="QSlider" name="horizontalSliderShadowLightDistance">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -717,14 +770,14 @@
        </property>
       </widget>
      </item>
-     <item row="19" column="0">
+     <item row="21" column="0">
       <widget class="QLabel" name="labelShadowSoftness">
        <property name="text">
         <string>Softness</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
+     <item row="21" column="1">
       <widget class="QSlider" name="horizontalSliderShadowSoftness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -752,14 +805,14 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="0">
+     <item row="22" column="0">
       <widget class="QLabel" name="labelShadowDarkness">
        <property name="text">
         <string>Darkness</string>
        </property>
       </widget>
      </item>
-     <item row="20" column="1">
+     <item row="22" column="1">
       <widget class="QSlider" name="horizontalSliderShadowDarkness">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">

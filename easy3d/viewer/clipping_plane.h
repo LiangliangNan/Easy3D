@@ -50,6 +50,12 @@ namespace easy3d {
         Plane3 plane0() const;    // clipping plane0
         Plane3 plane1() const;    // clipping plane1
 
+        bool is_visible() const { return visible_; }
+        void set_visible(bool v) { visible_ = v; }
+
+        const vec4& color() const { return color_; }
+        void set_color(const vec4& c) { color_ = c; }
+
         bool cross_section() const { return cross_section_; }
         void set_cross_section(bool b) { cross_section_ = b; }
 
@@ -68,6 +74,8 @@ namespace easy3d {
     protected:
         ManipulatedFrame *manipulated_frame_;
         bool enabled_;
+        bool visible_;
+        vec4 color_;
         bool cross_section_;
         float cross_section_width_;
         float size_;

@@ -38,7 +38,8 @@ namespace easy3d {
 
 
     ClippingPlane::ClippingPlane()
-            : manipulated_frame_(0), size_(1.0f), enabled_(false), cross_section_(false),
+            : manipulated_frame_(0), size_(1.0f), enabled_(false), visible_(true),
+              color_(setting::clipping_plane_color), cross_section_(false),
               cross_section_width_(0.001f) {
     }
 
@@ -120,7 +121,7 @@ namespace easy3d {
 
 
     void ClippingPlane::draw(Camera *cam) const {
-        if (!enabled_)
+        if (!enabled_ || !visible_)
             return;
 
         // To use the standard drawable to visualize the clipping plane, I have to temporally disable clipping plane
@@ -147,7 +148,7 @@ namespace easy3d {
         wireframe.update_vertex_buffer(points);
         wireframe.update_index_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
-        wireframe.set_default_color(vec4(1, 0, 0, 1));
+        wireframe.set_default_color(color_);
         wireframe.draw(cam, false);  easy3d_debug_log_gl_error;
 
         // draw the face of the clipping plane
@@ -157,7 +158,7 @@ namespace easy3d {
         TrianglesDrawable face;
         face.update_vertex_buffer(points);
         face.update_index_buffer(face_indices);
-        face.set_default_color(vec4(1, 0, 0, 0.2));
+        face.set_default_color(color_);
         face.draw(cam, false);
         glDisable(GL_BLEND);    easy3d_debug_log_gl_error;
 

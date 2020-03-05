@@ -106,6 +106,8 @@ namespace easy3d {
         extern float graph_edges_line_width;
 
         extern ClippingPlane* clipping_plane;
+        extern vec4 clipping_plane_color;
+
 
     } // namespace setting
 

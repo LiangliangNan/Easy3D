@@ -33,7 +33,7 @@ set(${PROJECT_NAME}_HEADERS
         widgets/widget_drawable_points.h
         widgets/widget_drawable_lines.h
         widgets/widget_drawable_triangles.h
-        widgets/widget_lighting.h
+        widgets/widget_global_setting.h
 
         tools/canvas.h
         tools/tool.h
@@ -60,7 +60,7 @@ set(${PROJECT_NAME}_SOURCES
         widgets/widget_drawable_points.cpp
         widgets/widget_drawable_lines.cpp
         widgets/widget_drawable_triangles.cpp
-        widgets/widget_lighting.cpp
+        widgets/widget_global_setting.cpp
 
         tools/tool.cpp
         tools/tool_manager.cpp
@@ -81,7 +81,7 @@ set(${PROJECT_NAME}_FORMS
         widgets/widget_drawable_points.ui
         widgets/widget_drawable_lines.ui
         widgets/widget_drawable_triangles.ui
-        widgets/widget_lighting.ui
+        widgets/widget_global_setting.ui
         )
 
 #set(${PROJECT_NAME}_RESOURCES

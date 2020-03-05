@@ -1,28 +1,29 @@
-#ifndef WIDGET_LIGHTING_H
-#define WIDGET_LIGHTING_H
+#ifndef WIDGET_GLOBAL_SETTING_H
+#define WIDGET_GLOBAL_SETTING_H
 
 #include <QWidget>
 
 
 namespace Ui {
-class WidgetLighting;
+class WidgetGlobalSetting;
 }
 
 class PaintCanvas;
 
-class WidgetLighting : public QWidget
+class WidgetGlobalSetting : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit WidgetLighting(QWidget *parent);
-    ~WidgetLighting();
+    explicit WidgetGlobalSetting(QWidget *parent);
+    ~WidgetGlobalSetting();
 
 private slots:
-    void setClippingPlane(bool);
-    void setCrossSection(bool);
+    void setEnableClippingPlane(bool);
+    void setClippingPlaneVisible(bool);
+    void setClippingPlaneColor();
+    void setEnableCrossSection(bool);
     void setCrossSectionThickness(double);
-
 
     void setSSAOAlgorithm(int);
     void setSSAORadius(int);
@@ -41,10 +42,10 @@ private slots:
     void setImposterShadows(bool);
 
 private:
-    Ui::WidgetLighting* ui;
+    Ui::WidgetGlobalSetting* ui;
 
     PaintCanvas* viewer_;
 };
 
 
-#endif // WIDGET_LIGHTING_H
+#endif // WIDGET_GLOBAL_SETTING_H

@@ -1101,7 +1101,7 @@ void PaintCanvas::postDraw() {
     tool_manager()->draw_hint();
 
     //
-    if (setting::clipping_plane && setting::clipping_plane->is_enabled())
+    if (setting::clipping_plane)
         setting::clipping_plane->draw(camera());
 }
 

@@ -37,7 +37,7 @@
 #include "dialogs/dialog_point_cloud_simplification.h"
 #include "dialogs/dialog_gaussian_noise.h"
 
-#include "widgets/widget_lighting.h"
+#include "widgets/widget_global_setting.h"
 #include "widgets/widget_drawable_points.h"
 #include "widgets/widget_drawable_lines.h"
 #include "widgets/widget_drawable_triangles.h"
@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
     widgetPointsDrawable_->setEnabled(false);
 
-    ui->verticalLayoutGlobalSetting->addWidget(new WidgetLighting(this));
+    ui->verticalLayoutGlobalSetting->addWidget(new WidgetGlobalSetting(this));
 
     // ---------------------------
 
@@ -587,6 +587,8 @@ void MainWindow::createActionsForViewMenu() {
     ui->menuView->addAction(actionToggleDockWidgetLogger);
 
     connect(ui->actionBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
+
+//    connect(ui->actionShowManipulateHint, SIGNAL(toggled(bool)), viewer_, SLOT(showManipulatiHint(bool)));
 }
 
 

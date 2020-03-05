@@ -48,7 +48,7 @@ void create_spheres(SurfaceMesh* mesh) {
     points_drawable->update_vertex_buffer(points.vector());
     points_drawable->set_per_vertex_color(false);
     points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-    points_drawable->set_point_size(18.0f);
+    points_drawable->set_point_size(24.0f);
     points_drawable->set_impostor_type(PointsDrawable::SPHERE);
 }
 
@@ -113,7 +113,7 @@ void create_surfels(SurfaceMesh* mesh) {
     points_drawable->update_normal_buffer(normals.vector());
     points_drawable->set_per_vertex_color(false);
     points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-    points_drawable->set_point_size(20.0f);
+    points_drawable->set_point_size(24.0f);
     points_drawable->set_impostor_type(PointsDrawable::SURFEL);
 }
 
