@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/point_cloud_io.h>
 
 #include <unordered_map>
 
