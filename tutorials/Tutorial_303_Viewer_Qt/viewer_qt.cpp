@@ -25,8 +25,6 @@
 #include "viewer_qt.h"
 
 #include <QMouseEvent>
-#include <QWheelEvent>
-#include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
 #include <QOpenGLContext>
