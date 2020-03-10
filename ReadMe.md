@@ -73,7 +73,7 @@ Easy3D. Then you should have obtained a usable project and just build. I recomme
 - Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio).
 
-Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./How_to_build.md).
+Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./HowToBuild.md).
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 

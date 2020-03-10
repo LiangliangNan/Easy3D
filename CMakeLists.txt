@@ -116,9 +116,9 @@ option (GENERATE_DOCUMENTATION "Generate Doxygen documentation" ${DOXYGEN_FOUND}
 # generates documentation if necessary
 if (GENERATE_DOCUMENTATION)
     # configures Doxygen
-    configure_file (Doxyfile.in Doxyfile @ONLY)
+    configure_file (doc/Doxyfile.in Doxyfile @ONLY)
 
-    add_custom_target (docs ALL
+    add_custom_target (doc ALL
             ${DOXYGEN_EXECUTABLE} Doxyfile
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
             COMMENT "Generating Doxygen documentation")
