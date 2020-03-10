@@ -1,7 +1,17 @@
 cmake_minimum_required(VERSION 3.1)
 
+################################################################################
+
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
+
+set (PROJECT_MAJOR 3)
+set (PROJECT_MINOR 0)
+set (PROJECT_PATCH 0)
+set (PROJECT_VERSION "${PROJECT_MAJOR}.${PROJECT_MINOR}.${PROJECT_PATCH}")
+
+
+################################################################################
 
 # One shouldn't generate the BUILD project directly in the SOURCES folder!
 if ( ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR} )
@@ -22,6 +32,8 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 else()
     message(STATUS "Easy3D: I'am working on a 32-bit ${CMAKE_SYSTEM_NAME}")
 endif()
+
+################################################################################
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -47,6 +59,7 @@ option(EASY3D_BUILD_SANDBOX         "Build sandbox"                         ON)
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
 
+################################################################################
 
 find_package(CGAL QUIET)
 if (CGAL_FOUND)
@@ -90,6 +103,28 @@ if(EASY3D_BUILD_SANDBOX)
 endif()
 
 add_subdirectory(applications)
+
+################################################################################
+
+# finds doxygen
+find_package (Doxygen)
+
+# turn on if you want to generate documentation
+# turned on by default as long as Doxygen is found
+option (GENERATE_DOCUMENTATION "Generate Doxygen documentation" ${DOXYGEN_FOUND})
+
+# generates documentation if necessary
+if (GENERATE_DOCUMENTATION)
+    # configures Doxygen
+    configure_file (Doxyfile.in Doxyfile @ONLY)
+
+    add_custom_target (docs ALL
+            ${DOXYGEN_EXECUTABLE} Doxyfile
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Generating Doxygen documentation")
+endif ()
+
+################################################################################
 
 # hide some variables that might be set in 3rd_party libraries
 mark_as_advanced(FORCE BUILD_SHARED_LIBS)
