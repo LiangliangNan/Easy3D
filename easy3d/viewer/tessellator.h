@@ -44,6 +44,8 @@ namespace easy3d {
      *          - Generate buffer data for rendering;
      *          - Triangulate non-triangle surfaces;
      *          - Stitch patches of a triangle meshes.
+     *
+     * @TODO: make it templated for both 2D and 3D, and floating point number; use the factored glutess
      */
 
     class Tessellator {
