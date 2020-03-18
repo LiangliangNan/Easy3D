@@ -111,10 +111,10 @@ find_package (Doxygen)
 
 # turn on if you want to generate documentation
 # turned on by default as long as Doxygen is found
-option (GENERATE_DOCUMENTATION "Generate Doxygen documentation" ${DOXYGEN_FOUND})
+option (EASY3D_BUILD_DOCUMENTATION "Generate Doxygen documentation" ${DOXYGEN_FOUND})
 
 # generates documentation if necessary
-if (GENERATE_DOCUMENTATION)
+if (EASY3D_BUILD_DOCUMENTATION)
     # configures Doxygen
     configure_file (doc/Doxyfile.in Doxyfile @ONLY)
 
