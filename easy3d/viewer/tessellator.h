@@ -52,7 +52,6 @@ namespace easy3d {
     public:
         struct Vertex : std::vector<double> {
             Vertex(std::size_t size = 0) : std::vector<double>(size) {}
-            explicit Vertex(const Vertex *v) : std::vector<double>(v->data(), v->data() + v->size()) {}
             template<typename Vec>
             inline void append(const Vec &v) {
                 for (int i = 0; i < v.size(); ++i)
