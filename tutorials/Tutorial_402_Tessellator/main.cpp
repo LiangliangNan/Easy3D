@@ -38,7 +38,7 @@ using namespace easy3d;
 // with concave faces, self−intersecting faces, and faces with holes) using the
 // tessellator of Easy3D.
 //
-// Note: For general rendering puruposes, you can use the tessellator to create a
+// Note: For general rendering purposes, you can use the tessellator to create a
 //       trianglesDrawable without modifying the mesh.
 
 typedef std::vector<vec3> Hole;
