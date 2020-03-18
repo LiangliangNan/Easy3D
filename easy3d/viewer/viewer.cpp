@@ -662,7 +662,7 @@ namespace easy3d {
 
 	bool Viewer::key_press_event(int key, int modifiers) {
 		if (key == GLFW_KEY_F1 && modifiers == 0)
-			LOG(INFO) << usage();
+			std::cout << usage();
 
 		else if (key == GLFW_KEY_LEFT && modifiers == 0) {
 			float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
@@ -836,7 +836,7 @@ namespace easy3d {
 				model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
 			if (model_idx_ >= 0) {
 				fit_screen(models_[model_idx_]);
-				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+				std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
 			}
 		}
 		else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
@@ -846,7 +846,7 @@ namespace easy3d {
 				model_idx_ = int((model_idx_ + 1) % models_.size());
 			if (model_idx_ >= 0) {
 				fit_screen(models_[model_idx_]);
-				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
 			}
 		}
 		else if (key == GLFW_KEY_DELETE && modifiers == 0) {
