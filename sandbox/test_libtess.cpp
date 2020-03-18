@@ -26,7 +26,10 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <3rd_party/libtess/tesselator.h>
 
@@ -59,7 +62,13 @@ void triangulate(SurfaceMesh* mesh) {
             push_back(c);
         }
     };
-    std::vector<vec3> points;
+    struct Point {
+        Point(const vec3& p, bool status = false) : pt(p), is_new(status) {}
+        vec3 pt;
+        bool is_new;
+    };
+
+    std::vector<Point> points;
     std::vector<Triangle> triangles;
 
     gluTesselator *tessellator = tessNewTess(nullptr);
@@ -76,10 +85,7 @@ void triangulate(SurfaceMesh* mesh) {
             pts.push_back(mesh->position(v));
         }
 
-        std::cout << "sizeof(vec3): " << sizeof(vec3) << std::endl;
-
-
-        tessSetOption(tessellator, TESS_CONSTRAINED_DELAUNAY_TRIANGULATION, 1);  // use CDT
+        tessSetOption(tessellator, TESS_CONSTRAINED_DELAUNAY_TRIANGULATION, 0);  // use CDT
         tessAddContour(tessellator, 3, pts[0], sizeof(vec3), pts.size());
 //        tessellator.end_contour();
 
@@ -102,17 +108,18 @@ void triangulate(SurfaceMesh* mesh) {
             const int nelems = tessGetElementCount(tessellator);
 
             for (int i = 0; i < nverts; ++i) {
-                if (vinds[i] == TESS_UNDEF) {
-                    // this is a new point due to self intersection
-                }
-                points.emplace_back(vec3(verts + i * 3));
+                points.emplace_back(Point(vec3(verts + i * 3), vinds[i] == TESS_UNDEF));
+
+//                if (vinds[i] == TESS_UNDEF) {
+//                    // this is a new point due to self intersection
+//                }
             }
 
             for (int i = 0; i < nelems; ++i) {
-                const int *p = &elems[i * 3];
-                int a = offset + p[0];
-                int b = offset + p[1];
-                int c = offset + p[2];
+                const int *poly = &elems[i * 3];
+                int a = offset + poly[0];
+                int b = offset + poly[1];
+                int c = offset + poly[2];
                 triangles.emplace_back(Triangle(a, b, c));
             }
 
@@ -129,11 +136,19 @@ void triangulate(SurfaceMesh* mesh) {
     mesh->clear();
 
     if (!triangles.empty()) { // in degenerate cases num can be zero
-        for (const auto &v : points)
-            mesh->add_vertex(v);
 
-        for (const auto &t : triangles)
+        auto lock = mesh->vertex_property<bool>("v:lock");
+        for (const auto &p : points) {
+            auto v = mesh->add_vertex(p.pt);
+            lock[v] = p.is_new;
+//            if (p.is_new)
+//                std::cout << "vertex " << v << " is new" << std::endl;
+        }
+
+        for (const auto &t : triangles) {
             mesh->add_triangle(SurfaceMesh::Vertex(t[0]), SurfaceMesh::Vertex(t[1]), SurfaceMesh::Vertex(t[2]));
+            LOG(INFO) << "triangle: " << t[0] << " " << t[1] << " " << t[2] << std::endl;
+        }
     }
 }
 
@@ -151,6 +166,7 @@ int main(int argc, char** argv) {
 
         //---------------------- create model -----------------------
 
+#if 1
         SurfaceMesh* mesh = new SurfaceMesh;
 
         // Face 1: a concave quad
@@ -192,10 +208,21 @@ int main(int argc, char** argv) {
                 vec3(1900, 600, 0)
             };
         }
+#else
+        // Read a mesh specified by its file name
+        const std::string file_name = resource::directory() + "/data/other/tree.obj";
+        SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
+        if (!mesh) {
+            LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+            return EXIT_FAILURE;
+        }
+#endif
 
         //-------- Triangulate the mesh using the tessellator ---------
 
+        StopWatch w;
         triangulate(mesh);
+        std::cout << "tessellation took " << w.time_string() << std::endl;
 
         // ------------------------------------------------------------
 
