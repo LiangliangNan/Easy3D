@@ -32,7 +32,7 @@
 // not enough memory
 #define STH_ENOMEM -4
 
-struct sth_stash* sth_create(int cachew, int cacheh);
+struct sth_stash* sth_create(int cachew, int cacheh, bool mipmap = true);
 
 int sth_add_font(struct sth_stash* stash, const char* path);
 int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer);

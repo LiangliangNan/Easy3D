@@ -116,6 +116,7 @@ struct sth_stash
 	struct sth_texture* bm_textures;
 	struct sth_font* fonts;
 	int drawing;
+    int mipmap; //Liangliang: optional mipmap generation to each char
 };
 
 
@@ -155,7 +156,7 @@ static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned i
 
 
 
-struct sth_stash* sth_create(int cachew, int cacheh)
+struct sth_stash* sth_create(int cachew, int cacheh, bool mipmap)
 {
 	struct sth_stash* stash = NULL;
 	GLubyte* empty_data = NULL;
@@ -549,6 +550,18 @@ static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt
 		glBindTexture(GL_TEXTURE_2D, texture->id);
 		glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0,glyph->y0, gw,gh, GL_RED,GL_UNSIGNED_BYTE,bmp);   easy3d_debug_log_gl_error;
+        if(stash->mipmap){
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 8); //TODO check for hw support!
+#if defined(__ANDROID__) || defined(TARGET_OPENGLES) || defined(TARGET_RASPBERRY_PI)
+            // OpenGLES 1.0 does not support the following.
+#else
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0); //shoot for sharper test
+//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3); // pick mipmap level 7 or lower
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0);
+            glGenerateMipmap(GL_TEXTURE_2D);
+#endif
+        }
         glBindTexture(GL_TEXTURE_2D, 0);   easy3d_debug_log_gl_error;
 		free(bmp);
 	}
