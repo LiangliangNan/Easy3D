@@ -39,7 +39,7 @@ using namespace easy3d;
 
 #define HASH_LUT_SIZE 256
 #define MAX_ROWS 128
-#define VERT_COUNT (6*128)
+#define VERT_COUNT (6*128 * 100)  /* oriol! x 100 to avoid repeated flush_draw() calls while drawing */
 #define VERT_STRIDE (sizeof(float)*4)
 
 #define TTFONT_FILE 1
