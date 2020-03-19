@@ -100,6 +100,7 @@ endif()
 
 if(EASY3D_BUILD_SANDBOX)
     add_subdirectory(sandbox)
+    add_subdirectory(FontRendering)
 endif()
 
 add_subdirectory(applications)
