@@ -73,7 +73,7 @@ void FontViewer::draw() const {
     /* position of the text */
     float font_size = 128.0f;
     float x = 50;
-    float y = (height() * dpi_scaling() - 1 - font_size) - 50;
+    float y = 50;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -81,7 +81,10 @@ void FontViewer::draw() const {
     /* draw text during your OpenGL render loop */
     sth_begin_draw(stash); easy3d_debug_log_gl_error;
     /* position: (x, y); font size: 24 */
-    sth_draw_text(stash, droid, font_size, x, y, "Hello world! I Love Easy3D!", &x); easy3d_debug_log_gl_error;
+
+    sth_draw_text(stash, droid, font_size, x, y, "Hello world! ", &x);easy3d_debug_log_gl_error;
+    sth_draw_text(stash, droid, font_size, x, y, "I Love Easy3D!", &x); easy3d_debug_log_gl_error;
+
     /* now, the float x contains the x position of the next char */
     sth_end_draw(stash); easy3d_debug_log_gl_error;
 

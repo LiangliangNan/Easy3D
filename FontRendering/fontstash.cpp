@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-#define STB_TRUETYPE_IMPLENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
 #include "fontstash.h"

@@ -11,7 +11,6 @@ add_executable(${PROJECT_NAME}
         fontstash.h
         fontstash.cpp
         stb_truetype.h
-        stb_truetype.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "sandbox")
