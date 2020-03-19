@@ -32,6 +32,29 @@
 // not enough memory
 #define STH_ENOMEM -4
 
+
+/**
+ * Example:
+ *  ------------------------------------------------------------------------------------
+ *  // create a font stash with a maximum texture size of 512 x 512
+ *  struct sth_stash *stash = sth_create(512, 512);
+ *  // load true type font
+ *  const std::string font_file = resource::directory() + "/fonts/zachary.ttf";
+ *  const int droid = sth_add_font(stash, font_file.c_str());
+ *  ------------------------------------------------------------------------------------
+ *  glEnable(GL_BLEND);
+ *  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+ *  // draw text during your OpenGL render loop
+ *  sth_begin_draw(stash);
+ *  // position: (x, y); font size: 24
+ *  sth_draw_text(stash, droid, 24, x, y, "Hello world! ", &x);
+ *  // now, the float x contains the x position of the next char
+ *  sth_end_draw(stash);
+ *  glDisable(GL_BLEND);
+ *  ------------------------------------------------------------------------------------
+ *  // clean
+ */
+
 struct sth_stash* sth_create(int cachew, int cacheh, bool mipmap = true);
 
 int sth_add_font(struct sth_stash* stash, const char* path);

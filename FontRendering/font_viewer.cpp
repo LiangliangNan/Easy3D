@@ -23,7 +23,7 @@
  */
 
 #include "font_viewer.h"
-#include "fontstash.h"
+#include "opengl_text.h"
 
 #include <easy3d/util/dialogs.h>
 #include <easy3d/fileio/resources.h>
@@ -32,11 +32,6 @@
 
 using namespace easy3d;
 
-
-/* create a font stash with a maximum texture size of 512 x 512 */
-struct sth_stash *stash = nullptr;
-/* load truetype font */
-int droid = -1;
 
 FontViewer::FontViewer(const std::string &title)
         : Viewer(title) {
@@ -49,44 +44,49 @@ void FontViewer::init() {
 
     LOG(WARNING) << "TODO: add a OpenGLText class, allowing changing text color/font/size etc.";
 
-    /* create a font stash with a maximum texture size of 512 x 512 */
-    stash = sth_create(512, 512); easy3d_debug_log_gl_error;
+    texter_ = new ofxFontStash;
+    
+    std::vector<std::string> font_files = {
+            resource::directory() + "/fonts/DroidSerif-Regular.ttf",
+            resource::directory() + "/fonts/zachary.ttf",
+            resource::directory() + "/fonts/BNFontBoy.ttf",
+            resource::directory() + "/fonts/Caribbean.ttf",
+            resource::directory() + "/fonts/Cousine-Regular.ttf",
+            resource::directory() + "/fonts/DroidSerif-Italic.ttf",
+            resource::directory() + "/fonts/Earth-Normal.ttf",
+            resource::directory() + "/fonts/G-Unit.ttf",
+            resource::directory() + "/fonts/ProggyClean.ttf",
+            resource::directory() + "/fonts/Vera.ttf",
+            resource::directory() + "/fonts/wds052801.ttf"
+    };
 
-    /* load truetype font */
-    //const std::string font_file = resource::directory() + "/fonts/DroidSerif-Regular.ttf";
-    const std::string font_file = resource::directory() + "/fonts/zachary.ttf";
-    droid = sth_add_font(stash, font_file.c_str()); easy3d_debug_log_gl_error;
+    for (const auto& file : font_files)
+        texter_->add_font(file);
 }
 
 
 void FontViewer::cleanup() {
     Viewer::cleanup();
 
-    sth_delete(stash);
+    delete texter_;
 }
 
 
 void FontViewer::draw() const {
     Viewer::draw();
 
+    const float font_size = 80.0f;
+    float x = 100.0f;
+    float y = 200.0f;
 
-    /* position of the text */
-    float font_size = 128.0f;
-    float x = 50;
-    float y = 50;
+    const int num_fonts = texter_->num_fonts();
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    const float font_height = texter_->getFontHeight(font_size);
 
-    /* draw text during your OpenGL render loop */
-    sth_begin_draw(stash); easy3d_debug_log_gl_error;
-    /* position: (x, y); font size: 24 */
+    for (int i = 0; i < num_fonts; ++i) {
+        float y1 = y + i * (font_height + 50);
+        float x1 = texter_->draw("Easy3D makes 3D easy! ", font_size, x, y1, i);
+        texter_->draw("I Love Easy3D!", font_size, x1, y1, i);
+    }
 
-    sth_draw_text(stash, droid, font_size, x, y, "Hello world! ", &x);easy3d_debug_log_gl_error;
-    sth_draw_text(stash, droid, font_size, x, y, "I Love Easy3D!", &x); easy3d_debug_log_gl_error;
-
-    /* now, the float x contains the x position of the next char */
-    sth_end_draw(stash); easy3d_debug_log_gl_error;
-
-    glDisable(GL_BLEND);
 }

@@ -27,6 +27,9 @@
 
 #include <easy3d/viewer/viewer.h>
 
+namespace easy3d {
+    class ofxFontStash;
+}
 
 class FontViewer : public easy3d::Viewer
 {
@@ -38,6 +41,9 @@ protected:
 
     void init() override;
     void cleanup() override;
+
+private:
+    easy3d::ofxFontStash* texter_;
 };
 
 

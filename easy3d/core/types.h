@@ -226,6 +226,20 @@ namespace easy3d {
             return radians * static_cast<T>(57.295779513082320876798154814105);
         }
 
+        /**
+         * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
+         * @param a The starting point for finding the next power of 2.
+         * @return value^2.
+         * Example:
+         *      next_pow2(50);  // returns 64
+         *      next_pow2(64);  // returns 64
+         *      next_pow2(401); // returns 512
+         */
+        inline int next_pow2(int a) {
+            int rval = 1;
+            while (rval < a) rval <<= 1;
+            return rval;
+        }
 
         inline float triangle_area(
                 const vec3 &p1, const vec3 &p2, const vec3 &p3
