@@ -55,7 +55,7 @@ namespace easy3d {
          * @param texture_size  The size of the font textures. Suggested values are 512, 1024, 2048 ...
          * @param mipmaps True to create mipmaps for the font textures.
          */
-        OpenGLText(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = true);
+        OpenGLText(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = false);
 
         /**
          * Destructor.
@@ -85,7 +85,7 @@ namespace easy3d {
          * @return The end position of the x-coordinate. This allows you to draw another string after the previous one.
          *
          * @Note: This function will draw the text in one line. Line breaks (i.e., "\n") will be ignored.
-         * @TODO: Support line breaks and multiple line drawing.
+         * @TODO: Support multiple line drawing (allow strings containing '\n').
          */
         float draw(const std::string &text, float x, float y, float font_size, int fontID = 0,
                    const vec3 &font_color = vec3(0, 0, 0)
@@ -125,6 +125,7 @@ namespace easy3d {
         int     texture_size_;
         details::sth_stash *stash_;
         std::vector<int> font_ids_;
+        std::vector<std::string> font_names_;
     };
 
 }

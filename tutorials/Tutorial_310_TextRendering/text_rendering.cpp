@@ -27,6 +27,9 @@
 #include <easy3d/viewer/opengl_text.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/core/random.h>
+
+#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
 
 using namespace easy3d;
@@ -41,14 +44,14 @@ TextRendering::TextRendering(const std::string &title)
 void TextRendering::init() {
     Viewer::init();
 
-    texter_ = new OpenGLText;
+    texter_ = new OpenGLText(dpi_scaling());
     
     std::vector<std::string> files;
     file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
     for (const auto& file : files) {
         if (file_system::extension(file) == "ttf") {
-            if (texter_->add_font(resource::directory() + "/fonts/" + file))
-                std::cout << "loaded font: " << file << std::endl;
+            texter_->add_font(resource::directory() + "/fonts/" + file);
+            colors_.push_back(random_color());
         }
     }
 }
@@ -56,7 +59,6 @@ void TextRendering::init() {
 
 void TextRendering::cleanup() {
     Viewer::cleanup();
-
     delete texter_;
 }
 
@@ -64,11 +66,11 @@ void TextRendering::cleanup() {
 void TextRendering::draw() const {
     Viewer::draw();
 
-    texter_->draw(" --- This example shows how to render text in Easy3D ---", 50, height() * dpi_scaling() - 100, 40, 0);
+    texter_->draw("--- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
 
-    const float font_size = 20.0f;
-    float x = 50.0f;
-    float y = 20.0f;
+    const float font_size = 35.0f;
+    float x = 100.0f;
+    float y = 100.0f;
 
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
@@ -76,10 +78,37 @@ void TextRendering::draw() const {
     float next = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
         if (i % 2 == 0) {
-            y += (font_height + 30);
-            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i);
+            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i, colors_[i]);
         }
-        else
-            texter_->draw("I Love Easy3D!", next, y, font_size, i);
+        else {
+            texter_->draw("I Love Easy3D!", next, y, font_size, i, colors_[i]);
+            y += (font_height + 35 * dpi_scaling());
+        }
     }
+}
+
+
+bool TextRendering::key_press_event(int key, int modifiers) {
+    if (key == GLFW_KEY_SPACE) {
+        bool kerning = texter_->kerning();
+        texter_->set_kerning(!kerning);
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_DOWN) {
+        float spacing = texter_->character_spacing();
+        spacing -= 0.5f;
+        texter_->set_character_spacing(std::max(spacing, 0.0f));
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_UP) {
+        float spacing = texter_->character_spacing();
+        spacing += 0.5f;
+        texter_->set_character_spacing(std::min(spacing, 50.0f));
+        update();
+        return true;
+    }
+    else
+        return Viewer::key_press_event(key, modifiers);
 }
