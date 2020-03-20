@@ -52,6 +52,8 @@ namespace easy3d {
         // 2. Altered source versions must be plainly marked as such, and must not be
         //    misrepresented as being the original software.
         // 3. This notice may not be removed or altered from any source distribution.
+        //
+        // The original code is available at https://github.com/akrinke/Font-Stash
 
 #define STH_ESUCCESS 0
 // error opening file
