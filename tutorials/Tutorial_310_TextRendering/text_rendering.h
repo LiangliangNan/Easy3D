@@ -44,6 +44,7 @@ protected:
 
 private:
     easy3d::OpenGLText* texter_;
+    std::vector< easy3d::vec3> colors_;
 };
 
 

@@ -24,7 +24,6 @@
 
 
 #include <easy3d/viewer/opengl_text.h>
-#include <easy3d/core/types.h>
 
 
 namespace easy3d {
@@ -32,11 +31,7 @@ namespace easy3d {
     namespace details {
 
         // Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
-        //     The main changes are that all fixed pipeline rendering code has been
-        //     replaced by rendering using shaders.
-        //
         // Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
-        //
         // Copyright (c) 2009 Mikko Mononen memon@inside.org
         //
         // This software is provided 'as-is', without any express or implied
@@ -53,6 +48,8 @@ namespace easy3d {
         //    misrepresented as being the original software.
         // 3. This notice may not be removed or altered from any source distribution.
         //
+        // The significant changes are that all fixed pipeline rendering code has been
+        // replaced by shader-based rendering.
         // The original code is available at https://github.com/akrinke/Font-Stash
 
 #define STH_ESUCCESS 0
@@ -109,7 +106,8 @@ namespace easy3d {
 
         void sth_draw_text(struct sth_stash *stash,
                            int idx, float size,
-                           float x, float y, const char *string, float *dx);
+                           float x, float y,
+                           const char *s, float *dx);
 
         void sth_dim_text(struct sth_stash *stash, int idx, float size, const char *string,
                           float *minx, float *miny, float *maxx, float *maxy);
@@ -218,6 +216,7 @@ namespace easy3d {
             struct sth_font* fonts;
             int drawing;
             int mipmap; //Liangliang: optional mipmap generation to each char
+            vec3 color; //Liangliang: optional font color
         };
 
 
@@ -258,23 +257,23 @@ namespace easy3d {
 
         struct sth_stash* sth_create(int cachew, int cacheh, bool mipmap)
         {
-            struct sth_stash* stash = NULL;
-            GLubyte* empty_data = NULL;
-            struct sth_texture* texture = NULL;
+            struct sth_stash* stash = nullptr;
+            GLubyte* empty_data = nullptr;
+            struct sth_texture* texture = nullptr;
 
             // Allocate memory for the font stash.
             stash = (struct sth_stash*)malloc(sizeof(struct sth_stash));
-            if (stash == NULL) goto error;
+            if (stash == nullptr) goto error;
             memset(stash,0,sizeof(struct sth_stash));
 
             // Create data for clearing the textures
             empty_data = (GLubyte*)malloc(cachew * cacheh);
-            if (empty_data == NULL) goto error;
+            if (empty_data == nullptr) goto error;
             memset(empty_data, 0, cachew * cacheh);
 
             // Allocate memory for the first texture
             texture = (struct sth_texture*)malloc(sizeof(struct sth_texture));
-            if (texture == NULL) goto error;
+            if (texture == nullptr) goto error;
             memset(texture,0,sizeof(struct sth_texture));
 
             // Create first texture for the cache.
@@ -295,22 +294,22 @@ namespace easy3d {
             return stash;
 
             error:
-            if (stash != NULL)
+            if (stash != nullptr)
                 free(stash);
-            if (empty_data != NULL)
+            if (empty_data != nullptr)
                 free(empty_data);
-            if (texture != NULL)
+            if (texture != nullptr)
                 free(texture);
-            return NULL;
+            return nullptr;
         }
 
         int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer)
         {
             int ret, i, ascent, descent, fh, lineGap;
-            struct sth_font* fnt = NULL;
+            struct sth_font* fnt = nullptr;
 
             fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
-            if (fnt == NULL)
+            if (fnt == nullptr)
             {
                 ret = STH_ENOMEM;
                 goto error;
@@ -356,7 +355,7 @@ namespace easy3d {
         {
             FILE* fp = 0;
             int ret, datasize;
-            unsigned char* data = NULL;
+            unsigned char* data = nullptr;
             int idx;
 
             // Read in the font data.
@@ -371,7 +370,7 @@ namespace easy3d {
             datasize = (int)ftell(fp);
             fseek(fp,0,SEEK_SET);
             data = (unsigned char*)malloc(datasize);
-            if (data == NULL)
+            if (data == nullptr)
             {
                 ret = STH_ENOMEM;
                 goto error;
@@ -398,10 +397,10 @@ namespace easy3d {
         int sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap)
         {
             int ret, i, fh;
-            struct sth_font* fnt = NULL;
+            struct sth_font* fnt = nullptr;
 
             fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
-            if (fnt == NULL)
+            if (fnt == nullptr)
             {
                 ret = STH_ENOMEM;
                 goto error;
@@ -438,19 +437,19 @@ namespace easy3d {
                                         int x, int y, int w, int h,
                                         float xoffset, float yoffset, float xadvance)
         {
-            struct sth_texture* texture = NULL;
-            struct sth_font* fnt = NULL;
-            struct sth_glyph* glyph = NULL;
+            struct sth_texture* texture = nullptr;
+            struct sth_font* fnt = nullptr;
+            struct sth_glyph* glyph = nullptr;
 
-            if (stash == NULL)
+            if (stash == nullptr)
                 return STH_EINVAL;
             texture = stash->bm_textures;
-            while (texture != NULL && texture->id != id) texture = texture->next;
-            if (texture == NULL)
+            while (texture != nullptr && texture->id != id) texture = texture->next;
+            if (texture == nullptr)
             {
                 // Create new texture
                 texture = (struct sth_texture*)malloc(sizeof(struct sth_texture));
-                if (texture == NULL)
+                if (texture == nullptr)
                     return STH_ENOMEM;
                 memset(texture, 0, sizeof(struct sth_texture));
                 texture->id = id;
@@ -459,8 +458,8 @@ namespace easy3d {
             }
 
             fnt = stash->fonts;
-            while (fnt != NULL && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == NULL)
+            while (fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
+            if (fnt == nullptr)
                 return STH_EINVAL;
             if (fnt->type != BMFONT)
                 return STH_EINVAL;
@@ -520,13 +519,13 @@ namespace easy3d {
         {
             int i,g,advance,lsb,x0,y0,x1,y1,gw,gh;
             float scale;
-            struct sth_texture* texture = NULL;
-            struct sth_glyph* glyph = NULL;
-            unsigned char* bmp = NULL;
+            struct sth_texture* texture = nullptr;
+            struct sth_glyph* glyph = nullptr;
+            unsigned char* bmp = nullptr;
             unsigned int h;
             float size = isize/10.0f;
             int rh;
-            struct sth_row* br = NULL;
+            struct sth_row* br = nullptr;
 
             // Find code point and size.
             h = hashint(codepoint) & (HASH_LUT_SIZE-1);
@@ -558,10 +557,10 @@ namespace easy3d {
                 return 0;
 
             // Find texture and row where the glyph can be fit.
-            br = NULL;
+            br = nullptr;
             rh = (gh+7) & ~7;
             texture = stash->tt_textures;
-            while(br == NULL)
+            while(br == nullptr)
             {
                 for (i = 0; i < texture->nrows; ++i)
                 {
@@ -573,7 +572,7 @@ namespace easy3d {
                 //   - add new row
                 //   - try next texture
                 //   - create new texture
-                if (br == NULL)
+                if (br == nullptr)
                 {
                     short py = 0;
                     // Check that there is enough space.
@@ -582,7 +581,7 @@ namespace easy3d {
                         py = texture->rows[texture->nrows-1].y + texture->rows[texture->nrows-1].h+1;
                         if (py+rh > stash->th)
                         {
-                            if (texture->next != NULL)
+                            if (texture->next != nullptr)
                             {
                                 texture = texture->next;
                             }
@@ -591,7 +590,7 @@ namespace easy3d {
                                 // Create new texture
                                 texture->next = (struct sth_texture*)malloc(sizeof(struct sth_texture));
                                 texture = texture->next;
-                                if (texture == NULL) goto error;
+                                if (texture == nullptr) goto error;
                                 memset(texture,0,sizeof(struct sth_texture));
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
@@ -760,7 +759,7 @@ namespace easy3d {
                     }
 
                     program->bind();
-                    program->bind_texture("textureID", texture->id, 0);
+                    program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->color);
                     drawable.gl_draw(false);
                     program->release_texture();
                     program->release();
@@ -778,7 +777,7 @@ namespace easy3d {
 
         void sth_begin_draw(struct sth_stash* stash)
         {
-            if (stash == NULL)
+            if (stash == nullptr)
                 return;
             if (stash->drawing)
                 flush_draw(stash);
@@ -787,7 +786,7 @@ namespace easy3d {
 
         void sth_end_draw(struct sth_stash* stash)
         {
-            if (stash == NULL)
+            if (stash == nullptr)
                 return;
             if (!stash->drawing)
                 return;
@@ -796,26 +795,26 @@ namespace easy3d {
             stash->drawing = 0;
         }
 
-        void sth_draw_text(struct sth_stash* stash,
+        void sth_draw_text(struct sth_stash *stash,
                            int idx, float size,
                            float x, float y,
-                           const char* s, float* dx)
+                           const char *s, float *dx)
         {
             unsigned int codepoint;
-            struct sth_glyph* glyph = NULL;
-            struct sth_texture* texture = NULL;
+            struct sth_glyph* glyph = nullptr;
+            struct sth_texture* texture = nullptr;
             unsigned int state = 0;
             struct sth_quad q;
             short isize = (short)(size*10.0f);
             float* v;
-            struct sth_font* fnt = NULL;
+            struct sth_font* fnt = nullptr;
 
-            if (stash == NULL)
+            if (stash == nullptr)
                 return;
 
             fnt = stash->fonts;
-            while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == NULL)
+            while(fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
+            if (fnt == nullptr)
                 return;
             if (fnt->type != BMFONT && !fnt->data)
                 return;
@@ -853,21 +852,21 @@ namespace easy3d {
                           float* minx, float* miny, float* maxx, float* maxy)
         {
             unsigned int codepoint;
-            struct sth_glyph* glyph = NULL;
+            struct sth_glyph* glyph = nullptr;
             unsigned int state = 0;
             struct sth_quad q;
             short isize = (short)(size*10.0f);
-            struct sth_font* fnt = NULL;
+            struct sth_font* fnt = nullptr;
             float x = 0, y = 0;
 
             *minx = *maxx = *miny = *maxy = 0;	/* @rlyeh: reset vars before failing */
 
-            if (stash == NULL)
+            if (stash == nullptr)
                 return;
             fnt = stash->fonts;
-            while(fnt != NULL && fnt->idx != idx)
+            while(fnt != nullptr && fnt->idx != idx)
                 fnt = fnt->next;
-            if (fnt == NULL)
+            if (fnt == nullptr)
                 return;
             if (fnt->type != BMFONT && !fnt->data)
                 return;
@@ -893,13 +892,13 @@ namespace easy3d {
                           int idx, float size,
                           float* ascender, float* descender, float* lineh)
         {
-            struct sth_font* fnt = NULL;
+            struct sth_font* fnt = nullptr;
 
-            if (stash == NULL)
+            if (stash == nullptr)
                 return;
             fnt = stash->fonts;
-            while(fnt != NULL && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == NULL)
+            while(fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
+            if (fnt == nullptr)
                 return;
             if (fnt->type != BMFONT && !fnt->data)
                 return;
@@ -913,16 +912,16 @@ namespace easy3d {
 
         void sth_delete(struct sth_stash* stash)
         {
-            struct sth_texture* tex = NULL;
-            struct sth_texture* curtex = NULL;
-            struct sth_font* fnt = NULL;
-            struct sth_font* curfnt = NULL;
+            struct sth_texture* tex = nullptr;
+            struct sth_texture* curtex = nullptr;
+            struct sth_font* fnt = nullptr;
+            struct sth_font* curfnt = nullptr;
 
             if (!stash)
                 return;
 
             tex = stash->tt_textures;
-            while(tex != NULL) {
+            while(tex != nullptr) {
                 curtex = tex;
                 tex = tex->next;
                 if (curtex->id)
@@ -931,7 +930,7 @@ namespace easy3d {
             }
 
             tex = stash->bm_textures;
-            while(tex != NULL) {
+            while(tex != nullptr) {
                 curtex = tex;
                 tex = tex->next;
                 if (curtex->id)
@@ -940,7 +939,7 @@ namespace easy3d {
             }
 
             fnt = stash->fonts;
-            while(fnt != NULL) {
+            while(fnt != nullptr) {
                 curfnt = fnt;
                 fnt = fnt->next;
                 if (curfnt->glyphs)
@@ -994,9 +993,11 @@ namespace easy3d {
     }
 
 
-    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID) const {
+    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID,
+                           const vec3 &font_color) const {
         float dx = 0.0f;
         if (stash_ != nullptr) {
+            stash_->color = font_color;
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             sth_begin_draw(stash_);

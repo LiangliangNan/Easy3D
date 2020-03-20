@@ -27,6 +27,7 @@
 #include <easy3d/viewer/opengl_text.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/core/random.h>
 
 
 using namespace easy3d;
@@ -46,8 +47,10 @@ void TextRendering::init() {
     std::vector<std::string> files;
     file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
     for (const auto& file : files) {
-        if (file_system::extension(file) == "ttf")
+        if (file_system::extension(file) == "ttf") {
             texter_->add_font(resource::directory() + "/fonts/" + file);
+            colors_.push_back(random_color());
+        }
     }
 }
 
@@ -65,8 +68,8 @@ void TextRendering::draw() const {
     texter_->draw(" --- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 80, 0);
 
     const float font_size = 70.0f;
-    float x = 200.0f;
-    float y = 200.0f;
+    float x = 100.0f;
+    float y = 100.0f;
 
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
@@ -74,10 +77,11 @@ void TextRendering::draw() const {
     float next = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
         if (i % 2 == 0) {
-            y += (font_height + 30);
-            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i);
+            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i, colors_[i]);
         }
-        else
-            texter_->draw("I Love Easy3D!", next, y, font_size, i);
+        else {
+            texter_->draw("I Love Easy3D!", next, y, font_size, i, colors_[i]);
+            y += (font_height + 30);
+        }
     }
 }
