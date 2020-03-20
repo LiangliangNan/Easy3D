@@ -29,6 +29,7 @@ add_subdirectory(Tutorial_306_ImageViewer)
 add_subdirectory(Tutorial_307_ModelPicker)
 add_subdirectory(Tutorial_308_FacePicker)
 add_subdirectory(Tutorial_309_PointSelection)
+add_subdirectory(Tutorial_310_TextRendering)
 
 # basic rendering
 add_subdirectory(Tutorial_401_Drawable)

@@ -6,16 +6,11 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        font_viewer.h
-        font_viewer.cpp
-        fontstash.h
-        fontstash.cpp
-        stb_truetype.h
-        opengl_text.h
-        opengl_text.cpp
+        text_rendering.h
+        text_rendering.cpp
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "sandbox")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 

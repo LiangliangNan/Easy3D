@@ -24,9 +24,10 @@
 
 
 #include "opengl_text.h"
-#include "fontstash.h"
 
 #include <easy3d/core/types.h>
+
+#include <3rd_party/fontstash/fontstash.h>
 
 
 namespace easy3d {

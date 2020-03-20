@@ -26,6 +26,7 @@ set(${PROJECT_NAME}_HEADERS
         opengl.h
         opengl_error.h
         opengl_info.h
+        opengl_text.h
         primitives.h
         read_pixel.h
         renderer.h
@@ -65,6 +66,7 @@ set(${PROJECT_NAME}_SOURCES
         model.cpp
         opengl_error.cpp
         opengl_info.cpp
+        opengl_text.cpp
         primitives.cpp
         read_pixel.cpp
         renderer.cpp
@@ -194,7 +196,7 @@ add_library(${PROJECT_NAME} STATIC
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} glew glfw core util fileio)
+target_link_libraries(${PROJECT_NAME} glew glfw core util fileio fontstash)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 

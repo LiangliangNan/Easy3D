@@ -22,29 +22,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_EXPERIMENT_FONT_VIEWER_H
-#define EASY3D_EXPERIMENT_FONT_VIEWER_H
+#include "text_rendering.h"
+#include <easy3d/fileio/resources.h>
+#include <easy3d/viewer/model.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/util/logging.h>
 
-#include <easy3d/viewer/viewer.h>
 
-namespace easy3d {
-    class OpenGLText;
+using namespace easy3d;
+
+// This example shows how to create depth images from the rendering.
+
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize();
+
+    // the point cloud file.
+    try {
+        TextRendering viewer("Tutorial_310_TextRendering");
+
+        // Run the viewer
+        viewer.run();
+    } catch (const std::runtime_error &e) {
+        LOG(ERROR) << "caught a fatal error: " + std::string(e.what());
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
-class FontViewer : public easy3d::Viewer
-{
-public:
-    FontViewer(const std::string& title);
-    
-protected:
-    void draw() const override;
-
-    void init() override;
-    void cleanup() override;
-
-private:
-    easy3d::OpenGLText* texter_;
-};
-
-
-#endif // EASY3D_EXPERIMENT_FONT_VIEWER_H

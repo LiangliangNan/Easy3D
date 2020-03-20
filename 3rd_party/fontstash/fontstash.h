@@ -1,5 +1,9 @@
+// Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
+//     The main changes are that all fixed pipeline rendering code has been
+//     replaced by rendering using shaders.
 //
 // Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
+//
 // Copyright (c) 2009 Mikko Mononen memon@inside.org
 //
 // This software is provided 'as-is', without any express or implied

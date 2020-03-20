@@ -22,9 +22,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "font_viewer.h"
-#include "opengl_text.h"
+#include "text_rendering.h"
 
+#include <easy3d/viewer/opengl_text.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
 
@@ -32,17 +32,16 @@
 using namespace easy3d;
 
 
-FontViewer::FontViewer(const std::string &title)
+TextRendering::TextRendering(const std::string &title)
         : Viewer(title) {
     set_background_color(vec3(1, 1, 1));
 }
 
 
-void FontViewer::init() {
+void TextRendering::init() {
     Viewer::init();
 
     texter_ = new OpenGLText;
-
     
     std::vector<std::string> files;
     file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
@@ -53,14 +52,14 @@ void FontViewer::init() {
 }
 
 
-void FontViewer::cleanup() {
+void TextRendering::cleanup() {
     Viewer::cleanup();
 
     delete texter_;
 }
 
 
-void FontViewer::draw() const {
+void TextRendering::draw() const {
     Viewer::draw();
 
     const float font_size = 80.0f;

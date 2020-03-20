@@ -33,9 +33,9 @@ using namespace easy3d;
 
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "../stb/stb_truetype.h"
 
-#include "fontstash.h"
+#include <3rd_party/fontstash/fontstash.h>
 
 #define HASH_LUT_SIZE 256
 #define MAX_ROWS 128
