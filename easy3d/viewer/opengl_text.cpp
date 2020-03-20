@@ -1028,6 +1028,20 @@ namespace easy3d {
     }
 
 
+    void OpenGLText::set_kerning(bool kerning) {
+        if (stash_)
+            stash_->doKerning = kerning;
+    }
+
+
+    bool OpenGLText::kerning() const {
+        if (stash_)
+            return stash_->doKerning;
+        else
+            return false;
+    }
+
+
     float OpenGLText::font_height(float font_size) const {
         float asc, desc, lineh;
         sth_vmetrics(stash_, font_ids_[0], font_size, &asc, &desc, &lineh);

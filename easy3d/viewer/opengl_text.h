@@ -41,9 +41,11 @@ namespace easy3d {
     /**
      * OpenGLText enables quick and easy string rendering in OpenGL applications. It supports truetype (TTF) fonts and
      * unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
-     * TODO: character spacing;
-     *       retina support;
-     *       multi-line string rendering (to support line breaks '\n' in strings).
+     * OpenGLText allows you to:
+     *    - switch between fonts;
+     *    - change character spacing;
+     *    - enable/disable kerning;
+     * TODO: multi-line string rendering (to support line breaks '\n' in strings).
      */
 
     class OpenGLText {
@@ -90,15 +92,26 @@ namespace easy3d {
         ) const;
 
         /**
-         * Set the spacing between consecutive characters.
+         * Set the spacing between consecutive characters. The default character spacing is 0.
          * @param spacing The expected character spacing.
          */
         void set_character_spacing(float spacing);
         /**
          * Query the spacing between consecutive characters.
-         * @param The spacing between consecutive characters.
+         * @return The spacing between consecutive characters.
          */
         float character_spacing() const;
+
+        /**
+         * Set kerning.
+         * @param kerning The expected kerning behavior.
+         */
+        void set_kerning(bool kerning);
+        /**
+         * Query the kerning behavior. Kerning is disabled by default.
+         * @return The kerning behavior.
+         */
+        bool kerning() const;
 
         /**
          * Query the height of the font.

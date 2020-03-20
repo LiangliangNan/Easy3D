@@ -66,7 +66,7 @@ void TextRendering::cleanup() {
 void TextRendering::draw() const {
     Viewer::draw();
 
-    texter_->draw(" --- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
+    texter_->draw("--- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
 
     const float font_size = 35.0f;
     float x = 100.0f;
@@ -90,19 +90,21 @@ void TextRendering::draw() const {
 
 bool TextRendering::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
+        bool kerning = texter_->kerning();
+        texter_->set_kerning(!kerning);
         update();
         return true;
     }
     else if (key == GLFW_KEY_DOWN) {
         float spacing = texter_->character_spacing();
-        spacing -= 1.0f;
+        spacing -= 0.5f;
         texter_->set_character_spacing(std::max(spacing, 0.0f));
         update();
         return true;
     }
     else if (key == GLFW_KEY_UP) {
         float spacing = texter_->character_spacing();
-        spacing += 1.0f;
+        spacing += 0.5f;
         texter_->set_character_spacing(std::min(spacing, 50.0f));
         update();
         return true;
