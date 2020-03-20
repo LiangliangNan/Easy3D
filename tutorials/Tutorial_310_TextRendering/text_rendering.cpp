@@ -66,7 +66,7 @@ void TextRendering::cleanup() {
 void TextRendering::draw() const {
     Viewer::draw();
 
-    texter_->draw("--- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
+    texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), (height() - 50) * dpi_scaling(), 40, 0);
 
     const float font_size = 35.0f;
     float x = 50.0f;
