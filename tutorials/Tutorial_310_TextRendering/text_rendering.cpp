@@ -69,8 +69,8 @@ void TextRendering::draw() const {
     texter_->draw("--- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
 
     const float font_size = 35.0f;
-    float x = 100.0f;
-    float y = 100.0f;
+    float x = 50.0f;
+    float y = 50.0f;
 
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
@@ -78,11 +78,11 @@ void TextRendering::draw() const {
     float next = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
         if (i % 2 == 0) {
-            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i, colors_[i]);
+            next = texter_->draw("Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
         }
         else {
-            texter_->draw("I Love Easy3D!", next, y, font_size, i, colors_[i]);
-            y += (font_height + 35 * dpi_scaling());
+            texter_->draw("I Love Easy3D!", next, y * dpi_scaling(), font_size, i, colors_[i]);
+            y += (font_height) * 1.5;
         }
     }
 }
