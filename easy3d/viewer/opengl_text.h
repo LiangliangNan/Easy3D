@@ -26,6 +26,7 @@
 #define EASY3D_OPENGL_TEXT_H
 
 #include <vector>
+#include <string>
 
 
 namespace easy3d {
