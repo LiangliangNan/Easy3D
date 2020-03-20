@@ -29,6 +29,8 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/random.h>
 
+#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
+
 
 using namespace easy3d;
 
@@ -42,7 +44,7 @@ TextRendering::TextRendering(const std::string &title)
 void TextRendering::init() {
     Viewer::init();
 
-    texter_ = new OpenGLText;
+    texter_ = new OpenGLText(dpi_scaling());
     
     std::vector<std::string> files;
     file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
@@ -57,7 +59,6 @@ void TextRendering::init() {
 
 void TextRendering::cleanup() {
     Viewer::cleanup();
-
     delete texter_;
 }
 
@@ -65,9 +66,9 @@ void TextRendering::cleanup() {
 void TextRendering::draw() const {
     Viewer::draw();
 
-    texter_->draw(" --- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 80, 0);
+    texter_->draw(" --- This example shows how to render text in Easy3D ---", 100, height() * dpi_scaling() - 100, 40, 0);
 
-    const float font_size = 70.0f;
+    const float font_size = 35.0f;
     float x = 100.0f;
     float y = 100.0f;
 
@@ -81,7 +82,31 @@ void TextRendering::draw() const {
         }
         else {
             texter_->draw("I Love Easy3D!", next, y, font_size, i, colors_[i]);
-            y += (font_height + 30);
+            y += (font_height + 70);
         }
     }
+}
+
+
+bool TextRendering::key_press_event(int key, int modifiers) {
+    if (key == GLFW_KEY_SPACE) {
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_DOWN) {
+        float spacing = texter_->character_spacing();
+        spacing -= 1.0f;
+        texter_->set_character_spacing(std::max(spacing, 0.0f));
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_UP) {
+        float spacing = texter_->character_spacing();
+        spacing += 1.0f;
+        texter_->set_character_spacing(std::min(spacing, 50.0f));
+        update();
+        return true;
+    }
+    else
+        return Viewer::key_press_event(key, modifiers);
 }

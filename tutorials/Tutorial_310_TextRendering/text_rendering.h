@@ -42,6 +42,8 @@ protected:
     void init() override;
     void cleanup() override;
 
+    bool key_press_event(int key, int modifiers) override;
+
 private:
     easy3d::OpenGLText* texter_;
     std::vector< easy3d::vec3> colors_;

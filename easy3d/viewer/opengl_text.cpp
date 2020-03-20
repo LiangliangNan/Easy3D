@@ -52,15 +52,6 @@ namespace easy3d {
         // replaced by shader-based rendering.
         // The original code is available at https://github.com/akrinke/Font-Stash
 
-#define STH_ESUCCESS 0
-// error opening file
-#define STH_EFILEIO -1
-// error initializing truetype font
-#define STH_ETTFINIT -2
-// invalid argument
-#define STH_EINVAL -3
-// not enough memory
-#define STH_ENOMEM -4
 
         /**
          * Example:
@@ -84,39 +75,33 @@ namespace easy3d {
          *  // cleaning
          *  sth_delete(stash);
          */
-        struct sth_stash *sth_create(int cachew, int cacheh, bool mipmap = true);
+        struct sth_stash* sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale);
 
-        int sth_add_font(struct sth_stash *stash, const char *path);
+        int sth_add_font(struct sth_stash* stash, const char* path);
+        int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer);
 
-        int sth_add_font_from_memory(struct sth_stash *stash, unsigned char *buffer);
+        int  sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap);
+        void sth_add_glyph(struct sth_stash* stash, int idx, unsigned int id, const char* s,  /* @rlyeh: function does not return int */
+                               short size, short base, int x, int y, int w, int h,
+                               float xoffset, float yoffset, float xadvance);
 
-        int sth_add_bitmap_font(struct sth_stash *stash, int ascent, int descent, int line_gap);
+        void sth_begin_draw(struct sth_stash* stash);
+        void sth_end_draw(struct sth_stash* stash);
 
-        int sth_add_glyph_for_codepoint(struct sth_stash *stash, int idx, unsigned int id, unsigned int codepoint,
-                                        short size, short base, int x, int y, int w, int h,
-                                        float xoffset, float yoffset, float xadvance);
+        void sth_draw_text(struct sth_stash* stash,
+                               int idx, float size,
+                               float x, float y, const char* string, float* dx);
 
-        int sth_add_glyph_for_char(struct sth_stash *stash, int idx, unsigned int id, const char *s,
-                                   short size, short base, int x, int y, int w, int h,
-                                   float xoffset, float yoffset, float xadvance);
+        void sth_dim_text(struct sth_stash* stash, int idx, float size, const char* string,
+                              float* minx, float* miny, float* maxx, float* maxy);
 
-        void sth_begin_draw(struct sth_stash *stash);
+        void sth_vmetrics(struct sth_stash* stash,
+                              int idx, float size,
+                              float* ascender, float* descender, float * lineh);
 
-        void sth_end_draw(struct sth_stash *stash);
+        void sth_delete(struct sth_stash* stash);
 
-        void sth_draw_text(struct sth_stash *stash,
-                           int idx, float size,
-                           float x, float y,
-                           const char *s, float *dx);
-
-        void sth_dim_text(struct sth_stash *stash, int idx, float size, const char *string,
-                          float *minx, float *miny, float *maxx, float *maxy);
-
-        void sth_vmetrics(struct sth_stash *stash,
-                          int idx, float size,
-                          float *ascender, float *descender, float *lineh);
-
-        void sth_delete(struct sth_stash *stash);
+        void set_lod_bias(struct sth_stash* stash, float bias);
     }
 }
 
@@ -215,9 +200,14 @@ namespace easy3d {
             struct sth_texture* bm_textures;
             struct sth_font* fonts;
             int drawing;
-            int mipmap; //Liangliang: optional mipmap generation to each char
-            vec3 color; //Liangliang: optional font color
+            int padding; //oriol adding texture padding around chars to avoid mipmap neighbor leaks
+            int hasMipMap; //oriol adding optional mipmap generation to each char
+            int doKerning; //calc kerning on the fly and offset letters when drawing and / calcing box sizes
+            float charSpacing;
+            float dpiScale;
+            vec3 font_color;
         };
+
 
 
 
@@ -255,8 +245,9 @@ namespace easy3d {
         }
 
 
-        struct sth_stash* sth_create(int cachew, int cacheh, bool mipmap)
-        {
+
+        struct sth_stash* sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale){
+
             struct sth_stash* stash = nullptr;
             GLubyte* empty_data = nullptr;
             struct sth_texture* texture = nullptr;
@@ -267,7 +258,7 @@ namespace easy3d {
             memset(stash,0,sizeof(struct sth_stash));
 
             // Create data for clearing the textures
-            empty_data = (GLubyte*)malloc(cachew * cacheh);
+            empty_data = (GLubyte*)	malloc(cachew * cacheh);
             if (empty_data == nullptr) goto error;
             memset(empty_data, 0, cachew * cacheh);
 
@@ -283,6 +274,7 @@ namespace easy3d {
             stash->ith = 1.0f/cacheh;
             stash->empty_data = empty_data;
             stash->tt_textures = texture;
+            stash->dpiScale = dpiScale;
             glGenTextures(1, &texture->id); easy3d_debug_log_gl_error;
             if (!texture->id) goto error;
             glBindTexture(GL_TEXTURE_2D, texture->id);    easy3d_debug_log_gl_error;
@@ -291,13 +283,15 @@ namespace easy3d {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cachew, cacheh, 0, GL_RED, GL_UNSIGNED_BYTE, empty_data);    easy3d_debug_log_gl_error;
             glBindTexture(GL_TEXTURE_2D, 0);    easy3d_debug_log_gl_error;
 
+            stash->hasMipMap = createMipmaps;
+            stash->padding = charPadding;
+            stash->charSpacing = 0.0f;
+            stash->doKerning = 0;
             return stash;
 
             error:
             if (stash != nullptr)
                 free(stash);
-            if (empty_data != nullptr)
-                free(empty_data);
             if (texture != nullptr)
                 free(texture);
             return nullptr;
@@ -305,15 +299,11 @@ namespace easy3d {
 
         int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer)
         {
-            int ret, i, ascent, descent, fh, lineGap;
+            int i, ascent, descent, fh, lineGap;
             struct sth_font* fnt = nullptr;
 
             fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
-            if (fnt == nullptr)
-            {
-                ret = STH_ENOMEM;
-                goto error;
-            }
+            if (fnt == nullptr) goto error;
             memset(fnt,0,sizeof(struct sth_font));
 
             // Init hash lookup.
@@ -321,12 +311,9 @@ namespace easy3d {
 
             fnt->data = buffer;
 
+
             // Init stb_truetype
-            if (!stbtt_InitFont(&fnt->font, fnt->data, 0))
-            {
-                ret = STH_ETTFINIT;
-                goto error;
-            }
+            if (!stbtt_InitFont(&fnt->font, fnt->data, 0)) goto error;
 
             // Store normalized line height. The real line height is got
             // by multiplying the lineh by font size.
@@ -348,33 +335,24 @@ namespace easy3d {
                 if (fnt->glyphs) free(fnt->glyphs);
                 free(fnt);
             }
-            return ret;
+            return 0;
         }
 
         int sth_add_font(struct sth_stash* stash, const char* path)
         {
             FILE* fp = 0;
-            int ret, datasize;
+            int datasize;
             unsigned char* data = nullptr;
             int idx;
 
             // Read in the font data.
             fp = fopen(path, "rb");
-            if (!fp)
-            {
-                ret = STH_EFILEIO;
-                printf("failed load font: %s\n", path);
-                goto error;
-            }
+            if (!fp) goto error;
             fseek(fp,0,SEEK_END);
             datasize = (int)ftell(fp);
             fseek(fp,0,SEEK_SET);
             data = (unsigned char*)malloc(datasize);
-            if (data == nullptr)
-            {
-                ret = STH_ENOMEM;
-                goto error;
-            }
+            if (data == nullptr) goto error;
             fread(data, 1, datasize, fp);
             fclose(fp);
             fp = 0;
@@ -391,20 +369,16 @@ namespace easy3d {
             error:
             if (data) free(data);
             if (fp) fclose(fp);
-            return ret;
+            return 0;
         }
 
         int sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap)
         {
-            int ret, i, fh;
+            int i, fh;
             struct sth_font* fnt = nullptr;
 
             fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
-            if (fnt == nullptr)
-            {
-                ret = STH_ENOMEM;
-                goto error;
-            }
+            if (fnt == nullptr) goto error;
             memset(fnt,0,sizeof(struct sth_font));
 
             // Init hash lookup.
@@ -426,31 +400,31 @@ namespace easy3d {
 
             error:
             if (fnt) free(fnt);
-            return ret;
+            return 0;
         }
 
-        int sth_add_glyph_for_codepoint(struct sth_stash* stash,
-                                        int idx,
-                                        GLuint id,
-                                        unsigned int codepoint,
-                                        short size, short base,
-                                        int x, int y, int w, int h,
-                                        float xoffset, float yoffset, float xadvance)
+        void sth_add_glyph(struct sth_stash* stash,
+                               int idx,
+                               GLuint id,
+                               const char* s,
+                               short size, short base,
+                               int x, int y, int w, int h,
+                               float xoffset, float yoffset, float xadvance)
         {
             struct sth_texture* texture = nullptr;
             struct sth_font* fnt = nullptr;
             struct sth_glyph* glyph = nullptr;
+            unsigned int codepoint;
+            unsigned int state = 0;
 
-            if (stash == nullptr)
-                return STH_EINVAL;
+            if (stash == nullptr) return;
             texture = stash->bm_textures;
             while (texture != nullptr && texture->id != id) texture = texture->next;
             if (texture == nullptr)
             {
                 // Create new texture
                 texture = (struct sth_texture*)malloc(sizeof(struct sth_texture));
-                if (texture == nullptr)
-                    return STH_ENOMEM;
+                if (texture == nullptr) return;
                 memset(texture, 0, sizeof(struct sth_texture));
                 texture->id = id;
                 texture->next = stash->bm_textures;
@@ -459,16 +433,19 @@ namespace easy3d {
 
             fnt = stash->fonts;
             while (fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == nullptr)
-                return STH_EINVAL;
-            if (fnt->type != BMFONT)
-                return STH_EINVAL;
+            if (fnt == nullptr) return;
+            if (fnt->type != BMFONT) return;
+
+            for (; *s; ++s)
+            {
+                if (!decutf8(&state, &codepoint, *(unsigned char*)s)) break;
+            }
+            if (state != UTF8_ACCEPT) return;
 
             // Alloc space for new glyph.
             fnt->nglyphs++;
             fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
-            if (!fnt->glyphs)
-                return STH_ENOMEM;
+            if (!fnt->glyphs) return;
 
             // Init glyph.
             glyph = &fnt->glyphs[fnt->nglyphs-1];
@@ -489,30 +466,6 @@ namespace easy3d {
             // Insert char to hash lookup.
             glyph->next = fnt->lut[h];
             fnt->lut[h] = fnt->nglyphs-1;
-
-            return STH_ESUCCESS;
-        }
-
-        inline int sth_add_glyph_for_char(struct sth_stash* stash,
-                                          int idx,
-                                          GLuint id,
-                                          const char* s,
-                                          short size, short base,
-                                          int x, int y, int w, int h,
-                                          float xoffset, float yoffset, float xadvance)
-        {
-            unsigned int codepoint;
-            unsigned int state = 0;
-
-            for (; *s; ++s)
-            {
-                if (!decutf8(&state, &codepoint, *(unsigned char*)s))
-                    break;
-            }
-            if (state != UTF8_ACCEPT)
-                return STH_EINVAL;
-
-            return sth_add_glyph_for_codepoint(stash, idx, id, codepoint, size, base, x, y, w, h, xoffset, yoffset, xadvance);
         }
 
         static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt, unsigned int codepoint, short isize)
@@ -539,18 +492,17 @@ namespace easy3d {
             // Could not find glyph.
 
             // For bitmap fonts: ignore this glyph.
-            if (fnt->type == BMFONT)
-                return 0;
+            if (fnt->type == BMFONT) return 0;
 
             // For truetype fonts: create this glyph.
-            scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
+            scale = stash->dpiScale * stbtt_ScaleForPixelHeight(&fnt->font, size);
             g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
-            if(!g)
-                return 0; /* @rlyeh: glyph not found, ie, arab chars */
+            if(!g) return 0; /* @rlyeh: glyph not found, ie, arab chars */
             stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
             stbtt_GetGlyphBitmapBox(&fnt->font, g, scale,scale, &x0,&y0,&x1,&y1);
-            gw = x1-x0;
-            gh = y1-y0;
+
+            gw = x1-x0 + stash->padding;
+            gh = y1-y0 + stash->padding;
 
             // Check if glyph is larger than maximum texture size
             if (gw >= stash->tw || gh >= stash->th)
@@ -592,6 +544,15 @@ namespace easy3d {
                                 texture = texture->next;
                                 if (texture == nullptr) goto error;
                                 memset(texture,0,sizeof(struct sth_texture));
+                                //oriol counting how many we have created so far!
+                                int numTex = 1;
+                                struct sth_texture* tex = stash->tt_textures;
+                                while (tex->next != nullptr) {
+                                    numTex++;
+                                    tex = tex->next;
+                                }
+
+                                LOG(INFO) << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)";
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
                                 glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -615,8 +576,7 @@ namespace easy3d {
             // Alloc space for new glyph.
             fnt->nglyphs++;
             fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
-            if (!fnt->glyphs)
-                return 0;
+            if (!fnt->glyphs) return 0;
 
             // Init glyph.
             glyph = &fnt->glyphs[fnt->nglyphs-1];
@@ -646,18 +606,20 @@ namespace easy3d {
             {
                 stbtt_MakeGlyphBitmap(&fnt->font, bmp, gw,gh,gw, scale,scale, g);
                 // Update texture
-                glBindTexture(GL_TEXTURE_2D, texture->id);
+                glBindTexture(GL_TEXTURE_2D, texture->id);   easy3d_debug_log_gl_error;
                 glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0,glyph->y0, gw,gh, GL_RED,GL_UNSIGNED_BYTE,bmp);   easy3d_debug_log_gl_error;
-                if(stash->mipmap){
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	//oriol trying to get rid of halos when rotating font
+                glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	//
+                glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0,glyph->y0, gw,gh, GL_RED,GL_UNSIGNED_BYTE,bmp);
+                if(stash->hasMipMap > 0){
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 8); //TODO check for hw support!
 #if defined(__ANDROID__) || defined(TARGET_OPENGLES) || defined(TARGET_RASPBERRY_PI)
                     // OpenGLES 1.0 does not support the following.
 #else
-//                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0); //shoot for sharper test
-//                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3); // pick mipmap level 7 or lower
-//                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0);
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0); //shoot for sharper test
+//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3); // pick mipmap level 7 or lower
+//			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.0);
                     glGenerateMipmap(GL_TEXTURE_2D);
 #endif
                 }
@@ -676,7 +638,7 @@ namespace easy3d {
         static int get_quad(struct sth_stash* stash, struct sth_font* fnt, struct sth_glyph* glyph, short isize, float* x, float* y, struct sth_quad* q)
         {
             int rx,ry;
-            float scale = 1.0f;
+            float scale = 1.0f ;
 
             if (fnt->type == BMFONT) scale = isize/(glyph->size*10.0f);
 
@@ -705,6 +667,22 @@ namespace easy3d {
             v[2] = s;
             v[3] = t;
             return v+4;
+        }
+
+
+        void set_lod_bias(struct sth_stash* stash, float bias){
+
+            struct sth_texture* texture = stash->tt_textures;
+            if(stash->hasMipMap > 0){
+                while (texture){
+                    glBindTexture(GL_TEXTURE_2D, texture->id);
+#ifndef TARGET_OPENGLES
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, bias);
+#endif
+                    glBindTexture(GL_TEXTURE_2D, 0);
+                    texture = texture->next;
+                }
+            }
         }
 
         static void flush_draw(struct sth_stash* stash)
@@ -759,7 +737,7 @@ namespace easy3d {
                     }
 
                     program->bind();
-                    program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->color);
+                    program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->font_color);
                     drawable.gl_draw(false);
                     program->release_texture();
                     program->release();
@@ -777,8 +755,7 @@ namespace easy3d {
 
         void sth_begin_draw(struct sth_stash* stash)
         {
-            if (stash == nullptr)
-                return;
+            if (stash == nullptr) return;
             if (stash->drawing)
                 flush_draw(stash);
             stash->drawing = 1;
@@ -786,19 +763,17 @@ namespace easy3d {
 
         void sth_end_draw(struct sth_stash* stash)
         {
-            if (stash == nullptr)
-                return;
-            if (!stash->drawing)
-                return;
+            if (stash == nullptr) return;
+            if (!stash->drawing) return;
 
             flush_draw(stash);
             stash->drawing = 0;
         }
 
-        void sth_draw_text(struct sth_stash *stash,
-                           int idx, float size,
-                           float x, float y,
-                           const char *s, float *dx)
+        void sth_draw_text(struct sth_stash* stash,
+                               int idx, float size,
+                               float x, float y,
+                               const char* s, float* dx)
         {
             unsigned int codepoint;
             struct sth_glyph* glyph = nullptr;
@@ -809,29 +784,40 @@ namespace easy3d {
             float* v;
             struct sth_font* fnt = nullptr;
 
-            if (stash == nullptr)
-                return;
+            if (stash == nullptr) return;
 
             fnt = stash->fonts;
             while(fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == nullptr)
-                return;
-            if (fnt->type != BMFONT && !fnt->data)
-                return;
+            if (fnt == nullptr) return;
+            if (fnt->type != BMFONT && !fnt->data) return;
+
+            int len = strlen(s);
+            float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
+            int c = 0;
+            float spacing = stash->charSpacing;
+            int doKerning = stash->doKerning;
+            int p = stash->padding;
+            float dpiScale = stash->dpiScale;
+            float tw = stash->padding / (float)stash->tw;
 
             for (; *s; ++s)
             {
-                if (decutf8(&state, &codepoint, *(unsigned char*)s))
-                    continue;
+                if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
                 glyph = get_glyph(stash, fnt, codepoint, isize);
-                if (!glyph)
-                    continue;
+                if (!glyph) continue;
                 texture = glyph->texture;
                 if (texture->nverts+4 >= VERT_COUNT)
                     flush_draw(stash);
 
-                if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q))
-                    continue;
+                if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q)) continue;
+
+                int diff = 0;
+                if (c < len && doKerning > 0){
+                    diff = stbtt_GetCodepointKernAdvance(&fnt->font, *(s), *(s+1));
+                    //printf("diff '%c' '%c' = %d\n", *(s-1), *s, diff);
+                    x += diff * scale;
+                }
+                x += dpiScale * spacing;
 
                 v = &texture->verts[texture->nverts*4];
 
@@ -841,15 +827,16 @@ namespace easy3d {
                 v = setv(v, q.x0, q.y1, q.s0, q.t1);
 
                 texture->nverts += 4;
+                c++;
             }
 
             if (dx) *dx = x;
         }
 
         void sth_dim_text(struct sth_stash* stash,
-                          int idx, float size,
-                          const char* s,
-                          float* minx, float* miny, float* maxx, float* maxy)
+                              int idx, float size,
+                              const char* s,
+                              float* minx, float* miny, float* maxx, float* maxy)
         {
             unsigned int codepoint;
             struct sth_glyph* glyph = nullptr;
@@ -861,47 +848,53 @@ namespace easy3d {
 
             *minx = *maxx = *miny = *maxy = 0;	/* @rlyeh: reset vars before failing */
 
-            if (stash == nullptr)
-                return;
+            if (stash == nullptr) return;
             fnt = stash->fonts;
-            while(fnt != nullptr && fnt->idx != idx)
-                fnt = fnt->next;
-            if (fnt == nullptr)
-                return;
-            if (fnt->type != BMFONT && !fnt->data)
-                return;
+            while(fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
+            if (fnt == nullptr) return;
+            if (fnt->type != BMFONT && !fnt->data) return;
 
-            for (; *s; ++s)
-            {
-                if (decutf8(&state, &codepoint, *(unsigned char*)s))
-                    continue;
+            int len = strlen(s);
+            float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
+            int c = 0;
+            float spacing = stash->charSpacing;
+            int doKerning = stash->doKerning;
+            float dpiScale = stash->dpiScale;
+
+            for (; *s; ++s){
+                if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
                 glyph = get_glyph(stash, fnt, codepoint, isize);
-                if (!glyph)
-                    continue;
-                if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q))
-                    continue;
+                if (!glyph) continue;
+                if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q)) continue;
+
+                int diff = 0;
+                if (c < len && doKerning > 0){
+                    diff = stbtt_GetCodepointKernAdvance(&fnt->font, *(s), *(s+1));
+                    //printf("diff '%c' '%c' = %d\n", *(s-1), *s, diff);
+                    x += diff * scale;
+                }
+                x += spacing;
+
                 if (q.x0 < *minx) *minx = q.x0;
                 if (q.x1 > *maxx) *maxx = q.x1;
                 if (q.y1 < *miny) *miny = q.y1;
                 if (q.y0 > *maxy) *maxy = q.y0;
+                c++;
             }
-            if (floorf(x) > *maxx) *maxx = floorf(x);
+            if (x > *maxx) *maxx = x;
         }
 
         void sth_vmetrics(struct sth_stash* stash,
-                          int idx, float size,
-                          float* ascender, float* descender, float* lineh)
+                              int idx, float size,
+                              float* ascender, float* descender, float* lineh)
         {
             struct sth_font* fnt = nullptr;
 
-            if (stash == nullptr)
-                return;
+            if (stash == nullptr) return;
             fnt = stash->fonts;
             while(fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == nullptr)
-                return;
-            if (fnt->type != BMFONT && !fnt->data)
-                return;
+            if (fnt == nullptr) return;
+            if (fnt->type != BMFONT && !fnt->data) return;
             if (ascender)
                 *ascender = fnt->ascender*size;
             if (descender)
@@ -917,8 +910,7 @@ namespace easy3d {
             struct sth_font* fnt = nullptr;
             struct sth_font* curfnt = nullptr;
 
-            if (!stash)
-                return;
+            if (!stash) return;
 
             tex = stash->tt_textures;
             while(tex != nullptr) {
@@ -965,9 +957,18 @@ namespace easy3d {
 namespace easy3d {
 
 
-    OpenGLText::OpenGLText(int texture_size, bool mipmaps) {
+    OpenGLText::OpenGLText(float dpi_scale, int texture_size, bool mipmaps)
+        : dpi_scale_(dpi_scale)
+    {
         texture_size_ = geom::next_pow2(texture_size);
-        stash_ = details::sth_create(texture_size_, texture_size_, mipmaps);
+        stash_ = details::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale); easy3d_log_gl_error;
+        if (stash_ == nullptr) {
+            LOG(ERROR) << "construction of OpenGLText failed";
+        }
+        else {
+            stash_->doKerning = 0; //kerning disabled by default
+            stash_->charSpacing = 0.0; //spacing neutral by default
+        }
     }
 
     OpenGLText::~OpenGLText() {
@@ -977,10 +978,11 @@ namespace easy3d {
 
     bool OpenGLText::add_font(const std::string &font_file) {
         if (stash_ == nullptr) {
-            LOG(ERROR) << "addFont() error: font stash_ not initialized, call setup first";
+            LOG(ERROR) << "construction of OpenGLText failed";
             return false;
         }
 
+        LOG(INFO) << "loading font '" << font_file << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         const int id = sth_add_font(stash_, font_file.c_str());
         if (id <= 0) {
             LOG(ERROR) << "could not load font: " << font_file;
@@ -988,26 +990,41 @@ namespace easy3d {
         }
 
         font_ids_.push_back(id);
-        LOG(INFO) << "loaded font '" << font_file << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         return true;
     }
 
 
     float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID,
                            const vec3 &font_color) const {
-        float dx = 0.0f;
+        float endx = 0.0f;
         if (stash_ != nullptr) {
-            stash_->color = font_color;
+            stash_->font_color = font_color;
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            sth_begin_draw(stash_);
-            sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &dx); //this might draw
+            sth_begin_draw(stash_); easy3d_debug_log_gl_error;
+            sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &endx); //this might draw
+            easy3d_debug_log_gl_error;
             sth_end_draw(stash_); // this actually draws
+            easy3d_debug_log_gl_error;
             glDisable(GL_BLEND);
         } else {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
         }
-        return dx;
+        return endx;
+    }
+
+
+    void OpenGLText::set_character_spacing(float spacing) {
+        if (stash_)
+            stash_->charSpacing = spacing;
+    }
+
+
+    float OpenGLText::character_spacing() const {
+        if (stash_)
+            return stash_->charSpacing;
+        else
+            return 0.0f;
     }
 
 
