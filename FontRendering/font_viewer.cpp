@@ -25,9 +25,8 @@
 #include "font_viewer.h"
 #include "opengl_text.h"
 
-#include <easy3d/util/dialogs.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
-#include <easy3d/viewer/opengl_error.h>
 
 
 using namespace easy3d;
@@ -42,26 +41,15 @@ FontViewer::FontViewer(const std::string &title)
 void FontViewer::init() {
     Viewer::init();
 
-    LOG(WARNING) << "TODO: add a OpenGLText class, allowing changing text color/font/size etc.";
+    texter_ = new OpenGLText;
 
-    texter_ = new ofxFontStash;
     
-    std::vector<std::string> font_files = {
-            resource::directory() + "/fonts/DroidSerif-Regular.ttf",
-            resource::directory() + "/fonts/zachary.ttf",
-            resource::directory() + "/fonts/BNFontBoy.ttf",
-            resource::directory() + "/fonts/Caribbean.ttf",
-            resource::directory() + "/fonts/Cousine-Regular.ttf",
-            resource::directory() + "/fonts/DroidSerif-Italic.ttf",
-            resource::directory() + "/fonts/Earth-Normal.ttf",
-            resource::directory() + "/fonts/G-Unit.ttf",
-            resource::directory() + "/fonts/ProggyClean.ttf",
-            resource::directory() + "/fonts/Vera.ttf",
-            resource::directory() + "/fonts/wds052801.ttf"
-    };
-
-    for (const auto& file : font_files)
-        texter_->add_font(file);
+    std::vector<std::string> files;
+    file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
+    for (const auto& file : files) {
+        if (file_system::extension(file) == "ttf")
+            texter_->add_font(resource::directory() + "/fonts/" + file);
+    }
 }
 
 
@@ -76,17 +64,20 @@ void FontViewer::draw() const {
     Viewer::draw();
 
     const float font_size = 80.0f;
-    float x = 100.0f;
-    float y = 200.0f;
+    float x = 50.0f;
+    float y = 50.0f;
 
     const int num_fonts = texter_->num_fonts();
+    const float font_height = texter_->font_height(font_size);
 
-    const float font_height = texter_->getFontHeight(font_size);
-
+    float next = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
-        float y1 = y + i * (font_height + 50);
-        float x1 = texter_->draw("Easy3D makes 3D easy! ", font_size, x, y1, i);
-        texter_->draw("I Love Easy3D!", font_size, x1, y1, i);
+        if (i % 2 == 0) {
+            y += (font_height + 40);
+            next = texter_->draw("Easy3D makes 3D easy! ", x, y, font_size, i);
+        }
+        else
+            texter_->draw("I Love Easy3D!", next, y, font_size, i);
     }
 
 }
