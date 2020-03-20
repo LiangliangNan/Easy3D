@@ -82,7 +82,7 @@ void TextRendering::draw() const {
         }
         else {
             texter_->draw("I Love Easy3D!", next, y, font_size, i, colors_[i]);
-            y += (font_height + 70);
+            y += (font_height + 35 * dpi_scaling());
         }
     }
 }

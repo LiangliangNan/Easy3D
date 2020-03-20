@@ -55,7 +55,7 @@ namespace easy3d {
          * @param texture_size  The size of the font textures. Suggested values are 512, 1024, 2048 ...
          * @param mipmaps True to create mipmaps for the font textures.
          */
-        OpenGLText(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = true);
+        OpenGLText(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = false);
 
         /**
          * Destructor.
