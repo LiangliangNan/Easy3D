@@ -25,22 +25,34 @@
 #ifndef EASY3D_OPENGL_TEXT_H
 #define EASY3D_OPENGL_TEXT_H
 
-
 #include <vector>
 
-struct sth_stash;
 
 namespace easy3d {
+
+    namespace details {
+        struct sth_stash;
+    }
+
+
+    /**
+     * OpenGLText enables quick and simple string rendering in OpenGL applications. It supports truetype (TTF) fonts and
+     * Unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
+     * TODO: character spacing; retina support; multi-line string rendering (to support line breaks '\n' in strings).
+     */
 
     class OpenGLText {
     public:
         /**
          * Constructor.
-         * @param texture_size  The size of the font textures, e.g., 512, 1024, 2048.
+         * @param texture_size  The size of the font textures. Suggested values are 512, 1024, 2048 ...
          * @param mipmaps True to create mipmaps for the font textures.
          */
         OpenGLText(int texture_size = 512, bool mipmaps = false);
 
+        /**
+         * Destructor.
+         */
         ~OpenGLText();
 
         /**
@@ -77,7 +89,7 @@ namespace easy3d {
         float font_height(float font_size) const;
 
     private:
-        struct sth_stash *stash_;
+        details::sth_stash *stash_;
         int texture_size_;
         std::vector<int> font_ids_;
     };

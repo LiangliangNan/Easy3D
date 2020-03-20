@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet)
     - Let each drawable remember how the buffer data was created (the property and the update_buffer() function);
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). An workaround is to proivide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
     - The Graph data structure is not ready, not tested yet.
