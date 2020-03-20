@@ -1088,7 +1088,7 @@ void PaintCanvas::postDraw() {
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.beginNativePainting();
 
-    char buffer[1024];
+    char buffer[48];
     sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
     painter.drawText(20, 20, QString::fromStdString(buffer));
 
