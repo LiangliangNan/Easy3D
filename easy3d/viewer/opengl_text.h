@@ -37,9 +37,12 @@ namespace easy3d {
 
 
     /**
-     * OpenGLText enables quick and simple string rendering in OpenGL applications. It supports truetype (TTF) fonts and
-     * Unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
-     * TODO: font color; character spacing; retina support; multi-line string rendering (to support line breaks '\n' in strings).
+     * OpenGLText enables quick and easy string rendering in OpenGL applications. It supports truetype (TTF) fonts and
+     * unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
+     * TODO: font color;
+     *       character spacing;
+     *       retina support;
+     *       multi-line string rendering (to support line breaks '\n' in strings).
      */
 
     class OpenGLText {
