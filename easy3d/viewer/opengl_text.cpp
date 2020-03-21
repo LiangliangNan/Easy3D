@@ -51,6 +51,7 @@ namespace easy3d {
         // The significant changes are that all fixed pipeline rendering code has been
         // replaced by shader-based rendering.
         // The original code is available at https://github.com/akrinke/Font-Stash
+        // The original code is available at https://github.com/armadillu/ofxFontStash
 
 
         /**
@@ -695,8 +696,8 @@ namespace easy3d {
                 {
                     int viewport[4];
                     glGetIntegerv(GL_VIEWPORT, viewport);
-                    int w = viewport[2];
-                    int h = viewport[3];
+                    const int w = viewport[2];
+                    const int h = viewport[3];
 
                     std::vector<vec3> verts(texture->nverts);
                     std::vector<vec2> texcoords(texture->nverts);
@@ -996,6 +997,14 @@ namespace easy3d {
 
     float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID,
                            const vec3 &font_color) const {
+
+        if (true) { // upper_left corner is the origin
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            const int h = viewport[3];
+            y = h - y - 1 - font_height(font_size);
+        }
+
         float endx = 0.0f;
         if (stash_ != nullptr) {
             stash_->font_color = font_color;
@@ -1014,13 +1023,17 @@ namespace easy3d {
     }
 
 
-#if 0
+#ifdef ENABLE_MULTILINE_TEXT_RENDERING
 
 #define OFX_FONT_STASH_LINE_HEIGHT_MULT	0.9
 
-    Rect OpenGLText::draw_multi_line(const std::string &text, float x, float y, float font_size, ofAlignHorz align, float width, int fontID, const vec3 &font_color) const {
+    Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align, float width, int fontID, const vec3 &font_color) const {
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        const int h = viewport[3];
+
         Rect area(0, 0, 0, 0);
-        if (stash != NULL){
+        if (stash_ != NULL){
             std::stringstream ss(text);
             std::string s;
             int line = 0;
@@ -1033,13 +1046,13 @@ namespace easy3d {
 
             while ( getline(ss, s, '\n') ) {
                 lines.push_back(s);
-                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash->dpiScale;
+                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 ys.push_back(yy);
-                Rect dim = get_bbox(s, font_size, x, y + yy / stash->dpiScale );
+                Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, 0.0f);
 
                 if(line == 0){
                     area = dim;
-                }else{
+                } else{
                     area = Rect(std::min(area.x_min(), dim.x_min()),
                                 std::max(area.x_max(), dim.x_max()),
                                 std::min(area.y_min(), dim.y_min()),
@@ -1052,38 +1065,36 @@ namespace easy3d {
                 line++;
             }
 
-            stash->font_color = font_color;
+            stash_->font_color = font_color;
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-//            glPushMatrix();
-//            glTranslatef(x, y, 0.0f);
-            sth_begin_draw(stash);
+            sth_begin_draw(stash_);
             {
-                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash->dpiScale;
+                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 float minDiffX = FLT_MAX;
                 for(int i = 0; i < lines.size(); i++){
                     float dx = 0;
                     float x = 0;
                     switch (align) {
-                        case OF_ALIGN_HORZ_LEFT: break;
-                        case OF_ALIGN_HORZ_RIGHT: x = maxW - widths[i]; break;
-                        case OF_ALIGN_HORZ_CENTER: x = (maxW - widths[i]) * 0.5; break;
+                        case ALIGN_LEFT: break;
+                        case ALIGN_RIGHT: x = maxW - widths[i]; break;
+                        case ALIGN_CENTER: x = (maxW - widths[i]) * 0.5; break;
                         default: break;
                     }
                     if(minDiffX > x) minDiffX = x;
-                    sth_draw_text(stash,
-                                      font_ids_[fontID],
-                                      font_size,
-                                      x * stash->dpiScale,
-                                      ys[i],
-                                      lines[i].c_str(),
-                                      &dx
+                    sth_draw_text(stash_,
+                                  font_ids_[fontID],
+                                  font_size,
+                                  x0 + x * stash_->dpiScale,
+                                  h - ys[i] - 1 - font_height(font_size) - y0,
+                                  lines[i].c_str(),
+                                  &dx
                     );
                 }
                 area.x() += minDiffX;
             }
-            sth_end_draw(stash);
+            sth_end_draw(stash_);
             easy3d_debug_log_gl_error;
             glDisable(GL_BLEND);
         } else {
@@ -1094,12 +1105,12 @@ namespace easy3d {
     }
 
 
-    Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, ofAlignHorz align, float width) const {
+    Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, Align align, float width) const {
 
         Rect totalArea(0, 0, 0, 0);
         const float lineHeight = 1.0f; // as percent, 1.0 would be normal
 
-        if (stash != NULL){
+        if (stash_ != NULL){
             std::stringstream ss(text);
             std::string s;
             int line = 0;
@@ -1109,7 +1120,7 @@ namespace easy3d {
 
                 float dx = 0;
                 float w, h, x, y;
-                sth_dim_text( stash, font_ids_[0], font_size / stash->dpiScale, s.c_str(), &x, &y, &w, &h);
+                sth_dim_text( stash_, font_ids_[0], font_size / stash_->dpiScale, s.c_str(), &x, &y, &w, &h);
 
                 totalArea.x() = x + xx;
                 totalArea.y() = yy + y ;
@@ -1127,11 +1138,6 @@ namespace easy3d {
 
             if(line > 1){ //if multiline
                 totalArea.y() -= rects[0].height();
-                for(int i = 0; i < rects.size(); i++){
-#if OF_VERSION_MAJOR == 0 && OF_VERSION_MINOR >= 8
-                    totalArea = totalArea.getUnion(rects[i]);	//TODO
-#endif
-                }
             }else{
                 totalArea.y() -= totalArea.height();
             }
@@ -1145,8 +1151,8 @@ namespace easy3d {
 //            totalArea.height -= extraPadding;
 //        }
 
-        if(align != OF_ALIGN_HORZ_LEFT){
-            if(align == OF_ALIGN_HORZ_RIGHT){
+        if(align != ALIGN_LEFT){
+            if(align == ALIGN_RIGHT){
                 totalArea.x() += width - totalArea.width();
             }else{
                 totalArea.x() += (width - totalArea.width()) * 0.5;
