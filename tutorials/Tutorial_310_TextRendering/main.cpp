@@ -23,9 +23,6 @@
  */
 
 #include "text_rendering.h"
-#include <easy3d/fileio/resources.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_points.h>
 #include <easy3d/util/logging.h>
 
 

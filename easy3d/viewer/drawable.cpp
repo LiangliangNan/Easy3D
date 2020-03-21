@@ -265,7 +265,7 @@ namespace easy3d {
         }
 
         // Primitives like lines and triangles can be drawn without the index buffer provided that
-        // all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v2). This requires
+        // all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3). This requires
         // the shared vertices be duplicated in the vertex buffer.
         if (index_buffer_) {
             // index buffer must be bound if using glDrawElements()
