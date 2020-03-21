@@ -37,7 +37,8 @@ using namespace easy3d;
 
 TextRendering::TextRendering(const std::string &title)
         : Viewer(title)
-        , font_size_delta_(0)
+        , font_size_delta_(0.0f)
+        , line_spacing_(0.0f)
 {
     set_background_color(vec3(1, 1, 1));
 }
@@ -45,8 +46,9 @@ TextRendering::TextRendering(const std::string &title)
 
 std::string TextRendering::usage() const {
     return ("----------------- Text Rendering usage ----------------- \n"
-            "Press '+/-' to increase/decrease font size\n"
-            "Press 'up/down' to increase/decrease character spacing\n"
+            "Press '+'/'-' to increase/decrease font size\n"
+            "Press 'up'/'down' to increase/decrease character spacing\n"
+            "Press '<'/'>' to increase/decrease line spacing\n"
             "Press key 'space' to enable/disable kerning\n"
             "----------------------------------------------------------- \n");
 }
@@ -90,12 +92,10 @@ void TextRendering::draw() const {
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
 
-#if 0
-    texter_->draw_multi_line("This example is part of Easy3D examples.\nIt shows how to render text in Easy3D.\nIt is quite simple and I hope it is useful.",
-                             x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align::ALIGN_CENTER, width());
-#else
-    texter_->draw("--- This example shows how to render text in Easy3D ---", x * dpi_scaling(), y * dpi_scaling(),  font_size, 0);
-    y += font_height * 1.5;
+    texter_->draw_multi_line("This example is part of Easy3D.\nIt shows\nhow to render strings in an OpenGL application.",
+                             x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align::ALIGN_CENTER, 0, vec3(0, 0, 0), line_spacing_);
+
+    y += font_height * (1.1 + line_spacing_) * 3;
 
     float next_x = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
@@ -107,7 +107,6 @@ void TextRendering::draw() const {
             y += font_height * 1.5;
         }
     }
-#endif
 }
 
 
@@ -142,6 +141,18 @@ bool TextRendering::key_press_event(int key, int modifiers) {
         update();
         return true;
     }
+
+    else if (key == GLFW_KEY_COMMA) {
+        line_spacing_ = std::max(line_spacing_ - 0.1f, -1.0f);
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_PERIOD) {
+        line_spacing_ = std::min(line_spacing_ + 0.1f, 2.0f);
+        update();
+        return true;
+    }
+
     else
         return Viewer::key_press_event(key, modifiers);
 }

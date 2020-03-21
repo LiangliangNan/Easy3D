@@ -1070,7 +1070,9 @@ namespace easy3d {
 
 #define FONT_STASH_LINE_HEIGHT_MULT	0.9
 
-    Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align, float width, int fontID, const vec3 &font_color) const {
+    Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align,
+            int fontID, const vec3 &font_color, float line_spacing) const
+    {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int h = viewport[3];
@@ -1083,15 +1085,15 @@ namespace easy3d {
             std::vector<std::string> lines;
             std::vector<float> widths;
             std::vector<float> ys;
-            float maxW = width;
+            float maxW = 0.0f;
 
-            const float lineHeight = 1.0f; // as percent, 1.0 would be normal
+            const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 
             while ( getline(ss, s, '\n') ) {
                 lines.push_back(s);
                 float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 ys.push_back(yy);
-                Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, 0.0f);
+                Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
 
                 if(line == 0){
                     area = dim;
@@ -1102,9 +1104,8 @@ namespace easy3d {
                                 std::max(area.y_max(), dim.y_max()));
                 }
                 widths.push_back(dim.width());
-                if(width == 0){
-                    if(maxW < dim.width()) maxW = dim.width();
-                }
+                maxW = dim.width();
+
                 line++;
             }
 
@@ -1143,10 +1144,10 @@ namespace easy3d {
     }
 
 
-    Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, Align align, float width) const {
+    Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, Align align, float line_spacing) const {
 
         Rect totalArea(0, 0, 0, 0);
-        const float lineHeight = 1.0f; // as percent, 1.0 would be normal
+        const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 
         if (stash_ != nullptr){
             std::stringstream ss(text);
@@ -1184,16 +1185,12 @@ namespace easy3d {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
         }
 
-//        if(extraPadding > 0){
-//            totalArea.width -= extraPadding;
-//            totalArea.height -= extraPadding;
-//        }
 
         if(align != ALIGN_LEFT){
             if(align == ALIGN_RIGHT){
-                totalArea.x() += width - totalArea.width();
+                totalArea.x() -= totalArea.width();
             }else{
-                totalArea.x() += (width - totalArea.width()) * 0.5;
+                totalArea.x() -= totalArea.width() * 0.5;
             }
         }
 

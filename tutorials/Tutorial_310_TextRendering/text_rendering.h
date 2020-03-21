@@ -49,7 +49,8 @@ protected:
 private:
     easy3d::OpenGLText* texter_;
     std::vector< easy3d::vec3> colors_;
-    int font_size_delta_;
+    float font_size_delta_;
+    float line_spacing_;
 };
 
 
