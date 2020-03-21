@@ -111,9 +111,9 @@ namespace easy3d {
 
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
+#include <easy3d/viewer/vertex_array_object.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <3rd_party/stb/stb_truetype.h>
@@ -692,8 +692,7 @@ namespace easy3d {
             auto program = ShaderManager::get_program(name);
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                        ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tex_coord")
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "coords")
                 };
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
@@ -719,32 +718,33 @@ namespace easy3d {
             {
                 if (texture->nverts > 0)
                 {
-                    std::vector<vec3> verts(texture->nverts);
-                    std::vector<vec2> texcoords(texture->nverts);
+                    // each vec4 represent x, y, u, and v
+                    std::vector<vec4> vertices(texture->nverts);
                     for (int i=0;i<texture->nverts; ++i) {
-                        float x = texture->verts[i * 4];
-                        float y = texture->verts[i * 4 + 1];
-                        verts[i] = vec3(2.0f * x / w - 1.0f, 2.0f * y / h - 1.0f, -0.9f);
-                        texcoords[i] = vec2(texture->verts + i * 4 + 2);
+                        vertices[i] = vec4(texture->verts + i * 4);
+                        vertices[i].x = 2.0f * vertices[i].x / w - 1.0f;
+                        vertices[i].y = 2.0f * vertices[i].y / h - 1.0f;
                     }
 
-                    std::vector<unsigned int> indices;
+                    std::vector<unsigned int> indices(texture->nverts/4 * 6);
                     for (int j = 0; j < texture->nverts/4; ++j) {
-                        indices.push_back(j * 4);
-                        indices.push_back(j * 4 + 1);
-                        indices.push_back(j * 4 + 2);
-                        indices.push_back(j * 4);
-                        indices.push_back(j * 4 + 2);
-                        indices.push_back(j * 4 + 3);
+                        indices[j * 6 + 0] = j * 4;
+                        indices[j * 6 + 1] = j * 4 + 1;
+                        indices[j * 6 + 2] = j * 4 + 2;
+                        indices[j * 6 + 3] = j * 4;
+                        indices[j * 6 + 4] = j * 4 + 2;
+                        indices[j * 6 + 5] = j * 4 + 3;
                     }
 
-                    TrianglesDrawable drawable;
-                    drawable.update_vertex_buffer(verts);
-                    drawable.update_texcoord_buffer(texcoords);
-                    drawable.update_index_buffer(indices);
+                    unsigned int vertex_buffer, index_buffer;
+                    VertexArrayObject vao;
+                    vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, vertices.data(), vertices.size() * sizeof(vec4), 4,true);
+                    vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int), true);
 
                     program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->font_color);
-                    drawable.gl_draw(false);
+                    vao.bind();
+                    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+                    vao.release();
                     program->release_texture();
 
                     texture->nverts = 0;
@@ -1068,7 +1068,7 @@ namespace easy3d {
 
 #ifdef ENABLE_MULTILINE_TEXT_RENDERING
 
-#define OFX_FONT_STASH_LINE_HEIGHT_MULT	0.9
+#define FONT_STASH_LINE_HEIGHT_MULT	0.9
 
     Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align, float width, int fontID, const vec3 &font_color) const {
         int viewport[4];
@@ -1076,7 +1076,7 @@ namespace easy3d {
         const int h = viewport[3];
 
         Rect area(0, 0, 0, 0);
-        if (stash_ != NULL){
+        if (stash_ != nullptr){
             std::stringstream ss(text);
             std::string s;
             int line = 0;
@@ -1089,7 +1089,7 @@ namespace easy3d {
 
             while ( getline(ss, s, '\n') ) {
                 lines.push_back(s);
-                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
+                float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 ys.push_back(yy);
                 Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, 0.0f);
 
@@ -1111,7 +1111,7 @@ namespace easy3d {
             stash_->font_color = font_color;
             sth_begin_draw(stash_);
             {
-                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
+                float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 float minDiffX = FLT_MAX;
                 for(int i = 0; i < lines.size(); i++){
                     float dx = 0;
@@ -1148,7 +1148,7 @@ namespace easy3d {
         Rect totalArea(0, 0, 0, 0);
         const float lineHeight = 1.0f; // as percent, 1.0 would be normal
 
-        if (stash_ != NULL){
+        if (stash_ != nullptr){
             std::stringstream ss(text);
             std::string s;
             int line = 0;
@@ -1168,7 +1168,7 @@ namespace easy3d {
                 if(h > totalArea.height()) totalArea.y_max() = totalArea.y() + h;
                 Rect r2 = totalArea;
                 r2.y() -= r2.height();
-                r2.y() += ((font_size * lineHeight)) * OFX_FONT_STASH_LINE_HEIGHT_MULT * line;
+                r2.y() += ((font_size * lineHeight)) * FONT_STASH_LINE_HEIGHT_MULT * line;
                 rects.push_back(r2);
 
                 line ++;
