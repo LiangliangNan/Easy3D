@@ -96,14 +96,14 @@ void TextRendering::draw() const {
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
 
-    float next = 0.0f;
+    float next_x = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
         if (i % 2 == 0) {
-            next = texter_->draw("Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
+            next_x = texter_->draw("Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
         }
         else {
-            texter_->draw("I Love Easy3D!", next * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
-            y += (font_height) * 1.5;
+            texter_->draw("I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
+            y += font_height * 1.5;
         }
     }
 #endif
@@ -112,35 +112,32 @@ void TextRendering::draw() const {
 
 bool TextRendering::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
-        bool kerning = texter_->kerning();
+        const bool kerning = texter_->kerning();
         texter_->set_kerning(!kerning);
         update();
         return true;
     }
 
     else if (key == GLFW_KEY_MINUS) {
-        --font_size_delta_;
-        font_size_delta_ = std::max(font_size_delta_, -10);
+        font_size_delta_ = std::max(font_size_delta_ - 1.0f, -10.0f);
         update();
         return true;
     }
     else if (key == GLFW_KEY_EQUAL) {
-        ++font_size_delta_;
+        font_size_delta_ = std::min(font_size_delta_ + 1.0f, 250.0f);
         update();
         return true;
     }
 
     else if (key == GLFW_KEY_DOWN) {
-        float spacing = texter_->character_spacing();
-        spacing -= 0.5f;
-        texter_->set_character_spacing(std::max(spacing, 0.0f));
+        const float spacing = texter_->character_spacing();
+        texter_->set_character_spacing(std::max(spacing - 0.5f, 0.0f));
         update();
         return true;
     }
     else if (key == GLFW_KEY_UP) {
-        float spacing = texter_->character_spacing();
-        spacing += 0.5f;
-        texter_->set_character_spacing(std::min(spacing, 50.0f));
+        const float spacing = texter_->character_spacing();
+        texter_->set_character_spacing(std::min(spacing + 0.5f, 50.0f));
         update();
         return true;
     }
