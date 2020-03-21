@@ -68,6 +68,9 @@ void TextRendering::draw() const {
 
     texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), (height() - 50) * dpi_scaling(), 40, 0);
 
+#if 0
+    texter_->draw_multi_line("This example\n shows how to \nrender text in Easy3D.", 50 * dpi_scaling(), (height() - 50) * dpi_scaling(), 40, OpenGLText::ofAlignHorz::OF_ALIGN_HORZ_LEFT, 0);
+#else
     const float font_size = 35.0f;
     float x = 50.0f;
     float y = 50.0f;
@@ -81,10 +84,11 @@ void TextRendering::draw() const {
             next = texter_->draw("Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
         }
         else {
-            texter_->draw("I Love Easy3D!", next, y * dpi_scaling(), font_size, i, colors_[i]);
+            texter_->draw("I Love Easy3D!", next * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
             y += (font_height) * 1.5;
         }
     }
+#endif
 }
 
 

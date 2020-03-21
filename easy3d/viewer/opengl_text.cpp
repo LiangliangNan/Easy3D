@@ -830,7 +830,7 @@ namespace easy3d {
                 c++;
             }
 
-            if (dx) *dx = x;
+            if (dx) *dx = x / dpiScale;
         }
 
         void sth_dim_text(struct sth_stash* stash,
@@ -1013,6 +1013,149 @@ namespace easy3d {
         return endx;
     }
 
+
+#if 0
+
+#define OFX_FONT_STASH_LINE_HEIGHT_MULT	0.9
+
+    Rect OpenGLText::draw_multi_line(const std::string &text, float x, float y, float font_size, ofAlignHorz align, float width, int fontID, const vec3 &font_color) const {
+        Rect area(0, 0, 0, 0);
+        if (stash != NULL){
+            std::stringstream ss(text);
+            std::string s;
+            int line = 0;
+            std::vector<std::string> lines;
+            std::vector<float> widths;
+            std::vector<float> ys;
+            float maxW = width;
+
+            const float lineHeight = 1.0f; // as percent, 1.0 would be normal
+
+            while ( getline(ss, s, '\n') ) {
+                lines.push_back(s);
+                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash->dpiScale;
+                ys.push_back(yy);
+                Rect dim = get_bbox(s, font_size, x, y + yy / stash->dpiScale );
+
+                if(line == 0){
+                    area = dim;
+                }else{
+                    area = Rect(std::min(area.x_min(), dim.x_min()),
+                                std::max(area.x_max(), dim.x_max()),
+                                std::min(area.y_min(), dim.y_min()),
+                                std::max(area.y_max(), dim.y_max()));
+                }
+                widths.push_back(dim.width());
+                if(width == 0){
+                    if(maxW < dim.width()) maxW = dim.width();
+                }
+                line++;
+            }
+
+            stash->font_color = font_color;
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+//            glPushMatrix();
+//            glTranslatef(x, y, 0.0f);
+            sth_begin_draw(stash);
+            {
+                float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash->dpiScale;
+                float minDiffX = FLT_MAX;
+                for(int i = 0; i < lines.size(); i++){
+                    float dx = 0;
+                    float x = 0;
+                    switch (align) {
+                        case OF_ALIGN_HORZ_LEFT: break;
+                        case OF_ALIGN_HORZ_RIGHT: x = maxW - widths[i]; break;
+                        case OF_ALIGN_HORZ_CENTER: x = (maxW - widths[i]) * 0.5; break;
+                        default: break;
+                    }
+                    if(minDiffX > x) minDiffX = x;
+                    sth_draw_text(stash,
+                                      font_ids_[fontID],
+                                      font_size,
+                                      x * stash->dpiScale,
+                                      ys[i],
+                                      lines[i].c_str(),
+                                      &dx
+                    );
+                }
+                area.x() += minDiffX;
+            }
+            sth_end_draw(stash);
+            easy3d_debug_log_gl_error;
+            glDisable(GL_BLEND);
+        } else {
+            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+        }
+
+        return area;
+    }
+
+
+    Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, ofAlignHorz align, float width) const {
+
+        Rect totalArea(0, 0, 0, 0);
+        const float lineHeight = 1.0f; // as percent, 1.0 would be normal
+
+        if (stash != NULL){
+            std::stringstream ss(text);
+            std::string s;
+            int line = 0;
+            float totalH = 0;
+            std::vector<Rect> rects;
+            while ( getline(ss, s, '\n') ) {
+
+                float dx = 0;
+                float w, h, x, y;
+                sth_dim_text( stash, font_ids_[0], font_size / stash->dpiScale, s.c_str(), &x, &y, &w, &h);
+
+                totalArea.x() = x + xx;
+                totalArea.y() = yy + y ;
+                w = fabs (w - x);
+                h = fabs (y - h);
+                if(w > totalArea.width()) totalArea.x_max() = totalArea.x() + w;
+                if(h > totalArea.height()) totalArea.y_max() = totalArea.y() + h;
+                Rect r2 = totalArea;
+                r2.y() -= r2.height();
+                r2.y() += ((font_size * lineHeight)) * OFX_FONT_STASH_LINE_HEIGHT_MULT * line;
+                rects.push_back(r2);
+
+                line ++;
+            }
+
+            if(line > 1){ //if multiline
+                totalArea.y() -= rects[0].height();
+                for(int i = 0; i < rects.size(); i++){
+#if OF_VERSION_MAJOR == 0 && OF_VERSION_MINOR >= 8
+                    totalArea = totalArea.getUnion(rects[i]);	//TODO
+#endif
+                }
+            }else{
+                totalArea.y() -= totalArea.height();
+            }
+
+        } else {
+            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+        }
+
+//        if(extraPadding > 0){
+//            totalArea.width -= extraPadding;
+//            totalArea.height -= extraPadding;
+//        }
+
+        if(align != OF_ALIGN_HORZ_LEFT){
+            if(align == OF_ALIGN_HORZ_RIGHT){
+                totalArea.x() += width - totalArea.width();
+            }else{
+                totalArea.x() += (width - totalArea.width()) * 0.5;
+            }
+        }
+
+        return totalArea;
+    }
+#endif
 
     void OpenGLText::set_character_spacing(float spacing) {
         if (stash_)
