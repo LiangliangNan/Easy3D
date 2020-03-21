@@ -66,14 +66,15 @@ void TextRendering::cleanup() {
 void TextRendering::draw() const {
     Viewer::draw();
 
-    texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), (height() - 50) * dpi_scaling(), 40, 0);
-
 #if 0
-    texter_->draw_multi_line("This example\n shows how to \nrender text in Easy3D.", 50 * dpi_scaling(), (height() - 50) * dpi_scaling(), 40, OpenGLText::ofAlignHorz::OF_ALIGN_HORZ_LEFT, 0);
+    texter_->draw_multi_line("This example shows how to\nshows how to\nrender text in Easy3D. It is quite simple. It is quite simple.",
+                             5 * dpi_scaling(), 5 * dpi_scaling(), 40, OpenGLText::Align::ALIGN_RIGHT, width());
 #else
+    texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), 50 * dpi_scaling(), 40, 0);
+
     const float font_size = 35.0f;
     float x = 50.0f;
-    float y = 50.0f;
+    float y = 120.0f;
 
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
