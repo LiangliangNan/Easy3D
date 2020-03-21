@@ -54,7 +54,6 @@ std::string TextRendering::usage() const {
 }
 
 
-
 void TextRendering::init() {
     Viewer::init();
 
