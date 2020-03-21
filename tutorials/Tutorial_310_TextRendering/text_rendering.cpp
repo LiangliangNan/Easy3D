@@ -90,7 +90,7 @@ void TextRendering::draw() const {
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
 
-#if 1
+#if 0
     texter_->draw_multi_line("This example is part of Easy3D examples.\nIt shows how to render text in Easy3D.\nIt is quite simple and I hope it is useful.",
                              x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align::ALIGN_CENTER, width());
 #else
