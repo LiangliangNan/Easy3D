@@ -23,20 +23,22 @@
  */
 
 #include "text_rendering.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
 
-// This example shows how to create depth images from the rendering.
+// This example shows how to render strings using Easy3D.
 
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
-    // the point cloud file.
+    const std::string file_name = resource::directory() + "/data/sphere.obj";
     try {
         TextRendering viewer("Tutorial_310_TextRendering");
+        viewer.add_model(file_name);
 
         // Run the viewer
         viewer.run();
