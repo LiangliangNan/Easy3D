@@ -53,16 +53,27 @@ namespace easy3d {
         {
         }
 
+        FT& x_min() { return x_min_; }
+        FT& y_min() { return y_min_; }
+        FT& x_max() { return x_max_; }
+        FT& y_max() { return y_max_; }
         FT x_min() const { return x_min_; }
         FT y_min() const { return y_min_; }
         FT x_max() const { return x_max_; }
         FT y_max() const { return y_max_; }
 
-        FT x()  const { return x_min_; }
+        FT& x() { return x_min_; }
+        FT& y() { return y_min_; }
+        FT x() const { return x_min_; }
         FT y() const { return y_min_; }
+
         FT width()  const { return x_max() - x_min(); }
         FT height() const { return y_max() - y_min(); }
 
+        FT& left() { return x_min_; }
+        FT& top()  { return y_min_; }
+        FT& right() { return x_max_; }
+        FT& bottom() { return y_max_; }
         FT left() const { return x_min_; }
         FT top() const  { return y_min_; }
         FT right() const  { return x_max_; }
