@@ -688,17 +688,37 @@ namespace easy3d {
 
         static void flush_draw(struct sth_stash* stash)
         {
+            const std::string name = "text/text";
+            auto program = ShaderManager::get_program(name);
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes = {
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                        ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tex_coord")
+                };
+                program = ShaderManager::create_program_from_files(name, attributes);
+            }
+            if (!program) {
+                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                return;
+            }
+
+            int viewport[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            const int w = viewport[2];
+            const int h = viewport[3];
+
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            program->bind();
+
             struct sth_texture* texture = stash->tt_textures;
             short tt = 1;
             while (texture)
             {
                 if (texture->nverts > 0)
                 {
-                    int viewport[4];
-                    glGetIntegerv(GL_VIEWPORT, viewport);
-                    const int w = viewport[2];
-                    const int h = viewport[3];
-
                     std::vector<vec3> verts(texture->nverts);
                     std::vector<vec2> texcoords(texture->nverts);
                     for (int i=0;i<texture->nverts; ++i) {
@@ -708,7 +728,7 @@ namespace easy3d {
                         texcoords[i] = vec2(texture->verts + i * 4 + 2);
                     }
 
-                    std::vector<unsigned int> indices; // = { 0, 1, 2, 0, 2, 3 };
+                    std::vector<unsigned int> indices;
                     for (int j = 0; j < texture->nverts/4; ++j) {
                         indices.push_back(j * 4);
                         indices.push_back(j * 4 + 1);
@@ -723,25 +743,9 @@ namespace easy3d {
                     drawable.update_texcoord_buffer(texcoords);
                     drawable.update_index_buffer(indices);
 
-                    const std::string name = "text/text";
-                    auto program = ShaderManager::get_program(name);
-                    if (!program) {
-                        std::vector<ShaderProgram::Attribute> attributes = {
-                                ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tex_coord")
-                        };
-                        program = ShaderManager::create_program_from_files(name, attributes);
-                    }
-                    if (!program) {
-                        LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
-                        return;
-                    }
-
-                    program->bind();
                     program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->font_color);
                     drawable.gl_draw(false);
                     program->release_texture();
-                    program->release();
 
                     texture->nverts = 0;
                 }
@@ -752,6 +756,9 @@ namespace easy3d {
                     tt = 0;
                 }
             }
+            program->release();
+            glDisable(GL_BLEND);
+            glEnable(GL_DEPTH_TEST);
         }
 
         void sth_begin_draw(struct sth_stash* stash)
@@ -973,10 +980,12 @@ namespace easy3d {
         }
     }
 
+
     OpenGLText::~OpenGLText() {
         if (stash_ != nullptr)
             sth_delete(stash_);
     }
+
 
     bool OpenGLText::add_font(const std::string &font_file) {
         if (stash_ == nullptr) {
@@ -997,6 +1006,41 @@ namespace easy3d {
     }
 
 
+    void OpenGLText::set_character_spacing(float spacing) {
+        if (stash_)
+            stash_->charSpacing = spacing;
+    }
+
+
+    float OpenGLText::character_spacing() const {
+        if (stash_)
+            return stash_->charSpacing;
+        else
+            return 0.0f;
+    }
+
+
+    void OpenGLText::set_kerning(bool kerning) {
+        if (stash_)
+            stash_->doKerning = kerning;
+    }
+
+
+    bool OpenGLText::kerning() const {
+        if (stash_)
+            return stash_->doKerning;
+        else
+            return false;
+    }
+
+
+    float OpenGLText::font_height(float font_size) const {
+        float asc, desc, lineh;
+        sth_vmetrics(stash_, font_ids_[0], font_size, &asc, &desc, &lineh);
+        return asc - desc;
+    }
+
+
     float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID,
                            const vec3 &font_color) const {
 
@@ -1010,14 +1054,11 @@ namespace easy3d {
         float endx = 0.0f;
         if (stash_ != nullptr) {
             stash_->font_color = font_color;
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             sth_begin_draw(stash_); easy3d_debug_log_gl_error;
             sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &endx); //this might draw
             easy3d_debug_log_gl_error;
             sth_end_draw(stash_); // this actually draws
             easy3d_debug_log_gl_error;
-            glDisable(GL_BLEND);
         } else {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
         }
@@ -1068,9 +1109,6 @@ namespace easy3d {
             }
 
             stash_->font_color = font_color;
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
             sth_begin_draw(stash_);
             {
                 float yy = font_size * lineHeight * OFX_FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
@@ -1096,9 +1134,7 @@ namespace easy3d {
                 }
                 area.x() += minDiffX;
             }
-            sth_end_draw(stash_);
-            easy3d_debug_log_gl_error;
-            glDisable(GL_BLEND);
+            sth_end_draw(stash_);   easy3d_debug_log_gl_error;
         } else {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
         }
@@ -1164,39 +1200,5 @@ namespace easy3d {
         return totalArea;
     }
 #endif
-
-    void OpenGLText::set_character_spacing(float spacing) {
-        if (stash_)
-            stash_->charSpacing = spacing;
-    }
-
-
-    float OpenGLText::character_spacing() const {
-        if (stash_)
-            return stash_->charSpacing;
-        else
-            return 0.0f;
-    }
-
-
-    void OpenGLText::set_kerning(bool kerning) {
-        if (stash_)
-            stash_->doKerning = kerning;
-    }
-
-
-    bool OpenGLText::kerning() const {
-        if (stash_)
-            return stash_->doKerning;
-        else
-            return false;
-    }
-
-
-    float OpenGLText::font_height(float font_size) const {
-        float asc, desc, lineh;
-        sth_vmetrics(stash_, font_ids_[0], font_size, &asc, &desc, &lineh);
-        return asc - desc;
-    }
 
 }

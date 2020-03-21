@@ -9,8 +9,6 @@ uniform vec3        font_color;
 
 
 void main() {
-    float a = texture(textureID, tcoordVC).r;
-    if (a == 0)
-        discard;
-    fragOutput = vec4(font_color, a);
+    float alpha = texture(textureID, tcoordVC).r;
+    fragOutput = vec4(font_color, alpha);
 }
