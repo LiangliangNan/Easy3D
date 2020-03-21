@@ -953,6 +953,7 @@ namespace easy3d {
 // Here starts the implementation of OpenGLText
 
 #include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -991,6 +992,7 @@ namespace easy3d {
         }
 
         font_ids_.push_back(id);
+        font_names_.push_back(file_system::base_name(font_file));
         return true;
     }
 

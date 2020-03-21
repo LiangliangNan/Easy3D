@@ -36,9 +36,21 @@ using namespace easy3d;
 
 
 TextRendering::TextRendering(const std::string &title)
-        : Viewer(title) {
+        : Viewer(title)
+        , font_size_delta_(0)
+{
     set_background_color(vec3(1, 1, 1));
 }
+
+
+std::string TextRendering::usage() const {
+    return ("----------------- Text Rendering usage ----------------- \n"
+            "Press '+/-' to increase/decrease font size\n"
+            "Press 'up/down' to increase/decrease character spacing\n"
+            "Press key 'space' to enable/disable kerning\n"
+            "----------------------------------------------------------- \n");
+}
+
 
 
 void TextRendering::init() {
@@ -54,6 +66,11 @@ void TextRendering::init() {
             colors_.push_back(random_color());
         }
     }
+
+    const auto& names = texter_->font_names();
+    std::cout << "available fonts: " << std::endl;
+    for (std::size_t i =0; i< names.size(); ++i)
+        std::cout << "\tfont " << i << ": " << names[i] << std::endl;
 }
 
 
@@ -68,11 +85,11 @@ void TextRendering::draw() const {
 
 #if 0
     texter_->draw_multi_line("This example shows how to\nshows how to\nrender text in Easy3D. It is quite simple. It is quite simple.",
-                             5 * dpi_scaling(), 5 * dpi_scaling(), 40, OpenGLText::Align::ALIGN_RIGHT, width());
+                             5 * dpi_scaling(), 5 * dpi_scaling(), 40 + font_size_delta_, OpenGLText::Align::ALIGN_CENTER, width());
 #else
-    texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), 50 * dpi_scaling(), 40, 0);
+    texter_->draw("--- This example shows how to render text in Easy3D ---", 50 * dpi_scaling(), 50 * dpi_scaling(), 40 + font_size_delta_, 0);
 
-    const float font_size = 35.0f;
+    const float font_size = 35.0f + font_size_delta_;
     float x = 50.0f;
     float y = 120.0f;
 
@@ -100,6 +117,19 @@ bool TextRendering::key_press_event(int key, int modifiers) {
         update();
         return true;
     }
+
+    else if (key == GLFW_KEY_MINUS) {
+        --font_size_delta_;
+        font_size_delta_ = std::max(font_size_delta_, -10);
+        update();
+        return true;
+    }
+    else if (key == GLFW_KEY_EQUAL) {
+        ++font_size_delta_;
+        update();
+        return true;
+    }
+
     else if (key == GLFW_KEY_DOWN) {
         float spacing = texter_->character_spacing();
         spacing -= 0.5f;

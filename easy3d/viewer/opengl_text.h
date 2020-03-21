@@ -47,7 +47,6 @@ namespace easy3d {
      *    - switch between fonts;
      *    - change character spacing;
      *    - enable/disable kerning;
-     * TODO: multi-line string rendering (to support line breaks '\n' in strings).
      */
 
     class OpenGLText {
@@ -74,6 +73,11 @@ namespace easy3d {
          * The number of available fonts.
          */
         int num_fonts() const { return font_ids_.size(); }
+
+        /**
+         * The names of available fonts.
+         */
+        const std::vector<std::string>& font_names() const { return font_names_; }
 
         /**
          * Draw the text.

@@ -44,9 +44,12 @@ protected:
 
     bool key_press_event(int key, int modifiers) override;
 
+    std::string usage() const override;
+
 private:
     easy3d::OpenGLText* texter_;
     std::vector< easy3d::vec3> colors_;
+    int font_size_delta_;
 };
 
 
