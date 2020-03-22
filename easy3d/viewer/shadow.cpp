@@ -162,7 +162,11 @@ namespace easy3d {
         render_pass(surfaces);      easy3d_debug_log_gl_error;
 
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
-        const Rect quad(20, 20 + 500, 20, 20 + 500);
+        const float dpi_scale = static_cast<float>(w) / camera_->screenWidth();
+        const float offset_x = 20.0f;
+        const float offset_y = 40.0f;
+        const float size = 200.0f;
+        const Rect quad(offset_x * dpi_scale, (offset_x + size) * dpi_scale, offset_y * dpi_scale, (offset_y + size) * dpi_scale);
         opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
         opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
         easy3d_debug_log_gl_error;

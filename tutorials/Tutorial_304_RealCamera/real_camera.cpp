@@ -223,15 +223,15 @@ void RealCamera::draw_image() const {
     float image_as = tex_w / static_cast<float>(tex_h);
     float viewer_as = width() / static_cast<float>(height());
     if (image_as < viewer_as) {// thin
-        tex_h = static_cast<int>(height() * 0.5f);
+        tex_h = static_cast<int>(height() * 0.3f);
         tex_w = static_cast<int>(tex_h * image_as);
     }
     else {
-        tex_w = static_cast<int>(width() * 0.5f);
+        tex_w = static_cast<int>(width() * 0.3f);
         tex_h = static_cast<int>(tex_w / image_as);
     }
 
-    const Rect quad(20 * dpi_scaling(), tex_w, 40 * dpi_scaling(), tex_h);
+    const Rect quad(20 * dpi_scaling(), (20 + tex_w) * dpi_scaling(), 40 * dpi_scaling(), (40 + tex_h) * dpi_scaling());
     opengl::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
 }

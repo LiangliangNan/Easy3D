@@ -40,7 +40,7 @@ using namespace easy3d;
 CompositeView::CompositeView(const std::string& title)
     : Viewer(title)
     , active_view_(-1)
-    , grid_size_(60)
+    , grid_size_(30)
 {
     grid_ = new LinesDrawable;
     update_grid();
@@ -48,13 +48,8 @@ CompositeView::CompositeView(const std::string& title)
 
 
 void CompositeView::draw() const {
-#ifdef __APPLE__
     int w = width() * dpi_scaling();
     int h = height() * dpi_scaling();
-#else
-    int w = width();
-    int h = height();
-#endif
 
     // remember the viewer port and scissor status, later we will have to restore them
     int viewport[4], scissor[4];
@@ -161,9 +156,9 @@ void CompositeView::cleanup() {
 
 
 void CompositeView::update_grid() {
-    int x_steps = width() * dpi_scaling() * 0.5f / grid_size_;
-    int y_steps = height() * dpi_scaling() * 0.5f / grid_size_;
+    int x_steps = width() * 0.5f / grid_size_;
+    int y_steps = height() * 0.5f / grid_size_;
     std::vector<vec3> points;
-    opengl::prepare_grid(x_steps, y_steps, points, grid_size_);
+    opengl::prepare_grid(x_steps, y_steps, points, grid_size_ * dpi_scaling());
     grid_->update_vertex_buffer(points);
 }
