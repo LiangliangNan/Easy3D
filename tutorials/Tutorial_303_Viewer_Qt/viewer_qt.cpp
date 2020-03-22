@@ -49,6 +49,8 @@
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -59,6 +61,7 @@ using namespace easy3d;
 ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
 	: QOpenGLWidget(parent)
 	, func_(nullptr)
+	, text_renderer_(nullptr)
 	, camera_(nullptr)
 	, pressed_button_(Qt::NoButton)
 	, mouse_pressed_pos_(0, 0)
@@ -92,11 +95,9 @@ ViewerQt::~ViewerQt() {
 
 
 void ViewerQt::cleanup() {
-	if (camera_)
-		delete camera_;
-
-	if (drawable_axes_)
-		delete drawable_axes_;
+    delete camera_;
+    delete drawable_axes_;
+    delete text_renderer_;
 
 	for (auto m : models_)
 		delete m;
@@ -106,6 +107,18 @@ void ViewerQt::cleanup() {
 
 
 void ViewerQt::init() {
+    // default font
+    const std::string& font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
+    if (file_system::is_file(font_file)) {
+        text_renderer_ = new OpenGLText(dpi_scaling());
+        if (!text_renderer_->add_font(font_file)) {
+            delete text_renderer_;
+            text_renderer_ = nullptr;
+        }
+    }
+
+    if (!text_renderer_)
+        LOG(ERROR) << "failed loading font: " << font_file;
 }
 
 
@@ -958,6 +971,13 @@ void ViewerQt::preDraw() {
 
 
 void ViewerQt::postDraw() {
+    // draw Easy3D logo
+    if (text_renderer_) {
+        const float font_size = 15.0f;
+        const float offset = 20.0f * dpi_scaling();
+        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+    }
+
     if (show_pivot_point_) {
         ShaderProgram* program = ShaderManager::get_program("lines/lines_plain_color");
         if (!program) {

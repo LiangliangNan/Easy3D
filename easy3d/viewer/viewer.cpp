@@ -96,6 +96,7 @@ namespace easy3d {
 		, full_screen_(full_screen)
 		, process_events_(true)
 		, gpu_timer_(nullptr)
+		, text_renderer_(nullptr)
 		, button_(-1)
 		, modifiers_(-1)
 		, drag_active_(false)
@@ -1128,8 +1129,18 @@ namespace easy3d {
 		glClearDepthf(1.0f);
 		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
-        text_renderer_ = new OpenGLText(dpi_scaling());
-        text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+		// default font
+		const std::string& font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
+		if (file_system::is_file(font_file)) {
+            text_renderer_ = new OpenGLText(dpi_scaling());
+            if (!text_renderer_->add_font(font_file)) {
+                delete text_renderer_;
+                text_renderer_ = nullptr;
+            }
+        }
+
+		if (!text_renderer_)
+            LOG(ERROR) << "failed loading font: " << font_file;
 	}
 
 
@@ -1580,9 +1591,12 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() {
-        const float font_size = 15.0f;
-        const float offset = 20.0f * dpi_scaling();
-        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+        // draw Easy3D logo
+        if (text_renderer_) {
+            const float font_size = 15.0f;
+            const float offset = 20.0f * dpi_scaling();
+            text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+        }
 
         // shown only when it is not animating
 		if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
