@@ -48,13 +48,12 @@ CompositeView::CompositeView(const std::string& title)
 
 
 void CompositeView::draw() const {
-    int w = width() * dpi_scaling();
-    int h = height() * dpi_scaling();
-
     // remember the viewer port and scissor status, later we will have to restore them
     int viewport[4], scissor[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glGetIntegerv(GL_SCISSOR_BOX, scissor);
+    int w = viewport[2];
+    int h = viewport[3];
 
     // ------------------------------------------------------------
 
@@ -124,8 +123,8 @@ void CompositeView::draw_grid() const {
     if (!program)
         return;
 
-    int w = width();
-    int h = height();
+    int w = width() * 0.5f * dpi_scaling();
+    int h = height() * 0.5f * dpi_scaling();
     const mat4& proj = transform::ortho(0.0f, w, h, 0.0f, 0.0f, -1.0f);
 
     // To make the grid appear behind other objects: reserve a tiny bit of the
