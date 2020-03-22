@@ -122,7 +122,7 @@ namespace easy3d {
         }
 
 
-        void draw_quad_filled(const Rect &rect, int texture, int width, int height, float depth) {
+        void draw_quad_filled(const Rect &rect, unsigned int texture, int width, int height, float depth) {
             const std::string name = "screen_space/screen_space_texture";
             auto program = ShaderManager::get_program(name);
             if (!program) {
@@ -176,7 +176,52 @@ namespace easy3d {
         }
 
 
-        void draw_depth_texture(const Rect &rect, int texture, int width, int height, float depth) {
+        void draw_full_screen_quad(unsigned int texture, float depth) {
+            const std::string name = "screen_space/screen_space_texture";
+            auto program = ShaderManager::get_program(name);
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes = {
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                        ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tex_coord")
+                };
+                program = ShaderManager::create_program_from_files(name, attributes);
+            }
+            if (!program) {
+                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                return;
+            }
+
+            // vertex positions in NDC (Normalized Device Coordinates)
+            const std::vector<vec3> points = {
+                    vec3(-1.0f, -1.0f, depth),
+                    vec3(1.0f, -1.0f, depth),
+                    vec3(1.0f, 1.0f, depth),
+                    vec3(-1.0f, 1.0f, depth)
+            };
+
+            const std::vector<vec2> texcoords = {
+                    vec2(0, 0),
+                    vec2(1.0, 0),
+                    vec2(1.0, 1.0),
+                    vec2(0, 1.0),
+            };
+
+            const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
+
+            TrianglesDrawable drawable;
+            drawable.update_vertex_buffer(points);
+            drawable.update_texcoord_buffer(texcoords);
+            drawable.update_index_buffer(indices);
+
+            program->bind();
+            program->bind_texture("textureID", texture, 0);
+            drawable.gl_draw(false);
+            program->release_texture();
+            program->release();
+        }
+
+
+        void draw_depth_texture(const Rect &rect, unsigned int texture, int width, int height, float depth) {
             const std::string name = "screen_space/screen_space_depth_texture";
             auto program = ShaderManager::get_program(name);
             if (!program) {
@@ -299,24 +344,6 @@ namespace easy3d {
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             easy3d_debug_log_gl_error;
             glBindVertexArray(0);
-        }
-
-
-        void draw_full_screen_quad(GLuint positionAttrib, float depth) {
-            // vertex positions in NDC (Normalized Device Coordinates)
-            static const float positions[] = {
-                    -1.0f, -1.0f, depth,
-                    1.0f, -1.0f, depth,
-                    -1.0f, 1.0f, depth,
-                    1.0f, 1.0f, depth
-            };
-
-            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, false, 3 * sizeof(float), positions);
-            glEnableVertexAttribArray(positionAttrib);
-
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-            glDisableVertexAttribArray(positionAttrib);
         }
 
 

@@ -46,7 +46,7 @@ namespace easy3d {
          */
         void draw_quad_wire(const Rect& rect, const vec4& color, int width, int height, float depth);
         void draw_quad_filled(const Rect& rect, const vec4& color, int width, int height, float depth);
-        void draw_quad_filled(const Rect& rect, int texture, int width, int height, float depth);
+        void draw_quad_filled(const Rect& rect, unsigned int texture, int width, int height, float depth);
 
         /**
          * Draw a full screen textured quad.
@@ -55,10 +55,10 @@ namespace easy3d {
          * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
-        void draw_full_screen_quad(int texture, float depth);
+        void draw_full_screen_quad(unsigned int texture, float depth);
 
         /**
-         * draw a quad visualizing a depth texture in a region. This is function is similar to
+         * Draw a quad visualizing a depth texture in a region. This is function is similar to
          * draw_quad_filled(... int texture...). The only difference is that a depth texture is rendered as a gray
          * scale image. For depth textures from off-screen rendering (usually from an FBO), the depth values are stored
          * in the R component of the texture.
@@ -70,7 +70,7 @@ namespace easy3d {
          * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
-        void draw_depth_texture(const Rect& rect, int texture, int width, int height, float depth);
+        void draw_depth_texture(const Rect& rect, unsigned int texture, int width, int height, float depth);
 
         /**
          * Draw a quad  defined in the screen space using a bound shader. It binds the vertex position and UVs arrays
@@ -101,7 +101,6 @@ namespace easy3d {
 		/**
 		 * @brief Prepare data for a representing a grid as a set of line segments. The grid is centered at
 		 *        vec3(0, 0, 0) and lies on the XOY plane.
-		 *        and is
 		 * @param x_steps The number of subdivisions along X direction.
 		 * @param y_steps The number of subdivisions along Y direction.
 		 * @param scale The scaling factor
