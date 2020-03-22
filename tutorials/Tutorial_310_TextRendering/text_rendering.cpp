@@ -99,10 +99,10 @@ void TextRendering::draw() const {
     float next_x = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
         if (i % 2 == 0) {
-            next_x = texter_->draw("Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
+            next_x = texter_->draw( std::to_string(i) + " - Easy3D makes 3D easy! ", x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
         }
         else {
-            texter_->draw("I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
+            texter_->draw(std::to_string(i) + " - I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size, i, colors_[i]);
             y += font_height * 1.5;
         }
     }

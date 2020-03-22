@@ -56,6 +56,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/opengl_text.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -500,12 +501,12 @@ namespace easy3d {
 		if (!window_)
 			return;
 
-		if (camera_) { delete camera_; camera_ = nullptr; }
-		if (drawable_axes_) { delete drawable_axes_; drawable_axes_ = nullptr; }
+		delete camera_;
+		delete drawable_axes_;
+        delete gpu_timer_;
+        delete text_renderer_;
 
 		clear_scene();
-
-		if (gpu_timer_) { delete gpu_timer_; gpu_timer_ = nullptr; }
 
 		ShaderManager::terminate();
 
@@ -1126,6 +1127,9 @@ namespace easy3d {
 
 		glClearDepthf(1.0f);
 		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+
+        text_renderer_ = new OpenGLText(dpi_scaling());
+        text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
 	}
 
 
@@ -1576,7 +1580,11 @@ namespace easy3d {
 
 
 	void Viewer::post_draw() {
-		// shown only when it is not animating
+        const float font_size = 15.0f;
+        const float offset = 20.0f * dpi_scaling();
+        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+
+        // shown only when it is not animating
 		if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
 			camera()->draw_paths();
 

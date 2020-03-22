@@ -42,6 +42,7 @@ namespace easy3d {
     class OpenGLTimer;
 	class LinesDrawable;
     class TrianglesDrawable;
+    class OpenGLText;
 
     /**
      * @brief The built-in Easy3D Viewer.
@@ -434,6 +435,7 @@ namespace easy3d {
 
         OpenGLTimer* gpu_timer_;
         double gpu_time_;
+        OpenGLText* text_renderer_;
 
 		// mouse
 		int		button_;		// for mouse drag
