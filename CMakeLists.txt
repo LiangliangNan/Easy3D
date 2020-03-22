@@ -52,12 +52,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 
+# Build Qt-based examples/applications
+option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications"  OFF)
 # Build tutorials
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
+# Build documentation
+option(EASY3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"            OFF)
 # Build sandbox
-option(EASY3D_BUILD_SANDBOX         "Build sandbox"                         ON)
-# Build Qt-based examples/applications
-option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications" OFF)
+option(EASY3D_BUILD_SANDBOX         "Build sandbox (for development)"       ON)
 
 ################################################################################
 
@@ -106,22 +108,21 @@ add_subdirectory(applications)
 
 ################################################################################
 
-# finds doxygen
-find_package (Doxygen)
-
-# turn on if you want to generate documentation
-# turned on by default as long as Doxygen is found
-option (EASY3D_BUILD_DOCUMENTATION "Generate Doxygen documentation" ${DOXYGEN_FOUND})
-
-# generates documentation if necessary
-if (EASY3D_BUILD_DOCUMENTATION)
-    # configures Doxygen
-    configure_file (doc/Doxyfile.in Doxyfile @ONLY)
-
-    add_custom_target (doc ALL
-            ${DOXYGEN_EXECUTABLE} Doxyfile
-            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-            COMMENT "Generating Doxygen documentation")
+if(EASY3D_BUILD_DOCUMENTATION)
+    # generation of Easy3D documentation requires doxygen
+    find_package (Doxygen)
+    if(${DOXYGEN_FOUND})
+        message(STATUS "Found Doxygen: " ${DOXYGEN_EXECUTABLE})
+        # configures Doxygen
+        configure_file (doc/Doxyfile.in Doxyfile @ONLY)
+        add_custom_target (doc ALL ${DOXYGEN_EXECUTABLE} Doxyfile
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                COMMENT "Generating Doxygen documentation")
+    else ()
+        message(WARNING "Building documentation requires Doxygen but Doxygen was not found. Building documentation is "
+                        "thus disabled. You can set 'DOXYGEN_EXECUTABLE' to the directory containing the Doxygen executable "
+                        "if Doxygen already exists (otherwise install Doxygen first).")
+    endif ()
 endif ()
 
 ################################################################################
