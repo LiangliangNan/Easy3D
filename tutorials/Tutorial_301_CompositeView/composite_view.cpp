@@ -40,7 +40,7 @@ using namespace easy3d;
 CompositeView::CompositeView(const std::string& title)
     : Viewer(title)
     , active_view_(-1)
-    , grid_size_(80)
+    , grid_size_(60)
 {
     grid_ = new LinesDrawable;
     update_grid();
@@ -56,8 +56,10 @@ void CompositeView::draw() const {
     int h = height();
 #endif
 
-    // Enable scissor test
-    glEnable(GL_SCISSOR_TEST);
+    // remember the viewer port and scissor status, later we will have to restore them
+    int viewport[4], scissor[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glGetIntegerv(GL_SCISSOR_BOX, scissor);
 
     // ------------------------------------------------------------
 
@@ -111,8 +113,9 @@ void CompositeView::draw() const {
 
     // ------------------------------------------------------------
 
-    // Disable scissor test
-    glDisable(GL_SCISSOR_TEST);
+    // restore scissor and viewport states.
+    glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
 
 
