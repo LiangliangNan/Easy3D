@@ -30,6 +30,7 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/renderer.h>
+#include <easy3d/viewer/opengl_text.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -43,8 +44,8 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 
 
 std::string PointSelection::usage() const {
-    return ("-------------- Surface Reconstruction usage -------------- \n"
-            "Press the ALT key, then drag the mouse for point selection \n"
+    return ("-------------- Point Selection usage -------------- \n"
+            "Press the ALT key, then drag the mouse to select point (selected points will be deleted) \n"
             "---------------------------------------------------------- \n");
 }
 
@@ -118,6 +119,13 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 // This function will be called after the main draw procedure.
 void PointSelection::post_draw() {
     Viewer::draw_corner_axes();
+
+    // draw Easy3D logo
+    if (text_renderer_) {
+        const float font_size = 15.0f;
+        const float offset = 20.0f * dpi_scaling();
+        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+    }
 
     if (polygon_.size() >= 3) {
         ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");

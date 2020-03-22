@@ -30,6 +30,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/viewer/opengl_text.h>
 
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
@@ -293,7 +294,19 @@ namespace easy3d {
 		ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
+        // TODO: a workaround to draw the Easy3D logo at a different location (due to the menu bar)
+        auto texter = text_renderer_;
+        text_renderer_ = nullptr;
         Viewer::post_draw();
+        text_renderer_ = texter;
+
+        // draw Easy3D logo
+        if (text_renderer_) {
+            const float font_size = 15.0f;
+            const float offset_x = 20.0f * dpi_scaling();
+            const float offset_y = 50.0f * dpi_scaling();
+            text_renderer_->draw("Easy3D", offset_x, offset_y, font_size, 0);
+        }
 	}
 
 
