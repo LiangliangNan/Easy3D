@@ -59,7 +59,7 @@ option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
 # Build documentation
 option(EASY3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"            OFF)
 # Build sandbox
-option(EASY3D_BUILD_SANDBOX         "Build sandbox (for development)"       ON)
+option(EASY3D_BUILD_SANDBOX         "Build sandbox (for development)"       OFF)
 
 ################################################################################
 
