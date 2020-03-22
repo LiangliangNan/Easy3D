@@ -100,13 +100,8 @@ void DepthImage::generate_depth() {
 
 void DepthImage::draw_depth() const {
     DepthImage* viewer = const_cast<DepthImage*>(this);
-    int w = width();
-    int h = height();
-
-#if defined(__APPLE__)
-    w *= dpi_scaling();
-    h *= dpi_scaling();
-#endif
+    int w = width() * dpi_scaling();
+    int h = height() * dpi_scaling();
 
     if (!fbo_) {
         const int samples = 0;
@@ -118,7 +113,7 @@ void DepthImage::draw_depth() const {
     // generate
     viewer->generate_depth();
 
-    const Rect quad(20, 20 + w/3, 20, 20 + h/3);
+    const Rect quad(20 * dpi_scaling(), 20 * dpi_scaling() + w/4, 40 * dpi_scaling(), 40 * dpi_scaling() + h/4);
     opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
     opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
 }

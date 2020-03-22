@@ -141,14 +141,9 @@ void TutorialAmbientOcclusion::draw() const {
 		program->release_texture();
 		program->release();
 
-        int w = width() / 4;
-        int h = height() / 4;
-
-#if defined(__APPLE__)
-        w *= dpi_scaling();
-        h *= dpi_scaling();
-#endif
-        ao_->draw_occlusion(20, 20, w, h);
+        int w = width() / 4 * dpi_scaling();
+        int h = height() / 4 * dpi_scaling();
+        ao_->draw_occlusion(20 * dpi_scaling(), 40 * dpi_scaling(), w, h);
 	}
 	else
 		Viewer::draw();
