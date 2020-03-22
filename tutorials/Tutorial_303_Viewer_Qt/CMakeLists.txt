@@ -6,7 +6,7 @@ project(${PROJECT_NAME})
 include( ../../cmake/UseQt5.cmake )
 if (NOT QT5_FOUND)
     message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
-            "directory containing 'Qt5Config.cmake' or 'qt5-config.cmake' in 'CMakeCache.txt'. "
+            "directory containing 'Qt5Config.cmake' or 'qt5-config.cmake'. "
             "Optionally, you can set the Qt5 root directory 'QT5_ROOT_PATH' to the directory "
             "containing the 'bin' folder.")
     return()
