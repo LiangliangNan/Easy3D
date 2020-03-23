@@ -40,18 +40,20 @@ TextRendering::TextRendering(const std::string &title)
         , texter_(nullptr)
         , font_size_delta_(0.0f)
         , line_spacing_(0.0f)
+        , alignment_(OpenGLText::ALIGN_CENTER)
 {
     set_background_color(vec3(1, 1, 1));
 }
 
 
 std::string TextRendering::usage() const {
-    return ("----------------- Text Rendering usage ----------------- \n"
-            "Press '+'/'-' to increase/decrease font size\n"
-            "Press 'up'/'down' to increase/decrease character spacing\n"
-            "Press '<'/'>' to increase/decrease line spacing\n"
-            "Press key 'space' to enable/disable kerning\n"
-            "----------------------------------------------------------- \n");
+    return ("----------------------- Text Rendering usage --------------------- \n"
+            "Press '+'/'-' to increase/decrease font size                       \n"
+            "Press 'up'/'down' to increase/decrease character spacing           \n"
+            "Press '<'/'>' to increase/decrease line spacing                    \n"
+            "Press 'l'/'c'/'r' to left/center/right align the multi-line text   \n"
+            "Press key 'space' to enable/disable kerning                        \n"
+            "------------------------------------------------------------------ \n");
 }
 
 
@@ -71,10 +73,12 @@ void TextRendering::init() {
         }
     }
 
+#if 0
     const auto& names = texter_->font_names();
     std::cout << "available fonts: " << std::endl;
     for (std::size_t i =0; i< names.size(); ++i)
         std::cout << "\tfont " << i << ": " << names[i] << std::endl;
+#endif
 }
 
 
@@ -84,50 +88,8 @@ void TextRendering::cleanup() {
 }
 
 
-void TextRendering::draw() const {
-    Viewer::draw();
-
-    if (!texter_ || texter_->num_fonts() == 0)
-        return;
-
-    const float font_size = 30.0f + font_size_delta_;
-    float x = 50.0f;
-    float y = 50.0f;
-
-    const int num_fonts = texter_->num_fonts();
-    const float font_height = texter_->font_height(font_size);
-
-    texter_->draw_multi_line(
-            "This example is part of Easy3D.\nIt shows\nhow to render strings in an OpenGL application.",
-            x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align::ALIGN_CENTER, 0, vec3(0, 0, 0),
-            line_spacing_);
-
-    // the new Y position to start; add extra space
-    y += font_height * (1.5 + line_spacing_) * 3;
-
-    float next_x = 0.0f;
-    for (int i = 0; i < num_fonts; ++i) {
-        if (i % 2 == 0) {
-            next_x = texter_->draw(std::to_string(i) + " - Easy3D makes 3D easy!     ", x * dpi_scaling(),
-                                   y * dpi_scaling(), font_size, i, colors_[i]);
-        } else {
-            texter_->draw(std::to_string(i) + " - I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size,
-                          i, colors_[i]);
-            y += font_height * 1.5;
-        }
-    }
-}
-
-
 bool TextRendering::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
-        const bool kerning = texter_->kerning();
-        texter_->set_kerning(!kerning);
-        update();
-        return true;
-    }
-
-    else if (key == GLFW_KEY_MINUS) {
+    if (key == GLFW_KEY_MINUS) {
         font_size_delta_ = std::max(font_size_delta_ - 1.0f, -20.0f);
         update();
         return true;
@@ -162,6 +124,59 @@ bool TextRendering::key_press_event(int key, int modifiers) {
         return true;
     }
 
+    else if (key == GLFW_KEY_L) {
+        alignment_ = OpenGLText::ALIGN_LEFT;
+        update();
+        return true;
+    }
+
+    else if (key == GLFW_KEY_C) {
+        alignment_ = OpenGLText::ALIGN_CENTER;
+        update();
+        return true;
+    }
+
+    else if (key == GLFW_KEY_R) {
+        alignment_ = OpenGLText::ALIGN_RIGHT;
+        update();
+        return true;
+    }
+
     else
         return Viewer::key_press_event(key, modifiers);
+}
+
+
+void TextRendering::draw() const {
+    Viewer::draw();
+
+    if (!texter_ || texter_->num_fonts() == 0)
+        return;
+
+    const float font_size = 30.0f + font_size_delta_;
+    float x = 50.0f;
+    float y = 50.0f;
+
+    const int num_fonts = texter_->num_fonts();
+    const float font_height = texter_->font_height(font_size);
+
+    texter_->draw_multi_line(
+            "This example is part of Easy3D\nIt shows\nhow to render strings in an OpenGL application\nI hope you find it useful",
+            x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align(alignment_), 0, vec3(0, 0, 0),
+            line_spacing_);
+
+    // the new Y position to start; add extra space
+    y += font_height * (1.5 + line_spacing_) * 3;
+
+    float next_x = 0.0f;
+    for (int i = 0; i < num_fonts; ++i) {
+        if (i % 2 == 0) {
+            next_x = texter_->draw(std::to_string(i) + " - Easy3D makes 3D easy!     ", x * dpi_scaling(),
+                                   y * dpi_scaling(), font_size, i, colors_[i]);
+        } else {
+            texter_->draw(std::to_string(i) + " - I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size,
+                          i, colors_[i]);
+            y += font_height * 1.5;
+        }
+    }
 }

@@ -51,6 +51,7 @@ private:
     std::vector< easy3d::vec3> colors_;
     float font_size_delta_;
     float line_spacing_;
+    int alignment_;
 };
 
 

@@ -1104,7 +1104,7 @@ namespace easy3d {
                                 std::max(area.y_max(), dim.y_max()));
                 }
                 widths.push_back(dim.width());
-                maxW = dim.width();
+                maxW = std::max(maxW, dim.width());
 
                 line++;
             }
@@ -1114,7 +1114,7 @@ namespace easy3d {
             {
                 float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
                 float minDiffX = FLT_MAX;
-                for(int i = 0; i < lines.size(); i++){
+                for(std::size_t i = 0; i < lines.size(); i++){
                     float dx = 0;
                     float x = 0;
                     switch (align) {
@@ -1187,11 +1187,10 @@ namespace easy3d {
 
 
         if(align != ALIGN_LEFT){
-            if(align == ALIGN_RIGHT){
+            if(align == ALIGN_RIGHT)
                 totalArea.x() -= totalArea.width();
-            }else{
+            else
                 totalArea.x() -= totalArea.width() * 0.5;
-            }
         }
 
         return totalArea;
