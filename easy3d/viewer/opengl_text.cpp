@@ -53,38 +53,10 @@ namespace easy3d {
         // The original code is available at https://github.com/akrinke/Font-Stash
         // The original code is available at https://github.com/armadillu/ofxFontStash
 
-
-        /**
-         * Example:
-         *  ------------------------------------------------------------------------------------
-         *  // create a font stash with a maximum texture size of 512 x 512
-         *  struct sth_stash *stash = sth_create(512, 512);
-         *  // load true type font
-         *  const std::string font_file = resource::directory() + "/fonts/zachary.ttf";
-         *  const int droid = sth_add_font(stash, font_file.c_str());
-         *  ------------------------------------------------------------------------------------
-         *  glEnable(GL_BLEND);
-         *  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-         *  // draw text during your OpenGL render loop
-         *  sth_begin_draw(stash);
-         *  // position: (x, y); font size: 24
-         *  sth_draw_text(stash, droid, 24, x, y, "Hello world! ", &x);
-         *  // now, the float x contains the x position of the next char
-         *  sth_end_draw(stash);
-         *  glDisable(GL_BLEND);
-         *  ------------------------------------------------------------------------------------
-         *  // cleaning
-         *  sth_delete(stash);
-         */
         struct sth_stash* sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale);
 
         int sth_add_font(struct sth_stash* stash, const char* path);
         int sth_add_font_from_memory(struct sth_stash* stash, unsigned char* buffer);
-
-        int  sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap);
-        void sth_add_glyph(struct sth_stash* stash, int idx, unsigned int id, const char* s,  /* @rlyeh: function does not return int */
-                               short size, short base, int x, int y, int w, int h,
-                               float xoffset, float yoffset, float xadvance);
 
         void sth_draw_text(struct sth_stash* stash,
                                int idx, float size,
@@ -108,9 +80,6 @@ namespace easy3d {
 
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/vertex_array_object.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <3rd_party/stb/stb_truetype.h>
@@ -367,102 +336,6 @@ namespace easy3d {
             if (data) free(data);
             if (fp) fclose(fp);
             return 0;
-        }
-
-        int sth_add_bitmap_font(struct sth_stash* stash, int ascent, int descent, int line_gap)
-        {
-            int i, fh;
-            struct sth_font* fnt = nullptr;
-
-            fnt = (struct sth_font*)malloc(sizeof(struct sth_font));
-            if (fnt == nullptr) goto error;
-            memset(fnt,0,sizeof(struct sth_font));
-
-            // Init hash lookup.
-            for (i = 0; i < HASH_LUT_SIZE; ++i) fnt->lut[i] = -1;
-
-            // Store normalized line height. The real line height is got
-            // by multiplying the lineh by font size.
-            fh = ascent - descent;
-            fnt->ascender = (float)ascent / (float)fh;
-            fnt->descender = (float)descent / (float)fh;
-            fnt->lineh = (float)(fh + line_gap) / (float)fh;
-
-            fnt->idx = idx;
-            fnt->type = BMFONT;
-            fnt->next = stash->fonts;
-            stash->fonts = fnt;
-
-            return idx++;
-
-            error:
-            if (fnt) free(fnt);
-            return 0;
-        }
-
-        void sth_add_glyph(struct sth_stash* stash,
-                               int idx,
-                               GLuint id,
-                               const char* s,
-                               short size, short base,
-                               int x, int y, int w, int h,
-                               float xoffset, float yoffset, float xadvance)
-        {
-            struct sth_texture* texture = nullptr;
-            struct sth_font* fnt = nullptr;
-            struct sth_glyph* glyph = nullptr;
-            unsigned int codepoint;
-            unsigned int state = 0;
-
-            if (stash == nullptr) return;
-            texture = stash->bm_textures;
-            while (texture != nullptr && texture->id != id) texture = texture->next;
-            if (texture == nullptr)
-            {
-                // Create new texture
-                texture = (struct sth_texture*)malloc(sizeof(struct sth_texture));
-                if (texture == nullptr) return;
-                memset(texture, 0, sizeof(struct sth_texture));
-                texture->id = id;
-                texture->next = stash->bm_textures;
-                stash->bm_textures = texture;
-            }
-
-            fnt = stash->fonts;
-            while (fnt != nullptr && fnt->idx != idx) fnt = fnt->next;
-            if (fnt == nullptr) return;
-            if (fnt->type != BMFONT) return;
-
-            for (; *s; ++s)
-            {
-                if (!decutf8(&state, &codepoint, *(unsigned char*)s)) break;
-            }
-            if (state != UTF8_ACCEPT) return;
-
-            // Alloc space for new glyph.
-            fnt->nglyphs++;
-            fnt->glyphs = (struct sth_glyph *)realloc(fnt->glyphs, fnt->nglyphs*sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
-            if (!fnt->glyphs) return;
-
-            // Init glyph.
-            glyph = &fnt->glyphs[fnt->nglyphs-1];
-            memset(glyph, 0, sizeof(struct sth_glyph));
-            glyph->codepoint = codepoint;
-            glyph->size = size;
-            glyph->texture = texture;
-            glyph->x0 = x;
-            glyph->y0 = y;
-            glyph->x1 = glyph->x0+w;
-            glyph->y1 = glyph->y0+h;
-            glyph->xoff = xoffset;
-            glyph->yoff = yoffset - base;
-            glyph->xadv = xadvance;
-
-            // Find code point and size.
-            h = hashint(codepoint) & (HASH_LUT_SIZE-1);
-            // Insert char to hash lookup.
-            glyph->next = fnt->lut[h];
-            fnt->lut[h] = fnt->nglyphs-1;
         }
 
         static struct sth_glyph* get_glyph(struct sth_stash* stash, struct sth_font* fnt, unsigned int codepoint, short isize)
@@ -863,6 +736,9 @@ namespace easy3d {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Here starts the implementation of OpenGLText
 
+#include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/shader_manager.h>
+#include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -945,14 +821,18 @@ namespace easy3d {
     }
 
 
-    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID, const vec3 &font_color) const {
+    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int font_id, const vec3 &font_color, bool upper_left) const {
         float end_x = 0.0f;
         if (!stash_) {
-            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            LOG_FIRST_N(ERROR, 1) << "couldn't draw() due to the failure in initialization (this is the first record)";
+            return end_x;
+        }
+        if (font_id >= font_ids_.size()) {
+            LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
             return end_x;
         }
 
-        if (true) { // upper_left corner is the origin
+        if (upper_left) { // upper_left corner is the origin
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
             const int h = viewport[3];
@@ -960,7 +840,7 @@ namespace easy3d {
         }
 
         // compute all necessary vertex/texture coordinates
-        sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &end_x); easy3d_debug_log_gl_error;
+        sth_draw_text(stash_, font_ids_[font_id], font_size, x, y, text.c_str(), &end_x); easy3d_debug_log_gl_error;
 
         // the actual rendering
         flush_draw(font_color); easy3d_debug_log_gl_error;
@@ -970,11 +850,6 @@ namespace easy3d {
 
 
     void OpenGLText::flush_draw(const vec3& font_color) const {
-        if (!stash_) {
-            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
-            return;
-        }
-
         const std::string name = "text/text";
         auto program = ShaderManager::get_program(name);
         if (!program) {
@@ -1051,12 +926,17 @@ namespace easy3d {
 
 #define FONT_STASH_LINE_HEIGHT_MULT	0.9f
 
-    Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align,
-            int fontID, const vec3 &font_color, float line_spacing) const
+    Rect OpenGLText::draw(const std::string &text, float x0, float y0, float font_size, Align align,
+            int font_id, const vec3 &font_color, float line_spacing, bool upper_left) const
     {
         Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
         if (!stash_) {
-            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            LOG_FIRST_N(ERROR, 1) << "couldn't draw() due to the failure in initialization (this is the first record)";
+            return rect;
+        }
+
+        if (font_id >= font_ids_.size()) {
+            LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
             return rect;
         }
 
@@ -1116,10 +996,10 @@ namespace easy3d {
                 }
                 if (minDiffX > x) minDiffX = x;
                 sth_draw_text(stash_,
-                              font_ids_[fontID],
+                              font_ids_[font_id],
                               font_size,
                               x0 + x * stash_->dpiScale,
-                              h - ys[i] - 1 - font_height(font_size) - y0,
+                              upper_left ? (h - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
                               lines[i].c_str(),
                               &dx
                 );
@@ -1135,18 +1015,14 @@ namespace easy3d {
 
 
     Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, Align align, float line_spacing) const {
-        Rect totalArea(0, 0, 0, 0);
-        if (!stash_) {
-            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
-            return totalArea;
-        }
-
         const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 
         std::stringstream ss(text);
         std::string s;
         int line = 0;
         std::vector<Rect> rects;
+
+        Rect totalArea(0.0f, 0.0f, 0.0f, 0.0f);
         while (getline(ss, s, '\n')) {
             float w, h, x, y;
             sth_dim_text(stash_, font_ids_[0], font_size / stash_->dpiScale, s.c_str(), &x, &y, &w, &h);
