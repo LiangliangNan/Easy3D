@@ -96,7 +96,7 @@ namespace easy3d {
 #define TTFONT_MEM  2
 #define BMFONT      3
 
-        static int font_index = 0;
+        static int font_index = 1;
 
         static unsigned int hashint(unsigned int a)
         {
