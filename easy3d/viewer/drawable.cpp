@@ -268,9 +268,11 @@ namespace easy3d {
         // all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3). This requires
         // the shared vertices be duplicated in the vertex buffer.
         if (index_buffer_) {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);	easy3d_debug_log_gl_error;
+
             // index buffer must be bound if using glDrawElements()
-            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);
-            easy3d_debug_log_gl_error;
+            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);    easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
         } else
             glDrawArrays(type(), 0, GLsizei(num_vertices_));
         easy3d_debug_log_gl_error;

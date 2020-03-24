@@ -125,8 +125,7 @@ namespace easy3d {
             glDeleteBuffers(1, &buffer);                                    easy3d_debug_log_gl_error;
             buffer = 0;
 		}
-        // Otherwise (if you uncoment this line), you will have to bind the buffer before drawing
-        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
         release();
         return (glGetError() == GL_NO_ERROR);
 	}
