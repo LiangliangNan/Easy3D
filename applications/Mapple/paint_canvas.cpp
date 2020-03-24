@@ -86,28 +86,16 @@ PaintCanvas::~PaintCanvas() {
 
 
 void PaintCanvas::cleanup() {
-    if (camera_)
-        delete camera_;
-
-    if (drawable_axes_)
-        delete drawable_axes_;
-
     for (auto m : models_)
         delete m;
 
-    if (ssao_)
-        delete ssao_;
-
-    if (shadow_)
-        delete shadow_;
-
-    if (transparency_)
-        delete transparency_;
-
-    if (edl_)
-        delete edl_;
-
-    if (gpu_timer_) { delete gpu_timer_; gpu_timer_ = nullptr; }
+    delete camera_;
+    delete drawable_axes_;
+    delete ssao_;
+    delete shadow_;
+    delete transparency_;
+    delete edl_;
+    delete gpu_timer_;
 
     ShaderManager::terminate();
 }
@@ -1022,9 +1010,9 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("hightlight_id_min", -1)
             ->set_uniform("hightlight_id_max", -1)
-            ->set_uniform("clippingPlaneEnabled", false);
+            ->set_uniform("clippingPlaneEnabled", false); easy3d_debug_log_gl_error;
 
-    drawable_axes_->gl_draw(false);
+    drawable_axes_->gl_draw(false); easy3d_debug_log_gl_error;
     program->release();
 
     // restore
@@ -1044,9 +1032,12 @@ void PaintCanvas::preDraw() {
 
 
 void PaintCanvas::postDraw() {
+    easy3d_debug_log_gl_error;
+
     // shown only when it is not animating
     if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
         camera()->draw_paths();
+    easy3d_debug_log_gl_error;
 
     if (show_pivot_point_) {
         ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
@@ -1060,13 +1051,13 @@ void PaintCanvas::postDraw() {
             return;
 
         const float size = 10;
-        LinesDrawable drawable("pivot_point");
+        LinesDrawable drawable("pivot_point"); easy3d_debug_log_gl_error;
         const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
         std::vector<vec3> points = {
                 vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
                 vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
         };
-        drawable.update_vertex_buffer(points);
+        drawable.update_vertex_buffer(points); easy3d_debug_log_gl_error;
 
         const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f,
                                             -1.0f);
@@ -1080,29 +1071,31 @@ void PaintCanvas::postDraw() {
         glEnable(GL_DEPTH_TEST);   // restore
     }
 
-    drawCornerAxes();
+    easy3d_debug_log_gl_error;
 
-    QPainter painter;
+    drawCornerAxes(); easy3d_debug_log_gl_error;
+
+    QPainter painter; easy3d_debug_log_gl_error;
     painter.begin(this);
     painter.setRenderHint(QPainter::HighQualityAntialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.beginNativePainting();
+    painter.beginNativePainting(); easy3d_debug_log_gl_error;
 
     char buffer[48];
     sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
     painter.drawText(20, 20, QString::fromStdString(buffer));
 
     painter.endNativePainting();
-    painter.end();
+    painter.end();  easy3d_debug_log_gl_error;
     func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
 
     // ------------------ draw elements from the tool --------------------------
 
-    tool_manager()->draw_hint();
+    tool_manager()->draw_hint();    easy3d_debug_log_gl_error;
 
     //
     if (setting::clipping_plane)
-        setting::clipping_plane->draw(camera());
+        setting::clipping_plane->draw(camera());    easy3d_debug_log_gl_error;
 }
 
 
@@ -1229,6 +1222,7 @@ void PaintCanvas::pasteCamera() {
 
 
 void PaintCanvas::draw() {
+    easy3d_debug_log_gl_error;
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.
 
@@ -1238,10 +1232,10 @@ void PaintCanvas::draw() {
             surfaces.push_back(d);
     }
     if (shadow_enabled_) {
-        shadow()->draw(surfaces);
+        shadow()->draw(surfaces); easy3d_debug_log_gl_error;
         return;
     } else if (transparency_enabled_) {
-        transparency()->draw(surfaces);
+        transparency()->draw(surfaces); easy3d_debug_log_gl_error;
         return;
     }
     //    else if (ssao()) {
@@ -1384,13 +1378,15 @@ void PaintCanvas::draw() {
     //            edl()->end();
     //    }
 
+    easy3d_debug_log_gl_error;
+
     for (const auto m : models_) {
         if (!m->is_visible())
             continue;
 
         for (auto d : m->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
 
         // Let's check if edges and surfaces are both shown. If true, we
@@ -1399,7 +1395,7 @@ void PaintCanvas::draw() {
         std::size_t count = 0;
         for (auto d : m->lines_drawables()) {
             if (d->is_visible()) {
-                d->draw(camera(), false);
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
                 ++count;
             }
         }
@@ -1410,9 +1406,11 @@ void PaintCanvas::draw() {
         }
         for (auto d : m->triangles_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
         if (count > 0)
             glDisable(GL_POLYGON_OFFSET_FILL);
+
+        easy3d_debug_log_gl_error;
     }
 }
