@@ -91,7 +91,7 @@ find_package(MPFR REQUIRED)
 if(MPFR_FOUND)
     message(STATUS "   MPFR_INCLUDE_DIR: ${MPFR_INCLUDE_DIR}")
     message(STATUS "   MPFR_LIBRARIES: ${MPFR_LIBRARIES}")
-    
+
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code flags.
