@@ -422,8 +422,7 @@ namespace easy3d {
                                     tex = tex->next;
                                 }
 
-                                //LOG(INFO) << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)";
-                                std::cout << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)" << std::endl;
+                                LOG(INFO) << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)";
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
                                 glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -815,6 +814,10 @@ namespace easy3d {
 
 
     float OpenGLText::font_height(float font_size) const {
+        if (font_ids_.empty()) {
+            LOG_FIRST_N(ERROR, 1) << "no font exists. To add a font, please call add_font()";
+            return 0.0f;
+        }
         float asc, desc, lineh;
         sth_vmetrics(stash_, font_ids_[0], font_size, &asc, &desc, &lineh);
         return asc - desc;
@@ -828,7 +831,12 @@ namespace easy3d {
             return end_x;
         }
         if (font_id >= font_ids_.size()) {
-            LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
+            if (font_ids_.empty()) {
+                LOG_FIRST_N(ERROR, 1) << "no font exists. To add a font, please call add_font()";
+            }
+            else {
+                LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
+            }
             return end_x;
         }
 
@@ -936,7 +944,12 @@ namespace easy3d {
         }
 
         if (font_id >= font_ids_.size()) {
-            LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
+            if (font_ids_.empty()) {
+                LOG_FIRST_N(ERROR, 1) << "no font exists. To add a font, please call add_font()";
+            }
+            else {
+                LOG_FIRST_N(ERROR, 1) << "font (ID: " << font_id << ") does not exist (this is the first record)";
+            }
             return rect;
         }
 
