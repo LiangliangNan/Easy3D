@@ -25,12 +25,9 @@
 #include "point_selection.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/primitives.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -128,36 +125,13 @@ void PointSelection::post_draw() {
     }
 
     if (polygon_.size() >= 3) {
-        ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
-        }
-        if (!program)
-            return;
+        // draw the boundary of the rect
+        opengl::draw_polygon_wire(polygon_, vec4(1.0f, 0.0f, 0.0f, 1.0f), width(), height(), -1.0f);
 
-        LinesDrawable drawable("polygon");
-
-        //TODO: better handling 2D->3D points
-        std::vector<vec3> points;
-        std::size_t n=polygon_.size();
-        for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            points.push_back(polygon_[s]);
-            points.push_back(polygon_[t]);
-        }
-        drawable.update_vertex_buffer(points);
-
-        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f,
-                                            -1.0f);
-        glDisable(GL_DEPTH_TEST);   // always on top
-        program->bind();
-        program->set_uniform("MVP", proj);
-        program->set_uniform("per_vertex_color", false);
-        program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
-        drawable.gl_draw(false);
-        program->release();
-        glEnable(GL_DEPTH_TEST);   // restore
+        // draw the transparent face
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        opengl::draw_polygon_filled(polygon_, vec4(1.0f, 0.0f, 0.0f, 0.2f), width(), height(), -0.9f);
+        glDisable(GL_BLEND);
     }
 }
