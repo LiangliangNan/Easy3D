@@ -50,7 +50,6 @@ namespace easy3d {
         //
         // The significant changes are that all fixed pipeline rendering code has been
         // replaced by shader-based rendering.
-        // The original code is available at https://github.com/akrinke/Font-Stash
         // The original code is available at https://github.com/armadillu/ofxFontStash
 
         struct sth_stash* sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale);
@@ -97,7 +96,7 @@ namespace easy3d {
 #define TTFONT_MEM  2
 #define BMFONT      3
 
-        static int idx = 1;
+        static int font_index = 0;
 
         static unsigned int hashint(unsigned int a)
         {
@@ -181,7 +180,6 @@ namespace easy3d {
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
 #define UTF8_ACCEPT 0
-#define UTF8_REJECT 1
 
         static const unsigned char utf8d[] = {
                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
@@ -289,12 +287,12 @@ namespace easy3d {
             fnt->descender = (float)descent / (float)fh;
             fnt->lineh = (float)(fh + lineGap) / (float)fh;
 
-            fnt->idx = idx;
+            fnt->idx = font_index;
             fnt->type = TTFONT_MEM;
             fnt->next = stash->fonts;
             stash->fonts = fnt;
 
-            return idx++;
+            return font_index++;
 
             error:
             if (fnt) {
@@ -643,7 +641,6 @@ namespace easy3d {
             int c = 0;
             float spacing = stash->charSpacing;
             int doKerning = stash->doKerning;
-            float dpiScale = stash->dpiScale;
 
             for (; *s; ++s){
                 if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;

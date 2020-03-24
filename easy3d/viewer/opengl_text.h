@@ -47,6 +47,7 @@ namespace easy3d {
      *    - switch between fonts;
      *    - change character spacing;
      *    - enable/disable kerning;
+     * TODO: for a large number of strings/characters, it is necessary to separate buffer creation and rendering.
      */
 
     class OpenGLText {
@@ -77,7 +78,7 @@ namespace easy3d {
         /**
          * The names of available fonts.
          */
-        const std::vector<std::string>& font_names() const { return font_names_; }
+        const std::vector<std::string> &font_names() const { return font_names_; }
 
         /**
          * Draw the text.
@@ -102,7 +103,9 @@ namespace easy3d {
 #ifdef ENABLE_MULTILINE_TEXT_RENDERING
 
         /** @brief Horizontal alignment. **/
-        enum Align { ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER };
+        enum Align {
+            ALIGN_LEFT, ALIGN_RIGHT, ALIGN_CENTER
+        };
 
         /**
          * Draw the text. The difference with draw() is that draw_multi_line() produces line breaks for text with "\n".
@@ -122,8 +125,9 @@ namespace easy3d {
          * @return The region occupied by the text.
          */
         Rect draw(const std::string &text, float x, float y, float font_size, Align align = ALIGN_LEFT,
-                             int font_id = 0, const vec3 &font_color = vec3(0, 0, 0),
-                             float line_spacing = 0.0f, bool upper_left = true) const;
+                  int font_id = 0, const vec3 &font_color = vec3(0, 0, 0),
+                  float line_spacing = 0.0f, bool upper_left = true) const;
+
 #endif
 
         /**
@@ -131,6 +135,7 @@ namespace easy3d {
          * @param spacing The expected character spacing.
          */
         void set_character_spacing(float spacing);
+
         /**
          * Query the spacing between consecutive characters.
          * @return The spacing between consecutive characters.
@@ -142,6 +147,7 @@ namespace easy3d {
          * @param kerning The expected kerning behavior.
          */
         void set_kerning(bool kerning);
+
         /**
          * Query the kerning behavior. Kerning is disabled by default.
          * @return The kerning behavior.
@@ -157,16 +163,18 @@ namespace easy3d {
 
     private:
 
-        void flush_draw(const vec3& font_color) const;
+        void flush_draw(const vec3 &font_color) const;
 
 #ifdef ENABLE_MULTILINE_TEXT_RENDERING
-        //if the text has newlines, it will be treated as if was called into drawMultiLine()
+
+        //if the text has newlines, it will be treated as if was called into drawing multiple lines
         Rect get_bbox(const std::string &text, float size, float x, float y, Align align, float line_spacing) const;
+
 #endif
 
     private:
-        float   dpi_scale_;
-        int     texture_size_;
+        float dpi_scale_;
+        int texture_size_;
         details::sth_stash *stash_;
         std::vector<int> font_ids_;
         std::vector<std::string> font_names_;
