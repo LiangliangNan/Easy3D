@@ -86,9 +86,6 @@ namespace easy3d {
                                short size, short base, int x, int y, int w, int h,
                                float xoffset, float yoffset, float xadvance);
 
-        void sth_begin_draw(struct sth_stash* stash);
-        void sth_end_draw(struct sth_stash* stash);
-
         void sth_draw_text(struct sth_stash* stash,
                                int idx, float size,
                                float x, float y, const char* string, float* dx);
@@ -206,7 +203,6 @@ namespace easy3d {
             int doKerning; //calc kerning on the fly and offset letters when drawing and / calcing box sizes
             float charSpacing;
             float dpiScale;
-            vec3 font_color;
         };
 
 
@@ -553,7 +549,8 @@ namespace easy3d {
                                     tex = tex->next;
                                 }
 
-                                LOG(INFO) << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)";
+                                //LOG(INFO) << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)";
+                                std::cout << "allocating a new texture of " << stash->tw << " x " << stash->th << " (" << numTex << " used so far)" << std::endl;
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
                                 glBindTexture(GL_TEXTURE_2D, texture->id);
@@ -686,97 +683,6 @@ namespace easy3d {
             }
         }
 
-        static void flush_draw(struct sth_stash* stash)
-        {
-            const std::string name = "text/text";
-            auto program = ShaderManager::get_program(name);
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes = {
-                        ShaderProgram::Attribute(ShaderProgram::POSITION, "coords")
-                };
-                program = ShaderManager::create_program_from_files(name, attributes);
-            }
-            if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
-                return;
-            }
-
-            int viewport[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            const int w = viewport[2];
-            const int h = viewport[3];
-
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            program->bind();
-
-            struct sth_texture* texture = stash->tt_textures;
-            short tt = 1;
-            while (texture)
-            {
-                if (texture->nverts > 0)
-                {
-                    // each vec4 represent x, y, u, and v
-                    std::vector<vec4> vertices(texture->nverts);
-                    for (int i=0;i<texture->nverts; ++i) {
-                        vertices[i] = vec4(texture->verts + i * 4);
-                        vertices[i].x = 2.0f * vertices[i].x / w - 1.0f;
-                        vertices[i].y = 2.0f * vertices[i].y / h - 1.0f;
-                    }
-
-                    std::vector<unsigned int> indices(texture->nverts/4 * 6);
-                    for (int j = 0; j < texture->nverts/4; ++j) {
-                        indices[j * 6 + 0] = j * 4;
-                        indices[j * 6 + 1] = j * 4 + 1;
-                        indices[j * 6 + 2] = j * 4 + 2;
-                        indices[j * 6 + 3] = j * 4;
-                        indices[j * 6 + 4] = j * 4 + 2;
-                        indices[j * 6 + 5] = j * 4 + 3;
-                    }
-
-                    unsigned int vertex_buffer, index_buffer;
-                    VertexArrayObject vao;
-                    vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, vertices.data(), vertices.size() * sizeof(vec4), 4,true);
-                    vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int), true);
-
-                    program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", stash->font_color);
-                    vao.bind();
-                    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
-                    vao.release();
-                    program->release_texture();
-
-                    texture->nverts = 0;
-                }
-                texture = texture->next;
-                if (!texture && tt)
-                {
-                    texture = stash->bm_textures;
-                    tt = 0;
-                }
-            }
-            program->release();
-            glDisable(GL_BLEND);
-            glEnable(GL_DEPTH_TEST);
-        }
-
-        void sth_begin_draw(struct sth_stash* stash)
-        {
-            if (stash == nullptr) return;
-            if (stash->drawing)
-                flush_draw(stash);
-            stash->drawing = 1;
-        }
-
-        void sth_end_draw(struct sth_stash* stash)
-        {
-            if (stash == nullptr) return;
-            if (!stash->drawing) return;
-
-            flush_draw(stash);
-            stash->drawing = 0;
-        }
 
         void sth_draw_text(struct sth_stash* stash,
                                int idx, float size,
@@ -804,7 +710,7 @@ namespace easy3d {
             int c = 0;
             float spacing = stash->charSpacing;
             int doKerning = stash->doKerning;
-            int p = stash->padding;
+            int p = 100;//stash->padding;
             float dpiScale = stash->dpiScale;
             float tw = stash->padding / (float)stash->tw;
 
@@ -814,8 +720,6 @@ namespace easy3d {
                 glyph = get_glyph(stash, fnt, codepoint, isize);
                 if (!glyph) continue;
                 texture = glyph->texture;
-                if (texture->nverts+4 >= VERT_COUNT)
-                    flush_draw(stash);
 
                 if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q)) continue;
 
@@ -1041,8 +945,12 @@ namespace easy3d {
     }
 
 
-    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID,
-                           const vec3 &font_color) const {
+    float OpenGLText::draw(const std::string &text, float x, float y, float font_size, int fontID, const vec3 &font_color) const {
+        float end_x = 0.0f;
+        if (!stash_) {
+            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            return end_x;
+        }
 
         if (true) { // upper_left corner is the origin
             int viewport[4];
@@ -1051,146 +959,222 @@ namespace easy3d {
             y = h - y - 1 - font_height(font_size);
         }
 
-        float endx = 0.0f;
-        if (stash_ != nullptr) {
-            stash_->font_color = font_color;
-            sth_begin_draw(stash_); easy3d_debug_log_gl_error;
-            sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &endx); //this might draw
-            easy3d_debug_log_gl_error;
-            sth_end_draw(stash_); // this actually draws
-            easy3d_debug_log_gl_error;
-        } else {
+        // compute all necessary vertex/texture coordinates
+        sth_draw_text(stash_, font_ids_[fontID], font_size, x, y, text.c_str(), &end_x); easy3d_debug_log_gl_error;
+
+        // the actual rendering
+        flush_draw(font_color); easy3d_debug_log_gl_error;
+
+        return end_x;
+    }
+
+
+    void OpenGLText::flush_draw(const vec3& font_color) const {
+        if (!stash_) {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            return;
         }
-        return endx;
+
+        const std::string name = "text/text";
+        auto program = ShaderManager::get_program(name);
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes = { ShaderProgram::Attribute(ShaderProgram::POSITION, "coords") };
+            program = ShaderManager::create_program_from_files(name, attributes);
+        }
+        if (!program) {
+            LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+            return;
+        }
+
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        const int w = viewport[2];
+        const int h = viewport[3];
+
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        program->bind();
+
+        struct details::sth_texture* texture = stash_->tt_textures;
+        short tt = 1;
+        while (texture)
+        {
+            if (texture->nverts > 0)
+            {
+                // each vec4 represent x, y, u, and v
+                std::vector<vec4> vertices(texture->nverts);
+                for (int i=0;i<texture->nverts; ++i) {
+                    vertices[i] = vec4(texture->verts + i * 4);
+                    vertices[i].x = 2.0f * vertices[i].x / w - 1.0f;
+                    vertices[i].y = 2.0f * vertices[i].y / h - 1.0f;
+                }
+
+                std::vector<unsigned int> indices(texture->nverts/4 * 6);
+                for (int j = 0; j < texture->nverts/4; ++j) {
+                    indices[j * 6 + 0] = j * 4;
+                    indices[j * 6 + 1] = j * 4 + 1;
+                    indices[j * 6 + 2] = j * 4 + 2;
+                    indices[j * 6 + 3] = j * 4;
+                    indices[j * 6 + 4] = j * 4 + 2;
+                    indices[j * 6 + 5] = j * 4 + 3;
+                }
+
+                unsigned int vertex_buffer, index_buffer;
+                VertexArrayObject vao;
+                vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, vertices.data(), vertices.size() * sizeof(vec4), 4,true);
+                vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int), true);
+
+                program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", font_color);
+                vao.bind();
+                glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+                vao.release();
+                program->release_texture();
+
+                texture->nverts = 0;
+            }
+            texture = texture->next;
+            if (!texture && tt)
+            {
+                texture = stash_->bm_textures;
+                tt = 0;
+            }
+        }
+        program->release();
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
     }
 
 
 #ifdef ENABLE_MULTILINE_TEXT_RENDERING
 
-#define FONT_STASH_LINE_HEIGHT_MULT	0.9
+#define FONT_STASH_LINE_HEIGHT_MULT	0.9f
 
     Rect OpenGLText::draw_multi_line(const std::string &text, float x0, float y0, float font_size, Align align,
             int fontID, const vec3 &font_color, float line_spacing) const
     {
+        Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
+        if (!stash_) {
+            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            return rect;
+        }
+
+        // get height of the viewport
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int h = viewport[3];
 
-        Rect area(0, 0, 0, 0);
-        if (stash_ != nullptr){
-            std::stringstream ss(text);
-            std::string s;
-            int line = 0;
-            std::vector<std::string> lines;
-            std::vector<float> widths;
-            std::vector<float> ys;
-            float maxW = 0.0f;
+        std::stringstream ss(text);
+        std::string s;
+        int line = 0;
+        std::vector<std::string> lines;
+        std::vector<float> widths;
+        std::vector<float> ys;
+        float maxW = 0.0f;
 
-            const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
+        const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 
-            while ( getline(ss, s, '\n') ) {
-                lines.push_back(s);
-                float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
-                ys.push_back(yy);
-                Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
+        while (getline(ss, s, '\n')) {
+            lines.push_back(s);
+            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
+            ys.push_back(yy);
+            Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
 
-                if(line == 0){
-                    area = dim;
-                } else{
-                    area = Rect(std::min(area.x_min(), dim.x_min()),
-                                std::max(area.x_max(), dim.x_max()),
-                                std::min(area.y_min(), dim.y_min()),
-                                std::max(area.y_max(), dim.y_max()));
-                }
-                widths.push_back(dim.width());
-                maxW = std::max(maxW, dim.width());
-
-                line++;
+            if (line == 0) {
+                rect = dim;
+            } else {
+                rect = Rect(std::min(rect.x_min(), dim.x_min()),
+                            std::max(rect.x_max(), dim.x_max()),
+                            std::min(rect.y_min(), dim.y_min()),
+                            std::max(rect.y_max(), dim.y_max()));
             }
+            widths.push_back(dim.width());
+            maxW = std::max(maxW, dim.width());
 
-            stash_->font_color = font_color;
-            sth_begin_draw(stash_);
-            {
-                float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
-                float minDiffX = FLT_MAX;
-                for(std::size_t i = 0; i < lines.size(); i++){
-                    float dx = 0;
-                    float x = 0;
-                    switch (align) {
-                        case ALIGN_LEFT: break;
-                        case ALIGN_RIGHT: x = maxW - widths[i]; break;
-                        case ALIGN_CENTER: x = (maxW - widths[i]) * 0.5; break;
-                        default: break;
-                    }
-                    if(minDiffX > x) minDiffX = x;
-                    sth_draw_text(stash_,
-                                  font_ids_[fontID],
-                                  font_size,
-                                  x0 + x * stash_->dpiScale,
-                                  h - ys[i] - 1 - font_height(font_size) - y0,
-                                  lines[i].c_str(),
-                                  &dx
-                    );
-                }
-                area.x() += minDiffX;
-            }
-            sth_end_draw(stash_);   easy3d_debug_log_gl_error;
-        } else {
-            LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            line++;
         }
 
-        return area;
+        // compute all necessary vertex/texture coordinates
+        {
+            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
+            float minDiffX = FLT_MAX;
+            for (std::size_t i = 0; i < lines.size(); i++) {
+                float dx = 0;
+                float x = 0;
+                switch (align) {
+                    case ALIGN_LEFT:
+                        break;
+                    case ALIGN_RIGHT:
+                        x = maxW - widths[i];
+                        break;
+                    case ALIGN_CENTER:
+                        x = (maxW - widths[i]) * 0.5f;
+                        break;
+                    default:
+                        break;
+                }
+                if (minDiffX > x) minDiffX = x;
+                sth_draw_text(stash_,
+                              font_ids_[fontID],
+                              font_size,
+                              x0 + x * stash_->dpiScale,
+                              h - ys[i] - 1 - font_height(font_size) - y0,
+                              lines[i].c_str(),
+                              &dx
+                );
+            }
+            rect.x() += minDiffX;
+        }
+
+        // the actual rendering
+        flush_draw(font_color); easy3d_debug_log_gl_error;
+
+        return rect;
     }
 
 
     Rect OpenGLText::get_bbox(const std::string& text, float font_size, float xx, float yy, Align align, float line_spacing) const {
-
         Rect totalArea(0, 0, 0, 0);
-        const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
-
-        if (stash_ != nullptr){
-            std::stringstream ss(text);
-            std::string s;
-            int line = 0;
-            float totalH = 0;
-            std::vector<Rect> rects;
-            while ( getline(ss, s, '\n') ) {
-
-                float dx = 0;
-                float w, h, x, y;
-                sth_dim_text( stash_, font_ids_[0], font_size / stash_->dpiScale, s.c_str(), &x, &y, &w, &h);
-
-                totalArea.x() = x + xx;
-                totalArea.y() = yy + y ;
-                w = fabs (w - x);
-                h = fabs (y - h);
-                if(w > totalArea.width()) totalArea.x_max() = totalArea.x() + w;
-                if(h > totalArea.height()) totalArea.y_max() = totalArea.y() + h;
-                Rect r2 = totalArea;
-                r2.y() -= r2.height();
-                r2.y() += ((font_size * lineHeight)) * FONT_STASH_LINE_HEIGHT_MULT * line;
-                rects.push_back(r2);
-
-                line ++;
-            }
-
-            if(line > 1){ //if multiline
-                totalArea.y() -= rects[0].height();
-            }else{
-                totalArea.y() -= totalArea.height();
-            }
-
-        } else {
+        if (!stash_) {
             LOG(ERROR) << "couldn't draw() due to the failure in initialization";
+            return totalArea;
         }
 
+        const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
+
+        std::stringstream ss(text);
+        std::string s;
+        int line = 0;
+        std::vector<Rect> rects;
+        while (getline(ss, s, '\n')) {
+            float w, h, x, y;
+            sth_dim_text(stash_, font_ids_[0], font_size / stash_->dpiScale, s.c_str(), &x, &y, &w, &h);
+
+            totalArea.x() = x + xx;
+            totalArea.y() = yy + y;
+            w = std::fabs(w - x);
+            h = std::fabs(y - h);
+            if (w > totalArea.width()) totalArea.x_max() = totalArea.x() + w;
+            if (h > totalArea.height()) totalArea.y_max() = totalArea.y() + h;
+            Rect r2 = totalArea;
+            r2.y() -= r2.height();
+            r2.y() += ((font_size * lineHeight)) * FONT_STASH_LINE_HEIGHT_MULT * line;
+            rects.push_back(r2);
+
+            ++line;
+        }
+
+        if (line > 1)  //if multiline
+            totalArea.y() -= rects[0].height();
+        else
+            totalArea.y() -= totalArea.height();
 
         if(align != ALIGN_LEFT){
             if(align == ALIGN_RIGHT)
                 totalArea.x() -= totalArea.width();
             else
-                totalArea.x() -= totalArea.width() * 0.5;
+                totalArea.x() -= totalArea.width() * 0.5f;
         }
 
         return totalArea;

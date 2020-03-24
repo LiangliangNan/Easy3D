@@ -148,8 +148,11 @@ namespace easy3d {
          */
         float font_height(float font_size) const;
 
-#ifdef ENABLE_MULTILINE_TEXT_RENDERING
     private:
+
+        void flush_draw(const vec3& font_color) const;
+
+#ifdef ENABLE_MULTILINE_TEXT_RENDERING
         //if the text has newlines, it will be treated as if was called into drawMultiLine()
         Rect get_bbox(const std::string &text, float size, float x, float y, Align align, float line_spacing) const;
 #endif
