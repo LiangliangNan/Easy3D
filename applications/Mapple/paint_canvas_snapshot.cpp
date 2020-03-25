@@ -37,17 +37,15 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
         return false;
     }
 
-    QSize finalSize(w, h);
     int sub_w = static_cast<int>(width() * dpi_scaling());
     int sub_h = static_cast<int>(height() * dpi_scaling());
-    QSize subSize(sub_w, sub_h);
 
     double aspectRatio = sub_w / static_cast<double>(sub_h);
     double newAspectRatio = w / static_cast<double>(h);
     double zNear = camera()->zNear();
     double zFar = camera()->zFar();
 
-    float xMin, yMin;
+    float xMin = 0.0f, yMin = 0.0f;
     if (camera()->type() == Camera::PERSPECTIVE)
         if ((expand && (newAspectRatio>aspectRatio)) || (!expand && (newAspectRatio<aspectRatio))) {
             yMin = zNear * tan(camera()->fieldOfView() / 2.0);
