@@ -62,9 +62,6 @@ namespace easy3d {
         // return the ssao texture
         unsigned int ssao_texture() const;
 
-		// show the occlusion texture on the screen region
-		void  draw_occlusion(int x, int y, int w, int h);
-
     protected:
         void init(int w, int h);
 
@@ -79,9 +76,6 @@ namespace easy3d {
 
         float	radius_;
         float	bias_;
-
-        int     width_;
-        int     height_;
 
         FramebufferObject*	geom_fbo_;
         FramebufferObject*	ssao_fbo_;

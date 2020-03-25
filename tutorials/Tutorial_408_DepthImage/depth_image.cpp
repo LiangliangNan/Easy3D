@@ -115,5 +115,5 @@ void DepthImage::draw_depth() const {
 
     const Rect quad(20 * dpi_scaling(), 20 * dpi_scaling() + w/4, 40 * dpi_scaling(), 40 * dpi_scaling() + h/4);
     opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-    opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
+    opengl::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 }

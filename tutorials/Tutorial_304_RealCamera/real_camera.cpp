@@ -233,5 +233,5 @@ void RealCamera::draw_image() const {
 
     const Rect quad(20 * dpi_scaling(), (20 + tex_w) * dpi_scaling(), 40 * dpi_scaling(), (40 + tex_h) * dpi_scaling());
     opengl::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
-    opengl::draw_quad_wire(quad, vec4(0.0f, 0.0f, 0.0f, 1.0f), w, h, -1.0f);
+    opengl::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 }

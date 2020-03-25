@@ -57,8 +57,6 @@ namespace easy3d {
         : camera_(cam)
         , radius_(0.5f)
         , bias_(0.005f)
-        , width_(1024)
-        , height_(768)
         , geom_fbo_(nullptr)
         , ssao_fbo_(nullptr)
         , noise_texture_(0)
@@ -142,9 +140,7 @@ namespace easy3d {
     unsigned int AmbientOcclusion::generate(const std::vector<Model*>& models) {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        width_ = viewport[2];
-        height_ = viewport[3];
-        init(width_, height_);
+        init(viewport[2], viewport[3]);
 
         geometry_pass(models);
 
@@ -292,12 +288,5 @@ namespace easy3d {
         ssao_fbo_->snapshot_color_ppm(1, "ssao_blur.ppm");
 #endif
     }
-
-
-	void AmbientOcclusion::draw_occlusion(int x, int y, int w, int h) {
-        const Rect quad(x, x+w, y, y+h);
-        opengl::draw_depth_texture(quad, ssao_texture(), width_, height_, -1.0f); easy3d_debug_log_gl_error;
-	}
-
 
 } // namespace easy3d

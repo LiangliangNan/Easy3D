@@ -95,6 +95,33 @@ namespace easy3d {
          */
         void draw_full_screen_quad(unsigned int position_attrib, unsigned int texcoord_attrib, float depth);
 
+        /**
+         * Draw a polygon (line loop) in the screen space.
+         * @param polygon The polygon.
+         * @param color The color.
+         * @param width The width of the viewer.
+         * @param height The height of the viewer.
+         * @param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
+        void draw_polygon_wire(const Polygon2& polygon, const vec4& color, int width, int height, float depth);
+
+        /**
+         * Draw a filled polygon in the screen space.
+         * @param polygon The polygon.
+         * @param color The color.
+         * @param width The width of the viewer.
+         * @param height The height of the viewer.
+         * @param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         *
+         * To make the polygon transparent, do the following
+         *      glEnable(GL_BLEND);
+         *      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+         *      draw_polygon_filled(...);
+         *      glDisable(GL_BLEND);
+         */
+        void draw_polygon_filled(const Polygon2& polygon, const vec4& color, int width, int height, float depth);
 
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----
 

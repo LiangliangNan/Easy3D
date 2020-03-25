@@ -29,6 +29,7 @@
 #include <easy3d/viewer/ambient_occlusion.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/shader_program.h>
+#include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -95,7 +96,6 @@ void TutorialAmbientOcclusion::draw() const {
 	if (ao_enabled_) {
 		ao_->generate(models_);
 
-
 		const mat4& MVP = camera_->modelViewProjectionMatrix();
 		// camera position is defined in world coordinate system.
 		const vec3& wCamPos = camera_->position();
@@ -141,10 +141,14 @@ void TutorialAmbientOcclusion::draw() const {
 		program->release_texture();
 		program->release();
 
+		int x = 20 * dpi_scaling();
+		int y = 40 * dpi_scaling();
         int w = width() / 4 * dpi_scaling();
         int h = height() / 4 * dpi_scaling();
-        ao_->draw_occlusion(20 * dpi_scaling(), 40 * dpi_scaling(), w, h);
-	}
+        const Rect quad(x, x+w, y, y+h);
+        opengl::draw_depth_texture(quad, ao_->ssao_texture(), width() * dpi_scaling(), height() * dpi_scaling(), -0.9f);
+        opengl::draw_quad_wire(quad, vec4(1, 0,0, 1), width() * dpi_scaling(), height() * dpi_scaling(), -0.99f);
+    }
 	else
 		Viewer::draw();
 }

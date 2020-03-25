@@ -1,10 +1,13 @@
 #version 150
 
-in	vec3	vtx_position;
+in	vec2	ndc_position; // NDC format
+
+uniform float   depth;
+
 
 void main()
 {
-  gl_Position = vec4( vtx_position, 1.0);
+  gl_Position = vec4(ndc_position, depth, 1.0);
 }
 
 
