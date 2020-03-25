@@ -758,8 +758,7 @@ namespace easy3d {
 
 
     OpenGLText::~OpenGLText() {
-        if (stash_ != nullptr)
-            sth_delete(stash_);
+        sth_delete(stash_);
     }
 
 

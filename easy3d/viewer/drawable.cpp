@@ -86,15 +86,11 @@ namespace easy3d {
     }
 
     void Drawable::clear() {
-        if (vao_) {
-            delete vao_;
-            vao_ = nullptr;
-        }
+        delete vao_;
+        vao_ = nullptr;
 
-        if (texture_) {
-            delete texture_;
-            texture_ = nullptr;
-        }
+        delete texture_;
+        texture_ = nullptr;
 
         VertexArrayObject::release_buffer(vertex_buffer_);
         VertexArrayObject::release_buffer(color_buffer_);

@@ -69,12 +69,9 @@ namespace easy3d {
     }
 
 
-    void DualDepthPeeling::clear()
-    {
-        if (fbo_) { 
-			delete fbo_;
-			fbo_ = nullptr;
-		}
+    void DualDepthPeeling::clear() {
+        delete fbo_;
+        fbo_ = nullptr;
     }
 
 

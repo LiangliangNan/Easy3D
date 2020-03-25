@@ -65,8 +65,8 @@ namespace easy3d {
 
 
     AmbientOcclusion::~AmbientOcclusion() {
-        if (geom_fbo_) { delete geom_fbo_; geom_fbo_ = nullptr; }	
-        if (ssao_fbo_) { delete ssao_fbo_; ssao_fbo_ = nullptr; }
+        delete geom_fbo_;
+        delete ssao_fbo_;
 
         if (glIsTexture(noise_texture_)) {
             glDeleteTextures(1, &noise_texture_);

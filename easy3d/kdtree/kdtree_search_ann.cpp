@@ -51,7 +51,7 @@ namespace easy3d {
 
 
     KdTreeSearch_ANN::~KdTreeSearch_ANN() {
-#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
 #else
@@ -67,7 +67,7 @@ namespace easy3d {
     void KdTreeSearch_ANN::begin()  {
         points_num_ = 0;
 
-#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
 #else
@@ -88,7 +88,7 @@ namespace easy3d {
     void KdTreeSearch_ANN::add_point_cloud(PointCloud* cloud)  {
         points_num_ = int(cloud->n_vertices());
 
-#ifdef COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         points_ = annAllocPts(points_num_, 3);
         const std::vector<vec3>& pts = cloud->points();
         for (int i = 0; i < points_num_; ++i) {

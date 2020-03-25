@@ -38,15 +38,14 @@ namespace easy3d {
 
 
     ClippingPlane::ClippingPlane()
-            : manipulated_frame_(0), size_(1.0f), enabled_(false), visible_(true),
+            : manipulated_frame_(nullptr), size_(1.0f), enabled_(false), visible_(true),
               color_(setting::clipping_plane_color), cross_section_(false),
               cross_section_width_(0.001f) {
     }
 
 
     ClippingPlane::~ClippingPlane() {
-        if (manipulated_frame_)
-            delete manipulated_frame_;
+        delete manipulated_frame_;
     }
 
 

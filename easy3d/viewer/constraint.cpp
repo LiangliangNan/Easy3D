@@ -74,11 +74,10 @@ namespace easy3d {
 
 	/*! Simply calls setTranslationConstraintType() and
 	 * setTranslationConstraintDirection(). */
-	void AxisPlaneConstraint::setTranslationConstraint(Type type,
-		const vec3 &direction) {
-		setTranslationConstraintType(type);
-		setTranslationConstraintDirection(direction);
-	}
+    void AxisPlaneConstraint::setTranslationConstraint(Type type, const vec3 &direction) {
+        setTranslationConstraintType(type);
+        setTranslationConstraintDirection(direction);
+    }
 
 	/*! Defines the translationConstraintDirection(). The coordinate system where \p
 	 * direction is expressed depends on your class implementation. */

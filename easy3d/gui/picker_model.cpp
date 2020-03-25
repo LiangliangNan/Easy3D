@@ -44,10 +44,8 @@ namespace easy3d {
 
 
     ModelPicker::~ModelPicker() {
-        if (fbo_) {
-            delete fbo_;
-            fbo_ = nullptr;
-        }
+        delete fbo_;
+        fbo_ = nullptr;
     }
 
 

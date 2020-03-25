@@ -132,10 +132,8 @@ namespace easy3d {
             fbo_id_ = 0;
         }
 
-        if (resolved_fbo_) {
-            delete resolved_fbo_;						easy3d_debug_log_gl_error;
-            resolved_fbo_ = nullptr;
-        }
+        delete resolved_fbo_;						easy3d_debug_log_gl_error;
+        resolved_fbo_ = nullptr;
     }
 
 

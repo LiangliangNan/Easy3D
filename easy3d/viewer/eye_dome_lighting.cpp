@@ -320,9 +320,9 @@ namespace easy3d {
 
     void EyeDomeLighting::clear()
     {
-        if (projection_fbo_) { delete projection_fbo_;	projection_fbo_ = nullptr; }	easy3d_debug_log_gl_error;
-        if (high_fbo_) { delete high_fbo_;		high_fbo_ = nullptr; }      easy3d_debug_log_gl_error;
-        if (low_fbo_) { delete low_fbo_;		low_fbo_ = nullptr; }		easy3d_debug_log_gl_error;
+        delete projection_fbo_;	projection_fbo_ = nullptr; 	easy3d_debug_log_gl_error;
+        delete high_fbo_;		high_fbo_ = nullptr;       easy3d_debug_log_gl_error;
+        delete low_fbo_;		low_fbo_ = nullptr; 		easy3d_debug_log_gl_error;
     }
 
 }

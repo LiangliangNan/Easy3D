@@ -29,14 +29,19 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/transform.h>
-#include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/frustum.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/setting.h>
 
 
-//#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
+// for debugging
+#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
+
+#ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
+#include <easy3d/viewer/primitives.h>
+#endif
+
 
 namespace easy3d {
 
@@ -61,27 +66,18 @@ namespace easy3d {
     }
 
 
-    void Shadow::clear()
-    {
-        if (fbo_) {
-            delete fbo_;
-            fbo_ = nullptr;
-        }
+    void Shadow::clear() {
+        delete fbo_;
+        fbo_ = nullptr;
 
-        if (camera_frustum_) {
-            delete camera_frustum_;
-            camera_frustum_ = nullptr;
-        }
+        delete camera_frustum_;
+        camera_frustum_ = nullptr;
 
-        if (light_frustum_) {
-            delete light_frustum_;
-            light_frustum_ = nullptr;
-        }
+        delete light_frustum_;
+        light_frustum_ = nullptr;
 
-        if (background_) {
-            delete background_;
-            background_ = nullptr;
-        }
+        delete background_;
+        background_ = nullptr;
     }
 
 
@@ -146,21 +142,20 @@ namespace easy3d {
     {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        int w = viewport[2];
-        int h = viewport[3];
+        const int w = viewport[2];
+        const int h = viewport[3];
 
         init();
 
         // generate shadow map
-
         glViewport(0, 0, shadow_map_size_, shadow_map_size_);
         shadow_map_pass(surfaces);          easy3d_debug_log_gl_error;
 
         // rendering
-
         glViewport(0, 0, w, h);
         render_pass(surfaces);      easy3d_debug_log_gl_error;
 
+        // for debugging
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
         const float dpi_scale = static_cast<float>(w) / camera_->screenWidth();
         const float offset_x = 20.0f;
@@ -168,9 +163,7 @@ namespace easy3d {
         const float size = 200.0f;
         const Rect quad(offset_x * dpi_scale, (offset_x + size) * dpi_scale, offset_y * dpi_scale, (offset_y + size) * dpi_scale);
         opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-        opengl::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
-        easy3d_debug_log_gl_error;
-
+        opengl::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);   easy3d_debug_log_gl_error;
         draw_light_frustum();		easy3d_debug_log_gl_error;
     #endif
     }

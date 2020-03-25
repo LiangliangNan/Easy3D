@@ -51,10 +51,8 @@ namespace easy3d {
 
     void AverageColorBlending::clear()
     {
-        if (fbo_) {
-            delete fbo_;
-            fbo_ = nullptr;
-        }
+        delete fbo_;
+        fbo_ = nullptr;
     }
 
 

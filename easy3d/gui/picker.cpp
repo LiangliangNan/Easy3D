@@ -40,10 +40,8 @@ namespace easy3d {
 
 
     Picker::~Picker() {
-        if (fbo_) {
-            delete fbo_;
-            fbo_ = 0;
-        }
+        delete fbo_;
+        fbo_ = nullptr;
     }
 
 

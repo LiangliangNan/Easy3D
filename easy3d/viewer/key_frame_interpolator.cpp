@@ -232,15 +232,11 @@ namespace easy3d {
         valuesAreValid_ = false;
         currentFrameValid_ = false;
 
-        if (path_drawable_) {
-            delete path_drawable_;
-            path_drawable_ = nullptr;
-        }
+        delete path_drawable_;
+        path_drawable_ = nullptr;
 
-        if (cameras_drawable_) {
-            delete cameras_drawable_;
-            cameras_drawable_ = nullptr;
-        }
+        delete cameras_drawable_;
+        cameras_drawable_ = nullptr;
     }
 
 

@@ -271,7 +271,6 @@ namespace easy3d {
 	}
 
 
-
 	void Viewer::setup_callbacks(GLFWwindow *window) {
 		glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y)
 		{

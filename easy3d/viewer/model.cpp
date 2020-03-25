@@ -40,7 +40,7 @@ namespace easy3d {
 
 	Model::~Model() {
 		for (auto d : points_drawables_)	delete d;
-		for (auto d : lines_drawables_)	delete d;
+		for (auto d : lines_drawables_)	    delete d;
         for (auto d : triangles_drawables_)	delete d;
 	}
 

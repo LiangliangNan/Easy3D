@@ -131,7 +131,7 @@ namespace easy3d {
         };
 
         // builds the graph
-        void build_graph(easy3d::PointCloud* cloud, const KdTreeSearch_NanoFLANN* tree, unsigned int k, RiemannianGraph& graph)
+        void build_graph(easy3d::PointCloud* cloud, const KdTreeSearch* tree, unsigned int k, RiemannianGraph& graph)
         {
             // Step 1: create the vertices of the graph
 
