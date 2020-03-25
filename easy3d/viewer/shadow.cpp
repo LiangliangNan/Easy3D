@@ -36,7 +36,7 @@
 
 
 // for debugging
-#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
+//#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
 
 #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
 #include <easy3d/viewer/primitives.h>
