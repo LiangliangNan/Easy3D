@@ -1,3 +1,5 @@
+#include <easy3d/viewer/opengl.h>
+
 #include "paint_canvas.h"
 
 #include <easy3d/core/surface_mesh.h>
