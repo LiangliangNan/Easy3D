@@ -81,7 +81,7 @@ PaintCanvas::~PaintCanvas() {
 
     doneCurrent();
 
-    LOG(INFO) << "viewer terminated";
+    LOG(INFO) << "viewer terminated. Bye!";
 }
 
 
