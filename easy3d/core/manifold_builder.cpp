@@ -86,8 +86,9 @@ namespace easy3d {
         // Query the number of non-manifold edges.
         std::size_t num_non_manifold_edges(0);
         for (const auto &targets : outgoing_halfedges_) {
-            std::set<int> tmp(targets.begin(), targets.end());
-            num_non_manifold_edges += (targets.size() - tmp.size());
+            const auto& halfedges = targets.second;
+            std::set<int> tmp(halfedges.begin(), halfedges.end());
+            num_non_manifold_edges += (halfedges.size() - tmp.size());
         }
 
         // Release memory immediately when not needed any more.
@@ -210,7 +211,6 @@ namespace easy3d {
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
         DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the construction";
-        DLOG_IF(ERROR, mesh_->n_faces() > 0) << "vertices should be added before adding faces";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
@@ -265,11 +265,6 @@ namespace easy3d {
 
 
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
-        DLOG_IF(ERROR, mesh_->n_vertices() == 0)
-                        << "you must add vertices by calling add_vertex() before adding a face";
-        if (mesh_->n_faces() == 0) // the first face
-            outgoing_halfedges_.resize(mesh_->n_vertices());
-
         if (!vertices_valid(vertices))
             return SurfaceMesh::Face();
 
@@ -338,11 +333,13 @@ namespace easy3d {
         if (face.is_valid()) {
             // put the halfedges into our record (of the original vertex indices)
             for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-                outgoing_halfedges_[vertices[s].idx()].push_back(vertices[t].idx());
+                int s_idx = vertices[s].idx();
+                int t_idx = vertices[t].idx();
+                outgoing_halfedges_[s_idx].push_back(t_idx);
             }
         } else {
             ++num_faces_unknown_topology_;
-            LOG_FIRST_N(ERROR, 1) << "fatal error: failed adding face (" << vertices << ") (this is the first record)";
+            LOG_FIRST_N(ERROR, 1) << "failed adding face (" << vertices << ") (this is the first record)";
         }
 
         return face;

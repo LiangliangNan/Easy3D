@@ -175,10 +175,11 @@ namespace easy3d {
         // A vertex property to record the original vertex of each vertex.
         SurfaceMesh::VertexProperty <SurfaceMesh::Vertex> original_vertex_;
 
-        // The records of the existing halfedges (each associated with a valid face) used
-        // for fast query of duplicated edges. All vertices are their original indices.
-        // A halfedge is denoted as: v(i) -> v(outgoing_halfedges_[i][j]).
-        std::vector<std::vector<int> > outgoing_halfedges_;
+        // The record of all halfedges (each associated with a valid face) originating from a vertex.
+        // This is used for fast query of duplicated edges. All vertices are their original indices.
+        //  - first: the index of a vertex
+        //  - second: the indices of the target vertices
+        std::unordered_map<int, std::vector<int> > outgoing_halfedges_;
     };
 
 }
