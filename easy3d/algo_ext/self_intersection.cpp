@@ -31,36 +31,34 @@
 #define REMESH_INTERSECTIONS_TIMING
 
 #ifdef REMESH_INTERSECTIONS_TIMING
+
 #include <easy3d/util/stop_watch.h>
+
 #endif
 
 namespace easy3d {
 
 
-    void SelfIntersection::mark_offensive(int f)
-    {
+    void SelfIntersection::mark_offensive(int f) {
         if (offending_.count(f) == 0) {
             // first time marking, initialize with new id and empty list
             offending_[f] = {};
         }
     }
 
-    void SelfIntersection::count_intersection(int fa, int fb)
-    {
+    void SelfIntersection::count_intersection(int fa, int fb) {
         mark_offensive(fa);
         mark_offensive(fb);
     }
 
     bool SelfIntersection::double_shared_vertex(
-        const Triangle & A,
-        const Triangle & B,
-        std::vector< std::pair<int, int> > shared )
-    {
+            const Triangle &A,
+            const Triangle &B,
+            const std::vector<std::pair<int, int> > &shared) {
         // must be co-planar
         if (
-            A.triangle.supporting_plane() != B.triangle.supporting_plane() &&
-            A.triangle.supporting_plane() != B.triangle.supporting_plane().opposite())
-        {
+                A.triangle.supporting_plane() != B.triangle.supporting_plane() &&
+                A.triangle.supporting_plane() != B.triangle.supporting_plane().opposite()) {
             return false;
         }
         // Since A and B are non-degenerate the intersection must be a polygon
@@ -70,8 +68,8 @@ namespace easy3d {
         //
         // Determine if the vertex opposite edge (a0,a1) in triangle A lies in
         // (intersects) triangle B
-        const auto & opposite_point_inside = [] (const Triangle_3 & A, const int a0, const int a1, const Triangle_3 & B) -> bool
-        {
+        const auto &opposite_point_inside = [](const Triangle_3 &A, const int a0, const int a1,
+                                               const Triangle_3 &B) -> bool {
             // get opposite index
             int a2 = -1;
             for (unsigned short c = 0; c < 3; c++) {
@@ -87,8 +85,7 @@ namespace easy3d {
 
         // Determine if edge opposite vertex va in triangle A intersects edge
         // opposite vertex vb in triangle B.
-        const auto & opposite_edges_intersect = [](const Triangle_3 & A, int va, const Triangle_3 & B, int vb) -> bool
-        {
+        const auto &opposite_edges_intersect = [](const Triangle_3 &A, int va, const Triangle_3 &B, int vb) -> bool {
             Segment_3 sa(A.vertex((va + 1) % 3), A.vertex((va + 2) % 3));
             Segment_3 sb(B.vertex((vb + 1) % 3), B.vertex((vb + 2) % 3));
             bool ret = CGAL::do_intersect(sa, sb);
@@ -96,11 +93,10 @@ namespace easy3d {
         };
 
         if (
-            !opposite_point_inside(A.triangle, shared[0].first, shared[1].first, B.triangle) &&
-            !opposite_point_inside(B.triangle, shared[0].second, shared[1].second, A.triangle) &&
-            !opposite_edges_intersect(A.triangle, shared[0].first, B.triangle, shared[1].second) &&
-            !opposite_edges_intersect(A.triangle, shared[1].first, B.triangle, shared[0].second))
-        {
+                !opposite_point_inside(A.triangle, shared[0].first, shared[1].first, B.triangle) &&
+                !opposite_point_inside(B.triangle, shared[0].second, shared[1].second, A.triangle) &&
+                !opposite_edges_intersect(A.triangle, shared[0].first, B.triangle, shared[1].second) &&
+                !opposite_edges_intersect(A.triangle, shared[1].first, B.triangle, shared[0].second)) {
             return false;
         }
 
@@ -110,40 +106,33 @@ namespace easy3d {
             return true;
 
         // Construct intersection
-        try
-        {
+        try {
             // This can fail for Epick but not Epeck
             CGAL::Object result = CGAL::intersection(A.triangle, B.triangle);
-            if (!result.empty())
-            {
-                if (CGAL::object_cast<Segment_3>(&result))
-                {
+            if (!result.empty()) {
+                if (CGAL::object_cast<Segment_3>(&result)) {
                     // not coplanar
                     assert(false && "Co-planar non-degenerate triangles should intersect over triangle");
                     return false;
-                }
-                else if (CGAL::object_cast<Point_3>(&result)) {
+                } else if (CGAL::object_cast<Point_3>(&result)) {
                     // this "shouldn't" happen but does for inexact
                     assert(false && "Co-planar non-degenerate triangles should intersect over triangle");
                     return false;
-                }
-                else {
-					const int fa = A.index;
-					const int fb = B.index;
+                } else {
+                    const int fa = A.index;
+                    const int fb = B.index;
                     // Triangle object
-                    offending_[fa].push_back({ fb, result });
-                    offending_[fb].push_back({ fa, result });
+                    offending_[fa].push_back({fb, result});
+                    offending_[fb].push_back({fa, result});
                     return true;
                 }
-            }
-            else {
+            } else {
                 // CGAL::intersection is disagreeing with do_intersect
                 assert(false && "CGAL::intersection should agree with predicate tests");
                 return false;
             }
         }
-        catch (...)
-        {
+        catch (...) {
             // This catches some cgal assertion:
             //     CGAL error: assertion violation!
             //     Expression : is_finite(d)
@@ -157,24 +146,21 @@ namespace easy3d {
     }
 
     bool SelfIntersection::single_shared_vertex(
-            const Triangle & A, const Triangle & B,
-            int va, int vb)
-    {
+            const Triangle &A, const Triangle &B,
+            int va, int vb) {
         if (single_shared_vertex(A, B, va))
             return true;
         return single_shared_vertex(B, A, vb);
     }
 
-    bool SelfIntersection::single_shared_vertex(const Triangle & A, const Triangle & B, int va)
-    {
-		const int fa = A.index;
-		const int fb = B.index;
+    bool SelfIntersection::single_shared_vertex(const Triangle &A, const Triangle &B, int va) {
+        const int fa = A.index;
+        const int fb = B.index;
 
         // This was not a good idea. It will not handle coplanar triangles well.
         Segment_3 sa(A.triangle.vertex((va + 1) % 3), A.triangle.vertex((va + 2) % 3));
 
-        if (CGAL::do_intersect(sa, B.triangle))
-        {
+        if (CGAL::do_intersect(sa, B.triangle)) {
             // can't put count_intersection(fa,fb) here since we use intersect below
             // and then it will be counted twice.
             if (!construct_intersection_) {
@@ -182,24 +168,20 @@ namespace easy3d {
                 return true;
             }
             CGAL::Object result = CGAL::intersection(sa, B.triangle);
-            if (const Point_3 * p = CGAL::object_cast<Point_3>(&result))
-            {
+            if (const Point_3 *p = CGAL::object_cast<Point_3>(&result)) {
                 // Single intersection --> segment from shared point to intersection
                 CGAL::Object seg = CGAL::make_object(Segment_3(A.triangle.vertex(va), *p));
                 count_intersection(fa, fb);
-                offending_[fa].push_back({ fb, seg });
-                offending_[fb].push_back({ fa, seg });
+                offending_[fa].push_back({fb, seg});
+                offending_[fb].push_back({fa, seg});
                 return true;
-            }
-            else if (CGAL::object_cast<Segment_3>(&result))
-            {
+            } else if (CGAL::object_cast<Segment_3>(&result)) {
                 // Need to do full test. Intersection could be a general poly.
                 bool test = intersect(A, B);
-                ((void)test);
+                ((void) test);
                 assert(test && "intersect should agree with do_intersect");
                 return true;
-            }
-            else {
+            } else {
                 LOG(ERROR) << "Segment ∩ triangle neither point nor segment?";
                 assert(false);
             }
@@ -209,29 +191,26 @@ namespace easy3d {
     }
 
 
-    bool SelfIntersection::intersect(const Triangle & A, const Triangle & B)
-    {
-		const int fa = A.index;
-		const int fb = B.index;
+    bool SelfIntersection::intersect(const Triangle &A, const Triangle &B) {
+        const int fa = A.index;
+        const int fb = B.index;
 
         // Determine whether there is an intersection
         if (!CGAL::do_intersect(A.triangle, B.triangle))
             return false;
 
         count_intersection(fa, fb);
-        if (construct_intersection_)
-        {
+        if (construct_intersection_) {
             // Construct intersection
             CGAL::Object result = CGAL::intersection(A.triangle, B.triangle);
-            offending_[fa].push_back({ fb, result });
-            offending_[fb].push_back({ fa, result });
+            offending_[fa].push_back({fb, result});
+            offending_[fb].push_back({fa, result});
         }
         return true;
     }
 
 
-
-    bool SelfIntersection::do_intersect(const Triangle& A, const Triangle& B) {
+    bool SelfIntersection::do_intersect(const Triangle &A, const Triangle &B) {
         // Number of combinatorially shared vertices
         int num_comb_shared_vertices = 0;
 
@@ -239,14 +218,13 @@ namespace easy3d {
         int num_geom_shared_vertices = 0;
 
         // Keep track of shared vertex indices
-        std::vector< std::pair<int, int> > shared;
+        std::vector<std::pair<int, int> > shared;
         for (unsigned short ea = 0; ea < 3; ++ea) {
             for (unsigned short eb = 0; eb < 3; ++eb) {
                 if (A.vertices[ea] == B.vertices[eb]) {
                     ++num_comb_shared_vertices;
                     shared.emplace_back(ea, eb);
-                }
-                else if (A.triangle.vertex(ea) == B.triangle.vertex(eb)) {
+                } else if (A.triangle.vertex(ea) == B.triangle.vertex(eb)) {
                     ++num_geom_shared_vertices;
                     shared.emplace_back(ea, eb);
                 }
@@ -285,10 +263,9 @@ namespace easy3d {
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
-    SelfIntersection::detect(SurfaceMesh* mesh, bool construct)
-    {
-        std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
+    SelfIntersection::detect(SurfaceMesh *mesh, bool construct) {
+        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
         if (!mesh)
             return result;
 
@@ -310,22 +287,23 @@ namespace easy3d {
             if (!it->triangle.is_degenerate())
                 boxes.push_back(Box(it->triangle.bbox(), it));
         }
-        std::vector< std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
+        std::vector<std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
         auto cb = [&intersecting_boxes](const Box &a, const Box &b) {
-            intersecting_boxes.push_back({ a.handle(), b.handle() });
+            intersecting_boxes.push_back({a.handle(), b.handle()});
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
-        for (const auto& b : intersecting_boxes) {
-            const Triangle& ta = *b.first;
-            const Triangle& tb = *b.second;
+        for (const auto &b : intersecting_boxes) {
+            const Triangle &ta = *b.first;
+            const Triangle &tb = *b.second;
             if (do_intersect(ta, tb))
                 result.emplace_back(std::make_pair(ta.face, tb.face));
         }
 
         std::string msg("");
         if (total_comb_duplicated_faces_ > 0)
-            msg += ("Model has " + std::to_string(total_comb_duplicated_faces_) + " combinatorially duplicated faces. ");
+            msg += ("Model has " + std::to_string(total_comb_duplicated_faces_) +
+                    " combinatorially duplicated faces. ");
         if (total_geom_duplicated_faces_ > 0)
             msg += ("Model has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
         if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
@@ -337,15 +315,15 @@ namespace easy3d {
     }
 
 
-    SelfIntersection::Triangles SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh* mesh) {
+    SelfIntersection::Triangles SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *mesh) {
         auto prop = mesh->get_vertex_property<vec3>("v:point");
 
         Triangles triangles;
         for (auto f : mesh->faces()) {
-            std::vector< Point_3 > points;
-            std::vector< SurfaceMesh::Vertex > vertices;
+            std::vector<Point_3> points;
+            std::vector<SurfaceMesh::Vertex> vertices;
             for (auto v : mesh->vertices(f)) {
-                const vec3& p = prop[v];
+                const vec3 &p = prop[v];
                 points.push_back(Point_3(p.x, p.y, p.z));
                 vertices.push_back(v);
             }
@@ -355,8 +333,7 @@ namespace easy3d {
                 t.index = f.idx();
                 t.vertices = vertices;
                 triangles.push_back(t);
-            }
-            else {
+            } else {
                 LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
                 return triangles;
             }
@@ -365,37 +342,27 @@ namespace easy3d {
     }
 
 
-    void SelfIntersection::insert_into_cdt(const CGAL::Object & obj, const Plane_3& P, CDT_plus_2& cdt)
-    {
-        if (const Segment_3 *iseg = CGAL::object_cast<Segment_3>(&obj))
-        {
+    void SelfIntersection::insert_into_cdt(const CGAL::Object &obj, const Plane_3 &P, CDT_plus_2 &cdt) {
+        if (const Segment_3 *iseg = CGAL::object_cast<Segment_3>(&obj)) {
             // Add segment constraint
             cdt.insert_constraint(P.to_2d(iseg->vertex(0)), P.to_2d(iseg->vertex(1)));
-        }
-        else if (const Point_3 *ipoint = CGAL::object_cast<Point_3>(&obj))
-        {
+        } else if (const Point_3 *ipoint = CGAL::object_cast<Point_3>(&obj)) {
             // Add point
             cdt.insert(P.to_2d(*ipoint));
-        }
-        else if (const Triangle_3 *itri = CGAL::object_cast<Triangle_3>(&obj))
-        {
+        } else if (const Triangle_3 *itri = CGAL::object_cast<Triangle_3>(&obj)) {
             // Add 3 segment constraints
             cdt.insert_constraint(P.to_2d(itri->vertex(0)), P.to_2d(itri->vertex(1)));
             cdt.insert_constraint(P.to_2d(itri->vertex(1)), P.to_2d(itri->vertex(2)));
             cdt.insert_constraint(P.to_2d(itri->vertex(2)), P.to_2d(itri->vertex(0)));
-        }
-        else if (const std::vector<Point_3 > *polyp = CGAL::object_cast< std::vector<Point_3> >(&obj))
-        {
-            const std::vector<Point_3 > & poly = *polyp;
+        } else if (const std::vector<Point_3> *polyp = CGAL::object_cast<std::vector<Point_3> >(&obj)) {
+            const std::vector<Point_3> &poly = *polyp;
             const std::size_t m = poly.size();
             assert(m >= 2);
-            for (std::size_t p = 0; p < m; p++)
-            {
+            for (std::size_t p = 0; p < m; p++) {
                 const std::size_t np = (p + 1) % m;
                 cdt.insert_constraint(P.to_2d(poly[p]), P.to_2d(poly[np]));
             }
-        }
-        else {
+        } else {
             LOG(ERROR) << "Unknown intersection object!";
             throw std::runtime_error("Unknown intersection object!");
         }
@@ -403,52 +370,48 @@ namespace easy3d {
 
 
     void SelfIntersection::projected_cdt(
-            const std::vector<CGAL::Object> & objects,
-            const Plane_3 & P,
-            std::vector<Point_3>& vertices,
-            std::vector< std::vector<int> >& faces)
-    {
+            const std::vector<CGAL::Object> &objects,
+            const Plane_3 &P,
+            std::vector<Point_3> &vertices,
+            std::vector<std::vector<int> > &faces) {
         CDT_plus_2 cdt;
-        for (const auto & obj : objects)
+        for (const auto &obj : objects)
             insert_into_cdt(obj, P, cdt);
 
         // Read off vertices of the cdt, remembering index
         std::map<typename CDT_plus_2::Vertex_handle, int> v2i;
         int count = 0;
         for (
-            auto itr = cdt.finite_vertices_begin();
-            itr != cdt.finite_vertices_end();
-            itr++)
-        {
+                auto itr = cdt.finite_vertices_begin();
+                itr != cdt.finite_vertices_end();
+                itr++) {
             vertices.push_back(P.to_3d(itr->point()));
             v2i[itr] = count;
             count++;
         }
         // Read off faces and store index triples
         for (
-            auto itr = cdt.finite_faces_begin();
-            itr != cdt.finite_faces_end();
-            itr++)
-        {
+                auto itr = cdt.finite_faces_begin();
+                itr != cdt.finite_faces_end();
+                itr++) {
             faces.push_back(
-                { v2i[itr->vertex(0)], v2i[itr->vertex(1)], v2i[itr->vertex(2)] });
+                    {v2i[itr->vertex(0)], v2i[itr->vertex(1)], v2i[itr->vertex(2)]});
         }
     }
 
 
-    SurfaceMesh* SelfIntersection::remesh(SurfaceMesh* mesh, bool stitch)
-    {
+    SurfaceMesh *SelfIntersection::remesh(SurfaceMesh *mesh, bool stitch) {
 #ifdef REMESH_INTERSECTIONS_TIMING
         StopWatch w;
         w.start();
         LOG(ERROR) << "detecting intersections... ";
 #endif
 
-        const auto& intersecting_faces = detect(mesh, true);
+        const auto &intersecting_faces = detect(mesh, true);
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(ERROR) << "done. " << intersecting_faces.size()
-                  << " pairs of intersecting triangles. Time: " << w.time_string();
+                   << " pairs of intersecting triangles. Time: " << w.time_string();
 
         w.restart();
         LOG(ERROR) << "overlap analysis... ";
@@ -459,36 +422,33 @@ namespace easy3d {
 
         typedef std::pair<std::size_t, std::size_t> Edge;
         struct EdgeHash {
-            std::size_t operator()(const Edge& e) const {
+            std::size_t operator()(const Edge &e) const {
                 return (e.first * 805306457) ^ (e.second * 201326611);
             }
         };
-        typedef std::unordered_map<Edge, std::vector<int>, EdgeHash > EdgeMap;
+        typedef std::unordered_map<Edge, std::vector<int>, EdgeHash> EdgeMap;
 
         const std::size_t num_faces = mesh->n_faces();
         const std::size_t num_base_vertices = mesh->n_vertices();
         assert(num_faces == triangle_faces_.size());
 
         std::vector<bool> is_offending(num_faces, false);
-        for (const auto& itr : offending_)
+        for (const auto &itr : offending_)
             is_offending[itr.first] = true;
 
         // Cluster overlaps so that co-planar clusters are resolved only once
         std::unordered_map<int, std::vector<int> > intersecting_and_coplanar;
-        for (const auto& itr : offending_)
-        {
-            const auto& fi = itr.first;
+        for (const auto &itr : offending_) {
+            const auto &fi = itr.first;
             const auto P = triangle_faces_[fi].triangle.supporting_plane();
             assert(!P.is_degenerate());
-            for (const auto& jtr : itr.second)
-            {
-                const auto& fj = jtr.first;
-                const auto& tj = triangle_faces_[fj];
-                if (P.has_on(tj.triangle[0]) && P.has_on(tj.triangle[1]) && P.has_on(tj.triangle[2]))
-                {
+            for (const auto &jtr : itr.second) {
+                const auto &fj = jtr.first;
+                const auto &tj = triangle_faces_[fj];
+                if (P.has_on(tj.triangle[0]) && P.has_on(tj.triangle[1]) && P.has_on(tj.triangle[2])) {
                     auto loc = intersecting_and_coplanar.find(fi);
                     if (loc == intersecting_and_coplanar.end())
-                        intersecting_and_coplanar[fi] = { fj };
+                        intersecting_and_coplanar[fi] = {fj};
                     else
                         loc->second.push_back(fj);
                 }
@@ -517,28 +477,25 @@ namespace easy3d {
         //   vertices  #V list of vertex positions of output triangulation
         //   faces   #F list of face indices into vertices of output triangulation
         //
-        auto delaunay_triangulation = [&] (
-            const Plane_3& P,
-            const std::vector< int >& involved_faces,
-            std::vector<Point_3>& vertices,
-            std::vector< std::vector<int> >& faces) -> void
-        {
+        auto delaunay_triangulation = [&](
+                const Plane_3 &P,
+                const std::vector<int> &involved_faces,
+                std::vector<Point_3> &vertices,
+                std::vector<std::vector<int> > &faces) -> void {
             std::vector<CGAL::Object> objects;
 
             CDT_plus_2 cdt;
             // insert each face into a common cdt
-            for (const auto& fid : involved_faces)
-            {
-                const auto& itr = offending_.find(fid);
-                const auto& tri = triangle_faces_[fid];
+            for (const auto &fid : involved_faces) {
+                const auto &itr = offending_.find(fid);
+                const auto &tri = triangle_faces_[fid];
                 objects.push_back(CGAL::make_object(tri.triangle));
                 if (itr == offending_.end())
                     continue;
 
-                for (const auto& index_obj : itr->second)
-                {
+                for (const auto &index_obj : itr->second) {
                     //const auto& ofid = index_obj.first;
-                    const auto& obj = index_obj.second;
+                    const auto &obj = index_obj.second;
                     objects.push_back(obj);
                 }
             }
@@ -553,20 +510,17 @@ namespace easy3d {
         // Returns global index of vertex (dependent on whether stitch_all flag is
         // set)
         //
-        auto find_or_append_point = [&](const Point_3& p, const std::size_t ori_f) -> int
-        {
+        auto find_or_append_point = [&](const Point_3 &p, const std::size_t ori_f) -> int {
             if (!stitch) {
                 // No need to check if p shared by multiple triangles because all shared
                 // vertices would be merged later on.
-				const int index = num_base_vertices + new_vertices.size();
+                const int index = num_base_vertices + new_vertices.size();
                 new_vertices.push_back(p);
                 return index;
-            }
-            else
-            {
+            } else {
                 // Stitching triangles according to input connectivity.
                 // This step is potentially costly.
-                const auto& tri = triangle_faces_[ori_f];
+                const auto &tri = triangle_faces_[ori_f];
                 // Check if p is one of the triangle corners.
                 for (unsigned short i = 0; i < 3; i++) {
                     if (p == tri.triangle[i]) {
@@ -592,11 +546,10 @@ namespace easy3d {
                         auto itr = edge_vertices.find(key);
                         if (itr == edge_vertices.end()) {
                             const int index = num_base_vertices + new_vertices.size();
-                            edge_vertices.insert({ key, {index} });
+                            edge_vertices.insert({key, {index}});
                             new_vertices.push_back(p);
                             return index;
-                        }
-                        else {
+                        } else {
                             for (const auto vid : itr->second) {
                                 if (p == new_vertices[vid - num_base_vertices]) {
                                     return vid;
@@ -611,7 +564,7 @@ namespace easy3d {
                 }
 
                 // p must be in the middle of the triangle.
-                auto & existing_face_vertices = face_vertices[ori_f];
+                auto &existing_face_vertices = face_vertices[ori_f];
                 for (const auto vid : existing_face_vertices) {
                     if (p == new_vertices[vid - num_base_vertices]) {
                         return vid;
@@ -635,38 +588,32 @@ namespace easy3d {
         //   - add corresponding original face to source_faces
         //   -
         auto post_triangulation_process = [&](
-            const std::vector<Point_3>& vertices,
-            const std::vector<std::vector<int> >& faces,
-            const std::vector<int>& involved_faces) -> void
-        {
+                const std::vector<Point_3> &vertices,
+                const std::vector<std::vector<int> > &faces,
+                const std::vector<int> &involved_faces) -> void {
             assert(involved_faces.size() > 0);
             // for all faces of the cdt
-            for (const auto& f : faces)
-            {
-                const Point_3& v0 = vertices[f[0]];
-                const Point_3& v1 = vertices[f[1]];
-                const Point_3& v2 = vertices[f[2]];
+            for (const auto &f : faces) {
+                const Point_3 &v0 = vertices[f[0]];
+                const Point_3 &v1 = vertices[f[1]];
+                const Point_3 &v2 = vertices[f[2]];
                 Point_3 center(
-                    (v0[0] + v1[0] + v2[0]) / 3.0,
-                    (v0[1] + v1[1] + v2[1]) / 3.0,
-                    (v0[2] + v1[2] + v2[2]) / 3.0);
-                if (involved_faces.size() == 1)
-                {
+                        (v0[0] + v1[0] + v2[0]) / 3.0,
+                        (v0[1] + v1[1] + v2[1]) / 3.0,
+                        (v0[2] + v1[2] + v2[2]) / 3.0);
+                if (involved_faces.size() == 1) {
                     // If only there is only one involved face, all sub-triangles must
                     // belong to it and have the correct orientation.
-                    const auto& ori_f = involved_faces[0];
+                    const auto &ori_f = involved_faces[0];
                     std::vector<int> corners(3);
                     corners[0] = find_or_append_point(v0, ori_f);
                     corners[1] = find_or_append_point(v1, ori_f);
                     corners[2] = find_or_append_point(v2, ori_f);
                     resolved_faces.emplace_back(corners);
                     source_faces.push_back(ori_f);
-                }
-                else
-                {
-                    for (const auto& ori_f : involved_faces)
-                    {
-                        const auto& tri = triangle_faces_[ori_f];
+                } else {
+                    for (const auto &ori_f : involved_faces) {
+                        const auto &tri = triangle_faces_[ori_f];
                         const Plane_3 P = tri.triangle.supporting_plane();
                         if (tri.triangle.has_on(center)) {
                             std::vector<int> corners(3);
@@ -685,11 +632,9 @@ namespace easy3d {
         };
 
         // Process un-touched faces.
-        for (auto f : mesh->faces())
-        {
-			const int fid = f.idx();
-            if (!is_offending[fid] && !triangle_faces_[fid].triangle.is_degenerate())
-            {
+        for (auto f : mesh->faces()) {
+            const int fid = f.idx();
+            if (!is_offending[fid] && !triangle_faces_[fid].triangle.is_degenerate()) {
                 SurfaceMesh::Face f = triangle_faces_[fid].face;
                 std::vector<int> ids;
                 for (auto v : mesh->vertices(f))
@@ -702,8 +647,7 @@ namespace easy3d {
         // Process self-intersecting faces.
         std::vector<bool> processed(num_faces, false);
         std::vector<std::pair<Plane_3, std::vector<int> > > cdt_inputs;
-        for (const auto& itr : offending_)
-        {
+        for (const auto &itr : offending_) {
             const int fid = itr.first;
             if (processed[fid])
                 continue;
@@ -711,16 +655,12 @@ namespace easy3d {
 
             const auto loc = intersecting_and_coplanar.find(fid);
             std::vector<int> involved_faces;
-            if (loc == intersecting_and_coplanar.end())
-            {
+            if (loc == intersecting_and_coplanar.end()) {
                 involved_faces.push_back(fid);
-            }
-            else
-            {
+            } else {
                 std::queue<int> Q;
                 Q.push(fid);
-                while (!Q.empty())
-                {
+                while (!Q.empty()) {
                     const auto index = Q.front();
                     involved_faces.push_back(index);
                     Q.pop();
@@ -728,8 +668,7 @@ namespace easy3d {
                     const auto overlapping_faces = intersecting_and_coplanar.find(index);
                     assert(overlapping_faces != intersecting_and_coplanar.end());
 
-                    for (const auto other_index : overlapping_faces->second)
-                    {
+                    for (const auto other_index : overlapping_faces->second) {
                         if (processed[other_index]) continue;
                         processed[other_index] = true;
                         Q.push(other_index);
@@ -758,12 +697,11 @@ namespace easy3d {
         //// I tried it and got random segfaults (via MATLAB). Seems this is not
         //// safe.
         //igl::parallel_for(num_cdts,[&](int i)
-        for (std::size_t i = 0; i < num_cdts; i++)
-        {
-            auto& vertices = cdt_vertices[i];
-            auto& faces = cdt_faces[i];
-            const auto& P = cdt_inputs[i].first;
-            const auto& involved_faces = cdt_inputs[i].second;
+        for (std::size_t i = 0; i < num_cdts; i++) {
+            auto &vertices = cdt_vertices[i];
+            auto &faces = cdt_faces[i];
+            const auto &P = cdt_inputs[i].first;
+            const auto &involved_faces = cdt_inputs[i].second;
             delaunay_triangulation(P, involved_faces, vertices, faces);
         }
         //,1000);
@@ -774,11 +712,10 @@ namespace easy3d {
         LOG(ERROR) << "stitching... ";
 #endif
 
-        for (std::size_t i = 0; i < num_cdts; i++)
-        {
-            const auto& vertices = cdt_vertices[i];
-            const auto& faces = cdt_faces[i];
-            const auto& involved_faces = cdt_inputs[i].second;
+        for (std::size_t i = 0; i < num_cdts; i++) {
+            const auto &vertices = cdt_vertices[i];
+            const auto &faces = cdt_faces[i];
+            const auto &involved_faces = cdt_inputs[i].second;
             post_triangulation_process(vertices, faces, involved_faces);
         }
 #ifdef REMESH_INTERSECTIONS_TIMING
@@ -790,7 +727,7 @@ namespace easy3d {
 
         // Output resolved mesh.
 
-        SurfaceMesh* result = new SurfaceMesh;
+        SurfaceMesh *result = new SurfaceMesh;
         std::vector<SurfaceMesh::Vertex> vertices;
         auto points = mesh->get_vertex_property<vec3>("v:point");
         for (auto p : mesh->vertices()) {
@@ -798,12 +735,13 @@ namespace easy3d {
             vertices.push_back(v);
         }
         for (auto p : new_vertices) {
-            SurfaceMesh::Vertex v = result->add_vertex(vec3(CGAL::to_double(p[0]), CGAL::to_double(p[1]), CGAL::to_double(p[2])));
+            SurfaceMesh::Vertex v = result->add_vertex(
+                    vec3(CGAL::to_double(p[0]), CGAL::to_double(p[1]), CGAL::to_double(p[2])));
             vertices.push_back(v);
         }
 
         for (auto fvids : resolved_faces) {
-            result->add_face({vertices[fvids[0]],  vertices[fvids[1]],  vertices[fvids[2]]});
+            result->add_face({vertices[fvids[0]], vertices[fvids[1]], vertices[fvids[2]]});
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
