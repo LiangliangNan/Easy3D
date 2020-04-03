@@ -25,7 +25,6 @@ public:
         for (int i = 0; i < parent->columnCount(); ++i)
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
 
-        selected_color_ = Qt::yellow;
         active_color_ = QColor(255, 177, 255);
     }
 
@@ -66,8 +65,6 @@ public:
     void setStatus(bool is_selected, bool is_active) {
         if (is_active)
             setColor(active_color_);
-        else if (is_selected)
-            setColor(selected_color_);
         else
             resetColor();
 
@@ -91,8 +88,6 @@ private:
 
 private:
     Model *model_;
-
-    QColor selected_color_;
     QColor active_color_;
 };
 
@@ -105,9 +100,6 @@ WidgetModelList::WidgetModelList(QWidget *parent)
     connect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this, SLOT(modelItemClicked(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
             SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
-    connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-            SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
-    connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
@@ -240,9 +232,6 @@ void WidgetModelList::updateModelList() {
                SLOT(modelItemClicked(QTreeWidgetItem * , int)));
     disconnect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
                SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
-    disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-               SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
-    disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
 
     Model *active_model = canvas()->currentModel();
 
@@ -288,9 +277,6 @@ void WidgetModelList::updateModelList() {
     connect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this, SLOT(modelItemClicked(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
             SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
-    connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-            SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
-    connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
 
     if (canvas()->currentModel()) {
         const std::string &name = canvas()->currentModel()->name();
@@ -569,10 +555,18 @@ void WidgetModelList::setAutoFocus(bool b) {
 
 void WidgetModelList::setSelectedOnly(bool b) {
 	selected_only_ = b;
-	if (selected_only_)
-		setSelectionMode(QAbstractItemView::SingleSelection);
-	else
-		setSelectionMode(QAbstractItemView::ExtendedSelection);
+	if (selected_only_) {
+        setSelectionMode(QAbstractItemView::SingleSelection);
+        connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+        connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
+                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
+    }
+	else {
+        setSelectionMode(QAbstractItemView::ExtendedSelection);
+        disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+        disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
+                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
+    }
 
 	ModelItem* item = dynamic_cast<ModelItem*>(currentItem());
 	if (!item)
