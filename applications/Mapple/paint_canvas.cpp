@@ -389,6 +389,17 @@ Model *PaintCanvas::currentModel() {
     return nullptr;
 }
 
+
+void PaintCanvas::setCurrentModel(easy3d::Model *m) {
+    for (int i=0; i<models_.size(); ++i) {
+        if (models_[i] == m) {
+            model_idx_ = i;
+            return;
+        }
+    }
+}
+
+
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
         std::cout << usage() << std::endl;

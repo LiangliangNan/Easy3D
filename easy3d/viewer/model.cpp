@@ -34,6 +34,7 @@ namespace easy3d {
 		: name_(name)
 		, visible_(true)
 		, bbox_known_(false)
+		, selected_(false)
 	{
 	}
 

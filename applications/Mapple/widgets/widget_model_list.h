@@ -43,33 +43,22 @@ public:
 private Q_SLOTS :
 
     void setAutoFocus(bool b);
-
-    void setShowSelectedOnly(bool b);
+    void setSelectedOnly(bool b);
 
     void duplicateCurrent();
-
     void mergeSelected();
-
     void deleteSelected();
-
     void decomposeSelected();
 
     void invertSelection();
-
     void showSelected();
-
     void hideSelected();
-
     void invertShowHide();
-
     void showAll();
 
     void modelItemClicked(QTreeWidgetItem *current, int column);
-
     void modelItemDoubleClicked(QTreeWidgetItem *current, int column);
-
     void currentModelItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-
     void modelItemSelectionChanged();
 
     void showContextMenu(const QPoint &p);

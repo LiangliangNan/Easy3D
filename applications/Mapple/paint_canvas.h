@@ -45,6 +45,7 @@ public:
 
 	const std::vector<easy3d::Model*>& models() const override { return models_; }
     easy3d::Model* currentModel();
+	void setCurrentModel(easy3d::Model* m);
 
     // the camera
     easy3d::Camera* camera() override { return camera_; }

@@ -99,11 +99,15 @@ namespace easy3d {
         /// prints the names of all properties
         virtual void property_stats() const = 0;
 
+        bool is_selected() const { return selected_; }
+        void set_selected(bool b) { selected_ = b; }
+
     protected:
         std::string	name_;
         bool		visible_;
         Box3		bbox_;
         bool		bbox_known_;
+        bool        selected_;
 
         std::vector<PointsDrawable*>    points_drawables_;
         std::vector<LinesDrawable*>     lines_drawables_;

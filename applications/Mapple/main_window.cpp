@@ -67,7 +67,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 #ifndef _WIN32
     const QSize& size = ui->dockWidgetRendering->sizeHint();
-    int width = static_cast<int>(size.width() * 1.5f);
+    const int width = static_cast<int>(size.width() * 1.5f);
     ui->dockWidgetRendering->setFixedWidth(width);
 #endif
 
@@ -86,6 +86,11 @@ MainWindow::MainWindow(QWidget *parent)
     widgetPointsDrawable_->setEnabled(false);
 
     ui->verticalLayoutGlobalSetting->addWidget(new WidgetGlobalSetting(this));
+
+    // ---------------------------
+
+    connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
+    connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
 
     // ---------------------------
 
@@ -281,6 +286,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         StopWatch w;
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
+        ui->treeWidgetModels->addModel(model, true, true);
         viewer_->doneCurrent();
         LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
         setCurrentFile(QString::fromStdString(file_name));
