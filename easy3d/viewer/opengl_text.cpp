@@ -768,7 +768,6 @@ namespace easy3d {
             return false;
         }
 
-        LOG(INFO) << "loading font '" << font_file << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         const int id = sth_add_font(stash_, font_file.c_str());
         if (id <= 0) {
             LOG(ERROR) << "could not load font: " << font_file;
@@ -776,7 +775,9 @@ namespace easy3d {
         }
 
         font_ids_.push_back(id);
-        font_names_.push_back(file_system::base_name(font_file));
+        const std::string simple_name = file_system::simple_name(font_file);
+        font_names_.push_back(simple_name);
+        LOG(INFO) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         return true;
     }
 
