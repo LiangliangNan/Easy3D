@@ -83,7 +83,7 @@ void main(void) {
     if (ssaoEnabled) {
         vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
         float coeff = texture(ssaoTexture, texCoord).r;
-        outputF = vec4(vec3(color * df + specular * sf + ambient) * coeff, DataIn.color.a);
+        outputF = vec4((color * df + specular * sf + ambient) * coeff, DataIn.color.a);
     }
     else
          outputF = vec4(color * df + specular * sf + ambient, DataIn.color.a);
