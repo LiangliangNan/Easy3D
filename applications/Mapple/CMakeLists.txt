@@ -61,6 +61,7 @@ set(${PROJECT_NAME}_SOURCES
         widgets/widget_drawable_lines.cpp
         widgets/widget_drawable_triangles.cpp
         widgets/widget_global_setting.cpp
+        widgets/widget_model_list.cpp
 
         tools/tool.cpp
         tools/tool_manager.cpp
@@ -82,6 +83,7 @@ set(${PROJECT_NAME}_FORMS
         widgets/widget_drawable_lines.ui
         widgets/widget_drawable_triangles.ui
         widgets/widget_global_setting.ui
+        widgets/widget_model_list.h
         )
 
 #set(${PROJECT_NAME}_RESOURCES

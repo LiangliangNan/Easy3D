@@ -36,6 +36,13 @@ public:
 
     PaintCanvas* viewer() { return viewer_; }
 
+    void setCurrentFile(const QString &fileName);
+
+    void enableCameraManipulation();
+
+public slots:
+    void onCurrentModelChanged();
+
 private slots:
 
     // file
@@ -75,8 +82,6 @@ private slots:
     // about
     void onAboutMapple();
 
-    void onCurrentModelChanged();
-
     void operationModeChanged(QAction* act);
 
 protected:
@@ -104,8 +109,6 @@ private:
     void readSettings();
     void writeSettings();
     void updateWindowTitle();
-
-    void setCurrentFile(const QString &fileName);
 
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);

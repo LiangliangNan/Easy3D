@@ -351,16 +351,22 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QTreeWidget" name="treeWidgetModels">
+      <widget class="WidgetModelList" name="treeWidgetModels">
        <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::MultiSelection</enum>
        </property>
+       <property name="indentation">
+        <number>5</number>
+       </property>
        <property name="columnCount">
         <number>3</number>
        </property>
+       <attribute name="headerDefaultSectionSize">
+        <number>60</number>
+       </attribute>
        <column>
         <property name="text">
          <string notr="true">1</string>
@@ -677,6 +683,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>WidgetModelList</class>
+   <extends>QTreeWidget</extends>
+   <header>widgets/widget_model_list.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

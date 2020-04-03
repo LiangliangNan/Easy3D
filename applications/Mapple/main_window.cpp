@@ -22,6 +22,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
@@ -58,6 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->treeWidgetModels->init(this);
 
     viewer_ = new PaintCanvas(this);
     connect(viewer_, SIGNAL(currentModelChanged()), this, SLOT(onCurrentModelChanged()));
@@ -89,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
 
-    setWindowIcon(QIcon("Resources/icons/Mapple.png"));
+    setWindowIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/Mapple.png")));
     setFocusPolicy(Qt::StrongFocus);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);
@@ -253,6 +255,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             while ((cloud = serializer.load_next())) {
                 viewer_->makeCurrent();
                 viewer_->addModel(cloud, create_default_drawables);
+                ui->treeWidgetModels->addModel(cloud, true, true);
                 viewer_->doneCurrent();
             }
         }
@@ -299,6 +302,8 @@ void MainWindow::onCurrentModelChanged() {
     widgetTrianglesDrawable_->updatePanel();
     widgetLinesDrawable_->updatePanel();
     widgetPointsDrawable_->updatePanel();
+
+    ui->treeWidgetModels->updateModelList();
 }
 
 
@@ -317,6 +322,11 @@ void MainWindow::setCurrentFile(const QString &fileName)
     }
 
     updateWindowTitle();
+}
+
+
+void MainWindow::enableCameraManipulation() {
+    ui->actionCameraManipulation->trigger();
 }
 
 
@@ -587,8 +597,6 @@ void MainWindow::createActionsForViewMenu() {
     ui->menuView->addAction(actionToggleDockWidgetLogger);
 
     connect(ui->actionBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
-
-//    connect(ui->actionShowManipulateHint, SIGNAL(toggled(bool)), viewer_, SLOT(showManipulatiHint(bool)));
 }
 
 
