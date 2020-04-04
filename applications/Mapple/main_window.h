@@ -38,10 +38,11 @@ public:
 
     void setCurrentFile(const QString &fileName);
 
-    void enableCameraManipulation();
+    void setShowSelectedOnly(bool b);
 
 public slots:
     void onCurrentModelChanged();
+    void enableCameraManipulation();
 
 private slots:
 

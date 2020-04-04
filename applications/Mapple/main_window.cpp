@@ -336,6 +336,11 @@ void MainWindow::enableCameraManipulation() {
 }
 
 
+void MainWindow::setShowSelectedOnly(bool b) {
+    ui->checkBoxSelectedOnly->setChecked(b);
+}
+
+
 void MainWindow::onOpenRecentFile()
 {
     if (okToContinue()) {

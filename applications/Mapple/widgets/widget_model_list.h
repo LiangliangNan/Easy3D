@@ -54,24 +54,19 @@ private Q_SLOTS :
     void showSelected();
     void hideSelected();
     void invertShowHide();
-    void showAll();
+
+    void showAllModels();
 
     void modelItemClicked(QTreeWidgetItem *current, int column);
-    void modelItemDoubleClicked(QTreeWidgetItem *current, int column);
     void currentModelItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void modelItemSelectionChanged();
 
     void showContextMenu(const QPoint &p);
 
-protected:
-    void mousePressEvent(QMouseEvent *e);
-
-    void mouseReleaseEvent(QMouseEvent *e);
-
 private:
     void hideOtherModels(easy3d::Model *model);
 
-    PaintCanvas *canvas();
+    PaintCanvas *viewer();
 
 private:
     MainWindow *mainWindow_;

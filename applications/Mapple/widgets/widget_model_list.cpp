@@ -13,7 +13,6 @@
 #include <QColorDialog>
 #include <QTreeWidgetItem>
 #include <QHeaderView>
-#include <QMouseEvent>
 
 
 using namespace easy3d;
@@ -98,8 +97,6 @@ WidgetModelList::WidgetModelList(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this, SLOT(modelItemClicked(QTreeWidgetItem * , int)));
-    connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
-            SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
@@ -126,7 +123,7 @@ void WidgetModelList::init(MainWindow *w) {
 }
 
 
-PaintCanvas *WidgetModelList::canvas() {
+PaintCanvas *WidgetModelList::viewer() {
     return mainWindow_->viewer();
 }
 
@@ -183,7 +180,7 @@ void WidgetModelList::prepareContextMenu(QMenu *menu) {
 
     if (num_invisible > 0) {
         QAction *actionShowAll = menu->addAction("Show All");
-        connect(actionShowAll, SIGNAL(triggered()), this, SLOT(showAll()));
+        connect(actionShowAll, SIGNAL(triggered()), this, SLOT(showAllModels()));
     }
 
     menu->addSeparator();
@@ -228,14 +225,9 @@ void WidgetModelList::showContextMenu(const QPoint &pos) {
 
 
 void WidgetModelList::updateModelList() {
-    disconnect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this,
-               SLOT(modelItemClicked(QTreeWidgetItem * , int)));
-    disconnect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
-               SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
+    Model *active_model = viewer()->currentModel();
 
-    Model *active_model = canvas()->currentModel();
-
-    const std::vector<Model *> &models = canvas()->models();
+    const std::vector<Model *> &models = viewer()->models();
     for (unsigned int i = 0; i < models.size(); ++i) {
         Model *model = models[i];
         const std::string &name = file_system::base_name(model->name());
@@ -272,14 +264,8 @@ void WidgetModelList::updateModelList() {
 
     assert(topLevelItemCount() == models.size());
 
-    update();
-
-    connect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this, SLOT(modelItemClicked(QTreeWidgetItem * , int)));
-    connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem * , int)), this,
-            SLOT(modelItemDoubleClicked(QTreeWidgetItem * , int)));
-
-    if (canvas()->currentModel()) {
-        const std::string &name = canvas()->currentModel()->name();
+    if (viewer()->currentModel()) {
+        const std::string &name = viewer()->currentModel()->name();
         if (!name.empty()) {
             mainWindow_->setCurrentFile(QString::fromStdString(name));
         }
@@ -289,8 +275,8 @@ void WidgetModelList::updateModelList() {
 
 
 void WidgetModelList::duplicateCurrent() {
-    if (canvas()->currentModel()) {
-        Model* model = canvas()->currentModel();
+    if (viewer()->currentModel()) {
+        Model* model = viewer()->currentModel();
 
         Model* copy = nullptr;
         if (dynamic_cast<SurfaceMesh*>(model)) {
@@ -310,9 +296,9 @@ void WidgetModelList::duplicateCurrent() {
             const std::string name = file_system::parent_directory(model->name()) + "/" + file_system::base_name(model->name()) + "_copy";
             copy->set_name(name);
 
-            canvas()->makeCurrent();
-            canvas()->addModel(copy, true);
-            canvas()->doneCurrent();
+            viewer()->makeCurrent();
+            viewer()->addModel(copy, true);
+            viewer()->doneCurrent();
 
             addModel(copy, true, false);
         }
@@ -321,7 +307,7 @@ void WidgetModelList::duplicateCurrent() {
 
 
 void WidgetModelList::hideOtherModels(Model *cur) {
-    const std::vector<Model *> &models = canvas()->models();
+    const std::vector<Model *> &models = viewer()->models();
     for (int i = 0; i < models.size(); ++i) {
         Model *model = models[i];
         if (selected_only_ && model != cur)
@@ -329,21 +315,6 @@ void WidgetModelList::hideOtherModels(Model *cur) {
         else
             model->set_visible(true);
     }
-}
-
-
-void WidgetModelList::showAll() {
-//	if (selected_only_) {
-//        mainWindow_->actionShowSelectedOnly->setChecked(false);
-//    }
-//	else {
-//		const std::vector<Model*>& models = canvas()->models();
-//		for (int i = 0; i < models.size(); ++i) {
-//			models[i]->set_visible(true);
-//		}
-//		canvas()->update();
-//		updateModelList();
-//	}
 }
 
 
@@ -358,7 +329,8 @@ void WidgetModelList::showSelected() {
 		model->set_visible(true);
 	}
 
-    canvas()->update();
+	updateModelList();
+    viewer()->update();
 }
 
 
@@ -373,38 +345,53 @@ void WidgetModelList::hideSelected() {
 		model->set_visible(false);
 	}
 
-    canvas()->update();
+    updateModelList();
+    viewer()->update();
 }
 
 
 void WidgetModelList::invertShowHide() {
-//	int num = topLevelItemCount();
-//
-//	if (selected_only_) {
-//		std::vector<unsigned char> visible(num);
-//		for (int i = 0; i < num; ++i) {
-//			QTreeWidgetItem* item = topLevelItem(i);
-//			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-//			visible[i] = (!modelItem->currentModel()->is_visible());
-//		}
-//		mainWindow_->actionShowSelectedOnly->setChecked(false);
-//		for (int i = 0; i < num; ++i) {
-//			QTreeWidgetItem* item = topLevelItem(i);
-//			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-//			modelItem->currentModel()->set_visible(visible[i]);
-//		}
-//	}
-//	else {
-//		for (int i = 0; i < num; ++i) {
-//			QTreeWidgetItem* item = topLevelItem(i);
-//			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-//			Model* model = modelItem->currentModel();
-//			model->set_visible(!model->is_visible());;
-//		}
-//	}
-//
-    canvas()->update();
+	int num = topLevelItemCount();
 
+	if (selected_only_) {
+		std::vector<unsigned char> visible(num);
+		for (int i = 0; i < num; ++i) {
+			QTreeWidgetItem* item = topLevelItem(i);
+			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
+			visible[i] = (!modelItem->model()->is_visible());
+		}
+		mainWindow_->setShowSelectedOnly(false);
+		for (int i = 0; i < num; ++i) {
+			QTreeWidgetItem* item = topLevelItem(i);
+			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
+			modelItem->model()->set_visible(visible[i]);
+		}
+	}
+	else {
+		for (int i = 0; i < num; ++i) {
+			QTreeWidgetItem* item = topLevelItem(i);
+			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
+			Model* model = modelItem->model();
+			model->set_visible(!model->is_visible());;
+		}
+	}
+
+	updateModelList();
+    viewer()->update();
+}
+
+
+void WidgetModelList::showAllModels() {
+    if (selected_only_)
+        mainWindow_->setShowSelectedOnly(false);
+    else {
+        const std::vector<Model *> &models = viewer()->models();
+        for (int i = 0; i < models.size(); ++i) {
+            models[i]->set_visible(true);
+        }
+        updateModelList();
+        viewer()->update();
+    }
 }
 
 
@@ -469,7 +456,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
         previous_item->setStatus(previous_item->model()->is_selected(), false);
 
 	Model* model = current_item->model();
-	canvas()->setCurrentModel(model);
+	viewer()->setCurrentModel(model);
 
 	if (selected_only_) {
 		hideOtherModels(model);
@@ -477,16 +464,16 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	}
 
 	if (auto_focus_)
-		canvas()->fitScreen(model);
+		viewer()->fitScreen(model);
 	else
-		canvas()->update();
+		viewer()->update();
 
     mainWindow_->onCurrentModelChanged();
 }
 
 
 void WidgetModelList::modelItemSelectionChanged() {
-    Model *active_model = canvas()->currentModel();
+    Model *active_model = viewer()->currentModel();
 
     int num = topLevelItemCount();
     for (int i = 0; i < num; ++i) {
@@ -494,24 +481,8 @@ void WidgetModelList::modelItemSelectionChanged() {
         item->setStatus(item->isSelected(), item->model() == active_model);
     }
 
-//	canvas()->configureManipulation();
-    canvas()->update();
-}
-
-
-void WidgetModelList::mousePressEvent(QMouseEvent *e) {
-    if (selected_only_) {
-        ModelItem *curr_item = dynamic_cast<ModelItem *>(currentItem());
-        if (curr_item && itemAt(e->pos()) == nullptr) {
-            curr_item->setStatus(false, true);
-        }
-    }
-
-    QTreeWidget::mousePressEvent(e);
-}
-
-void WidgetModelList::mouseReleaseEvent(QMouseEvent *e) {
-    QTreeWidget::mouseReleaseEvent(e);
+//	viewer()->configureManipulation();
+    viewer()->update();
 }
 
 
@@ -520,36 +491,36 @@ void WidgetModelList::modelItemClicked(QTreeWidgetItem *current, int column) {
     if (!current_item)
         return;
 
-    Model *model = current_item->model();
-
     if (column == 2 && !selected_only_) {
+        Model *model = current_item->model();
         bool visible = !model->is_visible();
         current_item->setVisibilityIcon(2, visible);
         model->set_visible(visible);
+        viewer()->update();
     }
+    else {
+        int num = topLevelItemCount();
+        for (int i = 0; i < num; ++i) {
+            ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
+            item->setStatus(item->isSelected(), item == current_item);
+        }
+        viewer()->setCurrentModel(current_item->model());
+        mainWindow_->onCurrentModelChanged();
 
-    canvas()->update();
-}
-
-
-void WidgetModelList::modelItemDoubleClicked(QTreeWidgetItem *current, int column) {
-//	ModelItem* item = dynamic_cast<ModelItem*>(current);
-//	if (!item)
-//		return;
-//
-//	Model* model = item->model();
-//	if (column == 3) {
-//	    // if you want to change something here
-//	}
-//	canvas()->update();
-//	mainWindow_->onCurrentModelChanged();
+        if (auto_focus_)
+            viewer()->fitScreen(current_item->model());
+        else
+            viewer()->update();
+    }
 }
 
 
 void WidgetModelList::setAutoFocus(bool b) {
     auto_focus_ = b;
     if (auto_focus_)
-        canvas()->fitScreen();
+        viewer()->fitScreen(viewer()->currentModel());
+    else
+        viewer()->update();
 }
 
 
@@ -576,31 +547,30 @@ void WidgetModelList::setSelectedOnly(bool b) {
 	if (selected_only_)
 		hideOtherModels(active_model);
 	else {
-		const std::vector<Model*>& models = canvas()->models();
+		const std::vector<Model*>& models = viewer()->models();
 		for (int i = 0; i < models.size(); ++i) {
 			models[i]->set_visible(true);
 		}
 	}
 
-    canvas()->update();
-
-	mainWindow_->onCurrentModelChanged();
+    updateModelList();
+    viewer()->update();
 }
 
 
 void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
-    const auto &models = canvas()->models();
+    const auto &models = viewer()->models();
     if (!model || models.empty())
         return;
 
-    Model *current_model = canvas()->currentModel();
+    Model *current_model = viewer()->currentModel();
     if (selected_only_)
         hideOtherModels(current_model);
 
     if (fit)
-        canvas()->fitScreen(current_model);
+        viewer()->fitScreen(current_model);
     else
-        canvas()->update();
+        viewer()->update();
 
     if (make_current)
         mainWindow_->enableCameraManipulation();
@@ -608,7 +578,7 @@ void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
 
 
 void WidgetModelList::deleteModel(Model *model, bool fit) {
-//	ModelManager* manager = canvas()->modelManager();
+//	ModelManager* manager = viewer()->modelManager();
 //	if (!manager)
 //		return;
 //
@@ -618,10 +588,10 @@ void WidgetModelList::deleteModel(Model *model, bool fit) {
 //		hideOtherModels(active_model);
 //
 //	if (fit)
-//		canvas()->fitScreen();
+//		viewer()->fitScreen();
 //	else
-//		canvas()->update();
-//	canvas()->configureManipulation();
+//		viewer()->update();
+//	viewer()->configureManipulation();
 //
 
 //	mainWindow_->onCurrentModelChanged();
@@ -634,22 +604,22 @@ void WidgetModelList::addModels(const std::vector<Model *> &models) {
 //	if (models.empty())
 //		return;
 //
-//	ModelManager* manager = canvas()->modelManager();
+//	ModelManager* manager = viewer()->modelManager();
 //	if (!manager)
 //		return;
 //
 //	for (std::size_t i = 0; i < models.size(); ++i) {
 //		Model* model = models[i];
-//		model->set_canvas(canvas());
+//		model->set_canvas(viewer());
 //		bool make_another_current = (i == (models.size() - 1));
-//		canvas()->modelManager()->add_model(model, make_another_current);
+//		viewer()->modelManager()->add_model(model, make_another_current);
 //	}
 //
 //	Model* active_model = manager->current_model();
 //	if (selected_only_)
 //		hideOtherModels(active_model);
 //
-    canvas()->update();
+    viewer()->update();
 //
 
 //	mainWindow_->onCurrentModelChanged();
@@ -660,7 +630,7 @@ void WidgetModelList::addModels(const std::vector<Model *> &models) {
 
 // delete all
 void WidgetModelList::clear() {
-//	ModelManager* manager = canvas()->modelManager();
+//	ModelManager* manager = viewer()->modelManager();
 //	if (!manager)
 //		return;
 //
@@ -674,7 +644,7 @@ void WidgetModelList::clear() {
 
 
 void WidgetModelList::deleteModels(const std::vector<Model *> &models) {
-//	ModelManager* manager = canvas()->modelManager();
+//	ModelManager* manager = viewer()->modelManager();
 //	if (!manager)
 //		return;
 //
@@ -688,10 +658,10 @@ void WidgetModelList::deleteModels(const std::vector<Model *> &models) {
 //		hideOtherModels(current_model);
 //
 //	if (auto_focus_)
-//		canvas()->fitScreen();
+//		viewer()->fitScreen();
 //	else
-//		canvas()->update();
-//	canvas()->configureManipulation();
+//		viewer()->update();
+//	viewer()->configureManipulation();
 //
 
 //	mainWindow_->onCurrentModelChanged();
@@ -758,13 +728,13 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 //
 //	for (unsigned int i = 0; i < to_delete.size(); ++i) {
 //		Model* model = to_delete[i];
-//		canvas()->modelManager()->delete_model(model);
+//		viewer()->modelManager()->delete_model(model);
 //	}
 //
 //	// update display and ui
 //	if (meshes.size() > 1 || clouds.size() > 1) {
-//		canvas()->configureManipulation();
-//		canvas()->update();
+//		viewer()->configureManipulation();
+//		viewer()->update();
 //		updateModelList();
 //		mainWindow_->onCurrentModelChanged();
 //		
@@ -815,9 +785,9 @@ void WidgetModelList::decomposeModel(Model *model) {
 //		// 		new_mesh->compute_facet_normals();
 //		// 		new_mesh->compute_vertex_normals();
 //
-//		new_mesh->set_canvas(canvas());
+//		new_mesh->set_canvas(viewer());
 //		bool activate = (i == components.size() - 1); // make the last current
-//		canvas()->modelManager()->add_model(new_mesh, activate);
+//		viewer()->modelManager()->add_model(new_mesh, activate);
 //	}
 //
 //	vertex_id.unbind();
