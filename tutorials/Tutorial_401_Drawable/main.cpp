@@ -59,24 +59,15 @@ int main(int argc, char** argv) {
         // We use the points and indices of the bunny model.
         const std::vector<vec3>& vertices = resource::bunny_vertices;
         // Each consecutive 3 indices represent a triangle.
-        const std::vector<int>& indices = resource::bunny_indices;
+        const std::vector<unsigned int>& indices = resource::bunny_indices;
 
-        // To create a TrianglesDrawable to visualize the surface, we need
-		// to collect the point positions and normals to be sent to the GPU.
-        std::vector<vec3> points, normals;
-        for (std::size_t i=0; i<indices.size(); i+=3) {
-			const vec3& a = vertices[ indices[i]	 ];		points.push_back(a);
-			const vec3& b = vertices[ indices[i + 1] ]; 	points.push_back(b);
-			const vec3& c = vertices[ indices[i + 2] ];		points.push_back(c);
-            const vec3& n = geom::triangle_normal(a, b, c);
-            normals.insert(normals.end(), 3, n); // each vertex has a normal
-        }
-
+        // To create a TrianglesDrawable to visualize the surface, we need to send
+        // the point positions and the vertex indices of the faces to the GPU.
 		TrianglesDrawable* surface = new TrianglesDrawable("faces");
 		// Upload the vertex positions of the surface to the GPU.
-		surface->update_vertex_buffer(points);
-		// Upload the vertex normals of the surface to the GPU.
-        surface->update_normal_buffer(normals);
+		surface->update_vertex_buffer(vertices);
+		// Upload the vertex indices of the surface to the GPU.
+        surface->update_index_buffer(indices);
 
         // Add the drawable to the viewer
         viewer.add_drawable(surface);
@@ -86,7 +77,7 @@ int main(int argc, char** argv) {
         // Here, we show how to create a LinesDrawable to visualize the
         // bounding box of the bunny model.
         LinesDrawable* bbox_drawable = new LinesDrawable("bbox");
-        const Box3& box = geom::bounding_box<Box3, std::vector<vec3>::const_iterator>(points.begin(), points.end());
+        const Box3& box = geom::bounding_box<Box3, std::vector<vec3>::const_iterator>(vertices.begin(), vertices.end());
         float xmin = box.min(0);	float xmax = box.max(0);
         float ymin = box.min(1);	float ymax = box.max(1);
         float zmin = box.min(2);	float zmax = box.max(2);

@@ -520,7 +520,7 @@ namespace easy3d {
                 vec3(0.3376559615f, -0.06637400389f, 0.1319919974f)
             };
 
-            std::vector<int> bunny_indices =
+            std::vector<unsigned int> bunny_indices =
             {
                 126, 134, 133,
                 342, 138, 134,

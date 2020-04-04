@@ -37,7 +37,7 @@ namespace easy3d {
         // the vertices
         extern std::vector<vec3>    bunny_vertices;
         // the triangle faces (each consecutive 3 values denote the vertex indices of a triangle)
-        extern std::vector<int>     bunny_indices;
+        extern std::vector<unsigned int>     bunny_indices;
 
 
 		// resource directory (containing color maps, shaders, textures, etc.)
