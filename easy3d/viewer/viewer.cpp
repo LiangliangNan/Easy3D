@@ -1543,7 +1543,7 @@ namespace easy3d {
 
 		// To make the axis appear over other objects: reserve a tiny bit of the
 		// front depth range. NOTE: do remember to restore it later.
-		glDepthRangef(0, 0.001f);
+		glDepthRangef(0, 0.01f);
 
 		const mat4& proj = transform::ortho(-1, 1, -1, 1, -1, 1);
 		const mat4& view = camera_->orientation().inverse().matrix();

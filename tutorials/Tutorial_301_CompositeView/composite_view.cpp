@@ -129,7 +129,7 @@ void CompositeView::draw_grid() const {
 
     // To make the grid appear behind other objects: reserve a tiny bit of the
     // back depth range. NOTE: do remember to restore it later.
-    glDepthRangef(0.999f, 1.000f);
+    glDepthRangef(0.99f, 1.000f);
 
     program->bind();
     // the translation moves the grid to the view center
