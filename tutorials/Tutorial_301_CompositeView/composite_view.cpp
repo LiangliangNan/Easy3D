@@ -52,8 +52,8 @@ void CompositeView::draw() const {
     int viewport[4], scissor[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     glGetIntegerv(GL_SCISSOR_BOX, scissor);
-    int w = viewport[2];
-    int h = viewport[3];
+    const int w = viewport[2];
+    const int h = viewport[3];
 
     // ------------------------------------------------------------
 

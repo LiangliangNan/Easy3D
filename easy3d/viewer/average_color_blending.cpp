@@ -123,8 +123,8 @@ namespace easy3d {
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        int w = viewport[2];
-        int h = viewport[3];
+        const int w = viewport[2];
+        const int h = viewport[3];
         init(w, h);
 
         glDisable(GL_DEPTH_TEST);

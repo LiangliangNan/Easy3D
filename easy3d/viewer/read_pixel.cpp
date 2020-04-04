@@ -217,8 +217,8 @@ namespace easy3d {
 
 			int viewport[4];
 			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
+			const int w = viewport[2];
+			const int h = viewport[3];
 
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
@@ -277,8 +277,8 @@ namespace easy3d {
 
 			int viewport[4];
 			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
+			const int w = viewport[2];
+			const int h = viewport[3];
 
 			GLuint fbo = 0;
 			GLuint color_buffer = 0;
@@ -332,8 +332,8 @@ namespace easy3d {
 		{
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
+            const int w = viewport[2];
+            const int h = viewport[3];
 
             // I can acutally alway ask for RGBA format and use my ImageIO for saving.
             // But for ppm, bmp and tga formats, this causes extra internal
@@ -367,8 +367,8 @@ namespace easy3d {
 		{
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
+            const int w = viewport[2];
+            const int h = viewport[3];
 
             // I can acutally alway ask for RGBA format and use my ImageIO for saving.
             // But for ppm, bmp and tga formats, this causes extra internal
@@ -403,8 +403,8 @@ namespace easy3d {
 		{
 			int viewport[4];
 			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
+			const int w = viewport[2];
+			const int h = viewport[3];
 
 			// We need to configure how glReadPixels will behave with respect to memory alignment. 
 			// See http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/
@@ -445,8 +445,8 @@ namespace easy3d {
 
 			int viewport[4];
 			glGetIntegerv(GL_VIEWPORT, viewport);
-			int w = viewport[2];
-			int h = viewport[3];
+			const int w = viewport[2];
+			const int h = viewport[3];
 
 			GLuint fbo = 0;
 			GLuint depth_buffer = 0;
@@ -503,8 +503,8 @@ namespace easy3d {
 		{
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
+            const int w = viewport[2];
+            const int h = viewport[3];
 
             std::vector<float> depths;
             read_depth(depths, true);
@@ -527,8 +527,8 @@ namespace easy3d {
 		{
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
-            int w = viewport[2];
-            int h = viewport[3];
+            const int w = viewport[2];
+            const int h = viewport[3];
 
             std::vector<float> depths;
             read_depth_ms(depths, true);
