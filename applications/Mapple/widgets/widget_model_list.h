@@ -24,14 +24,6 @@ public:
 
     void deleteModel(easy3d::Model *obj, bool fit);
 
-    // multiple models
-    void addModels(const std::vector<easy3d::Model *> &objs);
-
-    void deleteModels(const std::vector<easy3d::Model *> &objs);
-
-    // delete all
-    void clear();
-
     void mergeModels(const std::vector<easy3d::Model *> &objs);
 
     void decomposeModel(easy3d::Model *obj);

@@ -578,95 +578,21 @@ void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
 
 
 void WidgetModelList::deleteModel(Model *model, bool fit) {
-//	ModelManager* manager = viewer()->modelManager();
-//	if (!manager)
-//		return;
-//
-//	manager->delete_model(model);
-//	Model* active_model = manager->current_model();
-//	if (selected_only_)
-//		hideOtherModels(active_model);
-//
-//	if (fit)
-//		viewer()->fitScreen();
-//	else
-//		viewer()->update();
-//	viewer()->configureManipulation();
-//
+    viewer()->deleteModel(model);
+    Model *active_model = viewer()->currentModel();
+    if (!active_model)  // no model exists
+        return;
 
-//	mainWindow_->onCurrentModelChanged();
-//	
-//	
-}
+    if (selected_only_)
+        hideOtherModels(active_model);
 
+    mainWindow_->onCurrentModelChanged();
+    //viewer()->configureManipulation();
 
-void WidgetModelList::addModels(const std::vector<Model *> &models) {
-//	if (models.empty())
-//		return;
-//
-//	ModelManager* manager = viewer()->modelManager();
-//	if (!manager)
-//		return;
-//
-//	for (std::size_t i = 0; i < models.size(); ++i) {
-//		Model* model = models[i];
-//		model->set_canvas(viewer());
-//		bool make_another_current = (i == (models.size() - 1));
-//		viewer()->modelManager()->add_model(model, make_another_current);
-//	}
-//
-//	Model* active_model = manager->current_model();
-//	if (selected_only_)
-//		hideOtherModels(active_model);
-//
-    viewer()->update();
-//
-
-//	mainWindow_->onCurrentModelChanged();
-//	
-//	
-}
-
-
-// delete all
-void WidgetModelList::clear() {
-//	ModelManager* manager = viewer()->modelManager();
-//	if (!manager)
-//		return;
-//
-//	manager->clear();
-//
-
-//	mainWindow_->onCurrentModelChanged();
-//	
-//	
-}
-
-
-void WidgetModelList::deleteModels(const std::vector<Model *> &models) {
-//	ModelManager* manager = viewer()->modelManager();
-//	if (!manager)
-//		return;
-//
-//	for (std::size_t i = 0; i < models.size(); ++i) { //
-//		Model* model = models[i];
-//		manager->delete_model(model);
-//	}
-//
-//	Model* current_model = manager->current_model();
-//	if (selected_only_)
-//		hideOtherModels(current_model);
-//
-//	if (auto_focus_)
-//		viewer()->fitScreen();
-//	else
-//		viewer()->update();
-//	viewer()->configureManipulation();
-//
-
-//	mainWindow_->onCurrentModelChanged();
-//	
-//	
+    if (fit)
+        viewer()->fitScreen();
+    else
+        viewer()->update();
 }
 
 
