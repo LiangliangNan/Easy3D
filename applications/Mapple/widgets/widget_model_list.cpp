@@ -431,14 +431,24 @@ void WidgetModelList::mergeSelected() {
 
 
 void WidgetModelList::deleteSelected() {
-//	std::vector<Model*>	models;
-//	const QList<QTreeWidgetItem*>& items = selectedItems();
-//	for (int i = 0; i < items.size(); ++i) {
-//		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-//		models.push_back(item->currentModel());
-//	}
-//
-//	deleteModels(models);
+	const QList<QTreeWidgetItem*>& items = selectedItems();
+	for (int i = 0; i < items.size(); ++i) {
+		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
+        viewer()->deleteModel(item->model());
+	}
+
+	Model* current_model = viewer()->currentModel();
+	if (selected_only_)
+		hideOtherModels(current_model);
+
+    //	viewer()->configureManipulation();
+
+    mainWindow_->onCurrentModelChanged();
+
+	if (auto_focus_)
+		viewer()->fitScreen();
+	else
+		viewer()->update();
 }
 
 
