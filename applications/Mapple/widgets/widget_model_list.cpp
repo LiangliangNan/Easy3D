@@ -13,6 +13,7 @@
 #include <QColorDialog>
 #include <QTreeWidgetItem>
 #include <QHeaderView>
+#include <QMouseEvent>
 
 
 using namespace easy3d;
@@ -96,7 +97,7 @@ WidgetModelList::WidgetModelList(QWidget *parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(this, SIGNAL(itemClicked(QTreeWidgetItem * , int)), this, SLOT(modelItemClicked(QTreeWidgetItem * , int)));
+    connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
@@ -496,7 +497,7 @@ void WidgetModelList::modelItemSelectionChanged() {
 }
 
 
-void WidgetModelList::modelItemClicked(QTreeWidgetItem *current, int column) {
+void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
     ModelItem *current_item = dynamic_cast<ModelItem *>(current);
     if (!current_item)
         return;
@@ -522,6 +523,18 @@ void WidgetModelList::modelItemClicked(QTreeWidgetItem *current, int column) {
         else
             viewer()->update();
     }
+}
+
+
+void WidgetModelList::mousePressEvent(QMouseEvent* e) {
+    if (e->button() == Qt::LeftButton)
+        QTreeWidget::mousePressEvent(e);
+}
+
+
+void WidgetModelList::mouseReleaseEvent(QMouseEvent* e) {
+    //if (e->button() == Qt::LeftButton)
+    QTreeWidget::mouseReleaseEvent(e);
 }
 
 

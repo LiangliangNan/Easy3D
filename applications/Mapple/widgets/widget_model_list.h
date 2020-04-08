@@ -49,11 +49,15 @@ private Q_SLOTS :
 
     void showAllModels();
 
-    void modelItemClicked(QTreeWidgetItem *current, int column);
+    void modelItemPressed(QTreeWidgetItem *current, int column);
     void currentModelItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void modelItemSelectionChanged();
 
     void showContextMenu(const QPoint &p);
+
+protected:
+    void mousePressEvent(QMouseEvent* e);
+    void mouseReleaseEvent(QMouseEvent* e);
 
 private:
     void hideOtherModels(easy3d::Model *model);
