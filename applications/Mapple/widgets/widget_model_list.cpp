@@ -419,14 +419,14 @@ void WidgetModelList::invertSelection() {
 
 
 void WidgetModelList::mergeSelected() {
-//	std::vector<Model*>	models;
-//	const QList<QTreeWidgetItem*>& items = selectedItems();
-//	for (int i = 0; i < items.size(); ++i) {
-//		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-//		models.push_back(item->currentModel());
-//	}
-//
-//	mergeModels(models);
+	std::vector<Model*>	models;
+	const QList<QTreeWidgetItem*>& items = selectedItems();
+	for (int i = 0; i < items.size(); ++i) {
+		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
+		models.push_back(item->model());
+	}
+
+	mergeModels(models);
 }
 
 
@@ -624,58 +624,65 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     std::vector<Model *> to_delete;
 
-//	if (meshes.size() > 1) {
-//		SurfaceMesh* to = meshes[0];
+	if (meshes.size() > 1) {
+		SurfaceMesh* to = meshes[0];
 //		ProgressLogger logger(meshes.size() - 1, "Merge meshes");
-//		for (int i = 1; i < meshes.size(); ++i) {
+		for (std::size_t i = 1; i < meshes.size(); ++i) {
 //			if (logger.is_canceled())
 //				break;
-//
-//			SurfaceMesh* from = meshes[i];
-//			Geom::merge(to, from);
-//
-//			to_delete.push_back(from);
+
+			const int offset = to->n_vertices();
+            SurfaceMesh* from = meshes[i];
+			auto points = from->get_vertex_property<vec3>("v:point");
+            for (auto v : from->vertices())
+                to->add_vertex(points[v]);
+
+			for (auto f : from->faces()) {
+			    std::vector<SurfaceMesh::Vertex> vertices;
+			    for (auto v : from->vertices(f))
+			        vertices.emplace_back(SurfaceMesh::Vertex(v.idx() + offset));
+			    to->add_face(vertices);
+			}
+
+			to_delete.push_back(from);
 //			logger.next();
-//		}
-//
-//		to->set_name("merged_mesh");
-//		to->notify_vertex_change();
-//		to->reset_manipulated_frame();
-//	}
-//
-//	if (clouds.size() > 1) {
-//		PointCloud* to = clouds[0];
+		}
+
+		to->set_name("merged_mesh");
+	}
+
+	if (clouds.size() > 1) {
+		PointCloud* to = clouds[0];
 //		ProgressLogger logger(clouds.size() - 1, "Merge point sets");
-//		for (int i = 1; i < clouds.size(); ++i) {
+		for (int i = 1; i < clouds.size(); ++i) {
 //			if (logger.is_canceled())
 //				break;
-//
-//			PointCloud* from = clouds[i];
-//			Geom::merge(to, from);
-//
-//			to_delete.push_back(from);
+
+			PointCloud* from = clouds[i];
+            auto points = from->get_vertex_property<vec3>("v:point");
+            for (auto v : from->vertices()) {
+                to->add_vertex(points[v]);
+            }
+
+			to_delete.push_back(from);
 //			logger.next();
-//		}
-//
-//		to->set_name("merged_point_set");
-//		to->notify_vertex_change();
-//		to->reset_manipulated_frame();
-//	}
-//
-//	for (unsigned int i = 0; i < to_delete.size(); ++i) {
-//		Model* model = to_delete[i];
-//		viewer()->modelManager()->delete_model(model);
-//	}
-//
-//	// update display and ui
-//	if (meshes.size() > 1 || clouds.size() > 1) {
+		}
+
+		to->set_name("merged_point_set");
+	}
+
+	for (unsigned int i = 0; i < to_delete.size(); ++i) {
+		Model* model = to_delete[i];
+		viewer()->deleteModel(model);
+	}
+
+	// update display and ui
+	if (meshes.size() > 1 || clouds.size() > 1) {
 //		viewer()->configureManipulation();
-//		viewer()->update();
-//		updateModelList();
-//		mainWindow_->onCurrentModelChanged();
-//		
-//		
-//	}
+		updateModelList();
+		mainWindow_->onCurrentModelChanged();
+        viewer()->update();
+	}
 }
 
 
