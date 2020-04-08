@@ -6,8 +6,8 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/manifold_builder.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/util/file_system.h>
 
 #include <QMenu>
 #include <QColorDialog>
@@ -62,14 +62,11 @@ public:
         }
     }
 
-    void setStatus(bool is_selected, bool is_active) {
+    void setStatus(bool is_active) {
         if (is_active)
             setColor(active_color_);
         else
             resetColor();
-
-        model_->set_selected(is_selected);
-        QTreeWidgetItem::setSelected(is_selected);
     }
 
 
@@ -81,9 +78,8 @@ private:
     }
 
     void resetColor() {    // for all columns
-        for (int i = 0; i < columnCount(); ++i) {
+        for (int i = 0; i < columnCount(); ++i)
             QTreeWidgetItem::setBackground(i, QBrush());
-        }
     }
 
 private:
@@ -97,8 +93,14 @@ WidgetModelList::WidgetModelList(QWidget *parent)
 {
     setContextMenuPolicy(Qt::CustomContextMenu);
 
+    connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
     connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    if (selected_only_)
+        setSelectionMode(QAbstractItemView::SingleSelection);
+    else
+        setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
 
@@ -226,6 +228,10 @@ void WidgetModelList::showContextMenu(const QPoint &pos) {
 
 
 void WidgetModelList::updateModelList() {
+    disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+    disconnect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
+    disconnect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
     Model *active_model = viewer()->currentModel();
 
     const std::vector<Model *> &models = viewer()->models();
@@ -244,7 +250,7 @@ void WidgetModelList::updateModelList() {
         item->setVisibilityIcon(2, model->is_visible());
 
         item->setData(3, Qt::DisplayRole, QString::fromStdString(name));
-		item->setStatus(model->is_selected(), model == active_model);
+		item->setStatus(model == active_model);
 
         if (model == active_model)
             setCurrentItem(item);
@@ -272,6 +278,10 @@ void WidgetModelList::updateModelList() {
         }
     } else
         mainWindow_->setCurrentFile(QString());
+
+    connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+    connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
 
@@ -435,7 +445,8 @@ void WidgetModelList::deleteSelected() {
 	const QList<QTreeWidgetItem*>& items = selectedItems();
 	for (int i = 0; i < items.size(); ++i) {
 		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-        viewer()->deleteModel(item->model());
+		if (item)
+            viewer()->deleteModel(item->model());
 	}
 
 	Model* current_model = viewer()->currentModel();
@@ -462,24 +473,22 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	if (!current_item)
 		return;
 
-    current_item->setStatus(current_item->model()->is_selected(), true);
-    if (previous)
-        previous_item->setStatus(previous_item->model()->is_selected(), false);
+    current_item->setStatus(true);
+    if (previous_item)
+        previous_item->setStatus(false);
 
 	Model* model = current_item->model();
 	viewer()->setCurrentModel(model);
 
-	if (selected_only_) {
+	if (selected_only_)
 		hideOtherModels(model);
-		updateModelList();
-	}
-
-	if (auto_focus_)
-		viewer()->fitScreen(model);
-	else
-		viewer()->update();
 
     mainWindow_->onCurrentModelChanged();
+
+    if (auto_focus_)
+        viewer()->fitScreen(model);
+    else
+        viewer()->update();
 }
 
 
@@ -489,11 +498,13 @@ void WidgetModelList::modelItemSelectionChanged() {
     int num = topLevelItemCount();
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-        item->setStatus(item->isSelected(), item->model() == active_model);
+        item->setStatus(item->model() == active_model);
+        item->model()->set_selected(item->isSelected());
     }
 
 //	viewer()->configureManipulation();
     viewer()->update();
+    update();
 }
 
 
@@ -513,7 +524,8 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         int num = topLevelItemCount();
         for (int i = 0; i < num; ++i) {
             ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-            item->setStatus(item->isSelected(), item == current_item);
+            item->setStatus(item == current_item);
+            item->setSelected(item->model()->is_selected());
         }
         viewer()->setCurrentModel(current_item->model());
         mainWindow_->onCurrentModelChanged();
@@ -527,8 +539,12 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
 
 
 void WidgetModelList::mousePressEvent(QMouseEvent* e) {
-    if (e->button() == Qt::LeftButton)
+    if (e->button() == Qt::LeftButton) {
         QTreeWidget::mousePressEvent(e);
+
+        if (!selected_only_ && itemAt(e->pos()))
+            itemAt(e->pos())->setSelected(true);
+    }
 }
 
 
@@ -551,13 +567,11 @@ void WidgetModelList::setSelectedOnly(bool b) {
 	selected_only_ = b;
 	if (selected_only_) {
         setSelectionMode(QAbstractItemView::SingleSelection);
-        connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
         connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
                 SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
     }
 	else {
         setSelectionMode(QAbstractItemView::ExtendedSelection);
-        disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
         disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
                 SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
     }
