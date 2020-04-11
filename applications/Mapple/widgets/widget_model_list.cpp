@@ -24,8 +24,6 @@ public:
     ModelItem(QTreeWidget *parent) : QTreeWidgetItem(parent) {
         for (int i = 0; i < parent->columnCount(); ++i)
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
-
-        active_color_ = QColor(255, 177, 255);
     }
 
     ~ModelItem() {}
@@ -63,28 +61,16 @@ public:
     }
 
     void setStatus(bool is_active) {
-        if (is_active)
-            setColor(active_color_);
-        else
-            resetColor();
-    }
-
-
-private:
-    void setColor(const QColor &c) {    // for all columns
         for (int i = 0; i < columnCount(); ++i) {
-            QTreeWidgetItem::setBackground(i, c);
+            if (is_active)
+                QTreeWidgetItem::setBackground(i, QColor(255, 177, 255));
+            else
+                QTreeWidgetItem::setBackground(i, QBrush());
         }
-    }
-
-    void resetColor() {    // for all columns
-        for (int i = 0; i < columnCount(); ++i)
-            QTreeWidgetItem::setBackground(i, QBrush());
     }
 
 private:
     Model *model_;
-    QColor active_color_;
 };
 
 
