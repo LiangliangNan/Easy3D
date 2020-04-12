@@ -586,8 +586,6 @@ void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
     if (!model)
         return;
 
-    viewer()->addModel(model, true);
-
     if (make_current) {
         mainWindow_->enableCameraManipulation();
         viewer()->setCurrentModel(model);
@@ -731,8 +729,11 @@ void WidgetModelList::decomposeModel(Model *model) {
 		viewer()->addModel(new_mesh, true);
 	}
 
-	// delete the original model
-	deleteModel(mesh, false);
+    // delete the original model
+    viewer()->deleteModel(mesh);
+    updateModelList();
+    mainWindow_->currentModelChanged();
+    viewer()->update();
 
 	LOG(INFO) << "model decomposed into " << components.size() << " parts" << std::endl;
 }

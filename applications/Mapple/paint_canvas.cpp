@@ -784,7 +784,7 @@ void PaintCanvas::addModel(Model *model, bool create_default_drawables /* = true
     }
     for (auto m : models_) {
         if (model == m) {
-            LOG(WARNING) << "model has alreay been added to the viewer.";
+            LOG(WARNING) << "model '" << file_system::simple_name(model->name()) << "' has already been added to the viewer.";
             return;
         }
     }
