@@ -48,14 +48,16 @@ if (NOT GUROBI_FOUND)
     # Hardcoded search paths
     set(SEARCH_PATHS_FOR_HEADERS
             "$ENV{GUROBI_HOME}/include"
-            "/Library/gurobi810/mac64/include"
-            "C:\\dev\\gurobi810\\win64\\include"
+            "/Library/gurobi901/mac64/include"
+            "/home/liangliang/dev/gurobi901/include"
+            "C:\\dev\\gurobi901\\win64\\include"
             )
 
     set(SEARCH_PATHS_FOR_LIBRARIES
             "$ENV{GUROBI_HOME}/lib"
-            "/Library/gurobi810/mac64/lib"
-            "C:\\dev\\gurobi810\\win64\\lib"
+            "/Library/gurobi901/mac64/lib"
+            "/home/liangliang/dev/gurobi901/lib"
+            "C:\\dev\\gurobi901\\win64\\lib"
             )
 
     find_path(GUROBI_INCLUDE_DIR gurobi_c++.h
@@ -64,7 +66,7 @@ if (NOT GUROBI_FOUND)
 
 
     find_library(GUROBI_C_LIBRARY
-            NAMES gurobi81
+            NAMES gurobi90
             PATHS ${SEARCH_PATHS_FOR_LIBRARIES}
             )
 
@@ -81,16 +83,14 @@ if (NOT GUROBI_FOUND)
     # setup header file directories
     set(GUROBI_INCLUDE_DIRS ${GUROBI_INCLUDE_DIR})
 
+    # setup libraries files
+    set(GUROBI_LIBRARIES
+            debug ${GUROBI_CXX_LIBRARY_DEBUG}
+            optimized ${GUROBI_CXX_LIBRARY_RELEASE}
+            ${GUROBI_C_LIBRARY}
+            )
+
 endif ()
-
-
-# setup libraries files
-set(GUROBI_LIBRARIES
-        debug ${GUROBI_CXX_LIBRARY_DEBUG}
-        optimized ${GUROBI_CXX_LIBRARY_RELEASE}
-        ${GUROBI_C_LIBRARY}
-        )
-
 
 # Check that Gurobi was successfully found
 include(FindPackageHandleStandardArgs)
