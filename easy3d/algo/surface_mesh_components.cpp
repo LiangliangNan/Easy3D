@@ -173,8 +173,8 @@ namespace easy3d {
         SurfaceMeshEnumerator::enumerate_connected_components(mesh, component_id);
 
         SurfaceMeshComponent result(mesh);
-        auto v = mesh->vertices(face).begin();
-        int comp_id = component_id[*v];
+        auto vertex = mesh->vertices(face).begin();
+        int comp_id = component_id[*vertex];
 
         for (auto v : mesh->vertices()) {
             if (component_id[v] == comp_id)
@@ -201,5 +201,40 @@ namespace easy3d {
 
         return result;
     }
+
+
+    SurfaceMeshComponent SurfaceMeshComponent::extract(SurfaceMesh *mesh, SurfaceMesh::Vertex vertex) {
+        auto component_id = mesh->add_vertex_property<int>("SurfaceMeshComponentExtractor::extract::component_id");
+        SurfaceMeshEnumerator::enumerate_connected_components(mesh, component_id);
+
+        SurfaceMeshComponent result(mesh);
+        int comp_id = component_id[vertex];
+
+        for (auto v : mesh->vertices()) {
+            if (component_id[v] == comp_id)
+                result.vertices_.push_back(v);
+        }
+
+        for (auto f : mesh->faces()) {
+            auto v = mesh->vertices(f).begin();
+            if (component_id[*v] == comp_id)
+                result.faces_.push_back(f);
+        }
+
+        for (auto e : mesh->edges()) {
+            auto v = mesh->vertex(e, 0);
+            if (component_id[v] == comp_id)
+                result.edges_.push_back(e);
+        }
+
+        for (auto h : mesh->halfedges()) {
+            auto v = mesh->to_vertex(h);
+            if (component_id[v] == comp_id)
+                result.halfedges_.push_back(h);
+        }
+
+        return result;
+    }
+
 
 }

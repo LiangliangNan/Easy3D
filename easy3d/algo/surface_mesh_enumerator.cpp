@@ -26,7 +26,6 @@
 #include <easy3d/algo/surface_mesh_enumerator.h>
 
 #include <stack>
-#include <cassert>
 
 
 namespace easy3d {
