@@ -1,6 +1,7 @@
 #include <easy3d/viewer/opengl.h>
 
 #include "paint_canvas.h"
+#include "main_window.h"
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
@@ -41,7 +42,7 @@
 using namespace easy3d;
 
 
-PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
+PaintCanvas::PaintCanvas(QWidget *parent)
         : QOpenGLWidget(parent)
         , func_(nullptr)
         , gpu_timer_(nullptr)
@@ -64,6 +65,8 @@ PaintCanvas::PaintCanvas(QWidget *parent /* = nullptr*/)
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::WheelFocus);
     setMouseTracking(true);
+
+    main_window_ = dynamic_cast<MainWindow*>(parent);
 
     camera_ = new Camera;
     camera_->setType(Camera::PERSPECTIVE);
@@ -488,7 +491,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_line_width(size);
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
@@ -496,7 +498,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->lines_drawables()) {
                 float size = d->line_width() + 1.0f;
                 d->set_line_width(size);
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
@@ -506,7 +507,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_point_size(size);
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
@@ -514,7 +514,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
                 d->set_point_size(size);
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
@@ -524,7 +523,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
         if (model_idx_ != pre_idx) {
-            emit currentModelChanged();
+
             if (model_idx_ >= 0)
                 LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
@@ -535,7 +534,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ + 1) % models_.size());
         if (model_idx_ != pre_idx) {
-            emit currentModelChanged();
+            main_window_->currentModelChanged();
             if (model_idx_ >= 0)
 				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
@@ -551,11 +550,9 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     makeCurrent();
                     renderer::update_buffer(currentModel(), drawable);
                     doneCurrent();
-                    currentModelChanged();
                 }
             } else {
                 drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
@@ -567,10 +564,8 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 renderer::update_buffer(currentModel(), drawable);
                 doneCurrent();
                 drawable->set_impostor_type(PointsDrawable::SPHERE);
-                currentModelChanged();
             } else {
                 drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
             }
         }
     }
@@ -596,12 +591,10 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
                     drawable->set_line_width(setting::surface_mesh_borders_line_width);
-                    currentModelChanged();
                 }
             }
             else {
                 drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
             }
         }
     }
@@ -627,13 +620,11 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                         drawable->set_per_vertex_color(false);
                         drawable->set_impostor_type(PointsDrawable::SPHERE);
                         drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
-                        currentModelChanged();
                     }
                 }
             }
             else {
                 drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
             }
         }
     }
@@ -642,7 +633,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             auto drawable = currentModel()->triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
-                currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
@@ -807,15 +797,8 @@ void PaintCanvas::addModel(Model *model, bool create_default_drawables /* = true
     if (create_default_drawables)
         create_drawables(model);
 
-    int pre_idx = model_idx_;
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-
-    if (model_idx_ != pre_idx) {
-        emit currentModelChanged();
-        if (model_idx_ >= 0)
-            LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-    }
 }
 
 
@@ -825,7 +808,6 @@ void PaintCanvas::deleteModel(Model *model) {
         return;
     }
 
-    int pre_idx = model_idx_;
     auto pos = std::find(models_.begin(), models_.end(), model);
     if (pos != models_.end()) {
         const std::string name = model->name();
@@ -836,12 +818,6 @@ void PaintCanvas::deleteModel(Model *model) {
         std::cout << "model deleted: " << name << std::endl;
     } else
         LOG(WARNING) << "no such model: " << model->name();
-
-    if (model_idx_ != pre_idx) {
-        emit currentModelChanged();
-        if (model_idx_ >= 0)
-			LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-    }
 }
 
 

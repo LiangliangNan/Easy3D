@@ -24,6 +24,9 @@
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/algo/point_cloud_normals.h>
+#include <easy3d/algo/surface_mesh_components.h>
+#include <easy3d/algo/surface_mesh_topology.h>
+#include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -62,7 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidgetModels->init(this);
 
     viewer_ = new PaintCanvas(this);
-    connect(viewer_, SIGNAL(currentModelChanged()), this, SLOT(onCurrentModelChanged()));
     setCentralWidget(viewer_);
 
 #ifndef _WIN32
@@ -297,7 +299,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 }
 
 
-void MainWindow::onCurrentModelChanged() {
+void MainWindow::currentModelChanged() {
     const Model* model = viewer_->currentModel();
     if (model) {
         const std::string& name = model->name();
@@ -686,15 +688,53 @@ void MainWindow::createActionsForConversionMenu() {
 
 
 void MainWindow::reportTopologyStatistics() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
     if (!mesh)
         return;
 
-    std::cout << "#face:   " << mesh->n_faces() << std::endl;
-    std::cout << "#vertex: " << mesh->n_vertices() << std::endl;
-    std::cout << "#edge:   " << mesh->n_edges() << std::endl;
-    std::cout << "#connected component:   " << "not implemented yet" << std::endl;
-    std::cout << "..." << std::endl;
+    const std::string simple_name = file_system::simple_name(mesh->name());
+    if (simple_name.empty())
+        std::cout << "number of elements in model (with unknown name)" << std::endl;
+    else
+        std::cout << "number of elements in model '" << file_system::simple_name(mesh->name()) << "'" << std::endl;
+
+    std::cout << "\t#face = " << mesh->n_faces()
+              << ", #vertex = " << mesh->n_vertices()
+              << ", #edge = " << mesh->n_edges() << std::endl;
+
+    const auto &components = SurfaceMeshComponent::extract(mesh);
+    std::cout << "#connected component: " << components.size() << std::endl;
+
+    const std::size_t num = 10;
+    if (components.size() > num)
+        std::cout << "topology of the first " << num << " components:" << std::endl;
+
+    for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
+        const SurfaceMeshComponent& comp = components[i];
+        SurfaceMeshTopology topo(&comp);
+        std::string type = "unknown";
+        if (topo.is_sphere())
+            type = "sphere";
+        else if (topo.is_disc())
+            type = "disc";
+        else if (topo.is_cylinder())
+            type = "cylinder";
+        else if (topo.is_torus())
+            type = "torus";
+        else if (topo.is_closed())
+            type = "unknown closed";
+
+        std::cout << "\t" << i << ": "
+                  << type
+                  << ", #face = " << comp.n_faces() << ", #vertex = " << comp.n_vertices() << ", #edge = " << comp.n_edges()
+                  << ", #border = " << topo.number_of_borders();
+        if (topo.number_of_borders() == 1)
+            std::cout << ", border size = " << topo.largest_border_size();
+        else if (topo.number_of_borders() > 1)
+            std::cout << ", largest border size = " << topo.largest_border_size();
+
+        std::cout << std::endl;
+    }
 }
 
 
@@ -789,6 +829,7 @@ void MainWindow::remeshSelfIntersections() {
         viewer()->addModel(result);
         viewer()->doneCurrent();
 		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". Time: " << w.time_string();
+		currentModelChanged();
     }
     else
 		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
@@ -992,5 +1033,4 @@ void MainWindow::computeHeightField() {
             enormals[e] = vec3(1,1,1);
         }
     }
-    onCurrentModelChanged();
 }

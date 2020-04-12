@@ -6,6 +6,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/manifold_builder.h>
+#include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 
@@ -441,7 +442,7 @@ void WidgetModelList::deleteSelected() {
 
     //	viewer()->configureManipulation();
 
-    mainWindow_->onCurrentModelChanged();
+    mainWindow_->currentModelChanged();
 
 	if (auto_focus_)
 		viewer()->fitScreen();
@@ -469,7 +470,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	if (selected_only_)
 		hideOtherModels(model);
 
-    mainWindow_->onCurrentModelChanged();
+    mainWindow_->currentModelChanged();
 
     if (auto_focus_)
         viewer()->fitScreen(model);
@@ -514,7 +515,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             item->setSelected(item->model()->is_selected());
         }
         viewer()->setCurrentModel(current_item->model());
-        mainWindow_->onCurrentModelChanged();
+        mainWindow_->currentModelChanged();
 
         if (auto_focus_)
             viewer()->fitScreen(current_item->model());
@@ -582,21 +583,26 @@ void WidgetModelList::setSelectedOnly(bool b) {
 
 
 void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
-    const auto &models = viewer()->models();
-    if (!model || models.empty())
+    if (!model)
         return;
+
+    viewer()->addModel(model, true);
+
+    if (make_current) {
+        mainWindow_->enableCameraManipulation();
+        viewer()->setCurrentModel(model);
+    }
 
     Model *current_model = viewer()->currentModel();
     if (selected_only_)
         hideOtherModels(current_model);
 
+    mainWindow_->currentModelChanged();
+
     if (fit)
         viewer()->fitScreen(current_model);
     else
         viewer()->update();
-
-    if (make_current)
-        mainWindow_->enableCameraManipulation();
 }
 
 
@@ -609,7 +615,7 @@ void WidgetModelList::deleteModel(Model *model, bool fit) {
     if (selected_only_)
         hideOtherModels(active_model);
 
-    mainWindow_->onCurrentModelChanged();
+    mainWindow_->currentModelChanged();
     //viewer()->configureManipulation();
 
     if (fit)
@@ -693,7 +699,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 	if (meshes.size() > 1 || clouds.size() > 1) {
 //		viewer()->configureManipulation();
 		updateModelList();
-		mainWindow_->onCurrentModelChanged();
+		mainWindow_->currentModelChanged();
         viewer()->update();
 	}
 }
@@ -703,54 +709,30 @@ void WidgetModelList::decomposeModel(Model *model) {
     SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
     if (!mesh)
         return;
-//
-//	MeshComponentsExtractor extractor;
-//	const MeshComponentList& components = extractor.extract_components(mesh);
-//	if (components.size() == 1) {
-//		Logger::warn(title()) << "model has only one component" << std::endl;
-//		return;
-//	}
-//
-//	bool copy_attributes = true;
-//	std::string base_name = file_system::dir_name(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
-//
-//	MeshVertexAttribute<int>	vertex_id(mesh);
-//	MeshTexVertexAttribute<int>	tex_vertex_id(mesh);
-//	MeshCopier copier;
-//	copier.set_copy_all_attributes(copy_attributes);
-//
+
+
+	const auto& components = SurfaceMeshComponent::extract(mesh);
+	if (components.size() == 1) {
+		LOG(WARNING) << "model has only one component";
+		return;
+	}
+
+	const std::string base_name = file_system::parent_directory(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
+
 //	ProgressLogger logger(components.size(), "dispatch components");
-//	for (unsigned int i = 0; i < components.size(); i++) {
+	for (unsigned int i = 0; i < components.size(); i++) {
 //		logger.notify(i);
 //		if (logger.is_canceled()) {
 //			break;
 //		}
-//
-//		std::string name = base_name + std::to_string(i + 1);
-//
-//		SurfaceMesh* new_mesh = new SurfaceMesh;
-//		mpl_debug_assert(new_mesh != nullptr);
-//		new_mesh->set_name(name);
-//
-//		MeshBuilder builder(new_mesh);
-//		int cur_vertex_id = 0;
-//		int cur_tex_vertex_id = 0;
-//		builder.begin_surface();
-//		copier.copy(builder, components[i], vertex_id, tex_vertex_id, cur_vertex_id, cur_tex_vertex_id);
-//		builder.end_surface();
-//		// 		new_mesh->compute_facet_normals();
-//		// 		new_mesh->compute_vertex_normals();
-//
-//		new_mesh->set_canvas(viewer());
-//		bool activate = (i == components.size() - 1); // make the last current
-//		viewer()->modelManager()->add_model(new_mesh, activate);
-//	}
-//
-//	vertex_id.unbind();
-//	tex_vertex_id.unbind();
-//
-//	// delete the original model
-//	deleteModel(mesh, false);
-//
-//	Logger::out(title()) << "decomposed into " << components.size() << " parts" << std::endl;
+
+		SurfaceMesh* new_mesh = components[i].to_mesh();
+		new_mesh->set_name(base_name + std::to_string(i + 1));
+		viewer()->addModel(new_mesh, true);
+	}
+
+	// delete the original model
+	deleteModel(mesh, false);
+
+	LOG(INFO) << "model decomposed into " << components.size() << " parts" << std::endl;
 }

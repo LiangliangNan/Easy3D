@@ -189,19 +189,19 @@ namespace easy3d {
     //	// faces from smaller connected components will be deleted first. This way I try to keep the
     //	// connected components' original orientation.
 
-    //	MeshComponentsExtractor extractor;
-    //	const MeshComponentList& components = extractor.extract_components(m);
-    //	MeshFacetAttribute<const MeshComponent*> face_comp(m);
+    //	SurfaceMeshComponentExtractor extractor;
+    //	const SurfaceMeshComponentList& components = extractor.extract(m);
+    //	MeshFacetAttribute<const SurfaceMeshComponent*> face_comp(m);
     //	for (std::size_t i = 0; i < components.size(); ++i) {
-    //		const MeshComponent* comp = components[i];
-    //		FOR_EACH_FACET_CONST(MeshComponent, comp, it)
+    //		const SurfaceMeshComponent* comp = components[i];
+    //		FOR_EACH_FACET_CONST(SurfaceMeshComponent, comp, it)
     //			face_comp[it] = comp;
     //	}
 
     //	struct FaceAndComponent {
-    //		FaceAndComponent(const Mesh::Facet* f, const MeshComponent* c) : face(f), comp(c) {}
+    //		FaceAndComponent(const Mesh::Facet* f, const SurfaceMeshComponent* c) : face(f), comp(c) {}
     //		const Mesh::Facet*   face;
-    //		const MeshComponent* comp;
+    //		const SurfaceMeshComponent* comp;
     //	};
 
     //	struct CompareGreater {

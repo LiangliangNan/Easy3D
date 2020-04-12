@@ -37,11 +37,11 @@ public:
     PaintCanvas* viewer() { return viewer_; }
 
     void setCurrentFile(const QString &fileName);
+    void currentModelChanged();
 
     void setShowSelectedOnly(bool b);
 
 public slots:
-    void onCurrentModelChanged();
     void enableCameraManipulation();
 
 private slots:

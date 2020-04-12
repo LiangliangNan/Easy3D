@@ -21,12 +21,13 @@ namespace easy3d {
 
 class QWidget;
 class QOpenGLFunctions;
+class MainWindow;
 
 class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
 {
        Q_OBJECT
 public:
-    explicit PaintCanvas(QWidget* parent = nullptr);
+    explicit PaintCanvas(QWidget* parent);
     virtual ~PaintCanvas() override;
 
     virtual std::string usage() const;
@@ -187,10 +188,9 @@ protected:
 
     void drawCornerAxes();
 
-signals:
-    void currentModelChanged();
-
 protected:
+    MainWindow* main_window_;
+
 	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member 
 	// variable). Having it as a member can eliminate including the header file.
 	QOpenGLFunctions* func_;

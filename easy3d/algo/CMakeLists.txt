@@ -10,7 +10,10 @@ set(${PROJECT_NAME}_HEADERS
         point_cloud_poisson_reconstruction.h
         point_cloud_ransac.h
         point_cloud_simplification.h
+        surface_mesh_components.h
+        surface_mesh_enumerator.h
         surface_mesh_sampler.h
+        surface_mesh_topology.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -19,7 +22,10 @@ set(${PROJECT_NAME}_SOURCES
         point_cloud_poisson_reconstruction.cpp
         point_cloud_ransac.cpp
         point_cloud_simplification.cpp
+        surface_mesh_components.cpp
+        surface_mesh_enumerator.cpp
         surface_mesh_sampler.cpp
+        surface_mesh_topology.cpp
         )
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
