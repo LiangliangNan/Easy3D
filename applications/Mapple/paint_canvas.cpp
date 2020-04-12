@@ -259,8 +259,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             doneCurrent();
         }
 
-#if 1
-
+#if 1 // delete selected faces/points
         if (dynamic_cast<SurfaceMesh*>(currentModel())) {
             auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
             auto select = mesh->face_property<bool>("f:select");
