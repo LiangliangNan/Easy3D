@@ -115,6 +115,7 @@
      <string>Property</string>
     </property>
     <addaction name="actionComputeHeightField"/>
+    <addaction name="actionComputeConnectedComponents"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -742,6 +743,11 @@
   <action name="actionNormalizePointCloudNormals">
    <property name="text">
     <string>Normalize Point Cloud Normals</string>
+   </property>
+  </action>
+  <action name="actionComputeConnectedComponents">
+   <property name="text">
+    <string>Compute Connected Components</string>
    </property>
   </action>
  </widget>

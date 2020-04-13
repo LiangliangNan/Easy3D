@@ -62,6 +62,7 @@ private slots:
 
     // property
     void computeHeightField();
+    void computeConnectedComponents();
 
     // topology
     void reportTopologyStatistics();

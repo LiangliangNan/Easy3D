@@ -14,6 +14,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/random.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/renderer.h>
@@ -635,6 +636,7 @@ void MainWindow::createActionsForEditMenu() {
 
 void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
+    connect(ui->actionComputeConnectedComponents, SIGNAL(triggered()), this, SLOT(computeConnectedComponents()));
 }
 
 
@@ -1005,7 +1007,7 @@ void MainWindow::computeHeightField() {
         }
     }
 
-    if (dynamic_cast<PointCloud*>(model)) {
+    else if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 
         auto vscalar = cloud->vertex_property<float>("v:height");
@@ -1013,7 +1015,7 @@ void MainWindow::computeHeightField() {
             vscalar[v] = cloud->position(v).z;
     }
 
-    if (dynamic_cast<Graph*>(model)) {
+    else if (dynamic_cast<Graph*>(model)) {
         Graph* graph = dynamic_cast<Graph*>(model);
 
         auto vscalar = graph->vertex_property<float>("v:height");
@@ -1033,4 +1035,31 @@ void MainWindow::computeHeightField() {
             enormals[e] = vec3(1,1,1);
         }
     }
+}
+
+
+void MainWindow::computeConnectedComponents() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    const auto& components = SurfaceMeshComponent::extract(mesh);
+    std::cout << "model has " << components.size() << " connected components" << std::endl;
+
+    auto face_color = mesh->get_face_property<vec3>("f:connected_components");
+    if (!face_color)
+        face_color = mesh->add_face_property<vec3>("f:connected_components", vec3(0.5f, 0.5f, 0.5f));
+
+    for (auto& comp : components) {
+        const vec3& color = random_color(false);
+        for (auto f : comp.faces())
+            face_color[f] = color;
+    }
+
+    viewer_->makeCurrent();
+    auto drawable = mesh->triangles_drawable("faces");
+    renderer::update_buffer(mesh, drawable, face_color);
+    viewer_->doneCurrent();
+
+    viewer_->update();
 }
