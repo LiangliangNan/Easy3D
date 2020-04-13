@@ -371,11 +371,11 @@ void PaintCanvas::wheelEvent(QWheelEvent *e) {
     if (tool_manager()->current_tool()) {
     }
     else {
-        if (e->delta() == 0)
-            e->ignore();
-        int dy = e->delta() > 0 ? 1 : -1;
-
-        camera_->frame()->action_zoom(dy, camera_);
+        const int delta = e->delta();
+        if (delta <= -1 || delta >= 1) {
+            int dy = e->delta() > 0 ? 1 : -1;
+            camera_->frame()->action_zoom(dy, camera_);
+        }
     }
 
     QOpenGLWidget::wheelEvent(e);

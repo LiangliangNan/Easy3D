@@ -623,7 +623,7 @@ namespace easy3d {
 				camera_->frame()->action_translate(x, y, dx, dy, camera_, modifiers == EASY3D_MOD_CONTROL);
 				break;
 			case GLFW_MOUSE_BUTTON_MIDDLE:
-				if (dy != 0)
+				if (std::abs(dy) >= 1)
 					camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
 				break;
 			}
