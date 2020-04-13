@@ -63,6 +63,13 @@ THE SOFTWARE.
 
 namespace tinyobj {
 
+// TODO(syoyo): Better C++11 detection for older compiler
+#if __cplusplus > 199711L
+#define TINYOBJ_OVERRIDE override
+#else
+#define TINYOBJ_OVERRIDE
+#endif
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #if __has_warning("-Wzero-as-null-pointer-constant")
@@ -147,7 +154,7 @@ typedef enum {
   TEXTURE_TYPE_CUBE_RIGHT
 } texture_type_t;
 
-typedef struct {
+struct texture_option_t {
   texture_type_t type;      // -type (default TEXTURE_TYPE_NONE)
   real_t sharpness;         // -boost (default 1.0?)
   real_t brightness;        // base_value in -mm option (default 0)
@@ -155,7 +162,7 @@ typedef struct {
   real_t origin_offset[3];  // -o u [v [w]] (default 0 0 0)
   real_t scale[3];          // -s u [v [w]] (default 1 1 1)
   real_t turbulence[3];     // -t u [v [w]] (default 0 0 0)
-  // int   texture_resolution; // -texres resolution (default = ?) TODO
+  int   texture_resolution; // -texres resolution (No default value in the spec. We'll use -1)
   bool clamp;    // -clamp (default false)
   char imfchan;  // -imfchan (the default for bump is 'l' and for decal is 'm')
   bool blendu;   // -blendu (default on)
@@ -165,9 +172,9 @@ typedef struct {
   // extension
   std::string colorspace;  // Explicitly specify color space of stored texel
                            // value. Usually `sRGB` or `linear` (default empty).
-} texture_option_t;
+};
 
-typedef struct _material_t {
+struct material_t {
   std::string name;
 
   real_t ambient[3];
@@ -310,25 +317,25 @@ typedef struct _material_t {
 
 #endif
 
-} material_t;
+};
 
-typedef struct {
+struct tag_t {
   std::string name;
 
   std::vector<int> intValues;
   std::vector<real_t> floatValues;
   std::vector<std::string> stringValues;
-} tag_t;
+};
 
 // Index struct to support different indices for vtx/normal/texcoord.
 // -1 means not used.
-typedef struct {
+struct index_t {
   int vertex_index;
   int normal_index;
   int texcoord_index;
-} index_t;
+};
 
-typedef struct {
+struct mesh_t {
   std::vector<index_t> indices;
   std::vector<unsigned char>
       num_face_vertices;          // The number of vertices per
@@ -339,28 +346,28 @@ typedef struct {
                                                   // ID(0 = off. positive value
                                                   // = group id)
   std::vector<tag_t> tags;                        // SubD tag
-} mesh_t;
+};
 
-// typedef struct {
+// struct path_t {
 //  std::vector<int> indices;  // pairs of indices for lines
-//} path_t;
+//};
 
-typedef struct {
+struct lines_t {
   // Linear flattened indices.
   std::vector<index_t> indices;        // indices for vertices(poly lines)
   std::vector<int> num_line_vertices;  // The number of vertices per line.
-} lines_t;
+};
 
-typedef struct {
+struct points_t {
   std::vector<index_t> indices;  // indices for points
-} points_t;
+};
 
-typedef struct {
+struct shape_t {
   std::string name;
   mesh_t mesh;
   lines_t lines;
   points_t points;
-} shape_t;
+};
 
 // Vertex attributes
 struct attrib_t {
@@ -386,7 +393,7 @@ struct attrib_t {
   const std::vector<real_t> &GetVertexWeights() const { return vertex_weights; }
 };
 
-typedef struct callback_t_ {
+struct callback_t {
   // W is optional and set to 1 if there is no `w` item in `v` line
   void (*vertex_cb)(void *user_data, real_t x, real_t y, real_t z, real_t w);
   void (*normal_cb)(void *user_data, real_t x, real_t y, real_t z);
@@ -410,7 +417,7 @@ typedef struct callback_t_ {
   void (*group_cb)(void *user_data, const char **names, int num_names);
   void (*object_cb)(void *user_data, const char *name);
 
-  callback_t_()
+  callback_t()
       : vertex_cb(NULL),
         normal_cb(NULL),
         texcoord_cb(NULL),
@@ -419,7 +426,7 @@ typedef struct callback_t_ {
         mtllib_cb(NULL),
         group_cb(NULL),
         object_cb(NULL) {}
-} callback_t;
+};
 
 class MaterialReader {
  public:
@@ -440,11 +447,11 @@ class MaterialFileReader : public MaterialReader {
   // Path could contain separator(';' in Windows, ':' in Posix)
   explicit MaterialFileReader(const std::string &mtl_basedir)
       : m_mtlBaseDir(mtl_basedir) {}
-  virtual ~MaterialFileReader() {}
+  virtual ~MaterialFileReader() TINYOBJ_OVERRIDE {}
   virtual bool operator()(const std::string &matId,
                           std::vector<material_t> *materials,
                           std::map<std::string, int> *matMap, std::string *warn,
-                          std::string *err);
+                          std::string *err) TINYOBJ_OVERRIDE;
 
  private:
   std::string m_mtlBaseDir;
@@ -457,11 +464,11 @@ class MaterialStreamReader : public MaterialReader {
  public:
   explicit MaterialStreamReader(std::istream &inStream)
       : m_inStream(inStream) {}
-  virtual ~MaterialStreamReader() {}
+  virtual ~MaterialStreamReader() TINYOBJ_OVERRIDE {}
   virtual bool operator()(const std::string &matId,
                           std::vector<material_t> *materials,
                           std::map<std::string, int> *matMap, std::string *warn,
-                          std::string *err);
+                          std::string *err) TINYOBJ_OVERRIDE;
 
  private:
   std::istream &m_inStream;
@@ -1194,6 +1201,10 @@ bool ParseTextureNameAndOption(std::string *texname, texture_option_t *texopt,
     } else if ((0 == strncmp(token, "-type", 5)) && IS_SPACE((token[5]))) {
       token += 5;
       texopt->type = parseTextureType((&token), TEXTURE_TYPE_NONE);
+    } else if ((0 == strncmp(token, "-texres", 7)) && IS_SPACE((token[7]))) {
+      token += 7;
+      // TODO(syoyo): Check if arg is int type.
+      texopt->texture_resolution = parseInt(&token);
     } else if ((0 == strncmp(token, "-imfchan", 8)) && IS_SPACE((token[8]))) {
       token += 9;
       token += strspn(token, " \t");
@@ -1258,6 +1269,7 @@ static void InitTexOpt(texture_option_t *texopt, const bool is_bump) {
   texopt->turbulence[0] = static_cast<real_t>(0.0);
   texopt->turbulence[1] = static_cast<real_t>(0.0);
   texopt->turbulence[2] = static_cast<real_t>(0.0);
+  texopt->texture_resolution = -1;
   texopt->type = TEXTURE_TYPE_NONE;
 }
 
@@ -1664,6 +1676,10 @@ void LoadMtl(std::map<std::string, int> *material_map,
   bool has_d = false;
   bool has_tr = false;
 
+  // has_kd is used to set a default diffuse value when map_Kd is present
+  // and Kd is not.
+  bool has_kd = false;
+
   std::stringstream warn_ss;
 
   size_t line_no = 0;
@@ -1745,6 +1761,7 @@ void LoadMtl(std::map<std::string, int> *material_map,
       material.diffuse[0] = r;
       material.diffuse[1] = g;
       material.diffuse[2] = b;
+      has_kd = true;
       continue;
     }
 
@@ -1897,6 +1914,16 @@ void LoadMtl(std::map<std::string, int> *material_map,
       token += 7;
       ParseTextureNameAndOption(&(material.diffuse_texname),
                                 &(material.diffuse_texopt), token);
+
+      // Set a decent diffuse default value if a diffuse texture is specified
+      // without a matching Kd value.
+      if (!has_kd)
+      {
+        material.diffuse[0] = static_cast<real_t>(0.6);
+        material.diffuse[1] = static_cast<real_t>(0.6);
+        material.diffuse[2] = static_cast<real_t>(0.6);
+      }
+
       continue;
     }
 
@@ -2354,12 +2381,13 @@ bool LoadObj(attrib_t *attrib, std::vector<shape_t> *shapes,
 
     // use mtl
     if ((0 == strncmp(token, "usemtl", 6))) {
-      token += 6;      
+      token += 6;
       std::string namebuf = parseString(&token);
 
       int newMaterialId = -1;
-      if (material_map.find(namebuf) != material_map.end()) {
-        newMaterialId = material_map[namebuf];
+      std::map<std::string, int>::const_iterator it = material_map.find(namebuf);
+      if (it != material_map.end()) {
+        newMaterialId = it->second;
       } else {
         // { error!! material not found }
         if (warn) {
@@ -2766,8 +2794,9 @@ bool LoadObjWithCallback(std::istream &inStream, const callback_t &callback,
       std::string namebuf = ss.str();
 
       int newMaterialId = -1;
-      if (material_map.find(namebuf) != material_map.end()) {
-        newMaterialId = material_map[namebuf];
+      std::map<std::string, int>::const_iterator it = material_map.find(namebuf);
+      if (it != material_map.end()) {
+        newMaterialId = it->second;
       } else {
         // { warn!! material not found }
         if (warn && (!callback.usemtl_cb)) {
@@ -2943,8 +2972,9 @@ bool ObjReader::ParseFromFile(const std::string &filename,
     // split at last '/'(for unixish system) or '\\'(for windows) to get
     // the base directory of .obj file
     //
-    if (filename.find_last_of("/\\") != std::string::npos) {
-      mtl_search_path = filename.substr(0, filename.find_last_of("/\\"));
+    size_t pos = filename.find_last_of("/\\");
+    if (pos != std::string::npos) {
+      mtl_search_path = filename.substr(0, pos);
     }
   } else {
     mtl_search_path = config.mtl_search_path;
