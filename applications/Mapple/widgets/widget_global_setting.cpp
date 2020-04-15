@@ -107,6 +107,7 @@ void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
     if (b)
         setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
     viewer_->update();
+    disableUnavailableOptions();
 
     if (b)
         LOG(INFO) << "clipping plane enabled";
@@ -121,6 +122,7 @@ void WidgetGlobalSetting::setClippingPlaneVisible(bool b) {
 
     setting::clipping_plane->set_visible(b);
     viewer_->update();
+    disableUnavailableOptions();
 }
 
 
@@ -149,6 +151,7 @@ void WidgetGlobalSetting::setEnableCrossSection(bool b) {
 
     setting::clipping_plane->set_cross_section(b);
     viewer_->update();
+    disableUnavailableOptions();
 
     if (b)
         LOG(INFO) << "cross-section view enabled";
@@ -256,4 +259,29 @@ void WidgetGlobalSetting::setShadowDarkness(int v) {
 
 void WidgetGlobalSetting::setImposterShadows(bool) {
 
+}
+
+
+void WidgetGlobalSetting::disableUnavailableOptions() {
+    // ground plane
+    bool visible = ui->checkBoxGroundPlane->isChecked();
+    ui->spinBoxGroundPlaneSize->setEnabled(visible);
+    ui->labelGroundPlaneTexture->setEnabled(visible);
+    ui->checkBoxGroundPlaneTexture->setEnabled(visible);
+    bool can_change_ground_plane_texture = visible && (ui->checkBoxGroundPlaneTexture->isChecked());
+    ui->toolButtonGroundPlaneTexture->setEnabled(can_change_ground_plane_texture);
+
+    // clipping plane
+    visible = ui->checkBoxClippingPlaneEnable->isChecked();
+    ui->labelClippingPlaneVisible->setEnabled(visible);
+    ui->checkBoxClippingPlaneVisible->setEnabled(visible);
+    bool can_change_clipping_plane_color = visible && (ui->checkBoxClippingPlaneVisible->isChecked());
+    ui->toolButtonClippingPlaneColor->setEnabled(can_change_clipping_plane_color);
+    ui->labelCrossSectionEnable->setEnabled(visible);
+    ui->checkBoxCrossSectionEnable->setEnabled(visible);
+    bool can_change_crosssection_thickness = visible && (ui->checkBoxCrossSectionEnable->isChecked());
+    ui->doubleSpinBoxCrossSectionThickness->setEnabled(can_change_crosssection_thickness);
+
+    update();
+    qApp->processEvents();
 }

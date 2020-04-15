@@ -56,6 +56,9 @@ private slots:
     void setImposterShadows(bool);
 
 private:
+    void disableUnavailableOptions();
+
+private:
     Ui::WidgetGlobalSetting *ui;
 
     PaintCanvas *viewer_;
