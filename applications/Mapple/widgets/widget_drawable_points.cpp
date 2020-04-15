@@ -11,36 +11,12 @@
 #include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
+#include "main_window.h"
 
 #include "ui_widget_drawable_points.h"
 
 
 using namespace easy3d;
-
-
-
-// the state of the rendering panel
-struct State {
-    State() : initialized(false), coloring("uniform color"),
-              texture_file(""), scalar_style(0), auto_range(false), auto_range_min(0.0),
-              auto_range_max(1.0), vector_field("disabled"), vector_field_scale(1.0)
-    {
-        LOG(ERROR) << "not implemented yet (state for PointsDrawable)";
-    }
-
-    bool initialized;
-    std::string coloring;
-    std::string texture_file;
-    int scalar_style;
-    bool auto_range;
-    double auto_range_min;
-    double auto_range_max;
-    std::string vector_field;
-    double vector_field_scale;
-};
-
-static std::unordered_map<easy3d::PointsDrawable *, State> states;
-
 
 
 WidgetPointsDrawable::WidgetPointsDrawable(QWidget *parent)
@@ -94,6 +70,11 @@ void WidgetPointsDrawable::connectAll() {
 
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+
+    // vector field
+    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
+            SLOT(setVectorField(const QString&)));
+    connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
@@ -134,6 +115,11 @@ void WidgetPointsDrawable::disconnectAll() {
 
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+
+    // vector field
+    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
+               SLOT(setVectorField(const QString&)));
+    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
@@ -236,7 +222,7 @@ void WidgetPointsDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto& state = states[drawable()];
+    auto& state = states_[drawable()];
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->points_drawables();
@@ -306,6 +292,13 @@ void WidgetPointsDrawable::updatePanel() {
         ui->spinBoxHighlightMax->setValue(range.second);
     }
 
+    {   // scalar field
+        ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
+        ui->checkBoxScalarFieldAutoRange->setChecked(state.auto_range);
+        ui->doubleSpinBoxScalarFieldAutoRangeMin->setValue(state.auto_range_min);
+        ui->doubleSpinBoxScalarFieldAutoRangeMax->setValue(state.auto_range_max);
+    }
+
     {   // vector field
         ui->comboBoxVectorField->clear();
         std::vector<std::string> fields;
@@ -317,6 +310,9 @@ void WidgetPointsDrawable::updatePanel() {
             fields = details::vector_fields(dynamic_cast<Graph*>(viewer_->currentModel()));
         for (auto name : fields)
             ui->comboBoxVectorField->addItem(QString::fromStdString(name));
+
+        ui->comboBoxVectorField->setCurrentText(QString::fromStdString(state.vector_field));
+        ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
     }
 
     disableUnavailableOptions();
@@ -490,6 +486,7 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
         drawable()->set_use_texture(use_texture);
 
     viewer_->update();
+    states_[drawable()].coloring = text.toStdString();
 }
 
 
@@ -566,7 +563,99 @@ void WidgetPointsDrawable::setScalarFieldStyle(int idx) {
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
-    states[drawable()].scalar_style = idx;
+    states_[drawable()].scalar_style = idx;
+}
+
+
+void WidgetPointsDrawable::setVectorField(const QString &text) {
+    auto model = viewer_->currentModel();
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+    if (!mesh)
+        return;
+
+    if (text == "disabled") {
+        const auto &drawables = mesh->lines_drawables();
+        for (auto d : drawables) {
+            if (d->name().find("vector - ") != std::string::npos)
+                d->set_visible(false);
+        }
+        states_[drawable()].vector_field = "disabled";
+    } else {
+        const std::string &name = text.toStdString();
+        updateVectorFieldBuffer(mesh, name);
+
+        auto d = mesh->lines_drawable("vector - f:normal");
+        d->set_visible(true);
+
+        states_[drawable()].vector_field = "f:normal";
+    }
+
+    main_window_->currentModelChanged();
+    viewer_->update();
+}
+
+
+void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
+    LOG(ERROR) << "not implemented yet";
+//    if (name == "f:normal") {
+//        auto normals = mesh->get_face_property<vec3>(name);
+//        if (!normals)
+//            mesh->update_face_normals();
+//    }
+//
+//    auto prop = mesh->get_face_property<vec3>(name);
+//    if (!prop && name != "disabled") {
+//        LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+//        return;
+//    }
+//
+//    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+//    auto drawable = mesh->lines_drawable("vector - f:normal");
+//    if (!drawable)
+//        drawable = mesh->add_lines_drawable("vector - f:normal");
+//
+//    auto points = mesh->get_vertex_property<vec3>("v:point");
+//
+//    // use a limited number of edge to compute the length of the vectors.
+//    float avg_edge_length = 0.0f;
+//    const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
+//    for (unsigned int i = 0; i < num; ++i) {
+//        SurfaceMesh::Edge edge(i);
+//        auto vs = mesh->vertex(edge, 0);
+//        auto vt = mesh->vertex(edge, 1);
+//        avg_edge_length += distance(points[vs], points[vt]);
+//    }
+//    avg_edge_length /= num;
+//
+//    std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+//    int idx = 0;
+//    float scale = ui->doubleSpinBoxVectorFieldScale->value();
+//    for (
+//        auto f: mesh->faces()) {
+//        int size = 0;
+//        for (auto v: mesh->vertices(f)) {
+//            vertices[idx] += points[v];
+//            ++size;
+//        }
+//        vertices[idx] /= size;
+//        vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
+//        idx += 2;
+//    }
+//
+//    viewer_->makeCurrent();
+//    drawable->update_vertex_buffer(vertices);
+//    viewer_->doneCurrent();
+}
+
+
+void WidgetPointsDrawable::setVectorFieldScale(double s) {
+    auto model = viewer_->currentModel();
+
+    const std::string &name = states_[drawable()].vector_field;
+    updateVectorFieldBuffer(model, name);
+
+    viewer_->update();
+    states_[drawable()].vector_field_scale = s;
 }
 
 

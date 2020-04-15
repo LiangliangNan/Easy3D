@@ -22,29 +22,6 @@
 using namespace easy3d;
 
 
-// the state of the rendering panel
-struct State {
-    State() : initialized(false), coloring("uniform color"),
-              texture_file(""), scalar_style(0), auto_range(false), auto_range_min(0.0),
-              auto_range_max(1.0), vector_field("disabled"), vector_field_scale(1.0)
-    {
-    }
-
-    bool initialized;
-    std::string coloring;
-    std::string texture_file;
-    int scalar_style;
-    bool auto_range;
-    double auto_range_min;
-    double auto_range_max;
-    std::string vector_field;
-    double vector_field_scale;
-};
-
-static std::unordered_map<easy3d::TrianglesDrawable *, State> states;
-
-
-
 WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
         : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable) {
     ui->setupUi(this);
@@ -156,7 +133,8 @@ void WidgetTrianglesDrawable::disconnectAll() {
 
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
-               SLOT(setVectorField(const QString&)));
+            SLOT(setVectorField(const QString&)));
+    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
@@ -177,7 +155,7 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto& state = states[drawable()];
+    auto& state = states_[drawable()];
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->triangles_drawables();
@@ -483,7 +461,7 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
 
     viewer_->update();
 
-    states[drawable()].coloring = text.toStdString();
+    states_[drawable()].coloring = text.toStdString();
 }
 
 
@@ -556,7 +534,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
         drawable()->set_use_texture(true);
         viewer_->update();
         ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file_name)));
-        states[drawable()].texture_file = file_name;
+        states_[drawable()].texture_file = file_name;
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
@@ -618,7 +596,7 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
-    states[drawable()].scalar_style = idx;
+    states_[drawable()].scalar_style = idx;
 }
 
 
@@ -634,7 +612,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
             if (d->name().find("vector - ") != std::string::npos)
                 d->set_visible(false);
         }
-        states[drawable()].vector_field = "disabled";
+        states_[drawable()].vector_field = "disabled";
     } else {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
@@ -642,7 +620,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         auto d = mesh->lines_drawable("vector - f:normal");
         d->set_visible(true);
 
-        states[drawable()].vector_field = "f:normal";
+        states_[drawable()].vector_field = "f:normal";
     }
 
     main_window_->currentModelChanged();
@@ -650,55 +628,58 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
 }
 
 
-void WidgetTrianglesDrawable::updateVectorFieldBuffer(easy3d::SurfaceMesh *mesh, const std::string &name) {
-    if (name == "f:normal") {
-        auto normals = mesh->get_face_property<vec3>(name);
-        if (!normals)
-            mesh->update_face_normals();
-    }
-
-    auto prop = mesh->get_face_property<vec3>(name);
-    if (!prop && name != "disabled") {
-        LOG(ERROR) << "vector field '" << name << "' doesn't exist";
-        return;
-    }
-
-    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-    auto drawable = mesh->lines_drawable("vector - f:normal");
-    if (!drawable)
-        drawable = mesh->add_lines_drawable("vector - f:normal");
-
-    auto points = mesh->get_vertex_property<vec3>("v:point");
-
-    // use a limited number of edge to compute the length of the vectors.
-    float avg_edge_length = 0.0f;
-    const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
-    for (unsigned int i = 0; i < num; ++i) {
-        SurfaceMesh::Edge edge(i);
-        auto vs = mesh->vertex(edge, 0);
-        auto vt = mesh->vertex(edge, 1);
-        avg_edge_length += distance(points[vs], points[vt]);
-    }
-    avg_edge_length /= num;
-
-    std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-    int idx = 0;
-    float scale = ui->doubleSpinBoxVectorFieldScale->value();
-    for (
-        auto f: mesh->faces()) {
-        int size = 0;
-        for (auto v: mesh->vertices(f)) {
-            vertices[idx] += points[v];
-            ++size;
+void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+    if (mesh) {
+        if (name == "f:normal") {
+            auto normals = mesh->get_face_property<vec3>(name);
+            if (!normals)
+                mesh->update_face_normals();
         }
-        vertices[idx] /= size;
-        vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
-        idx += 2;
-    }
 
-    viewer_->makeCurrent();
-    drawable->update_vertex_buffer(vertices);
-    viewer_->doneCurrent();
+        auto prop = mesh->get_face_property<vec3>(name);
+        if (!prop && name != "disabled") {
+            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+            return;
+        }
+
+        // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+        auto drawable = mesh->lines_drawable("vector - f:normal");
+        if (!drawable)
+            drawable = mesh->add_lines_drawable("vector - f:normal");
+
+        auto points = mesh->get_vertex_property<vec3>("v:point");
+
+        // use a limited number of edge to compute the length of the vectors.
+        float avg_edge_length = 0.0f;
+        const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
+        for (unsigned int i = 0; i < num; ++i) {
+            SurfaceMesh::Edge edge(i);
+            auto vs = mesh->vertex(edge, 0);
+            auto vt = mesh->vertex(edge, 1);
+            avg_edge_length += distance(points[vs], points[vt]);
+        }
+        avg_edge_length /= num;
+
+        std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+        int idx = 0;
+        float scale = ui->doubleSpinBoxVectorFieldScale->value();
+        for (
+            auto f: mesh->faces()) {
+            int size = 0;
+            for (auto v: mesh->vertices(f)) {
+                vertices[idx] += points[v];
+                ++size;
+            }
+            vertices[idx] /= size;
+            vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
+            idx += 2;
+        }
+
+        viewer_->makeCurrent();
+        drawable->update_vertex_buffer(vertices);
+        viewer_->doneCurrent();
+    }
 }
 
 
@@ -708,11 +689,11 @@ void WidgetTrianglesDrawable::setVectorFieldScale(double s) {
     if (!mesh)
         return;
 
-    const std::string &name = states[drawable()].vector_field;
+    const std::string &name = states_[drawable()].vector_field;
     updateVectorFieldBuffer(mesh, name);
 
     viewer_->update();
-    states[drawable()].vector_field_scale = s;
+    states_[drawable()].vector_field_scale = s;
 }
 
 
