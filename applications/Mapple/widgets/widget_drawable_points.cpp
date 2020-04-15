@@ -150,10 +150,6 @@ namespace details {
                     renderer::update_buffer(model, drawable, model->template get_vertex_property<int>(name));
                     return;
                 }
-                if (model->template get_vertex_property<bool>(name)) {
-                    renderer::update_buffer(model, drawable, model->template get_vertex_property<bool>(name));
-                    return;
-                }
             }
         }
     }
@@ -178,8 +174,6 @@ namespace details {
             else if (model->template get_vertex_property<unsigned int>(name))
                 schemes.push_back("scalar - " + name);
             else if (model->template get_vertex_property<int>(name))
-                schemes.push_back("scalar - " + name);
-            else if (model->template get_vertex_property<bool>(name))
                 schemes.push_back("scalar - " + name);
         }
 
