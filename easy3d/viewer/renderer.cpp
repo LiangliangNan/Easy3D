@@ -213,7 +213,7 @@ namespace easy3d {
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
                     Tessellator::Vertex vertex;
@@ -284,7 +284,7 @@ namespace easy3d {
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 const vec3& color = fcolor[face];
                 for (auto h : model->halfedges(face)) {
@@ -359,7 +359,7 @@ namespace easy3d {
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
                     Tessellator::Vertex vertex;
@@ -434,7 +434,7 @@ namespace easy3d {
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
                     Tessellator::Vertex vertex;
@@ -518,7 +518,7 @@ namespace easy3d {
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
                     Tessellator::Vertex vertex;
