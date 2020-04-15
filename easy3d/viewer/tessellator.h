@@ -65,11 +65,11 @@ namespace easy3d {
 
         // Set the winding rule (default rule is ODD, modify if needed)
         enum WindingRule {
-            ODD = 100130,   // These values are the same as in GLU.
-            NONZERO = 100131,
-            POSITIVE = 100132,
-            NEGATIVE = 100133,
-            ABS_GEQ_TWO = 100134
+            ODD,
+            NONZERO,
+            POSITIVE,
+            NEGATIVE,
+            ABS_GEQ_TWO
         };
 
         void set_winding_rule(WindingRule rule);

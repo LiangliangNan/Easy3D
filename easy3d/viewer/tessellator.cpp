@@ -108,8 +108,12 @@ namespace easy3d {
     }
 
     Tessellator::Tessellator()
-            : primitive_type_(GL_TRIANGLES), primitive_aware_orientation_(false), num_triangles_in_polygon_(0),
-              vertex_manager_(new details::VertexManager), vertex_data_size_(3) {
+            : primitive_type_(GL_TRIANGLES)
+            , primitive_aware_orientation_(false)
+            , num_triangles_in_polygon_(0)
+            , vertex_manager_(new details::VertexManager)
+            , vertex_data_size_(3)
+    {
         tess_obj_ = gluNewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
             LOG(ERROR) << "failed to create a tessellator object";
@@ -143,7 +147,23 @@ namespace easy3d {
     }
 
     void Tessellator::set_winding_rule(WindingRule rule) {
-        gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, rule);
+        switch (rule) {
+            case ODD:
+                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+                return;
+            case NONZERO:
+                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
+                return;
+            case POSITIVE:
+                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+                return;
+            case NEGATIVE:
+                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+                return;
+            case ABS_GEQ_TWO:
+                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
+                return;
+        }
     }
 
     void Tessellator::begin_polygon(const vec3 &normal) {
