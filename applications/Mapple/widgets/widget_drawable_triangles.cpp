@@ -80,6 +80,7 @@ void WidgetTrianglesDrawable::connectAll() {
 
     // vector field
     connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
@@ -608,78 +609,80 @@ void WidgetTrianglesDrawable::setVectorField(const QString & text) {
 
     else {
         const std::string &name = text.toStdString();
-        if (name == "f:normal") {
-            auto normals = mesh->get_face_property<vec3>(name);
-            if (!normals)
-                mesh->update_face_normals();
-        }
+        updateVectorFieldBuffer(mesh, name);
 
-        auto prop = mesh->get_face_property<vec3>(name);
-        if (!prop) {
-            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
-            return;
-        }
-
-        auto points = mesh->get_vertex_property<vec3>("v:point");
-
-        // use a limited number of edge to compute the length of the vectors.
-        float avg_edge_length = 0.0f;
-        const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
-        for (unsigned int i = 0; i < num; ++i) {
-            SurfaceMesh::Edge edge(i);
-            auto vs = mesh->vertex(edge, 0);
-            auto vt = mesh->vertex(edge, 1);
-            avg_edge_length += distance(points[vs], points[vt]);
-        }
-        avg_edge_length /= num;
-
-        // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
         auto drawable = mesh->lines_drawable("vector - f:normal");
-        if (!drawable) {
-            drawable = mesh->add_lines_drawable("vector - f:normal");
-
-            std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-            int idx = 0;
-            float scale = ui->doubleSpinBoxVectorFieldScale->value();
-            for (auto f : mesh->faces()) {
-                int size = 0;
-                for (auto v : mesh->vertices(f)) {
-                    vertices[idx] += points[v];
-                    ++size;
-                }
-                vertices[idx] /= size;
-                vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
-                idx += 2;
-            }
-
-            viewer_->makeCurrent();
-            drawable->update_vertex_buffer(vertices);
-            viewer_->doneCurrent();
-
-            drawable->set_default_color(vec4(0.8f, 0.5f, 0.3f, 1.0f));
-            drawable->set_line_width(1.0f);
-            drawable->set_impostor_type(LinesDrawable::PLAIN);
-        }
-
         drawable->set_visible(true);
+
         active_vector_field_[mesh] = "f:normal";
-
-        disconnectAll();
-
-        // line width
-        ui->doubleSpinBoxVectorFieldWidth->setValue(drawable->line_width());
-
-        // color
-        const vec3 &c = drawable->default_color();
-        QColor color(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
-        QPixmap pixmap(ui->toolButtonVectorFieldColor->size());
-        pixmap.fill(color);
-        ui->toolButtonVectorFieldColor->setIcon(QIcon(pixmap));
-
-        connectAll();
     }
 
     main_window_->currentModelChanged();
+    viewer_->update();
+}
+
+
+void WidgetTrianglesDrawable::updateVectorFieldBuffer(easy3d::SurfaceMesh *mesh, const std::string &name) {
+    if (name == "f:normal") {
+        auto normals = mesh->get_face_property<vec3>(name);
+        if (!normals)
+            mesh->update_face_normals();
+    }
+
+    auto prop = mesh->get_face_property<vec3>(name);
+    if (!prop) {
+        LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+        return;
+    }
+
+    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+    auto drawable = mesh->lines_drawable("vector - f:normal");
+    if (!drawable)
+        drawable = mesh->add_lines_drawable("vector - f:normal");
+
+    auto points = mesh->get_vertex_property<vec3>("v:point");
+
+    // use a limited number of edge to compute the length of the vectors.
+    float avg_edge_length = 0.0f;
+    const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
+    for (unsigned int i = 0; i < num; ++i) {
+        SurfaceMesh::Edge edge(i);
+        auto vs = mesh->vertex(edge, 0);
+        auto vt = mesh->vertex(edge, 1);
+        avg_edge_length += distance(points[vs], points[vt]);
+    }
+    avg_edge_length /= num;
+
+    std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+    int idx = 0;
+    float scale = ui->doubleSpinBoxVectorFieldScale->value();
+    for (
+        auto f: mesh->faces()) {
+        int size = 0;
+        for (auto v: mesh->vertices(f)) {
+            vertices[idx] += points[v];
+            ++size;
+        }
+        vertices[idx] /= size;
+        vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
+        idx += 2;
+    }
+
+    viewer_->makeCurrent();
+    drawable->update_vertex_buffer(vertices);
+    viewer_->doneCurrent();
+}
+
+
+void WidgetTrianglesDrawable::setVectorFieldScale(double s) {
+    auto model = viewer_->currentModel();
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+    if (!mesh || active_vector_field_.find(mesh) == active_vector_field_.end())
+        return;
+
+    const std::string &name = active_vector_field_[mesh];
+    updateVectorFieldBuffer(mesh, name);
+
     viewer_->update();
 }
 
@@ -738,12 +741,7 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";
     ui->labelVectorField->setEnabled(can_show_vector);
     ui->comboBoxVectorField->setEnabled(can_show_vector);
-    bool can_modify_vector_style = can_show_vector &&
-            ui->comboBoxVectorField->currentText() != "disabled";
-    ui->labelVectorFieldColor->setEnabled(can_modify_vector_style);
-    ui->toolButtonVectorFieldColor->setEnabled(can_modify_vector_style);
-    ui->labelVectorFieldWidth->setEnabled(can_modify_vector_style);
-    ui->doubleSpinBoxVectorFieldWidth->setEnabled(can_modify_vector_style);
+    bool can_modify_vector_style = can_show_vector && ui->comboBoxVectorField->currentText() != "disabled";
     ui->labelVectorFieldScale->setEnabled(can_modify_vector_style);
     ui->doubleSpinBoxVectorFieldScale->setEnabled(can_modify_vector_style);
 

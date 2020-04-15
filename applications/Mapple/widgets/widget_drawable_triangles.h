@@ -10,6 +10,8 @@ namespace Ui {
 }
 
 namespace easy3d {
+    class Model;
+    class SurfaceMesh;
     class TrianglesDrawable;
 }
 
@@ -46,11 +48,14 @@ public slots:
 
     void setScalarFieldStyle(const QString &);
     void setVectorField(const QString &);
+    void setVectorFieldScale(double);
 
 private:
     void connectAll();
     void disconnectAll();
     void disableUnavailableOptions();
+
+    void updateVectorFieldBuffer(easy3d::SurfaceMesh *mesh, const std::string &name);
 
     // model depended stuff
     std::vector<std::string> vectorFields(const easy3d::Model* model);

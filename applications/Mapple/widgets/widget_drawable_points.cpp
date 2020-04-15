@@ -585,12 +585,7 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";
     ui->labelVectorField->setEnabled(can_show_vector);
     ui->comboBoxVectorField->setEnabled(can_show_vector);
-    bool can_modify_vector_style = can_show_vector &&
-            ui->comboBoxVectorField->currentText() != "disabled";
-    ui->labelVectorFieldColor->setEnabled(can_modify_vector_style);
-    ui->toolButtonVectorFieldColor->setEnabled(can_modify_vector_style);
-    ui->labelVectorFieldWidth->setEnabled(can_modify_vector_style);
-    ui->doubleSpinBoxVectorFieldWidth->setEnabled(can_modify_vector_style);
+    bool can_modify_vector_style = can_show_vector && ui->comboBoxVectorField->currentText() != "disabled";
     ui->labelVectorFieldScale->setEnabled(can_modify_vector_style);
     ui->doubleSpinBoxVectorFieldScale->setEnabled(can_modify_vector_style);
 
