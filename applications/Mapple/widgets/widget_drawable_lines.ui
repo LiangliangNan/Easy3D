@@ -647,6 +647,10 @@
            <height>0</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>Adjust the length of the vectors.
+The scale is relative to the average edge lenght of the model.</string>
+         </property>
          <property name="decimals">
           <number>1</number>
          </property>
@@ -656,8 +660,11 @@
          <property name="maximum">
           <double>50.000000000000000</double>
          </property>
+         <property name="singleStep">
+          <double>0.100000000000000</double>
+         </property>
          <property name="value">
-          <double>5.000000000000000</double>
+          <double>1.000000000000000</double>
          </property>
         </widget>
        </item>

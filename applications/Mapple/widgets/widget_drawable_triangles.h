@@ -45,11 +45,15 @@ public slots:
     void setOpacity(int);
 
     void setScalarFieldStyle(const QString &);
+    void setVectorField(const QString &);
 
 private:
     void connectAll();
     void disconnectAll();
     void disableUnavailableOptions();
+
+    // model depended stuff
+    std::vector<std::string> vectorFields(const easy3d::Model* model);
 
 private:
     Ui::WidgetTrianglesDrawable*  ui;

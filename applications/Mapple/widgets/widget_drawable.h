@@ -11,6 +11,7 @@ namespace easy3d {
 }
 
 class PaintCanvas;
+class MainWindow;
 
 class WidgetDrawable : public QWidget
 {
@@ -26,11 +27,14 @@ protected:
     easy3d::Texture* createColormapTexture(const QString& name) const;
 
 protected:
-    PaintCanvas* viewer_;
+    MainWindow*     main_window_;
+    PaintCanvas*    viewer_;
 
     // on the rendering panel, the rendering of only the selected drawable can be changed.
     // this is used to keep the history so the user can switch between different models.
     std::unordered_map<easy3d::Model*, std::string> active_drawable_;
+
+    std::unordered_map<easy3d::Model*, std::string> active_vector_field_;
 
     struct ColorMap {
         ColorMap(const std::string& f, const std::string& n) : file(f), name(n) {}

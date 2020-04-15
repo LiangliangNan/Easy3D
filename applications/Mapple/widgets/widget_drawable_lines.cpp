@@ -387,8 +387,8 @@ void WidgetLinesDrawable::setHighlightMax(int v) {
 }
 
 
-void WidgetLinesDrawable::setScalarFieldStyle(const QString& text) {
-    auto tex = createColormapTexture(ui->comboBoxScalarFieldStyle->currentText());
+void WidgetLinesDrawable::setScalarFieldStyle(const QString& name) {
+    auto tex = createColormapTexture(name);
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();

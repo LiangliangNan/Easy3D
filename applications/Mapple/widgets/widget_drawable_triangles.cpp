@@ -13,6 +13,7 @@
 #include <easy3d/fileio/resources.h>
 
 #include "paint_canvas.h"
+#include "main_window.h"
 
 #include "ui_widget_drawable_triangles.h"
 
@@ -76,6 +77,9 @@ void WidgetTrianglesDrawable::connectAll() {
 
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
+
+    // vector field
+    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
 }
 
 
@@ -121,6 +125,9 @@ void WidgetTrianglesDrawable::disconnectAll() {
 
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
+
+    // vector field
+    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
 }
 
 
@@ -244,27 +251,46 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     {   // vector field
         ui->comboBoxVectorField->clear();
+        const std::vector<std::string>& fields = vectorFields(viewer_->currentModel());
+        for (auto name : fields)
+            ui->comboBoxVectorField->addItem(QString::fromStdString(name));
 
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-
-        // vector fields defined on faces
-        for (const auto& name : mesh->face_properties()) {
-            if (mesh->get_face_property<vec3>(name))
-                ui->comboBoxVectorField->addItem(QString::fromStdString(name));
-        }
-
-        // if no vector fields found, add a "not available" item
-        if (ui->comboBoxVectorField->count() == 0)
-            ui->comboBoxVectorField->addItem("not available");
-        else {  // add one allowing to disable vector fields
-            ui->comboBoxVectorField->insertItem(0, "disabled");
-            ui->comboBoxVectorField->setCurrentIndex(0);
+        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+        if (mesh) {
+            if (active_vector_field_.find(mesh) != active_vector_field_.end())
+                ui->comboBoxVectorField->setCurrentText(QString::fromStdString(active_vector_field_[mesh]));
         }
     }
 
     disableUnavailableOptions();
 
     connectAll();
+}
+
+
+std::vector<std::string> WidgetTrianglesDrawable::vectorFields(const easy3d::Model* model) {
+    std::vector<std::string> fields;
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
+        // vector fields defined on faces
+        fields.push_back("f:normal");
+
+        for (const auto& name : mesh->face_properties()) {
+            if (mesh->get_face_property<vec3>(name)) {
+                if (name != "f:normal")
+                    fields.push_back(name);
+            }
+        }
+    }
+
+    // if no vector fields found, add a "not available" item
+    if (fields.empty())
+        fields.push_back("not available");
+    else   // add one allowing to disable vector fields
+        fields.insert(fields.begin(), "disabled");
+
+    return fields;
 }
 
 
@@ -557,10 +583,103 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 }
 
 
-void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& text) {
-    auto tex = createColormapTexture(ui->comboBoxScalarFieldStyle->currentText());
+void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& name) {
+    auto tex = createColormapTexture(name);
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
+    viewer_->update();
+}
+
+
+void WidgetTrianglesDrawable::setVectorField(const QString & text) {
+    auto model = viewer_->currentModel();
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+    if (!mesh)
+        return;
+
+    if (text == "disabled") {
+        const auto& drawables = mesh->lines_drawables();
+        for (auto d : drawables) {
+            if (d->name().find("vector - ") != std::string::npos)
+                d->set_visible(false);
+        }
+        active_vector_field_[mesh] = "disabled";
+    }
+
+    else {
+        const std::string &name = text.toStdString();
+        if (name == "f:normal") {
+            auto normals = mesh->get_face_property<vec3>(name);
+            if (!normals)
+                mesh->update_face_normals();
+        }
+
+        auto prop = mesh->get_face_property<vec3>(name);
+        if (!prop) {
+            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+            return;
+        }
+
+        auto points = mesh->get_vertex_property<vec3>("v:point");
+
+        // use a limited number of edge to compute the length of the vectors.
+        float avg_edge_length = 0.0f;
+        const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
+        for (unsigned int i = 0; i < num; ++i) {
+            SurfaceMesh::Edge edge(i);
+            auto vs = mesh->vertex(edge, 0);
+            auto vt = mesh->vertex(edge, 1);
+            avg_edge_length += distance(points[vs], points[vt]);
+        }
+        avg_edge_length /= num;
+
+        // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+        auto drawable = mesh->lines_drawable("vector - f:normal");
+        if (!drawable) {
+            drawable = mesh->add_lines_drawable("vector - f:normal");
+
+            std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+            int idx = 0;
+            float scale = ui->doubleSpinBoxVectorFieldScale->value();
+            for (auto f : mesh->faces()) {
+                int size = 0;
+                for (auto v : mesh->vertices(f)) {
+                    vertices[idx] += points[v];
+                    ++size;
+                }
+                vertices[idx] /= size;
+                vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
+                idx += 2;
+            }
+
+            viewer_->makeCurrent();
+            drawable->update_vertex_buffer(vertices);
+            viewer_->doneCurrent();
+
+            drawable->set_default_color(vec4(0.8f, 0.5f, 0.3f, 1.0f));
+            drawable->set_line_width(1.0f);
+            drawable->set_impostor_type(LinesDrawable::PLAIN);
+        }
+
+        drawable->set_visible(true);
+        active_vector_field_[mesh] = "f:normal";
+
+        disconnectAll();
+
+        // line width
+        ui->doubleSpinBoxVectorFieldWidth->setValue(drawable->line_width());
+
+        // color
+        const vec3 &c = drawable->default_color();
+        QColor color(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
+        QPixmap pixmap(ui->toolButtonVectorFieldColor->size());
+        pixmap.fill(color);
+        ui->toolButtonVectorFieldColor->setIcon(QIcon(pixmap));
+
+        connectAll();
+    }
+
+    main_window_->currentModelChanged();
     viewer_->update();
 }
 

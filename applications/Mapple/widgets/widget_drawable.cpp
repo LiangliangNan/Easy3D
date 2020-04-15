@@ -16,8 +16,8 @@ std::vector<WidgetDrawable::ColorMap> WidgetDrawable::colormap_files_;
 
 WidgetDrawable::WidgetDrawable(QWidget *parent)
         : QWidget(parent) {
-    auto window = dynamic_cast<MainWindow *>(parent);
-    viewer_ = window->viewer();
+    main_window_ = dynamic_cast<MainWindow *>(parent);
+    viewer_ = main_window_->viewer();
 
     if (colormap_files_.empty()) {
         const std::string dir = resource::directory() + "/colormaps/";
