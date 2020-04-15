@@ -298,7 +298,7 @@ void WidgetModelList::duplicateCurrent() {
             viewer()->addModel(copy, true);
             viewer()->doneCurrent();
 
-            addModel(copy, true, false);
+            addModel(copy, true);
         }
     }
 }
@@ -582,7 +582,7 @@ void WidgetModelList::setSelectedOnly(bool b) {
 }
 
 
-void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
+void WidgetModelList::addModel(Model *model, bool make_current) {
     if (!model)
         return;
 
@@ -597,10 +597,7 @@ void WidgetModelList::addModel(Model *model, bool make_current, bool fit) {
 
     mainWindow_->currentModelChanged();
 
-    if (fit)
-        viewer()->fitScreen(current_model);
-    else
-        viewer()->update();
+    viewer()->update();
 }
 
 

@@ -20,7 +20,7 @@ public:
     void init(MainWindow *w);
 
     // single model
-    void addModel(easy3d::Model *obj, bool make_current, bool fit);
+    void addModel(easy3d::Model *obj, bool make_current);
 
     void deleteModel(easy3d::Model *obj, bool fit);
 

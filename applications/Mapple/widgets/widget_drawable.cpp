@@ -37,12 +37,9 @@ WidgetDrawable::~WidgetDrawable() {
 }
 
 
-Texture* WidgetDrawable::createColormapTexture(const QString& name) const {
-    const std::string colormap = name.toStdString();
-    for (const auto& info : colormap_files_) {
-        if (info.name == colormap) {
-            return Texture::create(info.file, GL_CLAMP_TO_EDGE, GL_LINEAR);
-        }
+Texture* WidgetDrawable::createColormapTexture(int idx) const {
+    if (idx < colormap_files_.size()) {
+        return Texture::create(colormap_files_[idx].file, GL_CLAMP_TO_EDGE, GL_LINEAR);
     }
     return nullptr;
 }

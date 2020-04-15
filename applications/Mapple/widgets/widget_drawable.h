@@ -24,16 +24,15 @@ public:
     virtual void updatePanel() = 0;
 
 protected:
-    easy3d::Texture* createColormapTexture(const QString& name) const;
+    easy3d::Texture* createColormapTexture(int) const;
 
 protected:
     MainWindow*     main_window_;
     PaintCanvas*    viewer_;
 
     // the rendering of only the selected drawable can be changed.
-    // these variables keeps the history so the rendering panels are up to date when switching between models/drawables.
+    // this variable keeps the history so the rendering panels are up to date when switching between models.
     std::unordered_map<easy3d::Model*, std::string> active_drawable_;
-    std::unordered_map<easy3d::Model*, std::string> active_vector_field_;
 
     struct ColorMap {
         ColorMap(const std::string& f, const std::string& n) : file(f), name(n) {}

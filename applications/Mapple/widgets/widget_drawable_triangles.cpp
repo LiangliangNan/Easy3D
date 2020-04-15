@@ -7,6 +7,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture.h>
 #include <easy3d/viewer/renderer.h>
+#include <easy3d/viewer/setting.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -21,16 +22,39 @@
 using namespace easy3d;
 
 
+// the state of the rendering panel
+struct State {
+    State() : initialized(false), coloring("uniform color"),
+              texture_file(""), scalar_style(0), auto_range(false), auto_range_min(0.0),
+              auto_range_max(1.0), vector_field("disabled"), vector_field_scale(1.0)
+    {
+    }
+
+    bool initialized;
+    std::string coloring;
+    std::string texture_file;
+    int scalar_style;
+    bool auto_range;
+    double auto_range_min;
+    double auto_range_max;
+    std::string vector_field;
+    double vector_field_scale;
+};
+
+static std::unordered_map<easy3d::TrianglesDrawable *, State> states;
+
+
+
 WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
-        : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable)
-{
+        : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable) {
     ui->setupUi(this);
 
     if (colormap_files_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
     else {
-        for (const auto& colormap : colormap_files_)
-            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)), QString::fromStdString(colormap.name));
+        for (const auto &colormap : colormap_files_)
+            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
+                                                  QString::fromStdString(colormap.name));
     }
 }
 
@@ -76,10 +100,12 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
+    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this,
+            SLOT(setScalarFieldStyle(int)));
 
     // vector field
-    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
+            SLOT(setVectorField(const QString&)));
     connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
@@ -125,10 +151,12 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setScalarFieldStyle(const QString&)));
+    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this,
+            SLOT(setScalarFieldStyle(int)));
 
     // vector field
-    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
+               SLOT(setVectorField(const QString&)));
 }
 
 
@@ -149,6 +177,8 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     disconnectAll();
 
+    auto& state = states[drawable()];
+
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->triangles_drawables();
     for (auto d : drawables)
@@ -167,8 +197,7 @@ void WidgetTrianglesDrawable::updatePanel() {
                 ui->comboBoxLightingOptions->setCurrentText("front and back");
             else
                 ui->comboBoxLightingOptions->setCurrentText("front only");
-        }
-        else
+        } else
             ui->comboBoxLightingOptions->setCurrentText("disabled");
     }
 
@@ -190,17 +219,17 @@ void WidgetTrianglesDrawable::updatePanel() {
             ui->comboBoxColorScheme->addItem("h:texcoord");
 
         {   // color schemes from scalar fields
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
 
             // scalar fields defined on faces
-            for (const auto& name : mesh->face_properties()) {
+            for (const auto &name : mesh->face_properties()) {
                 if (mesh->get_face_property<float>(name))
                     ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
                 else if (mesh->get_face_property<int>(name))
                     ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
             }
             // scalar fields defined on vertices
-            for (const auto& name : mesh->vertex_properties()) {
+            for (const auto &name : mesh->vertex_properties()) {
                 if (mesh->get_vertex_property<float>(name))
                     ui->comboBoxColorScheme->addItem(QString::fromStdString("scalar - " + name));
                 else if (mesh->get_vertex_property<int>(name))
@@ -208,10 +237,7 @@ void WidgetTrianglesDrawable::updatePanel() {
             }
         }
 
-        if (drawable()->per_vertex_color()) {
-            const auto &name = model->color_scheme(drawable());
-            ui->comboBoxColorScheme->setCurrentText(QString::fromStdString(name));
-        }
+        ui->comboBoxColorScheme->setCurrentText(QString::fromStdString(state.coloring));
 
         // default color
         vec3 c = drawable()->default_color();
@@ -228,11 +254,11 @@ void WidgetTrianglesDrawable::updatePanel() {
         ui->toolButtonBackColor->setIcon(QIcon(pixmap));
 
         // texture
-        if (drawable()->texture()) {
-            const auto &file = drawable()->texture()->file_name();
-            ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file)));
-        } else
-            ui->lineEditTextureFile->setText("not available");
+        if (!state.initialized) {
+            if (drawable()->texture())
+                state.texture_file = drawable()->texture()->file_name();
+        }
+        ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(state.texture_file)));
 
         ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
         ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
@@ -248,28 +274,31 @@ void WidgetTrianglesDrawable::updatePanel() {
     }
 
     {   // scalar field
+        ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
+        ui->checkBoxScalarFieldAutoRange->setChecked(state.auto_range);
+        ui->doubleSpinBoxScalarFieldAutoRangeMin->setValue(state.auto_range_min);
+        ui->doubleSpinBoxScalarFieldAutoRangeMax->setValue(state.auto_range_max);
     }
 
     {   // vector field
         ui->comboBoxVectorField->clear();
-        const std::vector<std::string>& fields = vectorFields(viewer_->currentModel());
+        const std::vector<std::string> &fields = vectorFields(viewer_->currentModel());
         for (auto name : fields)
             ui->comboBoxVectorField->addItem(QString::fromStdString(name));
 
-        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        if (mesh) {
-            if (active_vector_field_.find(mesh) != active_vector_field_.end())
-                ui->comboBoxVectorField->setCurrentText(QString::fromStdString(active_vector_field_[mesh]));
-        }
+        ui->comboBoxVectorField->setCurrentText(QString::fromStdString(state.vector_field));
+        ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
     }
 
     disableUnavailableOptions();
 
     connectAll();
+
+    state.initialized = true;
 }
 
 
-std::vector<std::string> WidgetTrianglesDrawable::vectorFields(const easy3d::Model* model) {
+std::vector<std::string> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *model) {
     std::vector<std::string> fields;
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
@@ -277,7 +306,7 @@ std::vector<std::string> WidgetTrianglesDrawable::vectorFields(const easy3d::Mod
         // vector fields defined on faces
         fields.push_back("f:normal");
 
-        for (const auto& name : mesh->face_properties()) {
+        for (const auto &name : mesh->face_properties()) {
             if (mesh->get_face_property<vec3>(name)) {
                 if (name != "f:normal")
                     fields.push_back(name);
@@ -301,7 +330,7 @@ TrianglesDrawable *WidgetTrianglesDrawable::drawable() {
     if (pos != active_drawable_.end())
         return model->triangles_drawable(pos->second);
     else {
-        const auto& drawables = model->triangles_drawables();
+        const auto &drawables = model->triangles_drawables();
         if (drawables.empty())
             return nullptr;
         else {
@@ -353,20 +382,18 @@ void WidgetTrianglesDrawable::setPhongShading(bool b) {
 }
 
 
-void WidgetTrianglesDrawable::setLighting(const QString & text) {
+void WidgetTrianglesDrawable::setLighting(const QString &text) {
     if (text == "front and back") {
         if (!drawable()->lighting())
             drawable()->set_lighting(true);
         if (!drawable()->lighting_two_sides())
             drawable()->set_lighting_two_sides(true);
-    }
-    else if (text == "front only") {
+    } else if (text == "front only") {
         if (!drawable()->lighting())
             drawable()->set_lighting(true);
         if (drawable()->lighting_two_sides())
             drawable()->set_lighting_two_sides(false);
-    }
-    else if (text == "disabled") {
+    } else if (text == "disabled") {
         if (drawable()->lighting())
             drawable()->set_lighting(false);
     }
@@ -376,10 +403,9 @@ void WidgetTrianglesDrawable::setLighting(const QString & text) {
 }
 
 
-
 namespace details {
 
-    inline void setup_scalar_field(SurfaceMesh* mesh, TrianglesDrawable* drawable, const std::string& color_scheme) {
+    inline void setup_scalar_field(SurfaceMesh *mesh, TrianglesDrawable *drawable, const std::string &color_scheme) {
         for (const auto &name : mesh->face_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
                 if (mesh->get_face_property<float>(name)) {
@@ -432,7 +458,7 @@ namespace details {
     }
 }
 
-void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
+void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
     bool per_vertex_color = text != "uniform color";
@@ -442,11 +468,11 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
         if (mesh) {
             viewer_->makeCurrent();
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentText()));
+            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
             viewer_->doneCurrent();
         }
     }
@@ -456,6 +482,8 @@ void WidgetTrianglesDrawable::setColorScheme(const QString& text) {
         drawable()->set_use_texture(use_texture);
 
     viewer_->update();
+
+    states[drawable()].coloring = text.toStdString();
 }
 
 
@@ -528,6 +556,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
         drawable()->set_use_texture(true);
         viewer_->update();
         ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file_name)));
+        states[drawable()].texture_file = file_name;
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
@@ -584,37 +613,36 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 }
 
 
-void WidgetTrianglesDrawable::setScalarFieldStyle(const QString& name) {
-    auto tex = createColormapTexture(name);
+void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
+    auto tex = createColormapTexture(idx);
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
+    states[drawable()].scalar_style = idx;
 }
 
 
-void WidgetTrianglesDrawable::setVectorField(const QString & text) {
+void WidgetTrianglesDrawable::setVectorField(const QString &text) {
     auto model = viewer_->currentModel();
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
     if (!mesh)
         return;
 
     if (text == "disabled") {
-        const auto& drawables = mesh->lines_drawables();
+        const auto &drawables = mesh->lines_drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - ") != std::string::npos)
                 d->set_visible(false);
         }
-        active_vector_field_[mesh] = "disabled";
-    }
-
-    else {
+        states[drawable()].vector_field = "disabled";
+    } else {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto drawable = mesh->lines_drawable("vector - f:normal");
-        drawable->set_visible(true);
+        auto d = mesh->lines_drawable("vector - f:normal");
+        d->set_visible(true);
 
-        active_vector_field_[mesh] = "f:normal";
+        states[drawable()].vector_field = "f:normal";
     }
 
     main_window_->currentModelChanged();
@@ -630,7 +658,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(easy3d::SurfaceMesh *mesh,
     }
 
     auto prop = mesh->get_face_property<vec3>(name);
-    if (!prop) {
+    if (!prop && name != "disabled") {
         LOG(ERROR) << "vector field '" << name << "' doesn't exist";
         return;
     }
@@ -676,14 +704,15 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(easy3d::SurfaceMesh *mesh,
 
 void WidgetTrianglesDrawable::setVectorFieldScale(double s) {
     auto model = viewer_->currentModel();
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-    if (!mesh || active_vector_field_.find(mesh) == active_vector_field_.end())
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+    if (!mesh)
         return;
 
-    const std::string &name = active_vector_field_[mesh];
+    const std::string &name = states[drawable()].vector_field;
     updateVectorFieldBuffer(mesh, name);
 
     viewer_->update();
+    states[drawable()].vector_field_scale = s;
 }
 
 
@@ -700,7 +729,7 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->labelDefaultColor->setEnabled(can_modify_default_color);
     ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
 
-    const auto& lighting_option = ui->comboBoxLightingOptions->currentText();
+    const auto &lighting_option = ui->comboBoxLightingOptions->currentText();
     bool can_modify_back_color = visible && lighting_option == "front and back";
     ui->labelBackColor->setEnabled(can_modify_back_color);
     ui->checkBoxBackColor->setEnabled(can_modify_back_color);
@@ -729,7 +758,7 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
 
     // scalar field
     bool can_show_scalar = visible &&
-            ui->comboBoxColorScheme->currentText().contains("scalar - ");
+                           ui->comboBoxColorScheme->currentText().contains("scalar - ");
     ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldAutoRange->setEnabled(can_show_scalar);

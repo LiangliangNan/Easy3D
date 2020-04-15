@@ -32,18 +32,13 @@ namespace easy3d {
 
 
     // The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
-    // NOTE: it surports triangles only. To visualize general polygons, the vertex coordinates
-    //       and properties (e.g., color, normal) should be provided as consequtive triplets
-    //       in an array to be transfered to GPU. See update_vertex_buffer().
+    // NOTE: it supports triangles only. To visualize general polygons, the vertex coordinates
+    //       and properties (e.g., color, normal) should be provided as consecutive triplets
+    //       in an array to be transferred to GPU. See update_vertex_buffer().
     class TrianglesDrawable : public Drawable {
 	public:
-        TrianglesDrawable(const std::string& name = "")
-            : Drawable(name)
-            , smooth_shading_(false)
-            , opacity_(0.6f)
-        {
-			default_color_ = vec4(0.4f, 0.8f, 0.8f, 1.0f);
-		}
+        TrianglesDrawable(const std::string& name = "");
+
         DrawableType type() const override;
 
         bool smooth_shading() const { return smooth_shading_; }

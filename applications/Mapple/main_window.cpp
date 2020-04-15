@@ -263,9 +263,10 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             while ((cloud = serializer.load_next())) {
                 viewer_->makeCurrent();
                 viewer_->addModel(cloud, create_default_drawables);
-                ui->treeWidgetModels->addModel(cloud, true, true);
+                ui->treeWidgetModels->addModel(cloud, true);
                 viewer_->doneCurrent();
             }
+            viewer_->fitScreen();
         }
         else
             model = PointCloudIO::load(file_name);
@@ -277,7 +278,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         StopWatch w;
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
-        ui->treeWidgetModels->addModel(model, true, true);
+        ui->treeWidgetModels->addModel(model, true);
         viewer_->doneCurrent();
         LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
         setCurrentFile(QString::fromStdString(file_name));

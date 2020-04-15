@@ -46,7 +46,7 @@ public slots:
     void setHighlightMax(int);
     void setOpacity(int);
 
-    void setScalarFieldStyle(const QString &);
+    void setScalarFieldStyle(int);
     void setVectorField(const QString &);
     void setVectorFieldScale(double);
 

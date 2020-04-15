@@ -39,7 +39,7 @@ public slots:
     void setHighlightMin(int);
     void setHighlightMax(int);
 
-    void setScalarFieldStyle(const QString &);
+    void setScalarFieldStyle(int);
 
 private:
     void connectAll();

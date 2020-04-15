@@ -34,6 +34,14 @@
 
 namespace easy3d {
 
+    TrianglesDrawable::TrianglesDrawable(const std::string& name)
+            : Drawable(name)
+            , smooth_shading_(false)
+            , opacity_(0.6f)
+    {
+        default_color_ = setting::surface_mesh_faces_color;
+    }
+
 
     DrawableType TrianglesDrawable::type() const {
         return DT_TRIANGLES;
