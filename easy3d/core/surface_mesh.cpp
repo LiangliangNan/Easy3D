@@ -784,10 +784,25 @@ namespace easy3d {
         if (!vnormal_)
             vnormal_ = vertex_property<vec3>("v:normal");
 
+#if 0 // not stable for concave vertices
         VertexIterator vit, vend=vertices_end();
-
         for (vit=vertices_begin(); vit!=vend; ++vit)
             vnormal_[*vit] = compute_vertex_normal(*vit);
+
+#else // use the average of the incident face normals
+
+        if (!fnormal_)
+            update_face_normals();
+
+        VertexIterator vit, vend=vertices_end();
+        for (vit=vertices_begin(); vit!=vend; ++vit) {
+            auto v = *vit;
+            vec3     nn(0,0,0);
+            for (auto f : faces(v))
+                nn += fnormal_[f];
+            vnormal_[*vit] = nn.normalize();
+        }
+#endif
     }
 
 
