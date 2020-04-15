@@ -569,25 +569,22 @@ void WidgetPointsDrawable::setScalarFieldStyle(int idx) {
 
 void WidgetPointsDrawable::setVectorField(const QString &text) {
     auto model = viewer_->currentModel();
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-    if (!mesh)
-        return;
 
     if (text == "disabled") {
-        const auto &drawables = mesh->lines_drawables();
+        const auto &drawables = model->lines_drawables();
         for (auto d : drawables) {
-            if (d->name().find("vector - ") != std::string::npos)
+            if (d->name().find("vector - v") != std::string::npos)
                 d->set_visible(false);
         }
         states_[drawable()].vector_field = "disabled";
     } else {
         const std::string &name = text.toStdString();
-        updateVectorFieldBuffer(mesh, name);
+        updateVectorFieldBuffer(model, name);
 
-        auto d = mesh->lines_drawable("vector - f:normal");
+        auto d = model->lines_drawable("vector - v:normal");
         d->set_visible(true);
 
-        states_[drawable()].vector_field = "f:normal";
+        states_[drawable()].vector_field = "v:normal";
     }
 
     main_window_->currentModelChanged();
@@ -596,55 +593,80 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
 
 
 void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
-    LOG(ERROR) << "not implemented yet";
-//    if (name == "f:normal") {
-//        auto normals = mesh->get_face_property<vec3>(name);
-//        if (!normals)
-//            mesh->update_face_normals();
-//    }
-//
-//    auto prop = mesh->get_face_property<vec3>(name);
-//    if (!prop && name != "disabled") {
-//        LOG(ERROR) << "vector field '" << name << "' doesn't exist";
-//        return;
-//    }
-//
-//    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-//    auto drawable = mesh->lines_drawable("vector - f:normal");
-//    if (!drawable)
-//        drawable = mesh->add_lines_drawable("vector - f:normal");
-//
-//    auto points = mesh->get_vertex_property<vec3>("v:point");
-//
-//    // use a limited number of edge to compute the length of the vectors.
-//    float avg_edge_length = 0.0f;
-//    const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
-//    for (unsigned int i = 0; i < num; ++i) {
-//        SurfaceMesh::Edge edge(i);
-//        auto vs = mesh->vertex(edge, 0);
-//        auto vt = mesh->vertex(edge, 1);
-//        avg_edge_length += distance(points[vs], points[vt]);
-//    }
-//    avg_edge_length /= num;
-//
-//    std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-//    int idx = 0;
-//    float scale = ui->doubleSpinBoxVectorFieldScale->value();
-//    for (
-//        auto f: mesh->faces()) {
-//        int size = 0;
-//        for (auto v: mesh->vertices(f)) {
-//            vertices[idx] += points[v];
-//            ++size;
-//        }
-//        vertices[idx] /= size;
-//        vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
-//        idx += 2;
-//    }
-//
-//    viewer_->makeCurrent();
-//    drawable->update_vertex_buffer(vertices);
-//    viewer_->doneCurrent();
+    if (name == "v:normal") {
+        if (dynamic_cast<SurfaceMesh*>(model)) {
+            auto mesh = dynamic_cast<SurfaceMesh*>(model);
+            auto normals = mesh->get_vertex_property<vec3>(name);
+            if (!normals)
+                mesh->update_vertex_normals();
+        }
+    }
+
+    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+    auto drawable = model->lines_drawable("vector - v:normal");
+    if (!drawable)
+        drawable = model->add_lines_drawable("vector - v:normal");
+
+    std::vector<vec3> vertices;
+    if (dynamic_cast<SurfaceMesh*>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+
+        auto prop = mesh->get_vertex_property<vec3>(name);
+        if (!prop && name != "disabled") {
+            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+            return;
+        }
+
+        auto points = mesh->get_vertex_property<vec3>("v:point");
+
+        // use a limited number of edge to compute the length of the vectors.
+        float avg_edge_length = 0.0f;
+        const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
+        for (unsigned int i = 0; i < num; ++i) {
+            SurfaceMesh::Edge edge(i);
+            auto vs = mesh->vertex(edge, 0);
+            auto vt = mesh->vertex(edge, 1);
+            avg_edge_length += distance(points[vs], points[vt]);
+        }
+        avg_edge_length /= num;
+
+        vertices.resize(mesh->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+        int idx = 0;
+        float scale = ui->doubleSpinBoxVectorFieldScale->value();
+        for (auto v: mesh->vertices()) {
+            vertices[idx] = points[v];
+            vertices[idx + 1] = vertices[idx] + prop[v] * avg_edge_length * scale;
+            idx += 2;
+        }
+    }
+
+    else if (dynamic_cast<PointCloud*>(model)) {
+        auto cloud = dynamic_cast<PointCloud *>(model);
+
+        auto prop = cloud->get_vertex_property<vec3>(name);
+        if (!prop && name != "disabled") {
+            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+            return;
+        }
+
+        auto points = cloud->get_vertex_property<vec3>("v:point");
+
+        // use the 1% of the bbox diagonal as the vector length.
+        float avg_edge_length = cloud->bounding_box().diagonal() * 0.01f;
+
+        vertices.resize(cloud->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+        int idx = 0;
+        float scale = ui->doubleSpinBoxVectorFieldScale->value();
+        for (auto v: cloud->vertices()) {
+            vertices[idx] = points[v];
+            vertices[idx + 1] = vertices[idx] + prop[v] * avg_edge_length * scale;
+            idx += 2;
+        }
+    }
+
+    viewer_->makeCurrent();
+    drawable->update_vertex_buffer(vertices);
+    viewer_->doneCurrent();
 }
 
 

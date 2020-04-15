@@ -609,7 +609,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
     if (text == "disabled") {
         const auto &drawables = mesh->lines_drawables();
         for (auto d : drawables) {
-            if (d->name().find("vector - ") != std::string::npos)
+            if (d->name().find("vector - f") != std::string::npos)
                 d->set_visible(false);
         }
         states_[drawable()].vector_field = "disabled";
@@ -664,8 +664,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
         std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
         int idx = 0;
         float scale = ui->doubleSpinBoxVectorFieldScale->value();
-        for (
-            auto f: mesh->faces()) {
+        for (auto f: mesh->faces()) {
             int size = 0;
             for (auto v: mesh->vertices(f)) {
                 vertices[idx] += points[v];
