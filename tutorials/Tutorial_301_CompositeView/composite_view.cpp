@@ -76,6 +76,8 @@ void CompositeView::draw() const {
     PointsDrawable* vertices = current_model()->points_drawable("vertices");
     if (!vertices) {
         vertices = current_model()->add_points_drawable("vertices");
+        vertices->set_point_size(15.0f);
+        vertices->set_impostor_type(PointsDrawable::SPHERE);
         renderer::update_buffer(current_model(), vertices);
     }
     vertices->draw(camera(), false);
