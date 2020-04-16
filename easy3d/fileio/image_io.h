@@ -43,7 +43,7 @@ namespace easy3d {
          * \param file_name The image file to load.
          * \param data  Outputs the image data. Data will be empty if the specified image file
          *              doesn't exist, allocation failed, or the image is corrupt or invalid.
-         *              The image data returned is an 1D array of 'unsigned char' which points
+         *              The image data returned is a 1D array of 'unsigned char' which points
          *              to the pixel data, or empty when failed. The pixel data consists of
          *              'height' scanlines of 'width' pixels, with each pixel consisting of N
          *              interleaved 8-bit channels/components; the first pixel pointed to is
