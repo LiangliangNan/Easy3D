@@ -24,7 +24,7 @@ public:
     virtual void updatePanel() = 0;
 
 protected:
-    easy3d::Texture* createColormapTexture(int) const;
+    easy3d::Texture* colormapTexture(int) const;
 
 protected:
     MainWindow*     main_window_;
@@ -35,11 +35,12 @@ protected:
     std::unordered_map<easy3d::Model*, std::string> active_drawable_;
 
     struct ColorMap {
-        ColorMap(const std::string& f, const std::string& n) : file(f), name(n) {}
+        ColorMap(const std::string& f, const std::string& n) : file(f), name(n), texture(nullptr) {}
         std::string file;
         std::string name;
+        easy3d::Texture* texture;
     };
-    static std::vector<ColorMap> colormap_files_;
+    static std::vector<ColorMap> colormaps_;
 };
 
 #endif // WIDGET_DRAWABLE_H

@@ -152,6 +152,7 @@ namespace easy3d {
 		bool use_texture() const { return use_texture_; }
 		void set_use_texture(bool b) { use_texture_ = b; }
 
+		/** Memory management of textures is the user's responsibility. */
         Texture *texture() const { return texture_; }
         void set_texture(Texture *tex) { texture_ = tex; }
 

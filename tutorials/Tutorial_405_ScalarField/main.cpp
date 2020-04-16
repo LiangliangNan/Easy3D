@@ -25,7 +25,7 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/renderer.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
         // Create texture for coloring the scalar field.
         const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
-        Texture* texture = Texture::create(texture_file);
+        Texture* texture = TextureManager::request(texture_file);
         if (!texture) {
             LOG(ERROR) << "Error: failed to create texture.";
             return EXIT_FAILURE;

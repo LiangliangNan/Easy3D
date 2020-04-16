@@ -38,6 +38,7 @@ set(${PROJECT_NAME}_HEADERS
         opengl_timer.h
         tessellator.h
         texture.h
+        texture_manager.h
         transform.h
         transform_decompose.h
         transparency.h
@@ -77,6 +78,7 @@ set(${PROJECT_NAME}_SOURCES
         soft_shadow.cpp
         tessellator.cpp
         texture.cpp
+        texture_manager.cpp
         opengl_timer.cpp
         transform.cpp
         transform_decompose.cpp

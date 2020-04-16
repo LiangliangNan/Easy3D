@@ -4,7 +4,7 @@
 
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
@@ -24,10 +24,10 @@ WidgetPointsDrawable::WidgetPointsDrawable(QWidget *parent)
 {
     ui->setupUi(this);
 
-    if (colormap_files_.empty())
+    if (colormaps_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
     else {
-        for (const auto& colormap : colormap_files_)
+        for (const auto& colormap : colormaps_)
             ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)), QString::fromStdString(colormap.name));
     }
 }
@@ -460,17 +460,17 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
         if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
             SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
         }
         else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
             Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
             details::setup_scalar_field(graph, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
         }
         else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
             PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
             details::setup_scalar_field(cloud, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
         }
         viewer_->doneCurrent();
     }
@@ -553,7 +553,7 @@ void WidgetPointsDrawable::setHighlightMax(int v) {
 
 
 void WidgetPointsDrawable::setScalarFieldStyle(int idx) {
-    auto tex = createColormapTexture(idx);
+    auto tex = colormapTexture(idx);
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();

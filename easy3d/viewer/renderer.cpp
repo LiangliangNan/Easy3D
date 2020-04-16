@@ -26,7 +26,7 @@
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/core/random.h>
 
 
@@ -216,9 +216,8 @@ namespace easy3d {
                 // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     tessellator.add_vertex(vertex);
                 }
@@ -288,9 +287,8 @@ namespace easy3d {
                 tessellator.begin_contour();
                 const vec3& color = fcolor[face];
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     vertex.append(color);
                     tessellator.add_vertex(vertex);
@@ -362,9 +360,8 @@ namespace easy3d {
                 // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     vertex.append(vcolor[v]);
                     tessellator.add_vertex(vertex);
@@ -437,9 +434,8 @@ namespace easy3d {
                 // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     vertex.append(vtexcoords[v]);
                     tessellator.add_vertex(vertex);
@@ -473,7 +469,7 @@ namespace easy3d {
 
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
-            auto tex = Texture::create(texture_file, GL_REPEAT);
+            auto tex = TextureManager::request(texture_file, GL_REPEAT);
             drawable->set_texture(tex);
             drawable->set_texture_repeat(10);
             drawable->set_use_texture(true);
@@ -521,9 +517,8 @@ namespace easy3d {
                 // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     vertex.append(htexcoords[h]);
                     tessellator.add_vertex(vertex);
@@ -557,7 +552,7 @@ namespace easy3d {
 
 #if 0 // Model has texture coordinates, should we put a default texture?
             const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
-            auto tex = Texture::create(texture_file, GL_REPEAT);
+            auto tex = TextureManager::request(texture_file, GL_REPEAT);
             drawable->set_texture(tex);
             drawable->set_texture_repeat(10);
             drawable->set_use_texture(true);

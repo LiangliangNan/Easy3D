@@ -27,6 +27,7 @@
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/clipping_plane.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -103,6 +104,7 @@ void PaintCanvas::cleanup() {
     delete gpu_timer_;
 
     ShaderManager::terminate();
+    TextureManager::terminate();
 }
 
 

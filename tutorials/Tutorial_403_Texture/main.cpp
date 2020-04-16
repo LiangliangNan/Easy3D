@@ -26,7 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
         //----------------------- Load texture from an image file ------------------------
 
         const std::string texture_file = resource::directory() + "/images/logo.jpg";
-        Texture* tex = Texture::create(texture_file);
+        Texture* tex = TextureManager::request(texture_file);
         if (!tex) {
             LOG(ERROR) << "Error: failed to create texture. Please make sure the file exists and format is correct.";
             return EXIT_FAILURE;

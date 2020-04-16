@@ -57,6 +57,7 @@
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -508,7 +509,8 @@ namespace easy3d {
 
 		clear_scene();
 
-		ShaderManager::terminate();
+        ShaderManager::terminate();
+        TextureManager::terminate();
 
 		glfwDestroyWindow(window_);
 		window_ = nullptr;

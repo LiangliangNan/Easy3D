@@ -29,7 +29,7 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
@@ -131,9 +131,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 void RealCamera::load_image() {
     const std::string image_file = resource::directory() + "/data/fountain/images/" + string::from_integer(current_view_, 4, '0') + ".jpg";
     if (file_system::is_file(image_file)) {
-            if (texture_)
-                delete texture_;
-        texture_ = Texture::create(image_file);
+        texture_ = TextureManager::request(image_file);
     }
     update();
 }

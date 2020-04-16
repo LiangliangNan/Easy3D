@@ -26,7 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/opengl_error.h>

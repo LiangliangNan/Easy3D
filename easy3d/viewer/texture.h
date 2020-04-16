@@ -28,8 +28,6 @@
 
 #include <string>
 
-#include <easy3d/viewer/opengl.h>
-
 
 namespace easy3d {
 
@@ -37,12 +35,29 @@ namespace easy3d {
     class Texture
     {
     public:
-        // wrap: GL_CLAMP_TO_EDGE, GL_REPEAT
-        // filter: GL_NEAREST, GL_LINEAR
-        static Texture* create(const std::string& image_file, GLenum wrap = GL_CLAMP_TO_EDGE, GLenum filter = GL_LINEAR);
+        enum WrapMode { CLAMP_TO_EDGE, REPEAT };
+        enum FilterMode { NEAREST, LINEAR };
+
+        /**
+         * Creates a texture from an image file.
+         * @image_file The full path to the image file.
+         * @return The created texture.
+         */
+        static Texture* create(const std::string& image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+
+        /**
+         * Creates a texture from the given image data.
+         * @param rgb_data The image data.
+         * @param width The width (i.e., number of columns) of the image.
+         * @param height The rows (i.e., number of rows) of the image.
+         * @param comp The number of components for each pixel (e.g., 3 for RGB)
+         * @return The created texture.
+         */
+        static Texture* create(const std::vector<unsigned char>& rgb_data, int width, int height, int comp, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+
         ~Texture();
 
-        GLuint id() const { return id_; }
+        unsigned int id() const { return id_; }
 
         void bind(int unit = 0);
         void release();
@@ -53,14 +68,19 @@ namespace easy3d {
 
         const std::string& file_name() const { return file_name_; }
 
+        WrapMode wrap_mode() const { return wrap_mode_; }
+        FilterMode filter_mode() const { return filter_mode_; }
+
     private:
-        GLuint	id_;
+        unsigned int id_;
         int sizes_[3];
 
         std::string file_name_;
+        WrapMode	wrap_mode_;
+        FilterMode	filter_mode_;
 
     private:
-        //can only be created by using the create() function
+        /** The creation of a texture is only allowed by using the create() function */
         Texture();
 
         //copying disabled

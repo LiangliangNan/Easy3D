@@ -28,7 +28,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/tessellator.h>
@@ -263,7 +263,7 @@ namespace easy3d {
             std::string texname = group.tex_file;
             if (!texname.empty()) {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
-                Texture *tex = Texture::create(texture_file, GL_REPEAT);
+                Texture *tex = TextureManager::request(texture_file, Texture::REPEAT);
                 if (tex) {
                     drawable->set_texture(tex);
                     drawable->set_use_texture(true);

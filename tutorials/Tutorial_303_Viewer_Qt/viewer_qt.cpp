@@ -50,6 +50,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -102,7 +103,8 @@ void ViewerQt::cleanup() {
 	for (auto m : models_)
 		delete m;
 
-	ShaderManager::terminate();
+    ShaderManager::terminate();
+    TextureManager::terminate();
 }
 
 

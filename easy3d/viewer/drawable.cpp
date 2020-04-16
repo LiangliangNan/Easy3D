@@ -30,7 +30,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
@@ -88,9 +88,6 @@ namespace easy3d {
     void Drawable::clear() {
         delete vao_;
         vao_ = nullptr;
-
-        delete texture_;
-        texture_ = nullptr;
 
         VertexArrayObject::release_buffer(vertex_buffer_);
         VertexArrayObject::release_buffer(color_buffer_);

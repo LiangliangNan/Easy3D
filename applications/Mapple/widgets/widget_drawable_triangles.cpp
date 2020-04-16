@@ -5,7 +5,7 @@
 
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/texture.h>
+#include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/core/surface_mesh.h>
@@ -26,10 +26,10 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
         : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable) {
     ui->setupUi(this);
 
-    if (colormap_files_.empty())
+    if (colormaps_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
     else {
-        for (const auto &colormap : colormap_files_)
+        for (const auto &colormap : colormaps_)
             ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
                                                   QString::fromStdString(colormap.name));
     }
@@ -450,7 +450,7 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
         if (mesh) {
             viewer_->makeCurrent();
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
-            drawable()->set_texture(createColormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
             viewer_->doneCurrent();
         }
     }
@@ -526,7 +526,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
     }
 
     viewer_->makeCurrent();
-    tex = Texture::create(file_name, GL_REPEAT);
+    tex = TextureManager::request(file_name, Texture::REPEAT);
     viewer_->doneCurrent();
 
     if (tex) {
@@ -592,7 +592,7 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 
 
 void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
-    auto tex = createColormapTexture(idx);
+    auto tex = colormapTexture(idx);
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
