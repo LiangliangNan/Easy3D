@@ -278,11 +278,12 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
         StopWatch w;
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
-        ui->treeWidgetModels->addModel(model, true);
         viewer_->doneCurrent();
-        LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
-        setCurrentFile(QString::fromStdString(file_name));
         viewer_->fitScreen(model);
+
+        LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
+
+        ui->treeWidgetModels->addModel(model, true);
     }
 
     return model;
