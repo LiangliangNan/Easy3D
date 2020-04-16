@@ -1735,7 +1735,7 @@ namespace easy3d {
         // This can be easily fixed by assigning a correct outgoing halfedge to each vertex.
 
         // We need to take care of isolated vertices
-        VertexProperty<bool> reachable = add_vertex_property<bool>("v:vertex-reachable", false);
+        VertexProperty<bool> reachable = add_vertex_property<bool>("SurfaceMesh::garbage_collection-v:reachable", false);
 
         for (auto f : faces()) {
             for (auto h : halfedges(f)) {
