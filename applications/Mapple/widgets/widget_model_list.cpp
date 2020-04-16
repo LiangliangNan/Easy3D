@@ -515,12 +515,13 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             item->setSelected(item->model()->is_selected());
         }
         viewer()->setCurrentModel(current_item->model());
-        mainWindow_->currentModelChanged();
 
         if (auto_focus_)
             viewer()->fitScreen(current_item->model());
         else
             viewer()->update();
+
+        mainWindow_->currentModelChanged();
     }
 }
 
