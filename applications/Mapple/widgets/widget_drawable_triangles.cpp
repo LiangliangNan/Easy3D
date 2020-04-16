@@ -31,7 +31,7 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
     else {
         for (const auto &colormap : colormaps_)
             ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
-                                                  QString::fromStdString(colormap.name));
+                                                  QString::fromStdString("  " + colormap.name));
     }
 }
 

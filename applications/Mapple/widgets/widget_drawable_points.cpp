@@ -20,15 +20,15 @@ using namespace easy3d;
 
 
 WidgetPointsDrawable::WidgetPointsDrawable(QWidget *parent)
-        : WidgetDrawable(parent), ui(new Ui::WidgetPointsDrawable)
-{
+        : WidgetDrawable(parent), ui(new Ui::WidgetPointsDrawable) {
     ui->setupUi(this);
 
     if (colormaps_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
     else {
-        for (const auto& colormap : colormaps_)
-            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)), QString::fromStdString(colormap.name));
+        for (const auto &colormap : colormaps_)
+            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
+                                                  QString::fromStdString("  " + colormap.name));
     }
 }
 
@@ -81,7 +81,7 @@ void WidgetPointsDrawable::connectAll() {
 void WidgetPointsDrawable::disconnectAll() {
     // which drawable
     disconnect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setActiveDrawable(const QString &)));
+               this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     disconnect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -91,15 +91,15 @@ void WidgetPointsDrawable::disconnectAll() {
 
     // imposter
     disconnect(ui->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setImposterStyle(const QString &)));
+               this, SLOT(setImposterStyle(const QString &)));
 
     // lighting
     disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setLighting(const QString &)));
+               this, SLOT(setLighting(const QString &)));
 
     // color scheme
     disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setColorScheme(const QString &)));
+               this, SLOT(setColorScheme(const QString &)));
 
     // default color
     disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -119,7 +119,8 @@ void WidgetPointsDrawable::disconnectAll() {
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
                SLOT(setVectorField(const QString&)));
-    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
+    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this,
+               SLOT(setVectorFieldScale(double)));
 }
 
 
@@ -131,7 +132,7 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 namespace details {
 
     template<typename MODEL>
-    inline void setup_scalar_field(MODEL* model, PointsDrawable* drawable, const std::string& color_scheme) {
+    inline void setup_scalar_field(MODEL *model, PointsDrawable *drawable, const std::string &color_scheme) {
         for (const auto &name : model->vertex_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
                 if (model->template get_vertex_property<float>(name)) {
@@ -156,7 +157,7 @@ namespace details {
 
 
     template<typename MODEL>
-    inline std::vector<std::string> color_schemes(const MODEL* model) {
+    inline std::vector<std::string> color_schemes(const MODEL *model) {
         std::vector<std::string> schemes;
         schemes.push_back("uniform color");
 
@@ -182,7 +183,7 @@ namespace details {
 
 
     template<typename MODEL>
-    inline std::vector<std::string> vector_fields(const MODEL* model) {
+    inline std::vector<std::string> vector_fields(const MODEL *model) {
         std::vector<std::string> fields;
 
         // vector fields defined on vertices
@@ -216,7 +217,7 @@ void WidgetPointsDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto& state = states_[drawable()];
+    auto &state = states_[drawable()];
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->points_drawables();
@@ -232,9 +233,15 @@ void WidgetPointsDrawable::updatePanel() {
 
     // imposter
     switch (drawable()->impostor_type()) {
-        case PointsDrawable::PLAIN:    ui->comboBoxImposterStyle->setCurrentText("plain");   break;
-        case PointsDrawable::SPHERE:   ui->comboBoxImposterStyle->setCurrentText("sphere");  break;
-        case PointsDrawable::SURFEL:   ui->comboBoxImposterStyle->setCurrentText("surfel");  break;
+        case PointsDrawable::PLAIN:
+            ui->comboBoxImposterStyle->setCurrentText("plain");
+            break;
+        case PointsDrawable::SPHERE:
+            ui->comboBoxImposterStyle->setCurrentText("sphere");
+            break;
+        case PointsDrawable::SURFEL:
+            ui->comboBoxImposterStyle->setCurrentText("surfel");
+            break;
     }
 
     {   // lighting
@@ -243,21 +250,20 @@ void WidgetPointsDrawable::updatePanel() {
                 ui->comboBoxLightingOptions->setCurrentText("front and back");
             else
                 ui->comboBoxLightingOptions->setCurrentText("front only");
-        }
-        else
+        } else
             ui->comboBoxLightingOptions->setCurrentText("disabled");
     }
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
         std::vector<std::string> schemes;
-        if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
-            schemes = details::color_schemes(dynamic_cast<PointCloud*>(viewer_->currentModel()));
-        else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
-            schemes = details::color_schemes(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
-        else if (dynamic_cast<Graph*>(viewer_->currentModel()))
-            schemes = details::color_schemes(dynamic_cast<Graph*>(viewer_->currentModel()));
-        for (const auto& scheme : schemes)
+        if (dynamic_cast<PointCloud *>(viewer_->currentModel()))
+            schemes = details::color_schemes(dynamic_cast<PointCloud *>(viewer_->currentModel()));
+        else if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel()))
+            schemes = details::color_schemes(dynamic_cast<SurfaceMesh *>(viewer_->currentModel()));
+        else if (dynamic_cast<Graph *>(viewer_->currentModel()))
+            schemes = details::color_schemes(dynamic_cast<Graph *>(viewer_->currentModel()));
+        for (const auto &scheme : schemes)
             ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
 
         ui->comboBoxColorScheme->setCurrentText(QString::fromStdString(state.coloring));
@@ -296,12 +302,12 @@ void WidgetPointsDrawable::updatePanel() {
     {   // vector field
         ui->comboBoxVectorField->clear();
         std::vector<std::string> fields;
-        if (dynamic_cast<PointCloud*>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<PointCloud*>(viewer_->currentModel()));
-        else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<SurfaceMesh*>(viewer_->currentModel()));
-        else if (dynamic_cast<Graph*>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<Graph*>(viewer_->currentModel()));
+        if (dynamic_cast<PointCloud *>(viewer_->currentModel()))
+            fields = details::vector_fields(dynamic_cast<PointCloud *>(viewer_->currentModel()));
+        else if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel()))
+            fields = details::vector_fields(dynamic_cast<SurfaceMesh *>(viewer_->currentModel()));
+        else if (dynamic_cast<Graph *>(viewer_->currentModel()))
+            fields = details::vector_fields(dynamic_cast<Graph *>(viewer_->currentModel()));
         for (auto name : fields)
             ui->comboBoxVectorField->addItem(QString::fromStdString(name));
 
@@ -323,7 +329,7 @@ PointsDrawable *WidgetPointsDrawable::drawable() {
     if (pos != active_drawable_.end())
         return model->points_drawable(pos->second);
     else {
-        const auto& drawables = model->points_drawables();
+        const auto &drawables = model->points_drawables();
         if (drawables.empty())
             return nullptr;
         else {
@@ -375,20 +381,18 @@ void WidgetPointsDrawable::setPointSize(double s) {
 }
 
 
-void WidgetPointsDrawable::setLighting(const QString & text) {
+void WidgetPointsDrawable::setLighting(const QString &text) {
     if (text == "front and back") {
         if (!drawable()->lighting())
             drawable()->set_lighting(true);
         if (!drawable()->lighting_two_sides())
             drawable()->set_lighting_two_sides(true);
-    }
-    else if (text == "front only") {
+    } else if (text == "front only") {
         if (!drawable()->lighting())
             drawable()->set_lighting(true);
         if (drawable()->lighting_two_sides())
             drawable()->set_lighting_two_sides(false);
-    }
-    else if (text == "disabled") {
+    } else if (text == "disabled") {
         if (drawable()->lighting())
             drawable()->set_lighting(false);
     }
@@ -398,16 +402,14 @@ void WidgetPointsDrawable::setLighting(const QString & text) {
 }
 
 
-void WidgetPointsDrawable::setImposterStyle(const QString & style) {
+void WidgetPointsDrawable::setImposterStyle(const QString &style) {
     if (style == "plain") {
         if (drawable()->impostor_type() != PointsDrawable::PLAIN)
             drawable()->set_impostor_type(PointsDrawable::PLAIN);
-    }
-    else if (style == "sphere") {
+    } else if (style == "sphere") {
         if (drawable()->impostor_type() != PointsDrawable::SPHERE)
             drawable()->set_impostor_type(PointsDrawable::SPHERE);
-    }
-    else if (style == "surfel") {
+    } else if (style == "surfel") {
         if (drawable()->impostor_type() != PointsDrawable::SURFEL) {
             if (drawable()->normal_buffer() == 0) { // surfel requires point normals
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
@@ -420,8 +422,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString & style) {
                     viewer_->makeCurrent();
                     drawable()->update_normal_buffer(normals.vector());
                     viewer_->doneCurrent();
-                }
-                else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
+                } else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
                     if (drawable()->normal_buffer() == 0) { // surfel requires point normals
                         PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
                         auto normals = cloud->get_vertex_property<vec3>("v:normal");
@@ -446,7 +447,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString & style) {
 }
 
 
-void WidgetPointsDrawable::setColorScheme(const QString& text) {
+void WidgetPointsDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
     bool per_vertex_color = text != "uniform color";
@@ -457,18 +458,16 @@ void WidgetPointsDrawable::setColorScheme(const QString& text) {
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
         viewer_->makeCurrent();
-        if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+        if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel())) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-        }
-        else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
-            Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
+        } else if (dynamic_cast<Graph *>(viewer_->currentModel())) {
+            Graph *graph = dynamic_cast<Graph *>(viewer_->currentModel());
             details::setup_scalar_field(graph, drawable(), text.toStdString());
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-        }
-        else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
-            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+        } else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
+            PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
             details::setup_scalar_field(cloud, drawable(), text.toStdString());
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
         }
@@ -588,8 +587,8 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
 
 void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
     if (name == "v:normal") {
-        if (dynamic_cast<SurfaceMesh*>(model)) {
-            auto mesh = dynamic_cast<SurfaceMesh*>(model);
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            auto mesh = dynamic_cast<SurfaceMesh *>(model);
             auto normals = mesh->get_vertex_property<vec3>(name);
             if (!normals)
                 mesh->update_vertex_normals();
@@ -602,7 +601,7 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
         drawable = model->add_lines_drawable("vector - v:normal");
 
     std::vector<vec3> vertices;
-    if (dynamic_cast<SurfaceMesh*>(model)) {
+    if (dynamic_cast<SurfaceMesh *>(model)) {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
 
         auto prop = mesh->get_vertex_property<vec3>(name);
@@ -632,9 +631,7 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
             vertices[idx + 1] = vertices[idx] + prop[v] * avg_edge_length * scale;
             idx += 2;
         }
-    }
-
-    else if (dynamic_cast<PointCloud*>(model)) {
+    } else if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
 
         auto prop = cloud->get_vertex_property<vec3>(name);
@@ -690,8 +687,9 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     ui->labelDefaultColor->setEnabled(can_modify_default_color);
     ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
 
-    const auto& lighting_option = ui->comboBoxLightingOptions->currentText();
-    bool can_modify_back_color = visible && lighting_option == "front and back" && ui->comboBoxImposterStyle->currentText() != "sphere";
+    const auto &lighting_option = ui->comboBoxLightingOptions->currentText();
+    bool can_modify_back_color =
+            visible && lighting_option == "front and back" && ui->comboBoxImposterStyle->currentText() != "sphere";
     ui->labelBackColor->setEnabled(can_modify_back_color);
     ui->checkBoxBackColor->setEnabled(can_modify_back_color);
     ui->toolButtonBackColor->setEnabled(can_modify_back_color && drawable()->distinct_back_color());
@@ -705,7 +703,7 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
 
     // scalar field
     bool can_show_scalar = visible &&
-            ui->comboBoxColorScheme->currentText().contains("scalar - ");
+                           ui->comboBoxColorScheme->currentText().contains("scalar - ");
     ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldAutoRange->setEnabled(can_show_scalar);

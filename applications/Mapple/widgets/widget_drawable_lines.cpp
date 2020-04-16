@@ -20,15 +20,15 @@ using namespace easy3d;
 
 
 WidgetLinesDrawable::WidgetLinesDrawable(QWidget *parent)
-        : WidgetDrawable(parent), ui(new Ui::WidgetLinesDrawable)
-{
+        : WidgetDrawable(parent), ui(new Ui::WidgetLinesDrawable) {
     ui->setupUi(this);
 
     if (colormaps_.empty())
         ui->comboBoxScalarFieldStyle->addItem("not available");
     else {
-        for (const auto& colormap : colormaps_)
-            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)), QString::fromStdString(colormap.name));
+        for (const auto &colormap : colormaps_)
+            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
+                                                  QString::fromStdString("  " + colormap.name));
     }
 }
 
@@ -65,16 +65,15 @@ void WidgetLinesDrawable::connectAll() {
 
     // vector field
     connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
-               SLOT(setVectorField(const QString&)));
+            SLOT(setVectorField(const QString&)));
     connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
-
 
 
 void WidgetLinesDrawable::disconnectAll() {
     // which drawable
     disconnect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setActiveDrawable(const QString &)));
+               this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     disconnect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -84,11 +83,11 @@ void WidgetLinesDrawable::disconnectAll() {
 
     // imposter
     disconnect(ui->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setImposterStyle(const QString &)));
+               this, SLOT(setImposterStyle(const QString &)));
 
     // color scheme
     disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setColorScheme(const QString &)));
+               this, SLOT(setColorScheme(const QString &)));
 
     // default color
     disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -104,9 +103,9 @@ void WidgetLinesDrawable::disconnectAll() {
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
                SLOT(setVectorField(const QString&)));
-    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
+    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this,
+               SLOT(setVectorFieldScale(double)));
 }
-
 
 
 WidgetLinesDrawable::~WidgetLinesDrawable() {
@@ -126,7 +125,7 @@ void WidgetLinesDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto& state = states_[drawable()];
+    auto &state = states_[drawable()];
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->lines_drawables();
@@ -142,15 +141,21 @@ void WidgetLinesDrawable::updatePanel() {
 
     // imposter
     switch (drawable()->impostor_type()) {
-        case LinesDrawable::PLAIN:      ui->comboBoxImposterStyle->setCurrentText("plain");     break;
-        case LinesDrawable::CYLINDER:   ui->comboBoxImposterStyle->setCurrentText("cylinder");  break;
-        case LinesDrawable::CONE:       ui->comboBoxImposterStyle->setCurrentText("cone");      break;
+        case LinesDrawable::PLAIN:
+            ui->comboBoxImposterStyle->setCurrentText("plain");
+            break;
+        case LinesDrawable::CYLINDER:
+            ui->comboBoxImposterStyle->setCurrentText("cylinder");
+            break;
+        case LinesDrawable::CONE:
+            ui->comboBoxImposterStyle->setCurrentText("cone");
+            break;
     }
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
-        const std::vector<std::string>& schemes = colorSchemes(viewer_->currentModel());
-        for (const auto& scheme : schemes)
+        const std::vector<std::string> &schemes = colorSchemes(viewer_->currentModel());
+        for (const auto &scheme : schemes)
             ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
 
         ui->comboBoxColorScheme->setCurrentText(QString::fromStdString(state.coloring));
@@ -203,7 +208,7 @@ LinesDrawable *WidgetLinesDrawable::drawable() {
     if (pos != active_drawable_.end())
         return model->lines_drawable(pos->second);
     else {
-        const auto& drawables = model->lines_drawables();
+        const auto &drawables = model->lines_drawables();
         if (drawables.empty())
             return nullptr;
         else {
@@ -255,16 +260,14 @@ void WidgetLinesDrawable::setLineWidth(double w) {
 }
 
 
-void WidgetLinesDrawable::setImposterStyle(const QString & style) {
+void WidgetLinesDrawable::setImposterStyle(const QString &style) {
     if (style == "plain") {
         if (drawable()->impostor_type() != LinesDrawable::PLAIN)
             drawable()->set_impostor_type(LinesDrawable::PLAIN);
-    }
-    else if (style == "cylinder") {
+    } else if (style == "cylinder") {
         if (drawable()->impostor_type() != LinesDrawable::CYLINDER)
             drawable()->set_impostor_type(LinesDrawable::CYLINDER);
-    }
-    else if (style == "cone") {
+    } else if (style == "cone") {
         if (drawable()->impostor_type() != LinesDrawable::CONE)
             drawable()->set_impostor_type(LinesDrawable::CONE);
     }
@@ -274,11 +277,10 @@ void WidgetLinesDrawable::setImposterStyle(const QString & style) {
 }
 
 
-
 namespace details {
 
     template<typename MODEL>
-    inline void setup_scalar_field(MODEL* model, LinesDrawable* drawable, const std::string& color_scheme) {
+    inline void setup_scalar_field(MODEL *model, LinesDrawable *drawable, const std::string &color_scheme) {
         for (const auto &name : model->edge_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
                 if (model->template get_edge_property<float>(name)) {
@@ -331,7 +333,7 @@ namespace details {
     }
 }
 
-void WidgetLinesDrawable::setColorScheme(const QString& text) {
+void WidgetLinesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
     bool per_vertex_color = text != "uniform color";
@@ -342,13 +344,12 @@ void WidgetLinesDrawable::setColorScheme(const QString& text) {
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
         viewer_->makeCurrent();
-        if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
-            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+        if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel())) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
             details::setup_scalar_field(mesh, drawable(), text.toStdString());
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-        }
-        else if (dynamic_cast<Graph*>(viewer_->currentModel())) {
-            Graph* graph = dynamic_cast<Graph*>(viewer_->currentModel());
+        } else if (dynamic_cast<Graph *>(viewer_->currentModel())) {
+            Graph *graph = dynamic_cast<Graph *>(viewer_->currentModel());
             details::setup_scalar_field(graph, drawable(), text.toStdString());
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
         }
@@ -421,9 +422,7 @@ void WidgetLinesDrawable::setScalarFieldStyle(int idx) {
 }
 
 
-
-
-std::vector<std::string> WidgetLinesDrawable::colorSchemes(const easy3d::Model* model) {
+std::vector<std::string> WidgetLinesDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<std::string> schemes;
     schemes.push_back("uniform color");
 
@@ -507,13 +506,13 @@ std::vector<std::string> WidgetLinesDrawable::colorSchemes(const easy3d::Model* 
 }
 
 
-std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model* model) {
+std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model *model) {
     std::vector<std::string> fields;
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
         // vector fields defined on edges
-        for (const auto& name : mesh->edge_properties()) {
+        for (const auto &name : mesh->edge_properties()) {
             if (mesh->get_edge_property<vec3>(name)) {
                 if (name != "e:color")
                     fields.push_back(name);
@@ -524,7 +523,7 @@ std::vector<std::string> WidgetLinesDrawable::vectorFields(const easy3d::Model* 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph) {
         // vector fields defined on edges
-        for (const auto& name : graph->edge_properties()) {
+        for (const auto &name : graph->edge_properties()) {
             if (graph->get_edge_property<vec3>(name)) {
                 if (name != "e:color")
                     fields.push_back(name);
@@ -657,7 +656,7 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
 
     // scalar field
     bool can_show_scalar = visible &&
-            ui->comboBoxColorScheme->currentText().contains("scalar - ");
+                           ui->comboBoxColorScheme->currentText().contains("scalar - ");
     ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldAutoRange->setEnabled(can_show_scalar);
