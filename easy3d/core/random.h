@@ -44,7 +44,7 @@ namespace easy3d {
     }
 
     inline vec3 random_color(bool allow_dark = false) {
-        float min_rgb = 0.3f;
+        float min_rgb = 0.4f;
         if (allow_dark)
             min_rgb = 0.0f;
 
