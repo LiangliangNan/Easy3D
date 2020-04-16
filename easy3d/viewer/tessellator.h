@@ -26,7 +26,6 @@
 #define EASY3D_TESSELLATOR_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/viewer/opengl.h>
 
 #include <vector>
 
@@ -45,13 +44,31 @@ namespace easy3d {
      *          - Triangulate non-triangle surfaces;
      *          - Stitch patches of a triangle meshes.
      *
-     * @TODO: make it templated for both 2D and 3D, and floating point number; use the factored glutess
+     * @TODO: make it template for both 2D and 3D, and floating point number; use the factored glutess
      */
 
     class Tessellator {
     public:
+        /** A vertex carries both xyz coordinates and it attributes (e.g., color, texcoord). */
         struct Vertex : std::vector<double> {
+
+            /** initialized with xyz coordinates. */
+            Vertex(const vec3 &xyz) { append(xyz); }
+
+            /**
+             * initialized from a C-style array.
+             * @attention The first 3 components must be the xyz coordinates.
+             */
+            template<typename FT>
+            Vertex(const FT *data, std::size_t size) {
+                assign(data, data + size);
+            }
+
+            /**
+             * memory allocated without data initialization.
+             */
             Vertex(std::size_t size = 0) : std::vector<double>(size) {}
+
             template<typename Vec>
             inline void append(const Vec &v) {
                 for (int i = 0; i < v.size(); ++i)
@@ -95,12 +112,12 @@ namespace easy3d {
         void add_vertex(const float *data, unsigned int size);
 
         // commonly used data
-        void add_vertex(const vec3 &v0);
-        void add_vertex(const vec3 &v0, const vec2 &t);
-        void add_vertex(const vec3 &v0, const vec3 &v1);
-        void add_vertex(const vec3 &v0, const vec3 &v1, const vec2 &t);
-        void add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2);
-        void add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec2 &t);
+        void add_vertex(const vec3 &xyz);
+        void add_vertex(const vec3 &xyz, const vec2 &t);
+        void add_vertex(const vec3 &xyz, const vec3 &v1);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t);
 
         void end_contour();
 
@@ -136,22 +153,20 @@ namespace easy3d {
         void add_triangle(unsigned int a, unsigned int b, unsigned int c);
 
         // GLU tessellator callbacks
-        static void beginCallback(GLenum w, void *cbdata);
+        static void beginCallback(unsigned int w, void *cbdata);
         static void endCallback(void *cbdata);
-        static void vertexCallback(GLvoid *vertex, void *cbdata);
-        static void
-        combineCallback(GLdouble coords[3], void *vertex_data[4], GLdouble weight[4], void **dataOut, void *cbdata);
+        static void vertexCallback(void *vertex, void *cbdata);
+        static void combineCallback(double coords[3], void *vertex_data[4], double weight[4], void **dataOut, void *cbdata);
 
     private:
         GLUtesselator *tess_obj_;
 
-        // The tessellator decides the most efficient primitive type while performing tessellation,
-        // e.g., GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP.
-        GLenum primitive_type_;
+        // The tessellator decides the most efficient primitive type while performing tessellation.
+        unsigned int primitive_type_; // GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP
 
         // If true, the orientations of the resulted triangles will comply with the primitive_type_
         // (decided by the tessellator), which is useful for rendering as GL_TRIANGLE_STRIP.
-        // However, when tringulating a mesh, the output triangles must have the orientation as
+        // However, when triangulating a mesh, the output triangles must have the orientation as
         // the input polygons. In this case, you should set primitive_aware_orientation_ to false.
         bool primitive_aware_orientation_;
 

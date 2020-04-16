@@ -580,9 +580,8 @@ namespace easy3d {
                 float coord = (fscalar[face] - min_value) / (max_value - min_value);
 
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
                     vertex.append(vec2(coord, 0.5));
                     tessellator.add_vertex(vertex);
@@ -664,9 +663,8 @@ namespace easy3d {
                 tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    Tessellator::Vertex vertex;
                     auto v = model->to_vertex(h);
-                    vertex.append(points[v]);
+                    Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
 
                     float coord = (vscalar[v] - min_value) / (max_value - min_value);

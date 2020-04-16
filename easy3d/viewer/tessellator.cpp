@@ -23,6 +23,7 @@
  */
 
 #include <easy3d/viewer/tessellator.h>
+#include <easy3d/viewer/opengl.h>
 #include <easy3d/util/logging.h>
 
 #ifdef _WIN32
@@ -189,51 +190,41 @@ namespace easy3d {
 
     void Tessellator::add_vertex(const float *data, unsigned int size) // to be flexible (any data can be provide)
     {
-        Vertex vertex(size);
-        for (unsigned int i = 0; i < size; ++i)
-            vertex[i] = data[i];
-        add_vertex(vertex);
+        add_vertex(Vertex(data, size));
     }
 
-    void Tessellator::add_vertex(const vec3 &v0) {
-        Vertex v;
-        v.append(v0);
-        add_vertex(v);
+    void Tessellator::add_vertex(const vec3 &xyz) {
+        add_vertex(Vertex(xyz));
     }
 
-    void Tessellator::add_vertex(const vec3 &v0, const vec2 &t) {
-        Vertex v;
-        v.append(v0);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec2 &t) {
+        Vertex v(xyz);
         v.append(t);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1) {
-        Vertex v;
-        v.append(v0);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1) {
+        Vertex v(xyz);
         v.append(v1);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec2 &t) {
-        Vertex v;
-        v.append(v0);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t) {
+        Vertex v(xyz);
         v.append(v1);
         v.append(t);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2) {
-        Vertex v;
-        v.append(v0);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2) {
+        Vertex v(xyz);
         v.append(v1);
         v.append(v2);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &v0, const vec3 &v1, const vec3 &v2, const vec2 &t) {
-        Vertex v;
-        v.append(v0);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t) {
+        Vertex v(xyz);
         v.append(v1);
         v.append(v2);
         v.append(t);
