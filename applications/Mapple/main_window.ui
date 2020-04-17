@@ -94,7 +94,19 @@
     <property name="title">
      <string>Property</string>
     </property>
+    <widget class="QMenu" name="SurfaceMeshCurvatures">
+     <property name="title">
+      <string>Surface Mesh Curvatures</string>
+     </property>
+     <addaction name="actionComputeMeanCurvature"/>
+     <addaction name="actionComputeMaxAbsoluteCurvature"/>
+     <addaction name="actionComputeGaussianCurvature"/>
+     <addaction name="separator"/>
+     <addaction name="actionComputePrincipleCurvatures"/>
+    </widget>
     <addaction name="actionComputeHeightField"/>
+    <addaction name="separator"/>
+    <addaction name="SurfaceMeshCurvatures"/>
    </widget>
    <widget class="QMenu" name="menuSurfaceMesh">
     <property name="title">
@@ -772,6 +784,31 @@
   <action name="actionSurfaceMeshSubdivisionSqrt3">
    <property name="text">
     <string>Sqrt_3</string>
+   </property>
+  </action>
+  <action name="actionComputePrincipleCurvatures">
+   <property name="text">
+    <string>Principle Curvatures</string>
+   </property>
+  </action>
+  <action name="actionComputeMaxCurvature">
+   <property name="text">
+    <string>Max Curvature</string>
+   </property>
+  </action>
+  <action name="actionComputeGaussianCurvature">
+   <property name="text">
+    <string>Gaussian Curvature</string>
+   </property>
+  </action>
+  <action name="actionComputeMeanCurvature">
+   <property name="text">
+    <string>Mean Curvature</string>
+   </property>
+  </action>
+  <action name="actionComputeMaxAbsoluteCurvature">
+   <property name="text">
+    <string>Absolute Max Curvature</string>
    </property>
   </action>
  </widget>

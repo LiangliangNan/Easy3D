@@ -29,6 +29,7 @@
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
+#include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -622,7 +623,11 @@ void MainWindow::createActionsForEditMenu() {
 
 void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
-    connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(extractConnectedComponents()));
+
+    connect(ui->actionComputeMeanCurvature, SIGNAL(triggered()), this, SLOT(computeMeanCurvature()));
+    connect(ui->actionComputeMaxAbsoluteCurvature, SIGNAL(triggered()), this, SLOT(computeMaxAbsoluteCurvature()));
+    connect(ui->actionComputeGaussianCurvature, SIGNAL(triggered()), this, SLOT(computeGaussianCurvature()));
+    connect(ui->actionComputePrincipleCurvatures, SIGNAL(triggered()), this, SLOT(computePrincipleCurvatures()));
 }
 
 
@@ -640,6 +645,7 @@ void MainWindow::createActionsForPointCloudMenu() {
 
 void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(reportTopologyStatistics()));
+    connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(extractConnectedComponents()));
 
     connect(ui->actionDetectDuplicatedFaces, SIGNAL(triggered()), this, SLOT(detectDuplicatedFaces()));
     connect(ui->actionRemoveDuplicatedFaces, SIGNAL(triggered()), this, SLOT(removeDuplicatedFaces()));
@@ -1068,6 +1074,57 @@ void MainWindow::computeHeightField() {
             enormals[e] = vec3(1,1,1);
         }
     }
+
+    currentModelChanged();
+}
+
+
+void MainWindow::computeMeanCurvature() {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshCurvature analyzer(mesh);
+    analyzer.analyze_tensor(1, true);
+    analyzer.compute_mean_curvature();
+
+    currentModelChanged();
+}
+
+
+void MainWindow::computeMaxAbsoluteCurvature() {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshCurvature analyzer(mesh);
+    analyzer.analyze_tensor(1, true);
+    analyzer.compute_max_abs_curvature();
+
+    currentModelChanged();
+}
+
+
+void MainWindow::computeGaussianCurvature() {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshCurvature analyzer(mesh);
+    analyzer.analyze_tensor(1, true);
+    analyzer.compute_gauss_curvature();
+
+    currentModelChanged();
+}
+
+
+void MainWindow::computePrincipleCurvatures() {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshCurvature analyzer(mesh);
+    analyzer.analyze_tensor(1, true);
 
     currentModelChanged();
 }

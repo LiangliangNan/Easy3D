@@ -61,6 +61,10 @@ private slots:
 
     // property
     void computeHeightField();
+    void computeMeanCurvature();
+    void computeMaxAbsoluteCurvature();
+    void computeGaussianCurvature();
+    void computePrincipleCurvatures();
 
     // point cloud
     void downsampling();

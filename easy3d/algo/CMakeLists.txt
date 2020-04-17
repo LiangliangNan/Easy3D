@@ -5,26 +5,32 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+        differential_geometry.cpp
         gaussian_noise.h
         point_cloud_normals.h
         point_cloud_poisson_reconstruction.h
         point_cloud_ransac.h
         point_cloud_simplification.h
         surface_mesh_components.h
+        surface_mesh_curvature.h
         surface_mesh_enumerator.h
+        surface_mesh_remeshing.h
         surface_mesh_sampler.h
         surface_mesh_subdivision.h
         surface_mesh_topology.h
         )
 
 set(${PROJECT_NAME}_SOURCES
+        differential_geometry.cpp
         gaussian_noise.cpp
         point_cloud_normals.cpp
         point_cloud_poisson_reconstruction.cpp
         point_cloud_ransac.cpp
         point_cloud_simplification.cpp
         surface_mesh_components.cpp
+        surface_mesh_curvature.cpp
         surface_mesh_enumerator.cpp
+#        surface_mesh_remeshing.cpp
         surface_mesh_sampler.cpp
         surface_mesh_subdivision.cpp
         surface_mesh_topology.cpp
