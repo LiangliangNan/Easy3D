@@ -32,32 +32,28 @@ public:
 public slots:
 
     void setDrawableVisible(bool);
-
     void setActiveDrawable(const QString &);
 
     void setLineWidth(double);
-
     void setImposterStyle(const QString &);
 
     void setColorScheme(const QString &);
-
     void setDefaultColor();
 
     void setHighlight(bool);
-
     void setHighlightMin(int);
-
     void setHighlightMax(int);
 
     void setScalarFieldStyle(int);
+    void setScalarFieldClamp(bool);
+    void setScalarFieldClampLower(int);
+    void setScalarFieldClampUpper(int);
 
     void setVectorField(const QString &);
-
     void setVectorFieldScale(double);
 
 private:
     void connectAll();
-
     void disconnectAll();
 
     void disableUnavailableOptions();
@@ -76,16 +72,16 @@ private:
     // the state of the rendering panel
     struct State {
         State() : initialized(false), coloring("uniform color"),
-                  scalar_style(0), auto_range(false), auto_range_min(0.0),
-                  auto_range_max(1.0), vector_field("disabled"), vector_field_scale(1.0) {
+                  scalar_style(0), clamp_value(false), clamp_value_lower(5),
+                  clamp_value_upper(5), vector_field("disabled"), vector_field_scale(1.0) {
         }
 
         bool initialized;
         std::string coloring;
         int scalar_style;
-        bool auto_range;
-        double auto_range_min;
-        double auto_range_max;
+        bool clamp_value;
+        int clamp_value_lower;
+        int clamp_value_upper;
         std::string vector_field;
         double vector_field_scale;
     };
