@@ -429,16 +429,25 @@ void WidgetLinesDrawable::setScalarFieldStyle(int idx) {
 
 
 void WidgetLinesDrawable::setScalarFieldClamp(bool b) {
+    auto& state = states_[drawable()];
+    state.clamp_value = b;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetLinesDrawable::setScalarFieldClampLower(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_lower = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetLinesDrawable::setScalarFieldClampUpper(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_upper = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 

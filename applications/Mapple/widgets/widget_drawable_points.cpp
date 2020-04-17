@@ -567,16 +567,25 @@ void WidgetPointsDrawable::setScalarFieldStyle(int idx) {
 
 
 void WidgetPointsDrawable::setScalarFieldClamp(bool b) {
+    auto& state = states_[drawable()];
+    state.clamp_value = b;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetPointsDrawable::setScalarFieldClampLower(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_lower = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetPointsDrawable::setScalarFieldClampUpper(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_upper = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
