@@ -27,7 +27,7 @@
 
 
 #include <string>
-#include <vector >
+#include <vector>
 
 
 namespace easy3d {

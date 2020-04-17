@@ -80,7 +80,7 @@ namespace easy3d {
             LOG(ERROR) << "empty image data provided";
             return nullptr;
         }
-        else if (rgb_data.size() != width * height * 3) {
+        else if (rgb_data.size() != width * height * comp) {
             LOG(ERROR) << "image data does not match the given size";
             return nullptr;
         }

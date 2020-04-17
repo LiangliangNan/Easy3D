@@ -19,4 +19,4 @@
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
 	    * otherwise, use multi-thread
-	-...
+	- More algorithms (similar to that of https://github.com/pmp-library/pmp-library/tree/master)

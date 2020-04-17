@@ -22,32 +22,26 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_FILEIO_RESOURCES_H
-#define EASY3D_FILEIO_RESOURCES_H
-
-
-#include <easy3d/core/types.h>
+#ifndef EASY3D_ALGO_MESH_SUBDIVISION_H
+#define EASY3D_ALGO_MESH_SUBDIVISION_H
 
 
 namespace easy3d {
 
-    namespace resource {
+    class SurfaceMesh;
 
-        // the data representing a bunny model.
-        // the vertices
-        extern const std::vector<vec3>    bunny_vertices;
-        // the triangle faces (each consecutive 3 values denote the vertex indices of a triangle)
-        extern const std::vector<unsigned int>     bunny_indices;
+    class SurfaceMeshSubdivision {
+    public:
+        /** The Catmull-Clark subdivision. */
+        static bool catmull_clark(SurfaceMesh *mesh);
 
-        // a 1D array store a gradually changing colors which each consecutive 3 elements represent a RGB color.
-        extern const std::vector<unsigned char> cold_warm_colors;
+        /** The Loop subdivision. */
+        static bool loop(SurfaceMesh *mesh);
 
-		// resource directory (containing color maps, shaders, textures, etc.)
-        extern std::string directory();
-
-    } // namespace resource
+        /** The sqrt3 subdivision. */
+        static bool sqrt3(SurfaceMesh *mesh);
+    };
 
 } // namespace easy3d
 
-
-#endif // EASY3D_FILEIO_RESOURCES_H
+#endif  // EASY3D_ALGO_MESH_SUBDIVISION_H

@@ -628,9 +628,8 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     }
                 }
             }
-            else {
+            else
                 drawable->set_visible(!drawable->is_visible());
-            }
             main_window_->currentModelChanged();
         }
     }
@@ -639,6 +638,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             auto drawable = currentModel()->triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
+                main_window_->currentModelChanged();
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {

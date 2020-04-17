@@ -56,30 +56,35 @@ private slots:
     void saveSnapshot();
     void setBackgroundColor();
 
-    // edit
-    void downsampling();
+    // common edit
     void addGaussianNoise();
 
     // property
     void computeHeightField();
-    void computeConnectedComponents();
+    void computeMeanCurvature();
+    void computeMaxAbsoluteCurvature();
+    void computeGaussianCurvature();
+    void computePrincipleCurvatures();
 
-    // topology
+    // point cloud
+    void downsampling();
+    void estimatePointCloudNormals();
+    void reorientPointCloudNormals();
+    void normalizePointCloudNormals();
+    void poissonSurfaceReconstruction();
+    void ransacPrimitiveExtraction();
+
+    // surface mesh
     void reportTopologyStatistics();
+    void extractConnectedComponents();
     void detectDuplicatedFaces();
     void removeDuplicatedFaces();
     void detectSelfIntersections();
     void remeshSelfIntersections();
-
-    // orientation
-    void estimatePointCloudNormals();
-    void reorientPointCloudNormals();
-    void normalizePointCloudNormals();
-
-    // conversion
-    void poissonSurfaceReconstruction();
-    void ransacPrimitiveExtraction();
     void samplingSurfaceMesh();
+    void subdivisionCatmullClark();
+    void subdivisionLoop();
+    void subdivisionSqrt3();
 
     // about
     void onAboutMapple();
@@ -97,15 +102,13 @@ private:
     easy3d::Model* open(const std::string& file_name, bool create_default_drawables = true);
 
 private:
-    void createActions();
-
     void createActionsForFileMenu();
     void createActionsForViewMenu();
     void createActionsForEditMenu();
     void createActionsForPropertyMenu();
-    void createActionsForTopologyMenu();
-    void createActionsForOrientationMenu();
-    void createActionsForConversionMenu();
+    void createActionsForSelectMenu();
+    void createActionsForPointCloudMenu();
+    void createActionsForSurfaceMeshMenu();
 
     bool okToContinue();
     void readSettings();

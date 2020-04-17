@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>460</width>
+    <width>347</width>
     <height>411</height>
    </rect>
   </property>
@@ -97,7 +97,7 @@
        <item alignment="Qt::AlignRight">
         <widget class="QLabel" name="labelVectorFieldScale">
          <property name="text">
-          <string>Scale (%)</string>
+          <string>Scale</string>
          </property>
         </widget>
        </item>
@@ -111,9 +111,9 @@
       </widget>
      </item>
      <item row="7" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayoutLabelAutoRange">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelClamp">
        <item>
-        <spacer name="horizontalSpacerLabelAutoRange">
+        <spacer name="horizontalSpacerLabelClamp">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -126,7 +126,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="labelScalarFieldAutoRange">
+        <widget class="QLabel" name="labelScalarFieldClamp">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -134,7 +134,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Auto range</string>
+          <string>Clamp(%)</string>
          </property>
         </widget>
        </item>
@@ -233,8 +233,18 @@
      </item>
      <item row="7" column="1" colspan="2">
       <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBoxScalarFieldClamp">
+         <property name="toolTip">
+          <string>Check to clamp the specified percent of lower and upper values.</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="1">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldAutoRangeMin">
+        <widget class="QSpinBox" name="spinBoxScalarFieldClampLower">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -247,19 +257,16 @@
            <height>0</height>
           </size>
          </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-999999999999.000000000000000</double>
-         </property>
          <property name="maximum">
-          <double>999999999999.000000000000000</double>
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>5</number>
          </property>
         </widget>
        </item>
        <item row="0" column="2">
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldAutoRangeMax">
+        <widget class="QSpinBox" name="spinBoxScalarFieldClampUpper">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -272,24 +279,11 @@
            <height>0</height>
           </size>
          </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-999999999999.000000000000000</double>
-         </property>
          <property name="maximum">
-          <double>999999999999.000000000000000</double>
+          <number>100</number>
          </property>
          <property name="value">
-          <double>1.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="checkBoxScalarFieldAutoRange">
-         <property name="text">
-          <string/>
+          <number>5</number>
          </property>
         </widget>
        </item>
@@ -641,9 +635,9 @@ The scale is relative to the average edge lenght of the model.</string>
   <tabstop>comboBoxColorScheme</tabstop>
   <tabstop>toolButtonDefaultColor</tabstop>
   <tabstop>comboBoxScalarFieldStyle</tabstop>
-  <tabstop>checkBoxScalarFieldAutoRange</tabstop>
-  <tabstop>doubleSpinBoxScalarFieldAutoRangeMin</tabstop>
-  <tabstop>doubleSpinBoxScalarFieldAutoRangeMax</tabstop>
+  <tabstop>checkBoxScalarFieldClamp</tabstop>
+  <tabstop>spinBoxScalarFieldClampLower</tabstop>
+  <tabstop>spinBoxScalarFieldClampUpper</tabstop>
   <tabstop>comboBoxVectorField</tabstop>
   <tabstop>doubleSpinBoxVectorFieldScale</tabstop>
   <tabstop>checkBoxHighlight</tabstop>

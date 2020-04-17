@@ -3,7 +3,6 @@
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
-#include <easy3d/viewer/texture_manager.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"
@@ -24,6 +23,8 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
         const std::string dir = resource::directory() + "/colormaps/";
         if (file_system::is_file(dir + "default.png"))
             colormaps_.emplace_back(ColorMap(dir + "default.png", "default"));
+        if (file_system::is_file(dir + "french.png"))
+            colormaps_.emplace_back(ColorMap(dir + "french.png", "french"));
         if (file_system::is_file(dir + "rainbow.png"))
             colormaps_.emplace_back(ColorMap(dir + "rainbow.png", "rainbow"));
         if (file_system::is_file(dir + "blue_red.png"))
@@ -58,7 +59,7 @@ Texture *WidgetDrawable::colormapTexture(int idx) const {
         if (colormaps_[idx].name.find("random") == std::string::npos)
             return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
         else
-            return TextureManager::request(24, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+            return TextureManager::request(12, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     }
     else
         return nullptr;

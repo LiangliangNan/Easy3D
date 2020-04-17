@@ -38,8 +38,7 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
 
 void WidgetTrianglesDrawable::connectAll() {
     // which drawable
-    connect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setActiveDrawable(const QString &)));
+    connect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     connect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -48,12 +47,10 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setLighting(const QString &)));
+    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    connect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
-            this, SLOT(setColorScheme(const QString &)));
+    connect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
     connect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -65,8 +62,7 @@ void WidgetTrianglesDrawable::connectAll() {
     // texture
     connect(ui->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
     connect(ui->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
-    connect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),
-            this, SLOT(setTextureFractionalRepeat(int)));
+    connect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
 
     // highlight
     connect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
@@ -77,20 +73,20 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this,
-            SLOT(setScalarFieldStyle(int)));
+    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
+    connect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
+    connect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
 
     // vector field
-    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
-            SLOT(setVectorField(const QString&)));
+    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
     connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
 void WidgetTrianglesDrawable::disconnectAll() {
     // which drawable
-    disconnect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
-               this, SLOT(setActiveDrawable(const QString &)));
+    disconnect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     disconnect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -99,12 +95,10 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),
-               this, SLOT(setLighting(const QString &)));
+    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
-               this, SLOT(setColorScheme(const QString &)));
+    disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
     disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -116,8 +110,7 @@ void WidgetTrianglesDrawable::disconnectAll() {
     // texture
     disconnect(ui->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
     disconnect(ui->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
-    disconnect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),
-               this, SLOT(setTextureFractionalRepeat(int)));
+    disconnect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
 
     // highlight
     disconnect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
@@ -128,12 +121,13 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this,
-            SLOT(setScalarFieldStyle(int)));
+    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
+    disconnect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
+    disconnect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
 
     // vector field
-    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
-            SLOT(setVectorField(const QString&)));
+    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
     disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
@@ -253,9 +247,9 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
-        ui->checkBoxScalarFieldAutoRange->setChecked(state.auto_range);
-        ui->doubleSpinBoxScalarFieldAutoRangeMin->setValue(state.auto_range_min);
-        ui->doubleSpinBoxScalarFieldAutoRangeMax->setValue(state.auto_range_max);
+        ui->checkBoxScalarFieldClamp->setChecked(state.clamp_value);
+        ui->spinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
+        ui->spinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
     }
 
     {   // vector field
@@ -383,27 +377,27 @@ void WidgetTrianglesDrawable::setLighting(const QString &text) {
 
 namespace details {
 
-    inline void setup_scalar_field(SurfaceMesh *mesh, TrianglesDrawable *drawable, const std::string &color_scheme) {
+    inline void setup_scalar_field(SurfaceMesh *mesh, TrianglesDrawable *drawable, const std::string &color_scheme, float dummy_lower, float dummy_upper) {
         for (const auto &name : mesh->face_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
                 if (mesh->get_face_property<float>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<float>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<float>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_face_property<double>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<double>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<double>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_face_property<unsigned int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<unsigned int>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<unsigned int>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_face_property<int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<int>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<int>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_face_property<bool>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<bool>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_face_property<bool>(name), dummy_lower, dummy_upper);
                     return;
                 }
             }
@@ -412,23 +406,23 @@ namespace details {
         for (const auto &name : mesh->vertex_properties()) {
             if (color_scheme.find(name) != std::string::npos) {
                 if (mesh->get_vertex_property<float>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<float>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<float>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_vertex_property<double>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<double>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<double>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_vertex_property<unsigned int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<unsigned int>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<unsigned int>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_vertex_property<int>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<int>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<int>(name), dummy_lower, dummy_upper);
                     return;
                 }
                 if (mesh->get_vertex_property<bool>(name)) {
-                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<bool>(name));
+                    renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<bool>(name), dummy_lower, dummy_upper);
                     return;
                 }
             }
@@ -439,25 +433,27 @@ namespace details {
 void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
-    bool per_vertex_color = text != "uniform color";
-    if (drawable()->per_vertex_color() != per_vertex_color) {
-        drawable()->set_per_vertex_color(per_vertex_color);
-    }
+    drawable()->set_per_vertex_color(text != "uniform color");
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
         SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
         if (mesh) {
+            float clamp_lower = 0.0f, clamp_upper = 0.0f;
+            if (ui->checkBoxScalarFieldClamp->isChecked()) {
+                clamp_lower = ui->spinBoxScalarFieldClampLower->value() / 100.0f;
+                clamp_upper = ui->spinBoxScalarFieldClampUpper->value() / 100.0f;
+            }
+
             viewer_->makeCurrent();
-            details::setup_scalar_field(mesh, drawable(), text.toStdString());
+            details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
             drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
             viewer_->doneCurrent();
         }
     }
 
-    bool use_texture = text.contains(":texcoord") || is_scalar_field;
-    if (drawable()->use_texture() != use_texture)
-        drawable()->set_use_texture(use_texture);
+    bool use_texture = (text.contains(":texcoord") || is_scalar_field);
+    drawable()->set_use_texture(use_texture);
 
     viewer_->update();
 
@@ -600,6 +596,21 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
 }
 
 
+void WidgetTrianglesDrawable::setScalarFieldClamp(bool b) {
+    setColorScheme(ui->comboBoxColorScheme->currentText());
+}
+
+
+void WidgetTrianglesDrawable::setScalarFieldClampLower(int v) {
+    setColorScheme(ui->comboBoxColorScheme->currentText());
+}
+
+
+void WidgetTrianglesDrawable::setScalarFieldClampUpper(int v) {
+    setColorScheme(ui->comboBoxColorScheme->currentText());
+}
+
+
 void WidgetTrianglesDrawable::setVectorField(const QString &text) {
     auto model = viewer_->currentModel();
     SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
@@ -737,14 +748,13 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->horizontalSliderOpacity->setEnabled(can_modify_opacity);
 
     // scalar field
-    bool can_show_scalar = visible &&
-                           ui->comboBoxColorScheme->currentText().contains("scalar - ");
+    bool can_show_scalar = visible && ui->comboBoxColorScheme->currentText().contains("scalar - ");
     ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
-    ui->labelScalarFieldAutoRange->setEnabled(can_show_scalar);
-    ui->checkBoxScalarFieldAutoRange->setEnabled(can_show_scalar);
-    ui->doubleSpinBoxScalarFieldAutoRangeMin->setEnabled(can_show_scalar);
-    ui->doubleSpinBoxScalarFieldAutoRangeMax->setEnabled(can_show_scalar);
+    ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
+    ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
+    ui->spinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->spinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

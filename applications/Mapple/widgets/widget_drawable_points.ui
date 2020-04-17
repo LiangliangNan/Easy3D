@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>460</width>
+    <width>348</width>
     <height>463</height>
    </rect>
   </property>
@@ -492,9 +492,9 @@ The scale is relative to the average edge lenght of the model.</string>
       </layout>
      </item>
      <item row="8" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayoutLabelAutoRange">
+      <layout class="QHBoxLayout" name="horizontalLayoutLabelClamp">
        <item>
-        <spacer name="horizontalSpacerLabelAutoRange">
+        <spacer name="horizontalSpacerLabelClamp">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -507,7 +507,7 @@ The scale is relative to the average edge lenght of the model.</string>
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="labelScalarFieldAutoRange">
+        <widget class="QLabel" name="labelScalarFieldClamp">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -515,7 +515,7 @@ The scale is relative to the average edge lenght of the model.</string>
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Auto range</string>
+          <string>Clamp(%)</string>
          </property>
         </widget>
        </item>
@@ -531,14 +531,17 @@ The scale is relative to the average edge lenght of the model.</string>
      <item row="8" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QCheckBox" name="checkBoxScalarFieldAutoRange">
+        <widget class="QCheckBox" name="checkBoxScalarFieldClamp">
+         <property name="toolTip">
+          <string>Check to clamp the specified percent of lower and upper values.</string>
+         </property>
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldAutoRangeMin">
+        <widget class="QSpinBox" name="spinBoxScalarFieldClampLower">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -551,19 +554,16 @@ The scale is relative to the average edge lenght of the model.</string>
            <height>0</height>
           </size>
          </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-999999999999.000000000000000</double>
-         </property>
          <property name="maximum">
-          <double>999999999999.000000000000000</double>
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>5</number>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldAutoRangeMax">
+        <widget class="QSpinBox" name="spinBoxScalarFieldClampUpper">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -576,14 +576,11 @@ The scale is relative to the average edge lenght of the model.</string>
            <height>0</height>
           </size>
          </property>
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>-999999999999.000000000000000</double>
+         <property name="maximum">
+          <number>100</number>
          </property>
          <property name="value">
-          <double>1.000000000000000</double>
+          <number>5</number>
          </property>
         </widget>
        </item>
@@ -719,7 +716,7 @@ The scale is relative to the average edge lenght of the model.</string>
        <item alignment="Qt::AlignRight">
         <widget class="QLabel" name="labelVectorFieldScale">
          <property name="text">
-          <string>Scale (%)</string>
+          <string>Scale</string>
          </property>
         </widget>
        </item>
@@ -750,9 +747,9 @@ The scale is relative to the average edge lenght of the model.</string>
   <tabstop>checkBoxVisible</tabstop>
   <tabstop>comboBoxColorScheme</tabstop>
   <tabstop>comboBoxScalarFieldStyle</tabstop>
-  <tabstop>checkBoxScalarFieldAutoRange</tabstop>
-  <tabstop>doubleSpinBoxScalarFieldAutoRangeMin</tabstop>
-  <tabstop>doubleSpinBoxScalarFieldAutoRangeMax</tabstop>
+  <tabstop>checkBoxScalarFieldClamp</tabstop>
+  <tabstop>spinBoxScalarFieldClampLower</tabstop>
+  <tabstop>spinBoxScalarFieldClampUpper</tabstop>
   <tabstop>comboBoxVectorField</tabstop>
   <tabstop>doubleSpinBoxVectorFieldScale</tabstop>
   <tabstop>checkBoxHighlight</tabstop>
