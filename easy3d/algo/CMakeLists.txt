@@ -14,7 +14,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_components.h
         surface_mesh_curvature.h
         surface_mesh_enumerator.h
-        surface_mesh_remeshing.h
+#        surface_mesh_remeshing.h
         surface_mesh_sampler.h
         surface_mesh_subdivision.h
         surface_mesh_topology.h

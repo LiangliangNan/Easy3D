@@ -597,16 +597,25 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
 
 
 void WidgetTrianglesDrawable::setScalarFieldClamp(bool b) {
+    auto& state = states_[drawable()];
+    state.clamp_value = b;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetTrianglesDrawable::setScalarFieldClampLower(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_lower = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
 void WidgetTrianglesDrawable::setScalarFieldClampUpper(int v) {
+    auto& state = states_[drawable()];
+    state.clamp_value_upper = v;
+
     setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
