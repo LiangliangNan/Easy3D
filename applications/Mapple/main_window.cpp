@@ -28,6 +28,7 @@
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
+#include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -92,12 +93,33 @@ MainWindow::MainWindow(QWidget *parent)
 
     // ---------------------------
 
+    // file menu
+    createActionsForFileMenu();
+
+    // view menu
+    createActionsForViewMenu();
+
+    // edit menu
+    createActionsForEditMenu();
+
+    // property menu
+    createActionsForPropertyMenu();
+
+    // select menu
+    createActionsForSelectMenu();
+
+    // point cloud menu
+    createActionsForPointCloudMenu();
+
+    // surface mesh menu
+    createActionsForSurfaceMeshMenu();
+
+    // about menu
+    connect(ui->actionAboutMapple, SIGNAL(triggered()), this, SLOT(onAboutMapple()));
+
+    // options for the model panel
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
     connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
-
-    // ---------------------------
-
-    createActions();
 
     setWindowIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/Mapple.png")));
     setFocusPolicy(Qt::StrongFocus);
@@ -530,33 +552,6 @@ QString MainWindow::strippedName(const QString &fullFileName)
 }
 
 
-void MainWindow::createActions() {
-    // file menu
-    createActionsForFileMenu();
-
-    // view menu
-    createActionsForViewMenu();
-
-    // edit menu
-    createActionsForEditMenu();
-
-    // property menu
-    createActionsForPropertyMenu();
-
-    // topology menu
-    createActionsForTopologyMenu();
-
-    // orientation menu
-    createActionsForOrientationMenu();
-
-    // conversion menu
-    createActionsForConversionMenu();
-
-    // about menu
-    connect(ui->actionAboutMapple, SIGNAL(triggered()), this, SLOT(onAboutMapple()));
-}
-
-
 void MainWindow::createActionsForFileMenu() {
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpen()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
@@ -604,13 +599,9 @@ void MainWindow::createActionsForViewMenu() {
 }
 
 
-void MainWindow::createActionsForEditMenu() {
+void MainWindow::createActionsForSelectMenu() {
     connect(ui->actionInvertSelection, SIGNAL(triggered()), viewer_, SLOT(invertSelection()));
     connect(ui->actionDeleteSelectedPrimitives, SIGNAL(triggered()), viewer_, SLOT(deleteSelectedPrimitives()));
-
-    connect(ui->actionDownSampling, SIGNAL(triggered()), this, SLOT(downsampling()));
-
-    connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -624,9 +615,41 @@ void MainWindow::createActionsForEditMenu() {
 }
 
 
+void MainWindow::createActionsForEditMenu() {
+    connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
+}
+
+
 void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
-    connect(ui->actionComputeConnectedComponents, SIGNAL(triggered()), this, SLOT(computeConnectedComponents()));
+    connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(extractConnectedComponents()));
+}
+
+
+void MainWindow::createActionsForPointCloudMenu() {
+    connect(ui->actionDownSampling, SIGNAL(triggered()), this, SLOT(downsampling()));
+
+    connect(ui->actionEstimatePointCloudNormals, SIGNAL(triggered()), this, SLOT(estimatePointCloudNormals()));
+    connect(ui->actionReorientPointCloudNormals, SIGNAL(triggered()), this, SLOT(reorientPointCloudNormals()));
+    connect(ui->actionNormalizePointCloudNormals, SIGNAL(triggered()), this, SLOT(normalizePointCloudNormals()));
+
+    connect(ui->actionRansacPrimitiveExtraction, SIGNAL(triggered()), this, SLOT(ransacPrimitiveExtraction()));
+    connect(ui->actionPoissonSurfaceReconstruction, SIGNAL(triggered()), this, SLOT(poissonSurfaceReconstruction()));
+}
+
+
+void MainWindow::createActionsForSurfaceMeshMenu() {
+    connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(reportTopologyStatistics()));
+
+    connect(ui->actionDetectDuplicatedFaces, SIGNAL(triggered()), this, SLOT(detectDuplicatedFaces()));
+    connect(ui->actionRemoveDuplicatedFaces, SIGNAL(triggered()), this, SLOT(removeDuplicatedFaces()));
+
+    connect(ui->actionDetectSelfIntersections, SIGNAL(triggered()), this, SLOT(detectSelfIntersections()));
+    connect(ui->actionRemeshSelfIntersections, SIGNAL(triggered()), this, SLOT(remeshSelfIntersections()));
+
+    connect(ui->actionSurfaceMeshSubdivisionCatmullClark, SIGNAL(triggered()), this, SLOT(subdivisionCatmullClark()));
+    connect(ui->actionSurfaceMeshSubdivisionLoop, SIGNAL(triggered()), this, SLOT(subdivisionLoop()));
+    connect(ui->actionSurfaceMeshSubdivisionSqrt3, SIGNAL(triggered()), this, SLOT(subdivisionSqrt3()));
 }
 
 
@@ -651,31 +674,6 @@ void MainWindow::operationModeChanged(QAction* act) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
     }
     viewer()->update();
-}
-
-
-void MainWindow::createActionsForTopologyMenu() {
-    connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(reportTopologyStatistics()));
-
-    connect(ui->actionDetectDuplicatedFaces, SIGNAL(triggered()), this, SLOT(detectDuplicatedFaces()));
-    connect(ui->actionRemoveDuplicatedFaces, SIGNAL(triggered()), this, SLOT(removeDuplicatedFaces()));
-
-    connect(ui->actionDetectSelfIntersections, SIGNAL(triggered()), this, SLOT(detectSelfIntersections()));
-    connect(ui->actionRemeshSelfIntersections, SIGNAL(triggered()), this, SLOT(remeshSelfIntersections()));
-}
-
-
-void MainWindow::createActionsForOrientationMenu() {
-    connect(ui->actionEstimatePointCloudNormals, SIGNAL(triggered()), this, SLOT(estimatePointCloudNormals()));
-    connect(ui->actionReorientPointCloudNormals, SIGNAL(triggered()), this, SLOT(reorientPointCloudNormals()));
-    connect(ui->actionNormalizePointCloudNormals, SIGNAL(triggered()), this, SLOT(normalizePointCloudNormals()));
-}
-
-
-void MainWindow::createActionsForConversionMenu() {
-    connect(ui->actionPoissonSurfaceReconstruction, SIGNAL(triggered()), this, SLOT(poissonSurfaceReconstruction()));
-    connect(ui->actionRansacPrimitiveExtraction, SIGNAL(triggered()), this, SLOT(ransacPrimitiveExtraction()));
-    connect(ui->actionSamplingSurfaceMesh, SIGNAL(triggered()), this, SLOT(samplingSurfaceMesh()));
 }
 
 
@@ -828,6 +826,51 @@ void MainWindow::remeshSelfIntersections() {
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
+}
+
+
+void MainWindow::subdivisionCatmullClark() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
+        mesh->update_vertex_normals();
+        viewer()->makeCurrent();
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+        viewer()->doneCurrent();
+        viewer()->update();
+    }
+}
+
+
+void MainWindow::subdivisionLoop() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::loop(mesh)) {
+        mesh->update_vertex_normals();
+        viewer()->makeCurrent();
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+        viewer()->doneCurrent();
+        viewer()->update();
+    }
+}
+
+
+void MainWindow::subdivisionSqrt3() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::sqrt3(mesh)) {
+        mesh->update_vertex_normals();
+        viewer()->makeCurrent();
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+        viewer()->doneCurrent();
+        viewer()->update();
+    }
 }
 
 
@@ -1030,7 +1073,7 @@ void MainWindow::computeHeightField() {
 }
 
 
-void MainWindow::computeConnectedComponents() {
+void MainWindow::extractConnectedComponents() {
     auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
     if (!mesh)
         return;

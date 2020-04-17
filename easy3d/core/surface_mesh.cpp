@@ -790,9 +790,7 @@ namespace easy3d {
             vnormal_[*vit] = compute_vertex_normal(*vit);
 
 #else // use the average of the incident face normals
-
-        if (!fnormal_)
-            update_face_normals();
+        update_face_normals();
 
         VertexIterator vit, vend=vertices_end();
         for (vit=vertices_begin(); vit!=vend; ++vit) {

@@ -69,61 +69,70 @@
     </property>
     <addaction name="actionAboutMapple"/>
    </widget>
-   <widget class="QMenu" name="menuConversion">
+   <widget class="QMenu" name="menuPointCloud">
     <property name="title">
-     <string>Conversion</string>
+     <string>Point Cloud</string>
     </property>
-    <addaction name="actionPoissonSurfaceReconstruction"/>
-    <addaction name="actionRansacPrimitiveExtraction"/>
+    <addaction name="actionDownSampling"/>
     <addaction name="separator"/>
-    <addaction name="actionSamplingSurfaceMesh"/>
-   </widget>
-   <widget class="QMenu" name="menuTopology">
-    <property name="title">
-     <string>Topology</string>
-    </property>
-    <addaction name="actionTopologyStatistics"/>
-    <addaction name="separator"/>
-    <addaction name="actionDetectDuplicatedFaces"/>
-    <addaction name="actionRemoveDuplicatedFaces"/>
-    <addaction name="separator"/>
-    <addaction name="actionDetectSelfIntersections"/>
-    <addaction name="actionRemeshSelfIntersections"/>
-   </widget>
-   <widget class="QMenu" name="menuOrientation">
-    <property name="title">
-     <string>Orientation</string>
-    </property>
     <addaction name="actionEstimatePointCloudNormals"/>
     <addaction name="actionReorientPointCloudNormals"/>
-    <addaction name="separator"/>
     <addaction name="actionNormalizePointCloudNormals"/>
+    <addaction name="separator"/>
+    <addaction name="actionRansacPrimitiveExtraction"/>
+    <addaction name="actionPoissonSurfaceReconstruction"/>
    </widget>
    <widget class="QMenu" name="menuSelect">
     <property name="title">
-     <string>Edit</string>
+     <string>Select</string>
     </property>
     <addaction name="actionInvertSelection"/>
     <addaction name="separator"/>
     <addaction name="actionDeleteSelectedPrimitives"/>
-    <addaction name="separator"/>
-    <addaction name="actionDownSampling"/>
-    <addaction name="actionAddGaussianNoise"/>
    </widget>
    <widget class="QMenu" name="menuProperty">
     <property name="title">
      <string>Property</string>
     </property>
     <addaction name="actionComputeHeightField"/>
-    <addaction name="actionComputeConnectedComponents"/>
+   </widget>
+   <widget class="QMenu" name="menuSurfaceMesh">
+    <property name="title">
+     <string>Surface Mesh</string>
+    </property>
+    <widget class="QMenu" name="menuSubdivision">
+     <property name="title">
+      <string>Subdivision</string>
+     </property>
+     <addaction name="actionSurfaceMeshSubdivisionLoop"/>
+     <addaction name="actionSurfaceMeshSubdivisionCatmullClark"/>
+     <addaction name="actionSurfaceMeshSubdivisionSqrt3"/>
+    </widget>
+    <addaction name="actionTopologyStatistics"/>
+    <addaction name="actionExtractConnectedComponents"/>
+    <addaction name="separator"/>
+    <addaction name="actionDetectDuplicatedFaces"/>
+    <addaction name="actionRemoveDuplicatedFaces"/>
+    <addaction name="separator"/>
+    <addaction name="actionDetectSelfIntersections"/>
+    <addaction name="actionRemeshSelfIntersections"/>
+    <addaction name="separator"/>
+    <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="menuSubdivision"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionAddGaussianNoise"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
-   <addaction name="menuSelect"/>
    <addaction name="menuProperty"/>
-   <addaction name="menuTopology"/>
-   <addaction name="menuOrientation"/>
-   <addaction name="menuConversion"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuSelect"/>
+   <addaction name="menuPointCloud"/>
+   <addaction name="menuSurfaceMesh"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -593,7 +602,7 @@
   </action>
   <action name="actionTopologyStatistics">
    <property name="text">
-    <string>Show Statistics</string>
+    <string>Topology Statistics</string>
    </property>
   </action>
   <action name="actionDetectSelfIntersections">
@@ -745,9 +754,24 @@
     <string>Normalize Point Cloud Normals</string>
    </property>
   </action>
-  <action name="actionComputeConnectedComponents">
+  <action name="actionExtractConnectedComponents">
    <property name="text">
-    <string>Compute Connected Components</string>
+    <string>Extract Connected Components</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSubdivisionLoop">
+   <property name="text">
+    <string>Loop</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSubdivisionCatmullClark">
+   <property name="text">
+    <string>Catm-Clark</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSubdivisionSqrt3">
+   <property name="text">
+    <string>Sqrt_3</string>
    </property>
   </action>
  </widget>
