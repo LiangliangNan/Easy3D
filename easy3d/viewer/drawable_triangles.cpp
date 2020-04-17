@@ -36,7 +36,7 @@ namespace easy3d {
 
     TrianglesDrawable::TrianglesDrawable(const std::string& name)
             : Drawable(name)
-            , smooth_shading_(false)
+            , smooth_shading_(setting::surface_mesh_phong_shading)
             , opacity_(0.6f)
     {
         default_color_ = setting::surface_mesh_faces_color;

@@ -66,7 +66,7 @@ namespace easy3d {
         bool point_cloud_impostors = false;
 
         // surface mesh - surface
-        bool surface_mesh_phong_shading = false;
+        bool surface_mesh_phong_shading = true;
         bool surface_mesh_show_faces = true;
         vec4 surface_mesh_faces_color = vec4(0.4f, 0.8f, 0.8f, 1.0f);
         bool surface_mesh_use_color_property = true;
