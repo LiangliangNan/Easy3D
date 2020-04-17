@@ -69,7 +69,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop);
+        void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a point cloud using the texture
@@ -112,7 +112,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop);
+        void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a surface mesh using the texture
@@ -155,7 +155,7 @@ namespace easy3d {
          * @param prop      The edge property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop);
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a surface mesh using the vertex property
@@ -174,7 +174,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop);
+        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a surface mesh using the texture coordinates
@@ -226,7 +226,7 @@ namespace easy3d {
          * @param prop      The face property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> prop);
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the vertex property 
@@ -245,7 +245,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop);
+        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh using the texture coordinates
@@ -296,7 +296,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop);
+        void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "vertices" drawable of a graph using the texture
@@ -338,7 +338,7 @@ namespace easy3d {
          * @param prop      The edge property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<FT> prop);
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a graph using the vertex property "v:color".
@@ -356,7 +356,7 @@ namespace easy3d {
          * @param prop      The vertex property that defines the scalar field.
          */
         template <typename FT>
-        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop);
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a graph using the texture coordinates
@@ -406,37 +406,68 @@ namespace easy3d {
 
     namespace renderer {
 
+
+        namespace details {
+
+            template <typename FT>
+            inline void clamp_scalar_field(std::vector<FT>& property, float& min_value, float& max_value, float dummy_lower, float dummy_upper) {
+                // sort curvature values
+                std::vector<FT> values = property;;
+                std::sort(values.begin(), values.end());
+
+                std::size_t n = values.size() - 1;
+                std::size_t index_lower = n * dummy_lower;
+                std::size_t index_upper = n - n * dummy_upper - 1;
+                min_value = values[index_lower];
+                max_value = values[index_upper];
+
+                // not needed because the texture is CLAMP_TO_EDGE.
+//                for (std::size_t i=0; i<property.size(); ++i) {
+//                    if (property[i] < min_value)  property[i] = min_value;
+//                    if (property[i] > max_value)  property[i] = max_value;
+//                }
+            }
+        }
+
         template <typename FT>
-        inline void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop) {
+        inline void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = prop[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             auto points = model->get_vertex_property<vec3>("v:point");
 
             std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
-                float coord = (prop[v] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
+                float coord = (temp[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
             }
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(d_texcoords);
+
+            model->remove_vertex_property(temp);
         }
 
 
         template <typename FT>
-        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop) {
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_edge_property<FT>("update_buffer:e:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto e : model->edges()) {
-                float value = prop[e];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
@@ -446,25 +477,30 @@ namespace easy3d {
                 SurfaceMesh::Vertex t = model->vertex(e, 1);
                 d_points.push_back(points[s]);
                 d_points.push_back(points[t]);
-                float coord = (prop[e] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
-                d_texcoords.emplace_back(vec2(coord, 0.5));
+                float coord = (temp[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
             drawable->release_element_buffer();
+
+            model->remove_edge_property(temp);
         }
 
 
         template <typename FT>
-        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop) {
+        inline void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = prop[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
@@ -472,8 +508,8 @@ namespace easy3d {
             std::vector<vec2> d_texcoords;
             d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
-                float coord = (prop[v] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
+                float coord = (temp[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
             }
             drawable->update_texcoord_buffer(d_texcoords);
 
@@ -486,56 +522,68 @@ namespace easy3d {
                 indices.push_back(t.idx());
             }
             drawable->update_index_buffer(indices);
+
+            model->remove_vertex_property(temp);
         }
 
 
         template <typename FT>
-        inline void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop) {
-            float min_value = std::numeric_limits<FT>::max();
-            float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = prop[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
-
-            auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
-            for (auto v : model->vertices()) {
-                float coord = (prop[v] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
-            }
-            drawable->update_vertex_buffer(points.vector());
-            drawable->update_texcoord_buffer(d_texcoords);
-        }
-
-
-        template <typename FT>
-        inline void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop) {
-            float min_value = std::numeric_limits<FT>::max();
-            float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = prop[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
-
-            auto points = model->get_vertex_property<vec3>("v:point");
-            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
-            for (auto v : model->vertices()) {
-                float coord = (prop[v] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
-            }
-            drawable->update_vertex_buffer(points.vector());
-            drawable->update_texcoord_buffer(d_texcoords);
-        }
-
-
-        template <typename FT>
-        inline void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> fscalar) {
+        inline void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
             assert(model);
             assert(drawable);
-            assert(fscalar);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
+            for (auto v : model->vertices()) {
+                float coord = (temp[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
+            }
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_texcoord_buffer(d_texcoords);
+
+            model->remove_vertex_property(temp);
+        }
+
+
+        template <typename FT>
+        inline void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
+            float min_value = std::numeric_limits<FT>::max();
+            float max_value = -std::numeric_limits<FT>::max();
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
+            for (auto v : model->vertices()) {
+                float coord = (temp[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
+            }
+            drawable->update_vertex_buffer(points.vector());
+            drawable->update_texcoord_buffer(d_texcoords);
+
+            model->remove_vertex_property(temp);
+        }
+
+
+        template <typename FT>
+        inline void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
 
             /**
              * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
@@ -565,25 +613,24 @@ namespace easy3d {
             model->update_vertex_normals();
             auto normals = model->get_vertex_property<vec3>("v:normal");
 
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_face_property<FT>("update_buffer:f:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto f : model->faces()) {
-                float value = fscalar[f];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
                 tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
-                float coord = (fscalar[face] - min_value) / (max_value - min_value);
+                float coord = (temp[face] - min_value) / (max_value - min_value);
 
                 for (auto h : model->halfedges(face)) {
                     auto v = model->to_vertex(h);
                     Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
-                    vertex.append(vec2(coord, 0.5));
+                    vertex.append(vec2(coord, 0.5f));
                     tessellator.add_vertex(vertex);
                 }
                 tessellator.end_contour();
@@ -612,15 +659,18 @@ namespace easy3d {
             drawable->update_index_buffer(d_indices);
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
+
+            model->remove_face_property(temp);
+
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
         template <typename FT>
-        inline void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<FT> vscalar) {
+        inline void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
             assert(model);
             assert(drawable);
-            assert(vscalar);
+            assert(prop);
 
             /**
              * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
@@ -650,13 +700,12 @@ namespace easy3d {
             model->update_vertex_normals();
             auto normals = model->get_vertex_property<vec3>("v:normal");
 
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = vscalar[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             for (auto face : model->faces()) {
                 tessellator.begin_polygon(model->compute_face_normal(face));
@@ -667,8 +716,8 @@ namespace easy3d {
                     Tessellator::Vertex vertex(points[v]);
                     vertex.append(normals[v]);
 
-                    float coord = (vscalar[v] - min_value) / (max_value - min_value);
-                    vertex.append(vec2(coord, 0.5));
+                    float coord = (temp[v] - min_value) / (max_value - min_value);
+                    vertex.append(vec2(coord, 0.5f));
                     tessellator.add_vertex(vertex);
                 }
                 tessellator.end_contour();
@@ -698,19 +747,24 @@ namespace easy3d {
             drawable->update_normal_buffer(d_normals);
             drawable->update_texcoord_buffer(d_texcoords);
 
+            model->remove_vertex_property(temp);
+
             DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
         }
 
 
         template <typename FT>
-        void update_buffer(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
+        void update_buffer(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_edge_property<FT>("update_buffer:e:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto e : model->edges()) {
-                float value = prop[e];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;
@@ -722,27 +776,32 @@ namespace easy3d {
                 Graph::Vertex t = model->to_vertex(e);
                 d_points.push_back(points[s]);
                 d_points.push_back(points[t]);
-                float coord_s = (prop[e] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord_s, 0.5));
-                float coord_t = (prop[e] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord_t, 0.5));
+                float coord_s = (temp[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_s, 0.5f));
+                float coord_t = (temp[e] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord_t, 0.5f));
             }
             drawable->update_vertex_buffer(d_points);
             drawable->update_texcoord_buffer(d_texcoords);
             drawable->release_element_buffer();
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
+
+            model->remove_edge_property(temp);
         }
 
 
         template <typename FT>
-        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop) {
+        void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower, float dummy_upper) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
+            // add a temporary property to store the clamped scalar fields
+            auto temp = model->add_vertex_property<FT>("update_buffer:v:temp");
+            temp.vector() = prop.vector();
             float min_value = std::numeric_limits<FT>::max();
             float max_value = -std::numeric_limits<FT>::max();
-            for (auto v : model->vertices()) {
-                float value = prop[v];
-                min_value = std::min(value, min_value);
-                max_value = std::max(value, max_value);
-            }
+            details::clamp_scalar_field(temp.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
@@ -750,8 +809,8 @@ namespace easy3d {
             std::vector<vec2> d_texcoords;
             d_texcoords.reserve(model->n_vertices());
             for (auto v : model->vertices()) {
-                float coord = (prop[v] - min_value) / (max_value - min_value);
-                d_texcoords.emplace_back(vec2(coord, 0.5));
+                float coord = (temp[v] - min_value) / (max_value - min_value);
+                d_texcoords.emplace_back(vec2(coord, 0.5f));
             }
             drawable->update_texcoord_buffer(d_texcoords);
 
@@ -765,6 +824,8 @@ namespace easy3d {
             }
             drawable->update_index_buffer(indices);
             drawable->set_impostor_type(LinesDrawable::CYLINDER);
+
+            model->remove_vertex_property(temp);
         }
     }
 }

@@ -96,6 +96,10 @@ namespace easy3d {
 
 
         void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             auto normals = model->get_vertex_property<vec3>("v:normal");
@@ -107,6 +111,10 @@ namespace easy3d {
 
 
         void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             auto normals = model->get_vertex_property<vec3>("v:normal");
@@ -118,6 +126,9 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh *model, PointsDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
             auto texcoords = model->get_vertex_property<vec2>("v:texcoord");
             if (texcoords) {
                 update_buffer(model, drawable, texcoords);
@@ -137,6 +148,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_color_buffer(prop.vector());
@@ -144,6 +159,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(prop.vector());
@@ -151,6 +170,9 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh *model, TrianglesDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
             // Priority:
             //  1. per-halfedge/vertex texture coordinates
             //  2. per-vertex texture coordinates
@@ -563,6 +585,9 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh *model, LinesDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
             // Priority:
             //  1. per-edge texture coordinates
             //  2. per-vertex texture coordinates
@@ -608,6 +633,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
             d_points.reserve(model->n_edges() * 2);
@@ -627,6 +656,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
             d_points.reserve(model->n_edges() * 2);
@@ -646,6 +679,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
             std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
@@ -664,6 +701,10 @@ namespace easy3d {
 
 
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
             std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
@@ -682,6 +723,9 @@ namespace easy3d {
 
 
         void update_buffer(Graph *model, PointsDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
             auto texcoords = model->get_vertex_property<vec2>("v:texcoord");
             if (texcoords) {
                 update_buffer(model, drawable, texcoords);
@@ -702,6 +746,10 @@ namespace easy3d {
 
 
         void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_color_buffer(prop.vector());
@@ -710,6 +758,10 @@ namespace easy3d {
 
 
         void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
             drawable->update_texcoord_buffer(prop.vector());
@@ -718,6 +770,9 @@ namespace easy3d {
 
 
         void update_buffer(Graph *model, LinesDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
             // Priority:
             //  1. per-edge texture coordinates
             //  2. per-vertex texture coordinates
@@ -765,6 +820,10 @@ namespace easy3d {
 
 
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points, d_colors;
             d_points.reserve(model->n_edges() * 2);
@@ -784,6 +843,10 @@ namespace easy3d {
         }
 
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
 
@@ -802,6 +865,10 @@ namespace easy3d {
 
 
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             std::vector<vec3> d_points;
             d_points.reserve(model->n_edges() * 2);
@@ -823,6 +890,10 @@ namespace easy3d {
 
 
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            assert(model);
+            assert(drawable);
+            assert(prop);
+
             auto points = model->get_vertex_property<vec3>("v:point");
             drawable->update_vertex_buffer(points.vector());
 
