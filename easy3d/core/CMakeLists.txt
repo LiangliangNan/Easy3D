@@ -9,6 +9,7 @@ set(${PROJECT_NAME}_HEADERS
 		constant.h
 		eigen_solver.h
 		graph.h
+		heap.h
 		line.h
 		mat.h
 		oriented_line.h
