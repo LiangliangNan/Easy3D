@@ -1045,21 +1045,18 @@ void PaintCanvas::postDraw() {
 
         char buffer[48];
         sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
-//        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 18, 1);
+        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
 
-#if 1   // text rendering using Qt.
+#if 0   // text rendering using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
         painter.begin(this);
         painter.setRenderHint(QPainter::HighQualityAntialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
-
         painter.beginNativePainting(); easy3d_debug_log_gl_error;
-        painter.drawText(20, 50, QString::fromStdString(buffer));
+        painter.drawText(20, 150, QString::fromStdString(buffer));
         painter.endNativePainting();
-
         painter.end();  easy3d_debug_log_gl_error;
         func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
-
 #endif
     }
 
