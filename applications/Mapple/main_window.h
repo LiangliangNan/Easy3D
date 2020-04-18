@@ -86,6 +86,7 @@ private slots:
     void subdivisionLoop();
     void subdivisionSqrt3();
 
+
     // about
     void onAboutMapple();
 
