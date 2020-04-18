@@ -18,6 +18,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/renderer.h>
+#include <easy3d/viewer/camera.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -937,6 +938,42 @@ void MainWindow::surfaceMeshSmoothing() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
+
+    // TODO: compute Mean Curvature first.
+
+    bool uniform_laplace = false;
+
+    SurfaceSmoothing smoother(mesh);
+    if (0) {   // Explicit Smoothing
+        int iter = 10;
+        smoother.explicit_smoothing(iter, uniform_laplace);
+    }
+    else {    // Implicit Smoothing
+        float timestep = 0.001f;
+
+        // does the mesh have a boundary?
+        bool has_boundary = false;
+        for (auto v: mesh->vertices())
+            if (mesh->is_boundary(v))
+                has_boundary = true;
+
+        // only re-scale if we don't have a (fixed) boundary
+        bool rescale = !has_boundary;
+        float scene_radius = viewer()->camera()->sceneRadius();
+        float dt = uniform_laplace ? timestep : timestep * scene_radius * scene_radius;
+        smoother.implicit_smoothing(dt, uniform_laplace, rescale);
+    }
+
+    mesh->update_vertex_normals();
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+    auto edges = mesh->lines_drawable("edges");
+    if (edges)
+        renderer::update_buffer(mesh, edges);
+
+    viewer()->doneCurrent();
+    viewer()->update();
 }
 
 
