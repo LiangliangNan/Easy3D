@@ -40,14 +40,14 @@ namespace easy3d {
 
 //=============================================================================
 
-    SurfaceSmoothing::SurfaceSmoothing(SurfaceMesh *mesh) : mesh_(mesh) {
+    SurfaceMeshSmoothing::SurfaceMeshSmoothing(SurfaceMesh *mesh) : mesh_(mesh) {
         how_many_edge_weights_ = 0;
         how_many_vertex_weights_ = 0;
     }
 
 //-----------------------------------------------------------------------------
 
-    SurfaceSmoothing::~SurfaceSmoothing() {
+    SurfaceMeshSmoothing::~SurfaceMeshSmoothing() {
         auto vweight = mesh_->get_vertex_property<float>("v:area");
         if (vweight)
             mesh_->remove_vertex_property(vweight);
@@ -59,7 +59,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSmoothing::compute_edge_weights(bool use_uniform_laplace) {
+    void SurfaceMeshSmoothing::compute_edge_weights(bool use_uniform_laplace) {
         auto eweight = mesh_->edge_property<float>("e:cotan");
 
         if (use_uniform_laplace) {
@@ -75,7 +75,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSmoothing::compute_vertex_weights(bool use_uniform_laplace) {
+    void SurfaceMeshSmoothing::compute_vertex_weights(bool use_uniform_laplace) {
         auto vweight = mesh_->vertex_property<float>("v:area");
 
         if (use_uniform_laplace) {
@@ -91,7 +91,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSmoothing::explicit_smoothing(unsigned int iters,
+    void SurfaceMeshSmoothing::explicit_smoothing(unsigned int iters,
                                               bool use_uniform_laplace) {
         if (!mesh_->n_vertices())
             return;
@@ -141,7 +141,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSmoothing::implicit_smoothing(float timestep,
+    void SurfaceMeshSmoothing::implicit_smoothing(float timestep,
                                               bool use_uniform_laplace,
                                               bool rescale) {
         if (!mesh_->n_vertices())
@@ -226,7 +226,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT <SparseMatrix> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceSmoothing: Could not solve linear system\n";
+            std::cerr << "SurfaceMeshSmoothing: Could not solve linear system\n";
         } else {
             // copy solution
             for (unsigned int i = 0; i < n; ++i) {

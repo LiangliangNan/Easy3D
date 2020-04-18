@@ -36,13 +36,13 @@ namespace easy3d {
 
 //=============================================================================
 
-    SurfaceParameterization::SurfaceParameterization(SurfaceMesh *mesh)
+    SurfaceMeshParameterization::SurfaceMeshParameterization(SurfaceMesh *mesh)
             : mesh_(mesh) {
     }
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceParameterization::setup_boundary_constraints() {
+    bool SurfaceMeshParameterization::setup_boundary_constraints() {
         // get properties
         auto points = mesh_->vertex_property<vec3>("v:point");
         auto tex = mesh_->vertex_property<vec2>("v:texcoord");
@@ -105,7 +105,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceParameterization::harmonic(bool use_uniform_weights) {
+    void SurfaceMeshParameterization::harmonic(bool use_uniform_weights) {
         // map boundary to circle
         if (!setup_boundary_constraints()) {
             std::cerr << "Could not perform setup of boundary constraints.\n";
@@ -176,7 +176,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT <Eigen::SparseMatrix<double>> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceParameterization: Could not solve linear system\n";
+            std::cerr << "SurfaceMeshParameterization: Could not solve linear system\n";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {
@@ -192,7 +192,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceParameterization::setup_lscm_boundary() {
+    bool SurfaceMeshParameterization::setup_lscm_boundary() {
         // constrain the two boundary vertices farthest from each other to fix
         // the translation and rotation of the resulting parameterization
 
@@ -241,7 +241,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceParameterization::lscm() {
+    void SurfaceMeshParameterization::lscm() {
         // boundary constraints
         if (!setup_lscm_boundary())
             return;
@@ -389,7 +389,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT <Eigen::SparseMatrix<double>> solver(A);
         Eigen::VectorXd x = solver.solve(b);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceParameterization: Could not solve linear system\n";
+            std::cerr << "SurfaceMeshParameterization: Could not solve linear system\n";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {

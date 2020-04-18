@@ -34,7 +34,7 @@ namespace easy3d {
 
 //=============================================================================
 
-    SurfaceSimplification::SurfaceSimplification(SurfaceMesh *mesh)
+    SurfaceMeshSimplification::SurfaceMeshSimplification(SurfaceMesh *mesh)
             : mesh_(mesh), initialized_(false), queue_(nullptr) {
         aspect_ratio_ = 0;
         edge_length_ = 0;
@@ -55,7 +55,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    SurfaceSimplification::~SurfaceSimplification() {
+    SurfaceMeshSimplification::~SurfaceMeshSimplification() {
         // remove added properties
         mesh_->remove_vertex_property(vquadric_);
         mesh_->remove_face_property(normal_cone_);
@@ -64,7 +64,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSimplification::initialize(float aspect_ratio, float edge_length,
+    void SurfaceMeshSimplification::initialize(float aspect_ratio, float edge_length,
                                            unsigned int max_valence,
                                            float normal_deviation,
                                            float hausdorff_error) {
@@ -143,7 +143,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSimplification::simplify(unsigned int n_vertices) {
+    void SurfaceMeshSimplification::simplify(unsigned int n_vertices) {
         if (!mesh_->is_triangle_mesh()) {
             std::cerr << "Not a triangle mesh!" << std::endl;
             return;
@@ -215,7 +215,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSimplification::enqueue_vertex(SurfaceMesh::Vertex v) {
+    void SurfaceMeshSimplification::enqueue_vertex(SurfaceMesh::Vertex v) {
         float prio, min_prio(FLT_MAX);
         SurfaceMesh::Halfedge min_h;
 
@@ -254,7 +254,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceSimplification::is_collapse_legal(const CollapseData &cd) {
+    bool SurfaceMeshSimplification::is_collapse_legal(const CollapseData &cd) {
         // test selected vertices
         if (has_selection_) {
             if (!vselected_[cd.v0])
@@ -421,7 +421,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    float SurfaceSimplification::priority(const CollapseData &cd) {
+    float SurfaceMeshSimplification::priority(const CollapseData &cd) {
         // computer quadric error metric
         Quadric Q = vquadric_[cd.v0];
         Q += vquadric_[cd.v1];
@@ -430,7 +430,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceSimplification::postprocess_collapse(const CollapseData &cd) {
+    void SurfaceMeshSimplification::postprocess_collapse(const CollapseData &cd) {
         // update error quadrics
         vquadric_[cd.v1] += vquadric_[cd.v0];
 
@@ -503,7 +503,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    float SurfaceSimplification::aspect_ratio(SurfaceMesh::Face f) const {
+    float SurfaceMeshSimplification::aspect_ratio(SurfaceMesh::Face f) const {
         // min height is area/maxLength
         // aspect ratio = length / height
         //              = length * length / area
@@ -533,7 +533,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    float SurfaceSimplification::distance(SurfaceMesh::Face f, const vec3 &p) const {
+    float SurfaceMeshSimplification::distance(SurfaceMesh::Face f, const vec3 &p) const {
         SurfaceMesh::VertexAroundFaceCirculator fvit = mesh_->vertices(f);
 
         const vec3 p0 = vpoint_[*fvit];
@@ -547,7 +547,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    SurfaceSimplification::CollapseData::CollapseData(SurfaceMesh *sm, SurfaceMesh::Halfedge h)
+    SurfaceMeshSimplification::CollapseData::CollapseData(SurfaceMesh *sm, SurfaceMesh::Halfedge h)
             : mesh(sm) {
         v0v1 = h;
         v1v0 = mesh->opposite_halfedge(v0v1);

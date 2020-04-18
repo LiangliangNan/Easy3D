@@ -134,6 +134,8 @@
     <addaction name="actionSurfaceMeshFairing"/>
     <addaction name="actionSurfaceMeshSmoothing"/>
     <addaction name="separator"/>
+    <addaction name="actionSurfaceMeshGeodesic"/>
+    <addaction name="separator"/>
     <addaction name="menuSubdivision"/>
     <addaction name="actionSurfaceMeshSimplification"/>
     <addaction name="actionSurfaceMeshRemeshing"/>
@@ -141,6 +143,7 @@
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
     <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -854,6 +857,11 @@
   <action name="actionSurfaceMeshTriangulation">
    <property name="text">
     <string>Triangulation</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshGeodesic">
+   <property name="text">
+    <string>Geodesic (w.r.t. a random vertex)</string>
    </property>
   </action>
  </widget>

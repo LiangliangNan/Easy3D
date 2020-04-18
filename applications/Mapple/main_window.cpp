@@ -674,6 +674,7 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshSimplification, SIGNAL(triggered()), this, SLOT(surfaceMeshSimplification()));
     connect(ui->actionSurfaceMeshParameterization, SIGNAL(triggered()), this, SLOT(surfaceMeshParameterization()));
     connect(ui->actionSurfaceMeshRemeshing, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshing()));
+    connect(ui->actionSurfaceMeshGeodesic, SIGNAL(triggered()), this, SLOT(surfaceMeshGeodesic()));
 }
 
 
@@ -943,7 +944,7 @@ void MainWindow::surfaceMeshSmoothing() {
 
     bool uniform_laplace = false;
 
-    SurfaceSmoothing smoother(mesh);
+    SurfaceMeshSmoothing smoother(mesh);
     if (0) {   // Explicit Smoothing
         int iter = 10;
         smoother.explicit_smoothing(iter, uniform_laplace);
@@ -1041,7 +1042,7 @@ void MainWindow::surfaceMeshHoleFilling() {
 
     // close smallest hole
     if (hmin.is_valid()) {
-        SurfaceHoleFilling hf(mesh);
+        SurfaceMeshHoleFilling hf(mesh);
         hf.fill_hole(hmin);
 
         mesh->update_vertex_normals();
@@ -1068,7 +1069,7 @@ void MainWindow::surfaceMeshSimplification() {
     int target_percentage = 10;
     int normal_deviation = 180;
     int aspect_ratio = 10;
-    SurfaceSimplification ss(mesh);
+    SurfaceMeshSimplification ss(mesh);
     ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
     ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
 
@@ -1132,7 +1133,7 @@ void MainWindow::surfaceMeshParameterization() {
     if (!mesh)
         return;
 
-    SurfaceParameterization para(mesh);
+    SurfaceMeshParameterization para(mesh);
 
     bool LSCM = false;
     if (false)  // Least Squares Conformal Map
@@ -1144,6 +1145,39 @@ void MainWindow::surfaceMeshParameterization() {
 
     viewer()->makeCurrent();
     renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+    viewer()->doneCurrent();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshGeodesic() {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // pick a random vertex
+    int idx = rand() % mesh->n_vertices();
+    SurfaceMesh::Vertex vertex(idx);
+
+    auto lock = mesh->vertex_property<bool>("v:lock");
+    for (auto v : mesh->vertices())
+        lock[v] = false;
+    lock[vertex] = true;
+
+    // setup seed
+    std::vector<SurfaceMesh::Vertex> seed;
+    seed.push_back(vertex);
+
+    // compute geodesic distance
+    SurfaceMeshGeodesic geodist(mesh);
+    geodist.compute(seed);
+
+    // setup texture coordinates for visualization
+    geodist.distance_to_texture_coordinates();
+    currentModelChanged();
+
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"), mesh->get_vertex_property<vec2>("v:texcoord"));
     viewer()->doneCurrent();
     viewer()->update();
 }

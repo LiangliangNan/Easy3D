@@ -92,6 +92,7 @@ private slots:
     void surfaceMeshSimplification();
     void surfaceMeshRemeshing();
     void surfaceMeshParameterization();
+    void surfaceMeshGeodesic();
 
     // about
     void onAboutMapple();

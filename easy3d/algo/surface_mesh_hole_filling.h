@@ -47,10 +47,10 @@ namespace easy3d {
 //! by isometric remeshing, and finished by curvature-minimizing fairing of the
 //! filled-in patch.
 //! See \cite liepa_2003_filling for details.
-    class SurfaceHoleFilling {
+    class SurfaceMeshHoleFilling {
     public:
         /// construct with mesh
-        SurfaceHoleFilling(SurfaceMesh *mesh);
+        SurfaceMeshHoleFilling(SurfaceMesh *mesh);
 
         /// fill the hole specified by halfedge h
         bool fill_hole(SurfaceMesh::Halfedge h);

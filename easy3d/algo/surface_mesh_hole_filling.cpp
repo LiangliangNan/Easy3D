@@ -15,13 +15,13 @@ namespace easy3d {
 
 //=============================================================================
 
-    SurfaceHoleFilling::SurfaceHoleFilling(SurfaceMesh *mesh) : mesh_(mesh) {
+    SurfaceMeshHoleFilling::SurfaceMeshHoleFilling(SurfaceMesh *mesh) : mesh_(mesh) {
         points_ = mesh_->get_vertex_property<vec3>("v:point");
     }
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceHoleFilling::is_interior_edge(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b) const {
+    bool SurfaceMeshHoleFilling::is_interior_edge(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b) const {
         SurfaceMesh::Halfedge h = mesh_->find_halfedge(_a, _b);
         if (!h.is_valid())
             return false; // edge does not exist
@@ -31,27 +31,27 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    float SurfaceHoleFilling::compute_area(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
+    float SurfaceMeshHoleFilling::compute_area(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
         return length2(cross(points_[_b] - points_[_a], points_[_c] - points_[_a]));
     }
 
 //-----------------------------------------------------------------------------
 
-    vec3 SurfaceHoleFilling::compute_normal(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
+    vec3 SurfaceMeshHoleFilling::compute_normal(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
         return normalize(
                 cross(points_[_b] - points_[_a], points_[_c] - points_[_a]));
     }
 
 //-----------------------------------------------------------------------------
 
-    float SurfaceHoleFilling::compute_angle(const vec3 &_n1,
+    float SurfaceMeshHoleFilling::compute_angle(const vec3 &_n1,
                                              const vec3 &_n2) const {
         return (1.0 - dot(_n1, _n2));
     }
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceHoleFilling::fill_hole(SurfaceMesh::Halfedge _h) {
+    bool SurfaceMeshHoleFilling::fill_hole(SurfaceMesh::Halfedge _h) {
         // is it really a hole?
         if (!mesh_->is_boundary(_h)) {
             return false;
@@ -62,9 +62,9 @@ namespace easy3d {
         // lock vertices/edge that already exist, to be later able to
         // identify the filled-in vertices/edges
         vlocked_ =
-                mesh_->add_vertex_property<bool>("SurfaceHoleFilling:vlocked", false);
+                mesh_->add_vertex_property<bool>("SurfaceMeshHoleFilling:vlocked", false);
         elocked_ =
-                mesh_->add_edge_property<bool>("SurfaceHoleFilling:elocked", false);
+                mesh_->add_edge_property<bool>("SurfaceMeshHoleFilling:elocked", false);
         for (auto v : mesh_->vertices())
             vlocked_[v] = true;
         for (auto e : mesh_->edges())
@@ -87,14 +87,14 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    bool SurfaceHoleFilling::triangulate_hole(SurfaceMesh::Halfedge _h) {
+    bool SurfaceMeshHoleFilling::triangulate_hole(SurfaceMesh::Halfedge _h) {
         // trace hole
         hole_.clear();
         SurfaceMesh::Halfedge h = _h;
         do {
             // check for manifoldness
             if (!mesh_->is_manifold(mesh_->to_vertex(h))) {
-                std::cerr << "[SurfaceHoleFilling] Non-manifold hole\n";
+                std::cerr << "[SurfaceMeshHoleFilling] Non-manifold hole\n";
                 return false;
             }
 
@@ -168,7 +168,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    SurfaceHoleFilling::Weight SurfaceHoleFilling::compute_weight(int _i, int _j,
+    SurfaceMeshHoleFilling::Weight SurfaceMeshHoleFilling::compute_weight(int _i, int _j,
                                                                   int _k) const {
         const SurfaceMesh::Vertex a = hole_vertex(_i);
         const SurfaceMesh::Vertex b = hole_vertex(_j);
@@ -208,7 +208,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::refine() {
+    void SurfaceMeshHoleFilling::refine() {
         const int n = hole_.size();
         float l, lmin, lmax;
 
@@ -234,7 +234,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::split_long_edges(const float _lmax) {
+    void SurfaceMeshHoleFilling::split_long_edges(const float _lmax) {
         bool ok;
         int i;
 
@@ -259,7 +259,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::collapse_short_edges(const float _lmin) {
+    void SurfaceMeshHoleFilling::collapse_short_edges(const float _lmin) {
         bool ok;
         int i;
 
@@ -297,7 +297,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::flip_edges() {
+    void SurfaceMeshHoleFilling::flip_edges() {
         SurfaceMesh::Vertex v0, v1, v2, v3;
         SurfaceMesh::Halfedge h;
         int val0, val1, val2, val3;
@@ -358,10 +358,10 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::relaxation() {
+    void SurfaceMeshHoleFilling::relaxation() {
         // properties
         SurfaceMesh::VertexProperty<int> idx =
-                mesh_->add_vertex_property<int>("SurfaceHoleFilling:idx", -1);
+                mesh_->add_vertex_property<int>("SurfaceMeshHoleFilling:idx", -1);
 
         // collect free vertices
         std::vector<SurfaceMesh::Vertex> vertices;
@@ -419,7 +419,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT <SparseMatrix> solver(AtA);
         Eigen::MatrixXd X = solver.solve(AtB);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "[SurfaceHoleFilling] Solver failed\n";
+            std::cerr << "[SurfaceMeshHoleFilling] Solver failed\n";
             return;
         }
 
@@ -435,7 +435,7 @@ namespace easy3d {
 
 //-----------------------------------------------------------------------------
 
-    void SurfaceHoleFilling::fairing() {
+    void SurfaceMeshHoleFilling::fairing() {
         // did the refinement insert new vertices?
         // if yes, then trigger fairing; otherwise don't.
         bool new_vertices = false;

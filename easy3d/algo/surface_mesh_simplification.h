@@ -46,13 +46,13 @@ namespace easy3d {
 //! \details Performs incremental greedy mesh simplification based on halfedge
 //! collapses. See \cite kobbelt_1998_general and \cite garland_1997_surface for
 //! details.
-    class SurfaceSimplification {
+    class SurfaceMeshSimplification {
     public:
         //! Construct with mesh to be simplified.
-        SurfaceSimplification(SurfaceMesh *mesh);
+        SurfaceMeshSimplification(SurfaceMesh *mesh);
 
         // destructor
-        ~SurfaceSimplification();
+        ~SurfaceMeshSimplification();
 
         //! Initialize with given parameters.
         void initialize(float aspect_ratio = 0.0, float edge_length = 0.0,

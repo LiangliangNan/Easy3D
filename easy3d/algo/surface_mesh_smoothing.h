@@ -40,13 +40,13 @@ namespace easy3d {
 
 //! \brief A class for Laplacian smoothing
 //! \details See also \cite desbrun_1999_implicit and \cite kazhdan_2012
-    class SurfaceSmoothing {
+    class SurfaceMeshSmoothing {
     public:
         //! Construct with mesh to be smoothed.
-        SurfaceSmoothing(SurfaceMesh *mesh);
+        SurfaceMeshSmoothing(SurfaceMesh *mesh);
 
         // destructor
-        ~SurfaceSmoothing();
+        ~SurfaceMeshSmoothing();
 
         //! Perform \p iters iterations of explicit Laplacian smoothing.
         //! Decide whether to use uniform Laplacian or cotan Laplacian (default: cotan).

@@ -41,10 +41,10 @@ namespace easy3d {
 //! \brief A class for surface parameterization.
 //! \details See \cite levy_2002_least and \cite desbrun_2002_intrinsic
 //! for more details.
-    class SurfaceParameterization {
+    class SurfaceMeshParameterization {
     public:
         //! Construct with mesh to be parameterized.
-        SurfaceParameterization(SurfaceMesh *mesh);
+        SurfaceMeshParameterization(SurfaceMesh *mesh);
 
         //! Compute discrete harmonic parameterization.
         void harmonic(bool use_uniform_weights = false);
