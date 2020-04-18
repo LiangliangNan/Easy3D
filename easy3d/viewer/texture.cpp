@@ -147,6 +147,9 @@ namespace easy3d {
         // To be robust to handle
         // - R, RG or RGB textures which are not 4-bytes floats, or the width is not divisible by 4.
         // - image pixels are tightly packed.
+        // Liangliang: I need to restore the modified OpenGL state
+        int align;
+        glGetIntegerv(GL_UNPACK_ALIGNMENT, &align);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);  easy3d_debug_log_gl_error;
@@ -156,6 +159,8 @@ namespace easy3d {
 
         glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, rgb_data.data()); easy3d_debug_log_gl_error;
         glBindTexture(GL_TEXTURE_2D, 0);    easy3d_debug_log_gl_error;
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, align);
 
         Texture *texture = new Texture;
         texture->wrap_mode_ = wrap_mode;
