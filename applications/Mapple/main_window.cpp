@@ -29,6 +29,7 @@
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
+#include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
@@ -912,16 +913,16 @@ void MainWindow::surfaceMeshRemeshing() {
     if (!mesh)
         return;
 
-/*
+    bool uss_features = true;
+    if (uss_features) {
         static int feature_angle = 70;
         SurfaceMeshFeatures sf(mesh);
         sf.clear();
         sf.detect_angle(feature_angle);
-        update_mesh();
-*/
+        sf.detect_boundary();
+    }
 
-
-    if (false) { // Uniform remeshing
+    if (true) { // Uniform remeshing
         float len(0.0f);
         for (auto eit : mesh->edges())
             len += distance(mesh->position(mesh->vertex(eit, 0)),
