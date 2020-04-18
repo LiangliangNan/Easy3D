@@ -17,6 +17,7 @@ namespace easy3d {
     class Transparency;
     class EyeDomeLighting;
     class OpenGLTimer;
+    class OpenGLText;
 }
 
 class QWidget;
@@ -196,6 +197,8 @@ protected:
 	QOpenGLFunctions* func_;
     easy3d::OpenGLTimer* gpu_timer_;
     double gpu_time_;
+
+    easy3d::OpenGLText* text_renderer_;
 
     double  dpi_scaling_;
     int     samples_;
