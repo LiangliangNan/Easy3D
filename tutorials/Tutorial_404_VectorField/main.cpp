@@ -23,7 +23,6 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/fileio/resources.h>
@@ -41,8 +40,6 @@ using namespace easy3d;
 int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
-    setting::surface_mesh_phong_shading = false;
-    setting::surface_mesh_show_edges = true;
 
     try {
         // Create the default Easy3D viewer.
