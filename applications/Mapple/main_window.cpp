@@ -32,6 +32,12 @@
 #include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
+#include <easy3d/algo/surface_mesh_parameterization.h>
+#include <easy3d/algo/surface_mesh_simplification.h>
+#include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/algo/surface_mesh_smoothing.h>
+#include <easy3d/algo/surface_mesh_hole_filling.h>
+#include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -745,6 +751,27 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
 }
 
 
+void MainWindow::surfaceMeshTriangulation() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshTriangulation triangulator(mesh);
+    triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
+
+    viewer_->makeCurrent();
+    auto faces = mesh->triangles_drawable("faces");
+    renderer::update_buffer(mesh, faces);
+
+    auto edges = mesh->lines_drawable("edges");
+    if (edges)
+        renderer::update_buffer(mesh, edges);
+    viewer_->doneCurrent();
+
+    viewer_->update();
+}
+
+
 void MainWindow::surfaceMeshDetectDuplicatedFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
@@ -783,7 +810,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
         viewer()->makeCurrent();
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
         viewer()->doneCurrent();
-        update();
+        viewer()->update();
 		LOG(INFO) << "done. " << num << " faces deleted. Time: " << w.time_string();
     }
     else
@@ -855,6 +882,11 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
         mesh->update_vertex_normals();
         viewer()->makeCurrent();
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+        auto edges = mesh->lines_drawable("edges");
+        if (edges)
+            renderer::update_buffer(mesh, edges);
+
         viewer()->doneCurrent();
         viewer()->update();
     }
@@ -870,6 +902,11 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
         mesh->update_vertex_normals();
         viewer()->makeCurrent();
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+        auto edges = mesh->lines_drawable("edges");
+        if (edges)
+            renderer::update_buffer(mesh, edges);
+
         viewer()->doneCurrent();
         viewer()->update();
     }
@@ -885,6 +922,11 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
         mesh->update_vertex_normals();
         viewer()->makeCurrent();
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+        auto edges = mesh->lines_drawable("edges");
+        if (edges)
+            renderer::update_buffer(mesh, edges);
+
         viewer()->doneCurrent();
         viewer()->update();
     }
@@ -892,22 +934,117 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 
 
 void MainWindow::surfaceMeshSmoothing() {
-
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
 }
 
 
 void MainWindow::surfaceMeshFairing() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
 
+    // TODO: compute Mean Curvature first.
+
+    int method = 2;
+
+    SurfaceMeshFairing fair(mesh);
+    switch (method) {
+        case 0: fair.minimize_area(); // Minimize Area
+            break;
+        case 1: fair.minimize_curvature(); // Minimize Curvature
+            break;
+        case 2: fair.fair(3);; // Minimize Curvature Variation
+            break;
+        default: std::cerr << "no such fairing method" << std::endl;
+            return;
+    }
+
+    mesh->update_vertex_normals();
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+    auto edges = mesh->lines_drawable("edges");
+    if (edges)
+        renderer::update_buffer(mesh, edges);
+
+    viewer()->doneCurrent();
+    viewer()->update();
 }
 
 
 void MainWindow::surfaceMeshHoleFilling() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
 
+    // find the smallest hole
+    SurfaceMesh::Halfedge hmin;
+    unsigned int lmin(mesh->n_halfedges());
+    for (auto h : mesh->halfedges()) {
+        if (mesh->is_boundary(h)) {
+            float l(0);
+            SurfaceMesh::Halfedge hh = h;
+            do {
+                ++l;
+                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
+                    l += 123456;
+                    break;
+                }
+                hh = mesh->next_halfedge(hh);
+            } while (hh != h);
+
+            if (l < lmin) {
+                lmin = l;
+                hmin = h;
+            }
+        }
+    }
+
+    // close smallest hole
+    if (hmin.is_valid()) {
+        SurfaceHoleFilling hf(mesh);
+        hf.fill_hole(hmin);
+
+        mesh->update_vertex_normals();
+        viewer()->makeCurrent();
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+        auto edges = mesh->lines_drawable("edges");
+        if (edges)
+            renderer::update_buffer(mesh, edges);
+
+        viewer()->doneCurrent();
+        viewer()->update();
+    } else {
+        std::cerr << "No manifold boundary loop found\n";
+    }
 }
 
 
 void MainWindow::surfaceMeshSimplification() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
 
+    int target_percentage = 10;
+    int normal_deviation = 180;
+    int aspect_ratio = 10;
+    SurfaceSimplification ss(mesh);
+    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
+    ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
+
+    mesh->update_vertex_normals();
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+    auto edges = mesh->lines_drawable("edges");
+    if (edges)
+        renderer::update_buffer(mesh, edges);
+
+    viewer()->doneCurrent();
+    viewer()->update();
 }
 
 
@@ -943,13 +1080,35 @@ void MainWindow::surfaceMeshRemeshing() {
     mesh->update_vertex_normals();
     viewer()->makeCurrent();
     renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+    auto edges = mesh->lines_drawable("edges");
+    if (edges)
+        renderer::update_buffer(mesh, edges);
+
     viewer()->doneCurrent();
     viewer()->update();
 }
 
 
 void MainWindow::surfaceMeshParameterization() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
 
+    SurfaceParameterization para(mesh);
+
+    bool LSCM = false;
+    if (false)  // Least Squares Conformal Map
+        para.lscm();
+    else        // Discrete Harmonic parameterization
+        para.harmonic();
+
+    currentModelChanged();
+
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+    viewer()->doneCurrent();
+    viewer()->update();
 }
 
 
@@ -1228,25 +1387,3 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
 
     viewer_->update();
 }
-
-
-void MainWindow::surfaceMeshTriangulation() {
-    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshTriangulation triangulator(mesh);
-    triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
-
-    viewer_->makeCurrent();
-    auto faces = mesh->triangles_drawable("faces");
-    renderer::update_buffer(mesh, faces);
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer_->doneCurrent();
-
-    viewer_->update();
-}
-
