@@ -94,17 +94,17 @@ namespace easy3d {
         float max_edge_length_;
         float approx_error_;
 
-        SurfaceMesh::VertexProperty <vec3> points_;
-        SurfaceMesh::VertexProperty <vec3> vnormal_;
+        SurfaceMesh::VertexProperty<vec3> points_;
+        SurfaceMesh::VertexProperty<vec3> vnormal_;
         SurfaceMesh::VertexProperty<bool> vfeature_;
         SurfaceMesh::EdgeProperty<bool> efeature_;
         SurfaceMesh::VertexProperty<bool> vlocked_;
         SurfaceMesh::EdgeProperty<bool> elocked_;
-        SurfaceMesh::VertexProperty <float> vsizing_;
+        SurfaceMesh::VertexProperty<float> vsizing_;
 
-        SurfaceMesh::VertexProperty <vec3> refpoints_;
-        SurfaceMesh::VertexProperty <vec3> refnormals_;
-        SurfaceMesh::VertexProperty <float> refsizing_;
+        SurfaceMesh::VertexProperty<vec3> refpoints_;
+        SurfaceMesh::VertexProperty<vec3> refnormals_;
+        SurfaceMesh::VertexProperty<float> refsizing_;
     };
 
 } // namespace easy3d

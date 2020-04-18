@@ -240,7 +240,7 @@ namespace easy3d {
             }
 
             // build kd-tree
-            kd_tree_ = new TriangleMeshKdTree(*refmesh_, 0);
+            kd_tree_ = new TriangleMeshKdTree(refmesh_, 0);
         }
     }
 
@@ -572,7 +572,7 @@ namespace easy3d {
         vec3 u, n, t, b;
 
         // add property
-        SurfaceMesh::VertexProperty <vec3> update = mesh_->add_vertex_property<vec3>("v:update");
+        SurfaceMesh::VertexProperty<vec3> update = mesh_->add_vertex_property<vec3>("v:update");
 
         // project at the beginning to get valid sizing values and normal vectors
         // for vertices introduced by splitting
