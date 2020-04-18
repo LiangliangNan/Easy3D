@@ -45,7 +45,11 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
-//    QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
+    //QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
+#endif
+
+#ifdef __APPLE__
+    //QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
 #endif
 
     QApplication app(argc, argv);
