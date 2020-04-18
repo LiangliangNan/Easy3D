@@ -806,11 +806,6 @@
     <string>Principle Curvatures</string>
    </property>
   </action>
-  <action name="actionComputeMaxCurvature">
-   <property name="text">
-    <string>Max Curvature</string>
-   </property>
-  </action>
   <action name="actionComputeGaussianCurvature">
    <property name="text">
     <string>Gaussian Curvature</string>
