@@ -48,13 +48,26 @@ void DialogGaussianNoise::apply() {
 
     const float sigma = ui->lineEditGaussianNoiseSigma->text().toFloat();
     if (dynamic_cast<SurfaceMesh *>(model)) {
-        GaussianNoise::apply(dynamic_cast<SurfaceMesh *>(model), sigma);
-        renderer::update_buffer(dynamic_cast<SurfaceMesh *>(model), model->triangles_drawable("faces"));
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        GaussianNoise::apply(mesh, sigma);
+
+        mesh->update_vertex_normals();
+        viewer_->makeCurrent();
+        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+
+        auto edges = mesh->lines_drawable("edges");
+        if (edges)
+            renderer::update_buffer(mesh, edges);
+
+        viewer_->doneCurrent();
         viewer_->update();
     }
     else if (dynamic_cast<PointCloud *>(model)) {
         GaussianNoise::apply(dynamic_cast<PointCloud *>(model), sigma);
+
+        viewer_->makeCurrent();
         renderer::update_buffer(dynamic_cast<PointCloud *>(model), model->points_drawable("vertices"));
+        viewer_->doneCurrent();
         viewer_->update();
     }
 }
