@@ -68,6 +68,8 @@ int main(int argc, char** argv) {
 		surface->update_vertex_buffer(vertices);
 		// Upload the vertex indices of the surface to the GPU.
         surface->update_index_buffer(indices);
+        // flat shading
+        surface->set_smooth_shading(false);
 
         // Add the drawable to the viewer
         viewer.add_drawable(surface);
