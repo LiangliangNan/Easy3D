@@ -483,6 +483,11 @@ namespace easy3d {
                 // Update texture
                 glBindTexture(GL_TEXTURE_2D, texture->id);
                 easy3d_debug_log_gl_error;
+
+                // Liangliang: I need to restore the modified OpenGL state
+                int align;
+                glGetIntegerv(GL_UNPACK_ALIGNMENT, &align);
+
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                 glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                                 GL_CLAMP_TO_EDGE);    //oriol trying to get rid of halos when rotating font
@@ -500,6 +505,9 @@ namespace easy3d {
                     glGenerateMipmap(GL_TEXTURE_2D);
 #endif
                 }
+
+                glPixelStorei(GL_UNPACK_ALIGNMENT, align);
+
                 glBindTexture(GL_TEXTURE_2D, 0);
                 easy3d_debug_log_gl_error;
                 free(bmp);
@@ -781,8 +789,7 @@ namespace easy3d {
         font_ids_.push_back(id);
         const std::string simple_name = file_system::simple_name(font_file);
         font_names_.push_back(simple_name);
-        LOG(INFO) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_
-                  << ")";
+        LOG(INFO) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         return true;
     }
 

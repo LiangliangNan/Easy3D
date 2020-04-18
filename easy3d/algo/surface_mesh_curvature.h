@@ -29,31 +29,30 @@
 
 namespace easy3d {
 
-//! \brief Compute per-vertex curvature (min,max,mean,Gaussian).
-
-//! \details Curvature values for boundary vertices are interpolated from their
-//! interior neighbors. Curvature values can be smoothed. See
-//! \cite meyer_2003_discrete and \cite cohen-steiner_2003_restricted for
-//! details.
+    /**
+     * Compute per-vertex curvatures, i.e., principle (min, max), mean, Gaussian.
+     * Curvature values for boundary vertices are interpolated from their interior neighbors.
+     * Curvature values can be smoothed. For more details, please refer to the following papers:
+     *    - Discrete Differential-Geometry Operators for Triangulated 2-Manifolds. Meyer et al. 2003.
+     *    - Restricted Delaunay triangulations and normal cycle. Cohen-Steiner and Morvan. 2003.
+     */
     class SurfaceMeshCurvature {
     public:
-        //! construct with mesh to be analyzed
         SurfaceMeshCurvature(SurfaceMesh *mesh);
 
-        // destructor
         ~SurfaceMeshCurvature();
 
         /**
-         * Computes curvature information for each vertex, optionally followed by some smoothing iterations of the
-         * curvature values. Upon finish, the principle curvatures are stored as a temporary vertex properties
-         * "v:curv-min" and "v:curv-max", respectively.
+         * Computes principle curvature information for each vertex, optionally followed by some smoothing iterations
+         * of the curvature values. Upon finish, the principle curvatures are stored as vertex properties "v:curv-min"
+         * and "v:curv-max", respectively.
          */
         void analyze(unsigned int post_smoothing_steps = 0);
 
         /**
-         * Computes curvature information for each vertex, optionally followed by some smoothing iterations of the
-         * curvature values. Upon finish, the principle curvatures are stored as a temporary vertex properties
-         * "v:curv-min" and "v:curv-max", respectively.
+         * Computes principle curvature information for each vertex, optionally followed by some smoothing iterations
+         * of the curvature values. Upon finish, the principle curvatures are stored as vertex properties "v:curv-min"
+         * and "v:curv-max", respectively.
          */
         void analyze_tensor(unsigned int post_smoothing_steps = 0, bool two_ring_neighborhood = false);
 

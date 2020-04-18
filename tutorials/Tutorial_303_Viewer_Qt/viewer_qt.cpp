@@ -109,18 +109,6 @@ void ViewerQt::cleanup() {
 
 
 void ViewerQt::init() {
-    // default font
-    const std::string& font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
-    if (file_system::is_file(font_file)) {
-        text_renderer_ = new OpenGLText(dpi_scaling());
-        if (!text_renderer_->add_font(font_file)) {
-            delete text_renderer_;
-            text_renderer_ = nullptr;
-        }
-    }
-
-    if (!text_renderer_)
-        LOG(ERROR) << "failed loading font: " << font_file;
 }
 
 
@@ -173,9 +161,15 @@ void ViewerQt::initializeGL()
 	//int samples_received = 0;
 	//func_->glgetintegerv(gl_samples, &samples_received);
 
-	// Calls user defined method.
-	init();
+    // create OpenGLText renderer and load default fonts
+    text_renderer_ = new OpenGLText(dpi_scaling());
+    text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
+    // Calls user defined method.
+    init();
+
+    // print usage
     std::cout << usage() << std::endl;
 }
 
@@ -1023,32 +1017,24 @@ void ViewerQt::draw() {
 		if (!m->is_visible())
 			continue;
 
-		for (auto d : m->points_drawables()) {
-			if (d->is_visible())
-				d->draw(camera(), false);
-		}
+        glDepthRange(0.001, 1.0);
+        for (auto d : m->triangles_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
+        }
 
-		// Let's check if edges and surfaces are both shown. If true, we
-		// make the depth coordinates of the surface smaller, so that displaying
-		// the mesh and the surface together does not cause Z-fighting.
-		std::size_t count = 0;
-		for (auto d : m->lines_drawables()) {
-			if (d->is_visible()) {
-				d->draw(camera(), false);
-				++count;
-			}
-		}
+        glDepthRange(0.0, 1.0);
+        glDepthFunc(GL_LEQUAL);
+        for (auto d : m->lines_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+        }
+        glDepthFunc(GL_LESS);
 
-		if (count > 0) {
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(0.5f, -0.0001f);
-		}
-		for (auto d : m->triangles_drawables()) {
-			if (d->is_visible())
-				d->draw(camera(), false);
-		}
-		if (count > 0)
-			glDisable(GL_POLYGON_OFFSET_FILL);
+        for (auto d : m->points_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+        }
 	}
 
 }

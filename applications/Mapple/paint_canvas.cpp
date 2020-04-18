@@ -28,6 +28,8 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/viewer/texture_manager.h>
+#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -48,6 +50,7 @@ PaintCanvas::PaintCanvas(QWidget *parent)
         , func_(nullptr)
         , gpu_timer_(nullptr)
         , gpu_time_(0.0)
+        , text_renderer_(nullptr)
         , camera_(nullptr)
         , pressed_button_(Qt::NoButton)
         , mouse_previous_pos_(0, 0)
@@ -102,6 +105,7 @@ void PaintCanvas::cleanup() {
     delete transparency_;
     delete edl_;
     delete gpu_timer_;
+    delete text_renderer_;
 
     ShaderManager::terminate();
     TextureManager::terminate();
@@ -167,9 +171,15 @@ void PaintCanvas::initializeGL() {
     //int samples_received = 0;
     //func_->glgetintegerv(gl_samples, &samples_received);
 
+    // create OpenGLText renderer and load default fonts
+    text_renderer_ = new OpenGLText(dpi_scaling());
+    text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+
     // Calls user defined method.
     init();
 
+    // print usage
     std::cout << usage() << std::endl;
 }
 
@@ -1029,6 +1039,30 @@ void PaintCanvas::preDraw() {
 void PaintCanvas::postDraw() {
     easy3d_debug_log_gl_error;
 
+    {   // draw Easy3D logo and frame rate
+        const float offset = 20.0f * dpi_scaling();
+        text_renderer_->draw("Easy3D", offset, offset, 15, 0);
+
+        char buffer[48];
+        sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
+//        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 18, 1);
+
+#if 1   // text rendering using Qt.
+        QPainter painter; easy3d_debug_log_gl_error;
+        painter.begin(this);
+        painter.setRenderHint(QPainter::HighQualityAntialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
+
+        painter.beginNativePainting(); easy3d_debug_log_gl_error;
+        painter.drawText(20, 50, QString::fromStdString(buffer));
+        painter.endNativePainting();
+
+        painter.end();  easy3d_debug_log_gl_error;
+        func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
+
+#endif
+    }
+
     // shown only when it is not animating
     if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
         camera()->draw_paths();
@@ -1065,24 +1099,9 @@ void PaintCanvas::postDraw() {
         program->release();
         glEnable(GL_DEPTH_TEST);   // restore
     }
-
     easy3d_debug_log_gl_error;
 
     drawCornerAxes(); easy3d_debug_log_gl_error;
-
-    QPainter painter; easy3d_debug_log_gl_error;
-    painter.begin(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.beginNativePainting(); easy3d_debug_log_gl_error;
-
-    char buffer[48];
-    sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
-    painter.drawText(20, 20, QString::fromStdString(buffer));
-
-    painter.endNativePainting();
-    painter.end();  easy3d_debug_log_gl_error;
-    func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
 
     // ------------------ draw elements from the tool --------------------------
 
@@ -1242,23 +1261,13 @@ void PaintCanvas::draw() {
     if (models_.empty())
         return;
 
-    //    // Let's check if edges and surfaces are both shown. If true, we
-    //    // make the depth coordinates of the surface smaller, so that displaying
-    //    // the mesh and the surface together does not cause Z-fighting.
-    //    std::size_t count = 0;
     //    for (auto m : models_) {
     //        if (!m->is_visible())
     //            continue;
-    //        for (auto d : m->lines_drawables()) {
+    //        for (auto d : m->lines_drawables())
     //            if (d->is_visible())
-    //                ++count;
-    //        }
     //    }
-    //    if (count > 0) {
-    //        func_->glEnable(GL_POLYGON_OFFSET_FILL);
-    //        func_->glPolygonOffset(0.5f, -0.0001f);
-    //    }
-
+    //
     //    const mat4& MVP = camera_->modelViewProjectionMatrix();
     //    // camera position is defined in world coordinate system.
     //    const vec3& wCamPos = camera_->position();
@@ -1266,7 +1275,7 @@ void PaintCanvas::draw() {
     //    //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
     //    const mat4& MV = camera_->modelViewMatrix();
     //    const vec4& wLightPos = inverse(MV) * setting::light_position;
-
+    //
     //    ShaderProgram* program = ShaderManager::get_program("surface_color");
     //    if (!program) {
     //        std::vector<ShaderProgram::Attribute> attributes;
@@ -1299,10 +1308,7 @@ void PaintCanvas::draw() {
     //            program->release_texture();
     //        program->release();
     //    }
-
-    //    if (count > 0)
-    //        func_->glDisable(GL_POLYGON_OFFSET_FILL);
-
+    //
     //    program = ShaderManager::get_program("lines_color");
     //    if (!program) {
     //        std::vector<ShaderProgram::Attribute> attributes;
@@ -1326,7 +1332,7 @@ void PaintCanvas::draw() {
     //        }
     //        program->release();
     //    }
-
+    //
     //    program = ShaderManager::get_program("points_color");
     //    if (!program) {
     //        std::vector<ShaderProgram::Attribute> attributes;
@@ -1336,10 +1342,10 @@ void PaintCanvas::draw() {
     //        program = ShaderManager::create_program_from_files("points_color", attributes);
     //    }
     //    if (program) {
-
+    //
     //        if (edl_enabled_)
     //            edl()->begin();
-
+    //
     //        //glDisable(GL_MULTISAMPLE);
     //        program->bind();
     //        program->set_uniform("MVP", MVP);
@@ -1368,7 +1374,7 @@ void PaintCanvas::draw() {
     //        }
     //        program->release();
     //        //glEnable(GL_MULTISAMPLE);
-
+    //
     //        if (edl_enabled_)
     //            edl()->end();
     //    }
@@ -1379,33 +1385,25 @@ void PaintCanvas::draw() {
         if (!m->is_visible())
             continue;
 
-        for (auto d : m->points_drawables()) {
-            if (d->is_visible())
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-        }
+        // temporarily change the depth range and depth comparison method to properly render edges.
 
-        // Let's check if edges and surfaces are both shown. If true, we
-        // make the depth coordinates of the surface smaller, so that displaying
-        // the mesh and the surface together does not cause Z-fighting.
-        std::size_t count = 0;
-        for (auto d : m->lines_drawables()) {
-            if (d->is_visible()) {
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-                ++count;
-            }
-        }
-
-        if (count > 0) {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0.5f, -0.0001f);
-        }
+        glDepthRange(0.001, 1.0);
         for (auto d : m->triangles_drawables()) {
             if (d->is_visible())
                 d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
-        if (count > 0)
-            glDisable(GL_POLYGON_OFFSET_FILL);
 
-        easy3d_debug_log_gl_error;
+        glDepthRange(0.0, 1.0);
+        glDepthFunc(GL_LEQUAL);
+        for (auto d : m->lines_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+        }
+        glDepthFunc(GL_LESS);
+
+        for (auto d : m->points_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+        }
     }
 }
