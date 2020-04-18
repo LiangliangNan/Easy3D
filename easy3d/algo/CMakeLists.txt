@@ -66,15 +66,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/RANSAC-
 
 target_link_libraries(${PROJECT_NAME} core kdtree poisson_recon-9.0.1 RANSAC-1.1)
 
+set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
+target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})
+
 # It's "Boost", not "BOOST" or "boost". Case matters.
 find_package(Boost)
 if (Boost_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
 endif ()
-
-
-
-
-set(EIGEN_SOURCE_DIR "/Users/lnan/Software/eigen")
-target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})

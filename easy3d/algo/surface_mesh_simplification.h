@@ -26,8 +26,7 @@
 #define EASY3D_ALGO_SURFACE_MESH_SIMPLIFICATION_H
 
 #include <easy3d/core/surface_mesh.h>
-
-#include <easy3d/algo/heap.h>
+#include <easy3d/core/heap.h>
 #include <easy3d/algo/normal_cone.h>
 #include <easy3d/algo/quadric.h>
 
