@@ -82,10 +82,17 @@ private slots:
     void detectSelfIntersections();
     void remeshSelfIntersections();
     void samplingSurfaceMesh();
+
     void subdivisionCatmullClark();
     void subdivisionLoop();
     void subdivisionSqrt3();
 
+    void surfaceMeshSmoothing();
+    void surfaceMeshFairing();
+    void surfaceMeshHoleFilling();
+    void surfaceMeshSimplification();
+    void surfaceMeshRemeshing();
+    void surfaceMeshParameterization();
 
     // about
     void onAboutMapple();

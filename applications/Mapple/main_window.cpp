@@ -27,9 +27,9 @@
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
-#include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
+#include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -662,6 +662,7 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshHoleFilling, SIGNAL(triggered()), this, SLOT(surfaceMeshHoleFilling()));
     connect(ui->actionSurfaceMeshSimplification, SIGNAL(triggered()), this, SLOT(surfaceMeshSimplification()));
     connect(ui->actionSurfaceMeshParameterization, SIGNAL(triggered()), this, SLOT(surfaceMeshParameterization()));
+    connect(ui->actionSurfaceMeshRemeshing, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshing()));
 }
 
 
@@ -883,6 +884,68 @@ void MainWindow::subdivisionSqrt3() {
         viewer()->doneCurrent();
         viewer()->update();
     }
+}
+
+
+void MainWindow::surfaceMeshSmoothing() {
+
+}
+
+
+void MainWindow::surfaceMeshFairing() {
+
+}
+
+
+void MainWindow::surfaceMeshHoleFilling() {
+
+}
+
+
+void MainWindow::surfaceMeshSimplification() {
+
+}
+
+
+void MainWindow::surfaceMeshRemeshing() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+/*
+        static int feature_angle = 70;
+        SurfaceMeshFeatures sf(mesh);
+        sf.clear();
+        sf.detect_angle(feature_angle);
+        update_mesh();
+*/
+
+
+    if (false) { // Uniform remeshing
+        float len(0.0f);
+        for (auto eit : mesh->edges())
+            len += distance(mesh->position(mesh->vertex(eit, 0)),
+                          mesh->position(mesh->vertex(eit, 1)));
+        len /= (float) mesh->n_edges();
+        SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
+    } else { // Adaptive remeshing
+        auto bb = mesh->bounding_box().diagonal();
+        SurfaceMeshRemeshing(mesh).adaptive_remeshing(
+                0.001 * bb,  // min length
+                0.100 * bb,  // max length
+                0.001 * bb); // approx. error
+    }
+
+    mesh->update_vertex_normals();
+    viewer()->makeCurrent();
+    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
+    viewer()->doneCurrent();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshParameterization() {
+
 }
 
 
