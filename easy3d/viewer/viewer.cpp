@@ -1132,7 +1132,7 @@ namespace easy3d {
         // create OpenGLText renderer and load default fonts
         text_renderer_ = new OpenGLText(dpi_scaling());
         text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-        text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Regular.ttf");
+        text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
         // print usage
         std::cout << usage() << std::endl;

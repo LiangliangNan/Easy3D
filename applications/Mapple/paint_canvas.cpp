@@ -174,7 +174,7 @@ void PaintCanvas::initializeGL() {
     // create OpenGLText renderer and load default fonts
     text_renderer_ = new OpenGLText(dpi_scaling());
     text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Regular.ttf");
+    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
     // Calls user defined method.
     init();
@@ -1045,7 +1045,7 @@ void PaintCanvas::postDraw() {
 
         char buffer[48];
         sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
-        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 18, 1);
+//        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 18, 1);
 
 #if 1   // text rendering using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
@@ -1054,10 +1054,9 @@ void PaintCanvas::postDraw() {
         painter.setRenderHint(QPainter::TextAntialiasing);
 
         painter.beginNativePainting(); easy3d_debug_log_gl_error;
-
-        painter.drawText(20, 100, QString::fromStdString(buffer));
-
+        painter.drawText(20, 50, QString::fromStdString(buffer));
         painter.endNativePainting();
+
         painter.end();  easy3d_debug_log_gl_error;
         func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
 
