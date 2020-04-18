@@ -5,7 +5,9 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        differential_geometry.cpp
+        barycentric_coordinates.h
+        differential_geometry.h
+        distance_point_triangle.h
         gaussian_noise.h
         point_cloud_normals.h
         point_cloud_poisson_reconstruction.h
@@ -14,14 +16,24 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_components.h
         surface_mesh_curvature.h
         surface_mesh_enumerator.h
-#        surface_mesh_remeshing.h
+        surface_mesh_fairing.h
+        surface_mesh_features.h
+        surface_mesh_geodesic.h
+        surface_mesh_hole_filling.h
+        surface_mesh_parameterization.h
+        surface_mesh_remeshing.h
+        surface_mesh_simplification.h
+        surface_mesh_smoothing.h
         surface_mesh_sampler.h
         surface_mesh_subdivision.h
         surface_mesh_topology.h
+        surface_mesh_triangulation.h
+        triangle_mesh_kdtree.h
         )
 
 set(${PROJECT_NAME}_SOURCES
         differential_geometry.cpp
+        distance_point_triangle.cpp
         gaussian_noise.cpp
         point_cloud_normals.cpp
         point_cloud_poisson_reconstruction.cpp
@@ -30,10 +42,19 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_components.cpp
         surface_mesh_curvature.cpp
         surface_mesh_enumerator.cpp
-#        surface_mesh_remeshing.cpp
+        surface_mesh_fairing.cpp
+        surface_mesh_features.cpp
+        surface_mesh_geodesic.cpp
+        surface_mesh_hole_filling.cpp
+        surface_mesh_parameterization.cpp
+        surface_mesh_remeshing.cpp
+        surface_mesh_simplification.cpp
+        surface_mesh_smoothing.cpp
         surface_mesh_sampler.cpp
         surface_mesh_subdivision.cpp
         surface_mesh_topology.cpp
+        surface_mesh_triangulation.cpp
+        triangle_mesh_kdtree.cpp
         )
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
@@ -52,3 +73,8 @@ if (Boost_FOUND)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
 endif ()
 
+
+
+
+set(EIGEN_SOURCE_DIR "/Users/lnan/Software/eigen")
+target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})
