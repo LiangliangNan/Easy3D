@@ -656,13 +656,31 @@ namespace easy3d {
 
     //----------------------------------------------------------------------
 
-    template <class Vec> inline
-    bool has_nan(const Vec& v) {
-        for (std::size_t i=0; i<v.size(); ++i) {
+    template<class Vec>
+    inline bool has_nan(const Vec &v) {
+        for (std::size_t i = 0; i < v.size(); ++i) {
             if (std::isnan(v[i]) || std::isinf(v[i]))
                 return true;
         }
         return false;
+    }
+
+    //! return component-wise minimum
+    template<class Vec>
+    inline Vec comp_min(const Vec &v1, const Vec &v2) {
+        Vec result;
+        for (int i = 0; i < result.size(); ++i)
+            result[i] = std::min(v1[i], v2[i]);
+        return result;
+    }
+
+    //! return component-wise minimum
+    template<class Vec>
+    inline Vec comp_max(const Vec &v1, const Vec &v2) {
+        Vec result;
+        for (int i = 0; i < result.size(); ++i)
+            result[i] = std::max(v1[i], v2[i]);
+        return result;
     }
 
 #else
