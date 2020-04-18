@@ -129,8 +129,16 @@
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
     <addaction name="separator"/>
-    <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="actionSurfaceMeshFairing"/>
+    <addaction name="actionSurfaceMeshSmoothing"/>
+    <addaction name="separator"/>
     <addaction name="menuSubdivision"/>
+    <addaction name="actionSurfaceMeshSimplification"/>
+    <addaction name="actionSurfaceMeshRemeshing"/>
+    <addaction name="actionSurfaceMeshHoleFilling"/>
+    <addaction name="actionSurfaceMeshParameterization"/>
+    <addaction name="separator"/>
+    <addaction name="actionSamplingSurfaceMesh"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -809,6 +817,36 @@
   <action name="actionComputeMaxAbsoluteCurvature">
    <property name="text">
     <string>Absolute Max Curvature</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSimplification">
+   <property name="text">
+    <string>Simplification</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshRemeshing">
+   <property name="text">
+    <string>Remeshing</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshHoleFilling">
+   <property name="text">
+    <string>Fill Holes</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSmoothing">
+   <property name="text">
+    <string>Smoothing</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshParameterization">
+   <property name="text">
+    <string>Parameterization</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshFairing">
+   <property name="text">
+    <string>Fairing</string>
    </property>
   </action>
  </widget>
