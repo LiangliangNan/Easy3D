@@ -178,9 +178,6 @@ void PaintCanvas::initializeGL() {
 
     // Calls user defined method.
     init();
-
-    // print usage
-    std::cout << usage() << std::endl;
 }
 
 
@@ -415,10 +412,7 @@ void PaintCanvas::setCurrentModel(easy3d::Model *m) {
 
 
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
-    if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
-        std::cout << usage() << std::endl;
-
-    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
+    if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
     } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {

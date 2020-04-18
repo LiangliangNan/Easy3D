@@ -96,6 +96,7 @@ private slots:
 
     // about
     void onAboutMapple();
+    void showManual();
 
     void operationModeChanged(QAction* act);
 

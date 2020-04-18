@@ -126,6 +126,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // about menu
     connect(ui->actionAboutMapple, SIGNAL(triggered()), this, SLOT(onAboutMapple()));
+    connect(ui->actionManual, SIGNAL(triggered()), this, SLOT(showManual()));
 
     // options for the model panel
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
@@ -483,6 +484,11 @@ void MainWindow::onAboutMapple()
 
     //QMessageBox::about(this, title, text);
     QMessageBox::about(this, "About Mapple", title + text);
+}
+
+
+void MainWindow::showManual() {
+    std::cout << viewer()->usage() << std::endl;
 }
 
 
