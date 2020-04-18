@@ -30,7 +30,6 @@
 
 namespace easy3d {
 
-
     /**
      * \brief A class for implicitly fairing a surface mesh. See the following paper for more details:
      *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
@@ -62,7 +61,7 @@ namespace easy3d {
         SurfaceMesh *mesh_; //!< the mesh
 
         // property handles
-        SurfaceMesh::VertexProperty<vec3> points_;
+        SurfaceMesh::VertexProperty <vec3> points_;
         SurfaceMesh::VertexProperty<bool> vselected_;
         SurfaceMesh::VertexProperty<bool> vlocked_;
         SurfaceMesh::VertexProperty<double> vweight_;
@@ -71,7 +70,6 @@ namespace easy3d {
     };
 
 
-//=============================================================================
 } // namespace easy3d
 
 #endif  // EASY3D_ALGO_SURFACE_MESH_FAIRING_H

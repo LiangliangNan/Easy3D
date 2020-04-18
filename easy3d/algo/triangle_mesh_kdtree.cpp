@@ -24,15 +24,12 @@
 
 
 #include <easy3d/algo/triangle_mesh_kdtree.h>
-#include <easy3d/algo/differential_geometry.h>
-#include <easy3d/algo/distance_point_triangle.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 
 #include <cfloat>
 
 
 namespace easy3d {
-
-//=============================================================================
 
     TriangleMeshKdTree::TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces,
                                            unsigned int max_depth) {
@@ -60,7 +57,7 @@ namespace easy3d {
         build_recurse(root_, max_faces, max_depth);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     unsigned int TriangleMeshKdTree::build_recurse(Node *node, unsigned int max_faces,
                                                    unsigned int depth) {
@@ -171,7 +168,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     TriangleMeshKdTree::NearestNeighbor TriangleMeshKdTree::nearest(const vec3 &p) const {
         NearestNeighbor data;
@@ -181,7 +178,7 @@ namespace easy3d {
         return data;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void TriangleMeshKdTree::nearest_recurse(Node *node, const vec3 &point,
                                              NearestNeighbor &data) const {
@@ -192,7 +189,7 @@ namespace easy3d {
 
             auto fit = node->faces->begin(), fend = node->faces->end();
             for (; fit != fend; ++fit) {
-                d = dist_point_triangle(point, fit->x[0], fit->x[1], fit->x[2], n);
+                d = geom::dist_point_triangle(point, fit->x[0], fit->x[1], fit->x[2], n);
                 ++data.tests;
                 if (d < data.dist) {
                     data.dist = d;
@@ -202,7 +199,7 @@ namespace easy3d {
             }
         }
 
-            // non-terminal node
+        // non-terminal node
         else {
             float dist = point[node->axis] - node->split;
 
@@ -218,5 +215,4 @@ namespace easy3d {
         }
     }
 
-//=============================================================================
 } // namespace easy3d

@@ -27,8 +27,6 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/heap.h>
-#include <easy3d/algo/normal_cone.h>
-#include <easy3d/algo/quadric.h>
 
 #include <set>
 #include <vector>
@@ -36,15 +34,148 @@
 
 namespace easy3d {
 
-//=============================================================================
-//! \addtogroup algorithms algorithms
-//! @{
-//=============================================================================
+    //! This class stores a quadric as a symmetrix 4x4 matrix. Used by the error
+    //! quadric mesh decimation algorithms.
+    class Quadric {
+    public:
+        //! construct quadric from upper triangle of symmetric 4x4 matrix
+        Quadric(double a, double b, double c, double d,
+                double e, double f, double g,
+                double h, double i,
+                double j)
+                : a_(a), b_(b), c_(c), d_(d),
+                  e_(e), f_(f), g_(g),
+                  h_(h), i_(i),
+                  j_(j) {}
 
-//! \brief Surface mesh simplification based on approximation error and fairness criteria.
-//! \details Performs incremental greedy mesh simplification based on halfedge
-//! collapses. See \cite kobbelt_1998_general and \cite garland_1997_surface for
-//! details.
+        //! constructor quadric from given plane equation: ax+by+cz+d=0
+        Quadric(double a = 0.0, double b = 0.0, double c = 0.0, double d = 0.0)
+                : a_(a * a), b_(a * b), c_(a * c), d_(a * d),
+                  e_(b * b), f_(b * c), g_(b * d),
+                  h_(c * c), i_(c * d),
+                  j_(d * d) {}
+
+        //! construct from point and normal specifying a plane
+        Quadric(const vec3 &n, const vec3 &p) {
+            *this = Quadric(n[0], n[1], n[2], -dot(n, p));
+        }
+
+        //! set all matrix entries to zero
+        void clear() { a_ = b_ = c_ = d_ = e_ = f_ = g_ = h_ = i_ = j_ = 0.0; }
+
+        //! add given quadric to this quadric
+        Quadric &operator+=(const Quadric &q) {
+            a_ += q.a_;
+            b_ += q.b_;
+            c_ += q.c_;
+            d_ += q.d_;
+            e_ += q.e_;
+            f_ += q.f_;
+            g_ += q.g_;
+            h_ += q.h_;
+            i_ += q.i_;
+            j_ += q.j_;
+            return *this;
+        }
+
+        //! multiply quadric by a scalar
+        Quadric &operator*=(double s) {
+            a_ *= s;
+            b_ *= s;
+            c_ *= s;
+            d_ *= s;
+            e_ *= s;
+            f_ *= s;
+            g_ *= s;
+            h_ *= s;
+            i_ *= s;
+            j_ *= s;
+            return *this;
+        }
+
+        //! evaluate quadric Q at position p by computing (p^T * Q * p)
+        double operator()(const vec3 &p) const {
+            const double x(p[0]), y(p[1]), z(p[2]);
+            return a_ * x * x + 2.0 * b_ * x * y + 2.0 * c_ * x * z + 2.0 * d_ * x
+                   + e_ * y * y + 2.0 * f_ * y * z + 2.0 * g_ * y
+                   + h_ * z * z + 2.0 * i_ * z
+                   + j_;
+        }
+
+    private:
+
+        double a_, b_, c_, d_,
+                e_, f_, g_,
+                h_, i_,
+                j_;
+    };
+
+    //=============================================================================
+
+    //! A class implementing a normal cone.
+    class NormalCone {
+    public:
+        //! default constructor (not initialized)
+        NormalCone() {}
+
+        //! Initialize cone with center (unit vector) and angle (radius in radians)
+        NormalCone(const vec3 &normal, float angle = 0.0)
+                : center_normal_(normal), angle_(angle) {
+        }
+
+        //! returns center normal
+        const vec3 &center_normal() const { return center_normal_; }
+
+        //! returns size of cone (radius in radians)
+        float angle() const { return angle_; }
+
+        //! merge *this with n.
+        NormalCone &merge(const vec3 &n) { return merge(NormalCone(n)); }
+
+        //! merge *this with nc. *this will then enclose both cones.
+        NormalCone &merge(const NormalCone &nc) {
+            const float dp = dot(center_normal_, nc.center_normal_);
+
+            // axes point in same direction
+            if (dp > 0.99999) {
+                angle_ = std::max(angle_, nc.angle_);
+            }
+
+                // axes point in opposite directions
+            else if (dp < -0.99999) {
+                angle_ = 2 * M_PI;
+            } else {
+                // new angle
+                float center_angle = acos(dp);
+                float min_angle = std::min(-angle_, center_angle - nc.angle_);
+                float max_angle = std::max(angle_, center_angle + nc.angle_);
+                angle_ = 0.5 * (max_angle - min_angle);
+
+                // axis by SLERP
+                float axis_angle = 0.5 * (min_angle + max_angle);
+                center_normal_ = ((center_normal_ * sin(center_angle - axis_angle) +
+                                   nc.center_normal_ * sin(axis_angle)) /
+                                  sin(center_angle));
+            }
+
+            return *this;
+        }
+
+    private:
+        vec3 center_normal_;
+        float angle_;
+    };
+
+
+    //=============================================================================
+
+    /**
+     * \brief Surface mesh simplification based on approximation error and fairness criteria.
+     * \details It performs incremental greedy mesh simplification based on halfedge collapses. See the following paper
+     * for more details:
+     *  - Michael Garland and Paul Seagrave Heckbert. Surface simplification using quadric error metrics. SIGGRAPH 1997.
+     *  - Leif Kobbelt et al. A general framework for mesh decimation. In Proceedings of Graphics Interface, 1998.
+     */
     class SurfaceMeshSimplification {
     public:
         //! Construct with mesh to be simplified.
@@ -61,7 +192,7 @@ namespace easy3d {
         //! Simplify mesh to \p n vertices.
         void simplify(unsigned int n_vertices);
 
-    private: //------------------------------------------------------ private types
+    private:
         //! Store data for an halfedge collapse
         /*
                     vl
@@ -116,7 +247,7 @@ namespace easy3d {
 
         typedef std::vector<vec3> Points;
 
-    private: //-------------------------------------------------- private functions
+    private:
         // put the vertex v in the priority queue
         void enqueue_vertex(SurfaceMesh::Vertex v);
 
@@ -135,7 +266,7 @@ namespace easy3d {
         // compute distance from p to triagle f
         float distance(SurfaceMesh::Face f, const vec3 &p) const;
 
-    private: //------------------------------------------------------- private data
+    private:
         SurfaceMesh *mesh_;
 
         bool initialized_;
@@ -164,7 +295,6 @@ namespace easy3d {
         unsigned int max_valence_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 #endif  // EASY3D_ALGO_SURFACE_MESH_SIMPLIFICATION_H

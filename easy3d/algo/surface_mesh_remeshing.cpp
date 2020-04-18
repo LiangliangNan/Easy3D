@@ -23,18 +23,15 @@
  */
 
 #include <easy3d/algo/surface_mesh_remeshing.h>
-#include <easy3d/algo/distance_point_triangle.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
-#include <easy3d/algo/differential_geometry.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo/triangle_mesh_kdtree.h>
 
-#include <cfloat>
 #include <cmath>
 #include <algorithm>
 
-namespace easy3d {
 
-//=============================================================================
+namespace easy3d {
 
     SurfaceMeshRemeshing::SurfaceMeshRemeshing(SurfaceMesh *mesh)
             : mesh_(mesh), refmesh_(nullptr), kd_tree_(nullptr) {
@@ -44,11 +41,11 @@ namespace easy3d {
         vnormal_ = mesh_->get_vertex_property<vec3>("v:normal");
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshRemeshing::~SurfaceMeshRemeshing() = default;
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::uniform_remeshing(float edge_length,
                                                  unsigned int iterations,
@@ -81,7 +78,7 @@ namespace easy3d {
         postprocessing();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::adaptive_remeshing(float min_edge_length,
                                                   float max_edge_length,
@@ -118,7 +115,7 @@ namespace easy3d {
         postprocessing();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::preprocessing() {
         // properties
@@ -191,7 +188,7 @@ namespace easy3d {
                     for (auto h : mesh_->halfedges(v)) {
                         vv = mesh_->to_vertex(h);
                         if (!vfeature_[vv]) {
-                            w = std::max(0.0, cotan_weight(mesh_, mesh_->edge(h)));
+                            w = std::max(0.0, geom::cotan_weight(mesh_, mesh_->edge(h)));
                             ww += w;
                             c += w * curv.max_abs_curvature(vv);
                         }
@@ -243,7 +240,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::postprocessing() {
         // delete kd-tree and reference mesh
@@ -258,16 +255,16 @@ namespace easy3d {
         mesh_->remove_vertex_property(vsizing_);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::project_to_reference(SurfaceMesh::Vertex v) {
         if (!use_projection_) {
             return;
         }
 
-         // find closest triangle of reference mesh
+        // find closest triangle of reference mesh
         TriangleMeshKdTree::NearestNeighbor nn = kd_tree_->nearest(points_[v]);
-        const vec3& p = nn.nearest;
+        const vec3 &p = nn.nearest;
         const SurfaceMesh::Face f = nn.face;
 
         // get face data
@@ -285,7 +282,7 @@ namespace easy3d {
         const float s2 = refsizing_[*fvIt];
 
         // get barycentric coordinates
-        const vec3& b = geom::barycentric_coordinates(p, p0, p1, p2);
+        const vec3 &b = geom::barycentric_coordinates(p, p0, p1, p2);
 
         // interpolate normal
         vec3 n;
@@ -307,7 +304,7 @@ namespace easy3d {
         vsizing_[v] = s;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::split_long_edges() {
         SurfaceMesh::Vertex vnew, v0, v1;
@@ -334,7 +331,7 @@ namespace easy3d {
                     mesh_->split(e, vnew);
 
                     // need normal or sizing for adaptive refinement
-                    vnormal_[vnew] =mesh_->compute_vertex_normal(vnew);
+                    vnormal_[vnew] = mesh_->compute_vertex_normal(vnew);
                     vsizing_[vnew] = 0.5f * (vsizing_[v0] + vsizing_[v1]);
 
                     if (is_feature) {
@@ -352,7 +349,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::collapse_short_edges() {
         SurfaceMesh::Vertex v0, v1;
@@ -476,7 +473,7 @@ namespace easy3d {
         mesh_->garbage_collection();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::flip_edges() {
         SurfaceMesh::Vertex v0, v1, v2, v3;
@@ -562,7 +559,7 @@ namespace easy3d {
         mesh_->remove_vertex_property(valence);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::tangential_smoothing(unsigned int iterations) {
         SurfaceMesh::Vertex v1, v2, v3, vv;
@@ -683,7 +680,7 @@ namespace easy3d {
         mesh_->remove_vertex_property(update);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::remove_caps() {
         SurfaceMesh::Halfedge h;

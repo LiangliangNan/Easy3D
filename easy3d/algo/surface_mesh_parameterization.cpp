@@ -24,23 +24,21 @@
 
 
 #include <easy3d/algo/surface_mesh_parameterization.h>
-#include <easy3d/algo/differential_geometry.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/logging.h>
 
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-//=============================================================================
 
 namespace easy3d {
-
-//=============================================================================
 
     SurfaceMeshParameterization::SurfaceMeshParameterization(SurfaceMesh *mesh)
             : mesh_(mesh) {
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshParameterization::setup_boundary_constraints() {
         // get properties
@@ -63,7 +61,7 @@ namespace easy3d {
 
         // no boundary found ?
         if (vit == vend) {
-            std::cerr << "Mesh has no boundary." << std::endl;
+            LOG(WARNING) << "SurfaceMeshParameterization works only on meshes with boundaries.";
             return false;
         }
 
@@ -103,12 +101,12 @@ namespace easy3d {
         return true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshParameterization::harmonic(bool use_uniform_weights) {
         // map boundary to circle
         if (!setup_boundary_constraints()) {
-            std::cerr << "Could not perform setup of boundary constraints.\n";
+            LOG(ERROR) << "Failed performing setup of boundary constraints.";
             return;
         }
 
@@ -119,8 +117,7 @@ namespace easy3d {
 
         // compute Laplace weight per edge: cotan or uniform
         for (auto e : mesh_->edges()) {
-            eweight[e] =
-                    use_uniform_weights ? 1.0 : std::max(0.0, cotan_weight(mesh_, e));
+            eweight[e] = use_uniform_weights ? 1.0 : std::max(0.0, geom::cotan_weight(mesh_, e));
         }
 
         // collect free (non-boundary) vertices in array free_vertices[]
@@ -139,8 +136,8 @@ namespace easy3d {
         const unsigned int n = free_vertices.size();
         Eigen::SparseMatrix<double> A(n, n);
         Eigen::MatrixXd B(n, 2);
-        std::vector<Eigen::Triplet < double>>
-        triplets;
+        std::vector<Eigen::Triplet<double>>
+                triplets;
         dvec2 b;
         double w, ww;
         SurfaceMesh::Vertex v, vv;
@@ -173,14 +170,14 @@ namespace easy3d {
         A.setFromTriplets(triplets.begin(), triplets.end());
 
         // solve A*X = B
-        Eigen::SimplicialLDLT <Eigen::SparseMatrix<double>> solver(A);
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceMeshParameterization: Could not solve linear system\n";
+            LOG(ERROR) << "SurfaceMeshParameterization failed solving the linear system.";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {
-                const auto& tmp = X.row(i);
+                const auto &tmp = X.row(i);
                 tex[free_vertices[i]] = vec2(tmp(0), tmp(1));
             }
         }
@@ -190,7 +187,7 @@ namespace easy3d {
         mesh_->remove_edge_property(eweight);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshParameterization::setup_lscm_boundary() {
         // constrain the two boundary vertices farthest from each other to fix
@@ -239,7 +236,7 @@ namespace easy3d {
         return true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshParameterization::lscm() {
         // boundary constraints
@@ -325,8 +322,8 @@ namespace easy3d {
 
         Eigen::SparseMatrix<double> A(2 * n, 2 * n);
         Eigen::VectorXd b = Eigen::VectorXd::Zero(2 * n);
-        std::vector<Eigen::Triplet < double>>
-        triplets;
+        std::vector<Eigen::Triplet<double>>
+                triplets;
 
         for (unsigned int i = 0; i < nv2; ++i) {
             vi = SurfaceMesh::Vertex(i % nv);
@@ -386,10 +383,10 @@ namespace easy3d {
         A.setFromTriplets(triplets.begin(), triplets.end());
 
         // solve A*X = B
-        Eigen::SimplicialLDLT <Eigen::SparseMatrix<double>> solver(A);
+        Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver(A);
         Eigen::VectorXd x = solver.solve(b);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceMeshParameterization: Could not solve linear system\n";
+            LOG(ERROR) << "SurfaceMeshParameterization failed solving the linear system";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {
@@ -416,6 +413,4 @@ namespace easy3d {
         mesh_->remove_halfedge_property(weight);
     }
 
-//=============================================================================
 } // namespace easy3d
-//=============================================================================

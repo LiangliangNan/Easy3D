@@ -31,21 +31,15 @@
 #include <float.h>
 #include <limits.h>
 
-//=============================================================================
-
 namespace easy3d {
 
-//=============================================================================
-
-//! \addtogroup algorithms algorithms
-//! @{
-
-//=============================================================================
-
-//! \brief Compute geodesic distance from a set of seed vertices
-//! \details The method works by a Dykstra-like breadth first traversal from
-//! the seed vertices, implemented by a heap structure.
-//! See \cite kimmel_1998_geodesic for details.
+    /**
+     * \brief This class computes geodesic distance from a set of seed vertices.
+     * \details The method works by a Dykstra-like breadth first traversal from the seed vertices, implemented by a
+     * heap structure. See the following paper for more details:
+     *  - Kimmel and Sethian. Computing geodesic paths on manifolds. Proceedings of the National Academy of Sciences,
+     *    95(15):8431–8435, 1998.
+     */
     class SurfaceMeshGeodesic {
     public:
         //! \brief Construct from mesh.
@@ -140,7 +134,6 @@ namespace easy3d {
         SurfaceMesh::VertexProperty<bool> processed_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 

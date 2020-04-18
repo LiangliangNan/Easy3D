@@ -29,24 +29,15 @@
 #include <vector>
 #include <float.h>
 
-//=============================================================================
-
 namespace easy3d {
 
-//=============================================================================
-
-//! \addtogroup algorithms algorithms
-//! @{
-
-//=============================================================================
-
-//! \brief Close simple holes
-
-//! \details Close simple holes (boundary loops of manifold vertices) by first
-//! filling the hole with an angle/area-minimizing triangulation, followed
-//! by isometric remeshing, and finished by curvature-minimizing fairing of the
-//! filled-in patch.
-//! See \cite liepa_2003_filling for details.
+    /**
+     * \brief This class closes simple holes in a surface mesh.
+     * \details It closes simple holes (boundary loops of manifold vertices) by first filling the hole with an
+     * angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing
+     * fairing of the filled-in patch. See the following paper for more details:
+     *  - Peter Liepa. Filling holes in meshes. SGP, pages 200–205, 2003.
+     */
     class SurfaceMeshHoleFilling {
     public:
         /// construct with mesh
@@ -55,7 +46,7 @@ namespace easy3d {
         /// fill the hole specified by halfedge h
         bool fill_hole(SurfaceMesh::Halfedge h);
 
-    private: //------------------------------------------------------ private types
+    private:
         struct Weight {
             Weight(float _angle = FLT_MAX, float _area = FLT_MAX)
                     : angle(_angle), area(_area) {
@@ -74,7 +65,7 @@ namespace easy3d {
             float area;
         };
 
-    private: //-------------------------------------------------- private functions
+    private:
         // compute optimal triangulation of hole
         bool triangulate_hole(SurfaceMesh::Halfedge h);
 
@@ -94,7 +85,7 @@ namespace easy3d {
 
         void fairing();
 
-    private: //--------------------------------------------------- helper functions
+    private:
         // return i'th vertex of hole
         SurfaceMesh::Vertex hole_vertex(unsigned int i) const {
             assert(i < hole_.size());
@@ -120,10 +111,10 @@ namespace easy3d {
         // dihedral angle
         float compute_angle(const vec3 &_n1, const vec3 &_n2) const;
 
-    private: //------------------------------------------------------- private data
+    private:
         // mesh and properties
         SurfaceMesh *mesh_;
-        SurfaceMesh::VertexProperty<vec3> points_;
+        SurfaceMesh::VertexProperty <vec3> points_;
         SurfaceMesh::VertexProperty<bool> vlocked_;
         SurfaceMesh::EdgeProperty<bool> elocked_;
 
@@ -134,7 +125,6 @@ namespace easy3d {
         std::vector<std::vector<int>> index_;
     };
 
-//=============================================================================
 }
 
 #endif  // EASY3D_ALGO_SURFACE_MESH_HOLE_FILLING_H

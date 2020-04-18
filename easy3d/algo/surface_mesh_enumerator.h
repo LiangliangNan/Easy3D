@@ -42,7 +42,9 @@ namespace easy3d {
          * @param cur_id The index of the connected component to be propagated.
          * @attention The vertex property id must be initialize with "-1".
          */
-        static void propagate_connected_component(SurfaceMesh* mesh, SurfaceMesh::VertexProperty<int> id, SurfaceMesh::Vertex seed, int cur_id);
+        static void
+        propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id, SurfaceMesh::Vertex seed,
+                                      int cur_id);
 
         /**
          * Propagates a connected component of a surface mesh from the seed face.
@@ -52,7 +54,9 @@ namespace easy3d {
          * @param cur_id The index of the connected component to be propagated.
          * @attention The face property id must be initialize with "-1".
          */
-        static void propagate_connected_component(SurfaceMesh* mesh, SurfaceMesh::FaceProperty<int> id, SurfaceMesh::Face seed, int cur_id);
+        static void
+        propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id, SurfaceMesh::Face seed,
+                                      int cur_id);
 
         /**
          * Enumerates the connected components of a surface mesh from its vertices.

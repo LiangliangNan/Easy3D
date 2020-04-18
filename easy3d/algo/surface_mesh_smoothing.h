@@ -27,19 +27,13 @@
 
 #include <easy3d/core/surface_mesh.h>
 
-//=============================================================================
-
 namespace easy3d {
 
-//=============================================================================
-
-//! \addtogroup algorithms algorithms
-//! @{
-
-//=============================================================================
-
-//! \brief A class for Laplacian smoothing
-//! \details See also \cite desbrun_1999_implicit and \cite kazhdan_2012
+    /**
+     * A class for Laplacian smoothing. See the following papers for more details:
+     *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
+     *  - Misha Kazhdan et al. Can mean‐curvature flow be modified to be non‐singular? CGF, 2012.
+     */
     class SurfaceMeshSmoothing {
     public:
         //! Construct with mesh to be smoothed.
@@ -83,7 +77,6 @@ namespace easy3d {
         unsigned int how_many_vertex_weights_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 

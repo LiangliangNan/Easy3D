@@ -33,7 +33,7 @@ namespace easy3d {
 
     SurfaceMesh *SurfaceMeshComponent::to_mesh() const {
         const SurfaceMeshComponent *comp = this;
-        SurfaceMesh* mesh = comp->mesh();
+        SurfaceMesh *mesh = comp->mesh();
 
         SurfaceMesh *result = new SurfaceMesh;
 
@@ -85,7 +85,7 @@ namespace easy3d {
 
         float area = 0.0f;
         std::size_t num = tess.num_triangles();
-        const std::vector<Tessellator::Vertex*>& vts = tess.vertices();
+        const std::vector<Tessellator::Vertex *> &vts = tess.vertices();
         for (std::size_t i = 0; i < num; ++i) {
             unsigned int a, b, c;
             tess.get_triangle(i, a, b, c);

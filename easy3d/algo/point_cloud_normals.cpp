@@ -47,8 +47,8 @@
 
 namespace easy3d {
 
-    bool PointCloudNormals::estimate(PointCloud* cloud, unsigned int k /* = 16 */, bool compute_curvature /* = false */) const
-    {
+    bool PointCloudNormals::estimate(PointCloud *cloud, unsigned int k /* = 16 */,
+                                     bool compute_curvature /* = false */) const {
         if (!cloud) {
             LOG(ERROR) << "empty input point cloud";
             return false;
@@ -65,29 +65,29 @@ namespace easy3d {
         LOG(INFO) << "done. Time: " << w.time_string();
 
         int num = cloud->n_vertices();
-        const std::vector<vec3>& points = cloud->points();
-        std::vector<vec3>& normals = cloud->vertex_property<vec3>("v:normal").vector();
+        const std::vector<vec3> &points = cloud->points();
+        std::vector<vec3> &normals = cloud->vertex_property<vec3>("v:normal").vector();
 
-        std::vector<float>* curvatures = nullptr;
+        std::vector<float> *curvatures = nullptr;
         if (compute_curvature)
             curvatures = &(cloud->vertex_property<float>("v:curvature").vector());
 
         w.restart();
         LOG(INFO) << "estimating normals...";
 
-    #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < num; ++i) {
-            const vec3& p = points[i];
+            const vec3 &p = points[i];
             std::vector<int> neighbors;
             kdtree.find_closest_k_points(p, k, neighbors);
 
             PrincipalAxes<3, float> pca;
-            pca.begin() ;
+            pca.begin();
             for (unsigned int j = 0; j < neighbors.size(); ++j) {
                 int idx = neighbors[j];
                 pca.add_point(points[idx]);
             }
-            pca.end() ;
+            pca.end();
 
             // the eigen vector corresponding to the smallest eigen value
             normals[i] = pca.axis(2);
@@ -95,7 +95,8 @@ namespace easy3d {
                 normals[i] = -normals[i];
 
             if (compute_curvature)
-                (*curvatures)[i] = float(pca.eigen_value(2) / (pca.eigen_value(0) + pca.eigen_value(1) + pca.eigen_value(2)));
+                (*curvatures)[i] = float(
+                        pca.eigen_value(2) / (pca.eigen_value(0) + pca.eigen_value(1) + pca.eigen_value(2)));
         }
 
         LOG(INFO) << "done. Time: " << w.time_string();
@@ -108,11 +109,13 @@ namespace easy3d {
 
         struct VertexProperty {
             VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1)) : vertex(v) {}
+
             easy3d::PointCloud::Vertex vertex;
         };
 
         struct EdgeProperty {
             EdgeProperty(float w = -std::numeric_limits<float>::max()) : weight(w) {}
+
             float weight;
         };
 
@@ -120,19 +123,18 @@ namespace easy3d {
         /// - the adjacency relations of vertices in a K neighbors.
         /// - vertices contain the corresponding input point cloud vertex
         /// - the edge weight = edge weight = 1 - | normal1 * normal2 |
-        class RiemannianGraph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty, EdgeProperty >
-        {
+        class RiemannianGraph
+                : public boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty, EdgeProperty> {
         public:
-            typedef RiemannianGraph::vertex_descriptor   Vertex;
-            typedef RiemannianGraph::edge_descriptor     Edge;
+            typedef RiemannianGraph::vertex_descriptor Vertex;
+            typedef RiemannianGraph::edge_descriptor Edge;
 
         public:
             Vertex top;
         };
 
         // builds the graph
-        void build_graph(easy3d::PointCloud* cloud, const KdTreeSearch* tree, unsigned int k, RiemannianGraph& graph)
-        {
+        void build_graph(easy3d::PointCloud *cloud, const KdTreeSearch *tree, unsigned int k, RiemannianGraph &graph) {
             // Step 1: create the vertices of the graph
 
             // we need to remember the vertex descriptor of each point.
@@ -147,7 +149,7 @@ namespace easy3d {
             auto points = cloud->get_vertex_property<easy3d::vec3>("v:point");
             auto normals = cloud->get_vertex_property<easy3d::vec3>("v:normal");
             for (auto v : cloud->vertices()) {
-                const easy3d::vec3& p = points[v];
+                const easy3d::vec3 &p = points[v];
 
                 // The indices of the neighbors of v (NOTE: the result include v itself).
                 std::vector<int> neighbor_indices;
@@ -156,7 +158,7 @@ namespace easy3d {
                     continue; // in extreme cases, a point cloud can have less than K points
 
                 // now let's create the edges
-                for (std::size_t i = 0; i<neighbor_indices.size(); ++i) {
+                for (std::size_t i = 0; i < neighbor_indices.size(); ++i) {
                     int index = neighbor_indices[i];
                     if (index == v.idx())
                         continue; // this is actually the current vertex
@@ -168,8 +170,8 @@ namespace easy3d {
                     if (ed.second)
                         continue; // the edge already exists.
 
-                    const easy3d::vec3& n1 = normals[v];
-                    const easy3d::vec3& n2 = normals[v2];
+                    const easy3d::vec3 &n1 = normals[v];
+                    const easy3d::vec3 &n2 = normals[v2];
                     float weight = 1.0f - std::abs(dot(n1, n2));
                     if (weight < 0)
                         weight = 0; // safety check
@@ -188,32 +190,34 @@ namespace easy3d {
         /// - vertices contain the corresponding input point cloud vertex
         /// - a boolean indicating if the normal is oriented.
         struct MST_VertexProperty : public VertexProperty {
-            MST_VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1), bool oriented = false) : VertexProperty(v), is_oriented(oriented) {}
+            MST_VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1), bool oriented = false)
+                    : VertexProperty(v), is_oriented(oriented) {}
+
             bool is_oriented;
         };
 
-        class MST_Graph : public boost::adjacency_list< boost::vecS, boost::vecS, boost::directedS, MST_VertexProperty>
-        {
+        class MST_Graph : public boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, MST_VertexProperty> {
         public:
             typedef typename MST_Graph::vertex_descriptor Vertex;
-            typedef typename MST_Graph::edge_descriptor   Edge;
+            typedef typename MST_Graph::edge_descriptor Edge;
 
         public:
             MST_Graph(PointCloud::VertexProperty<vec3> nmap) : normal_map(nmap) {}
+
             PointCloud::VertexProperty<vec3> normal_map;
 
             Vertex root;
         };
 
 
-        void extract_minimum_spanning_tree(const RiemannianGraph& graph, MST_Graph& mst) {
+        void extract_minimum_spanning_tree(const RiemannianGraph &graph, MST_Graph &mst) {
             RiemannianGraph::Vertex top = graph.top;
 
-            std::vector< details::RiemannianGraph::Vertex > predecessor(boost::num_vertices(graph));
+            std::vector<details::RiemannianGraph::Vertex> predecessor(boost::num_vertices(graph));
             boost::prim_minimum_spanning_tree(
-                graph,
-                &predecessor[0],
-                boost::weight_map(boost::get(&details::EdgeProperty::weight, graph)).root_vertex(top)
+                    graph,
+                    &predecessor[0],
+                    boost::weight_map(boost::get(&details::EdgeProperty::weight, graph)).root_vertex(top)
             );
 
             // we create a directed graph (i.e., MST_Graph) to represent the MST.
@@ -227,8 +231,7 @@ namespace easy3d {
                     auto vt = boost::add_vertex(MST_VertexProperty(v, true), mst);
                     if (i == top)
                         mst.root = vt;
-                }
-                else {
+                } else {
                     // other vertices are marked "oriented".
                     boost::add_vertex(MST_VertexProperty(v, false), mst);
                 }
@@ -236,7 +239,7 @@ namespace easy3d {
 
             // add edges
             for (std::size_t i = 0; i < predecessor.size(); ++i) {
-               if (predecessor[i] == i)  // is either the root or not reachable
+                if (predecessor[i] == i)  // is either the root or not reachable
                     continue;
                 else {
                     // the parent: predecessor[i]
@@ -246,30 +249,28 @@ namespace easy3d {
             }
         }
 
-        template <class Graph>
-        class BfsVisitor : public boost::default_bfs_visitor
-        {
+        template<class Graph>
+        class BfsVisitor : public boost::default_bfs_visitor {
         public:
             typedef typename Graph::vertex_descriptor VertexDescriptor;
-            typedef typename Graph::edge_descriptor   EdgeDescriptor;
+            typedef typename Graph::edge_descriptor EdgeDescriptor;
 
-            BfsVisitor(std::function<void(EdgeDescriptor e, Graph& g)> fun)
-                : func_(fun)
-            {}
+            BfsVisitor(std::function<void(EdgeDescriptor e, Graph &g)> fun)
+                    : func_(fun) {}
 
             // Note: boost requires const graph
-            void examine_edge(EdgeDescriptor edge, const Graph& graph) const {
-                func_(edge, const_cast<Graph&>(graph));
+            void examine_edge(EdgeDescriptor edge, const Graph &graph) const {
+                func_(edge, const_cast<Graph &>(graph));
             }
 
         private:
-            std::function<void(EdgeDescriptor edge, Graph& graph)> func_;
+            std::function<void(EdgeDescriptor edge, Graph &graph)> func_;
         };
 
 
         /// find the top vertex (the one with the largest Z value) in the graph.
         /// orient the normal of the point with maximum Z towards +Z axis.
-        void find_top_vertex(PointCloud* cloud, RiemannianGraph& graph) {
+        void find_top_vertex(PointCloud *cloud, RiemannianGraph &graph) {
             float top_z = -std::numeric_limits<float>::max();
             auto points = cloud->get_vertex_property<vec3>("v:point");
 
@@ -281,20 +282,19 @@ namespace easy3d {
                     graph.top = vd;
                     top_z = points[v].z;
                 }
-             }
+            }
 
             PointCloud::Vertex top = graph[graph.top].vertex;
             if (top.idx() != -1) {
-                 auto normals = cloud->get_vertex_property<vec3>("v:normal");
-                 if (normals[top].z < 0)
+                auto normals = cloud->get_vertex_property<vec3>("v:normal");
+                if (normals[top].z < 0)
                     normals[top] = -normals[top];
             }
         }
 
 
         // extract the connected components of a graph. The results are stored in a set of graphs
-        std::vector<RiemannianGraph> connected_components(PointCloud* cloud, const RiemannianGraph& riemannian_graph)
-        {
+        std::vector<RiemannianGraph> connected_components(PointCloud *cloud, const RiemannianGraph &riemannian_graph) {
             std::vector<std::size_t> labels(boost::num_vertices(riemannian_graph));
             std::size_t num = boost::connected_components(riemannian_graph, &labels[0]);
 
@@ -304,9 +304,9 @@ namespace easy3d {
             // This is needed in a later stage to add edges.
             auto vertex_descriptors = cloud->vertex_property<RiemannianGraph::Vertex>("v:descriptors");
 
-            for (std::size_t i=0; i<boost::num_vertices(riemannian_graph); ++i) {
+            for (std::size_t i = 0; i < boost::num_vertices(riemannian_graph); ++i) {
                 std::size_t idx = labels[i];
-                RiemannianGraph& graph = components[idx];
+                RiemannianGraph &graph = components[idx];
                 PointCloud::Vertex v = riemannian_graph[i].vertex;
                 vertex_descriptors[v] = boost::add_vertex(VertexProperty(v), graph);
             }
@@ -318,18 +318,18 @@ namespace easy3d {
                 auto vd2 = boost::target(*eit, riemannian_graph);
                 if (labels[vd1] == labels[vd2]) { // they belong to the same component
                     std::size_t idx = labels[vd1];
-                    RiemannianGraph& graph = components[idx];
+                    RiemannianGraph &graph = components[idx];
                     auto p1 = riemannian_graph[vd1].vertex;
                     auto p2 = riemannian_graph[vd2].vertex;
                     auto s = vertex_descriptors[p1];
                     auto t = vertex_descriptors[p2];
                     boost::add_edge(s, t, EdgeProperty(riemannian_graph[*eit].weight), graph);
                 }
-             }
+            }
 
             cloud->remove_vertex_property(vertex_descriptors);
 
-            for (auto& graph : components)
+            for (auto &graph : components)
                 find_top_vertex(cloud, graph);
 
             return components;
@@ -340,38 +340,37 @@ namespace easy3d {
         /// It does not propagate the orientation if the angle between 2 normals > angle_max.
         /// \pre Normals must be unit vectors
         /// \pre `0 < angle_max <= PI/2`
-        void propagate_normal(MST_Graph::Edge edge, MST_Graph& graph)
-        {
+        void propagate_normal(MST_Graph::Edge edge, MST_Graph &graph) {
             const static double angle_max = M_PI * 0.5;
 
             // Gets source
             MST_Graph::Vertex source_vertex = boost::source(edge, graph);
             const bool source_normal_is_oriented = graph[source_vertex].is_oriented;
             PointCloud::Vertex v_source = graph[source_vertex].vertex;
-            const vec3& source_normal = graph.normal_map[v_source];
+            const vec3 &source_normal = graph.normal_map[v_source];
 
             // Gets target
             MST_Graph::Vertex target_vertex = boost::target(edge, graph);
-            bool& target_normal_is_oriented = graph[target_vertex].is_oriented;
+            bool &target_normal_is_oriented = graph[target_vertex].is_oriented;
             PointCloud::Vertex v_target = graph[target_vertex].vertex;
-            vec3& target_normal = graph.normal_map[v_target];
+            vec3 &target_normal = graph.normal_map[v_target];
 
             if (!target_normal_is_oriented) {
-              float normals_dot = dot(source_normal, target_normal);
-              if (normals_dot < 0) {
-                  target_normal = -target_normal;
-               }
+                float normals_dot = dot(source_normal, target_normal);
+                if (normals_dot < 0) {
+                    target_normal = -target_normal;
+                }
 
-              // Is orientation robust?
-              target_normal_is_oriented = source_normal_is_oriented &&
-                      (std::abs(normals_dot) >= std::cos(angle_max)); // oriented iff angle <= m_angle_max
+                // Is orientation robust?
+                target_normal_is_oriented = source_normal_is_oriented &&
+                                            (std::abs(normals_dot) >=
+                                             std::cos(angle_max)); // oriented iff angle <= m_angle_max
             }
         }
     }
 
 
-    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
-    {
+    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const {
         if (!cloud) {
             LOG(ERROR) << "empty input point cloud";
             return false;
@@ -410,16 +409,16 @@ namespace easy3d {
         w.restart();
         LOG(INFO) << "extract minimum spanning tree...";
         std::vector<details::MST_Graph> ms_trees;
-        for (const auto& graph : components) {
+        for (const auto &graph : components) {
             ms_trees.emplace_back(cloud->get_vertex_property<vec3>("v:normal"));
-            details::MST_Graph& mst = ms_trees.back();
+            details::MST_Graph &mst = ms_trees.back();
             details::extract_minimum_spanning_tree(graph, mst);
         }
         LOG(INFO) << "done. Time: " << w.time_string();
 
         w.restart();
         LOG(INFO) << "propagate...";
-        for (const auto& mst : ms_trees) {
+        for (const auto &mst : ms_trees) {
             // Traverse the point set along the MST to propagate source_point's orientation
             details::BfsVisitor<details::MST_Graph> bfsVisitor(details::propagate_normal);
             boost::breadth_first_search(mst, mst.root, boost::visitor(bfsVisitor));
@@ -453,7 +452,7 @@ namespace easy3d {
         mst_graph->set_visible(true);
 #endif
 
-        return  true;
+        return true;
     }
 
 #else

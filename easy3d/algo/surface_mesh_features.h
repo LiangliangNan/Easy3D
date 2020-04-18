@@ -52,7 +52,6 @@ namespace easy3d {
         SurfaceMesh::EdgeProperty<bool> efeature_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 #endif  // EASY3D_ALGO_SURFACE_MESH_FEATURES_H

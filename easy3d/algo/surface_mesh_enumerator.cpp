@@ -30,7 +30,8 @@
 
 namespace easy3d {
 
-    void SurfaceMeshEnumerator::propagate_connected_component(SurfaceMesh* mesh, SurfaceMesh::VertexProperty<int> id, SurfaceMesh::Vertex seed, int cur_id) {
+    void SurfaceMeshEnumerator::propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id,
+                                                              SurfaceMesh::Vertex seed, int cur_id) {
         std::stack<SurfaceMesh::Vertex> stack;
         stack.push(seed);
 
@@ -64,7 +65,8 @@ namespace easy3d {
     }
 
 
-    void SurfaceMeshEnumerator::propagate_connected_component(SurfaceMesh* mesh, SurfaceMesh::FaceProperty<int> id, SurfaceMesh::Face seed, int cur_id) {
+    void SurfaceMeshEnumerator::propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id,
+                                                              SurfaceMesh::Face seed, int cur_id) {
         std::stack<SurfaceMesh::Face> stack;
         stack.push(seed);
 
