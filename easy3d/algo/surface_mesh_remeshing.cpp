@@ -25,7 +25,6 @@
 #include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo/distance_point_triangle.h>
 #include <easy3d/algo/surface_mesh_curvature.h>
-#include <easy3d/algo/barycentric_coordinates.h>
 #include <easy3d/algo/differential_geometry.h>
 #include <easy3d/algo/triangle_mesh_kdtree.h>
 
@@ -286,7 +285,7 @@ namespace easy3d {
         const float s2 = refsizing_[*fvIt];
 
         // get barycentric coordinates
-        vec3 b = barycentric_coordinates(p, p0, p1, p2);
+        const vec3& b = geom::barycentric_coordinates(p, p0, p1, p2);
 
         // interpolate normal
         vec3 n;

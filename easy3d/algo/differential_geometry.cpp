@@ -33,12 +33,6 @@ namespace easy3d {
 
 //=============================================================================
 
-    float triangle_area(const vec3 &p0, const vec3 &p1, const vec3 &p2) {
-        return float(0.5) * norm(cross(p1 - p0, p2 - p0));
-    }
-
-//-----------------------------------------------------------------------------
-
     float triangle_area(const SurfaceMesh *mesh, SurfaceMesh::Face f) {
         assert(mesh->valence(f) == 3);
 
@@ -47,7 +41,7 @@ namespace easy3d {
         const auto &p1 = mesh->position(*(++fv));
         const auto &p2 = mesh->position(*(++fv));
 
-        return triangle_area(p0, p1, p2);
+        return geom::triangle_area(p0, p1, p2);
     }
 
 //-----------------------------------------------------------------------------
@@ -107,7 +101,7 @@ namespace easy3d {
             const double area = norm(cross(d0, d1));
             if (area > std::numeric_limits<double>::min()) {
                 const double cot = dot(d0, d1) / area;
-                weight += clamp_cot(cot);
+                weight += geom::clamp_cot(cot);
             }
         }
 
@@ -119,7 +113,7 @@ namespace easy3d {
             const double area = norm(cross(d0, d1));
             if (area > std::numeric_limits<double>::min()) {
                 const double cot = dot(d0, d1) / area;
-                weight += clamp_cot(cot);
+                weight += geom::clamp_cot(cot);
             }
         }
 
@@ -185,8 +179,8 @@ namespace easy3d {
                     cotr = dotr / triArea;
 
                     // clamp cot(angle) by clamping angle to [1,179]
-                    area += 0.125 * (length2(pr) * clamp_cot(cotq) +
-                            length2(pq) * clamp_cot(cotr));
+                    area += 0.125 * (length2(pr) * geom::clamp_cot(cotq) +
+                            length2(pq) * geom::clamp_cot(cotr));
                 }
             }
         }
@@ -264,7 +258,7 @@ namespace easy3d {
                 const vec3 p01 = normalize(p1 - p0);
                 const vec3 p02 = normalize(p2 - p0);
 
-                float cos_angle = clamp_cos(dot(p01, p02));
+                float cos_angle = geom::clamp_cos(dot(p01, p02));
 
                 angles += acos(cos_angle);
             }

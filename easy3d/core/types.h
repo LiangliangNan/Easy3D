@@ -153,6 +153,68 @@ namespace easy3d {
             return (p1 + p2 + p3 + p4) * 0.25f;
         }
 
+        template<typename FT>
+        const Vec<3, FT> barycentric_coordinates(const Vec<3, FT> &p,
+                                                 const Vec<3, FT> &u,
+                                                 const Vec<3, FT> &v,
+                                                 const Vec<3, FT> &w) {
+            Vec<3, FT> result(1.0 / 3.0); // default: barycenter
+
+            Vec<3, FT> vu = v - u, wu = w - u, pu = p - u;
+
+            // find largest absolute coordinate of normal
+            FT nx = vu[1] * wu[2] - vu[2] * wu[1],
+                    ny = vu[2] * wu[0] - vu[0] * wu[2],
+                    nz = vu[0] * wu[1] - vu[1] * wu[0], ax = fabs(nx), ay = fabs(ny),
+                    az = fabs(nz);
+
+            unsigned char maxCoord;
+
+            if (ax > ay) {
+                if (ax > az)
+                    maxCoord = 0;
+                else
+                    maxCoord = 2;
+            } else {
+                if (ay > az)
+                    maxCoord = 1;
+                else
+                    maxCoord = 2;
+            }
+
+            // solve 2D problem
+            switch (maxCoord) {
+                case 0: {
+                    if (1.0 + ax != 1.0) {
+                        result[1] = 1.0 + (pu[1] * wu[2] - pu[2] * wu[1]) / nx - 1.0;
+                        result[2] = 1.0 + (vu[1] * pu[2] - vu[2] * pu[1]) / nx - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+
+                case 1: {
+                    if (1.0 + ay != 1.0) {
+                        result[1] = 1.0 + (pu[2] * wu[0] - pu[0] * wu[2]) / ny - 1.0;
+                        result[2] = 1.0 + (vu[2] * pu[0] - vu[0] * pu[2]) / ny - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+
+                case 2: {
+                    if (1.0 + az != 1.0) {
+                        result[1] = 1.0 + (pu[0] * wu[1] - pu[1] * wu[0]) / nz - 1.0;
+                        result[2] = 1.0 + (vu[0] * pu[1] - vu[1] * pu[0]) / nz - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+            }
+
+            return result;
+        }
+
         // NOTE: works for both convex and non-convex polygons.
         inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon) {
             bool inside = false;
@@ -175,42 +237,40 @@ namespace easy3d {
             return inside;
         }
 
-        inline float cos_angle(const vec3 &a, const vec3 &b) {
-            float na2 = length2(a);
-            float nb2 = length2(b);
-            return dot(a, b) / ::sqrt(na2 * nb2);
+        /** clamp cotangent values as if angles are in [1, 179]    */
+        inline double clamp_cot(const double v) {
+            const double bound = 19.1; // 3 degrees
+            return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        inline float angle(const vec3 &a, const vec3 &b) {
-            return std::acos(cos_angle(a, b));
+        /** clamp cosine values as if angles are in [1, 179]    */
+        inline double clamp_cos(const double v) {
+            const double bound = 0.9986; // 3 degrees
+            return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-
-        inline float cos_angle(const vec2 &a, const vec2 &b) {
-            float na2 = length2(a);
-            float nb2 = length2(b);
-            return dot(a, b) / std::sqrt(na2 * nb2);
+        /** compute cosine of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double cos_angle(const Vec &a, const Vec &b) {
+            return dot(a, b) / std::sqrt(length2(a) * length2(b));
         }
 
-        inline float det(const vec2 &a, const vec2 &b) {
-            return a.x * b.y - a.y * b.x;
+        /** compute sine of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double sin_angle(const Vec &a, const Vec &b) {
+            return norm(cross(a, b)) / (norm(a) * norm(b));
         }
 
-        /* returns the angle in the interval [-pi .. pi] */
-        inline float angle(const vec2 &a, const vec2 &b) {
-            return det(a, b) > 0 ?
-                   std::acos(cos_angle(a, b)) :
-                   -std::acos(cos_angle(a, b));
+        /** compute cotangent of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double cot_angle(const Vec &a, const Vec &b) {
+            return clamp_cot(dot(a, b) / norm(cross(a, b)));
         }
 
-        // round the given floating point number v to be num_digits.
-        // TODO: this function should not be in this file.
-        template<class T>
-        T truncate_digits(const T &v, int num_digits) {
-            T tmp = std::pow(10.0f, num_digits);
-            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
-            T result = T(des) / tmp;
-            return result;
+        /** compute angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double angle(const Vec &a, const Vec &b) {
+            return atan2(norm(cross(a, b)), dot(a, b));
         }
 
         // radians
@@ -241,23 +301,28 @@ namespace easy3d {
             return rval;
         }
 
-        inline float triangle_area(
-                const vec3 &p1, const vec3 &p2, const vec3 &p3
-        ) {
+        /** compute area of a triangle given by three points */
+        inline float triangle_area(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             return 0.5f * length(cross(p2 - p1, p3 - p1));
         }
 
-        inline float triangle_signed_area(
-                const vec2 &p1, const vec2 &p2, const vec2 &p3
-        ) {
+        inline float triangle_signed_area(const vec2 &p1, const vec2 &p2, const vec2 &p3) {
             return 0.5f * det(p2 - p1, p3 - p1);
         }
 
-        inline vec3 triangle_normal(
-                const vec3 &p1, const vec3 &p2, const vec3 &p3
-        ) {
+        inline vec3 triangle_normal(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             vec3 n = cross(p2 - p1, p3 - p2);
             return normalize(n);
+        }
+
+        // round the given floating point number v to be num_digits.
+        // TODO: this function should not be in this file.
+        template<class T>
+        T truncate_digits(const T &v, int num_digits) {
+            T tmp = std::pow(10.0f, num_digits);
+            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
+            T result = T(des) / tmp;
+            return result;
         }
 
     } // namespace Geom

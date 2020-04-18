@@ -82,7 +82,7 @@ namespace easy3d {
                     p1.normalize();
                     p2 -= p0;
                     p2.normalize();
-                    sum_angles += acos(clamp_cos(dot(p1, p2)));
+                    sum_angles += acos(geom::clamp_cos(dot(p1, p2)));
                 }
                 laplace -= sum_weights * mesh_->position(v);
                 laplace /= float(2.0) * area;

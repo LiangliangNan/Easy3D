@@ -5,7 +5,6 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        barycentric_coordinates.h
         differential_geometry.h
         distance_point_triangle.h
         gaussian_noise.h
