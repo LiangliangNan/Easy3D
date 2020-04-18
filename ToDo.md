@@ -3,7 +3,7 @@
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Let each drawable remember how the buffer data was created (the property and the update_buffer() function);
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
-      An workaround is to proivide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
+      An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
     - The Graph data structure is not ready, not tested yet.
     - Module dependence can be improved (core <- viewer; viewer <- core);  The IO examples should not depend on viewer.
     - Rendering performance can still be improved
@@ -19,4 +19,3 @@
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
 	    * otherwise, use multi-thread
-	- More algorithms (similar to that of https://github.com/pmp-library/pmp-library/tree/master)

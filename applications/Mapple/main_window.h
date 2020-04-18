@@ -61,32 +61,31 @@ private slots:
 
     // property
     void computeHeightField();
-    void computeMeanCurvature();
-    void computeMaxAbsoluteCurvature();
-    void computeGaussianCurvature();
-    void computePrincipleCurvatures();
+    void computeSurfaceMeshMeanCurvature();
+    void computeSurfaceMeshMaxAbsoluteCurvature();
+    void computeSurfaceGaussianCurvature();
+    void computeSurfacePrincipleCurvatures();
 
     // point cloud
-    void downsampling();
-    void estimatePointCloudNormals();
-    void reorientPointCloudNormals();
-    void normalizePointCloudNormals();
-    void poissonSurfaceReconstruction();
-    void ransacPrimitiveExtraction();
+    void pointCloudDownsampling();
+    void pointCloudEstimateNormals();
+    void pointCloudReorientNormals();
+    void pointCloudNormalizeNormals();
+    void pointCloudPoissonSurfaceReconstruction();
+    void pointCloudRansacPrimitiveExtraction();
 
     // surface mesh
-    void reportTopologyStatistics();
-    void extractConnectedComponents();
-    void detectDuplicatedFaces();
-    void removeDuplicatedFaces();
-    void detectSelfIntersections();
-    void remeshSelfIntersections();
-    void samplingSurfaceMesh();
-
-    void subdivisionCatmullClark();
-    void subdivisionLoop();
-    void subdivisionSqrt3();
-
+    void surfaceMeshReportTopologyStatistics();
+    void surfaceMeshExtractConnectedComponents();
+    void surfaceMeshTriangulation();
+    void surfaceMeshDetectDuplicatedFaces();
+    void surfaceMeshRemoveDuplicatedFaces();
+    void surfaceMeshDetectSelfIntersections();
+    void surfaceMeshRemeshSelfIntersections();
+    void surfaceMeshSampling();
+    void surfaceMeshSubdivisionCatmullClark();
+    void surfaceMeshSubdivisionLoop();
+    void surfaceMeshSubdivisionSqrt3();
     void surfaceMeshSmoothing();
     void surfaceMeshFairing();
     void surfaceMeshHoleFilling();

@@ -123,6 +123,8 @@
     <addaction name="actionTopologyStatistics"/>
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="separator"/>
+    <addaction name="actionSurfaceMeshTriangulation"/>
+    <addaction name="separator"/>
     <addaction name="actionDetectDuplicatedFaces"/>
     <addaction name="actionRemoveDuplicatedFaces"/>
     <addaction name="separator"/>
@@ -847,6 +849,11 @@
   <action name="actionSurfaceMeshFairing">
    <property name="text">
     <string>Fairing</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshTriangulation">
+   <property name="text">
+    <string>Triangulation</string>
    </property>
   </action>
  </widget>

@@ -21,6 +21,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_sampler.h
         surface_mesh_subdivision.h
         surface_mesh_topology.h
+        surface_mesh_triangulation.h
         triangle_mesh_kdtree.h
         )
 
@@ -40,6 +41,7 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_sampler.cpp
         surface_mesh_subdivision.cpp
         surface_mesh_topology.cpp
+        surface_mesh_triangulation.cpp
         triangle_mesh_kdtree.cpp
         )
 
