@@ -34,19 +34,19 @@ namespace easy3d {
 
 //=============================================================================
 
-    TriangleMeshKdTree::TriangleMeshKdTree(const SurfaceMesh &mesh, unsigned int max_faces,
+    TriangleMeshKdTree::TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces,
                                            unsigned int max_depth) {
         // init
         root_ = new Node();
         root_->faces = new Triangles();
-        SurfaceMesh::VertexProperty <vec3> points = mesh.get_vertex_property<vec3>("v:point");
+        SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
 
         // collect triangles
         Triangle tri;
-        root_->faces->reserve(mesh.n_faces());
-        for (SurfaceMesh::FaceIterator fit = mesh.faces_begin();
-             fit != mesh.faces_end(); ++fit) {
-            SurfaceMesh::VertexAroundFaceCirculator vfit = mesh.vertices(*fit);
+        root_->faces->reserve(mesh->n_faces());
+        for (SurfaceMesh::FaceIterator fit = mesh->faces_begin();
+             fit != mesh->faces_end(); ++fit) {
+            SurfaceMesh::VertexAroundFaceCirculator vfit = mesh->vertices(*fit);
             tri.x[0] = points[*vfit];
             ++vfit;
             tri.x[1] = points[*vfit];

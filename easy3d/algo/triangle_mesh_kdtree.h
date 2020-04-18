@@ -38,7 +38,7 @@ namespace easy3d {
     class TriangleMeshKdTree {
     public:
         //! construct with mesh
-        TriangleMeshKdTree(const SurfaceMesh &mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
+        TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
 
         //! destructur
         ~TriangleMeshKdTree() { delete root_; }
