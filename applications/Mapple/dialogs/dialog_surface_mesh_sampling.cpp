@@ -16,7 +16,9 @@ DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(QWidget *parent) :
         QDialog(parent),
         ui(new Ui::DialogSurfaceMeshSampling) {
     ui->setupUi(this);
-    viewer_ = dynamic_cast<MainWindow *>(parent)->viewer();
+
+    main_window_ = dynamic_cast<MainWindow *>(parent);
+    viewer_ = main_window_->viewer();
 
     connect(ui->okButton, SIGNAL(clicked()), this, SLOT(apply()));
 }
@@ -44,6 +46,8 @@ void DialogSurfaceMeshSampling::apply() {
         viewer_->makeCurrent();
         viewer_->addModel(cloud);
         viewer_->doneCurrent();
+
+        main_window_->currentModelChanged();
     }
 }
 

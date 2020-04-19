@@ -4,10 +4,11 @@
 #include <QDialog>
 
 namespace Ui {
-class DialogPoissonReconstruction;
+    class DialogPoissonReconstruction;
 }
 
 class PaintCanvas;
+class MainWindow;
 
 class DialogPoissonReconstruction : public QDialog
 {
@@ -27,6 +28,7 @@ private:
     Ui::DialogPoissonReconstruction *ui;
 
     PaintCanvas*	viewer_;
+    MainWindow*     main_window_;
 
     int			default_octree_depth_;
     int         default_samples_per_node_;

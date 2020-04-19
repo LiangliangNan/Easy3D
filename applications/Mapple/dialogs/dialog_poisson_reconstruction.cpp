@@ -18,7 +18,9 @@ DialogPoissonReconstruction::DialogPoissonReconstruction(QWidget *parent) :
     ui(new Ui::DialogPoissonReconstruction)
 {
     ui->setupUi(this);
-    viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
+
+    main_window_ = dynamic_cast<MainWindow*>(parent);
+    viewer_ = main_window_->viewer();
 
     // default value
     default_octree_depth_ = 8;
@@ -75,6 +77,8 @@ void DialogPoissonReconstruction::reconstruct() {
             viewer_->makeCurrent();
             viewer_->addModel(mesh, true);
             viewer_->doneCurrent();
+
+            main_window_->currentModelChanged();
         }
     }
 }
@@ -111,7 +115,10 @@ void DialogPoissonReconstruction::trim() {
         if (trimmed_mesh) {
             const std::string& name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
             trimmed_mesh->set_name(name);
+            viewer_->makeCurrent();
             viewer_->addModel(trimmed_mesh);
+            viewer_->doneCurrent();
+            main_window_->currentModelChanged();
         }
     }
 }
