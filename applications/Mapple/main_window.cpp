@@ -791,10 +791,7 @@ void MainWindow::surfaceMeshDetectDuplicatedFaces() {
 
     MeshSurfacer ms;
     const auto& faces = ms.detect_duplicated_faces(mesh, true);
-    if (!faces.empty())
-		LOG(INFO) << "done. " << faces.size() << " faces duplicating others. " << w.time_string();
-    else
-		LOG(INFO) << "done. No duplicated faces detected. " << w.time_string();
+    LOG(INFO) << "done. " << faces.size() << " faces deleted. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
@@ -818,10 +815,8 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
         viewer()->doneCurrent();
         viewer()->update();
-		LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
     }
-    else
-		LOG(INFO) << "done. No duplicated faces detected. " << w.time_string();
+    LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif

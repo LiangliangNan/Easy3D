@@ -788,7 +788,7 @@ void PaintCanvas::create_drawables(Model *model) {
         edges->set_impostor_type(LinesDrawable::CYLINDER);
     }
 
-    LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data took " << w.time_string();
+    LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data. " << w.time_string();
 }
 
 

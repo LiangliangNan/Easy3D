@@ -78,7 +78,7 @@ namespace easy3d {
 
         if (success)
             LOG(INFO) << "point cloud loaded ("
-                      << "#vertex: " << cloud->n_vertices() << "). Time: "
+                      << "#vertex: " << cloud->n_vertices() << "). "
                       << w.time_string();
         else
             LOG(INFO) << "load point cloud failed.";
@@ -123,7 +123,7 @@ namespace easy3d {
 		}
 
         if (success) {
-            LOG(INFO) << "save model done. time: " << w.time_string();
+            LOG(INFO) << "save model done. " << w.time_string();
             return true;
         }
         else {

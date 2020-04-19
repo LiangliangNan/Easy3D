@@ -285,7 +285,7 @@ namespace easy3d {
                 profiler.print(" - Load input into tree: ");
 
             LOG(INFO) << "input points/samples: " << pointCount << "/" << samples->size() <<
-                      ". memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
+                      ". memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. " << t.time_string();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -317,7 +317,7 @@ namespace easy3d {
                 if (verbose_)
                     profiler.print(" - Got normal field:     ");
 
-                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: "
+                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. "
                           << t.time_string();
             }
 
@@ -341,7 +341,7 @@ namespace easy3d {
                 if (verbose_)
                     profiler.print(" - Finalized tree:       ");
 
-                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: "
+                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. "
                           << t.time_string();
             }
 
@@ -398,7 +398,7 @@ namespace easy3d {
                 if (iInfo)
                     delete iInfo, iInfo = nullptr;
 
-                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: "
+                LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. "
                           << t.time_string();
             }
         }
@@ -477,7 +477,7 @@ namespace easy3d {
                 samples = nullptr;
             }
 
-            LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. Time: " << t.time_string();
+            LOG(INFO) << "memory usage: " << float(MemoryInfo::Usage()) / (1 << 20) << " MB. " << t.time_string();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -573,7 +573,7 @@ namespace easy3d {
             trimmed_mesh->add_face(face_vts);
         }
 
-//    LOG(INFO) << "done. time: " << t.time_string();
+//    LOG(INFO) << "done. " << t.time_string();
 
         return trimmed_mesh;
     }

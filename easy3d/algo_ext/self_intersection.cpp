@@ -411,7 +411,7 @@ namespace easy3d {
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << intersecting_faces.size()
-                   << " pairs of intersecting triangles. Time: " << w.time_string();
+                   << " pairs of intersecting triangles. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "overlap analysis... ";
@@ -455,7 +455,7 @@ namespace easy3d {
             }
         }
 #ifdef REMESH_INTERSECTIONS_TIMING
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "preprocess... ";
@@ -681,7 +681,7 @@ namespace easy3d {
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "CDT... ";
@@ -706,7 +706,7 @@ namespace easy3d {
         }
         //,1000);
 #ifdef REMESH_INTERSECTIONS_TIMING
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "stitching... ";
@@ -719,7 +719,7 @@ namespace easy3d {
             post_triangulation_process(vertices, faces, involved_faces);
         }
 #ifdef REMESH_INTERSECTIONS_TIMING
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "store results... ";
@@ -745,7 +745,7 @@ namespace easy3d {
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 #endif
 
         return result;

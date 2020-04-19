@@ -79,7 +79,7 @@ namespace easy3d {
             LOG(INFO) << "surface mesh loaded ("
                       << "#face: " << mesh->n_faces() << ", "
                       << "#vertex: " << mesh->n_vertices() << ", "
-                      << "#edge: " << mesh->n_edges() << "). Time: "
+                      << "#edge: " << mesh->n_edges() << "). "
                       << w.time_string();
         else
             LOG(INFO) << "load surface mesh failed";
@@ -127,7 +127,7 @@ namespace easy3d {
 		}
 
         if (success) {
-            LOG(INFO) << "save model done. time: " << w.time_string();
+            LOG(INFO) << "save model done. " << w.time_string();
             return true;
         }
         else {

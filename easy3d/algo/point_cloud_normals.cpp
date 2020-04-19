@@ -62,7 +62,7 @@ namespace easy3d {
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         int num = cloud->n_vertices();
         const std::vector<vec3> &points = cloud->points();
@@ -99,7 +99,7 @@ namespace easy3d {
                         pca.eigen_value(2) / (pca.eigen_value(0) + pca.eigen_value(1) + pca.eigen_value(2)));
         }
 
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
         return true;
     }
 
@@ -390,7 +390,7 @@ namespace easy3d {
         kdtree.begin();
         kdtree.add_point_cloud(cloud);
         kdtree.end();
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "constructing graph...";
@@ -404,7 +404,7 @@ namespace easy3d {
         LOG(INFO) << "done. #vertices: " << boost::num_vertices(riemannian_graph)
                   << ", #edges: " << boost::num_edges(riemannian_graph)
                   << ", #components: " << components.size()
-                  << ". Time: " << w.time_string();
+                  << ". " << w.time_string();
 
         w.restart();
         LOG(INFO) << "extract minimum spanning tree...";
@@ -414,7 +414,7 @@ namespace easy3d {
             details::MST_Graph &mst = ms_trees.back();
             details::extract_minimum_spanning_tree(graph, mst);
         }
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "propagate...";
@@ -423,7 +423,7 @@ namespace easy3d {
             details::BfsVisitor<details::MST_Graph> bfsVisitor(details::propagate_normal);
             boost::breadth_first_search(mst, mst.root, boost::visitor(bfsVisitor));
         }
-        LOG(INFO) << "done. Time: " << w.time_string();
+        LOG(INFO) << "done. " << w.time_string();
 
 #ifdef VISUALIZATION_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph

@@ -44,10 +44,10 @@ namespace easy3d {
      *
      *      StopWatch w ;
      *      // do task_1 ...
-     *      LOG(INFO) << "task_1 done. time: " << w.elapsed() << " seconds";
+     *      LOG(INFO) << "task_1 done. Time: " << w.time_string() << " seconds";
      *	   w.start();
      *      // do task_2 ...
-     *      LOG(INFO) << "task_2 done. time: " << w.elapsed() << " seconds";
+     *      LOG(INFO) << "task_2 done. Time: " << w.time_string() << " seconds";
      *
      */
 

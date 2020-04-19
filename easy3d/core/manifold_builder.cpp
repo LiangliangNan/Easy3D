@@ -24,6 +24,7 @@
 
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -204,7 +205,7 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        const std::string header = "mesh \"" + mesh_->name() + "\"";
+        const std::string header = "mesh '" + file_system::simple_name(mesh_->name()) + "'";
         if (!issues.empty()) {
             LOG(WARNING) << header << " has topological issues:" << issues
                          << "\n\tResult: \n\t\t"

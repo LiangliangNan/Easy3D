@@ -39,11 +39,11 @@ namespace easy3d {
     *	   t.start();
     *
     *      // do task_1 ...
-    *      LOG(INFO) << "task_1 done. time: " << t.time_string();
+    *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
     *
     *	   t.reset(), t.start();
     *      // do task_2 ...
-    *      LOG(INFO) << "task_1 done. time: " << t.time_string();
+    *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
     *   }
     */
 
