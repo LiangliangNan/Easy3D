@@ -212,7 +212,7 @@ namespace details {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetPointsDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || model->points_drawables().empty()) {
+    if (!model || !model->is_visible() || model->points_drawables().empty()) {
         setEnabled(false);
         return;
     }

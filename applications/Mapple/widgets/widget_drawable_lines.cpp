@@ -120,7 +120,7 @@ WidgetLinesDrawable::~WidgetLinesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetLinesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || model->lines_drawables().empty()) {
+    if (!model || !model->is_visible() || model->lines_drawables().empty()) {
         setEnabled(false);
         return;
     }

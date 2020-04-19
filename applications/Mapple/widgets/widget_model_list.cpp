@@ -506,6 +506,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         current_item->setVisibilityIcon(2, visible);
         model->set_visible(visible);
         viewer()->update();
+        mainWindow_->updateRenderingPanel();
     }
     else {
         int num = topLevelItemCount();

@@ -328,11 +328,16 @@ void MainWindow::currentModelChanged() {
     } else
         updateWindowTitle();
 
+    updateRenderingPanel();
+
+    ui->treeWidgetModels->updateModelList();
+}
+
+
+void MainWindow::updateRenderingPanel() {
     widgetTrianglesDrawable_->updatePanel();
     widgetLinesDrawable_->updatePanel();
     widgetPointsDrawable_->updatePanel();
-
-    ui->treeWidgetModels->updateModelList();
 }
 
 

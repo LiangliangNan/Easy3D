@@ -38,6 +38,7 @@ public:
 
     void setCurrentFile(const QString &fileName);
     void currentModelChanged();
+    void updateRenderingPanel();
 
     void setShowSelectedOnly(bool b);
 
