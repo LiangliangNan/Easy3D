@@ -29,7 +29,7 @@
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/core/random.h>
 
-
+#include <algorithm>
 
 
 namespace easy3d {

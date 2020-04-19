@@ -67,6 +67,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -110,6 +112,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -153,6 +157,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The edge property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -172,6 +178,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -224,6 +232,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The face property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -243,6 +253,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -294,6 +306,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -336,6 +350,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The edge property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -354,6 +370,8 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param prop      The vertex property that defines the scalar field.
+         * @param dummy_lower The percentage of values to be clamped at the left side of the value range.
+         * @param dummy_upper The percentage of values to be clamped at the right side of the value range.
          */
         template <typename FT>
         void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<FT> prop, float dummy_lower = 0.05f, float dummy_upper = 0.05f);
@@ -409,6 +427,8 @@ namespace easy3d {
 
         namespace details {
 
+            // clamps scalar field values by the percentages specified by dummy_lower and dummy_upper.
+            // min_value and max_value return the expected value range.
             template <typename FT>
             inline void clamp_scalar_field(std::vector<FT>& property, float& min_value, float& max_value, float dummy_lower, float dummy_upper) {
                 // sort curvature values
@@ -421,11 +441,11 @@ namespace easy3d {
                 min_value = values[index_lower];
                 max_value = values[index_upper];
 
-                // not needed because the texture is CLAMP_TO_EDGE.
-//                for (std::size_t i=0; i<property.size(); ++i) {
-//                    if (property[i] < min_value)  property[i] = min_value;
-//                    if (property[i] > max_value)  property[i] = max_value;
-//                }
+                const int lower = static_cast<int>(dummy_lower * 100);
+                const int upper = static_cast<int>(dummy_upper * 100);
+                LOG(INFO) << "scalar field clamped by "
+                          << lower << "% (lower) and "
+                          << upper << "% (upper). new range: [" << min_value << ", " << max_value << "]";
             }
         }
 
