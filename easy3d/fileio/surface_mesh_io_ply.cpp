@@ -157,13 +157,15 @@ namespace easy3d {
             for (auto p : coordinates)
                 builder.add_vertex(p);
 
-            {// add vertex properties
+            if (element_vertex) {// add vertex properties
                 // NOTE: to properly handle non-manifold meshes, vertex properties must be added before adding the faces
                 details::add_vertex_properties<vec3>(mesh, element_vertex->vec3_properties);
                 details::add_vertex_properties<float>(mesh, element_vertex->float_properties);
                 details::add_vertex_properties<int>(mesh, element_vertex->int_properties);
                 details::add_vertex_properties<std::vector<int> >(mesh, element_vertex->int_list_properties);
                 details::add_vertex_properties<std::vector<float> >(mesh, element_vertex->float_list_properties);
+            } else {
+                LOG(ERROR) << "element 'vertex' not found";
             }
 
             // add faces
