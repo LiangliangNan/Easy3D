@@ -65,7 +65,7 @@ namespace easy3d {
         if (success)
             LOG(INFO) << "graph loaded ("
                       << "#vertex: " << graph->n_vertices() << ", "
-                      << "#edge: " << graph->n_edges() << "). Time: "
+                      << "#edge: " << graph->n_edges() << "). "
                       << w.time_string();
         else
             LOG(INFO) << "load graph failed";
@@ -100,7 +100,7 @@ namespace easy3d {
 		}
 
         if (success) {
-            LOG(INFO) << "save model done. time: " << w.time_string();
+            LOG(INFO) << "save model done. " << w.time_string();
             return true;
         }
         else {

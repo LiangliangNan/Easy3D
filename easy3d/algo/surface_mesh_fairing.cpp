@@ -24,21 +24,19 @@
 
 
 #include <easy3d/algo/surface_mesh_fairing.h>
-#include <easy3d/algo/differential_geometry.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/logging.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-//=============================================================================
 
 namespace easy3d {
-
-//=============================================================================
 
     using SparseMatrix = Eigen::SparseMatrix<double>;
     using Triplet = Eigen::Triplet<double>;
 
-//=============================================================================
+    //=============================================================================
 
     SurfaceMeshFairing::SurfaceMeshFairing(SurfaceMesh *mesh) : mesh_(mesh) {
         // get & add properties
@@ -50,7 +48,7 @@ namespace easy3d {
         idx_ = mesh_->add_vertex_property<int>("fairing:idx", -1);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshFairing::~SurfaceMeshFairing() {
         // remove properties
@@ -60,15 +58,15 @@ namespace easy3d {
         mesh_->remove_vertex_property(idx_);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshFairing::fair(unsigned int k) {
         // compute cotan weights
         for (auto v : mesh_->vertices()) {
-            vweight_[v] = 0.5 / voronoi_area(mesh_, v);
+            vweight_[v] = 0.5 / geom::voronoi_area(mesh_, v);
         }
         for (auto e : mesh_->edges()) {
-            eweight_[e] = std::max(0.0, cotan_weight(mesh_, e));
+            eweight_[e] = std::max(0.0, geom::cotan_weight(mesh_, e));
         }
 
         // check whether some vertices are selected
@@ -127,8 +125,7 @@ namespace easy3d {
 
         // we need locked vertices as boundary constraints
         if (vertices.size() == mesh_->n_vertices()) {
-            std::cerr << "SurfaceMeshFairing: need locked vertices as boundary "
-                         "constraints.\n";
+            LOG(WARNING) << "SurfaceMeshFairing requires locked vertices as boundary constraints.";
             return;
         }
 
@@ -163,20 +160,20 @@ namespace easy3d {
         A.setFromTriplets(triplets.begin(), triplets.end());
 
         // solve A*X = B
-        Eigen::SimplicialLDLT <SparseMatrix> solver(A);
+        Eigen::SimplicialLDLT<SparseMatrix> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
 
         if (solver.info() != Eigen::Success) {
             std::cerr << "SurfaceMeshFairing: Could not solve linear system\n";
         } else {
             for (unsigned int i = 0; i < n; ++i) {
-                const auto& tmp = X.row(i);
+                const auto &tmp = X.row(i);
                 points_[vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
             }
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     struct Triple {
         Triple() = default;
@@ -190,13 +187,13 @@ namespace easy3d {
         unsigned int degree_;
     };
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshFairing::setup_matrix_row(const SurfaceMesh::Vertex v,
-                                          SurfaceMesh::VertexProperty<double> vweight,
-                                          SurfaceMesh::EdgeProperty<double> eweight,
-                                          unsigned int laplace_degree,
-                                          std::map<SurfaceMesh::Vertex, double> &row) {
+                                              SurfaceMesh::VertexProperty<double> vweight,
+                                              SurfaceMesh::EdgeProperty<double> eweight,
+                                              unsigned int laplace_degree,
+                                              std::map<SurfaceMesh::Vertex, double> &row) {
         Triple t(v, 1.0, laplace_degree);
 
         // init

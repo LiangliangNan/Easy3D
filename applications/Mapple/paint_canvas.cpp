@@ -32,6 +32,7 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -178,9 +179,6 @@ void PaintCanvas::initializeGL() {
 
     // Calls user defined method.
     init();
-
-    // print usage
-    std::cout << usage() << std::endl;
 }
 
 
@@ -415,10 +413,7 @@ void PaintCanvas::setCurrentModel(easy3d::Model *m) {
 
 
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
-    if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
-        std::cout << usage() << std::endl;
-
-    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
+    if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
     } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
@@ -759,6 +754,8 @@ std::string PaintCanvas::usage() const {
 
 
 void PaintCanvas::create_drawables(Model *model) {
+    StopWatch w;
+
     if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
         renderer::update_buffer(cloud, cloud->add_points_drawable("vertices"));
@@ -790,6 +787,8 @@ void PaintCanvas::create_drawables(Model *model) {
         edges->set_line_width(setting::graph_edges_line_width);
         edges->set_impostor_type(LinesDrawable::CYLINDER);
     }
+
+    LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data. " << w.time_string();
 }
 
 

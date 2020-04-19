@@ -24,9 +24,16 @@
 
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
+
+
+    static const std::string name_known_nm_vertex("v:ManifoldBuilder:known_nm_vertex");
+    static const std::string name_visited_vertex("v:ManifoldBuilder:visited_vertex");
+    static const std::string name_visited_halfedge("h:ManifoldBuilder:visited_halfedge");
+    static const std::string name_original_vertex("h:ManifoldBuilder:original_vertex");
 
 
     ManifoldBuilder::ManifoldBuilder(SurfaceMesh *mesh)
@@ -50,7 +57,7 @@ namespace easy3d {
         copied_vertices_for_linking_.clear();
         outgoing_halfedges_.clear();
 
-        original_vertex_ = mesh_->add_vertex_property<SurfaceMesh::Vertex>("v:ManifoldBuilder:original_vertex");
+        original_vertex_ = mesh_->add_vertex_property<SurfaceMesh::Vertex>(name_original_vertex);
     }
 
 
@@ -198,7 +205,7 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        const std::string header = "mesh \"" + mesh_->name() + "\"";
+        const std::string header = "mesh '" + file_system::simple_name(mesh_->name()) + "'";
         if (!issues.empty()) {
             LOG(WARNING) << header << " has topological issues:" << issues
                          << "\n\tResult: \n\t\t"
@@ -387,7 +394,11 @@ namespace easy3d {
         // copy all vertex properties except "v:connectivity" and "v:deleted"
         auto &arrays = mesh_->vprops_.arrays();
         for (auto &a : arrays) {
-            if (a->name() == "v:connectivity" || a->name() == "v:deleted")
+            if (a->name() == "v:connectivity" || a->name() == "v:deleted" ||
+                a->name() == name_known_nm_vertex ||
+                a->name() == name_visited_vertex ||
+                a->name() == name_visited_halfedge||
+                a->name() == name_original_vertex)
                 continue;
             a->copy(v.idx(), new_v.idx());
         }
@@ -405,11 +416,9 @@ namespace easy3d {
 
         auto null_h = SurfaceMesh::Halfedge();
 
-        auto known_nm_vertices = mesh->add_vertex_property<bool>("v:ManifoldBuilder:known_nm_vertices", false);
-        auto visited_vertices = mesh->add_vertex_property<SurfaceMesh::Halfedge>("v:ManifoldBuilder:visited_vertices",
-                                                                                 null_h);
-        auto visited_halfedges = mesh->add_halfedge_property<bool>("h:ManifoldBuilder:visited_halfedges", false);
-
+        auto known_nm_vertex = mesh->add_vertex_property<bool>(name_known_nm_vertex, false);
+        auto visited_vertex = mesh->add_vertex_property<SurfaceMesh::Halfedge>(name_visited_vertex, null_h);
+        auto visited_halfedge = mesh->add_halfedge_property<bool>(name_visited_halfedge, false);
 
         // keep a record that the vertex copies are occurred in the 'resolve_non_manifold_vertices()' phase.
         // NOTE: not possible to reuse 'copied_vertices_', because this phase requires a clean record but some vertices
@@ -421,23 +430,23 @@ namespace easy3d {
             // If 'h' is not visited yet, we walk around the target of 'h' and mark these
             // halfedges as visited. Thus, if we are here and the target is already marked as visited,
             // it means that the vertex is non manifold.
-            if (!visited_halfedges[h]) {
-                visited_halfedges[h] = true;
+            if (!visited_halfedge[h]) {
+                visited_halfedge[h] = true;
                 bool is_non_manifold = false;
 
                 auto v = mesh->to_vertex(h);
-                if (visited_vertices[v] != null_h) // already seen this vertex, but not from this star
+                if (visited_vertex[v] != null_h) // already seen this vertex, but not from this star
                 {
                     is_non_manifold = true;
                     // if this is the second time we visit that vertex and the first star was manifold, we have
                     // never reported the first star, but we must now
-                    if (!known_nm_vertices[v]) {
+                    if (!known_nm_vertex[v]) {
                         // that's a halfedge of the first star we've seen 'v' in
-                        non_manifold_cones.push_back(visited_vertices[v]);
+                        non_manifold_cones.push_back(visited_vertex[v]);
                     }
                 } else {
                     // first time we meet this vertex, just mark it so, and keep the halfedge we found the vertex with in memory
-                    visited_vertices[v] = h;
+                    visited_vertex[v] = h;
                 }
 
                 // While walking the star of this halfedge, if we meet a border halfedge more than once,
@@ -445,7 +454,7 @@ namespace easy3d {
                 auto ih = h, done = ih;
                 int border_counter = 0;
                 do {
-                    visited_halfedges[ih] = true;
+                    visited_halfedge[ih] = true;
                     if (mesh->is_boundary(ih))
                         ++border_counter;
 
@@ -457,7 +466,7 @@ namespace easy3d {
 
                 if (is_non_manifold) {
                     non_manifold_cones.push_back(h);
-                    known_nm_vertices[v] = true;
+                    known_nm_vertex[v] = true;
                 }
             }
         }
@@ -475,9 +484,9 @@ namespace easy3d {
         }
 #endif
 
-        mesh->remove_vertex_property(known_nm_vertices);
-        mesh->remove_vertex_property(visited_vertices);
-        mesh->remove_halfedge_property(visited_halfedges);
+        mesh->remove_vertex_property(known_nm_vertex);
+        mesh->remove_vertex_property(visited_vertex);
+        mesh->remove_halfedge_property(visited_halfedge);
 
         return copy_record.size();
     }

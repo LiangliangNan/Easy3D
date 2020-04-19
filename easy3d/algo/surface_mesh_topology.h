@@ -50,6 +50,7 @@ namespace easy3d {
         std::size_t largest_border_size() const { return largest_border_size_; }
 
         bool is_closed() const { return number_of_borders_ == 0; }
+
         bool is_sphere() const { return (number_of_borders() == 0) && (euler_poincare() == 2); }
         bool is_disc() const { return (number_of_borders() == 1) && (euler_poincare() == 1); }
         bool is_cylinder() const { return (number_of_borders() == 2) && (euler_poincare() == 0); }

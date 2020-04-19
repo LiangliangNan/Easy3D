@@ -120,9 +120,11 @@ namespace easy3d {
 			IntListProperty    face_vertex_indices;
 			IntListProperty    edge_vertex_indices;
 
+			const Element* element_vertex = nullptr;
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				Element& e = elements[i];
                 if (e.name == "vertex") {
+                    element_vertex = &e;
 					if (details::extract_named_property(e.vec3_properties, coordinates, "point"))
 						continue;
 					else {
@@ -151,9 +153,22 @@ namespace easy3d {
             ManifoldBuilder builder(mesh);
             builder.begin_surface();
 
+            // add vertices
             for (auto p : coordinates)
                 builder.add_vertex(p);
 
+            if (element_vertex) {// add vertex properties
+                // NOTE: to properly handle non-manifold meshes, vertex properties must be added before adding the faces
+                details::add_vertex_properties<vec3>(mesh, element_vertex->vec3_properties);
+                details::add_vertex_properties<float>(mesh, element_vertex->float_properties);
+                details::add_vertex_properties<int>(mesh, element_vertex->int_properties);
+                details::add_vertex_properties<std::vector<int> >(mesh, element_vertex->int_list_properties);
+                details::add_vertex_properties<std::vector<float> >(mesh, element_vertex->float_list_properties);
+            } else {
+                LOG(ERROR) << "element 'vertex' not found";
+            }
+
+            // add faces
 			for (auto indices : face_vertex_indices) {
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
@@ -161,16 +176,12 @@ namespace easy3d {
 				builder.add_face(vts);
 			}
 
-			// now let's add the properties
+			// now let's add the remained properties
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				Element& e = elements[i];
                 if (e.name == "vertex") {
-					details::add_vertex_properties<vec3>(mesh, e.vec3_properties);
-					details::add_vertex_properties<float>(mesh, e.float_properties);
-					details::add_vertex_properties<int>(mesh, e.int_properties);
-					details::add_vertex_properties< std::vector<int> >(mesh, e.int_list_properties);
-					details::add_vertex_properties< std::vector<float> >(mesh, e.float_list_properties);
-				}
+                    continue;   // the vertex property has already been added
+                }
                 else if (e.name == "face") {
 					details::add_face_properties<vec3>(mesh, e.vec3_properties);
 					details::add_face_properties<float>(mesh, e.float_properties);
@@ -329,7 +340,7 @@ namespace easy3d {
 
 			//-----------------------------------------------------
 
-			DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
+			LOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
 
 			PlyWriter writer;
 			return writer.write(file_name, elements, "", binary);

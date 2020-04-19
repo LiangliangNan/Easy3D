@@ -9,17 +9,13 @@
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
 
-//=============================================================================
-
 namespace easy3d {
-
-//=============================================================================
 
     SurfaceMeshHoleFilling::SurfaceMeshHoleFilling(SurfaceMesh *mesh) : mesh_(mesh) {
         points_ = mesh_->get_vertex_property<vec3>("v:point");
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshHoleFilling::is_interior_edge(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b) const {
         SurfaceMesh::Halfedge h = mesh_->find_halfedge(_a, _b);
@@ -29,27 +25,29 @@ namespace easy3d {
                 !mesh_->is_boundary(mesh_->opposite_halfedge(h)));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
-    float SurfaceMeshHoleFilling::compute_area(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
+    float
+    SurfaceMeshHoleFilling::compute_area(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
         return length2(cross(points_[_b] - points_[_a], points_[_c] - points_[_a]));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
-    vec3 SurfaceMeshHoleFilling::compute_normal(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b, SurfaceMesh::Vertex _c) const {
+    vec3 SurfaceMeshHoleFilling::compute_normal(SurfaceMesh::Vertex _a, SurfaceMesh::Vertex _b,
+                                                SurfaceMesh::Vertex _c) const {
         return normalize(
                 cross(points_[_b] - points_[_a], points_[_c] - points_[_a]));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     float SurfaceMeshHoleFilling::compute_angle(const vec3 &_n1,
-                                             const vec3 &_n2) const {
+                                                const vec3 &_n2) const {
         return (1.0 - dot(_n1, _n2));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshHoleFilling::fill_hole(SurfaceMesh::Halfedge _h) {
         // is it really a hole?
@@ -85,7 +83,7 @@ namespace easy3d {
         return ok;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshHoleFilling::triangulate_hole(SurfaceMesh::Halfedge _h) {
         // trace hole
@@ -153,7 +151,7 @@ namespace easy3d {
             int split = index_[start][end];
 
             mesh_->add_triangle(hole_vertex(start), hole_vertex(split),
-                               hole_vertex(end));
+                                hole_vertex(end));
 
             todo.push_back(ivec2(start, split));
             todo.push_back(ivec2(split, end));
@@ -166,10 +164,10 @@ namespace easy3d {
         return true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshHoleFilling::Weight SurfaceMeshHoleFilling::compute_weight(int _i, int _j,
-                                                                  int _k) const {
+                                                                          int _k) const {
         const SurfaceMesh::Vertex a = hole_vertex(_i);
         const SurfaceMesh::Vertex b = hole_vertex(_j);
         const SurfaceMesh::Vertex c = hole_vertex(_k);
@@ -206,7 +204,7 @@ namespace easy3d {
         return Weight(angle, area);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::refine() {
         const int n = hole_.size();
@@ -232,7 +230,7 @@ namespace easy3d {
         fairing();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::split_long_edges(const float _lmax) {
         bool ok;
@@ -257,7 +255,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::collapse_short_edges(const float _lmin) {
         bool ok;
@@ -295,7 +293,7 @@ namespace easy3d {
         mesh_->garbage_collection();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::flip_edges() {
         SurfaceMesh::Vertex v0, v1, v2, v3;
@@ -356,7 +354,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::relaxation() {
         // properties
@@ -416,7 +414,7 @@ namespace easy3d {
         A.setFromTriplets(triplets.begin(), triplets.end());
         SparseMatrix AtA = A.transpose() * A;
         Eigen::MatrixXd AtB = A.transpose() * B;
-        Eigen::SimplicialLDLT <SparseMatrix> solver(AtA);
+        Eigen::SimplicialLDLT<SparseMatrix> solver(AtA);
         Eigen::MatrixXd X = solver.solve(AtB);
         if (solver.info() != Eigen::Success) {
             std::cerr << "[SurfaceMeshHoleFilling] Solver failed\n";
@@ -425,7 +423,7 @@ namespace easy3d {
 
         // copy solution to mesh vertices
         for (int i = 0; i < n; ++i) {
-            const auto& tmp = X.row(i);
+            const auto &tmp = X.row(i);
             points_[vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
         }
 
@@ -433,7 +431,7 @@ namespace easy3d {
         mesh_->remove_vertex_property(idx);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::fairing() {
         // did the refinement insert new vertices?
@@ -458,6 +456,4 @@ namespace easy3d {
         mesh_->remove_vertex_property(vsel);
     }
 
-//=============================================================================
 }
-//=============================================================================

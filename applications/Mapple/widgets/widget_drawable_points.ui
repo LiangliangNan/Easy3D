@@ -538,6 +538,9 @@ The scale is relative to the average edge lenght of the model.</string>
          <property name="text">
           <string/>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item>

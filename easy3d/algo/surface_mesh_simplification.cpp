@@ -22,17 +22,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <easy3d/algo/surface_mesh_simplification.h>
-#include <easy3d/algo/distance_point_triangle.h>
 
 #include <cfloat>
 #include <iterator> // for back_inserter on Windows
 
 
 namespace easy3d {
-
-//=============================================================================
 
     SurfaceMeshSimplification::SurfaceMeshSimplification(SurfaceMesh *mesh)
             : mesh_(mesh), initialized_(false), queue_(nullptr) {
@@ -53,7 +49,7 @@ namespace easy3d {
         fnormal_ = mesh_->get_face_property<vec3>("f:normal");
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshSimplification::~SurfaceMeshSimplification() {
         // remove added properties
@@ -62,12 +58,12 @@ namespace easy3d {
         mesh_->remove_face_property(face_points_);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSimplification::initialize(float aspect_ratio, float edge_length,
-                                           unsigned int max_valence,
-                                           float normal_deviation,
-                                           float hausdorff_error) {
+                                               unsigned int max_valence,
+                                               float normal_deviation,
+                                               float hausdorff_error) {
         if (!mesh_->is_triangle_mesh())
             return;
 
@@ -141,7 +137,7 @@ namespace easy3d {
         initialized_ = true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSimplification::simplify(unsigned int n_vertices) {
         if (!mesh_->is_triangle_mesh()) {
@@ -213,7 +209,7 @@ namespace easy3d {
         mesh_->remove_vertex_property(vtarget_);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSimplification::enqueue_vertex(SurfaceMesh::Vertex v) {
         float prio, min_prio(FLT_MAX);
@@ -252,7 +248,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshSimplification::is_collapse_legal(const CollapseData &cd) {
         // test selected vertices
@@ -419,7 +415,7 @@ namespace easy3d {
         return true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     float SurfaceMeshSimplification::priority(const CollapseData &cd) {
         // computer quadric error metric
@@ -428,7 +424,7 @@ namespace easy3d {
         return Q(vpoint_[cd.v1]);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSimplification::postprocess_collapse(const CollapseData &cd) {
         // update error quadrics
@@ -501,7 +497,7 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     float SurfaceMeshSimplification::aspect_ratio(SurfaceMesh::Face f) const {
         // min height is area/maxLength
@@ -531,7 +527,7 @@ namespace easy3d {
         return l / a;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     float SurfaceMeshSimplification::distance(SurfaceMesh::Face f, const vec3 &p) const {
         SurfaceMesh::VertexAroundFaceCirculator fvit = mesh_->vertices(f);
@@ -541,11 +537,10 @@ namespace easy3d {
         const vec3 p2 = vpoint_[*(++fvit)];
 
         vec3 n;
-
-        return dist_point_triangle(p, p0, p1, p2, n);
+        return geom::dist_point_triangle(p, p0, p1, p2, n);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshSimplification::CollapseData::CollapseData(SurfaceMesh *sm, SurfaceMesh::Halfedge h)
             : mesh(sm) {
@@ -571,6 +566,4 @@ namespace easy3d {
         }
     }
 
-//=============================================================================
 } // namespace easy3d
-//=============================================================================

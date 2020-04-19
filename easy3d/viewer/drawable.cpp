@@ -153,7 +153,7 @@ namespace easy3d {
         //	else {
         //		current_selection_buffer_size_ = selections_.size();
         //		if (t.elapsed_seconds() > 0.1) {
-        //			LOG(INFO) << "selection buffer updated. time: " << t.time_string();
+        //			LOG(INFO) << "selection buffer updated. " << t.time_string();
         //		}
         //	}
         //}
@@ -163,7 +163,7 @@ namespace easy3d {
         //		LOG(ERROR) << "failed updating selection buffer";
         //	else {
         //		if (t.elapsed_seconds() > 0.1) {
-        //			LOG(INFO) << "selection buffer updated. time: " << t.time_string();
+        //			LOG(INFO) << "selection buffer updated. " << t.time_string();
         //		}
         //	}
         //}

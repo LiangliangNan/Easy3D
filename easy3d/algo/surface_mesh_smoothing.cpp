@@ -24,28 +24,25 @@
 
 
 #include <easy3d/algo/surface_mesh_smoothing.h>
-#include <easy3d/algo/differential_geometry.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-//=============================================================================
 
 namespace easy3d {
-
-//=============================================================================
 
     using SparseMatrix = Eigen::SparseMatrix<double>;
     using Triplet = Eigen::Triplet<double>;
 
-//=============================================================================
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshSmoothing::SurfaceMeshSmoothing(SurfaceMesh *mesh) : mesh_(mesh) {
         how_many_edge_weights_ = 0;
         how_many_vertex_weights_ = 0;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshSmoothing::~SurfaceMeshSmoothing() {
         auto vweight = mesh_->get_vertex_property<float>("v:area");
@@ -57,7 +54,7 @@ namespace easy3d {
             mesh_->remove_edge_property(eweight);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSmoothing::compute_edge_weights(bool use_uniform_laplace) {
         auto eweight = mesh_->edge_property<float>("e:cotan");
@@ -67,13 +64,13 @@ namespace easy3d {
                 eweight[e] = 1.0;
         } else {
             for (auto e : mesh_->edges())
-                eweight[e] = std::max(0.0, cotan_weight(mesh_, e));
+                eweight[e] = std::max(0.0, geom::cotan_weight(mesh_, e));
         }
 
         how_many_edge_weights_ = mesh_->n_edges();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSmoothing::compute_vertex_weights(bool use_uniform_laplace) {
         auto vweight = mesh_->vertex_property<float>("v:area");
@@ -83,16 +80,16 @@ namespace easy3d {
                 vweight[v] = 1.0 / mesh_->valence(v);
         } else {
             for (auto v : mesh_->vertices())
-                vweight[v] = 0.5 / voronoi_area(mesh_, v);
+                vweight[v] = 0.5 / geom::voronoi_area(mesh_, v);
         }
 
         how_many_vertex_weights_ = mesh_->n_vertices();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSmoothing::explicit_smoothing(unsigned int iters,
-                                              bool use_uniform_laplace) {
+                                                  bool use_uniform_laplace) {
         if (!mesh_->n_vertices())
             return;
 
@@ -139,11 +136,11 @@ namespace easy3d {
         mesh_->remove_vertex_property(laplace);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshSmoothing::implicit_smoothing(float timestep,
-                                              bool use_uniform_laplace,
-                                              bool rescale) {
+                                                  bool use_uniform_laplace,
+                                                  bool rescale) {
         if (!mesh_->n_vertices())
             return;
 
@@ -157,8 +154,8 @@ namespace easy3d {
         compute_vertex_weights(use_uniform_laplace);
 
         // store center and area
-        vec3 center_before = centroid(mesh_);
-        float area_before = surface_area(mesh_);
+        vec3 center_before = geom::centroid(mesh_);
+        float area_before = geom::surface_area(mesh_);
 
         // properties
         auto points = mesh_->get_vertex_property<vec3>("v:point");
@@ -223,27 +220,27 @@ namespace easy3d {
         A.setFromTriplets(triplets.begin(), triplets.end());
 
         // solve A*X = B
-        Eigen::SimplicialLDLT <SparseMatrix> solver(A);
+        Eigen::SimplicialLDLT<SparseMatrix> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
             std::cerr << "SurfaceMeshSmoothing: Could not solve linear system\n";
         } else {
             // copy solution
             for (unsigned int i = 0; i < n; ++i) {
-                const auto& tmp = X.row(i);
+                const auto &tmp = X.row(i);
                 points[free_vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
             }
         }
 
         if (rescale) {
             // restore original surface area
-            float area_after = surface_area(mesh_);
+            float area_after = geom::surface_area(mesh_);
             float scale = sqrt(area_before / area_after);
             for (auto v : mesh_->vertices())
                 mesh_->position(v) *= scale;
 
             // restore original center
-            vec3 center_after = centroid(mesh_);
+            vec3 center_after = geom::centroid(mesh_);
             vec3 trans = center_before - center_after;
             for (auto v : mesh_->vertices())
                 mesh_->position(v) += trans;
@@ -253,6 +250,4 @@ namespace easy3d {
         mesh_->remove_vertex_property(idx);
     }
 
-//=============================================================================
 } // namespace easy3d
-//=============================================================================

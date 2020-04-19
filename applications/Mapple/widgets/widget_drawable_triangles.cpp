@@ -517,8 +517,6 @@ void WidgetTrianglesDrawable::setTextureFile() {
     if (tex) {
         if (tex->file_name() == file_name)
             return;
-
-        delete tex;
     }
 
     viewer_->makeCurrent();

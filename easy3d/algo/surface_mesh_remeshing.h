@@ -42,7 +42,7 @@ namespace easy3d {
     class SurfaceMeshRemeshing {
     public:
         SurfaceMeshRemeshing(SurfaceMesh *mesh);
-        
+
         ~SurfaceMeshRemeshing();
 
         //! uniform remeshing with target edge length
@@ -56,15 +56,11 @@ namespace easy3d {
 
     private:
         void preprocessing();
-
         void postprocessing();
 
         void split_long_edges();
-
         void collapse_short_edges();
-
         void flip_edges();
-
         void tangential_smoothing(unsigned int iterations);
 
         void remove_caps();
@@ -86,7 +82,7 @@ namespace easy3d {
         SurfaceMesh *refmesh_;
 
         bool use_projection_;
-        TriangleMeshKdTree* kd_tree_;
+        TriangleMeshKdTree *kd_tree_;
 
         bool uniform_;
         float target_edge_length_;
@@ -94,16 +90,16 @@ namespace easy3d {
         float max_edge_length_;
         float approx_error_;
 
-        SurfaceMesh::VertexProperty<vec3> points_;
-        SurfaceMesh::VertexProperty<vec3> vnormal_;
+        SurfaceMesh::VertexProperty <vec3> points_;
+        SurfaceMesh::VertexProperty <vec3> vnormal_;
         SurfaceMesh::VertexProperty<bool> vfeature_;
         SurfaceMesh::EdgeProperty<bool> efeature_;
         SurfaceMesh::VertexProperty<bool> vlocked_;
         SurfaceMesh::EdgeProperty<bool> elocked_;
         SurfaceMesh::VertexProperty<float> vsizing_;
 
-        SurfaceMesh::VertexProperty<vec3> refpoints_;
-        SurfaceMesh::VertexProperty<vec3> refnormals_;
+        SurfaceMesh::VertexProperty <vec3> refpoints_;
+        SurfaceMesh::VertexProperty <vec3> refnormals_;
         SurfaceMesh::VertexProperty<float> refsizing_;
     };
 

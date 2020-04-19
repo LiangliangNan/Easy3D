@@ -21,14 +21,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 
 #include <easy3d/algo/surface_mesh_triangulation.h>
 
 
 namespace easy3d {
-
-//=============================================================================
 
     SurfaceMeshTriangulation::SurfaceMeshTriangulation(SurfaceMesh *mesh) : mesh_(mesh) {
         points_ = mesh_->get_vertex_property<vec3>("v:point");
@@ -36,14 +34,14 @@ namespace easy3d {
         objective_ = MAX_ANGLE;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshTriangulation::triangulate(Objective o) {
         for (auto f: mesh_->faces())
             triangulate(f, o);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshTriangulation::triangulate(SurfaceMesh::Face f, Objective o) {
         // store objective
@@ -119,7 +117,7 @@ namespace easy3d {
         }
 
         // now add triangles to mesh
-        std::vector <ivec2> todo;
+        std::vector<ivec2> todo;
         todo.reserve(n);
         todo.push_back(ivec2(0, n - 1));
         while (!todo.empty()) {
@@ -146,7 +144,7 @@ namespace easy3d {
         vertices_.clear();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     float SurfaceMeshTriangulation::compute_weight(int i, int j, int k) const {
         const SurfaceMesh::Vertex a = vertices_[i];
@@ -189,13 +187,13 @@ namespace easy3d {
         return w;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshTriangulation::is_edge(SurfaceMesh::Vertex a, SurfaceMesh::Vertex b) const {
         return mesh_->find_halfedge(a, b).is_valid();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshTriangulation::is_interior_edge(SurfaceMesh::Vertex a, SurfaceMesh::Vertex b) const {
         SurfaceMesh::Halfedge h = mesh_->find_halfedge(a, b);
@@ -205,7 +203,7 @@ namespace easy3d {
                 !mesh_->is_boundary(mesh_->opposite_halfedge(h)));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool SurfaceMeshTriangulation::insert_edge(int i, int j) {
         SurfaceMesh::Halfedge h0 = halfedges_[i];
@@ -246,5 +244,4 @@ namespace easy3d {
         return false;
     }
 
-//=============================================================================
 }

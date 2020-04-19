@@ -56,13 +56,19 @@ namespace easy3d {
         static SurfaceMeshComponent extract(SurfaceMesh *mesh, SurfaceMesh::Vertex seed);
 
         const std::vector<Face> &faces() const { return faces_; }
+
         const std::vector<Vertex> &vertices() const { return vertices_; }
+
         const std::vector<Edge> &edges() const { return edges_; }
+
         const std::vector<Halfedge> &halfedges() const { return halfedges_; }
 
         std::size_t n_faces() const { return faces_.size(); }
+
         std::size_t n_vertices() const { return vertices_.size(); }
+
         std::size_t n_edges() const { return edges_.size(); }
+
         std::size_t n_halfedges() const { return halfedges_.size(); }
 
         /** Returns the surface mesh to which this component belongs. */

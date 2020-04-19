@@ -68,6 +68,8 @@
      <string>Help</string>
     </property>
     <addaction name="actionAboutMapple"/>
+    <addaction name="separator"/>
+    <addaction name="actionManual"/>
    </widget>
    <widget class="QMenu" name="menuPointCloud">
     <property name="title">
@@ -804,11 +806,6 @@
     <string>Principle Curvatures</string>
    </property>
   </action>
-  <action name="actionComputeMaxCurvature">
-   <property name="text">
-    <string>Max Curvature</string>
-   </property>
-  </action>
   <action name="actionComputeGaussianCurvature">
    <property name="text">
     <string>Gaussian Curvature</string>
@@ -862,6 +859,14 @@
   <action name="actionSurfaceMeshGeodesic">
    <property name="text">
     <string>Geodesic (w.r.t. a random vertex)</string>
+   </property>
+  </action>
+  <action name="actionManual">
+   <property name="text">
+    <string>Manual</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

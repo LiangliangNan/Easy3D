@@ -34,11 +34,10 @@ namespace easy3d {
     // surface sampling algorithm.
     // the result is a (near uniform) point set.
 
-    class SurfaceMeshSampler
-    {
+    class SurfaceMeshSampler {
     public:
         // param num: expected point number
-        PointCloud* apply(const SurfaceMesh* mesh, int num = 1000000);
+        PointCloud *apply(const SurfaceMesh *mesh, int num = 1000000);
     };
 
 } // namespace easy3d

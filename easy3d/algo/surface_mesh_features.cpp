@@ -28,14 +28,12 @@
 
 namespace easy3d {
 
-//=============================================================================
-
     SurfaceMeshFeatures::SurfaceMeshFeatures(SurfaceMesh *mesh) : mesh_(mesh) {
         vfeature_ = mesh_->vertex_property("v:feature", false);
         efeature_ = mesh_->edge_property("e:feature", false);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshFeatures::clear() {
         for (auto v : mesh_->vertices())
@@ -45,7 +43,7 @@ namespace easy3d {
             efeature_[e] = false;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshFeatures::detect_boundary() {
         for (auto v : mesh_->vertices())
@@ -57,7 +55,7 @@ namespace easy3d {
                 efeature_[e] = true;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshFeatures::detect_angle(float angle) {
         const float feature_cosine = cos(angle / 180.0 * M_PI);
@@ -79,5 +77,4 @@ namespace easy3d {
         }
     }
 
-//=============================================================================
 } // namespace easy3d

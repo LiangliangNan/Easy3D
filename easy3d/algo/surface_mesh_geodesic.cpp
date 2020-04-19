@@ -28,8 +28,6 @@
 
 namespace easy3d {
 
-//=============================================================================
-
     SurfaceMeshGeodesic::SurfaceMeshGeodesic(SurfaceMesh *mesh, bool use_virtual_edges)
             : mesh_(mesh), use_virtual_edges_(use_virtual_edges) {
         distance_ = mesh_->vertex_property<float>("v:geodesic:distance");
@@ -39,12 +37,12 @@ namespace easy3d {
             find_virtual_edges();
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshGeodesic::~SurfaceMeshGeodesic() {
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshGeodesic::find_virtual_edges() {
         SurfaceMesh::Halfedge hh, hhh;
@@ -143,15 +141,14 @@ namespace easy3d {
             }
         }
 
-        std::clog << "[Geodesic] Found " << virtual_edges_.size()
-                  << " virtual edges\n";
+        LOG(INFO) << virtual_edges_.size() << " virtual edges found";
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     unsigned int SurfaceMeshGeodesic::compute(const std::vector<SurfaceMesh::Vertex> &seed,
-                                          float maxdist, unsigned int maxnum,
-                                          std::vector<SurfaceMesh::Vertex> *neighbors) {
+                                              float maxdist, unsigned int maxnum,
+                                              std::vector<SurfaceMesh::Vertex> *neighbors) {
         unsigned int num(0);
 
         // generate front
@@ -184,10 +181,10 @@ namespace easy3d {
         return num;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     unsigned int SurfaceMeshGeodesic::init_front(const std::vector<SurfaceMesh::Vertex> &seed,
-                                             std::vector<SurfaceMesh::Vertex> *neighbors) {
+                                                 std::vector<SurfaceMesh::Vertex> *neighbors) {
         unsigned int num(0);
 
         if (seed.empty())
@@ -238,11 +235,11 @@ namespace easy3d {
         return num;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     unsigned int SurfaceMeshGeodesic::propagate_front(float maxdist,
-                                                  unsigned int maxnum,
-                                                  std::vector<SurfaceMesh::Vertex> *neighbors) {
+                                                      unsigned int maxnum,
+                                                      std::vector<SurfaceMesh::Vertex> *neighbors) {
         unsigned int num(0);
 
         while (!front_->empty()) {
@@ -274,7 +271,7 @@ namespace easy3d {
         return num;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshGeodesic::heap_vertex(SurfaceMesh::Vertex v) {
         assert(!processed_[v]);
@@ -346,16 +343,17 @@ namespace easy3d {
         }
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     bool valid_triangle(double a, double b, double c) {
         return (a + b > c && a + c > b && b + c > a);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
-    float SurfaceMeshGeodesic::distance(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, float r0,
-                                     float r1) {
+    float
+    SurfaceMeshGeodesic::distance(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, float r0,
+                                  float r1) {
         vec3 A, B, C;
         double TA, TB;
         double a, b;
@@ -407,7 +405,7 @@ namespace easy3d {
         return dykstra;
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshGeodesic::distance_to_texture_coordinates() {
         // find maximum distance

@@ -59,7 +59,7 @@ namespace easy3d {
             vec3 dir(random_float(-1.0f, 1.0f), random_float(-1.0f, 1.0f),
                      random_float(-1.0f, 1.0f));
             dir = normalize(dir);
-            points[v] = points[v] +  dir * offset;
+            points[v] = points[v] + dir * offset;
         }
 
         // update normals if exist
@@ -94,7 +94,7 @@ namespace easy3d {
             vec3 dir(random_float(-1.0f, 1.0f), random_float(-1.0f, 1.0f),
                      random_float(-1.0f, 1.0f));
             dir = normalize(dir);
-            points[v] = points[v] +  dir * offset;
+            points[v] = points[v] + dir * offset;
         }
     }
 

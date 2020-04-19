@@ -24,7 +24,7 @@
 
 
 #include <easy3d/algo/surface_mesh_curvature.h>
-#include <easy3d/algo/differential_geometry.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/core/eigen_solver.h>
 
 namespace easy3d {
@@ -34,12 +34,12 @@ namespace easy3d {
         max_curvature_ = mesh_->vertex_property<float>("v:curv-max");
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     SurfaceMeshCurvature::~SurfaceMeshCurvature() {
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::analyze(unsigned int post_smoothing_steps) {
         float kmin, kmax, mean, gauss;
@@ -50,7 +50,7 @@ namespace easy3d {
         // cotan weight per edge
         auto cotan = mesh_->add_edge_property<double>("curv:cotan");
         for (auto e : mesh_->edges())
-            cotan[e] = cotan_weight(mesh_, e);
+            cotan[e] = geom::cotan_weight(mesh_, e);
 
         // Voronoi area per vertex
         // Laplace per vertex
@@ -66,7 +66,7 @@ namespace easy3d {
                 p0 = mesh_->position(v);
 
                 // Voronoi area
-                area = voronoi_area(mesh_, v);
+                area = geom::voronoi_area(mesh_, v);
 
                 // Laplace & angle sum
                 for (auto vh : mesh_->halfedges(v)) {
@@ -82,7 +82,7 @@ namespace easy3d {
                     p1.normalize();
                     p2 -= p0;
                     p2.normalize();
-                    sum_angles += acos(clamp_cos(dot(p1, p2)));
+                    sum_angles += acos(geom::clamp_cos(dot(p1, p2)));
                 }
                 laplace -= sum_weights * mesh_->position(v);
                 laplace /= float(2.0) * area;
@@ -131,7 +131,7 @@ namespace easy3d {
         smooth_curvatures(post_smoothing_steps);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::analyze_tensor(unsigned int post_smoothing_steps,
                                               bool two_ring_neighborhood) {
@@ -152,7 +152,7 @@ namespace easy3d {
 
         // precompute Voronoi area per vertex
         for (auto v : mesh_->vertices()) {
-            area[v] = voronoi_area(mesh_, v);
+            area[v] = geom::voronoi_area(mesh_, v);
         }
 
         // precompute face normals
@@ -216,7 +216,7 @@ namespace easy3d {
                 tensor /= A;
 
                 // Liangliang: eigen solver requires FT** as input matrix :-(
-                double** matrix = new double*[3];
+                double **matrix = new double *[3];
                 for (int i = 0; i < 3; ++i) {
                     matrix[i] = new double[3];
                     for (int j = 0; j < 3; ++j)
@@ -282,7 +282,7 @@ namespace easy3d {
         smooth_curvatures(post_smoothing_steps);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::smooth_curvatures(unsigned int iterations) {
         float kmin, kmax;
@@ -294,7 +294,7 @@ namespace easy3d {
 
         // cotan weight per edge
         for (auto e : mesh_->edges()) {
-            cotan[e] = cotan_weight(mesh_, e);
+            cotan[e] = geom::cotan_weight(mesh_, e);
         }
 
         for (unsigned int i = 0; i < iterations; ++i) {
@@ -312,7 +312,7 @@ namespace easy3d {
                     if (vfeature && vfeature[tv])
                         continue;
 
-                    weight = std::max(0.0, cotan_weight(mesh_, mesh_->edge(vh)));
+                    weight = std::max(0.0, geom::cotan_weight(mesh_, mesh_->edge(vh)));
                     sum_weights += weight;
                     kmin += weight * min_curvature_[tv];
                     kmax += weight * max_curvature_[tv];
@@ -329,7 +329,7 @@ namespace easy3d {
         mesh_->remove_edge_property(cotan);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::compute_mean_curvature() {
         auto curvatures = mesh_->vertex_property<float>("v:curv-mean");
@@ -337,7 +337,7 @@ namespace easy3d {
             curvatures[v] = fabs(mean_curvature(v));
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::compute_gauss_curvature() {
         auto curvatures = mesh_->vertex_property<float>("v:curv-gauss");
@@ -345,7 +345,7 @@ namespace easy3d {
             curvatures[v] = gauss_curvature(v);
     }
 
-//-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::compute_max_abs_curvature() {
         auto curvatures = mesh_->vertex_property<float>("v:curv-max_abs");

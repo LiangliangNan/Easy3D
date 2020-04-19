@@ -49,7 +49,7 @@ namespace easy3d {
         enum Objective {
             MIN_AREA, MAX_ANGLE
         } objective_;
-        
+
         SurfaceMeshTriangulation(SurfaceMesh *mesh);
 
         //! triangulate all faces
@@ -57,8 +57,8 @@ namespace easy3d {
 
         //! triangulate a particular face f
         void triangulate(SurfaceMesh::Face f, Objective obj = MIN_AREA);
-        
-    private: //-------------------------------------------------- private functions
+
+    private:
 
         // compute the weight of the triangle (i,j,k).
         float compute_weight(int i, int j, int k) const;
@@ -73,11 +73,11 @@ namespace easy3d {
         bool insert_edge(int i, int j);
 
 
-    private: //------------------------------------------------------- private data
+    private:
 
         // mesh and properties
         SurfaceMesh *mesh_;
-        SurfaceMesh::VertexProperty<vec3> points_;
+        SurfaceMesh::VertexProperty <vec3> points_;
         std::vector<SurfaceMesh::Halfedge> halfedges_;
         std::vector<SurfaceMesh::Vertex> vertices_;
 
@@ -86,7 +86,6 @@ namespace easy3d {
         std::vector<std::vector<int> > index_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 

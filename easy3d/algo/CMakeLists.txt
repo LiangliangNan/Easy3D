@@ -5,9 +5,7 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        barycentric_coordinates.h
-        differential_geometry.h
-        distance_point_triangle.h
+        surface_mesh_geometry.h
         gaussian_noise.h
         point_cloud_normals.h
         point_cloud_poisson_reconstruction.h
@@ -32,8 +30,7 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
-        differential_geometry.cpp
-        distance_point_triangle.cpp
+        surface_mesh_geometry.cpp
         gaussian_noise.cpp
         point_cloud_normals.cpp
         point_cloud_poisson_reconstruction.cpp

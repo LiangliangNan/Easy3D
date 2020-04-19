@@ -153,64 +153,52 @@ namespace easy3d {
             return (p1 + p2 + p3 + p4) * 0.25f;
         }
 
-        // NOTE: works for both convex and non-convex polygons.
-        inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon) {
-            bool inside = false;
-            std::size_t n = polygon.size();
-            for (std::size_t i = 0, j = n - 1; i < n; j = i, ++i) {
-                const vec2 &u0 = polygon[i];
-                const vec2 &u1 = polygon[j];  // current edge
+        template<typename FT>
+        inline Vec<3, FT> barycentric_coordinates(const Vec<3, FT> &p,
+                                                  const Vec<3, FT> &u,
+                                                  const Vec<3, FT> &v,
+                                                  const Vec<3, FT> &w);
 
-                if (((u0.y <= p.y) && (p.y < u1.y)) ||  // U1 is above the ray, U0 is on or below the ray
-                    ((u1.y <= p.y) && (p.y < u0.y)))    // U0 is above the ray, U1 is on or below the ray
-                {
-                    // find x-intersection of current edge with the ray.
-                    // Only consider edge crossings on the ray to the right of P.
-                    double x = u0.x + (p.y - u0.y) * (u1.x - u0.x) / (u1.y - u0.y);
-                    if (x > p.x)
-                        inside = !inside;
-                }
-            }
+        /**
+         * test if a point lies inside or outside of a polygon.
+         * This function is robust to handle general polygons (both convex and concave).
+         */
+        inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon);
 
-            return inside;
+        /** clamp cotangent values as if angles are in [1, 179]    */
+        inline double clamp_cot(const double v) {
+            const double bound = 19.1; // 3 degrees
+            return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        inline float cos_angle(const vec3 &a, const vec3 &b) {
-            float na2 = length2(a);
-            float nb2 = length2(b);
-            return dot(a, b) / ::sqrt(na2 * nb2);
+        /** clamp cosine values as if angles are in [1, 179]    */
+        inline double clamp_cos(const double v) {
+            const double bound = 0.9986; // 3 degrees
+            return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        inline float angle(const vec3 &a, const vec3 &b) {
-            return std::acos(cos_angle(a, b));
+        /** compute cosine of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double cos_angle(const Vec &a, const Vec &b) {
+            return dot(a, b) / std::sqrt(length2(a) * length2(b));
         }
 
-
-        inline float cos_angle(const vec2 &a, const vec2 &b) {
-            float na2 = length2(a);
-            float nb2 = length2(b);
-            return dot(a, b) / std::sqrt(na2 * nb2);
+        /** compute sine of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double sin_angle(const Vec &a, const Vec &b) {
+            return norm(cross(a, b)) / (norm(a) * norm(b));
         }
 
-        inline float det(const vec2 &a, const vec2 &b) {
-            return a.x * b.y - a.y * b.x;
+        /** compute cotangent of angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double cotan_angle(const Vec &a, const Vec &b) {
+            return clamp_cot(dot(a, b) / norm(cross(a, b)));
         }
 
-        /* returns the angle in the interval [-pi .. pi] */
-        inline float angle(const vec2 &a, const vec2 &b) {
-            return det(a, b) > 0 ?
-                   std::acos(cos_angle(a, b)) :
-                   -std::acos(cos_angle(a, b));
-        }
-
-        // round the given floating point number v to be num_digits.
-        // TODO: this function should not be in this file.
-        template<class T>
-        T truncate_digits(const T &v, int num_digits) {
-            T tmp = std::pow(10.0f, num_digits);
-            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
-            T result = T(des) / tmp;
-            return result;
+        /** compute angle between two (un-normalized) vectors */
+        template<typename Vec>
+        inline double angle(const Vec &a, const Vec &b) {
+            return atan2(norm(cross(a, b)), dot(a, b));
         }
 
         // radians
@@ -218,7 +206,6 @@ namespace easy3d {
         inline T to_radians(T degrees) {
             return degrees * static_cast<T>(0.01745329251994329576923690768489);
         }
-
 
         // degrees
         template<typename T>
@@ -241,23 +228,35 @@ namespace easy3d {
             return rval;
         }
 
-        inline float triangle_area(
-                const vec3 &p1, const vec3 &p2, const vec3 &p3
-        ) {
+        /** compute area of a triangle given by three points */
+        inline float triangle_area(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             return 0.5f * length(cross(p2 - p1, p3 - p1));
         }
 
-        inline float triangle_signed_area(
-                const vec2 &p1, const vec2 &p2, const vec2 &p3
-        ) {
+        inline float triangle_signed_area(const vec2 &p1, const vec2 &p2, const vec2 &p3) {
             return 0.5f * det(p2 - p1, p3 - p1);
         }
 
-        inline vec3 triangle_normal(
-                const vec3 &p1, const vec3 &p2, const vec3 &p3
-        ) {
+        inline vec3 triangle_normal(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             vec3 n = cross(p2 - p1, p3 - p2);
             return normalize(n);
+        }
+
+        /** Compute the distance of a point p to a line segment given by vec3s (v0,v1). */
+        inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_vec3);
+
+        /** Compute the distance of a point p to the triangle given by vec3s (v0, v1, v2). */
+        inline float
+        dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_vec3);
+
+        // round the given floating point number v to be num_digits.
+        // TODO: this function should not be in this file.
+        template<class T>
+        inline T truncate_digits(const T &v, int num_digits) {
+            T tmp = std::pow(10.0f, num_digits);
+            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
+            T result = T(des) / tmp;
+            return result;
         }
 
     } // namespace Geom
@@ -311,6 +310,257 @@ namespace easy3d {
     }
 
 }
+
+
+//=============================================================================
+
+//=============================================================================
+
+
+namespace easy3d {
+
+    namespace geom {
+
+        template<typename FT>
+        inline Vec<3, FT> barycentric_coordinates(const Vec<3, FT> &p,
+                                                  const Vec<3, FT> &u,
+                                                  const Vec<3, FT> &v,
+                                                  const Vec<3, FT> &w) {
+            Vec<3, FT> result(1.0 / 3.0); // default: barycenter
+
+            Vec<3, FT> vu = v - u, wu = w - u, pu = p - u;
+
+            // find largest absolute coordinate of normal
+            FT nx = vu[1] * wu[2] - vu[2] * wu[1],
+                    ny = vu[2] * wu[0] - vu[0] * wu[2],
+                    nz = vu[0] * wu[1] - vu[1] * wu[0], ax = fabs(nx), ay = fabs(ny),
+                    az = fabs(nz);
+
+            unsigned char maxCoord;
+
+            if (ax > ay) {
+                if (ax > az)
+                    maxCoord = 0;
+                else
+                    maxCoord = 2;
+            } else {
+                if (ay > az)
+                    maxCoord = 1;
+                else
+                    maxCoord = 2;
+            }
+
+            // solve 2D problem
+            switch (maxCoord) {
+                case 0: {
+                    if (1.0 + ax != 1.0) {
+                        result[1] = 1.0 + (pu[1] * wu[2] - pu[2] * wu[1]) / nx - 1.0;
+                        result[2] = 1.0 + (vu[1] * pu[2] - vu[2] * pu[1]) / nx - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+
+                case 1: {
+                    if (1.0 + ay != 1.0) {
+                        result[1] = 1.0 + (pu[2] * wu[0] - pu[0] * wu[2]) / ny - 1.0;
+                        result[2] = 1.0 + (vu[2] * pu[0] - vu[0] * pu[2]) / ny - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+
+                case 2: {
+                    if (1.0 + az != 1.0) {
+                        result[1] = 1.0 + (pu[0] * wu[1] - pu[1] * wu[0]) / nz - 1.0;
+                        result[2] = 1.0 + (vu[0] * pu[1] - vu[1] * pu[0]) / nz - 1.0;
+                        result[0] = 1.0 - result[1] - result[2];
+                    }
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        //-----------------------------------------------------------------------------
+
+        inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon) {
+            bool inside = false;
+            std::size_t n = polygon.size();
+            for (std::size_t i = 0, j = n - 1; i < n; j = i, ++i) {
+                const vec2 &u0 = polygon[i];
+                const vec2 &u1 = polygon[j];  // current edge
+
+                if (((u0.y <= p.y) && (p.y < u1.y)) ||  // U1 is above the ray, U0 is on or below the ray
+                    ((u1.y <= p.y) && (p.y < u0.y)))    // U0 is above the ray, U1 is on or below the ray
+                {
+                    // find x-intersection of current edge with the ray.
+                    // Only consider edge crossings on the ray to the right of P.
+                    double x = u0.x + (p.y - u0.y) * (u1.x - u0.x) / (u1.y - u0.y);
+                    if (x > p.x)
+                        inside = !inside;
+                }
+            }
+
+            return inside;
+        }
+
+        //-----------------------------------------------------------------------------
+
+        inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_point) {
+            vec3 d1(p - v0);
+            vec3 d2(v1 - v0);
+            vec3 min_v(v0);
+            float t = dot(d2, d2);
+
+            if (t > FLT_MIN) {
+                t = dot(d1, d2) / t;
+                if (t > 1.0)
+                    d1 = p - (min_v = v1);
+                else if (t > 0.0)
+                    d1 = p - (min_v = v0 + d2 * t);
+            }
+
+            nearest_point = min_v;
+            return norm(d1);
+        }
+
+        //-----------------------------------------------------------------------------
+
+        inline float
+        dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_point) {
+            vec3 v0v1 = v1 - v0;
+            vec3 v0v2 = v2 - v0;
+            vec3 n = cross(v0v1, v0v2); // not normalized !
+            float d = length2(n);
+
+            // Check if the triangle is degenerated -> measure dist to line segments
+            if (fabs(d) < FLT_MIN) {
+                vec3 q, qq;
+                float d, dd(FLT_MAX);
+
+                dd = dist_point_line_segment(p, v0, v1, qq);
+
+                d = dist_point_line_segment(p, v1, v2, q);
+                if (d < dd) {
+                    dd = d;
+                    qq = q;
+                }
+
+                d = dist_point_line_segment(p, v2, v0, q);
+                if (d < dd) {
+                    dd = d;
+                    qq = q;
+                }
+
+                nearest_point = qq;
+                return dd;
+            }
+
+            float inv_d = 1.0 / d;
+            vec3 v1v2 = v2;
+            v1v2 -= v1;
+            vec3 v0p = p;
+            v0p -= v0;
+            vec3 t = cross(v0p, n);
+            float a = dot(t, v0v2) * -inv_d;
+            float b = dot(t, v0v1) * inv_d;
+            float s01, s02, s12;
+
+            // Calculate the distance to an edge or a corner vertex
+            if (a < 0) {
+                s02 = dot(v0v2, v0p) / length2(v0v2);
+                if (s02 < 0.0) {
+                    s01 = dot(v0v1, v0p) / length2(v0v1);
+                    if (s01 <= 0.0) {
+                        v0p = v0;
+                    } else if (s01 >= 1.0) {
+                        v0p = v1;
+                    } else {
+                        (v0p = v0) += (v0v1 *= s01);
+                    }
+                } else if (s02 > 1.0) {
+                    s12 = dot(v1v2, (p - v1)) / length2(v1v2);
+                    if (s12 >= 1.0) {
+                        v0p = v2;
+                    } else if (s12 <= 0.0) {
+                        v0p = v1;
+                    } else {
+                        (v0p = v1) += (v1v2 *= s12);
+                    }
+                } else {
+                    (v0p = v0) += (v0v2 *= s02);
+                }
+            }
+
+                // Calculate the distance to an edge or a corner vertex
+            else if (b < 0.0) {
+                s01 = dot(v0v1, v0p) / length2(v0v1);
+                if (s01 < 0.0) {
+                    s02 = dot(v0v2, v0p) / length2(v0v2);
+                    if (s02 <= 0.0) {
+                        v0p = v0;
+                    } else if (s02 >= 1.0) {
+                        v0p = v2;
+                    } else {
+                        (v0p = v0) += (v0v2 *= s02);
+                    }
+                } else if (s01 > 1.0) {
+                    s12 = dot(v1v2, (p - v1)) / length2(v1v2);
+                    if (s12 >= 1.0) {
+                        v0p = v2;
+                    } else if (s12 <= 0.0) {
+                        v0p = v1;
+                    } else {
+                        (v0p = v1) += (v1v2 *= s12);
+                    }
+                } else {
+                    (v0p = v0) += (v0v1 *= s01);
+                }
+            }
+
+                // Calculate the distance to an edge or a corner vertex
+            else if (a + b > 1.0) {
+                s12 = dot(v1v2, (p - v1)) / length2(v1v2);
+                if (s12 >= 1.0) {
+                    s02 = dot(v0v2, v0p) / length2(v0v2);
+                    if (s02 <= 0.0) {
+                        v0p = v0;
+                    } else if (s02 >= 1.0) {
+                        v0p = v2;
+                    } else {
+                        (v0p = v0) += (v0v2 *= s02);
+                    }
+                } else if (s12 <= 0.0) {
+                    s01 = dot(v0v1, v0p) / length2(v0v1);
+                    if (s01 <= 0.0) {
+                        v0p = v0;
+                    } else if (s01 >= 1.0) {
+                        v0p = v1;
+                    } else {
+                        (v0p = v0) += (v0v1 *= s01);
+                    }
+                } else {
+                    (v0p = v1) += (v1v2 *= s12);
+                }
+            }
+
+                // Calculate the distance to an interior point of the triangle
+            else {
+                n *= (dot(n, v0p) * inv_d);
+                (v0p = p) -= n;
+            }
+
+            nearest_point = v0p;
+            v0p -= p;
+            return norm(v0p);
+        }
+
+    }   // namespace geom
+
+}   // namespace easy3d
+
 
 #endif  // EASY3D_TYPES_H
 
