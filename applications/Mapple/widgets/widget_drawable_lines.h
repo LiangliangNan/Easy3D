@@ -72,7 +72,7 @@ private:
     // the state of the rendering panel
     struct State {
         State() : initialized(false), coloring("uniform color"),
-                  scalar_style(0), clamp_value(false), clamp_value_lower(5),
+                  scalar_style(0), clamp_value(true), clamp_value_lower(5),
                   clamp_value_upper(5), vector_field("disabled"), vector_field_scale(1.0) {
         }
 
