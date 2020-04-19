@@ -56,10 +56,7 @@ private slots:
 
     // property
     void computeHeightField();
-    void computeSurfaceMeshMeanCurvature();
-    void computeSurfaceMeshMaxAbsoluteCurvature();
-    void computeSurfaceGaussianCurvature();
-    void computeSurfacePrincipleCurvatures();
+    void computeSurfaceMeshCurvatures();
 
     // point cloud
     void pointCloudDownsampling();

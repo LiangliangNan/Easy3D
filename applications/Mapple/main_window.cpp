@@ -48,6 +48,7 @@
 
 #include "dialogs/dialog_snapshot.h"
 #include "dialogs/dialog_poisson_reconstruction.h"
+#include "dialogs/dialog_surface_mesh_curvature.h"
 #include "dialogs/dialog_surface_mesh_sampling.h"
 #include "dialogs/dialog_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
@@ -643,11 +644,7 @@ void MainWindow::createActionsForEditMenu() {
 
 void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
-
-    connect(ui->actionComputeMeanCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshMeanCurvature()));
-    connect(ui->actionComputeMaxAbsoluteCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshMaxAbsoluteCurvature()));
-    connect(ui->actionComputeGaussianCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceGaussianCurvature()));
-    connect(ui->actionComputePrincipleCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfacePrincipleCurvatures()));
+    connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
 }
 
 
@@ -1284,6 +1281,12 @@ void MainWindow::addGaussianNoise() {
 }
 
 
+void MainWindow::computeSurfaceMeshCurvatures() {
+    auto dialog = new DialogSurfaceMeshCurvature(this);
+    showDialog(dialog);
+}
+
+
 void MainWindow::computeHeightField() {
     auto model = viewer_->currentModel();
 
@@ -1364,57 +1367,6 @@ void MainWindow::computeHeightField() {
             enormals[e] = vec3(1,1,1);
         }
     }
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceMeshMeanCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_mean_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceMeshMaxAbsoluteCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_max_abs_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceGaussianCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_gauss_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfacePrincipleCurvatures() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
 
     currentModelChanged();
 }
