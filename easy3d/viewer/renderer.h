@@ -443,9 +443,11 @@ namespace easy3d {
 
                 const int lower = static_cast<int>(dummy_lower * 100);
                 const int upper = static_cast<int>(dummy_upper * 100);
-                LOG(INFO) << "scalar field clamped by "
-                          << lower << "% (lower) and "
-                          << upper << "% (upper). new range: [" << min_value << ", " << max_value << "]";
+                if (lower > 0 || upper > 0) {
+                    LOG(INFO) << "scalar field clamped by "
+                              << lower << "% (lower) and "
+                              << upper << "% (upper). new range: [" << min_value << ", " << max_value << "]";
+                }
             }
         }
 
