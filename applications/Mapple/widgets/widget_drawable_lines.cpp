@@ -63,8 +63,8 @@ void WidgetLinesDrawable::connectAll() {
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    connect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    connect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    connect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    connect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
@@ -103,8 +103,8 @@ void WidgetLinesDrawable::disconnectAll() {
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    disconnect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    disconnect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
@@ -184,8 +184,8 @@ void WidgetLinesDrawable::updatePanel() {
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
         ui->checkBoxScalarFieldClamp->setChecked(state.clamp_value);
-        ui->spinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
-        ui->spinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
+        ui->doubleSpinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
+        ui->doubleSpinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
     }
 
     {   // vector field
@@ -346,8 +346,8 @@ void WidgetLinesDrawable::setColorScheme(const QString &text) {
     if (is_scalar_field) {
         float clamp_lower = 0.0f, clamp_upper = 0.0f;
         if (ui->checkBoxScalarFieldClamp->isChecked()) {
-            clamp_lower = ui->spinBoxScalarFieldClampLower->value() / 100.0f;
-            clamp_upper = ui->spinBoxScalarFieldClampUpper->value() / 100.0f;
+            clamp_lower = ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0f;
+            clamp_upper = ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f;
         }
 
         viewer_->makeCurrent();
@@ -436,7 +436,7 @@ void WidgetLinesDrawable::setScalarFieldClamp(bool b) {
 }
 
 
-void WidgetLinesDrawable::setScalarFieldClampLower(int v) {
+void WidgetLinesDrawable::setScalarFieldClampLower(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_lower = v;
 
@@ -444,7 +444,7 @@ void WidgetLinesDrawable::setScalarFieldClampLower(int v) {
 }
 
 
-void WidgetLinesDrawable::setScalarFieldClampUpper(int v) {
+void WidgetLinesDrawable::setScalarFieldClampUpper(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_upper = v;
 
@@ -690,8 +690,8 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->spinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->spinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

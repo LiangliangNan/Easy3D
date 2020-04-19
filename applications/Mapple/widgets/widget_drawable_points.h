@@ -50,8 +50,8 @@ public slots:
 
     void setScalarFieldStyle(int);
     void setScalarFieldClamp(bool);
-    void setScalarFieldClampLower(int);
-    void setScalarFieldClampUpper(int);
+    void setScalarFieldClampLower(double);
+    void setScalarFieldClampUpper(double);
 
     void setVectorField(const QString &);
     void setVectorFieldScale(double);
@@ -74,8 +74,8 @@ private:
     // the state of the rendering panel
     struct State {
         State() : initialized(false), coloring("uniform color"),
-                  texture_file(""), scalar_style(0), clamp_value(true), clamp_value_lower(5),
-                  clamp_value_upper(5), vector_field("disabled"), vector_field_scale(1.0) {
+                  texture_file(""), scalar_style(0), clamp_value(true), clamp_value_lower(5.0),
+                  clamp_value_upper(5.0), vector_field("disabled"), vector_field_scale(1.0) {
         }
 
         bool initialized;
@@ -83,8 +83,8 @@ private:
         std::string texture_file;
         int scalar_style;
         bool clamp_value;
-        int clamp_value_lower;
-        int clamp_value_upper;
+        double clamp_value_lower;
+        double clamp_value_upper;
         std::string vector_field;
         double vector_field_scale;
     };

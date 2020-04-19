@@ -544,7 +544,7 @@ The scale is relative to the average edge lenght of the model.</string>
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBoxScalarFieldClampLower">
+        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldClampLower">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -557,16 +557,13 @@ The scale is relative to the average edge lenght of the model.</string>
            <height>0</height>
           </size>
          </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-         <property name="value">
-          <number>5</number>
+         <property name="decimals">
+          <number>1</number>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBoxScalarFieldClampUpper">
+        <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldClampUpper">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -579,11 +576,8 @@ The scale is relative to the average edge lenght of the model.</string>
            <height>0</height>
           </size>
          </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-         <property name="value">
-          <number>5</number>
+         <property name="decimals">
+          <number>1</number>
          </property>
         </widget>
        </item>
@@ -751,8 +745,8 @@ The scale is relative to the average edge lenght of the model.</string>
   <tabstop>comboBoxColorScheme</tabstop>
   <tabstop>comboBoxScalarFieldStyle</tabstop>
   <tabstop>checkBoxScalarFieldClamp</tabstop>
-  <tabstop>spinBoxScalarFieldClampLower</tabstop>
-  <tabstop>spinBoxScalarFieldClampUpper</tabstop>
+  <tabstop>doubleSpinBoxScalarFieldClampLower</tabstop>
+  <tabstop>doubleSpinBoxScalarFieldClampUpper</tabstop>
   <tabstop>comboBoxVectorField</tabstop>
   <tabstop>doubleSpinBoxVectorFieldScale</tabstop>
   <tabstop>checkBoxHighlight</tabstop>
