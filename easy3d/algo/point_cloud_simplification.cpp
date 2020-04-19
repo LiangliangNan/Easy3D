@@ -254,8 +254,6 @@ namespace easy3d {
 
                     // now we get a pair of points
                     internal::PointPair pair(i, neighbors[1], sqr_dists[1]);
-                    assert(i == neighbors[0]);
-                    assert(i != neighbors[1]);
                     point_pairs.insert(pair);
                 } else {
                     // ignore, no point will not be deleted
