@@ -151,9 +151,24 @@ namespace easy3d {
             ManifoldBuilder builder(mesh);
             builder.begin_surface();
 
+            // add vertices
             for (auto p : coordinates)
                 builder.add_vertex(p);
 
+            // add vertex properties
+            // NOTE: to properly handle non-manifold meshes, vertex properties must be added before adding the faces
+            for (std::size_t i = 0; i < elements.size(); ++i) {
+                Element& e = elements[i];
+                if (e.name == "vertex") {
+                    details::add_vertex_properties<vec3>(mesh, e.vec3_properties);
+                    details::add_vertex_properties<float>(mesh, e.float_properties);
+                    details::add_vertex_properties<int>(mesh, e.int_properties);
+                    details::add_vertex_properties< std::vector<int> >(mesh, e.int_list_properties);
+                    details::add_vertex_properties< std::vector<float> >(mesh, e.float_list_properties);
+                }
+            }
+
+            // add faces
 			for (auto indices : face_vertex_indices) {
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
@@ -161,17 +176,10 @@ namespace easy3d {
 				builder.add_face(vts);
 			}
 
-			// now let's add the properties
+			// now let's add the remained properties (the vertex property has already been added)
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				Element& e = elements[i];
-                if (e.name == "vertex") {
-					details::add_vertex_properties<vec3>(mesh, e.vec3_properties);
-					details::add_vertex_properties<float>(mesh, e.float_properties);
-					details::add_vertex_properties<int>(mesh, e.int_properties);
-					details::add_vertex_properties< std::vector<int> >(mesh, e.int_list_properties);
-					details::add_vertex_properties< std::vector<float> >(mesh, e.float_list_properties);
-				}
-                else if (e.name == "face") {
+                if (e.name == "face") {
 					details::add_face_properties<vec3>(mesh, e.vec3_properties);
 					details::add_face_properties<float>(mesh, e.float_properties);
 					details::add_face_properties<int>(mesh, e.int_properties);
