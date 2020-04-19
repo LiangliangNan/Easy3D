@@ -18,9 +18,9 @@ using namespace easy3d;
 
 
 DialogPointCloudSimplification::DialogPointCloudSimplification(QWidget *parent)
-        : QDialog(parent, Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint)
+        : QDialog(parent)
         , ui(new Ui::DialogPointCloudSimplification)
-        , kdtree_(0)
+        , kdtree_(nullptr)
 {
     ui->setupUi(this);
     viewer_ = dynamic_cast<MainWindow *>(parent)->viewer();

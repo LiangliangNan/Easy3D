@@ -16,12 +16,6 @@ namespace easy3d {
 
 class PaintCanvas;
 class DialogSnapshot;
-class DialogPoissonReconstruction;
-class DialogRansacPrimitiveExtraction;
-class DialogPointCloudSimplification;
-class DialogSurfaceMeshSampling;
-class DialogGaussianNoise;
-
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
@@ -120,6 +114,8 @@ private:
     void createActionsForPointCloudMenu();
     void createActionsForSurfaceMeshMenu();
 
+    void showDialog(QDialog*);
+
     bool okToContinue();
     void readSettings();
     void writeSettings();
@@ -138,12 +134,7 @@ private:
     QAction *actionsRecentFile[MaxRecentFiles],
         *actionSeparator;
 
-    DialogSnapshot*                 dialogSanpshot_;
-    DialogPoissonReconstruction*    dialogPoissonReconstruction_;
-    DialogRansacPrimitiveExtraction*dialogRansacPrimitiveExtraction_;
-    DialogPointCloudSimplification* dialogPointCloudSimplification_;
-    DialogSurfaceMeshSampling*      dialogSurfaceMeshSampling_;
-    DialogGaussianNoise*            dialogGaussianNoise_;
+    DialogSnapshot*             dialogSanpshot_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

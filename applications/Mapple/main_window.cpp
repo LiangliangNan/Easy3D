@@ -66,14 +66,11 @@ using namespace easy3d;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , dialogSanpshot_(nullptr)
-    , dialogPoissonReconstruction_(nullptr)
-    , dialogRansacPrimitiveExtraction_(nullptr)
-    , dialogPointCloudSimplification_(nullptr)
-    , dialogSurfaceMeshSampling_(nullptr)
-    , dialogGaussianNoise_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    ui->dockWidgetCommands->hide();
     ui->treeWidgetModels->init(this);
 
     viewer_ = new PaintCanvas(this);
@@ -154,14 +151,8 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 
-MainWindow::~MainWindow()
-{
-    if (dialogSanpshot_)                delete dialogSanpshot_;
-    if (dialogPoissonReconstruction_)   delete dialogPoissonReconstruction_;
-    if (dialogRansacPrimitiveExtraction_)   delete dialogRansacPrimitiveExtraction_;
-    if (dialogPointCloudSimplification_)    delete dialogPointCloudSimplification_;
-    if (dialogSurfaceMeshSampling_)     delete dialogSurfaceMeshSampling_;
-    if (dialogGaussianNoise_)     delete dialogGaussianNoise_;
+MainWindow::~MainWindow() {
+    delete dialogSanpshot_;
 }
 
 
@@ -388,6 +379,17 @@ void MainWindow::onClearRecentFiles() {
 }
 
 
+void MainWindow::showDialog(QDialog* dialog) {
+    auto widget = ui->dockWidgetCommands->widget();
+    delete widget;
+
+    const QSize& size = dialog->sizeHint();
+    ui->dockWidgetCommands->setWidget(dialog);
+    ui->dockWidgetCommands->setFixedSize(size);
+    ui->dockWidgetCommands->show();
+}
+
+
 void MainWindow::saveSnapshot() {
     const Model* model = viewer_->currentModel();
 
@@ -426,6 +428,7 @@ void MainWindow::saveSnapshot() {
     dialogSanpshot_->raise();
     dialogSanpshot_->activateWindow();
 }
+
 
 
 void MainWindow::setBackgroundColor() {
@@ -1252,53 +1255,32 @@ void MainWindow::pointCloudNormalizeNormals() {
 
 
 void MainWindow::pointCloudPoissonSurfaceReconstruction() {
-    if (!dialogPoissonReconstruction_)
-        dialogPoissonReconstruction_ = new DialogPoissonReconstruction(this);
-
-    dialogPoissonReconstruction_->show();
-    dialogPoissonReconstruction_->raise();
-    dialogPoissonReconstruction_->activateWindow();
+    auto dialog = new DialogPoissonReconstruction(this);
+    showDialog(dialog);
 }
 
 
 void MainWindow::pointCloudRansacPrimitiveExtraction() {
-    if (!dialogRansacPrimitiveExtraction_)
-        dialogRansacPrimitiveExtraction_ = new DialogRansacPrimitiveExtraction(this);
-
-    dialogRansacPrimitiveExtraction_->setWorkOnSelectedPoints(false);
-    dialogRansacPrimitiveExtraction_->show();
-    dialogRansacPrimitiveExtraction_->raise();
-    dialogRansacPrimitiveExtraction_->activateWindow();
+    auto dialog = new DialogRansacPrimitiveExtraction(this);
+    showDialog(dialog);
 }
 
 
 void MainWindow::surfaceMeshSampling() {
-    if (!dialogSurfaceMeshSampling_)
-        dialogSurfaceMeshSampling_ = new DialogSurfaceMeshSampling(this);
-
-    dialogSurfaceMeshSampling_->show();
-    dialogSurfaceMeshSampling_->raise();
-    dialogSurfaceMeshSampling_->activateWindow();
+    auto dialog = new DialogSurfaceMeshSampling(this);
+    showDialog(dialog);
 }
 
 
 void MainWindow::pointCloudDownsampling() {
-    if (!dialogPointCloudSimplification_)
-        dialogPointCloudSimplification_ = new DialogPointCloudSimplification(this);
-
-    dialogPointCloudSimplification_->show();
-    dialogPointCloudSimplification_->raise();
-    dialogPointCloudSimplification_->activateWindow();
+    auto dialog = new DialogPointCloudSimplification(this);
+    showDialog(dialog);
 }
 
 
 void MainWindow::addGaussianNoise() {
-    if (!dialogGaussianNoise_)
-        dialogGaussianNoise_ = new DialogGaussianNoise(this);
-
-    dialogGaussianNoise_->show();
-    dialogGaussianNoise_->raise();
-    dialogGaussianNoise_->activateWindow();
+    auto dialog = new DialogGaussianNoise(this);
+    showDialog(dialog);
 }
 
 

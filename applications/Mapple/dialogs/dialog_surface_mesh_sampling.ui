@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>219</width>
+    <width>210</width>
     <height>87</height>
    </rect>
   </property>
@@ -68,22 +68,5 @@
   <tabstop>okButton</tabstop>
  </tabstops>
  <resources/>
- <connections>
-  <connection>
-   <sender>okButton</sender>
-   <signal>clicked()</signal>
-   <receiver>DialogSurfaceMeshSampling</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>155</x>
-     <y>58</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>43</x>
-     <y>58</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
