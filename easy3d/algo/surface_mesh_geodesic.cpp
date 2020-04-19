@@ -141,8 +141,7 @@ namespace easy3d {
             }
         }
 
-        std::clog << "[Geodesic] Found " << virtual_edges_.size()
-                  << " virtual edges\n";
+        LOG(INFO) << virtual_edges_.size() << " virtual edges found";
     }
 
     //-----------------------------------------------------------------------------
