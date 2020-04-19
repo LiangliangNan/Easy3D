@@ -106,7 +106,7 @@ namespace easy3d {
     void SurfaceMeshParameterization::harmonic(bool use_uniform_weights) {
         // map boundary to circle
         if (!setup_boundary_constraints()) {
-            LOG(ERROR) << "Failed performing setup of boundary constraints.";
+            LOG(ERROR) << "failed setup boundary constraints.";
             return;
         }
 
@@ -173,7 +173,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver(A);
         Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
-            LOG(ERROR) << "SurfaceMeshParameterization failed solving the linear system.";
+            LOG(ERROR) << "failed solving the linear system.";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {
@@ -386,7 +386,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver(A);
         Eigen::VectorXd x = solver.solve(b);
         if (solver.info() != Eigen::Success) {
-            LOG(ERROR) << "SurfaceMeshParameterization failed solving the linear system";
+            LOG(ERROR) << "failed solving the linear system";
         } else {
             // copy solution
             for (i = 0; i < n; ++i) {

@@ -1056,7 +1056,7 @@ void MainWindow::surfaceMeshHoleFilling() {
         viewer()->doneCurrent();
         viewer()->update();
     } else {
-        std::cerr << "No manifold boundary loop found\n";
+        LOG(WARNNG) << "could not find a hole (i.e., manifold boundary loop)";
     }
 }
 
