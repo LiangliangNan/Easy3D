@@ -32,6 +32,7 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -753,6 +754,8 @@ std::string PaintCanvas::usage() const {
 
 
 void PaintCanvas::create_drawables(Model *model) {
+    StopWatch w;
+
     if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
         renderer::update_buffer(cloud, cloud->add_points_drawable("vertices"));
@@ -784,6 +787,8 @@ void PaintCanvas::create_drawables(Model *model) {
         edges->set_line_width(setting::graph_edges_line_width);
         edges->set_impostor_type(LinesDrawable::CYLINDER);
     }
+
+    LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data took " << w.time_string();
 }
 
 

@@ -307,14 +307,11 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
     if (model) {
         model->set_name(file_name);
-
-        StopWatch w;
+        
         viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
         viewer_->doneCurrent();
         viewer_->fitScreen(model);
-
-        LOG_IF(INFO, create_default_drawables && w.elapsed_seconds() > 0.5f) << "creating default drawables took " << w.time_string();
 
         ui->treeWidgetModels->addModel(model, true);
     }
@@ -795,9 +792,9 @@ void MainWindow::surfaceMeshDetectDuplicatedFaces() {
     MeshSurfacer ms;
     const auto& faces = ms.detect_duplicated_faces(mesh, true);
     if (!faces.empty())
-		LOG(INFO) << "done. " << faces.size() << " faces duplicating others. Time: " << w.time_string();
+		LOG(INFO) << "done. " << faces.size() << " faces duplicating others. " << w.time_string();
     else
-		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
+		LOG(INFO) << "done. No duplicated faces detected. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
@@ -821,10 +818,10 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
         renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
         viewer()->doneCurrent();
         viewer()->update();
-		LOG(INFO) << "done. " << num << " faces deleted. Time: " << w.time_string();
+		LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
     }
     else
-		LOG(INFO) << "done. No duplicated faces detected. Time: " << w.time_string();
+		LOG(INFO) << "done. No duplicated faces detected. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
@@ -844,9 +841,9 @@ void MainWindow::surfaceMeshDetectSelfIntersections() {
     MeshSurfacer ms;
     const auto& pairs = ms.detect_self_intersections(mesh);
     if (!pairs.empty())
-		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. Time: " << w.time_string();
+		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. " << w.time_string();
     else
-		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
+		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
@@ -872,11 +869,11 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
         viewer()->makeCurrent();
         viewer()->addModel(result);
         viewer()->doneCurrent();
-		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". Time: " << w.time_string();
+		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
 		currentModelChanged();
     }
     else
-		LOG(INFO) << "done. No intersecting faces detected. Time: " << w.time_string();
+		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
