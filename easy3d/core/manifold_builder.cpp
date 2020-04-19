@@ -393,7 +393,6 @@ namespace easy3d {
         // copy all vertex properties except "v:connectivity" and "v:deleted"
         auto &arrays = mesh_->vprops_.arrays();
         for (auto &a : arrays) {
-            std::cout << a->name() << std::endl;
             if (a->name() == "v:connectivity" || a->name() == "v:deleted" ||
                 a->name() == name_known_nm_vertex ||
                 a->name() == name_visited_vertex ||
