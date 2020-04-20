@@ -1234,7 +1234,7 @@ void MainWindow::surfaceMeshHoleFilling() {
         updateRendering();
         viewer()->update();
     } else {
-        LOG(WARNNG) << "could not find a hole (i.e., manifold boundary loop)";
+        LOG(WARNING) << "could not find a hole (i.e., manifold boundary loop)";
     }
 }
 
