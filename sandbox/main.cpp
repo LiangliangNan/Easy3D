@@ -36,9 +36,42 @@ using namespace easy3d;
 //		- override the file loading function of the default easy3d viewer to visualize textured meshes;
 
 
+
+
 int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
+
+    const float w_a1 = 1.0/3.0;
+    const float w_a2 = 1.0/3.0;
+    const float w_a3 = 1.0/3.0;
+    const float w_assignments = 0.4;
+    const float w_exam = 0.6;
+
+    struct Student {
+        Student(const std::string& _name, float _a1, float _a2, float _a3, float _exam) : name(_name), a1(_a1), a2(_a2), a3(_a3), exam(_exam) {}
+        std::string name;
+        float a1;
+        float a2;
+        float a3;
+        float exam;
+    };
+
+    std::vector<Student> students = {
+            Student("Rohit Ramlakhan", 80, 35, 70, 72)
+    };
+
+    for (const auto& s : students) {
+        float grade = (s.a1 * w_a1 + s.a2 * w_a2 + s.a3 * w_a3) * w_assignments + s.exam * w_exam;
+        std::cout << s.name << ": " << grade << std::endl;
+    }
+
+    return 0;
+
+
+
+
+
 
     try {
         const std::vector<std::string> files = {
