@@ -80,7 +80,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
 
             // plane extraction results has been stored as properties:
             //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-            //      - "v:primitive_index" (0, 1, 2...)
+            //      - "v:primitive_index" (-1, 0, 1, 2...)
             auto primitive_type = cloud->get_vertex_property<int>("v:primitive_type");
             auto primitive_index = cloud->get_vertex_property<int>("v:primitive_index");
             std::vector<vec3> colors;
