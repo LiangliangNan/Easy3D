@@ -85,13 +85,13 @@ namespace easy3d {
 
         private:
             template<class T>
-            inline void hash_combine(std::size_t &seed, T const &v) const {
+            inline void hash_combine(int64_t &seed, T const &v) const {
                 std::hash<T> hasher;
                 seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
 
-            inline std::size_t hash(const Tessellator::Vertex& v) const {
-                std::size_t seed = 0;
+            inline int64_t hash(const Tessellator::Vertex& v) const {
+                int64_t seed = 0;
                 std::hash<double> hasher;
                 for (auto f : v) {
                     hash_combine(seed, hasher(f));
@@ -104,7 +104,7 @@ namespace easy3d {
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
             // key -> index
-            std::unordered_map<std::size_t, std::size_t> hash_table_;
+            std::unordered_map<int64_t, std::size_t> hash_table_;
         };
     }
 
