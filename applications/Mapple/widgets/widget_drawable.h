@@ -21,7 +21,11 @@ public:
     explicit WidgetDrawable(QWidget *parent);
     ~WidgetDrawable();
 
+    // update the panel to be consistent with the drawable's rendering parameters
     virtual void updatePanel() = 0;
+
+    // update the OpenGL buffers
+    virtual void updateRendering() = 0;
 
 protected:
     easy3d::Texture* colormapTexture(int) const;

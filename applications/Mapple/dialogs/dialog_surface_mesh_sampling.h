@@ -8,6 +8,7 @@ namespace Ui {
 }
 
 class PaintCanvas;
+class MainWindow;
 
 class DialogSurfaceMeshSampling : public QDialog {
 Q_OBJECT
@@ -25,6 +26,7 @@ private:
     Ui::DialogSurfaceMeshSampling *ui;
 
     PaintCanvas *viewer_;
+    MainWindow *main_window_;
 };
 
 #endif // DIALOG_SURFACE_SAMPLING_H

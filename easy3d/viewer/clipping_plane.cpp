@@ -38,9 +38,9 @@ namespace easy3d {
 
 
     ClippingPlane::ClippingPlane()
-            : manipulated_frame_(nullptr), size_(1.0f), enabled_(false), visible_(true),
+            : manipulated_frame_(nullptr), enabled_(false), visible_(true),
               color_(setting::clipping_plane_color), cross_section_(false),
-              cross_section_width_(0.001f) {
+              cross_section_width_(0.001f), size_(1.0f) {
     }
 
 
@@ -126,7 +126,7 @@ namespace easy3d {
         // To use the standard drawable to visualize the clipping plane, I have to temporally disable clipping plane
         // to avoid the clipping plane being clipped by itself.
         bool status = enabled_;
-        const_cast<ClippingPlane*>(this)->set_enabled(false);
+        const_cast<ClippingPlane *>(this)->set_enabled(false);
 
         std::vector<vec3> corners = {
                 vec3(-size_, -size_, 0),
@@ -148,7 +148,8 @@ namespace easy3d {
         wireframe.update_index_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
         wireframe.set_default_color(color_);
-        wireframe.draw(cam, false);  easy3d_debug_log_gl_error;
+        wireframe.draw(cam, false);
+        easy3d_debug_log_gl_error;
 
         // draw the face of the clipping plane
         //glDisable(GL_DEPTH_TEST);
@@ -159,9 +160,10 @@ namespace easy3d {
         face.update_index_buffer(face_indices);
         face.set_default_color(color_);
         face.draw(cam, false);
-        glDisable(GL_BLEND);    easy3d_debug_log_gl_error;
+        glDisable(GL_BLEND);
+        easy3d_debug_log_gl_error;
 
-        const_cast<ClippingPlane*>(this)->set_enabled(status);
+        const_cast<ClippingPlane *>(this)->set_enabled(status);
     }
 
 }

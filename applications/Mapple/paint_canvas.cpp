@@ -529,7 +529,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
         if (model_idx_ != pre_idx) {
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
             if (model_idx_ >= 0)
                 LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
@@ -540,14 +540,14 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ + 1) % models_.size());
         if (model_idx_ != pre_idx) {
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
             if (model_idx_ >= 0)
 				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
     } else if (e->key() == Qt::Key_Delete && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             deleteModel(currentModel());
-        main_window_->currentModelChanged();
+        main_window_->updateUi();
     } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
             LinesDrawable *drawable = currentModel()->lines_drawable("edges");
@@ -561,7 +561,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             } else {
                 drawable->set_visible(!drawable->is_visible());
             }
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
@@ -575,7 +575,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             } else {
                 drawable->set_visible(!drawable->is_visible());
             }
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
@@ -605,7 +605,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             else {
                 drawable->set_visible(!drawable->is_visible());
             }
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
@@ -635,7 +635,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             }
             else
                 drawable->set_visible(!drawable->is_visible());
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
@@ -643,7 +643,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             auto drawable = currentModel()->triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
-                main_window_->currentModelChanged();
+                main_window_->updateUi();
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {

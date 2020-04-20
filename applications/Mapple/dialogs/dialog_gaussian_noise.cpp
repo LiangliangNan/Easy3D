@@ -21,9 +21,8 @@ DialogGaussianNoise::DialogGaussianNoise(QWidget *parent)
 {
     ui->setupUi(this);
     viewer_ = dynamic_cast<MainWindow *>(parent)->viewer();
-//    setWindowFlags(Qt::WindowStaysOnTopHint);
 
-    suggested_ratio_ = 0.01f;
+    suggested_ratio_ = 0.01;
 
     default_sigma_ = "0.001";
     ui->lineEditGaussianNoiseSigma->setValidator(new QDoubleValidator(0.00001, 1.0, 5, this));

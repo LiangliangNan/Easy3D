@@ -75,8 +75,8 @@ void WidgetTrianglesDrawable::connectAll() {
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    connect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    connect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    connect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    connect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
@@ -123,8 +123,8 @@ void WidgetTrianglesDrawable::disconnectAll() {
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    disconnect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    disconnect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
@@ -140,7 +140,7 @@ WidgetTrianglesDrawable::~WidgetTrianglesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetTrianglesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || model->triangles_drawables().empty()) {
+    if (!model || !model->is_visible() || model->triangles_drawables().empty()) {
         setEnabled(false);
         return;
     }
@@ -226,11 +226,13 @@ void WidgetTrianglesDrawable::updatePanel() {
         ui->toolButtonBackColor->setIcon(QIcon(pixmap));
 
         // texture
-        if (!state.initialized) {
-            if (drawable()->texture())
-                state.texture_file = drawable()->texture()->file_name();
+        auto tex = drawable()->texture();
+        if (tex) {
+            const std::string &tex_name = file_system::simple_name(tex->file_name());
+            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
         }
-        ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(state.texture_file)));
+        else
+            ui->lineEditTextureFile->setText("");
 
         ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
         ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
@@ -248,8 +250,8 @@ void WidgetTrianglesDrawable::updatePanel() {
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
         ui->checkBoxScalarFieldClamp->setChecked(state.clamp_value);
-        ui->spinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
-        ui->spinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
+        ui->doubleSpinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
+        ui->doubleSpinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
     }
 
     {   // vector field
@@ -267,6 +269,17 @@ void WidgetTrianglesDrawable::updatePanel() {
     connectAll();
 
     state.initialized = true;
+}
+
+
+// update the OpenGL buffers
+void WidgetTrianglesDrawable::updateRendering() {
+    auto model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    for (auto d : model->triangles_drawables())
+        updateRendering(d);
 }
 
 
@@ -433,31 +446,76 @@ namespace details {
 void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
-    drawable()->set_per_vertex_color(text != "uniform color");
-
-    bool is_scalar_field = text.contains("scalar - ");
-    if (is_scalar_field) {
-        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        if (mesh) {
-            float clamp_lower = 0.0f, clamp_upper = 0.0f;
-            if (ui->checkBoxScalarFieldClamp->isChecked()) {
-                clamp_lower = ui->spinBoxScalarFieldClampLower->value() / 100.0f;
-                clamp_upper = ui->spinBoxScalarFieldClampUpper->value() / 100.0f;
-            }
-
-            viewer_->makeCurrent();
-            details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-            viewer_->doneCurrent();
-        }
+    auto tex = drawable()->texture();
+    if (tex) {
+        const std::string &tex_name = file_system::simple_name(tex->file_name());
+        ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
     }
-
-    bool use_texture = (text.contains(":texcoord") || is_scalar_field);
-    drawable()->set_use_texture(use_texture);
-
-    viewer_->update();
+    else
+        ui->lineEditTextureFile->setText("");
 
     states_[drawable()].coloring = text.toStdString();
+    states_[drawable()].scalar_style = ui->comboBoxScalarFieldStyle->currentIndex();
+    states_[drawable()].clamp_value = ui->checkBoxScalarFieldClamp->isChecked();
+    states_[drawable()].clamp_value_lower = ui->doubleSpinBoxScalarFieldClampLower->value();
+    states_[drawable()].clamp_value_upper = ui->doubleSpinBoxScalarFieldClampUpper->value();
+
+    updateRendering(drawable());
+
+    viewer_->update();
+}
+
+
+void WidgetTrianglesDrawable::updateRendering(TrianglesDrawable* drawable) {
+    if (!drawable)
+        return;
+    Model *model = drawable->model();
+    if (!model)
+        return;
+    if (states_.find(drawable) == states_.end())
+        return;
+
+    const std::string& color_scheme = states_[drawable].coloring;
+    drawable->set_per_vertex_color(color_scheme != "uniform color");
+
+    bool is_scalar_field = (color_scheme.find("scalar - ") != std::string::npos);
+    if (is_scalar_field) {
+        float clamp_lower = 0.0f, clamp_upper = 0.0f;
+        if (states_[drawable].clamp_value) {
+            clamp_lower = states_[drawable].clamp_value_lower / 100.0f;
+            clamp_upper = states_[drawable].clamp_value_upper / 100.0f;
+        }
+
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            details::setup_scalar_field(mesh, drawable, color_scheme, clamp_lower, clamp_upper);
+        }
+        drawable->set_texture(colormapTexture(states_[drawable].scalar_style));
+        viewer_->doneCurrent();
+    }
+    else if (color_scheme.find(":texcoord") != std::string::npos) {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            if (color_scheme == "h:texcoord")
+                renderer::update_buffer(mesh, drawable, mesh->get_halfedge_property<vec2>(color_scheme));
+            else if (color_scheme == "v:texcoord")
+                renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<vec2>(color_scheme));
+        }
+        viewer_->doneCurrent();
+    }
+    else {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            renderer::update_buffer(mesh, drawable);
+        }
+        viewer_->doneCurrent();
+    }
+
+    bool use_texture = (color_scheme.find(":texcoord") != std::string::npos || is_scalar_field);
+    drawable->set_use_texture(use_texture);
 }
 
 
@@ -513,22 +571,16 @@ void WidgetTrianglesDrawable::setTextureFile() {
         return;
 
     const std::string &file_name = fileName.toStdString();
-    Texture *tex = drawable()->texture();
-    if (tex) {
-        if (tex->file_name() == file_name)
-            return;
-    }
-
     viewer_->makeCurrent();
-    tex = TextureManager::request(file_name, Texture::REPEAT);
+    Texture* tex = TextureManager::request(file_name, Texture::REPEAT);
     viewer_->doneCurrent();
 
     if (tex) {
         drawable()->set_texture(tex);
         drawable()->set_use_texture(true);
         viewer_->update();
-        ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file_name)));
-        states_[drawable()].texture_file = file_name;
+        const std::string& simple_name = file_system::simple_name(file_name);
+        ui->lineEditTextureFile->setText(QString::fromStdString(simple_name));
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
@@ -590,6 +642,7 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
+
     states_[drawable()].scalar_style = idx;
 }
 
@@ -602,7 +655,7 @@ void WidgetTrianglesDrawable::setScalarFieldClamp(bool b) {
 }
 
 
-void WidgetTrianglesDrawable::setScalarFieldClampLower(int v) {
+void WidgetTrianglesDrawable::setScalarFieldClampLower(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_lower = v;
 
@@ -610,7 +663,7 @@ void WidgetTrianglesDrawable::setScalarFieldClampLower(int v) {
 }
 
 
-void WidgetTrianglesDrawable::setScalarFieldClampUpper(int v) {
+void WidgetTrianglesDrawable::setScalarFieldClampUpper(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_upper = v;
 
@@ -641,7 +694,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         states_[drawable()].vector_field = "f:normal";
     }
 
-    main_window_->currentModelChanged();
+    main_window_->updateUi();
     viewer_->update();
 }
 
@@ -760,8 +813,8 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->spinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->spinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

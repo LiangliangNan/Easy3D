@@ -63,8 +63,8 @@ void WidgetLinesDrawable::connectAll() {
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    connect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    connect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    connect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    connect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
@@ -103,8 +103,8 @@ void WidgetLinesDrawable::disconnectAll() {
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
     disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    disconnect(ui->spinBoxScalarFieldClampLower, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampLower(int)));
-    disconnect(ui->spinBoxScalarFieldClampUpper, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldClampUpper(int)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    disconnect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
     disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
@@ -120,7 +120,7 @@ WidgetLinesDrawable::~WidgetLinesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetLinesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || model->lines_drawables().empty()) {
+    if (!model || !model->is_visible() || model->lines_drawables().empty()) {
         setEnabled(false);
         return;
     }
@@ -170,6 +170,18 @@ void WidgetLinesDrawable::updatePanel() {
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
+
+//        // texture
+//        auto tex = drawable()->texture();
+//        if (tex) {
+//            const std::string &tex_name = file_system::simple_name(tex->file_name());
+//            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+//        }
+//        else
+//            ui->lineEditTextureFile->setText("");
+//
+//        ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
+//        ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
     }
 
     {   // highlight
@@ -184,8 +196,8 @@ void WidgetLinesDrawable::updatePanel() {
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
         ui->checkBoxScalarFieldClamp->setChecked(state.clamp_value);
-        ui->spinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
-        ui->spinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
+        ui->doubleSpinBoxScalarFieldClampLower->setValue(state.clamp_value_lower);
+        ui->doubleSpinBoxScalarFieldClampUpper->setValue(state.clamp_value_upper);
     }
 
     {   // vector field
@@ -203,6 +215,17 @@ void WidgetLinesDrawable::updatePanel() {
     connectAll();
 
     state.initialized = true;
+}
+
+
+// update the OpenGL buffers
+void WidgetLinesDrawable::updateRendering() {
+    auto model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    for (auto d : model->lines_drawables())
+        updateRendering(d);
 }
 
 
@@ -337,42 +360,76 @@ namespace details {
     }
 }
 
+
 void WidgetLinesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
-    drawable()->set_per_vertex_color(text != "uniform color");
+    states_[drawable()].coloring = text.toStdString();
+    states_[drawable()].scalar_style = ui->comboBoxScalarFieldStyle->currentIndex();
+    states_[drawable()].clamp_value = ui->checkBoxScalarFieldClamp->isChecked();
+    states_[drawable()].clamp_value_lower = ui->doubleSpinBoxScalarFieldClampLower->value();
+    states_[drawable()].clamp_value_upper = ui->doubleSpinBoxScalarFieldClampUpper->value();
 
-    bool is_scalar_field = text.contains("scalar - ");
+    updateRendering(drawable());
+
+    viewer_->update();
+}
+
+
+void WidgetLinesDrawable::updateRendering(LinesDrawable* drawable) {
+    if (!drawable)
+        return;
+    Model* model = drawable->model();
+    if (!model)
+        return;
+    if (states_.find(drawable) == states_.end())
+        return;
+
+    const std::string& color_scheme = states_[drawable].coloring;
+    drawable->set_per_vertex_color(color_scheme != "uniform color");
+
+    bool is_scalar_field = (color_scheme.find("scalar - ") != std::string::npos);
     if (is_scalar_field) {
         float clamp_lower = 0.0f, clamp_upper = 0.0f;
-        if (ui->checkBoxScalarFieldClamp->isChecked()) {
-            clamp_lower = ui->spinBoxScalarFieldClampLower->value() / 100.0f;
-            clamp_upper = ui->spinBoxScalarFieldClampUpper->value() / 100.0f;
+        if (states_[drawable].clamp_value) {
+            clamp_lower = states_[drawable].clamp_value_lower / 100.0f;
+            clamp_upper = states_[drawable].clamp_value_upper / 100.0f;
         }
 
         viewer_->makeCurrent();
-        if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel())) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-            details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-        } else if (dynamic_cast<Graph *>(viewer_->currentModel())) {
-            Graph *graph = dynamic_cast<Graph *>(viewer_->currentModel());
-            details::setup_scalar_field(graph, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            details::setup_scalar_field(mesh, drawable, color_scheme, clamp_lower, clamp_upper);
+            drawable->set_texture(colormapTexture(states_[drawable].scalar_style));
+        } else if (dynamic_cast<Graph *>(model)) {
+            Graph *graph = dynamic_cast<Graph *>(model);
+            details::setup_scalar_field(graph, drawable, color_scheme, clamp_lower, clamp_upper);
+            drawable->set_texture(colormapTexture(states_[drawable].scalar_style));
         }
-//        else if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
-//            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
-//            details::setup_scalar_field(cloud, drawable(), text.toStdString());
-//            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-//        }
+        viewer_->doneCurrent();
+    }
+    else if (color_scheme.find(":texcoord") != std::string::npos) {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            if (color_scheme == "e:texcoord")
+                renderer::update_buffer(mesh, drawable, mesh->get_edge_property<vec2>(color_scheme));
+            else if (color_scheme == "v:texcoord")
+                renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<vec2>(color_scheme));
+        }
+        viewer_->doneCurrent();
+    }
+    else {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            renderer::update_buffer(mesh, drawable);
+        }
         viewer_->doneCurrent();
     }
 
-    bool use_texture = (text.contains(":texcoord") || is_scalar_field);
-    drawable()->set_use_texture(use_texture);
-
-    viewer_->update();
-    states_[drawable()].coloring = text.toStdString();
+    bool use_texture = (color_scheme.find(":texcoord") != std::string::npos || is_scalar_field);
+    drawable->set_use_texture(use_texture);
 }
 
 
@@ -436,7 +493,7 @@ void WidgetLinesDrawable::setScalarFieldClamp(bool b) {
 }
 
 
-void WidgetLinesDrawable::setScalarFieldClampLower(int v) {
+void WidgetLinesDrawable::setScalarFieldClampLower(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_lower = v;
 
@@ -444,7 +501,7 @@ void WidgetLinesDrawable::setScalarFieldClampLower(int v) {
 }
 
 
-void WidgetLinesDrawable::setScalarFieldClampUpper(int v) {
+void WidgetLinesDrawable::setScalarFieldClampUpper(double v) {
     auto& state = states_[drawable()];
     state.clamp_value_upper = v;
 
@@ -594,7 +651,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         states_[drawable()].vector_field = "f:normal";
     }
 
-    main_window_->currentModelChanged();
+    main_window_->updateUi();
     viewer_->update();
 }
 
@@ -690,8 +747,8 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->spinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->spinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

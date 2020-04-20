@@ -26,6 +26,9 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
 
+    // update the OpenGL buffers
+    virtual void updateRendering() override;
+
     easy3d::TrianglesDrawable *drawable();
 
 public slots:
@@ -54,8 +57,8 @@ public slots:
 
     void setScalarFieldStyle(int);
     void setScalarFieldClamp(bool);
-    void setScalarFieldClampLower(int);
-    void setScalarFieldClampUpper(int);
+    void setScalarFieldClampLower(double);
+    void setScalarFieldClampUpper(double);
 
     void setVectorField(const QString &);
     void setVectorFieldScale(double);
@@ -67,6 +70,7 @@ private:
     void disableUnavailableOptions();
 
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name);
+    void updateRendering(easy3d::TrianglesDrawable* drawable);
 
     // model depended stuff
     std::vector<std::string> vectorFields(const easy3d::Model *model);
@@ -77,18 +81,16 @@ private:
 private:
     // the state of the rendering panel
     struct State {
-        State() : initialized(false), coloring("uniform color"),
-                  texture_file(""), scalar_style(0), clamp_value(true), clamp_value_lower(5),
-                  clamp_value_upper(5), vector_field("disabled"), vector_field_scale(1.0) {
+        State() : initialized(false), coloring("uniform color"), scalar_style(0), clamp_value(true),
+                  clamp_value_lower(5.0), clamp_value_upper(5.0), vector_field("disabled"), vector_field_scale(1.0) {
         }
 
         bool initialized;
         std::string coloring;
-        std::string texture_file;
         int scalar_style;
         bool clamp_value;
-        int clamp_value_lower;
-        int clamp_value_upper;
+        double clamp_value_lower;
+        double clamp_value_upper;
         std::string vector_field;
         double vector_field_scale;
     };

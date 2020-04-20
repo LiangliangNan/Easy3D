@@ -49,7 +49,7 @@ namespace easy3d {
 
     }
 
-    Drawable::Drawable(const std::string &name, const Model *model)
+    Drawable::Drawable(const std::string &name, Model *model)
             : name_(name)
             , model_(model)
             , visible_(true)

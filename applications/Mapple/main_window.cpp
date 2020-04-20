@@ -16,8 +16,6 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -30,7 +28,6 @@
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
-#include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo/surface_mesh_parameterization.h>
@@ -48,6 +45,7 @@
 
 #include "dialogs/dialog_snapshot.h"
 #include "dialogs/dialog_poisson_reconstruction.h"
+#include "dialogs/dialog_surface_mesh_curvature.h"
 #include "dialogs/dialog_surface_mesh_sampling.h"
 #include "dialogs/dialog_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
@@ -66,14 +64,11 @@ using namespace easy3d;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , dialogSanpshot_(nullptr)
-    , dialogPoissonReconstruction_(nullptr)
-    , dialogRansacPrimitiveExtraction_(nullptr)
-    , dialogPointCloudSimplification_(nullptr)
-    , dialogSurfaceMeshSampling_(nullptr)
-    , dialogGaussianNoise_(nullptr)
+    , dialogCommand_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     ui->treeWidgetModels->init(this);
 
     viewer_ = new PaintCanvas(this);
@@ -154,14 +149,8 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 
-MainWindow::~MainWindow()
-{
-    if (dialogSanpshot_)                delete dialogSanpshot_;
-    if (dialogPoissonReconstruction_)   delete dialogPoissonReconstruction_;
-    if (dialogRansacPrimitiveExtraction_)   delete dialogRansacPrimitiveExtraction_;
-    if (dialogPointCloudSimplification_)    delete dialogPointCloudSimplification_;
-    if (dialogSurfaceMeshSampling_)     delete dialogSurfaceMeshSampling_;
-    if (dialogGaussianNoise_)     delete dialogGaussianNoise_;
+MainWindow::~MainWindow() {
+    delete dialogSanpshot_;
 }
 
 
@@ -320,7 +309,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 }
 
 
-void MainWindow::currentModelChanged() {
+void MainWindow::updateUi() {
     const Model* model = viewer_->currentModel();
     if (model) {
         const std::string& name = model->name();
@@ -328,11 +317,23 @@ void MainWindow::currentModelChanged() {
     } else
         updateWindowTitle();
 
+    updateRenderingPanel();
+
+    ui->treeWidgetModels->updateModelList();
+}
+
+
+void MainWindow::updateRenderingPanel() {
     widgetTrianglesDrawable_->updatePanel();
     widgetLinesDrawable_->updatePanel();
     widgetPointsDrawable_->updatePanel();
+}
 
-    ui->treeWidgetModels->updateModelList();
+
+void MainWindow::updateRendering() {
+    widgetTrianglesDrawable_->updateRendering();
+    widgetLinesDrawable_->updateRendering();
+    widgetPointsDrawable_->updateRendering();
 }
 
 
@@ -383,6 +384,22 @@ void MainWindow::onClearRecentFiles() {
 }
 
 
+void MainWindow::showDialog(QDialog* dialog) {
+    if (!dialogCommand_) {
+        dialogCommand_ = new QDockWidget(this);
+        dialogCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
+        dialogCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
+        dialogCommand_->setFloating(true);
+    }
+    delete dialogCommand_->widget();
+
+    const QSize& size = dialog->sizeHint();
+    dialogCommand_->setWidget(dialog);
+    dialogCommand_->setFixedSize(size);
+    dialogCommand_->show();
+}
+
+
 void MainWindow::saveSnapshot() {
     const Model* model = viewer_->currentModel();
 
@@ -421,6 +438,7 @@ void MainWindow::saveSnapshot() {
     dialogSanpshot_->raise();
     dialogSanpshot_->activateWindow();
 }
+
 
 
 void MainWindow::setBackgroundColor() {
@@ -635,11 +653,7 @@ void MainWindow::createActionsForEditMenu() {
 
 void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
-
-    connect(ui->actionComputeMeanCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshMeanCurvature()));
-    connect(ui->actionComputeMaxAbsoluteCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshMaxAbsoluteCurvature()));
-    connect(ui->actionComputeGaussianCurvature, SIGNAL(triggered()), this, SLOT(computeSurfaceGaussianCurvature()));
-    connect(ui->actionComputePrincipleCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfacePrincipleCurvatures()));
+    connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
 }
 
 
@@ -766,15 +780,8 @@ void MainWindow::surfaceMeshTriangulation() {
     SurfaceMeshTriangulation triangulator(mesh);
     triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
 
-    viewer_->makeCurrent();
-    auto faces = mesh->triangles_drawable("faces");
-    renderer::update_buffer(mesh, faces);
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer_->doneCurrent();
-
+    mesh->update_vertex_normals();
+    updateRendering();
     viewer_->update();
 }
 
@@ -811,9 +818,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
     if (num > 0) {
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-        viewer()->doneCurrent();
+        updateRendering();
         viewer()->update();
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
@@ -865,321 +870,14 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
         viewer()->addModel(result);
         viewer()->doneCurrent();
 		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
-		currentModelChanged();
+		updateUi();
+		updateRendering();
     }
     else
 		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
 #endif
-}
-
-
-void MainWindow::surfaceMeshSubdivisionCatmullClark() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
-        mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
-        viewer()->update();
-    }
-}
-
-
-void MainWindow::surfaceMeshSubdivisionLoop() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    if (SurfaceMeshSubdivision::loop(mesh)) {
-        mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
-        viewer()->update();
-    }
-}
-
-
-void MainWindow::surfaceMeshSubdivisionSqrt3() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    if (SurfaceMeshSubdivision::sqrt3(mesh)) {
-        mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
-        viewer()->update();
-    }
-}
-
-
-void MainWindow::surfaceMeshSmoothing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // TODO: compute Mean Curvature first.
-
-    bool uniform_laplace = false;
-
-    SurfaceMeshSmoothing smoother(mesh);
-    if (0) {   // Explicit Smoothing
-        int iter = 10;
-        smoother.explicit_smoothing(iter, uniform_laplace);
-    }
-    else {    // Implicit Smoothing
-        float timestep = 0.001f;
-
-        // does the mesh have a boundary?
-        bool has_boundary = false;
-        for (auto v: mesh->vertices())
-            if (mesh->is_boundary(v))
-                has_boundary = true;
-
-        // only re-scale if we don't have a (fixed) boundary
-        bool rescale = !has_boundary;
-        float scene_radius = viewer()->camera()->sceneRadius();
-        float dt = uniform_laplace ? timestep : timestep * scene_radius * scene_radius;
-        smoother.implicit_smoothing(dt, uniform_laplace, rescale);
-    }
-
-    mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-
-    viewer()->doneCurrent();
-    viewer()->update();
-}
-
-
-void MainWindow::surfaceMeshFairing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // TODO: compute Mean Curvature first.
-
-    int method = 2;
-
-    SurfaceMeshFairing fair(mesh);
-    switch (method) {
-        case 0: fair.minimize_area(); // Minimize Area
-            break;
-        case 1: fair.minimize_curvature(); // Minimize Curvature
-            break;
-        case 2: fair.fair(3);; // Minimize Curvature Variation
-            break;
-        default: std::cerr << "no such fairing method" << std::endl;
-            return;
-    }
-
-    mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-
-    viewer()->doneCurrent();
-    viewer()->update();
-}
-
-
-void MainWindow::surfaceMeshHoleFilling() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // find the smallest hole
-    SurfaceMesh::Halfedge hmin;
-    unsigned int lmin(mesh->n_halfedges());
-    for (auto h : mesh->halfedges()) {
-        if (mesh->is_boundary(h)) {
-            float l(0);
-            SurfaceMesh::Halfedge hh = h;
-            do {
-                ++l;
-                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
-                    l += 123456;
-                    break;
-                }
-                hh = mesh->next_halfedge(hh);
-            } while (hh != h);
-
-            if (l < lmin) {
-                lmin = l;
-                hmin = h;
-            }
-        }
-    }
-
-    // close smallest hole
-    if (hmin.is_valid()) {
-        SurfaceMeshHoleFilling hf(mesh);
-        hf.fill_hole(hmin);
-
-        mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
-        viewer()->update();
-    } else {
-        LOG(WARNNG) << "could not find a hole (i.e., manifold boundary loop)";
-    }
-}
-
-
-void MainWindow::surfaceMeshSimplification() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    int target_percentage = 10;
-    int normal_deviation = 180;
-    int aspect_ratio = 10;
-    SurfaceMeshSimplification ss(mesh);
-    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
-    ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
-
-    mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-
-    viewer()->doneCurrent();
-    viewer()->update();
-}
-
-
-void MainWindow::surfaceMeshRemeshing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    bool uss_features = true;
-    if (uss_features) {
-        static int feature_angle = 70;
-        SurfaceMeshFeatures sf(mesh);
-        sf.clear();
-        sf.detect_angle(feature_angle);
-        sf.detect_boundary();
-    }
-
-    if (true) { // Uniform remeshing
-        float len(0.0f);
-        for (auto eit : mesh->edges())
-            len += distance(mesh->position(mesh->vertex(eit, 0)),
-                          mesh->position(mesh->vertex(eit, 1)));
-        len /= (float) mesh->n_edges();
-        SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
-    } else { // Adaptive remeshing
-        auto bb = mesh->bounding_box().diagonal();
-        SurfaceMeshRemeshing(mesh).adaptive_remeshing(
-                0.001 * bb,  // min length
-                0.100 * bb,  // max length
-                0.001 * bb); // approx. error
-    }
-
-    mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-
-    viewer()->doneCurrent();
-    viewer()->update();
-}
-
-
-void MainWindow::surfaceMeshParameterization() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshParameterization para(mesh);
-
-    bool LSCM = false;
-    if (false)  // Least Squares Conformal Map
-        para.lscm();
-    else        // Discrete Harmonic parameterization
-        para.harmonic();
-
-    currentModelChanged();
-
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-    viewer()->doneCurrent();
-    viewer()->update();
-}
-
-
-void MainWindow::surfaceMeshGeodesic() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // pick a random vertex
-    int idx = rand() % mesh->n_vertices();
-    SurfaceMesh::Vertex vertex(idx);
-
-    auto lock = mesh->vertex_property<bool>("v:lock");
-    for (auto v : mesh->vertices())
-        lock[v] = false;
-    lock[vertex] = true;
-
-    // setup seed
-    std::vector<SurfaceMesh::Vertex> seed;
-    seed.push_back(vertex);
-
-    // compute geodesic distance
-    SurfaceMeshGeodesic geodist(mesh);
-    geodist.compute(seed);
-
-    // setup texture coordinates for visualization
-    geodist.distance_to_texture_coordinates();
-    currentModelChanged();
-
-    viewer()->makeCurrent();
-    renderer::update_buffer(mesh, mesh->triangles_drawable("faces"), mesh->get_vertex_property<vec2>("v:texcoord"));
-    viewer()->doneCurrent();
-    viewer()->update();
 }
 
 
@@ -1192,14 +890,8 @@ void MainWindow::pointCloudEstimateNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.estimate(cloud);
 
-    auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    if (normals) {
-        viewer_->makeCurrent();
-        PointsDrawable* vertices = cloud->points_drawable("vertices");
-        vertices->update_normal_buffer(normals.vector());
-        viewer_->doneCurrent();
-        viewer_->update();
-    }
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1212,14 +904,8 @@ void MainWindow::pointCloudReorientNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.reorient(cloud);
 
-    auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    if (normals) {
-        viewer_->makeCurrent();
-        PointsDrawable* vertices = cloud->points_drawable("vertices");
-        vertices->update_normal_buffer(normals.vector());
-        viewer_->doneCurrent();
-        viewer_->update();
-    }
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1238,62 +924,8 @@ void MainWindow::pointCloudNormalizeNormals() {
     for (auto &n : normals)
         n.normalize();
 
-    viewer_->makeCurrent();
-    PointsDrawable *vertices = cloud->points_drawable("vertices");
-    vertices->update_normal_buffer(normals);
-    viewer_->doneCurrent();
-    viewer_->update();
-}
-
-
-void MainWindow::pointCloudPoissonSurfaceReconstruction() {
-    if (!dialogPoissonReconstruction_)
-        dialogPoissonReconstruction_ = new DialogPoissonReconstruction(this);
-
-    dialogPoissonReconstruction_->show();
-    dialogPoissonReconstruction_->raise();
-    dialogPoissonReconstruction_->activateWindow();
-}
-
-
-void MainWindow::pointCloudRansacPrimitiveExtraction() {
-    if (!dialogRansacPrimitiveExtraction_)
-        dialogRansacPrimitiveExtraction_ = new DialogRansacPrimitiveExtraction(this);
-
-    dialogRansacPrimitiveExtraction_->setWorkOnSelectedPoints(false);
-    dialogRansacPrimitiveExtraction_->show();
-    dialogRansacPrimitiveExtraction_->raise();
-    dialogRansacPrimitiveExtraction_->activateWindow();
-}
-
-
-void MainWindow::surfaceMeshSampling() {
-    if (!dialogSurfaceMeshSampling_)
-        dialogSurfaceMeshSampling_ = new DialogSurfaceMeshSampling(this);
-
-    dialogSurfaceMeshSampling_->show();
-    dialogSurfaceMeshSampling_->raise();
-    dialogSurfaceMeshSampling_->activateWindow();
-}
-
-
-void MainWindow::pointCloudDownsampling() {
-    if (!dialogPointCloudSimplification_)
-        dialogPointCloudSimplification_ = new DialogPointCloudSimplification(this);
-
-    dialogPointCloudSimplification_->show();
-    dialogPointCloudSimplification_->raise();
-    dialogPointCloudSimplification_->activateWindow();
-}
-
-
-void MainWindow::addGaussianNoise() {
-    if (!dialogGaussianNoise_)
-        dialogGaussianNoise_ = new DialogGaussianNoise(this);
-
-    dialogGaussianNoise_->show();
-    dialogGaussianNoise_->raise();
-    dialogGaussianNoise_->activateWindow();
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1378,58 +1010,8 @@ void MainWindow::computeHeightField() {
         }
     }
 
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceMeshMeanCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_mean_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceMeshMaxAbsoluteCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_max_abs_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfaceGaussianCurvature() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-    analyzer.compute_gauss_curvature();
-
-    currentModelChanged();
-}
-
-
-void MainWindow::computeSurfacePrincipleCurvatures() {
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshCurvature analyzer(mesh);
-    analyzer.analyze_tensor(1, true);
-
-    currentModelChanged();
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1451,10 +1033,290 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    viewer_->makeCurrent();
-    auto drawable = mesh->triangles_drawable("faces");
-    renderer::update_buffer(mesh, drawable, face_color);
-    viewer_->doneCurrent();
+    updateRenderingPanel();
+    updateRendering();
+    viewer()->update();
+}
 
-    viewer_->update();
+
+void MainWindow::surfaceMeshSubdivisionCatmullClark() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
+        mesh->update_vertex_normals();
+        updateRendering();
+        viewer()->update();
+    }
+}
+
+
+void MainWindow::surfaceMeshSubdivisionLoop() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::loop(mesh)) {
+        mesh->update_vertex_normals();
+        updateRendering();
+        viewer()->update();
+    }
+}
+
+
+void MainWindow::surfaceMeshSubdivisionSqrt3() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    if (SurfaceMeshSubdivision::sqrt3(mesh)) {
+        mesh->update_vertex_normals();
+        updateRendering();
+        viewer()->update();
+    }
+}
+
+
+void MainWindow::pointCloudPoissonSurfaceReconstruction() {
+    auto dialog = new DialogPoissonReconstruction(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::pointCloudRansacPrimitiveExtraction() {
+    auto dialog = new DialogRansacPrimitiveExtraction(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::surfaceMeshSampling() {
+    auto dialog = new DialogSurfaceMeshSampling(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::pointCloudDownsampling() {
+    auto dialog = new DialogPointCloudSimplification(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::addGaussianNoise() {
+    auto dialog = new DialogGaussianNoise(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::computeSurfaceMeshCurvatures() {
+    auto dialog = new DialogSurfaceMeshCurvature(this);
+    showDialog(dialog);
+}
+
+
+void MainWindow::surfaceMeshSimplification() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    int target_percentage = 10;
+    int normal_deviation = 180;
+    int aspect_ratio = 10;
+    SurfaceMeshSimplification ss(mesh);
+    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
+    ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
+
+    mesh->update_vertex_normals();
+
+    updateRendering();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshSmoothing() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // TODO: compute Mean Curvature first.
+
+    bool uniform_laplace = false;
+
+    SurfaceMeshSmoothing smoother(mesh);
+    if (0) {   // Explicit Smoothing
+        int iter = 10;
+        smoother.explicit_smoothing(iter, uniform_laplace);
+    }
+    else {    // Implicit Smoothing
+        float timestep = 0.001f;
+
+        // does the mesh have a boundary?
+        bool has_boundary = false;
+        for (auto v: mesh->vertices())
+            if (mesh->is_boundary(v))
+                has_boundary = true;
+
+        // only re-scale if we don't have a (fixed) boundary
+        bool rescale = !has_boundary;
+        float scene_radius = viewer()->camera()->sceneRadius();
+        float dt = uniform_laplace ? timestep : timestep * scene_radius * scene_radius;
+        smoother.implicit_smoothing(dt, uniform_laplace, rescale);
+    }
+
+    mesh->update_vertex_normals();
+
+    updateRendering();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshFairing() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // TODO: compute Mean Curvature first.
+
+    int method = 2;
+
+    SurfaceMeshFairing fair(mesh);
+    switch (method) {
+        case 0: fair.minimize_area(); // Minimize Area
+            break;
+        case 1: fair.minimize_curvature(); // Minimize Curvature
+            break;
+        case 2: fair.fair(3);; // Minimize Curvature Variation
+            break;
+        default: std::cerr << "no such fairing method" << std::endl;
+            return;
+    }
+
+    updateRendering();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshHoleFilling() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // find the smallest hole
+    SurfaceMesh::Halfedge hmin;
+    unsigned int lmin(mesh->n_halfedges());
+    for (auto h : mesh->halfedges()) {
+        if (mesh->is_boundary(h)) {
+            float l(0);
+            SurfaceMesh::Halfedge hh = h;
+            do {
+                ++l;
+                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
+                    l += 123456;
+                    break;
+                }
+                hh = mesh->next_halfedge(hh);
+            } while (hh != h);
+
+            if (l < lmin) {
+                lmin = l;
+                hmin = h;
+            }
+        }
+    }
+
+    // close smallest hole
+    if (hmin.is_valid()) {
+        SurfaceMeshHoleFilling hf(mesh);
+        hf.fill_hole(hmin);
+
+        mesh->update_vertex_normals();
+
+        updateRendering();
+        viewer()->update();
+    } else {
+        LOG(WARNNG) << "could not find a hole (i.e., manifold boundary loop)";
+    }
+}
+
+
+void MainWindow::surfaceMeshRemeshing() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    bool uss_features = true;
+    if (uss_features) {
+        static int feature_angle = 70;
+        SurfaceMeshFeatures sf(mesh);
+        sf.clear();
+        sf.detect_angle(feature_angle);
+        sf.detect_boundary();
+    }
+
+    if (true) { // Uniform remeshing
+        float len(0.0f);
+        for (auto eit : mesh->edges())
+            len += distance(mesh->position(mesh->vertex(eit, 0)),
+                            mesh->position(mesh->vertex(eit, 1)));
+        len /= (float) mesh->n_edges();
+        SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
+    } else { // Adaptive remeshing
+        auto bb = mesh->bounding_box().diagonal();
+        SurfaceMeshRemeshing(mesh).adaptive_remeshing(
+                0.001 * bb,  // min length
+                0.100 * bb,  // max length
+                0.001 * bb); // approx. error
+    }
+
+    mesh->update_vertex_normals();
+
+    updateRendering();
+    viewer()->update();
+}
+
+
+void MainWindow::surfaceMeshParameterization() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshParameterization para(mesh);
+
+    bool LSCM = false;
+    if (LSCM)  // Least Squares Conformal Map
+        para.lscm();
+    else        // Discrete Harmonic parameterization
+        para.harmonic();
+
+    updateUi();
+    updateRendering();
+}
+
+
+void MainWindow::surfaceMeshGeodesic() {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // pick a random vertex
+    int idx = rand() % mesh->n_vertices();
+    SurfaceMesh::Vertex vertex(idx);
+
+    auto lock = mesh->vertex_property<bool>("v:lock");
+    for (auto v : mesh->vertices())
+        lock[v] = false;
+    lock[vertex] = true;
+
+    // setup seed
+    std::vector<SurfaceMesh::Vertex> seed;
+    seed.push_back(vertex);
+
+    // compute geodesic distance
+    SurfaceMeshGeodesic geodist(mesh);
+    geodist.compute(seed);
+
+    // setup texture coordinates for visualization
+    geodist.distance_to_texture_coordinates();
+    updateUi();
+    updateRendering();
 }

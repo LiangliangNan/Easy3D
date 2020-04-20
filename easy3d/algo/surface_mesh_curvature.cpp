@@ -333,8 +333,10 @@ namespace easy3d {
 
     void SurfaceMeshCurvature::compute_mean_curvature() {
         auto curvatures = mesh_->vertex_property<float>("v:curv-mean");
-        for (auto v : mesh_->vertices())
-            curvatures[v] = fabs(mean_curvature(v));
+        for (auto v : mesh_->vertices()) {
+//            curvatures[v] = fabs(mean_curvature(v));
+            curvatures[v] = mean_curvature(v);
+        }
     }
 
     //-----------------------------------------------------------------------------

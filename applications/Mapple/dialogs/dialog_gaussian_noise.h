@@ -25,7 +25,7 @@ private:
 
     PaintCanvas *viewer_;
     QString default_sigma_;
-    float suggested_ratio_;
+    double suggested_ratio_;
 };
 
 #endif

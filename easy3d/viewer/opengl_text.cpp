@@ -597,9 +597,7 @@ namespace easy3d {
             int c = 0;
             float spacing = stash->charSpacing;
             int doKerning = stash->doKerning;
-            int p = 100;//stash->padding;
             float dpiScale = stash->dpiScale;
-            float tw = stash->padding / (float) stash->tw;
 
             for (; *s; ++s) {
                 if (decutf8(&state, &codepoint, *(unsigned char *) s)) continue;
@@ -755,8 +753,7 @@ namespace easy3d {
 namespace easy3d {
 
 
-    OpenGLText::OpenGLText(float dpi_scale, int texture_size, bool mipmaps)
-            : dpi_scale_(dpi_scale) {
+    OpenGLText::OpenGLText(float dpi_scale, int texture_size, bool mipmaps) {
         texture_size_ = geom::next_pow2(texture_size);
         stash_ = details::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
         easy3d_log_gl_error;
@@ -1001,7 +998,6 @@ namespace easy3d {
 
         // compute all necessary vertex/texture coordinates
         {
-            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
             float minDiffX = FLT_MAX;
             for (std::size_t i = 0; i < lines.size(); i++) {
                 float dx = 0;

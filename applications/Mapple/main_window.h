@@ -16,15 +16,10 @@ namespace easy3d {
 
 class PaintCanvas;
 class DialogSnapshot;
-class DialogPoissonReconstruction;
-class DialogRansacPrimitiveExtraction;
-class DialogPointCloudSimplification;
-class DialogSurfaceMeshSampling;
-class DialogGaussianNoise;
-
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
+class QDockWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -37,7 +32,10 @@ public:
     PaintCanvas* viewer() { return viewer_; }
 
     void setCurrentFile(const QString &fileName);
-    void currentModelChanged();
+
+    void updateUi(); // entire ui: window tile, rendering panel, model panel
+    void updateRenderingPanel();    // rendering panel only
+    void updateRendering(); // update OpenGL buffers
 
     void setShowSelectedOnly(bool b);
 
@@ -61,10 +59,7 @@ private slots:
 
     // property
     void computeHeightField();
-    void computeSurfaceMeshMeanCurvature();
-    void computeSurfaceMeshMaxAbsoluteCurvature();
-    void computeSurfaceGaussianCurvature();
-    void computeSurfacePrincipleCurvatures();
+    void computeSurfaceMeshCurvatures();
 
     // point cloud
     void pointCloudDownsampling();
@@ -119,6 +114,8 @@ private:
     void createActionsForPointCloudMenu();
     void createActionsForSurfaceMeshMenu();
 
+    void showDialog(QDialog*);
+
     bool okToContinue();
     void readSettings();
     void writeSettings();
@@ -137,12 +134,8 @@ private:
     QAction *actionsRecentFile[MaxRecentFiles],
         *actionSeparator;
 
-    DialogSnapshot*                 dialogSanpshot_;
-    DialogPoissonReconstruction*    dialogPoissonReconstruction_;
-    DialogRansacPrimitiveExtraction*dialogRansacPrimitiveExtraction_;
-    DialogPointCloudSimplification* dialogPointCloudSimplification_;
-    DialogSurfaceMeshSampling*      dialogSurfaceMeshSampling_;
-    DialogGaussianNoise*            dialogGaussianNoise_;
+    DialogSnapshot*             dialogSanpshot_;
+    QDockWidget*                dialogCommand_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

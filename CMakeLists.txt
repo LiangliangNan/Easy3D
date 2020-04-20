@@ -69,7 +69,8 @@ if (CGAL_FOUND)
     add_definitions(-DHAS_CGAL)
 else ()
     set(EASY3D_HAS_CGAL FALSE)
-    message(WARNING "Some advanced features require CGAL but CGAL was not found. Easy3D will be built without these features")
+    message(WARNING "Some advanced features require CGAL but CGAL was not found. Easy3D will be built without these features. "
+            "You can set 'CGAL_DIR' to the directory containing 'CGALConfig.cmake' or 'cgal-config.cmake' to help find CGAL.")
 endif ()
 
 ################################################################################

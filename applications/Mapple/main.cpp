@@ -8,7 +8,9 @@
 #include <QTime>
 #include <QApplication>
 #include <QSplashScreen>
+#ifdef _WIN32
 #include <QStyleFactory>
+#endif
 #include <QSurfaceFormat>
 #include <QElapsedTimer>
 

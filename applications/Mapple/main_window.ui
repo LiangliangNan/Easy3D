@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>893</width>
+    <height>715</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>893</width>
      <height>22</height>
     </rect>
    </property>
@@ -96,19 +96,9 @@
     <property name="title">
      <string>Property</string>
     </property>
-    <widget class="QMenu" name="SurfaceMeshCurvatures">
-     <property name="title">
-      <string>Surface Mesh Curvatures</string>
-     </property>
-     <addaction name="actionComputeMeanCurvature"/>
-     <addaction name="actionComputeMaxAbsoluteCurvature"/>
-     <addaction name="actionComputeGaussianCurvature"/>
-     <addaction name="separator"/>
-     <addaction name="actionComputePrincipleCurvatures"/>
-    </widget>
     <addaction name="actionComputeHeightField"/>
     <addaction name="separator"/>
-    <addaction name="SurfaceMeshCurvatures"/>
+    <addaction name="actionComputeSurfaceMeshCurvatures"/>
    </widget>
    <widget class="QMenu" name="menuSurfaceMesh">
     <property name="title">
@@ -225,7 +215,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>333</height>
+          <height>448</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -259,7 +249,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>333</height>
+          <height>448</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -293,7 +283,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>333</height>
+          <height>448</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -327,7 +317,7 @@
           <x>0</x>
           <y>0</y>
           <width>180</width>
-          <height>333</height>
+          <height>448</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -375,6 +365,9 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContentsModels">
     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <property name="leftMargin">
       <number>0</number>
      </property>
@@ -801,26 +794,6 @@
     <string>Sqrt_3</string>
    </property>
   </action>
-  <action name="actionComputePrincipleCurvatures">
-   <property name="text">
-    <string>Principle Curvatures</string>
-   </property>
-  </action>
-  <action name="actionComputeGaussianCurvature">
-   <property name="text">
-    <string>Gaussian Curvature</string>
-   </property>
-  </action>
-  <action name="actionComputeMeanCurvature">
-   <property name="text">
-    <string>Mean Curvature</string>
-   </property>
-  </action>
-  <action name="actionComputeMaxAbsoluteCurvature">
-   <property name="text">
-    <string>Absolute Max Curvature</string>
-   </property>
-  </action>
   <action name="actionSurfaceMeshSimplification">
    <property name="text">
     <string>Simplification</string>
@@ -867,6 +840,11 @@
    </property>
    <property name="shortcut">
     <string>F1</string>
+   </property>
+  </action>
+  <action name="actionComputeSurfaceMeshCurvatures">
+   <property name="text">
+    <string>Compute Surface Mesh Curvatures</string>
    </property>
   </action>
  </widget>
