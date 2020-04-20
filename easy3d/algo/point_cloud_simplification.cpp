@@ -324,7 +324,6 @@ namespace easy3d {
             if (points_to_delete.size() < num_should_delete) {
                 point_cloud = new PointCloud;
                 cloud_is_new = true;
-                std::vector<vec3> &new_points = point_cloud->points();
                 original_index.clear(); // we need to update the original_index
                 for (unsigned int i = 0; i < remain.size(); ++i) {
                     if (remain[i]) {

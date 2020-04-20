@@ -47,8 +47,8 @@ namespace easy3d {
 
         GenericRect(FT xmin, FT xmax, FT ymin, FT ymax)
             : x_min_(std::min(xmin, xmax))
-            , x_max_(std::max(xmin, xmax))
             , y_min_(std::min(ymin, ymax))
+            , x_max_(std::max(xmin, xmax))
             , y_max_(std::max(ymin, ymax))
         {
         }

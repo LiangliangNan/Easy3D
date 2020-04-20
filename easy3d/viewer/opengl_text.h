@@ -173,7 +173,6 @@ namespace easy3d {
 #endif
 
     private:
-        float dpi_scale_;
         int texture_size_;
         details::sth_stash *stash_;
         std::vector<int> font_ids_;

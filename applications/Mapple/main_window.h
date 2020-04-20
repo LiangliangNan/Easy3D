@@ -19,6 +19,7 @@ class DialogSnapshot;
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
+class QDockWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -134,6 +135,7 @@ private:
         *actionSeparator;
 
     DialogSnapshot*             dialogSanpshot_;
+    QDockWidget*                dialogCommand_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

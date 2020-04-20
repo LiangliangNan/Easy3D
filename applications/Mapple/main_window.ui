@@ -517,49 +517,6 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidgetCommands">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>66</width>
-     <height>100</height>
-    </size>
-   </property>
-   <property name="floating">
-    <bool>true</bool>
-   </property>
-   <property name="features">
-    <set>QDockWidget::AllDockWidgetFeatures</set>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::RightDockWidgetArea</set>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContentsCommands">
-    <layout class="QVBoxLayout" name="verticalLayout_8">
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayoutCommands"/>
-     </item>
-     <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <action name="actionOpen">
    <property name="icon">
     <iconset>

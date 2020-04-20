@@ -67,11 +67,11 @@ using namespace easy3d;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , dialogSanpshot_(nullptr)
+    , dialogCommand_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    ui->dockWidgetCommands->hide();
     ui->treeWidgetModels->init(this);
 
     viewer_ = new PaintCanvas(this);
@@ -388,13 +388,18 @@ void MainWindow::onClearRecentFiles() {
 
 
 void MainWindow::showDialog(QDialog* dialog) {
-    auto widget = ui->dockWidgetCommands->widget();
-    delete widget;
+    if (!dialogCommand_) {
+        dialogCommand_ = new QDockWidget(this);
+        dialogCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
+        dialogCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
+        dialogCommand_->setFloating(true);
+    }
+    delete dialogCommand_->widget();
 
     const QSize& size = dialog->sizeHint();
-    ui->dockWidgetCommands->setWidget(dialog);
-    ui->dockWidgetCommands->setFixedSize(size);
-    ui->dockWidgetCommands->show();
+    dialogCommand_->setWidget(dialog);
+    dialogCommand_->setFixedSize(size);
+    dialogCommand_->show();
 }
 
 
@@ -1355,7 +1360,7 @@ void MainWindow::surfaceMeshParameterization() {
     SurfaceMeshParameterization para(mesh);
 
     bool LSCM = false;
-    if (false)  // Least Squares Conformal Map
+    if (LSCM)  // Least Squares Conformal Map
         para.lscm();
     else        // Discrete Harmonic parameterization
         para.harmonic();
