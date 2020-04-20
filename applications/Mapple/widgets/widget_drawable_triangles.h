@@ -70,6 +70,7 @@ private:
     void disableUnavailableOptions();
 
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name);
+    void updateRendering(easy3d::TrianglesDrawable* drawable);
 
     // model depended stuff
     std::vector<std::string> vectorFields(const easy3d::Model *model);

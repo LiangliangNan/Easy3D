@@ -67,7 +67,7 @@ namespace easy3d {
 	{
 	public:
         // a drawable can be stand-alone or attached to a model
-        Drawable(const std::string& name = "unknown", const Model* model = nullptr);
+        Drawable(const std::string& name = "unknown", Model* model = nullptr);
 		virtual ~Drawable();
 
 		// accept  values are: GL_POINTS, GL_LINES, GL_TRIANGLES
@@ -77,8 +77,9 @@ namespace easy3d {
 		void set_name(const std::string n) { name_ = n; }
 
         // the model to which the drawable is attached to (can be NULL).
+        Model* model() { return model_; }
         const Model* model() const { return model_; }
-        void set_model(const Model* m) { model_ = m; }
+        void set_model(Model* m) { model_ = m; }
 
         const Box3& bounding_box() const { return bbox_; }
 
@@ -194,7 +195,7 @@ namespace easy3d {
 
 	protected:
         std::string	 name_;
-        const Model* model_;
+        Model* model_;
 
         Box3 bbox_;
 

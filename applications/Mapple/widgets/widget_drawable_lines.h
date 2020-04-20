@@ -13,6 +13,7 @@ namespace Ui {
 namespace easy3d {
     class Model;
     class LinesDrawable;
+    class TrianglesDrawable;
 }
 
 
@@ -67,6 +68,7 @@ private:
     std::vector<std::string> vectorFields(const easy3d::Model *model);
 
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name);
+    void updateRendering(easy3d::LinesDrawable* drawable);
 
 private:
     Ui::WidgetLinesDrawable *ui;

@@ -474,46 +474,71 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
 void WidgetPointsDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
 
-//    auto tex = drawable()->texture();
-//    if (tex) {
-//        const std::string &tex_name = file_system::simple_name(tex->file_name());
-//        ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
-//    }
-//    else
-//        ui->lineEditTextureFile->setText("");
+    states_[drawable()].coloring = text.toStdString();
+    states_[drawable()].scalar_style = ui->comboBoxScalarFieldStyle->currentIndex();
+    states_[drawable()].clamp_value = ui->checkBoxScalarFieldClamp->isChecked();
+    states_[drawable()].clamp_value_lower = ui->doubleSpinBoxScalarFieldClampLower->value();
+    states_[drawable()].clamp_value_upper = ui->doubleSpinBoxScalarFieldClampUpper->value();
 
-    drawable()->set_per_vertex_color(text != "uniform color");
+    updateRendering(drawable());
 
-    bool is_scalar_field = text.contains("scalar - ");
+    viewer_->update();
+}
+
+
+void WidgetPointsDrawable::updateRendering(PointsDrawable* drawable) {
+    if (!drawable)
+        return;
+    Model *model = drawable->model();
+    if (!model)
+        return;
+    if (states_.find(drawable) == states_.end())
+        return;
+
+    const std::string& color_scheme = states_[drawable].coloring;
+    drawable->set_per_vertex_color(color_scheme != "uniform color");
+
+    bool is_scalar_field = (color_scheme.find("scalar - ") != std::string::npos);
     if (is_scalar_field) {
         float clamp_lower = 0.0f, clamp_upper = 0.0f;
-        if (ui->checkBoxScalarFieldClamp->isChecked()) {
-            clamp_lower = ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0f;
-            clamp_upper = ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f;
+        if (states_[drawable].clamp_value) {
+            clamp_lower = states_[drawable].clamp_value_lower / 100.0f;
+            clamp_upper = states_[drawable].clamp_value_upper / 100.0f;
         }
 
         viewer_->makeCurrent();
-        if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel())) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-            details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            details::setup_scalar_field(mesh, drawable, color_scheme, clamp_lower, clamp_upper);
         } else if (dynamic_cast<Graph *>(viewer_->currentModel())) {
-            Graph *graph = dynamic_cast<Graph *>(viewer_->currentModel());
-            details::setup_scalar_field(graph, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-        } else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
-            PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
-            details::setup_scalar_field(cloud, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+            Graph *graph = dynamic_cast<Graph *>(model);
+            details::setup_scalar_field(graph, drawable, color_scheme, clamp_lower, clamp_upper);
+        } else if (dynamic_cast<PointCloud *>(model)) {
+            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+            details::setup_scalar_field(cloud, drawable, color_scheme, clamp_lower, clamp_upper);
+        }
+        drawable->set_texture(colormapTexture(states_[drawable].scalar_style));
+        viewer_->doneCurrent();
+    }
+    else if (color_scheme.find(":texcoord") != std::string::npos) {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            renderer::update_buffer(mesh, drawable, mesh->get_vertex_property<vec2>(color_scheme));
+        }
+        viewer_->doneCurrent();
+    }
+    else {
+        viewer_->makeCurrent();
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            renderer::update_buffer(mesh, drawable);
         }
         viewer_->doneCurrent();
     }
 
-    bool use_texture = (text.contains(":texcoord") || is_scalar_field);
-    drawable()->set_use_texture(use_texture);
-
-    viewer_->update();
-    states_[drawable()].coloring = text.toStdString();
+    bool use_texture = (color_scheme.find(":texcoord") != std::string::npos || is_scalar_field);
+    drawable->set_use_texture(use_texture);
 }
 
 

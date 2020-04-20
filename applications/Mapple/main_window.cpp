@@ -16,8 +16,6 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -30,7 +28,6 @@
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
-#include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/algo/surface_mesh_remeshing.h>
 #include <easy3d/algo/surface_mesh_parameterization.h>
@@ -783,15 +780,8 @@ void MainWindow::surfaceMeshTriangulation() {
     SurfaceMeshTriangulation triangulator(mesh);
     triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
 
-    viewer_->makeCurrent();
-    auto faces = mesh->triangles_drawable("faces");
-    renderer::update_buffer(mesh, faces);
-
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer_->doneCurrent();
-
+    mesh->update_vertex_normals();
+    updateRendering();
     viewer_->update();
 }
 
@@ -828,9 +818,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
     if (num > 0) {
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-        viewer()->doneCurrent();
+        updateRendering();
         viewer()->update();
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
@@ -902,14 +890,8 @@ void MainWindow::pointCloudEstimateNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.estimate(cloud);
 
-    auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    if (normals) {
-        viewer_->makeCurrent();
-        PointsDrawable* vertices = cloud->points_drawable("vertices");
-        vertices->update_normal_buffer(normals.vector());
-        viewer_->doneCurrent();
-        viewer_->update();
-    }
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -922,14 +904,8 @@ void MainWindow::pointCloudReorientNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.reorient(cloud);
 
-    auto normals = cloud->get_vertex_property<vec3>("v:normal");
-    if (normals) {
-        viewer_->makeCurrent();
-        PointsDrawable* vertices = cloud->points_drawable("vertices");
-        vertices->update_normal_buffer(normals.vector());
-        viewer_->doneCurrent();
-        viewer_->update();
-    }
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -948,11 +924,8 @@ void MainWindow::pointCloudNormalizeNormals() {
     for (auto &n : normals)
         n.normalize();
 
-    viewer_->makeCurrent();
-    PointsDrawable *vertices = cloud->points_drawable("vertices");
-    vertices->update_normal_buffer(normals);
-    viewer_->doneCurrent();
-    viewer_->update();
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1037,7 +1010,8 @@ void MainWindow::computeHeightField() {
         }
     }
 
-    updateUi();
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1059,12 +1033,9 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    viewer_->makeCurrent();
-    auto drawable = mesh->triangles_drawable("faces");
-    renderer::update_buffer(mesh, drawable, face_color);
-    viewer_->doneCurrent();
-
-    viewer_->update();
+    updateRenderingPanel();
+    updateRendering();
+    viewer()->update();
 }
 
 
@@ -1075,14 +1046,7 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
 
     if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
         mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
+        updateRendering();
         viewer()->update();
     }
 }
@@ -1095,14 +1059,7 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
 
     if (SurfaceMeshSubdivision::loop(mesh)) {
         mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
+        updateRendering();
         viewer()->update();
     }
 }
@@ -1115,14 +1072,7 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 
     if (SurfaceMeshSubdivision::sqrt3(mesh)) {
         mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        renderer::update_buffer(mesh, mesh->triangles_drawable("faces"));
-
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-
-        viewer()->doneCurrent();
+        updateRendering();
         viewer()->update();
     }
 }
@@ -1177,11 +1127,6 @@ void MainWindow::surfaceMeshSimplification() {
     ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
 
     mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer()->doneCurrent();
 
     updateRendering();
     viewer()->update();
@@ -1219,11 +1164,6 @@ void MainWindow::surfaceMeshSmoothing() {
     }
 
     mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer()->doneCurrent();
 
     updateRendering();
     viewer()->update();
@@ -1250,13 +1190,6 @@ void MainWindow::surfaceMeshFairing() {
         default: std::cerr << "no such fairing method" << std::endl;
             return;
     }
-
-    mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer()->doneCurrent();
 
     updateRendering();
     viewer()->update();
@@ -1297,11 +1230,6 @@ void MainWindow::surfaceMeshHoleFilling() {
         hf.fill_hole(hmin);
 
         mesh->update_vertex_normals();
-        viewer()->makeCurrent();
-        auto edges = mesh->lines_drawable("edges");
-        if (edges)
-            renderer::update_buffer(mesh, edges);
-        viewer()->doneCurrent();
 
         updateRendering();
         viewer()->update();
@@ -1341,11 +1269,6 @@ void MainWindow::surfaceMeshRemeshing() {
     }
 
     mesh->update_vertex_normals();
-    viewer()->makeCurrent();
-    auto edges = mesh->lines_drawable("edges");
-    if (edges)
-        renderer::update_buffer(mesh, edges);
-    viewer()->doneCurrent();
 
     updateRendering();
     viewer()->update();
