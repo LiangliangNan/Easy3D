@@ -47,7 +47,7 @@ void DialogSurfaceMeshSampling::apply() {
         viewer_->addModel(cloud);
         viewer_->doneCurrent();
 
-        main_window_->currentModelChanged();
+        main_window_->updateUi();
     }
 }
 

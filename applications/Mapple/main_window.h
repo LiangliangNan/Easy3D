@@ -31,8 +31,10 @@ public:
     PaintCanvas* viewer() { return viewer_; }
 
     void setCurrentFile(const QString &fileName);
-    void currentModelChanged();
-    void updateRenderingPanel();
+
+    void updateUi(); // entire ui: window tile, rendering panel, model panel
+    void updateRenderingPanel();    // rendering panel only
+    void updateRendering(); // update OpenGL buffers
 
     void setShowSelectedOnly(bool b);
 

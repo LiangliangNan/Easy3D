@@ -442,7 +442,7 @@ void WidgetModelList::deleteSelected() {
 
     //	viewer()->configureManipulation();
 
-    mainWindow_->currentModelChanged();
+    mainWindow_->updateUi();
 
 	if (auto_focus_)
 		viewer()->fitScreen();
@@ -470,7 +470,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	if (selected_only_)
 		hideOtherModels(model);
 
-    mainWindow_->currentModelChanged();
+    mainWindow_->updateUi();
 
     if (auto_focus_)
         viewer()->fitScreen(model);
@@ -522,7 +522,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         else
             viewer()->update();
 
-        mainWindow_->currentModelChanged();
+        mainWindow_->updateUi();
     }
 }
 
@@ -597,7 +597,7 @@ void WidgetModelList::addModel(Model *model, bool make_current) {
     if (selected_only_)
         hideOtherModels(current_model);
 
-    mainWindow_->currentModelChanged();
+    mainWindow_->updateUi();
 
     viewer()->update();
 }
@@ -612,7 +612,7 @@ void WidgetModelList::deleteModel(Model *model, bool fit) {
     if (selected_only_)
         hideOtherModels(active_model);
 
-    mainWindow_->currentModelChanged();
+    mainWindow_->updateUi();
     //viewer()->configureManipulation();
 
     if (fit)
@@ -696,7 +696,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 	if (meshes.size() > 1 || clouds.size() > 1) {
 //		viewer()->configureManipulation();
 		updateModelList();
-		mainWindow_->currentModelChanged();
+		mainWindow_->updateUi();
         viewer()->update();
 	}
 }
@@ -731,7 +731,7 @@ void WidgetModelList::decomposeModel(Model *model) {
     // delete the original model
     viewer()->deleteModel(mesh);
     updateModelList();
-    mainWindow_->currentModelChanged();
+    mainWindow_->updateUi();
     viewer()->update();
 
 	LOG(INFO) << "model decomposed into " << components.size() << " parts" << std::endl;

@@ -170,6 +170,18 @@ void WidgetLinesDrawable::updatePanel() {
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
+
+//        // texture
+//        auto tex = drawable()->texture();
+//        if (tex) {
+//            const std::string &tex_name = file_system::simple_name(tex->file_name());
+//            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+//        }
+//        else
+//            ui->lineEditTextureFile->setText("");
+//
+//        ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
+//        ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
     }
 
     {   // highlight
@@ -203,6 +215,14 @@ void WidgetLinesDrawable::updatePanel() {
     connectAll();
 
     state.initialized = true;
+}
+
+
+// update the OpenGL buffers
+void WidgetLinesDrawable::updateRendering() {
+    if (!drawable())
+        return;
+    setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
@@ -339,6 +359,14 @@ namespace details {
 
 void WidgetLinesDrawable::setColorScheme(const QString &text) {
     disableUnavailableOptions();
+
+//    auto tex = drawable()->texture();
+//    if (tex) {
+//        const std::string &tex_name = file_system::simple_name(tex->file_name());
+//        ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+//    }
+//    else
+//        ui->lineEditTextureFile->setText("");
 
     drawable()->set_per_vertex_color(text != "uniform color");
 
@@ -594,7 +622,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         states_[drawable()].vector_field = "f:normal";
     }
 
-    main_window_->currentModelChanged();
+    main_window_->updateUi();
     viewer_->update();
 }
 

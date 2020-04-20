@@ -226,11 +226,13 @@ void WidgetTrianglesDrawable::updatePanel() {
         ui->toolButtonBackColor->setIcon(QIcon(pixmap));
 
         // texture
-        if (!state.initialized) {
-            if (drawable()->texture())
-                state.texture_file = drawable()->texture()->file_name();
+        auto tex = drawable()->texture();
+        if (tex) {
+            const std::string &tex_name = file_system::simple_name(tex->file_name());
+            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
         }
-        ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(state.texture_file)));
+        else
+            ui->lineEditTextureFile->setText("");
 
         ui->spinBoxTextureRepeat->setValue(drawable()->texture_repeat());
         ui->spinBoxTextureFractionalRepeat->setValue(drawable()->texture_fractional_repeat());
@@ -267,6 +269,14 @@ void WidgetTrianglesDrawable::updatePanel() {
     connectAll();
 
     state.initialized = true;
+}
+
+
+// update the OpenGL buffers
+void WidgetTrianglesDrawable::updateRendering() {
+    if (!drawable())
+        return;
+    setColorScheme(ui->comboBoxColorScheme->currentText());
 }
 
 
@@ -431,29 +441,46 @@ namespace details {
 }
 
 void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh || !drawable())
+        return;
+
     disableUnavailableOptions();
+
+    auto tex = drawable()->texture();
+    if (tex) {
+        const std::string &tex_name = file_system::simple_name(tex->file_name());
+        ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+    }
+    else
+        ui->lineEditTextureFile->setText("");
 
     drawable()->set_per_vertex_color(text != "uniform color");
 
     bool is_scalar_field = text.contains("scalar - ");
     if (is_scalar_field) {
-        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        if (mesh) {
-            float clamp_lower = 0.0f, clamp_upper = 0.0f;
-            if (ui->checkBoxScalarFieldClamp->isChecked()) {
-                clamp_lower = ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0f;
-                clamp_upper = ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f;
-            }
-
-            viewer_->makeCurrent();
-            details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
-            drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
-            viewer_->doneCurrent();
+        float clamp_lower = 0.0f, clamp_upper = 0.0f;
+        if (ui->checkBoxScalarFieldClamp->isChecked()) {
+            clamp_lower = ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0f;
+            clamp_upper = ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f;
         }
+
+        viewer_->makeCurrent();
+        details::setup_scalar_field(mesh, drawable(), text.toStdString(), clamp_lower, clamp_upper);
+        drawable()->set_texture(colormapTexture(ui->comboBoxScalarFieldStyle->currentIndex()));
+        viewer_->doneCurrent();
+    }
+    else if (text.contains(":texcoord")) {
+        viewer_->makeCurrent();
+        if (text == "h:texcoord")
+            renderer::update_buffer(mesh, drawable(), mesh->get_halfedge_property<vec2>(text.toStdString()));
+        else if (text == "v:texcoord")
+            renderer::update_buffer(mesh, drawable(), mesh->get_vertex_property<vec2>(text.toStdString()));
+        viewer_->doneCurrent();
     }
 
-    bool use_texture = (text.contains(":texcoord") || is_scalar_field);
-    drawable()->set_use_texture(use_texture);
+    bool need_texture = (text.contains(":texcoord") || is_scalar_field);
+    drawable()->set_use_texture(need_texture);
 
     viewer_->update();
 
@@ -513,22 +540,16 @@ void WidgetTrianglesDrawable::setTextureFile() {
         return;
 
     const std::string &file_name = fileName.toStdString();
-    Texture *tex = drawable()->texture();
-    if (tex) {
-        if (tex->file_name() == file_name)
-            return;
-    }
-
     viewer_->makeCurrent();
-    tex = TextureManager::request(file_name, Texture::REPEAT);
+    Texture* tex = TextureManager::request(file_name, Texture::REPEAT);
     viewer_->doneCurrent();
 
     if (tex) {
         drawable()->set_texture(tex);
         drawable()->set_use_texture(true);
         viewer_->update();
-        ui->lineEditTextureFile->setText(QString::fromStdString(file_system::simple_name(file_name)));
-        states_[drawable()].texture_file = file_name;
+        const std::string& simple_name = file_system::simple_name(file_name);
+        ui->lineEditTextureFile->setText(QString::fromStdString(simple_name));
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
@@ -590,6 +611,7 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
     drawable()->set_texture(tex);
     drawable()->set_use_texture(true);
     viewer_->update();
+
     states_[drawable()].scalar_style = idx;
 }
 
@@ -641,7 +663,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         states_[drawable()].vector_field = "f:normal";
     }
 
-    main_window_->currentModelChanged();
+    main_window_->updateUi();
     viewer_->update();
 }
 

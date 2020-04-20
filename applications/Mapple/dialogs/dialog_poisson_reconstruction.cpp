@@ -78,7 +78,7 @@ void DialogPoissonReconstruction::reconstruct() {
             viewer_->addModel(mesh, true);
             viewer_->doneCurrent();
 
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     }
 }
@@ -118,7 +118,7 @@ void DialogPoissonReconstruction::trim() {
             viewer_->makeCurrent();
             viewer_->addModel(trimmed_mesh);
             viewer_->doneCurrent();
-            main_window_->currentModelChanged();
+            main_window_->updateUi();
         }
     }
 }

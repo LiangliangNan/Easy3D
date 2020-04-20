@@ -42,5 +42,6 @@ void DialogSurfaceMeshCurvature::apply() {
     analyzer.compute_gauss_curvature();
     analyzer.compute_max_abs_curvature();
 
-    main_window_->currentModelChanged();
+    main_window_->updateUi();
+    main_window_->updateRendering();
 }

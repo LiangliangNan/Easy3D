@@ -27,6 +27,9 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
 
+    // update the OpenGL buffers
+    virtual void updateRendering() override;
+
     easy3d::LinesDrawable *drawable();
 
 public slots:
