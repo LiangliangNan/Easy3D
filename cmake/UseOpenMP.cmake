@@ -38,18 +38,17 @@
 #---------------------------------------------------------------------------------------------
 
 find_package(OpenMP)
-if (OPENMP_FOUND)
-    message(STATUS "Found OpenMP")
-    message(STATUS "   OpenMP_C_FLAGS: ${OpenMP_C_FLAGS}")
-    message(STATUS "   OpenMP_CXX_FLAGS: ${OpenMP_CXX_FLAGS}")
+if (OpenMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 # Check that Gurobi was successfully found
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(OPENMP DEFAULT_MSG OPENMP_INCLUDE_DIRS)
-find_package_handle_standard_args(OPENMP DEFAULT_MSG OPENMP_LIBRARIES)
+find_package_handle_standard_args(OpenMP DEFAULT_MSG OpenMP_C_INCLUDE_DIRS)
+find_package_handle_standard_args(OpenMP DEFAULT_MSG OpenMP_C_LIBRARIES)
+find_package_handle_standard_args(OpenMP DEFAULT_MSG OpenMP_CXX_INCLUDE_DIRS)
+find_package_handle_standard_args(OpenMP DEFAULT_MSG OpenMP_CXX_LIBRARIES)
 
 #---------------------------------------------------------------------------------------------
 # OpenMP
