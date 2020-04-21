@@ -230,8 +230,8 @@ namespace easy3d {
             edge_vertex_indices.name = "vertex_indices";
             edge_vertex_indices.reserve(graph->n_edges());
             for (auto e : graph->edges()) {
-                int id0 = graph->from_vertex(e).idx();
-                int id1 = graph->to_vertex(e).idx();
+                int id0 = graph->vertex(e, 0).idx();
+                int id1 = graph->vertex(e, 1).idx();
                 edge_vertex_indices.push_back({ id0, id1 });
             }
             element_edge.int_list_properties.emplace_back(edge_vertex_indices);

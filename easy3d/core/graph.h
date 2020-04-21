@@ -464,9 +464,9 @@ namespace easy3d {
 			Vertex operator*() const {
 				assert(graph_);
 				if (iterator_ != end_) {
-					Vertex v = graph_->to_vertex(*iterator_);
+					Vertex v = graph_->vertex(*iterator_, 1);
 					if (v != vertex_)	return v;
-					else				return graph_->from_vertex(*iterator_);
+					else				return graph_->vertex(*iterator_, 0);
 				}
 				return Vertex();
 			}
@@ -610,16 +610,18 @@ namespace easy3d {
 			return vconn_[v].edges_.empty();
 		}
 
-		/// returns the vertex the halfedge \c h points to
-		Vertex to_vertex(Edge h) const
+		/// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
+		Vertex vertex(Edge e, unsigned int i) const
 		{
-			return econn_[h].target_;
-		}
-
-		/// returns the vertex the halfedge \c h emanates from
-		Vertex from_vertex(Edge h) const
-		{
-			return econn_[h].source_;
+			assert(i<=1);
+			if (i == 0)
+				return econn_[e].source_;
+			else if (i == 1)
+				return econn_[e].target_;
+			else {
+				std::cerr << "index out of range" << std::endl;
+				return Vertex();
+			}
 		}
 
 		//@}

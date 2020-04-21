@@ -227,7 +227,7 @@ namespace easy3d {
         assert(is_valid(start) && is_valid(end));
 
         for (auto e : edges(start)) {
-            if (from_vertex(e) == end || to_vertex(e) == end)
+            if (vertex(e, 0) == end || vertex(e, 1) == end)
                 return e;
         }
 
@@ -248,7 +248,7 @@ namespace easy3d {
 
     float Graph::edge_length(Edge e) const
     {
-        return norm(vpoint_[from_vertex(e)] - vpoint_[to_vertex(e)]);
+        return norm(vpoint_[vertex(e, 0)] - vpoint_[vertex(e, 1)]);
     }
 
 
