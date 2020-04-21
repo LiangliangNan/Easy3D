@@ -123,7 +123,7 @@ void TutorialAmbientOcclusion::draw() const {
 			->set_uniform("ssaoEnabled", true)
 			->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
-		auto drawable = current_model()->triangles_drawable("faces");
+		auto drawable = current_model()->get_triangles_drawable("faces");
 
 		program->set_uniform("smooth_shading", drawable->smooth_shading())
 			->set_block_uniform("Material", "ambient", drawable->material().ambient)

@@ -427,7 +427,7 @@ namespace easy3d {
 
 #ifdef VISUALIZATION_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph
-        LinesDrawable* mst_graph = cloud->lines_drawable("mst_graph");
+        LinesDrawable* mst_graph = cloud->get_lines_drawable("mst_graph");
         if (!mst_graph)
             mst_graph = cloud->add_lines_drawable("mst_graph");
 

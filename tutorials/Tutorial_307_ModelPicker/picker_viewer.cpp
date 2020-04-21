@@ -68,19 +68,19 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 void PickerViewer::change_color(Model *model, const vec3 &color) const {
     // make sure the vertex buffer holds the right data.
     if (dynamic_cast<SurfaceMesh *>(model)) {
-        Drawable *drawable = model->triangles_drawable("faces");
+        Drawable *drawable = model->get_triangles_drawable("faces");
         drawable->set_per_vertex_color(false);
         drawable->set_default_color(color);
     } else if (dynamic_cast<PointCloud *>(model)) {
-        Drawable *drawable = model->points_drawable("vertices");
+        Drawable *drawable = model->get_points_drawable("vertices");
         drawable->set_per_vertex_color(false);
         drawable->set_default_color(color);
     } else if (dynamic_cast<Graph *>(model)) {
-        Drawable *drawable = model->points_drawable("vertices");
+        Drawable *drawable = model->get_points_drawable("vertices");
         drawable->set_per_vertex_color(false);
         drawable->set_default_color(color);
 
-        drawable = model->lines_drawable("edges");
+        drawable = model->get_lines_drawable("edges");
         drawable->set_per_vertex_color(false);
         drawable->set_default_color(color);
     }

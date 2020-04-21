@@ -773,8 +773,7 @@ void MainWindow::surfaceMeshTriangulation() {
     SurfaceMeshTriangulation triangulator(mesh);
     triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
 
-    mesh->update_vertex_normals();
-//    updateRendering();
+    mesh->update();
     viewer_->update();
 }
 
@@ -811,8 +810,8 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
     if (num > 0) {
-//        updateRendering();
-        viewer()->update();
+        mesh->update();
+        viewer_->update();
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
 #else
@@ -863,8 +862,9 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
         viewer()->addModel(result);
         viewer()->doneCurrent();
 		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
-		updateUi();
-//		updateRendering();
+        mesh->update();
+        viewer_->update();
+        updateUi();
     }
     else
 		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
@@ -883,7 +883,7 @@ void MainWindow::pointCloudEstimateNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.estimate(cloud);
 
-//    updateRendering();
+    cloud->update();
     viewer()->update();
 }
 
@@ -897,7 +897,7 @@ void MainWindow::pointCloudReorientNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.reorient(cloud);
 
-//    updateRendering();
+    cloud->update();
     viewer()->update();
 }
 
@@ -917,7 +917,7 @@ void MainWindow::pointCloudNormalizeNormals() {
     for (auto &n : normals)
         n.normalize();
 
-//    updateRendering();
+    cloud->update();
     viewer()->update();
 }
 
@@ -972,6 +972,8 @@ void MainWindow::computeHeightField() {
             }
             enormals[e].normalize();
         }
+
+        mesh->update();
     }
 
     else if (dynamic_cast<PointCloud*>(model)) {
@@ -980,6 +982,8 @@ void MainWindow::computeHeightField() {
         auto vscalar = cloud->vertex_property<float>("v:height");
         for (auto v : cloud->vertices())
             vscalar[v] = cloud->position(v).z;
+
+        cloud->update();
     }
 
     else if (dynamic_cast<Graph*>(model)) {
@@ -1001,10 +1005,11 @@ void MainWindow::computeHeightField() {
         for (auto e : graph->edges()) {
             enormals[e] = vec3(1,1,1);
         }
+
+        graph->update();
     }
 
     updateRenderingPanel();
-//    updateRendering();
     viewer()->update();
 }
 
@@ -1028,7 +1033,8 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
     }
 
     updateRenderingPanel();
-//    updateRendering();
+
+    mesh->update();
     viewer()->update();
 }
 
@@ -1040,7 +1046,7 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
 
     if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
         mesh->update_vertex_normals();
-//        updateRendering();
+        mesh->update();
         viewer()->update();
     }
 }
@@ -1053,7 +1059,7 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
 
     if (SurfaceMeshSubdivision::loop(mesh)) {
         mesh->update_vertex_normals();
-//        updateRendering();
+        mesh->update();
         viewer()->update();
     }
 }
@@ -1066,7 +1072,7 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 
     if (SurfaceMeshSubdivision::sqrt3(mesh)) {
         mesh->update_vertex_normals();
-//        updateRendering();
+        mesh->update();
         viewer()->update();
     }
 }
@@ -1120,9 +1126,7 @@ void MainWindow::surfaceMeshSimplification() {
     ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
     ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
 
-    mesh->update_vertex_normals();
-
-//    updateRendering();
+    mesh->update();
     viewer()->update();
 }
 
@@ -1157,9 +1161,7 @@ void MainWindow::surfaceMeshSmoothing() {
         smoother.implicit_smoothing(dt, uniform_laplace, rescale);
     }
 
-    mesh->update_vertex_normals();
-
-//    updateRendering();
+    mesh->update();
     viewer()->update();
 }
 
@@ -1185,7 +1187,7 @@ void MainWindow::surfaceMeshFairing() {
             return;
     }
 
-//    updateRendering();
+    mesh->update();
     viewer()->update();
 }
 
@@ -1223,9 +1225,7 @@ void MainWindow::surfaceMeshHoleFilling() {
         SurfaceMeshHoleFilling hf(mesh);
         hf.fill_hole(hmin);
 
-        mesh->update_vertex_normals();
-
-//        updateRendering();
+        mesh->update();
         viewer()->update();
     } else {
         LOG(WARNING) << "could not find a hole (i.e., manifold boundary loop)";
@@ -1262,9 +1262,7 @@ void MainWindow::surfaceMeshRemeshing() {
                 0.001 * bb); // approx. error
     }
 
-    mesh->update_vertex_normals();
-
-//    updateRendering();
+    mesh->update();
     viewer()->update();
 }
 
@@ -1282,8 +1280,9 @@ void MainWindow::surfaceMeshParameterization() {
     else        // Discrete Harmonic parameterization
         para.harmonic();
 
-    updateUi();
-//    updateRendering();
+    updateRenderingPanel();
+    mesh->update();
+    viewer_->update();
 }
 
 
@@ -1311,6 +1310,8 @@ void MainWindow::surfaceMeshGeodesic() {
 
     // setup texture coordinates for visualization
     geodist.distance_to_texture_coordinates();
-    updateUi();
-//    updateRendering();
+
+    updateRenderingPanel();
+    mesh->update();
+    viewer_->update();
 }

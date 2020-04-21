@@ -147,7 +147,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void PointCloud::property_stats() const
+    void PointCloud::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props = vertex_properties();
 
@@ -155,7 +155,7 @@ namespace easy3d {
 		{
 			std::cout << "vertex properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = model_properties();
@@ -163,7 +163,7 @@ namespace easy3d {
 		{
 			std::cout << "model properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
     }
 

@@ -35,7 +35,7 @@ Of course, you can customize the drawables. For example, the following code rend
 
 ```c++
         // assume your point cloud has been loaded to the viewer
-        PointsDrawable* drawable = cloud->points_drawable("vertices");
+        PointsDrawable* drawable = cloud->get_points_drawable("vertices");
         drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
         drawable->set_point_size(3.0f);    // set point size
 ```

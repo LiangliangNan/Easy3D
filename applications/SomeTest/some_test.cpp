@@ -27,7 +27,6 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/core/random.h>
 #include <easy3d/fileio/ply_reader_writer.h>
@@ -129,13 +128,14 @@ namespace easy3d {
             auto colors = mesh->face_property<vec3>("f:color");
             for (auto f : mesh->faces())
                 colors[f] = random_color();
-            renderer::update_buffer(mesh, faces);
             faces->set_lighting_two_sides(true);
             faces->set_visible(false);
+            faces->color_scheme().source = ColorScheme::COLOR_PROPERTY;
+            faces->color_scheme().location = ColorScheme::FACE;
+            faces->color_scheme().name = "f:color";
             candidate_faces_.push_back(faces);
 
             auto* edges = mesh->add_lines_drawable("edges");
-            renderer::update_buffer(mesh, edges);
             edges->set_visible(false);
             edges->set_line_width(2.0f);
             candidate_faces_.push_back(edges);
@@ -173,12 +173,10 @@ namespace easy3d {
             }
 
             auto faces = copy->add_triangles_drawable("faces");
-            renderer::update_buffer(copy, faces);
             faces->set_lighting_two_sides(true);
             faces_ground_truth_.push_back(faces);
 
             auto* edges = copy->add_lines_drawable("edges");
-            renderer::update_buffer(copy, edges);
             faces_ground_truth_.push_back(edges);
 
             auto borders = copy->add_lines_drawable("borders");
@@ -217,7 +215,7 @@ namespace easy3d {
                 }
             }
             if (edge_labels.empty())
-                return;;
+                return;
 
             const auto& points = mesh->points();
             std::vector<vec3> pts, cls;

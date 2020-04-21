@@ -7,7 +7,6 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
@@ -178,41 +177,16 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
-        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-        ui->comboBoxColorScheme->addItem("uniform color");
-        auto vcolors = mesh->get_vertex_property<vec3>("v:color");
-        if (vcolors)
-            ui->comboBoxColorScheme->addItem("v:color");
-        auto fcolors = mesh->get_face_property<vec3>("f:color");
-        if (fcolors)
-            ui->comboBoxColorScheme->addItem("f:color");
-        auto vtexcoords = mesh->get_vertex_property<vec2>("v:texcoord");
-        if (vtexcoords)
-            ui->comboBoxColorScheme->addItem("v:texcoord");
-        auto htexcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
-        if (htexcoords)
-            ui->comboBoxColorScheme->addItem("h:texcoord");
+        const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
+        for (const auto &scheme : schemes)
+            ui->comboBoxColorScheme->addItem(scheme);
 
-        {   // color schemes from scalar fields
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-
-            // scalar fields defined on faces
-            for (const auto &name : mesh->face_properties()) {
-                if (mesh->get_face_property<float>(name))
-                    ui->comboBoxColorScheme->addItem(scalar_prefix_ + QString::fromStdString(name));
-                else if (mesh->get_face_property<int>(name))
-                    ui->comboBoxColorScheme->addItem(scalar_prefix_ + QString::fromStdString(name));
-            }
-            // scalar fields defined on vertices
-            for (const auto &name : mesh->vertex_properties()) {
-                if (mesh->get_vertex_property<float>(name))
-                    ui->comboBoxColorScheme->addItem(scalar_prefix_ + QString::fromStdString(name));
-                else if (mesh->get_vertex_property<int>(name))
-                    ui->comboBoxColorScheme->addItem(scalar_prefix_ + QString::fromStdString(name));
+        for (const auto& name : schemes) {
+            if (name.contains(QString::fromStdString(scheme.name))) {
+                ui->comboBoxColorScheme->setCurrentText(name);
+                break;
             }
         }
-
-        ui->comboBoxColorScheme->setCurrentText(scalar_prefix_ + QString::fromStdString(scheme.name));
 
         // default color
         vec3 c = d->default_color();
@@ -275,6 +249,45 @@ void WidgetTrianglesDrawable::updatePanel() {
 }
 
 
+
+std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *model) {
+    std::vector<QString> schemes;
+    schemes.push_back("uniform color");
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
+        // color schemes from color properties and texture
+        for (const auto &name : mesh->face_properties()) {
+            if (name.find("f:color") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : mesh->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : mesh->halfedge_properties()) {
+            if (name.find("h:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+
+        // color schemes from scalar fields
+        // scalar fields defined on vertices
+        for (const auto &name : mesh->vertex_properties()) {
+            if (mesh->get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+        }
+    }
+
+    return schemes;
+}
+
+
 std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *model) {
     std::vector<QString> fields;
 
@@ -305,7 +318,7 @@ Drawable *WidgetTrianglesDrawable::drawable() {
     auto model = viewer_->currentModel();
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->triangles_drawable(pos->second);
+        return model->get_triangles_drawable(pos->second);
     else {
         const auto &drawables = model->triangles_drawables();
         if (drawables.empty())
@@ -327,7 +340,7 @@ void WidgetTrianglesDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->triangles_drawable(name)) {
+    if (model->get_triangles_drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
@@ -458,7 +471,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->lines_drawable("vector - f:normal");
+        auto d = mesh->get_lines_drawable("vector - f:normal");
         d->set_visible(true);
 
         states_[d].vector_field = "f:normal";
@@ -491,7 +504,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
         }
 
         // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-        auto drawable = mesh->lines_drawable("vector - f:normal");
+        auto drawable = mesh->get_lines_drawable("vector - f:normal");
         if (!drawable)
             drawable = mesh->add_lines_drawable("vector - f:normal");
 

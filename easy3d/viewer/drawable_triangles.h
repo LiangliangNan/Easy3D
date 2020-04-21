@@ -39,7 +39,7 @@ namespace easy3d {
 	public:
         TrianglesDrawable(const std::string& name = "");
 
-        DrawableType type() const override;
+        Type type() const override;
 
         bool smooth_shading() const { return smooth_shading_; }
         void set_smooth_shading(bool b) { smooth_shading_ = b; }

@@ -1203,14 +1203,17 @@ namespace easy3d {
                 for (auto &c : color_table)
                     c = random_color();
 
-                auto colors = model->add_vertex_property<vec3>(color_name);
+                auto colors = model->vertex_property<vec3>(color_name, vec3(0, 0, 0));
                 for (auto v : model->vertices()) {
                     int idx = primitive_index[v];
                     if (idx == -1)
-                        colors[v] = vec3(0, 0, 0); // black for unknown type
+                        colors[v] = vec3(0, 0, 0);
                     else
                         colors[v] = color_table[idx];
                 }
+            }
+            else {
+                LOG(ERROR) << "segmentation '" << segmentation << "' does not exist";
             }
         }
 
@@ -1427,9 +1430,16 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
                             break;
                         }
+                        case ColorScheme::HALFEDGE: {
+                            auto texcoord = model->get_halfedge_property<vec2>(scheme.name);
+                            if (texcoord)
+                                details::update_buffer(model, drawable, texcoord);
+                            else
+                                LOG(WARNING) << "texcoord property not found on halfedges: " << scheme.name;
+                            break;
+                        }
                         case ColorScheme::FACE:
                         case ColorScheme::EDGE:
-                        case ColorScheme::HALFEDGE:
                             LOG(WARNING) << "should not happen" << scheme.name;
                             break;
                     }
@@ -1716,41 +1726,41 @@ namespace easy3d {
 
         void update_buffer(Model *model, Drawable *drawable) {
             if (dynamic_cast<PointCloud *>(model)) {
-                auto cloud = dynamic_cast<PointCloud *>(model);
+                PointCloud* cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
-                    case DT_POINTS:
+                    case Drawable::DT_POINTS:
                         update_buffer(cloud, dynamic_cast<PointsDrawable *>(drawable));
                         break;
-                    case DT_LINES:
+                    case Drawable::DT_LINES:
                         update_buffer(cloud, dynamic_cast<LinesDrawable *>(drawable));
                         break;
-                    case DT_TRIANGLES:
+                    case Drawable::DT_TRIANGLES:
                         update_buffer(cloud, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             } else if (dynamic_cast<Graph *>(model)) {
-                auto graph = dynamic_cast<Graph *>(model);
+                Graph* graph = dynamic_cast<Graph *>(model);
                 switch (drawable->type()) {
-                    case DT_POINTS:
+                    case Drawable::DT_POINTS:
                         update_buffer(graph, dynamic_cast<PointsDrawable *>(drawable));
                         break;
-                    case DT_LINES:
+                    case Drawable::DT_LINES:
                         update_buffer(graph, dynamic_cast<LinesDrawable *>(drawable));
                         break;
-                    case DT_TRIANGLES:
+                    case Drawable::DT_TRIANGLES:
                         update_buffer(graph, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             } else if (dynamic_cast<SurfaceMesh *>(model)) {
-                auto mesh = dynamic_cast<SurfaceMesh *>(model);
+                SurfaceMesh* mesh = dynamic_cast<SurfaceMesh *>(model);
                 switch (drawable->type()) {
-                    case DT_POINTS:
+                    case Drawable::DT_POINTS:
                         update_buffer(mesh, dynamic_cast<PointsDrawable *>(drawable));
                         break;
-                    case DT_LINES:
+                    case Drawable::DT_LINES:
                         update_buffer(mesh, dynamic_cast<LinesDrawable *>(drawable));
                         break;
-                    case DT_TRIANGLES:
+                    case Drawable::DT_TRIANGLES:
                         update_buffer(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }

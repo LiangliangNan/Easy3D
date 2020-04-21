@@ -41,12 +41,15 @@ namespace easy3d {
     }
 
 
-    DrawableType LinesDrawable::type() const {
+    Drawable::Type LinesDrawable::type() const {
         return DT_LINES;
     }
 
 
     void LinesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+        if (modified_)
+            const_cast<LinesDrawable*>(this)->update();
+
         switch (impostor_type_) {
             case PLAIN:
                 if (use_texture_ && texture_)

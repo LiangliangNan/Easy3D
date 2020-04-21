@@ -393,8 +393,8 @@ namespace easy3d {
             return mprops_.properties();
         }
 
-        /// prints the names of all properties
-        void property_stats() const;
+        /// prints the names of all properties to an output stream (e.g., std::cout)
+        void property_stats(std::ostream &output) const;
 
         //@}
 

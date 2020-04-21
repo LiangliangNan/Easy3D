@@ -124,12 +124,12 @@ namespace easy3d {
             const vec4 color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
             if (dynamic_cast<SurfaceMesh *>(model))
-                draw(model->triangles_drawable("faces"), color);
+                draw(model->get_triangles_drawable("faces"), color);
             else if (dynamic_cast<PointCloud *>(model))
-                draw(model->points_drawable("vertices"), color);
+                draw(model->get_points_drawable("vertices"), color);
             else if (dynamic_cast<Graph *>(model)) {
-                draw(model->points_drawable("vertices"), color);
-                draw(model->lines_drawable("edges"), color);
+                draw(model->get_points_drawable("vertices"), color);
+                draw(model->get_lines_drawable("edges"), color);
             }
         }
     }
@@ -162,12 +162,12 @@ namespace easy3d {
             if (!model->is_visible())
                 continue;
             if (dynamic_cast<SurfaceMesh *>(model))
-                restore(model->triangles_drawable("faces"));
+                restore(model->get_triangles_drawable("faces"));
             else if (dynamic_cast<PointCloud *>(model))
-                restore(model->points_drawable("vertices"));
+                restore(model->get_points_drawable("vertices"));
             else if (dynamic_cast<Graph *>(model)) {
-                restore(model->points_drawable("vertices"));
-                restore(model->lines_drawable("edges"));
+                restore(model->get_points_drawable("vertices"));
+                restore(model->get_lines_drawable("edges"));
             }
         }
     }

@@ -2,6 +2,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
+#include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
 
@@ -17,7 +18,8 @@ DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(QWidget *parent
     ui(new Ui::DialogRansacPrimitiveExtraction)
 {
     ui->setupUi(this);
-    viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
+    main_window_ = dynamic_cast<MainWindow*>(parent);
+    viewer_ = main_window_->viewer();
 
     // default value
     default_min_support_ = 1000;
@@ -85,9 +87,16 @@ void DialogRansacPrimitiveExtraction::extract() {
         LOG(INFO) << num << " primitives extracted";
     }
 
-    viewer_->makeCurrent();
-    renderer::update_buffer(cloud, cloud->points_drawable("vertices"));
-    viewer_->doneCurrent();
+    auto vertices = cloud->get_points_drawable("vertices");
+    const std::string name = "v:color-segments";
+
+    renderer::colorize_segmentation(cloud, "v:primitive_index", name);
+    vertices->color_scheme().source = ColorScheme::COLOR_PROPERTY;
+    vertices->color_scheme().name = name;
+    vertices->set_per_vertex_color(true);
+    vertices->set_use_texture(false);
+    vertices->set_modified();
 
     viewer_->update();
+    main_window_->updateRenderingPanel();
 }

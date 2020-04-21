@@ -32,6 +32,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/opengl_error.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 
@@ -67,6 +68,8 @@ namespace easy3d {
             , texture_fractional_repeat_(0.0f)
             , num_vertices_(0)
             , num_indices_(0)
+            , modified_(true)
+            , update_func_(nullptr)
             , vertex_buffer_(0)
             , color_buffer_(0)
             , normal_buffer_(0)
@@ -104,28 +107,28 @@ namespace easy3d {
     }
 
 
-    void Drawable::drawable_stats() const {
-       std::cout << "\t" << name() << std::endl;
+    void Drawable::buffer_stats(std::ostream &output) const {
+        std::cout << "\t" << name() << std::endl;
 
         if (vertex_buffer()) {
-           std::cout << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            output << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (normal_buffer()) {
-           std::cout << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            output << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (color_buffer()) {
-           std::cout << "\t\tColor buffer:      " << num_vertices_ << " colors, "
-                      << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+            output << "\t\tColor buffer:      " << num_vertices_ << " colors, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (texcoord_buffer()) {
-           std::cout << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
-                      << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
+            output << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
+                   << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
         }
         if (index_buffer()) {
-           std::cout << "\t\tIndex buffer:      " << num_indices_ << " indices, "
-                      << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
+            output << "\t\tIndex buffer:      " << num_indices_ << " indices, "
+                   << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
         }
     }
 
@@ -167,6 +170,20 @@ namespace easy3d {
         //		}
         //	}
         //}
+    }
+
+
+    void Drawable::update() {
+        if (!model()) {
+            LOG(WARNING) << "drawable not associated with a model, please call the update_*_buffer(...) functions for an update";
+            return;
+        }
+
+        if (update_func_)
+            update_func_(model(), this);
+        else
+            renderer::update_buffer(model(), this);
+        modified_ = false;
     }
 
 
@@ -241,6 +258,9 @@ namespace easy3d {
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
+        if (modified_ && model_)
+            const_cast<Drawable*>(this)->update();
+
         vao_->bind();
 
         if (with_storage_buffer) {

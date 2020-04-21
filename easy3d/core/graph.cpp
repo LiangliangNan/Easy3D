@@ -166,7 +166,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void Graph::property_stats() const
+    void Graph::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
 
@@ -175,7 +175,7 @@ namespace easy3d {
 		{
 			std::cout << "vertex properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 
@@ -184,7 +184,7 @@ namespace easy3d {
 		{
 			std::cout << "edge properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = model_properties();
@@ -192,7 +192,7 @@ namespace easy3d {
 		{
 			std::cout << "model properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
     }
 

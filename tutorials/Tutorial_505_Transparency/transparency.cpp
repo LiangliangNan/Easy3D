@@ -75,7 +75,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_DOWN) {
-        auto drawable = current_model()->triangles_drawable("faces");
+        auto drawable = current_model()->get_triangles_drawable("faces");
         if (drawable) {
             float o = drawable->opacity();
             if (o > 0)
@@ -89,7 +89,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_UP) {
-        auto drawable = current_model()->triangles_drawable("faces");
+        auto drawable = current_model()->get_triangles_drawable("faces");
         if (drawable) {
             float o = drawable->opacity();
             if (o > 0)

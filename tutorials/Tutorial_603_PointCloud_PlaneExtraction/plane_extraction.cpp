@@ -74,27 +74,15 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
         int num = algo.detect(cloud, 200, 0.005f, 0.02f, 0.8f, 0.001f);
         if (num > 0) {
             // assign each plane a unique color
-            std::vector<vec3> color_table(num);
-            for (auto& c : color_table)
-                c = random_color();
+            auto drawable = cloud->get_points_drawable("vertices");
 
-            // plane extraction results has been stored as properties:
-            //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-            //      - "v:primitive_index" (-1, 0, 1, 2...)
-            auto primitive_type = cloud->get_vertex_property<int>("v:primitive_type");
-            auto primitive_index = cloud->get_vertex_property<int>("v:primitive_index");
-            std::vector<vec3> colors;
-            for (auto v : cloud->vertices()) {
-                int idx = primitive_index[v];
-                if (primitive_type[v] == PrimitivesRansac::UNKNOWN)
-                    colors.push_back(vec3(0, 0, 0));
-                else
-                    colors.push_back(color_table[idx]); // black for unkonwn type
-            }
-            auto drawable = cloud->points_drawable("vertices");
-            // Upload the vertex colors to the GPU.
-            drawable->update_color_buffer(colors);
+            const std::string name = "v:color-segments";
+            renderer::colorize_segmentation(cloud, "v:primitive_index", name);
+            drawable->color_scheme().source = ColorScheme::COLOR_PROPERTY;
+            drawable->color_scheme().name = name;
             drawable->set_per_vertex_color(true);
+
+            drawable->update();
             update();
         }
 

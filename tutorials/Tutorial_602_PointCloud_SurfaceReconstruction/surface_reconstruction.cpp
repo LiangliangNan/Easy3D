@@ -71,7 +71,7 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
         Model* surface = algo.apply(cloud);
         if (surface != nullptr) {
             add_model(surface, true);
-            surface->triangles_drawable("faces")->set_smooth_shading(false);
+            surface->get_triangles_drawable("faces")->set_smooth_shading(false);
             delete_model(cloud);
             update();
         }

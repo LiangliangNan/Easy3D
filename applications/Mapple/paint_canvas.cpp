@@ -11,7 +11,6 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/viewer/camera.h>
@@ -281,12 +280,8 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             mesh->garbage_collection();
+            mesh->update();
             LOG(INFO) << count << " faces deleted" << std::endl;
-            auto drawable = mesh->triangles_drawable("faces");
-
-            makeCurrent();
-            renderer::update_buffer(mesh, drawable);
-            doneCurrent();
         } else if (dynamic_cast<PointCloud*>(currentModel())) {
             auto cloud = dynamic_cast<PointCloud*>(currentModel());
             auto select = cloud->vertex_property<bool>("v:select");
@@ -298,11 +293,8 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             cloud->garbage_collection();
+            cloud->update();
             LOG(INFO) << count << " points deleted" << std::endl;
-            auto drawable = cloud->points_drawable("vertices");
-            makeCurrent();
-            renderer::update_buffer(cloud, drawable);
-            doneCurrent();
         }
 
 #endif
@@ -550,97 +542,110 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         main_window_->updateUi();
     } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            LinesDrawable *drawable = currentModel()->lines_drawable("edges");
-            if (!drawable) {
+            auto *edges = currentModel()->get_lines_drawable("edges");
+            if (!edges) {
                 if (!dynamic_cast<PointCloud *>(currentModel())) { // no default "edges" drawable for point clouds
-                    drawable = currentModel()->add_lines_drawable("edges");
-                    makeCurrent();
-                    renderer::update_buffer(currentModel(), drawable);
-                    doneCurrent();
+                    edges = currentModel()->add_lines_drawable("edges");
+                    if (dynamic_cast<SurfaceMesh *>(currentModel())) {
+                        edges->set_default_color(setting::surface_mesh_edges_color);
+                        edges->set_line_width(setting::surface_mesh_edges_line_width);
+                    }
+                    else if (dynamic_cast<Graph *>(currentModel())) {
+                        edges->set_default_color(setting::graph_edges_color);
+                        edges->set_line_width(setting::graph_edges_line_width);
+                        edges->set_impostor_type(LinesDrawable::CYLINDER);
+                    }
                 }
-            } else {
-                drawable->set_visible(!drawable->is_visible());
-            }
-            main_window_->updateUi();
+            } else
+                edges->set_visible(!edges->is_visible());
+            main_window_->updateRenderingPanel();
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            auto drawable = currentModel()->points_drawable("vertices");
-            if (!drawable) {
-                drawable = currentModel()->add_points_drawable("vertices");
-                makeCurrent();
-                renderer::update_buffer(currentModel(), drawable);
-                doneCurrent();
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
-            } else {
-                drawable->set_visible(!drawable->is_visible());
-            }
-            main_window_->updateUi();
+            auto vertices = currentModel()->get_points_drawable("vertices");
+            if (!vertices) {
+                vertices = currentModel()->add_points_drawable("vertices");
+                if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+                    vertices->set_impostor_type(PointsDrawable::SPHERE);
+                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                }
+                else if (dynamic_cast<PointCloud*>(currentModel())) {
+                    vertices->set_point_size(setting::point_cloud_point_size);
+                    vertices->set_default_color(setting::point_cloud_points_color);
+                }
+                else if (dynamic_cast<Graph*>(currentModel())) {
+                    vertices->set_default_color(setting::graph_vertices_color);
+                    vertices->set_point_size(setting::graph_vertices_point_size);
+                    vertices->set_impostor_type(PointsDrawable::SPHERE);
+                }
+            } else
+                vertices->set_visible(!vertices->is_visible());
+            main_window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
-            auto drawable = mesh->lines_drawable("borders");
-            if (!drawable) {
-                auto prop = mesh->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> points;
-                for (auto e : mesh->edges()) {
-                    if (mesh->is_boundary(e)) {
-                        points.push_back(prop[mesh->vertex(e, 0)]);
-                        points.push_back(prop[mesh->vertex(e, 1)]);
+            auto borders = mesh->get_lines_drawable("borders");
+            if (!borders) {
+                borders = mesh->add_lines_drawable("borders");
+                borders->set_default_color(setting::surface_mesh_borders_color);
+                borders->set_per_vertex_color(false);
+                borders->set_impostor_type(LinesDrawable::CYLINDER);
+                borders->set_line_width(setting::surface_mesh_borders_line_width);
+
+                auto func = [](Model* model, Drawable* drawable) -> void {
+                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+                    auto prop = mesh->get_vertex_property<vec3>("v:point");
+                    std::vector<vec3> points;
+                    for (auto e : mesh->edges()) {
+                        if (mesh->is_boundary(e)) {
+                            points.push_back(prop[mesh->vertex(e, 0)]);
+                            points.push_back(prop[mesh->vertex(e, 1)]);
+                        }
                     }
-                }
-                if (!points.empty()) {
-                    drawable = mesh->add_lines_drawable("borders");
-                    makeCurrent();
                     drawable->update_vertex_buffer(points);
-                    doneCurrent();
-                    drawable->set_default_color(setting::surface_mesh_borders_color);
-                    drawable->set_per_vertex_color(false);
-                    drawable->set_impostor_type(LinesDrawable::CYLINDER);
-                    drawable->set_line_width(setting::surface_mesh_borders_line_width);
-                }
+                };
+                borders->set_update_func(func);
             }
-            else {
-                drawable->set_visible(!drawable->is_visible());
-            }
-            main_window_->updateUi();
+            else
+                borders->set_visible(!borders->is_visible());
+            main_window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
-            auto drawable = mesh->points_drawable("locks");
+            auto drawable = mesh->get_points_drawable("locks");
             if (!drawable) {
-                auto lock = mesh->get_vertex_property<bool>("v:lock");
-                if (lock) {
-                    auto prop = mesh->get_vertex_property<vec3>("v:point");
-                    std::vector<vec3> points;
-                    for (auto v : mesh->vertices()) {
-                        if (lock[v])
-                            points.push_back(prop[v]);
-                    }
-                    if (!points.empty()) {
-                        drawable = mesh->add_points_drawable("locks");
-                        makeCurrent();
+                drawable = mesh->add_points_drawable("locks");
+                drawable->set_default_color(vec3(1, 1, 0));
+                drawable->set_per_vertex_color(false);
+                drawable->set_impostor_type(PointsDrawable::SPHERE);
+                drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+                auto func = [](Model* model, Drawable* drawable) -> void {
+                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+                    auto lock = mesh->get_vertex_property<bool>("v:lock");
+                    if (lock) {
+                        auto prop = mesh->get_vertex_property<vec3>("v:point");
+                        std::vector<vec3> points;
+                        for (auto v : mesh->vertices()) {
+                            if (lock[v])
+                                points.push_back(prop[v]);
+                        }
                         drawable->update_vertex_buffer(points);
-                        doneCurrent();
-                        drawable->set_default_color(vec3(1, 1, 0));
-                        drawable->set_per_vertex_color(false);
-                        drawable->set_impostor_type(PointsDrawable::SPHERE);
-                        drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
                     }
-                }
+                };
+                drawable->set_update_func(func);
             }
             else
                 drawable->set_visible(!drawable->is_visible());
-            main_window_->updateUi();
+            main_window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
         if (dynamic_cast<SurfaceMesh *>(currentModel())) {
-            auto drawable = currentModel()->triangles_drawable("faces");
+            auto drawable = currentModel()->get_triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
                 main_window_->updateUi();
@@ -648,39 +653,41 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
 		if (currentModel()) {
-			std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------\n";
+		    std::ostream& output = std::cout;
+
+            output << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------\n";
 			if (dynamic_cast<SurfaceMesh*>(currentModel())) {
 				auto model = dynamic_cast<SurfaceMesh*>(currentModel());
-				std::cout << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+                output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
 						  << ", #vertex: " + std::to_string(model->n_vertices())
 						  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 			}
 			else if (dynamic_cast<PointCloud*>(currentModel())) {
 				auto model = dynamic_cast<PointCloud*>(currentModel());
-				std::cout << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
+                output << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
 			}
 			else if (dynamic_cast<Graph*>(currentModel())) {
 				auto model = dynamic_cast<Graph*>(currentModel());
-				std::cout << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+                output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
 						  << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
 			}
 			if (!currentModel()->points_drawables().empty()) {
-				std::cout << "points drawables:\n";
+                output << "points drawables:\n";
 				for (auto d : currentModel()->points_drawables())
-					d->drawable_stats();
+					d->buffer_stats(output);
 			}
 			if (!currentModel()->lines_drawables().empty()) {
-				std::cout << "lines drawables:\n";
+                output << "lines drawables:\n";
 				for (auto d : currentModel()->lines_drawables())
-					d->drawable_stats();
+					d->buffer_stats(output);
 			}
 			if (!currentModel()->triangles_drawables().empty()) {
-				std::cout << "triangles drawables:\n";
+                output << "triangles drawables:\n";
 				for (auto d : currentModel()->triangles_drawables())
-					d->drawable_stats();
+					d->buffer_stats(output);
 			}
 
-			currentModel()->property_stats();
+			currentModel()->property_stats(output);
 		}
     } else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
         // Reload the shader(s) - useful for writing/debugging shader code.
@@ -756,33 +763,42 @@ std::string PaintCanvas::usage() const {
 void PaintCanvas::create_drawables(Model *model) {
     StopWatch w;
 
-    if (dynamic_cast<PointCloud*>(model)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-        renderer::update_buffer(cloud, cloud->add_points_drawable("vertices"));
-    }
-    else if (dynamic_cast<SurfaceMesh*>(model)) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-        renderer::update_buffer(mesh, mesh->add_triangles_drawable("faces"));
-
-        if (setting::surface_mesh_show_edges)
-            renderer::update_buffer(mesh, mesh->add_lines_drawable("edges"));
-
-        if (setting::surface_mesh_show_vertices)
-            renderer::update_buffer(mesh, mesh->add_points_drawable("edges"));
-    }
-    else if (dynamic_cast<Graph*>(model)) {
-        Graph* graph = dynamic_cast<Graph*>(model);
-
+    if (dynamic_cast<PointCloud *>(model)) {
+        PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+        auto vertices = cloud->add_points_drawable("vertices");
+        vertices->set_point_size(setting::point_cloud_point_size);
+        vertices->set_default_color(setting::point_cloud_points_color);
+    } else if (dynamic_cast<SurfaceMesh *>(model)) {
+        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+        auto faces = mesh->add_triangles_drawable("faces");
+        faces->set_default_color(setting::surface_mesh_faces_color);
+        if (setting::surface_mesh_show_edges) {
+            auto edges = mesh->add_lines_drawable("edges");
+            edges->set_default_color(setting::surface_mesh_edges_color);
+            edges->set_line_width(setting::surface_mesh_edges_line_width);
+        }
+        if (setting::surface_mesh_show_vertices) {
+            auto vertices = mesh->add_points_drawable("vertices");
+            vertices->set_impostor_type(PointsDrawable::SPHERE);
+            vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+        }
+        if (setting::surface_mesh_show_borders) {
+            auto borders = mesh->add_lines_drawable("borders");
+            borders->set_default_color(setting::surface_mesh_borders_color);
+            borders->set_per_vertex_color(false);
+            borders->set_impostor_type(LinesDrawable::CYLINDER);
+            borders->set_line_width(setting::surface_mesh_borders_line_width);
+        }
+    } else if (dynamic_cast<Graph *>(model)) {
+        Graph *graph = dynamic_cast<Graph *>(model);
         // create points drawable for the edges
-        PointsDrawable* vertices = graph->add_points_drawable("vertices");
-        renderer::update_buffer(graph, vertices);
+        auto vertices = graph->add_points_drawable("vertices");
         vertices->set_default_color(setting::graph_vertices_color);
         vertices->set_point_size(setting::graph_vertices_point_size);
         vertices->set_impostor_type(PointsDrawable::SPHERE);
 
         // create liens drawable for the edges
-        LinesDrawable* edges = graph->add_lines_drawable("edges");
-        renderer::update_buffer(graph, edges);
+        auto edges = graph->add_lines_drawable("edges");
         edges->set_default_color(setting::graph_edges_color);
         edges->set_line_width(setting::graph_edges_line_width);
         edges->set_impostor_type(LinesDrawable::CYLINDER);
@@ -1382,7 +1398,6 @@ void PaintCanvas::draw() {
             continue;
 
         // temporarily change the depth range and depth comparison method to properly render edges.
-
         glDepthRange(0.001, 1.0);
         for (auto d : m->triangles_drawables()) {
             if (d->is_visible())
@@ -1393,13 +1408,13 @@ void PaintCanvas::draw() {
         glDepthFunc(GL_LEQUAL);
         for (auto d : m->lines_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
         glDepthFunc(GL_LESS);
 
         for (auto d : m->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
     }
 }

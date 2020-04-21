@@ -7,7 +7,6 @@
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -165,7 +164,12 @@ void WidgetLinesDrawable::updatePanel() {
         for (const auto &scheme : schemes)
             ui->comboBoxColorScheme->addItem(scheme);
 
-        ui->comboBoxColorScheme->setCurrentText(scalar_prefix_ + QString::fromStdString(scheme.name));
+        for (const auto& name : schemes) {
+            if (name.contains(QString::fromStdString(scheme.name))) {
+                ui->comboBoxColorScheme->setCurrentText(name);
+                break;
+            }
+        }
 
         // default color
         vec3 c = d->default_color();
@@ -213,7 +217,7 @@ Drawable *WidgetLinesDrawable::drawable() {
     auto model = viewer_->currentModel();
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->lines_drawable(pos->second);
+        return model->get_lines_drawable(pos->second);
     else {
         const auto &drawables = model->lines_drawables();
         if (drawables.empty())
@@ -235,7 +239,7 @@ void WidgetLinesDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->lines_drawable(name)) {
+    if (model->get_lines_drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
@@ -311,17 +315,24 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
-        if (mesh->get_vertex_property<vec3>("v:color"))
-            schemes.push_back("v:color");
-        if (mesh->get_edge_property<vec3>("e:color"))
-            schemes.push_back("e:color");
-        if (mesh->get_vertex_property<vec2>("v:texcoord"))
-            schemes.push_back("v:texcoord");
+        // color schemes from color properties and texture
+        for (const auto &name : mesh->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : mesh->edge_properties()) {
+            if (name.find("e:color") != std::string::npos || name.find("e:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
 
         // color schemes from scalar fields
         // scalar fields defined on edges
         for (const auto &name : mesh->edge_properties()) {
             if (mesh->get_edge_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_edge_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_edge_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (mesh->get_edge_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
@@ -330,6 +341,10 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
         for (const auto &name : mesh->vertex_properties()) {
             if (mesh->get_vertex_property<float>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (mesh->get_vertex_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
         }
@@ -337,19 +352,24 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph) {
-        if (graph->get_vertex_property<vec3>("v:color"))
-            schemes.push_back("v:color");
-        if (graph->get_edge_property<vec3>("e:color"))
-            schemes.push_back("e:color");
-        if (graph->get_vertex_property<vec2>("v:texcoord"))
-            schemes.push_back("v:texcoord");
-        if (graph->get_edge_property<vec2>("e:texcoord"))
-            schemes.push_back("e:texcoord");
+        // color schemes from color properties and texture
+        for (const auto &name : graph->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back( QString::fromStdString(name));
+        }
+        for (const auto &name : graph->edge_properties()) {
+            if (name.find("e:color") != std::string::npos || name.find("e:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
 
         // color schemes from scalar fields
         // scalar fields defined on edges
         for (const auto &name : graph->edge_properties()) {
             if (graph->get_edge_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_edge_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_edge_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (graph->get_edge_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
@@ -357,6 +377,10 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
         // scalar fields defined on vertices
         for (const auto &name : graph->vertex_properties()) {
             if (graph->get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_vertex_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (graph->get_vertex_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
@@ -420,7 +444,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->lines_drawable("vector - f:normal");
+        auto d = mesh->get_lines_drawable("vector - f:normal");
         d->set_visible(true);
 
         states_[d].vector_field = "f:normal";
@@ -447,7 +471,7 @@ void WidgetLinesDrawable::updateVectorFieldBuffer(Model *model, const std::strin
 //    }
 //
 //    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-//    auto drawable = mesh->lines_drawable("vector - f:normal");
+//    auto drawable = mesh->get_lines_drawable("vector - f:normal");
 //    if (!drawable)
 //        drawable = mesh->add_lines_drawable("vector - f:normal");
 //

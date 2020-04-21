@@ -61,6 +61,13 @@ namespace easy3d {
         /// vector of vertex positions (read only)
         virtual const std::vector<vec3>& points() const = 0;
 
+        /// Sets the model modified after operations like remeshing/smoothing. This will update the OpenGL buffers,
+        /// ensuring the rendering to be updated automatically.
+        /// Note: all drawables associated with this model will be updated. This is equivalent to call the set_modified()
+        ///       function for every drawables. Performance may be improved by calling only the affected drawables (e.g.,
+        ///       the change in texture coordinates of a surface mesh doesn't change the rendering of its wireframe).
+        void update();
+
         //-------------------- rendering  -----------------------
 
         bool is_visible() const { return visible_; }
@@ -68,9 +75,9 @@ namespace easy3d {
 
         // Gets the drawable named 'name'.
         // Returns a nullptr if the drawable does not exist.
-        PointsDrawable* points_drawable(const std::string& name) const;
-        LinesDrawable*  lines_drawable(const std::string& name) const;
-        TrianglesDrawable*  triangles_drawable(const std::string& name) const;
+        PointsDrawable* get_points_drawable(const std::string& name) const;
+        LinesDrawable*  get_lines_drawable(const std::string& name) const;
+        TrianglesDrawable*  get_triangles_drawable(const std::string& name) const;
 
         // Create a drawable named 'name'.
         // Ignore the creation if a drawable named 'name' already exists.
@@ -83,8 +90,8 @@ namespace easy3d {
         const std::vector<LinesDrawable*>&   lines_drawables() const { return lines_drawables_; }
         const std::vector<TrianglesDrawable*>& triangles_drawables() const { return triangles_drawables_; }
 
-        /// prints the names of all properties
-        virtual void property_stats() const = 0;
+        /// prints the names of all properties to an output stream (e.g., std::cout).
+        virtual void property_stats(std::ostream &output) const = 0;
 
         bool is_selected() const { return selected_; }
         void set_selected(bool b) { selected_ = b; }

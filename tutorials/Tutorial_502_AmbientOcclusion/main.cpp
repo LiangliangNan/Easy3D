@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
-        auto drawable = model->triangles_drawable("faces");
+        auto drawable = model->get_triangles_drawable("faces");
         drawable->set_default_color(vec3(1.0f, 1.0f, 1.0f));
 
         // Run the viewer

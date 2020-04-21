@@ -78,17 +78,11 @@ namespace easy3d {
         }
 
         inline Point min() const {
-            if (initialized())
-                return min_;
-            else
-                return Point(FT(0.0));
+            return min_;
         }
 
         inline Point max() const {
-            if (initialized())
-                return max_;
-            else
-                return Point(FT(0.0));
+            return max_;
         }
 
         inline FT min(unsigned int axis) const {
@@ -148,19 +142,24 @@ namespace easy3d {
         }
 
         inline void add_box(const thisclass& b) {
-            add_point(b.min());
-            add_point(b.max());
+            if (b.initialized()) {
+                add_point(b.min());
+                add_point(b.max());
+            }
         }
 
         inline thisclass operator+(const thisclass& b) const {
             thisclass result = *this;
-            result += b;
+            if (b.initialized())
+                result += b;
             return result;
         }
 
         inline thisclass& operator+=(const thisclass& b) {
-            add_point(b.min());
-            add_point(b.max());
+            if (b.initialized()) {
+                add_point(b.min());
+                add_point(b.max());
+            }
             return *this;
         }
 

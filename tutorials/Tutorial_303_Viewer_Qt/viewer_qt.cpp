@@ -37,7 +37,6 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/transform.h>
@@ -346,286 +345,287 @@ Model* ViewerQt::currentModel() const {
 void ViewerQt::keyPressEvent(QKeyEvent* e) {
     if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
         std::cout << usage() << std::endl;
-
-	else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
-		float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
-		camera_->frame()->action_turn(angle, camera_);
-	}
-	else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
-		float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
-		camera_->frame()->action_turn(-angle, camera_);
-	}
-
-	else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {	// move camera forward
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
-	}
-	else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
-	}
-
-	else if (e->key() == Qt::Key_Left && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera left
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
-	}
-	else if (e->key() == Qt::Key_Right && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera right
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
-	}
-
-	else if (e->key() == Qt::Key_Up && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera up
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
-	}
-	else if (e->key() == Qt::Key_Down && e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {	// move camera down
-		float step = 0.05f * camera_->sceneRadius();
-		camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
-	}
-
-    else if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
+        float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
+        camera_->frame()->action_turn(angle, camera_);
+    } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
+        float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
+        camera_->frame()->action_turn(-angle, camera_);
+    } else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {    // move camera forward
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
+    } else if (e->key() == Qt::Key_Down && e->modifiers() == Qt::KeypadModifier) {// move camera backward
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
+    } else if (e->key() == Qt::Key_Left &&
+               e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera left
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
+    } else if (e->key() == Qt::Key_Right &&
+               e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera right
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
+    } else if (e->key() == Qt::Key_Up &&
+               e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera up
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
+    } else if (e->key() == Qt::Key_Down &&
+               e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera down
+        float step = 0.05f * camera_->sceneRadius();
+        camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
+    } else if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
         if (drawable_axes_)
             drawable_axes_->set_visible(!drawable_axes_->is_visible());
-    }
-    else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
+    } else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             fitScreen(currentModel());
-    }
-    else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
+    } else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
         fitScreen();
-    }
+    } else if (e->key() == Qt::Key_P && e->modifiers() == Qt::NoModifier) {
+        if (camera_->type() == Camera::PERSPECTIVE)
+            camera_->setType(Camera::ORTHOGRAPHIC);
+        else
+            camera_->setType(Camera::PERSPECTIVE);
+    } else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
+        // Aligns camera
+        Frame frame;
+        frame.setTranslation(camera_->pivotPoint());
+        camera_->frame()->alignWithFrame(&frame, true);
 
-	else if (e->key() == Qt::Key_P && e->modifiers() == Qt::NoModifier) {
-		if (camera_->type() == Camera::PERSPECTIVE)
-			camera_->setType(Camera::ORTHOGRAPHIC);
-		else
-			camera_->setType(Camera::PERSPECTIVE);
-	}
-	else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
-		// Aligns camera
-		Frame frame;
-		frame.setTranslation(camera_->pivotPoint());
-		camera_->frame()->alignWithFrame(&frame, true);
+        // Aligns frame
+        //if (manipulatedFrame())
+        //	manipulatedFrame()->alignWithFrame(camera_->frame());
+    } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(-1, camera_);
+    else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
+        camera_->frame()->action_zoom(1, camera_);
 
-		// Aligns frame
-		//if (manipulatedFrame())
-		//	manipulatedFrame()->alignWithFrame(camera_->frame());
-	}
+    else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
+        easy3d::Frame *frame = camera()->frame();
+        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
+        // update scene bounding box to make sure the path is within the view frustum
+        float old_radius = camera()->sceneRadius();
+        float candidate_radius = distance(camera()->sceneCenter(), frame->position());
+        camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+    } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier) { // delete path
+        camera()->keyFrameInterpolator()->deletePath();
 
-	else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::ControlModifier)
-		camera_->frame()->action_zoom(-1, camera_);
-	else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
-		camera_->frame()->action_zoom(1, camera_);
-
-	else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
-		easy3d::Frame* frame = camera()->frame();
-		camera()->keyFrameInterpolator()->addKeyFrame(*frame);
-		// update scene bounding box to make sure the path is within the view frustum
-		float old_radius = camera()->sceneRadius();
-		float candidate_radius = distance(camera()->sceneCenter(), frame->position());
-		camera()->setSceneRadius(std::max(old_radius, candidate_radius));
-	}
-	else if (e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier) { // delete path
-		camera()->keyFrameInterpolator()->deletePath();
-
-		// update scene bounding box
-		Box3 box;
-		for (auto m : models_)
-			box.add_box(m->bounding_box());
-		camera_->setSceneBoundingBox(box.min(), box.max());
-	}
-	else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
-		if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-			camera()->keyFrameInterpolator()->stopInterpolation();
-		else
-			camera()->keyFrameInterpolator()->startInterpolation();
-	}
-	else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
-		for (auto m : models_) {
-			for (auto d : m->points_drawables()) {
-				float size = d->point_size() - 1.0f;
-				if (size < 1)
-					size = 1;
-				d->set_point_size(size);
-			}
-			for (auto d : m->lines_drawables()) {
-				float size = d->line_width() - 1.0f;
-				if (size < 1)
-					size = 1;
-				d->set_line_width(size);
-			}
-		}
-	}
-	else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
-		for (auto m : models_) {
-			for (auto d : m->points_drawables()) {
-				float size = d->point_size() + 1.0f;
-				d->set_point_size(size);
-			}
-			for (auto d : m->lines_drawables()) {
-				float size = d->line_width() + 1.0f;
-				d->set_line_width(size);
-			}
-		}
-	}
-
-	else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
-		int pre_idx = model_idx_;
-		if (models_.empty())
-			model_idx_ = -1;
-		else
-			model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
-		if (model_idx_ != pre_idx) {
-			emit currentModelChanged();
-			if (model_idx_ >= 0)
-				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-		}
-	}
-	else if (e->key() == Qt::Key_Period && e->modifiers() == Qt::NoModifier) {
-		int pre_idx = model_idx_;
-		if (models_.empty())
-			model_idx_ = -1;
-		else
-			model_idx_ = int((model_idx_ + 1) % models_.size());
-		if (model_idx_ != pre_idx) {
-			emit currentModelChanged();
-			if (model_idx_ >= 0)
-				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
-		}
-	}
-	else if (e->key() == Qt::Key_Delete && e->modifiers() == Qt::NoModifier) {
-		if (currentModel())
-			deleteModel(currentModel());
-	}
-	else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
-		if (currentModel()) {
-            LinesDrawable* drawable = currentModel()->lines_drawable("edges");
-            if (!drawable) {
-                if (!dynamic_cast<PointCloud*>(currentModel())) { // no default "edges" drawable for point clouds
-                    drawable = currentModel()->add_lines_drawable("edges");
-                    makeCurrent();
-                    renderer::update_buffer(currentModel(), drawable);
-                    doneCurrent();
-                }
+        // update scene bounding box
+        Box3 box;
+        for (auto m : models_)
+            box.add_box(m->bounding_box());
+        camera_->setSceneBoundingBox(box.min(), box.max());
+    } else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
+        if (camera()->keyFrameInterpolator()->interpolationIsStarted())
+            camera()->keyFrameInterpolator()->stopInterpolation();
+        else
+            camera()->keyFrameInterpolator()->startInterpolation();
+    } else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() - 1.0f;
+                if (size < 1)
+                    size = 1;
+                d->set_line_width(size);
             }
-            else
-                drawable->set_visible(!drawable->is_visible());
-		}
-	}
-
-	else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
-		if (currentModel()) {
-			PointsDrawable* vertices = currentModel()->points_drawable("vertices");
-			if (!vertices) {
-				vertices = currentModel()->add_points_drawable("vertices");
-				makeCurrent();
-				renderer::update_buffer(currentModel(), vertices);
-                doneCurrent();
-                vertices->set_impostor_type(PointsDrawable::SPHERE);
-                vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-			}
-			else
-				vertices->set_visible(!vertices->is_visible());
-		}
-	}
-
+        }
+    } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->lines_drawables()) {
+                float size = d->line_width() + 1.0f;
+                d->set_line_width(size);
+            }
+        }
+    } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->points_drawables()) {
+                float size = d->point_size() - 1.0f;
+                if (size < 1)
+                    size = 1;
+                d->set_point_size(size);
+            }
+        }
+    } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
+        for (auto m : models_) {
+            for (auto d : m->points_drawables()) {
+                float size = d->point_size() + 1.0f;
+                d->set_point_size(size);
+            }
+        }
+    } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
+        int pre_idx = model_idx_;
+        if (models_.empty())
+            model_idx_ = -1;
+        else
+            model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
+        if (model_idx_ != pre_idx) {
+            if (model_idx_ >= 0)
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+        }
+    } else if (e->key() == Qt::Key_Period && e->modifiers() == Qt::NoModifier) {
+        int pre_idx = model_idx_;
+        if (models_.empty())
+            model_idx_ = -1;
+        else
+            model_idx_ = int((model_idx_ + 1) % models_.size());
+        if (model_idx_ != pre_idx) {
+            if (model_idx_ >= 0)
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+        }
+    } else if (e->key() == Qt::Key_Delete && e->modifiers() == Qt::NoModifier) {
+        if (currentModel())
+            deleteModel(currentModel());
+    } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
+        if (currentModel()) {
+            auto *edges = currentModel()->get_lines_drawable("edges");
+            if (!edges) {
+                if (!dynamic_cast<PointCloud *>(currentModel())) { // no default "edges" drawable for point clouds
+                    edges = currentModel()->add_lines_drawable("edges");
+                    if (dynamic_cast<SurfaceMesh *>(currentModel())) {
+                        edges->set_default_color(setting::surface_mesh_edges_color);
+                        edges->set_line_width(setting::surface_mesh_edges_line_width);
+                    }
+                    else if (dynamic_cast<Graph *>(currentModel())) {
+                        edges->set_default_color(setting::graph_edges_color);
+                        edges->set_line_width(setting::graph_edges_line_width);
+                        edges->set_impostor_type(LinesDrawable::CYLINDER);
+                    }
+                }
+            } else
+                edges->set_visible(!edges->is_visible());
+        }
+    } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
+        if (currentModel()) {
+            auto vertices = currentModel()->get_points_drawable("vertices");
+            if (!vertices) {
+                vertices = currentModel()->add_points_drawable("vertices");
+                if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+                    vertices->set_impostor_type(PointsDrawable::SPHERE);
+                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                }
+                else if (dynamic_cast<PointCloud*>(currentModel())) {
+                    vertices->set_point_size(setting::point_cloud_point_size);
+                    vertices->set_default_color(setting::point_cloud_points_color);
+                }
+                else if (dynamic_cast<Graph*>(currentModel())) {
+                    vertices->set_default_color(setting::graph_vertices_color);
+                    vertices->set_point_size(setting::graph_vertices_point_size);
+                    vertices->set_impostor_type(PointsDrawable::SPHERE);
+                }
+            } else
+                vertices->set_visible(!vertices->is_visible());
+        }
+    }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
-            auto drawable = mesh->lines_drawable("borders");
-            if (!drawable) {
-                auto prop = mesh->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> points;
-                for (auto e : mesh->edges()) {
-                    if (mesh->is_boundary(e)) {
-                        points.push_back(prop[mesh->vertex(e, 0)]);
-                        points.push_back(prop[mesh->vertex(e, 1)]);
+            auto borders = mesh->get_lines_drawable("borders");
+            if (!borders) {
+                borders = mesh->add_lines_drawable("borders");
+                borders->set_default_color(setting::surface_mesh_borders_color);
+                borders->set_per_vertex_color(false);
+                borders->set_impostor_type(LinesDrawable::CYLINDER);
+                borders->set_line_width(setting::surface_mesh_borders_line_width);
+
+                auto func = [](Model* model, Drawable* drawable) -> void {
+                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+                    auto prop = mesh->get_vertex_property<vec3>("v:point");
+                    std::vector<vec3> points;
+                    for (auto e : mesh->edges()) {
+                        if (mesh->is_boundary(e)) {
+                            points.push_back(prop[mesh->vertex(e, 0)]);
+                            points.push_back(prop[mesh->vertex(e, 1)]);
+                        }
                     }
-                }
-                if (!points.empty()) {
-                    drawable = mesh->add_lines_drawable("borders");
-                    makeCurrent();
                     drawable->update_vertex_buffer(points);
-                    doneCurrent();
-                    drawable->set_default_color(setting::surface_mesh_borders_color);
-                    drawable->set_per_vertex_color(false);
-                    drawable->set_impostor_type(LinesDrawable::CYLINDER);
-                    drawable->set_line_width(setting::surface_mesh_borders_line_width);
-                    currentModelChanged();
-                }
+                };
+                borders->set_update_func(func);
             }
-            else {
-                drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
-            }
+            else
+                borders->set_visible(!borders->is_visible());
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
-            auto drawable = mesh->points_drawable("locks");
+            auto drawable = mesh->get_points_drawable("locks");
             if (!drawable) {
-                auto lock = mesh->get_vertex_property<bool>("v:lock");
-                if (lock) {
-                    auto prop = mesh->get_vertex_property<vec3>("v:point");
-                    std::vector<vec3> points;
-                    for (auto v : mesh->vertices()) {
-                        if (lock[v])
-                            points.push_back(prop[v]);
-                    }
-                    if (!points.empty()) {
-                        drawable = mesh->add_points_drawable("locks");
-                        makeCurrent();
+                drawable = mesh->add_points_drawable("locks");
+                drawable->set_default_color(vec3(1, 1, 0));
+                drawable->set_per_vertex_color(false);
+                drawable->set_impostor_type(PointsDrawable::SPHERE);
+                drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+                auto func = [](Model* model, Drawable* drawable) -> void {
+                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+                    auto lock = mesh->get_vertex_property<bool>("v:lock");
+                    if (lock) {
+                        auto prop = mesh->get_vertex_property<vec3>("v:point");
+                        std::vector<vec3> points;
+                        for (auto v : mesh->vertices()) {
+                            if (lock[v])
+                                points.push_back(prop[v]);
+                        }
                         drawable->update_vertex_buffer(points);
-                        doneCurrent();
-                        drawable->set_default_color(vec3(1, 1, 0));
-                        drawable->set_per_vertex_color(false);
-                        drawable->set_impostor_type(PointsDrawable::SPHERE);
-                        drawable->set_point_size(setting::surface_mesh_vertices_point_size + 3);
-                        currentModelChanged();
                     }
-                }
+                };
+                drawable->set_update_func(func);
             }
-            else {
+            else
                 drawable->set_visible(!drawable->is_visible());
-                currentModelChanged();
+        }
+    }
+    else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
+        if (dynamic_cast<SurfaceMesh *>(currentModel())) {
+            auto drawable = currentModel()->get_triangles_drawable("faces");
+            if (drawable) {
+                drawable->set_smooth_shading(!drawable->smooth_shading());
             }
         }
-    }
+    } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
+        if (currentModel()) {
+            std::ostream& output = std::cout;
 
-    else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
-        if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-            auto drawable = currentModel()->triangles_drawable("faces");
-            if (drawable)
-                drawable->set_smooth_shading(!drawable->smooth_shading());
+            output << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------\n";
+            if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+                auto model = dynamic_cast<SurfaceMesh*>(currentModel());
+                output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+                       << ", #vertex: " + std::to_string(model->n_vertices())
+                       << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+            }
+            else if (dynamic_cast<PointCloud*>(currentModel())) {
+                auto model = dynamic_cast<PointCloud*>(currentModel());
+                output << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
+            }
+            else if (dynamic_cast<Graph*>(currentModel())) {
+                auto model = dynamic_cast<Graph*>(currentModel());
+                output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+                       << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+            }
+            if (!currentModel()->points_drawables().empty()) {
+                output << "points drawables:\n";
+                for (auto d : currentModel()->points_drawables())
+                    d->buffer_stats(output);
+            }
+            if (!currentModel()->lines_drawables().empty()) {
+                output << "lines drawables:\n";
+                for (auto d : currentModel()->lines_drawables())
+                    d->buffer_stats(output);
+            }
+            if (!currentModel()->triangles_drawables().empty()) {
+                output << "triangles drawables:\n";
+                for (auto d : currentModel()->triangles_drawables())
+                    d->buffer_stats(output);
+            }
+
+            currentModel()->property_stats(output);
         }
+    } else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
+        // Reload the shader(s) - useful for writing/debugging shader code.
+        ShaderManager::reload();
     }
 
-	else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
-		if (currentModel()) {
-            std::cout << "----------- " << file_system::simple_name(currentModel()->name()) << " -----------" << std::endl;
-
-            std::cout << "points drawables:" << std::endl;
-            for (auto d : currentModel()->points_drawables())
-                std::cout << "\t" << d->name() << std::endl;
-            std::cout << "lines drawables:" << std::endl;
-            for (auto d : currentModel()->lines_drawables())
-                std::cout << "\t" << d->name() << std::endl;
-            std::cout << "triangles drawables:" << std::endl;
-            for (auto d : currentModel()->triangles_drawables())
-                std::cout << "\t" << d->name() << std::endl;
-
-            currentModel()->property_stats();
-		}
-	}
-
-	else if (e->key() == Qt::Key_R && e->modifiers() == Qt::NoModifier) {
-		// Reload the shader(s) - useful for writing/debugging shader code.
-		ShaderManager::reload();
-	}
-
-	QOpenGLWidget::keyPressEvent(e);
-	update();
+    QOpenGLWidget::keyPressEvent(e);
+    update();
 }
 
 
@@ -690,33 +690,42 @@ std::string ViewerQt::usage() const {
 
 
 void ViewerQt::create_drawables(Model* model) {
-    if (dynamic_cast<PointCloud*>(model)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-        renderer::update_buffer(cloud, cloud->add_points_drawable("vertices"));
-    }
-    else if (dynamic_cast<SurfaceMesh*>(model)) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-        renderer::update_buffer(mesh, mesh->add_triangles_drawable("faces"));
-
-        if (setting::surface_mesh_show_edges)
-            renderer::update_buffer(mesh, mesh->add_lines_drawable("edges"));
-
-        if (setting::surface_mesh_show_vertices)
-            renderer::update_buffer(mesh, mesh->add_points_drawable("edges"));
-    }
-    else if (dynamic_cast<Graph*>(model)) {
-        Graph* graph = dynamic_cast<Graph*>(model);
-
+    if (dynamic_cast<PointCloud *>(model)) {
+        PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+        auto vertices = cloud->add_points_drawable("vertices");
+        vertices->set_point_size(setting::point_cloud_point_size);
+        vertices->set_default_color(setting::point_cloud_points_color);
+    } else if (dynamic_cast<SurfaceMesh *>(model)) {
+        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+        auto faces = mesh->add_triangles_drawable("faces");
+        faces->set_default_color(setting::surface_mesh_faces_color);
+        if (setting::surface_mesh_show_edges) {
+            auto edges = mesh->add_lines_drawable("edges");
+            edges->set_default_color(setting::surface_mesh_edges_color);
+            edges->set_line_width(setting::surface_mesh_edges_line_width);
+        }
+        if (setting::surface_mesh_show_vertices) {
+            auto vertices = mesh->add_points_drawable("vertices");
+            vertices->set_impostor_type(PointsDrawable::SPHERE);
+            vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+        }
+        if (setting::surface_mesh_show_borders) {
+            auto borders = mesh->add_lines_drawable("borders");
+            borders->set_default_color(setting::surface_mesh_borders_color);
+            borders->set_per_vertex_color(false);
+            borders->set_impostor_type(LinesDrawable::CYLINDER);
+            borders->set_line_width(setting::surface_mesh_borders_line_width);
+        }
+    } else if (dynamic_cast<Graph *>(model)) {
+        Graph *graph = dynamic_cast<Graph *>(model);
         // create points drawable for the edges
-        PointsDrawable* vertices = graph->add_points_drawable("vertices");
-        renderer::update_buffer(graph, vertices);
+        auto vertices = graph->add_points_drawable("vertices");
         vertices->set_default_color(setting::graph_vertices_color);
         vertices->set_point_size(setting::graph_vertices_point_size);
         vertices->set_impostor_type(PointsDrawable::SPHERE);
 
         // create liens drawable for the edges
-        LinesDrawable* edges = graph->add_lines_drawable("edges");
-        renderer::update_buffer(graph, edges);
+        auto edges = graph->add_lines_drawable("edges");
         edges->set_default_color(setting::graph_edges_color);
         edges->set_line_width(setting::graph_edges_line_width);
         edges->set_impostor_type(LinesDrawable::CYLINDER);
@@ -1010,13 +1019,11 @@ void ViewerQt::postDraw() {
 
 
 void ViewerQt::draw() {
-	if (models_.empty())
-		return;
+    for (const auto m : models_) {
+        if (!m->is_visible())
+            continue;
 
-	for (const auto m : models_) {
-		if (!m->is_visible())
-			continue;
-
+        // temporarily change the depth range and depth comparison method to properly render edges.
         glDepthRange(0.001, 1.0);
         for (auto d : m->triangles_drawables()) {
             if (d->is_visible())
@@ -1027,14 +1034,13 @@ void ViewerQt::draw() {
         glDepthFunc(GL_LEQUAL);
         for (auto d : m->lines_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
         glDepthFunc(GL_LESS);
 
         for (auto d : m->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);   easy3d_debug_log_gl_error;
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
-	}
-
+    }
 }

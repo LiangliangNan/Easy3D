@@ -224,50 +224,48 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    property_stats() const
+    void SurfaceMesh::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
 
 		props = vertex_properties();
 		if (!props.empty())
 		{
-			std::cout << "vertex properties:\n";
+            output << "vertex properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = halfedge_properties();
 		if (!props.empty())
 		{
-			std::cout << "halfedge properties:\n";
+            output << "halfedge properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = edge_properties();
 		if (!props.empty())
 		{
-			std::cout << "edge properties:\n";
+            output<< "edge properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = face_properties();
 		if (!props.empty())
 		{
-			std::cout << "face properties:\n";
+            output << "face properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
 
 		props = model_properties();
 		if (!props.empty())
 		{
-			std::cout << "model properties:\n";
+            output << "model properties:\n";
 			for (unsigned int i = 0; i < props.size(); ++i)
-				std::cout << "\t" << props[i] << std::endl;
+                output << "\t" << props[i] << std::endl;
 		}
     }
 

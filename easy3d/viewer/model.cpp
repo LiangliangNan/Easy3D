@@ -58,7 +58,17 @@ namespace easy3d {
 	}
 
 
-	PointsDrawable* Model::points_drawable(const std::string& name) const {
+    void Model::update() {
+        for (auto d : points_drawables_)
+            d->set_modified(true);
+        for (auto d : lines_drawables())
+            d->set_modified(true);
+        for (auto d : triangles_drawables_)
+            d->set_modified(true);
+    }
+
+
+	PointsDrawable* Model::get_points_drawable(const std::string& name) const {
 		for (auto d : points_drawables_) {
 			if (d->name() == name)
 				return d;
@@ -67,7 +77,7 @@ namespace easy3d {
 	}
 
 
-	LinesDrawable* Model::lines_drawable(const std::string& name) const {
+	LinesDrawable* Model::get_lines_drawable(const std::string& name) const {
 		for (auto d : lines_drawables_) {
 			if (d->name() == name)
 				return d;
@@ -76,7 +86,7 @@ namespace easy3d {
 	}
 
 
-    TrianglesDrawable* Model::triangles_drawable(const std::string& name) const {
+    TrianglesDrawable* Model::get_triangles_drawable(const std::string& name) const {
         for (auto d : triangles_drawables_) {
 			if (d->name() == name)
 				return d;

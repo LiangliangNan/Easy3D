@@ -36,7 +36,7 @@ namespace easy3d {
 	public:
         PointsDrawable(const std::string& name = "");
 
-        DrawableType type() const override;
+        Type type() const override;
 
         // a point imposter can be a sphere, or a surfel/disc
         enum ImposterType {

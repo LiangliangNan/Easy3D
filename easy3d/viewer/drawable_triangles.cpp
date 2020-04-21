@@ -43,12 +43,15 @@ namespace easy3d {
     }
 
 
-    DrawableType TrianglesDrawable::type() const {
+    Drawable::Type TrianglesDrawable::type() const {
         return DT_TRIANGLES;
     }
 
 
     void TrianglesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+        if (modified_)
+            const_cast<TrianglesDrawable*>(this)->update();
+
         if (use_texture_ && texture_)
             _draw_triangles_with_texture(camera, with_storage_buffer);
         else

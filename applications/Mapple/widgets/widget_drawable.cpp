@@ -1,7 +1,6 @@
 #include "widget_drawable.h"
 
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/drawable.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -67,23 +66,22 @@ Texture *WidgetDrawable::colormapTexture(int idx) const {
 
 
 void WidgetDrawable::setDrawableVisible(bool b) {
-    if (drawable()->is_visible() != b) {
-        drawable()->set_visible(b);
-        viewer_->update();
-    }
+    drawable()->set_visible(b);
+    viewer_->update();
     disableUnavailableOptions();
 }
 
 
 void WidgetDrawable::setLighting(const QString &text) {
+    auto d = drawable();
     if (text == "front and back") {
-        drawable()->set_lighting(true);
-        drawable()->set_lighting_two_sides(true);
+        d->set_lighting(true);
+        d->set_lighting_two_sides(true);
     } else if (text == "front only") {
-        drawable()->set_lighting(true);
-        drawable()->set_lighting_two_sides(false);
+        d->set_lighting(true);
+        d->set_lighting_two_sides(false);
     } else if (text == "disabled") {
-        drawable()->set_lighting(false);
+        d->set_lighting(false);
     }
 
     viewer_->update();
@@ -92,62 +90,62 @@ void WidgetDrawable::setLighting(const QString &text) {
 
 
 void WidgetDrawable::setScalarFieldStyle(int idx) {
-    states_[drawable()].scalar_style = idx;
+    auto d = drawable();
+    states_[d].scalar_style = idx;
     auto tex = colormapTexture(idx);
-    drawable()->set_texture(tex);
-    drawable()->set_use_texture(true);
+    d->set_texture(tex);
+    d->set_use_texture(true);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setScalarFieldClamp(bool b) {
-    auto& scheme = drawable()->color_scheme();
+    auto d = drawable();
+    auto& scheme = d->color_scheme();
     scheme.clamp_value = b;
-    renderer::update_buffer(viewer_->currentModel(), drawable());
+    d->set_modified(true);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setScalarFieldClampLower(double v) {
-    auto& scheme = drawable()->color_scheme();
+    auto d = drawable();
+    auto& scheme = d->color_scheme();
     scheme.dummy_lower = v / 100.0f;
-    renderer::update_buffer(viewer_->currentModel(), drawable());
+    d->set_modified(true);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setScalarFieldClampUpper(double v) {
-    auto& scheme = drawable()->color_scheme();
+    auto d = drawable();
+    auto& scheme = d->color_scheme();
     scheme.dummy_upper = v / 100.0f;
-    renderer::update_buffer(viewer_->currentModel(), drawable());
+    d->set_modified(true);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setHighlight(bool b) {
-    if (drawable()->highlight() != b) {
-        drawable()->set_highlight(b);
-        viewer_->update();
-        disableUnavailableOptions();
-    }
+    drawable()->set_highlight(b);
+    viewer_->update();
+    disableUnavailableOptions();
 }
 
 
 void WidgetDrawable::setHighlightMin(int v) {
-    const auto &range = drawable()->highlight_range();
-    if (range.first != v) {
-        drawable()->set_highlight_range(std::make_pair(v, range.second));
-        viewer_->update();
-    }
+    auto d = drawable();
+    const auto &range = d->highlight_range();
+    d->set_highlight_range(std::make_pair(v, range.second));
+    viewer_->update();
 }
 
 
 void WidgetDrawable::setHighlightMax(int v) {
-    const auto &range = drawable()->highlight_range();
-    if (range.second != v) {
-        drawable()->set_highlight_range(std::make_pair(range.first, v));
-        viewer_->update();
-    }
+    auto d = drawable();
+    const auto &range = d->highlight_range();
+    d->set_highlight_range(std::make_pair(range.first, v));
+    viewer_->update();
 }
 
 
@@ -166,8 +164,7 @@ void WidgetDrawable::setTextureRepeat(int r) {
 
 
 void WidgetDrawable::setTextureFractionalRepeat(int r) {
-    auto d = drawable();
-    d->set_texture_fractional_repeat(r);
+    drawable()->set_texture_fractional_repeat(r);
     viewer_->update();
 }
 
@@ -196,7 +193,7 @@ std::string WidgetDrawable::color_property_name(const std::string& name, const s
 ColorScheme::Source WidgetDrawable::color_source(const std::string& name, const std::string& scalar_prefix) const {
     if (name == "uniform color")
         return ColorScheme::UNIFORM_COLOR;
-    else if (name == "v:color")
+    else if (name.find("v:color") != std::string::npos || name.find("f:color") != std::string::npos)
         return ColorScheme::COLOR_PROPERTY;
     else if (name.find("texcoord") != std::string::npos)
         return ColorScheme::TEXTURE;
@@ -229,17 +226,16 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     scheme.source = color_source(text.toStdString(), scalar_prefix_.toStdString());
     scheme.location = color_location(text.toStdString());
     scheme.name = color_property_name(text.toStdString(), scalar_prefix_.toStdString());
-
-    viewer_->makeCurrent();
-    renderer::update_buffer(viewer_->currentModel(), d);
+    
     if (scheme.source == ColorScheme::TEXTURE || scheme.source == ColorScheme::SCALAR_FIELD)
         d->set_texture(colormapTexture(states_[d].scalar_style));
     else {
         d->set_texture(nullptr);
         d->set_use_texture(false);
-        d->set_per_vertex_color(false);
     }
-    viewer_->doneCurrent();
+
+    d->set_per_vertex_color(scheme.source != ColorScheme::UNIFORM_COLOR);
+    d->set_modified(true);
 
     viewer_->update();
     disableUnavailableOptions();

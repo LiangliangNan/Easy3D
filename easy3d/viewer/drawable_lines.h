@@ -35,7 +35,7 @@ namespace easy3d {
 	public:
         LinesDrawable(const std::string& name = "");
 
-        DrawableType type() const override;
+        Type type() const override;
 
         // a line poster can be a cylinder, or a cone
         enum ImposterType {

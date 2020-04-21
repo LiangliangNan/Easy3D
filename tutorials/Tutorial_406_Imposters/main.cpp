@@ -43,32 +43,21 @@ using namespace easy3d;
 
 // render mesh vertices as spheres
 void create_spheres(SurfaceMesh* mesh) {
-    auto points = mesh->get_vertex_property<vec3>("v:point");
-    PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
-    points_drawable->update_vertex_buffer(points.vector());
-    points_drawable->set_per_vertex_color(false);
-    points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-    points_drawable->set_point_size(24.0f);
-    points_drawable->set_impostor_type(PointsDrawable::SPHERE);
+    PointsDrawable* drawable = mesh->add_points_drawable("vertices");
+    drawable->set_per_vertex_color(false);
+    drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+    drawable->set_point_size(24.0f);
+    drawable->set_impostor_type(PointsDrawable::SPHERE);;
 }
 
 
 // render mesh edges as cylinders
 void create_cylinders(SurfaceMesh* mesh) {
-    auto points = mesh->get_vertex_property<vec3>("v:point");
-    LinesDrawable* edges_drawable = mesh->add_lines_drawable("edges");
-    std::vector<vec3> edge_points; // each consecutive point pair represents an edge
-    for (auto e : mesh->edges()) {
-        SurfaceMesh::Vertex s = mesh->vertex(e, 0);
-        edge_points.push_back(points[s]);
-        SurfaceMesh::Vertex t = mesh->vertex(e, 1);
-        edge_points.push_back(points[t]);
-    }
-    edges_drawable->update_vertex_buffer(edge_points);
-    edges_drawable->set_per_vertex_color(false);
-    edges_drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
-    edges_drawable->set_impostor_type(LinesDrawable::CYLINDER);
-    edges_drawable->set_line_width(6);
+    LinesDrawable* drawable = mesh->add_lines_drawable("edges");
+    drawable->set_per_vertex_color(false);
+    drawable->set_default_color(vec3(1.0f, 0.67f, 0.5f));
+    drawable->set_impostor_type(LinesDrawable::CYLINDER);
+    drawable->set_line_width(6);
 }
 
 
@@ -94,27 +83,23 @@ void create_cones(SurfaceMesh* mesh) {
         normal_points.push_back(t);
     }
 
-    LinesDrawable* normals_drawable = mesh->add_lines_drawable("normals");
-    normals_drawable->update_vertex_buffer(normal_points);
-    normals_drawable->set_per_vertex_color(false);
-    normals_drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
-    normals_drawable->set_impostor_type(LinesDrawable::CONE);
-    normals_drawable->set_line_width(8);
+    LinesDrawable* drawable = mesh->add_lines_drawable("normals");
+    drawable->update_vertex_buffer(normal_points);
+    drawable->set_per_vertex_color(false);
+    drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+    drawable->set_impostor_type(LinesDrawable::CONE);
+    drawable->set_line_width(8);
+    drawable->set_modified(false);
 }
 
 
 // render mesh vertices as surfels
 void create_surfels(SurfaceMesh* mesh) {
-    auto points = mesh->get_vertex_property<vec3>("v:point");
-    mesh->update_vertex_normals();
-    auto normals = mesh->get_vertex_property<vec3>("v:normal");
-    PointsDrawable* points_drawable = mesh->add_points_drawable("vertices");
-    points_drawable->update_vertex_buffer(points.vector());
-    points_drawable->update_normal_buffer(normals.vector());
-    points_drawable->set_per_vertex_color(false);
-    points_drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
-    points_drawable->set_point_size(24.0f);
-    points_drawable->set_impostor_type(PointsDrawable::SURFEL);
+    PointsDrawable* drawable = mesh->add_points_drawable("vertices");
+    drawable->set_per_vertex_color(false);
+    drawable->set_default_color(vec3(1.0f, 0.0f, 0.0f));
+    drawable->set_point_size(24.0f);
+    drawable->set_impostor_type(PointsDrawable::SURFEL);
 }
 
 

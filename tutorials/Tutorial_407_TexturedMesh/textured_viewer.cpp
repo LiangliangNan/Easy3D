@@ -270,6 +270,8 @@ namespace easy3d {
                     LOG(INFO) << "texture created from " << texname;
                 }
             }
+
+            drawable->set_modified(false);
         }
 
         // the drawables have already been created

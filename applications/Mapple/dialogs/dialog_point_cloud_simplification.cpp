@@ -4,8 +4,6 @@
 #include <easy3d/algo/point_cloud_simplification.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
-#include <easy3d/viewer/renderer.h>
-
 #include <QButtonGroup>
 #include <QIntValidator>
 
@@ -149,9 +147,7 @@ void DialogPointCloudSimplification::apply() {
             int new_num = cloud->n_vertices();
             LOG(INFO) << old_num - new_num << " points removed. " << new_num << " points remain";
 
-            viewer_->makeCurrent();
-            renderer::update_buffer(cloud, cloud->points_drawable("vertices"));
-            viewer_->doneCurrent();
+            cloud->update();
             viewer_->update();
         }
 

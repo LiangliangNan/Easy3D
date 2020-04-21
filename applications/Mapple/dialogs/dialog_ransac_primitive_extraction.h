@@ -4,9 +4,10 @@
 #include <QDialog>
 
 namespace Ui {
-class DialogRansacPrimitiveExtraction;
+    class DialogRansacPrimitiveExtraction;
 }
 
+class MainWindow;
 class PaintCanvas;
 
 class DialogRansacPrimitiveExtraction : public QDialog
@@ -26,6 +27,7 @@ private Q_SLOTS:
 private:
     Ui::DialogRansacPrimitiveExtraction *ui;
 
+    MainWindow*     main_window_;
     PaintCanvas*	viewer_;
 
     bool	selected_only_;

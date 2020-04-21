@@ -42,12 +42,15 @@ namespace easy3d {
     }
 
 
-    DrawableType PointsDrawable::type() const {
+    Drawable::Type PointsDrawable::type() const {
         return DT_POINTS;
     }
 
 
     void PointsDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+        if (modified_)
+            const_cast<PointsDrawable*>(this)->update();
+
         switch (impostor_type_) {
             case PLAIN:
                 if (use_texture_ && texture_)
@@ -230,7 +233,7 @@ namespace easy3d {
             LOG_FIRST_N(ERROR, 1) << "texcoord buffer not created (this is the first record)";
             return;
         }
-        
+
         ShaderProgram *program = ShaderManager::get_program("points/points_plain_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;

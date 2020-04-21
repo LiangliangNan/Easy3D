@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
-        auto drawable = model->points_drawable("vertices");
+        auto drawable = model->get_points_drawable("vertices");
         drawable->set_point_size(5.0f);
         drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));
 

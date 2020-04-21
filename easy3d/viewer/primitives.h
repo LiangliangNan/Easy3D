@@ -133,7 +133,7 @@ namespace easy3d {
 		 * @param scale The scaling factor
 		 * @param points The points to be returned.
 		 */
-        void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float scale = 0.5f);
+        void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float depth = 0.0f, float scale = 0.5f);
 
 		// Prepare data (points, normals, and colors) for a 3D sphere.
 		// radius: the radius of the sphere.

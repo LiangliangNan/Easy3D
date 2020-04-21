@@ -27,7 +27,6 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
 
 
@@ -57,7 +56,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (model) {
         SurfaceMeshPicker picker(camera());
         auto face = picker.pick_face(model, x, y);
-        auto drawable = model->triangles_drawable("faces");
+        auto drawable = model->get_triangles_drawable("faces");
         auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
         if (triangle_range && face.is_valid()) {
             const auto& range = triangle_range[face];
@@ -80,8 +79,7 @@ Model* PickerViewer::add_model(const std::string& file_name, bool create_default
     Model* model = Viewer::add_model(file_name, create_default_drawables);
 
     // let's also create a drawable to visualize the edges
-    Drawable* drawable = current_model()->add_lines_drawable("edges");
-    renderer::update_buffer(current_model(), drawable);
+    current_model()->add_lines_drawable("edges");
 
     return model;
 }

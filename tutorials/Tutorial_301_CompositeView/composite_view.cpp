@@ -23,17 +23,16 @@
  */
 
 #include "composite_view.h"
-#include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/opengl.h>
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/transform.h>
+#include <easy3d/viewer/renderer.h>
 
 
 using namespace easy3d;
@@ -62,7 +61,7 @@ void CompositeView::draw() const {
     // Upper left view (wireframe)
     glViewport(0, h / 2, w / 2, h / 2);
     glScissor(0, h / 2, w / 2, h / 2);
-    LinesDrawable* edges = current_model()->lines_drawable("edges");
+    LinesDrawable* edges = current_model()->get_lines_drawable("edges");
     if (!edges) {
         edges = current_model()->add_lines_drawable("edges");
         renderer::update_buffer(current_model(), edges);
@@ -75,7 +74,7 @@ void CompositeView::draw() const {
     // Lower left view (wireframe + vertices)
     glViewport(0, 0, w / 2, h / 2);
     glScissor(0, 0, w / 2, h / 2);
-    PointsDrawable* vertices = current_model()->points_drawable("vertices");
+    PointsDrawable* vertices = current_model()->get_points_drawable("vertices");
     if (!vertices) {
         vertices = current_model()->add_points_drawable("vertices");
         vertices->set_point_size(15.0f);
@@ -91,12 +90,11 @@ void CompositeView::draw() const {
     // Lower right view (faces)
     glViewport(w / 2, 0, w / 2, h / 2);
     glScissor(w / 2, 0, w / 2, h / 2);
-    TrianglesDrawable* faces = current_model()->triangles_drawable("faces");
-    if (!faces) {
+    TrianglesDrawable* faces = current_model()->get_triangles_drawable("faces");
+    if (!faces)
         faces = current_model()->add_triangles_drawable("faces");
-        if (dynamic_cast<SurfaceMesh*>(current_model()))
-            renderer::update_buffer(dynamic_cast<SurfaceMesh*>(current_model()), faces);
-    }
+    if (faces->is_modified())
+        faces->update();
     faces->draw(camera(), false);
     draw_grid();
 
@@ -162,6 +160,6 @@ void CompositeView::update_grid() {
     int x_steps = width() * 0.5f / grid_size_;
     int y_steps = height() * 0.5f / grid_size_;
     std::vector<vec3> points;
-    opengl::prepare_grid(x_steps, y_steps, points, grid_size_ * dpi_scaling());
+    opengl::prepare_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
     grid_->update_vertex_buffer(points);
 }

@@ -516,13 +516,13 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------
 
-        void prepare_grid(int x_steps, int y_steps, std::vector<vec3> &points, float scale) {
+        void prepare_grid(int x_steps, int y_steps, std::vector<vec3> &points, float depth, float scale) {
             // Horizontal lines
             float x = scale * 0.5f * (x_steps - 1);
             float y = -scale * 0.5f * (y_steps - 1);
             for (int i = 0; i < y_steps; i++) {
-                points.push_back(vec3(-x, y, 0.0f));
-                points.push_back(vec3(x, y, 0.0f));
+                points.push_back(vec3(-x, y, depth));
+                points.push_back(vec3(x, y, depth));
                 y += scale;
             }
 
@@ -530,8 +530,8 @@ namespace easy3d {
             x = -scale * 0.5f * (float) (x_steps - 1);
             y = scale * 0.5f * (float) (y_steps - 1);
             for (int i = 0; i < x_steps; i++) {
-                points.push_back(vec3(x, -y, 0.0f));
-                points.push_back(vec3(x, y, 0.0f));
+                points.push_back(vec3(x, -y, depth));
+                points.push_back(vec3(x, y, depth));
                 x += scale;
             }
         }

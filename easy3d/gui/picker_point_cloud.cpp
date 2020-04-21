@@ -151,7 +151,7 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->points_drawable("vertices");
+        auto drawable = model->get_points_drawable("vertices");
 //        int num_before = drawable->num_selected();
 
         int viewport[4];
@@ -246,7 +246,7 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->points_drawable("vertices");
+        auto drawable = model->get_points_drawable("vertices");
 //        int num_before = drawable->num_selected();
 
 //        // make sure the vertex buffer holds the right data.

@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
             return EXIT_FAILURE;
         }
 
-        auto drawable = model->points_drawable("vertices");
+        auto drawable = model->get_points_drawable("vertices");
         drawable->set_point_size(5.0f);
 
         // Run the viewer

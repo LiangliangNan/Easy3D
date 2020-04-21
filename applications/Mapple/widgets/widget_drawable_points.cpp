@@ -8,7 +8,6 @@
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
@@ -137,54 +136,112 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 }
 
 
-namespace details {
+std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *model) {
+    std::vector<QString> schemes;
+    schemes.push_back("uniform color");
 
-    template<typename MODEL>
-    inline std::vector<std::string> color_schemes(const MODEL *model, const std::string& scalar_prefix) {
-        std::vector<std::string> schemes;
-        schemes.push_back("uniform color");
-
-        if (model->template get_vertex_property<vec3>("v:color"))
-            schemes.push_back("v:color");
-        if (model->template get_vertex_property<vec2>("v:texcoord"))
-            schemes.push_back("v:texcoord");
-
-        // scalar fields defined on vertices
-        for (const auto &name : model->vertex_properties()) {
-            if (model->template get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix + name);
-            else if (model->template get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix + name);
-            else if (model->template get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix + name);
-            else if (model->template get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix + name);
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    if (cloud) {
+        // color schemes from color properties and texture
+        for (const auto &name : cloud->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
         }
 
-        return schemes;
+        // color schemes from scalar fields
+        // scalar fields defined on vertices
+        for (const auto &name : cloud->vertex_properties()) {
+            if (cloud->get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (cloud->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (cloud->get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (cloud->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+        }
     }
 
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
+        // color schemes from color properties and texture
+        for (const auto &name : mesh->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
 
-    template<typename MODEL>
-    inline std::vector<std::string> vector_fields(const MODEL *model) {
-        std::vector<std::string> fields;
+        // color schemes from scalar fields
+        // scalar fields defined on vertices
+        for (const auto &name : mesh->vertex_properties()) {
+            if (mesh->get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+        }
+    }
 
+    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+    if (graph) {
+        // color schemes from color properties and texture
+        for (const auto &name : mesh->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+
+        // color schemes from scalar fields
+        // scalar fields defined on vertices
+        for (const auto &name : graph->vertex_properties()) {
+            if (graph->get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (graph->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+        }
+    }
+
+    return schemes;
+}
+
+
+std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *model) {
+    std::vector<QString> fields;
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (mesh) {
         // vector fields defined on vertices
-        for (const auto &name : model->vertex_properties()) {
-            if (model->template get_vertex_property<vec3>(name)) {
-                if (name != "v:point" && name != "v:color")
-                    fields.push_back(name);
+        for (const auto &name : mesh->vertex_properties()) {
+            if (mesh->get_vertex_property<vec3>(name)) {
+                if (name != "v:color")
+                    fields.push_back(QString::fromStdString(name));
             }
         }
-
-        // if no vector fields found, add a "not available" item
-        if (fields.empty())
-            fields.push_back("not available");
-        else   // add one allowing to disable vector fields
-            fields.insert(fields.begin(), "disabled");
-
-        return fields;
     }
+
+    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+    if (graph) {
+        // vector fields defined on vertices
+        for (const auto &name : graph->vertex_properties()) {
+            if (graph->get_vertex_property<vec3>(name)) {
+                if (name != "v:color")
+                    fields.push_back(QString::fromStdString(name));
+            }
+        }
+    }
+
+    // if no vector fields found, add a "not available" item
+    if (fields.empty())
+        fields.push_back("not available");
+    else   // add one allowing to disable vector fields
+        fields.insert(fields.begin(), "disabled");
+
+    return fields;
 }
 
 
@@ -241,17 +298,16 @@ void WidgetPointsDrawable::updatePanel() {
 
     {   // color scheme
         ui->comboBoxColorScheme->clear();
-        std::vector<std::string> schemes;
-        if (dynamic_cast<PointCloud *>(model))
-            schemes = details::color_schemes(dynamic_cast<PointCloud *>(model), scalar_prefix_.toStdString());
-        else if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel()))
-            schemes = details::color_schemes(dynamic_cast<SurfaceMesh *>(model), scalar_prefix_.toStdString());
-        else if (dynamic_cast<Graph *>(viewer_->currentModel()))
-            schemes = details::color_schemes(dynamic_cast<Graph *>(model), scalar_prefix_.toStdString());
+        const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
         for (const auto &scheme : schemes)
-            ui->comboBoxColorScheme->addItem(QString::fromStdString(scheme));
+            ui->comboBoxColorScheme->addItem(scheme);
 
-        ui->comboBoxColorScheme->setCurrentText(scalar_prefix_ + QString::fromStdString(scheme.name));
+        for (const auto& name : schemes) {
+            if (name.contains(QString::fromStdString(scheme.name))) {
+                ui->comboBoxColorScheme->setCurrentText(name);
+                break;
+            }
+        }
 
         // default color
         vec3 c = d->default_color();
@@ -286,15 +342,9 @@ void WidgetPointsDrawable::updatePanel() {
 
     {   // vector field
         ui->comboBoxVectorField->clear();
-        std::vector<std::string> fields;
-        if (dynamic_cast<PointCloud *>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<PointCloud *>(viewer_->currentModel()));
-        else if (dynamic_cast<SurfaceMesh *>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<SurfaceMesh *>(viewer_->currentModel()));
-        else if (dynamic_cast<Graph *>(viewer_->currentModel()))
-            fields = details::vector_fields(dynamic_cast<Graph *>(viewer_->currentModel()));
+        const std::vector<QString> &fields = vectorFields(viewer_->currentModel());
         for (auto name : fields)
-            ui->comboBoxVectorField->addItem(QString::fromStdString(name));
+            ui->comboBoxVectorField->addItem(name);
 
         ui->comboBoxVectorField->setCurrentText(state.vector_field);
         ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
@@ -312,7 +362,7 @@ Drawable *WidgetPointsDrawable::drawable() {
     auto model = viewer_->currentModel();
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->points_drawable(pos->second);
+        return model->get_points_drawable(pos->second);
     else {
         const auto &drawables = model->points_drawables();
         if (drawables.empty())
@@ -334,7 +384,7 @@ void WidgetPointsDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->points_drawable(name)) {
+    if (model->get_points_drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
@@ -459,7 +509,7 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(model, name);
 
-        auto d = model->lines_drawable("vector - v:normal");
+        auto d = model->get_lines_drawable("vector - v:normal");
         d->set_visible(true);
 
         states_[d].vector_field = "v:normal";
@@ -481,7 +531,7 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
     }
 
     // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-    auto drawable = model->lines_drawable("vector - v:normal");
+    auto drawable = model->get_lines_drawable("vector - v:normal");
     if (!drawable)
         drawable = model->add_lines_drawable("vector - v:normal");
 

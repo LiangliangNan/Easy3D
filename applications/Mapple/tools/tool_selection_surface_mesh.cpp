@@ -119,7 +119,7 @@ namespace easy3d {
                 auto *mesh = dynamic_cast<ToolSurfaceMeshFaceSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(face, x, y);
                 if (mesh && face.is_valid()) {
                     auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-                    auto drawable = mesh->triangles_drawable("faces");
+                    auto drawable = mesh->get_triangles_drawable("faces");
                     drawable->set_highlight(true);
                     drawable->set_highlight_range(triangle_range[face]);
                 }
@@ -130,7 +130,7 @@ namespace easy3d {
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
                 if (mesh) {
-                    auto drawable = mesh->triangles_drawable("faces");
+                    auto drawable = mesh->get_triangles_drawable("faces");
                     drawable->set_highlight(false);
                     drawable->set_highlight_range({-1, -1});
                 }

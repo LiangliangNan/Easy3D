@@ -25,7 +25,6 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/resources.h>
@@ -71,7 +70,7 @@ int main(int argc, char** argv) {
         // Upload data to the GPU.
         drawable->color_scheme().source = ColorScheme::SCALAR_FIELD;
         drawable->color_scheme().name = "v:elevation";
-        renderer::update_buffer(model, drawable);
+        drawable->update();
 
         // Create texture for coloring the scalar field.
         const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";

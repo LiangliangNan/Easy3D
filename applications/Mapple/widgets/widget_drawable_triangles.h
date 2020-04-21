@@ -15,7 +15,6 @@ Q_OBJECT
 
 public:
     explicit WidgetTrianglesDrawable(QWidget *parent);
-
     ~WidgetTrianglesDrawable() override;
 
     // update the panel to be consistent with the drawable's rendering parameters
@@ -24,18 +23,13 @@ public:
 public slots:
 
     void setActiveDrawable(const QString &);
-
     void setPhongShading(bool);
-
-    void setColorScheme(const QString &) override ;
+    void setColorScheme(const QString &) override;
 
     void setDefaultColor();
     void setBackColor();
-
     void setTextureFile();
-
     void setOpacity(int);
-
     void setScalarFieldStyle(int);
     void setVectorField(const QString &);
 
@@ -43,12 +37,13 @@ private:
     void connectAll();
     void disconnectAll();
 
-    easy3d::Drawable *drawable() override ;
-    void disableUnavailableOptions() override ;
+    easy3d::Drawable *drawable() override;
 
-    void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) override ;
+    void disableUnavailableOptions() override;
+    void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) override;
 
     // model depended stuff
+    std::vector<QString> colorSchemes(const easy3d::Model *model);
     std::vector<QString> vectorFields(const easy3d::Model *model);
 
 private:

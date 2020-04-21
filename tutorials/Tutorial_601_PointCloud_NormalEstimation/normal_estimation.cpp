@@ -98,7 +98,7 @@ void TutorialNormalEstimation::update_rendering() {
     // The "normal" property
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
     if (normals) {
-        auto drawable = cloud->points_drawable("vertices");
+        auto drawable = cloud->get_points_drawable("vertices");
         // Upload the vertex normals to the GPU.
         drawable->update_normal_buffer(normals.vector());
         update();
