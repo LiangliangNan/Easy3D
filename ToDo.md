@@ -1,5 +1,9 @@
 * easy3d (on going):
-    - Support multiple models;
+    - The hash function in tessellator.cpp may not work on 32-bit machines:
+                  inline void hash_combine(std::size_t &seed, T const &v) const {
+                      std::hash<T> hasher;
+                      seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+                  }
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Let each drawable remember how the buffer data was created (the property and the update_buffer() function);
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
