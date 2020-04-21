@@ -1022,10 +1022,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
     const auto& components = SurfaceMeshComponent::extract(mesh);
     std::cout << "model has " << components.size() << " connected components" << std::endl;
 
-    auto face_color = mesh->get_face_property<vec3>("f:connected_components");
-    if (!face_color)
-        face_color = mesh->add_face_property<vec3>("f:connected_components", vec3(0.5f, 0.5f, 0.5f));
-
+    auto face_color = mesh->face_property<vec3>("f:color_connected_components",vec3(0.5f, 0.5f, 0.5f));
     for (auto& comp : components) {
         const vec3& color = random_color(false);
         for (auto f : comp.faces())
