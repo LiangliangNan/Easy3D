@@ -23,6 +23,8 @@
  */
 
 #include "composite_view.h"
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/viewer/drawable_triangles.h>

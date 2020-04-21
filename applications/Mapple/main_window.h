@@ -35,7 +35,6 @@ public:
 
     void updateUi(); // entire ui: window tile, rendering panel, model panel
     void updateRenderingPanel();    // rendering panel only
-    void updateRendering(); // update OpenGL buffers
 
     void setShowSelectedOnly(bool b);
 

@@ -39,14 +39,12 @@
 
 namespace easy3d {
 
-
 	// representation models
 	enum DrawableType {
 		DT_POINTS = 0x0000,		// same as GL_POINTS
 		DT_LINES = 0x0001,		// same as GL_LINES
 		DT_TRIANGLES = 0x0004	// same as GL_TRIANGLES
 	};
-
 
     struct Material {
         Material();
@@ -57,6 +55,25 @@ namespace easy3d {
         float	shininess;	// specular power
     };
 
+    struct ColorScheme {
+        // where is the color from?
+        enum Source { UNIFORM_COLOR, COLOR_PROPERTY, TEXTURE, SCALAR_FIELD };
+        // where is the necessary property stored?
+        enum Location { FACE, VERTEX, EDGE, HALFEDGE };
+
+        ColorScheme(Source src = UNIFORM_COLOR, Location loc = VERTEX) : source(src), location(loc), name(""),
+                                                                         clamp_value(true),
+                                                                         dummy_lower(0.05f), dummy_upper(0.05f) {}
+
+        Source source;
+        Location location;
+
+        std::string name; // the name of the property
+
+        bool  clamp_value;
+        float dummy_lower;  // the percentage of values to be clamped (used by rendering scalar field)
+        float dummy_upper;  // the percentage of values to be clamped (used by rendering scalar field)
+    };
 
     class Model;
     class Camera;
@@ -124,7 +141,18 @@ namespace easy3d {
 		bool is_visible() const { return visible_; }
 		void set_visible(bool v) { visible_ = v; }
 
-		// if true, one of the color properties (e.g., "v:color", "f:color", or "e:color") will be active for rendering.
+        /**
+         * A drawable can be colored in the following ways:
+         *      - using one of the color properties (e.g., "v:color", "f:color", or "e:color");
+         *      - textured using one of the texture coordinates (e.g., "v:texcoord", "h:texcoord").
+         *      - textured using using the scalar field defined on the model.
+         * The active color is a string denoting how this drawable is colored.
+         * @return The string denoting the current color scheme.
+         */
+        ColorScheme& color_scheme() { return color_scheme_; }
+        const ColorScheme& color_scheme() const { return color_scheme_; }
+
+        // if true, one of the color properties (e.g., "v:color", "f:color", or "e:color") will be active for rendering.
 		bool per_vertex_color() const { return per_vertex_color_; }
 		void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
 
@@ -200,6 +228,9 @@ namespace easy3d {
         Box3 bbox_;
 
         bool visible_;
+
+        ColorScheme color_scheme_;
+
         bool per_vertex_color_;
         vec4 default_color_;
 

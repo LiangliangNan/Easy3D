@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <QWidget>
 
+#include <easy3d/viewer/drawable.h>
 
 namespace easy3d {
     class Model;
@@ -24,19 +25,38 @@ public:
     // update the panel to be consistent with the drawable's rendering parameters
     virtual void updatePanel() = 0;
 
-    // update the OpenGL buffers
-    virtual void updateRendering() = 0;
+public slots:
+
+    void setDrawableVisible(bool b);
+    void setLighting(const QString &text);
+
+    virtual void setColorScheme(const QString &text);
+
+    void setDistinctBackColor(bool);
+
+    void setScalarFieldStyle(int);
+    void setScalarFieldClamp(bool);
+    void setScalarFieldClampLower(double);
+    void setScalarFieldClampUpper(double);
+
+    void setTextureRepeat(int);
+    void setTextureFractionalRepeat(int);
+
+    void setVectorFieldScale(double);
+
+    void setHighlight(bool);
+    void setHighlightMin(int);
+    void setHighlightMax(int);
 
 protected:
     easy3d::Texture* colormapTexture(int) const;
 
-protected:
-    MainWindow*     main_window_;
-    PaintCanvas*    viewer_;
+    // the current drawable who rendering can be manipulated
+    virtual easy3d::Drawable* drawable() = 0;
 
-    // the rendering of only the selected drawable can be changed.
-    // this variable keeps the history so the rendering panels are up to date when switching between models.
-    std::unordered_map<easy3d::Model*, std::string> active_drawable_;
+    virtual void disableUnavailableOptions() = 0;
+
+    virtual void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) = 0;
 
     struct ColorMap {
         ColorMap(const std::string& f, const std::string& n) : file(f), name(n), texture(nullptr) {}
@@ -44,7 +64,41 @@ protected:
         std::string name;
         easy3d::Texture* texture;
     };
+
+    struct State {
+        State() : initialized(false), scalar_style(0), vector_field("disabled"), vector_field_scale(1.0) {
+        }
+
+        bool initialized;
+        int scalar_style;
+        QString vector_field;
+        double vector_field_scale;
+    };
+
+protected:
+
+    // get the property name from the color scheme name, i.e., remove scalar_prefix_ substring
+    std::string color_property_name(const std::string& name, const std::string& scalar_prefix) const;
+
+    // get the color source from the color scheme name
+    easy3d::ColorScheme::Source color_source(const std::string& name, const std::string& scalar_prefix) const ;
+
+    // get the color location from the color scheme name
+    easy3d::ColorScheme::Location color_location(const std::string& name) const;
+
+protected:
+    MainWindow*     main_window_;
+    PaintCanvas*    viewer_;
+    QString         scalar_prefix_;
+
+    // the rendering of only the selected drawable can be changed.
+    // this variable keeps the history so the rendering panels are up to date when switching between models.
+    std::unordered_map<easy3d::Model*, std::string> active_drawable_;
+
     static std::vector<ColorMap> colormaps_;
+
+    // the state of the rendering panel
+    std::unordered_map<easy3d::Drawable *, State> states_;
 };
 
 #endif // WIDGET_DRAWABLE_H
