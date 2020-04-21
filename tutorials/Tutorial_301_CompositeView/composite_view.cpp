@@ -32,7 +32,6 @@
 #include <easy3d/viewer/shader_manager.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/transform.h>
-#include <easy3d/viewer/renderer.h>
 
 
 using namespace easy3d;
@@ -62,10 +61,8 @@ void CompositeView::draw() const {
     glViewport(0, h / 2, w / 2, h / 2);
     glScissor(0, h / 2, w / 2, h / 2);
     LinesDrawable* edges = current_model()->get_lines_drawable("edges");
-    if (!edges) {
+    if (!edges)
         edges = current_model()->add_lines_drawable("edges");
-        renderer::update_buffer(current_model(), edges);
-    }
     edges->draw(camera(), false);
     draw_grid();
 
@@ -79,7 +76,6 @@ void CompositeView::draw() const {
         vertices = current_model()->add_points_drawable("vertices");
         vertices->set_point_size(15.0f);
         vertices->set_impostor_type(PointsDrawable::SPHERE);
-        renderer::update_buffer(current_model(), vertices);
     }
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
@@ -93,8 +89,6 @@ void CompositeView::draw() const {
     TrianglesDrawable* faces = current_model()->get_triangles_drawable("faces");
     if (!faces)
         faces = current_model()->add_triangles_drawable("faces");
-    if (faces->is_modified())
-        faces->update();
     faces->draw(camera(), false);
     draw_grid();
 
