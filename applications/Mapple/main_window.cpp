@@ -17,6 +17,7 @@
 #include <easy3d/core/random.h>
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/camera.h>
+#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -1022,17 +1023,23 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
     const auto& components = SurfaceMeshComponent::extract(mesh);
     std::cout << "model has " << components.size() << " connected components" << std::endl;
 
-    auto face_color = mesh->face_property<vec3>("f:color_connected_components",vec3(0.5f, 0.5f, 0.5f));
+    const std::string color_name = "f:color_connected_components";
+    auto face_color = mesh->face_property<vec3>(color_name, vec3(0.5f, 0.5f, 0.5f));
     for (auto& comp : components) {
         const vec3& color = random_color(false);
         for (auto f : comp.faces())
             face_color[f] = color;
     }
 
-    updateRenderingPanel();
+    auto& scheme = mesh->get_triangles_drawable("faces")->color_scheme();
+    scheme.source = ColorScheme::COLOR_PROPERTY;
+    scheme.location = ColorScheme::FACE;
+    scheme.name = color_name;
 
     mesh->update();
     viewer()->update();
+
+    updateRenderingPanel();
 }
 
 
