@@ -229,8 +229,13 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     scheme.location = color_location(text.toStdString());
     scheme.name = color_property_name(text.toStdString(), scalar_prefix_.toStdString());
     
-    if (scheme.source == ColorScheme::TEXTURE || scheme.source == ColorScheme::SCALAR_FIELD)
+    if (scheme.source == ColorScheme::TEXTURE || scheme.source == ColorScheme::SCALAR_FIELD) {
         d->set_texture(colormapTexture(states_[d].scalar_style));
+        if (scheme.source == ColorScheme::SCALAR_FIELD) {
+            d->set_texture_repeat(1.0f);
+            d->set_texture_fractional_repeat(0.0f);
+        }
+    }
     else {
         d->set_texture(nullptr);
         d->set_use_texture(false);
@@ -240,5 +245,6 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     d->set_modified(true);
 
     viewer_->update();
-    disableUnavailableOptions();
+
+    updatePanel();
 }
