@@ -1194,12 +1194,12 @@ namespace easy3d {
             //      - "v:primitive_index" (-1, 0, 1, 2...)
             auto primitive_index = model->get_vertex_property<int>(segmentation);
             if (primitive_index) { // model has segmentation information
-                int count = 0;  // number of segments
+                int max_index = 0;
                 for (auto v : model->vertices())
-                    count = std::max(count, primitive_index[v]);
+                    max_index = std::max(max_index, primitive_index[v]);
 
                 // assign each segment a unique color
-                std::vector<vec3> color_table(count);
+                std::vector<vec3> color_table(max_index + 1);   // index starts from 0
                 for (auto &c : color_table)
                     c = random_color();
 
