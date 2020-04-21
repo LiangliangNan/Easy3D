@@ -72,6 +72,8 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
         // you can try different parameters of RANSAC (usually you don't need to tune them)
         int num = algo.detect(cloud, 200, 0.005f, 0.02f, 0.8f, 0.001f);
         if (num > 0) {
+            std::cout << num << " primitives extracted" << std::endl;
+
             // assign each plane a unique color
             auto drawable = cloud->get_points_drawable("vertices");
 
