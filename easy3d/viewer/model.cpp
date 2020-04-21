@@ -95,7 +95,7 @@ namespace easy3d {
 	}
 
 
-	PointsDrawable* Model::add_points_drawable(const std::string& name) {
+	PointsDrawable* Model::add_points_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
 		for (auto d : points_drawables_) {
 			if (d->name() == name) {
 				LOG(ERROR) << "drawable already exists: " << name;
@@ -104,12 +104,13 @@ namespace easy3d {
 		}
 		PointsDrawable* d = new PointsDrawable(name);
 		d->set_model(this);
+		d->set_update_func(update_func);
 		points_drawables_.push_back(d);
 		return d;
 	}
 
 
-	LinesDrawable* Model::add_lines_drawable(const std::string& name) {
+	LinesDrawable* Model::add_lines_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
 		for (auto d : lines_drawables_) {
 			if (d->name() == name) {
                 LOG(ERROR) << "drawable already exists: " << name;
@@ -117,13 +118,14 @@ namespace easy3d {
 			}
 		}
 		LinesDrawable* d = new LinesDrawable(name);
-		d->set_model(this);
+        d->set_model(this);
+        d->set_update_func(update_func);
 		lines_drawables_.push_back(d);
 		return d;
 	}
 
 
-    TrianglesDrawable* Model::add_triangles_drawable(const std::string& name) {
+    TrianglesDrawable* Model::add_triangles_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
         for (auto d : triangles_drawables_) {
 			if (d->name() == name) {
                 LOG(ERROR) << "drawable already exists: " << name;
@@ -131,7 +133,8 @@ namespace easy3d {
 			}
 		}
 		TrianglesDrawable* d = new TrianglesDrawable(name);
-		d->set_model(this);
+        d->set_model(this);
+        d->set_update_func(update_func);
         triangles_drawables_.push_back(d);
 		return d;
 	}

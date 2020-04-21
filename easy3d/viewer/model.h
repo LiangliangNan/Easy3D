@@ -79,11 +79,23 @@ namespace easy3d {
         LinesDrawable*  get_lines_drawable(const std::string& name) const;
         TrianglesDrawable*  get_triangles_drawable(const std::string& name) const;
 
-        // Create a drawable named 'name'.
-        // Ignore the creation if a drawable named 'name' already exists.
-        PointsDrawable* add_points_drawable(const std::string& name);
-        LinesDrawable*  add_lines_drawable(const std::string& name);
-        TrianglesDrawable*  add_triangles_drawable(const std::string& name);
+        /// Create a drawable assign it a name.
+        /// \param name The name of the drawable
+        /// \param update_func An callback function for the OpenGL buffers to be automatically updated when the model
+        ///        or the drawable has changed. This function is not needed for standard drawables, e.g.,
+        ///             - SurfaceMesh: "faces", "edge", "vertices", "borders", "locks";
+        ///             - PointCloud: "vertices";
+        ///             - Graph: "edge", "vertices".
+        ///        For non-standard drawable, the user must provide such a callback function in order for Easy3D to
+        ///        update the OpenGL buffers. The parameters of the function are:
+        ///             - the pointer to the base class of this model;
+        ///             - the pointer to the base class of the drawable;
+        ///             - user data.
+        /// \return The created drawable. If a drawable with 'name' already exists, the creation will be ignored and
+        ///         the existing drawable will be returned.
+        PointsDrawable* add_points_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
+        LinesDrawable*  add_lines_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
+        TrianglesDrawable*  add_triangles_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
 
         // Returns all available drawables.
         const std::vector<PointsDrawable*>&  points_drawables() const { return points_drawables_; }
@@ -107,6 +119,7 @@ namespace easy3d {
         std::vector<LinesDrawable*>     lines_drawables_;
         std::vector<TrianglesDrawable*> triangles_drawables_;
     };
+
 }
 
 #endif  // EASY3D_MODEL_H
