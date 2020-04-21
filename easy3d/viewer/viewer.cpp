@@ -847,20 +847,6 @@ namespace easy3d {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
                     drawable->set_line_width(setting::surface_mesh_borders_line_width);
-
-                    auto func = [](Model* model, Drawable* drawable) -> void {
-                        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-                        auto prop = mesh->get_vertex_property<vec3>("v:point");
-                        std::vector<vec3> points;
-                        for (auto e : mesh->edges()) {
-                            if (mesh->is_boundary(e)) {
-                                points.push_back(prop[mesh->vertex(e, 0)]);
-                                points.push_back(prop[mesh->vertex(e, 1)]);
-                            }
-                        }
-                        drawable->update_vertex_buffer(points);
-                    };
-                    drawable->set_update_func(func);
                 }
                 else
                     drawable->set_visible(!drawable->is_visible());
@@ -875,20 +861,6 @@ namespace easy3d {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(PointsDrawable::SPHERE);
                     drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
-                    auto func = [](Model* model, Drawable* drawable) -> void {
-                        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-                        auto lock = mesh->get_vertex_property<bool>("v:lock");
-                        if (lock) {
-                            auto prop = mesh->get_vertex_property<vec3>("v:point");
-                            std::vector<vec3> points;
-                            for (auto v : mesh->vertices()) {
-                                if (lock[v])
-                                    points.push_back(prop[v]);
-                            }
-                            drawable->update_vertex_buffer(points);
-                        }
-                    };
-                    drawable->set_update_func(func);
                 }
                 else
                     drawable->set_visible(!drawable->is_visible());

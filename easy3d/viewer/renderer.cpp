@@ -1003,6 +1003,33 @@ namespace easy3d {
             }
 
 
+            void update_mesh_borders(SurfaceMesh *model, LinesDrawable *drawable) {
+                auto prop = model->get_vertex_property<vec3>("v:point");
+                std::vector<vec3> points;
+                for (auto e : model->edges()) {
+                    if (model->is_boundary(e)) {
+                        points.push_back(prop[model->vertex(e, 0)]);
+                        points.push_back(prop[model->vertex(e, 1)]);
+                    }
+                }
+                drawable->update_vertex_buffer(points);
+            }
+
+
+            void update_mesh_locked_vertices(SurfaceMesh *model, PointsDrawable *drawable) {
+                auto lock = model->get_vertex_property<bool>("v:lock");
+                if (lock) {
+                    auto prop = model->get_vertex_property<vec3>("v:point");
+                    std::vector<vec3> points;
+                    for (auto v : model->vertices()) {
+                        if (lock[v])
+                            points.push_back(prop[v]);
+                    }
+                    drawable->update_vertex_buffer(points);
+                }
+            }
+
+
             void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
@@ -1225,6 +1252,11 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
+            if (drawable->name() == "locks") {
+                details::update_mesh_locked_vertices(model, drawable);
+                return;
+            }
+
             const auto &scheme = drawable->color_scheme();
             switch (scheme.source) {
                 case ColorScheme::TEXTURE: {
@@ -1288,6 +1320,11 @@ namespace easy3d {
         void update_buffer(SurfaceMesh *model, LinesDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (drawable->name() == "borders") {
+                details::update_mesh_borders(model, drawable);
+                return;
+            }
 
             const auto &scheme = drawable->color_scheme();
             switch (scheme.source) {
