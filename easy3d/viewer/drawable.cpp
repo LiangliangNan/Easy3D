@@ -174,7 +174,7 @@ namespace easy3d {
 
 
     void Drawable::update() {
-        if (!model()) {
+        if (!model() && !update_func_) {
             LOG(WARNING) << "drawable not associated with a model, please call the update_*_buffer(...) functions for an update";
             return;
         }
@@ -258,7 +258,7 @@ namespace easy3d {
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
-        if (modified_ && model_)
+        if (modified_ && (model_ || update_func_))
             const_cast<Drawable*>(this)->update();
 
         vao_->bind();

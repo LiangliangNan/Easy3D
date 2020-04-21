@@ -49,7 +49,7 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
-        if (modified_)
+        if (modified_ && (model() || update_func_))
             const_cast<TrianglesDrawable*>(this)->update();
 
         if (use_texture_ && texture_)

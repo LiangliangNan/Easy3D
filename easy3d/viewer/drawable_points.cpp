@@ -48,7 +48,7 @@ namespace easy3d {
 
 
     void PointsDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
-        if (modified_)
+        if (modified_ && (model() || update_func_))
             const_cast<PointsDrawable*>(this)->update();
 
         switch (impostor_type_) {
