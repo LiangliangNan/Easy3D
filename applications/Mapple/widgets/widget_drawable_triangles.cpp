@@ -238,7 +238,6 @@ void WidgetTrianglesDrawable::updatePanel() {
             ui->comboBoxVectorField->addItem(name);
 
         ui->comboBoxVectorField->setCurrentText(state.vector_field);
-        std::cout << state.vector_field.toStdString() << std::endl;
         ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
     }
 
@@ -477,7 +476,6 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
 
         states_[drawable()].vector_field = QString::fromStdString(name);
     }
-
 
     main_window_->updateRenderingPanel();
     viewer_->update();

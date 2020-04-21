@@ -213,6 +213,17 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
 std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *model) {
     std::vector<QString> fields;
 
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    if (cloud) {
+        // vector fields defined on vertices
+        for (const auto &name : cloud->vertex_properties()) {
+            if (cloud->get_vertex_property<vec3>(name)) {
+                if (name != "v:color" && name != "v:point")
+                    fields.push_back(QString::fromStdString(name));
+            }
+        }
+    }
+
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
         // vector fields defined on vertices

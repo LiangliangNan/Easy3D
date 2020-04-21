@@ -1,7 +1,8 @@
 #include "widget_drawable.h"
 
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/drawable.h>
+#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/model.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
 
@@ -171,11 +172,12 @@ void WidgetDrawable::setTextureFractionalRepeat(int r) {
 
 void WidgetDrawable::setVectorFieldScale(double s) {
     auto d = drawable();
-    const QString &name = states_[d].vector_field;
-    updateVectorFieldBuffer(viewer_->currentModel(), name.toStdString());
-
-    viewer_->update();
     states_[d].vector_field_scale = s;
+
+    auto drawa = viewer_->currentModel()->get_lines_drawable("vector - " + states_[d].vector_field.toStdString());
+    if (drawa)
+        drawa->set_modified(true);
+    viewer_->update();
 }
 
 
