@@ -29,7 +29,6 @@
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
 
 
@@ -243,7 +242,7 @@ namespace easy3d {
         auto drawable = model->get_triangles_drawable("faces");
         if (!drawable) {
             drawable = model->add_triangles_drawable("faces");
-            renderer::update_buffer(model, drawable);
+            drawable->update();
         }
 
         int viewport[4];
