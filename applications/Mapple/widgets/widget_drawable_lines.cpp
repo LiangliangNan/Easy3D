@@ -173,18 +173,6 @@ void WidgetLinesDrawable::updatePanel() {
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
         ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
-
-//        // texture
-//        auto tex = d->texture();
-//        if (tex) {
-//            const std::string &tex_name = file_system::simple_name(tex->file_name());
-//            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
-//        }
-//        else
-//            ui->lineEditTextureFile->setText("");
-//
-//        ui->spinBoxTextureRepeat->setValue(d->texture_repeat());
-//        ui->spinBoxTextureFractionalRepeat->setValue(d->texture_fractional_repeat());
     }
 
     {   // highlight

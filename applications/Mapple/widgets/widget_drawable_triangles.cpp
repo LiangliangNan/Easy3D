@@ -469,6 +469,12 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
 }
 
 
+void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
+    WidgetDrawable::setScalarFieldStyle(idx);
+    ui->lineEditTextureFile->setText(QString::fromStdString(colormaps_[idx].name));
+}
+
+
 void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
     if (mesh) {

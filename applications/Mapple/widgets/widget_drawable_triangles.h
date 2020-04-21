@@ -36,6 +36,7 @@ public slots:
 
     void setOpacity(int);
 
+    void setScalarFieldStyle(int);
     void setVectorField(const QString &);
 
 private:
