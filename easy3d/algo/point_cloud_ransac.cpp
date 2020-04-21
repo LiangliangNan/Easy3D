@@ -117,11 +117,11 @@ namespace easy3d {
 
         auto primitive_types = cloud->vertex_property<int>("v:primitive_type", PrimitivesRansac::UNKNOWN);
         auto primitive_indices = cloud->vertex_property<int>("v:primitive_index", -1);
-        primitive_types.vector().resize(cloud->n_vertices(), PrimitivesRansac::UNKNOWN);
-        primitive_indices.vector().resize(cloud->n_vertices(), -1);
+        primitive_types.vector().assign(cloud->n_vertices(), PrimitivesRansac::UNKNOWN);
+        primitive_indices.vector().assign(cloud->n_vertices(), -1);
 
         int index = 0;
-        for (unsigned int id = 0; shape_itr != shapes.end(); ++shape_itr, ++id) {
+        for (; shape_itr != shapes.end(); ++shape_itr) {
             const PrimitiveShape *primitive = shape_itr->first;
             std::size_t num = shape_itr->second;
 
@@ -212,12 +212,6 @@ namespace easy3d {
                 }
             }
             ++index;
-        }
-
-        // assign the ungroup points a positive index
-        for (auto v : cloud->vertices()) {
-            if (primitive_indices[v] == -1)
-                primitive_indices[v] = index;
         }
 
         LOG(INFO) << index << " primitives extracted. " << remaining << " points remained";
