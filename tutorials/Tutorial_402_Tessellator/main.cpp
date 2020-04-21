@@ -26,6 +26,7 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
 
@@ -157,6 +158,10 @@ int main(int argc, char** argv) {
 
         // ------------------------------------------------------------
 
+        // also show the borders
+        mesh->add_lines_drawable("borders");
+
+        // add the model to the viewer
         viewer.add_model(mesh, true);
 
         // Run the viewer

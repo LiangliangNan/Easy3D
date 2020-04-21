@@ -82,7 +82,12 @@ int main(int argc, char** argv) {
         drawable->set_texture(tex);
         drawable->set_use_texture(true);
         drawable->set_per_vertex_color(true);
+
+        drawable->color_scheme().source = ColorScheme::TEXTURE;
         drawable->color_scheme().name = "v:texcoord";
+
+        // also show the borders
+        mesh->add_lines_drawable("borders");
 
         // -------------------------------------------------------------------------------
 

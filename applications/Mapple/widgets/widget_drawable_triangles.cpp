@@ -238,6 +238,7 @@ void WidgetTrianglesDrawable::updatePanel() {
             ui->comboBoxVectorField->addItem(name);
 
         ui->comboBoxVectorField->setCurrentText(state.vector_field);
+        std::cout << state.vector_field.toStdString() << std::endl;
         ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
     }
 
@@ -471,13 +472,14 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->get_lines_drawable("vector - f:normal");
+        auto d = mesh->get_lines_drawable("vector - " + name);
         d->set_visible(true);
 
-        states_[d].vector_field = "f:normal";
+        states_[drawable()].vector_field = QString::fromStdString(name);
     }
 
-    main_window_->updateUi();
+
+    main_window_->updateRenderingPanel();
     viewer_->update();
 }
 
@@ -505,39 +507,40 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
 
         // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
         auto drawable = mesh->get_lines_drawable("vector - f:normal");
-        if (!drawable)
+        if (!drawable) {
             drawable = mesh->add_lines_drawable("vector - f:normal");
+            drawable->set_update_func([this](Model *m, Drawable *d) -> void {
+                auto surface = dynamic_cast<SurfaceMesh *>(m);
+                auto points = surface->get_vertex_property<vec3>("v:point");
+                auto fprop = surface->get_face_property<vec3>("f:normal");
 
-        auto points = mesh->get_vertex_property<vec3>("v:point");
+                // use a limited number of edge to compute the length of the vectors.
+                float avg_edge_length = 0.0f;
+                const int num = std::min(static_cast<unsigned int>(500), surface->n_edges());
+                for (unsigned int i = 0; i < num; ++i) {
+                    SurfaceMesh::Edge edge(i);
+                    auto vs = surface->vertex(edge, 0);
+                    auto vt = surface->vertex(edge, 1);
+                    avg_edge_length += distance(points[vs], points[vt]);
+                }
+                avg_edge_length /= num;
 
-        // use a limited number of edge to compute the length of the vectors.
-        float avg_edge_length = 0.0f;
-        const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
-        for (unsigned int i = 0; i < num; ++i) {
-            SurfaceMesh::Edge edge(i);
-            auto vs = mesh->vertex(edge, 0);
-            auto vt = mesh->vertex(edge, 1);
-            avg_edge_length += distance(points[vs], points[vt]);
+                std::vector<vec3> vertices(surface->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+                int idx = 0;
+                float scale = ui->doubleSpinBoxVectorFieldScale->value();
+                for (auto f: surface->faces()) {
+                    int size = 0;
+                    for (auto v: surface->vertices(f)) {
+                        vertices[idx] += points[v];
+                        ++size;
+                    }
+                    vertices[idx] /= size;
+                    vertices[idx + 1] = vertices[idx] + fprop[f] * avg_edge_length * scale;
+                    idx += 2;
+                }
+                d->update_vertex_buffer(vertices);
+            });
         }
-        avg_edge_length /= num;
-
-        std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-        int idx = 0;
-        float scale = ui->doubleSpinBoxVectorFieldScale->value();
-        for (auto f: mesh->faces()) {
-            int size = 0;
-            for (auto v: mesh->vertices(f)) {
-                vertices[idx] += points[v];
-                ++size;
-            }
-            vertices[idx] /= size;
-            vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
-            idx += 2;
-        }
-
-        viewer_->makeCurrent();
-        drawable->update_vertex_buffer(vertices);
-        viewer_->doneCurrent();
     }
 }
 
