@@ -119,9 +119,9 @@ int main(int argc, char** argv) {
     // loop over all edges
     for (auto e : g->edges()) {
         std::cout << "the two end points of edge " << e << ": ";
-        Graph::Vertex vs = g->from_vertex(e);
+        Graph::Vertex vs = g->vertex(e, 0);
         std::cout << vs << " ";
-        Graph::Vertex vt = g->to_vertex(e);
+        Graph::Vertex vt = g->vertex(e, 1);
         std::cout << vt << " " << std::endl;
     }
 
