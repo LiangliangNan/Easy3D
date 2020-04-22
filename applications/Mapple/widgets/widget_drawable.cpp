@@ -231,6 +231,7 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     
     if (scheme.source == ColorScheme::TEXTURE || scheme.source == ColorScheme::SCALAR_FIELD) {
         d->set_texture(colormapTexture(states_[d].scalar_style));
+        d->set_use_texture(true);
         if (scheme.source == ColorScheme::SCALAR_FIELD) {
             d->set_texture_repeat(1.0f);
             d->set_texture_fractional_repeat(0.0f);
