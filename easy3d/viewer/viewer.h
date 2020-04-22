@@ -92,7 +92,7 @@ namespace easy3d {
         /**
          * Run the viewer.
          */
-        void run();
+        int run();
 
 
         /** -------------------- The viewer properties ---------------------- */

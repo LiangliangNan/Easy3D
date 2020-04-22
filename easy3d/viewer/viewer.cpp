@@ -983,7 +983,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::run() {
+    int Viewer::run() {
         // initialize before showing the window because it can be slow
         init();
 
@@ -1034,12 +1034,14 @@ namespace easy3d {
 
             /* Process events once more */
             glfwPollEvents();
+            cleanup();
+            return EXIT_SUCCESS;
         }
         catch (const std::exception &e) {
             LOG(ERROR) << "Caught exception in main loop: " << e.what();
+            cleanup();
+            return EXIT_FAILURE;
         }
-
-        cleanup();
     }
 
 
