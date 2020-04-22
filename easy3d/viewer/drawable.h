@@ -30,12 +30,6 @@
 
 #include <easy3d/core/types.h>
 
-/********************************************************************************************
-* A Drawable is a general abstraction for "something that can be drawn."
-* Drawable is the base class for drawable objects (i.e., points, line segments, triangles).
-* A drawable manages the rendering of an objects. When data (vertex coordinates/colors/normals,
-* selection, etc.) changes, it controls the upload of the data to GPU.
-*********************************************************************************************/
 
 namespace easy3d {
 
@@ -73,6 +67,14 @@ namespace easy3d {
         float dummy_upper;  // the percentage of values to be clamped (used by rendering scalar field)
     };
 
+
+    /**
+     * @brief The base class for drawable objects like points, line segments, and triangles.
+     * @details A Drawable is a general abstraction for "something that can be drawn" (i.e., drawable objects).
+     *          A drawable manages its rendering status and controls the upload of the data to the GPU.
+     *          A drawable can live independently or be associated with a Model.
+     * @related @class Model
+     */
 
     class Drawable {
     public:
@@ -114,17 +116,7 @@ namespace easy3d {
         unsigned int storage_buffer() const { return storage_buffer_; }
         unsigned int selection_buffer() const { return selection_buffer_; }
 
-        // ------------------- buffer creation/update ------------------------
-
-        /// To render non-standard model drawables (e.g., visualized the locked vertices of a mesh), a user can provide
-        /// a customized function for update the OpenGL buffers.
-        /// @related Standard drawables can be easily updated by calling the "renderer::update_buffer(...)" functions.
-        void set_update_func(std::function<void(Model*, Drawable*)> func) { update_func_ = func; }
-
-        /// Update all the OpenGL buffers of this drawable.
-        /// By default, the "renderer::update_buffer(...)" function is called. For non-standard drawables, a user needs
-        /// to provide the update function by calling the "set_update_func(...)" function.
-        void update();
+        // ------------------- buffer management ------------------------
 
         /// Creates/Updates a single buffer.
         void update_vertex_buffer(const std::vector<vec3> &vertices);
@@ -146,11 +138,28 @@ namespace easy3d {
         /// Releases the index buffer if existing vertex data is sufficient (may require duplicating vertex data).
         void release_element_buffer();
 
-        /// Sets the drawable modified when the rendering needs update.
-        void set_modified(bool b = true) { modified_ = b; }
-        bool is_modified() const { return modified_; }
+        /**
+         * @brief Updates the OpenGL buffers of this drawable.
+         * @details This function sets the status requesting updates the OpenGL buffers. The actual update does not
+         *          occur immediately but is deferred to the rendering phase.
+         * @attention This method works for standard drawables (no update function required) and non-standard drawable
+         *            (update function required). Standard drawables include:
+         *              - SurfaceMesh: "faces", "edges", "vertices", "borders", "locks";
+         *              - PointCloud: "vertices";
+         *              - Graph: "edges", "vertices".
+         * @TODO: promote face/vertex normals to the standard ones.
+         */
+        void update_buffers();
 
-        // ---------------------- get data from GPU -------------------------
+        /**
+         * @brief Setups how a drwable can update its OpenGL buffers. This function is required by only non-standard
+         *        drawables for a special visualization purpose. Standard drawables can be automatically updated and
+         *        do not require this function.
+         * @related renderer::update_buffers(...), update_buffers().
+         */
+        void set_update_func(std::function<void(Model*, Drawable*)> func) { update_func_ = func; }
+
+        // ----------------- access data from the buffers -------------------
 
         void fetch_selection_buffer();
 
@@ -277,7 +286,7 @@ namespace easy3d {
         std::size_t num_vertices_;
         std::size_t num_indices_;
 
-        bool modified_;
+        bool need_update_buffers_;
         std::function<void(Model*, Drawable*)> update_func_;
 
         unsigned int vertex_buffer_;

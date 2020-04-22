@@ -89,7 +89,7 @@ void create_cones(SurfaceMesh* mesh) {
     drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
     drawable->set_impostor_type(LinesDrawable::CONE);
     drawable->set_line_width(8);
-    drawable->set_modified(false);
+
 }
 
 

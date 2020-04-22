@@ -104,7 +104,7 @@ void WidgetDrawable::setScalarFieldClamp(bool b) {
     auto d = drawable();
     auto& scheme = d->color_scheme();
     scheme.clamp_value = b;
-    d->set_modified(true);
+    d->update_buffers();
     viewer_->update();
 }
 
@@ -113,7 +113,7 @@ void WidgetDrawable::setScalarFieldClampLower(double v) {
     auto d = drawable();
     auto& scheme = d->color_scheme();
     scheme.dummy_lower = v / 100.0f;
-    d->set_modified(true);
+    d->update_buffers();
     viewer_->update();
 }
 
@@ -122,7 +122,7 @@ void WidgetDrawable::setScalarFieldClampUpper(double v) {
     auto d = drawable();
     auto& scheme = d->color_scheme();
     scheme.dummy_upper = v / 100.0f;
-    d->set_modified(true);
+    d->update_buffers();
     viewer_->update();
 }
 
@@ -176,7 +176,7 @@ void WidgetDrawable::setVectorFieldScale(double s) {
 
     auto drawa = viewer_->currentModel()->get_lines_drawable("vector - " + states_[d].vector_field.toStdString());
     if (drawa)
-        drawa->set_modified(true);
+        drawa->update_buffers();
     viewer_->update();
 }
 
@@ -242,7 +242,7 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     }
 
     d->set_per_vertex_color(scheme.source != ColorScheme::UNIFORM_COLOR);
-    d->set_modified(true);
+    d->update_buffers();
 
     viewer_->update();
 

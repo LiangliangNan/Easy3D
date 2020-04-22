@@ -60,11 +60,11 @@ namespace easy3d {
 
     void Model::update() {
         for (auto d : points_drawables_)
-            d->set_modified(true);
+            d->update_buffers();
         for (auto d : lines_drawables())
-            d->set_modified(true);
+            d->update_buffers();
         for (auto d : triangles_drawables_)
-            d->set_modified(true);
+            d->update_buffers();
     }
 
 
@@ -95,7 +95,7 @@ namespace easy3d {
 	}
 
 
-	PointsDrawable* Model::add_points_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
+	PointsDrawable* Model::add_points_drawable(const std::string& name) {
 		for (auto d : points_drawables_) {
 			if (d->name() == name) {
 				LOG(ERROR) << "drawable already exists: " << name;
@@ -104,13 +104,13 @@ namespace easy3d {
 		}
 		PointsDrawable* d = new PointsDrawable(name);
 		d->set_model(this);
-		d->set_update_func(update_func);
+		d->update_buffers();
 		points_drawables_.push_back(d);
 		return d;
 	}
 
 
-	LinesDrawable* Model::add_lines_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
+	LinesDrawable* Model::add_lines_drawable(const std::string& name) {
 		for (auto d : lines_drawables_) {
 			if (d->name() == name) {
                 LOG(ERROR) << "drawable already exists: " << name;
@@ -119,13 +119,13 @@ namespace easy3d {
 		}
 		LinesDrawable* d = new LinesDrawable(name);
         d->set_model(this);
-        d->set_update_func(update_func);
+        d->update_buffers();
 		lines_drawables_.push_back(d);
 		return d;
 	}
 
 
-    TrianglesDrawable* Model::add_triangles_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func) {
+    TrianglesDrawable* Model::add_triangles_drawable(const std::string& name) {
         for (auto d : triangles_drawables_) {
 			if (d->name() == name) {
                 LOG(ERROR) << "drawable already exists: " << name;
@@ -134,7 +134,7 @@ namespace easy3d {
 		}
 		TrianglesDrawable* d = new TrianglesDrawable(name);
         d->set_model(this);
-        d->set_update_func(update_func);
+        d->update_buffers();
         triangles_drawables_.push_back(d);
 		return d;
 	}

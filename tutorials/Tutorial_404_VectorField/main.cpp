@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 
         // Set the line width
         drawable->set_line_width(3.0f);
-        drawable->set_modified(false);
+
 
         // also show the standard "edges"
         model->add_lines_drawable("edges");

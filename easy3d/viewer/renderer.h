@@ -47,7 +47,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(Model* model, Drawable* drawable);
+        void update_buffers(Model* model, Drawable* drawable);
 
 
         // PointCloud -------------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(PointCloud* model, PointsDrawable* drawable);
+        void update_buffers(PointCloud* model, PointsDrawable* drawable);
 
         /**
          * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
@@ -77,7 +77,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-         void update_buffer(SurfaceMesh* model, PointsDrawable* drawable);
+         void update_buffers(SurfaceMesh* model, PointsDrawable* drawable);
 
         /**
          * @brief Update render buffers for the default "edges" drawable of a surface mesh.
@@ -85,7 +85,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(SurfaceMesh* model, LinesDrawable* drawable);
+        void update_buffers(SurfaceMesh* model, LinesDrawable* drawable);
 
 
         /**
@@ -94,7 +94,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable);
+        void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable);
 
 
         // Graph ------------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(Graph* model, PointsDrawable* drawable);
+        void update_buffers(Graph* model, PointsDrawable* drawable);
 
 
         /**
@@ -114,7 +114,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update_buffer(Graph* model, LinesDrawable* drawable);
+        void update_buffers(Graph* model, LinesDrawable* drawable);
 
     }
 

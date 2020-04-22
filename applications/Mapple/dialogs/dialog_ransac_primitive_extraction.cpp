@@ -95,7 +95,7 @@ void DialogRansacPrimitiveExtraction::extract() {
     vertices->color_scheme().name = name;
     vertices->set_per_vertex_color(true);
     vertices->set_use_texture(false);
-    vertices->set_modified();
+    vertices->update_buffers();
 
     viewer_->update();
     main_window_->updateRenderingPanel();

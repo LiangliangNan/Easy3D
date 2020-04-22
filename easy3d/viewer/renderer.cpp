@@ -71,7 +71,7 @@ namespace easy3d {
             }
 
             template <typename FT>
-            inline void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop) {
+            inline void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -98,7 +98,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update_buffer(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update_buffers(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -126,7 +126,7 @@ namespace easy3d {
 
 
             template<typename FT>
-            inline void update_buffer(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<FT> prop) {
+            inline void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -161,7 +161,7 @@ namespace easy3d {
 
 
             template<typename FT>
-            inline void update_buffer(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            inline void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -200,7 +200,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update_buffer(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<FT> prop) {
+            update_buffers(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -228,7 +228,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update_buffer(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::FaceProperty<FT> prop) {
+            update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::FaceProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -316,7 +316,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update_buffer(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -403,7 +403,7 @@ namespace easy3d {
 
 
             template<typename FT>
-            void update_buffer(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -440,7 +440,7 @@ namespace easy3d {
 
 
             template<typename FT>
-            void update_buffer(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<FT> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -478,7 +478,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop) {
+            void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -493,7 +493,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop) {
+            void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -508,7 +508,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            void update_buffers(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -519,7 +519,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            void update_buffers(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -530,7 +530,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh *model, TrianglesDrawable *drawable) {
+            void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
                 assert(model);
                 assert(drawable);
 
@@ -599,7 +599,7 @@ namespace easy3d {
             }
 
             // with a per-face color
-            void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<vec3> fcolor) {
+            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<vec3> fcolor) {
                 assert(model);
                 assert(drawable);
                 assert(fcolor);
@@ -674,7 +674,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
+            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
                 assert(model);
                 assert(drawable);
                 assert(vcolor);
@@ -747,7 +747,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> vtexcoords) {
+            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> vtexcoords) {
                 assert(model);
                 assert(drawable);
                 assert(vtexcoords);
@@ -830,7 +830,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::HalfedgeProperty<vec2> htexcoords) {
+            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::HalfedgeProperty<vec2> htexcoords) {
                 assert(model);
                 assert(drawable);
                 assert(htexcoords);
@@ -913,7 +913,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
+            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -936,7 +936,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -959,7 +959,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -981,7 +981,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
+            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1030,7 +1030,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            void update_buffers(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1042,7 +1042,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            void update_buffers(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1054,7 +1054,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
+            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1077,7 +1077,7 @@ namespace easy3d {
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
             }
 
-            void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1099,7 +1099,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
+            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1124,7 +1124,7 @@ namespace easy3d {
             }
 
 
-            void update_buffer(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1153,7 +1153,7 @@ namespace easy3d {
 
 
 
-        void update_buffer(PointCloud *model, PointsDrawable *drawable) {
+        void update_buffers(PointCloud *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1162,7 +1162,7 @@ namespace easy3d {
                 case ColorScheme::TEXTURE: {
                     auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                     if (texcoord)
-                        details::update_buffer(model, drawable, texcoord);
+                        details::update_buffers(model, drawable, texcoord);
                     else
                         LOG(WARNING) << "texcoord property not found: " << scheme.name;
                     break;
@@ -1171,7 +1171,7 @@ namespace easy3d {
                 case ColorScheme::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(scheme.name);
                     if (colors)
-                        details::update_buffer(model, drawable, colors);
+                        details::update_buffers(model, drawable, colors);
                     else
                         LOG(WARNING) << "color property not found: " << scheme.name;
                     break;
@@ -1180,16 +1180,16 @@ namespace easy3d {
                 case ColorScheme::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(scheme.name)) {
                         auto prop = model->get_vertex_property<float>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(scheme.name)) {
                         auto prop = model->get_vertex_property<double>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(scheme.name)) {
                         auto prop = model->get_vertex_property<int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                         auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << scheme.name;
                         return;
@@ -1248,7 +1248,7 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
-        void update_buffer(SurfaceMesh *model, PointsDrawable *drawable) {
+        void update_buffers(SurfaceMesh *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1262,7 +1262,7 @@ namespace easy3d {
                 case ColorScheme::TEXTURE: {
                     auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                     if (texcoord)
-                        details::update_buffer(model, drawable, texcoord);
+                        details::update_buffers(model, drawable, texcoord);
                     else
                         LOG(WARNING) << "texcoord property not found: " << scheme.name;
                     break;
@@ -1271,7 +1271,7 @@ namespace easy3d {
                 case ColorScheme::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(scheme.name);
                     if (colors)
-                        details::update_buffer(model, drawable, colors);
+                        details::update_buffers(model, drawable, colors);
                     else
                         LOG(WARNING) << "color property not found: " << scheme.name;
                     break;
@@ -1280,16 +1280,16 @@ namespace easy3d {
                 case ColorScheme::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(scheme.name)) {
                         auto prop = model->get_vertex_property<float>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(scheme.name)) {
                         auto prop = model->get_vertex_property<double>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(scheme.name)) {
                         auto prop = model->get_vertex_property<int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                         auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << scheme.name;
                         return;
@@ -1317,7 +1317,7 @@ namespace easy3d {
 
 
 
-        void update_buffer(SurfaceMesh *model, LinesDrawable *drawable) {
+        void update_buffers(SurfaceMesh *model, LinesDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1333,7 +1333,7 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             auto texcoord = model->get_edge_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on edges: " << scheme.name;
                             break;
@@ -1341,7 +1341,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
                             break;
@@ -1359,7 +1359,7 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             auto colors = model->get_edge_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1367,7 +1367,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1385,16 +1385,16 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             if (model->get_edge_property<float>(scheme.name)) {
                                 auto prop = model->get_edge_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<double>(scheme.name)) {
                                 auto prop = model->get_edge_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<int>(scheme.name)) {
                                 auto prop = model->get_edge_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_edge_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
                                 return;
@@ -1404,16 +1404,16 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             if (model->get_vertex_property<float>(scheme.name)) {
                                 auto prop = model->get_vertex_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(scheme.name)) {
                                 auto prop = model->get_vertex_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
                                 return;
@@ -1451,7 +1451,7 @@ namespace easy3d {
 
 
 
-        void update_buffer(SurfaceMesh *model, TrianglesDrawable *drawable) {
+        void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1462,7 +1462,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
                             break;
@@ -1470,7 +1470,7 @@ namespace easy3d {
                         case ColorScheme::HALFEDGE: {
                             auto texcoord = model->get_halfedge_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on halfedges: " << scheme.name;
                             break;
@@ -1488,7 +1488,7 @@ namespace easy3d {
                         case ColorScheme::FACE: {
                             auto colors = model->get_face_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1496,7 +1496,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1514,16 +1514,16 @@ namespace easy3d {
                         case ColorScheme::FACE: {
                             if (model->get_face_property<float>(scheme.name)) {
                                 auto prop = model->get_face_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_face_property<double>(scheme.name)) {
                                 auto prop = model->get_face_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_face_property<int>(scheme.name)) {
                                 auto prop = model->get_face_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_face_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_face_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
                                 return;
@@ -1533,16 +1533,16 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             if (model->get_vertex_property<float>(scheme.name)) {
                                 auto prop = model->get_vertex_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(scheme.name)) {
                                 auto prop = model->get_vertex_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
                                 return;
@@ -1559,7 +1559,7 @@ namespace easy3d {
 
                 default: {// uniform color
                     // if reached here, we choose a uniform color.
-                    details::update_buffer(model, drawable);
+                    details::update_buffers(model, drawable);
                     break;
                 }
             }
@@ -1571,7 +1571,7 @@ namespace easy3d {
 
 
 
-        void update_buffer(Graph *model, PointsDrawable *drawable) {
+        void update_buffers(Graph *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1580,7 +1580,7 @@ namespace easy3d {
                 case ColorScheme::TEXTURE: {
                     auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                     if (texcoord)
-                        details::update_buffer(model, drawable, texcoord);
+                        details::update_buffers(model, drawable, texcoord);
                     else
                         LOG(WARNING) << "texcoord property not found: " << scheme.name;
                     break;
@@ -1589,7 +1589,7 @@ namespace easy3d {
                 case ColorScheme::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(scheme.name);
                     if (colors)
-                        details::update_buffer(model, drawable, colors);
+                        details::update_buffers(model, drawable, colors);
                     else
                         LOG(WARNING) << "color property not found: " << scheme.name;
                     break;
@@ -1598,16 +1598,16 @@ namespace easy3d {
                 case ColorScheme::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(scheme.name)) {
                         auto prop = model->get_vertex_property<float>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(scheme.name)) {
                         auto prop = model->get_vertex_property<double>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(scheme.name)) {
                         auto prop = model->get_vertex_property<int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                         auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                        details::update_buffer(model, drawable, prop);
+                        details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << scheme.name;
                         return;
@@ -1633,7 +1633,7 @@ namespace easy3d {
 
 
 
-        void update_buffer(Graph *model, LinesDrawable *drawable) {
+        void update_buffers(Graph *model, LinesDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -1644,7 +1644,7 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             auto texcoord = model->get_edge_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on edges: " << scheme.name;
                             break;
@@ -1652,7 +1652,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(scheme.name);
                             if (texcoord)
-                                details::update_buffer(model, drawable, texcoord);
+                                details::update_buffers(model, drawable, texcoord);
                             else
                                 LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
                             break;
@@ -1670,7 +1670,7 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             auto colors = model->get_edge_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1678,7 +1678,7 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(scheme.name);
                             if (colors)
-                                details::update_buffer(model, drawable, colors);
+                                details::update_buffers(model, drawable, colors);
                             else
                                 LOG(WARNING) << "color property not found: " << scheme.name;
                             break;
@@ -1696,16 +1696,16 @@ namespace easy3d {
                         case ColorScheme::EDGE: {
                             if (model->get_edge_property<float>(scheme.name)) {
                                 auto prop = model->get_edge_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<double>(scheme.name)) {
                                 auto prop = model->get_edge_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<int>(scheme.name)) {
                                 auto prop = model->get_edge_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_edge_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
                                 return;
@@ -1715,16 +1715,16 @@ namespace easy3d {
                         case ColorScheme::VERTEX: {
                             if (model->get_vertex_property<float>(scheme.name)) {
                                 auto prop = model->get_vertex_property<float>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(scheme.name)) {
                                 auto prop = model->get_vertex_property<double>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(scheme.name);
-                                details::update_buffer(model, drawable, prop);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
                                 return;
@@ -1760,45 +1760,44 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
-
-        void update_buffer(Model *model, Drawable *drawable) {
+        void update_buffers(Model *model, Drawable *drawable) {
             if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud* cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
-                        update_buffer(cloud, dynamic_cast<PointsDrawable *>(drawable));
+                        update_buffers(cloud, dynamic_cast<PointsDrawable *>(drawable));
                         break;
                     case Drawable::DT_LINES:
-                        update_buffer(cloud, dynamic_cast<LinesDrawable *>(drawable));
+                        update_buffers(cloud, dynamic_cast<LinesDrawable *>(drawable));
                         break;
                     case Drawable::DT_TRIANGLES:
-                        update_buffer(cloud, dynamic_cast<TrianglesDrawable *>(drawable));
+                        update_buffers(cloud, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             } else if (dynamic_cast<Graph *>(model)) {
                 Graph* graph = dynamic_cast<Graph *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
-                        update_buffer(graph, dynamic_cast<PointsDrawable *>(drawable));
+                        update_buffers(graph, dynamic_cast<PointsDrawable *>(drawable));
                         break;
                     case Drawable::DT_LINES:
-                        update_buffer(graph, dynamic_cast<LinesDrawable *>(drawable));
+                        update_buffers(graph, dynamic_cast<LinesDrawable *>(drawable));
                         break;
                     case Drawable::DT_TRIANGLES:
-                        update_buffer(graph, dynamic_cast<TrianglesDrawable *>(drawable));
+                        update_buffers(graph, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             } else if (dynamic_cast<SurfaceMesh *>(model)) {
                 SurfaceMesh* mesh = dynamic_cast<SurfaceMesh *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
-                        update_buffer(mesh, dynamic_cast<PointsDrawable *>(drawable));
+                        update_buffers(mesh, dynamic_cast<PointsDrawable *>(drawable));
                         break;
                     case Drawable::DT_LINES:
-                        update_buffer(mesh, dynamic_cast<LinesDrawable *>(drawable));
+                        update_buffers(mesh, dynamic_cast<LinesDrawable *>(drawable));
                         break;
                     case Drawable::DT_TRIANGLES:
-                        update_buffer(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
+                        update_buffers(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             }

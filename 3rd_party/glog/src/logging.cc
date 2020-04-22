@@ -868,9 +868,9 @@ bool LastModifiedOver(const string& filepath, int days) {
 
   if (stat(filepath.c_str(), &file_stat) == 0) {
     // A day is 86400 seconds, so 7 days is 86400 * 7 = 604800 seconds.
-    time_t last_modified_time = file_stat.st_mtime;
+    time_t last_need_update_buffers_time = file_stat.st_mtime;
     time_t current_time = time(NULL);
-    return difftime(current_time, last_modified_time) > days * 86400;
+    return difftime(current_time, last_need_update_buffers_time) > days * 86400;
   }
 
   // If failed to get file stat, don't return true!

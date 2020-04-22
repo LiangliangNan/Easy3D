@@ -40,10 +40,10 @@ namespace easy3d {
     class LinesDrawable;
     class TrianglesDrawable;
 
-    /*
-    * Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud.
-    * A Model can have multiple drawables, e.g., faces, vertices, edges.
-    */
+    /**
+     * Model is the base class for 3D models, e.g., SurfaceMesh, PointCloud.
+     * A Model can have multiple drawables, e.g., faces, vertices, edges.
+     */
     class Model
     {
     public:
@@ -61,11 +61,17 @@ namespace easy3d {
         /// vector of vertex positions (read only)
         virtual const std::vector<vec3>& points() const = 0;
 
-        /// Sets the model modified after operations like remeshing/smoothing. This will update the OpenGL buffers,
-        /// ensuring the rendering to be updated automatically.
-        /// Note: all drawables associated with this model will be updated. This is equivalent to call the set_modified()
-        ///       function for every drawables. Performance may be improved by calling only the affected drawables (e.g.,
-        ///       the change in texture coordinates of a surface mesh doesn't change the rendering of its wireframe).
+        /**
+         * @brief Sets the model modified after processing (e.g., remeshing, denoising). This ensure the OpenGL buffers
+         *        are up-to-date before rendering.
+         * @details All drawables associated with this model will be updated. This is equivalent to call the
+         *          update_buffers() function for all the drawables of this model. To achieve better performance (for
+         *          huge models), it is wiser to update only the affected drawables and buffers. For example, the change
+         *          in texture coordinates of a surface mesh doesn't change the rendering of its "edges" and "vertices".
+         *          It is not necessary to update "edges" and "vertices". Besides, the vertex buffer and the index
+         *          buffer of the "faces" are also not affected and can avoid update. So, you only need to update the
+         *          texcoord buffer of the "faces".
+         */
         void update();
 
         //-------------------- rendering  -----------------------
@@ -79,23 +85,15 @@ namespace easy3d {
         LinesDrawable*  get_lines_drawable(const std::string& name) const;
         TrianglesDrawable*  get_triangles_drawable(const std::string& name) const;
 
-        /// Create a drawable assign it a name.
-        /// \param name The name of the drawable
-        /// \param update_func An callback function for the OpenGL buffers to be automatically updated when the model
-        ///        or the drawable has changed. This function is not needed for standard drawables, e.g.,
-        ///             - SurfaceMesh: "faces", "edge", "vertices", "borders", "locks";
-        ///             - PointCloud: "vertices";
-        ///             - Graph: "edge", "vertices".
-        ///        For non-standard drawable, the user must provide such a callback function in order for Easy3D to
-        ///        update the OpenGL buffers. The parameters of the function are:
-        ///             - the pointer to the base class of this model;
-        ///             - the pointer to the base class of the drawable;
-        ///             - user data.
-        /// \return The created drawable. If a drawable with 'name' already exists, the creation will be ignored and
-        ///         the existing drawable will be returned.
-        PointsDrawable* add_points_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
-        LinesDrawable*  add_lines_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
-        TrianglesDrawable*  add_triangles_drawable(const std::string& name, std::function<void(Model*, Drawable*)> update_func = nullptr);
+        /**
+         * Adds a drawable to this model.
+         * @param name The name of the drawable to assign.
+         * @return The created drawable. If a drawable with 'name' already exists, the creation will be ignored and the
+         *         existing drawable is returned.
+         */
+        PointsDrawable* add_points_drawable(const std::string& name);
+        LinesDrawable*  add_lines_drawable(const std::string& name);
+        TrianglesDrawable*  add_triangles_drawable(const std::string& name);
 
         // Returns all available drawables.
         const std::vector<PointsDrawable*>&  points_drawables() const { return points_drawables_; }

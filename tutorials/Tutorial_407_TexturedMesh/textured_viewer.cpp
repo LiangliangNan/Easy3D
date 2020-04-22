@@ -271,7 +271,7 @@ namespace easy3d {
                 }
             }
 
-            drawable->set_modified(false);
+
         }
 
         // the drawables have already been created

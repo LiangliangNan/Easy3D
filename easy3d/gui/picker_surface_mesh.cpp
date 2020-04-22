@@ -242,7 +242,7 @@ namespace easy3d {
         auto drawable = model->get_triangles_drawable("faces");
         if (!drawable) {
             drawable = model->add_triangles_drawable("faces");
-            drawable->update();
+            drawable->update_buffers();
         }
 
         int viewport[4];
