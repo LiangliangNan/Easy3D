@@ -1,26 +1,24 @@
-/**
- * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
- * https://3d.bk.tudelft.nl/liangliang/
- *
- * This file is part of Easy3D. If it is useful in your research/work,
- * I would be grateful if you show your appreciation by citing it:
- * ------------------------------------------------------------------
- *      Liangliang Nan.
- *      Easy3D: a lightweight, easy-to-use, and efficient C++
- *      library for processing and rendering 3D data. 2018.
- * ------------------------------------------------------------------
- * Easy3D is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 3
- * as published by the Free Software Foundation.
- *
- * Easy3D is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+// Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
+// Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
+// Copyright (c) 2009 Mikko Mononen memon@inside.org
+//
+// This software is provided 'as-is', without any express or implied
+// warranty.  In no event will the authors be held liable for any damages
+// arising from the use of this software.
+// Permission is granted to anyone to use this software for any purpose,
+// including commercial applications, and to alter it and redistribute it
+// freely, subject to the following restrictions:
+// 1. The origin of this software must not be misrepresented; you must not
+//    claim that you wrote the original software. If you use this software
+//    in a product, an acknowledgment in the product documentation would be
+//    appreciated but is not required.
+// 2. Altered source versions must be plainly marked as such, and must not be
+//    misrepresented as being the original software.
+// 3. This notice may not be removed or altered from any source distribution.
+//
+// The significant changes are that all fixed pipeline rendering code has been
+// replaced by shader-based rendering.
+// The original code is available at https://github.com/armadillu/ofxFontStash
 
 
 #include <easy3d/viewer/opengl_text.h>
@@ -29,28 +27,6 @@
 namespace easy3d {
 
     namespace details {
-
-        // Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
-        // Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
-        // Copyright (c) 2009 Mikko Mononen memon@inside.org
-        //
-        // This software is provided 'as-is', without any express or implied
-        // warranty.  In no event will the authors be held liable for any damages
-        // arising from the use of this software.
-        // Permission is granted to anyone to use this software for any purpose,
-        // including commercial applications, and to alter it and redistribute it
-        // freely, subject to the following restrictions:
-        // 1. The origin of this software must not be misrepresented; you must not
-        //    claim that you wrote the original software. If you use this software
-        //    in a product, an acknowledgment in the product documentation would be
-        //    appreciated but is not required.
-        // 2. Altered source versions must be plainly marked as such, and must not be
-        //    misrepresented as being the original software.
-        // 3. This notice may not be removed or altered from any source distribution.
-        //
-        // The significant changes are that all fixed pipeline rendering code has been
-        // replaced by shader-based rendering.
-        // The original code is available at https://github.com/armadillu/ofxFontStash
 
         struct sth_stash *sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale);
 
@@ -830,6 +806,23 @@ namespace easy3d {
     }
 
 
+    float OpenGLText::string_width(const std::string& str, float font_size) const {
+        const Rect& rect = _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
+        return rect.width();
+    }
+
+
+    float OpenGLText::string_height(const std::string& str, float font_size) const {
+        const Rect& rect = _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
+        return rect.height();
+    }
+
+
+    Rect OpenGLText::string_bounding_rect(const std::string& str, float x, float y, float font_size) const {
+        return _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
+    }
+
+
     float
     OpenGLText::draw(const std::string &text, float x, float y, float font_size, int font_id, const vec3 &font_color,
                      bool upper_left) const {
@@ -980,7 +973,7 @@ namespace easy3d {
             lines.push_back(s);
             float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
             ys.push_back(yy);
-            Rect dim = get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
+            const Rect& dim = _get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
 
             if (line == 0) {
                 rect = dim;
@@ -1035,7 +1028,7 @@ namespace easy3d {
     }
 
 
-    Rect OpenGLText::get_bbox(const std::string &text, float font_size, float xx, float yy, Align align,
+    Rect OpenGLText::_get_bbox(const std::string &text, float font_size, float xx, float yy, Align align,
                               float line_spacing) const {
         const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 

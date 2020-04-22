@@ -161,6 +161,30 @@ namespace easy3d {
          */
         float font_height(float font_size) const;
 
+        /**
+         * Query the width of a string (treated as if with no space between characters). Useful to position a string.
+         * For example, with the string width, its X-center can be computed as: viewer_width * 0.5 - string_width * 0.5.
+         * @param font_size The font size.
+         * @return The width of the string in pixels.
+         */
+        float string_width(const std::string& str, float font_size) const;
+
+        /**
+         * Query the height of a string.
+         * @param font_size The font size.
+         * @return The height of the string in pixels.
+         */
+        float string_height(const std::string& str, float font_size) const;
+
+        /**
+         * Query the bounding rectangle of a string (treated as if with no space between characters).
+         * @param x The x-coordinate of the starting position, relative to the left edge of the content area.
+         * @param y The y-coordinate of the starting position, relative to the top edge of the content area.
+         * @param font_size The font size.
+         * @return The bounding rectangle of the string (in pixels).
+         */
+        Rect string_bounding_rect(const std::string& str, float x, float y, float font_size) const;
+
     private:
 
         void flush_draw(const vec3 &font_color) const;
@@ -168,7 +192,7 @@ namespace easy3d {
 #ifdef ENABLE_MULTILINE_TEXT_RENDERING
 
         //if the text has newlines, it will be treated as if was called into drawing multiple lines
-        Rect get_bbox(const std::string &text, float size, float x, float y, Align align, float line_spacing) const;
+        Rect _get_bbox(const std::string &text, float size, float x, float y, Align align, float line_spacing) const;
 
 #endif
 
