@@ -1,3 +1,7 @@
+#### 22/04/2020
+  - easier OpenGL buffer management (buffers of standard model drawabls can be automatically updated when model is modified).
+  - reorganize the tutorials (because I am planning to add more tutorials which needs to be better grouped).
+  
 #### 27/01/2020
   - now loading models from files is done through ManifoldBuilder that resolves non-manifoldness.
 
