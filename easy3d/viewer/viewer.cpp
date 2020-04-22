@@ -806,13 +806,11 @@ namespace easy3d {
                         if (dynamic_cast<SurfaceMesh *>(current_model())) {
                             edges->set_default_color(setting::surface_mesh_edges_color);
                             edges->set_line_width(setting::surface_mesh_edges_line_width);
-                            edges->update_buffers();
                         }
                         else if (dynamic_cast<Graph *>(current_model())) {
                             edges->set_default_color(setting::graph_edges_color);
                             edges->set_line_width(setting::graph_edges_line_width);
                             edges->set_impostor_type(LinesDrawable::CYLINDER);
-                            edges->update_buffers();
                         }
                     }
                 } else
@@ -826,18 +824,15 @@ namespace easy3d {
                     if (dynamic_cast<SurfaceMesh*>(current_model())) {
                         vertices->set_impostor_type(PointsDrawable::SPHERE);
                         vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                        vertices->update_buffers();
                     }
                     else if (dynamic_cast<PointCloud*>(current_model())) {
                         vertices->set_point_size(setting::point_cloud_point_size);
                         vertices->set_default_color(setting::point_cloud_points_color);
-                        vertices->update_buffers();
                     }
                     else if (dynamic_cast<Graph*>(current_model())) {
                         vertices->set_default_color(setting::graph_vertices_color);
                         vertices->set_point_size(setting::graph_vertices_point_size);
                         vertices->set_impostor_type(PointsDrawable::SPHERE);
-                        vertices->update_buffers();
                     }
                 } else
                     vertices->set_visible(!vertices->is_visible());
@@ -852,7 +847,6 @@ namespace easy3d {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
                     drawable->set_line_width(setting::surface_mesh_borders_line_width);
-                    drawable->update_buffers();
                 }
                 else
                     drawable->set_visible(!drawable->is_visible());
@@ -867,7 +861,6 @@ namespace easy3d {
                     drawable->set_per_vertex_color(false);
                     drawable->set_impostor_type(PointsDrawable::SPHERE);
                     drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
-                    drawable->update_buffers();
                 }
                 else
                     drawable->set_visible(!drawable->is_visible());
@@ -1159,24 +1152,20 @@ namespace easy3d {
             auto vertices = cloud->add_points_drawable("vertices");
             vertices->set_point_size(setting::point_cloud_point_size);
             vertices->set_default_color(setting::point_cloud_points_color);
-            vertices->update_buffers();
         } else if (dynamic_cast<SurfaceMesh *>(model)) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
             auto faces = mesh->add_triangles_drawable("faces");
             faces->set_default_color(setting::surface_mesh_faces_color);
-            faces->update_buffers();
 
             if (setting::surface_mesh_show_edges) {
                 auto edges = mesh->add_lines_drawable("edges");
                 edges->set_default_color(setting::surface_mesh_edges_color);
                 edges->set_line_width(setting::surface_mesh_edges_line_width);
-                edges->update_buffers();
             }
             if (setting::surface_mesh_show_vertices) {
                 auto vertices = mesh->add_points_drawable("vertices");
                 vertices->set_impostor_type(PointsDrawable::SPHERE);
                 vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                vertices->update_buffers();
             }
             if (setting::surface_mesh_show_borders) {
                 auto borders = mesh->add_lines_drawable("borders");
@@ -1184,7 +1173,6 @@ namespace easy3d {
                 borders->set_per_vertex_color(false);
                 borders->set_impostor_type(LinesDrawable::CYLINDER);
                 borders->set_line_width(setting::surface_mesh_borders_line_width);
-                borders->update_buffers();
             }
         } else if (dynamic_cast<Graph *>(model)) {
             Graph *graph = dynamic_cast<Graph *>(model);
@@ -1193,14 +1181,12 @@ namespace easy3d {
             vertices->set_default_color(setting::graph_vertices_color);
             vertices->set_point_size(setting::graph_vertices_point_size);
             vertices->set_impostor_type(PointsDrawable::SPHERE);
-            vertices->update_buffers();
 
             // create liens drawable for the edges
             auto edges = graph->add_lines_drawable("edges");
             edges->set_default_color(setting::graph_edges_color);
             edges->set_line_width(setting::graph_edges_line_width);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
-            edges->update_buffers();
         }
 
         LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data. " << w.time_string();

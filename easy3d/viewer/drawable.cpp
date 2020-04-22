@@ -179,20 +179,17 @@ namespace easy3d {
 
 
     void Drawable::internal_update_buffers() {
-        if (update_requested_ || vertex_buffer_ == 0) {
-            if (!model_ && !update_func_) {
-                LOG(WARNING)
-                        << "drawable not associated with a model, please call the update_*_buffer(...) functions for an update";
-                return;
-            }
-
-            if (update_func_)
-                update_func_(model_, this);
-            else
-                renderer::update_buffers(model_, this);
-
-            update_requested_ = false;
+        if (!model_ && !update_func_) {
+            LOG(ERROR) << "failed updating buffers: drawable not associated with a model and no update function has been specified.";
+            return;
         }
+
+        if (update_func_)
+            update_func_(model_, this);
+        else
+            renderer::update_buffers(model_, this);
+
+        update_requested_ = false;
     }
 
 
@@ -267,7 +264,7 @@ namespace easy3d {
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
-        if (update_requested_ && (model_ || update_func_))
+        if (update_requested_ || vertex_buffer_ == 0)
             const_cast<Drawable*>(this)->internal_update_buffers();
 
         vao_->bind();
