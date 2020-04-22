@@ -104,7 +104,6 @@ namespace easy3d {
 		}
 		PointsDrawable* d = new PointsDrawable(name);
 		d->set_model(this);
-		d->update_buffers();
 		points_drawables_.push_back(d);
 		return d;
 	}
@@ -119,7 +118,6 @@ namespace easy3d {
 		}
 		LinesDrawable* d = new LinesDrawable(name);
         d->set_model(this);
-        d->update_buffers();
 		lines_drawables_.push_back(d);
 		return d;
 	}
@@ -134,7 +132,6 @@ namespace easy3d {
 		}
 		TrianglesDrawable* d = new TrianglesDrawable(name);
         d->set_model(this);
-        d->update_buffers();
         triangles_drawables_.push_back(d);
 		return d;
 	}

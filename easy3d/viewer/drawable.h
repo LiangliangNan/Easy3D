@@ -139,8 +139,8 @@ namespace easy3d {
         void release_element_buffer();
 
         /**
-         * @brief Updates the OpenGL buffers of this drawable.
-         * @details This function sets the status requesting updates the OpenGL buffers. The actual update does not
+         * @brief Requests an update of the OpenGL buffers.
+         * @details This function sets the status to trigger an update of the OpenGL buffers. The actual update does not
          *          occur immediately but is deferred to the rendering phase.
          * @attention This method works for standard drawables (no update function required) and non-standard drawable
          *            (update function required). Standard drawables include:
@@ -245,7 +245,8 @@ namespace easy3d {
         void gl_draw(bool with_storage_buffer = false) const;
 
     protected:
-        void clear();
+        virtual void clear();
+        virtual void internal_update_buffers();
 
         VertexArrayObject *vao() const { return vao_; }
 
@@ -286,7 +287,7 @@ namespace easy3d {
         std::size_t num_vertices_;
         std::size_t num_indices_;
 
-        bool need_update_buffers_;
+        bool update_requested_;
         std::function<void(Model*, Drawable*)> update_func_;
 
         unsigned int vertex_buffer_;

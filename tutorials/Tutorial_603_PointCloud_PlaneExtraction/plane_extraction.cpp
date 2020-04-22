@@ -83,7 +83,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             drawable->color_scheme().name = name;
             drawable->set_per_vertex_color(true);
 
-            drawable->update();
+            drawable->update_buffers();
             update();
         }
 

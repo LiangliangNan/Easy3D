@@ -68,7 +68,7 @@ namespace easy3d {
             , texture_fractional_repeat_(0.0f)
             , num_vertices_(0)
             , num_indices_(0)
-            , need_update_buffers_(false)
+            , update_requested_(false)
             , update_func_(nullptr)
             , vertex_buffer_(0)
             , color_buffer_(0)
@@ -174,16 +174,25 @@ namespace easy3d {
 
 
     void Drawable::update_buffers() {
-        if (!model() && !update_func_) {
-            LOG(WARNING) << "drawable not associated with a model, please call the update_*_buffer(...) functions for an update";
-            return;
-        }
+        update_requested_ = true;
+    }
 
-        if (update_func_)
-            update_func_(model(), this);
-        else
-            renderer::update_buffers(model(), this);
-        need_update_buffers_ = false;
+
+    void Drawable::internal_update_buffers() {
+        if (update_requested_ || vertex_buffer_ == 0) {
+            if (!model_ && !update_func_) {
+                LOG(WARNING)
+                        << "drawable not associated with a model, please call the update_*_buffer(...) functions for an update";
+                return;
+            }
+
+            if (update_func_)
+                update_func_(model_, this);
+            else
+                renderer::update_buffers(model_, this);
+
+            update_requested_ = false;
+        }
     }
 
 
@@ -258,8 +267,8 @@ namespace easy3d {
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
-        if (need_update_buffers_ && (model_ || update_func_))
-            const_cast<Drawable*>(this)->update_buffers();
+        if (update_requested_ && (model_ || update_func_))
+            const_cast<Drawable*>(this)->internal_update_buffers();
 
         vao_->bind();
 

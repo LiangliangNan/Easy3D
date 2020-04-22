@@ -549,11 +549,13 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                     if (dynamic_cast<SurfaceMesh *>(currentModel())) {
                         edges->set_default_color(setting::surface_mesh_edges_color);
                         edges->set_line_width(setting::surface_mesh_edges_line_width);
+                        edges->update_buffers();
                     }
                     else if (dynamic_cast<Graph *>(currentModel())) {
                         edges->set_default_color(setting::graph_edges_color);
                         edges->set_line_width(setting::graph_edges_line_width);
                         edges->set_impostor_type(LinesDrawable::CYLINDER);
+                        edges->update_buffers();
                     }
                 }
             } else
@@ -568,15 +570,18 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (dynamic_cast<SurfaceMesh*>(currentModel())) {
                     vertices->set_impostor_type(PointsDrawable::SPHERE);
                     vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                    vertices->update_buffers();
                 }
                 else if (dynamic_cast<PointCloud*>(currentModel())) {
                     vertices->set_point_size(setting::point_cloud_point_size);
                     vertices->set_default_color(setting::point_cloud_points_color);
+                    vertices->update_buffers();
                 }
                 else if (dynamic_cast<Graph*>(currentModel())) {
                     vertices->set_default_color(setting::graph_vertices_color);
                     vertices->set_point_size(setting::graph_vertices_point_size);
                     vertices->set_impostor_type(PointsDrawable::SPHERE);
+                    vertices->update_buffers();
                 }
             } else
                 vertices->set_visible(!vertices->is_visible());
@@ -593,6 +598,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 borders->set_per_vertex_color(false);
                 borders->set_impostor_type(LinesDrawable::CYLINDER);
                 borders->set_line_width(setting::surface_mesh_borders_line_width);
+                borders->update_buffers();
             }
             else
                 borders->set_visible(!borders->is_visible());
@@ -609,6 +615,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 drawable->set_per_vertex_color(false);
                 drawable->set_impostor_type(PointsDrawable::SPHERE);
                 drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+                drawable->update_buffers();
             }
             else
                 drawable->set_visible(!drawable->is_visible());
@@ -620,7 +627,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             auto drawable = currentModel()->get_triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
-                main_window_->updateUi();
+                main_window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
@@ -740,19 +747,24 @@ void PaintCanvas::create_drawables(Model *model) {
         auto vertices = cloud->add_points_drawable("vertices");
         vertices->set_point_size(setting::point_cloud_point_size);
         vertices->set_default_color(setting::point_cloud_points_color);
+        vertices->update_buffers();
     } else if (dynamic_cast<SurfaceMesh *>(model)) {
         SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
         auto faces = mesh->add_triangles_drawable("faces");
         faces->set_default_color(setting::surface_mesh_faces_color);
+        faces->update_buffers();
+
         if (setting::surface_mesh_show_edges) {
             auto edges = mesh->add_lines_drawable("edges");
             edges->set_default_color(setting::surface_mesh_edges_color);
             edges->set_line_width(setting::surface_mesh_edges_line_width);
+            edges->update_buffers();
         }
         if (setting::surface_mesh_show_vertices) {
             auto vertices = mesh->add_points_drawable("vertices");
             vertices->set_impostor_type(PointsDrawable::SPHERE);
             vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+            vertices->update_buffers();
         }
         if (setting::surface_mesh_show_borders) {
             auto borders = mesh->add_lines_drawable("borders");
@@ -760,6 +772,7 @@ void PaintCanvas::create_drawables(Model *model) {
             borders->set_per_vertex_color(false);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
+            borders->update_buffers();
         }
     } else if (dynamic_cast<Graph *>(model)) {
         Graph *graph = dynamic_cast<Graph *>(model);
@@ -768,12 +781,14 @@ void PaintCanvas::create_drawables(Model *model) {
         vertices->set_default_color(setting::graph_vertices_color);
         vertices->set_point_size(setting::graph_vertices_point_size);
         vertices->set_impostor_type(PointsDrawable::SPHERE);
+        vertices->update_buffers();
 
         // create liens drawable for the edges
         auto edges = graph->add_lines_drawable("edges");
         edges->set_default_color(setting::graph_edges_color);
         edges->set_line_width(setting::graph_edges_line_width);
         edges->set_impostor_type(LinesDrawable::CYLINDER);
+        edges->update_buffers();
     }
 
     LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data. " << w.time_string();

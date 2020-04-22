@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
         // Upload data to the GPU.
         drawable->color_scheme().source = ColorScheme::SCALAR_FIELD;
         drawable->color_scheme().name = "v:elevation";
-        drawable->update();
+        drawable->update_buffers();
 
         // Create texture for coloring the scalar field.
         const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
