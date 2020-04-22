@@ -58,7 +58,9 @@ int main(int argc, char **argv) {
     };
 
     std::vector<Student> students = {
-            Student("Rohit Ramlakhan", 80, 35, 70, 72)
+            Student("Rohit Ramlakhan", 80, 35, 70, 71.5),
+            Student("Mihai-Alexandru Erbașu", 75, 64, 64, 58.5),
+            Student("Nur An Nisa Milyana ", 60, 75, 85, 60.5)
     };
 
     for (const auto& s : students) {
