@@ -284,10 +284,8 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             io::PointCloudIO_ptx serializer(file_name);
             PointCloud* cloud = nullptr;
             while ((cloud = serializer.load_next())) {
-                viewer_->makeCurrent();
                 viewer_->addModel(cloud, create_default_drawables);
                 ui->treeWidgetModels->addModel(cloud, true);
-                viewer_->doneCurrent();
             }
             viewer_->fitScreen();
         }
@@ -297,12 +295,8 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
     if (model) {
         model->set_name(file_name);
-        
-        viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
-        viewer_->doneCurrent();
         viewer_->fitScreen(model);
-
         ui->treeWidgetModels->addModel(model, true);
     }
 
@@ -859,9 +853,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
     if (result) {
         const std::string& name = file_system::name_less_extension(mesh->name()) + "_remeshed." + file_system::extension(mesh->name());
         result->set_name(name);
-        viewer()->makeCurrent();
         viewer()->addModel(result);
-        viewer()->doneCurrent();
 		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
         mesh->update();
         viewer_->update();
@@ -1311,9 +1303,6 @@ void MainWindow::surfaceMeshGeodesic() {
     // compute geodesic distance
     SurfaceMeshGeodesic geodist(mesh);
     geodist.compute(seed);
-
-    // setup texture coordinates for visualization
-    geodist.distance_to_texture_coordinates();
 
     updateRenderingPanel();
     mesh->update();

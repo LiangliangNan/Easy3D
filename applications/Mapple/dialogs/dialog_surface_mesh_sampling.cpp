@@ -43,10 +43,7 @@ void DialogSurfaceMeshSampling::apply() {
     SurfaceMeshSampler sampler;
     PointCloud *cloud = sampler.apply(mesh, num);
     if (cloud) {
-        viewer_->makeCurrent();
         viewer_->addModel(cloud);
-        viewer_->doneCurrent();
-
         main_window_->updateUi();
     }
 }

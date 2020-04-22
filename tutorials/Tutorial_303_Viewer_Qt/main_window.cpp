@@ -211,9 +211,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
             io::PointCloudIO_ptx serializer(file_name);
             PointCloud* cloud = nullptr;
             while ((cloud = serializer.load_next())) {
-                viewer_->makeCurrent();
                 viewer_->addModel(cloud, create_default_drawables);
-                viewer_->doneCurrent();
             }
         }
         else
@@ -222,9 +220,7 @@ Model* MainWindow::open(const std::string& file_name, bool create_default_drawab
 
     if (model) {
         model->set_name(file_name);
-        viewer_->makeCurrent();
         viewer_->addModel(model, create_default_drawables);
-        viewer_->doneCurrent();
         setCurrentFile(QString::fromStdString(file_name));
     }
 

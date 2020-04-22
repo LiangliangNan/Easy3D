@@ -74,10 +74,7 @@ void DialogPoissonReconstruction::reconstruct() {
         if (mesh) {
             const std::string& name = file_system::name_less_extension(cloud->name()) + "_poisson_reconstruction.ply";
             mesh->set_name(name);
-            viewer_->makeCurrent();
             viewer_->addModel(mesh, true);
-            viewer_->doneCurrent();
-
             main_window_->updateUi();
         }
     }
@@ -115,9 +112,7 @@ void DialogPoissonReconstruction::trim() {
         if (trimmed_mesh) {
             const std::string& name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
             trimmed_mesh->set_name(name);
-            viewer_->makeCurrent();
             viewer_->addModel(trimmed_mesh);
-            viewer_->doneCurrent();
             main_window_->updateUi();
         }
     }

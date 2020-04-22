@@ -35,16 +35,9 @@ WidgetCheckerSphere::WidgetCheckerSphere(QWidget *parent)
 WidgetCheckerSphere::~WidgetCheckerSphere()
 {
     makeCurrent();
-
-    if (checkerSphere_)
-        delete checkerSphere_;
-
-    if (lightSphere_)
-        delete lightSphere_;
-
-    if (camera_)
-        delete camera_;
-
+    delete checkerSphere_;
+    delete lightSphere_;
+    delete camera_;
     doneCurrent();
 }
 
