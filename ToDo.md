@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Add tutorial examples for the mesh processing algorithms (simplification, subdivision, smoothing, hole filling, curvatures, parameterization)
     - The hash function in tessellator.cpp may not work on 32-bit machines:
                   inline void hash_combine(std::size_t &seed, T const &v) const {
                       std::hash<T> hasher;
@@ -7,7 +8,7 @@
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
-    - The Graph data structure is not ready, not tested yet.
+    - The Graph data structure is not ready, not tested yet;
     - Module dependence can be improved (core <- viewer; viewer <- core);  The IO examples should not depend on viewer.
     - Rendering performance can still be improved
         * Drawables (e.g., faces, edges, and vertices) of the same model can share the same vertex buffer;
@@ -17,8 +18,8 @@
 	  This will ensure viewport[2] == camera()->screenWidth(), and viewport[3] == camera()->screenHeight():
 	            int viewport[4];
                 glGetIntegerv(GL_VIEWPORT, viewport);
-	- Cross-section; able to be manipulated;
 	- Save/load camera/viewer states, and settings (e.g., default rendering parameters);
+	- Walkthrough and animation;
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
 	    * otherwise, use multi-thread
