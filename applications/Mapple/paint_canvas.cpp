@@ -566,6 +566,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             if (!vertices) {
                 vertices = currentModel()->add_points_drawable("vertices");
                 if (dynamic_cast<SurfaceMesh*>(currentModel())) {
+                    vertices->set_default_color(setting::surface_mesh_vertices_color);
                     vertices->set_impostor_type(PointsDrawable::SPHERE);
                     vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                 }
@@ -752,6 +753,7 @@ void PaintCanvas::create_drawables(Model *model) {
         }
         if (setting::surface_mesh_show_vertices) {
             auto vertices = mesh->add_points_drawable("vertices");
+            vertices->set_default_color(setting::surface_mesh_vertices_color);
             vertices->set_impostor_type(PointsDrawable::SPHERE);
             vertices->set_point_size(setting::surface_mesh_vertices_point_size);
         }

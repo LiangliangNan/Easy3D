@@ -822,6 +822,7 @@ namespace easy3d {
                 if (!vertices) {
                     vertices = current_model()->add_points_drawable("vertices");
                     if (dynamic_cast<SurfaceMesh*>(current_model())) {
+                        vertices->set_default_color(setting::surface_mesh_vertices_color);
                         vertices->set_impostor_type(PointsDrawable::SPHERE);
                         vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                     }
@@ -1166,6 +1167,7 @@ namespace easy3d {
             }
             if (setting::surface_mesh_show_vertices) {
                 auto vertices = mesh->add_points_drawable("vertices");
+                vertices->set_default_color(setting::surface_mesh_vertices_color);
                 vertices->set_impostor_type(PointsDrawable::SPHERE);
                 vertices->set_point_size(setting::surface_mesh_vertices_point_size);
             }
