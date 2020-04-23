@@ -35,7 +35,7 @@
     </property>
     <widget class="QMenu" name="menuRecentFiles">
      <property name="title">
-      <string>Recent Files</string>
+      <string>Recent files</string>
      </property>
      <addaction name="separator"/>
      <addaction name="actionClearRecentFiles"/>
@@ -115,13 +115,16 @@
     <addaction name="actionTopologyStatistics"/>
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="separator"/>
-    <addaction name="actionSurfaceMeshTriangulation"/>
+    <addaction name="actionSurfaceMeshStitchCoincidentEdges"/>
+    <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
     <addaction name="separator"/>
     <addaction name="actionDetectDuplicatedFaces"/>
     <addaction name="actionRemoveDuplicatedFaces"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
+    <addaction name="separator"/>
+    <addaction name="actionSurfaceMeshTriangulation"/>
     <addaction name="separator"/>
     <addaction name="actionSurfaceMeshFairing"/>
     <addaction name="actionSurfaceMeshSmoothing"/>
@@ -135,7 +138,6 @@
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
     <addaction name="actionSamplingSurfaceMesh"/>
-    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -543,12 +545,12 @@
   </action>
   <action name="actionSaveCameraState">
    <property name="text">
-    <string>Save Camera State</string>
+    <string>Save camera state</string>
    </property>
   </action>
   <action name="actionRestoreCameraState">
    <property name="text">
-    <string>Restore Camera State</string>
+    <string>Restore camera state</string>
    </property>
   </action>
   <action name="actionExit">
@@ -583,12 +585,12 @@
   </action>
   <action name="actionPoissonSurfaceReconstruction">
    <property name="text">
-    <string>Poisson Surface Reconstruction</string>
+    <string>Poisson surface reconstruction</string>
    </property>
   </action>
   <action name="actionRansacPrimitiveExtraction">
    <property name="text">
-    <string>RANSAC Primitive Extraction</string>
+    <string>RANSAC primitive extraction</string>
    </property>
   </action>
   <action name="actionSnapshot">
@@ -602,47 +604,47 @@
   </action>
   <action name="actionBackgroundColor">
    <property name="text">
-    <string>Background Color</string>
+    <string>Background color</string>
    </property>
   </action>
   <action name="actionSamplingSurfaceMesh">
    <property name="text">
-    <string>Sampling Surface Mesh (as Point Cloud)</string>
+    <string>Sampling (to a point cloud)</string>
    </property>
   </action>
   <action name="actionDetectDuplicatedFaces">
    <property name="text">
-    <string>Detect Duplicated Faces</string>
+    <string>Detect duplicate faces</string>
    </property>
   </action>
   <action name="actionRemoveDuplicatedFaces">
    <property name="text">
-    <string>Remove Duplicated Faces</string>
+    <string>Remove duplicate faces</string>
    </property>
   </action>
   <action name="actionTopologyStatistics">
    <property name="text">
-    <string>Topology Statistics</string>
+    <string>Topology statistics</string>
    </property>
   </action>
   <action name="actionDetectSelfIntersections">
    <property name="text">
-    <string>Detect Self Intersections</string>
+    <string>Detect self-intersections</string>
    </property>
   </action>
   <action name="actionRemeshSelfIntersections">
    <property name="text">
-    <string>Remesh Self Intersections</string>
+    <string>Remesh self-intersections</string>
    </property>
   </action>
   <action name="actionEstimatePointCloudNormals">
    <property name="text">
-    <string>Estimate Point Cloud Normals</string>
+    <string>Estimate normals</string>
    </property>
   </action>
   <action name="actionReorientPointCloudNormals">
    <property name="text">
-    <string>Re-orient Point Cloud Normals</string>
+    <string>Re-orient normals</string>
    </property>
   </action>
   <action name="actionSelectLasso">
@@ -662,7 +664,7 @@
   </action>
   <action name="actionInvertSelection">
    <property name="text">
-    <string>Invert Selection</string>
+    <string>Invert selection</string>
    </property>
    <property name="toolTip">
     <string>Invert Selection</string>
@@ -670,7 +672,7 @@
   </action>
   <action name="actionDeleteSelectedPrimitives">
    <property name="text">
-    <string>Delete Selected Primitives</string>
+    <string>Delete selected primitives</string>
    </property>
    <property name="toolTip">
     <string>Delete Selected Primitives</string>
@@ -723,7 +725,7 @@
   </action>
   <action name="actionComputeHeightField">
    <property name="text">
-    <string>Compute Height Field</string>
+    <string>Compute height-field</string>
    </property>
   </action>
   <action name="actionDownSampling">
@@ -732,7 +734,7 @@
      <normaloff>Resources/icons/down_sample.png</normaloff>Resources/icons/down_sample.png</iconset>
    </property>
    <property name="text">
-    <string>Down Sampling</string>
+    <string>Down sampling</string>
    </property>
   </action>
   <action name="actionAddGaussianNoise">
@@ -741,7 +743,7 @@
      <normaloff>Resources/icons/noise.png</normaloff>Resources/icons/noise.png</iconset>
    </property>
    <property name="text">
-    <string>Add Gaussian Noise</string>
+    <string>Add Gaussian noise</string>
    </property>
   </action>
   <action name="actionSettings">
@@ -755,7 +757,7 @@
   </action>
   <action name="actionCopyCamera">
    <property name="text">
-    <string>Copy Camera</string>
+    <string>Copy camera</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -763,7 +765,7 @@
   </action>
   <action name="actionPasteCamera">
    <property name="text">
-    <string>Paste Camera</string>
+    <string>Paste camera</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+V</string>
@@ -771,12 +773,12 @@
   </action>
   <action name="actionNormalizePointCloudNormals">
    <property name="text">
-    <string>Normalize Point Cloud Normals</string>
+    <string>Normalize normals</string>
    </property>
   </action>
   <action name="actionExtractConnectedComponents">
    <property name="text">
-    <string>Extract Connected Components</string>
+    <string>Extract connected components</string>
    </property>
   </action>
   <action name="actionSurfaceMeshSubdivisionLoop">
@@ -786,7 +788,7 @@
   </action>
   <action name="actionSurfaceMeshSubdivisionCatmullClark">
    <property name="text">
-    <string>Catm-Clark</string>
+    <string>Catmull-Clark</string>
    </property>
   </action>
   <action name="actionSurfaceMeshSubdivisionSqrt3">
@@ -844,7 +846,20 @@
   </action>
   <action name="actionComputeSurfaceMeshCurvatures">
    <property name="text">
-    <string>Compute Surface Mesh Curvatures</string>
+    <string>Compute surface mesh curvatures</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshStitchCoincidentEdges">
+   <property name="text">
+    <string>Stitch coincident edges</string>
+   </property>
+   <property name="toolTip">
+    <string>Stitch coincident edges</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshRemoveIsolatedVertices">
+   <property name="text">
+    <string>Remove isolated vertices</string>
    </property>
   </action>
  </widget>

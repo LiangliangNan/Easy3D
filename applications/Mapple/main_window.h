@@ -87,6 +87,8 @@ private slots:
     void surfaceMeshRemeshing();
     void surfaceMeshParameterization();
     void surfaceMeshGeodesic();
+    void surfaceMeshStitchCoincidentEdges();
+    void surfaceMeshRemoveIsolatedVertices();
 
     // about
     void onAboutMapple();

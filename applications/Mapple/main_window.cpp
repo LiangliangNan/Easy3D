@@ -666,6 +666,8 @@ void MainWindow::createActionsForPointCloudMenu() {
 void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(surfaceMeshReportTopologyStatistics()));
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
+    connect(ui->actionSurfaceMeshStitchCoincidentEdges, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchCoincidentEdges()));
+    connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
 
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
@@ -722,20 +724,28 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
 
     const std::string simple_name = file_system::simple_name(mesh->name());
     if (simple_name.empty())
-        std::cout << "number of elements in model (with unknown name)" << std::endl;
+        std::cout << "#elements in model (with unknown name): ";
     else
-        std::cout << "number of elements in model '" << file_system::simple_name(mesh->name()) << "'" << std::endl;
+        std::cout << "#elements in model '" << file_system::simple_name(mesh->name()) << "': ";
 
-    std::cout << "\t#face = " << mesh->n_faces()
-              << ", #vertex = " << mesh->n_vertices()
-              << ", #edge = " << mesh->n_edges() << std::endl;
+    std::cout << "#face = " << mesh->n_faces() << ", #vertex = " << mesh->n_vertices() << ", #edge = "
+              << mesh->n_edges() << std::endl;
+
+    // count isolated vertices
+    std::size_t count = 0;
+    for (auto v : mesh->vertices()) {
+        if (mesh->is_isolated(v))
+            ++count;
+    }
+    if (count > 0)
+        std::cout << "#isolated vertices: " << count << std::endl;
 
     const auto &components = SurfaceMeshComponent::extract(mesh);
     std::cout << "#connected component: " << components.size() << std::endl;
 
     const std::size_t num = 10;
     if (components.size() > num)
-        std::cout << "topology of the first " << num << " components:" << std::endl;
+        std::cout << "\ttopology of the first " << num << " components:" << std::endl;
 
     for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
         const SurfaceMeshComponent& comp = components[i];
@@ -752,7 +762,7 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
         else if (topo.is_closed())
             type = "unknown closed";
 
-        std::cout << "\t" << i << ": "
+        std::cout << "\t\t" << i << ": "
                   << type
                   << ", #face = " << comp.n_faces() << ", #vertex = " << comp.n_vertices() << ", #edge = " << comp.n_edges()
                   << ", #border = " << topo.number_of_borders();
@@ -760,7 +770,6 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
             std::cout << ", border size = " << topo.largest_border_size();
         else if (topo.number_of_borders() > 1)
             std::cout << ", largest border size = " << topo.largest_border_size();
-
         std::cout << std::endl;
     }
 }
@@ -1311,6 +1320,80 @@ void MainWindow::surfaceMeshGeodesic() {
     geodist.compute(seed);
 
     updateRenderingPanel();
+    mesh->update();
+    viewer_->update();
+}
+
+
+void MainWindow::surfaceMeshStitchCoincidentEdges() {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    LOG(WARNING) << "TODO: This stitching function is based purely on vertex positions and no adjacency information is used. "
+                    "A stable stitching function taking into account the topology will be implemented in the near future.";
+
+    class CmpVec {
+    public:
+        CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
+
+        bool operator()(const vec3 &v0, const vec3 &v1) const {
+            if (fabs(v0[0] - v1[0]) <= eps_) {
+                if (fabs(v0[1] - v1[1]) <= eps_) {
+                    return (v0[2] < v1[2] - eps_);
+                } else return (v0[1] < v1[1] - eps_);
+            } else return (v0[0] < v1[0] - eps_);
+        }
+
+    private:
+        float eps_;
+    };
+
+    auto find_unique_vertex = [](SurfaceMesh* mesh, SurfaceMesh::Vertex v, std::map<vec3, SurfaceMesh::Vertex, CmpVec>& vMap) -> SurfaceMesh::Vertex {
+        const vec3& p = mesh->position(v);
+        // has vector been referenced before?
+        auto it = vMap.find(p);
+        if (it == vMap.end()) { // No : add vertex and remember idx/vector mapping
+            vMap[p] = v;
+            return v;
+        }
+        else // Yes : get index from map
+            return it->second;
+    };
+
+    auto copy(*mesh);
+    mesh->clear(); // clear the original mesh and it will be refilled.
+
+    CmpVec comp(FLT_MIN);
+    std::map<vec3, SurfaceMesh::Vertex, CmpVec> vMap(comp);
+
+    auto points = copy.vertex_property<vec3>("v:point");
+    for (auto v : copy.vertices())
+        mesh->add_vertex(points[v]);
+    for (auto f : copy.faces()) {
+        std::vector<SurfaceMesh::Vertex> vertices;
+        for (auto v : copy.vertices(f))
+            vertices.push_back(find_unique_vertex(&copy, v, vMap));
+        mesh->add_face(vertices);
+    }
+
+    mesh->update();
+    viewer_->update();
+}
+
+
+void MainWindow::surfaceMeshRemoveIsolatedVertices() {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    // clean: remove isolated vertices
+    for (auto v : mesh->vertices()) {
+        if (mesh->is_isolated(v))
+            mesh->delete_vertex(v);
+    }
+    mesh->garbage_collection();
+
     mesh->update();
     viewer_->update();
 }
