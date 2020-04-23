@@ -416,6 +416,7 @@ void MainWindow::saveSnapshot() {
     if (fileName.isEmpty())
         return;
 
+#if 1
     if (!dialogSanpshot_) {
         dialogSanpshot_ = new DialogSnapshot(this);
         connect(viewer_, SIGNAL(resized()), dialogSanpshot_, SLOT(computeImageSize()));
@@ -425,6 +426,11 @@ void MainWindow::saveSnapshot() {
     dialogSanpshot_->show();
     dialogSanpshot_->raise();
     dialogSanpshot_->activateWindow();
+#else
+    auto dialog = new DialogSnapshot(this);
+    connect(viewer_, SIGNAL(resized()), dialogSanpshot_, SLOT(computeImageSize()));
+    showDialog(dialog);
+#endif
 }
 
 
