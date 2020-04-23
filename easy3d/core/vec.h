@@ -389,7 +389,7 @@ namespace easy3d {
         typedef Vec<3, T> thisclass;
 
         Vec() : x(0), y(0), z(0) {}
-        Vec(const Vec<2, T>& v, const T& s = 0) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
+        Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
         Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {} // very useful for inverse promoting from homogeneous coordinates
 
         Vec(T x_in, T y_in, T z_in) : x(x_in), y(y_in), z(z_in) {}
@@ -517,7 +517,7 @@ namespace easy3d {
         typedef Vec<4, T> thisclass;
 
         Vec() : x(0), y(0), z(0), w(0) {}
-        Vec(const Vec<3, T>& v, const T& s = 0) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
+        Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
         Vec(T x_in, T y_in, T z_in, T w_in) : x(x_in), y(y_in), z(z_in), w(w_in) {}
 
         explicit Vec(const T& s) : x(s), y(s), z(s), w(s) {  }
