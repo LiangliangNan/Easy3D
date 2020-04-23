@@ -22,22 +22,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "image_viewer.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+// This example shows how to render an images.
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    // the image file.
+    const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
 
-    viewer.resize(800, 600);
+    ImageViewer viewer("Tutorial_306_Image", image_file);
+
+    // Run the viewer
     return viewer.run();
 }
+

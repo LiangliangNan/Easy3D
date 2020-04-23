@@ -22,22 +22,37 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "point_selection.h"
+#include <easy3d/viewer/model.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+// This example shows how to select a subset of a point cloud by sketching a rectangle or a lasso
+// using the mouse.
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    const std::string file = resource::directory() + "/data/polyhedron.bin";
 
-    viewer.resize(800, 600);
+    // Create the viewer.
+    PointSelection viewer("Tutorial_403_PointSelection");
+
+    Model *model = viewer.add_model(file, true);
+    if (!model) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+
+    auto drawable = model->get_points_drawable("vertices");
+    drawable->set_point_size(5.0f);
+
+    // Run the viewer
     return viewer.run();
 }
+

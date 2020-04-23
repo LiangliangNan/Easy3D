@@ -22,22 +22,29 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "real_camera.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
 
+// This example shows how to
+//        - render a model from the view point given the camera's intrinsic and
+//        extrinsic parameters. The camera parameters were recovered using
+//        commonly used computer vision techniques (i.e., calibration, or SfM).
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    // the bundler file (We use only the camera intrinsic and extrinsic parameters).
+    const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";
+    // the point cloud file.
+    const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
 
-    viewer.resize(800, 600);
+    RealCamera viewer("Tutorial_205_RealCamera", bundler_file, cloud_file);
+
+    // Run the viewer
     return viewer.run();
 }

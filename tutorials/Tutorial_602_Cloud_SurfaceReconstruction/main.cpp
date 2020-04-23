@@ -22,22 +22,39 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "surface_reconstruction.h"
+#include <easy3d/viewer/model.h>
+#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+// This example shows how to
+//		- reconstruct a smooth surface from a point cloud using the Poisson surface reconstruction method
+
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    const std::string file = resource::directory() + "/data/polyhedron.bin";
 
-    viewer.resize(800, 600);
+    // Create the viewer.
+    TutorialSurfaceReconstruction viewer("Tutorial_602_Cloud_SurfaceReconstruction");
+
+    Model *model = viewer.add_model(file, true);
+    if (!model) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+
+    auto drawable = model->get_points_drawable("vertices");
+    drawable->set_point_size(5.0f);
+    drawable->set_default_color(vec3(0.6f, 0.6f, 1.0f));
+
+    // Run the viewer
     return viewer.run();
 }
+

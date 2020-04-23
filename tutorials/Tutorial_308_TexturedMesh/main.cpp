@@ -22,22 +22,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "textured_viewer.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+
+// This example shows how to
+//		- override the file loading function of the default easy3d viewer to visualize textured meshes;
+
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    // Create the viewer.
+    TexturedViewer viewer("Tutorial_308_TexturedMesh");
 
-    viewer.resize(800, 600);
+    //----------------------- Load a mesh from a file ------------------------
+
+    const std::string &file_name = resource::directory() + "/data/domik/domik.obj";
+    //const std::string& file_name = resource::directory() + "/data/cube/cube.obj";
+    if (!viewer.add_model(file_name, true)) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+
+    // Run the viewer
     return viewer.run();
 }

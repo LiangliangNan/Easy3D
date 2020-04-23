@@ -22,22 +22,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "text_rendering.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+// This example shows how to render strings using Easy3D.
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    const std::string file_name = resource::directory() + "/data/sphere.obj";
 
-    viewer.resize(800, 600);
+    TextRendering viewer("Tutorial_309_Text");
+    viewer.add_model(file_name);
+
+    // Run the viewer
     return viewer.run();
 }
+

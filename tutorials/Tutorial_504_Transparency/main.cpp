@@ -22,22 +22,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "viewer_imgui.h"
+#include "transparency.h"
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+// This example shows how to render a surface mesh with transparency effect using the following techniques
+//		  - Average Color Blending
+//		  - Dual Depth Peeling
+
+
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
+    const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
-    ViewerImGui viewer("Tutorial_201_imgui");
+    // Create the viewer.
+    TutorialTransparency viewer("Tutorial_504_Transparency");
 
-    viewer.resize(800, 600);
+    // Load a mesh model and create a drawable for the faces.
+    if (!viewer.add_model(file_name, true)) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+
+    auto drawable = viewer.current_model()->get_triangles_drawable("faces");
+    drawable->set_smooth_shading(true);
+
+    // Run the viewer
     return viewer.run();
 }
+
