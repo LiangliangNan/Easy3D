@@ -20,7 +20,12 @@
 #include <commdlg.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <strsafe.h>
 #include <future>
+
+#elif __EMSCRIPTEN__
+#include <emscripten.h>
+
 #else
 #ifndef _POSIX_C_SOURCE
 #   define _POSIX_C_SOURCE 2 // for popen()
@@ -221,6 +226,13 @@ public:
         stop();
         m_future = std::async(fun, &m_exit_code);
         m_running = true;
+    }
+#endif
+
+#if __EMSCRIPTEN__
+    void start(int exit_code)
+    {
+        m_exit_code = exit_code;
     }
 #endif
 
@@ -488,9 +500,9 @@ protected:
 #endif
     }
 
-    std::string buttons_to_name(choice choice) const
+    std::string buttons_to_name(choice _choice) const
     {
-        switch (choice)
+        switch (_choice)
         {
             case choice::ok_cancel: return "okcancel";
             case choice::yes_no: return "yesno";
@@ -501,9 +513,9 @@ protected:
         }
     }
 
-    std::string get_icon_name(icon icon) const
+    std::string get_icon_name(icon _icon) const
     {
-        switch (icon)
+        switch (_icon)
         {
             case icon::warning: return "warning";
             case icon::error: return "error";
@@ -676,8 +688,8 @@ protected:
 
             if (in_type == type::save)
             {
-                if (!confirm_overwrite)
-					ofn.Flags |= OFN_OVERWRITEPROMPT;
+                if (confirm_overwrite)
+                    ofn.Flags |= OFN_OVERWRITEPROMPT;
 
                 // using set context to apply new visual style (required for windows XP)
                 new_style_context ctx;
@@ -972,10 +984,10 @@ class notify : public internal::dialog
 public:
     notify(std::string const &title,
            std::string const &message,
-           icon icon = icon::info)
+           icon _icon = icon::info)
     {
-        if (icon == icon::question) // Not supported by notifications
-            icon = icon::info;
+        if (_icon == icon::question) // Not supported by notifications
+            _icon = icon::info;
 
 #if _WIN32
         // Use a static shared pointer for notify_icon so that we can delete
@@ -1015,7 +1027,7 @@ public:
         // - NIIF_WARNING   A warning icon.
         // - NIIF_ICON_MASK Version 6.0. Reserved.
         // - NIIF_NOSOUND   Version 6.0. Do not play the associated sound. Applies only to balloon ToolTips
-        switch (icon)
+        switch (_icon)
         {
             case icon::warning: nid->dwInfoFlags = NIIF_WARNING; break;
             case icon::error: nid->dwInfoFlags = NIIF_ERROR; break;
@@ -1033,9 +1045,8 @@ public:
 
         nid->uTimeout = 5000;
 
-        // FIXME check buffer length
-        lstrcpyW(nid->szInfoTitle, internal::str2wstr(title).c_str());
-        lstrcpyW(nid->szInfo, internal::str2wstr(message).c_str());
+        StringCchCopyW(nid->szInfoTitle, ARRAYSIZE(nid->szInfoTitle), internal::str2wstr(title).c_str());
+        StringCchCopyW(nid->szInfo, ARRAYSIZE(nid->szInfo), internal::str2wstr(message).c_str());
 
         // Display the new icon
         Shell_NotifyIconW(NIM_ADD, nid.get());
@@ -1050,12 +1061,12 @@ public:
         else if (is_zenity())
         {
             command += " --notification"
-                       " --window-icon " + get_icon_name(icon) +
+                       " --window-icon " + get_icon_name(_icon) +
                        " --text " + shell_quote(title + "\n" + message);
         }
         else if (is_kdialog())
         {
-            command += " --icon " + get_icon_name(icon) +
+            command += " --icon " + get_icon_name(_icon) +
                        " --title " + shell_quote(title) +
                        " --passivepopup " + shell_quote(message) +
                        " 5";
@@ -1074,12 +1085,12 @@ class message : public internal::dialog
 public:
     message(std::string const &title,
             std::string const &text,
-            choice choice = choice::ok_cancel,
-            icon icon = icon::info)
+            choice _choice = choice::ok_cancel,
+            icon _icon = icon::info)
     {
 #if _WIN32
         UINT style = MB_TOPMOST;
-        switch (icon)
+        switch (_icon)
         {
             case icon::warning: style |= MB_ICONWARNING; break;
             case icon::error: style |= MB_ICONERROR; break;
@@ -1087,7 +1098,7 @@ public:
             /* case icon::info: */ default: style |= MB_ICONINFORMATION; break;
         }
 
-        switch (choice)
+        switch (_choice)
         {
             case choice::ok_cancel: style |= MB_OKCANCEL; break;
             case choice::yes_no: style |= MB_YESNO; break;
@@ -1114,6 +1125,27 @@ public:
             *exit_code = MessageBoxW(GetForegroundWindow(), wtext.c_str(), wtitle.c_str(), style);
             return "";
         });
+#elif __EMSCRIPTEN__
+        std::string full_message;
+        switch (_icon)
+        {
+            case icon::warning: full_message = "⚠️"; break;
+            case icon::error: full_message = "⛔"; break;
+            case icon::question: full_message = "❓"; break;
+            /* case icon::info: */ default: full_message = "ℹ"; break;
+        }
+
+        full_message += ' ' + title + "\n\n" + text;
+
+        // This does not really start an async task; it just passes the
+        // EM_ASM_INT return value to a fake start() function.
+        m_async->start(EM_ASM_INT(
+        {
+            if ($1)
+                return window.confirm(UTF8ToString($0)) ? 0 : -1;
+            alert(UTF8ToString($0));
+            return 0;
+        }, full_message.c_str(), _choice == choice::ok_cancel));
 #else
         auto command = desktop_helper();
 
@@ -1121,7 +1153,7 @@ public:
         {
             command += " -e 'display dialog " + osascript_quote(text) +
                        "     with title " + osascript_quote(title);
-            switch (choice)
+            switch (_choice)
             {
                 case choice::ok_cancel:
                     command += "buttons {\"OK\", \"Cancel\"} "
@@ -1161,7 +1193,7 @@ public:
                     break;
             }
             command += " with icon ";
-            switch (icon)
+            switch (_icon)
             {
                 #define PFD_OSX_ICON(n) "alias ((path to library folder from system domain) as text " \
                     "& \"CoreServices:CoreTypes.bundle:Contents:Resources:" n ".icns\")"
@@ -1175,7 +1207,7 @@ public:
         }
         else if (is_zenity())
         {
-            switch (choice)
+            switch (_choice)
             {
                 case choice::ok_cancel:
                     command += " --question --ok-label=OK --cancel-label=Cancel"; break;
@@ -1190,7 +1222,7 @@ public:
                 case choice::abort_retry_ignore:
                     command += " --question --switch --extra-button Abort --extra-button Retry --extra-button Ignore"; break;
                 default:
-                    switch (icon)
+                    switch (_icon)
                     {
                         case icon::error: command += " --error"; break;
                         case icon::warning: command += " --warning"; break;
@@ -1201,13 +1233,13 @@ public:
             command += " --title " + shell_quote(title)
                      + " --width 300 --height 0" // sensible defaults
                      + " --text " + shell_quote(text)
-                     + " --icon-name=dialog-" + get_icon_name(icon);
+                     + " --icon-name=dialog-" + get_icon_name(_icon);
         }
         else if (is_kdialog())
         {
-            if (choice == choice::ok)
+            if (_choice == choice::ok)
             {
-                switch (icon)
+                switch (_icon)
                 {
                     case icon::error: command += " --error"; break;
                     case icon::warning: command += " --sorry"; break;
@@ -1217,12 +1249,12 @@ public:
             else
             {
                 command += " --";
-                if (icon == icon::warning || icon == icon::error)
+                if (_icon == icon::warning || _icon == icon::error)
                     command += "warning";
                 command += "yesno";
-                if (choice == choice::yes_no_cancel)
+                if (_choice == choice::yes_no_cancel)
                     command += "cancel";
-                if (choice == choice::yes_no || choice == choice::yes_no_cancel)
+                if (_choice == choice::yes_no || _choice == choice::yes_no_cancel)
                 {
                     m_mappings[0] = button::yes;
                     m_mappings[256] = button::no;
@@ -1233,7 +1265,7 @@ public:
                      + " --title " + shell_quote(title);
 
             // Must be after the above part
-            if (choice == choice::ok_cancel)
+            if (_choice == choice::ok_cancel)
                 command += " --yes-label OK --no-label Cancel";
         }
 
