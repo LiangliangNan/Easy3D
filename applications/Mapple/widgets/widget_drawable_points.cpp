@@ -187,7 +187,7 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph) {
         // color schemes from color properties and texture
-        for (const auto &name : mesh->vertex_properties()) {
+        for (const auto &name : graph->vertex_properties()) {
             if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
                 schemes.push_back(QString::fromStdString(name));
         }
