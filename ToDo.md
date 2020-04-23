@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - In ModelPicker, once model selected (lighting changed), snapshots show models rendered without lighting (but normal rendering is ok).
     - Add tutorial examples for the mesh processing algorithms (simplification, subdivision, smoothing, hole filling, curvatures, parameterization)
     - The hash function in tessellator.cpp may not work on 32-bit machines:
                   inline void hash_combine(std::size_t &seed, T const &v) const {
