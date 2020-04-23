@@ -41,7 +41,7 @@ DepthImage::DepthImage(const std::string& title)
     : Viewer(title)
     , fbo_(nullptr)
 {
-    set_background_color(vec3(1, 1, 1));
+    set_background_color(vec4(1, 1, 1, 1));
 
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));

@@ -48,7 +48,7 @@ ImageViewer::ImageViewer(const std::string& title, const std::string& image_file
     , scale_(1.0f)
 {
     image_file_ = image_file;
-    set_background_color(vec3(1, 1, 1));
+    set_background_color(vec4(1, 1, 1, 1));
 }
 
 

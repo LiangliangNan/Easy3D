@@ -38,7 +38,7 @@ namespace easy3d {
 
     PointsDrawable::PointsDrawable(const std::string &name /*= ""*/)
             : Drawable(name), point_size_(2.0f), impostor_type_(PLAIN) {
-        default_color_ = vec3(0.0f, 1.0f, 0.0f);
+        default_color_ = vec4(0.0f, 1.0f, 0.0f, 1.0f);
     }
 
 

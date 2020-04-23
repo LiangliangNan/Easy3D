@@ -427,7 +427,7 @@ void WidgetTrianglesDrawable::setDefaultColor() {
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
-        const vec3 new_color(color.redF(), color.greenF(), color.blueF());
+        const vec4 new_color(color.redF(), color.greenF(), color.blueF(), color.alphaF());
         d->set_default_color(new_color);
         viewer_->update();
 
@@ -444,7 +444,7 @@ void WidgetTrianglesDrawable::setBackColor() {
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
-        const vec3 new_color(color.redF(), color.greenF(), color.blueF());
+        const vec4 new_color(color.redF(), color.greenF(), color.blueF(), color.alphaF());
         d->set_back_color(new_color);
         viewer_->update();
 

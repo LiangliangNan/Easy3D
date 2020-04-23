@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     drawable->update_vertex_buffer(points);
 
     // We will draw the normal vectors in a uniform green color
-    drawable->set_default_color(vec3(0.0f, 1.0f, 0.0f));
+    drawable->set_default_color(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     drawable->set_per_vertex_color(false);
 
     // Set the line width

@@ -43,7 +43,7 @@ TextRendering::TextRendering(const std::string &title)
         , alignment_(OpenGLText::ALIGN_CENTER)
         , upper_left_(true)
 {
-    set_background_color(vec3(1, 1, 1));
+    set_background_color(vec4(1, 1, 1, 1));
 }
 
 

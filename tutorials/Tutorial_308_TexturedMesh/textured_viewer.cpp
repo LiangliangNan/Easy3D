@@ -258,7 +258,7 @@ namespace easy3d {
             drawable->set_smooth_shading(false);
 
             drawable->set_material(Material(group.ambient, group.specular, group.shininess));
-            drawable->set_default_color(group.diffuse);
+            drawable->set_default_color(vec4(group.diffuse, 1.0f));
 
             std::string texname = group.tex_file;
             if (!texname.empty()) {

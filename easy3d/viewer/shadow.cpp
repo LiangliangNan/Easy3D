@@ -418,7 +418,7 @@ namespace easy3d {
         frustum.update_vertex_buffer(points);
         frustum.update_index_buffer(indices);
         frustum.set_per_vertex_color(false);
-        frustum.set_default_color(vec3(0.0, 0.0, 1.0));
+        frustum.set_default_color(vec4(0.0, 0.0, 1.0, 1.0));
         frustum.draw(camera_, false);
     }
 

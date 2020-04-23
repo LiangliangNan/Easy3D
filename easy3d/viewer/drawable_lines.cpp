@@ -37,7 +37,7 @@ namespace easy3d {
 
     LinesDrawable::LinesDrawable(const std::string &name /* = ""*/)
             : Drawable(name), line_width_(1.0f), impostor_type_(PLAIN) {
-        default_color_ = vec3(0.0f, 0.0f, 0.0f);
+        default_color_ = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
 

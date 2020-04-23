@@ -537,7 +537,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             auto drawable = mesh->get_points_drawable("locks");
             if (!drawable) {
                 drawable = mesh->add_points_drawable("locks");
-                drawable->set_default_color(vec3(1, 1, 0));
+                drawable->set_default_color(vec4(1, 1, 0, 1.0f));
                 drawable->set_per_vertex_color(false);
                 drawable->set_impostor_type(PointsDrawable::SPHERE);
                 drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);

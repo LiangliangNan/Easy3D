@@ -198,7 +198,7 @@ void RealCamera::create_cameras_drawable()
     }
     LinesDrawable* cameras = new LinesDrawable("cameras");
     cameras->update_vertex_buffer(vertices);
-    cameras->set_default_color(vec3(0, 0, 1));
+    cameras->set_default_color(vec4(0, 0, 1, 1.0f));
     cameras->set_line_width(2.0f);
     add_drawable(cameras); // add the camera drawables to the viewer
 }
