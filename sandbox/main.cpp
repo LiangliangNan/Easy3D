@@ -58,15 +58,43 @@ int main(int argc, char **argv) {
     };
 
     std::vector<Student> students = {
-            Student("Rohit Ramlakhan", 80, 35, 70, 71.5),
-            Student("Mihai-Alexandru Erbașu", 75, 64, 64, 58.5),
-            Student("Nur An Nisa Milyana ", 60, 75, 85, 60.5),
-            Student("Ellie Roy", 69, 80, 70, 70.5),
-            Student("Vera Stevers", 68, 60, 69, 75),
-            Student("Jos Feenstra", 65, 75, 80, 65),
+            Student("Manos Papageorgiou",       80,    80,    85,   68.5),
+            Student("Jialun Wu",                75,    70,    85,   69.5),
+            Student("Nur An Nisa Milyana",      75,    75,    85,   60.5),
+
+            Student("Ellie Roy",                75,    80,    70,		70.5),
+            Student("Constantijn Dinklo",       80,    75,    70,		69),
+            Student("Laurens van Rijssel",      80,    80,    65,		56.5),
+
+            Student("Mels Smit",                75,    85,    85,		68),
+            Student("Robin Hurkmans",           75,    80,    80,		70.5),
+            Student("Mihai-Alexandru Erbașu",   75,    80,    80,		58.5),
+
+            Student("Xiaoai Li",                85,    85,    85,		76.5),
+            Student("Zhaiyu Chen",              85,    85,    85,		88),
+            Student("Qian Bai",                 85,    85,    85,		73),
+
+            Student("Lisa Keurentjes",          90,    80,    80,		61.5),
+            Student("Maarten de Jong",          85,    75,    80,		32.5),
+            Student("Vera Stevers",             85,    75,    75,		75),
+
+            Student("Kristof Kenesei",          65,    75,    80,		76),
+            Student("Jos Feenstra",             65,    75,    80,		65),
+            Student("Max van Schendel",         65,    70,    80,		62),
+
+            Student("Doan Truc Quynh",          85,         60,    75,72),
+            Student("Yustisi Ardhitasari Lumban Gaol", 85,  65,    80,69),
+            Student("Nadine Hobeika",           85,         65,    80,74),
+            
+            Student("Camille Morlighem",        80,    70,   70,		75),
+            Student("Charalampos Chatzidiakos", 75,    65,   70,		28),
+            Student("Rohit Ramlakhan",          80,    65,   70,		71.5)
     };
 
-    for (const auto& s : students) {
+    for (int i=0; i<students.size(); ++i) {
+        if (i%3 == 0)
+            std::cout << std::endl;
+        const Student& s = students[i];
         float grade = (s.a1 * w_a1 + s.a2 * w_a2 + s.a3 * w_a3) * w_assignments + s.exam * w_exam;
         std::cout << s.name << ": " << grade << std::endl;
     }
