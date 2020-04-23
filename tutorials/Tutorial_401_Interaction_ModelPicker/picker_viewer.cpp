@@ -55,9 +55,9 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = picker.pick(models(), x, y);
     if (model) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
-            change_color(model, vec3(1, 0, 0));
+            change_color(model, vec4(1, 0, 0, 1.0f));
         else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            change_color(model, vec3(0.8f, 0.8f, 0.8f));
+            change_color(model, vec4(0.8f, 0.8f, 0.8f, 1.0f));
         std::cout << "picked model: " << model->name() << std::endl;
     }
 
@@ -65,7 +65,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-void PickerViewer::change_color(Model *model, const vec3 &color) const {
+void PickerViewer::change_color(Model *model, const vec4 &color) const {
     // make sure the vertex buffer holds the right data.
     if (dynamic_cast<SurfaceMesh *>(model)) {
         Drawable *drawable = model->get_triangles_drawable("faces");

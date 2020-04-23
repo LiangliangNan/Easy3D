@@ -44,7 +44,7 @@ protected:
     std::string usage() const override;
 
 private:
-    void change_color(easy3d::Model *model, const easy3d::vec3 &color) const;
+    void change_color(easy3d::Model *model, const easy3d::vec4 &color) const;
 };
 
 
