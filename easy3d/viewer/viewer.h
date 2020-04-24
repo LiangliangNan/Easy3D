@@ -85,7 +85,7 @@ namespace easy3d {
 		);
 
         /**
-         * @brief The desctructor of the Viewer.
+         * @brief The destructor of the Viewer.
          */
 		virtual ~Viewer();
 
