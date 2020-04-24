@@ -271,6 +271,19 @@ std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *
         }
 
         // color schemes from scalar fields
+
+        // scalar fields defined on faces
+        for (const auto &name : mesh->face_properties()) {
+            if (mesh->get_face_property<float>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_face_property<double>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_face_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_face_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+        }
+
         // scalar fields defined on vertices
         for (const auto &name : mesh->vertex_properties()) {
             if (mesh->get_vertex_property<float>(name))
