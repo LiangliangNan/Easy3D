@@ -370,44 +370,6 @@ namespace easy3d {
                     g[j * 3 + 2] -= 2 * lambda_edge_length * dz;
                 }
 #endif
-
-                //////////////////////////////////////////////////////////////////////////
-#ifdef ENCODE_LAPLACIAN    // laplacian term
-
-                const std::vector<Laplacian>& laplacians = d->laplacians;
-    double lambda_lap = d->lambda_lap;
-    for (int i=0; i<laplacians.size(); ++i) {
-        const Laplacian& lap = laplacians[i];
-
-        // compute the new Laplacian vector (sx, sy, sz)
-        double sx(0), sy(0), sz(0);
-        const std::vector<unsigned int>& nbs = lap.nbs;
-        unsigned int size = (unsigned int)(nbs.size());
-        for (unsigned int j=0; j<size; ++j) {
-            unsigned int id = nbs[j];
-            sx += x[id*3  ];
-            sy += x[id*3+1];
-            sz += x[id*3+2];
-        }
-        unsigned int idx = lap.id;
-        const vec3& tv = lap.vec;
-        double dx = x[idx*3  ] - sx / size - tv.x;
-        double dy = x[idx*3+1] - sy / size - tv.y;
-        double dz = x[idx*3+2] - sz / size - tv.z;
-
-        f += lambda_lap * (dx*dx + dy*dy + dz*dz);
-        g[idx*3  ] += 2 * lambda_lap * dx;
-        g[idx*3+1] += 2 * lambda_lap * dy;
-        g[idx*3+2] += 2 * lambda_lap * dz;
-
-        for (unsigned int j=0; j<size; ++j) {
-            unsigned int id = nbs[j];
-            g[id*3  ] -= 2 * lambda_lap * dx / size;
-            g[id*3+1] -= 2 * lambda_lap * dy / size;
-            g[id*3+2] -= 2 * lambda_lap * dz / size;
-        }
-    }
-#endif
                 return f;
             }
 
@@ -534,8 +496,8 @@ namespace easy3d {
 
     void Polygonizer::optimize_vertices() {
         details::vertices::VerticesData data(mesh_);
-        data.lambda_data = 0.1;
-        data.lambda_smoothness = 10;
+        data.lambda_data = 1;
+        data.lambda_smoothness = 100;
         data.lambda_edge_length = 5;
 
         int n = mesh_->n_vertices() * 3;
