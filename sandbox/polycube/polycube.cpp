@@ -209,7 +209,7 @@ namespace easy3d {
         }
 
 
-//#define ENCODE_EDGE_LENGTH
+#define ENCODE_EDGE_LENGTH
 //#define ERROR_RELATIVE_TO_ORIGINAL_VERTICES
 
         namespace vertices {
@@ -278,7 +278,7 @@ namespace easy3d {
                         EdgeVector esl;
                         esl.s = mesh->vertex(e, 0);
                         esl.t = mesh->vertex(e, 1);
-                        esl.vec = (points[esl.t] - points[esl.s]);
+                        esl.vec = (points[esl.s] - points[esl.t]);
                         edge_len_constrs.push_back(esl);
                     }
 #endif
@@ -478,6 +478,8 @@ namespace easy3d {
         for (auto f : mesh_->faces()) {
             normals[f] = expected_normals[f];
         }
+
+        std::cout << "disable optimize_normals() to converge faster and have sharper edges" << std::endl;
         return;
 #endif
 
