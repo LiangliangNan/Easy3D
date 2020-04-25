@@ -29,7 +29,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(false, "", google::GLOG_INFO);
+    logging::initialize(false, "", google::GLOG_WARNING);
 
     try {
         // Create the viewer.

@@ -46,12 +46,12 @@ namespace easy3d {
 
     std::string SomeTest::usage() const {
         return Viewer::usage() +
-                (" -------------------- SomeTest Usage --------------------------- \n"
+                (" ----------------------- SomeTest Usage --------------------------- \n"
                 "\tCtrl+O: Open file\n"
                 "\tG: Ground truth\n"
                 "\tE: Edges\n"
                 "\tC: All candidate faces\n"
-                " ---------------------------------------------------------------- \n");
+                " ------------------------------------------------------------------- \n");
     }
 
 
