@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     drawable->set_line_width(3.0f);
 
     // also show the standard "edges"
-    model->add_lines_drawable("edges");
+    model->get_lines_drawable("edges")->set_visible(true);
 
     // Run the viewer
     return viewer.run();
