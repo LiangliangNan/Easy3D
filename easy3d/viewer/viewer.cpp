@@ -59,6 +59,7 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_text.h>
 #include <easy3d/viewer/texture_manager.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -1148,52 +1149,7 @@ namespace easy3d {
 
 
     void Viewer::create_drawables(Model *model) {
-        StopWatch w;
-
-        if (dynamic_cast<PointCloud *>(model)) {
-            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-            auto vertices = cloud->add_points_drawable("vertices");
-            vertices->set_point_size(setting::point_cloud_point_size);
-            vertices->set_default_color(setting::point_cloud_points_color);
-        } else if (dynamic_cast<SurfaceMesh *>(model)) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-            auto faces = mesh->add_triangles_drawable("faces");
-            faces->set_default_color(setting::surface_mesh_faces_color);
-
-            if (setting::surface_mesh_show_edges) {
-                auto edges = mesh->add_lines_drawable("edges");
-                edges->set_default_color(setting::surface_mesh_edges_color);
-                edges->set_line_width(setting::surface_mesh_edges_line_width);
-            }
-            if (setting::surface_mesh_show_vertices) {
-                auto vertices = mesh->add_points_drawable("vertices");
-                vertices->set_default_color(setting::surface_mesh_vertices_color);
-                vertices->set_impostor_type(PointsDrawable::SPHERE);
-                vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-            }
-            if (setting::surface_mesh_show_borders) {
-                auto borders = mesh->add_lines_drawable("borders");
-                borders->set_default_color(setting::surface_mesh_borders_color);
-                borders->set_per_vertex_color(false);
-                borders->set_impostor_type(LinesDrawable::CYLINDER);
-                borders->set_line_width(setting::surface_mesh_borders_line_width);
-            }
-        } else if (dynamic_cast<Graph *>(model)) {
-            Graph *graph = dynamic_cast<Graph *>(model);
-            // create points drawable for the edges
-            auto vertices = graph->add_points_drawable("vertices");
-            vertices->set_default_color(setting::graph_vertices_color);
-            vertices->set_point_size(setting::graph_vertices_point_size);
-            vertices->set_impostor_type(PointsDrawable::SPHERE);
-
-            // create liens drawable for the edges
-            auto edges = graph->add_lines_drawable("edges");
-            edges->set_default_color(setting::graph_edges_color);
-            edges->set_line_width(setting::graph_edges_line_width);
-            edges->set_impostor_type(LinesDrawable::CYLINDER);
-        }
-
-        LOG_IF(INFO, w.elapsed_seconds() > 1.0f) << "preparing GPU data. " << w.time_string();
+        renderer::create_default_drawables(model);
     }
 
 
@@ -1210,9 +1166,9 @@ namespace easy3d {
         }
 
         if (create_default_drawables) {
-            if (model->n_vertices() > 0) {
+            if (model->n_vertices() > 0)
                 create_drawables(model);
-            } else
+            else
                 LOG(WARNING) << "drawable cannot be created due to no vertices.";
         }
 

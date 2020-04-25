@@ -1840,6 +1840,63 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
+        void create_default_drawables(Model *model) {
+            if (dynamic_cast<PointCloud *>(model)) {
+                PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+                auto vertices = cloud->add_points_drawable("vertices");
+                vertices->set_point_size(setting::point_cloud_point_size);
+                vertices->set_default_color(setting::point_cloud_points_color);
+                vertices->set_visible(true);
+            } else if (dynamic_cast<SurfaceMesh *>(model)) {
+                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+
+                // faces
+                auto faces = mesh->add_triangles_drawable("faces");
+                faces->set_default_color(setting::surface_mesh_faces_color);
+                faces->set_visible(true);
+
+                // edges
+                auto edges = mesh->add_lines_drawable("edges");
+                edges->set_default_color(setting::surface_mesh_edges_color);
+                edges->set_line_width(setting::surface_mesh_edges_line_width);
+                edges->set_visible(setting::surface_mesh_show_edges);
+
+                // vertices
+                auto vertices = mesh->add_points_drawable("vertices");
+                vertices->set_default_color(setting::surface_mesh_vertices_color);
+                vertices->set_impostor_type(PointsDrawable::SPHERE);
+                vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                vertices->set_visible(setting::surface_mesh_show_vertices);
+
+                // borders
+                auto borders = mesh->add_lines_drawable("borders");
+                borders->set_default_color(setting::surface_mesh_borders_color);
+                borders->set_per_vertex_color(false);
+                borders->set_impostor_type(LinesDrawable::CYLINDER);
+                borders->set_line_width(setting::surface_mesh_borders_line_width);
+                borders->set_visible(setting::surface_mesh_show_borders);
+            } else if (dynamic_cast<Graph *>(model)) {
+                Graph *graph = dynamic_cast<Graph *>(model);
+                // create points drawable for the edges
+                auto vertices = graph->add_points_drawable("vertices");
+                vertices->set_default_color(setting::graph_vertices_color);
+                vertices->set_point_size(setting::graph_vertices_point_size);
+                vertices->set_impostor_type(PointsDrawable::SPHERE);
+                vertices->set_visible(true);
+
+                // create liens drawable for the edges
+                auto edges = graph->add_lines_drawable("edges");
+                edges->set_default_color(setting::graph_edges_color);
+                edges->set_line_width(setting::graph_edges_line_width);
+                edges->set_impostor_type(LinesDrawable::CYLINDER);
+                edges->set_visible(true);
+            }
+        }
+
+
+        // -------------------------------------------------------------------------------------------------------------
+
+
         void update_buffers(Model *model, Drawable *drawable) {
             if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud* cloud = dynamic_cast<PointCloud *>(model);

@@ -41,6 +41,15 @@ namespace easy3d {
 
     namespace renderer {
 
+        // -------------------------------------------------------------------------------------------------------------
+
+        /**
+         * @brief Creates default drawable for a model.
+         * @param model The model
+         */
+        void create_default_drawables(Model *model);
+
+        // -------------------------------------------------------------------------------------------------------------
 
         /**
          * @brief Update render buffers of a drawable. Coloring determined by the drawable's coloring scheme.

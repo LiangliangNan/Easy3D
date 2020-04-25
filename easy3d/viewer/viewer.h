@@ -181,17 +181,15 @@ namespace easy3d {
          *        accessed by the 'current_model()' method.
          * @details This method loads a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
-         *          - for point clouds, a PointsDrawable (with name "vertices");
-         *          - for surface meshes, a TrianglesDrawable (with name "faces");
-         *          - for graphs, a PointsDrawable (with name "vertices") and a LinesDrawable (with
-         *            name "edges").
+         *          - for point clouds: "vertices".
+         *          - for surface meshes: "faces", "vertices", "edges", "borders".
+         *          - for graphs: "vertices", "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, a user
-         *          can set 'create_default_drawables' to false and create the drawables later on.
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override create_drawables() or set 'create_default_drawables' to false and create
+         *          the drawables by calling Model::add_[type]_drawable()..
          * @param file_name The string of the file name.
-         * @param create_default_drawables If ture, the default drawables will be created. Users can
-         *        set create_default_drawables to false if a customized drawable will be created for
-         *        a particular rendering purpose.
+         * @param create_default_drawables If ture, the default drawables will be created.
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
@@ -202,17 +200,15 @@ namespace easy3d {
          *        to the viewer, the viewer will be incharge of its memory menagement.
          * @details This method adds a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
-         *          - for point clouds, a PointsDrawable (with name "vertices");
-         *          - for surface meshes, a TrianglesDrawable (with name "faces");
-         *          - for graphes, a PointsDrawable (with name "vertices") and a LinesDrawable (with
-         *            name "edges").
+         *          - for point clouds: "vertices".
+         *          - for surface meshes: "faces", "vertices", "edges", "borders".
+         *          - for graphs: "vertices", "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, a user
-         *          can set 'create_default_drawables' to false and create the drawables later on.
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override create_drawables() or set 'create_default_drawables' to false and create
+         *          the drawables by calling Model::add_[type]_drawable()..
          * @param model The pointer to the model.
-         * @param create_default_drawables If ture, the default drawables will be created. Users can
-         *        set create_default_drawables to false if a customized drawable will be created for
-         *        a particular rendering purpose.
+         * @param create_default_drawables If ture, the default drawables will be created.
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related add_model(const std::string&, bool).
          */
@@ -326,15 +322,16 @@ namespace easy3d {
 
 	protected:
         /**
-         * @brief Create default drawables for rendering
-         * @details For a PointCloud, it creates a PointsDrawable. Per point color will be enabled
-         *          if vertex property 'v:color' exists; nomals (stored in vertex property
-         *          'v:normal') will be used for rendering if exists.
-         *          For a MeshSurface, it creates a TrianglesDrawable; Per vertex color will be
-         *          enabled if vertex property 'v:color' exists.
-         *          For a Graph, it creates a PointsDrawable (phere imposters) for visualizing the
-         *          vertices and a LinesDrawable (cylinder imposters) for visualizing the edges.
-         * @todo TODO: move this function to Renderer module; enable per face color for surface meshes.
+         * @brief Create default drawables for rendering.
+         * @details This method creates defaults drawables for rendering a model. The supported
+         *          default drawables are
+         *              - for point clouds: "vertices".
+         *              - for surface meshes: "faces", "vertices", "edges", "borders".
+         *              - for graphs: "vertices", "edges".
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override this function or set 'create_default_drawables' to false and create the
+         *          drawables by calling Model::add_[type]_drawable().
          */
         virtual void create_drawables(Model* model);
 

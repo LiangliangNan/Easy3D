@@ -62,7 +62,7 @@ public:
     const easy3d::vec4& backGroundColor() const { return background_color_; }
     void setBackgroundColor(const easy3d::vec4& c);
 
-    void addModel(easy3d::Model* model, bool create_default_drawables = true);
+    void addModel(easy3d::Model* model);
 	void deleteModel(easy3d::Model* model);
 
 	const std::vector<easy3d::Model*>& models() const { return models_; }
@@ -175,14 +175,6 @@ protected:
     virtual void closeEvent(QCloseEvent *) override;
 
 protected:
-    // Create default drawables for rendering
-    //  - for point clouds, it creates a PointsDrawable
-    //      - per point color will be enabled if vertex property 'v:color' exists
-    //      - nomals (stored in vertex property 'v:normal') will used for rendering if exists.
-    //  - for mesh surfaces, it creates a TrianglesDrawable
-    //      - per vertex color will be enabled if vertex property 'v:color' exists
-    // TODO: move this function to Renderer module; enable per face color for surface meshes.
-    void create_drawables(easy3d::Model* model);
 
     void drawCornerAxes();
 

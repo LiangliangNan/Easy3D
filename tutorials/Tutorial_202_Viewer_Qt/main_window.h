@@ -78,10 +78,8 @@ private:
 
     // open a file (given the file name) and add the model to the viewer
     // for visualization. It will also create the default drawables for
-    // visualizing the model. If create_default_drawables == false, no
-    // default drawable will be created, which is useful when a user wants
-    // to create a customized drawable.
-    easy3d::Model* open(const std::string& file_name, bool create_default_drawables = true);
+    // visualizing the model.
+    easy3d::Model* open(const std::string& file_name);
 
 private:
     void createActions();
