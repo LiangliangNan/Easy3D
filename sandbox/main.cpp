@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "polygonization.h"
+
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -39,16 +39,7 @@ int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    const std::string file = resource::directory() + "/data/polygonizer/bunny_VSA_partition.ply";
-
-    // Create the viewer.
-    TutorialPolygonization viewer("TutorialPolygonization");
-
-    easy3d::Model *model = viewer.add_model(file, true);
-    if (!model) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
-    }
+    std::cout << "for simple check only" << std::endl;
 
     // Run the viewer
     return viewer.run();
