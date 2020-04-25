@@ -61,6 +61,15 @@ namespace easy3d {
         void update_buffers(PointCloud* model, PointsDrawable* drawable);
 
         /**
+         * @brief Update render buffers for a vector field defined on a point cloud.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param field The name of the vector field.
+         * @param scale The length scale of the vectors w.r.t. (0.01 * radius) of the model's bounding sphere.
+         */
+        void update_buffers_vector_field(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale);
+
+        /**
          * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
          * @param model     The model.
          * @param segmentation  The <int> type vertex property storing the segmentation.
@@ -87,7 +96,6 @@ namespace easy3d {
          */
         void update_buffers(SurfaceMesh* model, LinesDrawable* drawable);
 
-
         /**
          * @brief Update render buffers for the default "faces" drawable of a surface mesh.
          * Coloring determined by the drawable's coloring scheme.
@@ -95,6 +103,18 @@ namespace easy3d {
          * @param drawable  The drawable.
          */
         void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable);
+
+        /**
+         * @brief Update render buffers for a vector field defined on a surface mesh.
+         * @param model     The model.
+         * @param drawable  The drawable.
+         * @param field The name of the vector field.
+         * @param location The location where the vector is defined.
+         *         - 0: on faces;
+         *         - 1: on vertices.
+         * @param scale The scale of the vector length w.r.t. the average edge length of the surface mesh.
+         */
+        void update_buffers_vector_field(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale);
 
 
         // Graph ------------------------------------------------------------------------------------------------------

@@ -1212,6 +1212,27 @@ namespace easy3d {
         }
 
 
+        void update_buffers_vector_field(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale) {
+            auto prop = model->get_vertex_property<vec3>(field);
+            if (!prop) {
+                LOG(ERROR) << "vector filed '" << field << " ' not found on the point cloud (wrong name?)";
+                return;
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+            float length = model->bounding_box().diagonal() * 0.5f * 0.01f * scale;
+
+            std::vector<vec3> vertices(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+            int idx = 0;
+            for (auto v: model->vertices()) {
+                vertices[v.idx()] = points[v];
+                vertices[v.idx() + 1] = points[v] + prop[v] * length;
+                idx += 2;
+            }
+            drawable->update_vertex_buffer(vertices);
+        };
+
+
         // -------------------------------------------------------------------------------------------------------------
 
 
@@ -1446,9 +1467,68 @@ namespace easy3d {
         }
 
 
+        void update_buffers_vector_field(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale) {
+            if (location == 0) {
+                if (!model->get_face_property<vec3>(field)) {
+                    LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh faces (wrong name?)";
+                    return;
+                }
+            } else if (location == 1) {
+                if (!model->get_vertex_property<vec3>(field)) {
+                    LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh vertices (wrong name?)";
+                    return;
+                }
+            }
+            else {
+                LOG(ERROR) << "invalid vector filed location";
+                return;
+            }
+
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+
+            // use a limited number of edge to compute the length of the vectors.
+            float avg_edge_length = 0.0f;
+            const int num = std::min(static_cast<unsigned int>(500), model->n_edges());
+            for (unsigned int i = 0; i < num; ++i) {
+                SurfaceMesh::Edge edge(i);
+                auto vs = model->vertex(edge, 0);
+                auto vt = model->vertex(edge, 1);
+                avg_edge_length += distance(points[vs], points[vt]);
+            }
+            avg_edge_length /= num;
+
+            std::vector<vec3> d_points;
+
+            if (location == 0) {
+                auto prop = model->get_face_property<vec3>(field);
+                d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+                int idx = 0;
+                for (auto f: model->faces()) {
+                    int size = 0;
+                    for (auto v: model->vertices(f)) {
+                        d_points[idx] += points[v];
+                        ++size;
+                    }
+                    d_points[idx] /= size;
+                    d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
+                    idx += 2;
+                }
+            }
+            else if (location == 1) {
+                auto prop = model->get_vertex_property<vec3>(field);
+                d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+                for (auto v: model->vertices()) {
+                    d_points[v.idx() * 2] = points[v];
+                    d_points[v.idx() * 2 + 1] = points[v] + prop[v] * avg_edge_length * scale;
+                }
+            }
+
+            drawable->update_vertex_buffer(d_points);
+        };
+
 
         // -------------------------------------------------------------------------------------------------------------
-
 
 
         void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {

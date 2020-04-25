@@ -8,6 +8,7 @@
 #include <easy3d/viewer/model.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/setting.h>
+#include <easy3d/viewer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -521,35 +522,8 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
         if (!drawable) {
             drawable = mesh->add_lines_drawable("vector - f:normal");
             drawable->set_update_func([this](Model *m, Drawable *d) -> void {
-                auto surface = dynamic_cast<SurfaceMesh *>(m);
-                auto points = surface->get_vertex_property<vec3>("v:point");
-                auto fprop = surface->get_face_property<vec3>("f:normal");
-
-                // use a limited number of edge to compute the length of the vectors.
-                float avg_edge_length = 0.0f;
-                const int num = std::min(static_cast<unsigned int>(500), surface->n_edges());
-                for (unsigned int i = 0; i < num; ++i) {
-                    SurfaceMesh::Edge edge(i);
-                    auto vs = surface->vertex(edge, 0);
-                    auto vt = surface->vertex(edge, 1);
-                    avg_edge_length += distance(points[vs], points[vt]);
-                }
-                avg_edge_length /= num;
-
-                std::vector<vec3> vertices(surface->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-                int idx = 0;
                 float scale = ui->doubleSpinBoxVectorFieldScale->value();
-                for (auto f: surface->faces()) {
-                    int size = 0;
-                    for (auto v: surface->vertices(f)) {
-                        vertices[idx] += points[v];
-                        ++size;
-                    }
-                    vertices[idx] /= size;
-                    vertices[idx + 1] = vertices[idx] + fprop[f] * avg_edge_length * scale;
-                    idx += 2;
-                }
-                d->update_vertex_buffer(vertices);
+                renderer::update_buffers_vector_field(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), "f:normal", 0, scale);
             });
         }
     }
