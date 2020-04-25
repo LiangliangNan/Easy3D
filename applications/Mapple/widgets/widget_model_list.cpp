@@ -293,7 +293,7 @@ void WidgetModelList::duplicateCurrent() {
         if (copy) {
             const std::string name = file_system::parent_directory(model->name()) + "/" + file_system::base_name(model->name()) + "_copy";
             copy->set_name(name);
-            viewer()->addModel(copy, true);
+            viewer()->addModel(copy);
             addModel(copy, true);
         }
     }
@@ -721,7 +721,7 @@ void WidgetModelList::decomposeModel(Model *model) {
 
 		SurfaceMesh* new_mesh = components[i].to_mesh();
 		new_mesh->set_name(base_name + std::to_string(i + 1));
-		viewer()->addModel(new_mesh, true);
+		viewer()->addModel(new_mesh);
 	}
 
     // delete the original model

@@ -102,9 +102,8 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
-    // Open a file with file name given
-    // NOTE: model will not be added to the viewer
-    easy3d::Model* open(const std::string& file_name, bool create_default_drawables = true);
+    // Open a file with file name given. On success, the model has been added to the viewer
+    easy3d::Model* open(const std::string& file_name);
 
 private:
     void createActionsForFileMenu();
