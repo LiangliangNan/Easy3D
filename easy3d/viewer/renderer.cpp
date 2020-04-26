@@ -57,17 +57,15 @@ namespace easy3d {
 
                 std::size_t n = values.size() - 1;
                 std::size_t index_lower = n * dummy_lower;
-                std::size_t index_upper = n - n * dummy_upper - 1;
+                std::size_t index_upper = n - n * dummy_upper;
                 min_value = values[index_lower];
                 max_value = values[index_upper];
 
                 const int lower = static_cast<int>(dummy_lower * 100);
                 const int upper = static_cast<int>(dummy_upper * 100);
-                if (lower > 0 || upper > 0) {
-                    LOG(INFO) << "scalar field clamped by "
-                              << lower << "% (lower) and "
-                              << upper << "% (upper). new range: [" << min_value << ", " << max_value << "]";
-                }
+                if (lower > 0 || upper > 0)
+                    LOG(INFO) << "scalar field range [" << values.front() << ", " << values.back() << "] clamped to ["
+                              << min_value << ", " << max_value << "]";
             }
 
             template <typename FT>
