@@ -375,8 +375,8 @@ namespace easy3d {
         }
 
 
-        // delete a property
-        template <class T> void remove(Property<T>& h)
+        // delete a property. Returns true on success.
+        template <class T> bool remove(Property<T>& h)
         {
             std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
             for (; it!=end; ++it)
@@ -386,9 +386,26 @@ namespace easy3d {
                     delete *it;
                     parrays_.erase(it);
                     h.reset();
-                    break;
+                    return true;
                 }
             }
+            return false;
+        }
+
+        // delete a property by name. Returns true on success.
+        bool remove(const std::string& name)
+        {
+            std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
+            for (; it!=end; ++it)
+            {
+                if ((*it)->name() == name)
+                {
+                    delete *it;
+                    parrays_.erase(it);
+                    return true;
+                }
+            }
+            return false;
         }
 
 

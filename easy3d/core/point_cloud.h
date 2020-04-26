@@ -358,16 +358,18 @@ namespace easy3d {
         }
 
         /// remove the vertex property \c p
-        template <class T> void remove_vertex_property(VertexProperty<T>& p)
-        {
-            vprops_.remove(p);
-        }
-        /// remove the model property \c p
-        template <class T> void remove_model_property(ModelProperty<T>& p)
-        {
-            mprops_.remove(p);
-        }
+        template<class T>
+        bool remove_vertex_property(VertexProperty<T> &p) { return vprops_.remove(p); }
 
+        /// remove the vertex property named \c n
+        bool remove_vertex_property(const std::string &n) { return vprops_.remove(n); }
+
+        /// remove the model property \c p
+        template<class T>
+        bool remove_model_property(ModelProperty<T> &p) { return mprops_.remove(p); }
+
+        /// remove the model property named \c n
+        bool remove_model_property(const std::string &n) { return mprops_.remove(n); }
 
         /** get the type_info \c T of vertex property named \c. returns an typeid(void)
          if the property does not exist or if the type does not match. */
