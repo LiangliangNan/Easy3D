@@ -33,7 +33,7 @@ void DialogSurfaceMeshCurvature::apply() {
 
     const unsigned int iter_smooth = ui->spinBoxPostSmoothingIterations->value();
     const bool two_ring = ui->checkBoxUseTwoRingNeighborhood->isChecked();
-    LOG(INFO) << "post smoothing iterations: " << iter_smooth << ". use 2-ring neighbor: " << (two_ring ? "true" : "false");
+    LOG(INFO) << "post smoothing iterations: " << iter_smooth << ". use 2-ring neighbors: " << (two_ring ? "true" : "false");
 
     SurfaceMeshCurvature analyzer(mesh);
     analyzer.analyze_tensor(iter_smooth, two_ring);
