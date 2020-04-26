@@ -36,9 +36,27 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
             colormaps_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))
             colormaps_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
+        if (file_system::is_file(dir + "ceil.png"))
+            colormaps_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
+
+        if (file_system::is_file(dir + "default-16.png"))
+            colormaps_.emplace_back(ColorMap(dir + "default-16.png", "default-16"));
+        if (file_system::is_file(dir + "default-32.png"))
+            colormaps_.emplace_back(ColorMap(dir + "default-32.png", "default-32"));
+
+        if (file_system::is_file(dir + "french-16.png"))
+            colormaps_.emplace_back(ColorMap(dir + "french-16.png", "french-16"));
+        if (file_system::is_file(dir + "french-32.png"))
+            colormaps_.emplace_back(ColorMap(dir + "french-32.png", "french-32"));
+
+        if (file_system::is_file(dir + "rainbow-16.png"))
+            colormaps_.emplace_back(ColorMap(dir + "rainbow-16.png", "rainbow-16"));
+        if (file_system::is_file(dir + "rainbow-32.png"))
+            colormaps_.emplace_back(ColorMap(dir + "rainbow-32.png", "rainbow-32"));
+
         if (file_system::is_file(dir + "random.png")) {
+            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-16"));
             colormaps_.emplace_back(ColorMap(dir + "random.png", "random-32"));
-            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-64"));
         }
     }
 }
@@ -60,13 +78,11 @@ Texture *WidgetDrawable::colormapTexture(int idx) const {
         if (colormaps_[idx].name.find("random") == std::string::npos)
             return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
         else {
-            int num_colors = 16;
-            if (colormaps_[idx].name.find("32") != std::string::npos)
+            int num_colors = 64;
+            if (colormaps_[idx].name.find("16") != std::string::npos)
+                num_colors = 16;
+            else if (colormaps_[idx].name.find("32") != std::string::npos)
                 num_colors = 32;
-            else if (colormaps_[idx].name.find("64") != std::string::npos)
-                num_colors = 64;
-            else if (colormaps_[idx].name.find("128") != std::string::npos)
-                num_colors = 128;
             return TextureManager::request(num_colors, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
         }
     } else
