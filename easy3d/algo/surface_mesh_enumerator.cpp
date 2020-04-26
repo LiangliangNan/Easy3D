@@ -51,8 +51,7 @@ namespace easy3d {
 
 
     int SurfaceMeshEnumerator::enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id) {
-        for (auto v : mesh->vertices())
-            id[v] = -1;
+        id.vector().assign(mesh->n_vertices(), -1);
 
         int cur_id = 0;
         for (auto v : mesh->vertices()) {
@@ -78,7 +77,7 @@ namespace easy3d {
 
                 for (auto h : mesh->halfedges(top)) {
                     auto op = mesh->opposite_halfedge(h);
-                    if (mesh->is_boundary(op)) {
+                    if (!mesh->is_boundary(op)) {
                         auto f = mesh->face(op);
                         if (id[f] == -1) {
                             stack.push(f);
@@ -91,8 +90,7 @@ namespace easy3d {
 
 
     int SurfaceMeshEnumerator::enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id) {
-        for (auto f : mesh->faces())
-            id[f] = -1;
+        id.vector().assign(mesh->n_faces(), -1);
 
         int cur_id = 0;
         for (auto f : mesh->faces()) {
