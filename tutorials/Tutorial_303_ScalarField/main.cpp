@@ -66,8 +66,7 @@ int main(int argc, char **argv) {
         elevation[v] = model->position(v).z;
 
     // Upload data to the GPU.
-    drawable->color_scheme().source = ColorScheme::SCALAR_FIELD;
-    drawable->color_scheme().name = "v:elevation";
+    drawable->set_coloring_by_scalar_field(State::VERTEX, "v:elevation");
     drawable->update_buffers();
 
     // Create texture for coloring the scalar field.
@@ -80,10 +79,6 @@ int main(int argc, char **argv) {
 
     // Use the texture
     drawable->set_texture(texture);
-    drawable->set_use_texture(true);
-
-    // Vertices have varying colors.
-    drawable->set_per_vertex_color(true);
 
     // Run the viewer
     return viewer.run();

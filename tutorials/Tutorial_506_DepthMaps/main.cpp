@@ -49,8 +49,7 @@ int main(int argc, char **argv) {
 
     auto drawable = model->get_points_drawable("vertices");
     drawable->set_point_size(5);
-    drawable->color_scheme().source = ColorScheme::COLOR_PROPERTY;
-    drawable->color_scheme().name = "v:color";
+    drawable->set_coloring_by_color_property(State::VERTEX, "v:color");
 
     // Run the viewer
     return viewer.run();

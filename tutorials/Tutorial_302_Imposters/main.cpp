@@ -43,8 +43,7 @@ using namespace easy3d;
 // render mesh vertices as spheres
 void create_spheres(SurfaceMesh *mesh) {
     PointsDrawable *drawable = mesh->add_points_drawable("vertices");
-    drawable->set_per_vertex_color(false);
-    drawable->set_default_color(vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     drawable->set_point_size(24.0f);
     drawable->set_impostor_type(PointsDrawable::SPHERE);;
 }
@@ -53,8 +52,7 @@ void create_spheres(SurfaceMesh *mesh) {
 // render mesh edges as cylinders
 void create_cylinders(SurfaceMesh *mesh) {
     LinesDrawable *drawable = mesh->add_lines_drawable("edges");
-    drawable->set_per_vertex_color(false);
-    drawable->set_default_color(vec4(1.0f, 0.67f, 0.5f, 1.0f));
+    drawable->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CYLINDER);
     drawable->set_line_width(6);
 }
@@ -84,8 +82,7 @@ void create_cones(SurfaceMesh *mesh) {
 
     LinesDrawable *drawable = mesh->add_lines_drawable("normals");
     drawable->update_vertex_buffer(normal_points);
-    drawable->set_per_vertex_color(false);
-    drawable->set_default_color(vec4(0.0f, 1.0f, 0.0f, 1.0f));
+    drawable->set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CONE);
     drawable->set_line_width(8);
 
@@ -95,8 +92,7 @@ void create_cones(SurfaceMesh *mesh) {
 // render mesh vertices as surfels
 void create_surfels(SurfaceMesh *mesh) {
     PointsDrawable *drawable = mesh->add_points_drawable("vertices");
-    drawable->set_per_vertex_color(false);
-    drawable->set_default_color(vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     drawable->set_point_size(24.0f);
     drawable->set_impostor_type(PointsDrawable::SURFEL);
 }

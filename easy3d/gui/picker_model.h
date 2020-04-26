@@ -27,6 +27,7 @@
 
 #include <easy3d/gui/picker.h>
 #include <easy3d/viewer/camera.h>
+#include <easy3d/viewer/state.h>
 
 #include <vector>
 #include <unordered_map>
@@ -59,19 +60,9 @@ namespace easy3d {
         void draw(const std::vector<Model *> &models);
         // render the drawable with color
         void draw(Drawable *drawable, const vec4 &color);
-        // restore each model's original rendering state
-        void restore(const std::vector<Model *> &models);
-        // restore drawable's original rendering state
-        void restore(Drawable *drawable);
 
     private:
 
-        struct State {
-            bool lighting;
-            bool use_texture;
-            bool per_vertex_color;
-            vec4 default_color;
-        };
         std::unordered_map<Drawable *, State> states_;
 
     };

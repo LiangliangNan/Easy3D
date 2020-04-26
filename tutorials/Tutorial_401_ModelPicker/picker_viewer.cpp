@@ -55,9 +55,9 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = picker.pick(models(), x, y);
     if (model) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
-            change_color(model, vec4(1, 0, 0, 1.0f));
+            mark_picked(model, vec4(1, 0, 0, 1.0f));
         else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            change_color(model, vec4(0.8f, 0.8f, 0.8f, 1.0f));
+            restore(model);
         std::cout << "picked model: " << model->name() << std::endl;
     }
 
@@ -65,23 +65,39 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-void PickerViewer::change_color(Model *model, const vec4 &color) const {
+void PickerViewer::mark_picked(Model *model, const vec4 &color) {
     // make sure the vertex buffer holds the right data.
     if (dynamic_cast<SurfaceMesh *>(model)) {
         Drawable *drawable = model->get_triangles_drawable("faces");
-        drawable->set_per_vertex_color(false);
-        drawable->set_default_color(color);
+        states_[drawable] = drawable->state();
+        drawable->set_uniform_coloring(color);
     } else if (dynamic_cast<PointCloud *>(model)) {
         Drawable *drawable = model->get_points_drawable("vertices");
-        drawable->set_per_vertex_color(false);
-        drawable->set_default_color(color);
+        states_[drawable] = drawable->state();
+        drawable->set_uniform_coloring(color);
     } else if (dynamic_cast<Graph *>(model)) {
         Drawable *drawable = model->get_points_drawable("vertices");
-        drawable->set_per_vertex_color(false);
-        drawable->set_default_color(color);
-
+        states_[drawable] = drawable->state();
+        drawable->set_uniform_coloring(color);
         drawable = model->get_lines_drawable("edges");
-        drawable->set_per_vertex_color(false);
-        drawable->set_default_color(color);
+        states_[drawable] = drawable->state();
+        drawable->set_uniform_coloring(color);
+    }
+}
+
+
+void PickerViewer::restore(Model *model) {
+    // make sure the vertex buffer holds the right data.
+    if (dynamic_cast<SurfaceMesh *>(model)) {
+        Drawable *drawable = model->get_triangles_drawable("faces");
+        drawable->set_state(states_[drawable]);
+    } else if (dynamic_cast<PointCloud *>(model)) {
+        Drawable *drawable = model->get_points_drawable("vertices");
+        drawable->set_state(states_[drawable]);
+    } else if (dynamic_cast<Graph *>(model)) {
+        Drawable *drawable = model->get_points_drawable("vertices");
+        drawable->set_state(states_[drawable]);
+        drawable = model->get_lines_drawable("edges");
+        drawable->set_state(states_[drawable]);
     }
 }

@@ -230,8 +230,8 @@ namespace easy3d {
                 program->set_block_uniform("Material", "ambient", d->material().ambient);
                 program->set_block_uniform("Material", "specular", d->material().specular);
                 program->set_block_uniform("Material", "shininess", &d->material().shininess);
-                program->set_uniform("default_color", d->default_color());				easy3d_debug_log_gl_error;
-                program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
+                program->set_uniform("default_color", d->color());				easy3d_debug_log_gl_error;
+                program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                 program->set_uniform("is_background", false);
                 d->gl_draw(false);
             }
@@ -417,8 +417,7 @@ namespace easy3d {
         LinesDrawable frustum("frustum");
         frustum.update_vertex_buffer(points);
         frustum.update_index_buffer(indices);
-        frustum.set_per_vertex_color(false);
-        frustum.set_default_color(vec4(0.0, 0.0, 1.0, 1.0));
+        frustum.set_uniform_coloring(vec4(0.0, 0.0, 1.0, 1.0));
         frustum.draw(camera_, false);
     }
 

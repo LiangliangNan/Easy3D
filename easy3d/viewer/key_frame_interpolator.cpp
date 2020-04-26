@@ -346,7 +346,7 @@ namespace easy3d {
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);
-                path_drawable_->set_default_color(vec4(1.0f, 0.67f, 0.5f, 1.0f));
+                path_drawable_->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f));
                 path_drawable_->set_line_width(2);
                 path_drawable_->set_impostor_type(LinesDrawable::CYLINDER);
             }
@@ -368,7 +368,7 @@ namespace easy3d {
             if (points.size() > 1) {
                 cameras_drawable_ = new LinesDrawable;
                 cameras_drawable_->update_vertex_buffer(points);
-                cameras_drawable_->set_default_color(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+                cameras_drawable_->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));
                 cameras_drawable_->set_line_width(2);
             }
         }

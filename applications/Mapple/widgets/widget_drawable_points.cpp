@@ -271,7 +271,7 @@ void WidgetPointsDrawable::updatePanel() {
 
     auto d = dynamic_cast<PointsDrawable*>(drawable());
     auto &state = states_[d];
-    auto &scheme = d->color_scheme();
+    auto &scheme = d->state();
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->points_drawables();
@@ -315,14 +315,14 @@ void WidgetPointsDrawable::updatePanel() {
             ui->comboBoxColorScheme->addItem(scheme);
 
         for (const auto& name : schemes) {
-            if (name.contains(QString::fromStdString(scheme.name))) {
+            if (name.contains(QString::fromStdString(scheme.property_name()))) {
                 ui->comboBoxColorScheme->setCurrentText(name);
                 break;
             }
         }
 
         // default color
-        vec3 c = d->default_color();
+        vec3 c = d->color();
         QPixmap pixmap(ui->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -347,9 +347,9 @@ void WidgetPointsDrawable::updatePanel() {
 
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
-        ui->checkBoxScalarFieldClamp->setChecked(scheme.clamp_value);
-        ui->doubleSpinBoxScalarFieldClampLower->setValue(scheme.dummy_lower * 100);
-        ui->doubleSpinBoxScalarFieldClampUpper->setValue(scheme.dummy_upper * 100);
+        ui->checkBoxScalarFieldClamp->setChecked(scheme.clamp_range());
+        ui->doubleSpinBoxScalarFieldClampLower->setValue(scheme.clamp_lower() * 100);
+        ui->doubleSpinBoxScalarFieldClampUpper->setValue(scheme.clamp_upper() * 100);
     }
 
     {   // vector field
@@ -462,10 +462,10 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
 
 void WidgetPointsDrawable::setColorScheme(const QString &text) {
     auto d = drawable();
-    auto& scheme = d->color_scheme();
-    scheme.clamp_value = ui->checkBoxScalarFieldClamp->isChecked();
-    scheme.dummy_lower = ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0;
-    scheme.dummy_upper = ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0;
+    auto& scheme = d->state();
+    scheme.set_clamp_range(ui->checkBoxScalarFieldClamp->isChecked());
+    scheme.set_clamp_lower(ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0);
+    scheme.set_clamp_upper(ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0);
     states_[d].scalar_style = ui->comboBoxScalarFieldStyle->currentIndex();
 
     WidgetDrawable::setColorScheme(text);
@@ -474,12 +474,12 @@ void WidgetPointsDrawable::setColorScheme(const QString &text) {
 
 void WidgetPointsDrawable::setDefaultColor() {
     auto d = drawable();
-    const vec3 &c = d->default_color();
+    const vec3 &c = d->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
         const vec4 new_color(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-        d->set_default_color(new_color);
+        d->set_uniform_coloring(new_color);
         viewer_->update();
 
         QPixmap pixmap(ui->toolButtonDefaultColor->size());

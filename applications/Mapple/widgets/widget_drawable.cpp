@@ -92,18 +92,15 @@ void WidgetDrawable::setLighting(const QString &text) {
 
 void WidgetDrawable::setScalarFieldStyle(int idx) {
     auto d = drawable();
-    states_[d].scalar_style = idx;
     auto tex = colormapTexture(idx);
     d->set_texture(tex);
-    d->set_use_texture(true);
     viewer_->update();
 }
 
 
 void WidgetDrawable::setScalarFieldClamp(bool b) {
     auto d = drawable();
-    auto& scheme = d->color_scheme();
-    scheme.clamp_value = b;
+    d->set_clamp_range(b);
     d->update_buffers();
     viewer_->update();
 }
@@ -111,8 +108,7 @@ void WidgetDrawable::setScalarFieldClamp(bool b) {
 
 void WidgetDrawable::setScalarFieldClampLower(double v) {
     auto d = drawable();
-    auto& scheme = d->color_scheme();
-    scheme.dummy_lower = v / 100.0f;
+    d->set_clamp_lower(v / 100.0f);
     d->update_buffers();
     viewer_->update();
 }
@@ -120,8 +116,7 @@ void WidgetDrawable::setScalarFieldClampLower(double v) {
 
 void WidgetDrawable::setScalarFieldClampUpper(double v) {
     auto d = drawable();
-    auto& scheme = d->color_scheme();
-    scheme.dummy_upper = v / 100.0f;
+    d->set_clamp_upper(v / 100.0f);
     d->update_buffers();
     viewer_->update();
 }
@@ -192,57 +187,55 @@ std::string WidgetDrawable::color_property_name(const std::string& name, const s
 
 
 // get the color source from the color scheme name
-ColorScheme::Source WidgetDrawable::color_source(const std::string& name, const std::string& scalar_prefix) const {
+State::Method WidgetDrawable::color_source(const std::string& name, const std::string& scalar_prefix) const {
     if (name == "uniform color")
-        return ColorScheme::UNIFORM_COLOR;
+        return State::UNIFORM_COLOR;
     else if (name.find("v:color") != std::string::npos || name.find("f:color") != std::string::npos)
-        return ColorScheme::COLOR_PROPERTY;
+        return State::COLOR_PROPERTY;
     else if (name.find("texcoord") != std::string::npos)
-        return ColorScheme::TEXTURE;
+        return State::TEXTURED;
     else if (name.find(scalar_prefix) != std::string::npos)
-        return ColorScheme::SCALAR_FIELD;
+        return State::SCALAR_FIELD;
     else {
         LOG(ERROR) << "unknown color source (scheme = " << name << ")";
-        return ColorScheme::UNIFORM_COLOR;
+        return State::UNIFORM_COLOR;
     }
 }
 
 
 // get the color location from the color scheme name
-ColorScheme::Location WidgetDrawable::color_location(const std::string& name) const {
+State::PropertyLocation WidgetDrawable::color_location(const std::string& name) const {
     if (name.find("e:") != std::string::npos)
-        return ColorScheme::EDGE;
+        return State::EDGE;
     else if (name.find("h:") != std::string::npos)
-        return ColorScheme::HALFEDGE;
+        return State::HALFEDGE;
     else if (name.find("f:") != std::string::npos)
-        return ColorScheme::FACE;
+        return State::FACE;
     else
-        return ColorScheme::VERTEX;
+        return State::VERTEX;
 }
 
 
 void WidgetDrawable::setColorScheme(const QString &text) {
     auto d = drawable();
-    auto& scheme = d->color_scheme();
+    auto& state = d->state();
 
-    scheme.source = color_source(text.toStdString(), scalar_prefix_.toStdString());
-    scheme.location = color_location(text.toStdString());
-    scheme.name = color_property_name(text.toStdString(), scalar_prefix_.toStdString());
+    state.set_coloring(
+            color_source(text.toStdString(), scalar_prefix_.toStdString()),
+            color_location(text.toStdString()),
+            color_property_name(text.toStdString(), scalar_prefix_.toStdString())
+    );
     
-    if (scheme.source == ColorScheme::TEXTURE || scheme.source == ColorScheme::SCALAR_FIELD) {
+    if (d->coloring_method() == State::TEXTURED || d->coloring_method() == State::SCALAR_FIELD) {
         d->set_texture(colormapTexture(states_[d].scalar_style));
-        d->set_use_texture(true);
-        if (scheme.source == ColorScheme::SCALAR_FIELD) {
+        if (d->coloring_method() == State::SCALAR_FIELD) {
             d->set_texture_repeat(1.0f);
             d->set_texture_fractional_repeat(0.0f);
         }
     }
-    else {
+    else
         d->set_texture(nullptr);
-        d->set_use_texture(false);
-    }
 
-    d->set_per_vertex_color(scheme.source != ColorScheme::UNIFORM_COLOR);
     d->update_buffers();
 
     viewer_->update();

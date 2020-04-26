@@ -130,9 +130,7 @@ namespace easy3d {
                 colors[f] = random_color();
             faces->set_lighting_two_sides(true);
             faces->set_visible(false);
-            faces->color_scheme().source = ColorScheme::COLOR_PROPERTY;
-            faces->color_scheme().location = ColorScheme::FACE;
-            faces->color_scheme().name = "f:color";
+            faces->set_coloring_by_color_property(State::FACE, "f:color");
             candidate_faces_.push_back(faces);
 
             auto* edges = mesh->add_lines_drawable("edges");
@@ -150,8 +148,7 @@ namespace easy3d {
                 }
             }
             borders->update_vertex_buffer(points);
-            borders->set_default_color(setting::surface_mesh_borders_color);
-            borders->set_per_vertex_color(false);
+            borders->set_uniform_coloring(setting::surface_mesh_borders_color);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
             borders->set_visible(false);
@@ -189,8 +186,7 @@ namespace easy3d {
                 }
             }
             borders->update_vertex_buffer(points);
-            borders->set_default_color(setting::surface_mesh_borders_color);
-            borders->set_per_vertex_color(false);
+            borders->set_uniform_coloring(setting::surface_mesh_borders_color);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
             faces_ground_truth_.push_back(borders);
@@ -237,8 +233,7 @@ namespace easy3d {
             auto* edges = mesh->add_lines_drawable("ground_truth_edges");
             edges->update_vertex_buffer(pts);
             edges->update_color_buffer(cls);
-            edges->set_default_color(setting::surface_mesh_borders_color);
-            edges->set_per_vertex_color(true);
+            edges->set_coloring_by_color_property(State::VERTEX);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_line_width(setting::surface_mesh_borders_line_width);
             edges->set_visible(false);

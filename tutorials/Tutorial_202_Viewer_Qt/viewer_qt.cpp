@@ -483,11 +483,11 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 if (!dynamic_cast<PointCloud *>(currentModel())) { // no default "edges" drawable for point clouds
                     edges = currentModel()->add_lines_drawable("edges");
                     if (dynamic_cast<SurfaceMesh *>(currentModel())) {
-                        edges->set_default_color(setting::surface_mesh_edges_color);
+                        edges->set_uniform_coloring(setting::surface_mesh_edges_color);
                         edges->set_line_width(setting::surface_mesh_edges_line_width);
                     }
                     else if (dynamic_cast<Graph *>(currentModel())) {
-                        edges->set_default_color(setting::graph_edges_color);
+                        edges->set_uniform_coloring(setting::graph_edges_color);
                         edges->set_line_width(setting::graph_edges_line_width);
                         edges->set_impostor_type(LinesDrawable::CYLINDER);
                     }
@@ -506,10 +506,10 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 }
                 else if (dynamic_cast<PointCloud*>(currentModel())) {
                     vertices->set_point_size(setting::point_cloud_point_size);
-                    vertices->set_default_color(setting::point_cloud_points_color);
+                    vertices->set_uniform_coloring(setting::point_cloud_points_color);
                 }
                 else if (dynamic_cast<Graph*>(currentModel())) {
-                    vertices->set_default_color(setting::graph_vertices_color);
+                    vertices->set_uniform_coloring(setting::graph_vertices_color);
                     vertices->set_point_size(setting::graph_vertices_point_size);
                     vertices->set_impostor_type(PointsDrawable::SPHERE);
                 }
@@ -523,8 +523,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             auto borders = mesh->get_lines_drawable("borders");
             if (!borders) {
                 borders = mesh->add_lines_drawable("borders");
-                borders->set_default_color(setting::surface_mesh_borders_color);
-                borders->set_per_vertex_color(false);
+                borders->set_uniform_coloring(setting::surface_mesh_borders_color);
                 borders->set_impostor_type(LinesDrawable::CYLINDER);
                 borders->set_line_width(setting::surface_mesh_borders_line_width);
             }
@@ -538,8 +537,7 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             auto drawable = mesh->get_points_drawable("locks");
             if (!drawable) {
                 drawable = mesh->add_points_drawable("locks");
-                drawable->set_default_color(vec4(1, 1, 0, 1.0f));
-                drawable->set_per_vertex_color(false);
+                drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
                 drawable->set_impostor_type(PointsDrawable::SPHERE);
                 drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
             }
@@ -845,7 +843,7 @@ void ViewerQt::drawCornerAxes() {
 		drawable_axes_->update_vertex_buffer(points);
 		drawable_axes_->update_normal_buffer(normals);
 		drawable_axes_->update_color_buffer(colors);
-		drawable_axes_->set_per_vertex_color(true);
+        drawable_axes_->set_coloring_by_color_property(State::VERTEX);
 	}
 	if (!drawable_axes_->is_visible())
 		return;

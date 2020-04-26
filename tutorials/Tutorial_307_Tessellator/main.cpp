@@ -156,11 +156,11 @@ int main(int argc, char **argv) {
 
     // ------------------------------------------------------------
 
-    // also show the borders
-    mesh->add_lines_drawable("borders");
-
     // add the model to the viewer
     viewer.add_model(mesh, true);
+
+    // also show the borders
+    mesh->get_lines_drawable("borders")->set_visible(true);
 
     // Run the viewer
     return viewer.run();

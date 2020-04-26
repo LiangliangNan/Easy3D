@@ -257,16 +257,15 @@ namespace easy3d {
                 drawable->update_texcoord_buffer(d_texcoords);
             drawable->set_smooth_shading(false);
 
-            drawable->set_material(Material(group.ambient, group.specular, group.shininess));
-            drawable->set_default_color(vec4(group.diffuse, 1.0f));
+            drawable->set_material(State::Material(group.ambient, group.specular, group.shininess));
+            drawable->set_uniform_coloring(vec4(group.diffuse, 1.0f));
 
             std::string texname = group.tex_file;
             if (!texname.empty()) {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
                 Texture *tex = TextureManager::request(texture_file, Texture::REPEAT);
                 if (tex) {
-                    drawable->set_texture(tex);
-                    drawable->set_use_texture(true);
+                    drawable->set_coloring_by_texture(State::HALFEDGE, "h:texcoord", tex);
                     LOG(INFO) << "texture created from " << texname;
                 }
             }

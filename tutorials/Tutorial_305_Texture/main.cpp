@@ -83,14 +83,7 @@ int main(int argc, char **argv) {
     // set the texture of the default drawable "faces"
     auto drawable = mesh->get_triangles_drawable("faces");
     drawable->set_texture(tex);
-    drawable->set_use_texture(true);
-    drawable->set_per_vertex_color(true);
-
-    drawable->color_scheme().source = ColorScheme::TEXTURE;
-    drawable->color_scheme().name = "v:texcoord";
-
-    // also show the borders
-    mesh->add_lines_drawable("borders");
+    drawable->set_coloring_by_texture(easy3d::State::VERTEX, "v:texcoord", tex);
 
     // -------------------------------------------------------------------------------
 

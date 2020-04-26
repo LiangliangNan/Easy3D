@@ -805,11 +805,11 @@ namespace easy3d {
                     if (!dynamic_cast<PointCloud *>(current_model())) { // no default "edges" drawable for point clouds
                         edges = current_model()->add_lines_drawable("edges");
                         if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                            edges->set_default_color(setting::surface_mesh_edges_color);
+                            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
                             edges->set_line_width(setting::surface_mesh_edges_line_width);
                         }
                         else if (dynamic_cast<Graph *>(current_model())) {
-                            edges->set_default_color(setting::graph_edges_color);
+                            edges->set_uniform_coloring(setting::graph_edges_color);
                             edges->set_line_width(setting::graph_edges_line_width);
                             edges->set_impostor_type(LinesDrawable::CYLINDER);
                         }
@@ -823,16 +823,16 @@ namespace easy3d {
                 if (!vertices) {
                     vertices = current_model()->add_points_drawable("vertices");
                     if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                        vertices->set_default_color(setting::surface_mesh_vertices_color);
+                        vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
                         vertices->set_impostor_type(PointsDrawable::SPHERE);
                         vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                     }
                     else if (dynamic_cast<PointCloud*>(current_model())) {
                         vertices->set_point_size(setting::point_cloud_point_size);
-                        vertices->set_default_color(setting::point_cloud_points_color);
+                        vertices->set_uniform_coloring(setting::point_cloud_points_color);
                     }
                     else if (dynamic_cast<Graph*>(current_model())) {
-                        vertices->set_default_color(setting::graph_vertices_color);
+                        vertices->set_uniform_coloring(setting::graph_vertices_color);
                         vertices->set_point_size(setting::graph_vertices_point_size);
                         vertices->set_impostor_type(PointsDrawable::SPHERE);
                     }
@@ -845,8 +845,7 @@ namespace easy3d {
                 auto drawable = mesh->get_lines_drawable("borders");
                 if (!drawable) {
                     drawable = mesh->add_lines_drawable("borders");
-                    drawable->set_default_color(setting::surface_mesh_borders_color);
-                    drawable->set_per_vertex_color(false);
+                    drawable->set_uniform_coloring(setting::surface_mesh_borders_color);
                     drawable->set_impostor_type(LinesDrawable::CYLINDER);
                     drawable->set_line_width(setting::surface_mesh_borders_line_width);
                 }
@@ -859,8 +858,7 @@ namespace easy3d {
                 auto drawable = mesh->get_points_drawable("locks");
                 if (!drawable) {
                     drawable = mesh->add_points_drawable("locks");
-                    drawable->set_default_color(vec4(1, 1, 0, 1.0f));
-                    drawable->set_per_vertex_color(false);
+                    drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
                     drawable->set_impostor_type(PointsDrawable::SPHERE);
                     drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
                 }
@@ -1418,7 +1416,7 @@ namespace easy3d {
             drawable_axes_->update_vertex_buffer(points);
             drawable_axes_->update_normal_buffer(normals);
             drawable_axes_->update_color_buffer(colors);
-            drawable_axes_->set_per_vertex_color(true);
+            drawable_axes_->set_coloring_by_color_property(State::VERTEX);
         }
         if (!drawable_axes_->is_visible())
             return;
@@ -1554,21 +1552,21 @@ namespace easy3d {
             glDepthRange(0.001, 1.0);
             for (auto d : m->triangles_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
-            }
+                    d->draw(camera(), false);
+            } easy3d_debug_log_gl_error;
 
             glDepthRange(0.0, 1.0);
             glDepthFunc(GL_LEQUAL);
             for (auto d : m->lines_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
-            }
+                    d->draw(camera(), false);
+            } easy3d_debug_log_gl_error;
             glDepthFunc(GL_LESS);
 
             for (auto d : m->points_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
-            }
+                    d->draw(camera(), false);
+            } easy3d_debug_log_gl_error;
         }
 
         for (auto d : drawables_) {

@@ -129,8 +129,8 @@ void TutorialAmbientOcclusion::draw() const {
 			->set_block_uniform("Material", "ambient", drawable->material().ambient)
 			->set_block_uniform("Material", "specular", drawable->material().specular)
 			->set_block_uniform("Material", "shininess", &drawable->material().shininess)
-			->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer())
-			->set_uniform("default_color", drawable->default_color());
+			->set_uniform("per_vertex_color", drawable->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer())
+			->set_uniform("default_color", drawable->color());
 
 		const auto& range = drawable->highlight_range();
 		program->set_uniform("hightlight_id_min", range.first)

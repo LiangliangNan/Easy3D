@@ -147,7 +147,7 @@ namespace easy3d {
         wireframe.update_vertex_buffer(points);
         wireframe.update_index_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
-        wireframe.set_default_color(color_);
+        wireframe.set_uniform_coloring(color_);
         wireframe.draw(cam, false);
         easy3d_debug_log_gl_error;
 
@@ -158,7 +158,7 @@ namespace easy3d {
         TrianglesDrawable face;
         face.update_vertex_buffer(points);
         face.update_index_buffer(face_indices);
-        face.set_default_color(color_);
+        face.set_uniform_coloring(color_);
         face.draw(cam, false);
         glDisable(GL_BLEND);
         easy3d_debug_log_gl_error;

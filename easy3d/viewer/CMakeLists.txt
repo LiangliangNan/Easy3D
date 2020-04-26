@@ -35,6 +35,7 @@ set(${PROJECT_NAME}_HEADERS
         shader_program.h
         shadow.h
         soft_shadow.h
+        state.h
         opengl_timer.h
         tessellator.h
         texture.h
@@ -76,6 +77,7 @@ set(${PROJECT_NAME}_SOURCES
         shader_program.cpp
         shadow.cpp
         soft_shadow.cpp
+        state.cpp
         tessellator.cpp
         texture.cpp
         texture_manager.cpp

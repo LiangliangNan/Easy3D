@@ -100,8 +100,8 @@ void TutorialEyeDomeLighting::draw() const {
 		program->set_uniform("wLightPos", wLightPos);
 		program->set_uniform("wCamPos", wCamPos);
 		program->set_uniform("lighting", drawable->normal_buffer());
-		program->set_uniform("per_vertex_color", drawable->per_vertex_color() && drawable->color_buffer());
-		program->set_uniform("default_color", drawable->default_color());
+		program->set_uniform("per_vertex_color", drawable->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer());
+		program->set_uniform("default_color", drawable->color());
         drawable->gl_draw(false);
 
 		program->release();

@@ -65,8 +65,8 @@ protected:
         easy3d::Texture* texture;
     };
 
-    struct State {
-        State() : initialized(false), scalar_style(0), vector_field("disabled"), vector_field_scale(1.0) {
+    struct RenderingState {
+        RenderingState() : initialized(false), scalar_style(0), vector_field("disabled"), vector_field_scale(1.0) {
         }
 
         bool initialized;
@@ -81,10 +81,10 @@ protected:
     std::string color_property_name(const std::string& name, const std::string& scalar_prefix) const;
 
     // get the color source from the color scheme name
-    easy3d::ColorScheme::Source color_source(const std::string& name, const std::string& scalar_prefix) const ;
+    easy3d::State::Method color_source(const std::string& name, const std::string& scalar_prefix) const ;
 
     // get the color location from the color scheme name
-    easy3d::ColorScheme::Location color_location(const std::string& name) const;
+    easy3d::State::PropertyLocation color_location(const std::string& name) const;
 
 protected:
     MainWindow*     main_window_;
@@ -98,7 +98,7 @@ protected:
     static std::vector<ColorMap> colormaps_;
 
     // the state of the rendering panel
-    std::unordered_map<easy3d::Drawable *, State> states_;
+    std::unordered_map<easy3d::Drawable *, RenderingState> states_;
 };
 
 #endif // WIDGET_DRAWABLE_H

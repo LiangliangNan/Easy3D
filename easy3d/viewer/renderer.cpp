@@ -76,9 +76,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -91,8 +90,6 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(d_texcoords);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -103,9 +100,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -120,8 +116,6 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(d_texcoords);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -131,9 +125,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -155,8 +148,6 @@ namespace easy3d {
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_texcoord_buffer(d_texcoords);
                 drawable->release_element_buffer();
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -166,9 +157,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -193,8 +183,6 @@ namespace easy3d {
                     indices.push_back(t.idx());
                 }
                 drawable->update_index_buffer(indices);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -205,9 +193,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -221,8 +208,6 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(d_texcoords);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -261,9 +246,8 @@ namespace easy3d {
                 model->update_vertex_normals();
                 auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -308,8 +292,6 @@ namespace easy3d {
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
-                drawable->set_use_texture(true);
-
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
@@ -348,10 +330,9 @@ namespace easy3d {
                 auto points = model->get_vertex_property<vec3>("v:point");
                 model->update_vertex_normals();
                 auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -396,8 +377,6 @@ namespace easy3d {
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
-                drawable->set_use_texture(true);
-
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
@@ -408,9 +387,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -434,8 +412,6 @@ namespace easy3d {
                 drawable->update_texcoord_buffer(d_texcoords);
                 drawable->release_element_buffer();
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -445,9 +421,8 @@ namespace easy3d {
                 assert(drawable);
                 assert(prop);
 
-                const auto& scheme = drawable->color_scheme();
-                const float dummy_lower = (scheme.clamp_value ? scheme.dummy_lower : 0.0f);
-                const float dummy_upper = (scheme.clamp_value ? scheme.dummy_upper : 0.0f);
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
@@ -473,8 +448,6 @@ namespace easy3d {
                 }
                 drawable->update_index_buffer(indices);
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
-
-                drawable->set_use_texture(true);
             }
 
 
@@ -1157,41 +1130,41 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update_buffers(model, drawable, texcoord);
                     else
-                        LOG(WARNING) << "texcoord property not found: " << scheme.name;
+                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update_buffers(model, drawable, colors);
                     else
-                        LOG(WARNING) << "color property not found: " << scheme.name;
+                        LOG(WARNING) << "color property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    if (model->get_vertex_property<float>(scheme.name)) {
-                        auto prop = model->get_vertex_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    if (model->get_vertex_property<float>(name)) {
+                        auto prop = model->get_vertex_property<float>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<double>(scheme.name)) {
-                        auto prop = model->get_vertex_property<double>(scheme.name);
+                    } else if (model->get_vertex_property<double>(name)) {
+                        auto prop = model->get_vertex_property<double>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<int>(scheme.name);
+                    } else if (model->get_vertex_property<int>(name)) {
+                        auto prop = model->get_vertex_property<int>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                    } else if (model->get_vertex_property<unsigned int>(name)) {
+                        auto prop = model->get_vertex_property<unsigned int>(name);
                         details::update_buffers(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << scheme.name;
+                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
                         return;
                     }
                     break;
@@ -1203,9 +1176,6 @@ namespace easy3d {
                     auto normals = model->get_vertex_property<vec3>("v:normal");
                     if (normals)
                         drawable->update_normal_buffer(normals.vector());
-                    drawable->set_per_vertex_color(false);
-                    drawable->set_use_texture(false);
-                    drawable->set_texture(nullptr);
                     break;
                 }
             }
@@ -1278,41 +1248,41 @@ namespace easy3d {
                 return;
             }
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update_buffers(model, drawable, texcoord);
                     else
-                        LOG(WARNING) << "texcoord property not found: " << scheme.name;
+                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update_buffers(model, drawable, colors);
                     else
-                        LOG(WARNING) << "color property not found: " << scheme.name;
+                        LOG(WARNING) << "color property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    if (model->get_vertex_property<float>(scheme.name)) {
-                        auto prop = model->get_vertex_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    if (model->get_vertex_property<float>(name)) {
+                        auto prop = model->get_vertex_property<float>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<double>(scheme.name)) {
-                        auto prop = model->get_vertex_property<double>(scheme.name);
+                    } else if (model->get_vertex_property<double>(name)) {
+                        auto prop = model->get_vertex_property<double>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<int>(scheme.name);
+                    } else if (model->get_vertex_property<int>(name)) {
+                        auto prop = model->get_vertex_property<int>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                    } else if (model->get_vertex_property<unsigned int>(name)) {
+                        auto prop = model->get_vertex_property<unsigned int>(name);
                         details::update_buffers(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << scheme.name;
+                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
                         return;
                     }
                     break;
@@ -1324,10 +1294,6 @@ namespace easy3d {
                     auto normals = model->get_vertex_property<vec3>("v:normal");
                     if (normals)
                         drawable->update_normal_buffer(normals.vector());
-
-                    drawable->set_per_vertex_color(false);
-                    drawable->set_use_texture(false);
-                    drawable->set_texture(nullptr);
                     break;
             }
         }
@@ -1347,103 +1313,103 @@ namespace easy3d {
                 return;
             }
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            auto texcoord = model->get_edge_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            auto texcoord = model->get_edge_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on edges: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on edges: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+                        case State::VERTEX: {
+                            auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            auto colors = model->get_edge_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            auto colors = model->get_vertex_property<vec3>(scheme.name);
+                        case State::VERTEX: {
+                            auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            if (model->get_edge_property<float>(scheme.name)) {
-                                auto prop = model->get_edge_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            if (model->get_edge_property<float>(name)) {
+                                auto prop = model->get_edge_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<double>(scheme.name)) {
-                                auto prop = model->get_edge_property<double>(scheme.name);
+                            } else if (model->get_edge_property<double>(name)) {
+                                auto prop = model->get_edge_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<int>(scheme.name)) {
-                                auto prop = model->get_edge_property<int>(scheme.name);
+                            } else if (model->get_edge_property<int>(name)) {
+                                auto prop = model->get_edge_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_edge_property<unsigned int>(scheme.name);
+                            } else if (model->get_edge_property<unsigned int>(name)) {
+                                auto prop = model->get_edge_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            if (model->get_vertex_property<float>(scheme.name)) {
-                                auto prop = model->get_vertex_property<float>(scheme.name);
+                        case State::VERTEX: {
+                            if (model->get_vertex_property<float>(name)) {
+                                auto prop = model->get_vertex_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<double>(scheme.name)) {
-                                auto prop = model->get_vertex_property<double>(scheme.name);
+                            } else if (model->get_vertex_property<double>(name)) {
+                                auto prop = model->get_vertex_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<int>(scheme.name);
+                            } else if (model->get_vertex_property<int>(name)) {
+                                auto prop = model->get_vertex_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                            } else if (model->get_vertex_property<unsigned int>(name)) {
+                                auto prop = model->get_vertex_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
@@ -1535,103 +1501,103 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    switch (scheme.location) {
-                        case ColorScheme::VERTEX: {
-                            auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    switch (drawable->property_location()) {
+                        case State::VERTEX: {
+                            auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::HALFEDGE: {
-                            auto texcoord = model->get_halfedge_property<vec2>(scheme.name);
+                        case State::HALFEDGE: {
+                            auto texcoord = model->get_halfedge_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on halfedges: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on halfedges: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::EDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::EDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    switch (scheme.location) {
-                        case ColorScheme::FACE: {
-                            auto colors = model->get_face_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    switch (drawable->property_location()) {
+                        case State::FACE: {
+                            auto colors = model->get_face_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            auto colors = model->get_vertex_property<vec3>(scheme.name);
+                        case State::VERTEX: {
+                            auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::EDGE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::EDGE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    switch (scheme.location) {
-                        case ColorScheme::FACE: {
-                            if (model->get_face_property<float>(scheme.name)) {
-                                auto prop = model->get_face_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    switch (drawable->property_location()) {
+                        case State::FACE: {
+                            if (model->get_face_property<float>(name)) {
+                                auto prop = model->get_face_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_face_property<double>(scheme.name)) {
-                                auto prop = model->get_face_property<double>(scheme.name);
+                            } else if (model->get_face_property<double>(name)) {
+                                auto prop = model->get_face_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_face_property<int>(scheme.name)) {
-                                auto prop = model->get_face_property<int>(scheme.name);
+                            } else if (model->get_face_property<int>(name)) {
+                                auto prop = model->get_face_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_face_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_face_property<unsigned int>(scheme.name);
+                            } else if (model->get_face_property<unsigned int>(name)) {
+                                auto prop = model->get_face_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            if (model->get_vertex_property<float>(scheme.name)) {
-                                auto prop = model->get_vertex_property<float>(scheme.name);
+                        case State::VERTEX: {
+                            if (model->get_vertex_property<float>(name)) {
+                                auto prop = model->get_vertex_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<double>(scheme.name)) {
-                                auto prop = model->get_vertex_property<double>(scheme.name);
+                            } else if (model->get_vertex_property<double>(name)) {
+                                auto prop = model->get_vertex_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<int>(scheme.name);
+                            } else if (model->get_vertex_property<int>(name)) {
+                                auto prop = model->get_vertex_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                            } else if (model->get_vertex_property<unsigned int>(name)) {
+                                auto prop = model->get_vertex_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::EDGE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::EDGE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
@@ -1655,41 +1621,41 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update_buffers(model, drawable, texcoord);
                     else
-                        LOG(WARNING) << "texcoord property not found: " << scheme.name;
+                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update_buffers(model, drawable, colors);
                     else
-                        LOG(WARNING) << "color property not found: " << scheme.name;
+                        LOG(WARNING) << "color property not found: " << drawable->property_name();
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    if (model->get_vertex_property<float>(scheme.name)) {
-                        auto prop = model->get_vertex_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    if (model->get_vertex_property<float>(name)) {
+                        auto prop = model->get_vertex_property<float>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<double>(scheme.name)) {
-                        auto prop = model->get_vertex_property<double>(scheme.name);
+                    } else if (model->get_vertex_property<double>(name)) {
+                        auto prop = model->get_vertex_property<double>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<int>(scheme.name);
+                    } else if (model->get_vertex_property<int>(name)) {
+                        auto prop = model->get_vertex_property<int>(name);
                         details::update_buffers(model, drawable, prop);
-                    } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                        auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                    } else if (model->get_vertex_property<unsigned int>(name)) {
+                        auto prop = model->get_vertex_property<unsigned int>(name);
                         details::update_buffers(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << scheme.name;
+                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
                         return;
                     }
                     break;
@@ -1698,10 +1664,6 @@ namespace easy3d {
                 default: // uniform color
                     auto points = model->get_vertex_property<vec3>("v:point");
                     drawable->update_vertex_buffer(points.vector());
-
-                    drawable->set_per_vertex_color(false);
-                    drawable->set_use_texture(false);
-                    drawable->set_texture(nullptr);
                     break;
             }
 
@@ -1717,103 +1679,103 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
-            const auto &scheme = drawable->color_scheme();
-            switch (scheme.source) {
-                case ColorScheme::TEXTURE: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            auto texcoord = model->get_edge_property<vec2>(scheme.name);
+            const std::string& name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            auto texcoord = model->get_edge_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on edges: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on edges: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            auto texcoord = model->get_vertex_property<vec2>(scheme.name);
+                        case State::VERTEX: {
+                            auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::COLOR_PROPERTY: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            auto colors = model->get_edge_property<vec3>(scheme.name);
+                case State::COLOR_PROPERTY: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            auto colors = model->get_vertex_property<vec3>(scheme.name);
+                        case State::VERTEX: {
+                            auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update_buffers(model, drawable, colors);
                             else
-                                LOG(WARNING) << "color property not found: " << scheme.name;
+                                LOG(WARNING) << "color property not found: " << drawable->property_name();
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
                 }
 
-                case ColorScheme::SCALAR_FIELD: {
-                    switch (scheme.location) {
-                        case ColorScheme::EDGE: {
-                            if (model->get_edge_property<float>(scheme.name)) {
-                                auto prop = model->get_edge_property<float>(scheme.name);
+                case State::SCALAR_FIELD: {
+                    switch (drawable->property_location()) {
+                        case State::EDGE: {
+                            if (model->get_edge_property<float>(name)) {
+                                auto prop = model->get_edge_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<double>(scheme.name)) {
-                                auto prop = model->get_edge_property<double>(scheme.name);
+                            } else if (model->get_edge_property<double>(name)) {
+                                auto prop = model->get_edge_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<int>(scheme.name)) {
-                                auto prop = model->get_edge_property<int>(scheme.name);
+                            } else if (model->get_edge_property<int>(name)) {
+                                auto prop = model->get_edge_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_edge_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_edge_property<unsigned int>(scheme.name);
+                            } else if (model->get_edge_property<unsigned int>(name)) {
+                                auto prop = model->get_edge_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::VERTEX: {
-                            if (model->get_vertex_property<float>(scheme.name)) {
-                                auto prop = model->get_vertex_property<float>(scheme.name);
+                        case State::VERTEX: {
+                            if (model->get_vertex_property<float>(name)) {
+                                auto prop = model->get_vertex_property<float>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<double>(scheme.name)) {
-                                auto prop = model->get_vertex_property<double>(scheme.name);
+                            } else if (model->get_vertex_property<double>(name)) {
+                                auto prop = model->get_vertex_property<double>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<int>(scheme.name);
+                            } else if (model->get_vertex_property<int>(name)) {
+                                auto prop = model->get_vertex_property<int>(name);
                                 details::update_buffers(model, drawable, prop);
-                            } else if (model->get_vertex_property<unsigned int>(scheme.name)) {
-                                auto prop = model->get_vertex_property<unsigned int>(scheme.name);
+                            } else if (model->get_vertex_property<unsigned int>(name)) {
+                                auto prop = model->get_vertex_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << scheme.name;
+                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
                                 return;
                             }
                             break;
                         }
-                        case ColorScheme::FACE:
-                        case ColorScheme::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << scheme.name;
+                        case State::FACE:
+                        case State::HALFEDGE:
+                            LOG(WARNING) << "should not happen" << drawable->property_name();
                             break;
                     }
                     break;
@@ -1845,33 +1807,32 @@ namespace easy3d {
                 PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 auto vertices = cloud->add_points_drawable("vertices");
                 vertices->set_point_size(setting::point_cloud_point_size);
-                vertices->set_default_color(setting::point_cloud_points_color);
+                vertices->set_uniform_coloring(setting::point_cloud_points_color);
                 vertices->set_visible(true);
             } else if (dynamic_cast<SurfaceMesh *>(model)) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
 
                 // faces
                 auto faces = mesh->add_triangles_drawable("faces");
-                faces->set_default_color(setting::surface_mesh_faces_color);
+                faces->set_uniform_coloring(setting::surface_mesh_faces_color);
                 faces->set_visible(true);
 
                 // edges
                 auto edges = mesh->add_lines_drawable("edges");
-                edges->set_default_color(setting::surface_mesh_edges_color);
+                edges->set_uniform_coloring(setting::surface_mesh_edges_color);
                 edges->set_line_width(setting::surface_mesh_edges_line_width);
                 edges->set_visible(setting::surface_mesh_show_edges);
 
                 // vertices
                 auto vertices = mesh->add_points_drawable("vertices");
-                vertices->set_default_color(setting::surface_mesh_vertices_color);
+                vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
                 vertices->set_impostor_type(PointsDrawable::SPHERE);
                 vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                 vertices->set_visible(setting::surface_mesh_show_vertices);
 
                 // borders
                 auto borders = mesh->add_lines_drawable("borders");
-                borders->set_default_color(setting::surface_mesh_borders_color);
-                borders->set_per_vertex_color(false);
+                borders->set_uniform_coloring(setting::surface_mesh_borders_color);
                 borders->set_impostor_type(LinesDrawable::CYLINDER);
                 borders->set_line_width(setting::surface_mesh_borders_line_width);
                 borders->set_visible(setting::surface_mesh_show_borders);
@@ -1879,14 +1840,14 @@ namespace easy3d {
                 Graph *graph = dynamic_cast<Graph *>(model);
                 // create points drawable for the edges
                 auto vertices = graph->add_points_drawable("vertices");
-                vertices->set_default_color(setting::graph_vertices_color);
+                vertices->set_uniform_coloring(setting::graph_vertices_color);
                 vertices->set_point_size(setting::graph_vertices_point_size);
                 vertices->set_impostor_type(PointsDrawable::SPHERE);
                 vertices->set_visible(true);
 
                 // create liens drawable for the edges
                 auto edges = graph->add_lines_drawable("edges");
-                edges->set_default_color(setting::graph_edges_color);
+                edges->set_uniform_coloring(setting::graph_edges_color);
                 edges->set_line_width(setting::graph_edges_line_width);
                 edges->set_impostor_type(LinesDrawable::CYLINDER);
                 edges->set_visible(true);

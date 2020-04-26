@@ -91,8 +91,6 @@ namespace easy3d {
         // switch back to the previous fbo
         fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
-        restore(models);
-
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);
         easy3d_debug_log_gl_error;
@@ -138,47 +136,17 @@ namespace easy3d {
     // draw a drawable
     void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
         // record
-        State state;
-        state.lighting = drawable->lighting();
-        state.use_texture = drawable->use_texture();
-        state.per_vertex_color = drawable->per_vertex_color();
-        state.default_color = drawable->default_color();
-        states_[drawable] = state;
 
-        // change
+        states_[drawable] = drawable->state();
+
+        // temporally change the rendering
         drawable->set_lighting(false);
-        drawable->set_use_texture(false);
-        drawable->set_per_vertex_color(false);
-        drawable->set_default_color(color);
+        drawable->set_uniform_coloring(color);
 
         // render
         drawable->draw(camera(), false);
-    }
 
-
-    void ModelPicker::restore(const std::vector<Model *> &models) {
-        for (std::size_t i = 0; i < models.size(); ++i) {
-            Model *model = models[i];
-            if (!model->is_visible())
-                continue;
-            if (dynamic_cast<SurfaceMesh *>(model))
-                restore(model->get_triangles_drawable("faces"));
-            else if (dynamic_cast<PointCloud *>(model))
-                restore(model->get_points_drawable("vertices"));
-            else if (dynamic_cast<Graph *>(model)) {
-                restore(model->get_points_drawable("vertices"));
-                restore(model->get_lines_drawable("edges"));
-            }
-        }
-    }
-
-
-    void ModelPicker::restore(Drawable *drawable) {
-        const State &state = states_[drawable];
-        drawable->set_lighting(state.lighting);
-        drawable->set_use_texture(state.use_texture);
-        drawable->set_per_vertex_color(state.per_vertex_color);
-        drawable->set_default_color(state.default_color);
+        drawable->set_state(states_[drawable]);
     }
 
 }

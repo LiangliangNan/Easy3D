@@ -51,10 +51,8 @@ RealCamera::RealCamera(const std::string& title,
     // Read the point cloud
     if (add_model(cloud_file)) {
         auto drawable = current_model()->get_points_drawable("vertices");
-        drawable->set_per_vertex_color(true);
         drawable->set_point_size(5.0f);
-        drawable->color_scheme().source = ColorScheme::COLOR_PROPERTY;
-        drawable->color_scheme().name = "v:color";
+        drawable->set_coloring_by_color_property(State::VERTEX, "v:color");
         
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
@@ -198,7 +196,7 @@ void RealCamera::create_cameras_drawable()
     }
     LinesDrawable* cameras = new LinesDrawable("cameras");
     cameras->update_vertex_buffer(vertices);
-    cameras->set_default_color(vec4(0, 0, 1, 1.0f));
+    cameras->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
     cameras->set_line_width(2.0f);
     add_drawable(cameras); // add the camera drawables to the viewer
 }

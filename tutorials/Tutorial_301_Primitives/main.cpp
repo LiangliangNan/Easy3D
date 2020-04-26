@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     bbox_drawable->update_vertex_buffer(bbox_points);
     // Upload the vertex indices of the bounding box to the GPU.
     bbox_drawable->update_index_buffer(bbox_indices);
-    bbox_drawable->set_default_color(vec4(1.0f, 0.0f, 0.0f, 1.0f));    // red color
+    bbox_drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));    // red color
     bbox_drawable->set_line_width(5.0f);
 
     // Add the drawable to the viewer

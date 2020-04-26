@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/viewer/state.h>
 
 
 namespace easy3d {
@@ -39,44 +40,16 @@ namespace easy3d {
     class VertexArrayObject;
 
 
-    struct Material {
-        Material();
-        Material(const vec3 &ambi, const vec3 &spec, float shin);
-        vec3 ambient;
-        //vec3    diffuse; // we have per face/point/line color!
-        vec3 specular;
-        float shininess;   // specular power
-    };
-
-
-    struct ColorScheme {
-        // where is the color from?
-        enum Source { UNIFORM_COLOR, COLOR_PROPERTY, TEXTURE, SCALAR_FIELD };
-        // where is the necessary property stored?
-        enum Location { FACE, VERTEX, EDGE, HALFEDGE };
-
-        ColorScheme(Source src = UNIFORM_COLOR, Location loc = VERTEX) : source(src), location(loc),
-                                                                         name("uniform color"),
-                                                                         clamp_value(true),
-                                                                         dummy_lower(0.05f), dummy_upper(0.05f) {}
-        Source source;
-        Location location;
-        std::string name;   // the name of the property
-        bool clamp_value;
-        float dummy_lower;  // the percentage of values to be clamped (used by rendering scalar field)
-        float dummy_upper;  // the percentage of values to be clamped (used by rendering scalar field)
-    };
-
-
     /**
-     * @brief The base class for drawable objects like points, line segments, and triangles.
-     * @details A Drawable is a general abstraction for "something that can be drawn" (i.e., drawable objects).
+     * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
+     * @details A Drawable is an abstraction for "something that can be drawn" (i.e., drawable objects), e.g., a point
+     *          point cloud, the surface of a mesh, the wireframe of a surface mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.
      *          A drawable can live independently or be associated with a Model.
      * @related @class Model
      */
 
-    class Drawable {
+    class Drawable : public State {
     public:
         // three types of drawables (the values are the same as GL_POINTS, GL_LINES, and GL_TRIANGLES).
         enum Type {
@@ -165,81 +138,14 @@ namespace easy3d {
 
         // -------------------------- rendering -----------------------------
 
-        bool is_visible() const { return visible_; }
-        void set_visible(bool v) { visible_ = v; }
+        State& state() { return *this; };
+        const State& state() const { return *this; };
+        void set_state(const State& s) { *((State*)this) = s; };
 
-        /**
-         * A drawable can be colored in the following ways:
-         *      - using one of the color properties (e.g., "v:color", "f:color", or "e:color");
-         *      - textured using one of the texture coordinates (e.g., "v:texcoord", "h:texcoord").
-         *      - textured using using the scalar field defined on the model.
-         * The active color is a string denoting how this drawable is colored.
-         * @return The string denoting the current color scheme.
-         */
-        ColorScheme &color_scheme() { return color_scheme_; }
-        const ColorScheme &color_scheme() const { return color_scheme_; }
-
-        /// if true, one of the color properties (e.g., "v:color", "f:color", or "e:color") will be active for rendering.
-        bool per_vertex_color() const { return per_vertex_color_; }
-        void set_per_vertex_color(bool b) { per_vertex_color_ = b; }
-
-        /// default_color will be ignored if per_vertex_color is true and given.
-        const vec4 &default_color() const { return default_color_; }
-        void set_default_color(const vec4 &c) { default_color_ = c; }
-
-        bool lighting() const { return lighting_; }
-        void set_lighting(bool l) { lighting_ = l; }
-
-        bool lighting_two_sides() const { return lighting_two_sides_; }
-        void set_lighting_two_sides(bool b) { lighting_two_sides_ = b; }
-
-        /// use a different color for the back side, valid only if two-side lighting is enabled
-        bool distinct_back_color() const { return distinct_back_color_; }
-        void set_distinct_back_color(bool b) { distinct_back_color_ = b; }
-
-        /// the back side color, valid only if two-side lighting is enabled and distinct back color is true
-        const vec4 &back_color() const { return back_color_; }
-        void set_back_color(const vec4 &c) { back_color_ = c; }
-
-        Material &material() { return material_; }
-        const Material &material() const { return material_; }
-        void set_material(const Material &m) { material_ = m; }
-
-        bool use_texture() const { return use_texture_; }
-        void set_use_texture(bool b) { use_texture_ = b; }
-
-        /** Memory management of textures is the user's responsibility. */
-        Texture *texture() const { return texture_; }
-        void set_texture(Texture *tex) { texture_ = tex; }
-
-        /// How many time do you want to repeat the texture?
-        float texture_repeat() const { return texture_repeat_; };
-        void set_texture_repeat(float r) { texture_repeat_ = r; };
-
-        // Control at a finer level: 100 fractional repeat == repeat.
-        float texture_fractional_repeat() const { return texture_fractional_repeat_; };
-        void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; };
-
-        /**
-         * Highlight a subset of primitives of this drawable. Primitives with indices within the range
-         * [highlight_id_low_, highlight_id_high_] will be highlighted.
-         * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
-         *              un-highlight any previously highlighted primitives.
-         * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
-         *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
-         *            internally implemented by selecting triangle primitives using program shaders. This allows data
-         *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
-         */
-        bool highlight() const { return highlight_; };
-        void set_highlight(bool b) { highlight_ = b; }
-
-        void set_highlight_range(const std::pair<int, int> &range) { highlight_range_ = range; }
-        const std::pair<int, int> &highlight_range() const { return highlight_range_; }
-
-        /// Rendering
+        /// The draw method.
         virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
 
-        /// The internal draw of this drawable.
+        /// The internal draw method of this drawable.
         /// NOTE: this functions should be called when your shader program is in use,
         ///		 i.e., between glUseProgram(id) and glUseProgram(0);
         void gl_draw(bool with_storage_buffer = false) const;
@@ -253,33 +159,7 @@ namespace easy3d {
     protected:
         std::string name_;
         Model *model_;
-
         Box3 bbox_;
-        bool visible_;
-
-        ColorScheme color_scheme_;
-
-        bool per_vertex_color_;
-        vec4 default_color_;
-
-        bool lighting_;
-        bool lighting_two_sides_;
-        bool distinct_back_color_;
-        vec4 back_color_;
-
-        // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
-        bool highlight_;
-        std::pair<int, int> highlight_range_;
-
-        Material material_;
-
-        // texture
-        bool use_texture_;
-        Texture *texture_;
-        // How many times do you want to repeat the texture?
-        float texture_repeat_;
-        // Control at a finer level: 100 fractional repeat == repeat.
-        float texture_fractional_repeat_;
 
         // vertex array object
         VertexArrayObject *vao_;

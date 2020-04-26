@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
     auto drawable = model->get_points_drawable("vertices");
     drawable->set_point_size(5.0f);
-    drawable->set_default_color(vec4(0.6f, 0.6f, 1.0f, 1.0f));
+    drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
 
     // Run the viewer
     return viewer.run();

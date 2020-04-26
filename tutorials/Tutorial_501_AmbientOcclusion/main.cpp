@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     }
 
     auto drawable = model->get_triangles_drawable("faces");
-    drawable->set_default_color(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    drawable->set_uniform_coloring(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
     // Run the viewer
     return viewer.run();

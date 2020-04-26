@@ -235,8 +235,8 @@ namespace easy3d {
                     program->set_block_uniform("Material", "specular", d->material().specular);
                     program->set_block_uniform("Material", "shininess", &d->material().shininess);
                     program->set_uniform("Alpha", d->opacity());
-                    program->set_uniform("per_vertex_color", d->per_vertex_color() && d->color_buffer());
-                    program->set_uniform("default_color", d->default_color());
+                    program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
+                    program->set_uniform("default_color", d->color());
                     d->gl_draw(false);
                 }
             }

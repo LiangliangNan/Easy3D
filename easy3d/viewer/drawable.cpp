@@ -33,39 +33,15 @@
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/renderer.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/util/logging.h>
 
 
 namespace easy3d {
 
-    Material::Material()
-            : ambient(setting::material_ambient), specular(setting::material_specular),
-              shininess(setting::material_shininess) {
-
-    }
-
-    Material::Material(const vec3 &ambi, const vec3 &spec, float shin)
-            : ambient(ambi), specular(spec), shininess(shin) {
-
-    }
 
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name)
             , model_(model)
-            , visible_(true)
-            , per_vertex_color_(true)
-            , default_color_(0.8f, 0.8f, 0.8f, 1.0f)
-            , lighting_(true)
-            , lighting_two_sides_(setting::light_two_sides)
-            , distinct_back_color_(setting::light_distinct_back_color)
-            , back_color_(setting::light_back_color)
-            , highlight_(false)
-            , highlight_range_(-1, -1)
-            , use_texture_(false)
-            , texture_(nullptr)
-            , texture_repeat_(1.0f)
-            , texture_fractional_repeat_(0.0f)
             , num_vertices_(0)
             , num_indices_(0)
             , update_requested_(false)

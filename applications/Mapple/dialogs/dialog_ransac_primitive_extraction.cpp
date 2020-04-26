@@ -91,10 +91,7 @@ void DialogRansacPrimitiveExtraction::extract() {
     const std::string name = "v:color-segments";
 
     renderer::colorize_segmentation(cloud, "v:primitive_index", name);
-    vertices->color_scheme().source = ColorScheme::COLOR_PROPERTY;
-    vertices->color_scheme().name = name;
-    vertices->set_per_vertex_color(true);
-    vertices->set_use_texture(false);
+    vertices->set_coloring_by_color_property(State::VERTEX, name);
     vertices->update_buffers();
 
     viewer_->update();
