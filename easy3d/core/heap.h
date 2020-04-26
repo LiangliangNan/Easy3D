@@ -29,6 +29,28 @@
 
 namespace easy3d {
 
+    /**
+     * An example of heap interface
+     * -----------------------------------------------------------------------------------------------------------
+     *   class HeapInterface {
+     *   public:
+     *       HeapInterface(SurfaceMesh::VertexProperty<float> prio, SurfaceMesh::VertexProperty<int> pos)
+     *               : prio_(prio), pos_(pos) {
+     *       }
+     *
+     *       bool less(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1) { return prio_[v0] < prio_[v1]; }
+     *       bool greater(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1) { return prio_[v0] > prio_[v1]; }
+     *       int get_heap_position(SurfaceMesh::Vertex v) { return pos_[v]; }
+     *       void set_heap_position(SurfaceMesh::Vertex v, int pos) { pos_[v] = pos; }
+     *
+     *   private:
+     *       SurfaceMesh::VertexProperty<float> prio_;
+     *       SurfaceMesh::VertexProperty<int> pos_;
+     *   };
+     * -----------------------------------------------------------------------------------------------------------
+     */
+
+
     //! A class implementing a heap.
     template<class HeapEntry, class HeapInterface>
     class Heap : private std::vector<HeapEntry> {
