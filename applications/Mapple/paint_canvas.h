@@ -4,6 +4,7 @@
 #include <easy3d/core/types.h>
 
 #include <QOpenGLWidget>
+#include <QTime>
 
 #include "tools/canvas.h"
 
@@ -16,7 +17,6 @@ namespace easy3d {
     class Shadow;
     class Transparency;
     class EyeDomeLighting;
-    class OpenGLTimer;
     class OpenGLText;
 }
 
@@ -186,10 +186,9 @@ protected:
 	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member 
 	// variable). Having it as a member can eliminate including the header file.
 	QOpenGLFunctions* func_;
-    easy3d::OpenGLTimer* gpu_timer_;
-    double gpu_time_;
 
-    easy3d::OpenGLText* text_renderer_;
+	QTime timer_;
+    easy3d::OpenGLText* texter_;
 
     double  dpi_scaling_;
     int     samples_;

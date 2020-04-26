@@ -32,15 +32,14 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/stop_watch.h>
 
 #include <QKeyEvent>
 #include <QPainter>
-#include <QTimer>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QApplication>
 #include <QClipboard>
+#include <QTime>
 
 
 using namespace easy3d;
@@ -49,9 +48,7 @@ using namespace easy3d;
 PaintCanvas::PaintCanvas(QWidget *parent)
         : QOpenGLWidget(parent)
         , func_(nullptr)
-        , gpu_timer_(nullptr)
-        , gpu_time_(0.0)
-        , text_renderer_(nullptr)
+        , texter_(nullptr)
         , camera_(nullptr)
         , pressed_button_(Qt::NoButton)
         , mouse_previous_pos_(0, 0)
@@ -105,8 +102,7 @@ void PaintCanvas::cleanup() {
     delete shadow_;
     delete transparency_;
     delete edl_;
-    delete gpu_timer_;
-    delete text_renderer_;
+    delete texter_;
 
     ShaderManager::terminate();
     TextureManager::terminate();
@@ -132,9 +128,6 @@ void PaintCanvas::initializeGL() {
     if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
-
-    // create a GPU timer
-    gpu_timer_ = new OpenGLTimer(false);
 
     background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -173,9 +166,11 @@ void PaintCanvas::initializeGL() {
     //func_->glgetintegerv(gl_samples, &samples_received);
 
     // create OpenGLText renderer and load default fonts
-    text_renderer_ = new OpenGLText(dpi_scaling());
-    text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+    texter_ = new OpenGLText(dpi_scaling());
+    texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+    texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+
+    timer_.start();
 
     // Calls user defined method.
     init();
@@ -876,10 +871,7 @@ void PaintCanvas::paintGL() {
 
     preDraw();
 
-    gpu_timer_->start();
     draw();
-    gpu_timer_->stop();
-    gpu_time_ = gpu_timer_->time();
 
     // Add visual hints: axis, camera, grid...
     postDraw();
@@ -986,19 +978,28 @@ void PaintCanvas::postDraw() {
 
     {   // draw Easy3D logo and frame rate
         const float offset = 20.0f * dpi_scaling();
-        text_renderer_->draw("Easy3D", offset, offset, 15, 0);
+        texter_->draw("Easy3D", offset, offset, 15, 0);
 
-        char buffer[48];
-        sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
-        text_renderer_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
+        // FPS computation
+        static unsigned int fpsCounter = 0;
+        static double fps = 0.0;
+        static const unsigned int maxCounter = 40;
+        static QString fpsString("Rendering (Hz): --");
+        if (++fpsCounter == maxCounter) {
+            fps = 1000.0 * maxCounter / timer_.restart();
+            fpsString = tr("Rendering (Hz): %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
+            fpsCounter = 0;
+        }
 
-#if 0   // text rendering using Qt.
+#if 0   // draw frame rate text using my OpenGLText
+        texter_->draw(fpsString.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
+#else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
         painter.begin(this);
         painter.setRenderHint(QPainter::HighQualityAntialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
         painter.beginNativePainting(); easy3d_debug_log_gl_error;
-        painter.drawText(20, 150, QString::fromStdString(buffer));
+        painter.drawText(20, 50, fpsString);
         painter.endNativePainting();
         painter.end();  easy3d_debug_log_gl_error;
         func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?

@@ -75,7 +75,7 @@ MainWindow::MainWindow(QWidget *parent)
     viewer_ = new PaintCanvas(this);
     setCentralWidget(viewer_);
 
-#ifndef _WIN32
+#if 1
     const QSize& size = ui->dockWidgetRendering->sizeHint();
     const int width = static_cast<int>(size.width() * 1.5f);
     ui->dockWidgetRendering->setFixedWidth(width);
