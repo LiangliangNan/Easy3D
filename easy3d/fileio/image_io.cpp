@@ -107,21 +107,6 @@ namespace easy3d {
     }
 
 
-    void ImageIO::discretize_image(std::vector<unsigned char> &data, int width, int height, int channels, int num_colors) {
-        if (num_colors >= data.size())
-            return;
-
-        const int step = width / num_colors;
-        for (int i = 0; i < num_colors; ++i) {
-            for (int j = 0; j < height; ++j) {
-                for (int m = 0; m < step; ++m)
-                    for (int k = 0; k < channels; ++k)
-                        data[j * (width * channels) + i * (step * channels) + m * channels + k] =
-                                data[j * (width * channels) + i * step * channels + k];
-            }
-        }
-    }
-
 
     namespace io {
 
