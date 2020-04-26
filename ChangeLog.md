@@ -1,5 +1,5 @@
 #### 22/04/2020
-  - add a class State to control the rendering state of drawables. 
+  - easier rendering state management (with the new class State). 
 
 #### 22/04/2020
   - easier OpenGL buffer management (buffers of standard model drawabls can be automatically updated when model is modified).
