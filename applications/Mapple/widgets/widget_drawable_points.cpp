@@ -365,8 +365,6 @@ void WidgetPointsDrawable::updatePanel() {
     disableUnavailableOptions();
 
     connectAll();
-
-    state.initialized = true;
 }
 
 
@@ -527,8 +525,8 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
         states_[drawa].vector_field = QString::fromStdString(name);
     }
 
-    main_window_->updateRenderingPanel();
     viewer_->update();
+    main_window_->updateRenderingPanel();
 }
 
 
@@ -594,8 +592,9 @@ void WidgetPointsDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    bool can_edit_clamp = can_show_scalar && d->clamp_range();
+    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

@@ -36,10 +36,10 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
             colormaps_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))
             colormaps_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
-        if (file_system::is_file(dir + "ceil.png"))
-            colormaps_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
-        if (file_system::is_file(dir + "random.png"))
-            colormaps_.emplace_back(ColorMap(dir + "random.png", "random"));
+        if (file_system::is_file(dir + "random.png")) {
+            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-32"));
+            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-64"));
+        }
     }
 }
 
@@ -59,8 +59,16 @@ Texture *WidgetDrawable::colormapTexture(int idx) const {
     if (idx < colormaps_.size()) {
         if (colormaps_[idx].name.find("random") == std::string::npos)
             return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
-        else
-            return TextureManager::request(256, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+        else {
+            int num_colors = 16;
+            if (colormaps_[idx].name.find("32") != std::string::npos)
+                num_colors = 32;
+            else if (colormaps_[idx].name.find("64") != std::string::npos)
+                num_colors = 64;
+            else if (colormaps_[idx].name.find("128") != std::string::npos)
+                num_colors = 128;
+            return TextureManager::request(num_colors, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+        }
     } else
         return nullptr;
 }
@@ -95,6 +103,7 @@ void WidgetDrawable::setScalarFieldStyle(int idx) {
     auto tex = colormapTexture(idx);
     d->set_texture(tex);
     viewer_->update();
+    states_[d].scalar_style = idx;
 }
 
 
@@ -103,6 +112,7 @@ void WidgetDrawable::setScalarFieldClamp(bool b) {
     d->set_clamp_range(b);
     d->update_buffers();
     viewer_->update();
+    disableUnavailableOptions();
 }
 
 
@@ -187,7 +197,7 @@ std::string WidgetDrawable::color_property_name(const std::string& name, const s
 
 
 // get the color source from the color scheme name
-State::Method WidgetDrawable::color_source(const std::string& name, const std::string& scalar_prefix) const {
+State::Method WidgetDrawable::color_method(const std::string& name, const std::string& scalar_prefix) const {
     if (name == "uniform color")
         return State::UNIFORM_COLOR;
     else if (name.find("v:color") != std::string::npos || name.find("f:color") != std::string::npos)
@@ -221,20 +231,18 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     auto& state = d->state();
 
     state.set_coloring(
-            color_source(text.toStdString(), scalar_prefix_.toStdString()),
+            color_method(text.toStdString(), scalar_prefix_.toStdString()),
             color_location(text.toStdString()),
             color_property_name(text.toStdString(), scalar_prefix_.toStdString())
     );
     
-    if (d->coloring_method() == State::TEXTURED || d->coloring_method() == State::SCALAR_FIELD) {
-        d->set_texture(colormapTexture(states_[d].scalar_style));
-        if (d->coloring_method() == State::SCALAR_FIELD) {
-            d->set_texture_repeat(1.0f);
-            d->set_texture_fractional_repeat(0.0f);
+    if (state.coloring_method() == State::TEXTURED || state.coloring_method() == State::SCALAR_FIELD) {
+        state.set_texture(colormapTexture(states_[d].scalar_style));
+        if (state.coloring_method() == State::SCALAR_FIELD) {
+            state.set_texture_repeat(1.0f);
+            state.set_texture_fractional_repeat(0.0f);
         }
     }
-    else
-        d->set_texture(nullptr);
 
     d->update_buffers();
 

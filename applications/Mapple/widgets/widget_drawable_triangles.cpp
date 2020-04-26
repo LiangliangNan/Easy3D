@@ -210,7 +210,7 @@ void WidgetTrianglesDrawable::updatePanel() {
             ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
         }
         else
-            ui->lineEditTextureFile->setText("");
+            ui->lineEditTextureFile->setText("not available");
 
         ui->spinBoxTextureRepeat->setValue(d->texture_repeat());
         ui->spinBoxTextureFractionalRepeat->setValue(d->texture_fractional_repeat());
@@ -245,8 +245,6 @@ void WidgetTrianglesDrawable::updatePanel() {
     disableUnavailableOptions();
 
     connectAll();
-
-    state.initialized = true;
 }
 
 
@@ -386,8 +384,6 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
         const std::string &tex_name = file_system::simple_name(tex->file_name());
         ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
     }
-    else
-        ui->lineEditTextureFile->setText("");
 
     auto& scheme = d->state();
     scheme.set_clamp_range(ui->checkBoxScalarFieldClamp->isChecked());
@@ -490,8 +486,8 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         states_[drawable()].vector_field = QString::fromStdString(name);
     }
 
-    main_window_->updateRenderingPanel();
     viewer_->update();
+    main_window_->updateRenderingPanel();
 }
 
 
@@ -577,8 +573,9 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_show_scalar && ui->checkBoxScalarFieldClamp->isChecked());
+    bool can_edit_clamp = can_show_scalar && d->clamp_range();
+    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
+    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
     bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";

@@ -312,9 +312,8 @@ void MainWindow::updateUi() {
     } else
         updateWindowTitle();
 
-    updateRenderingPanel();
-
     ui->treeWidgetModels->updateModelList();
+    updateRenderingPanel();
 }
 
 
@@ -1017,8 +1016,8 @@ void MainWindow::computeHeightField() {
         graph->update();
     }
 
-    updateRenderingPanel();
     viewer()->update();
+    updateRenderingPanel();
 }
 
 
@@ -1042,7 +1041,6 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
 
     mesh->update();
     viewer()->update();
-
     updateRenderingPanel();
 }
 
@@ -1288,9 +1286,9 @@ void MainWindow::surfaceMeshParameterization() {
     else        // Discrete Harmonic parameterization
         para.harmonic();
 
-    updateRenderingPanel();
     mesh->update();
     viewer_->update();
+    updateRenderingPanel();
 }
 
 
@@ -1316,9 +1314,9 @@ void MainWindow::surfaceMeshGeodesic() {
     SurfaceMeshGeodesic geodist(mesh);
     geodist.compute(seed);
 
-    updateRenderingPanel();
     mesh->update();
     viewer_->update();
+    updateRenderingPanel();
 }
 
 
