@@ -1453,7 +1453,7 @@ namespace easy3d {
 
             // use a limited number of edge to compute the length of the vectors.
             float avg_edge_length = 0.0f;
-            const int num = std::min(static_cast<unsigned int>(500), model->n_edges());
+            const unsigned int num = std::min(static_cast<unsigned int>(500), model->n_edges());
             for (unsigned int i = 0; i < num; ++i) {
                 SurfaceMesh::Edge edge(i);
                 auto vs = model->vertex(edge, 0);
