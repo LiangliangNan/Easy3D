@@ -72,10 +72,11 @@ namespace easy3d {
             return nullptr;
         }
 
-        const std::string& texture_id = "random_" + std::to_string(texture->id());
-        textures_[texture_id] = texture;
+        // though random colored texture, just give an name
+        texture->file_name_ = "random-" + std::to_string(num_colors);
+        textures_[texture->file_name_] = texture;
 
-        LOG(INFO) << "a random-color texture generated, with id: " << texture->id();
+        LOG(INFO) << "a random-colored texture generated. id: " << texture->id() << ", number of colors: " << num_colors;
         return texture;
     }
 

@@ -87,6 +87,8 @@ namespace easy3d {
         //copying disabled
         Texture(const Texture&);
         Texture& operator=(const Texture&);
+
+        friend class TextureManager;
     };
 
 } // namespace easy3d
