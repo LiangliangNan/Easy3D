@@ -1297,6 +1297,10 @@ void MainWindow::surfaceMeshGeodesic() {
     if (!mesh)
         return;
 
+    const auto& components = SurfaceMeshComponent::extract(mesh);
+    if (components.size() > 1)
+        LOG(WARNING) << "mesh has " << components.size() << " connected components. computed geodesic distance valid on component";
+
     // pick a random vertex
     int idx = rand() % mesh->n_vertices();
     SurfaceMesh::Vertex vertex(idx);
