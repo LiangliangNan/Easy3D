@@ -36,8 +36,6 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
             colormaps_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))
             colormaps_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
-        if (file_system::is_file(dir + "ceil.png"))
-            colormaps_.emplace_back(ColorMap(dir + "ceil.png", "ceil"));
 
         if (file_system::is_file(dir + "default-16.png"))
             colormaps_.emplace_back(ColorMap(dir + "default-16.png", "default-16"));
