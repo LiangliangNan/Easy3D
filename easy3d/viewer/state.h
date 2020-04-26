@@ -100,7 +100,7 @@ namespace easy3d {
         * @param color_location The location of the color property.
         * @param color_name The name of the color property.
         */
-        void set_coloring_by_color_property(PropertyLocation color_location, const std::string &color_name = "");
+        void set_property_coloring(PropertyLocation color_location, const std::string &color_name = "");
 
         /**
         * Constructs a scheme for textured rendering.
@@ -109,9 +109,9 @@ namespace easy3d {
         * @param repeat The repeat factor of the texture. Default value is 1.0.
         * @param repeat_fraction The fractional repeat factor of the texture. Default value is 0.0.
         */
-        void set_coloring_by_texture(PropertyLocation texcoord_location, const std::string &texcoord_name,
-                                     const Texture *texture = nullptr, float repeat = 1.0f,
-                                     float repeat_fraction = 0.0f);
+        void set_texture_coloring(PropertyLocation texcoord_location, const std::string &texcoord_name,
+                                  const Texture *texture = nullptr, float repeat = 1.0f,
+                                  float repeat_fraction = 0.0f);
 
         /**
          * Constructs a scheme for rendering scalar fields.
@@ -121,12 +121,12 @@ namespace easy3d {
          * @param clamp_lower The percentage of values to be clamped at the lower side of the range. Default is 5%.
          * @param clamp_upper The percentage of values to be clamped at the upper side of the range. Default is 5%.
          */
-        void set_coloring_by_scalar_field(PropertyLocation scalar_location, const std::string &scalar_name,
-                                          const Texture *texture = nullptr, float clamp_lower = 0.05f,
-                                          float clamp_upper = 0.05f);
+        void set_scalar_coloring(PropertyLocation scalar_location, const std::string &scalar_name,
+                                 const Texture *texture = nullptr, float clamp_lower = 0.05f,
+                                 float clamp_upper = 0.05f);
 
         /**
-         * Sets the coloring.
+         * Sets the coloring. A generic version of the set_[method]_coloring() method.
          * @param method The the color method.
          * @param location The the location of the coloring property.
          * @param name The name of the coloring property.
@@ -139,7 +139,7 @@ namespace easy3d {
         Method coloring_method() const { return coloring_method_; }
 
         /**
-         * The rendering color, which is effective only when the coloring method was set to UNIFORM_COLOR.
+         * The color, which is effective only when the coloring method was set to UNIFORM_COLOR.
          * Call set_uniform_coloring() to change this color.
          */
         const vec4 &color() const { return color_; }
@@ -151,57 +151,45 @@ namespace easy3d {
         const std::string &property_name() const { return property_name_; }
 
         bool lighting() const { return lighting_; }
-
         void set_lighting(bool l) { lighting_ = l; }
 
         bool lighting_two_sides() const { return lighting_two_sides_; }
-
         void set_lighting_two_sides(bool b) { lighting_two_sides_ = b; }
 
         /// use a different color for the back side, valid only if two-side lighting is enabled
         bool distinct_back_color() const { return distinct_back_color_; }
-
         void set_distinct_back_color(bool b) { distinct_back_color_ = b; }
 
         /// the back side color, valid only if two-side lighting is enabled and distinct back color is true
         const vec4 &back_color() const { return back_color_; }
-
         void set_back_color(const vec4 &c) { back_color_ = c; }
 
         /** Memory management of textures is the user's responsibility. */
         const Texture *texture() const { return texture_; }
-
         void set_texture(Texture *tex) { texture_ = tex; }
 
         /** How many times do you want to repeat the texture? */
         float texture_repeat() const { return texture_repeat_; };
-
         void set_texture_repeat(float r) { texture_repeat_ = r; };
 
         /** Controls the texture repeat at a finer level: 100 fractional repeat == 1 repeat. */
         float texture_fractional_repeat() const { return texture_fractional_repeat_; };
-
         void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; };
 
         /** Clamp the value range of a scalar field. */
         bool clamp_range() const { return clamp_range_; }
-
         void set_clamp_range(bool b) { clamp_range_ = b; }
 
         /** Clamp the lower side of the value range of a scalar field. */
         float clamp_lower() const { return clamp_lower_; }
-
         void set_clamp_lower(float v) { clamp_lower_ = v; }
 
         /** Clamp the upper side of the value range of a scalar field. */
         float clamp_upper() const { return clamp_upper_; }
-
         void set_clamp_upper(float v) { clamp_upper_ = v; }
 
         Material &material() { return material_; }
-
         const Material &material() const { return material_; }
-
         void set_material(const Material &m) { material_ = m; }
 
         /**
@@ -215,11 +203,8 @@ namespace easy3d {
          *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
          */
         bool highlight() const { return highlight_; };
-
         void set_highlight(bool b) { highlight_ = b; }
-
         void set_highlight_range(const std::pair<int, int> &range) { highlight_range_ = range; }
-
         const std::pair<int, int> &highlight_range() const { return highlight_range_; }
 
     protected:

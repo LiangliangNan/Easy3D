@@ -130,7 +130,7 @@ namespace easy3d {
                 colors[f] = random_color();
             faces->set_lighting_two_sides(true);
             faces->set_visible(false);
-            faces->set_coloring_by_color_property(State::FACE, "f:color");
+            faces->set_property_coloring(State::FACE, "f:color");
             candidate_faces_.push_back(faces);
 
             auto* edges = mesh->add_lines_drawable("edges");
@@ -233,7 +233,7 @@ namespace easy3d {
             auto* edges = mesh->add_lines_drawable("ground_truth_edges");
             edges->update_vertex_buffer(pts);
             edges->update_color_buffer(cls);
-            edges->set_coloring_by_color_property(State::VERTEX);
+            edges->set_property_coloring(State::VERTEX);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_line_width(setting::surface_mesh_borders_line_width);
             edges->set_visible(false);

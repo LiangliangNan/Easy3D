@@ -265,7 +265,7 @@ namespace easy3d {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
                 Texture *tex = TextureManager::request(texture_file, Texture::REPEAT);
                 if (tex) {
-                    drawable->set_coloring_by_texture(State::HALFEDGE, "h:texcoord", tex);
+                    drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord", tex);
                     LOG(INFO) << "texture created from " << texname;
                 }
             }

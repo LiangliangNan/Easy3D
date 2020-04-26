@@ -79,7 +79,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
 
             const std::string name = "v:color-segments";
             renderer::colorize_segmentation(cloud, "v:primitive_index", name);
-            drawable->set_coloring_by_color_property(State::VERTEX, name);
+            drawable->set_property_coloring(State::VERTEX, name);
 
             drawable->update_buffers();
             update();

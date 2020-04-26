@@ -1038,7 +1038,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    mesh->get_triangles_drawable("faces")->set_coloring_by_color_property(State::FACE, color_name);
+    mesh->get_triangles_drawable("faces")->set_property_coloring(State::FACE, color_name);
 
     mesh->update();
     viewer()->update();

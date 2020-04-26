@@ -60,7 +60,7 @@ namespace easy3d {
     }
 
 
-    void State::set_coloring_by_color_property(PropertyLocation color_location, const std::string &color_name) {
+    void State::set_property_coloring(PropertyLocation color_location, const std::string &color_name) {
         coloring_method_ = COLOR_PROPERTY;
         property_location_ = color_location;
         property_name_ = color_name;
@@ -68,8 +68,8 @@ namespace easy3d {
     }
 
 
-    void State::set_coloring_by_texture(PropertyLocation texcoord_location, const std::string &texcoord_name,
-                                        const Texture *texture, float repeat, float repeat_fraction) {
+    void State::set_texture_coloring(PropertyLocation texcoord_location, const std::string &texcoord_name,
+                                     const Texture *texture, float repeat, float repeat_fraction) {
         coloring_method_ = TEXTURED;
         property_location_ = texcoord_location;
         property_name_ = texcoord_name;
@@ -79,8 +79,8 @@ namespace easy3d {
     }
 
 
-    void State::set_coloring_by_scalar_field(PropertyLocation scalar_location, const std::string &scalar_name,
-                                             const Texture *texture, float clamp_lower, float clamp_upper) {
+    void State::set_scalar_coloring(PropertyLocation scalar_location, const std::string &scalar_name,
+                                    const Texture *texture, float clamp_lower, float clamp_upper) {
             coloring_method_ = SCALAR_FIELD;
             property_location_ = scalar_location;
             property_name_ = scalar_name;

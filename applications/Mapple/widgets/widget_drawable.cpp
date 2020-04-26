@@ -60,7 +60,7 @@ Texture *WidgetDrawable::colormapTexture(int idx) const {
         if (colormaps_[idx].name.find("random") == std::string::npos)
             return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
         else
-            return TextureManager::request(12, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+            return TextureManager::request(256, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     } else
         return nullptr;
 }

@@ -1416,7 +1416,7 @@ namespace easy3d {
             drawable_axes_->update_vertex_buffer(points);
             drawable_axes_->update_normal_buffer(normals);
             drawable_axes_->update_color_buffer(colors);
-            drawable_axes_->set_coloring_by_color_property(State::VERTEX);
+            drawable_axes_->set_property_coloring(State::VERTEX);
         }
         if (!drawable_axes_->is_visible())
             return;

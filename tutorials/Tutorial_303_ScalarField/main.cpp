@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
         elevation[v] = model->position(v).z;
 
     // Upload data to the GPU.
-    drawable->set_coloring_by_scalar_field(State::VERTEX, "v:elevation");
+    drawable->set_scalar_coloring(State::VERTEX, "v:elevation");
     drawable->update_buffers();
 
     // Create texture for coloring the scalar field.
