@@ -57,6 +57,7 @@ private slots:
     void addGaussianNoise();
 
     // property
+    void deleteProperty();
     void computeHeightField();
     void computeSurfaceMeshCurvatures();
 

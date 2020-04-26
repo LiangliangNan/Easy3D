@@ -96,8 +96,9 @@
     <property name="title">
      <string>Property</string>
     </property>
-    <addaction name="actionComputeHeightField"/>
+    <addaction name="actionDeleteProperty"/>
     <addaction name="separator"/>
+    <addaction name="actionComputeHeightField"/>
     <addaction name="actionComputeSurfaceMeshCurvatures"/>
    </widget>
    <widget class="QMenu" name="menuSurfaceMesh">
@@ -860,6 +861,11 @@
   <action name="actionSurfaceMeshRemoveIsolatedVertices">
    <property name="text">
     <string>Remove isolated vertices</string>
+   </property>
+  </action>
+  <action name="actionDeleteProperty">
+   <property name="text">
+    <string>Delete property</string>
    </property>
   </action>
  </widget>

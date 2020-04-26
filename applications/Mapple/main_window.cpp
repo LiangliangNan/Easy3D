@@ -45,6 +45,7 @@
 #include "paint_canvas.h"
 
 #include "dialogs/dialog_snapshot.h"
+#include "dialogs/dialog_delete_property.h"
 #include "dialogs/dialog_poisson_reconstruction.h"
 #include "dialogs/dialog_surface_mesh_curvature.h"
 #include "dialogs/dialog_surface_mesh_sampling.h"
@@ -645,6 +646,7 @@ void MainWindow::createActionsForEditMenu() {
 
 
 void MainWindow::createActionsForPropertyMenu() {
+    connect(ui->actionDeleteProperty, SIGNAL(triggered()), this, SLOT(deleteProperty()));
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
     connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
 }
@@ -926,6 +928,12 @@ void MainWindow::pointCloudNormalizeNormals() {
 
     cloud->update();
     viewer()->update();
+}
+
+
+void MainWindow::deleteProperty() {
+    auto dialog = new DialogDeleteProperty(this);
+    showDialog(dialog);
 }
 
 

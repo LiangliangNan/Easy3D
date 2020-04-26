@@ -27,7 +27,7 @@
       <widget class="QSpinBox" name="spinBoxPostSmoothingIterations">
        <property name="minimumSize">
         <size>
-         <width>50</width>
+         <width>20</width>
          <height>0</height>
         </size>
        </property>
@@ -87,6 +87,9 @@
       <widget class="QPushButton" name="applyButton">
        <property name="text">
         <string>Apply</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
