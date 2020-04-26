@@ -103,7 +103,7 @@ namespace easy3d {
      * @param num_colors The desired number of colors. The image will remain unmodified if the requested number of
      *        colors is greater than the available colors (i.e., image width).
      */
-    static void discretize_image(
+    void discretize_image(
             std::vector<unsigned char> &data,
             int width,
             int height,

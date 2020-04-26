@@ -1,6 +1,7 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/viewer/texture.h>
 #include <easy3d/fileio/image_io.h>
 
 using namespace easy3d;
@@ -21,7 +22,7 @@ int main(int argc, char **argv) {
 
 #if 1 // discretize a gradually varying (from left to right) color image
     const int num_colors = 16;
-    ImageIO::discretize_image(data, width, height, comp,num_colors );
+    discretize_image(data, width, height, comp,num_colors );
     ImageIO::save(file_name + "-" + std::to_string(num_colors) + ".png", data, width, height, comp);
 
 #endif
