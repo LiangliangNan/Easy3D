@@ -56,7 +56,6 @@ namespace easy3d {
         color_ = color;
         property_location_ = VERTEX;
         property_name_ = "uniform color";
-        texture_ = nullptr;
     }
 
 
@@ -64,7 +63,6 @@ namespace easy3d {
         coloring_method_ = COLOR_PROPERTY;
         property_location_ = color_location;
         property_name_ = color_name;
-        texture_ = nullptr;
     }
 
 
@@ -92,12 +90,10 @@ namespace easy3d {
         }
 
 
-        void
-        State::set_coloring(Method method, PropertyLocation location, const std::string &name, const Texture *texture) {
+        void State::set_coloring(Method method, PropertyLocation location, const std::string &name) {
             coloring_method_ = method;
             property_location_ = location;
             property_name_ = name;
-            texture_ = texture;
         }
 
     }
