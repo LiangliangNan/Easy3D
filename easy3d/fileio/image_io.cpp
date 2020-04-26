@@ -71,8 +71,7 @@ namespace easy3d {
             int width,
             int height,
             int channels,
-            bool flip_vertically)
-    {
+            bool flip_vertically) {
         if (data.empty()) {
             LOG(ERROR) << "image data is empty";
             return false;
@@ -82,7 +81,7 @@ namespace easy3d {
         stbi_flip_vertically_on_write(flip_vertically);
 
         std::string final_name = file_name;
-        const std::string& ext = file_system::extension(file_name, true);
+        const std::string &ext = file_system::extension(file_name, true);
 
         if (ext == "png" || ext.empty()) {
             if (ext.empty()) {
@@ -94,12 +93,10 @@ namespace easy3d {
             // variable 'stbi_write_png_compression_level' (it defaults to 8).
             stbi_write_png_compression_level = 8; //
             return ::stbi_write_png(final_name.c_str(), width, height, channels, data.data(), width * channels);
-        }
-        else if (ext == "jpg") {
+        } else if (ext == "jpg") {
             // quality is between 1 and 100. Higher quality looks better but results in a bigger image.
             return ::stbi_write_jpg(final_name.c_str(), width, height, channels, data.data(), 100);
-        }
-        else if (ext == "bmp")
+        } else if (ext == "bmp")
             return ::stbi_write_bmp(final_name.c_str(), width, height, channels, data.data());
         else if (ext == "tga")
             return ::stbi_write_tga(final_name.c_str(), width, height, channels, data.data());
@@ -107,7 +104,22 @@ namespace easy3d {
             LOG(ERROR) << "unsupported file format: " << ext;
             return false;
         }
+    }
 
+
+    void ImageIO::discretize_image(std::vector<unsigned char> &data, int width, int height, int channels, int num_colors) {
+        if (num_colors >= data.size())
+            return;
+
+        const int step = width / num_colors;
+        for (int i = 0; i < num_colors; ++i) {
+            for (int j = 0; j < height; ++j) {
+                for (int m = 0; m < step; ++m)
+                    for (int k = 0; k < channels; ++k)
+                        data[j * (width * channels) + i * (step * channels) + m * channels + k] =
+                                data[j * (width * channels) + i * step * channels + k];
+            }
+        }
     }
 
 

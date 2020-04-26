@@ -114,7 +114,27 @@ namespace easy3d {
                 int channels,
                 bool flip_vertically = false
                 );
-	};
+
+
+        /**
+         * Discretizes a gradually varying-color (from left to right) image. The result image has uniform colored
+         * vertical strips, which is typically used for rendering scalar fields.
+         * @param data The input data to be discretized.
+         * @param width The width of the image (i.e., number of pixels in a row).
+         * @param height The height of the image (i.e., number of pixels in a column).
+         * @param channels The number or color component per pixel.
+         * @param num_colors The desired number of colors. The image will remain unmodified if the requested number of
+         *        colors is greater than the available colors (i.e., image width).
+         */
+        static void discretize_image(
+                std::vector<unsigned char> &data,
+                int width,
+                int height,
+                int channels,
+                int num_colors
+        );
+
+    };
 
 
 	namespace io {
