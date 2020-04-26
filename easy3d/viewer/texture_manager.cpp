@@ -58,15 +58,19 @@ namespace easy3d {
 
 
     Texture* TextureManager::request(int num_colors, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        std::vector<unsigned char> data(num_colors * 3);
+        const int strip_width = 8;
+        std::vector<unsigned char> data(num_colors * strip_width * 3);
         for(int x=0; x<num_colors; ++x) {
             const vec3& c = random_color(false);
-            data[x * 3] = c.r * 255;
-            data[x * 3 + 1] = c.g * 255;
-            data[x * 3 + 2] = c.b * 255;
+            for (int j = 0; j<strip_width; ++j) {
+                const int base = (x * strip_width + j) * 3;
+                data[base] = c.r * 255;
+                data[base + 1] = c.g * 255;
+                data[base + 2] = c.b * 255;
+            }
         }
 
-        Texture *texture = Texture::create(data, num_colors, 1, 3, wrap, filter);
+        Texture *texture = Texture::create(data, num_colors * strip_width, 1, 3, wrap, filter);
         if (!texture) {
             LOG(ERROR) << "failed creating texture from image data";
             return nullptr;
