@@ -493,6 +493,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_line_width(size);
+                main_window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
@@ -500,6 +501,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->lines_drawables()) {
                 float size = d->line_width() + 1.0f;
                 d->set_line_width(size);
+                main_window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
@@ -509,6 +511,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_point_size(size);
+                main_window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
@@ -516,6 +519,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
                 d->set_point_size(size);
+                main_window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
