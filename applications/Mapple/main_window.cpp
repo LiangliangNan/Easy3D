@@ -1301,22 +1301,23 @@ void MainWindow::surfaceMeshGeodesic() {
     if (components.size() > 1)
         LOG(WARNING) << "mesh has " << components.size() << " connected components. computed geodesic distance valid on component";
 
-    // pick a random vertex
-    int idx = rand() % mesh->n_vertices();
-    SurfaceMesh::Vertex vertex(idx);
+    // pick a few a random vertices and mark them locked
+    auto lock = mesh->vertex_property<bool>("v:lock", false);
+    lock.vector().assign(mesh->n_vertices(), false);
 
-    auto lock = mesh->vertex_property<bool>("v:lock");
-    for (auto v : mesh->vertices())
-        lock[v] = false;
-    lock[vertex] = true;
-
-    // setup seed
-    std::vector<SurfaceMesh::Vertex> seed;
-    seed.push_back(vertex);
+    // setup seeds
+    std::vector<SurfaceMesh::Vertex> seeds;
+    const int num_seeds = 2;
+    for (int i=0; i<num_seeds; ++i) {
+        const int idx = rand() % mesh->n_vertices();
+        SurfaceMesh::Vertex v(idx);
+        seeds.push_back(v);
+        lock[v] = true;
+    }
 
     // compute geodesic distance
     SurfaceMeshGeodesic geodist(mesh);
-    geodist.compute(seed);
+    geodist.compute(seeds);
 
     mesh->update();
     viewer_->update();
