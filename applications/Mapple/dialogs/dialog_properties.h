@@ -34,10 +34,6 @@ private:
     bool removeProperty();
     bool renameProperty();
     bool convertPropertyDataType();
-    bool mergeProperties();   // x, y, z -> vec3
-    bool splitProperty();     // vec3 -> x, y, z
-
-    bool updatePropertyType(const QString& location, const QString& name);
 
 private:
     Ui::DialogProperties *ui;

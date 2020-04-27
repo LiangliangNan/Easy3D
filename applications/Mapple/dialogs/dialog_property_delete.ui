@@ -30,7 +30,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="comboBoxCommands">
+      <widget class="QComboBox" name="comboBoxCommand">
        <property name="minimumSize">
         <size>
          <width>200</width>
@@ -243,7 +243,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>comboBoxCommands</tabstop>
+  <tabstop>comboBoxCommand</tabstop>
   <tabstop>comboBoxModels</tabstop>
   <tabstop>comboBoxPropertyLocations</tabstop>
   <tabstop>comboBoxPropertyNames</tabstop>
