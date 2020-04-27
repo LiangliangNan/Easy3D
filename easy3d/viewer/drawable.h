@@ -27,6 +27,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include <easy3d/core/types.h>
 #include <easy3d/viewer/state.h>
