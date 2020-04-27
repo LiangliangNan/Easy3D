@@ -4,6 +4,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/string.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"
@@ -34,6 +35,18 @@ DialogProperties::DialogProperties(MainWindow *window, QDockWidget* dockWidgetCo
     ui->comboBoxCommands->addItem("Merge (Scalars -> Vector)");
     ui->comboBoxCommands->setCurrentIndex(0);
 
+    ui->comboBoxSourceType->setEditable(false);
+
+    ui->comboBoxTargetType->addItem("float");
+    ui->comboBoxTargetType->addItem("double");
+    ui->comboBoxTargetType->addItem("int");
+    ui->comboBoxTargetType->addItem("unsigned int");
+    ui->comboBoxTargetType->addItem("std::size_t");
+    ui->comboBoxTargetType->addItem("char");
+    ui->comboBoxTargetType->addItem("unsigned char");
+    ui->comboBoxTargetType->addItem("vec2");
+    ui->comboBoxTargetType->addItem("vec3");
+
     QMargins margins = ui->lineEditNewPropertyName->textMargins();
     margins.setLeft(7);
     ui->lineEditNewPropertyName->setTextMargins(margins);
@@ -44,6 +57,8 @@ DialogProperties::DialogProperties(MainWindow *window, QDockWidget* dockWidgetCo
             SLOT(modelChanged(const QString &)));
     connect(ui->comboBoxPropertyLocations, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(locationChanged(const QString &)));
+    connect(ui->comboBoxPropertyNames_1, SIGNAL(currentIndexChanged(const QString &)), this,
+            SLOT(propertyChanged(const QString &)));
     connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateProperties()));
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyCommand()));
 
@@ -147,6 +162,8 @@ Model* DialogProperties::getModel() {
 
 
 void DialogProperties::modelChanged(const QString &text) {
+    ui->comboBoxPropertyLocations->clear();
+
     Model* model = getModel();
     if (!model)
         return;
@@ -157,7 +174,6 @@ void DialogProperties::modelChanged(const QString &text) {
     disconnect(ui->comboBoxPropertyLocations, SIGNAL(currentIndexChanged(const QString &)), this,
                SLOT(locationChanged(const QString &)));
 
-    ui->comboBoxPropertyLocations->clear();
     if (dynamic_cast<SurfaceMesh *>(model)) {
         ui->comboBoxPropertyLocations->addItem("Vertex");
         ui->comboBoxPropertyLocations->addItem("Face");
@@ -188,11 +204,11 @@ void DialogProperties::modelChanged(const QString &text) {
 
 
 void DialogProperties::locationChanged(const QString &text) {
+    ui->comboBoxPropertyNames_1->clear();
+
     Model* model = getModel();
     if (!model)
         return;
-
-    ui->comboBoxPropertyNames_1->clear();
 
     const QString& location = ui->comboBoxPropertyLocations->currentText();
     if (dynamic_cast<PointCloud *>(model)) {
@@ -240,15 +256,786 @@ void DialogProperties::locationChanged(const QString &text) {
                     ui->comboBoxPropertyNames_1->addItem(QString::fromStdString(name));
         }
     }
+
+    propertyChanged(ui->comboBoxPropertyNames_1->currentText());
+}
+
+
+namespace details {
+
+    inline QString type_info_to_string(const std::type_info& info) {
+        if (info == typeid(float))              return "float";
+        else if (info == typeid(double))        return "double";
+        else if (info == typeid(int))           return "int";
+        else if (info == typeid(unsigned int))  return "unsigned int";
+        else if (info == typeid(std::size_t))   return "std::size_t";
+        else if (info == typeid(bool))          return "bool";
+        else if (info == typeid(char))          return "char";
+        else if (info == typeid(unsigned char)) return "unsigned char";
+        else if (info == typeid(vec2))          return "vec2";
+        else if (info == typeid(vec3))          return "vec3";
+        else
+            return "void";
+    }
+
+    template<typename MODEL, typename SourceTarget, typename TargetType>
+    inline bool create_vertex_property_from_data(MODEL *model, const std::string &name) {
+        auto old_prop = model->template get_vertex_property<SourceTarget>(name);
+        if (old_prop) {
+            const auto &data = old_prop.vector();
+            auto new_prop = model->template add_vertex_property<TargetType>(name + name);   // the old property has the same name, so ...
+            if (new_prop) {
+                new_prop.vector().assign(data.begin(), data.end());
+                model->template remove_vertex_property(old_prop);
+                new_prop.set_name(name);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    template<typename MODEL, typename SourceTarget, typename TargetType>
+    inline bool create_face_property_from_data(MODEL *model, const std::string &name) {
+        auto old_prop = model->template get_face_property<SourceTarget>(name);
+        if (old_prop) {
+            const auto &data = old_prop.vector();
+            auto new_prop = model->template add_face_property<TargetType>(name + name);   // the old property has the same name, so ...
+            if (new_prop) {
+                new_prop.vector().assign(data.begin(), data.end());
+                model->template remove_face_property(old_prop);
+                new_prop.set_name(name);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    template<typename MODEL, typename SourceTarget, typename TargetType>
+    inline bool create_edge_property_from_data(MODEL *model, const std::string &name) {
+        auto old_prop = model->template get_edge_property<SourceTarget>(name);
+        if (old_prop) {
+            const auto &data = old_prop.vector();
+            auto new_prop = model->template add_edge_property<TargetType>(name + name);   // the old property has the same name, so ...
+            if (new_prop) {
+                new_prop.vector().assign(data.begin(), data.end());
+                model->template remove_edge_property(old_prop);
+                new_prop.set_name(name);
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    template<typename MODEL, typename SourceTarget, typename TargetType>
+    inline bool create_halfedge_property_from_data(MODEL *model, const std::string &name) {
+        auto old_prop = model->template get_halfedge_property<SourceTarget>(name);
+        if (old_prop) {
+            const auto &data = old_prop.vector();
+            auto new_prop = model->template add_halfedge_property<TargetType>(name + name);   // the old property has the same name, so ...
+            if (new_prop) {
+                new_prop.vector().assign(data.begin(), data.end());
+                model->template remove_halfedge_property(old_prop);
+                new_prop.set_name(name);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    template <typename MODEL>
+    inline bool change_vertex_property_type(MODEL* model, const std::string& name, const std::string& source_type, const std::string& target_type) {
+        if (source_type == target_type) {
+            LOG(WARNING) << "source and target data types are identical (" << source_type << " == " << target_type << ") and nothing to convert";
+            return false;
+        }
+
+        if (source_type == "float") {
+            if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, float, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, float, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, float, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, float, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, float, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, float, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, float, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "double") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, double, float>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, double, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, double, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, double, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, double, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, double, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, double, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "int") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, int, double>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, int, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned int") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, unsigned int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "std::size_t") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, unsigned int>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, std::size_t, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "bool") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, bool, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, bool, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, bool, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, bool, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, bool, std::size_t>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, bool, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, bool, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "char") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, char, bool>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_vertex_property_from_data<MODEL, char, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned char") {
+            if (target_type == "float")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_vertex_property_from_data<MODEL, unsigned char, char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else
+            LOG(WARNING) << "property of type '" << source_type << "' cannot be converted to type '" << target_type << "'";
+        return false;
+    }
+
+    template <typename MODEL>
+    inline bool change_face_property_type(MODEL* model, const std::string& name, const std::string& source_type, const std::string& target_type) {
+        if (source_type == target_type) {
+            LOG(WARNING) << "source and target data types are identical (" << source_type << " == " << target_type << ") and nothing to convert";
+            return false;
+        }
+
+        if (source_type == "float") {
+            if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, float, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, float, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, float, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, float, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, float, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, float, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, float, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "double") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, double, float>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, double, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, double, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, double, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, double, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, double, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, double, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "int") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, int, double>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, int, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned int") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, unsigned int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, unsigned int, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, unsigned int, int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, unsigned int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, unsigned int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, unsigned int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, unsigned int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "std::size_t") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, std::size_t, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, std::size_t, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, std::size_t, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, std::size_t, unsigned int>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, std::size_t, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, std::size_t, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, std::size_t, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "bool") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, bool, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, bool, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, bool, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, bool, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, bool, std::size_t>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, bool, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, bool, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "char") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, char, bool>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_face_property_from_data<MODEL, char, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned char") {
+            if (target_type == "float")
+                return details::create_face_property_from_data<MODEL, unsigned char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_face_property_from_data<MODEL, unsigned char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_face_property_from_data<MODEL, unsigned char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_face_property_from_data<MODEL, unsigned char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_face_property_from_data<MODEL, unsigned char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_face_property_from_data<MODEL, unsigned char, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_face_property_from_data<MODEL, unsigned char, char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else
+            LOG(WARNING) << "property of type '" << source_type << "' cannot be converted to type '" << target_type << "'";
+        return false;
+    }
+
+
+    template <typename MODEL>
+    inline bool change_edge_property_type(MODEL* model, const std::string& name, const std::string& source_type, const std::string& target_type) {
+        if (source_type == target_type) {
+            LOG(WARNING) << "source and target data types are identical (" << source_type << " == " << target_type << ") and nothing to convert";
+            return false;
+        }
+
+        if (source_type == "float") {
+            if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, float, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, float, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, float, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, float, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, float, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, float, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, float, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "double") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, double, float>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, double, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, double, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, double, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, double, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, double, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, double, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "int") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, int, double>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, int, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned int") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, unsigned int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, unsigned int, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, unsigned int, int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, unsigned int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, unsigned int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, unsigned int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, unsigned int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "std::size_t") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, std::size_t, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, std::size_t, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, std::size_t, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, std::size_t, unsigned int>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, std::size_t, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, std::size_t, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, std::size_t, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "bool") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, bool, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, bool, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, bool, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, bool, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, bool, std::size_t>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, bool, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, bool, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "char") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, char, bool>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_edge_property_from_data<MODEL, char, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned char") {
+            if (target_type == "float")
+                return details::create_edge_property_from_data<MODEL, unsigned char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_edge_property_from_data<MODEL, unsigned char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_edge_property_from_data<MODEL, unsigned char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_edge_property_from_data<MODEL, unsigned char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_edge_property_from_data<MODEL, unsigned char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_edge_property_from_data<MODEL, unsigned char, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_edge_property_from_data<MODEL, unsigned char, char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else
+            LOG(WARNING) << "property of type '" << source_type << "' cannot be converted to type '" << target_type << "'";
+        return false;
+    }
+
+
+    template <typename MODEL>
+    inline bool change_halfedge_property_type(MODEL* model, const std::string& name, const std::string& source_type, const std::string& target_type) {
+        if (source_type == target_type) {
+            LOG(WARNING) << "source and target data types are identical (" << source_type << " == " << target_type << ") and nothing to convert";
+            return false;
+        }
+
+        if (source_type == "float") {
+            if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, float, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, float, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, float, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, float, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, float, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, float, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, float, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "double") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, double, float>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, double, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, double, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, double, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, double, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, double, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, double, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "int") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, int, double>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, int, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned int") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, unsigned int, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "std::size_t") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, unsigned int>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, std::size_t, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "bool") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, bool, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, bool, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, bool, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, bool, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, bool, std::size_t>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, bool, char>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, bool, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "char") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, char, bool>(model, name);
+            else if (target_type == "unsigned char")
+                return details::create_halfedge_property_from_data<MODEL, char, unsigned char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else if (source_type == "unsigned char") {
+            if (target_type == "float")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, float>(model, name);
+            else if (target_type == "double")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, double>(model, name);
+            else if (target_type == "int")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, int>(model, name);
+            else if (target_type == "unsigned int")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, unsigned int>(model, name);
+            else if (target_type == "std::size_t")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, std::size_t>(model, name);
+            else if (target_type == "bool")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, bool>(model, name);
+            else if (target_type == "char")
+                return details::create_halfedge_property_from_data<MODEL, unsigned char, char>(model, name);
+            else
+                LOG(WARNING) << "unaccepted target data type: " << target_type;
+        }
+        else
+            LOG(WARNING) << "property of type '" << source_type << "' cannot be converted to type '" << target_type << "'";
+        return false;
+    }
+}
+
+
+void DialogProperties::propertyChanged(const QString & name) {
+    ui->comboBoxSourceType->clear();
+
+    if (name.isEmpty())
+        return;
+
+    const std::string& location = ui->comboBoxPropertyLocations->currentText().toStdString();
+    if (location.empty())
+        return;
+
+    const std::string& property_name = name.toStdString();
+
+    Model* model = getModel();
+    if (!model)
+        return;
+
+    QString type = "void";
+    if (dynamic_cast<PointCloud *>(model)) {
+        auto cloud = dynamic_cast<PointCloud *>(model);
+        if (location == "Vertex") {
+            const auto& info = cloud->get_vertex_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        }
+    } else if (dynamic_cast<Graph *>(model)) {
+        auto graph = dynamic_cast<Graph *>(model);
+        if (location == "Vertex") {
+            const auto& info = graph->get_vertex_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        } else if (location == "Edge") {
+            const auto& info = graph->get_edge_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        }
+    } else if (dynamic_cast<SurfaceMesh *>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        if (location == "Vertex") {
+            const auto& info = mesh->get_vertex_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        } else if (location == "Edge") {
+            const auto& info = mesh->get_edge_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        } else if (location == "Face") {
+            const auto& info = mesh->get_face_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        } else if (location == "Halfedge") {
+            const auto& info = mesh->get_halfedge_property_type(name.toStdString());
+            type = details::type_info_to_string(info);
+        }
+    }
+
+    if (type != "void")
+        ui->comboBoxSourceType->addItem(type);
+    else
+        LOG(WARNING) << "unrecognized data type for property '" << property_name << "' defined on '" << location << "'";
 }
 
 
 void DialogProperties::updateProperties() {
+    disconnect(ui->comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(modelChanged(const QString &)));
+    ui->comboBoxModels->clear();
+
     const QString &model_text = ui->comboBoxModels->currentText();
     bool model_text_has_match = false;
 
-    disconnect(ui->comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(modelChanged(const QString &)));
-    ui->comboBoxModels->clear();
     auto &models = viewer_->models();
     for (auto m : models) {
         const std::string &name = file_system::simple_name(m->name());
@@ -278,36 +1065,42 @@ void DialogProperties::updateProperties() {
 
 void DialogProperties::applyCommand() {
     const QString& command = ui->comboBoxCommands->currentText();
+
+    bool succeed = false;
     if (command == "Remove")
-        removeProperty();
+        succeed = removeProperty();
     else if (command == "Rename")
-        renameProperty();
+        succeed = renameProperty();
     else if (command == "Convert Data Type")
-        convertPropertyDataTye();
+        succeed = convertPropertyDataType();
     else if (command == "Split (Vector -> Scalars)")
-        splitProperty();
+        succeed = splitProperty();
     else if (command == "Merge (Scalars -> Vector)")
-        mergeProperties();
+        succeed = mergeProperties();
+
+    if ( succeed) {
+        updateProperties();
+        window_->updateRenderingPanel();
+    }
 }
 
 
-void DialogProperties::removeProperty() {
+bool DialogProperties::removeProperty() {
     Model* model = getModel();
     if (!model)
-        return;
+        return false;
 
     const QString& location = ui->comboBoxPropertyLocations->currentText();
     const std::string& property = ui->comboBoxPropertyNames_1->currentText().toStdString();
     if (property.empty())
-        return;
+        return false;
 
-    bool succeed = false;
     if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (location == "Vertex") {
             if (cloud->remove_vertex_property(property)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << property << "'";
@@ -318,16 +1111,16 @@ void DialogProperties::removeProperty() {
         auto graph = dynamic_cast<Graph *>(model);
         if (location == "Vertex") {
             if (graph->remove_vertex_property(property)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << property << "'";
         }
         else if (location == "Edge") {
             if (graph->remove_edge_property(property)) {
-                succeed = true;
                 LOG(INFO) << "edge property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing edge property '" << property << "'";
@@ -338,70 +1131,66 @@ void DialogProperties::removeProperty() {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         if (location == "Vertex") {
             if (mesh->remove_vertex_property(property)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << property << "'";
         }
         else if (location == "Edge") {
             if (mesh->remove_edge_property(property)) {
-                succeed = true;
                 LOG(INFO) << "edge property '" << property << "' successfully removed";
-            }
+                return true;
+             }
             else
                 LOG(WARNING) << "failed removing edge property '" << property << "'";
         }
         else if (location == "Face") {
             if (mesh->remove_face_property(property)) {
-                succeed = true;
                 LOG(INFO) << "face property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing face property '" << property << "'";
         }
         else if (location == "Halfedge") {
             if (mesh->remove_halfedge_property(property)) {
-                succeed = true;
                 LOG(INFO) << "halfedge property '" << property << "' successfully removed";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing halfedge property '" << property << "'";
         }
     }
 
-    updateProperties();
-    if (succeed)
-        window_->updateRenderingPanel();
+    return false;
 }
 
 
-void DialogProperties::renameProperty() {
+bool DialogProperties::renameProperty() {
     Model* model = getModel();
     if (!model)
-        return;
+        return false;
 
     const QString& location = ui->comboBoxPropertyLocations->currentText();
     const std::string& old_name = ui->comboBoxPropertyNames_1->currentText().toStdString();
-    if (old_name.empty()) {
-        return;
-    }
+    if (old_name.empty())
+        return false;
 
     std::string new_name = ui->lineEditNewPropertyName->text().toStdString();
     if (new_name.size() <= 2) { // because of the prefix "v:", "f:"...
         LOG(WARNING) << "property's new name cannot be empty";
-        return;
+        return false;
     }
 
-    bool succeed = false;
     if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (location == "Vertex") {
             if (new_name.substr(0, 2) != "v:")
                 new_name.insert(0, "v:");
             if (cloud->rename_vertex_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << old_name << "'";
@@ -414,8 +1203,8 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "v:")
                 new_name.insert(0, "v:");
             if (graph->rename_vertex_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << old_name << "'";
@@ -424,8 +1213,8 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "e:")
                 new_name.insert(0, "e:");
             if (graph->rename_edge_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "edge property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing edge property '" << old_name << "'";
@@ -438,8 +1227,8 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "v:")
                 new_name.insert(0, "v:");
             if (mesh->rename_vertex_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "vertex property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing vertex property '" << old_name << "'";
@@ -448,8 +1237,8 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "e:")
                 new_name.insert(0, "e:");
             if (mesh->rename_edge_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "edge property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing edge property '" << old_name << "'";
@@ -458,8 +1247,8 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "f:")
                 new_name.insert(0, "f:");
             if (mesh->rename_face_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "face property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing face property '" << old_name << "'";
@@ -468,32 +1257,69 @@ void DialogProperties::renameProperty() {
             if (new_name.substr(0, 2) != "h:")
                 new_name.insert(0, "h:");
             if (mesh->rename_halfedge_property(old_name, new_name)) {
-                succeed = true;
                 LOG(INFO) << "halfedge property '" << old_name << "' successfully renamed to '" << new_name << "'";
+                return true;
             }
             else
                 LOG(WARNING) << "failed removing halfedge property '" << old_name << "'";
         }
     }
 
-    updateProperties();
-    if (succeed)
-        window_->updateRenderingPanel();
+    return false;
 }
 
 
-void DialogProperties::convertPropertyDataTye() {
+bool DialogProperties::convertPropertyDataType() {
+    Model* model = getModel();
+    if (!model)
+        return false;
 
+    const std::string& location = ui->comboBoxPropertyLocations->currentText().toStdString();
+    const std::string& name = ui->comboBoxPropertyNames_1->currentText().toStdString();
+    const std::string& source_type = ui->comboBoxSourceType->currentText().toStdString();
+    const std::string& target_type = ui->comboBoxTargetType->currentText().toStdString();
+    if (source_type.empty() || target_type.empty())
+        return false;
+
+    bool succeed = false;
+    if (dynamic_cast<PointCloud *>(model)) {
+        auto cloud = dynamic_cast<PointCloud *>(model);
+        if (location == "Vertex")
+            succeed = details::change_vertex_property_type(cloud, name, source_type, target_type);
+    }
+    else if (dynamic_cast<Graph *>(model)) {
+        auto graph = dynamic_cast<Graph *>(model);
+        if (location == "Vertex")
+            succeed = details::change_vertex_property_type(graph, name, source_type, target_type);
+        else if (location == "Edge")
+            succeed = details::change_edge_property_type(graph, name, source_type, target_type);
+    } else if (dynamic_cast<SurfaceMesh *>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        if (location == "Vertex")
+            succeed = details::change_vertex_property_type(mesh, name, source_type, target_type);
+        else if (location == "Edge")
+            succeed = details::change_edge_property_type(mesh, name, source_type, target_type);
+        else if (location == "Face")
+            succeed = details::change_face_property_type(mesh, name, source_type, target_type);
+        else if (location == "Halfedge")
+            succeed = details::change_halfedge_property_type(mesh, name, source_type, target_type);
+    }
+
+    if (succeed) {
+        LOG(INFO) << "the type of " << string::to_lowercase(location) << " property '" << name << "' changed from '" << source_type << "' to '" << target_type << "'";
+        return true;
+    }
+    return false;
 }
 
 
 // x, y, z -> vec3
-void DialogProperties::mergeProperties() {
+bool DialogProperties::mergeProperties() {
 
 }
 
 
 // vec3 -> x, y, z
-void DialogProperties::splitProperty() {
+bool DialogProperties::splitProperty() {
 
 }

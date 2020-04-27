@@ -26,15 +26,18 @@ private Q_SLOTS:
     void commandChanged(const QString &);
     void modelChanged(const QString &);
     void locationChanged(const QString &);
+    void propertyChanged(const QString &);
 
 private:
     easy3d::Model *getModel();
 
-    void removeProperty();
-    void renameProperty();
-    void convertPropertyDataTye();
-    void mergeProperties();   // x, y, z -> vec3
-    void splitProperty();     // vec3 -> x, y, z
+    bool removeProperty();
+    bool renameProperty();
+    bool convertPropertyDataType();
+    bool mergeProperties();   // x, y, z -> vec3
+    bool splitProperty();     // vec3 -> x, y, z
+
+    bool updatePropertyType(const QString& location, const QString& name);
 
 private:
     Ui::DialogProperties *ui;
