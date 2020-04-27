@@ -105,7 +105,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     qApp->setOverrideCursor(Qt::WaitCursor);
     qApp->processEvents();
     // progress logger changes the context thus interferes with the screen grabbing mechanism
-    makeCurrent();
+//    makeCurrent();
 #endif
 
     int count = 0;
@@ -173,7 +173,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
             progress.setValue(count);
             // progress logger changes the context thus interferes with the screen grabbing mechanism
-            makeCurrent();
+//            makeCurrent();
 #endif
         }
     }
