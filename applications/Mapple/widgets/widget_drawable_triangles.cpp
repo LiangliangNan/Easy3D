@@ -481,13 +481,14 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         updateVectorFieldBuffer(mesh, name);
 
         auto d = mesh->get_lines_drawable("vector - " + name);
-        d->set_visible(true);
-
-        states_[drawable()].vector_field = QString::fromStdString(name);
+        if (d) { // just in case the vector field has been removed
+            d->set_visible(true);
+            states_[drawable()].vector_field = QString::fromStdString(name);
+        }
     }
 
     viewer_->update();
-    main_window_->updateRenderingPanel();
+    window_->updateRenderingPanel();
 }
 
 

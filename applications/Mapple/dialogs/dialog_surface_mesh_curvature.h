@@ -1,20 +1,17 @@
 #ifndef DIALOG_SURFACE_CURVATURE_H
 #define DIALOG_SURFACE_CURVATURE_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogSurfaceMeshCurvature;
 }
 
-class PaintCanvas;
-class MainWindow;
-
-class DialogSurfaceMeshCurvature : public QDialog {
+class DialogSurfaceMeshCurvature : public Dialog {
 Q_OBJECT
 
 public:
-    explicit DialogSurfaceMeshCurvature(QWidget *parent = nullptr);
+    explicit DialogSurfaceMeshCurvature(MainWindow *window, QDockWidget* dockWidgetCommand);
 
     ~DialogSurfaceMeshCurvature();
 
@@ -24,9 +21,6 @@ private Q_SLOTS:
 
 private:
     Ui::DialogSurfaceMeshCurvature *ui;
-
-    PaintCanvas *viewer_;
-    MainWindow *main_window_;
 };
 
 #endif // DIALOG_SURFACE_CURVATURE_H

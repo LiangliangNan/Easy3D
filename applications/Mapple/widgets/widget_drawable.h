@@ -85,7 +85,7 @@ protected:
     easy3d::State::PropertyLocation color_location(const std::string& name) const;
 
 protected:
-    MainWindow*     main_window_;
+    MainWindow*     window_;
     PaintCanvas*    viewer_;
     QString         scalar_prefix_;
 

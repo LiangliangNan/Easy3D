@@ -9,20 +9,20 @@
 
 using namespace easy3d;
 
-DialogSnapshot::DialogSnapshot(QWidget *parent)
-    : QDialog(parent)
+DialogSnapshot::DialogSnapshot(MainWindow *window, QDockWidget* dockWidgetCommand)
+    : Dialog(window, dockWidgetCommand)
     , ui(new Ui::DialogSnapshot)
 {
     double scale = 1.0;
     ui->setupUi(this);
     ui->doubleSpinBoxImageScale->setValue(scale);
 
-    viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
-
     computeImageSize();;
 
     connect(ui->doubleSpinBoxImageScale, SIGNAL(valueChanged(double)), this, SLOT(computeImageSize()));
     connect(this, SIGNAL(accepted()), this, SLOT(saveSnapshot()));
+
+    bestSize();
  }
 
 

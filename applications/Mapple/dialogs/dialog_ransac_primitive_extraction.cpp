@@ -13,13 +13,11 @@
 
 using namespace easy3d;
 
-DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(QWidget *parent) :
-    QDialog(parent),
+DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *window, QDockWidget* dockWidgetCommand) :
+    Dialog(window, dockWidgetCommand),
     ui(new Ui::DialogRansacPrimitiveExtraction)
 {
     ui->setupUi(this);
-    main_window_ = dynamic_cast<MainWindow*>(parent);
-    viewer_ = main_window_->viewer();
 
     // default value
     default_min_support_ = 1000;
@@ -32,6 +30,8 @@ DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(QWidget *parent
 
     connect(ui->pushButtonReset, SIGNAL(clicked()), this, SLOT(reset()));
     connect(ui->pushButtonExtract, SIGNAL(clicked()), this, SLOT(extract()));
+
+    bestSize();
 }
 
 DialogRansacPrimitiveExtraction::~DialogRansacPrimitiveExtraction()
@@ -95,5 +95,5 @@ void DialogRansacPrimitiveExtraction::extract() {
     vertices->update_buffers();
 
     viewer_->update();
-    main_window_->updateRenderingPanel();
+    window_->updateRenderingPanel();
 }

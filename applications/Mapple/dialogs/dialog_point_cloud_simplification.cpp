@@ -15,13 +15,12 @@
 using namespace easy3d;
 
 
-DialogPointCloudSimplification::DialogPointCloudSimplification(QWidget *parent)
-        : QDialog(parent)
+DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *window, QDockWidget* dockWidgetCommand)
+        : Dialog(window, dockWidgetCommand)
         , ui(new Ui::DialogPointCloudSimplification)
         , kdtree_(nullptr)
 {
     ui->setupUi(this);
-    viewer_ = dynamic_cast<MainWindow *>(parent)->viewer();
 
     // default value
     ui->lineEditDistanceThreshold->setText("0.01");
@@ -38,6 +37,8 @@ DialogPointCloudSimplification::DialogPointCloudSimplification(QWidget *parent)
     connect(ui->buttonComputeAvgSpacing, SIGNAL(clicked()), this, SLOT(computeAvgSpacing()));
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(apply()));
     connect(ui->qureyButton, SIGNAL(clicked()), this, SLOT(query()));
+
+    bestSize();
 }
 
 

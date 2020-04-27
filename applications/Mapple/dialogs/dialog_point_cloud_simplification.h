@@ -3,7 +3,7 @@
 
 #include <easy3d/core/point_cloud.h>
 
-#include <QDialog>
+#include "dialog.h"
 
 
 namespace Ui {
@@ -14,14 +14,12 @@ namespace easy3d {
     class KdTreeSearch;
 }
 
-class PaintCanvas;
-
-class DialogPointCloudSimplification : public QDialog
+class DialogPointCloudSimplification : public Dialog
 {
 	Q_OBJECT
 
 public:
-	DialogPointCloudSimplification(QWidget* parent);
+	DialogPointCloudSimplification(MainWindow *window, QDockWidget* dockWidgetCommand);
 	~DialogPointCloudSimplification();
 
 private Q_SLOTS:
@@ -40,7 +38,6 @@ protected:
 private:
     Ui::DialogPointCloudSimplification *ui;
 
-	PaintCanvas*	 viewer_;
 	easy3d::KdTreeSearch*    kdtree_;
 	std::vector<easy3d::PointCloud::Vertex> points_to_remove_;
 };

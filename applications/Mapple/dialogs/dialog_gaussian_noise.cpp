@@ -13,12 +13,11 @@
 
 using namespace easy3d;
 
-DialogGaussianNoise::DialogGaussianNoise(QWidget *parent)
-        : QDialog(parent)
+DialogGaussianNoise::DialogGaussianNoise(MainWindow *window, QDockWidget* dockWidgetCommand)
+        : Dialog(window, dockWidgetCommand)
         , ui(new Ui::DialogGaussianNoise)
 {
     ui->setupUi(this);
-    viewer_ = dynamic_cast<MainWindow *>(parent)->viewer();
 
     suggested_ratio_ = 0.01;
 
@@ -30,6 +29,8 @@ DialogGaussianNoise::DialogGaussianNoise(QWidget *parent)
 
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(apply()));
     connect(ui->computeBBoxButton, SIGNAL(clicked()), this, SLOT(computeBBox()));
+
+    bestSize();
 }
 
 

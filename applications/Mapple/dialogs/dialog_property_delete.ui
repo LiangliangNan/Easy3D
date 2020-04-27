@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>282</width>
-    <height>181</height>
+    <width>322</width>
+    <height>309</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -21,15 +21,56 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="1" column="0">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="labelCommand">
+       <property name="text">
+        <string>Command</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="comboBoxCommands">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" rowspan="2" colspan="2">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" rowspan="2">
+      <widget class="QComboBox" name="comboBoxModels">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelModel">
+       <property name="text">
+        <string>Model</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
       <widget class="QLabel" name="labelPropertyLocation">
        <property name="text">
         <string>Location</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
+     <item row="4" column="1">
       <widget class="QComboBox" name="comboBoxPropertyLocations">
        <property name="minimumSize">
         <size>
@@ -39,14 +80,14 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="labelPropertyName">
        <property name="text">
-        <string>Name</string>
+        <string>Property 1</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="5" column="1">
       <widget class="QComboBox" name="comboBoxPropertyNames">
        <property name="minimumSize">
         <size>
@@ -56,15 +97,32 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="labelModel">
+     <item row="6" column="0">
+      <widget class="QLabel" name="labelPropertyName_2">
        <property name="text">
-        <string>Model</string>
+        <string>Property 2</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="comboBoxModels">
+     <item row="6" column="1">
+      <widget class="QComboBox" name="comboBoxPropertyNames_2">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="labelPropertyName_3">
+       <property name="text">
+        <string>Property 3</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QComboBox" name="comboBoxPropertyNames_3">
        <property name="minimumSize">
         <size>
          <width>200</width>
@@ -98,7 +156,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="queryButton">
+      <widget class="QPushButton" name="updateButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -107,7 +165,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>60</width>
+         <width>80</width>
          <height>25</height>
         </size>
        </property>
@@ -118,7 +176,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Query</string>
+        <string>Update</string>
        </property>
        <property name="default">
         <bool>false</bool>
@@ -139,7 +197,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="deleteButton">
+      <widget class="QPushButton" name="applyButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -148,7 +206,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>60</width>
+         <width>80</width>
          <height>25</height>
         </size>
        </property>
@@ -159,7 +217,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Delete</string>
+        <string>Apply</string>
        </property>
        <property name="default">
         <bool>true</bool>
@@ -185,11 +243,14 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>comboBoxCommands</tabstop>
   <tabstop>comboBoxModels</tabstop>
   <tabstop>comboBoxPropertyLocations</tabstop>
   <tabstop>comboBoxPropertyNames</tabstop>
-  <tabstop>queryButton</tabstop>
-  <tabstop>deleteButton</tabstop>
+  <tabstop>comboBoxPropertyNames_2</tabstop>
+  <tabstop>comboBoxPropertyNames_3</tabstop>
+  <tabstop>updateButton</tabstop>
+  <tabstop>applyButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -448,7 +448,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         states_[d].vector_field = "f:normal";
     }
 
-    main_window_->updateUi();
+    window_->updateUi();
     viewer_->update();
 }
 

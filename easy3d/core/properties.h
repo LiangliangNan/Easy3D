@@ -422,6 +422,23 @@ namespace easy3d {
             return false;
         }
 
+        // rename a property. Returns true on success.
+        bool rename(const std::string& old_name, const std::string& new_name)
+        {
+            assert(!old_name.empty());
+            assert(!new_name.empty());
+            std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
+            for (; it!=end; ++it)
+            {
+                if ((*it)->name() == old_name)
+                {
+                    (*it)->set_name(new_name);
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
         // delete all properties
         void clear()

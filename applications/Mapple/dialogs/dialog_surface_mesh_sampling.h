@@ -1,20 +1,17 @@
 #ifndef DIALOG_SURFACE_SAMPLING_H
 #define DIALOG_SURFACE_SAMPLING_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogSurfaceMeshSampling;
 }
 
-class PaintCanvas;
-class MainWindow;
-
-class DialogSurfaceMeshSampling : public QDialog {
+class DialogSurfaceMeshSampling : public Dialog {
 Q_OBJECT
 
 public:
-    explicit DialogSurfaceMeshSampling(QWidget *parent = nullptr);
+    explicit DialogSurfaceMeshSampling(MainWindow *window, QDockWidget* dockWidgetCommand);
 
     ~DialogSurfaceMeshSampling();
 
@@ -24,9 +21,6 @@ private Q_SLOTS:
 
 private:
     Ui::DialogSurfaceMeshSampling *ui;
-
-    PaintCanvas *viewer_;
-    MainWindow *main_window_;
 };
 
 #endif // DIALOG_SURFACE_SAMPLING_H

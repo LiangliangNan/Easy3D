@@ -21,10 +21,11 @@ set(${PROJECT_NAME}_HEADERS
         main_window.h
         paint_canvas.h
 
+        dialogs/dialog.h
         dialogs/dialog_surface_mesh_curvature.h
         dialogs/dialog_gaussian_noise.h
         dialogs/dialog_poisson_reconstruction.h
-        dialogs/dialog_delete_property.h
+        dialogs/dialog_properties.h
         dialogs/dialog_ransac_primitive_extraction.h
         dialogs/dialog_surface_mesh_sampling.h
         dialogs/dialog_snapshot.h
@@ -50,10 +51,11 @@ set(${PROJECT_NAME}_SOURCES
         paint_canvas.cpp
         paint_canvas_snapshot.cpp
 
+        dialogs/dialog.cpp
         dialogs/dialog_surface_mesh_curvature.cpp
         dialogs/dialog_gaussian_noise.cpp
         dialogs/dialog_poisson_reconstruction.cpp
-        dialogs/dialog_delete_property.cpp
+        dialogs/dialog_properties.cpp
         dialogs/dialog_ransac_primitive_extraction.cpp
         dialogs/dialog_surface_mesh_sampling.cpp
         dialogs/dialog_snapshot.cpp
@@ -79,7 +81,7 @@ set(${PROJECT_NAME}_FORMS
         dialogs/dialog_surface_mesh_curvature.ui
         dialogs/dialog_gaussian_noise.ui
         dialogs/dialog_poisson_reconstruction.ui
-        dialogs/dialog_delete_property.ui
+        dialogs/dialog_properties.ui
         dialogs/dialog_ransac_primitive_extraction.ui
         dialogs/dialog_surface_mesh_sampling.ui
         dialogs/dialog_snapshot.ui

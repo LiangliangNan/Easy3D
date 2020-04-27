@@ -57,7 +57,7 @@ private slots:
     void addGaussianNoise();
 
     // property
-    void deleteProperty();
+    void manipulateProperties();
     void computeHeightField();
     void computeSurfaceMeshCurvatures();
 
@@ -125,6 +125,8 @@ private:
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
+    QDockWidget* dockWidgetCommand();
+
 private:
     PaintCanvas*   viewer_;
 
@@ -136,7 +138,7 @@ private:
         *actionSeparator;
 
     DialogSnapshot*             dialogSanpshot_;
-    QDockWidget*                dialogCommand_;
+    QDockWidget*                dockWidgetCommand_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

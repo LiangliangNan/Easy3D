@@ -12,15 +12,14 @@
 
 using namespace easy3d;
 
-DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(QWidget *parent) :
-        QDialog(parent),
+DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(MainWindow *window, QDockWidget* dockWidgetCommand) :
+        Dialog(window, dockWidgetCommand),
         ui(new Ui::DialogSurfaceMeshSampling) {
     ui->setupUi(this);
 
-    main_window_ = dynamic_cast<MainWindow *>(parent);
-    viewer_ = main_window_->viewer();
-
     connect(ui->okButton, SIGNAL(clicked()), this, SLOT(apply()));
+
+    bestSize();
 }
 
 
@@ -44,7 +43,7 @@ void DialogSurfaceMeshSampling::apply() {
     PointCloud *cloud = sampler.apply(mesh, num);
     if (cloud) {
         viewer_->addModel(cloud);
-        main_window_->updateUi();
+        window_->updateUi();
     }
 }
 

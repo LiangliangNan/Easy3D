@@ -1,7 +1,7 @@
 #ifndef DIALOG_POISSON_RECONSTRUCTION_H
 #define DIALOG_POISSON_RECONSTRUCTION_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogPoissonReconstruction;
@@ -9,13 +9,14 @@ namespace Ui {
 
 class PaintCanvas;
 class MainWindow;
+class QDockWidget;
 
-class DialogPoissonReconstruction : public QDialog
+class DialogPoissonReconstruction : public Dialog
 {
     Q_OBJECT
 
 public:
-    explicit DialogPoissonReconstruction(QWidget *parent = nullptr);
+    explicit DialogPoissonReconstruction(MainWindow *window, QDockWidget* dockWidgetCommand);
     ~DialogPoissonReconstruction();
 
 private Q_SLOTS:
@@ -26,9 +27,6 @@ private Q_SLOTS:
 
 private:
     Ui::DialogPoissonReconstruction *ui;
-
-    PaintCanvas*	viewer_;
-    MainWindow*     main_window_;
 
     int			default_octree_depth_;
     int         default_samples_per_node_;

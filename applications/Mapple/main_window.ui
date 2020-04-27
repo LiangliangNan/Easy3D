@@ -96,7 +96,7 @@
     <property name="title">
      <string>Property</string>
     </property>
-    <addaction name="actionDeleteProperty"/>
+    <addaction name="actionManipulateProperties"/>
     <addaction name="separator"/>
     <addaction name="actionComputeHeightField"/>
     <addaction name="actionComputeSurfaceMeshCurvatures"/>
@@ -863,9 +863,9 @@
     <string>Remove isolated vertices</string>
    </property>
   </action>
-  <action name="actionDeleteProperty">
+  <action name="actionManipulateProperties">
    <property name="text">
-    <string>Delete property</string>
+    <string>Manipulate properties</string>
    </property>
   </action>
  </widget>

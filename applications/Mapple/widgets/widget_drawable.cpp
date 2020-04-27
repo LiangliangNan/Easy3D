@@ -17,8 +17,8 @@ std::vector<WidgetDrawable::ColorMap> WidgetDrawable::colormaps_;
 
 WidgetDrawable::WidgetDrawable(QWidget *parent)
         : QWidget(parent), scalar_prefix_("scalar - ") {
-    main_window_ = dynamic_cast<MainWindow *>(parent);
-    viewer_ = main_window_->viewer();
+    window_ = dynamic_cast<MainWindow *>(parent);
+    viewer_ = window_->viewer();
 
     if (colormaps_.empty()) {
         const std::string dir = resource::directory() + "/colormaps/";

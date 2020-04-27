@@ -1,20 +1,18 @@
 #ifndef DIALOG_SNAPSHOT_H
 #define DIALOG_SNAPSHOT_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogSnapshot;
 }
 
-class PaintCanvas;
-
-class DialogSnapshot : public QDialog
+class DialogSnapshot : public Dialog
 {
     Q_OBJECT
 
 public:
-    explicit DialogSnapshot(QWidget *parent = 0);
+    explicit DialogSnapshot(MainWindow *window, QDockWidget* dockWidgetCommand);
     ~DialogSnapshot();
 
     void setImageFileName(const QString& fileName);
@@ -26,7 +24,6 @@ private slots:
 private:
     Ui::DialogSnapshot *ui;
 
-    PaintCanvas*	viewer_;
     QString         fileName_;
 };
 

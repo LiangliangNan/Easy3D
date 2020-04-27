@@ -1411,6 +1411,32 @@ namespace easy3d {
         /// remove the model property named \c n
         bool remove_model_property(const std::string &n) { return mprops_.remove(n); }
 
+        /// rename a vertex property given its name
+        bool rename_vertex_property(const std::string &old_name, const std::string &new_name) {
+            return vprops_.rename(old_name, new_name);
+        }
+
+        /// rename a face property given its name
+        bool rename_face_property(const std::string &old_name, const std::string &new_name) {
+            return fprops_.rename(old_name, new_name);
+        }
+
+        /// rename an edge property given its name
+        bool rename_edge_property(const std::string &old_name, const std::string &new_name) {
+            return eprops_.rename(old_name, new_name);
+        }
+
+        /// rename a halfedge property given its name
+        bool rename_halfedge_property(const std::string &old_name, const std::string &new_name) {
+            return hprops_.rename(old_name, new_name);
+        }
+
+        /// rename a model property given its name
+        bool rename_model_property(const std::string &old_name, const std::string &new_name) {
+            return mprops_.rename(old_name, new_name);
+        }
+
+
         /** get the type_info \c T of vertex property named \c. returns an typeid(void)
          if the property does not exist or if the type does not match. */
         const std::type_info& get_vertex_property_type(const std::string& name) const

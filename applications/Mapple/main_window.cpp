@@ -45,7 +45,7 @@
 #include "paint_canvas.h"
 
 #include "dialogs/dialog_snapshot.h"
-#include "dialogs/dialog_delete_property.h"
+#include "dialogs/dialog_properties.h"
 #include "dialogs/dialog_poisson_reconstruction.h"
 #include "dialogs/dialog_surface_mesh_curvature.h"
 #include "dialogs/dialog_surface_mesh_sampling.h"
@@ -66,7 +66,7 @@ using namespace easy3d;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , dialogSanpshot_(nullptr)
-    , dialogCommand_(nullptr)
+    , dockWidgetCommand_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -373,18 +373,15 @@ void MainWindow::onClearRecentFiles() {
 
 
 void MainWindow::showDialog(QDialog* dialog) {
-    if (!dialogCommand_) {
-        dialogCommand_ = new QDockWidget(this);
-        dialogCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
-        dialogCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
-        dialogCommand_->setFloating(true);
+    if (!dockWidgetCommand_) {
+        dockWidgetCommand_ = new QDockWidget(this);
+        dockWidgetCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
+        dockWidgetCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
+        dockWidgetCommand_->setFloating(true);
     }
-    delete dialogCommand_->widget();
-
-    const QSize& size = dialog->sizeHint();
-    dialogCommand_->setWidget(dialog);
-    dialogCommand_->setFixedSize(size);
-    dialogCommand_->show();
+    delete dockWidgetCommand_->widget();
+    dockWidgetCommand_->setWidget(dialog);
+    dockWidgetCommand_->show();
 }
 
 
@@ -418,7 +415,7 @@ void MainWindow::saveSnapshot() {
 
 #if 1
     if (!dialogSanpshot_) {
-        dialogSanpshot_ = new DialogSnapshot(this);
+        dialogSanpshot_ = new DialogSnapshot(this, dockWidgetCommand());
         connect(viewer_, SIGNAL(resized()), dialogSanpshot_, SLOT(computeImageSize()));
     }
 
@@ -646,7 +643,7 @@ void MainWindow::createActionsForEditMenu() {
 
 
 void MainWindow::createActionsForPropertyMenu() {
-    connect(ui->actionDeleteProperty, SIGNAL(triggered()), this, SLOT(deleteProperty()));
+    connect(ui->actionManipulateProperties, SIGNAL(triggered()), this, SLOT(manipulateProperties()));
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
     connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
 }
@@ -931,12 +928,6 @@ void MainWindow::pointCloudNormalizeNormals() {
 }
 
 
-void MainWindow::deleteProperty() {
-    auto dialog = new DialogDeleteProperty(this);
-    showDialog(dialog);
-}
-
-
 void MainWindow::computeHeightField() {
     auto model = viewer_->currentModel();
 
@@ -1092,38 +1083,55 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 }
 
 
+QDockWidget* MainWindow::dockWidgetCommand() {
+    if (!dockWidgetCommand_) {
+        dockWidgetCommand_ = new QDockWidget(this);
+        dockWidgetCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
+        dockWidgetCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
+        dockWidgetCommand_->setFloating(true);
+    }
+    return dockWidgetCommand_;
+}
+
+
+void MainWindow::manipulateProperties() {
+    auto dialog = new DialogProperties(this, dockWidgetCommand());
+    showDialog(dialog);
+}
+
+
 void MainWindow::pointCloudPoissonSurfaceReconstruction() {
-    auto dialog = new DialogPoissonReconstruction(this);
+    auto dialog = new DialogPoissonReconstruction(this, dockWidgetCommand());
     showDialog(dialog);
 }
 
 
 void MainWindow::pointCloudRansacPrimitiveExtraction() {
-    auto dialog = new DialogRansacPrimitiveExtraction(this);
+    auto dialog = new DialogRansacPrimitiveExtraction(this, dockWidgetCommand());
     showDialog(dialog);
 }
 
 
 void MainWindow::surfaceMeshSampling() {
-    auto dialog = new DialogSurfaceMeshSampling(this);
+    auto dialog = new DialogSurfaceMeshSampling(this, dockWidgetCommand());
     showDialog(dialog);
 }
 
 
 void MainWindow::pointCloudDownsampling() {
-    auto dialog = new DialogPointCloudSimplification(this);
+    auto dialog = new DialogPointCloudSimplification(this, dockWidgetCommand());
     showDialog(dialog);
 }
 
 
 void MainWindow::addGaussianNoise() {
-    auto dialog = new DialogGaussianNoise(this);
+    auto dialog = new DialogGaussianNoise(this, dockWidgetCommand());
     showDialog(dialog);
 }
 
 
 void MainWindow::computeSurfaceMeshCurvatures() {
-    auto dialog = new DialogSurfaceMeshCurvature(this);
+    auto dialog = new DialogSurfaceMeshCurvature(this, dockWidgetCommand());
     showDialog(dialog);
 }
 

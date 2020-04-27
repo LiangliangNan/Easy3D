@@ -526,7 +526,7 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
     }
 
     viewer_->update();
-    main_window_->updateRenderingPanel();
+    window_->updateRenderingPanel();
 }
 
 

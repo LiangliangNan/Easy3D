@@ -9,15 +9,14 @@
 
 using namespace easy3d;
 
-DialogSurfaceMeshCurvature::DialogSurfaceMeshCurvature(QWidget *parent) :
-        QDialog(parent),
+DialogSurfaceMeshCurvature::DialogSurfaceMeshCurvature(MainWindow *window, QDockWidget* dockWidgetCommand) :
+        Dialog(window, dockWidgetCommand),
         ui(new Ui::DialogSurfaceMeshCurvature) {
     ui->setupUi(this);
 
-    main_window_ = dynamic_cast<MainWindow *>(parent);
-    viewer_ = main_window_->viewer();
-
     connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(apply()));
+
+    bestSize();
 }
 
 
@@ -44,5 +43,5 @@ void DialogSurfaceMeshCurvature::apply() {
 
     mesh->update();
     viewer_->update();
-    main_window_->updateRenderingPanel();
+    window_->updateRenderingPanel();
 }

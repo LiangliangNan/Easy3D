@@ -1,19 +1,17 @@
 #ifndef DIALOG_GAUSSIAN_NOISE_H
 #define DIALOG_GAUSSIAN_NOISE_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogGaussianNoise;
 }
 
-class PaintCanvas;
-
-class DialogGaussianNoise : public QDialog {
+class DialogGaussianNoise : public Dialog {
 Q_OBJECT
 
 public:
-    DialogGaussianNoise(QWidget *parent = 0);
+    DialogGaussianNoise(MainWindow *window, QDockWidget* dockWidgetCommand);
     ~DialogGaussianNoise();
 
 private Q_SLOTS:
@@ -23,7 +21,6 @@ private Q_SLOTS:
 private:
     Ui::DialogGaussianNoise *ui;
 
-    PaintCanvas *viewer_;
     QString default_sigma_;
     double suggested_ratio_;
 };

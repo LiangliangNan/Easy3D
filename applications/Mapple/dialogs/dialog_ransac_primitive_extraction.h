@@ -1,21 +1,18 @@
 #ifndef DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
 #define DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
 
-#include <QDialog>
+#include "dialog.h"
 
 namespace Ui {
     class DialogRansacPrimitiveExtraction;
 }
 
-class MainWindow;
-class PaintCanvas;
-
-class DialogRansacPrimitiveExtraction : public QDialog
+class DialogRansacPrimitiveExtraction : public Dialog
 {
     Q_OBJECT
 
 public:
-    explicit DialogRansacPrimitiveExtraction(QWidget *parent = nullptr);
+    explicit DialogRansacPrimitiveExtraction(MainWindow *window, QDockWidget* dockWidgetCommand);
     ~DialogRansacPrimitiveExtraction();
 
     void setWorkOnSelectedPoints(bool b) { selected_only_ = b; }
@@ -26,9 +23,6 @@ private Q_SLOTS:
 
 private:
     Ui::DialogRansacPrimitiveExtraction *ui;
-
-    MainWindow*     main_window_;
-    PaintCanvas*	viewer_;
 
     bool	selected_only_;
 

@@ -45,8 +45,9 @@
 using namespace easy3d;
 
 
-PaintCanvas::PaintCanvas(QWidget *parent)
-        : QOpenGLWidget(parent)
+PaintCanvas::PaintCanvas(MainWindow* window)
+        : QOpenGLWidget(window)
+        , window_(window)
         , func_(nullptr)
         , texter_(nullptr)
         , camera_(nullptr)
@@ -67,8 +68,6 @@ PaintCanvas::PaintCanvas(QWidget *parent)
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::WheelFocus);
     setMouseTracking(true);
-
-    main_window_ = dynamic_cast<MainWindow*>(parent);
 
     camera_ = new Camera;
     camera_->setType(Camera::PERSPECTIVE);
@@ -488,7 +487,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_line_width(size);
-                main_window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
@@ -496,7 +495,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->lines_drawables()) {
                 float size = d->line_width() + 1.0f;
                 d->set_line_width(size);
-                main_window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
@@ -506,7 +505,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 if (size < 1)
                     size = 1;
                 d->set_point_size(size);
-                main_window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
@@ -514,7 +513,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             for (auto d : m->points_drawables()) {
                 float size = d->point_size() + 1.0f;
                 d->set_point_size(size);
-                main_window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
@@ -524,7 +523,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
         if (model_idx_ != pre_idx) {
-            main_window_->updateUi();
+            window_->updateUi();
             if (model_idx_ >= 0)
                 LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
@@ -535,14 +534,14 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         else
             model_idx_ = int((model_idx_ + 1) % models_.size());
         if (model_idx_ != pre_idx) {
-            main_window_->updateUi();
+            window_->updateUi();
             if (model_idx_ >= 0)
 				LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
     } else if (e->key() == Qt::Key_Delete && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             deleteModel(currentModel());
-        main_window_->updateUi();
+        window_->updateUi();
     } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
             auto *edges = currentModel()->get_lines_drawable("edges");
@@ -561,7 +560,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 }
             } else
                 edges->set_visible(!edges->is_visible());
-            main_window_->updateRenderingPanel();
+            window_->updateRenderingPanel();
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
@@ -584,7 +583,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                 }
             } else
                 vertices->set_visible(!vertices->is_visible());
-            main_window_->updateRenderingPanel();
+            window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
@@ -599,7 +598,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             }
             else
                 borders->set_visible(!borders->is_visible());
-            main_window_->updateRenderingPanel();
+            window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
@@ -614,7 +613,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             }
             else
                 drawable->set_visible(!drawable->is_visible());
-            main_window_->updateRenderingPanel();
+            window_->updateRenderingPanel();
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
@@ -622,7 +621,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             auto drawable = currentModel()->get_triangles_drawable("faces");
             if (drawable) {
                 drawable->set_smooth_shading(!drawable->smooth_shading());
-                main_window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
             }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
