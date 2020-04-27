@@ -160,6 +160,7 @@ namespace easy3d {
             if (element_vertex) {// add vertex properties
                 // NOTE: to properly handle non-manifold meshes, vertex properties must be added before adding the faces
                 details::add_vertex_properties<vec3>(mesh, element_vertex->vec3_properties);
+                details::add_vertex_properties<vec2>(mesh, element_vertex->vec2_properties);
                 details::add_vertex_properties<float>(mesh, element_vertex->float_properties);
                 details::add_vertex_properties<int>(mesh, element_vertex->int_properties);
                 details::add_vertex_properties<std::vector<int> >(mesh, element_vertex->int_list_properties);
@@ -184,6 +185,7 @@ namespace easy3d {
                 }
                 else if (e.name == "face") {
 					details::add_face_properties<vec3>(mesh, e.vec3_properties);
+                    details::add_face_properties<vec2>(mesh, e.vec2_properties);
 					details::add_face_properties<float>(mesh, e.float_properties);
 					details::add_face_properties<int>(mesh, e.int_properties);
 					details::add_face_properties< std::vector<int> >(mesh, e.int_list_properties);
@@ -191,6 +193,7 @@ namespace easy3d {
 				}
                 else if (e.name == "edge") {
 					details::add_edge_properties<vec3>(mesh, e.vec3_properties);
+                    details::add_edge_properties<vec2>(mesh, e.vec2_properties);
 					details::add_edge_properties<float>(mesh, e.float_properties);
 					details::add_edge_properties<int>(mesh, e.int_properties);
 					details::add_edge_properties< std::vector<int> >(mesh, e.int_list_properties);
@@ -273,6 +276,7 @@ namespace easy3d {
 
 			// attributes defined on element "vertex"
 			details::collect_vertex_properties(mesh, element_vertex.vec3_properties);
+            details::collect_vertex_properties(mesh, element_vertex.vec2_properties);
 			details::collect_vertex_properties(mesh, element_vertex.float_properties);
 			details::collect_vertex_properties(mesh, element_vertex.int_properties);
 			details::collect_vertex_properties(mesh, element_vertex.int_list_properties);
@@ -299,6 +303,7 @@ namespace easy3d {
 
 			// attributes defined on element "face"
 			details::collect_face_properties(mesh, element_face.vec3_properties);
+            details::collect_face_properties(mesh, element_face.vec2_properties);
 			details::collect_face_properties(mesh, element_face.float_properties);
 			details::collect_face_properties(mesh, element_face.int_properties);
 			details::collect_face_properties(mesh, element_face.int_list_properties);
@@ -313,6 +318,7 @@ namespace easy3d {
 
 			// attributes defined on element "edge"
 			details::collect_edge_properties(mesh, element_edge.vec3_properties);
+            details::collect_edge_properties(mesh, element_edge.vec2_properties);
 			details::collect_edge_properties(mesh, element_edge.float_properties);
 			details::collect_edge_properties(mesh, element_edge.int_properties);
 			details::collect_edge_properties(mesh, element_edge.int_list_properties);
@@ -320,6 +326,7 @@ namespace easy3d {
 			// if edge property exist, we need to create the edge element which
 			// must have an extra int list property "vertex_indices"
 			if (element_edge.vec3_properties.size() > 0 ||
+			    element_edge.vec2_properties.size() > 0 ||
 				element_edge.float_properties.size() > 0 ||
 				element_edge.int_properties.size() > 0 ||
 				element_edge.int_list_properties.size() > 0 ||

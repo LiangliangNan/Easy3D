@@ -70,6 +70,7 @@ namespace easy3d {
 				const Element& e = elements[i];
                 if (e.name == "vertex") {
                     details::add_properties<vec3>(cloud, e.vec3_properties);
+                    details::add_properties<vec2>(cloud, e.vec2_properties);
                     details::add_properties<float>(cloud, e.float_properties);
                     details::add_properties<int>(cloud, e.int_properties);
                     details::add_properties< std::vector<int> >(cloud, e.int_list_properties);
@@ -116,6 +117,7 @@ namespace easy3d {
 			Element e("vertex", num);
 
 			details::collect_properties(cloud, e.vec3_properties);
+            details::collect_properties(cloud, e.vec2_properties);
 			details::collect_properties(cloud, e.float_properties);
 			details::collect_properties(cloud, e.int_properties);
 			details::collect_properties(cloud, e.int_list_properties);

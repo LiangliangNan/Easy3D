@@ -46,6 +46,7 @@ namespace easy3d {
         };
 
 		typedef GenericProperty<vec3>                   Vec3Property;
+        typedef GenericProperty<vec2>                   Vec2Property;
 		typedef GenericProperty<float>                  FloatProperty;
 		typedef GenericProperty<int>                    IntProperty;
 		typedef GenericProperty< std::vector<float> >	FloatListProperty;
@@ -60,6 +61,7 @@ namespace easy3d {
             std::size_t num_instances;  // number of instances
 
 			std::vector<Vec3Property>       vec3_properties;    // for "point", "normal", "color", and vector fields
+            std::vector<Vec2Property>       vec2_properties;    // for "texcoord"
 			std::vector<FloatProperty>      float_properties;	// for scalar fields of float values
 			std::vector<IntProperty>        int_properties;     // for scalar fields of integer values
             std::vector<FloatListProperty>  float_list_properties;	// for properties of a list of float values

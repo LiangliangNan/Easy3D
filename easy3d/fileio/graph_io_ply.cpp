@@ -137,6 +137,7 @@ namespace easy3d {
 				Element& e = elements[i];
                 if (e.name == "vertex") {
                     details::add_vertex_properties<vec3>(graph, e.vec3_properties);
+                    details::add_vertex_properties<vec2>(graph, e.vec2_properties);
                     details::add_vertex_properties<float>(graph, e.float_properties);
                     details::add_vertex_properties<int>(graph, e.int_properties);
                     details::add_vertex_properties< std::vector<int> >(graph, e.int_list_properties);
@@ -146,6 +147,7 @@ namespace easy3d {
                     LOG(ERROR) << "The Graph has face information (ignored). Is it a mesh?";
                 else if (e.name == "edge") {
                     details::add_edge_properties<vec3>(graph, e.vec3_properties);
+                    details::add_edge_properties<vec2>(graph, e.vec2_properties);
                     details::add_edge_properties<float>(graph, e.float_properties);
                     details::add_edge_properties<int>(graph, e.int_properties);
                     details::add_edge_properties< std::vector<int> >(graph, e.int_list_properties);
@@ -213,6 +215,7 @@ namespace easy3d {
 
 			// attributes defined on element "vertex"
             details::collect_vertex_properties(graph, element_vertex.vec3_properties);
+            details::collect_vertex_properties(graph, element_vertex.vec2_properties);
             details::collect_vertex_properties(graph, element_vertex.float_properties);
             details::collect_vertex_properties(graph, element_vertex.int_properties);
             details::collect_vertex_properties(graph, element_vertex.int_list_properties);
@@ -238,6 +241,7 @@ namespace easy3d {
 
 			// attributes defined on element "edge"
             details::collect_edge_properties(graph, element_edge.vec3_properties);
+            details::collect_edge_properties(graph, element_edge.vec2_properties);
             details::collect_edge_properties(graph, element_edge.float_properties);
             details::collect_edge_properties(graph, element_edge.int_properties);
             details::collect_edge_properties(graph, element_edge.int_list_properties);

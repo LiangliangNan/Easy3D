@@ -52,6 +52,11 @@ namespace easy3d {
                 for (const auto &prop : vec3_properties)
                     str += ("\n\t\t" + prop.name);
             }
+            if (!vec2_properties.empty()) {
+                str += "\n\tvec2_properties";
+                for (const auto &prop : vec2_properties)
+                    str += ("\n\t\t" + prop.name);
+            }
             if (!float_properties.empty()) {
                 str += "\n\tfloat_properties";
                 for (const auto &prop : float_properties)
@@ -160,10 +165,10 @@ namespace easy3d {
                     }
                 }
 
-                // vector properties
-                const std::vector<Vec3Property> &vector_properties = elements[i].vec3_properties;
-                for (std::size_t j = 0; j < vector_properties.size(); ++j) {
-                    const std::string &name = vector_properties[j].name;
+                // vector properties: vec3
+                const std::vector<Vec3Property> &vec3_properties = elements[i].vec3_properties;
+                for (std::size_t j = 0; j < vec3_properties.size(); ++j) {
+                    const std::string &name = vec3_properties[j].name;
 
                     std::string names[3];
                     if (name == "point") {
@@ -185,6 +190,30 @@ namespace easy3d {
                     }
 
                     for (std::size_t k = 0; k < 3; ++k) {
+                        if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
+                            LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                                       << element_name << "'";
+                            ply_close(ply);
+                            return false;
+                        }
+                    }
+                }
+
+                // vector properties: vec2
+                const std::vector<Vec2Property> &vec2_properties = elements[i].vec2_properties;
+                for (std::size_t j = 0; j < vec2_properties.size(); ++j) {
+                    const std::string &name = vec2_properties[j].name;
+
+                    std::string names[2];
+                    if (name == "texcoord") {
+                        names[0] = "texcoord_x";
+                        names[1] = "texcoord_y";
+                    } else {
+                        names[0] = name + "_x";
+                        names[1] = name + "_y";
+                    }
+
+                    for (std::size_t k = 0; k < 2; ++k) {
                         if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
                             LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
                                        << element_name << "'";
@@ -248,6 +277,14 @@ namespace easy3d {
                         ply_write(ply, static_cast<double>(v.x));
                         ply_write(ply, static_cast<double>(v.y));
                         ply_write(ply, static_cast<double>(v.z));
+                    }
+
+                    const std::vector<Vec2Property> &vec2_properties = elements[i].vec2_properties;
+                    for (std::size_t k = 0; k < vec2_properties.size(); ++k) {
+                        const std::vector<vec2> &values = vec2_properties[k];
+                        const vec2 &v = values[j];
+                        ply_write(ply, static_cast<double>(v.x));
+                        ply_write(ply, static_cast<double>(v.y));
                     }
 
                     const std::vector<FloatProperty> &float_properties = elements[i].float_properties;
@@ -502,6 +539,25 @@ namespace easy3d {
                     return false;
             }
 
+            template<typename PropertyT>
+            inline bool extract_vector_property(std::vector<PropertyT> &properties,
+                                                const std::string &x_name, const std::string &y_name,
+                                                Vec2Property &prop) {
+                PropertyT x_coords, y_coords;
+                if (details::extract_named_property(properties, x_coords, x_name) &&
+                    details::extract_named_property(properties, y_coords, y_name) ) {
+                    std::size_t num = x_coords.size();
+                    prop.resize(num);
+                    for (std::size_t j = 0; j < num; ++j)
+                        prop[j] = vec2(
+                                static_cast<float>(x_coords[j]),
+                                static_cast<float>(y_coords[j])
+                        );
+                    return true;
+                } else
+                    return false;
+            }
+
         } // namespace details
 
 
@@ -568,6 +624,11 @@ namespace easy3d {
                 if (details::extract_vector_property(element.float_properties, "x", "y", "z", prop_point) ||
                     details::extract_vector_property(element.float_properties, "X", "Y", "Z", prop_point)) {
                     element.vec3_properties.push_back(prop_point);
+                }
+
+                Vec2Property prop_texcoord("texcoord");
+                if (details::extract_vector_property(element.float_properties, "texcoord_x", "texcoord_y", prop_texcoord)) {
+                    element.vec2_properties.push_back(prop_texcoord);
                 }
 
                 Vec3Property prop_normal("normal");
