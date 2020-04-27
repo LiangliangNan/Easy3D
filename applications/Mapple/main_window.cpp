@@ -65,7 +65,6 @@ using namespace easy3d;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , dialogSanpshot_(nullptr)
     , dockWidgetCommand_(nullptr)
     , ui(new Ui::MainWindow)
 {
@@ -76,11 +75,11 @@ MainWindow::MainWindow(QWidget *parent)
     viewer_ = new PaintCanvas(this);
     setCentralWidget(viewer_);
 
-#if 1
-    const QSize& size = ui->dockWidgetRendering->sizeHint();
-    const int width = static_cast<int>(size.width() * 1.5f);
+    // ----- the width of the rendering panel ------
+    // sizeHint() doesn't suggest a good value
+    // const QSize& size = ui->dockWidgetRendering->sizeHint();
+    const int width = 270; //static_cast<int>(size.width() * 1.5f);
     ui->dockWidgetRendering->setFixedWidth(width);
-#endif
 
     // ----- rendering panel ------
 
@@ -152,7 +151,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
-    delete dialogSanpshot_;
 }
 
 
@@ -413,23 +411,11 @@ void MainWindow::saveSnapshot() {
     if (fileName.isEmpty())
         return;
 
-#if 1
-    if (!dialogSanpshot_) {
-        dialogSanpshot_ = new DialogSnapshot(this, dockWidgetCommand());
-        connect(viewer_, SIGNAL(resized()), dialogSanpshot_, SLOT(computeImageSize()));
-    }
-
-    dialogSanpshot_->setImageFileName(fileName);
-    dialogSanpshot_->show();
-    dialogSanpshot_->raise();
-    dialogSanpshot_->activateWindow();
-#else
-    auto dialog = new DialogSnapshot(this);
-    connect(viewer_, SIGNAL(resized()), dialogSanpshot_, SLOT(computeImageSize()));
+    auto dialog = new DialogSnapshot(this, dockWidgetCommand());
+    dialog->setImageFileName(fileName);
+    connect(viewer_, SIGNAL(resized()), dialog, SLOT(computeImageSize()));
     showDialog(dialog);
-#endif
 }
-
 
 
 void MainWindow::setBackgroundColor() {

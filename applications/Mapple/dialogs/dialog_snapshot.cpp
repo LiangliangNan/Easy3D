@@ -1,6 +1,7 @@
 #include "dialog_snapshot.h"
 
 #include <algorithm>
+#include <QDockWidget>
 
 #include "ui_dialog_snapshot.h"
 #include "main_window.h"
@@ -20,7 +21,8 @@ DialogSnapshot::DialogSnapshot(MainWindow *window, QDockWidget* dockWidgetComman
     computeImageSize();;
 
     connect(ui->doubleSpinBoxImageScale, SIGNAL(valueChanged(double)), this, SLOT(computeImageSize()));
-    connect(this, SIGNAL(accepted()), this, SLOT(saveSnapshot()));
+    connect(ui->pushButtonCancel, SIGNAL(clicked()), this, SLOT(closeDialog()));
+    connect(ui->pushButtonOK, SIGNAL(clicked()), this, SLOT(saveSnapshot()));
 
     bestSize();
  }
@@ -46,7 +48,18 @@ void DialogSnapshot::setImageFileName(const QString& fileName) {
 }
 
 
+void DialogSnapshot::closeDialog() {
+    dockWidgetCommand_->close();
+}
+
+
 void DialogSnapshot::saveSnapshot() {
+    // close the save dialog
+    closeDialog();
+
+    // disable ui to prevent the rendering from being modified.
+    window_->setEnabled(false);
+
     // Hide closed dialog
     QApplication::processEvents();
 
@@ -57,4 +70,7 @@ void DialogSnapshot::saveSnapshot() {
                           ui->checkBoxUseWhiteBackground->isChecked(),
                           ui->checkBoxExpandFrustum->isChecked()
                           );
+
+    // restore the ui
+    window_->setEnabled(true);
 }

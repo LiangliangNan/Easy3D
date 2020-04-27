@@ -20,11 +20,11 @@ public:
 private slots:
     void computeImageSize();
     void saveSnapshot();
+    void closeDialog();
 
 private:
     Ui::DialogSnapshot *ui;
-
-    QString         fileName_;
+    QString fileName_;
 };
 
 #endif // DIALOG_SNAPSHOT_H

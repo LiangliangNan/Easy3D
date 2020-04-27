@@ -15,7 +15,6 @@ namespace easy3d {
 }
 
 class PaintCanvas;
-class DialogSnapshot;
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
@@ -137,7 +136,6 @@ private:
     QAction *actionsRecentFile[MaxRecentFiles],
         *actionSeparator;
 
-    DialogSnapshot*             dialogSanpshot_;
     QDockWidget*                dockWidgetCommand_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
