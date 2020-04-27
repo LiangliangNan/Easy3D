@@ -16,10 +16,11 @@
 
 
 static std::vector<std::string> key_words = {
-        "v:point", "v:connectivity", "v:deleted", "v:lock",
+        "v:point", "v:connectivity", "v:deleted", "v:normal", "f:normal",
         "f:connectivity", "f:deleted", "f:triangle_range",
-        "e:deleted", "h:connectivity", "f:connectivity"
+        "e:deleted", "h:connectivity"
 };
+
 
 
 using namespace easy3d;
