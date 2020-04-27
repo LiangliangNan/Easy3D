@@ -87,6 +87,8 @@ namespace easy3d {
         /// Return the name of the property
         const std::string& name() const { return name_; }
 
+        /// Set the name of the property
+        void set_name(const std::string& n) { name_ = n; }
 
     protected:
 
@@ -218,7 +220,7 @@ namespace easy3d {
 
     public:
 
-        Property(PropertyArray<T>* p=nullptr) : parray_(p) {}
+        Property(PropertyArray<T> *p = nullptr) : parray_(p) {}
 
         void reset()
         {
@@ -270,6 +272,18 @@ namespace easy3d {
         {
             assert(parray_ != nullptr);
             return *parray_;
+        }
+
+        /// Return the name of the property
+        const std::string& name() const {
+            assert(parray_ != nullptr);
+            return parray_->name();
+        }
+
+        /// Set the name of the property
+        void set_name(const std::string& n) {
+            assert(parray_ != nullptr);
+            parray_->set_name(n);
         }
 
     private:
