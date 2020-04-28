@@ -35,7 +35,7 @@
 namespace easy3d {
 
     Texture::Texture()
-            : id_(0), file_name_(""), wrap_mode_(CLAMP_TO_EDGE), filter_mode_(LINEAR) {
+            : id_(0), name_(""), wrap_mode_(CLAMP_TO_EDGE), filter_mode_(LINEAR) {
         sizes_[0] = 0;
         sizes_[1] = 0;
         sizes_[2] = 0;
@@ -63,11 +63,9 @@ namespace easy3d {
         if (!success || data.empty())
             return nullptr;
 
-        Texture* texture = create(data, width, height, comp, wrap_mode, filter_mode);
-        if (texture) {
-            texture->file_name_ = file_name;
-            LOG(INFO) << "a texture generated from an image file, with id: " << texture->id();
-        }
+        Texture *texture = create(data, width, height, comp, wrap_mode, filter_mode);
+        if (texture)
+            texture->name_ = file_name;
 
         return texture;
     }
@@ -79,18 +77,20 @@ namespace easy3d {
         if (rgb_data.empty()) {
             LOG(ERROR) << "empty image data provided";
             return nullptr;
-        }
-        else if (rgb_data.size() != width * height * comp) {
+        } else if (rgb_data.size() != width * height * comp) {
             LOG(ERROR) << "image data does not match the given size";
             return nullptr;
         }
 
         GLuint tex = 0;
-        glGenTextures(1, &tex);         easy3d_debug_log_gl_error;
-        if (tex == 0) {
+        glGenTextures(1, &tex); easy3d_debug_log_gl_error;
+        if (tex)
+            LOG(INFO) << "a texture generated from an image file, with id: " << tex;
+        else {
             LOG(ERROR) << "failed to generate an OpenGL texture";
             return nullptr;
         }
+
 
         GLenum wrap, filter;
         switch (wrap_mode) {
@@ -142,7 +142,8 @@ namespace easy3d {
             }
         }
 
-        glBindTexture(GL_TEXTURE_2D, tex); easy3d_debug_log_gl_error;
+        glBindTexture(GL_TEXTURE_2D, tex);
+        easy3d_debug_log_gl_error;
 
         // To be robust to handle
         // - R, RG or RGB textures which are not 4-bytes floats, or the width is not divisible by 4.
@@ -152,13 +153,19 @@ namespace easy3d {
         glGetIntegerv(GL_UNPACK_ALIGNMENT, &align);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);  easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);  easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);        easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);        easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+        easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+        easy3d_debug_log_gl_error;
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, rgb_data.data()); easy3d_debug_log_gl_error;
-        glBindTexture(GL_TEXTURE_2D, 0);    easy3d_debug_log_gl_error;
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, rgb_data.data());
+        easy3d_debug_log_gl_error;
+        glBindTexture(GL_TEXTURE_2D, 0);
+        easy3d_debug_log_gl_error;
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, align);
 
@@ -187,16 +194,17 @@ namespace easy3d {
     }
 
 
-    void discretize_image(std::vector<unsigned char> &data, int width, int height, int channels, int num_colors) {
-        if (num_colors >= data.size())
+    void discretize_image(std::vector<unsigned char> &data, int width, int height, int channels, int num_stripes) {
+        if (num_stripes >= width)
             return;
-        const int step = width / num_colors;
-        for (int i = 0; i < num_colors; ++i) {
+
+        const int stride = width / num_stripes;
+        for (int i = 0; i < num_stripes; ++i) {
             for (int j = 0; j < height; ++j) {
-                for (int m = 0; m < step; ++m)
+                for (int m = 0; m < stride; ++m)
                     for (int k = 0; k < channels; ++k)
-                        data[j * (width * channels) + i * (step * channels) + m * channels + k] =
-                                data[j * (width * channels) + i * step * channels + k];
+                        data[j * (width * channels) + i * (stride * channels) + m * channels + k] =
+                                data[j * (width * channels) + i * stride * channels + k];
             }
         }
     }

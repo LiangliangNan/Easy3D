@@ -36,26 +36,8 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
             colormaps_.emplace_back(ColorMap(dir + "blue_yellow.png", "blue_yellow"));
         if (file_system::is_file(dir + "black_white.png"))
             colormaps_.emplace_back(ColorMap(dir + "black_white.png", "black_white"));
-
-        if (file_system::is_file(dir + "default-16.png"))
-            colormaps_.emplace_back(ColorMap(dir + "default-16.png", "default-16"));
-        if (file_system::is_file(dir + "default-32.png"))
-            colormaps_.emplace_back(ColorMap(dir + "default-32.png", "default-32"));
-
-        if (file_system::is_file(dir + "french-16.png"))
-            colormaps_.emplace_back(ColorMap(dir + "french-16.png", "french-16"));
-        if (file_system::is_file(dir + "french-32.png"))
-            colormaps_.emplace_back(ColorMap(dir + "french-32.png", "french-32"));
-
-        if (file_system::is_file(dir + "rainbow-16.png"))
-            colormaps_.emplace_back(ColorMap(dir + "rainbow-16.png", "rainbow-16"));
-        if (file_system::is_file(dir + "rainbow-32.png"))
-            colormaps_.emplace_back(ColorMap(dir + "rainbow-32.png", "rainbow-32"));
-
-        if (file_system::is_file(dir + "random.png")) {
-            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-16"));
-            colormaps_.emplace_back(ColorMap(dir + "random.png", "random-32"));
-        }
+        if (file_system::is_file(dir + "random.png"))
+            colormaps_.emplace_back(ColorMap(dir + "random.png", "random"));
     }
 }
 
@@ -71,20 +53,18 @@ WidgetDrawable::~WidgetDrawable() {
 }
 
 
-Texture *WidgetDrawable::colormapTexture(int idx) const {
-    if (idx < colormaps_.size()) {
-        if (colormaps_[idx].name.find("random") == std::string::npos)
-            return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
-        else {
-            int num_colors = 64;
-            if (colormaps_[idx].name.find("16") != std::string::npos)
-                num_colors = 16;
-            else if (colormaps_[idx].name.find("32") != std::string::npos)
-                num_colors = 32;
-            return TextureManager::request(num_colors, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
-        }
-    } else
+Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes) const {
+    if (idx >= colormaps_.size())
         return nullptr;
+
+    if (colormaps_[idx].name.find("random") != std::string::npos)
+        return TextureManager::request(num_stripes, 256/num_stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+    else {
+        if (discrete)
+            return TextureManager::request(colormaps_[idx].file, num_stripes,Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+        else
+            return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
+    }
 }
 
 
@@ -114,10 +94,29 @@ void WidgetDrawable::setLighting(const QString &text) {
 
 void WidgetDrawable::setScalarFieldStyle(int idx) {
     auto d = drawable();
-    auto tex = colormapTexture(idx);
+    states_[d].scalar_style = idx;
+    auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
     d->set_texture(tex);
     viewer_->update();
-    states_[d].scalar_style = idx;
+}
+
+
+void WidgetDrawable::setScalarFieldDiscreteColors(bool b) {
+    auto d = drawable();
+    states_[d].discrete_color = b;
+    auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
+    d->set_texture(tex);
+    viewer_->update();
+    disableUnavailableOptions();
+}
+
+
+void WidgetDrawable::setScalarFieldNumOfStripes(int num) {
+    auto d = drawable();
+    states_[d].num_stripes = num;
+    auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
+    d->set_texture(tex);
+    viewer_->update();
 }
 
 
@@ -251,7 +250,7 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     );
     
     if (state.coloring_method() == State::TEXTURED || state.coloring_method() == State::SCALAR_FIELD) {
-        state.set_texture(colormapTexture(states_[d].scalar_style));
+        state.set_texture(colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes));
         if (state.coloring_method() == State::SCALAR_FIELD) {
             state.set_texture_repeat(1.0f);
             state.set_texture_fractional_repeat(0.0f);

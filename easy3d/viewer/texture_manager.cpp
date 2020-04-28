@@ -23,14 +23,18 @@
  */
 
 #include <easy3d/viewer/texture_manager.h>
+#include <easy3d/fileio/image_io.h>
 #include <easy3d/core/random.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/string.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
 
     std::unordered_map<std::string, Texture *>    TextureManager::textures_;
     std::unordered_map<std::string, bool>        TextureManager::attempt_load_texture_; // avoid multiple attempt
+
 
     Texture* TextureManager::request(const std::string &image_file, Texture::WrapMode wrap, Texture::FilterMode filter) {
         std::unordered_map<std::string, Texture *>::iterator pos = textures_.find(image_file);
@@ -57,38 +61,83 @@ namespace easy3d {
     }
 
 
-    Texture* TextureManager::request(int num_colors, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        const int strip_width = 8;
-        std::vector<unsigned char> data(num_colors * strip_width * 3);
-        for(int x=0; x<num_colors; ++x) {
-            const vec3& c = random_color(false);
-            for (int j = 0; j<strip_width; ++j) {
-                const int base = (x * strip_width + j) * 3;
-                data[base] = c.r * 255;
-                data[base + 1] = c.g * 255;
-                data[base + 2] = c.b * 255;
-            }
-        }
-
-        Texture *texture = Texture::create(data, num_colors * strip_width, 1, 3, wrap, filter);
-        if (!texture) {
-            LOG(ERROR) << "failed creating texture from image data";
+    Texture* TextureManager::request(const std::string &file_name, int num_stripes, Texture::WrapMode wrap, Texture::FilterMode filter) {
+        if (!file_system::is_file(file_name)) {
+            LOG(ERROR) << "file does not exist: " << file_name;
             return nullptr;
         }
 
-        // though random colored texture, just give an name
-        texture->file_name_ = "random-" + std::to_string(num_colors);
-        textures_[texture->file_name_] = texture;
+        const std::string texture_name = file_name + "|" + std::to_string(num_stripes);
+        std::unordered_map<std::string, Texture *>::iterator pos = textures_.find(texture_name);
+        if (pos != textures_.end()) // program already exists
+            return pos->second;
+        else {
+            std::unordered_map<std::string, bool>::iterator it = attempt_load_texture_.find(texture_name);
+            if (it == attempt_load_texture_.end())
+                attempt_load_texture_[texture_name] = true;
+            else if (!attempt_load_texture_[texture_name])
+                return nullptr;
 
-        LOG(INFO) << "a random-colored texture generated. id: " << texture->id() << ", number of colors: " << num_colors;
-        return texture;
+            int width = 0, height = 0, comp = 0;
+            std::vector<unsigned char> data;
+            // flip the image vertically, so the first pixel in the output array is the bottom left
+            bool success = ImageIO::load(file_name, data, width, height, comp, 0, true);
+            if (!success || data.empty())
+                return nullptr;
+
+            discretize_image(data, width, height, comp, num_stripes);
+
+            Texture *texture = Texture::create(data, width, height, comp, wrap, filter);
+            if (!texture) {
+                LOG_FIRST_N(ERROR, 1) << "failed creating texture from image file: " << file_name
+                                      << " (this is the first record)";
+                attempt_load_texture_[file_name] = false;
+                return nullptr;
+            }
+
+            texture->name_ = texture_name;
+            textures_[texture_name] = texture;
+            return texture;
+        }
+    }
+
+
+    Texture* TextureManager::request(int num_stripes, int stride, Texture::WrapMode wrap, Texture::FilterMode filter) {
+        const std::string texture_name = "random|" + std::to_string(num_stripes) + "|" + std::to_string(stride);
+        std::unordered_map<std::string, Texture *>::iterator pos = textures_.find(texture_name);
+        if (pos != textures_.end()) // program already exists
+            return pos->second;
+        else {
+            std::vector<unsigned char> data(num_stripes * stride * 3);
+            for (int x = 0; x < num_stripes; ++x) {
+                const vec3 &c = random_color(false);
+                for (int j = 0; j < stride; ++j) {
+                    const int base = (x * stride + j) * 3;
+                    data[base] = c.r * 255;
+                    data[base + 1] = c.g * 255;
+                    data[base + 2] = c.b * 255;
+                }
+            }
+
+            Texture *texture = Texture::create(data, num_stripes * stride, 1, 3, wrap, filter);
+            if (!texture) {
+                LOG(ERROR) << "failed creating texture from image data";
+                return nullptr;
+            }
+
+            // though random colored texture, just give an name
+            texture->name_ = texture_name;
+            textures_[texture->name_] = texture;
+
+            return texture;
+        }
     }
 
     void TextureManager::release(const Texture* texture) {
         for (auto p : textures_) {
             if (p.second == texture) {
-                textures_.erase(texture->file_name());
-                attempt_load_texture_.erase(texture->file_name());
+                textures_.erase(texture->name());
+                attempt_load_texture_.erase(texture->name());
                 delete texture;
                 return;
             }

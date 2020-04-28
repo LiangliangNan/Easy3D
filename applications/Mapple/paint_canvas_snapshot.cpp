@@ -1,4 +1,4 @@
-//#define USE_QT_FBO
+#define USE_QT_FBO
 #define SHOW_PROGRESS
 
 #ifdef  USE_QT_FBO

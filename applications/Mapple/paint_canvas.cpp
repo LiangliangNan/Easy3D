@@ -23,7 +23,6 @@
 #include <easy3d/viewer/read_pixel.h>
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/viewer/texture_manager.h>
@@ -975,9 +974,12 @@ void PaintCanvas::preDraw() {
 void PaintCanvas::postDraw() {
     easy3d_debug_log_gl_error;
 
-    {   // draw Easy3D logo and frame rate
+    // draw the Easy3D logo and GPU time
+    if (texter_ && texter_->num_fonts() >=2)
+    {
+        const float font_size = 15.0f;
         const float offset = 20.0f * dpi_scaling();
-        texter_->draw("Easy3D", offset, offset, 15, 0);
+        texter_->draw("Easy3D", offset, offset, font_size, 0);
 
         // FPS computation
         static unsigned int fpsCounter = 0;

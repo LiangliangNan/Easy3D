@@ -35,6 +35,8 @@ public slots:
     void setDistinctBackColor(bool);
 
     void setScalarFieldStyle(int);
+    void setScalarFieldDiscreteColors(bool);
+    void setScalarFieldNumOfStripes(int);
     void setScalarFieldClamp(bool);
     void setScalarFieldClampLower(double);
     void setScalarFieldClampUpper(double);
@@ -49,7 +51,7 @@ public slots:
     void setHighlightMax(int);
 
 protected:
-    easy3d::Texture* colormapTexture(int) const;
+    easy3d::Texture* colormapTexture(int, bool, int) const;
 
     // the current drawable who rendering can be manipulated
     virtual easy3d::Drawable* drawable() = 0;
@@ -67,8 +69,10 @@ protected:
 
     // the extended rendering state
     struct StateExt {
-        StateExt() : scalar_style(0), vector_field("disabled"), vector_field_scale(1.0) {}
+        StateExt() : scalar_style(0), discrete_color(false), num_stripes(32), vector_field("disabled"), vector_field_scale(1.0) {}
         int scalar_style;
+        bool discrete_color;
+        int num_stripes;
         QString vector_field;
         double vector_field_scale;
     };

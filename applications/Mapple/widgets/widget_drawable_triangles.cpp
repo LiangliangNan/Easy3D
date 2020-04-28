@@ -75,6 +75,8 @@ void WidgetTrianglesDrawable::connectAll() {
 
     // scalar field
     connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    connect(ui->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
+    connect(ui->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
     connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
     connect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
     connect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
@@ -123,6 +125,8 @@ void WidgetTrianglesDrawable::disconnectAll() {
 
     // scalar field
     disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    disconnect(ui->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
+    disconnect(ui->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
     disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
     disconnect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
     disconnect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
@@ -206,7 +210,7 @@ void WidgetTrianglesDrawable::updatePanel() {
         // texture
         auto tex = d->texture();
         if (tex) {
-            const std::string &tex_name = file_system::simple_name(tex->file_name());
+            const std::string &tex_name = file_system::simple_name(tex->name());
             ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
         }
         else
@@ -381,7 +385,7 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
 
     auto tex = d->texture();
     if (tex) {
-        const std::string &tex_name = file_system::simple_name(tex->file_name());
+        const std::string &tex_name = file_system::simple_name(tex->name());
         ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
     }
 
@@ -574,6 +578,9 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
+    ui->checkBoxScalarFieldDiscrete->setEnabled(can_show_scalar);
+    bool can_change_num_colors = can_show_scalar && ui->checkBoxScalarFieldDiscrete->isChecked();
+    ui->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_colors);
     bool can_edit_clamp = can_show_scalar && d->clamp_range();
     ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
     ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
