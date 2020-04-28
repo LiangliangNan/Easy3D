@@ -579,8 +579,15 @@ void WidgetTrianglesDrawable::disableUnavailableOptions() {
     ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
     ui->checkBoxScalarFieldDiscrete->setEnabled(can_show_scalar);
-    bool can_change_num_colors = can_show_scalar && ui->checkBoxScalarFieldDiscrete->isChecked();
-    ui->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_colors);
+    if (ui->comboBoxScalarFieldStyle->currentText() == "random") {
+        ui->labelScalarFieldStripes->setEnabled(false);
+        ui->spinBoxScalarFieldNumStrips->setEnabled(true);
+    }
+    else {
+        bool can_change_num_strips = can_show_scalar && ui->checkBoxScalarFieldDiscrete->isChecked();
+        ui->labelScalarFieldStripes->setEnabled(can_change_num_strips);
+        ui->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_strips);
+    }
     bool can_edit_clamp = can_show_scalar && d->clamp_range();
     ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
     ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());

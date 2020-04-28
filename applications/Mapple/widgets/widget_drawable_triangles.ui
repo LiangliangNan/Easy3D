@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>347</width>
-    <height>558</height>
+    <width>346</width>
+    <height>568</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -30,7 +30,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QGridLayout" name="gridLayout_2">
+    <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="labelDrawableName">
        <property name="maximumSize">
@@ -44,7 +44,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1" colspan="3">
+     <item row="0" column="1">
       <widget class="QComboBox" name="comboBoxDrawables">
        <property name="toolTip">
         <string>Select the drawable to be visualized</string>
@@ -69,7 +69,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1" colspan="3">
+     <item row="1" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutVisible">
        <property name="spacing">
         <number>-1</number>
@@ -109,7 +109,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1" colspan="3">
+     <item row="2" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutPhone">
        <property name="spacing">
         <number>-1</number>
@@ -158,7 +158,7 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1" colspan="3">
+     <item row="3" column="1">
       <widget class="QComboBox" name="comboBoxLightingOptions">
        <property name="toolTip">
         <string>Select how lighting is implemented</string>
@@ -187,7 +187,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="1" colspan="3">
+     <item row="4" column="1">
       <widget class="QComboBox" name="comboBoxColorScheme">
        <property name="toolTip">
         <string>Select how color is assigned to each face</string>
@@ -228,7 +228,7 @@
        </item>
       </layout>
      </item>
-     <item row="5" column="1" colspan="3">
+     <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutDefaultColor">
        <property name="spacing">
         <number>0</number>
@@ -329,7 +329,7 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
+           <width>15</width>
            <height>0</height>
           </size>
          </property>
@@ -405,7 +405,7 @@
        </item>
       </layout>
      </item>
-     <item row="6" column="1" colspan="3">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutTexture">
        <property name="spacing">
         <number>0</number>
@@ -504,7 +504,7 @@
        </item>
       </layout>
      </item>
-     <item row="7" column="1" colspan="3">
+     <item row="7" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutTextureRepeat">
        <item>
         <widget class="QSpinBox" name="spinBoxTextureRepeat">
@@ -580,7 +580,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="1" colspan="3">
+     <item row="8" column="1">
       <widget class="QComboBox" name="comboBoxScalarFieldStyle">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -626,15 +626,15 @@
        </item>
       </layout>
      </item>
-     <item row="9" column="1" colspan="2">
-      <widget class="QCheckBox" name="checkBoxScalarFieldDiscrete">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="3">
+     <item row="9" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="checkBoxScalarFieldDiscrete">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
        <item>
         <spacer name="horizontalSpacer">
          <property name="orientation">
@@ -645,14 +645,14 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>30</width>
+           <width>10</width>
            <height>20</height>
           </size>
          </property>
         </spacer>
        </item>
        <item>
-        <widget class="QLabel" name="labelScalarFieldDiscrete_2">
+        <widget class="QLabel" name="labelScalarFieldStripes">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
@@ -685,7 +685,7 @@
           <set>Qt::AlignCenter</set>
          </property>
          <property name="minimum">
-          <number>2</number>
+          <number>4</number>
          </property>
          <property name="maximum">
           <number>128</number>
@@ -730,9 +730,9 @@
        </item>
       </layout>
      </item>
-     <item row="10" column="1" colspan="3">
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
+     <item row="10" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
         <widget class="QCheckBox" name="checkBoxScalarFieldClamp">
          <property name="toolTip">
           <string>Check to clamp the specified percent of lower and upper values.</string>
@@ -745,7 +745,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
+       <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldClampLower">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -764,7 +764,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
+       <item>
         <widget class="QDoubleSpinBox" name="doubleSpinBoxScalarFieldClampUpper">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -804,7 +804,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1" colspan="3">
+     <item row="11" column="1">
       <widget class="QComboBox" name="comboBoxVectorField">
        <property name="toolTip">
         <string>Select the drawable to be visualized</string>
@@ -840,7 +840,7 @@
        </item>
       </layout>
      </item>
-     <item row="12" column="1" colspan="3">
+     <item row="12" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutVectorFieldLength">
        <property name="spacing">
         <number>0</number>
@@ -890,8 +890,8 @@ The scale is relative to the average edge lenght of the model.</string>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>13</width>
+           <height>13</height>
           </size>
          </property>
         </spacer>
@@ -906,14 +906,14 @@ The scale is relative to the average edge lenght of the model.</string>
       </widget>
      </item>
      <item row="13" column="1">
-      <widget class="QCheckBox" name="checkBoxHighlight">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="2" colspan="2">
-      <layout class="QHBoxLayout" name="horizontalLayoutHighlight">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QCheckBox" name="checkBoxHighlight">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QSpinBox" name="spinBoxHighlightMin">
          <property name="sizePolicy">
@@ -985,7 +985,7 @@ The scale is relative to the average edge lenght of the model.</string>
        </property>
       </widget>
      </item>
-     <item row="14" column="1" colspan="3">
+     <item row="14" column="1">
       <widget class="QSlider" name="horizontalSliderOpacity">
        <property name="toolTip">
         <string>The opacity of the surface</string>
