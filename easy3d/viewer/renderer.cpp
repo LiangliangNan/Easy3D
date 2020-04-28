@@ -43,7 +43,82 @@ namespace easy3d {
     namespace renderer {
 
 
-        namespace details {
+        void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
+            auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
+            if (primitive_index) { // model has segmentation information
+                drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
+                return;
+            }
+
+            auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
+            if (texcoord) {
+                drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
+                return;
+            }
+
+            auto colors = model->get_vertex_property<vec3>("v:color");
+            if (colors) {
+                drawable->set_property_coloring(State::VERTEX, "v:color");
+                return;
+            }
+
+            drawable->set_uniform_coloring(setting::point_cloud_points_color);
+        }
+
+
+        // -----------------------------------------------------------------------------------------------------------
+        void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable) {
+            assert(model);
+            assert(drawable);
+
+            //  Priorities:
+            //      1. segmentation
+            //      2. per-halfedge/vertex texture coordinates
+            //      3. per-vertex texture coordinates
+            //      4: per-face color
+            //      5: per-vertex color
+            //      6: uniform color
+            auto segmentation = model->get_face_property<vec2>("f:chart");
+            if (segmentation) {
+                drawable->set_scalar_coloring(State::FACE, "f:chart");
+//                auto texture = TextureManager::request()
+                return;
+            }
+
+            auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
+            if (halfedge_texcoords) {
+                drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord");
+                return;
+            }
+
+            auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
+            if (vertex_texcoords) {
+                drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
+                return;
+            }
+
+            auto face_colors = model->get_face_property<vec3>("f:color");
+            if (face_colors) {
+                drawable->set_property_coloring(State::FACE, "f:color");
+                return;
+            }
+
+            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
+            if (vertex_colors) {
+                drawable->set_property_coloring(State::VERTEX, "v:color");
+                return;
+            }
+
+            drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
+        }
+
+
+
+
+namespace details {
 
             // clamps scalar field values by the percentages specified by dummy_lower and dummy_upper.
             // min_value and max_value return the expected value range.
@@ -1805,15 +1880,15 @@ namespace easy3d {
                 PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 auto vertices = cloud->add_points_drawable("vertices");
                 vertices->set_point_size(setting::point_cloud_point_size);
-                vertices->set_uniform_coloring(setting::point_cloud_points_color);
                 vertices->set_visible(true);
+                set_default_rendering_state(cloud, vertices);
             } else if (dynamic_cast<SurfaceMesh *>(model)) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
 
                 // faces
                 auto faces = mesh->add_triangles_drawable("faces");
-                faces->set_uniform_coloring(setting::surface_mesh_faces_color);
                 faces->set_visible(true);
+                set_default_rendering_state(mesh, faces);
 
                 // edges
                 auto edges = mesh->add_lines_drawable("edges");
