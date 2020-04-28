@@ -86,16 +86,15 @@ namespace easy3d {
         private:
             template<class T>
             inline void hash_combine(std::size_t &seed, T const &v) const {
-                std::hash<T> hasher;
+                static std::hash<T> hasher;
                 seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
 
             inline std::size_t hash(const Tessellator::Vertex& v) const {
                 std::size_t seed = 0;
-                std::hash<double> hasher;
-                for (auto f : v) {
+                static std::hash<double> hasher;
+                for (auto f : v)
                     hash_combine(seed, hasher(f));
-                }
                 return seed;
             }
 
