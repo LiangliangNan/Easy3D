@@ -81,7 +81,7 @@ namespace easy3d {
             //      4: per-face color
             //      5: per-vertex color
             //      6: uniform color
-            auto segmentation = model->get_face_property<vec2>("f:chart");
+            auto segmentation = model->get_face_property<int>("f:chart");
             if (segmentation) {
                 drawable->set_scalar_coloring(State::FACE, "f:chart");
 //                auto texture = TextureManager::request()
