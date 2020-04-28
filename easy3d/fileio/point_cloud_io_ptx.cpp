@@ -98,7 +98,7 @@ namespace easy3d {
 
 				num = width * height;
                 const std::string simple_name = file_system::simple_name(file_name_) + "-#" + std::to_string(cloud_index_);
-                LOG(INFO) << "Loading sub scan " << simple_name  << " with " << num << " points...";
+                LOG(INFO) << "loading sub scan " << simple_name  << " with " << num << " points...";
 
 				//read sensor transformation matrix
 				vec3 v3[4];
