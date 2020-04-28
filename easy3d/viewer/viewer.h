@@ -39,9 +39,8 @@ namespace easy3d {
 	class Camera;
 	class Model;
     class Drawable;
-    class OpenGLTimer;
-	class LinesDrawable;
     class TrianglesDrawable;
+    class OpenGLTimer;
     class OpenGLText;
 
     /**
@@ -432,7 +431,7 @@ namespace easy3d {
 
         OpenGLTimer* gpu_timer_;
         double gpu_time_;
-        OpenGLText* text_renderer_;
+        OpenGLText* texter_;
 
 		// mouse
 		int		button_;		// for mouse drag

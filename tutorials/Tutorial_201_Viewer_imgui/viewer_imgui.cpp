@@ -295,17 +295,17 @@ namespace easy3d {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
         // TODO: a workaround to draw the Easy3D logo at a different location (due to the menu bar)
-        auto texter = text_renderer_;
-        text_renderer_ = nullptr;
+        auto texter = texter_;
+        texter_ = nullptr;
         Viewer::post_draw();
-        text_renderer_ = texter;
+        texter_ = texter;
 
         // draw Easy3D logo
-        if (text_renderer_) {
+        if (texter_) {
             const float font_size = 15.0f;
-            const float offset_x = (width() * 0.5 -  text_renderer_->string_width("Easy3D", font_size) * 0.5) * dpi_scaling();
+            const float offset_x = (width() * 0.5 - texter_->string_width("Easy3D", font_size) * 0.5) * dpi_scaling();
             const float offset_y = 50.0f * dpi_scaling();
-            text_renderer_->draw("Easy3D", offset_x, offset_y, font_size, 0);
+            texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
         }
 	}
 

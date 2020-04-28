@@ -116,11 +116,16 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 void PointSelection::post_draw() {
     Viewer::draw_corner_axes();
 
-    // draw Easy3D logo
-    if (text_renderer_) {
+    // draw the Easy3D logo and GPU time
+    if (texter_ && texter_->num_fonts() >=2) {
         const float font_size = 15.0f;
         const float offset = 20.0f * dpi_scaling();
-        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+        texter_->draw("Easy3D", offset, offset, font_size, 0);
+
+        // the rendering time
+        char buffer[48];
+        sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
+        texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
     }
 
     if (polygon_.size() >= 3) {

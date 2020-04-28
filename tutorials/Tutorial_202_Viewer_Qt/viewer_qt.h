@@ -36,7 +36,6 @@ namespace easy3d {
     class Camera;
     class Model;
     class TrianglesDrawable;
-	class LinesDrawable;
     class OpenGLTimer;
     class OpenGLText;
 }
@@ -189,7 +188,9 @@ protected:
     double  dpi_scaling_;
     int     samples_;
 
-    easy3d::OpenGLText* text_renderer_;
+    easy3d::OpenGLTimer* gpu_timer_;
+    double gpu_time_;
+    easy3d::OpenGLText* texter_;
 
     easy3d::Camera*	camera_;
     easy3d::vec4	background_color_;

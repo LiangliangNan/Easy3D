@@ -27,7 +27,7 @@ add_subdirectory(Tutorial_204_CameraInterpolation)
 add_subdirectory(Tutorial_205_RealCamera)
 
 # drawable objects and basic rendering
-add_subdirectory(Tutorial_301_Primitives)
+add_subdirectory(Tutorial_301_Drawables)
 add_subdirectory(Tutorial_302_Imposters)
 add_subdirectory(Tutorial_303_ScalarField)
 add_subdirectory(Tutorial_304_VectorField)

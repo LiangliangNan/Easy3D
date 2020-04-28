@@ -49,6 +49,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/resources.h>
@@ -62,8 +63,8 @@ using namespace easy3d;
 ViewerQt::ViewerQt(QWidget* parent /* = nullptr*/)
 	: QOpenGLWidget(parent)
 	, func_(nullptr)
-	, text_renderer_(nullptr)
-	, camera_(nullptr)
+	, gpu_timer_(nullptr)
+	, texter_(nullptr)
 	, pressed_button_(Qt::NoButton)
 	, mouse_pressed_pos_(0, 0)
 	, mouse_previous_pos_(0, 0)
@@ -98,7 +99,8 @@ ViewerQt::~ViewerQt() {
 void ViewerQt::cleanup() {
     delete camera_;
     delete drawable_axes_;
-    delete text_renderer_;
+    delete gpu_timer_;
+    delete texter_;
 
 	for (auto m : models_)
 		delete m;
@@ -131,7 +133,6 @@ void ViewerQt::initializeGL()
 	background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	func_->glEnable(GL_DEPTH_TEST);
-
 	func_->glClearDepthf(1.0f);
 	func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
@@ -162,9 +163,12 @@ void ViewerQt::initializeGL()
 	//func_->glgetintegerv(gl_samples, &samples_received);
 
     // create OpenGLText renderer and load default fonts
-    text_renderer_ = new OpenGLText(dpi_scaling());
-    text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-    text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+    texter_ = new OpenGLText(dpi_scaling());
+    texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+    texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+
+    // create a GPU timer
+    gpu_timer_ = new OpenGLTimer(false);
 
     // Calls user defined method.
     init();
@@ -809,7 +813,10 @@ void ViewerQt::paintGL() {
 
 	preDraw();
 
-	draw();
+    gpu_timer_->start();
+    draw();
+    gpu_timer_->stop();
+    gpu_time_ = gpu_timer_->time();
 
 	// Add visual hints: axis, camera, grid...
 	postDraw();
@@ -900,11 +907,16 @@ void ViewerQt::preDraw() {
 
 
 void ViewerQt::postDraw() {
-    // draw Easy3D logo
-    if (text_renderer_) {
+    // draw the Easy3D logo and GPU time
+    if (texter_ && texter_->num_fonts() >=2) {
         const float font_size = 15.0f;
         const float offset = 20.0f * dpi_scaling();
-        text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+        texter_->draw("Easy3D", offset, offset, font_size, 0);
+
+        // the rendering time
+        char buffer[48];
+        sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
+        texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
     }
 
     if (show_pivot_point_) {

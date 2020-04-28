@@ -70,7 +70,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/timer.h>
-#include <easy3d/util/stop_watch.h>
 
 
 // To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
@@ -95,7 +94,7 @@ namespace easy3d {
             int stencil_bits /* = 8 */
     )
             : title_(title), camera_(nullptr), samples_(0), full_screen_(full_screen), process_events_(true),
-              gpu_timer_(nullptr), text_renderer_(nullptr), button_(-1), modifiers_(-1), drag_active_(false),
+              gpu_timer_(nullptr), texter_(nullptr), button_(-1), modifiers_(-1), drag_active_(false),
               mouse_x_(0), mouse_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), show_pivot_point_(false),
               drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1) {
         // Avoid locale-related number parsing issues.
@@ -482,7 +481,7 @@ namespace easy3d {
         delete camera_;
         delete drawable_axes_;
         delete gpu_timer_;
-        delete text_renderer_;
+        delete texter_;
 
         clear_scene();
 
@@ -998,8 +997,8 @@ namespace easy3d {
 
         try {
             // Rendering loop
-            const int num_extra_frames = 5;
-            const double animation_max_fps = 30;
+            static const int num_extra_frames = 5;
+            static const double animation_max_fps = 30;
             int frame_counter = 0;
 
             while (!glfwWindowShouldClose(window_)) {
@@ -1053,9 +1052,9 @@ namespace easy3d {
         glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
         // create OpenGLText renderer and load default fonts
-        text_renderer_ = new OpenGLText(dpi_scaling());
-        text_renderer_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-        text_renderer_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+        texter_ = new OpenGLText(dpi_scaling());
+        texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
+        texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
         // print usage
         std::cout << usage() << std::endl;
@@ -1479,11 +1478,16 @@ namespace easy3d {
 
 
     void Viewer::post_draw() {
-        // draw Easy3D logo
-        if (text_renderer_) {
+        // draw the Easy3D logo and GPU time
+        if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             const float offset = 20.0f * dpi_scaling();
-            text_renderer_->draw("Easy3D", offset, offset, font_size, 0);
+            texter_->draw("Easy3D", offset, offset, font_size, 0);
+
+            // the rendering time
+            char buffer[48];
+            sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
+            texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
         }
 
         // shown only when it is not animating
