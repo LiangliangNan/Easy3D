@@ -48,7 +48,7 @@
 * GL_EXT_framebuffer_multisample extension is required to create a framebuffer with more than
 * one sample per pixel.
 *
-* NOTE: A valid OpenGL context must present when creating a FramebufferObject, otherwise
+* NOTE: A valid OpenGL context must be present when creating a FramebufferObject, otherwise
 *		initialization will fail.
 *
 *	Version:	 1.0
