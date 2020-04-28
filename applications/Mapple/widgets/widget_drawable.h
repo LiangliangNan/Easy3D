@@ -69,7 +69,7 @@ protected:
 
     // the extended rendering state
     struct StateExt {
-        StateExt() : scalar_style(0), discrete_color(false), num_stripes(32), vector_field("disabled"), vector_field_scale(1.0) {}
+        StateExt() : scalar_style(0), discrete_color(false), num_stripes(16), vector_field("disabled"), vector_field_scale(1.0) {}
         int scalar_style;
         bool discrete_color;
         int num_stripes;

@@ -921,26 +921,42 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<SurfaceMesh*>(model)) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 
-        auto vscalar = mesh->vertex_property<float>("v:height");
-        for (auto v : mesh->vertices())
-            vscalar[v] = mesh->position(v).z;
-
-        auto escalar = mesh->edge_property<float>("e:height");
-        for (auto e : mesh->edges()) {
-            auto s = mesh->vertex(e, 0);
-            auto t = mesh->vertex(e, 1);
-            escalar[e] = 0.5 * (mesh->position(s).z + mesh->position(t).z);
+        auto v_height_x = mesh->vertex_property<float>("v:height_x");
+        auto v_height_y = mesh->vertex_property<float>("v:height_y");
+        auto v_height_z = mesh->vertex_property<float>("v:height_z");
+        for (auto v : mesh->vertices()) {
+            const auto& p = mesh->position(v);
+            v_height_x[v] = p.x;
+            v_height_y[v] = p.y;
+            v_height_z[v] = p.z;
         }
 
-        auto fscalar = mesh->face_property<float>("f:height");
+        auto e_height_x = mesh->edge_property<float>("e:height_x");
+        auto e_height_y = mesh->edge_property<float>("e:height_y");
+        auto e_height_z = mesh->edge_property<float>("e:height_z");
+        for (auto e : mesh->edges()) {
+            const auto& s = mesh->vertex(e, 0);
+            const auto& t = mesh->vertex(e, 1);
+            const auto& c = 0.5 * (mesh->position(s) + mesh->position(t));
+            e_height_x[e] = c.x;
+            e_height_y[e] = c.y;
+            e_height_z[e] = c.z;
+        }
+
+        auto f_height_x = mesh->face_property<float>("f:height_x");
+        auto f_height_y = mesh->face_property<float>("f:height_y");
+        auto f_height_z = mesh->face_property<float>("f:height_z");
         for (auto f : mesh->faces()) {
-            vec3 pos(0,0,0);
+            vec3 c(0,0,0);
             float count = 0.0f;
             for (auto v : mesh->vertices(f)) {
-                pos += mesh->position(v);
+                c += mesh->position(v);
                 ++count;
             }
-            fscalar[f] = pos.z / count;
+            c /= count;
+            f_height_x[f] = c.x;
+            f_height_y[f] = c.y;
+            f_height_z[f] = c.z;
         }
 
         // add a vector field to the faces
@@ -964,43 +980,49 @@ void MainWindow::computeHeightField() {
             }
             enormals[e].normalize();
         }
-
-        mesh->update();
     }
 
     else if (dynamic_cast<PointCloud*>(model)) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(model);
 
-        auto vscalar = cloud->vertex_property<float>("v:height");
-        for (auto v : cloud->vertices())
-            vscalar[v] = cloud->position(v).z;
-
-        cloud->update();
+        auto v_height_x = cloud->vertex_property<float>("v:height_x");
+        auto v_height_y = cloud->vertex_property<float>("v:height_y");
+        auto v_height_z = cloud->vertex_property<float>("v:height_z");
+        for (auto v : cloud->vertices()) {
+            const auto& p = cloud->position(v);
+            v_height_x[v] = p.x;
+            v_height_y[v] = p.y;
+            v_height_z[v] = p.z;
+        }
     }
 
     else if (dynamic_cast<Graph*>(model)) {
         Graph* graph = dynamic_cast<Graph*>(model);
 
-        auto vscalar = graph->vertex_property<float>("v:height");
-        for (auto v : graph->vertices())
-            vscalar[v] = graph->position(v).z;
-
-        auto escalar = graph->edge_property<float>("e:height");
-        for (auto e : graph->edges()) {
-            auto s = graph->vertex(e, 0);
-            auto t = graph->vertex(e, 1);
-            escalar[e] = 0.5 * (graph->position(s).z + graph->position(t).z);
+        auto v_height_x = graph->vertex_property<float>("v:height_x");
+        auto v_height_y = graph->vertex_property<float>("v:height_y");
+        auto v_height_z = graph->vertex_property<float>("v:height_z");
+        for (auto v : graph->vertices()) {
+            const auto& p = graph->position(v);
+            v_height_x[v] = p.x;
+            v_height_y[v] = p.y;
+            v_height_z[v] = p.z;
         }
 
-        // add a vector field to the edges
-        auto enormals = graph->edge_property<vec3>("e:normal");
+        auto e_height_x = graph->edge_property<float>("e:height_x");
+        auto e_height_y = graph->edge_property<float>("e:height_y");
+        auto e_height_z = graph->edge_property<float>("e:height_z");
         for (auto e : graph->edges()) {
-            enormals[e] = vec3(1,1,1);
+            const auto& s = graph->vertex(e, 0);
+            const auto& t = graph->vertex(e, 1);
+            const auto& c = 0.5 * (graph->position(s) + graph->position(t));
+            e_height_x[e] = c.x;
+            e_height_y[e] = c.y;
+            e_height_z[e] = c.z;
         }
-
-        graph->update();
     }
 
+    model->update();
     viewer()->update();
     updateRenderingPanel();
 }
