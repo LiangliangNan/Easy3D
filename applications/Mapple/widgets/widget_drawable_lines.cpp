@@ -537,17 +537,21 @@ void WidgetLinesDrawable::disableUnavailableOptions() {
     bool can_show_scalar = visible && ui->comboBoxColorScheme->currentText().contains(scalar_prefix_);
     ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
     ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
-    ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
-    if (ui->comboBoxScalarFieldStyle->currentText() == "random") {
+    if (ui->comboBoxScalarFieldStyle->currentText().contains("random")) {
+        ui->labelScalarFieldDiscrete->setEnabled(false);
+        ui->checkBoxScalarFieldDiscrete->setEnabled(false);
         ui->labelScalarFieldStripes->setEnabled(false);
         ui->spinBoxScalarFieldNumStrips->setEnabled(true);
     }
     else {
+        ui->labelScalarFieldDiscrete->setEnabled(can_show_scalar);
+        ui->checkBoxScalarFieldDiscrete->setEnabled(can_show_scalar);
         bool can_change_num_strips = can_show_scalar && ui->checkBoxScalarFieldDiscrete->isChecked();
         ui->labelScalarFieldStripes->setEnabled(can_change_num_strips);
         ui->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_strips);
     }
+    ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
+    ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
     bool can_edit_clamp = can_show_scalar && d->clamp_range();
     ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
     ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());

@@ -98,6 +98,7 @@ void WidgetDrawable::setScalarFieldStyle(int idx) {
     auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
     d->set_texture(tex);
     viewer_->update();
+    disableUnavailableOptions();
 }
 
 
