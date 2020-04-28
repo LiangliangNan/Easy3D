@@ -230,9 +230,6 @@
      </item>
      <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayoutDefaultColor">
-       <property name="spacing">
-        <number>0</number>
-       </property>
        <item>
         <widget class="QToolButton" name="toolButtonDefaultColor">
          <property name="minimumSize">
@@ -270,9 +267,6 @@
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::MinimumExpanding</enum>
-         </property>
          <property name="sizeHint" stdset="0">
           <size>
            <width>0</width>
@@ -296,7 +290,7 @@
           </size>
          </property>
          <property name="text">
-          <string>high back </string>
+          <string>Back</string>
          </property>
         </widget>
        </item>
@@ -315,7 +309,7 @@
           <string/>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -325,11 +319,11 @@
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Preferred</enum>
+          <enum>QSizePolicy::Minimum</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>15</width>
+           <width>20</width>
            <height>0</height>
           </size>
          </property>
@@ -694,7 +688,7 @@
           <number>4</number>
          </property>
          <property name="value">
-          <number>32</number>
+          <number>16</number>
          </property>
         </widget>
        </item>
@@ -762,6 +756,9 @@
          <property name="decimals">
           <number>1</number>
          </property>
+         <property name="value">
+          <double>5.000000000000000</double>
+         </property>
         </widget>
        </item>
        <item>
@@ -780,6 +777,9 @@
          </property>
          <property name="decimals">
           <number>1</number>
+         </property>
+         <property name="value">
+          <double>5.000000000000000</double>
          </property>
         </widget>
        </item>

@@ -409,7 +409,7 @@
           <number>4</number>
          </property>
          <property name="value">
-          <number>32</number>
+          <number>16</number>
          </property>
         </widget>
        </item>
@@ -477,6 +477,9 @@
          <property name="decimals">
           <number>1</number>
          </property>
+         <property name="value">
+          <double>5.000000000000000</double>
+         </property>
         </widget>
        </item>
        <item>
@@ -495,6 +498,9 @@
          </property>
          <property name="decimals">
           <number>1</number>
+         </property>
+         <property name="value">
+          <double>5.000000000000000</double>
          </property>
         </widget>
        </item>

@@ -351,6 +351,14 @@ void WidgetPointsDrawable::updatePanel() {
 
     {   // scalar field
         ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
+        ui->checkBoxScalarFieldDiscrete->setChecked(states_[d].discrete_color);
+        ui->spinBoxScalarFieldNumStrips->setValue(states_[d].num_stripes);
+        const auto& coloring = ui->comboBoxColorScheme->currentText().toStdString();
+        if (coloring.find("scalar - ") != std::string::npos && coloring.find(scheme.property_name()) != std::string::npos) {
+            auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
+            if (tex)
+                d->set_texture(tex);
+        }
         ui->checkBoxScalarFieldClamp->setChecked(scheme.clamp_range());
         ui->doubleSpinBoxScalarFieldClampLower->setValue(scheme.clamp_lower() * 100);
         ui->doubleSpinBoxScalarFieldClampUpper->setValue(scheme.clamp_upper() * 100);
