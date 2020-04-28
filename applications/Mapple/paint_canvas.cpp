@@ -1,5 +1,3 @@
-#include <easy3d/viewer/opengl.h>
-
 #include "paint_canvas.h"
 #include "main_window.h"
 

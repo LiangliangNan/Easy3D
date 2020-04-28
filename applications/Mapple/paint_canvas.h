@@ -4,7 +4,7 @@
 #include <easy3d/core/types.h>
 
 #include <QOpenGLWidget>
-#include <QTime>
+#include <QElapsedTimer>
 
 #include "tools/canvas.h"
 
@@ -187,7 +187,7 @@ protected:
 	// variable). Having it as a member can eliminate including the header file.
 	QOpenGLFunctions* func_;
 
-	QTime timer_;
+    QElapsedTimer timer_;
     easy3d::OpenGLText* texter_;
 
     double  dpi_scaling_;
