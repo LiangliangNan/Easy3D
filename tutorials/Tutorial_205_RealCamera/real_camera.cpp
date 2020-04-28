@@ -52,8 +52,7 @@ RealCamera::RealCamera(const std::string& title,
     if (add_model(cloud_file)) {
         auto drawable = current_model()->get_points_drawable("vertices");
         drawable->set_point_size(5.0f);
-        drawable->set_property_coloring(State::VERTEX, "v:color");
-        
+
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
             create_cameras_drawable();

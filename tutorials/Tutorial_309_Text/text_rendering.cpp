@@ -170,7 +170,7 @@ void TextRendering::draw() const {
 
     const float font_size = 28.0f + font_size_delta_;
     float x = 50.0f;
-    float y = 50.0f;
+    float y = 80.0f;
 
     const int num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);

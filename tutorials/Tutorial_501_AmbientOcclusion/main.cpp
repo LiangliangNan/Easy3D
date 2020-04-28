@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    const std::string file = resource::directory() + "/data/general.obj";
+    const std::string file = resource::directory() + "/data/general_open.obj";
 
     // Create the viewer.
     TutorialAmbientOcclusion viewer("Tutorial_501_AmbientOcclusion");
