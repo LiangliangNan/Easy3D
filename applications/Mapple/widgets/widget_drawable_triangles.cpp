@@ -314,7 +314,7 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
 
         for (const auto &name : mesh->face_properties()) {
             if (mesh->get_face_property<vec3>(name)) {
-                if (name != "f:normal")
+                if (name != "f:normal" && name != "f:color")
                     fields.push_back(QString::fromStdString(name));
             }
         }

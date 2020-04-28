@@ -1024,8 +1024,14 @@ void DialogProperties::applyCommand() {
     const QString &command = ui->comboBoxCommand->currentText();
 
     bool succeed = false;
-    if (command == "Remove")
+    if (command == "Remove") {
         succeed = removeProperty();
+        if (succeed) {
+            Model *model = getModel();
+            if (model)
+                model->update();
+        }
+    }
     else if (command == "Rename")
         succeed = renameProperty();
     else if (command == "Convert Data Type")
