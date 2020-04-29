@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ALGO_DUPLICATED_FACES_H
-#define ALGO_DUPLICATED_FACES_H
+#ifndef EASY_ALGO_DUPLICATED_FACES_H
+#define EASY_ALGO_DUPLICATED_FACES_H
 
 
 #include <vector>
@@ -88,6 +88,6 @@ namespace easy3d {
         Triangles triangle_faces_;
     };
 
-}
+}   // namespace easy3d
 
-#endif
+#endif  // EASY_ALGO_DUPLICATED_FACES_H
