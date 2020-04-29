@@ -842,8 +842,6 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     }
 
     const_cast<PaintCanvas *>(this)->doneCurrent();
-    // here the glGetError() won't work because the OpenGL context is not current.
-    // easy3d_debug_log_gl_error;
 
     found = depth < 1.0f;
     if (found) {
