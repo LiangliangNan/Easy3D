@@ -1100,7 +1100,7 @@ namespace easy3d {
         }
 
         LOG(ERROR) << "unknown depth internal format";
-        return 0; // should not reach here
+        return 0; // should not have reached here
     }
 
 
