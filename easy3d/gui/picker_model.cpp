@@ -146,6 +146,7 @@ namespace easy3d {
         // render
         drawable->draw(camera(), false);
 
+        // restore
         drawable->set_state(states_[drawable]);
     }
 
