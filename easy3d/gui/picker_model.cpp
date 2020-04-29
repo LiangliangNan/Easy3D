@@ -136,7 +136,6 @@ namespace easy3d {
     // draw a drawable
     void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
         // record
-
         states_[drawable] = drawable->state();
 
         // temporally change the rendering

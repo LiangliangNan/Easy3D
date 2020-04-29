@@ -55,9 +55,9 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = picker.pick(models(), x, y);
     if (model) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
-            mark_picked(model, vec4(1, 0, 0, 1.0f));
+            mark_status(model, true);
         else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            mark_picked(model, vec4(0.8, 0.8, 0.8, 1.0f));
+            mark_status(model, false);
         std::cout << "picked model: " << model->name() << std::endl;
     }
 
@@ -65,14 +65,46 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-void PickerViewer::mark_picked(Model *model, const vec4 &color) {
-    // make sure the vertex buffer holds the right data.
-    if (dynamic_cast<SurfaceMesh *>(model)) {
-        model->get_triangles_drawable("faces")->set_uniform_coloring(color);
-    } else if (dynamic_cast<PointCloud *>(model)) {
-        model->get_points_drawable("vertices")->set_uniform_coloring(color);
-    } else if (dynamic_cast<Graph *>(model)) {
-        model->get_points_drawable("vertices")->set_uniform_coloring(color);
-        model->get_lines_drawable("edges")->set_uniform_coloring(color);
+void PickerViewer::mark_status(easy3d::Model *model, bool picked) {
+    if (picked) {
+        const vec4 color(1, 0, 0, 1.0f);
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            Drawable *drawable = model->get_triangles_drawable("faces");
+            if (initial_colors_.find(drawable) == initial_colors_.end())
+                initial_colors_[drawable] = drawable->color();
+            drawable->set_uniform_coloring(color);
+        } else if (dynamic_cast<PointCloud *>(model)) {
+            Drawable *drawable = model->get_points_drawable("vertices");
+            if (initial_colors_.find(drawable) == initial_colors_.end())
+                initial_colors_[drawable] = drawable->color();
+            drawable->set_uniform_coloring(color);
+        } else if (dynamic_cast<Graph *>(model)) {
+            Drawable *drawable = model->get_points_drawable("vertices");
+            if (initial_colors_.find(drawable) == initial_colors_.end())
+                initial_colors_[drawable] = drawable->color();
+            drawable->set_uniform_coloring(color);
+            drawable = model->get_lines_drawable("edges");
+            if (initial_colors_.find(drawable) == initial_colors_.end())
+                initial_colors_[drawable] = drawable->color();
+            drawable->set_uniform_coloring(color);
+        }
+    }
+    else {
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            Drawable *drawable = model->get_triangles_drawable("faces");
+            if (initial_colors_.find(drawable) != initial_colors_.end())
+                drawable->set_uniform_coloring(initial_colors_[drawable]);
+        } else if (dynamic_cast<PointCloud *>(model)) {
+            Drawable *drawable = model->get_points_drawable("vertices");
+            if (initial_colors_.find(drawable) != initial_colors_.end())
+                drawable->set_uniform_coloring(initial_colors_[drawable]);
+        } else if (dynamic_cast<Graph *>(model)) {
+            Drawable *drawable = model->get_points_drawable("vertices");
+            if (initial_colors_.find(drawable) != initial_colors_.end())
+                drawable->set_uniform_coloring(initial_colors_[drawable]);
+            drawable = model->get_lines_drawable("edges");
+            if (initial_colors_.find(drawable) != initial_colors_.end())
+                drawable->set_uniform_coloring(initial_colors_[drawable]);
+        }
     }
 }

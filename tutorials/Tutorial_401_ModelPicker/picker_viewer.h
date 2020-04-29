@@ -27,10 +27,13 @@
 
 #include <easy3d/viewer/viewer.h>
 
+#include <unordered_map>
+
 // This class demonstrate how to pick a model using the mouse
 
 namespace easy3d {
     class Model;
+    class Drawable;
 }
 
 class PickerViewer : public easy3d::Viewer {
@@ -43,7 +46,10 @@ protected:
     std::string usage() const override;
 
 private:
-    void mark_picked(easy3d::Model *model, const easy3d::vec4 &color);
+    void mark_status(easy3d::Model *model, bool picked);
+
+private:
+    std::unordered_map<easy3d::Drawable *, easy3d::vec4> initial_colors_;
 };
 
 
