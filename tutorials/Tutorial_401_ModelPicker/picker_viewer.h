@@ -26,15 +26,11 @@
 #define EASY3D_TUTORIAL_PICKER_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/state.h>
-
-#include <unordered_map>
 
 // This class demonstrate how to pick a model using the mouse
 
 namespace easy3d {
     class Model;
-    class Drawable;
 }
 
 class PickerViewer : public easy3d::Viewer {
@@ -48,10 +44,6 @@ protected:
 
 private:
     void mark_picked(easy3d::Model *model, const easy3d::vec4 &color);
-    void restore(easy3d::Model *model);
-
-private:
-    std::unordered_map<easy3d::Drawable *, easy3d::State> states_;
 };
 
 

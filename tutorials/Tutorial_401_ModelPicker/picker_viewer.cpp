@@ -57,7 +57,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         if (button == GLFW_MOUSE_BUTTON_LEFT)
             mark_picked(model, vec4(1, 0, 0, 1.0f));
         else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            restore(model);
+            mark_picked(model, vec4(0.8, 0.8, 0.8, 1.0f));
         std::cout << "picked model: " << model->name() << std::endl;
     }
 
@@ -68,36 +68,11 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 void PickerViewer::mark_picked(Model *model, const vec4 &color) {
     // make sure the vertex buffer holds the right data.
     if (dynamic_cast<SurfaceMesh *>(model)) {
-        Drawable *drawable = model->get_triangles_drawable("faces");
-        states_[drawable] = drawable->state();
-        drawable->set_uniform_coloring(color);
+        model->get_triangles_drawable("faces")->set_uniform_coloring(color);
     } else if (dynamic_cast<PointCloud *>(model)) {
-        Drawable *drawable = model->get_points_drawable("vertices");
-        states_[drawable] = drawable->state();
-        drawable->set_uniform_coloring(color);
+        model->get_points_drawable("vertices")->set_uniform_coloring(color);
     } else if (dynamic_cast<Graph *>(model)) {
-        Drawable *drawable = model->get_points_drawable("vertices");
-        states_[drawable] = drawable->state();
-        drawable->set_uniform_coloring(color);
-        drawable = model->get_lines_drawable("edges");
-        states_[drawable] = drawable->state();
-        drawable->set_uniform_coloring(color);
-    }
-}
-
-
-void PickerViewer::restore(Model *model) {
-    // make sure the vertex buffer holds the right data.
-    if (dynamic_cast<SurfaceMesh *>(model)) {
-        Drawable *drawable = model->get_triangles_drawable("faces");
-        drawable->set_state(states_[drawable]);
-    } else if (dynamic_cast<PointCloud *>(model)) {
-        Drawable *drawable = model->get_points_drawable("vertices");
-        drawable->set_state(states_[drawable]);
-    } else if (dynamic_cast<Graph *>(model)) {
-        Drawable *drawable = model->get_points_drawable("vertices");
-        drawable->set_state(states_[drawable]);
-        drawable = model->get_lines_drawable("edges");
-        drawable->set_state(states_[drawable]);
+        model->get_points_drawable("vertices")->set_uniform_coloring(color);
+        model->get_lines_drawable("edges")->set_uniform_coloring(color);
     }
 }
