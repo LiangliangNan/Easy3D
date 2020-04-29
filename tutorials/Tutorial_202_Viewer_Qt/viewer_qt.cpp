@@ -298,12 +298,14 @@ void ViewerQt::mouseDoubleClickEvent(QMouseEvent* e) {
 
 
 void ViewerQt::wheelEvent(QWheelEvent* e) {
-	if (e->delta() == 0)
-		e->ignore();
-	int dy = e->delta() > 0 ? 1 : -1;
+    const int delta = e->delta();
+    if (delta <= -1 || delta >= 1) {
+        int dy = e->delta() > 0 ? 1 : -1;
+        camera_->frame()->action_zoom(dy, camera_);
+    }
 
-	camera_->frame()->action_zoom(dy, camera_);
-	update();
+    QOpenGLWidget::wheelEvent(e);
+    update();
 }
 
 
