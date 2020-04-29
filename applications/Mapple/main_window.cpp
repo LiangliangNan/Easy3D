@@ -38,6 +38,8 @@
 #include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
+#include <easy3d/algo_ext/delaunay_2d.h>
+#include <easy3d/algo_ext/delaunay_3d.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
@@ -644,6 +646,9 @@ void MainWindow::createActionsForPointCloudMenu() {
 
     connect(ui->actionRansacPrimitiveExtraction, SIGNAL(triggered()), this, SLOT(pointCloudRansacPrimitiveExtraction()));
     connect(ui->actionPoissonSurfaceReconstruction, SIGNAL(triggered()), this, SLOT(pointCloudPoissonSurfaceReconstruction()));
+
+    connect(ui->actionDelaunayTriangulation2D, SIGNAL(triggered()), this, SLOT(pointCloudDelaunayTriangulation2D()));
+    connect(ui->actionDelaynayTriangulation3D, SIGNAL(triggered()), this, SLOT(pointCloudDelaunayTriangulation3D()));
 }
 
 
@@ -1420,4 +1425,85 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
 
     mesh->update();
     viewer_->update();
+}
+
+
+void MainWindow::pointCloudDelaunayTriangulation2D() {
+    auto cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    if (!cloud)
+        return;
+
+    const std::vector<vec3>& pts = cloud->points();
+
+    std::vector<vec2> points;
+    for (std::size_t i = 0; i < pts.size(); ++i) {
+        points.push_back(vec2(pts[i]));
+    }
+
+    Delaunay2 delaunay;
+    delaunay.set_vertices(points);
+
+    SurfaceMesh* mesh = new SurfaceMesh;
+    const std::string& name = file_system::parent_directory(cloud->name()) + "/" + file_system::base_name(cloud->name()) + "_delaunay_XY";
+    mesh->set_name(name);
+
+    for (std::size_t i = 0; i < points.size(); i++) {
+        mesh->add_vertex(vec3(points[i], pts[i].z));
+    }
+
+    for (unsigned int i = 0; i < delaunay.nb_triangles(); i++) {
+        std::vector<SurfaceMesh::Vertex> vts(3);
+        for (int j = 0; j < 3; j++) {
+            const int v = delaunay.tri_vertex(i, j);
+            assert(v >= 0);
+            assert(v < points.size());
+            vts[j] = SurfaceMesh::Vertex(v);
+        }
+        mesh->add_face(vts);
+    }
+
+    viewer_->addModel(mesh);
+    updateUi();
+    viewer_->update();
+}
+
+
+void MainWindow::pointCloudDelaunayTriangulation3D() {
+    auto cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    if (!cloud)
+        return;
+
+    const std::vector<vec3>& pts = cloud->points();
+    Delaunay3 delaunay;
+    delaunay.set_vertices(pts);
+
+    LOG(WARNING) << "triangulation done. TODO: implement a data structure to store and visualize the result";
+
+//    CGraph* whet_grid = new CGraph;
+//    CGraphBuilder builder;
+//    builder.set_target(whet_grid);
+//    builder.begin_volume();
+//
+//    builder.build_meta_tetrahedron();
+//
+//    for (std::size_t i = 0; i < points.size(); i++) {
+//        builder.add_vertex(points[i]);
+//    }
+//
+//    std::cerr << "Nb tets = " << delaunay.nb_tets() << std::endl;
+//    for (unsigned int i = 0; i < delaunay.nb_tets(); i++) {
+//        builder.begin_cell(0);
+//        for (int j = 0; j < 4; j++) {
+//            int v = delaunay.tet_vertex(i, j);
+//            mpl_debug_assert(v >= 0);
+//            mpl_debug_assert(v < points.size());
+//            builder.add_vertex_to_cell(v);
+//        }
+//        builder.end_cell();
+//    }
+//    builder.end_volume();
+//
+//    const std::string& name = FileUtils::dir_name(pset->name()) + "/" + FileUtils::base_name(pset->name()) + "_delaunay";
+//    whet_grid->set_name(name);
+//    main_window_->addModel(whet_grid, true, false);
 }

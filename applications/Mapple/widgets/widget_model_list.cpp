@@ -252,7 +252,7 @@ void WidgetModelList::updateModelList() {
                 QTreeWidgetItem *item = takeTopLevelItem(idx);
                 delete item;
             } else
-                LOG(FATAL) << "should not reach here";
+                LOG(FATAL) << "should not have reached here";
         }
     }
 

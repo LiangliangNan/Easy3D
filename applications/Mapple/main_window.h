@@ -67,6 +67,8 @@ private slots:
     void pointCloudNormalizeNormals();
     void pointCloudPoissonSurfaceReconstruction();
     void pointCloudRansacPrimitiveExtraction();
+    void pointCloudDelaunayTriangulation2D();
+    void pointCloudDelaunayTriangulation3D();
 
     // surface mesh
     void surfaceMeshReportTopologyStatistics();

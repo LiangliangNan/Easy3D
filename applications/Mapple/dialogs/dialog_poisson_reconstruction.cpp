@@ -75,6 +75,7 @@ void DialogPoissonReconstruction::reconstruct() {
             mesh->set_name(name);
             viewer_->addModel(mesh);
             window_->updateUi();
+            viewer_->update();
         }
     }
 }

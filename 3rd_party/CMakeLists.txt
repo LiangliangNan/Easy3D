@@ -14,4 +14,8 @@ add_subdirectory(poisson_recon-9.0.1)
 
 add_subdirectory(glog)
 
+add_subdirectory(triangle)
+add_subdirectory(tetgen)
+
+
 

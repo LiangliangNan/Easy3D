@@ -83,6 +83,9 @@
     <addaction name="separator"/>
     <addaction name="actionRansacPrimitiveExtraction"/>
     <addaction name="actionPoissonSurfaceReconstruction"/>
+    <addaction name="separator"/>
+    <addaction name="actionDelaynayTriangulation3D"/>
+    <addaction name="actionDelaunayTriangulation2D"/>
    </widget>
    <widget class="QMenu" name="menuSelect">
     <property name="title">
@@ -866,6 +869,16 @@
   <action name="actionManipulateProperties">
    <property name="text">
     <string>Manipulate properties</string>
+   </property>
+  </action>
+  <action name="actionDelaunayTriangulation2D">
+   <property name="text">
+    <string>Delaunay triangulation 2D (XY only)</string>
+   </property>
+  </action>
+  <action name="actionDelaynayTriangulation3D">
+   <property name="text">
+    <string>Delaynay triangulation 3D</string>
    </property>
   </action>
  </widget>
