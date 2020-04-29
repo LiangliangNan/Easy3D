@@ -33,11 +33,11 @@ extern "C" {
 namespace easy3d {
 
 
-    static void init_triangulateio(struct ::triangulateio *tri) {
-        memset(tri, 0, sizeof(struct ::triangulateio));
+    static void init_triangulateio(struct triangulateio *tri) {
+        memset(tri, 0, sizeof(struct triangulateio));
     }
 
-    static void free_triangulateio(struct ::triangulateio *tri) {
+    static void free_triangulateio(struct triangulateio *tri) {
         free(tri->pointlist);
         free(tri->pointattributelist);
         free(tri->pointmarkerlist);
@@ -52,12 +52,12 @@ namespace easy3d {
         free(tri->edgelist);
         free(tri->edgemarkerlist);
         free(tri->normlist);
-        memset(tri, 0, sizeof(struct ::triangulateio));
+        memset(tri, 0, sizeof(struct triangulateio));
     }
 
     Delaunay2::Delaunay2() : Delaunay(2) {
-        triangle_in_ = new struct ::triangulateio;
-        triangle_out_ = new struct ::triangulateio;
+        triangle_in_ = new struct triangulateio;
+        triangle_out_ = new struct triangulateio;
 
         init_triangulateio(triangle_in_);
         init_triangulateio(triangle_out_);
