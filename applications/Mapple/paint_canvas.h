@@ -197,7 +197,10 @@ protected:
     easy3d::vec4	background_color_;
 
     Qt::MouseButton pressed_button_;
-    QPoint  mouse_previous_pos_;
+    Qt::KeyboardModifiers   modifiers_;
+    QPoint  mouse_current_pos_;    // mouse pos when moving
+    QPoint  mouse_pressed_pos_;     // mouse pos when pressed
+    int pressed_key_;
 
     bool    show_pivot_point_;
 

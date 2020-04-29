@@ -47,9 +47,15 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , window_(window)
         , func_(nullptr)
         , texter_(nullptr)
+        , dpi_scaling_(1.0)
+        , samples_(0)
         , camera_(nullptr)
+        , background_color_(1.0f, 1.0f, 1.0f, 1.0f)
         , pressed_button_(Qt::NoButton)
-        , mouse_previous_pos_(0, 0)
+        , modifiers_(Qt::NoModifier)
+        , mouse_current_pos_(0, 0)
+        , mouse_pressed_pos_(0, 0)
+        , pressed_key_(-1)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
         , show_camera_path_(false)
@@ -125,8 +131,6 @@ void PaintCanvas::initializeGL() {
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
 
-    background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
     func_->glEnable(GL_DEPTH_TEST);
 
     func_->glClearDepthf(1.0f);
@@ -195,7 +199,9 @@ void PaintCanvas::setBackgroundColor(const vec4 &c) {
 
 void PaintCanvas::mousePressEvent(QMouseEvent *e) {
     pressed_button_ = e->button();
-    mouse_previous_pos_ = e->pos();
+    modifiers_ = e->modifiers();
+    mouse_current_pos_ = e->pos();
+    mouse_pressed_pos_ = e->pos();
 
     if (tool_manager()->current_tool()) {
         tools::ToolButton bt = tools::NO_BUTTON;
@@ -213,14 +219,12 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
     }
     else {
         camera_->frame()->action_start();
-        if (e->modifiers() == Qt::ShiftModifier) {
+        if (pressed_key_ == Qt::Key_Z || e->modifiers() == Qt::ShiftModifier) {
             if (e->button() == Qt::LeftButton) {
                 bool found = false;
                 const vec3 &p = pointUnderPixel(e->pos(), found);
                 if (found) {
-                    camera()->interpolateToLookAt(p);
                     camera_->setPivotPoint(p);
-
                     // show, but hide the visual hint of pivot point after \p delay milliseconds.
                     show_pivot_point_ = true;
                     const int delay = 10000;
@@ -228,14 +232,17 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                         show_pivot_point_ = false;
                         update();
                     });
+                    if (pressed_key_ == Qt::Key_Z)
+                        camera()->interpolateToLookAt(p);
                 } else {
                     camera_->setPivotPoint(camera_->sceneCenter());
                     show_pivot_point_ = false;
                 }
             } else if (e->button() == Qt::RightButton) {
-                camera()->interpolateToFitScene();
                 camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
+                if (pressed_key_ == Qt::Key_Z)
+                    camera()->interpolateToFitScene();
             }
         }
     }
@@ -288,13 +295,22 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             cloud->update();
             LOG(INFO) << count << " points deleted" << std::endl;
         }
-
 #endif
+    }
+    else if (pressed_button_ == Qt::LeftButton && e->modifiers() == Qt::ControlModifier) { // ZOOM_ON_REGION
+        int xmin = std::min(mouse_pressed_pos_.x(), e->pos().x());
+        int xmax = std::max(mouse_pressed_pos_.x(), e->pos().x());
+        int ymin = std::min(mouse_pressed_pos_.y(), e->pos().y());
+        int ymax = std::max(mouse_pressed_pos_.y(), e->pos().y());
+        camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
     }
     else
         camera_->frame()->action_end();
 
     pressed_button_ = Qt::NoButton;
+    modifiers_ = Qt::NoModifier;
+    mouse_current_pos_ = e->pos();
+
     QOpenGLWidget::mouseReleaseEvent(e);
     update();
 }
@@ -321,7 +337,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         doneCurrent();
     }
     else {
-        if (pressed_button_ != Qt::NoButton) { // button pressed
+        // control modifier is reserved for zooming on region
+        if (pressed_button_ != Qt::NoButton && modifiers_ != Qt::ControlModifier) {
             ManipulatedFrame *frame = camera()->frame();
             if (e->modifiers() == Qt::AltModifier) {
                 if (setting::clipping_plane && setting::clipping_plane->is_enabled())
@@ -330,20 +347,20 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
 
             int x = e->pos().x();
             int y = e->pos().y();
-            int dx = x - mouse_previous_pos_.x();
-            int dy = y - mouse_previous_pos_.y();
+            int dx = x - mouse_current_pos_.x();
+            int dy = y - mouse_current_pos_.y();
             if (pressed_button_ == Qt::LeftButton)
-                frame->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::ControlModifier);
+                frame->action_rotate(x, y, dx, dy, camera_, pressed_key_ == Qt::Key_X);
             else if (pressed_button_ == Qt::RightButton)
-                frame->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::ControlModifier);
+                frame->action_translate(x, y, dx, dy, camera_, pressed_key_ == Qt::Key_X);
             else if (pressed_button_ == Qt::MidButton) {
                 if (dy != 0 && frame == camera_->frame()) // zoom is intended for camera manipulation only
                     frame->action_zoom(dy > 0 ? 1 : -1, camera_);
             }
         }
-
-        mouse_previous_pos_ = e->pos();
     }
+
+    mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
 
 //    bool found = false;
@@ -356,6 +373,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
 
 
 void PaintCanvas::mouseDoubleClickEvent(QMouseEvent *e) {
+    mouse_current_pos_ = e->pos();
+    mouse_pressed_pos_ = e->pos();
     QOpenGLWidget::mouseDoubleClickEvent(e);
     update();
 }
@@ -664,12 +683,16 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         ShaderManager::reload();
     }
 
+    pressed_key_ = e->key();
+
     QOpenGLWidget::keyPressEvent(e);
     update();
 }
 
 
 void PaintCanvas::keyReleaseEvent(QKeyEvent *e) {
+    pressed_key_ = -1;
+
     QOpenGLWidget::keyReleaseEvent(e);
     update();
 }
@@ -692,19 +715,19 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             " Easy3D viewer usage:                                              \n"
             " ------------------------------------------------------------------\n"
-            "  F1:                  Help                                        \n"
+            "  F1:                 Help                                         \n"
             " ------------------------------------------------------------------\n"
-            "  Ctrl + 'o':          Open file                                   \n"
-            "  Ctrl + 's':          Save file                                   \n"
-            "  Fn + Delete:         Delete current model                        \n"
-            "  '<' or '>':          Switch between models                       \n"
-            "  's':                 Snapshot                                    \n"
+            "  Ctrl + 'o':         Open file                                    \n"
+            "  Ctrl + 's':         Save file                                    \n"
+            "  Fn + Delete:        Delete current model                         \n"
+            "  '<' or '>':         Switch between models                        \n"
+            "  's':                Snapshot                                     \n"
             " ------------------------------------------------------------------\n"
-            "  'p':                 Toggle perspective/orthographic projection)	\n"
-            "  Left mouse:          Orbit-rotate the camera                     \n"
-            "  Right mouse:         Pan-move the camera                         \n"
-            "  Ctrl + Left mouse:   Orbit-rotate the camera (screen based)      \n"
-            "  Ctrl + Right mouse:  Pan-move camera vertically or horizontally  \n"
+            "  'p':                Toggle perspective/orthographic projection)	\n"
+            "  Left mouse:         Orbit-rotate the camera                      \n"
+            "  Right mouse:        Pan-move the camera                          \n"
+            "  'x' + Left mouse:   Orbit-rotate the camera (screen based)       \n"
+            "  'x' + Right mouse:  Pan-move camera vertically or horizontally   \n"
             "  Middle or Wheel:     Zoom in/out                                 \n"
             "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
             "  Left/Right           Turn camera left/right                      \n"
@@ -714,8 +737,11 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  'f':                 Fit screen (all models)                     \n"
             "  'c':                 Fit screen (current model only)             \n"
-            "  Shift + Left mouse:  Zoom to target point on model               \n"
-            "  Shift + Right mouse: Zoom o fit screen                           \n"
+            "  'z' + Left mouse:    Zoom to target point on model               \n"
+            "  'z' + Right mouse:   Zoom o fit screen                           \n"
+            "  Shift + Left mouse:  Define a target point on model              \n"
+            "  Shift + Right mouse: Undefine the target point (if any) on model \n"
+            "  Ctrl + Left mouse:   Zoom too fit region                         \n"
             " ------------------------------------------------------------------\n"
             "  '-'/'=':             Decrease/Increase point size                \n"
             "  '{'/'}':             Decrease/Increase line width                \n"
@@ -1043,11 +1069,30 @@ void PaintCanvas::postDraw() {
     }
     easy3d_debug_log_gl_error;
 
+    // ------------- draw the picking region with transparency  ---------------
+
+    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
+        const Rect rect(mouse_pressed_pos_.x(), mouse_current_pos_.x(), mouse_pressed_pos_.y(), mouse_current_pos_.y());
+        if (rect.width() > 0 || rect.height() > 0) {
+            // draw the boundary of the rect
+            opengl::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
+            // draw the transparent face
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            opengl::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
+            glDisable(GL_BLEND);
+        }
+    }
+
+    // ------- draw the axes indicating the orientation of the model  ----------
+
     drawCornerAxes(); easy3d_debug_log_gl_error;
 
     // ------------------ draw elements from the tool --------------------------
 
     tool_manager()->draw_hint();    easy3d_debug_log_gl_error;
+
+    // -------------------- draw the clipping plane ----------------------------
 
     //
     if (setting::clipping_plane)
