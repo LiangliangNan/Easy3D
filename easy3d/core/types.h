@@ -249,6 +249,8 @@ namespace easy3d {
         inline float
         dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_vec3);
 
+        inline vec3 tetra_circum_center(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4);
+
         // round the given floating point number v to be num_digits.
         // TODO: this function should not be in this file.
         template<class T>
@@ -556,6 +558,49 @@ namespace easy3d {
             v0p -= p;
             return norm(v0p);
         }
+
+
+        inline vec3 tetra_circum_center(const vec3 &p, const vec3 &q, const vec3 &r, const vec3 &s) {
+            vec3 qp = q - p;
+            float qp2 = length2(qp);
+            vec3 rp = r - p;
+            float rp2 = length2(rp);
+            vec3 sp = s - p;
+            float sp2 = length2(sp);
+
+            double num_x = determinant(mat3(
+                    qp.y, qp.z, qp2,
+                    rp.y, rp.z, rp2,
+                    sp.y, sp.z, sp2)
+            );
+            double num_y = determinant(mat3(
+                    qp.x, qp.z, qp2,
+                    rp.x, rp.z, rp2,
+                    sp.x, sp.z, sp2)
+            );
+            double num_z = determinant(mat3(
+                    qp.x, qp.y, qp2,
+                    rp.x, rp.y, rp2,
+                    sp.x, sp.y, sp2)
+            );
+            double den = determinant(mat3(
+                    qp.x, qp.y, qp.z,
+                    rp.x, rp.y, rp.z,
+                    sp.x, sp.y, sp.z)
+            );
+
+            assert(std::abs(den) > 1e-30f);
+
+            den *= 2.0f;
+
+            return vec3(
+                    p.x + float(num_x / den),
+                    p.y - float(num_y / den),
+                    p.z + float(num_z / den)
+            );
+
+        }
+
 
     }   // namespace geom
 
