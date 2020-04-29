@@ -82,11 +82,13 @@ namespace easy3d {
 
     public:
         State();
+        State(const State& s);
+        /// assign \c rhs to \c *this. performs a deep copy of all member variables.
+        State& operator=(const State& rhs);
 
         virtual ~State() {}
 
         bool is_visible() const { return visible_; }
-
         void set_visible(bool v) { visible_ = v; }
 
         /**

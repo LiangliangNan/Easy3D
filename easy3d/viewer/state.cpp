@@ -50,7 +50,45 @@ namespace easy3d {
               clamp_upper_(0.05f) {
     }
 
+    State::State(const State &s) : visible_(s.is_visible()), coloring_method_(s.coloring_method()), color_(s.color()),
+                                   property_location_(s.property_location()), property_name_(s.property_name()),
+                                   lighting_(s.lighting()),
+                                   lighting_two_sides_(s.lighting_two_sides()),
+                                   distinct_back_color_(s.distinct_back_color()),
+                                   back_color_(s.back_color()), highlight_(s.highlight()),
+                                   highlight_range_(s.highlight_range()),
+                                   texture_(s.texture()),
+                                   texture_repeat_(s.texture_repeat()),
+                                   texture_fractional_repeat_(s.texture_fractional_repeat()),
+                                   clamp_range_(s.clamp_range()),
+                                   clamp_lower_(s.clamp_lower()),
+                                   clamp_upper_(s.clamp_upper()),
+                                   material_(s.material()) {
 
+    }
+
+    State &State::operator=(const State &s) {
+        visible_ = s.is_visible();
+        coloring_method_ = s.coloring_method();
+        color_ = s.color();
+        property_location_ = s.property_location();
+        property_name_ = s.property_name();
+        lighting_ = s.lighting();
+        lighting_two_sides_ = s.lighting_two_sides();
+        distinct_back_color_ = s.distinct_back_color();
+        back_color_ = s.back_color();
+        highlight_ = s.highlight();
+        highlight_range_ = s.highlight_range();
+        texture_ = s.texture();
+        texture_repeat_ = s.texture_repeat();
+        texture_fractional_repeat_ = s.texture_fractional_repeat();
+        clamp_range_ = s.clamp_range();
+        clamp_lower_ = s.clamp_lower();
+        clamp_upper_ = s.clamp_upper();
+        material_ = s.material();
+        return *this;
+    }
+    
     void State::set_uniform_coloring(const vec4 &color) {
         coloring_method_ = UNIFORM_COLOR;
         color_ = color;
