@@ -5,3 +5,6 @@ if (EASY3D_ENABLE_QT)
 endif ()
 
 add_subdirectory(SomeTest)
+
+
+add_subdirectory(vulkan_experiment)
