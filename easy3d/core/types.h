@@ -116,10 +116,10 @@ namespace easy3d {
 
         // bounding box for 3D/2D point set
         template<typename Box, typename InputIterator>
-        inline Box bounding_box(InputIterator first, InputIterator last) {
-            assert(first != last);
+        inline Box bounding_box(InputIterator begin, InputIterator end) {
+            assert(begin != end);
             Box result;
-            for (InputIterator it = first; it != last; ++it) {
+            for (InputIterator it = begin; it != end; ++it) {
                 result.add_point(*it);
             }
             return result;
