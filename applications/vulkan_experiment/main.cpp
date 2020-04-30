@@ -1,11 +1,11 @@
 #include "application.h"
 
-
 #include <stdexcept>
 #include <iostream>
 
+
 int main() {
-    HelloTriangleApplication app;
+    ApplicationVulkan app;
 
     try {
         app.run();

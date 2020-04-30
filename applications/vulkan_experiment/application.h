@@ -81,7 +81,7 @@ struct UniformBufferObject {
 };
 
 
-class HelloTriangleApplication {
+class ApplicationVulkan {
 public:
     void run();
 
