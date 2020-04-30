@@ -232,7 +232,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                         show_pivot_point_ = false;
                         update();
                     });
-                    if (pressed_key_ == Qt::Key_Z)
+                    if (pressed_key_ == Qt::Key_Z && e->modifiers() == Qt::NoModifier)
                         camera()->interpolateToLookAt(p);
                 } else {
                     camera_->setPivotPoint(camera_->sceneCenter());
@@ -241,7 +241,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             } else if (e->button() == Qt::RightButton) {
                 camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
-                if (pressed_key_ == Qt::Key_Z)
+                if (pressed_key_ == Qt::Key_Z && e->modifiers() == Qt::NoModifier)
                     camera()->interpolateToFitScene();
             }
         }
@@ -682,8 +682,8 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         // Reload the shader(s) - useful for writing/debugging shader code.
         ShaderManager::reload();
     }
-
-    pressed_key_ = e->key();
+    else
+        pressed_key_ = e->key();
 
     QOpenGLWidget::keyPressEvent(e);
     update();

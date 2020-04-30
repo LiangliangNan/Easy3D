@@ -538,7 +538,7 @@ namespace easy3d {
                         update();
                     });
 
-                    if (pressed_key_ == GLFW_KEY_Z) {
+                    if (pressed_key_ == GLFW_KEY_Z &&  modifiers == 0) {
 #if 1   // with animation
                         camera()->interpolateToLookAt(p);
 #else   // without animation
@@ -556,7 +556,7 @@ namespace easy3d {
             } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
                 camera_->setPivotPoint(camera_->sceneCenter());
                 show_pivot_point_ = false;
-                if (pressed_key_ == GLFW_KEY_Z) {
+                if (pressed_key_ == GLFW_KEY_Z &&  modifiers == 0) {
 #if 1   // with animation
                     camera()->interpolateToFitScene();
 #else   // without animation
@@ -905,8 +905,8 @@ namespace easy3d {
         } else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {
             glfwSetWindowShouldClose(window_, true);
         }
-
-        pressed_key_ = key;
+        else
+            pressed_key_ = key;
 
         return false;
     }
