@@ -14,8 +14,8 @@ find_package(Vulkan REQUIRED FATAL_ERROR)
 message(STATUS "Vulkan Include dirs: ${Vulkan_INCLUDE_DIRS} and libs: ${Vulkan_LIBRARIES}")
 
 add_executable(${PROJECT_NAME}
-#        application.h
-#        application.cpp
+        application.h
+        application.cpp
         main.cpp
         )
 
