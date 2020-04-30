@@ -28,14 +28,14 @@
 
 namespace easy3d
 {
-    inline void hash_combine(std::size_t &seed, std::size_t hash) const {
+    inline void hash_combine(std::size_t &seed, std::size_t hash) {
         hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
         seed ^= hash;
     }
 
 
-    template<typename InputIterator, typename InputIterator>
-    inline std::size_t hash(InputIterator begin, InputIterator end) const {
+    template<typename InputIterator >
+    inline std::size_t hash(InputIterator begin, InputIterator end) {
         std::size_t seed = 0;
         std::hash<double> hasher;
         for (auto it = begin; it != end; ++it)
