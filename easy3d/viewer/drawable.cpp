@@ -34,6 +34,7 @@
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stop_watch.h>
 
 
 namespace easy3d {
@@ -160,11 +161,15 @@ namespace easy3d {
             return;
         }
 
+        StopWatch w;
+
         if (update_func_)
             update_func_(model_, this);
         else
             renderer::update_buffers(model_, this);
 
+        LOG_IF(INFO, w.elapsed_seconds() > 1.0) << "update rendering buffers took " << w.time_string();
+        
         update_requested_ = false;
     }
 
