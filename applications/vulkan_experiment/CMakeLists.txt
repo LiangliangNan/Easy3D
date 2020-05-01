@@ -19,13 +19,11 @@ add_executable(${PROJECT_NAME}
         main.cpp
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME})
-
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw core viewer util)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.obj DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}/models)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}/textures)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}/shaders)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}/shaders)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.obj DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/data/viking_room)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.png DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/data/viking_room)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders/vulkan)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/frag.spv DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/shaders/vulkan)
 

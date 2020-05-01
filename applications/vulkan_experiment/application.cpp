@@ -2,6 +2,9 @@
 
 
 #include <easy3d/viewer/transform.h>
+#include <easy3d/fileio/resources.h>
+
+using namespace easy3d;
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <3rd_party/stb/stb_image.h>
@@ -26,8 +29,10 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
-const std::string MODEL_PATH = "models/viking_room.obj";
-const std::string TEXTURE_PATH = "textures/viking_room.png";
+const std::string MODEL_PATH = resource::directory() + "/data/viking_room/viking_room.obj";
+const std::string TEXTURE_PATH = resource::directory() + "/data/viking_room/viking_room.png";
+const std::string VERT_SHADER_PARTH = resource::directory() +  "/shaders/vulkan/vert.spv";
+const std::string FRAG_SHADER_PARTH = resource::directory() +  "/shaders/vulkan/frag.spv";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -520,9 +525,10 @@ namespace easy3d {
         }
     }
 
+
     void ApplicationVulkan::createGraphicsPipeline() {
-        auto vertShaderCode = readFile("shaders/vert.spv");
-        auto fragShaderCode = readFile("shaders/frag.spv");
+        auto vertShaderCode = readFile(VERT_SHADER_PARTH.c_str());
+        auto fragShaderCode = readFile(FRAG_SHADER_PARTH.c_str());
 
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -741,7 +747,7 @@ namespace easy3d {
         mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
         if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
+            throw std::runtime_error("failed to load texture image: " + TEXTURE_PATH);
         }
 
         VkBuffer stagingBuffer;
@@ -1643,7 +1649,7 @@ namespace easy3d {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if (!file.is_open()) {
-            throw std::runtime_error("failed to open file!");
+            throw std::runtime_error("failed to open file: " + filename);
         }
 
         size_t fileSize = (size_t) file.tellg();
