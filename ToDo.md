@@ -1,5 +1,6 @@
 * easy3d (on going):
-    - Add tutorial examples for the mesh processing algorithms (simplification, subdivision, smoothing, hole filling, curvatures, parameterization)
+    - Add tutorials for algorithms: Delaunay2D, simplification, subdivision, smoothing, hole filling, curvatures, parameterization.
+    - Add a progress bar to Mapple;
     - Test if the hash function in tessellator.cpp works on both 64-bit and 32-bit machines:
                   inline void hash_combine(std::size_t &seed, T const &v) const {
                       std::hash<T> hasher;
@@ -23,3 +24,6 @@
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
 	    * otherwise, use multi-thread
+	    
+Longer term:
+    - switch to Vulkan.

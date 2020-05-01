@@ -352,9 +352,9 @@ namespace easy3d {
 
         //data intentionally left public to allow vec.x
         union {
+            T _array[2];		// array access
             struct { T x, y; };	// standard names for components
             struct { T u, v; };	// standard names for components
-            T _array[2];		// array access
         };
     };
 
@@ -463,10 +463,9 @@ namespace easy3d {
 
         //data intentionally left public to allow vec.x
         union {
-            struct { T x, y, z; };	// standard names for components
-            struct { T u, v, w; };	// standard names for components
-            struct { T r, g, b; };	// standard names for components
             T _array[3];			// array access
+            struct { T x, y, z; };	// standard names for components
+            struct { T r, g, b; };	// standard names for components
         };
     };
 
@@ -589,9 +588,9 @@ namespace easy3d {
 
         //data intentionally left public to allow vec.x
         union {
+            T _array[4];				// array access
             struct { T x, y, z, w; };	// standard names for components
             struct { T r, g, b, a; };	// standard names for components
-            T _array[4];				// array access
         };
     };
 
