@@ -2,16 +2,12 @@
 
 
 #include <easy3d/viewer/transform.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/image_io.h>
 #include <easy3d/fileio/resources.h>
 
 using namespace easy3d;
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <3rd_party/stb/stb_image.h>
-
-#define TINYOBJLOADER_IMPLEMENTATION
-#include <3rd_party/tinyobjloader/tiny_obj_loader.h>
-
 
 #include <iostream>
 #include <fstream>
@@ -19,11 +15,9 @@ using namespace easy3d;
 #include <algorithm>
 #include <chrono>
 #include <cstring>
-#include <cstdlib>
 #include <cstdint>
 #include <array>
 #include <set>
-#include <unordered_map>
 
 
 const uint32_t WIDTH = 800;
@@ -741,14 +735,15 @@ namespace easy3d {
     }
 
     void ApplicationVulkan::createTextureImage() {
-        int texWidth, texHeight, texChannels;
-        stbi_uc *pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        VkDeviceSize imageSize = texWidth * texHeight * 4;
-        mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-
-        if (!pixels) {
+        int texWidth, texHeight, texChannels, requested_channels = 4;
+        std::vector<unsigned char> pixels;
+        bool succeed = ImageIO::load(TEXTURE_PATH, pixels, texWidth, texHeight, texChannels, requested_channels, true);
+        if (!succeed) {
             throw std::runtime_error("failed to load texture image: " + TEXTURE_PATH);
         }
+
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
+        mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -758,10 +753,8 @@ namespace easy3d {
 
         void *data;
         vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        memcpy(data, pixels, static_cast<size_t>(imageSize));
+        memcpy(data, pixels.data(), static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
-
-        stbi_image_free(pixels);
 
         createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
                     VK_IMAGE_TILING_OPTIMAL,
@@ -1047,43 +1040,47 @@ namespace easy3d {
 
 
     void ApplicationVulkan::loadModel() {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string warn, err;
-
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
-            throw std::runtime_error(warn + err);
+        SurfaceMesh* model = SurfaceMeshIO::load(MODEL_PATH);
+        if (!model) {
+            throw std::runtime_error("failed loading model: " + MODEL_PATH);
         }
 
+        model->property_stats(std::cout);
 
-        std::unordered_map<Vertex, uint32_t, Vertex::Hash> uniqueVertices{};
+        vertices.reserve(model->n_vertices());
+        indices.reserve(model->n_vertices());
 
-        for (const auto &shape : shapes) {
-            for (const auto &index : shape.mesh.indices) {
+        auto points = model->get_vertex_property<vec3>("v:point");
+        auto texcoords = model->get_halfedge_property<vec2>("h:texcoord");
+        auto facecolors = model->get_face_property<vec3>("f:color");
+        auto vertexcolors = model->get_vertex_property<vec3>("v:color");
+
+        int index = 0;
+        for (auto f : model->faces()) {
+            for (auto h : model->halfedges(f)) {
+                auto v = model->to_vertex(h);
+                const vec3 &p = points[v];
                 Vertex vertex{};
+                vertex.pos = glm::vec3(p.x, p.y, p.z);
 
-                vertex.pos = {
-                        attrib.vertices[3 * index.vertex_index + 0],
-                        attrib.vertices[3 * index.vertex_index + 1],
-                        attrib.vertices[3 * index.vertex_index + 2]
-                };
+                vec3 c(1.0f, 1.0f, 1.0f);
+                if (facecolors)
+                    c = facecolors[f];
+                else if (vertexcolors)
+                    c = vertexcolors[v];
+                vertex.color = glm::vec3(c.x, c.y, c.z);
 
-                vertex.texCoord = {
-                        attrib.texcoords[2 * index.texcoord_index + 0],
-                        1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-                };
+                vec2 t(0.5f);
+                if (texcoords)
+                    t = texcoords[h];
+                vertex.texCoord = glm::vec2(t.x, t.y);  // 1 - y: flip vertically
 
-                vertex.color = {1.0f, 1.0f, 1.0f};
-
-                if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniqueVertices[vertex]);
+                vertices.push_back(vertex);
+                indices.push_back(index++);
             }
         }
+
+        delete model;
     }
 
     void ApplicationVulkan::createVertexBuffer() {
