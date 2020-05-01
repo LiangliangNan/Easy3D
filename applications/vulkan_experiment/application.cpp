@@ -4,11 +4,9 @@
 #include <easy3d/viewer/transform.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-
 #include <3rd_party/stb/stb_image.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
-
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 
@@ -1377,11 +1375,10 @@ namespace easy3d {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f,
-                                    10.0f);
-        ubo.proj[1][1] *= -1;
+        ubo.model = mat4::rotation(vec3(0.0f, 0.0f, 1.0f), time * glm::radians(90.0f));
+        ubo.view =  transform::look_at(vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = transform::perspective(deg2rad(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+        ubo.proj(1, 1) *= -1;
 
         void *data;
         vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);

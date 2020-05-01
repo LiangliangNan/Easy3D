@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <iostream>
 
+using namespace easy3d;
 
 int main() {
     ApplicationVulkan app;

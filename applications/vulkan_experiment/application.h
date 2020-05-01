@@ -2,7 +2,6 @@
 #define EASY3D_APPLICATION_VULKAN_H
 
 #define GLFW_INCLUDE_VULKAN
-
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
@@ -13,9 +12,14 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/hash.hpp"
 
+
 #include <array>
 #include <vector>
 #include <optional>
+
+#include <easy3d/core/types.h>
+#include <easy3d/core/hash.h>
+
 
 namespace easy3d {
 
@@ -77,15 +81,16 @@ namespace easy3d {
             size_t operator()(Vertex const &vertex) const {
                 return ((std::hash<glm::vec3>()(vertex.pos) ^ (std::hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
                        (std::hash<glm::vec2>()(vertex.texCoord) << 1);
+                //return ((hash<3, float>(vertex.pos) ^ (hash<3, float>(vertex.color) << 1)) >> 1) ^ (hash<2, float>(vertex.texCoord) << 1);
             }
         };
     };
 
 
     struct UniformBufferObject {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
+        alignas(16) mat4 model;
+        alignas(16) mat4 view;
+        alignas(16) mat4 proj;
     };
 
 
