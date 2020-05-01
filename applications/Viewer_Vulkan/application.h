@@ -80,9 +80,9 @@ namespace easy3d {
 
     class ApplicationVulkan {
     public:
-        void run();
+        virtual void run();
 
-    private:
+    protected:
         GLFWwindow *window;
 
         VkInstance instance;
@@ -151,11 +151,11 @@ namespace easy3d {
 
         void initVulkan();
 
-        void mainLoop();
+        virtual void mainLoop();
 
         void cleanupSwapChain();
 
-        void cleanup();
+        virtual void cleanup();
 
         void recreateSwapChain();
 
@@ -256,7 +256,7 @@ namespace easy3d {
 
         void createSyncObjects();
 
-        void updateUniformBuffer(uint32_t currentImage);
+        virtual void updateUniformBuffer(uint32_t currentImage);
 
 
         void drawFrame();

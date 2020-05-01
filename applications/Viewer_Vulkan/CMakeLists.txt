@@ -24,6 +24,8 @@ if (Vulkan_FOUND)
     add_executable(${PROJECT_NAME}
             application.h
             application.cpp
+            viewer.h
+            viewer.cpp
             main.cpp
             )
     target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})

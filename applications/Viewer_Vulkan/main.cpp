@@ -1,4 +1,4 @@
-#include "application.h"
+#include "viewer.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -10,10 +10,10 @@ using namespace easy3d;
 int main() {
     logging::initialize();
 
-    ApplicationVulkan app;
+    ViewerVK viewer;
 
     try {
-        app.run();
+        viewer.run();
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
