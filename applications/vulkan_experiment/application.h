@@ -78,9 +78,8 @@ namespace easy3d {
         }
 
         struct Hash {
-            size_t operator()(Vertex const &vertex) const {
-                return ((std::hash<glm::vec3>()(vertex.pos) ^ (std::hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                       (std::hash<glm::vec2>()(vertex.texCoord) << 1);
+            std::size_t operator()(Vertex const &vertex) const {
+                return ((std::hash<glm::vec3>()(vertex.pos) ^ (std::hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (std::hash<glm::vec2>()(vertex.texCoord) << 1);
                 //return ((hash<3, float>(vertex.pos) ^ (hash<3, float>(vertex.color) << 1)) >> 1) ^ (hash<2, float>(vertex.texCoord) << 1);
             }
         };
