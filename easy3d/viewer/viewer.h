@@ -404,13 +404,13 @@ namespace easy3d {
         void setup_callbacks(GLFWwindow*);
 
 		/* Event handlers. Client code should not touch these */
-        virtual bool callback_event_cursor_pos(double x, double y);
-        virtual bool callback_event_mouse_button(int button, int action, int modifiers);
-        virtual bool callback_event_keyboard(int key, int action, int mods);
-        virtual bool callback_event_character(unsigned int codepoint);
-        virtual bool callback_event_drop(int count, const char **filenames);
-        virtual bool callback_event_scroll(double dx, double dy);
-        virtual void callback_event_resize(int w, int h);
+        bool callback_event_cursor_pos(double x, double y);
+        bool callback_event_mouse_button(int button, int action, int modifiers);
+        bool callback_event_keyboard(int key, int action, int mods);
+        bool callback_event_character(unsigned int codepoint);
+        bool callback_event_drop(int count, const char **filenames);
+        bool callback_event_scroll(double dx, double dy);
+        void callback_event_resize(int w, int h);
 
         void draw_corner_axes();
 
