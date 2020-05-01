@@ -25,24 +25,36 @@
 #ifndef EASY3D_HASH_H
 #define EASY3D_HASH_H
 
+#include <functional>
+
 
 namespace easy3d
 {
+
     inline void hash_combine(std::size_t &seed, std::size_t hash) {
         hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
         seed ^= hash;
     }
 
 
-    template<typename InputIterator >
-    inline std::size_t hash(InputIterator begin, InputIterator end) {
+    template <int DIM, typename FT> inline
+    std::size_t hash(const Vec<DIM, FT>& v) {
         std::size_t seed = 0;
-        std::hash<double> hasher;
+        std::hash<FT> hasher;
+        for (std::size_t i=0; i<v.size(); ++i)
+            hash_combine(seed, hasher(v[i]));
+        return seed;
+    }
+
+
+    template<typename FT, typename InputIterator> inline
+    std::size_t hash(InputIterator begin, InputIterator end) {
+        std::size_t seed = 0;
+        std::hash<FT> hasher;
         for (auto it = begin; it != end; ++it)
             hash_combine(seed, hasher(*it));
         return seed;
     }
-
 
 } // namespace easy3d
 
