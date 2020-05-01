@@ -10,28 +10,23 @@
 #include <QOpenGLFunctions>
 #include <QMessageBox>
 
-#ifdef SHOW_PROGRESS // enable progress and cursor
-#include <QProgressDialog>
-#include <QGuiApplication>
-#include <QCursor>
-#endif
-
 #include "paint_canvas.h"
 #include "main_window.h"
 
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/transform.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
 
 using namespace easy3d;
 
 bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand)
 {
-    makeCurrent();
-
     int max_samples = 0;
+    makeCurrent();
     func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
+    doneCurrent();
     if (samples > max_samples) {
         LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples << ")";
         return false;
@@ -66,6 +61,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     QImage image(w, h, QImage::Format_ARGB32);
     if (image.isNull()) {
         QMessageBox::warning(this, "Image saving error", "Failed to allocate the image", QMessageBox::Ok, QMessageBox::NoButton);
+        doneCurrent();
         return false;
     }
 
@@ -79,9 +75,13 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     if (nbX * sub_w < w)	++nbX;
     if (nbY * sub_h < h)	++nbY;
 
+    ProgressLogger progress(nbX*nbY * 1.2f); // the extra 0.2 is for saving the "big" image
+
     // remember the current projection matrix
     // const mat4& proj_matrix = camera()->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
     const mat4 proj_matrix = camera()->projectionMatrix();
+
+    makeCurrent();
 
 #ifdef USE_QT_FBO
     QOpenGLFramebufferObjectFormat format;
@@ -93,19 +93,6 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     FramebufferObject* fbo = new FramebufferObject(sub_w, sub_h, samples);
     fbo->add_color_buffer();
     fbo->add_depth_buffer();
-#endif
-
-#ifdef SHOW_PROGRESS
-    QProgressDialog progress("Snapshot...", "Cancel", 0, nbX*nbY, nullptr, Qt::SplashScreen);
-    progress.setWindowModality(Qt::WindowModal);
-    progress.setAutoClose(false);
-    progress.setAutoReset(false);
-    progress.setCancelButton(nullptr);
-    progress.show();
-    qApp->setOverrideCursor(Qt::WaitCursor);
-    qApp->processEvents();
-    // progress logger changes the context thus interferes with the screen grabbing mechanism
-//    makeCurrent();
 #endif
 
     int count = 0;
@@ -166,14 +153,9 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             ++count;
 
 #ifdef SHOW_PROGRESS
-			// restore the projection matrix and color
-			camera()->set_projection_matrix(proj_matrix);
-			if (bk_white)
-				func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-
-            progress.setValue(count);
-            // progress logger changes the context thus interferes with the screen grabbing mechanism
-//            makeCurrent();
+			progress.next(false);
+			// this very important (the progress bar may interfere the framebuffer
+			makeCurrent();
 #endif
         }
     }
@@ -185,20 +167,10 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
     // restore the clear color
 	func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-
     doneCurrent();
 
-#ifdef SHOW_PROGRESS
-    progress.setLabelText("Saving image...");
-    qApp->processEvents();
-#endif
-
     bool saved = image.save(file_name);
-
-#ifdef SHOW_PROGRESS
-    progress.hide();
-    QGuiApplication::setOverrideCursor(Qt::ArrowCursor);
-#endif
+    progress.done();
 
     return saved;
 }

@@ -162,20 +162,21 @@ MainWindow::~MainWindow() {
 }
 
 
-void MainWindow::notify(std::size_t value, bool show_text) {
+void MainWindow::notify(std::size_t value, bool show_text, bool update_viewer) {
     progress_bar_->setValue(int(value));
     progress_bar_->setTextVisible(show_text);
-    viewer_->update();
-
     progress_bar_->setVisible(value > 0 && value < 100);
 
-    // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
-    // in parallel-calling one of them would effectively halt the other until the first one is finished
-    // (so you can't distribute computing power among different tasks). It also makes the application react
-    // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
-    // is only suited for short and simple problems that are to be processed in a single thread, such as
-    // splash screens and the monitoring of short operations.
-    QCoreApplication::processEvents();
+    if (update_viewer) {
+        viewer_->update();
+        // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
+        // in parallel-calling one of them would effectively halt the other until the first one is finished
+        // (so you can't distribute computing power among different tasks). It also makes the application react
+        // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
+        // is only suited for short and simple problems that are to be processed in a single thread, such as
+        // splash screens and the monitoring of short operations.
+        QCoreApplication::processEvents();
+    }
 }
 
 

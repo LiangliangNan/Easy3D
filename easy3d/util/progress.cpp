@@ -37,7 +37,7 @@ namespace easy3d {
         public:
             static Progress* instance();
 
-            virtual void notify(std::size_t new_val, bool show_text = true);
+            virtual void notify(std::size_t new_val, bool show_text = true, bool update_viewer = true);
 
             void set_client(ProgressClient *c) { client_ = c; }
 
@@ -75,9 +75,9 @@ namespace easy3d {
             level_--;
         }
 
-        void Progress::notify(std::size_t new_val, bool show_text) {
+        void Progress::notify(std::size_t new_val, bool show_text, bool update_viewer) {
             if (client_ != nullptr && level_ < 2)
-                client_->notify(new_val, show_text);
+                client_->notify(new_val, show_text, update_viewer);
         }
     }
 
@@ -117,27 +117,27 @@ namespace easy3d {
         details::Progress::instance()->pop();
     }
 
-    void ProgressLogger::next() {
+    void ProgressLogger::next(bool update_viewer) {
         cur_val_++;
-        update(true);
+        update(true, update_viewer);
     }
 
     bool ProgressLogger::is_canceled() const {
         return details::Progress::instance()->is_canceled();
     }
 
-    void ProgressLogger::notify(std::size_t new_val, bool show_text) {
-        cur_val_ = new_val;
-        update(show_text);
+    void ProgressLogger::notify(std::size_t new_value, bool show_text, bool update_viewer) {
+        cur_val_ = new_value;
+        update(show_text, update_viewer);
     }
 
 
-    void ProgressLogger::update(bool show_text) {
+    void ProgressLogger::update(bool show_text, bool update_viewer) {
         std::size_t percent = cur_val_ * 100 / std::max<std::size_t>(1, max_val_ - 1);
         if (percent != cur_percent_) {
             cur_percent_ = percent;
             if (!quiet_) {
-                details::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), show_text);
+                details::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), show_text, update_viewer);
             }
         }
     }

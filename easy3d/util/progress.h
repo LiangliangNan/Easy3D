@@ -38,7 +38,7 @@ namespace easy3d {
     public:
         ProgressClient();
         virtual ~ProgressClient() {}
-        virtual void notify(std::size_t new_val, bool show_text = true) = 0;
+        virtual void notify(std::size_t new_value, bool show_text = true, bool update_viewer = true) = 0;
         virtual void cancel();
     };
 
@@ -49,8 +49,9 @@ namespace easy3d {
         ProgressLogger(std::size_t max_val = 100, const std::string &task_name = "", bool quiet = false);
         virtual ~ProgressLogger();
 
-        virtual void notify(std::size_t new_val, bool show_text = true);
-        virtual void next();
+        virtual void notify(std::size_t new_value, bool show_text = true, bool update_viewer = true);
+        virtual void next(bool update_viewer = true);
+        virtual void done() { notify(max_val_); }
 
         bool is_canceled() const;
 
@@ -58,7 +59,7 @@ namespace easy3d {
         void reset(std::size_t max_val, bool show_text = true);
 
     protected:
-        virtual void update(bool show_text = true);
+        virtual void update(bool show_text, bool update_viewer);
 
     private:
         std::size_t max_val_;

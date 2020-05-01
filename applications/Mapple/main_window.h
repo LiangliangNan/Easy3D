@@ -142,7 +142,7 @@ private:
 
     QDockWidget* dockWidgetCommand();
 
-    void notify(std::size_t value, bool show_text) override ;
+    void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override ;
 
 private:
     PaintCanvas*   viewer_;
