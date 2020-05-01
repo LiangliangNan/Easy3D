@@ -1,9 +1,9 @@
-<img src="resources/images/logo.jpg" width="600">
+  <img src="resources/images/logo.jpg" width="600">
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 #### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
-![Overview of Easy3D](resources/images/overview.jpg)
+  ![Overview of Easy3D](resources/images/overview.jpg)
 
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). 
@@ -21,7 +21,7 @@
   for 3D modeling and geometry processing. 
 * A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data. Here is how Mapple looks like
 
-     <img src="resources/images/mapple.jpg" width="600">.   <img src="resources/images/supported_os.jpg" alt="" height="72px">    
+ <img src="resources/images/mapple.jpg" width="600">   <img src="resources/images/supported_os.jpg" alt="" height="72px">    
  
  
 ### A quick glance ###
