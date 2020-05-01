@@ -12,6 +12,8 @@
 #include <QColorDialog>
 #include <QCoreApplication>
 #include <QPushButton>
+#include <QHBoxLayout>
+#include <QSpacerItem>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -142,7 +144,7 @@ MainWindow::MainWindow(QWidget *parent)
 #ifdef NDEBUG
     setWindowState(Qt::WindowMaximized);
 #else
-    setBaseSize(960, 800);
+    setBaseSize(1024, 800);
 #endif
 
     readSettings();
@@ -176,52 +178,51 @@ void MainWindow::notify(std::size_t value, bool show_text) {
 
 void MainWindow::createStatusBar()
 {
+    QHBoxLayout* layout = new QHBoxLayout;
+
     labelStatusInfo_ = new QLabel("Ready");
-    labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width());
+    labelStatusInfo_->setFixedWidth(150);
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addWidget(labelStatusInfo_, 1);
+    layout->addWidget(labelStatusInfo_);
+
+    layout->addSpacerItem(new QSpacerItem(40, 10));
 
     labelPointUnderMouse_ = new QLabel("XYZ = [-, -, -]");
-    labelPointUnderMouse_->setFixedWidth(450);
+    labelPointUnderMouse_->setFixedWidth(300);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addWidget(labelPointUnderMouse_, 1);
+    layout->addWidget(labelPointUnderMouse_);
 
-    QLabel* space1 = new QLabel;
-    statusBar()->addWidget(space1, 1);
+    layout->addSpacerItem(new QSpacerItem(40, 10));
 
-    const int length = 250;
+    const int length = 150;
     labelNumFaces_ = new QLabel;
-    labelNumFaces_->setFixedWidth(length);
+    labelNumFaces_->setMinimumWidth(length);
     labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addPermanentWidget(labelNumFaces_, 1);
+    layout->addWidget(labelNumFaces_);
 
     labelNumVertices_ = new QLabel;
-    labelNumVertices_->setFixedWidth(length);
+    labelNumVertices_->setMinimumWidth(length);
     labelNumVertices_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addPermanentWidget(labelNumVertices_, 1);
+    layout->addWidget(labelNumVertices_);
 
     labelNumEdges_ = new QLabel;
-    labelNumEdges_->setFixedWidth(length);
+    labelNumEdges_->setMinimumWidth(length);
     labelNumEdges_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addPermanentWidget(labelNumEdges_, 1);
+    layout->addWidget(labelNumEdges_);
 
-    QLabel* space2 = new QLabel;
-    statusBar()->addWidget(space2, 1);
+    layout->addSpacerItem(new QSpacerItem(40, 10));
+
+    QWidget* widget = new QWidget(this);
+    widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    widget->setLayout(layout);
+    statusBar()->addWidget(widget);
 
     //////////////////////////////////////////////////////////////////////////
 
-    const QSize size(16, 16);
-    QPushButton* cancelButton = new QPushButton;
-    cancelButton->setFixedSize(size);
-    cancelButton->setIconSize(size);
-    cancelButton->setIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/cancel.png")));
-    statusBar()->addPermanentWidget(cancelButton, 1);
-    connect(cancelButton, SIGNAL(pressed()), this,  SLOT(cancelTask()));
-
     progress_bar_ = new QProgressBar;
     progress_bar_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    progress_bar_->setFixedWidth(ui->dockWidgetModels->sizeHint().width());
-    statusBar()->addPermanentWidget(progress_bar_, 1);
+    progress_bar_->setMinimumWidth(ui->dockWidgetModels->sizeHint().width());
+    statusBar()->addPermanentWidget(progress_bar_);
 
     //////////////////////////////////////////////////////////////////////////
 
