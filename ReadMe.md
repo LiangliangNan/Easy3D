@@ -19,6 +19,9 @@
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and algorithms 
   for 3D modeling and geometry processing. 
+* A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data. Here is how Mapple looks like
+
+     <img src="resources/images/mapple.jpg" width="800">
  
  
 ### A quick glance ###
