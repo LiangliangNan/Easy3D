@@ -4,15 +4,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtx/hash.hpp"
-
-
 #include <array>
 #include <vector>
 #include <optional>
@@ -38,18 +29,11 @@ namespace easy3d {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
-#define USE_GLM_TYPES 1
 
     struct Vertex {
-#if USE_GLM_TYPES
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texCoord;
-#else   // Why this doesn't work?
         vec3 pos;
         vec3 color;
         vec2 texCoord;
-#endif
 
         static VkVertexInputBindingDescription getBindingDescription() {
             VkVertexInputBindingDescription bindingDescription{};

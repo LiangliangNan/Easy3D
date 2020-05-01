@@ -1057,24 +1057,9 @@ namespace easy3d {
         for (auto f : model->faces()) {
             for (auto h : model->halfedges(f)) {
                 auto v = model->to_vertex(h);
-                const vec3 &p = points[v];
                 Vertex vertex{};
+                vertex.pos = points[v];
 
-#if USE_GLM_TYPES
-                vertex.pos = glm::vec3(p.x, p.y, p.z);
-
-                vec3 c(1.0f, 1.0f, 1.0f);
-                if (facecolors)
-                    c = facecolors[f];
-                else if (vertexcolors)
-                    c = vertexcolors[v];
-                vertex.color = glm::vec3(c.x, c.y, c.z);
-
-                vec2 t(0.5f);
-                if (texcoords)
-                    t = texcoords[h];
-                vertex.texCoord = glm::vec2(t.x, t.y);  // 1 - y: flip vertically
-#else
                 vertex.color = vec3(1.0f, 1.0f, 1.0f);
                 if (facecolors)
                     vertex.color = facecolors[f];
@@ -1084,7 +1069,6 @@ namespace easy3d {
                 vertex.texCoord = vec2(0.5f);
                 if (texcoords)
                     vertex.texCoord = texcoords[h];
-#endif
 
                 vertices.push_back(vertex);
                 indices.push_back(index++);
@@ -1389,7 +1373,7 @@ namespace easy3d {
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         UniformBufferObject ubo{};
-        ubo.model = mat4::rotation(vec3(0.0f, 0.0f, 1.0f), time * glm::radians(90.0f));
+        ubo.model = mat4::rotation(vec3(0.0f, 0.0f, 1.0f), time * deg2rad(90.0f));
         ubo.view =  transform::look_at(vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f));
         ubo.proj = transform::perspective(deg2rad(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
         ubo.proj(1, 1) *= -1;
