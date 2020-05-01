@@ -49,14 +49,14 @@ namespace easy3d {
 
     class Tessellator {
     public:
-        /** A vertex carries both xyz coordinates and it attributes (e.g., color, texcoord). */
+        /** A vertex carries both xyz coordinates and its attributes (e.g., color, texcoord). */
         struct Vertex : std::vector<double> {
 
-            /** initialized with xyz coordinates. */
+            /** initialize with xyz coordinates. */
             Vertex(const vec3 &xyz) { append(xyz); }
 
             /**
-             * initialized from a C-style array.
+             * initialize from a C-style array.
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
@@ -65,10 +65,16 @@ namespace easy3d {
             }
 
             /**
-             * memory allocated without data initialization.
+             * initialize with a known size but memory is allocated without data initialization.
              */
             Vertex(std::size_t size = 0) : std::vector<double>(size) {}
 
+            /**
+             * append a property (e.g., color, texture coordinates) to this vertex.
+             * @tparam Vec The vector type of the vertex property, e.g., vec2, vec3.
+             * @param v The value of the vertex property.
+             * @note The order you retrieve the properties must be the same as they were appended.
+             */
             template<typename Vec>
             inline void append(const Vec &v) {
                 for (int i = 0; i < v.size(); ++i)
