@@ -166,6 +166,9 @@ void MainWindow::notify(std::size_t value, bool show_text) {
     progress_bar_->setValue(int(value));
     progress_bar_->setTextVisible(show_text);
     viewer_->update();
+
+    progress_bar_->setVisible(value > 0 && value < 100);
+
     // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
     // in parallel-calling one of them would effectively halt the other until the first one is finished
     // (so you can't distribute computing power among different tasks). It also makes the application react
@@ -178,48 +181,38 @@ void MainWindow::notify(std::size_t value, bool show_text) {
 
 void MainWindow::createStatusBar()
 {
-    QHBoxLayout* layout = new QHBoxLayout;
-
     labelStatusInfo_ = new QLabel("Ready");
-    labelStatusInfo_->setFixedWidth(150);
+    labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width());
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(labelStatusInfo_);
-
-    layout->addSpacerItem(new QSpacerItem(40, 10));
+    statusBar()->addWidget(labelStatusInfo_);
 
     labelPointUnderMouse_ = new QLabel("XYZ = [-, -, -]");
     labelPointUnderMouse_->setFixedWidth(300);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(labelPointUnderMouse_);
+    statusBar()->addWidget(labelPointUnderMouse_);
 
-    layout->addSpacerItem(new QSpacerItem(40, 10));
+    //////////////////////////////////////////////////////////////////////////
 
     const int length = 150;
     labelNumFaces_ = new QLabel;
     labelNumFaces_->setMinimumWidth(length);
     labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(labelNumFaces_);
+    statusBar()->addWidget(labelNumFaces_);
 
     labelNumVertices_ = new QLabel;
     labelNumVertices_->setMinimumWidth(length);
     labelNumVertices_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(labelNumVertices_);
+    statusBar()->addWidget(labelNumVertices_);
 
     labelNumEdges_ = new QLabel;
     labelNumEdges_->setMinimumWidth(length);
     labelNumEdges_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    layout->addWidget(labelNumEdges_);
-
-    layout->addSpacerItem(new QSpacerItem(40, 10));
-
-    QWidget* widget = new QWidget(this);
-    widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    widget->setLayout(layout);
-    statusBar()->addWidget(widget);
+    statusBar()->addWidget(labelNumEdges_);
 
     //////////////////////////////////////////////////////////////////////////
 
     progress_bar_ = new QProgressBar;
+    progress_bar_->setVisible(false);
     progress_bar_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     progress_bar_->setMinimumWidth(ui->dockWidgetModels->sizeHint().width());
     statusBar()->addPermanentWidget(progress_bar_);
@@ -263,8 +256,6 @@ void MainWindow::updateStatusBar()
     labelNumVertices_->setText( vertices );
     labelNumEdges_->setText( edges );
 }
-
-
 
 
 void MainWindow::cancelTask() {
