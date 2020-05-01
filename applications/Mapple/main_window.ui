@@ -67,7 +67,7 @@
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionAboutMapple"/>
+    <addaction name="actionAbout"/>
     <addaction name="separator"/>
     <addaction name="actionManual"/>
    </widget>
@@ -569,7 +569,7 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionAboutMapple">
+  <action name="actionAbout">
    <property name="icon">
     <iconset>
      <normaloff>Resources/icons/help.png</normaloff>Resources/icons/help.png</iconset>

@@ -69,7 +69,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , edl_enabled_(false)
 {
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
-    setFocusPolicy(Qt::WheelFocus);
+    setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
 
     camera_ = new Camera;
@@ -363,10 +363,11 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
 
-//    bool found = false;
-//    easy3d::vec3 p = pointUnderPixel(e->pos(), found);
-//    if (found)
-//        std::cout << "point under mouse: " << p << std::endl;
+    bool found = false;
+    makeCurrent();
+    easy3d::vec3 p = pointUnderPixel(e->pos(), found);
+    doneCurrent();
+    window_->showPointUnderMouse(p, found);
 
     update();
 }

@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QToolBox>
 #include <QColorDialog>
+#include <QCoreApplication>
+#include <QPushButton>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -122,8 +124,11 @@ MainWindow::MainWindow(QWidget *parent)
     // surface mesh menu
     createActionsForSurfaceMeshMenu();
 
+    // status bar
+    createStatusBar();
+
     // about menu
-    connect(ui->actionAboutMapple, SIGNAL(triggered()), this, SLOT(onAboutMapple()));
+    connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(onAbout()));
     connect(ui->actionManual, SIGNAL(triggered()), this, SLOT(showManual()));
 
     // options for the model panel
@@ -131,14 +136,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
 
     setWindowIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/Mapple.png")));
-    setFocusPolicy(Qt::StrongFocus);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);
 
-    setBaseSize(1280, 960);
-
 #ifdef NDEBUG
     setWindowState(Qt::WindowMaximized);
+#else
+    setBaseSize(960, 800);
 #endif
 
     readSettings();
@@ -153,6 +157,125 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
+}
+
+
+void MainWindow::notify(std::size_t value, bool show_text) {
+    progress_bar_->setValue(int(value));
+    progress_bar_->setTextVisible(show_text);
+    viewer_->update();
+    // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
+    // in parallel-calling one of them would effectively halt the other until the first one is finished
+    // (so you can't distribute computing power among different tasks). It also makes the application react
+    // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
+    // is only suited for short and simple problems that are to be processed in a single thread, such as
+    // splash screens and the monitoring of short operations.
+    QCoreApplication::processEvents();
+}
+
+
+void MainWindow::createStatusBar()
+{
+    labelStatusInfo_ = new QLabel("Ready");
+    labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width());
+    labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addWidget(labelStatusInfo_, 1);
+
+    labelPointUnderMouse_ = new QLabel("XYZ = [-, -, -]");
+    labelPointUnderMouse_->setFixedWidth(450);
+    labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addWidget(labelPointUnderMouse_, 1);
+
+    QLabel* space1 = new QLabel;
+    statusBar()->addWidget(space1, 1);
+
+    const int length = 250;
+    labelNumFaces_ = new QLabel;
+    labelNumFaces_->setFixedWidth(length);
+    labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addPermanentWidget(labelNumFaces_, 1);
+
+    labelNumVertices_ = new QLabel;
+    labelNumVertices_->setFixedWidth(length);
+    labelNumVertices_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addPermanentWidget(labelNumVertices_, 1);
+
+    labelNumEdges_ = new QLabel;
+    labelNumEdges_->setFixedWidth(length);
+    labelNumEdges_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addPermanentWidget(labelNumEdges_, 1);
+
+    QLabel* space2 = new QLabel;
+    statusBar()->addWidget(space2, 1);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    const QSize size(16, 16);
+    QPushButton* cancelButton = new QPushButton;
+    cancelButton->setFixedSize(size);
+    cancelButton->setIconSize(size);
+    cancelButton->setIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/cancel.png")));
+    statusBar()->addPermanentWidget(cancelButton, 1);
+    connect(cancelButton, SIGNAL(pressed()), this,  SLOT(cancelTask()));
+
+    progress_bar_ = new QProgressBar;
+    progress_bar_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    progress_bar_->setFixedWidth(ui->dockWidgetModels->sizeHint().width());
+    statusBar()->addPermanentWidget(progress_bar_, 1);
+
+    //////////////////////////////////////////////////////////////////////////
+
+    updateStatusBar();
+}
+
+
+void MainWindow::updateStatusBar()
+{
+    QString faces(""), vertices(""), edges("");
+
+    Model* model = viewer_->currentModel();
+    if (dynamic_cast<SurfaceMesh*>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh*>(model);
+        faces = QString("#faces: %1").arg(mesh->n_faces());
+        vertices = QString("#vertices: %1").arg(mesh->n_vertices());
+        edges = QString("#edges: %1").arg(mesh->n_edges());
+        labelNumFaces_->setVisible(true);
+        labelNumEdges_->setVisible(true);
+    }
+
+    else if (dynamic_cast<PointCloud*>(model)) {
+        auto cloud = dynamic_cast<PointCloud*>(model);
+        vertices = QString("#vertices: %1").arg(cloud->n_vertices());
+        labelNumFaces_->setVisible(false);
+        labelNumEdges_->setVisible(false);
+    }
+
+    else if (dynamic_cast<Graph*>(model)) {
+        auto graph = dynamic_cast<Graph*>(model);
+        vertices = QString("#vertices: %1").arg(graph->n_vertices());
+        edges = QString("#meta: %1").arg(graph->n_edges());
+        labelNumFaces_->setVisible(false);
+        labelNumEdges_->setVisible(true);
+    }
+
+    labelNumFaces_->setText( faces );
+    labelNumVertices_->setText( vertices );
+    labelNumEdges_->setText( edges );
+}
+
+
+
+
+void MainWindow::cancelTask() {
+    int value = progress_bar_->value() ;
+
+    cancel();
+    progress_bar_->reset();
+    progress_bar_->setTextVisible(false);
+    viewer_->update();
+
+    if (value != -1 && value != 0)
+        LOG(WARNING) << "task canceled" << std::endl;
 }
 
 
@@ -315,6 +438,7 @@ void MainWindow::updateUi() {
 
     ui->treeWidgetModels->updateModelList();
     updateRenderingPanel();
+    updateStatusBar();
 }
 
 
@@ -350,6 +474,14 @@ void MainWindow::enableCameraManipulation() {
 
 void MainWindow::setShowSelectedOnly(bool b) {
     ui->checkBoxSelectedOnly->setChecked(b);
+}
+
+
+void MainWindow::showPointUnderMouse(const easy3d::vec3 &p, bool found) {
+	QString coordString = "XYZ = [-, -, -]";
+	if (found)
+		coordString = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
+	labelPointUnderMouse_->setText(coordString);
 }
 
 
@@ -450,7 +582,7 @@ bool MainWindow::okToContinue()
 }
 
 
-void MainWindow::onAboutMapple()
+void MainWindow::onAbout()
 {
     QString title = QMessageBox::tr(
         "<p align=\"center\"><span style=\"font-style:italic;\">I'm good software, though I have defects.</span></p>"
@@ -926,6 +1058,8 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<SurfaceMesh*>(model)) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 
+        ProgressLogger progress(4);
+
         auto v_height_x = mesh->vertex_property<float>("v:height_x");
         auto v_height_y = mesh->vertex_property<float>("v:height_y");
         auto v_height_z = mesh->vertex_property<float>("v:height_z");
@@ -935,6 +1069,7 @@ void MainWindow::computeHeightField() {
             v_height_y[v] = p.y;
             v_height_z[v] = p.z;
         }
+        progress.next();
 
         auto e_height_x = mesh->edge_property<float>("e:height_x");
         auto e_height_y = mesh->edge_property<float>("e:height_y");
@@ -947,6 +1082,7 @@ void MainWindow::computeHeightField() {
             e_height_y[e] = c.y;
             e_height_z[e] = c.z;
         }
+        progress.next();
 
         auto f_height_x = mesh->face_property<float>("f:height_x");
         auto f_height_y = mesh->face_property<float>("f:height_y");
@@ -963,6 +1099,7 @@ void MainWindow::computeHeightField() {
             f_height_y[f] = c.y;
             f_height_z[f] = c.z;
         }
+        progress.next();
 
         // add a vector field to the faces
         mesh->update_face_normals();
@@ -985,6 +1122,7 @@ void MainWindow::computeHeightField() {
             }
             enormals[e].normalize();
         }
+        progress.next();
     }
 
     else if (dynamic_cast<PointCloud*>(model)) {

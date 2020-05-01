@@ -4,6 +4,11 @@
 #include <string>
 
 #include <QMainWindow>
+#include <QProgressBar>
+#include <QLabel>
+
+#include <easy3d/util/progress.h>
+#include <easy3d/core/types.h>
 
 
 namespace Ui {
@@ -20,7 +25,7 @@ class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
 class QDockWidget;
 
-class MainWindow : public QMainWindow
+class MainWindow : public QMainWindow, public easy3d::ProgressClient
 {
     Q_OBJECT
 
@@ -36,6 +41,8 @@ public:
     void updateRenderingPanel();    // rendering panel only
 
     void setShowSelectedOnly(bool b);
+
+    void showPointUnderMouse(const easy3d::vec3& p, bool found);
 
 public slots:
     void enableCameraManipulation();
@@ -92,11 +99,16 @@ private slots:
     void surfaceMeshStitchCoincidentEdges();
     void surfaceMeshRemoveIsolatedVertices();
 
-    // about
-    void onAboutMapple();
-    void showManual();
-
+    // user interaction
     void operationModeChanged(QAction* act);
+
+    // status bar
+    void updateStatusBar();
+    void cancelTask();
+
+    // about
+    void onAbout();
+    void showManual();
 
 protected:
     void dragEnterEvent(QDragEnterEvent *e) override;
@@ -116,6 +128,8 @@ private:
     void createActionsForPointCloudMenu();
     void createActionsForSurfaceMeshMenu();
 
+    void createStatusBar();
+
     void showDialog(QDialog*);
 
     bool okToContinue();
@@ -128,6 +142,8 @@ private:
 
     QDockWidget* dockWidgetCommand();
 
+    void notify(std::size_t value, bool show_text) override ;
+
 private:
     PaintCanvas*   viewer_;
 
@@ -137,6 +153,13 @@ private:
     enum { MaxRecentFiles = 5 };
     QAction *actionsRecentFile[MaxRecentFiles],
         *actionSeparator;
+
+    QProgressBar*	progress_bar_;
+    QLabel *labelStatusInfo_,
+            *labelPointUnderMouse_,
+            *labelNumFaces_,
+            *labelNumVertices_,
+            *labelNumEdges_;
 
     QDockWidget*                dockWidgetCommand_;
 
