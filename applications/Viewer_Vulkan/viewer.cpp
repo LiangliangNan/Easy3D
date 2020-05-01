@@ -551,6 +551,47 @@ namespace easy3d {
         }
 
         if (create_default_drawables) {
+//            SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+//
+//            vertices.reserve(mesh->n_vertices());
+//            indices.reserve(mesh->n_vertices());
+//
+//            auto points = mesh->get_vertex_property<vec3>("v:point");
+//            auto texcoords = mesh->get_halfedge_property<vec2>("h:texcoord");
+//            auto facecolors = mesh->get_face_property<vec3>("f:color");
+//            auto vertexcolors = mesh->get_vertex_property<vec3>("v:color");
+//
+//            int index = 0;
+//            for (auto f : mesh->faces()) {
+//                for (auto h : mesh->halfedges(f)) {
+//                    auto v = mesh->to_vertex(h);
+//                    Vertex vertex{};
+//                    vertex.pos = points[v];
+//
+//                    vertex.color = vec3(1.0f, 1.0f, 1.0f);
+//                    if (facecolors)
+//                        vertex.color = facecolors[f];
+//                    else if (vertexcolors)
+//                        vertex.color = vertexcolors[v];
+//
+//                    vertex.texCoord = vec2(0.5f);
+//                    if (texcoords)
+//                        vertex.texCoord = texcoords[h];
+//
+//                    vertices.push_back(vertex);
+//                    indices.push_back(index++);
+//                }
+//            }
+//
+//            vkDestroyBuffer(device, indexBuffer, nullptr);
+//            vkFreeMemory(device, indexBufferMemory, nullptr);
+//
+//            vkDestroyBuffer(device, vertexBuffer, nullptr);
+//            vkFreeMemory(device, vertexBufferMemory, nullptr);
+//
+//            createVertexBuffer();
+//            createIndexBuffer();
+
 //            if (model->n_vertices() > 0)
 //                create_drawables(model);
 //            else
