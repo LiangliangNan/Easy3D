@@ -126,10 +126,11 @@ namespace easy3d {
 			std::vector<Element> elements;
             elements.emplace_back(e);
 
-            DLOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
+            binary = binary && (file_name.find("ascii") == std::string::npos);
+            LOG_IF(WARNING, !binary) << "you're writing an ASCII ply file. Use binary format for better performance";
 
-			PlyWriter writer;
-			return writer.write(file_name, elements, "", binary);
+            PlyWriter writer;
+            return writer.write(file_name, elements, "", binary);
 		}
 
 
