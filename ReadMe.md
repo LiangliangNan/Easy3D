@@ -21,7 +21,7 @@
   for 3D modeling and geometry processing. 
 * A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data. Here is how Mapple looks like
 
- <img src="resources/images/mapple.jpg" width="600">   <img src="resources/images/supported_os.jpg" alt="" height="72px">    
+    <img src="resources/images/mapple.jpg" width="600">      <img src="resources/images/supported_os.jpg" alt="" height="72px">    
  
  
 ### A quick glance ###
