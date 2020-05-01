@@ -1061,6 +1061,8 @@ namespace easy3d {
                 auto v = model->to_vertex(h);
                 const vec3 &p = points[v];
                 Vertex vertex{};
+
+#if USE_GLM_TYPES
                 vertex.pos = glm::vec3(p.x, p.y, p.z);
 
                 vec3 c(1.0f, 1.0f, 1.0f);
@@ -1074,6 +1076,17 @@ namespace easy3d {
                 if (texcoords)
                     t = texcoords[h];
                 vertex.texCoord = glm::vec2(t.x, t.y);  // 1 - y: flip vertically
+#else
+                vertex.color = vec3(1.0f, 1.0f, 1.0f);
+                if (facecolors)
+                    vertex.color = facecolors[f];
+                else if (vertexcolors)
+                    vertex.color = vertexcolors[v];
+
+                vertex.texCoord = vec2(0.5f);
+                if (texcoords)
+                    vertex.texCoord = texcoords[h];
+#endif
 
                 vertices.push_back(vertex);
                 indices.push_back(index++);

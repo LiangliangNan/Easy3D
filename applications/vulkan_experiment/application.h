@@ -38,10 +38,18 @@ namespace easy3d {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
+#define USE_GLM_TYPES 1
+
     struct Vertex {
+#if USE_GLM_TYPES
         glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
+#else   // Why this doesn't work?
+        vec3 pos;
+        vec3 color;
+        vec2 texCoord;
+#endif
 
         static VkVertexInputBindingDescription getBindingDescription() {
             VkVertexInputBindingDescription bindingDescription{};
