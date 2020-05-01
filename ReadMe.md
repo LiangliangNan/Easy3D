@@ -1,4 +1,7 @@
-<img src="https://img.shields.io/badge/Supported%20Platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/>     <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/>
+<div style="text-align: right"> <img src="https://img.shields.io/badge/Supported%20Platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </div>
+
+<div style="text-align: right"> 
+     <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </div>
 
 
 <img src="resources/images/logo.jpg" width="600">
