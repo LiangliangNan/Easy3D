@@ -31,9 +31,31 @@
 namespace easy3d
 {
 
-    inline void hash_combine(std::size_t &seed, std::size_t hash) {
-        hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        seed ^= hash;
+    namespace details {
+        inline void hash_combine(std::size_t &seed, std::size_t hash) {
+            hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= hash;
+        }
+    }
+
+
+    template <typename FT>
+    std::size_t hash(const Vec<2, FT>& v) {
+        std::size_t seed = 0;
+        std::hash<FT> hasher;
+        details::hash_combine(seed, hasher(v.x));
+        details::hash_combine(seed, hasher(v.y));
+        return seed;
+    }
+
+    template <typename FT>
+    std::size_t hash(const Vec<3, FT>& v) {
+        std::size_t seed = 0;
+        std::hash<FT> hasher;
+        details::hash_combine(seed, hasher(v.x));
+        details::hash_combine(seed, hasher(v.y));
+        details::hash_combine(seed, hasher(v.z));
+        return seed;
     }
 
 
@@ -42,7 +64,7 @@ namespace easy3d
         std::size_t seed = 0;
         std::hash<FT> hasher;
         for (std::size_t i=0; i<v.size(); ++i)
-            hash_combine(seed, hasher(v[i]));
+            details::hash_combine(seed, hasher(v[i]));
         return seed;
     }
 
@@ -52,7 +74,7 @@ namespace easy3d
         std::size_t seed = 0;
         std::hash<FT> hasher;
         for (auto it = begin; it != end; ++it)
-            hash_combine(seed, hasher(*it));
+            details::hash_combine(seed, hasher(*it));
         return seed;
     }
 
