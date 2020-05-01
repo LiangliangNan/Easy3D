@@ -1,7 +1,17 @@
-<div style="text-align: right"> <img src="https://img.shields.io/badge/Supported%20Platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </div>
+Normal Text
+
+<p align="right">
+    <b> <img src="https://img.shields.io/badge/Supported%20Platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> <br>
+    <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> <br>
+</p>
+
+
+
+
+<div style="text-align: right">  </div>
 
 <div style="text-align: right"> 
-     <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </div>
+      </div>
 
 
 <img src="resources/images/logo.jpg" width="600">
@@ -27,7 +37,9 @@
   for 3D modeling and geometry processing. 
 * A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data. Here is how Mapple looks like
 
-    <img src="resources/images/mapple.jpg" width="600">       <img src="resources/images/supported_os.jpg" alt="" height="72px">
+<p align="center"> 
+     <img src="resources/images/mapple.jpg" width="600"> 
+</p>
  
 ### A quick glance ###
 
