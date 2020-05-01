@@ -5,6 +5,9 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+        delaunay.h
+        delaunay_2d.h
+        delaunay_3d.h
         surface_mesh_geometry.h
         gaussian_noise.h
         point_cloud_normals.h
@@ -30,6 +33,9 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
+        delaunay.cpp
+        delaunay_2d.cpp
+        delaunay_3d.cpp
         surface_mesh_geometry.cpp
         gaussian_noise.cpp
         point_cloud_normals.cpp
@@ -61,7 +67,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/RANSAC-1.1)
 
-target_link_libraries(${PROJECT_NAME} core kdtree poisson_recon-9.0.1 RANSAC-1.1)
+target_link_libraries(${PROJECT_NAME} core kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tet)
 
 set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})

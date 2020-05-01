@@ -22,13 +22,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_ALGORITHM_EXT_DELAUNAY_3D_H
-#define EASY3D_ALGORITHM_EXT_DELAUNAY_3D_H
+#ifndef EASY3D_ALGORITHM_DELAUNAY_3D_H
+#define EASY3D_ALGORITHM_DELAUNAY_3D_H
 
 
 #include <cassert>
 
-#include <easy3d/algo_ext/delaunay.h>
+#include <easy3d/algo/delaunay.h>
 
 
 class tetgenio;
@@ -321,4 +321,4 @@ namespace easy3d {
 }   // namespace easy3d
 
 
-#endif  // EASY3D_ALGORITHM_EXT_DELAUNAY_3D_H
+#endif  // EASY3D_ALGORITHM_DELAUNAY_3D_H

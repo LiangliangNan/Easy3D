@@ -23,7 +23,7 @@
  */
 
 
-#include <easy3d/algo_ext/delaunay.h>
+#include <easy3d/algo/delaunay.h>
 
 #include <algorithm>
 #include <fstream>

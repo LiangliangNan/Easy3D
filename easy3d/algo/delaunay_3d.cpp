@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/algo_ext/delaunay_3d.h>
+#include <easy3d/algo/delaunay_3d.h>
 #include <easy3d/util/stop_watch.h>
 
 #include <3rd_party/tetgen/tetgen.h>

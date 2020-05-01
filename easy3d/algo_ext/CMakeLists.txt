@@ -5,18 +5,12 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        delaunay.h
-        delaunay_2d.h
-        delaunay_3d.h
         duplicated_faces.h
         mesh_surfacer.h
         self_intersection.h
         )
 
 set(${PROJECT_NAME}_SOURCES
-        delaunay.cpp
-        delaunay_2d.cpp
-        delaunay_3d.cpp
         duplicated_faces.cpp
         mesh_surfacer.cpp
         self_intersection.cpp
@@ -31,7 +25,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_glog_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} core triangle tet)
+target_link_libraries(${PROJECT_NAME} core)
 
 include(../../cmake/UseCGAL.cmake)
 

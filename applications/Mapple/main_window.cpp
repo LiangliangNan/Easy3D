@@ -42,8 +42,8 @@
 #include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
-#include <easy3d/algo_ext/delaunay_2d.h>
-#include <easy3d/algo_ext/delaunay_3d.h>
+#include <easy3d/algo/delaunay_2d.h>
+#include <easy3d/algo/delaunay_3d.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
