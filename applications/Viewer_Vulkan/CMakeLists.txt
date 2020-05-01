@@ -11,6 +11,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Config vulkan
 find_package(Vulkan QUIET)
+
+#if (NOT Vulkan_FOUND)
+#    find_path(Vulkan_INCLUDE_DIR NAMES vulkan/vulkan.h HINTS
+#            "/home/liangliang/dev/VulkanSDK/x86_64/include/")
+#    find_library(Vulkan_LIBRARY NAMES vulkan HINTS
+#            "/home/liangliang/dev/VulkanSDK/x86_64/lib/")
+#endif()
+
 if (Vulkan_FOUND)
     message(STATUS "Vulkan Include dirs: ${Vulkan_INCLUDE_DIRS} and libs: ${Vulkan_LIBRARIES}")
     add_executable(${PROJECT_NAME}
