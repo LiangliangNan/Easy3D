@@ -217,7 +217,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
-        DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the construction";
+        DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the constructing a surface mesh";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
