@@ -27,3 +27,9 @@
 	    
 Longer term:
     - switch to Vulkan.
+    
+    
+    
+Text to 3D models
+    - http://www.mxs.de/textstl/
+    - 
