@@ -31,6 +31,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/camera.h>
 
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
@@ -57,6 +58,9 @@ namespace easy3d {
         , alpha_(0.8f)
         , movable_(true)
 	{
+        camera()->setUpVector(vec3(0, 1, 0));
+        camera()->setViewDirection(vec3(0, 0, -1));
+        camera_->showEntireScene();
 	}
 
 

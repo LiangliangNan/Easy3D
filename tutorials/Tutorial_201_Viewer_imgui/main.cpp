@@ -25,9 +25,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include "viewer_imgui.h"
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
+#include "viewer_imgui.h"
 
 
 using namespace easy3d;
@@ -36,7 +37,13 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
+    const std::string file_name = resource::directory() + "/data/easy3d-earth_normal.ply";
     ViewerImGui viewer("Tutorial_201_imgui");
+
+    if (!viewer.add_model(file_name)) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
 
     viewer.resize(800, 600);
     return viewer.run();
