@@ -917,7 +917,7 @@ void ViewerQt::postDraw() {
 
         // the rendering time
         char buffer[48];
-        sprintf(buffer, "Rendering (ms): %4.1f", gpu_time_);
+        sprintf(buffer, "Rendering (ms/frame): %4.1f", gpu_time_);
         texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
     }
 

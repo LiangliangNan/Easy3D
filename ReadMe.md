@@ -6,24 +6,33 @@
   <img src="resources/images/logo.jpg" width="600">
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
-#### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
+#### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing 
+sophisticated 3D applications.
 
   ![Overview of Easy3D](resources/images/overview.jpg)
 
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). 
-  Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when loading models from files ...
+  Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
+  loading models from files ...
+  
 * High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster 
   programmable-shader-style rendering, i.e., no fixed function calls). Client code does not need to touch the low-level 
   APIs of OpenGL. 
+  
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
-  soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average color blending, dual depth peeling), and more ...
+  soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
+  color blending, dual depth peeling), and more ...
+  
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, 
   [Poisson Surface Reconstruction](http://www.cs.jhu.edu/~misha/MyPapers/ToG13.pdf), 
   [RANSAC](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.1514&rep=rep1&type=pdf).
-* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+  
 * Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and algorithms 
   for 3D modeling and geometry processing. 
+    
+* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+
 * A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data.
 
 <p align="center"> 
@@ -32,15 +41,9 @@
  
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. For example, only two lines of code to have a viewer to visualize 
-you point clouds, meshes, or graphs
-
-```c++
-        Viewer viewer("MyViewer");
-        viewer.run();
-```
-
-Of course, you can customize the drawables. For example, the following code renders a point cloud as a set of spheres
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
+vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
+point cloud as a set of spheres
 
 ```c++
         // assume your point cloud has been loaded to the viewer
@@ -54,11 +57,12 @@ or as a set of surfels (i.e., 3D discs)
         drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
-By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, scalar 
-fields) can be done very conveniently.
+By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
+scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. So you don't need to do anything about third-party libraries. However, Easy3D optionally supports the use of Qt for advanced UI. 
+Easy3D depends on some third-party libraries and **all dependencies are included** in the distribution. So you don't 
+need to do anything about third-party libraries. However, Easy3D optionally supports the use of Qt for advanced UI. 
 This can be enabled by switching on the corresponding CMake boolean option:
 
 - `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., 
