@@ -20,8 +20,8 @@ add_executable(${PROJECT_NAME}
         poly2tri/sweep/sweep_context.cc
         poly2tri/sweep/sweep.cc
 
-        text3d.h
-        text3d.cpp
+        text_mesh.h
+        text_mesh.cpp
         main.cpp
         )
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

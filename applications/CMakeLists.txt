@@ -5,12 +5,12 @@ endif ()
 
 
 # Liangliang: I intentionally make these hidden (NOT finished; NOT stable)
-set (BUILD_TEXT3D ON)
+set (BUILD_TEXT_MESH ON)
 set (BUILD_VULKAN ON)
 
 
-if (BUILD_TEXT3D)
-    add_subdirectory(Text3D)
+if (BUILD_TEXT_MESH)
+    add_subdirectory(TextMesh)
 endif ()
 
 # Liangliang: I intentionally make this hidden (NOT finished; NOT stable)
