@@ -24,7 +24,6 @@
 
 #include "viewer_imgui.h"
 
-#include <cmath>
 #include <iostream>
 
 #include <easy3d/util/file_system.h>
