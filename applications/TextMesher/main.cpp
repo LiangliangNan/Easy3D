@@ -26,8 +26,10 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/viewer/viewer.h>
-#include "text_mesh.h"
+#include <easy3d/viewer/camera.h>
 #include <easy3d/util/logging.h>
+
+#include "text_mesher.h"
 
 
 using namespace easy3d;
@@ -36,17 +38,23 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
+    // Create an instance of mesher from a font file.
     const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
-    TextMesh mesher(font_file);
-    if (!mesher.is_ready())
-        return EXIT_FAILURE;
+    TextMesher mesher(font_file);
 
+    // Generate a surface mesh from text.
     SurfaceMesh* mesh = mesher.generate_mesh("Easy3D");
     if (!mesh)
         return EXIT_FAILURE;
 
-    Viewer viewer("Tutorial_TextMesh3D");
+    // Create an Easy3D viewer and add the mesh to the viewer.
+    Viewer viewer("TextMesher - Easy3D");
     viewer.add_model(mesh);
 
+    // We always want to look the front of the meshed text.
+    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
+
+    // Go...
     return viewer.run();
 }

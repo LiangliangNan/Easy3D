@@ -1,5 +1,5 @@
-#ifndef EASY3D_TEXT_MESH_H
-#define EASY3D_TEXT_MESH_H
+#ifndef EASY3D_TEXT_MESHER_H
+#define EASY3D_TEXT_MESHER_H
 
 #include <string>
 
@@ -10,23 +10,17 @@ namespace easy3d {
 
     class SurfaceMesh;
 
-    class TextMesh {
+    class TextMesher {
     public:
         /**
-         * @brief Create an instance of TextMesh.
+         * @brief Create an instance of TextMesher.
          * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
          * @param font_height The height of the font.
          * @param bezier_steps
          */
-        TextMesh(const std::string &font_file = "fonts/hp.ttf", int font_height = 48, unsigned short bezier_steps = 4);
+        TextMesher(const std::string &font_file = "fonts/hp.ttf", int font_height = 48, unsigned short bezier_steps = 4);
 
-        ~TextMesh();
-
-        /**
-         * @brief Query if TextMesh was successfully initialized.
-         * @return true on success and false on failure.
-         */
-        bool is_ready() const { return ready_; }
+        ~TextMesher();
 
         /**
          * @brief Generate a 3D surface mesh of a text.
@@ -36,6 +30,7 @@ namespace easy3d {
          */
         SurfaceMesh *generate_mesh(const std::string &text, float extrude = 16);
 
+    private:
         /**
          * A contour is a closed polygon and it has an orientation (clockwise or counter-clockwise)
          */
@@ -80,4 +75,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_TEXT_MESH_H
+#endif  // EASY3D_TEXT_MESHER_H

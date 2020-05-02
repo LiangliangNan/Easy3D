@@ -1,5 +1,5 @@
 
-#include "text_mesh.h"
+#include "text_mesher.h"
 
 #include <ft2build.h>
 #include <freetype/freetype.h>
@@ -23,7 +23,7 @@ namespace easy3d {
 #define SCALE_TO_F26DOT6    64
 
 
-    TextMesh::TextMesh(const std::string &font_file, int font_height, unsigned short bezier_steps)
+    TextMesher::TextMesher(const std::string &font_file, int font_height, unsigned short bezier_steps)
             : bezier_steps_(bezier_steps), prev_char_index_(0), cur_char_index_(0), prev_rsb_delta_(0) {
         FT_Library library;
         if (FT_Init_FreeType(&library)) {
@@ -50,12 +50,12 @@ namespace easy3d {
     }
 
 
-    TextMesh::~TextMesh() {
+    TextMesher::~TextMesher() {
         delete get(face_);
     }
 
 
-    TextMesh::CharContour TextMesh::generate_contours(char ch, float &offset) {
+    TextMesher::CharContour TextMesher::generate_contours(char ch, float &offset) {
         CharContour char_contour;
         char_contour.character = ch;
 
@@ -110,7 +110,7 @@ namespace easy3d {
     }
 
 
-    void TextMesh::generate_contours(const std::string &text, std::vector<CharContour> &contours) {
+    void TextMesher::generate_contours(const std::string &text, std::vector<CharContour> &contours) {
         if (!ready_)
             return;
 
@@ -126,7 +126,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh *TextMesh::generate_mesh(const std::string &text, float extrude) {
+    SurfaceMesh *TextMesher::generate_mesh(const std::string &text, float extrude) {
         if (!ready_)
             return nullptr;
 
@@ -162,14 +162,8 @@ namespace easy3d {
                     const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
                     const vec3 c = a + vec3(0, 0, extrude);
                     const vec3 d = b + vec3(0, 0, extrude);
-
-                    if (contour.clockwise) {
-                        mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(b), mesh->add_vertex(a));
-                        mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(d), mesh->add_vertex(b));
-                    } else {
-                        mesh->add_triangle(mesh->add_vertex(a), mesh->add_vertex(b), mesh->add_vertex(c));
-                        mesh->add_triangle(mesh->add_vertex(b), mesh->add_vertex(d), mesh->add_vertex(c));
-                    }
+                    mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(b), mesh->add_vertex(a));
+                    mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(d), mesh->add_vertex(b));
                 }
 
                 // create faces for the bottom and top
