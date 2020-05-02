@@ -72,7 +72,6 @@ namespace easy3d {
         bool ready_;
 
         unsigned short bezier_steps_;
-        float scaling_;
 
         unsigned int prev_char_index_;
         unsigned int cur_char_index_;

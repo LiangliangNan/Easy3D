@@ -11,20 +11,20 @@
 #include <easy3d/util/logging.h>
 
 
+namespace easy3d {
+
 #define get(x)      (reinterpret_cast<FT_Face>(x))
 #define get_ptr(x)  (reinterpret_cast<FT_Face*>(&x))
 
+// The resolution in dpi.
+#define RESOLUTION          96
 
-namespace easy3d {
+// Used to convert actual font size to nominal size, in 26.6 fractional points.
+#define SCALE_TO_F26DOT6    64
 
 
     TextMesh::TextMesh(const std::string &font_file, int font_height, unsigned short bezier_steps)
-            : bezier_steps_(bezier_steps)
-            , scaling_(64)
-            , prev_char_index_(0)
-            , cur_char_index_(0)
-            , prev_rsb_delta_(0)
-    {
+            : bezier_steps_(bezier_steps), prev_char_index_(0), cur_char_index_(0), prev_rsb_delta_(0) {
         FT_Library library;
         if (FT_Init_FreeType(&library)) {
             LOG(ERROR) << "failed initializing the FreeType library.";
@@ -39,7 +39,8 @@ namespace easy3d {
             return;
         }
 
-        if (FT_Set_Char_Size(get(face_), font_height * scaling_, font_height * scaling_, 96, 96)) {
+        if (FT_Set_Char_Size(get(face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6, RESOLUTION,
+                             RESOLUTION)) {
             LOG(ERROR) << "failed requesting the nominal size (in points) of the characters)";
             ready_ = false;
             return;
@@ -54,7 +55,7 @@ namespace easy3d {
     }
 
 
-    TextMesh::CharContour TextMesh::generate_contours(char ch, float& offset) {
+    TextMesh::CharContour TextMesh::generate_contours(char ch, float &offset) {
         CharContour char_contour;
         char_contour.character = ch;
 
@@ -97,13 +98,13 @@ namespace easy3d {
 
             for (std::size_t p = 0; p < contour->PointCount(); ++p) {
                 const double *d = contour->GetPoint(p);
-                polygon[p] = vec2(d[0] / scaling_ + offset, d[1] / scaling_);
+                polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + offset, d[1] / SCALE_TO_F26DOT6);
             }
             char_contour.push_back(polygon);
         }
 
         prev_char_index_ = cur_char_index_;
-        offset += get(face_)->glyph->advance.x / scaling_;
+        offset += get(face_)->glyph->advance.x / SCALE_TO_F26DOT6;
 
         return char_contour;
     }
@@ -119,7 +120,7 @@ namespace easy3d {
 
         float offset = 0;
         for (int i = 0; i < text.size(); ++i) {
-            const auto& char_contour = generate_contours(text[i], offset);
+            const auto &char_contour = generate_contours(text[i], offset);
             contours.push_back(char_contour);
         }
     }
@@ -137,39 +138,74 @@ namespace easy3d {
             return nullptr;
         }
 
-#if 1
+        auto contour_to_p2t_format = [](const Contour &contour) -> std::vector<p2t::Point *> {
+            std::vector<p2t::Point *> polyline;
+            for (const auto &p : contour)
+                polyline.push_back(new p2t::Point((p.x), p.y));
+            return polyline;
+        };
+
+        auto is_inside = [](const Contour &contour_a, const Contour &contour_b) -> bool {
+            for (const auto &p : contour_a) {
+                if (!geom::point_in_polygon(p, contour_b))
+                    return false;
+            }
+            return true;
+        };
+
         SurfaceMesh *mesh = new SurfaceMesh;
         for (const auto &ch :characters) {
-            for (int c = 0; c < ch.size(); ++c) {
-                const Contour &contour = ch[c];
+            for (int index = 0; index < ch.size(); ++index) {
+                const Contour &contour = ch[index];
                 for (int p = 0; p < contour.size(); ++p) {
                     const vec3 a(contour[p], 0.0f);
                     const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
                     const vec3 c = a + vec3(0, 0, extrude);
                     const vec3 d = b + vec3(0, 0, extrude);
 
-                    // triangle 1
-                    mesh->add_triangle(
-                            mesh->add_vertex(a),
-                            mesh->add_vertex(b),
-                            mesh->add_vertex(c)
-                    );
+                    if (contour.clockwise) {
+                        mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(b), mesh->add_vertex(a));
+                        mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(d), mesh->add_vertex(b));
+                    } else {
+                        mesh->add_triangle(mesh->add_vertex(a), mesh->add_vertex(b), mesh->add_vertex(c));
+                        mesh->add_triangle(mesh->add_vertex(b), mesh->add_vertex(d), mesh->add_vertex(c));
+                    }
+                }
 
-                    // triangle 2
-                    mesh->add_triangle(
-                            mesh->add_vertex(b),
-                            mesh->add_vertex(d),
-                            mesh->add_vertex(c)
-                    );
+                // create faces for the bottom and top
+                if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
+                    const std::vector<p2t::Point *> &polyline = contour_to_p2t_format(contour);
+                    p2t::CDT cdt(polyline);
+
+                    for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
+                        const Contour &inner_contour = ch[inner_index];
+                        if (inner_index != index &&
+                            inner_contour.clockwise != contour.clockwise &&
+                            is_inside(inner_contour, contour)) {
+                            const std::vector<p2t::Point *> &pl = contour_to_p2t_format(inner_contour);
+                            cdt.AddHole(pl);
+                        }
+                    }
+
+                    cdt.Triangulate();
+                    const std::vector<p2t::Triangle *> &triangles = cdt.GetTriangles();
+                    for (const auto &t : triangles) {
+                        mesh->add_triangle( // bottom one
+                                mesh->add_vertex(vec3(t->GetPoint(2)->x, t->GetPoint(2)->y, 0.0f)),
+                                mesh->add_vertex(vec3(t->GetPoint(1)->x, t->GetPoint(1)->y, 0.0f)),
+                                mesh->add_vertex(vec3(t->GetPoint(0)->x, t->GetPoint(0)->y, 0.0f))
+                        );
+                        mesh->add_triangle( // top one
+                                mesh->add_vertex(vec3(t->GetPoint(0)->x, t->GetPoint(0)->y, extrude)),
+                                mesh->add_vertex(vec3(t->GetPoint(1)->x, t->GetPoint(1)->y, extrude)),
+                                mesh->add_vertex(vec3(t->GetPoint(2)->x, t->GetPoint(2)->y, extrude))
+                        );
+                    }
                 }
             }
         }
 
         return mesh;
-#else
-        LOG(ERROR) << "failed generating a surface mesh from the text";
-        return nullptr;
-#endif
     }
 
 }

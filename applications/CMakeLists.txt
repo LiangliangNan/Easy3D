@@ -5,8 +5,8 @@ endif ()
 
 
 # Liangliang: I intentionally make these hidden (NOT finished; NOT stable)
-set (BUILD_TEXT_MESH ON)
-set (BUILD_VULKAN ON)
+set (BUILD_TEXT_MESH    ON)
+set (BUILD_VULKAN       ON)
 
 
 if (BUILD_TEXT_MESH)
