@@ -28,6 +28,9 @@ if (Vulkan_FOUND)
             viewer.cpp
             main.cpp
             )
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
+
     target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw core viewer util)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.obj DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources/data/viking_room)

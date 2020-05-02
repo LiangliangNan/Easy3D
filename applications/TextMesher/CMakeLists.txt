@@ -24,10 +24,11 @@ add_executable(${PROJECT_NAME}
         text_mesher.cpp
         main.cpp
         )
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
-target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES}  ${GLUT_LIBRARIES} core viewer fileio)
+target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES} core viewer fileio)
