@@ -24,7 +24,6 @@
 
 #include <easy3d/viewer/viewer.h>
 
-#include <thread>
 #include <chrono>
 #include <iostream>
 
@@ -55,7 +54,6 @@
 #include <easy3d/viewer/key_frame_interpolator.h>
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/opengl_text.h>
 #include <easy3d/viewer/texture_manager.h>
@@ -94,7 +92,7 @@ namespace easy3d {
             int stencil_bits /* = 8 */
     )
             : title_(title), camera_(nullptr), samples_(0), full_screen_(full_screen), process_events_(true),
-              gpu_timer_(nullptr), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
+              texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
               show_pivot_point_(false), drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1),
               background_color_(0.9f, 0.9f, 1.0f, 1.0f) {
@@ -114,13 +112,12 @@ namespace easy3d {
         camera_->showEntireScene();
         camera_->connect(this, &Viewer::update);
 
+        sprintf(gpu_time_, "fps: __ (__ ms/frame)");
+
         int fw, fh;
         glfwGetFramebufferSize(window_, &fw, &fh);
         // needs to be executed once to ensure the viewer is initialized with correct viewer size
         callback_event_resize(fw, fh);
-
-        // create a GPU timer
-        gpu_timer_ = new OpenGLTimer(false);
 
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
@@ -471,7 +468,6 @@ namespace easy3d {
 
         delete camera_;
         delete drawable_axes_;
-        delete gpu_timer_;
         delete texter_;
 
         clear_scene();
@@ -977,11 +973,6 @@ namespace easy3d {
     }
 
 
-    inline double get_seconds() {
-        return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
-    }
-
-
     int Viewer::run() {
         // initialize before showing the window because it can be slow
         init();
@@ -992,43 +983,31 @@ namespace easy3d {
         // show the window
         glfwShowWindow(window_);
 
-        // TODO: make it member variable
-        bool is_animating = false;
-
-        try {
-            // Rendering loop
-            static const int num_extra_frames = 5;
-            static const double animation_max_fps = 30;
-            int frame_counter = 0;
+        try {   // main loop
+            static int frame_counter = 0;
+            double last_time = glfwGetTime();
 
             while (!glfwWindowShouldClose(window_)) {
                 if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
                     continue;
 
-                double tic = get_seconds();
+                glfwPollEvents();
+
+                // Calculate ms/frame
+                double current_time = glfwGetTime();
+                ++frame_counter;
+                if(current_time - last_time >= 2.0f) {
+                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)\n", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
+                    frame_counter = 0;
+                    last_time += 2.0f;
+                }
+
                 pre_draw();
-
-                gpu_timer_->start();
                 draw();
-                gpu_timer_->stop();
-                gpu_time_ = gpu_timer_->time();
-
                 post_draw();
                 glfwSwapBuffers(window_);
 
-                if (is_animating || frame_counter++ < num_extra_frames) {
-                    glfwPollEvents();
-                    // In microseconds
-                    double duration = 1000000. * (get_seconds() - tic);
-                    const double min_duration = 1000000. / animation_max_fps;
-                    if (duration < min_duration)
-                        std::this_thread::sleep_for(
-                                std::chrono::microseconds(static_cast<int>(min_duration - duration)));
-                } else {
-                    /* Wait for mouse/keyboard or empty refresh events */
-                    glfwWaitEvents();
-                    frame_counter = 0;
-                }
+                glfwWaitEvents();
             }
 
             /* Process events once more */
@@ -1486,10 +1465,7 @@ namespace easy3d {
             const float offset = 20.0f * dpi_scaling();
             texter_->draw("Easy3D", offset, offset, font_size, 0);
 
-            // the rendering time
-            char buffer[48];
-            sprintf(buffer, "Rendering (ms/frame): %4.1f", gpu_time_);
-            texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
+            texter_->draw(gpu_time_, offset, 50.0f * dpi_scaling(), 16, 1);
         }
 
         // shown only when it is not animating

@@ -8,7 +8,6 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/manipulated_camera_frame.h>
 #include <easy3d/viewer/key_frame_interpolator.h>
-#include <easy3d/viewer/setting.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -41,7 +40,6 @@ namespace easy3d {
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
               show_pivot_point_(false), model_idx_(-1)
     {
-
     }
 
 
@@ -92,11 +90,23 @@ namespace easy3d {
 
 
     void ViewerVK::mainLoop() {
+        static int frame_counter = 0;
+        double last_time = glfwGetTime();
+
         while (!glfwWindowShouldClose(window)) {
             if (!glfwGetWindowAttrib(window, GLFW_VISIBLE)) // not visible
                 continue;
 
             glfwPollEvents();
+
+            // Calculate ms/frame
+            double current_time = glfwGetTime();
+            ++frame_counter;
+            if(current_time - last_time >= 2.0f) {
+                printf("%4.1f ms/frame (fps: %2.0f)\n", 1000.0 / double(frame_counter), double(frame_counter) / (current_time - last_time));
+                frame_counter = 0;
+                last_time += 2.0f;
+            }
 
             pre_draw();
 

@@ -40,7 +40,6 @@ namespace easy3d {
 	class Model;
     class Drawable;
     class TrianglesDrawable;
-    class OpenGLTimer;
     class OpenGLText;
 
     /**
@@ -428,9 +427,8 @@ namespace easy3d {
 
 		// enable/disable event processing
 		bool	process_events_;
+		char   gpu_time_[48];       // show the frame rate
 
-        OpenGLTimer* gpu_timer_;
-        double gpu_time_;
         OpenGLText* texter_;
 
 		// mouse
