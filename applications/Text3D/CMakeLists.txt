@@ -23,9 +23,6 @@ add_executable(${PROJECT_NAME}
         text3d.h
         text3d.cpp
         main.cpp
-        #        main.cpp
-        #        picker_viewer.h
-        #        picker_viewer.cpp
         )
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

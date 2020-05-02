@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <easy3d/core/types.h>
 
 namespace easy3d {
 
@@ -31,7 +32,28 @@ namespace easy3d {
          * @param bezierSteps
          * @return
          */
-        SurfaceMesh *generate(const std::string text = "HelloWorld", float extrude = 16, unsigned short bezierSteps = 4);
+        SurfaceMesh *generate_mesh(const std::string& text, float extrude = 16, unsigned short bezierSteps = 4) const;
+
+        /**
+         * @brief Generate contours for a text.
+         * @param text The input text.
+         * @param contours The contours in the XOY-plane (each contour is a closed polygon). The generated contours are
+         *                 simply appended to the end of this variable.
+         * @param bezierSteps
+         * @return The contours in the XOY-plane. Each contour is a closed polyline.
+         */
+        void generate_contours(const std::string& text, std::vector<Polygon2>& contours, unsigned short bezierSteps = 4) const;
+
+        /**
+         * @brief Generate contours for a single character.
+         * @param character The input character.
+         * @param offset The offset of this character.
+         * @param contours The contours in the XOY-plane (each contour is a closed polygon). The generated contours are
+         *                 simply appended to the end of this variable.
+         * @param bezierSteps
+         * @return The offset value for the subsequent character in the text.
+         */
+        float generate_contours(char character, float offset, std::vector<Polygon2>& contours, unsigned short bezierSteps = 4) const;
 
     private:
         void* face_;
