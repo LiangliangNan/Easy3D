@@ -3,4 +3,7 @@ if (EASY3D_ENABLE_QT)
 endif ()
 
 
-add_subdirectory(Viewer_Vulkan)
+if (OFF)
+    add_subdirectory(3DText)
+    add_subdirectory(Vulkan)
+endif ()
