@@ -40,25 +40,28 @@ namespace easy3d {
     public:
         GenericPolygon() {}
 
+        // Initialize with a know size.
+        GenericPolygon(std::size_t size) { BaseClass::resize(size); }
+
         template<class InputIterator>
         GenericPolygon(InputIterator first, InputIterator last);
 
-        // Reverses the orientation of the polygon. The first vertex remains the same.
+        // Reverse the orientation of the polygon. The first vertex remains the same.
         // First vertex: pointed to by `p.begin()`, or [0]
         void reverse_orientation();
 
-        // tests if point lies inside the polygon
+        // Test if point lies inside the polygon
         bool contains(const Vec<2, FT> &point) const;
 
-        // Returns the signed area of the polygon. This means that the
+        // Return the signed area of the polygon. This means that the
         // area is positive for counter clockwise polygons and negative
         // for clockwise polygons.
         FT signed_area() const;
 
-        // the absolute value of the signed_area
+        // Return the absolute value of the signed_area
         FT area() const;
 
-        // Returns the smallest bounding box containing this polygon.
+        // Return the smallest bounding box containing this polygon.
         GenericBox<2, FT> bbox() const;
     };
 
