@@ -48,55 +48,9 @@ namespace easy3d {
         ready_ = true;
     }
 
+
     TextMesh::~TextMesh() {
         delete get(face_);
-    }
-
-
-    SurfaceMesh *TextMesh::generate_mesh(const std::string &text, float extrude) {
-        if (!ready_)
-            return nullptr;
-
-        std::vector<CharContour> contours;
-        generate_contours(text, contours);
-
-        if (contours.empty()) {
-            LOG(ERROR) << "no contour generated from the text using the specified font";
-            return nullptr;
-        }
-
-#if 0
-            SurfaceMesh *mesh = new SurfaceMesh;
-            for (int i = 0; i < tris.size(); i++) {
-                const Tri &tri = tris[i];
-                mesh->add_triangle(
-                        mesh->add_vertex({tri.a.x, tri.a.y, tri.a.z}),
-                        mesh->add_vertex({tri.b.x, tri.b.y, tri.b.z}),
-                        mesh->add_vertex({tri.c.x, tri.c.y, tri.c.z})
-                );
-            }
-
-            return mesh;
-#else
-        LOG(ERROR) << "failed generating a surface mesh from the text";
-        return nullptr;
-#endif
-    }
-
-
-    void TextMesh::generate_contours(const std::string &text, std::vector<CharContour> &contours) {
-        if (!ready_)
-            return;
-
-        prev_char_index_ = 0;
-        cur_char_index_ = 0;
-        prev_rsb_delta_ = 0;
-
-        float offset = 0;
-        for (int i = 0; i < text.size(); ++i) {
-            const auto& char_contour = generate_contours(text[i], offset);
-            contours.push_back(char_contour);
-        }
     }
 
 
@@ -138,7 +92,7 @@ namespace easy3d {
         for (std::size_t c = 0; c < vectoriser.ContourCount(); ++c) {
             const ::Contour *contour = vectoriser.GetContour(c);
 
-            TextMesh::Contour polygon(contour->PointCount());
+            Contour polygon(contour->PointCount());
             polygon.clockwise = contour->GetDirection();
 
             for (std::size_t p = 0; p < contour->PointCount(); ++p) {
@@ -152,6 +106,70 @@ namespace easy3d {
         offset += get(face_)->glyph->advance.x / scaling_;
 
         return char_contour;
+    }
+
+
+    void TextMesh::generate_contours(const std::string &text, std::vector<CharContour> &contours) {
+        if (!ready_)
+            return;
+
+        prev_char_index_ = 0;
+        cur_char_index_ = 0;
+        prev_rsb_delta_ = 0;
+
+        float offset = 0;
+        for (int i = 0; i < text.size(); ++i) {
+            const auto& char_contour = generate_contours(text[i], offset);
+            contours.push_back(char_contour);
+        }
+    }
+
+
+    SurfaceMesh *TextMesh::generate_mesh(const std::string &text, float extrude) {
+        if (!ready_)
+            return nullptr;
+
+        std::vector<CharContour> characters;
+        generate_contours(text, characters);
+
+        if (characters.empty()) {
+            LOG(ERROR) << "no contour generated from the text using the specified font";
+            return nullptr;
+        }
+
+#if 1
+        SurfaceMesh *mesh = new SurfaceMesh;
+        for (const auto &ch :characters) {
+            for (int c = 0; c < ch.size(); ++c) {
+                const Contour &contour = ch[c];
+                for (int p = 0; p < contour.size(); ++p) {
+                    const vec3 a(contour[p], 0.0f);
+                    const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
+                    const vec3 c = a + vec3(0, 0, extrude);
+                    const vec3 d = b + vec3(0, 0, extrude);
+
+                    // triangle 1
+                    mesh->add_triangle(
+                            mesh->add_vertex(a),
+                            mesh->add_vertex(b),
+                            mesh->add_vertex(c)
+                    );
+
+                    // triangle 2
+                    mesh->add_triangle(
+                            mesh->add_vertex(b),
+                            mesh->add_vertex(d),
+                            mesh->add_vertex(c)
+                    );
+                }
+            }
+        }
+
+        return mesh;
+#else
+        LOG(ERROR) << "failed generating a surface mesh from the text";
+        return nullptr;
+#endif
     }
 
 }

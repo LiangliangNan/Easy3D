@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
 
     Viewer viewer("Tutorial_TextMesh3D");
 
-#if 0
-    SurfaceMesh* mesh = texter.generate_mesh("Easy3D");
+#if 1
+    SurfaceMesh* mesh = mesher.generate_mesh("Easy3D");
     if (!mesh)
         return EXIT_FAILURE;
 
