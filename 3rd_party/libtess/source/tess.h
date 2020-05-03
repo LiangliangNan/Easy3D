@@ -56,7 +56,7 @@ typedef struct CachedVertex {
   void		*data;
 } CachedVertex;
 
-struct GLUtesselator {
+struct gluTesselator {
 
   /*** state needed for collecting the input data ***/
 

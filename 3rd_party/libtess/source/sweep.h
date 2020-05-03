@@ -43,7 +43,7 @@
  * to the polygon, according to the rule given by tess->windingRule.
  * Each interior region is guaranteed be monotone.
  */
-int __gl_computeInterior( GLUtesselator *tess );
+int __gl_computeInterior( gluTesselator *tess );
 
 
 /* The following is here *only* for access by debugging routines */

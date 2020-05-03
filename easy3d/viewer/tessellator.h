@@ -30,7 +30,7 @@
 #include <vector>
 
 
-class GLUtesselator;
+class gluTesselator;
 
 namespace easy3d {
 
@@ -186,7 +186,7 @@ namespace easy3d {
         static void combineCallback(double coords[3], void *vertex_data[4], double weight[4], void **dataOut, void *cbdata);
 
     private:
-        GLUtesselator *tess_obj_;
+        gluTesselator *tess_obj_;
 
         // The tessellator decides the most efficient primitive type while performing tessellation.
         unsigned int primitive_type_; // GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP

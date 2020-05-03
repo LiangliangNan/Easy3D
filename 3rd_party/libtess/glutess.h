@@ -44,13 +44,10 @@
 // redefined to match glew.h's
 typedef unsigned char TESS_boolean;
 
-#define GL_FALSE 0
-#define GL_TRUE 1
-#define GL_LINE_LOOP                      0x0002
-#define GL_LINE_STRIP                     0x0003
-#define TESS_TRIANGLES                         0x0004
-#define TESS_TRIANGLE_STRIP                 0x0005
-#define TESS_TRIANGLE_FAN                   0x0006
+#define TESS_LINE_LOOP                  0x0002
+#define TESS_TRIANGLES                  0x0004
+#define TESS_TRIANGLE_STRIP             0x0005
+#define TESS_TRIANGLE_FAN               0x0006
 
 
 #ifdef __cplusplus
@@ -101,9 +98,9 @@ extern "C" {
 /*************************************************************/
 
 #ifdef __cplusplus
-class GLUtesselator;
+class gluTesselator;
 #else
-typedef struct GLUtesselator GLUtesselator;
+typedef struct gluTesselator gluTesselator;
 #endif
 
 
@@ -112,16 +109,16 @@ typedef struct GLUtesselator GLUtesselator;
 /* Internal convenience typedefs */
 typedef void (_GLUfuncptr)(void);
 
-void DeleteTess (GLUtesselator* tess);
-GLUtesselator* NewTess (void);
-void TessBeginContour (GLUtesselator* tess);
-void TessBeginPolygon (GLUtesselator* tess, void* data);
-void TessCallback (GLUtesselator* tess, unsigned int which, _GLUfuncptr CallBackFunc);
-void TessEndContour (GLUtesselator* tess);
-void TessEndPolygon (GLUtesselator* tess);
-void TessNormal (GLUtesselator* tess, double valueX, double valueY, double valueZ);
-void TessProperty (GLUtesselator* tess, unsigned int which, double data);
-void TessVertex (GLUtesselator* tess, double *location, void* data);
+void DeleteTess (gluTesselator* tess);
+gluTesselator* NewTess (void);
+void TessBeginContour (gluTesselator* tess);
+void TessBeginPolygon (gluTesselator* tess, void* data);
+void TessCallback (gluTesselator* tess, unsigned int which, _GLUfuncptr CallBackFunc);
+void TessEndContour (gluTesselator* tess);
+void TessEndPolygon (gluTesselator* tess);
+void TessNormal (gluTesselator* tess, double valueX, double valueY, double valueZ);
+void TessProperty (gluTesselator* tess, unsigned int which, double data);
+void TessVertex (gluTesselator* tess, double *location, void* data);
 
 #ifdef __cplusplus
 }

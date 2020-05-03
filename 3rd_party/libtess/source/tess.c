@@ -87,10 +87,10 @@ typedef struct { GLUhalfEdge e, eSym; } EdgePair;
                          MAX(sizeof(GLUvertex),sizeof(GLUface))))
 
 
-GLUtesselator *
+gluTesselator *
 NewTess( void )
 {
-  GLUtesselator *tess;
+  gluTesselator *tess;
 
   /* Only initialize fields which can be changed by the api.  Other fields
    * are initialized where they are used.
@@ -99,7 +99,7 @@ NewTess( void )
   if (memInit( MAX_FAST_ALLOC ) == 0) {
      return 0;			/* out of memory */
   }
-  tess = (GLUtesselator *)memAlloc( sizeof( GLUtesselator ));
+  tess = (gluTesselator *)memAlloc( sizeof( gluTesselator ));
   if (tess == NULL) {
      return 0;			/* out of memory */
   }
@@ -136,7 +136,7 @@ NewTess( void )
   return tess;
 }
 
-static void MakeDormant( GLUtesselator *tess )
+static void MakeDormant( gluTesselator *tess )
 {
   /* Return the tessellator to its original dormant state. */
 
@@ -150,7 +150,7 @@ static void MakeDormant( GLUtesselator *tess )
 
 #define RequireState( tess, s )   if( tess->state != s ) GotoState(tess,s)
 
-static void GotoState( GLUtesselator *tess, enum TessState newState )
+static void GotoState( gluTesselator *tess, enum TessState newState )
 {
   while( tess->state != newState ) {
     /* We change the current state one level at a time, to get to
@@ -189,7 +189,7 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 
 
 void
-DeleteTess( GLUtesselator *tess )
+DeleteTess( gluTesselator *tess )
 {
   RequireState( tess, T_DORMANT );
   memFree( tess );
@@ -197,7 +197,7 @@ DeleteTess( GLUtesselator *tess )
 
 
 void
-TessProperty( GLUtesselator *tess, unsigned int which, double value )
+TessProperty( gluTesselator *tess, unsigned int which, double value )
 {
   unsigned int windingRule;
 
@@ -236,7 +236,7 @@ TessProperty( GLUtesselator *tess, unsigned int which, double value )
 
 /* Returns tessellator property */
 void
-gluGetTessProperty( GLUtesselator *tess, unsigned int which, double *value )
+gluGetTessProperty( gluTesselator *tess, unsigned int which, double *value )
 {
    switch (which) {
    case TESS_TOLERANCE:
@@ -264,7 +264,7 @@ gluGetTessProperty( GLUtesselator *tess, unsigned int which, double *value )
 } /* gluGetTessProperty() */
 
 void
-TessNormal( GLUtesselator *tess, double x, double y, double z )
+TessNormal( gluTesselator *tess, double x, double y, double z )
 {
   tess->normal[0] = x;
   tess->normal[1] = y;
@@ -272,7 +272,7 @@ TessNormal( GLUtesselator *tess, double x, double y, double z )
 }
 
 void
-TessCallback( GLUtesselator *tess, unsigned int which, _GLUfuncptr fn)
+TessCallback( gluTesselator *tess, unsigned int which, _GLUfuncptr fn)
 {
   switch( which ) {
   case TESS_BEGIN:
@@ -341,7 +341,7 @@ TessCallback( GLUtesselator *tess, unsigned int which, _GLUfuncptr fn)
   }
 }
 
-static int AddVertex( GLUtesselator *tess, double coords[3], void *data )
+static int AddVertex( gluTesselator *tess, double coords[3], void *data )
 {
   GLUhalfEdge *e;
 
@@ -380,7 +380,7 @@ static int AddVertex( GLUtesselator *tess, double coords[3], void *data )
 }
 
 
-static void CacheVertex( GLUtesselator *tess, double coords[3], void *data )
+static void CacheVertex( gluTesselator *tess, double coords[3], void *data )
 {
   CachedVertex *v = &tess->cache[tess->cacheCount];
 
@@ -392,7 +392,7 @@ static void CacheVertex( GLUtesselator *tess, double coords[3], void *data )
 }
 
 
-static int EmptyCache( GLUtesselator *tess )
+static int EmptyCache( gluTesselator *tess )
 {
   CachedVertex *v = tess->cache;
   CachedVertex *vLast;
@@ -411,7 +411,7 @@ static int EmptyCache( GLUtesselator *tess )
 
 
 void
-TessVertex( GLUtesselator *tess, double coords[3], void *data )
+TessVertex( gluTesselator *tess, double coords[3], void *data )
 {
   int i, tooLarge = FALSE;
   double x, clamped[3];
@@ -458,7 +458,7 @@ TessVertex( GLUtesselator *tess, double coords[3], void *data )
 
 
 void
-TessBeginPolygon( GLUtesselator *tess, void *data )
+TessBeginPolygon( gluTesselator *tess, void *data )
 {
   RequireState( tess, T_DORMANT );
 
@@ -472,7 +472,7 @@ TessBeginPolygon( GLUtesselator *tess, void *data )
 
 
 void
-TessBeginContour( GLUtesselator *tess )
+TessBeginContour( gluTesselator *tess )
 {
   RequireState( tess, T_IN_POLYGON );
 
@@ -489,14 +489,14 @@ TessBeginContour( GLUtesselator *tess )
 
 
 void
-TessEndContour( GLUtesselator *tess )
+TessEndContour( gluTesselator *tess )
 {
   RequireState( tess, T_IN_CONTOUR );
   tess->state = T_IN_POLYGON;
 }
 
 void
-TessEndPolygon( GLUtesselator *tess )
+TessEndPolygon( gluTesselator *tess )
 {
   GLUmesh *mesh;
 
@@ -607,7 +607,7 @@ gluDeleteMesh( GLUmesh *mesh )
 /* Obsolete calls -- for backward compatibility */
 
 void
-gluBeginPolygon( GLUtesselator *tess )
+gluBeginPolygon( gluTesselator *tess )
 {
   TessBeginPolygon( tess, NULL );
   TessBeginContour( tess );
@@ -616,7 +616,7 @@ gluBeginPolygon( GLUtesselator *tess )
 
 /*ARGSUSED*/
 void
-gluNextContour( GLUtesselator *tess, unsigned int type )
+gluNextContour( gluTesselator *tess, unsigned int type )
 {
   TessEndContour( tess );
   TessBeginContour( tess );
@@ -624,7 +624,7 @@ gluNextContour( GLUtesselator *tess, unsigned int type )
 
 
 void
-gluEndPolygon( GLUtesselator *tess )
+gluEndPolygon( gluTesselator *tess )
 {
   TessEndContour( tess );
   TessEndPolygon( tess );

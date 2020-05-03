@@ -208,7 +208,7 @@ void tessellate
 {
     const double *contourbegin, *contourend;
     struct Vertex_s *current_vertex;
-    GLUtesselator *tess;
+    gluTesselator *tess;
     struct TessContext_s *ctx;
 
     tess = NewTess();

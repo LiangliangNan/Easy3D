@@ -3,32 +3,31 @@ project(${PROJECT_NAME})
 
 
 add_library(${PROJECT_NAME} STATIC
-        dict-list.h
-        dict.c
-        dict.h
-        geom.c
-        geom.h
         glutess.h
-        gluos.h
-        memalloc.c
-        memalloc.h
-        mesh.c
-        mesh.h
-        normal.c
-        normal.h
-        priorityq-heap.c
-        priorityq-heap.h
-        priorityq-sort.h
-        priorityq.c
-        priorityq.h
-        render.c
-        render.h
-        sweep.c
-        sweep.h
-        tess.c
-        tess.h
-        tessmono.c
-        tessmono.h
+        source/dict-list.h
+        source/dict.c
+        source/dict.h
+        source/geom.c
+        source/geom.h
+        source/memalloc.c
+        source/memalloc.h
+        source/mesh.c
+        source/mesh.h
+        source/normal.c
+        source/normal.h
+        source/priorityq-heap.c
+        source/priorityq-heap.h
+        source/priorityq-sort.h
+        source/priorityq.c
+        source/priorityq.h
+        source/render.c
+        source/render.h
+        source/sweep.c
+        source/sweep.h
+        source/tess.c
+        source/tess.h
+        source/tessmono.c
+        source/tessmono.h
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
