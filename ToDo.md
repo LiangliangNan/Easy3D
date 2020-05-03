@@ -32,4 +32,3 @@ Longer term:
     
 Text to 3D models
     - http://www.mxs.de/textstl/
-    - https://github.com/codetiger/Font23D
