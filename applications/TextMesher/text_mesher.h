@@ -16,12 +16,19 @@ namespace easy3d {
          * @brief Create an instance of TextMesher.
          * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
          * @param font_height The height of the font.
-         * @param bezier_steps Control the smoothness of the curved corners. A greater value results in a smooth
-         *                     transitions but more vertices. Suggested value is 4.
+         * @note The font will be used in all subsequent generation procedure until the next call to set_font().
          */
-        TextMesher(const std::string &font_file, int font_height = 48, unsigned short bezier_steps = 4);
+        TextMesher(const std::string &font_file, int font_height = 48);
 
         ~TextMesher();
+
+        /**
+         * @brief Change the font.
+         * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
+         * @param font_height The height of the font.
+         * @note The font will be used in all subsequent generation procedure until the next call to set_font().
+         */
+        void set_font(const std::string &font_file, int font_height);
 
         /**
          * @brief Generate a 3D surface mesh of a text.
@@ -79,9 +86,15 @@ namespace easy3d {
         CharContour generate_contours(char character, float& x, float& y);
 
     private:
-        void *face_;
+        void cleanup();
+
+    private:
+        void *font_library_;
+        void *font_face_;
         bool ready_;
 
+        // Controls the smoothness of the curved corners. A greater value results in a smooth transitions but more
+        // vertices. Suggested value is 4.
         unsigned short bezier_steps_;
 
         unsigned int prev_char_index_;

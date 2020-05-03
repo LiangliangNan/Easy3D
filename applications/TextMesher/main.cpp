@@ -51,7 +51,8 @@ int main(int argc, char** argv) {
         viewer.add_model(mesh); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
-    mesher.generate(mesh,"Makes 3D Easy!", 0, -60);
+    mesher.set_font(resource::directory() + "/fonts/DroidSerif-Regular.ttf", 24);
+    mesher.generate(mesh,"Makes 3D Easy!", 400, 0);
 
     // We always want to look the front of the meshed text.
     viewer.camera()->setViewDirection(vec3(0, 0, -1));

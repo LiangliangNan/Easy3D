@@ -13,8 +13,11 @@
 
 namespace easy3d {
 
-#define get(x)      (reinterpret_cast<FT_Face>(x))
-#define get_ptr(x)  (reinterpret_cast<FT_Face*>(&x))
+#define get_face(x)      (reinterpret_cast<FT_Face>(x))
+#define get_face_ptr(x)  (reinterpret_cast<FT_Face*>(&x))
+
+#define get_library(x)      (reinterpret_cast<FT_Library>(x))
+#define get_library_ptr(x)  (reinterpret_cast<FT_Library*>(&x))
 
 // The resolution in dpi.
 #define RESOLUTION          96
@@ -23,23 +26,47 @@ namespace easy3d {
 #define SCALE_TO_F26DOT6    64
 
 
-    TextMesher::TextMesher(const std::string &font_file, int font_height, unsigned short bezier_steps)
-            : bezier_steps_(bezier_steps), prev_char_index_(0), cur_char_index_(0), prev_rsb_delta_(0) {
-        FT_Library library;
-        if (FT_Init_FreeType(&library)) {
+    TextMesher::TextMesher(const std::string &font_file, int font_height)
+            : font_library_(nullptr)
+            , font_face_(nullptr)
+            , bezier_steps_(4)
+            , prev_char_index_(0)
+            , cur_char_index_(0)
+            , prev_rsb_delta_(0)
+    {
+        set_font(font_file, font_height);
+    }
+
+
+    TextMesher::~TextMesher() {
+        cleanup();
+    }
+
+
+    void TextMesher::cleanup() {
+        FT_Done_Face(get_face(font_face_));
+        FT_Done_FreeType(get_library(font_library_));
+        font_face_ = nullptr;
+        font_library_ = nullptr;
+    }
+
+
+    void TextMesher::set_font(const std::string &font_file, int font_height) {
+        cleanup();
+
+        if (FT_Init_FreeType(get_library_ptr(font_library_))) {
             LOG(ERROR) << "failed initializing the FreeType library.";
             ready_ = false;
             return;
         }
 
-        face_ = new FT_FaceRec_;
-        if (FT_New_Face(library, font_file.c_str(), 0, get_ptr(face_))) {
+        if (FT_New_Face(get_library(font_library_), font_file.c_str(), 0, get_face_ptr(font_face_))) {
             LOG(ERROR) << "failed creating FreeType face (probably a problem with your font file)";
             ready_ = false;
             return;
         }
 
-        if (FT_Set_Char_Size(get(face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6, RESOLUTION,
+        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6, RESOLUTION,
                              RESOLUTION)) {
             LOG(ERROR) << "failed requesting the nominal size (in points) of the characters)";
             ready_ = false;
@@ -50,23 +77,18 @@ namespace easy3d {
     }
 
 
-    TextMesher::~TextMesher() {
-        delete get(face_);
-    }
-
-
     TextMesher::CharContour TextMesher::generate_contours(char ch, float& x, float& y) {
         CharContour char_contour;
         char_contour.character = ch;
 
-        cur_char_index_ = FT_Get_Char_Index(get(face_), ch);
-        if (FT_Load_Glyph(get(face_), cur_char_index_, FT_LOAD_DEFAULT)) {
+        cur_char_index_ = FT_Get_Char_Index(get_face(font_face_), ch);
+        if (FT_Load_Glyph(get_face(font_face_), cur_char_index_, FT_LOAD_DEFAULT)) {
             LOG_FIRST_N(ERROR, 1) << "failed loading glyph";
             return char_contour;
         }
 
         FT_Glyph glyph;
-        if (FT_Get_Glyph(get(face_)->glyph, &glyph)) {
+        if (FT_Get_Glyph(get_face(font_face_)->glyph, &glyph)) {
             LOG_FIRST_N(ERROR, 1) << "failed getting glyph";
             return char_contour;
         }
@@ -76,20 +98,20 @@ namespace easy3d {
             return char_contour;
         }
 
-        if (FT_HAS_KERNING(get(face_)) && prev_char_index_) {
+        if (FT_HAS_KERNING(get_face(font_face_)) && prev_char_index_) {
             FT_Vector kerning;
-            FT_Get_Kerning(get(face_), prev_char_index_, cur_char_index_, FT_KERNING_DEFAULT, &kerning);
+            FT_Get_Kerning(get_face(font_face_), prev_char_index_, cur_char_index_, FT_KERNING_DEFAULT, &kerning);
             x += kerning.x / SCALE_TO_F26DOT6;
         }
 
-        if (prev_rsb_delta_ - get(face_)->glyph->lsb_delta >= 32)
+        if (prev_rsb_delta_ - get_face(font_face_)->glyph->lsb_delta >= 32)
             x -= 1.0f;
-        else if (prev_rsb_delta_ - get(face_)->glyph->lsb_delta < -32)
+        else if (prev_rsb_delta_ - get_face(font_face_)->glyph->lsb_delta < -32)
             x += 1.0f;
 
-        prev_rsb_delta_ = get(face_)->glyph->rsb_delta;
+        prev_rsb_delta_ = get_face(font_face_)->glyph->rsb_delta;
 
-        Vectoriser vectoriser(get(face_)->glyph, bezier_steps_);
+        Vectoriser vectoriser(get_face(font_face_)->glyph, bezier_steps_);
         for (std::size_t c = 0; c < vectoriser.ContourCount(); ++c) {
             const ::Contour *contour = vectoriser.GetContour(c);
 
@@ -104,7 +126,7 @@ namespace easy3d {
         }
 
         prev_char_index_ = cur_char_index_;
-        x += get(face_)->glyph->advance.x / SCALE_TO_F26DOT6;
+        x += get_face(font_face_)->glyph->advance.x / SCALE_TO_F26DOT6;
 
         return char_contour;
     }
