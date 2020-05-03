@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <unordered_map>
-#include <functional>
 
 #include <easy3d/util/logging.h>
 
@@ -101,9 +100,7 @@ namespace easy3d {
 
 
 
-
     // -------------------------------------------------------------------------------------------------------------
-
 
 
 
@@ -116,22 +113,10 @@ namespace easy3d {
             return;
         }
 
-#if defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ == 0)
-        TessCallback(tess_obj_, TESS_VERTEX_DATA, (void(*)(...))vertexCallback);
-        TessCallback(tess_obj_, TESS_BEGIN_DATA, (void(*)(...))beginCallback);
-        TessCallback(tess_obj_, TESS_END_DATA, (void(*)(...))endCallback);
-        TessCallback(tess_obj_, TESS_COMBINE_DATA, (void(*)(...))combineCallback);
-#elif defined(_WIN32)
-        TessCallback(tess_obj_, TESS_VERTEX_DATA, (VOID(*)())vertexCallback);
-        TessCallback(tess_obj_, TESS_BEGIN_DATA, (VOID(*)())beginCallback);
-        TessCallback(tess_obj_, TESS_END_DATA, (VOID(*)())endCallback);
-        TessCallback(tess_obj_, TESS_COMBINE_DATA, (VOID(*)())combineCallback);
-#else
         TessCallback(tess_obj_, TESS_VERTEX_DATA, (void (*)()) vertexCallback);
         TessCallback(tess_obj_, TESS_BEGIN_DATA, (void (*)()) beginCallback);
         TessCallback(tess_obj_, TESS_END_DATA, (void (*)()) endCallback);
         TessCallback(tess_obj_, TESS_COMBINE_DATA, (void (*)()) combineCallback);
-#endif
 
         TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
         TessProperty(tess_obj_, TESS_TOLERANCE, 0.);
@@ -139,10 +124,12 @@ namespace easy3d {
         vertex_manager_ = new details::VertexManager(merge);
     }
 
+
     Tessellator::~Tessellator() {
         delete reinterpret_cast<details::VertexManager *>(vertex_manager_);
         DeleteTess(tess_obj_);
     }
+
 
     void Tessellator::set_winding_rule(WindingRule rule) {
         switch (rule) {
@@ -164,15 +151,18 @@ namespace easy3d {
         }
     }
 
+
     void Tessellator::begin_polygon(const vec3 &normal) {
         num_triangles_in_polygon_ = 0;
         TessNormal(tess_obj_, normal.x, normal.y, normal.z);
         TessBeginPolygon(tess_obj_, this);
     }
 
+
     void Tessellator::begin_contour() {
         TessBeginContour(tess_obj_);
     }
+
 
     void Tessellator::add_vertex(const Vertex &v) {
         Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_allocate_vertex(v);
@@ -185,15 +175,18 @@ namespace easy3d {
         TessVertex(tess_obj_, new_v->data(), new_v);
     }
 
+
     void
     Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
     {
         add_vertex(Vertex(data, size, idx));
     }
 
+
     void Tessellator::add_vertex(const vec3 &xyz, int idx) {
         add_vertex(Vertex(xyz, idx));
     }
+
 
     void Tessellator::add_vertex(const vec3 &xyz, const vec2 &t, int idx) {
         Vertex v(xyz, idx);
@@ -201,11 +194,13 @@ namespace easy3d {
         add_vertex(v);
     }
 
+
     void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, int idx) {
         Vertex v(xyz, idx);
         v.append(v1);
         add_vertex(v);
     }
+
 
     void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx) {
         Vertex v(xyz, idx);
@@ -214,12 +209,14 @@ namespace easy3d {
         add_vertex(v);
     }
 
+
     void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx) {
         Vertex v(xyz, idx);
         v.append(v1);
         v.append(v2);
         add_vertex(v);
     }
+
 
     void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx) {
         Vertex v(xyz, idx);
@@ -229,25 +226,31 @@ namespace easy3d {
         add_vertex(v);
     }
 
+
     void Tessellator::end_contour() {
         TessEndContour(tess_obj_);
     }
+
 
     void Tessellator::end_polygon() {
         TessEndPolygon(tess_obj_);
     }
 
+
     unsigned int Tessellator::num_triangles_in_last_polygon() const {
         return num_triangles_in_polygon_;
     }
+
 
     const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
         return reinterpret_cast<details::VertexManager *>(vertex_manager_)->vertices();
     }
 
+
     unsigned int Tessellator::num_triangles() const {
         return triangle_list_.size() / 3;
     }
+
 
     bool Tessellator::get_triangle(unsigned int t, unsigned int &a, unsigned int &b, unsigned int &c) const {
         bool ret = (t < triangle_list_.size() / 3);
@@ -261,12 +264,14 @@ namespace easy3d {
         return ret;
     }
 
+
     void Tessellator::add_triangle(unsigned int a, unsigned int b, unsigned int c) {
         triangle_list_.push_back(a);
         triangle_list_.push_back(b);
         triangle_list_.push_back(c);
         ++num_triangles_in_polygon_;
     }
+
 
     // ****************************************************************************
     // Method: Tessellator::beginCallback
@@ -282,6 +287,7 @@ namespace easy3d {
         tessellator->vertex_ids_in_polygon_.clear();
     }
 
+
     // ****************************************************************************
     // Method: Tessellator::endCallback
     // Purpose:
@@ -291,7 +297,6 @@ namespace easy3d {
     //   w: The type of primitives being created (TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN)
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
-
     void Tessellator::endCallback(void *cbdata) {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
@@ -345,6 +350,7 @@ namespace easy3d {
         }
     }
 
+
     // ****************************************************************************
     // Method: Tessellator::vertexCallback
     // Purpose:
@@ -363,6 +369,7 @@ namespace easy3d {
         std::size_t id = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->vertex_id(*v);
         tessellator->vertex_ids_in_polygon_.push_back(id);
     }
+
 
     // ****************************************************************************
     // Method: Tessellator::combineCallback
@@ -392,6 +399,7 @@ namespace easy3d {
 
         *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_allocate_vertex(v);
     }
+
 
     void Tessellator::reset() {
         reinterpret_cast<details::VertexManager *>(vertex_manager_)->clear();
