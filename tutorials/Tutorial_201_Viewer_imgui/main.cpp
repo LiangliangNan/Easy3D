@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
-    const std::string file_name = resource::directory() + "/data/easy3d-earth_normal.ply";
+    const std::string file_name = resource::directory() + "/data/easy3d.ply";
     ViewerImGui viewer("Tutorial_201_imgui");
 
     if (!viewer.add_model(file_name)) {

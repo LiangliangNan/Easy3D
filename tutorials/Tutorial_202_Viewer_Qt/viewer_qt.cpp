@@ -53,6 +53,7 @@
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -111,6 +112,15 @@ void ViewerQt::cleanup() {
 
 
 void ViewerQt::init() {
+    const std::string file_name = resource::directory() + "/data/easy3d.ply";
+    auto mesh = SurfaceMeshIO::load(file_name);
+    if (mesh)
+        addModel(mesh);
+
+    // We always want to look at the front of the easy3d logo.
+    camera()->setViewDirection(vec3(0, 0, -1));
+    camera()->setUpVector(vec3(0, 1, 0));
+    fitScreen(mesh);
 }
 
 
