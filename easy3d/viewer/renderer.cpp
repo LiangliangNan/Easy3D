@@ -333,7 +333,7 @@ namespace details {
 
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         vertex.append(vec2(coord, 0.5f));
                         tessellator.add_vertex(vertex);
@@ -416,7 +416,7 @@ namespace details {
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
 
                         float coord = (prop[v] - min_value) / (max_value - min_value);
@@ -614,7 +614,7 @@ namespace details {
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         tessellator.add_vertex(vertex);
                     }
@@ -685,7 +685,7 @@ namespace details {
                     const vec3& color = fcolor[face];
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         vertex.append(color);
                         tessellator.add_vertex(vertex);
@@ -758,7 +758,7 @@ namespace details {
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         vertex.append(vcolor[v]);
                         tessellator.add_vertex(vertex);
@@ -832,7 +832,7 @@ namespace details {
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         vertex.append(vtexcoords[v]);
                         tessellator.add_vertex(vertex);
@@ -915,7 +915,7 @@ namespace details {
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v]);
+                        Tessellator::Vertex vertex(points[v], v.idx());
                         vertex.append(normals[v]);
                         vertex.append(htexcoords[h]);
                         tessellator.add_vertex(vertex);

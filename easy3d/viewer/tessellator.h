@@ -90,7 +90,10 @@ namespace easy3d {
         };
 
     public:
-        Tessellator();
+        /**
+         * @param merge Whether or not to merge duplicated vertices in tessellation.
+         */
+        Tessellator(bool merge = true);
         ~Tessellator();
 
         // Set the winding rule (default rule is ODD, modify if needed)

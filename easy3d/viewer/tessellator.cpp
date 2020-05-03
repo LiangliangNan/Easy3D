@@ -51,7 +51,8 @@ namespace easy3d {
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
         public:
-            VertexManager(bool preserve = true) : preserve_connectivity_(preserve) {}
+            // merge: allows to merge the duplicated vertices during tessellation.
+            VertexManager(bool merge) : merge_duplicate_(merge) {}
             ~VertexManager() {
                 clear();
             }
@@ -91,7 +92,7 @@ namespace easy3d {
 
             inline std::size_t hash(const Tessellator::Vertex& v) const {
                 static std::hash<double> hasher;
-                std::size_t seed = (preserve_connectivity_ ? hasher(v.index) : 0);
+                std::size_t seed = (merge_duplicate_ ? 0 : hasher(v.index));
                 for (auto f : v)
                     hash_combine(seed, hasher(f));
 
@@ -99,7 +100,7 @@ namespace easy3d {
             }
 
         private:
-            bool preserve_connectivity_;
+            bool merge_duplicate_;
 
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
@@ -108,11 +109,10 @@ namespace easy3d {
         };
     }
 
-    Tessellator::Tessellator()
+    Tessellator::Tessellator(bool merge)
             : primitive_type_(GL_TRIANGLES)
             , primitive_aware_orientation_(false)
             , num_triangles_in_polygon_(0)
-            , vertex_manager_(new details::VertexManager)
             , vertex_data_size_(3)
     {
         tess_obj_ = gluNewTess();// Create a tessellator object and set up its callbacks.
@@ -140,6 +140,8 @@ namespace easy3d {
 
         gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
         gluTessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
+
+        vertex_manager_ = new details::VertexManager(merge);
     }
 
     Tessellator::~Tessellator() {
