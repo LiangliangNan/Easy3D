@@ -1537,8 +1537,16 @@ void MainWindow::surfaceMeshStitchCoincidentEdges() {
         mesh->add_face(vertices);
     }
 
+    // clean: remove isolated vertices
+    for (auto v : mesh->vertices()) {
+        if (mesh->is_isolated(v))
+            mesh->delete_vertex(v);
+    }
+    mesh->garbage_collection();
+
     mesh->update();
     viewer_->update();
+    updateUi();
 }
 
 
