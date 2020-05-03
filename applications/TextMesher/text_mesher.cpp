@@ -1,13 +1,13 @@
 
 #include "text_mesher.h"
+#include "ftgl/Vectoriser.h"
 
 #include <ft2build.h>
 #include <freetype/freetype.h>
 #include <freetype/ftglyph.h>
-#include "ftgl/Vectoriser.h"
-#include "poly2tri/poly2tri.h"
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
 
 
@@ -159,13 +159,6 @@ namespace easy3d {
             return false;
         }
 
-        auto contour_to_p2t_format = [](const Contour &contour) -> std::vector<p2t::Point *> {
-            std::vector<p2t::Point *> polyline;
-            for (const auto &p : contour)
-                polyline.push_back(new p2t::Point((p.x), p.y));
-            return polyline;
-        };
-
         auto is_inside = [](const Contour &contour_a, const Contour &contour_b) -> bool {
             for (const auto &p : contour_a) {
                 if (!geom::point_in_polygon(p, contour_b))
@@ -173,6 +166,8 @@ namespace easy3d {
             }
             return true;
         };
+
+        Tessellator tessellator(true);
 
         for (const auto &ch :characters) {
             for (int index = 0; index < ch.size(); ++index) {
@@ -188,35 +183,49 @@ namespace easy3d {
 
                 // create faces for the bottom and top
                 if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
-                    const std::vector<p2t::Point *> &polyline = contour_to_p2t_format(contour);
-                    p2t::CDT cdt(polyline);
+                    tessellator.begin_polygon(vec3(0, 0, -1));
+
+                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, 0.0));
+                    tessellator.end_contour();
 
                     for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
                         const Contour &inner_contour = ch[inner_index];
                         if (inner_index != index &&
                             inner_contour.clockwise != contour.clockwise &&
-                            is_inside(inner_contour, contour)) {
-                            const std::vector<p2t::Point *> &pl = contour_to_p2t_format(inner_contour);
-                            cdt.AddHole(pl);
+                            is_inside(inner_contour, contour))
+                        {
+                            tessellator.set_winding_rule(Tessellator::ODD);
+                            tessellator.begin_contour();
+                            for (const auto &p : inner_contour)
+                                tessellator.add_vertex(vec3(p, 0.0));
+                            tessellator.end_contour();
                         }
                     }
 
-                    cdt.Triangulate();
-                    const std::vector<p2t::Triangle *> &triangles = cdt.GetTriangles();
-                    for (const auto &t : triangles) {
-                        mesh->add_triangle( // bottom one
-                                mesh->add_vertex(vec3(t->GetPoint(2)->x, t->GetPoint(2)->y, 0.0f)),
-                                mesh->add_vertex(vec3(t->GetPoint(1)->x, t->GetPoint(1)->y, 0.0f)),
-                                mesh->add_vertex(vec3(t->GetPoint(0)->x, t->GetPoint(0)->y, 0.0f))
-                        );
-                        mesh->add_triangle( // top one
-                                mesh->add_vertex(vec3(t->GetPoint(0)->x, t->GetPoint(0)->y, extrude)),
-                                mesh->add_vertex(vec3(t->GetPoint(1)->x, t->GetPoint(1)->y, extrude)),
-                                mesh->add_vertex(vec3(t->GetPoint(2)->x, t->GetPoint(2)->y, extrude))
-                        );
-                    }
+                    tessellator.end_polygon();
                 }
             }
+        }
+
+        const auto &vertices = tessellator.vertices();
+        const int num = tessellator.num_triangles();
+        for (int i=0; i<num; ++i) {
+            unsigned int a, b, c;
+            tessellator.get_triangle(i, a, b, c);
+            const vec3 va(vertices[a]->data());
+            const vec3 vb(vertices[b]->data());
+            const vec3 vc(vertices[c]->data());
+            // bottom one
+            mesh->add_triangle(mesh->add_vertex(va), mesh->add_vertex(vb), mesh->add_vertex(vc));
+            // top one
+            mesh->add_triangle(
+                    mesh->add_vertex(vec3(vc.x, vc.y, vc.z + extrude)),
+                    mesh->add_vertex(vec3(vb.x, vb.y, vb.z + extrude)),
+                    mesh->add_vertex(vec3(va.x, va.y, va.z + extrude))
+            );
         }
 
         return true;

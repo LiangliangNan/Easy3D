@@ -11,18 +11,12 @@ endif()
 message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
 
 add_executable(${PROJECT_NAME}
-        ftgl/Point.cpp
-        ftgl/Contour.cpp
-        ftgl/Vectoriser.cpp
-        poly2tri/common/shapes.cc
-        poly2tri/sweep/cdt.cc
-        poly2tri/sweep/advancing_front.cc
-        poly2tri/sweep/sweep_context.cc
-        poly2tri/sweep/sweep.cc
-
         text_mesher.h
         text_mesher.cpp
         main.cpp
+        ftgl/Point.cpp
+        ftgl/Contour.cpp
+        ftgl/Vectoriser.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
