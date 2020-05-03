@@ -31,6 +31,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -153,13 +154,13 @@ namespace easy3d {
 				}
 			}
 
-			//	ProgressLogger progress(num);
+			ProgressLogger progress(num);
 			for (unsigned int i = 1; i < num; ++i) {
-				//		if (progress.is_canceled()) {
-				//			delete cloud;
-				//          return nullptr;
-				//		}
-				//		progress.notify(i);
+                if (progress.is_canceled()) {
+                    delete cloud;
+                    return nullptr;
+                }
+                progress.notify(i);
 
 				in.get_line();
 				in >> p >> intensity;

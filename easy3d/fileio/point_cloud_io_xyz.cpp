@@ -29,6 +29,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -45,10 +46,10 @@ namespace easy3d {
 			io::LineInputStream in(input);
 
 			// get length of file
-			// input.seekg(0, input.end);
-			// std::streamoff length = input.tellg();
-			// input.seekg(0, input.beg);
-			// ProgressLogger progress(length);
+            input.seekg(0, input.end);
+            std::streamoff length = input.tellg();
+            input.seekg(0, input.beg);
+            ProgressLogger progress(length);
 
 			vec3 p;
 			while (!input.eof()) {
@@ -58,8 +59,8 @@ namespace easy3d {
 					if (!in.fail()) {
 						cloud->add_vertex(p);
 
-						//  std::streamoff pos = input.tellg();
-						//	progress.notify(pos);
+                        std::streamoff pos = input.tellg();
+                        progress.notify(pos);
 					}
 					else {
 						LOG_FIRST_N(ERROR, 1) << "failed reading point (this is the first record)";
@@ -81,11 +82,11 @@ namespace easy3d {
 
 			PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 
-			//   ProgressLogger progress(cloud->n_vertices());
-			for (auto v : cloud->vertices()) {
+            ProgressLogger progress(cloud->n_vertices());
+            for (auto v : cloud->vertices()) {
                 output << points[v] << std::endl;
-				//		progress.next();
-			}
+                progress.next();
+            }
 
 			return true;
 		}

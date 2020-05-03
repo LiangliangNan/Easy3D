@@ -46,6 +46,7 @@
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
 #include "viewer_qt.h"
 
@@ -122,13 +123,13 @@ bool MainWindow::onOpen() {
         return false;
 
     int count = 0;
-//	ProgressLogger progress(fileNames.size());
+	ProgressLogger progress(fileNames.size());
     for (const auto& name : fileNames) {
-//        if (progress.is_canceled())
-//            break;
+        if (progress.is_canceled())
+            break;
         if (open(name.toStdString()))
             ++count;
-//        progress.next();
+        progress.next();
     }
     if (count > 0)
         viewer_->update();

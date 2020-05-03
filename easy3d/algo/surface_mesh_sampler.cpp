@@ -26,6 +26,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -97,7 +98,7 @@ namespace easy3d {
         std::size_t triangle_num = triangles.size();
         std::size_t num_generated = 0;
         std::size_t triangles_done = 0;
-//        ProgressLogger progress(triangle_num, title());
+        ProgressLogger progress(triangle_num, "Sampling mesh");
         for (std::size_t idx = 0; idx < triangle_num; ++idx) {
             const Triangle &tri = triangles[idx];
             const vec3 &n = triangle_normals[idx];
@@ -138,7 +139,7 @@ namespace easy3d {
 
             num_generated += quant_samples_num;
             triangles_done++;
-//            progress.next();
+            progress.next();
         }
 
         LOG(INFO) << "done. resulted point cloud has " << cloud->n_vertices() << " points";

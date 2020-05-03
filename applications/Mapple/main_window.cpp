@@ -312,13 +312,13 @@ bool MainWindow::onOpen() {
         return false;
 
     int count = 0;
-//	ProgressLogger progress(fileNames.size());
+	ProgressLogger progress(fileNames.size());
     for (const auto& name : fileNames) {
-//        if (progress.is_canceled())
-//            break;
+        if (progress.is_canceled())
+            break;
         if (open(name.toStdString()))
             ++count;
-//        progress.next();
+        progress.next();
     }
     if (count > 0)
         viewer_->update();
@@ -1172,7 +1172,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
     const auto& components = SurfaceMeshComponent::extract(mesh);
     std::cout << "model has " << components.size() << " connected components" << std::endl;
 
-    const std::string color_name = "f:color_connected_components";
+    const std::string color_name = "f:color_components";
     auto face_color = mesh->face_property<vec3>(color_name, vec3(0.5f, 0.5f, 0.5f));
     for (auto& comp : components) {
         const vec3& color = random_color(false);

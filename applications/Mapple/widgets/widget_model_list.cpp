@@ -638,10 +638,11 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 	if (meshes.size() > 1) {
 		SurfaceMesh* to = meshes[0];
-//		ProgressLogger logger(meshes.size() - 1, "Merge meshes");
+		ProgressLogger logger(meshes.size() - 1, "Merge meshes");
 		for (std::size_t i = 1; i < meshes.size(); ++i) {
-//			if (logger.is_canceled())
-//				break;
+		    logger.notify(i);
+			if (logger.is_canceled())
+				break;
 
 			const int offset = to->n_vertices();
             SurfaceMesh* from = meshes[i];
@@ -657,18 +658,19 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 			}
 
 			to_delete.push_back(from);
-//			logger.next();
 		}
 
 		to->set_name("merged_mesh");
+		to->update();
 	}
 
 	if (clouds.size() > 1) {
 		PointCloud* to = clouds[0];
-//		ProgressLogger logger(clouds.size() - 1, "Merge point sets");
+		ProgressLogger logger(clouds.size() - 1, "Merge point sets");
 		for (int i = 1; i < clouds.size(); ++i) {
-//			if (logger.is_canceled())
-//				break;
+            logger.notify(i);
+            if (logger.is_canceled())
+                break;
 
 			PointCloud* from = clouds[i];
             auto points = from->get_vertex_property<vec3>("v:point");
@@ -677,10 +679,10 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
             }
 
 			to_delete.push_back(from);
-//			logger.next();
 		}
 
 		to->set_name("merged_point_set");
+        to->update();
 	}
 
 	for (unsigned int i = 0; i < to_delete.size(); ++i) {
@@ -703,7 +705,6 @@ void WidgetModelList::decomposeModel(Model *model) {
     if (!mesh)
         return;
 
-
 	const auto& components = SurfaceMeshComponent::extract(mesh);
 	if (components.size() == 1) {
 		LOG(WARNING) << "model has only one component";
@@ -712,13 +713,9 @@ void WidgetModelList::decomposeModel(Model *model) {
 
 	const std::string base_name = file_system::parent_directory(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
 
-//	ProgressLogger logger(components.size(), "dispatch components");
+	ProgressLogger logger(components.size(), "dispatch components");
 	for (unsigned int i = 0; i < components.size(); i++) {
-//		logger.notify(i);
-//		if (logger.is_canceled()) {
-//			break;
-//		}
-
+		logger.notify(i);
 		SurfaceMesh* new_mesh = components[i].to_mesh();
 		new_mesh->set_name(base_name + std::to_string(i + 1));
 		viewer()->addModel(new_mesh);
