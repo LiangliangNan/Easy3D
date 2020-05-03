@@ -43,9 +43,7 @@ namespace easy3d {
      *          - Generate buffer data for rendering;
      *          - Triangulate non-triangle surfaces;
      *          - Stitch patches of a triangle meshes.
-     *
-     * @TODO 1: make it template for both 2D and 3D, and floating point number; use the factored glutess.
-     * @TODO 2: use libtess2 (indenpend of GLU)?
+     * @TODO: make it template for both 2D and 3D, and floating point number; use the factored glutess.
      */
 
     class Tessellator {
@@ -173,9 +171,8 @@ namespace easy3d {
 
         /**
          * Clear all recorded data (triangle list and vertices) and restart index counter.
-         * This function is useful if you don't want to stitch faces/components. In this case, call reset() before you
-         * process each mesh faces/components. Then for each faces/components, you collect the vertices and vertex
-         * indices of the triangles.
+         * This function is useful if you want to selectively stitch faces/components. In this case, call reset()
+         * before you process each set. Then for each set, you collect the vertices and vertex indices of the triangles.
          */
         void reset();
 
