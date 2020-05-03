@@ -55,7 +55,7 @@ namespace easy3d {
     }
 
 
-    TextMesher::CharContour TextMesher::generate_contours(char ch, float &offset) {
+    TextMesher::CharContour TextMesher::generate_contours(char ch, float& x, float& y) {
         CharContour char_contour;
         char_contour.character = ch;
 
@@ -79,13 +79,13 @@ namespace easy3d {
         if (FT_HAS_KERNING(get(face_)) && prev_char_index_) {
             FT_Vector kerning;
             FT_Get_Kerning(get(face_), prev_char_index_, cur_char_index_, FT_KERNING_DEFAULT, &kerning);
-            offset += kerning.x >> 6;
+            x += kerning.x / SCALE_TO_F26DOT6;
         }
 
         if (prev_rsb_delta_ - get(face_)->glyph->lsb_delta >= 32)
-            offset -= 1.0f;
+            x -= 1.0f;
         else if (prev_rsb_delta_ - get(face_)->glyph->lsb_delta < -32)
-            offset += 1.0f;
+            x += 1.0f;
 
         prev_rsb_delta_ = get(face_)->glyph->rsb_delta;
 
@@ -98,19 +98,19 @@ namespace easy3d {
 
             for (std::size_t p = 0; p < contour->PointCount(); ++p) {
                 const double *d = contour->GetPoint(p);
-                polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + offset, d[1] / SCALE_TO_F26DOT6);
+                polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
             }
             char_contour.push_back(polygon);
         }
 
         prev_char_index_ = cur_char_index_;
-        offset += get(face_)->glyph->advance.x / SCALE_TO_F26DOT6;
+        x += get(face_)->glyph->advance.x / SCALE_TO_F26DOT6;
 
         return char_contour;
     }
 
 
-    void TextMesher::generate_contours(const std::string &text, std::vector<CharContour> &contours) {
+    void TextMesher::generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
         if (!ready_)
             return;
 
@@ -118,20 +118,19 @@ namespace easy3d {
         cur_char_index_ = 0;
         prev_rsb_delta_ = 0;
 
-        float offset = 0;
         for (int i = 0; i < text.size(); ++i) {
-            const auto &char_contour = generate_contours(text[i], offset);
+            const auto &char_contour = generate_contours(text[i], x, y);
             contours.push_back(char_contour);
         }
     }
 
 
-    SurfaceMesh *TextMesher::generate_mesh(const std::string &text, float extrude) {
+    SurfaceMesh *TextMesher::generate_mesh(const std::string &text, float x, float y, float extrude) {
         if (!ready_)
             return nullptr;
 
         std::vector<CharContour> characters;
-        generate_contours(text, characters);
+        generate_contours(text, x, y, characters);
 
         if (characters.empty()) {
             LOG(ERROR) << "no contour generated from the text using the specified font";

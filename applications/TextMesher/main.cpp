@@ -38,18 +38,22 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
-    // Create an instance of mesher from a font file.
-    const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
-    TextMesher mesher(font_file);
-
-    // Generate a surface mesh from text.
-    SurfaceMesh* mesh = mesher.generate_mesh("Easy3D");
-    if (!mesh)
-        return EXIT_FAILURE;
-
-    // Create an Easy3D viewer and add the mesh to the viewer.
+    // Create an Easy3D viewer.
     Viewer viewer("TextMesher - Easy3D");
-    viewer.add_model(mesh);
+
+    // Create an instance of mesher by specifying a font file.
+    const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
+    TextMesher mesher(font_file, 48);   // font size is 48
+
+    // Generate a surface mesh for "Easy3D".
+    SurfaceMesh* mesh = mesher.generate_mesh("Easy3D", 0, 0);
+    if (mesh)
+        viewer.add_model(mesh); // Add the mesh to the viewer.
+
+    // Generate another mesh for "Makes 3D Easy!".
+    mesh = mesher.generate_mesh("Makes 3D Easy!", 0, -60);
+    if (mesh)
+        viewer.add_model(mesh); // Add the mesh to the viewer.
 
     // We always want to look the front of the meshed text.
     viewer.camera()->setViewDirection(vec3(0, 0, -1));

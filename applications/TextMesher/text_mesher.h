@@ -26,10 +26,12 @@ namespace easy3d {
         /**
          * @brief Generate a 3D surface mesh of a text.
          * @param text The input text.
+         * @param x The x-position of the character. In return, the new value for the subsequent character.
+         * @param y The y-position of the character. In return, the new value for the subsequent character.
          * @param extrude The height (in the Z direction) of the 3D model.
          * @return The generated triangular surface mesh.
          */
-        SurfaceMesh *generate_mesh(const std::string &text, float extrude = 16);
+        SurfaceMesh *generate_mesh(const std::string &text, float x, float y, float extrude = 16);
 
     private:
         /**
@@ -51,17 +53,20 @@ namespace easy3d {
         /**
          * @brief Generate contours for a text.
          * @param text The input text.
+         * @param x The x-position of the character. In return, the new value for the subsequent character.
+         * @param y The y-position of the character. In return, the new value for the subsequent character.
          * @param contours The contours of the text. The generated contours are simply appended to his variable.
          */
-        void generate_contours(const std::string &text, std::vector<CharContour> &contours);
+        void generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours);
 
         /**
          * @brief Generate contours for a single character.
          * @param character The input character.
-         * @param offset The offset of this character. In return, the new value for the subsequent character.
+         * @param x The x-position of the character. In return, the new value for the subsequent character.
+         * @param y The y-position of the character. In return, the new value for the subsequent character.
          * @return The contours for this character.
          */
-        CharContour generate_contours(char character, float &offset);
+        CharContour generate_contours(char character, float& x, float& y);
 
     private:
         void *face_;
