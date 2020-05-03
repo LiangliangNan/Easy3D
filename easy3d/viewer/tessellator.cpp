@@ -23,7 +23,6 @@
  */
 
 #include <easy3d/viewer/tessellator.h>
-#include <easy3d/viewer/opengl.h>
 #include <easy3d/util/logging.h>
 
 #ifdef _WIN32
@@ -32,11 +31,7 @@
 #define CALLBACK
 #endif
 
-#  if defined(__APPLE__) && defined(__MACH__)
-#    include <OpenGL/glu.h>
-#  else
-#    include <GL/glu.h>
-#  endif
+#include <3rd_party/libtess/glutess.h>
 
 #include <vector>
 #include <unordered_map>
@@ -115,79 +110,79 @@ namespace easy3d {
             , num_triangles_in_polygon_(0)
             , vertex_data_size_(3)
     {
-        tess_obj_ = gluNewTess();// Create a tessellator object and set up its callbacks.
+        tess_obj_ = NewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
             LOG(ERROR) << "failed to create a tessellator object";
             return;
         }
 
 #if defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ == 0)
-        gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)(...))vertexCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)(...))beginCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)(...))endCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)(...))combineCallback);
+        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)(...))vertexCallback);
+        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)(...))beginCallback);
+        TessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)(...))endCallback);
+        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)(...))combineCallback);
 #elif defined(_WIN32)
-        gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (VOID(CALLBACK *)())vertexCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (VOID(CALLBACK *)())beginCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (VOID(CALLBACK *)())endCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (VOID(CALLBACK *)())combineCallback);
+        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (VOID(CALLBACK *)())vertexCallback);
+        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (VOID(CALLBACK *)())beginCallback);
+        TessCallback(tess_obj_, GLU_TESS_END_DATA, (VOID(CALLBACK *)())endCallback);
+        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (VOID(CALLBACK *)())combineCallback);
 #else
-        gluTessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)()) vertexCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)()) beginCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)()) endCallback);
-        gluTessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)()) combineCallback);
+        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)()) vertexCallback);
+        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)()) beginCallback);
+        TessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)()) endCallback);
+        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)()) combineCallback);
 #endif
 
-        gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
-        gluTessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
+        TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+        TessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
 
         vertex_manager_ = new details::VertexManager(merge);
     }
 
     Tessellator::~Tessellator() {
         delete reinterpret_cast<details::VertexManager *>(vertex_manager_);
-        gluDeleteTess(tess_obj_);
+        DeleteTess(tess_obj_);
     }
 
     void Tessellator::set_winding_rule(WindingRule rule) {
         switch (rule) {
             case ODD:
-                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
                 return;
             case NONZERO:
-                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
+                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
                 return;
             case POSITIVE:
-                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
                 return;
             case NEGATIVE:
-                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
                 return;
             case ABS_GEQ_TWO:
-                gluTessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
+                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
                 return;
         }
     }
 
     void Tessellator::begin_polygon(const vec3 &normal) {
         num_triangles_in_polygon_ = 0;
-        gluTessNormal(tess_obj_, normal.x, normal.y, normal.z);
-        gluTessBeginPolygon(tess_obj_, this);
+        TessNormal(tess_obj_, normal.x, normal.y, normal.z);
+        TessBeginPolygon(tess_obj_, this);
     }
 
     void Tessellator::begin_contour() {
-        gluTessBeginContour(tess_obj_);
+        TessBeginContour(tess_obj_);
     }
 
     void Tessellator::add_vertex(const Vertex &v) {
         Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_allocate_vertex(v);
-        // gluTessVertex() takes 3 params: tess object, pointer to vertex coords,
+        // TessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
         // param is the actual vertex data to draw. It is usually same as the second
         // param, but It can be more than vertex coord, for example, color, normal
         // and UV coords which are needed for actual drawing.
-        gluTessVertex(tess_obj_, new_v->data(), new_v);
+        TessVertex(tess_obj_, new_v->data(), new_v);
     }
 
     void Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
@@ -234,11 +229,11 @@ namespace easy3d {
     }
 
     void Tessellator::end_contour() {
-        gluTessEndContour(tess_obj_);
+        TessEndContour(tess_obj_);
     }
 
     void Tessellator::end_polygon() {
-        gluTessEndPolygon(tess_obj_);
+        TessEndPolygon(tess_obj_);
     }
 
     unsigned int Tessellator::num_triangles_in_last_polygon() const {
