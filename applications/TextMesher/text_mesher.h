@@ -16,9 +16,10 @@ namespace easy3d {
          * @brief Create an instance of TextMesher.
          * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
          * @param font_height The height of the font.
-         * @param bezier_steps
+         * @param bezier_steps Control the smoothness of the curved corners. A greater value results in a smooth
+         *                     transitions but more vertices. Suggested value is 4.
          */
-        TextMesher(const std::string &font_file = "fonts/hp.ttf", int font_height = 48, unsigned short bezier_steps = 4);
+        TextMesher(const std::string &font_file, int font_height = 48, unsigned short bezier_steps = 4);
 
         ~TextMesher();
 
