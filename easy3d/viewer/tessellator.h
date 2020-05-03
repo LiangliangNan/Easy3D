@@ -44,7 +44,8 @@ namespace easy3d {
      *          - Triangulate non-triangle surfaces;
      *          - Stitch patches of a triangle meshes.
      *
-     * @TODO: make it template for both 2D and 3D, and floating point number; use the factored glutess
+     * @TODO 1: make it template for both 2D and 3D, and floating point number; use the factored glutess.
+     * @TODO 2: use libtess2 (indenpend of GLU)?
      */
 
     class Tessellator {
@@ -52,8 +53,12 @@ namespace easy3d {
         /** A vertex carries both xyz coordinates and its attributes (e.g., color, texcoord). */
         struct Vertex : std::vector<double> {
 
-            /** initialize with xyz coordinates. */
-            Vertex(const vec3 &xyz) { append(xyz); }
+            /**
+             * initialize with xyz coordinates and an optional index.
+             * @param idx The index of this point. So it allow to recover the original index after tessellation.
+             *            The new vertices generated during the tessellation will be assign a negative index.
+             * */
+            Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
 
             /**
              * initialize from a C-style array.
@@ -80,6 +85,8 @@ namespace easy3d {
                 for (int i = 0; i < v.size(); ++i)
                     push_back(v[i]);
             }
+
+            int index;
         };
 
     public:

@@ -51,7 +51,7 @@ namespace easy3d {
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
         public:
-            VertexManager() {}
+            VertexManager(bool preserve = true) : preserve_connectivity_(preserve) {}
             ~VertexManager() {
                 clear();
             }
@@ -90,14 +90,16 @@ namespace easy3d {
             }
 
             inline std::size_t hash(const Tessellator::Vertex& v) const {
-                std::size_t seed = 0;
                 static std::hash<double> hasher;
+                std::size_t seed = (preserve_connectivity_ ? hasher(v.index) : 0);
                 for (auto f : v)
                     hash_combine(seed, hasher(f));
+
                 return seed;
             }
 
         private:
+            bool preserve_connectivity_;
 
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
