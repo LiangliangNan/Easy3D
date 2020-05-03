@@ -1143,12 +1143,8 @@ namespace easy3d {
             }
         }
 
-        if (create_default_drawables) {
-            if (model->n_vertices() > 0)
-                create_drawables(model);
-            else
-                LOG(WARNING) << "drawable cannot be created due to no vertices.";
-        }
+        if (create_default_drawables)
+            create_drawables(model);
 
         int pre_idx = model_idx_;
         models_.push_back(model);

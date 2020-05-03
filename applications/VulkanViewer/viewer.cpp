@@ -601,11 +601,6 @@ namespace easy3d {
 //
 //            createVertexBuffer();
 //            createIndexBuffer();
-
-//            if (model->n_vertices() > 0)
-//                create_drawables(model);
-//            else
-                LOG(WARNING) << "drawable cannot be created due to no vertices.";
         }
 
         int pre_idx = model_idx_;
