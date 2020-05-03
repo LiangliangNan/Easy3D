@@ -1,5 +1,11 @@
-TextMesher was creatd to produce the logo of Easy3D. It is now a seperate program.
+TextMesher was creatd to produce the Easy3D logo. I made it a separate program in the hope that it is helpful.
 
-TextMesher is based on Easy3D. To build it, clone or download entire Easy3D source and use the CMakeList.txt in the root directory.
+TextMesher is based on
+ - [the FreeType library](https://www.freetype.org/): for decoding fonts and converting texts into a vector representation);
+ - [Easy3D](https://github.com/LiangliangNan/Easy3D): for triangulating the character contours, storing the surface mesh, and visualization.
+
+Build TextMesher
+ - download FreeType (either the prebuilt binaries or building it from its source code);
+ - download the entire Easy3D source code and use the CMakeList.txt in the root directory. 
 
 Enjoy!
