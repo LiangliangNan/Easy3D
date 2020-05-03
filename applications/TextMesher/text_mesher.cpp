@@ -168,7 +168,6 @@ namespace easy3d {
         };
 
         Tessellator tessellator(true);
-
         for (const auto &ch :characters) {
             for (int index = 0; index < ch.size(); ++index) {
                 const Contour &contour = ch[index];
@@ -177,11 +176,19 @@ namespace easy3d {
                     const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
                     const vec3 c = a + vec3(0, 0, extrude);
                     const vec3 d = b + vec3(0, 0, extrude);
-                    mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(b), mesh->add_vertex(a));
-                    mesh->add_triangle(mesh->add_vertex(c), mesh->add_vertex(d), mesh->add_vertex(b));
+                    // Though I've already known the vertex indices of the character's side triangles (a -> c -> b and
+                    // c -> d -> b), I still use my tessellator that allows to stitch the triangles into a closed mesh.
+                    tessellator.begin_polygon();
+                    tessellator.begin_contour(); // a -> c -> d -> b
+                    tessellator.add_vertex(a);
+                    tessellator.add_vertex(c);
+                    tessellator.add_vertex(d);
+                    tessellator.add_vertex(b);
+                    tessellator.end_contour();
+                    tessellator.end_polygon();
                 }
 
-                // create faces for the bottom and top
+                // create faces for the bottom
                 if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
                     tessellator.begin_polygon(vec3(0, 0, -1));
 
@@ -207,25 +214,52 @@ namespace easy3d {
 
                     tessellator.end_polygon();
                 }
-            }
-        }
 
-        const auto &vertices = tessellator.vertices();
-        const int num = tessellator.num_triangles();
-        for (int i=0; i<num; ++i) {
-            unsigned int a, b, c;
-            tessellator.get_triangle(i, a, b, c);
-            const vec3 va(vertices[a]->data());
-            const vec3 vb(vertices[b]->data());
-            const vec3 vc(vertices[c]->data());
-            // bottom one
-            mesh->add_triangle(mesh->add_vertex(va), mesh->add_vertex(vb), mesh->add_vertex(vc));
-            // top one
-            mesh->add_triangle(
-                    mesh->add_vertex(vec3(vc.x, vc.y, vc.z + extrude)),
-                    mesh->add_vertex(vec3(vb.x, vb.y, vb.z + extrude)),
-                    mesh->add_vertex(vec3(va.x, va.y, va.z + extrude))
-            );
+                // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
+                // be simply obtained. I still use my tessellator to tesselate the top faces.
+                // create faces for the top
+                if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
+                    tessellator.begin_polygon(vec3(0, 0, 1));
+
+                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, extrude));
+                    tessellator.end_contour();
+
+                    for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
+                        const Contour &inner_contour = ch[inner_index];
+                        if (inner_index != index &&
+                            inner_contour.clockwise != contour.clockwise &&
+                            is_inside(inner_contour, contour))
+                        {
+                            tessellator.set_winding_rule(Tessellator::ODD);
+                            tessellator.begin_contour();
+                            for (const auto &p : inner_contour)
+                                tessellator.add_vertex(vec3(p, extrude));
+                            tessellator.end_contour();
+                        }
+                    }
+
+                    tessellator.end_polygon();
+                }
+            }
+
+            const int offset = mesh->n_vertices();
+
+            const auto &vertices = tessellator.vertices();
+            for (const auto v : vertices)
+                mesh->add_vertex(vec3(v->data()));
+
+            const unsigned int num = tessellator.num_triangles();
+            for (int i=0; i<num; ++i) {
+                unsigned int a, b, c;
+                tessellator.get_triangle(i, a, b, c);
+                mesh->add_triangle(SurfaceMesh::Vertex(a + offset), SurfaceMesh::Vertex(b + offset), SurfaceMesh::Vertex(c + offset));
+            }
+
+            // we generate for each character.
+            tessellator.reset();
         }
 
         return true;
