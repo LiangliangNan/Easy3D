@@ -46,14 +46,12 @@ int main(int argc, char** argv) {
     TextMesher mesher(font_file, 48);   // font size is 48
 
     // Generate a surface mesh for "Easy3D".
-    SurfaceMesh* mesh = mesher.generate_mesh("Easy3D", 0, 0);
+    SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0);
     if (mesh)
         viewer.add_model(mesh); // Add the mesh to the viewer.
 
-    // Generate another mesh for "Makes 3D Easy!".
-    mesh = mesher.generate_mesh("Makes 3D Easy!", 0, -60);
-    if (mesh)
-        viewer.add_model(mesh); // Add the mesh to the viewer.
+    // Generate surface for "Makes 3D Easy!".
+    mesher.generate(mesh,"Makes 3D Easy!", 0, -60);
 
     // We always want to look the front of the meshed text.
     viewer.camera()->setViewDirection(vec3(0, 0, -1));

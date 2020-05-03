@@ -125,16 +125,16 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh *TextMesher::generate_mesh(const std::string &text, float x, float y, float extrude) {
+    bool TextMesher::generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude) {
         if (!ready_)
-            return nullptr;
+            return false;
 
         std::vector<CharContour> characters;
         generate_contours(text, x, y, characters);
 
         if (characters.empty()) {
             LOG(ERROR) << "no contour generated from the text using the specified font";
-            return nullptr;
+            return false;
         }
 
         auto contour_to_p2t_format = [](const Contour &contour) -> std::vector<p2t::Point *> {
@@ -152,7 +152,6 @@ namespace easy3d {
             return true;
         };
 
-        SurfaceMesh *mesh = new SurfaceMesh;
         for (const auto &ch :characters) {
             for (int index = 0; index < ch.size(); ++index) {
                 const Contour &contour = ch[index];
@@ -198,7 +197,21 @@ namespace easy3d {
             }
         }
 
-        return mesh;
+        return true;
+    }
+
+
+    SurfaceMesh *TextMesher::generate(const std::string &text, float x, float y, float extrude) {
+        if (!ready_)
+            return nullptr;
+
+        SurfaceMesh *mesh = new SurfaceMesh;
+        if (generate(mesh, text, x, y, extrude))
+            return mesh;
+        else {
+            delete mesh;
+            return nullptr;
+        }
     }
 
 }
