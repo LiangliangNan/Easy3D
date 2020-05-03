@@ -60,7 +60,7 @@ void triangulate(SurfaceMesh *mesh) {
         tessellator.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
-            tessellator.add_vertex(mesh->position(v));
+            tessellator.add_vertex(mesh->position(v), v.idx());
         }
         tessellator.end_contour();
 

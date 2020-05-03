@@ -218,15 +218,16 @@ namespace easy3d {
                 tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    const vec3 &v = points[model->to_vertex(h)];
-                    const vec3 &n = normals[model->to_vertex(h)];
+                    auto v = model->to_vertex(h);
+                    const vec3 &p = points[v];
+                    const vec3 &n = normals[v];
                     if (prop_texcoords) {
                         const vec2 &t = prop_texcoords[h];
-                        const float data[8] = {v.x, v.y, v.z, n.x, n.y, n.z, t.x, t.y};
-                        tessellator.add_vertex(data, 8);
+                        const float data[8] = {p.x, p.y, p.z, n.x, n.y, n.z, t.x, t.y};
+                        tessellator.add_vertex(data, 8, v.idx());
                     } else {
-                        const float data[6] = {v.x, v.y, v.z, n.x, n.y, n.z};
-                        tessellator.add_vertex(data, 6);
+                        const float data[6] = {p.x, p.y, p.z, n.x, n.y, n.z};
+                        tessellator.add_vertex(data, 6, v.idx());
                     }
                 }
                 tessellator.end_contour();

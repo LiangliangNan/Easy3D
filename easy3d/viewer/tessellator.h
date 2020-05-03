@@ -55,25 +55,37 @@ namespace easy3d {
 
             /**
              * initialize with xyz coordinates and an optional index.
-             * @param idx The index of this point. So it allow to recover the original index after tessellation.
-             *            The new vertices generated during the tessellation will be assign a negative index.
-             * */
-            Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
+             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
+             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             */
+            Vertex(const vec3 &xyz, int idx = -1) : index(idx) { append(xyz); }
 
             /**
              * initialize from a C-style array.
+             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
+             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
-            Vertex(const FT *data, std::size_t size) {
+            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx) {
                 assign(data, data + size);
             }
 
             /**
              * initialize with a known size but memory is allocated without data initialization.
+             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
+             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(std::size_t size = 0) : std::vector<double>(size) {}
+            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx) {}
 
+            /**
+             * copy constructor.
+             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
+             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             */
+            Vertex(const Vertex& v, int idx = -1) : index(idx) {
+                assign(v.begin(), v.end());
+            }
             /**
              * append a property (e.g., color, texture coordinates) to this vertex.
              * @tparam Vec The vector type of the vertex property, e.g., vec2, vec3.
@@ -123,17 +135,19 @@ namespace easy3d {
 
         void begin_contour();    // a polygon can have multiple contours
 
-        // general data
+        /**
+         * @brief Add a vertex to the tessellator.
+         * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
+         *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+         */
         void add_vertex(const Vertex &data);
-        void add_vertex(const float *data, unsigned int size);
-
-        // commonly used data
-        void add_vertex(const vec3 &xyz);
-        void add_vertex(const vec3 &xyz, const vec2 &t);
-        void add_vertex(const vec3 &xyz, const vec3 &v1);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t);
+        void add_vertex(const float *data, unsigned int size, int idx = -1);
+        void add_vertex(const vec3 &xyz, int idx = -1);
+        void add_vertex(const vec3 &xyz, const vec2 &t, int idx = -1);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, int idx = -1);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx = -1);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = -1);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = -1);
 
         void end_contour();
 

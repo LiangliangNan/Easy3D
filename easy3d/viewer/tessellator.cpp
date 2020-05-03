@@ -65,7 +65,7 @@ namespace easy3d {
                 std::size_t key = hash(v);
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
-                    auto vertex = new Tessellator::Vertex(v);
+                    auto vertex = new Tessellator::Vertex(v, v.index);
                     hash_table_[key] = unique_vertices_.size();
                     unique_vertices_.push_back(vertex);
                     return vertex;
@@ -190,43 +190,43 @@ namespace easy3d {
         gluTessVertex(tess_obj_, new_v->data(), new_v);
     }
 
-    void Tessellator::add_vertex(const float *data, unsigned int size) // to be flexible (any data can be provide)
+    void Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
     {
-        add_vertex(Vertex(data, size));
+        add_vertex(Vertex(data, size, idx));
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz) {
-        add_vertex(Vertex(xyz));
+    void Tessellator::add_vertex(const vec3 &xyz, int idx) {
+        add_vertex(Vertex(xyz, idx));
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz, const vec2 &t) {
-        Vertex v(xyz);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec2 &t, int idx) {
+        Vertex v(xyz, idx);
         v.append(t);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1) {
-        Vertex v(xyz);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, int idx) {
+        Vertex v(xyz, idx);
         v.append(v1);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t) {
-        Vertex v(xyz);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx) {
+        Vertex v(xyz, idx);
         v.append(v1);
         v.append(t);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2) {
-        Vertex v(xyz);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx) {
+        Vertex v(xyz, idx);
         v.append(v1);
         v.append(v2);
         add_vertex(v);
     }
 
-    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t) {
-        Vertex v(xyz);
+    void Tessellator::add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx) {
+        Vertex v(xyz, idx);
         v.append(v1);
         v.append(v2);
         v.append(t);
@@ -380,7 +380,7 @@ namespace easy3d {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         unsigned int size = tessellator->vertex_data_size_;
-        Vertex v(size);
+        Vertex v(size, -1);
         for (std::size_t i = 0; i < 3; ++i)
             v[i] = coords[i];
 
