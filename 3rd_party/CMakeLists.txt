@@ -16,6 +16,7 @@ add_subdirectory(glog)
 
 add_subdirectory(triangle)
 add_subdirectory(tetgen)
+add_subdirectory(libtess)
 
 
 
