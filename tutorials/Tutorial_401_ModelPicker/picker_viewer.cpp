@@ -24,12 +24,10 @@
 
 #include "picker_viewer.h"
 #include <easy3d/gui/picker_model.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/viewer/model.h>
 #include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/viewer/setting.h>
+#include <easy3d/util/file_system.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
@@ -39,13 +37,15 @@ using namespace easy3d;
 
 PickerViewer::PickerViewer(const std::string &title)
         : Viewer(title) {
+    // We always want to look at the front of the easy3d logo.
+    camera()->setViewDirection(vec3(0, 0, -1));
+    camera()->setUpVector(vec3(0, 1, 0));
 }
 
 
 std::string PickerViewer::usage() const {
     return ("------------ Picker Viewer usage ---------- \n"
-            "Press the left button to pick a model\n"
-            "Press the right button to unpick a model\n"
+            "Press the left button to pick/unpick a model\n"
             "------------------------------------------ \n");
 }
 
@@ -53,58 +53,24 @@ std::string PickerViewer::usage() const {
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     ModelPicker picker(camera());
     auto model = picker.pick(models(), x, y);
-    if (model) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT)
-            mark_status(model, true);
-        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            mark_status(model, false);
-        std::cout << "picked model: " << model->name() << std::endl;
-    }
+    if (model)
+        mark(model);
 
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
 
-void PickerViewer::mark_status(easy3d::Model *model, bool picked) {
-    if (picked) {
-        const vec4 color(1, 0, 0, 1.0f);
-        if (dynamic_cast<SurfaceMesh *>(model)) {
-            Drawable *drawable = model->get_triangles_drawable("faces");
-            if (initial_colors_.find(drawable) == initial_colors_.end())
-                initial_colors_[drawable] = drawable->color();
-            drawable->set_uniform_coloring(color);
-        } else if (dynamic_cast<PointCloud *>(model)) {
-            Drawable *drawable = model->get_points_drawable("vertices");
-            if (initial_colors_.find(drawable) == initial_colors_.end())
-                initial_colors_[drawable] = drawable->color();
-            drawable->set_uniform_coloring(color);
-        } else if (dynamic_cast<Graph *>(model)) {
-            Drawable *drawable = model->get_points_drawable("vertices");
-            if (initial_colors_.find(drawable) == initial_colors_.end())
-                initial_colors_[drawable] = drawable->color();
-            drawable->set_uniform_coloring(color);
-            drawable = model->get_lines_drawable("edges");
-            if (initial_colors_.find(drawable) == initial_colors_.end())
-                initial_colors_[drawable] = drawable->color();
-            drawable->set_uniform_coloring(color);
-        }
+void PickerViewer::mark(easy3d::Model *model) {
+    for (auto m : models()) {
+        if (m == model)
+            m->set_selected(!m->is_selected());
+
+        auto faces = m->get_triangles_drawable("faces");
+        if (m->is_selected())
+            faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
+        else
+            faces->set_uniform_coloring(setting::surface_mesh_faces_color);
     }
-    else {
-        if (dynamic_cast<SurfaceMesh *>(model)) {
-            Drawable *drawable = model->get_triangles_drawable("faces");
-            if (initial_colors_.find(drawable) != initial_colors_.end())
-                drawable->set_uniform_coloring(initial_colors_[drawable]);
-        } else if (dynamic_cast<PointCloud *>(model)) {
-            Drawable *drawable = model->get_points_drawable("vertices");
-            if (initial_colors_.find(drawable) != initial_colors_.end())
-                drawable->set_uniform_coloring(initial_colors_[drawable]);
-        } else if (dynamic_cast<Graph *>(model)) {
-            Drawable *drawable = model->get_points_drawable("vertices");
-            if (initial_colors_.find(drawable) != initial_colors_.end())
-                drawable->set_uniform_coloring(initial_colors_[drawable]);
-            drawable = model->get_lines_drawable("edges");
-            if (initial_colors_.find(drawable) != initial_colors_.end())
-                drawable->set_uniform_coloring(initial_colors_[drawable]);
-        }
-    }
+    std::cout << "picked model: " << file_system::simple_name(model->name()) << std::endl;
+    update();
 }

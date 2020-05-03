@@ -35,11 +35,15 @@ int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
-    const std::string file_name_0 = resource::directory() + "/data/graph.ply";
-    const std::string file_name_1 = resource::directory() + "/data/torusknot.obj";
-
     PickerViewer viewer("Tutorial_401_ModelPicker");
-    if (!viewer.add_model(file_name_0) || !viewer.add_model(file_name_1)) {
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_y.ply");
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_3.ply");
+    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
+
+    if (viewer.models().empty()) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
