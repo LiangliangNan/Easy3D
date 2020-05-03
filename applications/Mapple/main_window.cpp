@@ -321,7 +321,7 @@ bool MainWindow::onOpen() {
         progress.next();
     }
     if (count > 0)
-        viewer_->update();
+        viewer()->fitScreen();
 
     return count > 0;
 }
