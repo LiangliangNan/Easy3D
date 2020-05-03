@@ -32,7 +32,6 @@
 **
 */
 
-#include "gluos.h"
 #include <stdlib.h>
 #include "geom.h"
 #include "mesh.h"
@@ -177,7 +176,7 @@ void __gl_meshDiscardExterior( GLUmesh *mesh )
  * separate an interior region from an exterior one.
  */
 int __gl_meshSetWindingNumber( GLUmesh *mesh, int value,
-			        GLboolean keepOnlyBoundary )
+			        TESS_boolean keepOnlyBoundary )
 {
   GLUhalfEdge *e, *eNext;
 

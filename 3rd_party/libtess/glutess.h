@@ -41,40 +41,17 @@
 #ifndef __glu_h__
 #define __glu_h__
 
-typedef int GLint;
-typedef unsigned int GLenum;
-
-// redefined to match glew.h's -ml
-typedef int GLsizei;
-//typedef unsigned int GLsizei;
-typedef float GLfloat;
-typedef double GLdouble;
-typedef unsigned char GLubyte;
-
 // redefined to match glew.h's
-typedef unsigned char GLboolean;
-//typedef int GLboolean;
-typedef void GLvoid;
+typedef unsigned char TESS_boolean;
 
 #define GL_FALSE 0
 #define GL_TRUE 1
 #define GL_LINE_LOOP                      0x0002
 #define GL_LINE_STRIP                     0x0003
-#define GL_TRIANGLES                      0x0004
-#define GL_TRIANGLE_STRIP                 0x0005
-#define GL_TRIANGLE_FAN                   0x0006
+#define TESS_TRIANGLES                         0x0004
+#define TESS_TRIANGLE_STRIP                 0x0005
+#define TESS_TRIANGLE_FAN                   0x0006
 
-// #if (defined(_MSC_VER) || defined(__MINGW32__)) && defined(BUILD_GLU32)
-// # undef GLAPI
-// # define __declspec(dllexport)
-// #elif (defined(_MSC_VER) || defined(__MINGW32__)) && defined(_DLL)
-// /* tag specifying we're building for DLL runtime support */
-// # undef GLAPI
-// # define __declspec(dllimport)
-// #elif !defined(GLAPI)
-// /* for use with static link lib build of Win32 edition only */
-// # define extern
-// #endif /* _STATIC_MESA support */
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,43 +60,43 @@ extern "C" {
 /*************************************************************/
 
 /* ErrorCode */
-#define GLU_INVALID_ENUM                   100900
-#define GLU_INVALID_VALUE                  100901
-#define GLU_OUT_OF_MEMORY                  100902
+#define INVALID_ENUM                   100900
+#define INVALID_VALUE                  100901
+#define OUT_OF_MEMORY                  100902
 
 /* TessCallback */
-#define GLU_TESS_BEGIN                     100100
-#define GLU_TESS_VERTEX                    100101
-#define GLU_TESS_END                       100102
-#define GLU_TESS_ERROR                     100103
-#define GLU_TESS_EDGE_FLAG                 100104
-#define GLU_TESS_COMBINE                   100105
-#define GLU_TESS_BEGIN_DATA                100106
-#define GLU_TESS_VERTEX_DATA               100107
-#define GLU_TESS_END_DATA                  100108
-#define GLU_TESS_ERROR_DATA                100109
-#define GLU_TESS_EDGE_FLAG_DATA            100110
-#define GLU_TESS_COMBINE_DATA              100111
+#define TESS_BEGIN                     100100
+#define TESS_VERTEX                    100101
+#define TESS_END                       100102
+#define TESS_ERROR                     100103
+#define TESS_EDGE_FLAG                 100104
+#define TESS_COMBINE                   100105
+#define TESS_BEGIN_DATA                100106
+#define TESS_VERTEX_DATA               100107
+#define TESS_END_DATA                  100108
+#define TESS_ERROR_DATA                100109
+#define TESS_EDGE_FLAG_DATA            100110
+#define TESS_COMBINE_DATA              100111
 
 /* TessProperty */
-#define GLU_TESS_WINDING_RULE              100140
-#define GLU_TESS_BOUNDARY_ONLY             100141
-#define GLU_TESS_TOLERANCE                 100142
+#define TESS_WINDING_RULE              100140
+#define TESS_BOUNDARY_ONLY             100141
+#define TESS_TOLERANCE                 100142
 
 /* TessError */
-#define GLU_TESS_MISSING_BEGIN_POLYGON     100151
-#define GLU_TESS_MISSING_BEGIN_CONTOUR     100152
-#define GLU_TESS_MISSING_END_POLYGON       100153
-#define GLU_TESS_MISSING_END_CONTOUR       100154
-#define GLU_TESS_COORD_TOO_LARGE           100155
-#define GLU_TESS_NEED_COMBINE_CALLBACK     100156
+#define TESS_MISSING_BEGIN_POLYGON     100151
+#define TESS_MISSING_BEGIN_CONTOUR     100152
+#define TESS_MISSING_END_POLYGON       100153
+#define TESS_MISSING_END_CONTOUR       100154
+#define TESS_COORD_TOO_LARGE           100155
+#define TESS_NEED_COMBINE_CALLBACK     100156
 
 /* TessWinding */
-#define GLU_TESS_WINDING_ODD               100130
-#define GLU_TESS_WINDING_NONZERO           100131
-#define GLU_TESS_WINDING_POSITIVE          100132
-#define GLU_TESS_WINDING_NEGATIVE          100133
-#define GLU_TESS_WINDING_ABS_GEQ_TWO       100134
+#define TESS_WINDING_ODD               100130
+#define TESS_WINDING_NONZERO           100131
+#define TESS_WINDING_POSITIVE          100132
+#define TESS_WINDING_NEGATIVE          100133
+#define TESS_WINDING_ABS_GEQ_TWO       100134
 
 /*************************************************************/
 
@@ -130,7 +107,7 @@ typedef struct GLUtesselator GLUtesselator;
 #endif
 
 
-#define GLU_TESS_MAX_COORD 1.0e150
+#define TESS_MAX_COORD 1.0e150
 
 /* Internal convenience typedefs */
 typedef void (_GLUfuncptr)(void);
@@ -138,13 +115,13 @@ typedef void (_GLUfuncptr)(void);
 void DeleteTess (GLUtesselator* tess);
 GLUtesselator* NewTess (void);
 void TessBeginContour (GLUtesselator* tess);
-void TessBeginPolygon (GLUtesselator* tess, GLvoid* data);
-void TessCallback (GLUtesselator* tess, GLenum which, _GLUfuncptr CallBackFunc);
+void TessBeginPolygon (GLUtesselator* tess, void* data);
+void TessCallback (GLUtesselator* tess, unsigned int which, _GLUfuncptr CallBackFunc);
 void TessEndContour (GLUtesselator* tess);
 void TessEndPolygon (GLUtesselator* tess);
-void TessNormal (GLUtesselator* tess, GLdouble valueX, GLdouble valueY, GLdouble valueZ);
-void TessProperty (GLUtesselator* tess, GLenum which, GLdouble data);
-void TessVertex (GLUtesselator* tess, GLdouble *location, GLvoid* data);
+void TessNormal (GLUtesselator* tess, double valueX, double valueY, double valueZ);
+void TessProperty (GLUtesselator* tess, unsigned int which, double data);
+void TessVertex (GLUtesselator* tess, double *location, void* data);
 
 #ifdef __cplusplus
 }

@@ -32,7 +32,6 @@
 **
 */
 
-#include "gluos.h"
 #include <stddef.h>
 #include <assert.h>
 #include <setjmp.h>
@@ -44,8 +43,8 @@
 #include "tessmono.h"
 #include "render.h"
 
-#define GLU_TESS_DEFAULT_TOLERANCE 0.0
-#define GLU_TESS_MESH		100112	/* void (*)(GLUmesh *mesh)	    */
+#define TESS_DEFAULT_TOLERANCE 0.0
+#define TESS_MESH		100112	/* void (*)(GLUmesh *mesh)	    */
 
 #ifndef TRUE
 #define TRUE 1
@@ -54,28 +53,28 @@
 #define FALSE 0
 #endif
 
-/*ARGSUSED*/ static void noBegin( GLenum type ) {}
-/*ARGSUSED*/ static void noEdgeFlag( GLboolean boundaryEdge ) {}
+/*ARGSUSED*/ static void noBegin( unsigned int type ) {}
+/*ARGSUSED*/ static void noEdgeFlag( TESS_boolean boundaryEdge ) {}
 /*ARGSUSED*/ static void noVertex( void *data ) {}
 /*ARGSUSED*/ static void noEnd( void ) {}
-/*ARGSUSED*/ static void noError( GLenum errnum ) {}
-/*ARGSUSED*/ static void noCombine( GLdouble coords[3], void *data[4],
-				    GLfloat weight[4], void **dataOut ) {}
+/*ARGSUSED*/ static void noError( unsigned int errnum ) {}
+/*ARGSUSED*/ static void noCombine( double coords[3], void *data[4],
+				    float weight[4], void **dataOut ) {}
 /*ARGSUSED*/ static void noMesh( GLUmesh *mesh ) {}
 
 
-/*ARGSUSED*/ void __gl_noBeginData( GLenum type,
+/*ARGSUSED*/ void __gl_noBeginData( unsigned int type,
 					     void *polygonData ) {}
-/*ARGSUSED*/ void __gl_noEdgeFlagData( GLboolean boundaryEdge,
+/*ARGSUSED*/ void __gl_noEdgeFlagData( TESS_boolean boundaryEdge,
 				       void *polygonData ) {}
 /*ARGSUSED*/ void __gl_noVertexData( void *data,
 					      void *polygonData ) {}
 /*ARGSUSED*/ void __gl_noEndData( void *polygonData ) {}
-/*ARGSUSED*/ void __gl_noErrorData( GLenum errnum,
+/*ARGSUSED*/ void __gl_noErrorData( unsigned int errnum,
 					     void *polygonData ) {}
-/*ARGSUSED*/ void __gl_noCombineData( GLdouble coords[3],
+/*ARGSUSED*/ void __gl_noCombineData( double coords[3],
 					       void *data[4],
-					       GLfloat weight[4],
+					       float weight[4],
 					       void **outData,
 					       void *polygonData ) {}
 
@@ -88,7 +87,7 @@ typedef struct { GLUhalfEdge e, eSym; } EdgePair;
                          MAX(sizeof(GLUvertex),sizeof(GLUface))))
 
 
-GLUtesselator * GLAPIENTRY
+GLUtesselator *
 NewTess( void )
 {
   GLUtesselator *tess;
@@ -111,8 +110,8 @@ NewTess( void )
   tess->normal[1] = 0;
   tess->normal[2] = 0;
 
-  tess->relTolerance = GLU_TESS_DEFAULT_TOLERANCE;
-  tess->windingRule = GLU_TESS_WINDING_ODD;
+  tess->relTolerance = TESS_DEFAULT_TOLERANCE;
+  tess->windingRule = TESS_WINDING_ODD;
   tess->flagBoundary = FALSE;
   tess->boundaryOnly = FALSE;
 
@@ -160,11 +159,11 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
     if( tess->state < newState ) {
       switch( tess->state ) {
       case T_DORMANT:
-	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_BEGIN_POLYGON );
+	CALL_ERROR_OR_ERROR_DATA( TESS_MISSING_BEGIN_POLYGON );
 	TessBeginPolygon( tess, NULL );
 	break;
       case T_IN_POLYGON:
-	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_BEGIN_CONTOUR );
+	CALL_ERROR_OR_ERROR_DATA( TESS_MISSING_BEGIN_CONTOUR );
 	TessBeginContour( tess );
 	break;
       default:
@@ -173,11 +172,11 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
     } else {
       switch( tess->state ) {
       case T_IN_CONTOUR:
-	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_END_CONTOUR );
+	CALL_ERROR_OR_ERROR_DATA( TESS_MISSING_END_CONTOUR );
 	TessEndContour( tess );
 	break;
       case T_IN_POLYGON:
-	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_END_POLYGON );
+	CALL_ERROR_OR_ERROR_DATA( TESS_MISSING_END_POLYGON );
 	/* TessEndPolygon( tess ) is too much work! */
 	MakeDormant( tess );
 	break;
@@ -189,7 +188,7 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 }
 
 
-void GLAPIENTRY
+void
 DeleteTess( GLUtesselator *tess )
 {
   RequireState( tess, T_DORMANT );
@@ -197,152 +196,152 @@ DeleteTess( GLUtesselator *tess )
 }
 
 
-void GLAPIENTRY
-TessProperty( GLUtesselator *tess, GLenum which, GLdouble value )
+void
+TessProperty( GLUtesselator *tess, unsigned int which, double value )
 {
-  GLenum windingRule;
+  unsigned int windingRule;
 
   switch( which ) {
-  case GLU_TESS_TOLERANCE:
+  case TESS_TOLERANCE:
     if( value < 0.0 || value > 1.0 ) break;
     tess->relTolerance = value;
     return;
 
-  case GLU_TESS_WINDING_RULE:
-    windingRule = (GLenum) value;
+  case TESS_WINDING_RULE:
+    windingRule = (unsigned int) value;
     if( windingRule != value ) break;	/* not an integer */
 
     switch( windingRule ) {
-    case GLU_TESS_WINDING_ODD:
-    case GLU_TESS_WINDING_NONZERO:
-    case GLU_TESS_WINDING_POSITIVE:
-    case GLU_TESS_WINDING_NEGATIVE:
-    case GLU_TESS_WINDING_ABS_GEQ_TWO:
+    case TESS_WINDING_ODD:
+    case TESS_WINDING_NONZERO:
+    case TESS_WINDING_POSITIVE:
+    case TESS_WINDING_NEGATIVE:
+    case TESS_WINDING_ABS_GEQ_TWO:
       tess->windingRule = windingRule;
       return;
     default:
       break;
     }
 
-  case GLU_TESS_BOUNDARY_ONLY:
+  case TESS_BOUNDARY_ONLY:
     tess->boundaryOnly = (value != 0);
     return;
 
   default:
-    CALL_ERROR_OR_ERROR_DATA( GLU_INVALID_ENUM );
+    CALL_ERROR_OR_ERROR_DATA( INVALID_ENUM );
     return;
   }
-  CALL_ERROR_OR_ERROR_DATA( GLU_INVALID_VALUE );
+  CALL_ERROR_OR_ERROR_DATA( INVALID_VALUE );
 }
 
 /* Returns tessellator property */
-void GLAPIENTRY
-gluGetTessProperty( GLUtesselator *tess, GLenum which, GLdouble *value )
+void
+gluGetTessProperty( GLUtesselator *tess, unsigned int which, double *value )
 {
    switch (which) {
-   case GLU_TESS_TOLERANCE:
+   case TESS_TOLERANCE:
       /* tolerance should be in range [0..1] */
       assert(0.0 <= tess->relTolerance && tess->relTolerance <= 1.0);
       *value= tess->relTolerance;
       break;
-   case GLU_TESS_WINDING_RULE:
-      assert(tess->windingRule == GLU_TESS_WINDING_ODD ||
-	     tess->windingRule == GLU_TESS_WINDING_NONZERO ||
-	     tess->windingRule == GLU_TESS_WINDING_POSITIVE ||
-	     tess->windingRule == GLU_TESS_WINDING_NEGATIVE ||
-	     tess->windingRule == GLU_TESS_WINDING_ABS_GEQ_TWO);
+   case TESS_WINDING_RULE:
+      assert(tess->windingRule == TESS_WINDING_ODD ||
+	     tess->windingRule == TESS_WINDING_NONZERO ||
+	     tess->windingRule == TESS_WINDING_POSITIVE ||
+	     tess->windingRule == TESS_WINDING_NEGATIVE ||
+	     tess->windingRule == TESS_WINDING_ABS_GEQ_TWO);
       *value= tess->windingRule;
       break;
-   case GLU_TESS_BOUNDARY_ONLY:
+   case TESS_BOUNDARY_ONLY:
       assert(tess->boundaryOnly == TRUE || tess->boundaryOnly == FALSE);
       *value= tess->boundaryOnly;
       break;
    default:
       *value= 0.0;
-      CALL_ERROR_OR_ERROR_DATA( GLU_INVALID_ENUM );
+      CALL_ERROR_OR_ERROR_DATA( INVALID_ENUM );
       break;
    }
 } /* gluGetTessProperty() */
 
-void GLAPIENTRY
-TessNormal( GLUtesselator *tess, GLdouble x, GLdouble y, GLdouble z )
+void
+TessNormal( GLUtesselator *tess, double x, double y, double z )
 {
   tess->normal[0] = x;
   tess->normal[1] = y;
   tess->normal[2] = z;
 }
 
-void GLAPIENTRY
-TessCallback( GLUtesselator *tess, GLenum which, _GLUfuncptr fn)
+void
+TessCallback( GLUtesselator *tess, unsigned int which, _GLUfuncptr fn)
 {
   switch( which ) {
-  case GLU_TESS_BEGIN:
-    tess->callBegin = (fn == NULL) ? &noBegin : (void (*)(GLenum)) fn;
+  case TESS_BEGIN:
+    tess->callBegin = (fn == NULL) ? &noBegin : (void (*)(unsigned int)) fn;
     return;
-  case GLU_TESS_BEGIN_DATA:
+  case TESS_BEGIN_DATA:
     tess->callBeginData = (fn == NULL) ?
-	&__gl_noBeginData : (void (*)(GLenum, void *)) fn;
+	&__gl_noBeginData : (void (*)(unsigned int, void *)) fn;
     return;
-  case GLU_TESS_EDGE_FLAG:
+  case TESS_EDGE_FLAG:
     tess->callEdgeFlag = (fn == NULL) ? &noEdgeFlag :
-					(void (*)(GLboolean)) fn;
+					(void (*)(TESS_boolean)) fn;
     /* If the client wants boundary edges to be flagged,
      * we render everything as separate triangles (no strips or fans).
      */
     tess->flagBoundary = (fn != NULL);
     return;
-  case GLU_TESS_EDGE_FLAG_DATA:
+  case TESS_EDGE_FLAG_DATA:
     tess->callEdgeFlagData= (fn == NULL) ?
-	&__gl_noEdgeFlagData : (void (*)(GLboolean, void *)) fn;
+	&__gl_noEdgeFlagData : (void (*)(TESS_boolean, void *)) fn;
     /* If the client wants boundary edges to be flagged,
      * we render everything as separate triangles (no strips or fans).
      */
     tess->flagBoundary = (fn != NULL);
     return;
-  case GLU_TESS_VERTEX:
+  case TESS_VERTEX:
     tess->callVertex = (fn == NULL) ? &noVertex :
 				      (void (*)(void *)) fn;
     return;
-  case GLU_TESS_VERTEX_DATA:
+  case TESS_VERTEX_DATA:
     tess->callVertexData = (fn == NULL) ?
 	&__gl_noVertexData : (void (*)(void *, void *)) fn;
     return;
-  case GLU_TESS_END:
+  case TESS_END:
     tess->callEnd = (fn == NULL) ? &noEnd : (void (*)(void)) fn;
     return;
-  case GLU_TESS_END_DATA:
+  case TESS_END_DATA:
     tess->callEndData = (fn == NULL) ? &__gl_noEndData :
 				       (void (*)(void *)) fn;
     return;
-  case GLU_TESS_ERROR:
-    tess->callError = (fn == NULL) ? &noError : (void (*)(GLenum)) fn;
+  case TESS_ERROR:
+    tess->callError = (fn == NULL) ? &noError : (void (*)(unsigned int)) fn;
     return;
-  case GLU_TESS_ERROR_DATA:
+  case TESS_ERROR_DATA:
     tess->callErrorData = (fn == NULL) ?
-	&__gl_noErrorData : (void (*)(GLenum, void *)) fn;
+	&__gl_noErrorData : (void (*)(unsigned int, void *)) fn;
     return;
-  case GLU_TESS_COMBINE:
+  case TESS_COMBINE:
     tess->callCombine = (fn == NULL) ? &noCombine :
-	(void (*)(GLdouble [3],void *[4], GLfloat [4], void ** )) fn;
+	(void (*)(double [3],void *[4], float [4], void ** )) fn;
     return;
-  case GLU_TESS_COMBINE_DATA:
+  case TESS_COMBINE_DATA:
     tess->callCombineData = (fn == NULL) ? &__gl_noCombineData :
-					   (void (*)(GLdouble [3],
+					   (void (*)(double [3],
 						     void *[4],
-						     GLfloat [4],
+						     float [4],
 						     void **,
 						     void *)) fn;
     return;
-  case GLU_TESS_MESH:
+  case TESS_MESH:
     tess->callMesh = (fn == NULL) ? &noMesh : (void (*)(GLUmesh *)) fn;
     return;
   default:
-    CALL_ERROR_OR_ERROR_DATA( GLU_INVALID_ENUM );
+    CALL_ERROR_OR_ERROR_DATA( INVALID_ENUM );
     return;
   }
 }
 
-static int AddVertex( GLUtesselator *tess, GLdouble coords[3], void *data )
+static int AddVertex( GLUtesselator *tess, double coords[3], void *data )
 {
   GLUhalfEdge *e;
 
@@ -381,7 +380,7 @@ static int AddVertex( GLUtesselator *tess, GLdouble coords[3], void *data )
 }
 
 
-static void CacheVertex( GLUtesselator *tess, GLdouble coords[3], void *data )
+static void CacheVertex( GLUtesselator *tess, double coords[3], void *data )
 {
   CachedVertex *v = &tess->cache[tess->cacheCount];
 
@@ -411,35 +410,35 @@ static int EmptyCache( GLUtesselator *tess )
 }
 
 
-void GLAPIENTRY
-TessVertex( GLUtesselator *tess, GLdouble coords[3], void *data )
+void
+TessVertex( GLUtesselator *tess, double coords[3], void *data )
 {
   int i, tooLarge = FALSE;
-  GLdouble x, clamped[3];
+  double x, clamped[3];
 
   RequireState( tess, T_IN_CONTOUR );
 
   if( tess->emptyCache ) {
     if ( !EmptyCache( tess ) ) {
-       CALL_ERROR_OR_ERROR_DATA( GLU_OUT_OF_MEMORY );
+       CALL_ERROR_OR_ERROR_DATA( OUT_OF_MEMORY );
        return;
     }
     tess->lastEdge = NULL;
   }
   for( i = 0; i < 3; ++i ) {
     x = coords[i];
-    if( x < - GLU_TESS_MAX_COORD ) {
-      x = - GLU_TESS_MAX_COORD;
+    if( x < - TESS_MAX_COORD ) {
+      x = - TESS_MAX_COORD;
       tooLarge = TRUE;
     }
-    if( x > GLU_TESS_MAX_COORD ) {
-      x = GLU_TESS_MAX_COORD;
+    if( x > TESS_MAX_COORD ) {
+      x = TESS_MAX_COORD;
       tooLarge = TRUE;
     }
     clamped[i] = x;
   }
   if( tooLarge ) {
-    CALL_ERROR_OR_ERROR_DATA( GLU_TESS_COORD_TOO_LARGE );
+    CALL_ERROR_OR_ERROR_DATA( TESS_COORD_TOO_LARGE );
   }
 
   if( tess->mesh == NULL ) {
@@ -448,17 +447,17 @@ TessVertex( GLUtesselator *tess, GLdouble coords[3], void *data )
       return;
     }
     if ( !EmptyCache( tess ) ) {
-       CALL_ERROR_OR_ERROR_DATA( GLU_OUT_OF_MEMORY );
+       CALL_ERROR_OR_ERROR_DATA( OUT_OF_MEMORY );
        return;
     }
   }
   if ( !AddVertex( tess, clamped, data ) ) {
-       CALL_ERROR_OR_ERROR_DATA( GLU_OUT_OF_MEMORY );
+       CALL_ERROR_OR_ERROR_DATA( OUT_OF_MEMORY );
   }
 }
 
 
-void GLAPIENTRY
+void
 TessBeginPolygon( GLUtesselator *tess, void *data )
 {
   RequireState( tess, T_DORMANT );
@@ -472,7 +471,7 @@ TessBeginPolygon( GLUtesselator *tess, void *data )
 }
 
 
-void GLAPIENTRY
+void
 TessBeginContour( GLUtesselator *tess )
 {
   RequireState( tess, T_IN_POLYGON );
@@ -489,21 +488,21 @@ TessBeginContour( GLUtesselator *tess )
 }
 
 
-void GLAPIENTRY
+void
 TessEndContour( GLUtesselator *tess )
 {
   RequireState( tess, T_IN_CONTOUR );
   tess->state = T_IN_POLYGON;
 }
 
-void GLAPIENTRY
+void
 TessEndPolygon( GLUtesselator *tess )
 {
   GLUmesh *mesh;
 
   if (setjmp(tess->env) != 0) { 
      /* come back here if out of memory */
-     CALL_ERROR_OR_ERROR_DATA( GLU_OUT_OF_MEMORY );
+     CALL_ERROR_OR_ERROR_DATA( OUT_OF_MEMORY );
      return;
   }
 
@@ -594,7 +593,7 @@ TessEndPolygon( GLUtesselator *tess )
 
 /*XXXblythe unused function*/
 #if 0
-void GLAPIENTRY
+void
 gluDeleteMesh( GLUmesh *mesh )
 {
   __gl_meshDeleteMesh( mesh );
@@ -607,7 +606,7 @@ gluDeleteMesh( GLUmesh *mesh )
 
 /* Obsolete calls -- for backward compatibility */
 
-void GLAPIENTRY
+void
 gluBeginPolygon( GLUtesselator *tess )
 {
   TessBeginPolygon( tess, NULL );
@@ -616,15 +615,15 @@ gluBeginPolygon( GLUtesselator *tess )
 
 
 /*ARGSUSED*/
-void GLAPIENTRY
-gluNextContour( GLUtesselator *tess, GLenum type )
+void
+gluNextContour( GLUtesselator *tess, unsigned int type )
 {
   TessEndContour( tess );
   TessBeginContour( tess );
 }
 
 
-void GLAPIENTRY
+void
 gluEndPolygon( GLUtesselator *tess )
 {
   TessEndContour( tess );

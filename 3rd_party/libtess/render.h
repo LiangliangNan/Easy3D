@@ -47,6 +47,6 @@
 void __gl_renderMesh( GLUtesselator *tess, GLUmesh *mesh );
 void __gl_renderBoundary( GLUtesselator *tess, GLUmesh *mesh );
 
-GLboolean __gl_renderCache( GLUtesselator *tess );
+TESS_boolean __gl_renderCache( GLUtesselator *tess );
 
 #endif

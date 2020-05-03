@@ -32,7 +32,6 @@
 **
 */
 
-#include "gluos.h"
 #include <stddef.h>
 #include <assert.h>
 #include "mesh.h"

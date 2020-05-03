@@ -23,7 +23,7 @@ struct TessContext_s {
     struct Vertex_s *v_prev;
     struct Vertex_s *v_prevprev;
     struct Vertex_s *latest_v;
-    GLenum current_mode;
+    unsigned int current_mode;
     int odd_even_strip;
 
     void (*vertex_cb)(struct Vertex_s *, struct TessContext_s *);
@@ -140,24 +140,24 @@ void vertex(void *vertex_data, void *poly_data)
     ctx->vertex_cb(ptr, ctx);
 }
 
-void begin(GLenum which, void *poly_data)
+void begin(unsigned int which, void *poly_data)
 {
     struct TessContext_s *ctx = (struct TessContext_s *)poly_data;
     ctx->v_prev = ctx->v_prevprev = NULL;
     ctx->odd_even_strip = 0;
     switch (which) {
-    case GL_TRIANGLES: ctx->vertex_cb = &triangle_vertex; break;
-    case GL_TRIANGLE_STRIP: ctx->vertex_cb = &strip_vertex; break;
-    case GL_TRIANGLE_FAN: ctx->vertex_cb = &fan_vertex; break;
+    case TESS_TRIANGLES: ctx->vertex_cb = &triangle_vertex; break;
+    case TESS_TRIANGLE_STRIP: ctx->vertex_cb = &strip_vertex; break;
+    case TESS_TRIANGLE_FAN: ctx->vertex_cb = &fan_vertex; break;
     default:
         fprintf(stderr, "ERROR, can't handle %d\n", (int)which);
         ctx->vertex_cb = &skip_vertex;
     }
 }
 
-void combine(const GLdouble newVertex[3],
+void combine(const double newVertex[3],
              const void *neighborVertex_s[4],
-             const GLfloat neighborWeight[4], void **outData, void *polyData)
+             const float neighborWeight[4], void **outData, void *polyData)
 {
     struct TessContext_s *ctx = (struct TessContext_s *)polyData;
     struct Vertex_s *result = new_vertex(ctx, newVertex[0], newVertex[1]);
@@ -213,10 +213,10 @@ void tessellate
 
     tess = NewTess();
     ctx = new_tess_context();
-    TessProperty(tess, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
-    TessCallback(tess, GLU_TESS_VERTEX_DATA,  (GLvoid (*) ()) &vertex);
-    TessCallback(tess, GLU_TESS_BEGIN_DATA,   (GLvoid (*) ()) &begin);
-    TessCallback(tess, GLU_TESS_COMBINE_DATA, (GLvoid (*) ()) &combine);
+    TessProperty(tess, TESS_WINDING_RULE, TESS_WINDING_NONZERO);
+    TessCallback(tess, TESS_VERTEX_DATA,  (void (*) ()) &vertex);
+    TessCallback(tess, TESS_BEGIN_DATA,   (void (*) ()) &begin);
+    TessCallback(tess, TESS_COMBINE_DATA, (void (*) ()) &combine);
 
     TessBeginPolygon(tess, ctx);
     do {

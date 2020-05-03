@@ -32,7 +32,6 @@
 **
 */
 
-#include "gluos.h"
 #include <assert.h>
 #include <stddef.h>
 #include <setjmp.h>		/* longjmp */
@@ -120,7 +119,7 @@ static int EdgeLeq( GLUtesselator *tess, ActiveRegion *reg1,
 {
   GLUvertex *event = tess->event;
   GLUhalfEdge *e1, *e2;
-  GLdouble t1, t2;
+  double t1, t2;
 
   e1 = reg1->eUp;
   e2 = reg2->eUp;
@@ -235,18 +234,18 @@ static ActiveRegion *AddRegionBelow( GLUtesselator *tess,
   return regNew;
 }
 
-static GLboolean IsWindingInside( GLUtesselator *tess, int n )
+static TESS_boolean IsWindingInside( GLUtesselator *tess, int n )
 {
   switch( tess->windingRule ) {
-  case GLU_TESS_WINDING_ODD:
+  case TESS_WINDING_ODD:
     return (n & 1);
-  case GLU_TESS_WINDING_NONZERO:
+  case TESS_WINDING_NONZERO:
     return (n != 0);
-  case GLU_TESS_WINDING_POSITIVE:
+  case TESS_WINDING_POSITIVE:
     return (n > 0);
-  case GLU_TESS_WINDING_NEGATIVE:
+  case TESS_WINDING_NEGATIVE:
     return (n < 0);
-  case GLU_TESS_WINDING_ABS_GEQ_TWO:
+  case TESS_WINDING_ABS_GEQ_TWO:
     return (n >= 2) || (n <= -2);
   }
   /*LINTED*/
@@ -339,7 +338,7 @@ static GLUhalfEdge *FinishLeftRegions( GLUtesselator *tess,
 
 static void AddRightEdges( GLUtesselator *tess, ActiveRegion *regUp,
        GLUhalfEdge *eFirst, GLUhalfEdge *eLast, GLUhalfEdge *eTopLeft,
-       GLboolean cleanUp )
+       TESS_boolean cleanUp )
 /*
  * Purpose: insert right-going edges into the edge dictionary, and update
  * winding numbers and mesh connectivity appropriately.  All right-going
@@ -410,9 +409,9 @@ static void AddRightEdges( GLUtesselator *tess, ActiveRegion *regUp,
 
 
 static void CallCombine( GLUtesselator *tess, GLUvertex *isect,
-			 void *data[4], GLfloat weights[4], int needed )
+			 void *data[4], float weights[4], int needed )
 {
-  GLdouble coords[3];
+  double coords[3];
 
   /* Copy coord data in case the callback changes it. */
   coords[0] = isect->coords[0];
@@ -429,7 +428,7 @@ static void CallCombine( GLUtesselator *tess, GLUvertex *isect,
        * but the user has not provided the callback necessary to handle
        * generated intersection points.
        */
-      CALL_ERROR_OR_ERROR_DATA( GLU_TESS_NEED_COMBINE_CALLBACK );
+      CALL_ERROR_OR_ERROR_DATA( TESS_NEED_COMBINE_CALLBACK );
       tess->fatalError = TRUE;
     }
   }
@@ -443,7 +442,7 @@ static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
  */
 {
   void *data[4] = { NULL, NULL, NULL, NULL };
-  GLfloat weights[4] = { 0.5, 0.5, 0.0, 0.0 };
+  float weights[4] = { 0.5, 0.5, 0.0, 0.0 };
 
   data[0] = e1->Org->data;
   data[1] = e2->Org->data;
@@ -452,7 +451,7 @@ static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
 }
 
 static void VertexWeights( GLUvertex *isect, GLUvertex *org, GLUvertex *dst,
-			   GLfloat *weights )
+			   float *weights )
 /*
  * Find some weights which describe how the intersection vertex is
  * a linear combination of "org" and "dest".  Each of the two edges
@@ -461,8 +460,8 @@ static void VertexWeights( GLUvertex *isect, GLUvertex *org, GLUvertex *dst,
  * relative distance to "isect".
  */
 {
-  GLdouble t1 = VertL1dist( org, isect );
-  GLdouble t2 = VertL1dist( dst, isect );
+  double t1 = VertL1dist( org, isect );
+  double t2 = VertL1dist( dst, isect );
 
   weights[0] = 0.5 * t2 / (t1 + t2);
   weights[1] = 0.5 * t1 / (t1 + t2);
@@ -482,7 +481,7 @@ static void GetIntersectData( GLUtesselator *tess, GLUvertex *isect,
  */
 {
   void *data[4];
-  GLfloat weights[4];
+  float weights[4];
 
   data[0] = orgUp->data;
   data[1] = dstUp->data;
@@ -621,7 +620,7 @@ static int CheckForIntersect( GLUtesselator *tess, ActiveRegion *regUp )
   GLUvertex *orgLo = eLo->Org;
   GLUvertex *dstUp = eUp->Dst;
   GLUvertex *dstLo = eLo->Dst;
-  GLdouble tMinUp, tMaxLo;
+  double tMinUp, tMaxLo;
   GLUvertex isect, *orgMin;
   GLUhalfEdge *e;
 
@@ -1121,11 +1120,11 @@ static void SweepEvent( GLUtesselator *tess, GLUvertex *vEvent )
 /* Make the sentinel coordinates big enough that they will never be
  * merged with real input features.  (Even with the largest possible
  * input contour and the maximum tolerance of 1.0, no merging will be
- * done with coordinates larger than 3 * GLU_TESS_MAX_COORD).
+ * done with coordinates larger than 3 * TESS_MAX_COORD).
  */
-#define SENTINEL_COORD	(4 * GLU_TESS_MAX_COORD)
+#define SENTINEL_COORD	(4 * TESS_MAX_COORD)
 
-static void AddSentinel( GLUtesselator *tess, GLdouble t )
+static void AddSentinel( GLUtesselator *tess, double t )
 /*
  * We add two sentinel edges above and below all other edges,
  * to avoid special cases at the top and bottom.
@@ -1339,7 +1338,7 @@ int __gl_computeInterior( GLUtesselator *tess )
        * so when we insert B we may compute a slightly different
        * intersection point.  This might leave two edges with a small
        * gap between them.  This kind of error is especially obvious
-       * when using boundary extraction (GLU_TESS_BOUNDARY_ONLY).
+       * when using boundary extraction (TESS_BOUNDARY_ONLY).
        */
       vNext = (GLUvertex *)pqExtractMin( tess->pq ); /* __gl_pqSortExtractMin*/
       SpliceMergeVertices( tess, v->anEdge, vNext->anEdge );

@@ -23,23 +23,17 @@
  */
 
 #include <easy3d/viewer/tessellator.h>
-#include <easy3d/util/logging.h>
-
-#ifdef _WIN32
-#include <Windows.h>
-#else
-#define CALLBACK
-#endif
-
-#include <3rd_party/libtess/glutess.h>
 
 #include <vector>
 #include <unordered_map>
 #include <functional>
 
+#include <easy3d/util/logging.h>
+
+#include <3rd_party/libtess/glutess.h>
+
 
 namespace easy3d {
-
 
     namespace details {
 
@@ -48,6 +42,7 @@ namespace easy3d {
         public:
             // merge: allows to merge the duplicated vertices during tessellation.
             VertexManager(bool merge) : merge_duplicate_(merge) {}
+
             ~VertexManager() {
                 clear();
             }
@@ -56,7 +51,7 @@ namespace easy3d {
                 return unique_vertices_;
             }
 
-            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex& v) {
+            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex &v) {
                 std::size_t key = hash(v);
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
@@ -75,7 +70,7 @@ namespace easy3d {
                 hash_table_.clear();
             }
 
-            std::size_t vertex_id(const Tessellator::Vertex& v) {
+            std::size_t vertex_id(const Tessellator::Vertex &v) {
                 return hash_table_[hash(v)];
             }
 
@@ -85,7 +80,7 @@ namespace easy3d {
                 seed ^= hash;
             }
 
-            inline std::size_t hash(const Tessellator::Vertex& v) const {
+            inline std::size_t hash(const Tessellator::Vertex &v) const {
                 static std::hash<double> hasher;
                 std::size_t seed = (merge_duplicate_ ? 0 : hasher(v.index));
                 for (auto f : v)
@@ -104,12 +99,17 @@ namespace easy3d {
         };
     }
 
+
+
+
+    // -------------------------------------------------------------------------------------------------------------
+
+
+
+
     Tessellator::Tessellator(bool merge)
-            : primitive_type_(GL_TRIANGLES)
-            , primitive_aware_orientation_(false)
-            , num_triangles_in_polygon_(0)
-            , vertex_data_size_(3)
-    {
+            : primitive_type_(TESS_TRIANGLES), primitive_aware_orientation_(false), num_triangles_in_polygon_(0),
+              vertex_data_size_(3) {
         tess_obj_ = NewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
             LOG(ERROR) << "failed to create a tessellator object";
@@ -117,24 +117,24 @@ namespace easy3d {
         }
 
 #if defined(__GNUC__) && (__GNUC__ == 3 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__ == 0)
-        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)(...))vertexCallback);
-        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)(...))beginCallback);
-        TessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)(...))endCallback);
-        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)(...))combineCallback);
+        TessCallback(tess_obj_, TESS_VERTEX_DATA, (void(*)(...))vertexCallback);
+        TessCallback(tess_obj_, TESS_BEGIN_DATA, (void(*)(...))beginCallback);
+        TessCallback(tess_obj_, TESS_END_DATA, (void(*)(...))endCallback);
+        TessCallback(tess_obj_, TESS_COMBINE_DATA, (void(*)(...))combineCallback);
 #elif defined(_WIN32)
-        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (VOID(CALLBACK *)())vertexCallback);
-        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (VOID(CALLBACK *)())beginCallback);
-        TessCallback(tess_obj_, GLU_TESS_END_DATA, (VOID(CALLBACK *)())endCallback);
-        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (VOID(CALLBACK *)())combineCallback);
+        TessCallback(tess_obj_, TESS_VERTEX_DATA, (VOID(*)())vertexCallback);
+        TessCallback(tess_obj_, TESS_BEGIN_DATA, (VOID(*)())beginCallback);
+        TessCallback(tess_obj_, TESS_END_DATA, (VOID(*)())endCallback);
+        TessCallback(tess_obj_, TESS_COMBINE_DATA, (VOID(*)())combineCallback);
 #else
-        TessCallback(tess_obj_, GLU_TESS_VERTEX_DATA, (GLvoid(*)()) vertexCallback);
-        TessCallback(tess_obj_, GLU_TESS_BEGIN_DATA, (GLvoid(*)()) beginCallback);
-        TessCallback(tess_obj_, GLU_TESS_END_DATA, (GLvoid(*)()) endCallback);
-        TessCallback(tess_obj_, GLU_TESS_COMBINE_DATA, (GLvoid(*)()) combineCallback);
+        TessCallback(tess_obj_, TESS_VERTEX_DATA, (void (*)()) vertexCallback);
+        TessCallback(tess_obj_, TESS_BEGIN_DATA, (void (*)()) beginCallback);
+        TessCallback(tess_obj_, TESS_END_DATA, (void (*)()) endCallback);
+        TessCallback(tess_obj_, TESS_COMBINE_DATA, (void (*)()) combineCallback);
 #endif
 
-        TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
-        TessProperty(tess_obj_, GLU_TESS_TOLERANCE, 0.);
+        TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
+        TessProperty(tess_obj_, TESS_TOLERANCE, 0.);
 
         vertex_manager_ = new details::VertexManager(merge);
     }
@@ -147,19 +147,19 @@ namespace easy3d {
     void Tessellator::set_winding_rule(WindingRule rule) {
         switch (rule) {
             case ODD:
-                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
                 return;
             case NONZERO:
-                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NONZERO);
+                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NONZERO);
                 return;
             case POSITIVE:
-                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_POSITIVE);
+                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_POSITIVE);
                 return;
             case NEGATIVE:
-                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_NEGATIVE);
+                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NEGATIVE);
                 return;
             case ABS_GEQ_TWO:
-                TessProperty(tess_obj_, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ABS_GEQ_TWO);
+                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ABS_GEQ_TWO);
                 return;
         }
     }
@@ -185,7 +185,8 @@ namespace easy3d {
         TessVertex(tess_obj_, new_v->data(), new_v);
     }
 
-    void Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
+    void
+    Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
     {
         add_vertex(Vertex(data, size, idx));
     }
@@ -274,7 +275,7 @@ namespace easy3d {
     //   w: The type of primitives being created (TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN)
     //   cbdata: Callback data that points to "this".
     // ****************************************************************************
-    void Tessellator::beginCallback(GLenum w, void *cbdata) {
+    void Tessellator::beginCallback(unsigned int w, void *cbdata) {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         tessellator->primitive_type_ = w;
@@ -296,7 +297,7 @@ namespace easy3d {
 
         // Use the primitive type and intermediate vertex ids to create triangles that
         // get put into the triangle list
-        if (tessellator->primitive_type_ == GL_TRIANGLES) {
+        if (tessellator->primitive_type_ == TESS_TRIANGLES) {
             for (std::size_t i = 0; i < tessellator->vertex_ids_in_polygon_.size(); i += 3) {
                 // Prevent degenerate triangles
                 unsigned int a = tessellator->vertex_ids_in_polygon_[i];
@@ -307,7 +308,7 @@ namespace easy3d {
 
                 tessellator->add_triangle(a, b, c);
             }
-        } else if (tessellator->primitive_type_ == GL_TRIANGLE_STRIP) {
+        } else if (tessellator->primitive_type_ == TESS_TRIANGLE_STRIP) {
             for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i) {
                 std::size_t N = i - 2;
                 std::size_t N_1 = i - 1;
@@ -326,7 +327,7 @@ namespace easy3d {
                 else
                     tessellator->add_triangle(b, a, c);
             }
-        } else if (tessellator->primitive_type_ == GL_TRIANGLE_FAN) {
+        } else if (tessellator->primitive_type_ == TESS_TRIANGLE_FAN) {
             for (std::size_t i = 2; i < tessellator->vertex_ids_in_polygon_.size(); ++i) {
                 std::size_t N = 0;
                 std::size_t N_1 = i - 1;
@@ -355,7 +356,7 @@ namespace easy3d {
     //   vertex : The triangle vertex.
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
-    void Tessellator::vertexCallback(GLvoid *vertex, void *cbdata) {
+    void Tessellator::vertexCallback(void *vertex, void *cbdata) {
         Vertex *v = reinterpret_cast<Vertex *>(vertex);
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
@@ -371,7 +372,7 @@ namespace easy3d {
     // ****************************************************************************
     void Tessellator::combineCallback(double coords[3],
                                       void *vertex_data[4],
-                                      GLdouble weight[4], void **dataOut, void *cbdata) {
+                                      double weight[4], void **dataOut, void *cbdata) {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         unsigned int size = tessellator->vertex_data_size_;

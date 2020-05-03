@@ -52,7 +52,7 @@ enum TessState { T_DORMANT, T_IN_POLYGON, T_IN_CONTOUR };
 #define TESS_MAX_CACHE	100
 
 typedef struct CachedVertex {
-  GLdouble	coords[3];
+  double	coords[3];
   void		*data;
 } CachedVertex;
 
@@ -66,36 +66,36 @@ struct GLUtesselator {
   GLUmesh	*mesh;		/* stores the input contours, and eventually
                                    the tessellation itself */
 
-  void		(*callError)( GLenum errnum );
+  void		(*callError)( unsigned int errnum );
 
   /*** state needed for projecting onto the sweep plane ***/
 
-  GLdouble	normal[3];	/* user-specified normal (if provided) */
-  GLdouble	sUnit[3];	/* unit vector in s-direction (debugging) */
-  GLdouble	tUnit[3];	/* unit vector in t-direction (debugging) */
+  double	normal[3];	/* user-specified normal (if provided) */
+  double	sUnit[3];	/* unit vector in s-direction (debugging) */
+  double	tUnit[3];	/* unit vector in t-direction (debugging) */
 
   /*** state needed for the line sweep ***/
 
-  GLdouble	relTolerance;	/* tolerance for merging features */
-  GLenum	windingRule;	/* rule for determining polygon interior */
-  GLboolean	fatalError;	/* fatal error: needed combine callback */
+  double	relTolerance;	/* tolerance for merging features */
+  unsigned int	windingRule;	/* rule for determining polygon interior */
+  TESS_boolean	fatalError;	/* fatal error: needed combine callback */
 
   Dict		*dict;		/* edge dictionary for sweep line */
   PriorityQ	*pq;		/* priority queue of vertex events */
   GLUvertex	*event;		/* current sweep event being processed */
 
-  void		(*callCombine)( GLdouble coords[3], void *data[4],
-			        GLfloat weight[4], void **outData );
+  void		(*callCombine)( double coords[3], void *data[4],
+			        float weight[4], void **outData );
 
   /*** state needed for rendering callbacks (see render.c) ***/
 
-  GLboolean	flagBoundary;	/* mark boundary edges (use EdgeFlag) */
-  GLboolean	boundaryOnly;	/* Extract contours, not triangles */
+  TESS_boolean	flagBoundary;	/* mark boundary edges (use EdgeFlag) */
+  TESS_boolean	boundaryOnly;	/* Extract contours, not triangles */
   GLUface	*lonelyTriList;
     /* list of triangles which could not be rendered as strips or fans */
 
-  void		(*callBegin)( GLenum type );
-  void		(*callEdgeFlag)( GLboolean boundaryEdge );
+  void		(*callBegin)( unsigned int type );
+  void		(*callEdgeFlag)( TESS_boolean boundaryEdge );
   void		(*callVertex)( void *data );
   void		(*callEnd)( void );
   void		(*callMesh)( GLUmesh *mesh );
@@ -103,19 +103,19 @@ struct GLUtesselator {
 
   /*** state needed to cache single-contour polygons for renderCache() */
 
-  GLboolean	emptyCache;		/* empty cache on next vertex() call */
+  TESS_boolean	emptyCache;		/* empty cache on next vertex() call */
   int		cacheCount;		/* number of cached vertices */
   CachedVertex	cache[TESS_MAX_CACHE];	/* the vertex data */
 
   /*** rendering callbacks that also pass polygon data  ***/ 
-  void		(*callBeginData)( GLenum type, void *polygonData );
-  void		(*callEdgeFlagData)( GLboolean boundaryEdge,
+  void		(*callBeginData)( unsigned int type, void *polygonData );
+  void		(*callEdgeFlagData)( TESS_boolean boundaryEdge,
 				     void *polygonData );
   void		(*callVertexData)( void *data, void *polygonData );
   void		(*callEndData)( void *polygonData );
-  void		(*callErrorData)( GLenum errnum, void *polygonData );
-  void		(*callCombineData)( GLdouble coords[3], void *data[4],
-				    GLfloat weight[4], void **outData,
+  void		(*callErrorData)( unsigned int errnum, void *polygonData );
+  void		(*callCombineData)( double coords[3], void *data[4],
+				    float weight[4], void **outData,
 				    void *polygonData );
 
   jmp_buf env;			/* place to jump to when memAllocs fail */
@@ -123,13 +123,13 @@ struct GLUtesselator {
   void *polygonData;		/* client data for current polygon */
 };
 
-void __gl_noBeginData( GLenum type, void *polygonData );
-void __gl_noEdgeFlagData( GLboolean boundaryEdge, void *polygonData );
+void __gl_noBeginData( unsigned int type, void *polygonData );
+void __gl_noEdgeFlagData( TESS_boolean boundaryEdge, void *polygonData );
 void __gl_noVertexData( void *data, void *polygonData );
 void __gl_noEndData( void *polygonData );
-void __gl_noErrorData( GLenum errnum, void *polygonData );
-void __gl_noCombineData( GLdouble coords[3], void *data[4],
-			 GLfloat weight[4], void **outData,
+void __gl_noErrorData( unsigned int errnum, void *polygonData );
+void __gl_noCombineData( double coords[3], void *data[4],
+			 float weight[4], void **outData,
 			 void *polygonData );
 
 #define CALL_BEGIN_OR_BEGIN_DATA(a) \

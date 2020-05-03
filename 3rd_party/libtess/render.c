@@ -32,7 +32,6 @@
 **
 */
 
-#include "gluos.h"
 #include <assert.h>
 #include <stddef.h>
 #include "mesh.h"
@@ -254,7 +253,7 @@ static void RenderLonelyTriangles( GLUtesselator *tess, GLUface *f )
   int newState;
   int edgeState = -1;	/* force edge state output for first vertex */
 
-  CALL_BEGIN_OR_BEGIN_DATA( GL_TRIANGLES );
+  CALL_BEGIN_OR_BEGIN_DATA( TESS_TRIANGLES );
 
   for( ; f != NULL; f = f->trail ) {
     /* Loop once for each edge (there will always be 3 edges) */
@@ -286,7 +285,7 @@ static void RenderFan( GLUtesselator *tess, GLUhalfEdge *e, long size )
    * edge "e".  The fan *should* contain exactly "size" triangles
    * (otherwise we've goofed up somewhere).
    */
-  CALL_BEGIN_OR_BEGIN_DATA( GL_TRIANGLE_FAN ); 
+  CALL_BEGIN_OR_BEGIN_DATA( TESS_TRIANGLE_FAN );
   CALL_VERTEX_OR_VERTEX_DATA( e->Org->data ); 
   CALL_VERTEX_OR_VERTEX_DATA( e->Dst->data ); 
 
@@ -308,7 +307,7 @@ static void RenderStrip( GLUtesselator *tess, GLUhalfEdge *e, long size )
    * edge "e".  The strip *should* contain exactly "size" triangles
    * (otherwise we've goofed up somewhere).
    */
-  CALL_BEGIN_OR_BEGIN_DATA( GL_TRIANGLE_STRIP );
+  CALL_BEGIN_OR_BEGIN_DATA( TESS_TRIANGLE_STRIP );
   CALL_VERTEX_OR_VERTEX_DATA( e->Org->data ); 
   CALL_VERTEX_OR_VERTEX_DATA( e->Dst->data ); 
 
@@ -359,7 +358,7 @@ void __gl_renderBoundary( GLUtesselator *tess, GLUmesh *mesh )
 
 #define SIGN_INCONSISTENT 2
 
-static int ComputeNormal( GLUtesselator *tess, GLdouble norm[3], int check )
+static int ComputeNormal( GLUtesselator *tess, double norm[3], int check )
 /*
  * If check==FALSE, we compute the polygon normal and place it in norm[].
  * If check==TRUE, we check that each triangle in the fan from v0 has a
@@ -372,7 +371,7 @@ static int ComputeNormal( GLUtesselator *tess, GLdouble norm[3], int check )
   CachedVertex *v0 = tess->cache;
   CachedVertex *vn = v0 + tess->cacheCount;
   CachedVertex *vc;
-  GLdouble dot, xc, yc, zc, xp, yp, zp, n[3];
+  double dot, xc, yc, zc, xp, yp, zp, n[3];
   int sign = 0;
 
   /* Find the polygon normal.  It is important to get a reasonable
@@ -438,12 +437,12 @@ static int ComputeNormal( GLUtesselator *tess, GLdouble norm[3], int check )
  * Returns TRUE if the polygon was successfully rendered.  The rendering
  * output is provided as callbacks (see the api).
  */
-GLboolean __gl_renderCache( GLUtesselator *tess )
+TESS_boolean __gl_renderCache( GLUtesselator *tess )
 {
   CachedVertex *v0 = tess->cache;
   CachedVertex *vn = v0 + tess->cacheCount;
   CachedVertex *vc;
-  GLdouble norm[3];
+  double norm[3];
   int sign;
 
   if( tess->cacheCount < 3 ) {
@@ -470,22 +469,22 @@ GLboolean __gl_renderCache( GLUtesselator *tess )
 
   /* Make sure we do the right thing for each winding rule */
   switch( tess->windingRule ) {
-  case GLU_TESS_WINDING_ODD:
-  case GLU_TESS_WINDING_NONZERO:
+  case TESS_WINDING_ODD:
+  case TESS_WINDING_NONZERO:
     break;
-  case GLU_TESS_WINDING_POSITIVE:
+  case TESS_WINDING_POSITIVE:
     if( sign < 0 ) return TRUE;
     break;
-  case GLU_TESS_WINDING_NEGATIVE:
+  case TESS_WINDING_NEGATIVE:
     if( sign > 0 ) return TRUE;
     break;
-  case GLU_TESS_WINDING_ABS_GEQ_TWO:
+  case TESS_WINDING_ABS_GEQ_TWO:
     return TRUE;
   }
 
   CALL_BEGIN_OR_BEGIN_DATA( tess->boundaryOnly ? GL_LINE_LOOP
-			  : (tess->cacheCount > 3) ? GL_TRIANGLE_FAN
-			  : GL_TRIANGLES );
+			  : (tess->cacheCount > 3) ? TESS_TRIANGLE_FAN
+			  : TESS_TRIANGLES );
 
   CALL_VERTEX_OR_VERTEX_DATA( v0->data ); 
   if( sign > 0 ) {

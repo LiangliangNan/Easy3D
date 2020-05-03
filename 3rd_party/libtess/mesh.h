@@ -118,8 +118,8 @@ struct GLUvertex {
   void		*data;		/* client's data */
 
   /* Internal data (keep hidden) */
-  GLdouble	coords[3];	/* vertex location in 3D */
-  GLdouble	s, t;		/* projection onto the sweep plane */
+  double	coords[3];	/* vertex location in 3D */
+  double	s, t;		/* projection onto the sweep plane */
   long		pqHandle;	/* to allow deletion from priority queue */
 };
 
@@ -131,8 +131,8 @@ struct GLUface {
 
   /* Internal data (keep hidden) */
   GLUface	*trail;		/* "stack" for conversion to strips */
-  GLboolean	marked;		/* flag for conversion to strips */
-  GLboolean	inside;		/* this face is in the polygon interior */
+  TESS_boolean	marked;		/* flag for conversion to strips */
+  TESS_boolean	inside;		/* this face is in the polygon interior */
 };
 
 struct GLUhalfEdge {
