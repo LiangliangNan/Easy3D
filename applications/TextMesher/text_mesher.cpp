@@ -23,8 +23,9 @@ namespace easy3d {
 // The resolution in dpi.
 #define RESOLUTION          96
 
-// Used to convert actual font size to nominal size, in 26.6 fractional points.
-#define SCALE_TO_F26DOT6    64
+// Used to convert actual font size to nominal size, in 26.6 fractional points. The default value is 64.
+// I choose a very large value for robustness (just in case a user requests a very small font size).
+#define SCALE_TO_F26DOT6    6400
 
 
     TextMesher::TextMesher(const std::string &font_file, int font_height)
@@ -70,9 +71,8 @@ namespace easy3d {
             return;
         }
 
-        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6,
-                             RESOLUTION,
-                             RESOLUTION)) {
+        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6,
+                             font_height * SCALE_TO_F26DOT6, RESOLUTION, RESOLUTION)) {
             LOG(ERROR) << "failed requesting the nominal size (in points) of the characters)";
             ready_ = false;
             return;
@@ -172,31 +172,67 @@ namespace easy3d {
             return false;
         }
 
-        // test if a contains the majority of b
-        auto contains = [](const Contour& contour_a, const Contour& contour_b) -> bool {
-            int num_contained = 0;
-            for (const auto& p : contour_b) {
-                if (contour_a.contains(p))
-                    ++num_contained;
-            }
-            return num_contained > (contour_b.size() - num_contained);
-        };
-
-        // how many other contours contain a contour (given it index)
-        auto num_outer_contours = [&](int cur_idx, const CharContour& cha) -> int {
-            const Contour &contour = cha[cur_idx];
-            int num = 0;
-            for (int idx=0; idx<cha.size(); ++idx) {
-                if (idx != cur_idx && contains(cha[idx], contour))
-                    ++num;
-            }
-            return num;
-        };
-
-
         int vertex_index = 0;  // the index of a point added to the tessellator
         Tessellator tessellator(true);
         for (const auto &ch :characters) {
+            // --------------------------------------------------------------------------------------
+            // create faces for the bottom
+            if (1) {
+                vec3 normal(0, 0, -1);
+                tessellator.begin_polygon(normal);
+                for (std::size_t id = 0; id < ch.size(); ++id) {
+                    const Contour &contour = ch[id];
+                    tessellator.set_winding_rule(Tessellator::ODD);
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
+                    tessellator.end_contour();
+                }
+                tessellator.end_polygon();
+            }
+
+            // --------------------------------------------------------------------------------------
+            // create faces for the top
+            // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
+            // be simply obtained. I still use my tessellator to tesselate the top faces.
+#if 1
+                vec3 normal(0, 0, 1);
+                tessellator.begin_polygon(normal);
+                for (std::size_t id = 0; id < ch.size(); ++id) {
+                    const Contour &contour = ch[id];
+                    tessellator.set_winding_rule(Tessellator::ODD);
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, extrude), vertex_index++);
+                    tessellator.end_contour();
+                }
+                tessellator.end_polygon();
+#endif
+
+            // --------------------------------------------------------------------------------------
+            // generate the side faces for this character.
+#if 1
+            // test if a contains the majority of b
+            auto contains = [](const Contour &contour_a, const Contour &contour_b) -> bool {
+                int num_contained = 0;
+                for (const auto &p : contour_b) {
+                    if (contour_a.contains(p))
+                        ++num_contained;
+                }
+                return num_contained > (contour_b.size() - num_contained);
+            };
+
+            // how many other contours contain a contour (given it index)
+            auto num_outer_contours = [&](int cur_idx, const CharContour &cha) -> int {
+                const Contour &contour = cha[cur_idx];
+                int num = 0;
+                for (int idx = 0; idx < cha.size(); ++idx) {
+                    if (idx != cur_idx && contains(cha[idx], contour))
+                        ++num;
+                }
+                return num;
+            };
+
             for (int index = 0; index < ch.size(); ++index) {
                 const Contour &contour = ch[index];
                 for (int p = 0; p < contour.size(); ++p) {
@@ -207,8 +243,8 @@ namespace easy3d {
                     // Though I've already known the vertex indices for the character's side triangles, I still use my
                     // tessellator, which allows me to stitch the triangles into a closed mesh.
                     if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
-                        (!contour.clockwise && num_outer_contours(index, ch) % 2 == 1))
-                    { // if clockwise: a -> c -> d -> b
+                        (!contour.clockwise &&
+                         num_outer_contours(index, ch) % 2 == 1)) { // if clockwise: a -> c -> d -> b
                         vec3 n = cross(c - a, b - a);
                         n.normalize();
                         tessellator.begin_polygon(n);
@@ -233,41 +269,12 @@ namespace easy3d {
                     }
                 }
             }
+#endif
 
-            // create faces for the bottom
-            if (1)
-            {
-                vec3 normal(0, 0, -1);
-                tessellator.begin_polygon(normal);
-                for (std::size_t id = 0; id < ch.size(); ++id) {
-                    const Contour &contour = ch[id];
-                    tessellator.set_winding_rule(contour.clockwise ? Tessellator::NONZERO : Tessellator::ODD);
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
-                    tessellator.end_contour();
-                }
-                tessellator.end_polygon();
-            }
+            // --------------------------------------------------------------------------------------
+            // now we can collect the triangle faces
 
-            // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
-            // be simply obtained. I still use my tessellator to tesselate the top faces.
-            // create faces for the top
-            if (1)
-            {
-                vec3 normal(0, 0, 1);
-                tessellator.begin_polygon(normal);
-                for (std::size_t id = 0; id < ch.size(); ++id) {
-                    const Contour &contour = ch[id];
-                    tessellator.set_winding_rule(contour.clockwise ? Tessellator::ODD : Tessellator::NONZERO);
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, extrude), vertex_index++);
-                    tessellator.end_contour();
-                }
-                tessellator.end_polygon();
-            }
-
+            // the vertex index starts from 0 for each vertex.
             const int offset = mesh->n_vertices();
 
             const auto &vertices = tessellator.vertices();
@@ -275,9 +282,9 @@ namespace easy3d {
                 mesh->add_vertex(vec3(v->data()));
 #ifndef NDEBUG
                 LOG_IF(WARNING, v->index < 0) << "self-intersecting contours\n"
-                << "\t\t character: " << ch.character << "\n"
-                << "\t\t font file: " << font_file_ << "\n"
-                << "\t\t intersection: " << vec3(v->data());
+                                              << "\t\t character: " << ch.character << "\n"
+                                              << "\t\t font file: " << font_file_ << "\n"
+                                              << "\t\t intersection: " << vec3(v->data());
 #endif
             }
 
@@ -291,7 +298,6 @@ namespace easy3d {
                 mesh->add_triangle(va, vb, vc);
             }
 
-            // we generate for each character.
             tessellator.reset();
             vertex_index = 0;
         }
