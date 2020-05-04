@@ -415,6 +415,19 @@ namespace easy3d {
             if ( !is_boundary(vertices[i]) )
             {
                 LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ") (this is the first record)";
+
+#ifndef NDEBUG
+                static bool show = true;
+                if (show) {
+                    LOG(ERROR) << "the vertex coordinate: ";
+                    LOG(ERROR) << "\t\t" << vpoint_[vertices[i]];
+                    LOG(ERROR) << "the vertices of the face: ";
+                    for (int m = 0; m < vertices.size(); ++m) {
+                        LOG(ERROR) << "\t\t" << vpoint_[vertices[m]];
+                    }
+                    show = false;
+                }
+#endif
                 return Face();
             }
 
@@ -424,6 +437,20 @@ namespace easy3d {
             if (!is_new[i] && !is_boundary(halfedges[i]))
             {
                 LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ") (this is the first record)";
+
+#ifndef NDEBUG
+                static bool show = true;
+                if (show) {
+                    LOG(ERROR) << "SurfaceMesh::add_face: coordinates: ";
+                    LOG(ERROR) << "\t\t" << vpoint_[vertices[i]];
+                    LOG(ERROR) << "\t\t" << vpoint_[vertices[ii]];
+                    LOG(ERROR) << "the vertices of the face: ";
+                    for (int m = 0; m < vertices.size(); ++m) {
+                        LOG(ERROR) << "\t\t" << vpoint_[vertices[m]];
+                    }
+                    show = false;
+                }
+#endif
                 return Face();
             }
         }
