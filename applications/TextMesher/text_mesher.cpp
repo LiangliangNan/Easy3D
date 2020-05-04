@@ -112,15 +112,15 @@ namespace easy3d {
             const ::Contour *contour = vectoriser.GetContour(c);
 
             Contour polygon(contour->PointCount());
+            for (std::size_t p = 0; p < contour->PointCount(); ++p) {
+                const double *d = contour->GetPoint(p);
+                polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
+            }
 
             // The FTGL library must have a bug!!!
             //polygon.clockwise = contour->GetDirection();
             polygon.clockwise = polygon.is_clockwise();
 
-            for (std::size_t p = 0; p < contour->PointCount(); ++p) {
-                const double *d = contour->GetPoint(p);
-                polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
-            }
             char_contour.push_back(polygon);
         }
 
@@ -191,8 +191,8 @@ namespace easy3d {
                     const vec3 d = b + vec3(0, 0, extrude);
                     // Though I've already known the vertex indices for the character's side triangles, I still use my
                     // tessellator, which allows me to stitch the triangles into a closed mesh.
-                    if ((contour.is_clockwise() && num_outer_contours(index, ch) % 2 == 0) ||
-                        (!contour.is_clockwise() && num_outer_contours(index, ch) % 2 == 1))
+                    if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
+                        (!contour.clockwise && num_outer_contours(index, ch) % 2 == 1))
                     { // if clockwise: a -> c -> d -> b
                         vec3 n = cross(c - a, b - a);
                         n.normalize();
@@ -225,7 +225,7 @@ namespace easy3d {
                     tessellator.begin_polygon(normal);
                     for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
                         const Contour &contour = ch[inner_index];
-                        tessellator.set_winding_rule(contour.is_clockwise() ? Tessellator::NONZERO : Tessellator::ODD);
+                        tessellator.set_winding_rule(contour.clockwise ? Tessellator::NONZERO : Tessellator::ODD);
                         tessellator.begin_contour();
                         for (const auto &p : contour)
                             tessellator.add_vertex(vec3(p, 0.0));
@@ -243,7 +243,7 @@ namespace easy3d {
                     tessellator.begin_polygon(normal);
                     for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
                         const Contour &contour = ch[inner_index];
-                        tessellator.set_winding_rule(contour.is_clockwise() ? Tessellator::ODD : Tessellator::NONZERO);
+                        tessellator.set_winding_rule(contour.clockwise ? Tessellator::ODD : Tessellator::NONZERO);
                         tessellator.begin_contour();
                         for (const auto &p : contour)
                             tessellator.add_vertex(vec3(p, extrude));
