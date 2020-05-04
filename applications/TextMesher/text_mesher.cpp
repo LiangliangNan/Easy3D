@@ -27,13 +27,8 @@ namespace easy3d {
 
 
     TextMesher::TextMesher(const std::string &font_file, int font_height)
-            : font_library_(nullptr)
-            , font_face_(nullptr)
-            , bezier_steps_(4)
-            , prev_char_index_(0)
-            , cur_char_index_(0)
-            , prev_rsb_delta_(0)
-    {
+            : font_library_(nullptr), font_face_(nullptr), bezier_steps_(4), prev_char_index_(0), cur_char_index_(0),
+              prev_rsb_delta_(0) {
         set_font(font_file, font_height);
     }
 
@@ -66,7 +61,8 @@ namespace easy3d {
             return;
         }
 
-        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6, RESOLUTION,
+        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6, font_height * SCALE_TO_F26DOT6,
+                             RESOLUTION,
                              RESOLUTION)) {
             LOG(ERROR) << "failed requesting the nominal size (in points) of the characters)";
             ready_ = false;
@@ -77,7 +73,7 @@ namespace easy3d {
     }
 
 
-    TextMesher::CharContour TextMesher::generate_contours(char ch, float& x, float& y) {
+    TextMesher::CharContour TextMesher::generate_contours(char ch, float &x, float &y) {
         CharContour char_contour;
         char_contour.character = ch;
 
@@ -116,7 +112,10 @@ namespace easy3d {
             const ::Contour *contour = vectoriser.GetContour(c);
 
             Contour polygon(contour->PointCount());
-            polygon.clockwise = contour->GetDirection();
+
+            // The FTGL library must have a bug!!!
+            //polygon.clockwise = contour->GetDirection();
+            polygon.clockwise = polygon.is_clockwise();
 
             for (std::size_t p = 0; p < contour->PointCount(); ++p) {
                 const double *d = contour->GetPoint(p);
@@ -147,7 +146,7 @@ namespace easy3d {
     }
 
 
-    bool TextMesher::generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude) {
+    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &text, float x, float y, float extrude) {
         if (!ready_)
             return false;
 
@@ -159,13 +158,27 @@ namespace easy3d {
             return false;
         }
 
-        auto is_inside = [](const Contour &contour_a, const Contour &contour_b) -> bool {
-            for (const auto &p : contour_a) {
-                if (!geom::point_in_polygon(p, contour_b))
-                    return false;
+        // test if a contains the majority of b
+        auto contains = [](const Contour& contour_a, const Contour& contour_b) -> bool {
+            int num_contained = 0;
+            for (const auto& p : contour_b) {
+                if (contour_a.contains(p))
+                    ++num_contained;
             }
-            return true;
+            return num_contained > (contour_b.size() - num_contained);
         };
+
+        // how many other contours contain a contour (given it index)
+        auto num_outer_contours = [&](int cur_idx, const CharContour& cha) -> int {
+            const Contour &contour = cha[cur_idx];
+            int num = 0;
+            for (int idx=0; idx<cha.size(); ++idx) {
+                if (idx != cur_idx && contains(cha[idx], contour))
+                    ++num;
+            }
+            return num;
+        };
+
 
         Tessellator tessellator(true);
         for (const auto &ch :characters) {
@@ -176,71 +189,66 @@ namespace easy3d {
                     const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
                     const vec3 c = a + vec3(0, 0, extrude);
                     const vec3 d = b + vec3(0, 0, extrude);
-                    // Though I've already known the vertex indices of the character's side triangles (a -> c -> b and
-                    // c -> d -> b), I still use my tessellator that allows to stitch the triangles into a closed mesh.
-                    tessellator.begin_polygon();
-                    tessellator.begin_contour(); // a -> c -> d -> b
-                    tessellator.add_vertex(a);
-                    tessellator.add_vertex(c);
-                    tessellator.add_vertex(d);
-                    tessellator.add_vertex(b);
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
+                    // Though I've already known the vertex indices for the character's side triangles, I still use my
+                    // tessellator, which allows me to stitch the triangles into a closed mesh.
+                    if ((contour.is_clockwise() && num_outer_contours(index, ch) % 2 == 0) ||
+                        (!contour.is_clockwise() && num_outer_contours(index, ch) % 2 == 1))
+                    { // if clockwise: a -> c -> d -> b
+                        vec3 n = cross(c - a, b - a);
+                        n.normalize();
+                        tessellator.begin_polygon(n);
+                        tessellator.begin_contour();
+                        tessellator.add_vertex(a);
+                        tessellator.add_vertex(c);
+                        tessellator.add_vertex(d);
+                        tessellator.add_vertex(b);
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+                    } else { // if counter-clockwise: a -> b -> d -> c
+                        vec3 n = cross(b - a, c - a);
+                        n.normalize();
+                        tessellator.begin_polygon(n);
+                        tessellator.begin_contour();
+                        tessellator.add_vertex(a);
+                        tessellator.add_vertex(b);
+                        tessellator.add_vertex(d);
+                        tessellator.add_vertex(c);
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+                    }
                 }
 
                 // create faces for the bottom
-                if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
-                    tessellator.begin_polygon(vec3(0, 0, -1));
-
-                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, 0.0));
-                    tessellator.end_contour();
-
+                if (1)
+                {
+                    vec3 normal(0, 0, -1);
+                    tessellator.begin_polygon(normal);
                     for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
-                        const Contour &inner_contour = ch[inner_index];
-                        if (inner_index != index &&
-                            inner_contour.clockwise != contour.clockwise &&
-                            is_inside(inner_contour, contour))
-                        {
-                            tessellator.set_winding_rule(Tessellator::ODD);
-                            tessellator.begin_contour();
-                            for (const auto &p : inner_contour)
-                                tessellator.add_vertex(vec3(p, 0.0));
-                            tessellator.end_contour();
-                        }
+                        const Contour &contour = ch[inner_index];
+                        tessellator.set_winding_rule(contour.is_clockwise() ? Tessellator::NONZERO : Tessellator::ODD);
+                        tessellator.begin_contour();
+                        for (const auto &p : contour)
+                            tessellator.add_vertex(vec3(p, 0.0));
+                        tessellator.end_contour();
                     }
-
                     tessellator.end_polygon();
                 }
 
                 // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
                 // be simply obtained. I still use my tessellator to tesselate the top faces.
                 // create faces for the top
-                if (contour.clockwise) {  // according to FTGL, outer contours are clockwise (and inner ones are counter-clockwise)
-                    tessellator.begin_polygon(vec3(0, 0, 1));
-
-                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, extrude));
-                    tessellator.end_contour();
-
+                if (1)
+                {
+                    vec3 normal(0, 0, 1);
+                    tessellator.begin_polygon(normal);
                     for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
-                        const Contour &inner_contour = ch[inner_index];
-                        if (inner_index != index &&
-                            inner_contour.clockwise != contour.clockwise &&
-                            is_inside(inner_contour, contour))
-                        {
-                            tessellator.set_winding_rule(Tessellator::ODD);
-                            tessellator.begin_contour();
-                            for (const auto &p : inner_contour)
-                                tessellator.add_vertex(vec3(p, extrude));
-                            tessellator.end_contour();
-                        }
+                        const Contour &contour = ch[inner_index];
+                        tessellator.set_winding_rule(contour.is_clockwise() ? Tessellator::ODD : Tessellator::NONZERO);
+                        tessellator.begin_contour();
+                        for (const auto &p : contour)
+                            tessellator.add_vertex(vec3(p, extrude));
+                        tessellator.end_contour();
                     }
-
                     tessellator.end_polygon();
                 }
             }
@@ -252,10 +260,11 @@ namespace easy3d {
                 mesh->add_vertex(vec3(v->data()));
 
             const unsigned int num = tessellator.num_triangles();
-            for (int i=0; i<num; ++i) {
+            for (int i = 0; i < num; ++i) {
                 unsigned int a, b, c;
                 tessellator.get_triangle(i, a, b, c);
-                mesh->add_triangle(SurfaceMesh::Vertex(a + offset), SurfaceMesh::Vertex(b + offset), SurfaceMesh::Vertex(c + offset));
+                mesh->add_triangle(SurfaceMesh::Vertex(a + offset), SurfaceMesh::Vertex(b + offset),
+                                   SurfaceMesh::Vertex(c + offset));
             }
 
             // we generate for each character.

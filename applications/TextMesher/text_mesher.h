@@ -50,7 +50,7 @@ namespace easy3d {
          */
         bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude = 16);
 
-    private:
+    public:
         /**
          * A contour is a closed polygon and it has an orientation (clockwise or counter-clockwise)
          */
