@@ -9,6 +9,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
@@ -47,6 +48,14 @@ namespace easy3d {
 
 
     void TextMesher::set_font(const std::string &font_file, int font_height) {
+        if (!file_system::is_file(font_file)) {
+            LOG(WARNING) << "font file does not exist: " << font_file;
+            return;
+        }
+
+        if (font_file == font_file_ && font_height == font_height_)
+            return;
+
         cleanup();
 
         if (FT_Init_FreeType(get_library_ptr(font_library_))) {
@@ -69,6 +78,8 @@ namespace easy3d {
             return;
         }
 
+        font_file_ = font_file;
+        font_height_ = font_height;
         ready_ = true;
     }
 
@@ -117,11 +128,14 @@ namespace easy3d {
                 polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
             }
 
-            // The FTGL library must have a bug!!!
-            //polygon.clockwise = contour->GetDirection();
-            polygon.clockwise = polygon.is_clockwise();
+            // ignore tiny contours (some fonts even have degenarate countours)
+            if (polygon.area() >= font_height_ * font_height_ * 0.001) {
+                // The FTGL library must have a bug!!!
+                //polygon.clockwise = contour->GetDirection();
+                polygon.clockwise = polygon.is_clockwise();
 
-            char_contour.push_back(polygon);
+                char_contour.push_back(polygon);
+            }
         }
 
         prev_char_index_ = cur_char_index_;
@@ -218,57 +232,63 @@ namespace easy3d {
                         tessellator.end_polygon();
                     }
                 }
+            }
 
-                // create faces for the bottom
-                if (1)
-                {
-                    vec3 normal(0, 0, -1);
-                    tessellator.begin_polygon(normal);
-                    for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
-                        const Contour &contour = ch[inner_index];
-                        tessellator.set_winding_rule(contour.clockwise ? Tessellator::NONZERO : Tessellator::ODD);
-                        tessellator.begin_contour();
-                        for (const auto &p : contour)
-                            tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
-                        tessellator.end_contour();
-                    }
-                    tessellator.end_polygon();
+            // create faces for the bottom
+            if (1)
+            {
+                vec3 normal(0, 0, -1);
+                tessellator.begin_polygon(normal);
+                for (std::size_t id = 0; id < ch.size(); ++id) {
+                    const Contour &contour = ch[id];
+                    tessellator.set_winding_rule(contour.clockwise ? Tessellator::NONZERO : Tessellator::ODD);
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
+                    tessellator.end_contour();
                 }
+                tessellator.end_polygon();
+            }
 
-                // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
-                // be simply obtained. I still use my tessellator to tesselate the top faces.
-                // create faces for the top
-                if (1)
-                {
-                    vec3 normal(0, 0, 1);
-                    tessellator.begin_polygon(normal);
-                    for (std::size_t inner_index = 0; inner_index < ch.size(); ++inner_index) {
-                        const Contour &contour = ch[inner_index];
-                        tessellator.set_winding_rule(contour.clockwise ? Tessellator::ODD : Tessellator::NONZERO);
-                        tessellator.begin_contour();
-                        for (const auto &p : contour)
-                            tessellator.add_vertex(vec3(p, extrude), vertex_index++);
-                        tessellator.end_contour();
-                    }
-                    tessellator.end_polygon();
+            // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
+            // be simply obtained. I still use my tessellator to tesselate the top faces.
+            // create faces for the top
+            if (1)
+            {
+                vec3 normal(0, 0, 1);
+                tessellator.begin_polygon(normal);
+                for (std::size_t id = 0; id < ch.size(); ++id) {
+                    const Contour &contour = ch[id];
+                    tessellator.set_winding_rule(contour.clockwise ? Tessellator::ODD : Tessellator::NONZERO);
+                    tessellator.begin_contour();
+                    for (const auto &p : contour)
+                        tessellator.add_vertex(vec3(p, extrude), vertex_index++);
+                    tessellator.end_contour();
                 }
+                tessellator.end_polygon();
             }
 
             const int offset = mesh->n_vertices();
 
             const auto &vertices = tessellator.vertices();
             for (const auto v : vertices) {
-                if (v->index < 0)
-                    std::cout << "contours intersect at point: " << vec3(v->data())  << std::endl;
                 mesh->add_vertex(vec3(v->data()));
+#ifndef NDEBUG
+                LOG_IF(WARNING, v->index < 0) << "self-intersecting contours\n"
+                << "\t\t character: " << ch.character << "\n"
+                << "\t\t font file: " << font_file_ << "\n"
+                << "\t\t intersection: " << vec3(v->data());
+#endif
             }
 
             const unsigned int num = tessellator.num_triangles();
             for (int i = 0; i < num; ++i) {
                 unsigned int a, b, c;
                 tessellator.get_triangle(i, a, b, c);
-                mesh->add_triangle(SurfaceMesh::Vertex(a + offset), SurfaceMesh::Vertex(b + offset),
-                                   SurfaceMesh::Vertex(c + offset));
+                auto va = SurfaceMesh::Vertex(a + offset);
+                auto vb = SurfaceMesh::Vertex(b + offset);
+                auto vc = SurfaceMesh::Vertex(c + offset);
+                mesh->add_triangle(va, vb, vc);
             }
 
             // we generate for each character.

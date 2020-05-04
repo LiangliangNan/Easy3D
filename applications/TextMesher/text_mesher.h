@@ -101,6 +101,9 @@ namespace easy3d {
         void *font_face_;
         bool ready_;
 
+        std::string font_file_;
+        int font_height_;
+
         // Controls the smoothness of the curved corners. A greater value results in a smooth transitions but more
         // vertices. Suggested value is 4.
         unsigned short bezier_steps_;
