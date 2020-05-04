@@ -11,12 +11,13 @@ namespace easy3d {
     class SurfaceMesh;
 
 
-    //TODO: the method works well for most FFT fonts. However, it may fail for some fonts that have self-intersecting
-    //      contours (e.g., G-Unit.ttf). Though my tessellator is quite robust in triangulating the self-intersecting
-    //      contours, the issue may exist in creating the side faces. Here is an idea to solve it:
-    //          - first tessellate the two ends faces;
-    //          - identify and duplicate the intersecting vertices;
-    //          - generate the side faces for each connected component of the end faces.
+    //TODO: the method works well for most FFT fonts. However, some fonts have self-intersecting contours
+    //      (e.g., G-Unit.ttf). Though my tessellator is quite robust in triangulating the self-intersecting
+    //      contours, the issue may still exist in creating the side faces if you want to create a water-tight model.
+    //      Here is an idea to solve it (I will implement it when I find time):
+    //          - first tessellate the bottom face;
+    //          - identify the intersecting vertices and decompose the contours into simple ones;
+    //          - generate the side faces from the simple contours.
 
     class TextMesher {
     public:
