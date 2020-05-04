@@ -7,6 +7,7 @@
 #include <freetype/ftglyph.h>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -173,132 +174,201 @@ namespace easy3d {
         }
 
         int vertex_index = 0;  // the index of a point added to the tessellator
-        Tessellator tessellator(true);
-        for (const auto &ch :characters) {
-            // --------------------------------------------------------------------------------------
-            // create faces for the bottom
-            if (1) {
-                vec3 normal(0, 0, -1);
-                tessellator.begin_polygon(normal);
-                for (std::size_t id = 0; id < ch.size(); ++id) {
-                    const Contour &contour = ch[id];
-                    tessellator.set_winding_rule(Tessellator::ODD);
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
-                    tessellator.end_contour();
-                }
-                tessellator.end_polygon();
+        Tessellator tess_face;
+        for (auto &ch : characters) {
+            //-------------------------------------------------------------------------------------
+            // First, use another tessellator to generate simple contours
+
+            Tessellator tess_contour;
+            tess_contour.set_tess_bounary_only(true);
+            vec3 normal(0, 0, 1);
+            tess_contour.begin_polygon(normal);
+            int idx = 0;
+            for (std::size_t id = 0; id < ch.size(); ++id) {
+                const Contour &contour = ch[id];
+                tess_contour.begin_contour();
+                for (const auto &p : contour)
+                    tess_contour.add_vertex(vec3(p, 0.0), idx++);
+                tess_contour.end_contour();
             }
+            tess_contour.end_polygon();
 
-            // --------------------------------------------------------------------------------------
-            // create faces for the top
-            // Though I've already known the vertex indices of the character's bottom triangles, so the top one can
-            // be simply obtained. I still use my tessellator to tesselate the top faces.
-#if 1
-                vec3 normal(0, 0, 1);
-                tessellator.begin_polygon(normal);
-                for (std::size_t id = 0; id < ch.size(); ++id) {
-                    const Contour &contour = ch[id];
-                    tessellator.set_winding_rule(Tessellator::ODD);
-                    tessellator.begin_contour();
-                    for (const auto &p : contour)
-                        tessellator.add_vertex(vec3(p, extrude), vertex_index++);
-                    tessellator.end_contour();
+            ch.clear();
+            const auto &vertices = tess_contour.vertices();
+            const auto &contours = tess_contour.contours();
+
+            //-------------------------------------------------------------------------------------
+            // generate top faces
+
+            tess_face.begin_polygon(vec3(0, 0, 1));
+            for (std::size_t i = 0; i < contours.size(); ++i) {
+                Contour contour(contours[i].size());
+                tess_face.set_winding_rule(Tessellator::ODD);
+                tess_face.begin_contour();
+                for (int j = 0; j < contours[i].size(); ++j) {
+                    int id = contours[i][j];
+                    const Tessellator::Vertex *v = vertices[id];
+                    const vec2 p = vec2(v->data());
+                    contour[j] = p;
+
+                    Tessellator::Vertex vt(vec3(p, extrude), vertex_index++);
+                    if (v->index < 0)
+                        vt.can_merge = false;
+                    tess_face.add_vertex(vt);
                 }
-                tessellator.end_polygon();
-#endif
+                contour.clockwise = contour.is_clockwise();
+                ch.push_back(contour);
+                tess_face.end_contour();
+            }
+            tess_face.end_polygon();
 
-            // --------------------------------------------------------------------------------------
-            // generate the side faces for this character.
-#if 1
-            // test if a contains the majority of b
-            auto contains = [](const Contour &contour_a, const Contour &contour_b) -> bool {
-                int num_contained = 0;
-                for (const auto &p : contour_b) {
-                    if (contour_a.contains(p))
-                        ++num_contained;
+            //-------------------------------------------------------------------------------------
+            // generate bottom faces
+
+            tess_face.begin_polygon(vec3(0, 0, -1));
+            for (std::size_t i = 0; i < contours.size(); ++i) {
+                tess_face.set_winding_rule(Tessellator::ODD);
+                tess_face.begin_contour();
+                for (int j = 0; j < contours[i].size(); ++j) {
+                    int id = contours[i][j];
+                    const Tessellator::Vertex *v = vertices[id];
+                    const vec2 p = vec2(v->data());
+                    Tessellator::Vertex vt(vec3(p, 0), vertex_index++);
+                    if (v->index < 0)
+                        vt.can_merge = false;
+                    tess_face.add_vertex(vt);
                 }
-                return num_contained > (contour_b.size() - num_contained);
-            };
+                tess_face.end_contour();
+            }
+            tess_face.end_polygon();
 
-            // how many other contours contain a contour (given it index)
-            auto num_outer_contours = [&](int cur_idx, const CharContour &cha) -> int {
-                const Contour &contour = cha[cur_idx];
-                int num = 0;
-                for (int idx = 0; idx < cha.size(); ++idx) {
-                    if (idx != cur_idx && contains(cha[idx], contour))
-                        ++num;
-                }
-                return num;
-            };
 
-            for (int index = 0; index < ch.size(); ++index) {
-                const Contour &contour = ch[index];
-                for (int p = 0; p < contour.size(); ++p) {
-                    const vec3 a(contour[p], 0.0f);
-                    const vec3 b(contour[(p + 1) % contour.size()], 0.0f);
-                    const vec3 c = a + vec3(0, 0, extrude);
-                    const vec3 d = b + vec3(0, 0, extrude);
-                    // Though I've already known the vertex indices for the character's side triangles, I still use my
-                    // tessellator, which allows me to stitch the triangles into a closed mesh.
-                    if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
-                        (!contour.clockwise &&
-                         num_outer_contours(index, ch) % 2 == 1)) { // if clockwise: a -> c -> d -> b
-                        vec3 n = cross(c - a, b - a);
-                        n.normalize();
-                        tessellator.begin_polygon(n);
-                        tessellator.begin_contour();
-                        tessellator.add_vertex(a, vertex_index++);
-                        tessellator.add_vertex(c, vertex_index++);
-                        tessellator.add_vertex(d, vertex_index++);
-                        tessellator.add_vertex(b, vertex_index++);
-                        tessellator.end_contour();
-                        tessellator.end_polygon();
-                    } else { // if counter-clockwise: a -> b -> d -> c
-                        vec3 n = cross(b - a, c - a);
-                        n.normalize();
-                        tessellator.begin_polygon(n);
-                        tessellator.begin_contour();
-                        tessellator.add_vertex(a, vertex_index++);
-                        tessellator.add_vertex(b, vertex_index++);
-                        tessellator.add_vertex(d, vertex_index++);
-                        tessellator.add_vertex(c, vertex_index++);
-                        tessellator.end_contour();
-                        tessellator.end_polygon();
+            //-------------------------------------------------------------------------------------
+            {   // side faces
+                // generate the side faces for this character.
+                // test if a contains the majority of b
+                auto contains = [](const Contour &contour_a, const Contour &contour_b) -> bool {
+                    int num_contained = 0;
+                    for (const auto &p : contour_b) {
+                        if (contour_a.contains(p))
+                            ++num_contained;
+                    }
+                    return num_contained > (contour_b.size() - num_contained);
+                };
+
+                // how many other contours contain a contour (given it index)
+                auto num_outer_contours = [&](int cur_idx, const CharContour &cha) -> int {
+                    const Contour &contour = cha[cur_idx];
+                    int num = 0;
+                    for (int idx = 0; idx < cha.size(); ++idx) {
+                        if (idx != cur_idx && contains(cha[idx], contour))
+                            ++num;
+                    }
+                    return num;
+                };
+
+                for (std::size_t index = 0; index < contours.size(); ++index) {
+                    const Contour &contour = ch[index];
+                    for (int j = 0; j < contours[index].size(); ++j) {
+                        int id_a = contours[index][j];
+                        int id_b = contours[index][(j + 1 + contours[index].size()) % contours[index].size()];
+                        const Tessellator::Vertex *va = vertices[id_a];
+                        const Tessellator::Vertex *vb = vertices[id_b];
+                        const vec3 a = vec3(vec2(va->data()), 0);
+                        const vec3 b = vec3(vec2(vb->data()), 0);
+                        const vec3 c = a + vec3(0, 0, extrude);
+                        const vec3 d = b + vec3(0, 0, extrude);
+                        // Though I've already known the vertex indices for the character's side triangles, I still use my
+                        // tessellator, which allows me to stitch the triangles into a closed mesh.
+                        if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
+                            (!contour.clockwise &&
+                             num_outer_contours(index, ch) % 2 == 1)) { // if clockwise: a -> c -> d -> b
+                            vec3 n = cross(c - a, b - a);
+                            n.normalize();
+                            tess_face.begin_polygon(n);
+                            tess_face.begin_contour();
+
+                            {
+                                Tessellator::Vertex aa(a, vertex_index++);
+                                if (va->index < 0)
+                                    aa.can_merge = false;
+                                tess_face.add_vertex(aa);
+
+                                Tessellator::Vertex cc(c, vertex_index++);
+                                if (va->index < 0) cc.can_merge = false;
+                                tess_face.add_vertex(cc);
+
+                                Tessellator::Vertex dd(d, vertex_index++);
+                                if (vb->index < 0)
+                                    dd.can_merge = false;
+                                tess_face.add_vertex(dd);
+
+                                Tessellator::Vertex bb(b, vertex_index++);
+                                if (vb->index < 0) bb.can_merge = false;
+                                tess_face.add_vertex(bb);
+                            }
+                            tess_face.end_contour();
+                            tess_face.end_polygon();
+                        } else { // if counter-clockwise: a -> b -> d -> c
+                            vec3 n = cross(b - a, c - a);
+                            n.normalize();
+                            tess_face.begin_polygon(n);
+                            tess_face.begin_contour();
+                            {
+                                Tessellator::Vertex aa(a, vertex_index++);
+                                if (va->index < 0)
+                                    aa.can_merge = false;
+                                tess_face.add_vertex(aa);
+
+                                Tessellator::Vertex bb(b, vertex_index++);
+                                if (vb->index < 0)
+                                    bb.can_merge = false;
+                                tess_face.add_vertex(bb);
+
+                                Tessellator::Vertex dd(d, vertex_index++);
+                                if (vb->index < 0) dd.can_merge = false;
+                                tess_face.add_vertex(dd);
+
+                                Tessellator::Vertex cc(c, vertex_index++);
+                                if (va->index < 0) cc.can_merge = false;
+                                tess_face.add_vertex(cc);
+                            }
+                            tess_face.end_contour();
+                            tess_face.end_polygon();
+                        }
                     }
                 }
             }
-#endif
 
-            // --------------------------------------------------------------------------------------
-            // now we can collect the triangle faces
+            //-------------------------------------------------------------------------------------
 
-            // the vertex index starts from 0 for each vertex.
+            // now we can collect the triangle faces for this character
+            // the vertex index starts from 0 for each character.
             const int offset = mesh->n_vertices();
 
-            const auto &vertices = tessellator.vertices();
-            for (const auto v : vertices) {
-                mesh->add_vertex(vec3(v->data()));
-#ifndef NDEBUG
-                LOG_IF(WARNING, v->index < 0) << "self-intersecting contours\n"
-                                              << "\t\t character: " << ch.character << "\n"
-                                              << "\t\t font file: " << font_file_ << "\n"
-                                              << "\t\t intersection: " << vec3(v->data());
-#endif
+            // use ManifoldBuilder (just in case there were self-intersecting contours).
+            ManifoldBuilder builder(mesh);
+            builder.begin_surface();
+
+            const auto &final_faces = tess_face.vertices();
+            for (const auto v : final_faces) {
+                builder.add_vertex(vec3(v->data()));
             }
 
-            const unsigned int num = tessellator.num_triangles();
+            const unsigned int num = tess_face.num_triangles();
             for (int i = 0; i < num; ++i) {
                 unsigned int a, b, c;
-                tessellator.get_triangle(i, a, b, c);
+                tess_face.get_triangle(i, a, b, c);
                 auto va = SurfaceMesh::Vertex(a + offset);
                 auto vb = SurfaceMesh::Vertex(b + offset);
                 auto vc = SurfaceMesh::Vertex(c + offset);
-                mesh->add_triangle(va, vb, vc);
+                builder.add_triangle(va, vb, vc);
             }
 
-            tessellator.reset();
+            builder.end_surface(false);
+
+            // the tessellator runs for each character
+            tess_face.reset();
             vertex_index = 0;
         }
 
