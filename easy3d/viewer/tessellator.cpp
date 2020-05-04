@@ -408,10 +408,12 @@ namespace easy3d {
 
     void Tessellator::reset() {
         reinterpret_cast<details::VertexManager *>(vertex_manager_)->clear();
+
         triangle_list_.clear();
+        num_triangles_in_polygon_ = 0;
 
         vertex_ids_.clear();
-        num_triangles_in_polygon_ = 0;
+        contours_.clear();
     }
 
 
