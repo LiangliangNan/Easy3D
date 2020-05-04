@@ -77,8 +77,8 @@ namespace easy3d {
         mesh_->remove_vertex_property(original_vertex_);
 
         // now all copy occurrences are known
-        // add a vertex property "v:lock" recording all copied vertices
-        auto lock = mesh_->add_vertex_property<bool>("v:lock");
+        // mark all copied vertices in property "v:lock"
+        auto lock = mesh_->vertex_property<bool>("v:lock");
         std::size_t num_non_manifold_vertices = copied_vertices_.size();
         std::size_t num_copy_occurrences(0);
         for (const auto& copies : copied_vertices_) {
