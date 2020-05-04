@@ -62,9 +62,6 @@ namespace easy3d {
                         std::streamoff pos = input.tellg();
                         progress.notify(pos);
 					}
-					else {
-						LOG_FIRST_N(ERROR, 1) << "failed reading point (this is the first record)";
-					}
 				}
 			}
 
