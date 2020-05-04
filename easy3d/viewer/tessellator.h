@@ -56,7 +56,7 @@ namespace easy3d {
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(const vec3 &xyz, int idx = -1) : index(idx) { append(xyz); }
+            Vertex(const vec3 &xyz, int idx = -1) : index(idx), can_merge(true) { append(xyz); }
 
             /**
              * initialize from a C-style array.
@@ -65,7 +65,7 @@ namespace easy3d {
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
-            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx) {
+            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx), can_merge(true) {
                 assign(data, data + size);
             }
 
@@ -74,14 +74,14 @@ namespace easy3d {
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx) {}
+            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx), can_merge(true) {}
 
             /**
              * copy constructor.
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(const Vertex& v, int idx = -1) : index(idx) {
+            Vertex(const Vertex& v, int idx = -1) : index(idx), can_merge(v.can_merge) {
                 assign(v.begin(), v.end());
             }
             /**
@@ -97,13 +97,14 @@ namespace easy3d {
             }
 
             int index;
+
+            // whether or not this vertex can be consider duplicating another vertex
+            // if you don't allow some vertex to be merged, a unique index must be provided.
+            bool can_merge;
         };
 
     public:
-        /**
-         * @param merge Whether or not to merge duplicated vertices in tessellation.
-         */
-        Tessellator(bool merge = true);
+        Tessellator();
         ~Tessellator();
 
         // Set the winding rule (default rule is ODD, modify if needed)

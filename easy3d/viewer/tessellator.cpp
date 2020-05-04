@@ -39,9 +39,7 @@ namespace easy3d {
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
         public:
-            // merge: allows to merge the duplicated vertices during tessellation.
-            VertexManager(bool merge) : merge_duplicate_(merge) {}
-
+            VertexManager() {}
             ~VertexManager() {
                 clear();
             }
@@ -81,7 +79,7 @@ namespace easy3d {
 
             inline std::size_t hash(const Tessellator::Vertex &v) const {
                 static std::hash<double> hasher;
-                std::size_t seed = (merge_duplicate_ ? 0 : hasher(v.index));
+                std::size_t seed = (v.can_merge ? 0 : hasher(v.index));
                 for (auto f : v)
                     hash_combine(seed, hasher(f));
 
@@ -89,8 +87,6 @@ namespace easy3d {
             }
 
         private:
-            bool merge_duplicate_;
-
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
             // key -> index
@@ -104,7 +100,7 @@ namespace easy3d {
 
 
 
-    Tessellator::Tessellator(bool merge)
+    Tessellator::Tessellator()
             : primitive_type_(TESS_TRIANGLES), primitive_aware_orientation_(false), num_triangles_in_polygon_(0),
               vertex_data_size_(3) {
         tess_obj_ = NewTess();// Create a tessellator object and set up its callbacks.
@@ -121,7 +117,7 @@ namespace easy3d {
         TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
         TessProperty(tess_obj_, TESS_TOLERANCE, 0.);
 
-        vertex_manager_ = new details::VertexManager(merge);
+        vertex_manager_ = new details::VertexManager;
     }
 
 
