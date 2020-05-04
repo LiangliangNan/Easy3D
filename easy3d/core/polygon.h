@@ -46,12 +46,23 @@ namespace easy3d {
         template<class InputIterator>
         GenericPolygon(InputIterator first, InputIterator last);
 
+        /**
+         * @brief Check if the polygon has a clockwise orientation (right-hand rule).
+         * @details This method determines the orientation of a polygon based on the sign of its signed area:
+         *              - negative: clockwise
+         *              - positive: counterclockwise
+         */
+        bool is_clockwise() const { return signed_area() < 0; }
+
         // Reverse the orientation of the polygon. The first vertex remains the same.
         // First vertex: pointed to by `p.begin()`, or [0]
         void reverse_orientation();
 
         // Test if point lies inside the polygon
         bool contains(const Vec<2, FT> &point) const;
+
+        // Test if a polygon lies inside this polygon
+        bool contains(const GenericPolygon<FT> &plg) const;
 
         // Return the signed area of the polygon. This means that the
         // area is positive for counter clockwise polygons and negative
@@ -104,6 +115,14 @@ namespace easy3d {
         return inside;
     }
 
+    template<typename FT>
+    inline bool GenericPolygon<FT>::contains(const GenericPolygon<FT> &plg) const {
+        for (const auto &p : plg) {
+            if (!contains(p))
+                return false;
+        }
+        return true;
+    }
 
     template<typename FT>
     inline FT GenericPolygon<FT>::area() const {
