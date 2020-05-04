@@ -115,6 +115,11 @@ namespace easy3d {
             ABS_GEQ_TWO
         };
 
+        /**
+         * Set the wining rule. The new rule will be effective until changed again.
+         * Explanation of the winding rule can be found here:
+         * https://www.glprogramming.com/red/chapter11.html
+         */
         void set_winding_rule(WindingRule rule);
 
         /**
