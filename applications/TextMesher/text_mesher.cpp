@@ -180,6 +180,7 @@ namespace easy3d {
         };
 
 
+        int vertex_index = 0;  // the index of a point added to the tessellator
         Tessellator tessellator(true);
         for (const auto &ch :characters) {
             for (int index = 0; index < ch.size(); ++index) {
@@ -198,10 +199,10 @@ namespace easy3d {
                         n.normalize();
                         tessellator.begin_polygon(n);
                         tessellator.begin_contour();
-                        tessellator.add_vertex(a);
-                        tessellator.add_vertex(c);
-                        tessellator.add_vertex(d);
-                        tessellator.add_vertex(b);
+                        tessellator.add_vertex(a, vertex_index++);
+                        tessellator.add_vertex(c, vertex_index++);
+                        tessellator.add_vertex(d, vertex_index++);
+                        tessellator.add_vertex(b, vertex_index++);
                         tessellator.end_contour();
                         tessellator.end_polygon();
                     } else { // if counter-clockwise: a -> b -> d -> c
@@ -209,10 +210,10 @@ namespace easy3d {
                         n.normalize();
                         tessellator.begin_polygon(n);
                         tessellator.begin_contour();
-                        tessellator.add_vertex(a);
-                        tessellator.add_vertex(b);
-                        tessellator.add_vertex(d);
-                        tessellator.add_vertex(c);
+                        tessellator.add_vertex(a, vertex_index++);
+                        tessellator.add_vertex(b, vertex_index++);
+                        tessellator.add_vertex(d, vertex_index++);
+                        tessellator.add_vertex(c, vertex_index++);
                         tessellator.end_contour();
                         tessellator.end_polygon();
                     }
@@ -228,7 +229,7 @@ namespace easy3d {
                         tessellator.set_winding_rule(contour.clockwise ? Tessellator::NONZERO : Tessellator::ODD);
                         tessellator.begin_contour();
                         for (const auto &p : contour)
-                            tessellator.add_vertex(vec3(p, 0.0));
+                            tessellator.add_vertex(vec3(p, 0.0), vertex_index++);
                         tessellator.end_contour();
                     }
                     tessellator.end_polygon();
@@ -246,7 +247,7 @@ namespace easy3d {
                         tessellator.set_winding_rule(contour.clockwise ? Tessellator::ODD : Tessellator::NONZERO);
                         tessellator.begin_contour();
                         for (const auto &p : contour)
-                            tessellator.add_vertex(vec3(p, extrude));
+                            tessellator.add_vertex(vec3(p, extrude), vertex_index++);
                         tessellator.end_contour();
                     }
                     tessellator.end_polygon();
@@ -256,8 +257,11 @@ namespace easy3d {
             const int offset = mesh->n_vertices();
 
             const auto &vertices = tessellator.vertices();
-            for (const auto v : vertices)
+            for (const auto v : vertices) {
+                if (v->index < 0)
+                    std::cout << "contours intersect at point: " << vec3(v->data())  << std::endl;
                 mesh->add_vertex(vec3(v->data()));
+            }
 
             const unsigned int num = tessellator.num_triangles();
             for (int i = 0; i < num; ++i) {
@@ -269,6 +273,7 @@ namespace easy3d {
 
             // we generate for each character.
             tessellator.reset();
+            vertex_index = 0;
         }
 
         return true;
