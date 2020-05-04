@@ -48,7 +48,7 @@ namespace easy3d {
                 return unique_vertices_;
             }
 
-            Tessellator::Vertex *find_or_allocate_vertex(const Tessellator::Vertex &v) {
+            Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
                 std::size_t key = hash(v);
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
@@ -161,7 +161,7 @@ namespace easy3d {
 
 
     void Tessellator::add_vertex(const Vertex &v) {
-        Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_allocate_vertex(v);
+        Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_create(v);
         // TessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
@@ -398,7 +398,7 @@ namespace easy3d {
             v[i] = a + b + c + d;
         }
 
-        *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_allocate_vertex(v);
+        *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_create(v);
     }
 
 
