@@ -29,12 +29,15 @@
 #include <easy3d/viewer/camera.h>
 #include <easy3d/util/logging.h>
 
+#include <easy3d/util/file_system.h>
+#include <easy3d/viewer/drawable_lines.h>
+
 #include "text_mesher.h"
 
 
 using namespace easy3d;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
 
@@ -45,6 +48,7 @@ int main(int argc, char** argv) {
     const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
     TextMesher mesher(font_file, 48);   // font size is 48
 
+#if 1 // show the mesh
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0);
     if (mesh)
@@ -53,6 +57,37 @@ int main(int argc, char** argv) {
     // Generate surface for "Makes 3D Easy!".
     mesher.set_font(resource::directory() + "/fonts/DroidSerif-Regular.ttf", 24);
     mesher.generate(mesh,"Makes 3D Easy!", 400, 0);
+
+#else // show the contours
+    std::vector<TextMesher::CharContour> contours;
+    mesher.set_font(resource::directory() + font_file, 48);
+    mesher.generate_contours("Easy3D", 0, -60, contours);
+    mesher.set_font(resource::directory() + "/fonts/DroidSerif-Regular.ttf", 24);
+    mesher.generate_contours("Makes 3D Easy!", 400, -60, contours);
+    std::vector<vec3> points, colors;
+    std::vector<unsigned int> indices;
+    int offset = 0;
+    for (auto &cha : contours) {
+        for (auto &con : cha) {
+            vec3 c = con.is_clockwise() ? vec3(1, 0, 0) : vec3(0, 1, 0);
+            for (int i = 0; i < con.size(); ++i) {
+                points.push_back(vec3(con[i], 0.0f));
+                colors.push_back(c);
+                indices.push_back(offset + i);
+                indices.push_back(offset + (i + 1) % con.size());
+            }
+            offset += con.size();
+        }
+    }
+    LinesDrawable *d = new LinesDrawable;
+    d->update_vertex_buffer(points);
+    d->update_color_buffer(colors);
+    d->update_index_buffer(indices);
+    d->set_impostor_type(LinesDrawable::CONE);
+    d->set_line_width(2);
+    d->set_property_coloring(easy3d::State::VERTEX);
+    viewer.add_drawable(d);
+#endif
 
     // We always want to look the front of the meshed text.
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
