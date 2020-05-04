@@ -174,6 +174,14 @@ namespace easy3d {
         // NOTE: must be used after calling to end_polygon();
         unsigned int num_triangles_in_last_polygon() const;
 
+        ///-------------------------------------------------------------------------
+
+        // for generating simple closed loops with TESS_BOUNDARY_ONLY == TRUE.
+        void set_tess_bounary_only(bool b);
+        const std::vector< std::vector<unsigned int> >& contours() const { return contours_; }
+
+        ///-------------------------------------------------------------------------
+
         /**
          * Clear all recorded data (triangle list and vertices) and restart index counter.
          * This function is useful if you want to selectively stitch faces/components. In this case, call reset()
@@ -202,13 +210,17 @@ namespace easy3d {
         // the input polygons. In this case, you should set primitive_aware_orientation_ to false.
         bool primitive_aware_orientation_;
 
-        // vertex ids in the last polygon
-        std::vector<unsigned int> vertex_ids_in_polygon_;
+        // vertex ids for the current element
+        std::vector<unsigned int> vertex_ids_;
+
         // the number of triangles in the last polygon
         unsigned int num_triangles_in_polygon_;
 
-        // List of triangles created over many calls (every consecutive 3 entries form a triangle)
+        // list of triangles created over many calls (every consecutive 3 entries form a triangle)
         std::vector<unsigned int> triangle_list_;
+
+        // list of contours created over many calls
+        std::vector< std::vector<unsigned int> > contours_;
 
         void *vertex_manager_;
 
