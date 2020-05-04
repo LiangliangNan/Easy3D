@@ -423,7 +423,7 @@ namespace easy3d {
                     LOG(ERROR) << "\t\t" << vpoint_[vertices[i]];
                     LOG(ERROR) << "the vertices of the face: ";
                     for (int m = 0; m < vertices.size(); ++m) {
-                        LOG(ERROR) << "\t\t" << vpoint_[vertices[m]];
+                        LOG(ERROR) << "\t\t" << vertices[m] << ": " << vpoint_[vertices[m]];
                     }
                     show = false;
                 }
@@ -446,7 +446,7 @@ namespace easy3d {
                     LOG(ERROR) << "\t\t" << vpoint_[vertices[ii]];
                     LOG(ERROR) << "the vertices of the face: ";
                     for (int m = 0; m < vertices.size(); ++m) {
-                        LOG(ERROR) << "\t\t" << vpoint_[vertices[m]];
+                        LOG(ERROR) << "\t\t" << vertices[m] << ": " << vpoint_[vertices[m]];
                     }
                     show = false;
                 }
