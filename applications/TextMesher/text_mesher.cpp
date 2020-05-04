@@ -173,7 +173,6 @@ namespace easy3d {
             return false;
         }
 
-        int vertex_index = 0;  // the index of a point added to the tessellator
         Tessellator tess_face;
         for (auto &ch : characters) {
             //-------------------------------------------------------------------------------------
@@ -210,11 +209,7 @@ namespace easy3d {
                     const Tessellator::Vertex *v = vertices[id];
                     const vec2 p = vec2(v->data());
                     contour[j] = p;
-
-                    Tessellator::Vertex vt(vec3(p, extrude), vertex_index++);
-                    if (v->index < 0)
-                        vt.can_merge = false;
-                    tess_face.add_vertex(vt);
+                    tess_face.add_vertex(vec3(p, extrude));
                 }
                 contour.clockwise = contour.is_clockwise();
                 ch.push_back(contour);
@@ -233,10 +228,7 @@ namespace easy3d {
                     int id = contours[i][j];
                     const Tessellator::Vertex *v = vertices[id];
                     const vec2 p = vec2(v->data());
-                    Tessellator::Vertex vt(vec3(p, 0), vertex_index++);
-                    if (v->index < 0)
-                        vt.can_merge = false;
-                    tess_face.add_vertex(vt);
+                    tess_face.add_vertex(vec3(p, 0));
                 }
                 tess_face.end_contour();
             }
@@ -281,32 +273,17 @@ namespace easy3d {
                         // Though I've already known the vertex indices for the character's side triangles, I still use my
                         // tessellator, which allows me to stitch the triangles into a closed mesh.
                         if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
-                            (!contour.clockwise &&
-                             num_outer_contours(index, ch) % 2 == 1)) { // if clockwise: a -> c -> d -> b
+                            (!contour.clockwise && num_outer_contours(index, ch) % 2 == 1)) {
+                            // if counter-clockwise: a -> b -> d -> c
                             vec3 n = cross(c - a, b - a);
                             n.normalize();
                             tess_face.begin_polygon(n);
                             tess_face.begin_contour();
-
-                            {
-                                Tessellator::Vertex aa(a, vertex_index++);
-                                if (va->index < 0)
-                                    aa.can_merge = false;
-                                tess_face.add_vertex(aa);
-
-                                Tessellator::Vertex cc(c, vertex_index++);
-                                if (va->index < 0) cc.can_merge = false;
-                                tess_face.add_vertex(cc);
-
-                                Tessellator::Vertex dd(d, vertex_index++);
-                                if (vb->index < 0)
-                                    dd.can_merge = false;
-                                tess_face.add_vertex(dd);
-
-                                Tessellator::Vertex bb(b, vertex_index++);
-                                if (vb->index < 0) bb.can_merge = false;
-                                tess_face.add_vertex(bb);
-                            }
+                            // if clockwise: a -> c -> d -> b
+                            tess_face.add_vertex(a);
+                            tess_face.add_vertex(c);
+                            tess_face.add_vertex(d);
+                            tess_face.add_vertex(b);
                             tess_face.end_contour();
                             tess_face.end_polygon();
                         } else { // if counter-clockwise: a -> b -> d -> c
@@ -314,25 +291,10 @@ namespace easy3d {
                             n.normalize();
                             tess_face.begin_polygon(n);
                             tess_face.begin_contour();
-                            {
-                                Tessellator::Vertex aa(a, vertex_index++);
-                                if (va->index < 0)
-                                    aa.can_merge = false;
-                                tess_face.add_vertex(aa);
-
-                                Tessellator::Vertex bb(b, vertex_index++);
-                                if (vb->index < 0)
-                                    bb.can_merge = false;
-                                tess_face.add_vertex(bb);
-
-                                Tessellator::Vertex dd(d, vertex_index++);
-                                if (vb->index < 0) dd.can_merge = false;
-                                tess_face.add_vertex(dd);
-
-                                Tessellator::Vertex cc(c, vertex_index++);
-                                if (va->index < 0) cc.can_merge = false;
-                                tess_face.add_vertex(cc);
-                            }
+                            tess_face.add_vertex(a);
+                            tess_face.add_vertex(b);
+                            tess_face.add_vertex(d);
+                            tess_face.add_vertex(c);
                             tess_face.end_contour();
                             tess_face.end_polygon();
                         }
@@ -369,7 +331,6 @@ namespace easy3d {
 
             // the tessellator runs for each character
             tess_face.reset();
-            vertex_index = 0;
         }
 
         return true;

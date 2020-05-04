@@ -79,7 +79,7 @@ namespace easy3d {
 
             inline std::size_t hash(const Tessellator::Vertex &v) const {
                 static std::hash<double> hasher;
-                std::size_t seed = (v.can_merge ? 0 : hasher(v.index));
+                std::size_t seed = 0;//(v.can_merge ? 0 : hasher(v.index));
                 for (auto f : v)
                     hash_combine(seed, hasher(f));
 
@@ -171,9 +171,8 @@ namespace easy3d {
         TessVertex(tess_obj_, new_v->data(), new_v);
     }
 
-
-    void
-    Tessellator::add_vertex(const float *data, unsigned int size, int idx) // to be flexible (any data can be provide)
+    // to be flexible (any data can be provide)
+    void Tessellator::add_vertex(const float *data, unsigned int size, int idx)
     {
         add_vertex(Vertex(data, size, idx));
     }

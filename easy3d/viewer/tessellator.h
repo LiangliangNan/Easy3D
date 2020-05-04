@@ -56,7 +56,7 @@ namespace easy3d {
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(const vec3 &xyz, int idx = -1) : index(idx), can_merge(true) { append(xyz); }
+            Vertex(const vec3 &xyz, int idx = -1) : index(idx) { append(xyz); }
 
             /**
              * initialize from a C-style array.
@@ -65,7 +65,7 @@ namespace easy3d {
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
-            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx), can_merge(true) {
+            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx) {
                 assign(data, data + size);
             }
 
@@ -74,14 +74,14 @@ namespace easy3d {
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx), can_merge(true) {}
+            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx) {}
 
             /**
              * copy constructor.
              * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
              *            after tessellation. The new vertices generated in the tessellation will have a negative index.
              */
-            Vertex(const Vertex& v, int idx = -1) : index(idx), can_merge(v.can_merge) {
+            Vertex(const Vertex& v, int idx = -1) : index(idx) {
                 assign(v.begin(), v.end());
             }
             /**
@@ -96,11 +96,8 @@ namespace easy3d {
                     push_back(v[i]);
             }
 
+            // this can be used to carry and map to the original vertex index
             int index;
-
-            // whether or not this vertex can be consider duplicating another vertex
-            // if you don't allow some vertex to be merged, a unique index must be provided.
-            bool can_merge;
         };
 
     public:
