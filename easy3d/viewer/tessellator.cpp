@@ -27,6 +27,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include <easy3d/core/hash.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/libtess/glutess.h>
@@ -49,7 +50,7 @@ namespace easy3d {
             }
 
             inline Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
-                std::size_t key = hash(v);
+                std::size_t key = hash_range(v.begin(), v.end());
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
                     auto vertex = new Tessellator::Vertex(v, v.index);
@@ -68,22 +69,7 @@ namespace easy3d {
             }
 
             inline std::size_t vertex_id(const Tessellator::Vertex &v) {
-                return hash_table_[hash(v)];
-            }
-
-        private:
-            inline void hash_combine(std::size_t &seed, std::size_t hash) const {
-                hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
-                seed ^= hash;
-            }
-
-            inline std::size_t hash(const Tessellator::Vertex &v) const {
-                static std::hash<double> hasher;
-                std::size_t seed = 0;//(v.can_merge ? 0 : hasher(v.index));
-                for (auto f : v)
-                    hash_combine(seed, hasher(f));
-
-                return seed;
+                return hash_table_[hash_range(v.begin(), v.end())];
             }
 
         private:
