@@ -182,12 +182,11 @@ namespace easy3d {
             tess_contour.set_tess_bounary_only(true);
             vec3 normal(0, 0, 1);
             tess_contour.begin_polygon(normal);
-            int idx = 0;
             for (std::size_t id = 0; id < ch.size(); ++id) {
                 const Contour &contour = ch[id];
                 tess_contour.begin_contour();
                 for (const auto &p : contour)
-                    tess_contour.add_vertex(vec3(p, 0.0), idx++);
+                    tess_contour.add_vertex(vec3(p, 0.0));
                 tess_contour.end_contour();
             }
             tess_contour.end_polygon();
@@ -197,46 +196,50 @@ namespace easy3d {
             const auto &contours = tess_contour.contours();
 
             //-------------------------------------------------------------------------------------
-            // generate top faces
+            // Second, generate top faces
 
-            tess_face.begin_polygon(vec3(0, 0, 1));
-            for (std::size_t i = 0; i < contours.size(); ++i) {
-                Contour contour(contours[i].size());
-                tess_face.set_winding_rule(Tessellator::ODD);
-                tess_face.begin_contour();
-                for (int j = 0; j < contours[i].size(); ++j) {
-                    int id = contours[i][j];
-                    const Tessellator::Vertex *v = vertices[id];
-                    const vec2 p = vec2(v->data());
-                    contour[j] = p;
-                    tess_face.add_vertex(vec3(p, extrude));
+            tess_face.set_tess_bounary_only(false);
+            if (1) {
+                tess_face.begin_polygon(vec3(0, 0, 1));
+                for (std::size_t index = 0; index < contours.size(); ++index) {
+                    Contour contour(contours[index].size());
+                    tess_face.set_winding_rule(Tessellator::ODD);
+                    tess_face.begin_contour();
+                    for (int j = 0; j < contours[index].size(); ++j) {
+                        int id = contours[index][j];
+                        const Tessellator::Vertex *v = vertices[id];
+                        const vec2 p = vec2(v->data());
+                        contour[j] = p;
+                        Tessellator::Vertex vt(vec3(p, extrude)); vt.push_back(index); // one extra bit to allow stitch within a coutour.
+                        tess_face.add_vertex(vt);
+                    }
+                    contour.clockwise = contour.is_clockwise();
+                    ch.push_back(contour);
+                    tess_face.end_contour();
                 }
-                contour.clockwise = contour.is_clockwise();
-                ch.push_back(contour);
-                tess_face.end_contour();
+                tess_face.end_polygon();
             }
-            tess_face.end_polygon();
 
             //-------------------------------------------------------------------------------------
-            // generate bottom faces
-
-            tess_face.begin_polygon(vec3(0, 0, -1));
-            for (std::size_t i = 0; i < contours.size(); ++i) {
-                tess_face.set_winding_rule(Tessellator::ODD);
-                tess_face.begin_contour();
-                for (int j = 0; j < contours[i].size(); ++j) {
-                    int id = contours[i][j];
-                    const Tessellator::Vertex *v = vertices[id];
-                    const vec2 p = vec2(v->data());
-                    tess_face.add_vertex(vec3(p, 0));
+            // Third, generate bottom faces
+            if (1) {
+                tess_face.begin_polygon(vec3(0, 0, -1));
+                for (std::size_t index = 0; index < ch.size(); ++index) {
+                    const Contour &contour = ch[index];
+                    tess_face.set_winding_rule(Tessellator::ODD);
+                    tess_face.begin_contour();
+                    for (int j = 0; j < contour.size(); ++j) {
+                        Tessellator::Vertex vt(vec3(contour[j], 0)); vt.push_back(index); // one extra bit to allow stitch within a coutour.
+                        tess_face.add_vertex(vt);
+                    }
+                    tess_face.end_contour();
                 }
-                tess_face.end_contour();
+                tess_face.end_polygon();
             }
-            tess_face.end_polygon();
 
 
             //-------------------------------------------------------------------------------------
-            {   // side faces
+            if (1) { // Fourth, generate the side faces
                 // generate the side faces for this character.
                 // test if a contains the majority of b
                 auto contains = [](const Contour &contour_a, const Contour &contour_b) -> bool {
@@ -280,10 +283,14 @@ namespace easy3d {
                             tess_face.begin_polygon(n);
                             tess_face.begin_contour();
                             // if clockwise: a -> c -> d -> b
-                            tess_face.add_vertex(a);
-                            tess_face.add_vertex(c);
-                            tess_face.add_vertex(d);
-                            tess_face.add_vertex(b);
+                            Tessellator::Vertex vta(a); vta.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vta);
+                            Tessellator::Vertex vtc(c); vtc.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtc);
+                            Tessellator::Vertex vtd(d); vtd.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtd);
+                            Tessellator::Vertex vtb(b); vtb.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtb);
                             tess_face.end_contour();
                             tess_face.end_polygon();
                         } else { // if counter-clockwise: a -> b -> d -> c
@@ -291,10 +298,14 @@ namespace easy3d {
                             n.normalize();
                             tess_face.begin_polygon(n);
                             tess_face.begin_contour();
-                            tess_face.add_vertex(a);
-                            tess_face.add_vertex(b);
-                            tess_face.add_vertex(d);
-                            tess_face.add_vertex(c);
+                            Tessellator::Vertex vta(a); vta.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vta);
+                            Tessellator::Vertex vtb(b); vtb.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtb);
+                            Tessellator::Vertex vtd(d); vtd.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtd);
+                            Tessellator::Vertex vtc(c); vtc.push_back(index); // one extra bit to allow stitch within a coutour.
+                            tess_face.add_vertex(vtc);
                             tess_face.end_contour();
                             tess_face.end_polygon();
                         }

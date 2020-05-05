@@ -10,6 +10,8 @@ namespace easy3d {
 
     class SurfaceMesh;
 
+    // TODO: implement the vectorizer in Easy3D;
+    // TODO: make TextMesher a formal part of Easy3D.
     class TextMesher {
     public:
         /**
