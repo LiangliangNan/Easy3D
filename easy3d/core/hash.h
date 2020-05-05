@@ -31,51 +31,74 @@
 namespace easy3d
 {
 
-    namespace details {
-        inline void hash_combine(std::size_t &seed, std::size_t hash) {
-            hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= hash;
-        }
+#if 0
+    /**
+     * The hash combine function copied from boost. I have an example to fail this function:
+     *      std::vector<float> a = {16, 0, 0};
+     *      std::vector<float> b = {4, 12, 0}; // 15588749483758.
+     *      std::cout << "a: " << hash_range(a.begin(), a.end()) << std::endl;
+     *      std::cout << "b: " << hash_range(b.begin(), b.end()) << std::endl;
+     */
+    template<class T>
+    inline void hash_combine(std::size_t &seed, T const& value) {
+        std::hash<T> hasher;
+        seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
-
+#else
+    // code from CityHash
+    // https://github.com/google/cityhash/blob/master/src/city.h
+    template<class T>
+    inline void hash_combine(std::size_t &seed, T const& value) {
+        std::hash<T> hasher;
+        std::size_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
+        a ^= (a >> 47);
+        std::size_t b = (seed ^ a) * 0x9ddfea08eb382d69ULL;
+        b ^= (b >> 47);
+        seed = b * 0x9ddfea08eb382d69ULL;
+    }
+#endif
 
     template <typename FT>
-    std::size_t hash(const Vec<2, FT>& v) {
+    std::size_t hash(const Vec<2, FT>& value) {
         std::size_t seed = 0;
-        std::hash<FT> hasher;
-        details::hash_combine(seed, hasher(v.x));
-        details::hash_combine(seed, hasher(v.y));
+        hash_combine(seed, value.x);
+        hash_combine(seed, value.y);
         return seed;
     }
 
     template <typename FT>
-    std::size_t hash(const Vec<3, FT>& v) {
+    std::size_t hash(const Vec<3, FT>& value) {
         std::size_t seed = 0;
-        std::hash<FT> hasher;
-        details::hash_combine(seed, hasher(v.x));
-        details::hash_combine(seed, hasher(v.y));
-        details::hash_combine(seed, hasher(v.z));
+        hash_combine(seed, value.x);
+        hash_combine(seed, value.y);
+        hash_combine(seed, value.z);
         return seed;
     }
 
 
     template <int DIM, typename FT> inline
-    std::size_t hash(const Vec<DIM, FT>& v) {
+    std::size_t hash(const Vec<DIM, FT>& value) {
         std::size_t seed = 0;
-        std::hash<FT> hasher;
-        for (std::size_t i=0; i<v.size(); ++i)
-            details::hash_combine(seed, hasher(v[i]));
+        for (std::size_t i=0; i<DIM; ++i)
+            hash_combine(seed, value[i]);
         return seed;
     }
 
 
-    template<typename FT, typename InputIterator> inline
-    std::size_t hash(InputIterator begin, InputIterator end) {
+    template<class It>
+    inline std::size_t hash_range(It first, It last) {
         std::size_t seed = 0;
-        std::hash<FT> hasher;
-        for (auto it = begin; it != end; ++it)
-            details::hash_combine(seed, hasher(*it));
+        for (; first != last; ++first) {
+            hash_combine(seed, *first);
+        }
         return seed;
+    }
+
+    template<class It>
+    inline void hash_range(std::size_t &seed, It first, It last) {
+        for (; first != last; ++first) {
+            hash_combine(seed, *first);
+        }
     }
 
 } // namespace easy3d
