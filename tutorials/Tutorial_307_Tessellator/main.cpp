@@ -25,10 +25,12 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/drawable_lines.h>
 #include <easy3d/viewer/tessellator.h>
+#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stop_watch.h>
 
 
 using namespace easy3d;
@@ -108,6 +110,7 @@ int main(int argc, char **argv) {
 
     //---------------------- create model -----------------------
 
+#if 1
     SurfaceMesh *mesh = new SurfaceMesh;
 
     // Face 1: a concave quad
@@ -150,9 +153,24 @@ int main(int argc, char **argv) {
         };
     }
 
+#else
+    // Read a mesh and then tessellate it into a triangular mesh.
+    const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
+    SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
+    if (!mesh) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+#endif
+
     //-------- Triangulate the mesh using the tessellator ---------
 
+    StopWatch w;
+    std::cout << "tessellating ..."<< std::endl;
     triangulate(mesh);
+    std::cout << "done. time: " << w.time_string() << std::endl;
+
+    // ------------------------------------------------------------
 
     // ------------------------------------------------------------
 
@@ -160,7 +178,7 @@ int main(int argc, char **argv) {
     viewer.add_model(mesh, true);
 
     // also show the borders
-    mesh->get_lines_drawable("borders")->set_visible(true);
+    mesh->get_lines_drawable("edges")->set_visible(true);
 
     // Run the viewer
     return viewer.run();
