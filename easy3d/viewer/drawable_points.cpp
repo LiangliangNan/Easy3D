@@ -125,6 +125,10 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
+        program->set_uniform("highlight",highlight())
+                ->set_uniform("hightlight_id_min",highlight_range().first)
+                ->set_uniform("hightlight_id_max",highlight_range().second);
+
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program);
 
@@ -171,6 +175,10 @@ namespace easy3d {
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
+        program->set_uniform("highlight",highlight())
+                ->set_uniform("hightlight_id_min",highlight_range().first)
+                ->set_uniform("hightlight_id_max",highlight_range().second);
+
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program);
 
@@ -215,6 +223,10 @@ namespace easy3d {
         program->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
+
+        program->set_uniform("highlight",highlight())
+                ->set_uniform("hightlight_id_min",highlight_range().first)
+                ->set_uniform("hightlight_id_max",highlight_range().second);
 
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program);
@@ -267,10 +279,11 @@ namespace easy3d {
                 ->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
-                ->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second)
                 ->bind_texture("textureID",texture()->id(), 0);
+
+        program->set_uniform("highlight",highlight())
+                ->set_uniform("hightlight_id_min",highlight_range().first)
+                ->set_uniform("hightlight_id_max",highlight_range().second);
 
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program);

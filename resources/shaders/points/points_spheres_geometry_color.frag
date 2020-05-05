@@ -15,6 +15,10 @@ layout(std140) uniform Material {
 
 uniform float	sphere_radius;
 
+uniform bool highlight;
+uniform int  hightlight_id_min;
+uniform int  hightlight_id_max;
+
 in Data{
 	flat    vec4    sphere_color;
 	smooth  vec2    tex;
@@ -73,7 +77,13 @@ void main()
 			sf = pow(sf, shininess);
 		}
 
-		outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
+		vec3 color = DataIn.sphere_color.xyz;
+		if (highlight) {
+			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+				color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+		}
+
+		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 
 	// without perspective correction
@@ -115,6 +125,12 @@ void main()
 			sf = pow(sf, shininess);
 		}
 
-		outputF = vec4(DataIn.sphere_color.xyz * df + specular * sf + ambient, DataIn.sphere_color.a);
+		vec3 color = DataIn.sphere_color.xyz;
+		if (highlight) {
+			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+		}
+
+		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
 }

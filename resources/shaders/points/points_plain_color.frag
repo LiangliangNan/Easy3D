@@ -16,6 +16,10 @@ uniform bool    two_sides_lighting = true;
 uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
+uniform bool highlight;
+uniform int  hightlight_id_min;
+uniform int  hightlight_id_max;
+
 in Data{
     vec4 color;
     vec3 position;
@@ -33,6 +37,11 @@ void main(void) {
     vec3 color = DataIn.color.xyz;
     if (!gl_FrontFacing && distinct_back_color)
         color = backside_color;
+
+    if (highlight) {
+        if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+    }
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it
     vec3 normal = DataIn.normal;
