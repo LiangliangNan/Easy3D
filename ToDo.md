@@ -6,6 +6,7 @@
                       std::hash<T> hasher;
                       seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
                   }
+      It seems two different coordinates can have the same hash value (see the tree.obj).
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
