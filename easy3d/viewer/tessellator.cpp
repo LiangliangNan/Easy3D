@@ -48,7 +48,7 @@ namespace easy3d {
                 return unique_vertices_;
             }
 
-            Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
+            inline Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
                 std::size_t key = hash(v);
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
@@ -60,14 +60,14 @@ namespace easy3d {
                     return unique_vertices_[pos->second];
             }
 
-            void clear() {
+            inline void clear() {
                 for (auto vertex : unique_vertices_)
                     delete vertex;
                 unique_vertices_.clear();
                 hash_table_.clear();
             }
 
-            std::size_t vertex_id(const Tessellator::Vertex &v) {
+            inline std::size_t vertex_id(const Tessellator::Vertex &v) {
                 return hash_table_[hash(v)];
             }
 
@@ -272,7 +272,8 @@ namespace easy3d {
     // Method: Tessellator::beginCallback
     // Purpose: Begin callback for the tessellator.
     // Arguments:
-    //   w: The type of primitives being created (TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN)
+    //   w: The type of primitives being created (e.g., TESS_LINE_LOOP, TESS_TRIANGLES,
+    //   TESS_TRIANGLE_STRIP, TESS_TRIANGLE_FAN).
     //   cbdata: Callback data that points to "this".
     // ****************************************************************************
     void Tessellator::beginCallback(unsigned int w, void *cbdata) {
@@ -286,9 +287,8 @@ namespace easy3d {
     // Method: Tessellator::endCallback
     // Purpose:
     //   End callback for the tessellator. Translates intermediate vertices and
-    //   drawing mode into triangle definitions.
+    //   drawing mode into triangle/contour definitions.
     // Arguments:
-    //   w: The type of primitives being created (TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN)
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
     void Tessellator::endCallback(void *cbdata) {
@@ -357,7 +357,7 @@ namespace easy3d {
     //   Vertex callback for the tessellator. This method uses the unique vertex
     //   object to translate the vertex into a vertex id (storing the vertex into
     //   the vertex list, if needed) and stores that id into the intermediate vertex
-    //   ids that will be used to create triangle connectivity.
+    //   ids that will be used to create triangle/contour connectivity.
     // Arguments:
     //   vertex : The triangle vertex.
     //   cbdata : Callback data that points to "this".
@@ -374,8 +374,8 @@ namespace easy3d {
     // ****************************************************************************
     // Method: Tessellator::combineCallback
     // Purpose:
-    //   Combine callback for the tessellator that gets called when vertices need
-    //   to be combined.
+    //   Combine callback for the tessellator that gets called when new vertices
+    //   need to be created by combining existing method.
     // ****************************************************************************
     void Tessellator::combineCallback(double coords[3],
                                       void *vertex_data[4],
