@@ -103,7 +103,10 @@ namespace easy3d {
 
         // ----------------------------------------------------------------------------------
 
-        // Step 2: remove isolated vertices
+        // Step 2: adjust the outgoing halfedges
+        mesh_->adjust_outgoing_halfedges();
+
+        // Step 3: remove isolated vertices
         std::size_t num_isolated_vertices(0);
         for (auto v : mesh_->vertices()) {
             if (mesh_->is_isolated(v)) {
@@ -119,12 +122,19 @@ namespace easy3d {
         // Let me do some more checks
 
         // Check if the mesh is valid
+        for (auto v : mesh_->vertices()) {
+            DLOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
+            DLOG_IF(ERROR, mesh_->from_vertex(mesh_->halfedge(v)) != v) << "vertex " << v << " is not valid";
+            DLOG_IF(ERROR, mesh_->to_vertex(mesh_->opposite_halfedge(mesh_->halfedge(v))) != v) << "vertex " << v << " is not valid";
+        }
         for (auto f : mesh_->faces())
-            LOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
+            DLOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
         for (auto e : mesh_->edges())
-            LOG_IF(ERROR, !mesh_->is_valid(e)) << "edge " << e << " is not valid";
-        for (auto h : mesh_->halfedges())
-            LOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
+            DLOG_IF(ERROR, !mesh_->is_valid(e)) << "edge " << e << " is not valid";
+        for (auto h : mesh_->halfedges()) {
+            DLOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
+            DLOG_IF(ERROR, mesh_->opposite_halfedge(mesh_->opposite_halfedge(h)) != h) << "halfedge " << h << " is not valid";
+        }
 
         // Check if there are still non-manifold vertices
         std::size_t count(0);
