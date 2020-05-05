@@ -324,6 +324,28 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
+    void
+    SurfaceMesh::adjust_outgoing_halfedges() {
+        // We need to take care of isolated vertices
+        auto reachable = add_vertex_property<bool>("v:temp:reachable", false);
+
+        for (auto f : faces()) {
+            for (auto h : halfedges(f)) {
+                auto v = from_vertex(h);
+                set_halfedge(v, h);
+                adjust_outgoing_halfedge(v);
+                reachable[to_vertex(h)] = true;
+            }
+        }
+
+        for (auto v : vertices()) {
+            if (!reachable[v]) {
+                // mark this vertex isolated (by assigning an invalid halfedge)
+                set_halfedge(v, Halfedge());
+            }
+        }
+        remove_vertex_property(reachable);
+    }
 
     void
     SurfaceMesh::
@@ -1743,28 +1765,7 @@ namespace easy3d {
         // the index of a vertex's outgoing halfedge may go out of range in some cases (e.g., after deleting faces).
         // The reason was that the mesh may have an invalid state when elements were marked deleted but still exist.
         // This can be easily fixed by assigning a correct outgoing halfedge to each vertex.
-
-        // We need to take care of isolated vertices
-        VertexProperty<bool> reachable = add_vertex_property<bool>("SurfaceMesh::garbage_collection-v:reachable", false);
-
-        for (auto f : faces()) {
-            for (auto h : halfedges(f)) {
-                auto v = from_vertex(h);
-                set_halfedge(v, h);
-                adjust_outgoing_halfedge(v);
-                reachable[to_vertex(h)] = true;
-            }
-        }
-
-        int num = 0;
-        for (auto v : vertices()) {
-            if (!reachable[v]) {
-                set_halfedge(v, Halfedge());// mark this vertex isolated (by assigning an invalid halfedge)
-                ++num;
-            }
-        }
-        LOG_IF(WARNING, num > 0) << "model has " << num << " isolated vertices after garbage collection";
-        remove_vertex_property(reachable);
+        adjust_outgoing_halfedges();
 #endif
 
     }

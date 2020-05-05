@@ -1838,6 +1838,14 @@ namespace easy3d {
 
     private: //--------------------------------------------------- helper functions
 
+        /**
+         * [Liangliang]:
+         * The outgoing halfedges of the vertices may not be valid after many a sequence of add_face() operations or
+         * after deleting faces, because manifoldness is not maintained). This function assigns the correct outgoing
+         * halfedge to each vertex.
+         */
+        void adjust_outgoing_halfedges();
+
         /** make sure that the outgoing halfedge of vertex v is a boundary halfedge
          if v is a boundary vertex. */
         void adjust_outgoing_halfedge(Vertex v);
