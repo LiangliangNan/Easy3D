@@ -30,4 +30,6 @@ add_library(${PROJECT_NAME} STATIC
         source/tessmono.h
         )
 
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
