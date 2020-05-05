@@ -7,6 +7,7 @@ project(${PROJECT_NAME})
 set(${PROJECT_NAME}_HEADERS
 		box.h
 		constant.h
+		curve.h
 		eigen_solver.h
 		graph.h
 		heap.h
