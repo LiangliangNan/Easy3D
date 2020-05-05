@@ -39,7 +39,8 @@ namespace easy3d {
     template <size_t N, class T>
     class Vec {
     public:
-        typedef Vec<N, T> thisclass;
+        typedef Vec<N, T>   thisclass;
+        typedef T           FT;
 
         Vec() { for (size_t i = 0; i < N; i++) { data_[i] = T(0); } }
 
@@ -281,6 +282,7 @@ namespace easy3d {
     class Vec<2, T> {
     public:
         typedef Vec<2, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0) { }
         Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
@@ -387,6 +389,7 @@ namespace easy3d {
     class Vec<3, T> {
     public:
         typedef Vec<3, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0), z(0) {}
         explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
@@ -514,6 +517,7 @@ namespace easy3d {
     class Vec<4, T> {
     public:
         typedef Vec<4, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0), z(0), w(0) {}
         explicit Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
