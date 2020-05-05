@@ -147,6 +147,8 @@ namespace easy3d {
 
 
     void Tessellator::add_vertex(const Vertex &v) {
+        vertex_data_size_ = v.size();
+
         Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_create(v);
         // TessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
@@ -373,7 +375,7 @@ namespace easy3d {
         for (std::size_t i = 0; i < 3; ++i)
             v[i] = coords[i];
 
-        // Blend the height data for the vertex.
+        // Blend the other data fields for the vertex.
         double **vd = reinterpret_cast<double **>(vertex_data);
         for (std::size_t i = 3; i < size; ++i) {
             double a = (vertex_data[0]) ? (weight[0] * vd[0][i]) : 0.;
