@@ -323,8 +323,8 @@ namespace easy3d {
             ManifoldBuilder builder(mesh);
             builder.begin_surface();
 
-            const auto &final_faces = tess_face.vertices();
-            for (const auto v : final_faces) {
+            const auto &final_vertices = tess_face.vertices();
+            for (const auto v : final_vertices) {
                 builder.add_vertex(vec3(v->data()));
             }
 
