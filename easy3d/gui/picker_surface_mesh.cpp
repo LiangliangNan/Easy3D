@@ -240,10 +240,8 @@ namespace easy3d {
 
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y) {
         auto drawable = model->get_triangles_drawable("faces");
-        if (!drawable) {
-            drawable = model->add_triangles_drawable("faces");
-            drawable->update_buffers();
-        }
+        if (!drawable)
+            return SurfaceMesh::Face();
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
