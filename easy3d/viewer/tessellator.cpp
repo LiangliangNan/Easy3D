@@ -87,8 +87,10 @@ namespace easy3d {
 
 
     Tessellator::Tessellator()
-            : primitive_type_(TESS_TRIANGLES), primitive_aware_orientation_(false), num_triangles_in_polygon_(0),
-              vertex_data_size_(3) {
+            : primitive_type_(TESS_TRIANGLES)
+            , num_elements_in_polygon_(0)
+            , vertex_data_size_(3)
+    {
         tess_obj_ = NewTess();// Create a tessellator object and set up its callbacks.
         if (!tess_obj_) {
             LOG(ERROR) << "failed to create a tessellator object";
@@ -113,21 +115,26 @@ namespace easy3d {
     }
 
 
+    void Tessellator::set_bounary_only(bool b) {
+        TessProperty(tess_obj_, TESS_BOUNDARY_ONLY, b);
+    }
+
+
     void Tessellator::set_winding_rule(WindingRule rule) {
         switch (rule) {
-            case ODD:
+            case WINDING_ODD:
                 TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
                 return;
-            case NONZERO:
+            case WINDING_NONZERO:
                 TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NONZERO);
                 return;
-            case POSITIVE:
+            case WINDING_POSITIVE:
                 TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_POSITIVE);
                 return;
-            case NEGATIVE:
+            case WINDING_NEGATIVE:
                 TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NEGATIVE);
                 return;
-            case ABS_GEQ_TWO:
+            case WINDING_ABS_GEQ_TWO:
                 TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ABS_GEQ_TWO);
                 return;
         }
@@ -135,7 +142,7 @@ namespace easy3d {
 
 
     void Tessellator::begin_polygon(const vec3 &normal) {
-        num_triangles_in_polygon_ = 0;
+        num_elements_in_polygon_ = 0;
         TessNormal(tess_obj_, normal.x, normal.y, normal.z);
         TessBeginPolygon(tess_obj_, this);
     }
@@ -220,39 +227,14 @@ namespace easy3d {
     }
 
 
-    unsigned int Tessellator::num_triangles_in_last_polygon() const {
-        return num_triangles_in_polygon_;
-    }
-
-
     const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
         return reinterpret_cast<details::VertexManager *>(vertex_manager_)->vertices();
     }
 
 
-    unsigned int Tessellator::num_triangles() const {
-        return triangle_list_.size() / 3;
-    }
-
-
-    bool Tessellator::get_triangle(unsigned int t, unsigned int &a, unsigned int &b, unsigned int &c) const {
-        bool ret = (t < triangle_list_.size() / 3);
-        if (ret) {
-            a = triangle_list_[t * 3];
-            b = triangle_list_[t * 3 + 1];
-            c = triangle_list_[t * 3 + 2];
-        } else
-            LOG(ERROR) << "triangle index " << t << " out of range [0, " << num_triangles() << "]";
-
-        return ret;
-    }
-
-
-    void Tessellator::add_triangle(unsigned int a, unsigned int b, unsigned int c) {
-        triangle_list_.push_back(a);
-        triangle_list_.push_back(b);
-        triangle_list_.push_back(c);
-        ++num_triangles_in_polygon_;
+    void Tessellator::_add_element(const std::vector<unsigned int>& element) {
+        elements_.push_back(element);
+        ++num_elements_in_polygon_;
     }
 
 
@@ -268,6 +250,7 @@ namespace easy3d {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         tessellator->primitive_type_ = w;
         tessellator->vertex_ids_.clear();
+
     }
 
 
@@ -284,57 +267,58 @@ namespace easy3d {
 
         // Use the primitive type and intermediate vertex ids to create triangles that
         // get put into the triangle list
-        if (tessellator->primitive_type_ == TESS_TRIANGLES) {
-            for (std::size_t i = 0; i < tessellator->vertex_ids_.size(); i += 3) {
-                // Prevent degenerate triangles
-                unsigned int a = tessellator->vertex_ids_[i];
-                unsigned int b = tessellator->vertex_ids_[i + 1];
-                unsigned int c = tessellator->vertex_ids_[i + 2];
-                if (a == b || b == c || a == c)
-                    continue;
+        switch (tessellator->primitive_type_) {
+            case TESS_TRIANGLES: {
+                for (std::size_t i = 0; i < tessellator->vertex_ids_.size(); i += 3) {
+                    unsigned int a = tessellator->vertex_ids_[i];
+                    unsigned int b = tessellator->vertex_ids_[i + 1];
+                    unsigned int c = tessellator->vertex_ids_[i + 2];
+                    if (a == b || b == c || a == c) // prevent degenerate triangles
+                        continue;
 
-                tessellator->add_triangle(a, b, c);
+                    tessellator->_add_element({a, b, c});
+                }
+                break;
             }
-        } else if (tessellator->primitive_type_ == TESS_TRIANGLE_STRIP) {
-            for (std::size_t i = 2; i < tessellator->vertex_ids_.size(); ++i) {
-                std::size_t N = i - 2;
-                std::size_t N_1 = i - 1;
-                std::size_t N_2 = i;
 
-                // Prevent degenerate triangles
-                unsigned int a = tessellator->vertex_ids_[N];
-                unsigned int b = tessellator->vertex_ids_[N_1];
-                unsigned int c = tessellator->vertex_ids_[N_2];
-                if (a == b || b == c || a == c)
-                    continue;
+            case TESS_TRIANGLE_STRIP: {
+                for (std::size_t i = 2; i < tessellator->vertex_ids_.size(); ++i) {
+                    unsigned int a = tessellator->vertex_ids_[i - 2];
+                    unsigned int b = tessellator->vertex_ids_[i - 1];
+                    unsigned int c = tessellator->vertex_ids_[i];
+                    if (a == b || b == c || a == c) // prevent degenerate triangles
+                        continue;
 
-                int flag = (i - 2) % 2;
-                if (tessellator->primitive_aware_orientation_ || flag == 0)
-                    tessellator->add_triangle(a, b, c);
-                else
-                    tessellator->add_triangle(b, a, c);
+                    if ((i - 2) % 2 == 0)
+                        tessellator->_add_element({a, b, c});
+                    else
+                        tessellator->_add_element({b, a, c});
+                }
+                break;
             }
-        } else if (tessellator->primitive_type_ == TESS_TRIANGLE_FAN) {
-            for (std::size_t i = 2; i < tessellator->vertex_ids_.size(); ++i) {
-                std::size_t N = 0;
-                std::size_t N_1 = i - 1;
-                std::size_t N_2 = i;
 
-                // Prevent degenerate triangles
-                unsigned int a = tessellator->vertex_ids_[N];
-                unsigned int b = tessellator->vertex_ids_[N_1];
-                unsigned int c = tessellator->vertex_ids_[N_2];
-                if (a == b || b == c || a == c)
-                    continue;
+            case TESS_TRIANGLE_FAN: {
+                for (std::size_t i = 2; i < tessellator->vertex_ids_.size(); ++i) {
+                    unsigned int a = tessellator->vertex_ids_[0];
+                    unsigned int b = tessellator->vertex_ids_[i - 1];
+                    unsigned int c = tessellator->vertex_ids_[i];
+                    if (a == b || b == c || a == c) // prevent degenerate triangles
+                        continue;
 
-                tessellator->add_triangle(a, b, c);
+                    tessellator->_add_element({a, b, c});
+                }
+                break;
             }
-        }
-        else if (tessellator->primitive_type_ == TESS_LINE_LOOP) {
-            tessellator->contours_.push_back(tessellator->vertex_ids_);
-        }
-        else {
-            LOG_FIRST_N(WARNING, 1) << "unknown primitive type: " << tessellator->primitive_type_;
+
+            case TESS_LINE_LOOP: {
+                tessellator->_add_element(tessellator->vertex_ids_);
+                break;
+            }
+
+            default: {
+                LOG_FIRST_N(WARNING, 1) << "unknown primitive type: " << tessellator->primitive_type_;
+                break;
+            }
         }
     }
 
@@ -392,16 +376,11 @@ namespace easy3d {
     void Tessellator::reset() {
         reinterpret_cast<details::VertexManager *>(vertex_manager_)->clear();
 
-        triangle_list_.clear();
-        num_triangles_in_polygon_ = 0;
+        num_elements_in_polygon_ = 0;
 
+        elements_.clear();
         vertex_ids_.clear();
-        contours_.clear();
     }
 
-
-    void Tessellator::set_tess_bounary_only(bool b) {
-        TessProperty(tess_obj_, TESS_BOUNDARY_ONLY, b);
-    }
 
 }
