@@ -334,13 +334,12 @@ namespace easy3d {
     //   Combine callback for the tessellator that gets called when new vertices
     //   need to be created by combining existing method.
     // ****************************************************************************
-    void Tessellator::combineCallback(double coords[3],
-                                      void *vertex_data[4],
-                                      float weight[4], void **dataOut, void *cbdata) {
+    void Tessellator::combineCallback(double coords[3], void *vertex_data[4], float weight[4], void **dataOut,
+                                      void *cbdata) {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         unsigned int size = tessellator->vertex_data_size_;
-        Vertex v(size, -1);
+        Vertex v(size, -1); // assign a negative index
         for (std::size_t i = 0; i < 3; ++i)
             v[i] = coords[i];
 

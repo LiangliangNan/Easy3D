@@ -53,37 +53,38 @@ namespace easy3d {
 
             /**
              * initialize with xyz coordinates and an optional index.
-             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
-             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(const vec3 &xyz, int idx = -1) : index(idx) { append(xyz); }
+            Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
 
             /**
              * initialize from a C-style array.
-             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
-             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
-            Vertex(const FT *data, std::size_t size, int idx = -1) : index(idx) {
+            Vertex(const FT *data, std::size_t size, int idx = 0) : index(idx) {
                 assign(data, data + size);
             }
 
             /**
              * initialize with a known size but memory is allocated without data initialization.
-             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
-             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(std::size_t size = 0, int idx = -1) : std::vector<double>(size), index(idx) {}
+            Vertex(std::size_t size = 0, int idx = 0) : std::vector<double>(size), index(idx) {}
 
             /**
              * copy constructor.
-             * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
-             *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(const Vertex& v, int idx = -1) : index(idx) {
+            Vertex(const Vertex &v, int idx = 0) : index(idx) {
                 assign(v.begin(), v.end());
             }
+
             /**
              * append a property (e.g., color, texture coordinates) to this vertex.
              * @tparam Vec The vector type of the vertex property, e.g., vec2, vec3.
@@ -102,6 +103,7 @@ namespace easy3d {
 
     public:
         Tessellator();
+
         ~Tessellator();
 
         // Set the winding rule (default rule is ODD, modify if needed)
@@ -168,17 +170,18 @@ namespace easy3d {
         /**
          * @brief Add a vertex of a contour to the tessellator.
          * @param data The vertex data.
-         * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
-         *            after tessellation. The new vertices generated in the tessellation will have a negative index.
+         * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
          */
         void add_vertex(const Vertex &data);
-        void add_vertex(const float *data, unsigned int size, int idx = -1);
-        void add_vertex(const vec3 &xyz, int idx = -1);
-        void add_vertex(const vec3 &xyz, const vec2 &t, int idx = -1);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, int idx = -1);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx = -1);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = -1);
-        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = -1);
+
+        void add_vertex(const float *data, unsigned int size, int idx = 0);
+        void add_vertex(const vec3 &xyz, int idx = 0);
+        void add_vertex(const vec3 &xyz, const vec2 &t, int idx = 0);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, int idx = 0);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx = 0);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = 0);
+        void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = 0);
 
         /**
          * Finish the current contour of a polygon.
@@ -201,7 +204,7 @@ namespace easy3d {
          * The list of elements (triangle or contour) created over many calls. Each entry is the vertex indices of the
          * element.
          */
-        const std::vector< std::vector<unsigned int> >& elements() const { return elements_; }
+        const std::vector<std::vector<unsigned int> > &elements() const { return elements_; }
 
         /**
          * The number of elements (triangle or contour) in the last polygon.
@@ -220,7 +223,7 @@ namespace easy3d {
         void reset();
 
     private:
-        void _add_element(const std::vector<unsigned int>& element);
+        void _add_element(const std::vector<unsigned int> &element);
 
         // GLU tessellator callbacks
         static void beginCallback(unsigned int w, void *cbdata);
@@ -237,7 +240,7 @@ namespace easy3d {
 
         // The list of elements (triangle or contour) created over many calls. Each entry is the vertex indices of the
         // element.
-        std::vector< std::vector<unsigned int> > elements_;
+        std::vector<std::vector<unsigned int> > elements_;
 
         // The the growing number of elements (triangle or contour) in the current polygon.
         unsigned int num_elements_in_polygon_;
