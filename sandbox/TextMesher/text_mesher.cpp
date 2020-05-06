@@ -206,7 +206,7 @@ namespace easy3d {
                     tess_face.set_winding_rule(Tessellator::WINDING_ODD);
                     tess_face.begin_contour();
                     for (int j = 0; j < contours[index].size(); ++j) {
-                        int id = contours[index][j];
+                        const int id = contours[index][j];
                         const Tessellator::Vertex *v = vertices[id];
                         const vec2 p = vec2(v->data());
                         contour[j] = p;
@@ -324,16 +324,14 @@ namespace easy3d {
             builder.begin_surface();
 
             const auto &final_vertices = tess_face.vertices();
-            for (const auto v : final_vertices) {
+            for (const auto v : final_vertices)
                 builder.add_vertex(vec3(v->data()));
-            }
 
             const auto& elements = tess_face.elements();
             for (const auto& e : elements) {
-                auto va = SurfaceMesh::Vertex(e[0] + offset);
-                auto vb = SurfaceMesh::Vertex(e[1] + offset);
-                auto vc = SurfaceMesh::Vertex(e[2] + offset);
-                builder.add_triangle(va, vb, vc);
+                builder.add_triangle(SurfaceMesh::Vertex(e[0] + offset),
+                                     SurfaceMesh::Vertex(e[1] + offset),
+                                     SurfaceMesh::Vertex(e[2] + offset));
             }
 
 #ifndef NDEBUG
