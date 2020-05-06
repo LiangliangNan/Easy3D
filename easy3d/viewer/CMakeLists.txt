@@ -193,11 +193,7 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
-
-find_package(Freetype QUIET)
-if (NOT FREETYPE_FOUND)
-    message(WARNING "Freetype not found and TextMesher is disabled")
-else()
+if (EASY3D_HAS_FREETYPE)
     list (APPEND ${PROJECT_NAME}_HEADERS text_mesher.h)
     list (APPEND ${PROJECT_NAME}_SOURCES text_mesher.cpp)
     message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
@@ -216,7 +212,7 @@ target_link_libraries(${PROJECT_NAME} glew glfw libtess core util fileio)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
-if (FREETYPE_FOUND)
+if (EASY3D_HAS_FREETYPE)
     target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
 endif()

@@ -73,6 +73,14 @@ else ()
             "You can set 'CGAL_DIR' to the directory containing 'CGALConfig.cmake' or 'cgal-config.cmake' to help find CGAL.")
 endif ()
 
+find_package(Freetype QUIET)
+if (FREETYPE_FOUND)
+    set(EASY3D_HAS_FREETYPE TRUE)
+    add_definitions(-DHAS_TEXT_MESHER)
+else()
+    message(WARNING "Freetype not found and TextMesher is disabled")
+endif()
+
 ################################################################################
 
 ### Configuration
