@@ -25,12 +25,8 @@
 #ifndef EASY3D_TESSELLATOR_H
 #define EASY3D_TESSELLATOR_H
 
-#include <easy3d/core/types.h>
-
 #include <vector>
-
-
-class gluTesselator;
+#include <easy3d/core/types.h>
 
 namespace easy3d {
 
@@ -232,7 +228,7 @@ namespace easy3d {
         static void combineCallback(double coords[3], void *vertex_data[4], float weight[4], void **dataOut, void *cbdata);
 
     private:
-        gluTesselator *tess_obj_;
+        void *tess_obj_;
         void *vertex_manager_;
 
         // The tessellator decides the most efficient primitive type while performing tessellation.

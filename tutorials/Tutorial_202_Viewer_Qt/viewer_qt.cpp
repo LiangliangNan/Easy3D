@@ -48,7 +48,7 @@
 #include <easy3d/viewer/opengl_info.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 #include <easy3d/viewer/opengl_timer.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
@@ -172,8 +172,8 @@ void ViewerQt::initializeGL()
 	//int samples_received = 0;
 	//func_->glgetintegerv(gl_samples, &samples_received);
 
-    // create OpenGLText renderer and load default fonts
-    texter_ = new OpenGLText(dpi_scaling());
+    // create TextRenderer renderer and load default fonts
+    texter_ = new TextRenderer(dpi_scaling());
     texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
     texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 

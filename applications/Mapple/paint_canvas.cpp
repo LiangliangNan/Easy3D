@@ -24,7 +24,7 @@
 #include <easy3d/viewer/setting.h>
 #include <easy3d/viewer/clipping_plane.h>
 #include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
@@ -165,8 +165,8 @@ void PaintCanvas::initializeGL() {
     //int samples_received = 0;
     //func_->glgetintegerv(gl_samples, &samples_received);
 
-    // create OpenGLText renderer and load default fonts
-    texter_ = new OpenGLText(dpi_scaling());
+    // create TextRenderer renderer and load default fonts
+    texter_ = new TextRenderer(dpi_scaling());
     texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
     texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
@@ -1015,7 +1015,7 @@ void PaintCanvas::postDraw() {
             fpsCounter = 0;
         }
 
-#if 0   // draw frame rate text using my OpenGLText
+#if 0   // draw frame rate text using my TextRenderer
         texter_->draw(fpsString.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
 #else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;

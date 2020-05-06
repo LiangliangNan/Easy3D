@@ -26,7 +26,6 @@ set(${PROJECT_NAME}_HEADERS
         opengl.h
         opengl_error.h
         opengl_info.h
-        opengl_text.h
         primitives.h
         read_pixel.h
         renderer.h
@@ -40,6 +39,8 @@ set(${PROJECT_NAME}_HEADERS
         tessellator.h
         texture.h
         texture_manager.h
+        text_mesher.h
+        text_renderer.h
         transform.h
         transform_decompose.h
         transparency.h
@@ -68,7 +69,6 @@ set(${PROJECT_NAME}_SOURCES
         model.cpp
         opengl_error.cpp
         opengl_info.cpp
-        opengl_text.cpp
         primitives.cpp
         read_pixel.cpp
         renderer.cpp
@@ -81,6 +81,8 @@ set(${PROJECT_NAME}_SOURCES
         tessellator.cpp
         texture.cpp
         texture_manager.cpp
+        text_mesher.cpp
+        text_renderer.cpp
         opengl_timer.cpp
         transform.cpp
         transform_decompose.cpp
@@ -191,6 +193,16 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
+
+find_package(Freetype QUIET)
+if (NOT FREETYPE_FOUND)
+    message(WARNING "Freetype not found and TextMesher is disabled")
+else()
+    list (APPEND ${PROJECT_NAME}_HEADERS text_mesher.h)
+    list (APPEND ${PROJECT_NAME}_SOURCES text_mesher.cpp)
+    message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
+endif()
+
 add_library(${PROJECT_NAME} STATIC
         ${${PROJECT_NAME}_SOURCES}
         ${${PROJECT_NAME}_HEADERS}
@@ -203,6 +215,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} glew glfw libtess core util fileio)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
+
+if (FREETYPE_FOUND)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
+endif()
+
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)

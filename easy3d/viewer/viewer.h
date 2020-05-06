@@ -40,7 +40,7 @@ namespace easy3d {
 	class Model;
     class Drawable;
     class TrianglesDrawable;
-    class OpenGLText;
+    class TextRenderer;
 
     /**
      * @brief The built-in Easy3D Viewer.
@@ -429,7 +429,7 @@ namespace easy3d {
 		bool	process_events_;
 		char   gpu_time_[48];       // show the frame rate
 
-        OpenGLText* texter_;
+        TextRenderer* texter_;
 
 		// mouse
 		int		pressed_button_;    // for mouse drag

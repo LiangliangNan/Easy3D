@@ -28,7 +28,7 @@
 #include <easy3d/viewer/viewer.h>
 
 namespace easy3d {
-    class OpenGLText;
+    class TextRenderer;
 }
 
 class TextRendering : public easy3d::Viewer
@@ -47,7 +47,7 @@ protected:
     std::string usage() const override;
 
 private:
-    easy3d::OpenGLText* texter_;
+    easy3d::TextRenderer* texter_;
     std::vector< easy3d::vec3> colors_;
     float font_size_delta_;
     float line_spacing_;

@@ -72,7 +72,7 @@ static int LongAxis( double v[3] )
   return i;
 }
 
-static void ComputeNormal( gluTesselator *tess, double norm[3] )
+static void ComputeNormal( GLUtesselator *tess, double norm[3] )
 {
   GLUvertex *v, *v1, *v2;
   double c, tLen2, maxLen2;
@@ -137,7 +137,7 @@ static void ComputeNormal( gluTesselator *tess, double norm[3] )
 }
 
 
-static void CheckOrientation( gluTesselator *tess )
+static void CheckOrientation( GLUtesselator *tess )
 {
   double area;
   GLUface *f, *fHead = &tess->mesh->fHead;
@@ -194,7 +194,7 @@ extern int RandomSweep;
 /* Determine the polygon normal and project vertices onto the plane
  * of the polygon.
  */
-void __gl_projectPolygon( gluTesselator *tess )
+void __gl_projectPolygon( GLUtesselator *tess )
 {
   GLUvertex *v, *vHead = &tess->mesh->vHead;
   double norm[3];

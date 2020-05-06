@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_OPENGL_TEXT_H
-#define EASY3D_OPENGL_TEXT_H
+#ifndef EASY3D_TEXT_RENDERER_H
+#define EASY3D_TEXT_RENDERER_H
 
 #include <vector>
 #include <string>
@@ -31,38 +31,31 @@
 #include <easy3d/core/types.h>
 
 
-#define ENABLE_MULTILINE_TEXT_RENDERING
-
 namespace easy3d {
 
-    namespace details {
-        struct sth_stash;
-    }
-
-
     /**
-     * OpenGLText enables quick and easy string rendering in OpenGL applications. It supports truetype (TTF) fonts and
+     * TextRenderer enables quick and easy string rendering in OpenGL applications. It supports truetype (TTF) fonts and
      * unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
-     * OpenGLText allows you to:
+     * TextRenderer allows you to:
      *    - switch between fonts;
      *    - change character spacing;
      *    - enable/disable kerning;
      * TODO: for a large number of strings/characters, it is necessary to separate buffer creation and rendering.
      */
 
-    class OpenGLText {
+    class TextRenderer {
     public:
         /**
          * Constructor.
          * @param texture_size  The size of the font textures. Suggested values are 512, 1024, 2048 ...
          * @param mipmaps True to create mipmaps for the font textures.
          */
-        OpenGLText(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = false);
+        TextRenderer(float dpi_scale = 1.0f, int texture_size = 512, bool mipmaps = false);
 
         /**
          * Destructor.
          */
-        ~OpenGLText();
+        ~TextRenderer();
 
         /**
          * Add a font from a file. This function must be called at least once to add a font.
@@ -100,7 +93,9 @@ namespace easy3d {
                    const vec3 &font_color = vec3(0, 0, 0), bool upper_left = true
         ) const;
 
-#ifdef ENABLE_MULTILINE_TEXT_RENDERING
+
+        // -------------------------------------------------------------------------------------------------------------
+        // Multi-line text rendering
 
         /** @brief Horizontal alignment. **/
         enum Align {
@@ -108,7 +103,7 @@ namespace easy3d {
         };
 
         /**
-         * Draw the text. The difference with draw() is that draw_multi_line() produces line breaks for text with "\n".
+         * @brief Draw multi-line text with alignment support. This method produces line breaks for text with "\n".
          * @param text The string to be drawn.
          * @param x The x-coordinate of the starting position, relative to the left edge of the content area.
          * @param y The y-coordinate of the starting position. If upper_left is true, this position is relative to the
@@ -128,7 +123,7 @@ namespace easy3d {
                   int font_id = 0, const vec3 &font_color = vec3(0, 0, 0),
                   float line_spacing = 0.0f, bool upper_left = true) const;
 
-#endif
+        // -------------------------------------------------------------------------------------------------------------
 
         /**
          * Set the spacing between consecutive characters. The default character spacing is 0.
@@ -189,16 +184,12 @@ namespace easy3d {
 
         void flush_draw(const vec3 &font_color) const;
 
-#ifdef ENABLE_MULTILINE_TEXT_RENDERING
-
         //if the text has newlines, it will be treated as if was called into drawing multiple lines
         Rect _get_bbox(const std::string &text, float size, float x, float y, Align align, float line_spacing) const;
 
-#endif
-
     private:
         int texture_size_;
-        details::sth_stash *stash_;
+        void *stash_;
         std::vector<int> font_ids_;
         std::vector<std::string> font_names_;
     };

@@ -21,7 +21,7 @@
 // The original code is available at https://github.com/armadillu/ofxFontStash
 
 
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 
 
 namespace easy3d {
@@ -717,7 +717,7 @@ namespace easy3d {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Here starts the implementation of OpenGLText
+// Here starts the implementation of TextRenderer
 
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/shader_manager.h>
@@ -726,34 +726,37 @@ namespace easy3d {
 #include <easy3d/util/file_system.h>
 
 
+#define get_stash(x) (reinterpret_cast<details::sth_stash *>(x))
+
+
 namespace easy3d {
 
 
-    OpenGLText::OpenGLText(float dpi_scale, int texture_size, bool mipmaps) {
+    TextRenderer::TextRenderer(float dpi_scale, int texture_size, bool mipmaps) {
         texture_size_ = geom::next_pow2(texture_size);
         stash_ = details::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
         easy3d_log_gl_error;
         if (stash_ == nullptr) {
-            LOG(ERROR) << "construction of OpenGLText failed";
+            LOG(ERROR) << "construction of TextRenderer failed";
         } else {
-            stash_->doKerning = 0; //kerning disabled by default
-            stash_->charSpacing = 0.0; //spacing neutral by default
+            get_stash(stash_)->doKerning = 0; //kerning disabled by default
+            get_stash(stash_)->charSpacing = 0.0; //spacing neutral by default
         }
     }
 
 
-    OpenGLText::~OpenGLText() {
-        sth_delete(stash_);
+    TextRenderer::~TextRenderer() {
+        sth_delete(get_stash(stash_));
     }
 
 
-    bool OpenGLText::add_font(const std::string &font_file) {
+    bool TextRenderer::add_font(const std::string &font_file) {
         if (stash_ == nullptr) {
-            LOG(ERROR) << "construction of OpenGLText failed";
+            LOG(ERROR) << "construction of TextRenderer failed";
             return false;
         }
 
-        const int id = sth_add_font(stash_, font_file.c_str());
+        const int id = sth_add_font(get_stash(stash_), font_file.c_str());
         if (id <= 0) {
             LOG(ERROR) << "could not load font: " << font_file;
             return false;
@@ -767,64 +770,64 @@ namespace easy3d {
     }
 
 
-    void OpenGLText::set_character_spacing(float spacing) {
+    void TextRenderer::set_character_spacing(float spacing) {
         if (stash_)
-            stash_->charSpacing = spacing;
+            get_stash(stash_)->charSpacing = spacing;
     }
 
 
-    float OpenGLText::character_spacing() const {
+    float TextRenderer::character_spacing() const {
         if (stash_)
-            return stash_->charSpacing;
+            return get_stash(stash_)->charSpacing;
         else
             return 0.0f;
     }
 
 
-    void OpenGLText::set_kerning(bool kerning) {
+    void TextRenderer::set_kerning(bool kerning) {
         if (stash_)
-            stash_->doKerning = kerning;
+            get_stash(stash_)->doKerning = kerning;
     }
 
 
-    bool OpenGLText::kerning() const {
+    bool TextRenderer::kerning() const {
         if (stash_)
-            return stash_->doKerning;
+            return get_stash(stash_)->doKerning;
         else
             return false;
     }
 
 
-    float OpenGLText::font_height(float font_size) const {
+    float TextRenderer::font_height(float font_size) const {
         if (font_ids_.empty()) {
             LOG_FIRST_N(ERROR, 1) << "no font exists. To add a font, please call add_font()";
             return 0.0f;
         }
         float asc, desc, lineh;
-        sth_vmetrics(stash_, font_ids_[0], font_size, &asc, &desc, &lineh);
+        sth_vmetrics(get_stash(stash_), font_ids_[0], font_size, &asc, &desc, &lineh);
         return asc - desc;
     }
 
 
-    float OpenGLText::string_width(const std::string& str, float font_size) const {
+    float TextRenderer::string_width(const std::string& str, float font_size) const {
         const Rect& rect = _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
         return rect.width();
     }
 
 
-    float OpenGLText::string_height(const std::string& str, float font_size) const {
+    float TextRenderer::string_height(const std::string& str, float font_size) const {
         const Rect& rect = _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
         return rect.height();
     }
 
 
-    Rect OpenGLText::string_bounding_rect(const std::string& str, float x, float y, float font_size) const {
+    Rect TextRenderer::string_bounding_rect(const std::string& str, float x, float y, float font_size) const {
         return _get_bbox(str, font_size, 0, 0, ALIGN_LEFT, 0);
     }
 
 
     float
-    OpenGLText::draw(const std::string &text, float x, float y, float font_size, int font_id, const vec3 &font_color,
+    TextRenderer::draw(const std::string &text, float x, float y, float font_size, int font_id, const vec3 &font_color,
                      bool upper_left) const {
         float end_x = 0.0f;
         if (!stash_) {
@@ -848,7 +851,7 @@ namespace easy3d {
         }
 
         // compute all necessary vertex/texture coordinates
-        sth_draw_text(stash_, font_ids_[font_id], font_size, x, y, text.c_str(), &end_x);
+        sth_draw_text(get_stash(stash_), font_ids_[font_id], font_size, x, y, text.c_str(), &end_x);
         easy3d_debug_log_gl_error;
 
         // the actual rendering
@@ -859,7 +862,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLText::flush_draw(const vec3 &font_color) const {
+    void TextRenderer::flush_draw(const vec3 &font_color) const {
         const std::string name = "text/text";
         auto program = ShaderManager::get_program(name);
         if (!program) {
@@ -883,7 +886,7 @@ namespace easy3d {
 
         program->bind();
 
-        struct details::sth_texture *texture = stash_->tt_textures;
+        struct details::sth_texture *texture = get_stash(stash_)->tt_textures;
         short tt = 1;
         while (texture) {
             if (texture->nverts > 0) {
@@ -923,7 +926,7 @@ namespace easy3d {
             }
             texture = texture->next;
             if (!texture && tt) {
-                texture = stash_->bm_textures;
+                texture = get_stash(stash_)->bm_textures;
                 tt = 0;
             }
         }
@@ -933,11 +936,9 @@ namespace easy3d {
     }
 
 
-#ifdef ENABLE_MULTILINE_TEXT_RENDERING
-
 #define FONT_STASH_LINE_HEIGHT_MULT    0.9f
 
-    Rect OpenGLText::draw(const std::string &text, float x0, float y0, float font_size, Align align,
+    Rect TextRenderer::draw(const std::string &text, float x0, float y0, float font_size, Align align,
                           int font_id, const vec3 &font_color, float line_spacing, bool upper_left) const {
         Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
         if (!stash_) {
@@ -971,9 +972,9 @@ namespace easy3d {
 
         while (getline(ss, s, '\n')) {
             lines.push_back(s);
-            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * stash_->dpiScale;
+            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * get_stash(stash_)->dpiScale;
             ys.push_back(yy);
-            const Rect& dim = _get_bbox(s, font_size, x0, y0 + yy / stash_->dpiScale, ALIGN_LEFT, line_spacing);
+            const Rect& dim = _get_bbox(s, font_size, x0, y0 + yy / get_stash(stash_)->dpiScale, ALIGN_LEFT, line_spacing);
 
             if (line == 0) {
                 rect = dim;
@@ -1008,10 +1009,10 @@ namespace easy3d {
                         break;
                 }
                 if (minDiffX > x) minDiffX = x;
-                sth_draw_text(stash_,
+                sth_draw_text(get_stash(stash_),
                               font_ids_[font_id],
                               font_size,
-                              x0 + x * stash_->dpiScale,
+                              x0 + x * get_stash(stash_)->dpiScale,
                               upper_left ? (h - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
                               lines[i].c_str(),
                               &dx
@@ -1028,7 +1029,7 @@ namespace easy3d {
     }
 
 
-    Rect OpenGLText::_get_bbox(const std::string &text, float font_size, float xx, float yy, Align align,
+    Rect TextRenderer::_get_bbox(const std::string &text, float font_size, float xx, float yy, Align align,
                               float line_spacing) const {
         const float lineHeight = 1.0f + line_spacing; // as percent, 1.0 would be normal
 
@@ -1040,7 +1041,7 @@ namespace easy3d {
         Rect totalArea(0.0f, 0.0f, 0.0f, 0.0f);
         while (getline(ss, s, '\n')) {
             float w, h, x, y;
-            sth_dim_text(stash_, font_ids_[0], font_size / stash_->dpiScale, s.c_str(), &x, &y, &w, &h);
+            sth_dim_text(get_stash(stash_), font_ids_[0], font_size / get_stash(stash_)->dpiScale, s.c_str(), &x, &y, &w, &h);
 
             totalArea.x() = x + xx;
             totalArea.y() = yy + y;
@@ -1070,7 +1071,5 @@ namespace easy3d {
 
         return totalArea;
     }
-
-#endif
 
 }

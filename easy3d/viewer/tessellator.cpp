@@ -84,6 +84,7 @@ namespace easy3d {
 
     // -------------------------------------------------------------------------------------------------------------
 
+    #define get_tess(x) (reinterpret_cast<GLUtesselator *>(x))
 
 
     Tessellator::Tessellator()
@@ -91,49 +92,50 @@ namespace easy3d {
             , num_elements_in_polygon_(0)
             , vertex_data_size_(3)
     {
-        tess_obj_ = NewTess();// Create a tessellator object and set up its callbacks.
-        if (!tess_obj_) {
+        GLUtesselator* tess = NewTess();// Create a tessellator object and set up its callbacks.
+        if (!tess) {
             LOG(ERROR) << "failed to create a tessellator object";
             return;
         }
 
-        TessCallback(tess_obj_, TESS_VERTEX_DATA, (void (*)()) vertexCallback);
-        TessCallback(tess_obj_, TESS_BEGIN_DATA, (void (*)()) beginCallback);
-        TessCallback(tess_obj_, TESS_END_DATA, (void (*)()) endCallback);
-        TessCallback(tess_obj_, TESS_COMBINE_DATA, (void (*)()) combineCallback);
+        TessCallback(tess, TESS_VERTEX_DATA, (void (*)()) vertexCallback);
+        TessCallback(tess, TESS_BEGIN_DATA, (void (*)()) beginCallback);
+        TessCallback(tess, TESS_END_DATA, (void (*)()) endCallback);
+        TessCallback(tess, TESS_COMBINE_DATA, (void (*)()) combineCallback);
 
-        TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
-        TessProperty(tess_obj_, TESS_TOLERANCE, 0.);
+        TessProperty(tess, TESS_WINDING_RULE, TESS_WINDING_ODD);
+        TessProperty(tess, TESS_TOLERANCE, 0.);
 
+        tess_obj_ = tess;
         vertex_manager_ = new details::VertexManager;
     }
 
 
     Tessellator::~Tessellator() {
         delete reinterpret_cast<details::VertexManager *>(vertex_manager_);
-        DeleteTess(tess_obj_);
+        DeleteTess(get_tess(tess_obj_));
     }
 
 
     void Tessellator::set_bounary_only(bool b) {
-        TessProperty(tess_obj_, TESS_BOUNDARY_ONLY, b);
+        TessProperty(get_tess(tess_obj_), TESS_BOUNDARY_ONLY, b);
     }
 
 
     void Tessellator::set_winding_rule(WindingRule rule) {
-        TessProperty(tess_obj_, TESS_WINDING_RULE, rule);
+        TessProperty(get_tess(tess_obj_), TESS_WINDING_RULE, rule);
     }
 
 
     void Tessellator::begin_polygon(const vec3 &normal) {
         num_elements_in_polygon_ = 0;
-        TessNormal(tess_obj_, normal.x, normal.y, normal.z);
-        TessBeginPolygon(tess_obj_, this);
+        TessNormal(get_tess(tess_obj_), normal.x, normal.y, normal.z);
+        TessBeginPolygon(get_tess(tess_obj_), this);
     }
 
 
     void Tessellator::begin_contour() {
-        TessBeginContour(tess_obj_);
+        TessBeginContour(get_tess(tess_obj_));
     }
 
 
@@ -148,7 +150,7 @@ namespace easy3d {
         // param is the actual vertex data to draw. It is usually same as the second
         // param, but It can be more than vertex coord, for example, color, normal
         // and UV coords which are needed for actual drawing.
-        TessVertex(tess_obj_, new_v->data(), new_v);
+        TessVertex(get_tess(tess_obj_), new_v->data(), new_v);
     }
 
     // to be flexible (any data can be provide)
@@ -203,12 +205,12 @@ namespace easy3d {
 
 
     void Tessellator::end_contour() {
-        TessEndContour(tess_obj_);
+        TessEndContour(get_tess(tess_obj_));
     }
 
 
     void Tessellator::end_polygon() {
-        TessEndPolygon(tess_obj_);
+        TessEndPolygon(get_tess(tess_obj_));
     }
 
 

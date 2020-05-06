@@ -98,9 +98,9 @@ extern "C" {
 /*************************************************************/
 
 #ifdef __cplusplus
-class gluTesselator;
+class GLUtesselator;
 #else
-typedef struct gluTesselator gluTesselator;
+typedef struct GLUtesselator GLUtesselator;
 #endif
 
 
@@ -109,16 +109,16 @@ typedef struct gluTesselator gluTesselator;
 /* Internal convenience typedefs */
 typedef void (_GLUfuncptr)(void);
 
-void DeleteTess (gluTesselator* tess);
-gluTesselator* NewTess (void);
-void TessBeginContour (gluTesselator* tess);
-void TessBeginPolygon (gluTesselator* tess, void* data);
-void TessCallback (gluTesselator* tess, unsigned int which, _GLUfuncptr CallBackFunc);
-void TessEndContour (gluTesselator* tess);
-void TessEndPolygon (gluTesselator* tess);
-void TessNormal (gluTesselator* tess, double valueX, double valueY, double valueZ);
-void TessProperty (gluTesselator* tess, unsigned int which, double data);
-void TessVertex (gluTesselator* tess, double *location, void* data);
+void DeleteTess (GLUtesselator* tess);
+GLUtesselator* NewTess (void);
+void TessBeginContour (GLUtesselator* tess);
+void TessBeginPolygon (GLUtesselator* tess, void* data);
+void TessCallback (GLUtesselator* tess, unsigned int which, _GLUfuncptr CallBackFunc);
+void TessEndContour (GLUtesselator* tess);
+void TessEndPolygon (GLUtesselator* tess);
+void TessNormal (GLUtesselator* tess, double valueX, double valueY, double valueZ);
+void TessProperty (GLUtesselator* tess, unsigned int which, double data);
+void TessVertex (GLUtesselator* tess, double *location, void* data);
 
 #ifdef __cplusplus
 }

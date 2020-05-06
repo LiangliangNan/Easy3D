@@ -52,20 +52,20 @@
 struct FaceCount {
   long		size;		/* number of triangles used */
   GLUhalfEdge	*eStart;	/* edge where this primitive starts */
-  void		(*render)(gluTesselator *, GLUhalfEdge *, long);
+  void		(*render)(GLUtesselator *, GLUhalfEdge *, long);
                                 /* routine to render this primitive */
 };
 
 static struct FaceCount MaximumFan( GLUhalfEdge *eOrig );
 static struct FaceCount MaximumStrip( GLUhalfEdge *eOrig );
 
-static void RenderFan( gluTesselator *tess, GLUhalfEdge *eStart, long size );
-static void RenderStrip( gluTesselator *tess, GLUhalfEdge *eStart, long size );
-static void RenderTriangle( gluTesselator *tess, GLUhalfEdge *eStart,
+static void RenderFan( GLUtesselator *tess, GLUhalfEdge *eStart, long size );
+static void RenderStrip( GLUtesselator *tess, GLUhalfEdge *eStart, long size );
+static void RenderTriangle( GLUtesselator *tess, GLUhalfEdge *eStart,
 			    long size );
 
-static void RenderMaximumFaceGroup( gluTesselator *tess, GLUface *fOrig );
-static void RenderLonelyTriangles( gluTesselator *tess, GLUface *head );
+static void RenderMaximumFaceGroup( GLUtesselator *tess, GLUface *fOrig );
+static void RenderLonelyTriangles( GLUtesselator *tess, GLUface *head );
 
 
 
@@ -78,7 +78,7 @@ static void RenderLonelyTriangles( gluTesselator *tess, GLUface *head );
  *
  * The rendering output is provided as callbacks (see the api).
  */
-void __gl_renderMesh( gluTesselator *tess, GLUmesh *mesh )
+void __gl_renderMesh( GLUtesselator *tess, GLUmesh *mesh )
 {
   GLUface *f;
 
@@ -106,7 +106,7 @@ void __gl_renderMesh( gluTesselator *tess, GLUmesh *mesh )
 }
 
 
-static void RenderMaximumFaceGroup( gluTesselator *tess, GLUface *fOrig )
+static void RenderMaximumFaceGroup( GLUtesselator *tess, GLUface *fOrig )
 {
   /* We want to find the largest triangle fan or strip of unmarked faces
    * which includes the given face fOrig.  There are 3 possible fans
@@ -234,7 +234,7 @@ static struct FaceCount MaximumStrip( GLUhalfEdge *eOrig )
 }
 
 
-static void RenderTriangle( gluTesselator *tess, GLUhalfEdge *e, long size )
+static void RenderTriangle( GLUtesselator *tess, GLUhalfEdge *e, long size )
 {
   /* Just add the triangle to a triangle list, so we can render all
    * the separate triangles at once.
@@ -244,7 +244,7 @@ static void RenderTriangle( gluTesselator *tess, GLUhalfEdge *e, long size )
 }
 
 
-static void RenderLonelyTriangles( gluTesselator *tess, GLUface *f )
+static void RenderLonelyTriangles( GLUtesselator *tess, GLUface *f )
 {
   /* Now we render all the separate triangles which could not be
    * grouped into a triangle fan or strip.
@@ -279,7 +279,7 @@ static void RenderLonelyTriangles( gluTesselator *tess, GLUface *f )
 }
 
 
-static void RenderFan( gluTesselator *tess, GLUhalfEdge *e, long size )
+static void RenderFan( GLUtesselator *tess, GLUhalfEdge *e, long size )
 {
   /* Render as many CCW triangles as possible in a fan starting from
    * edge "e".  The fan *should* contain exactly "size" triangles
@@ -301,7 +301,7 @@ static void RenderFan( gluTesselator *tess, GLUhalfEdge *e, long size )
 }
 
 
-static void RenderStrip( gluTesselator *tess, GLUhalfEdge *e, long size )
+static void RenderStrip( GLUtesselator *tess, GLUhalfEdge *e, long size )
 {
   /* Render as many CCW triangles as possible in a strip starting from
    * edge "e".  The strip *should* contain exactly "size" triangles
@@ -335,7 +335,7 @@ static void RenderStrip( gluTesselator *tess, GLUhalfEdge *e, long size )
  * contour for each face marked "inside".  The rendering output is
  * provided as callbacks (see the api).
  */
-void __gl_renderBoundary( gluTesselator *tess, GLUmesh *mesh )
+void __gl_renderBoundary( GLUtesselator *tess, GLUmesh *mesh )
 {
   GLUface *f;
   GLUhalfEdge *e;
@@ -358,7 +358,7 @@ void __gl_renderBoundary( gluTesselator *tess, GLUmesh *mesh )
 
 #define SIGN_INCONSISTENT 2
 
-static int ComputeNormal( gluTesselator *tess, double norm[3], int check )
+static int ComputeNormal( GLUtesselator *tess, double norm[3], int check )
 /*
  * If check==FALSE, we compute the polygon normal and place it in norm[].
  * If check==TRUE, we check that each triangle in the fan from v0 has a
@@ -437,7 +437,7 @@ static int ComputeNormal( gluTesselator *tess, double norm[3], int check )
  * Returns TRUE if the polygon was successfully rendered.  The rendering
  * output is provided as callbacks (see the api).
  */
-TESS_boolean __gl_renderCache( gluTesselator *tess )
+TESS_boolean __gl_renderCache( GLUtesselator *tess )
 {
   CachedVertex *v0 = tess->cache;
   CachedVertex *vn = v0 + tess->cacheCount;

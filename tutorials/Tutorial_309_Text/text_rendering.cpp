@@ -24,7 +24,7 @@
 
 #include "text_rendering.h"
 
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/random.h>
@@ -40,7 +40,7 @@ TextRendering::TextRendering(const std::string &title)
         , texter_(nullptr)
         , font_size_delta_(0.0f)
         , line_spacing_(0.0f)
-        , alignment_(OpenGLText::ALIGN_CENTER)
+        , alignment_(TextRenderer::ALIGN_CENTER)
         , upper_left_(true)
 {
     set_background_color(vec4(1, 1, 1, 1));
@@ -62,7 +62,7 @@ std::string TextRendering::usage() const {
 void TextRendering::init() {
     Viewer::init();
 
-    texter_ = new OpenGLText(dpi_scaling());
+    texter_ = new TextRenderer(dpi_scaling());
     if (!texter_)
         return;
 
@@ -127,19 +127,19 @@ bool TextRendering::key_press_event(int key, int modifiers) {
     }
 
     else if (key == GLFW_KEY_L) {
-        alignment_ = OpenGLText::ALIGN_LEFT;
+        alignment_ = TextRenderer::ALIGN_LEFT;
         update();
         return true;
     }
 
     else if (key == GLFW_KEY_C) {
-        alignment_ = OpenGLText::ALIGN_CENTER;
+        alignment_ = TextRenderer::ALIGN_CENTER;
         update();
         return true;
     }
 
     else if (key == GLFW_KEY_R) {
-        alignment_ = OpenGLText::ALIGN_RIGHT;
+        alignment_ = TextRenderer::ALIGN_RIGHT;
         update();
         return true;
     }
@@ -183,7 +183,7 @@ void TextRendering::draw() const {
             "\n'l'/'c'/'r': left/center/right align the multi-line text"
             "\n'o': switch the origin between 'upper left' and 'bottom left'"
             "\n'space': enable/disable kerning",
-            x * dpi_scaling(), y * dpi_scaling(), font_size, OpenGLText::Align(alignment_), 0, vec3(0, 0, 0),
+            x * dpi_scaling(), y * dpi_scaling(), font_size, TextRenderer::Align(alignment_), 0, vec3(0, 0, 0),
             line_spacing_, upper_left_);
 
     // the new Y position to start; add extra space

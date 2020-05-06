@@ -14,7 +14,6 @@ set(${PROJECT_NAME}_HEADERS
         stop_watch.h
         string.h
         timer.h
-        threading.h
         tokenizer.h
         )
 
@@ -26,7 +25,6 @@ set(${PROJECT_NAME}_SOURCES
         progress.cpp
         stop_watch.cpp
         string.cpp
-        threading.cpp
         )
 
 	

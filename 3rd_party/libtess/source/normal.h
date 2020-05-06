@@ -40,6 +40,6 @@
 /* __gl_projectPolygon( tess ) determines the polygon normal
  * and project vertices onto the plane of the polygon.
  */
-void __gl_projectPolygon( gluTesselator *tess );
+void __gl_projectPolygon( GLUtesselator *tess );
 
 #endif

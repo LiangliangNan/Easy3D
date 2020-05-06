@@ -25,7 +25,7 @@
 #include "point_selection.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 #include <easy3d/viewer/primitives.h>
 #include <easy3d/viewer/drawable_points.h>
 #include <easy3d/util/logging.h>

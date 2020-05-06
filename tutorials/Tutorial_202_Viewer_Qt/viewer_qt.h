@@ -37,7 +37,7 @@ namespace easy3d {
     class Model;
     class TrianglesDrawable;
     class OpenGLTimer;
-    class OpenGLText;
+    class TextRenderer;
 }
 
 class QWidget;
@@ -190,7 +190,7 @@ protected:
 
     easy3d::OpenGLTimer* gpu_timer_;
     double gpu_time_;
-    easy3d::OpenGLText* texter_;
+    easy3d::TextRenderer* texter_;
 
     easy3d::Camera*	camera_;
     easy3d::vec4	background_color_;

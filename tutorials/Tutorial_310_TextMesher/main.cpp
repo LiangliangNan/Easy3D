@@ -22,7 +22,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/viewer/viewer.h>
@@ -31,8 +30,7 @@
 
 #include <easy3d/util/file_system.h>
 #include <easy3d/viewer/drawable_lines.h>
-
-#include "text_mesher.h"
+#include <easy3d/viewer/text_mesher.h>
 
 
 using namespace easy3d;
@@ -42,7 +40,7 @@ int main(int argc, char **argv) {
     logging::initialize();
 
     // Create an Easy3D viewer.
-    Viewer viewer("TextMesher - Easy3D");
+    Viewer viewer("Tutorial_310_TextMesher");
 
     // Create an instance of mesher by specifying a font file.
     const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";

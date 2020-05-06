@@ -55,7 +55,7 @@
 #include <easy3d/viewer/framebuffer_object.h>
 #include <easy3d/viewer/opengl_error.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/opengl_text.h>
+#include <easy3d/viewer/text_renderer.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/renderer.h>
 #include <easy3d/fileio/resources.h>
@@ -1030,8 +1030,8 @@ namespace easy3d {
         glClearDepthf(1.0f);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
-        // create OpenGLText renderer and load default fonts
-        texter_ = new OpenGLText(dpi_scaling());
+        // create TextRenderer renderer and load default fonts
+        texter_ = new TextRenderer(dpi_scaling());
         texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
         texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
 
