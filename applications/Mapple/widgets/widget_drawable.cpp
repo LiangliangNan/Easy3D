@@ -124,7 +124,7 @@ void WidgetDrawable::setScalarFieldNumOfStripes(int num) {
 void WidgetDrawable::setScalarFieldClamp(bool b) {
     auto d = drawable();
     d->set_clamp_range(b);
-    d->update_buffers();
+    d->update();
     viewer_->update();
     disableUnavailableOptions();
 }
@@ -133,7 +133,7 @@ void WidgetDrawable::setScalarFieldClamp(bool b) {
 void WidgetDrawable::setScalarFieldClampLower(double v) {
     auto d = drawable();
     d->set_clamp_lower(v / 100.0f);
-    d->update_buffers();
+    d->update();
     viewer_->update();
 }
 
@@ -141,7 +141,7 @@ void WidgetDrawable::setScalarFieldClampLower(double v) {
 void WidgetDrawable::setScalarFieldClampUpper(double v) {
     auto d = drawable();
     d->set_clamp_upper(v / 100.0f);
-    d->update_buffers();
+    d->update();
     viewer_->update();
 }
 
@@ -195,7 +195,7 @@ void WidgetDrawable::setVectorFieldScale(double s) {
 
     auto drawa = viewer_->currentModel()->get_lines_drawable("vector - " + states_[d].vector_field.toStdString());
     if (drawa)
-        drawa->update_buffers();
+        drawa->update();
     viewer_->update();
 }
 
@@ -258,7 +258,7 @@ void WidgetDrawable::setColorScheme(const QString &text) {
         }
     }
 
-    d->update_buffers();
+    d->update();
 
     viewer_->update();
 

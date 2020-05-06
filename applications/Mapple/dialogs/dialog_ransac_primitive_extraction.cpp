@@ -92,7 +92,7 @@ void DialogRansacPrimitiveExtraction::extract() {
 
     renderer::colorize_segmentation(cloud, "v:primitive_index", name);
     vertices->set_property_coloring(State::VERTEX, name);
-    vertices->update_buffers();
+    vertices->update();
 
     viewer_->update();
     window_->updateRenderingPanel();
