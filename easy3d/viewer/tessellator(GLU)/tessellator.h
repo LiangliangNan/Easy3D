@@ -37,7 +37,7 @@ namespace easy3d {
     /**
      * @brief Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges
      *        into triangles. This implementation also keeps track of the unique vertices and respective indices, so as
-     *        to allow client code to take advantage of the index buffer for efficient rendering (to avoid sending
+     *        to allow client code to take advantage of the element buffer for efficient rendering (to avoid sending
      *        duplicated vertex to GPU). Typical applications:
      *          - Tessellate concave polygons, polygons with holes, or polygons with intersecting edges;
      *          - Generate buffer data for rendering;
