@@ -491,10 +491,10 @@ namespace easy3d {
 #define SCALE_TO_F26DOT6    6400
 
 
-    TextMesher::TextMesher(const std::string &font_file, int font_height)
+    TextMesher::TextMesher(const std::string &font_file, int font_size)
             : font_library_(nullptr), font_face_(nullptr), bezier_steps_(4), prev_char_index_(0), cur_char_index_(0),
               prev_rsb_delta_(0) {
-        set_font(font_file, font_height);
+        set_font(font_file, font_size);
     }
 
 
@@ -511,13 +511,13 @@ namespace easy3d {
     }
 
 
-    void TextMesher::set_font(const std::string &font_file, int font_height) {
+    void TextMesher::set_font(const std::string &font_file, int font_size) {
         if (!file_system::is_file(font_file)) {
             LOG(WARNING) << "font file does not exist: " << font_file;
             return;
         }
 
-        if (font_file == font_file_ && font_height == font_height_)
+        if (font_file == font_file_ && font_size == font_size_)
             return;
 
         cleanup();
@@ -534,15 +534,15 @@ namespace easy3d {
             return;
         }
 
-        if (FT_Set_Char_Size(get_face(font_face_), font_height * SCALE_TO_F26DOT6,
-                             font_height * SCALE_TO_F26DOT6, RESOLUTION, RESOLUTION)) {
+        if (FT_Set_Char_Size(get_face(font_face_), font_size * SCALE_TO_F26DOT6,
+                             font_size * SCALE_TO_F26DOT6, RESOLUTION, RESOLUTION)) {
             LOG(ERROR) << "failed requesting the nominal size (in points) of the characters)";
             ready_ = false;
             return;
         }
 
         font_file_ = font_file;
-        font_height_ = font_height;
+        font_size_ = font_size;
         ready_ = true;
     }
 
@@ -592,7 +592,7 @@ namespace easy3d {
             }
 
             // ignore tiny contours (some fonts even have degenarate countours)
-            if (polygon.area() >= font_height_ * font_height_ * 0.001) {
+            if (polygon.area() >= font_size_ * font_size_ * 0.001) {
                 // The FTGL library must have a bug!!!
                 //polygon.clockwise = contour->GetDirection();
                 polygon.clockwise = polygon.is_clockwise();
