@@ -201,7 +201,7 @@ namespace easy3d {
          *              un-highlight any previously highlighted primitives.
          * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
          *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
-         *            internally implemented by selecting triangle primitives using program shaders. This allows data
+         *            internally implemented by selecting triangle primitives using shaders. This allows data
          *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
          */
         bool highlight() const { return highlight_; };

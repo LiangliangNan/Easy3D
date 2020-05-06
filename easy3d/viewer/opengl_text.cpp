@@ -905,15 +905,15 @@ namespace easy3d {
                     indices[j * 6 + 5] = j * 4 + 3;
                 }
 
-                unsigned int vertex_buffer = 0, index_buffer = 0;
+                unsigned int vertex_buffer = 0, element_buffer = 0;
                 VertexArrayObject vao;
                 vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, vertices.data(),
                                         vertices.size() * sizeof(vec4), 4, true);
-                vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int), true);
+                vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int), true);
 
                 program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", font_color);
                 vao.bind();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
                 glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
                 vao.release();

@@ -179,7 +179,7 @@ namespace easy3d {
             // First, use another tessellator to generate simple contours
 
             Tessellator tess_contour;
-            tess_contour.set_tess_bounary_only(true);
+            tess_contour.set_bounary_only(true);
             vec3 normal(0, 0, 1);
             tess_contour.begin_polygon(normal);
             for (std::size_t id = 0; id < ch.size(); ++id) {
@@ -193,17 +193,17 @@ namespace easy3d {
 
             ch.clear();
             const auto &vertices = tess_contour.vertices();
-            const auto &contours = tess_contour.contours();
+            const auto &contours = tess_contour.elements();
 
             //-------------------------------------------------------------------------------------
             // Second, generate top faces
 
-            tess_face.set_tess_bounary_only(false);
+            tess_face.set_bounary_only(false);
             if (1) {
                 tess_face.begin_polygon(vec3(0, 0, 1));
                 for (std::size_t index = 0; index < contours.size(); ++index) {
                     Contour contour(contours[index].size());
-                    tess_face.set_winding_rule(Tessellator::ODD);
+                    tess_face.set_winding_rule(Tessellator::WINDING_ODD);
                     tess_face.begin_contour();
                     for (int j = 0; j < contours[index].size(); ++j) {
                         int id = contours[index][j];
@@ -226,7 +226,7 @@ namespace easy3d {
                 tess_face.begin_polygon(vec3(0, 0, -1));
                 for (std::size_t index = 0; index < ch.size(); ++index) {
                     const Contour &contour = ch[index];
-                    tess_face.set_winding_rule(Tessellator::ODD);
+                    tess_face.set_winding_rule(Tessellator::WINDING_ODD);
                     tess_face.begin_contour();
                     for (int j = 0; j < contour.size(); ++j) {
                         Tessellator::Vertex vt(vec3(contour[j], 0)); vt.push_back(index); // one extra bit to allow stitch within a coutour.
@@ -328,13 +328,11 @@ namespace easy3d {
                 builder.add_vertex(vec3(v->data()));
             }
 
-            const unsigned int num = tess_face.num_triangles();
-            for (int i = 0; i < num; ++i) {
-                unsigned int a, b, c;
-                tess_face.get_triangle(i, a, b, c);
-                auto va = SurfaceMesh::Vertex(a + offset);
-                auto vb = SurfaceMesh::Vertex(b + offset);
-                auto vc = SurfaceMesh::Vertex(c + offset);
+            const auto& elements = tess_face.elements();
+            for (const auto& e : elements) {
+                auto va = SurfaceMesh::Vertex(e[0] + offset);
+                auto vb = SurfaceMesh::Vertex(e[1] + offset);
+                auto vc = SurfaceMesh::Vertex(e[2] + offset);
                 builder.add_triangle(va, vb, vc);
             }
 

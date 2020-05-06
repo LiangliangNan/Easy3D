@@ -51,7 +51,7 @@ namespace easy3d {
             , color_buffer_(0)
             , normal_buffer_(0)
             , texcoord_buffer_(0)
-            , index_buffer_(0)
+            , element_buffer_(0)
             , storage_buffer_(0)
             , current_storage_buffer_size_(0)
             , selection_buffer_(0)
@@ -73,14 +73,14 @@ namespace easy3d {
         VertexArrayObject::release_buffer(color_buffer_);
         VertexArrayObject::release_buffer(normal_buffer_);
         VertexArrayObject::release_buffer(texcoord_buffer_);
-        VertexArrayObject::release_buffer(index_buffer_);
+        VertexArrayObject::release_buffer(element_buffer_);
         VertexArrayObject::release_buffer(storage_buffer_);
         VertexArrayObject::release_buffer(selection_buffer_);
     }
 
 
     void Drawable::release_element_buffer() {
-        VertexArrayObject::release_buffer(index_buffer_);
+        VertexArrayObject::release_buffer(element_buffer_);
     }
 
 
@@ -103,7 +103,7 @@ namespace easy3d {
             output << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
                    << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
         }
-        if (index_buffer()) {
+        if (element_buffer()) {
             output << "\t\tIndex buffer:      " << num_indices_ << " indices, "
                    << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
         }
@@ -225,14 +225,34 @@ namespace easy3d {
     }
 
 
-    void Drawable::update_index_buffer(const std::vector<unsigned int> &indices) {
+    void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
         assert(vao_);
 
-        bool status = vao_->create_element_buffer(index_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
+        bool status = vao_->create_element_buffer(element_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
         if (!status)
             num_indices_ = 0;
         else
             num_indices_ = indices.size();
+    }
+
+
+    void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
+        assert(vao_);
+
+        if (type() == DT_POINTS) {
+            LOG(WARNING) << "element buffer is not needed for PointsDrawable";
+            return;
+        }
+
+        unsigned int num = 3;
+        if (type() == DT_LINES)
+            num = 2;
+
+        std::vector<unsigned int> elements;
+        for (const auto& array : indices)
+            elements.insert(elements.end(), array.begin(), array.end());
+
+        update_element_buffer(elements);
     }
 
 
@@ -257,18 +277,15 @@ namespace easy3d {
             easy3d_debug_log_gl_error;
 
             GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
-            if (index_buffer_ != 0)
+            if (element_buffer_ != 0)
                 barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 
             glMemoryBarrier(barriers);
             easy3d_debug_log_gl_error;
         }
 
-        // Primitives like lines and triangles can be drawn without the index buffer provided that
-        // all vertices are in order (e.g., f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3). This requires
-        // the shared vertices be duplicated in the vertex buffer.
-        if (index_buffer_) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_);	easy3d_debug_log_gl_error;
+        if (element_buffer_) {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_);	easy3d_debug_log_gl_error;
 
             // index buffer must be bound if using glDrawElements()
             glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);    easy3d_debug_log_gl_error;

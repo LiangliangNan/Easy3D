@@ -35,15 +35,15 @@ class gluTesselator;
 namespace easy3d {
 
     /**
-     * @brief Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges
-     *        into triangles. This implementation also keeps track of the unique vertices and respective indices, so as
-     *        to allow client code to take advantage of the index buffer for efficient rendering (to avoid sending
-     *        duplicated vertex to GPU). Typical applications:
-     *          - Tessellate concave polygons, polygons with holes, or polygons with intersecting edges;
-     *          - Generate buffer data for rendering;
-     *          - Triangulate non-triangle surfaces;
-     *          - Stitch patches of a triangle meshes.
-     * @TODO: make it template for both 2D and 3D, and floating point number; use the factored glutess.
+     * Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges into
+     * triangles or simple contours. This implementation also keeps track of the unique vertices and respective indices,
+     * which allows to take advantage of the element buffer for efficient rendering (i.e., avoid sending duplicated
+     * vertices to GPU). Typical applications:
+     *   - Tessellate concave polygons, polygons with holes, or polygons with intersecting edges;
+     *   - Generate buffer data for rendering;
+     *   - Triangulate non-triangle surfaces;
+     *   - Stitch patches of a triangle meshes;
+     *   - CSG operations
      */
 
     class Tessellator {
@@ -106,27 +106,52 @@ namespace easy3d {
 
         // Set the winding rule (default rule is ODD, modify if needed)
         enum WindingRule {
-            ODD,
-            NONZERO,
-            POSITIVE,
-            NEGATIVE,
-            ABS_GEQ_TWO
+            WINDING_ODD,
+            WINDING_NONZERO,
+            WINDING_POSITIVE,
+            WINDING_NEGATIVE,
+            WINDING_ABS_GEQ_TWO
         };
 
+        ///-------------------------------------------------------------------------
+
         /**
-         * Set the wining rule. The new rule will be effective until changed again.
-         * Explanation of the winding rule can be found here:
-         * https://www.glprogramming.com/red/chapter11.html
+         * @brief Set the working mode of the tessellator.
+         * @details The tessellator has two working modes and this function sets its working mode.
+         * The two working modes:
+         *  - Filled polygons: complex polygons are tessellated into filled polygons;
+         *  - Boundary only: complex polygons are tessellated into simple line loops separating the polygon interior
+         *                   and exterior
+         *  @param b true for the boundary only mode and false for the filled polygons mode.
+         */
+        void set_bounary_only(bool b);
+
+        /**
+         * Set the wining rule. The new rule will be effective until being changed by calling this function again.
+         * Explanation of the winding rule can be found here: https://www.glprogramming.com/red/chapter11.html
+         * With the winding rules, complex CSG operations can be implemented:
+         *  - UNION: Draw all input contours as a single polygon. The winding number of each resulting region is the
+         *           number of original polygons that cover it. The union can be extracted by using the WINDING_NONZERO
+         *           or WINDING_POSITIVE winding rules. Note that with the WINDING_NONZERO winding rule, we would get
+         *           the same result if all contour orientations were reversed.
+         *  - INTERSECTION: This only works for two contours at a time. Draw a single polygon using two contours.
+         *           Extract the result using WINDING_ABS_GEQ_TWO.
+         *  - DIFFERENCE: Suppose you want to compute A diff (B union C union D). Draw a single polygon consisting of
+         *           the unmodified contours from A, followed by the contours of B, C, and D, with their vertex order
+         *           reversed. To extract the result, use the WINDING_POSITIVE winding rule. (If B, C, and D are the
+         *           result of a BOUNDARY_ONLY operation, an alternative to reversing the vertex order is to reverse
+         *           the sign of the supplied normal. See begin_polygon().
          */
         void set_winding_rule(WindingRule rule);
 
         /**
-         * \brief Let the user supply the polygon normal, if known (to improve robustness). All input data is projected
-         *        into a plane perpendicular to the normal before tesselation.  All output triangles are oriented CCW
-         *        with respect to the normal.
+         * @brief Begin the tessellation of a complex polygon.
+         * @details This function lets the user supply the polygon normal if known (to improve robustness or to achieve
+         *        a specific tessellation purpose like CSG). All input data is projected into a plane perpendicular to
+         *        the normal before tesselation.  All output triangles are oriented CCW with respect to the normal.
          *        If the supplied normal is (0,0,0) (the default value), the normal is determined as follows. The
          *        direction of the normal, up to its sign, is found by fitting a plane to the vertices, without regard
-         *        to how the vertices are connected.  It is expected that the input data lies approximately in plane;
+         *        to how the vertices are connected. It is expected that the input data lies approximately in plane;
          *        otherwise projection perpendicular to the computed normal may substantially change the geometry. The
          *        sign of the normal is chosen so that the sum of the signed areas of all input contours is non-negative
          *        (where a CCW contour has positive area).
@@ -134,10 +159,14 @@ namespace easy3d {
          */
         void begin_polygon(const vec3 &normal = vec3(0, 0, 0));
 
-        void begin_contour();    // a polygon can have multiple contours
+        /**
+         * @brief Begin a contour of a complex polygon (a polygon may have multiple contours).
+         */
+        void begin_contour();
 
         /**
-         * @brief Add a vertex to the tessellator.
+         * @brief Add a vertex of a contour to the tessellator.
+         * @param data The vertex data.
          * @param idx The index of this vertex. This is optional. Providing it allows to recover its original index
          *            after tessellation. The new vertices generated in the tessellation will have a negative index.
          */
@@ -150,33 +179,35 @@ namespace easy3d {
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = -1);
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = -1);
 
+        /**
+         * Finish the current contour of a polygon.
+         */
         void end_contour();
 
+        /**
+         * Finish the current polygon.
+         */
         void end_polygon();
-
-        // the vertices of the resulted triangle set.
-        const std::vector<Vertex *> &vertices() const;
-
-        // list of triangle indices created over many calls (every consecutive 3 entries form a triangle)
-        // NOTE: the indices are w.r.t. the vertex list returned by 'vertices()'
-        const std::vector<unsigned int> &indices() const { return triangle_list_; }
-
-        // get the vertex indices of the i'th triangle in the triangle list.
-        // NOTE: the indices are w.r.t. the vertex list returned by 'vertices()'
-        bool get_triangle(unsigned int i, unsigned int &a, unsigned int &b, unsigned int &c) const;
-
-        // number of generated triangles
-        unsigned int num_triangles() const;
-
-        // number of triangles generated for the last polygon.
-        // NOTE: must be used after calling to end_polygon();
-        unsigned int num_triangles_in_last_polygon() const;
 
         ///-------------------------------------------------------------------------
 
-        // for generating simple closed loops with TESS_BOUNDARY_ONLY == TRUE.
-        void set_tess_bounary_only(bool b);
-        const std::vector< std::vector<unsigned int> >& contours() const { return contours_; }
+        /**
+         * The list of vertices in the result.
+         */
+        const std::vector<Vertex *> &vertices() const;
+
+        /**
+         * The list of elements (triangle or contour) created over many calls. Each entry is the vertex indices of the
+         * element.
+         */
+        const std::vector< std::vector<unsigned int> >& elements() const { return elements_; }
+
+        /**
+         * The number of elements (triangle or contour) in the last polygon.
+         * @note must be used after call to end_polygon() and before the next call to begin_polygon().
+         */
+        unsigned int num_elements_in_polygon() const { return num_elements_in_polygon_; }
+
 
         ///-------------------------------------------------------------------------
 
@@ -188,7 +219,7 @@ namespace easy3d {
         void reset();
 
     private:
-        void add_triangle(unsigned int a, unsigned int b, unsigned int c);
+        void _add_element(const std::vector<unsigned int>& element);
 
         // GLU tessellator callbacks
         static void beginCallback(unsigned int w, void *cbdata);
@@ -198,30 +229,22 @@ namespace easy3d {
 
     private:
         gluTesselator *tess_obj_;
+        void *vertex_manager_;
 
         // The tessellator decides the most efficient primitive type while performing tessellation.
         unsigned int primitive_type_; // GL_TRIANGLES, GL_TRIANGLE_FAN, GL_TRIANGLE_STRIP
 
-        // If true, the orientations of the resulted triangles will comply with the primitive_type_
-        // (decided by the tessellator), which is useful for rendering as GL_TRIANGLE_STRIP.
-        // However, when triangulating a mesh, the output triangles must have the orientation as
-        // the input polygons. In this case, you should set primitive_aware_orientation_ to false.
-        bool primitive_aware_orientation_;
+        // The list of elements (triangle or contour) created over many calls. Each entry is the vertex indices of the
+        // element.
+        std::vector< std::vector<unsigned int> > elements_;
 
-        // vertex ids for the current element
+        // The the growing number of elements (triangle or contour) in the current polygon.
+        unsigned int num_elements_in_polygon_;
+
+        // The vertex indices (including the original ones and the new vertices) of the current polygon.
         std::vector<unsigned int> vertex_ids_;
 
-        // the number of triangles in the last polygon
-        unsigned int num_triangles_in_polygon_;
-
-        // list of triangles created over many calls (every consecutive 3 entries form a triangle)
-        std::vector<unsigned int> triangle_list_;
-
-        // list of contours created over many calls
-        std::vector< std::vector<unsigned int> > contours_;
-
-        void *vertex_manager_;
-
+        // The length of the vertex data. Used to handle user provided data in the combine function.
         unsigned int vertex_data_size_;
     };
 

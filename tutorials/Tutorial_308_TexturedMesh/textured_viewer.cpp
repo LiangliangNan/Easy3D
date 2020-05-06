@@ -215,7 +215,7 @@ namespace easy3d {
                     continue;
 
                 tessellator.begin_polygon(model->compute_face_normal(face));
-                tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
                     auto v = model->to_vertex(h);
@@ -247,11 +247,11 @@ namespace easy3d {
                     d_texcoords.emplace_back(v->data() + offset);
             }
 
-            const std::vector<unsigned int> &indices = tessellator.indices();
+            const auto &d_indices = tessellator.elements();
 
             TrianglesDrawable *drawable = model->add_triangles_drawable("faces_" + std::to_string(i));
 
-            drawable->update_index_buffer(indices);
+            drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
             drawable->update_normal_buffer(d_normals);
             if (prop_texcoords)

@@ -255,7 +255,7 @@ namespace details {
                     indices.push_back(s.idx());
                     indices.push_back(t.idx());
                 }
-                drawable->update_index_buffer(indices);
+                drawable->update_element_buffer(indices);
             }
 
 
@@ -292,15 +292,15 @@ namespace details {
                 assert(prop);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -327,7 +327,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     float coord = (prop[face] - min_value) / (max_value - min_value);
 
@@ -341,7 +341,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -358,10 +358,10 @@ namespace details {
                     d_texcoords.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
@@ -377,15 +377,15 @@ namespace details {
                 assert(prop);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -412,7 +412,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
@@ -426,7 +426,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -443,10 +443,10 @@ namespace details {
                     d_texcoords.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
@@ -519,7 +519,7 @@ namespace details {
                     indices.push_back(s.idx());
                     indices.push_back(t.idx());
                 }
-                drawable->update_index_buffer(indices);
+                drawable->update_element_buffer(indices);
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
             }
 
@@ -581,15 +581,15 @@ namespace details {
                 assert(drawable);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -610,7 +610,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
@@ -621,7 +621,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -635,10 +635,10 @@ namespace details {
                     d_normals.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
 
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
@@ -651,15 +651,15 @@ namespace details {
                 assert(fcolor);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -680,7 +680,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     const vec3& color = fcolor[face];
                     for (auto h : model->halfedges(face)) {
@@ -693,7 +693,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -709,10 +709,10 @@ namespace details {
                     d_colors.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_color_buffer(d_colors);
 
@@ -726,15 +726,15 @@ namespace details {
                 assert(vcolor);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -754,7 +754,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
@@ -766,7 +766,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -782,10 +782,10 @@ namespace details {
                     d_colors.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_color_buffer(d_colors);
 
@@ -799,15 +799,15 @@ namespace details {
                 assert(vtexcoords);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -828,7 +828,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
@@ -840,7 +840,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -857,10 +857,10 @@ namespace details {
                     d_texcoords.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
@@ -882,15 +882,15 @@ namespace details {
                 assert(htexcoords);
 
                 /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of index buffer
-                 * to minimize the number of vertices sent to the GPU.
+                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
                  */
                 Tessellator tessellator;
 
                 /**
                  * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                  * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using program shaders. This allows data uploaded to the GPU
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                  * for the rendering purpose be shared for selection. Yeah, performance gain!
                  */
                 auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
@@ -911,7 +911,7 @@ namespace details {
 
                 for (auto face : model->faces()) {
                     tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                     tessellator.begin_contour();
                     for (auto h : model->halfedges(face)) {
                         auto v = model->to_vertex(h);
@@ -923,7 +923,7 @@ namespace details {
                     tessellator.end_contour();
                     tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_triangles_in_last_polygon();
+                    std::size_t num = tessellator.num_elements_in_polygon();
                     triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                     count_triangles += num;
                 }
@@ -940,10 +940,10 @@ namespace details {
                     d_texcoords.emplace_back(v->data() + offset);
                 }
 
-                const std::vector<unsigned int> &d_indices = tessellator.indices();
+                const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
-                drawable->update_index_buffer(d_indices);
+                drawable->update_element_buffer(d_indices);
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
@@ -1140,7 +1140,7 @@ namespace details {
                     indices.push_back(s);
                     indices.push_back(t);
                 }
-                drawable->update_index_buffer(indices);
+                drawable->update_element_buffer(indices);
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
             }
 
@@ -1187,7 +1187,7 @@ namespace details {
                     indices.push_back(s);
                     indices.push_back(t);
                 }
-                drawable->update_index_buffer(indices);
+                drawable->update_element_buffer(indices);
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
             }
 
@@ -1499,7 +1499,7 @@ namespace details {
                     }
                     auto points = model->get_vertex_property<vec3>("v:point");
                     drawable->update_vertex_buffer(points.vector());
-                    drawable->update_index_buffer(indices);
+                    drawable->update_element_buffer(indices);
                     break;
                 }
             }
@@ -1865,7 +1865,7 @@ namespace details {
                     }
                     auto points = model->get_vertex_property<vec3>("v:point");
                     drawable->update_vertex_buffer(points.vector());
-                    drawable->update_index_buffer(indices);
+                    drawable->update_element_buffer(indices);
                     break;
                 }
             }

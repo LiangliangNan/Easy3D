@@ -86,18 +86,28 @@ namespace easy3d {
         unsigned int color_buffer() const { return color_buffer_; }
         unsigned int normal_buffer() const { return normal_buffer_; }
         unsigned int texcoord_buffer() const { return texcoord_buffer_; }
-        unsigned int index_buffer() const { return index_buffer_; }
+        unsigned int element_buffer() const { return element_buffer_; }
         unsigned int storage_buffer() const { return storage_buffer_; }
         unsigned int selection_buffer() const { return selection_buffer_; }
 
         // ------------------- buffer management ------------------------
 
-        /// Creates/Updates a single buffer.
+        /**
+         * Create/Update a single buffer.
+         * Primitives like lines and triangles can be drawn with or without the element buffer.
+         *  - With an element buffer: this can reduce the GPU memory consumption.
+         *  - Without an element buffer: easier data transfer, but uses more GPU memory. In this case, vertices need to
+         *    be in a correct order, like f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3... This requires the shared vertices
+         *    be duplicated in the vertex buffer.
+         */
         void update_vertex_buffer(const std::vector<vec3> &vertices);
         void update_color_buffer(const std::vector<vec3> &colors);
         void update_normal_buffer(const std::vector<vec3> &normals);
         void update_texcoord_buffer(const std::vector<vec2> &texcoords);
-        void update_index_buffer(const std::vector<unsigned int> &indices);
+        void update_element_buffer(const std::vector<unsigned int> &elements);
+
+        // entry must have 2 or 3 elements
+        void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements);
 
         /// selection buffer (internally based on a shader storage buffer)
         /// @param index: the index of the binding point.
@@ -109,7 +119,7 @@ namespace easy3d {
         /// NOTE: the buffers should also be bound to this point in all shader code
         void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0);
 
-        /// Releases the index buffer if existing vertex data is sufficient (may require duplicating vertex data).
+        /// Releases the element buffer if existing vertex data is sufficient (may require duplicating vertex data).
         void release_element_buffer();
 
         /**
@@ -175,7 +185,7 @@ namespace easy3d {
         unsigned int color_buffer_;
         unsigned int normal_buffer_;
         unsigned int texcoord_buffer_;
-        unsigned int index_buffer_;
+        unsigned int element_buffer_;
 
         unsigned int storage_buffer_;
         std::size_t current_storage_buffer_size_;

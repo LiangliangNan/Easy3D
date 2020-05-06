@@ -389,7 +389,7 @@ namespace easy3d {
             background_ = new TrianglesDrawable;
         background_->update_vertex_buffer(vertices);
         background_->update_texcoord_buffer(texcoords);
-        background_->update_index_buffer(indices);
+        background_->update_element_buffer(indices);
         background_->update_normal_buffer(normals);
     }
 
@@ -416,7 +416,7 @@ namespace easy3d {
 
         LinesDrawable frustum("frustum");
         frustum.update_vertex_buffer(points);
-        frustum.update_index_buffer(indices);
+        frustum.update_element_buffer(indices);
         frustum.set_uniform_coloring(vec4(0.0, 0.0, 1.0, 1.0));
         frustum.draw(camera_, false);
     }

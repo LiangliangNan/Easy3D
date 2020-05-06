@@ -145,7 +145,7 @@ namespace easy3d {
         // draw the wireframe of the clipping plane
         LinesDrawable wireframe;
         wireframe.update_vertex_buffer(points);
-        wireframe.update_index_buffer(wire_indices);
+        wireframe.update_element_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
         wireframe.set_uniform_coloring(color_);
         wireframe.draw(cam, false);
@@ -157,7 +157,7 @@ namespace easy3d {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         TrianglesDrawable face;
         face.update_vertex_buffer(points);
-        face.update_index_buffer(face_indices);
+        face.update_element_buffer(face_indices);
         face.set_uniform_coloring(color_);
         face.draw(cam, false);
         glDisable(GL_BLEND);

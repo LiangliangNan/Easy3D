@@ -113,16 +113,16 @@ namespace easy3d {
             };
             const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, index_buffer = 0;
+            unsigned int vertex_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
+            vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
             program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
             program->set_uniform("depth", depth);
             vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);	easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);	easy3d_debug_log_gl_error;
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             vao.release();   easy3d_debug_log_gl_error;
@@ -171,17 +171,17 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, index_buffer = 0;
+            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
+            vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
             vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);	easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);	easy3d_debug_log_gl_error;
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             program->release_texture();
@@ -222,17 +222,17 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, index_buffer = 0;
+            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
+            vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
             vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);	easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);	easy3d_debug_log_gl_error;
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             program->release_texture();
@@ -282,17 +282,17 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, index_buffer = 0;
+            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_element_buffer(index_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
+            vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
             vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);	easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);	easy3d_debug_log_gl_error;
             glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             program->release_texture();
@@ -495,19 +495,23 @@ namespace easy3d {
             std::vector<vec2> points(vts.size());
             for (std::size_t i=0; i<vts.size(); ++i)
                 points[i] = vec2(vts[i]->data());
-            const std::vector<unsigned int>& face_indices = tess.indices();
 
-            unsigned int vertex_buffer = 0, index_buffer = 0;
+            const auto& indices = tess.elements();
+            std::vector<unsigned int> elements;
+            for (const auto& array : indices)
+                elements.insert(elements.end(), array.begin(), array.end());
+
+            unsigned int vertex_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_element_buffer(index_buffer, face_indices.data(), face_indices.size() * sizeof(unsigned int),true);easy3d_debug_log_gl_error;
+            vao.create_element_buffer(element_buffer, elements.data(), elements.size() * sizeof(unsigned int), true);easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
             program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
             program->set_uniform("depth", depth);
             vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);	easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, face_indices.size(), GL_UNSIGNED_INT, nullptr);easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);	easy3d_debug_log_gl_error;
+            glDrawElements(GL_TRIANGLES, elements.size(), GL_UNSIGNED_INT, nullptr); easy3d_debug_log_gl_error;
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             vao.release();   easy3d_debug_log_gl_error;
             program->release();easy3d_debug_log_gl_error;

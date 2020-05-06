@@ -58,7 +58,7 @@ void triangulate(SurfaceMesh *mesh) {
     for (auto f : mesh->faces()) {
         tessellator.begin_polygon(normals[f]);
 
-        tessellator.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
         tessellator.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
@@ -67,7 +67,7 @@ void triangulate(SurfaceMesh *mesh) {
         tessellator.end_contour();
 
         if (holes && holes[f].size() > 3) { // has a valid hole
-            tessellator.set_winding_rule(Tessellator::ODD);
+            tessellator.set_winding_rule(Tessellator::WINDING_ODD);
             tessellator.begin_contour();
             for (auto p : holes[f])
                 tessellator.add_vertex(p);
@@ -82,17 +82,15 @@ void triangulate(SurfaceMesh *mesh) {
 
     mesh->clear();
 
-    std::size_t num = tessellator.num_triangles();
-    if (num > 0) { // in degenerate cases num can be zero
+    const auto& triangles = tessellator.elements();
+    if (!triangles.empty()) { // in degenerate cases num can be zero
         const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
         for (auto v : vts) {
             mesh->add_vertex(vec3(v->data()));
         }
 
-        for (std::size_t i = 0; i < num; ++i) {
-            unsigned int a, b, c;
-            tessellator.get_triangle(i, a, b, c);
-            mesh->add_triangle(SurfaceMesh::Vertex(a), SurfaceMesh::Vertex(b), SurfaceMesh::Vertex(c));
+        for (const auto& t : triangles) {
+            mesh->add_triangle(SurfaceMesh::Vertex(t[0]), SurfaceMesh::Vertex(t[1]), SurfaceMesh::Vertex(t[2]));
         }
     }
 }

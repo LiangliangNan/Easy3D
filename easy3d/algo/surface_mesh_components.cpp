@@ -71,7 +71,7 @@ namespace easy3d {
         auto points = mesh_->get_vertex_property<vec3>("v:point");
 
         Tessellator tess;
-        tess.set_winding_rule(Tessellator::NONZERO);  // or POSITIVE
+        tess.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
 
         for (auto f : faces_) {
             tess.begin_polygon(normals[f]);
@@ -84,15 +84,13 @@ namespace easy3d {
         }
 
         float area = 0.0f;
-        std::size_t num = tess.num_triangles();
         const std::vector<Tessellator::Vertex *> &vts = tess.vertices();
-        for (std::size_t i = 0; i < num; ++i) {
-            unsigned int a, b, c;
-            tess.get_triangle(i, a, b, c);
-            const vec3 va(vts[a]->data());
-            const vec3 vb(vts[b]->data());
-            const vec3 vc(vts[c]->data());
-            area += geom::triangle_area(va, vb, vc);
+        const auto& triangles = tess.elements();
+        for (const auto& t : triangles) {
+            const vec3 a(vts[t[0]]->data());
+            const vec3 b(vts[t[1]]->data());
+            const vec3 c(vts[t[2]]->data());
+            area += geom::triangle_area(a, b, c);
         }
 
         return area;
