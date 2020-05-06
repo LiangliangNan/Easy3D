@@ -817,7 +817,7 @@ namespace easy3d {
             tess_face.reset();
         }
 
-        return true;
+        return mesh->n_faces() > 0;
     }
 
 
