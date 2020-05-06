@@ -164,6 +164,10 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (cloud->get_vertex_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (cloud->get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (cloud->get_vertex_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
         }
     }
 
@@ -185,6 +189,10 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
             else if (mesh->get_vertex_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (mesh->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned char>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
         }
     }

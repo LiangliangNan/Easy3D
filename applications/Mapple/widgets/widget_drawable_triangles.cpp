@@ -293,6 +293,10 @@ std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (mesh->get_face_property<int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
         }
 
         // scalar fields defined on vertices
@@ -304,6 +308,10 @@ std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *
             else if (mesh->get_vertex_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
             else if (mesh->get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
+            else if (mesh->get_vertex_property<unsigned char>(name))
                 schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
         }
     }
