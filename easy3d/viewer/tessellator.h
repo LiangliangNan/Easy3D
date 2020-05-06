@@ -106,11 +106,11 @@ namespace easy3d {
 
         // Set the winding rule (default rule is ODD, modify if needed)
         enum WindingRule {
-            WINDING_ODD,
-            WINDING_NONZERO,
-            WINDING_POSITIVE,
-            WINDING_NEGATIVE,
-            WINDING_ABS_GEQ_TWO
+            WINDING_ODD = 100130,
+            WINDING_NONZERO = 100131,
+            WINDING_POSITIVE = 100132,
+            WINDING_NEGATIVE = 100133,
+            WINDING_ABS_GEQ_TWO = 100134
         };
 
         ///-------------------------------------------------------------------------
@@ -128,7 +128,6 @@ namespace easy3d {
 
         /**
          * Set the wining rule. The new rule will be effective until being changed by calling this function again.
-         * Explanation of the winding rule can be found here: https://www.glprogramming.com/red/chapter11.html
          * With the winding rules, complex CSG operations can be implemented:
          *  - UNION: Draw all input contours as a single polygon. The winding number of each resulting region is the
          *           number of original polygons that cover it. The union can be extracted by using the WINDING_NONZERO
@@ -141,6 +140,8 @@ namespace easy3d {
          *           reversed. To extract the result, use the WINDING_POSITIVE winding rule. (If B, C, and D are the
          *           result of a BOUNDARY_ONLY operation, an alternative to reversing the vertex order is to reverse
          *           the sign of the supplied normal. See begin_polygon().
+         * Explanation of the winding rule can be found here:
+         * https://www.glprogramming.com/red/chapter11.html
          */
         void set_winding_rule(WindingRule rule);
 

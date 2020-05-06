@@ -58,7 +58,7 @@ void triangulate(SurfaceMesh *mesh) {
     for (auto f : mesh->faces()) {
         tessellator.begin_polygon(normals[f]);
 
-        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);
         tessellator.begin_contour();
         for (auto h : mesh->halfedges(f)) {
             SurfaceMesh::Vertex v = mesh->to_vertex(h);
@@ -112,6 +112,7 @@ int main(int argc, char **argv) {
     SurfaceMesh *mesh = new SurfaceMesh;
 
     // Face 1: a concave quad
+    if (1)
     {
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
         SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(800, 0, 0));
@@ -121,6 +122,7 @@ int main(int argc, char **argv) {
     }
 
     // Face 2: a self-intersecting face (a star)
+    if (1)
     {
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1500, 0, 0)),
@@ -133,6 +135,7 @@ int main(int argc, char **argv) {
     }
 
     // Face 3: a quad face with a hole
+    if (1)
     {
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1800, 0, 0)),
