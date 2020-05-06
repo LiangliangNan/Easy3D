@@ -131,9 +131,8 @@ namespace easy3d {
          *              - SurfaceMesh: "faces", "edges", "vertices", "borders", "locks";
          *              - PointCloud: "vertices";
          *              - Graph: "edges", "vertices".
-         * @TODO: promote face/vertex normals to the standard ones.
          */
-        void update_buffers();
+        void update();
 
         /**
          * @brief Setups how a drwable can update its OpenGL buffers. This function is required by only non-standard

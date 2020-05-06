@@ -150,7 +150,7 @@ namespace easy3d {
     }
 
 
-    void Drawable::update_buffers() {
+    void Drawable::update() {
         update_requested_ = true;
     }
 

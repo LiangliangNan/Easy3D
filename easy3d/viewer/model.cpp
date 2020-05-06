@@ -60,11 +60,11 @@ namespace easy3d {
 
     void Model::update() {
         for (auto d : points_drawables_)
-            d->update_buffers();
+            d->update();
         for (auto d : lines_drawables())
-            d->update_buffers();
+            d->update();
         for (auto d : triangles_drawables_)
-            d->update_buffers();
+            d->update();
     }
 
 

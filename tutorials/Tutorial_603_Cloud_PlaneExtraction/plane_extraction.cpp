@@ -81,7 +81,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             renderer::colorize_segmentation(cloud, "v:primitive_index", name);
             drawable->set_property_coloring(State::VERTEX, name);
 
-            drawable->update_buffers();
+            drawable->update();
             update();
         }
 

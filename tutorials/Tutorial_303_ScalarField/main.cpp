@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 
     // Upload data to the GPU.
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation");
-    drawable->update_buffers();
+    drawable->update();
 
     // Create texture for coloring the scalar field.
     const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
