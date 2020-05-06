@@ -226,7 +226,7 @@ namespace easy3d {
         static void beginCallback(unsigned int w, void *cbdata);
         static void endCallback(void *cbdata);
         static void vertexCallback(void *vertex, void *cbdata);
-        static void combineCallback(double coords[3], void *vertex_data[4], double weight[4], void **dataOut, void *cbdata);
+        static void combineCallback(double coords[3], void *vertex_data[4], float weight[4], void **dataOut, void *cbdata);
 
     private:
         gluTesselator *tess_obj_;

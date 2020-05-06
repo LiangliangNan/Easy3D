@@ -121,23 +121,7 @@ namespace easy3d {
 
 
     void Tessellator::set_winding_rule(WindingRule rule) {
-        switch (rule) {
-            case WINDING_ODD:
-                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ODD);
-                return;
-            case WINDING_NONZERO:
-                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NONZERO);
-                return;
-            case WINDING_POSITIVE:
-                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_POSITIVE);
-                return;
-            case WINDING_NEGATIVE:
-                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_NEGATIVE);
-                return;
-            case WINDING_ABS_GEQ_TWO:
-                TessProperty(tess_obj_, TESS_WINDING_RULE, TESS_WINDING_ABS_GEQ_TWO);
-                return;
-        }
+        TessProperty(tess_obj_, TESS_WINDING_RULE, rule);
     }
 
 
@@ -157,6 +141,7 @@ namespace easy3d {
         vertex_data_size_ = v.size();
 
         Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_create(v);
+
         // TessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
         // The second param is used only to perform tessellation, and the third
@@ -351,7 +336,7 @@ namespace easy3d {
     // ****************************************************************************
     void Tessellator::combineCallback(double coords[3],
                                       void *vertex_data[4],
-                                      double weight[4], void **dataOut, void *cbdata) {
+                                      float weight[4], void **dataOut, void *cbdata) {
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         unsigned int size = tessellator->vertex_data_size_;
@@ -360,13 +345,12 @@ namespace easy3d {
             v[i] = coords[i];
 
         // Blend the other data fields for the vertex.
-        double **vd = reinterpret_cast<double **>(vertex_data);
+        Vertex **vd = reinterpret_cast<Vertex **>(vertex_data);
         for (std::size_t i = 3; i < size; ++i) {
-            double a = (vertex_data[0]) ? (weight[0] * vd[0][i]) : 0.;
-            double b = (vertex_data[1]) ? (weight[1] * vd[1][i]) : 0.;
-            double c = (vertex_data[2]) ? (weight[2] * vd[2][i]) : 0.;
-            double d = (vertex_data[3]) ? (weight[3] * vd[3][i]) : 0.;
-            v[i] = a + b + c + d;
+            v[i] = (vd[0] ? (weight[0] * vd[0]->at(i)) : 0.) +
+                   (vd[1] ? (weight[1] * vd[1]->at(i)) : 0.) +
+                   (vd[2] ? (weight[2] * vd[2]->at(i)) : 0.) +
+                   (vd[3] ? (weight[3] * vd[3]->at(i)) : 0.);
         }
 
         *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_create(v);
