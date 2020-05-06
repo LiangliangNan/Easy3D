@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     surface->update_vertex_buffer(points);
     // Upload the vertex indices of the surface to the GPU. The indices represent how the vertices are connected to
     // form triangles.
-    surface->update_index_buffer(indices);
+    surface->update_element_buffer(indices);
     // Add the drawable to the viewer
     viewer.add_drawable(surface);
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     // Upload the vertex positions of the bounding box to the GPU.
     bbox_drawable->update_vertex_buffer(bbox_points);
     // Upload the vertex indices of the bounding box to the GPU.
-    bbox_drawable->update_index_buffer(bbox_indices);
+    bbox_drawable->update_element_buffer(bbox_indices);
     // Draw the lines of the bounding box in blue.
     bbox_drawable->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
     // Draw the lines with a width of 5 pixels.
