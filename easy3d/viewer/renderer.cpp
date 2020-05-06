@@ -1236,6 +1236,12 @@ namespace details {
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
                         details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<char>(name)) {
+                        auto prop = model->get_vertex_property<char>(name);
+                        details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<unsigned char>(name)) {
+                        auto prop = model->get_vertex_property<unsigned char>(name);
+                        details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << drawable->property_name();
                         return;
@@ -1353,6 +1359,12 @@ namespace details {
                         details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
+                        details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<char>(name)) {
+                        auto prop = model->get_vertex_property<char>(name);
+                        details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<unsigned char>(name)) {
+                        auto prop = model->get_vertex_property<unsigned char>(name);
                         details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << drawable->property_name();
@@ -1473,6 +1485,12 @@ namespace details {
                                 details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
+                                details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<char>(name)) {
+                                auto prop = model->get_vertex_property<char>(name);
+                                details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<unsigned char>(name)) {
+                                auto prop = model->get_vertex_property<unsigned char>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
@@ -1661,6 +1679,12 @@ namespace details {
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
                                 details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<char>(name)) {
+                                auto prop = model->get_vertex_property<char>(name);
+                                details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<unsigned char>(name)) {
+                                auto prop = model->get_vertex_property<unsigned char>(name);
+                                details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
                                 return;
@@ -1725,6 +1749,12 @@ namespace details {
                         details::update_buffers(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
+                        details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<char>(name)) {
+                        auto prop = model->get_vertex_property<char>(name);
+                        details::update_buffers(model, drawable, prop);
+                    } else if (model->get_vertex_property<unsigned char>(name)) {
+                        auto prop = model->get_vertex_property<unsigned char>(name);
                         details::update_buffers(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field not found: " << drawable->property_name();
@@ -1838,6 +1868,12 @@ namespace details {
                                 details::update_buffers(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
+                                details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<char>(name)) {
+                                auto prop = model->get_vertex_property<char>(name);
+                                details::update_buffers(model, drawable, prop);
+                            } else if (model->get_vertex_property<unsigned char>(name)) {
+                                auto prop = model->get_vertex_property<unsigned char>(name);
                                 details::update_buffers(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
