@@ -44,7 +44,7 @@ namespace easy3d {
 
     public:
         GenericBox()
-            : min_(std::numeric_limits<FT>::max())   // initialized to an invalid value
+            : min_(std::numeric_limits<FT>::max())   // is_valid to an invalid value
             , max_(-std::numeric_limits<FT>::max())
         {
         }
@@ -67,9 +67,12 @@ namespace easy3d {
             max_ = c + dir * r;
         }
 
-        inline bool initialized() const {
-            return (max_.x >= min_.x - std::numeric_limits<FT>::epsilon() ||
-                    max_.y >= min_.y - std::numeric_limits<FT>::epsilon() );
+        inline bool is_valid() const {
+            for (int i = 0; i < DIM; ++i) {
+                if (max_[i] >= min_[i] - std::numeric_limits<FT>::epsilon())
+                    return true;
+            }
+            return false;
         }
 
         inline void clear() {
@@ -87,14 +90,14 @@ namespace easy3d {
 
         inline FT min(unsigned int axis) const {
             assert(axis >= 0 && axis < DIM);
-            if (initialized())
+            if (is_valid())
                 return min_[axis];
             else
                 return FT(0.0);
         }
         inline FT max(unsigned int axis) const {
             assert(axis >= 0 && axis < DIM);
-            if (initialized())
+            if (is_valid())
                 return max_[axis];
             else
                 return FT(0.0);
@@ -102,21 +105,21 @@ namespace easy3d {
 
         inline FT range(unsigned int axis) const {
             assert(axis >= 0 && axis < DIM);
-            if (initialized())
+            if (is_valid())
                 return max_[axis] - min_[axis];
             else
                 return FT(0.0);
         }
 
         inline Point center() const {
-            if (initialized())
+            if (is_valid())
                 return FT(0.5) * (min_ + max_);
             else
                 return Point(0.0);
         }
 
         inline FT diagonal() const {
-            if (initialized()) {
+            if (is_valid()) {
                 FT sqr_len(0.0);
                 for (int i=0; i<DIM; ++i) {
                     FT d = max_[i] - min_[i];
@@ -129,7 +132,7 @@ namespace easy3d {
         }
 
         inline void add_point(const Point& p) {
-            if (initialized()) {
+            if (is_valid()) {
                 for (int i=0; i<DIM; ++i) {
                     min_[i] = std::min(min_[i], p[i]);
                     max_[i] = std::max(max_[i], p[i]);
@@ -142,7 +145,7 @@ namespace easy3d {
         }
 
         inline void add_box(const thisclass& b) {
-            if (b.initialized()) {
+            if (b.is_valid()) {
                 add_point(b.min());
                 add_point(b.max());
             }
@@ -150,13 +153,13 @@ namespace easy3d {
 
         inline thisclass operator+(const thisclass& b) const {
             thisclass result = *this;
-            if (b.initialized())
+            if (b.is_valid())
                 result += b;
             return result;
         }
 
         inline thisclass& operator+=(const thisclass& b) {
-            if (b.initialized()) {
+            if (b.is_valid()) {
                 add_point(b.min());
                 add_point(b.max());
             }

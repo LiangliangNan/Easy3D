@@ -804,16 +804,27 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     if (!model && models_.empty())
         return;
 
+    auto visual_box = [](const Model *m) -> Box3 {
+        Box3 box = m->bounding_box();
+        for (auto d : m->points_drawables()) box.add_box(d->bounding_box());
+        for (auto d : m->lines_drawables()) box.add_box(d->bounding_box());
+        for (auto d : m->triangles_drawables()) box.add_box(d->bounding_box());
+        return box;
+    };
+
     Box3 box;
     if (model)
-        box = model->bounding_box();
+        box = visual_box(model);
     else {
         for (auto m : models_)
-            box.add_box(m->bounding_box());
+            box.add_box(visual_box(m));
     }
-    camera_->setSceneBoundingBox(box.min(), box.max());
-    camera_->showEntireScene();
-    update();
+
+    if (box.is_valid()) {
+        camera_->setSceneBoundingBox(box.min(), box.max());
+        camera_->showEntireScene();
+        update();
+    }
 }
 
 
