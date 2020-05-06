@@ -550,6 +550,14 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
             if (!normals)
                 mesh->update_vertex_normals();
         }
+        else if (dynamic_cast<PointCloud *>(model)) {
+            auto cloud = dynamic_cast<PointCloud *>(model);
+            auto normals = cloud->get_vertex_property<vec3>(name);
+            if (!normals) {
+                LOG(WARNING) << "normal information does not exist";
+                return;
+            }
+        }
     }
 
     // a vector field is visualized as a LinesDrawable whose name is the same as the vector field

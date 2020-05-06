@@ -1268,9 +1268,9 @@ namespace details {
             std::vector<vec3> vertices(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
             int idx = 0;
             for (auto v: model->vertices()) {
-                vertices[v.idx()] = points[v];
-                vertices[v.idx() + 1] = points[v] + prop[v] * length;
-                idx += 2;
+                vertices[idx << 1] = points[v];
+                vertices[(idx << 1) + 1] = points[v] + prop[v] * length;
+                ++idx;
             }
             drawable->update_vertex_buffer(vertices);
         };
@@ -1522,7 +1522,6 @@ namespace details {
                 LOG(ERROR) << "invalid vector filed location";
                 return;
             }
-
 
             auto points = model->get_vertex_property<vec3>("v:point");
 
