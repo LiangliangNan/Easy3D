@@ -151,6 +151,7 @@ namespace easy3d {
 
 
     void Drawable::update() {
+        bbox_.clear();
         update_requested_ = true;
     }
 
