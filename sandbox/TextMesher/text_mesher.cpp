@@ -262,7 +262,7 @@ namespace easy3d {
                     return num;
                 };
 
-                for (std::size_t index = 0; index < contours.size(); ++index) {
+                for (std::size_t index = 0; index < contours.size() ; ++index) {
                     const Contour &contour = ch[index];
                     for (int j = 0; j < contours[index].size(); ++j) {
                         int id_a = contours[index][j];
@@ -336,7 +336,11 @@ namespace easy3d {
                 builder.add_triangle(va, vb, vc);
             }
 
+#ifndef NDEBUG
+            builder.end_surface(true);
+#else
             builder.end_surface(false);
+#endif
 
             // the tessellator runs for each character
             tess_face.reset();
