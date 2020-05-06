@@ -58,6 +58,7 @@
 #include "dialogs/dialog_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
 #include "dialogs/dialog_gaussian_noise.h"
+#include "dialogs/dialog_surface_mesh_from_text.h"
 
 #include "widgets/widget_global_setting.h"
 #include "widgets/widget_drawable_points.h"
@@ -802,8 +803,8 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshParameterization, SIGNAL(triggered()), this, SLOT(surfaceMeshParameterization()));
     connect(ui->actionSurfaceMeshRemeshing, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshing()));
     connect(ui->actionSurfaceMeshGeodesic, SIGNAL(triggered()), this, SLOT(surfaceMeshGeodesic()));
-
     connect(ui->actionSamplingSurfaceMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshSampling()));
+    connect(ui->actionCreateSurfaceMeshFromText, SIGNAL(triggered()), this, SLOT(surfaceMeshCreateMeshFromText()));
 }
 
 
@@ -916,7 +917,7 @@ void MainWindow::surfaceMeshDetectDuplicatedFaces() {
     const auto& faces = ms.detect_duplicated_faces(mesh, true);
     LOG(INFO) << "done. " << faces.size() << " faces deleted. " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -939,7 +940,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -961,7 +962,7 @@ void MainWindow::surfaceMeshDetectSelfIntersections() {
     else
 		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
  }
 
@@ -991,8 +992,14 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
     else
 		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was disabled or not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
+}
+
+
+void MainWindow::surfaceMeshCreateMeshFromText() {
+    auto dialog = new DialogSurfaceMeshFromText(this, dockWidgetCommand());
+    showDialog(dialog);
 }
 
 

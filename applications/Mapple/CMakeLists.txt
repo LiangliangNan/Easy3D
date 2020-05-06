@@ -23,6 +23,7 @@ set(${PROJECT_NAME}_HEADERS
 
         dialogs/dialog.h
         dialogs/dialog_surface_mesh_curvature.h
+        dialogs/dialog_surface_mesh_from_text.h
         dialogs/dialog_gaussian_noise.h
         dialogs/dialog_poisson_reconstruction.h
         dialogs/dialog_properties.h
@@ -53,6 +54,7 @@ set(${PROJECT_NAME}_SOURCES
 
         dialogs/dialog.cpp
         dialogs/dialog_surface_mesh_curvature.cpp
+        dialogs/dialog_surface_mesh_from_text.cpp
         dialogs/dialog_gaussian_noise.cpp
         dialogs/dialog_poisson_reconstruction.cpp
         dialogs/dialog_properties.cpp
@@ -79,6 +81,7 @@ set(${PROJECT_NAME}_FORMS
         main_window.ui
 
         dialogs/dialog_surface_mesh_curvature.ui
+        dialogs/dialog_surface_mesh_from_text.ui
         dialogs/dialog_gaussian_noise.ui
         dialogs/dialog_poisson_reconstruction.ui
         dialogs/dialog_properties.ui

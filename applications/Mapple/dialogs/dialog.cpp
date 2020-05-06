@@ -21,7 +21,7 @@ Dialog::~Dialog() {
 
 
 void Dialog::bestSize() {
-    // Liangliang: all this can be done by setting the dialog's layout constraints to "fixed".
+    // Liangliang: all these can be done by setting the dialog's layout constraints to "fixed".
     layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     // Query the title bar height of a QDockWidget:

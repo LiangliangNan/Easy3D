@@ -98,6 +98,7 @@ private slots:
     void surfaceMeshGeodesic();
     void surfaceMeshStitchCoincidentEdges();
     void surfaceMeshRemoveIsolatedVertices();
+    void surfaceMeshCreateMeshFromText();
 
     // user interaction
     void operationModeChanged(QAction* act);

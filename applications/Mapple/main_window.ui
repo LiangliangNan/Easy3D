@@ -142,6 +142,8 @@
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
     <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="separator"/>
+    <addaction name="actionCreateSurfaceMeshFromText"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -879,6 +881,11 @@
   <action name="actionDelaynayTriangulation3D">
    <property name="text">
     <string>Delaynay triangulation 3D</string>
+   </property>
+  </action>
+  <action name="actionCreateSurfaceMeshFromText">
+   <property name="text">
+    <string>Create from text</string>
    </property>
   </action>
  </widget>
