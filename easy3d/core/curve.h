@@ -49,7 +49,7 @@ namespace easy3d {
         }
         LinesDrawable *curve = new LinesDrawable;
         curve->update_vertex_buffer(points);
-        curve->update_index_buffer(indices);
+        curve->update_element_buffer(indices);
         curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
         curve->set_line_width(5);
         curve->set_uniform_coloring(vec4(0, 0, 1, 1));
@@ -72,7 +72,7 @@ namespace easy3d {
         }
         LinesDrawable *curve = new LinesDrawable;
         curve->update_vertex_buffer(points);
-        curve->update_index_buffer(indices);
+        curve->update_element_buffer(indices);
         curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
         curve->set_line_width(5);
         curve->set_uniform_coloring(vec4(0, 1, 0, 1));
