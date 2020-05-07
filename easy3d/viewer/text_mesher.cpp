@@ -35,6 +35,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -624,6 +625,7 @@ namespace easy3d {
 
         for (int i = 0; i < text.size(); ++i) {
             const auto &char_contour = _generate_contours(text[i], x, y);
+            // std::cout << i << ": " << string::to_string({wchar_t(char_contour.character)}) << std::endl;
             if (!char_contour.empty())
                 contours.push_back(char_contour);
         }
@@ -636,24 +638,28 @@ namespace easy3d {
     }
 
 
-    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &input_text, float x, float y, float extrude) {
-        if (!ready_)
-            return false;
-
+    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &text, float x, float y, float extrude) {
         // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
         // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
         // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
         // So I convert it to a muilti-byte character string
-        const std::wstring text = string::to_wstring(input_text);
+        const std::wstring the_text = string::to_wstring(text);
+        return _generate(mesh, the_text, x, y, extrude);
+    }
+
+
+    bool TextMesher::_generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, float extrude) {
+        if (!ready_)
+            return false;
 
         std::vector<CharContour> all_character_contours;
         _generate_contours(text, x, y, all_character_contours);
-
         if (all_character_contours.empty()) {
-            LOG(ERROR) << "no contour generated from the text using the specified font";
+            LOG(WARNING) << "no contour generated from the text using the specified font";
             return false;
         }
 
+        ProgressLogger progress(text.size());
         Tessellator tess_face;
         for (auto &ch : all_character_contours) {
             //-------------------------------------------------------------------------------------
@@ -840,6 +846,7 @@ namespace easy3d {
 
             // the tessellator runs for each character
             tess_face.reset();
+            progress.next();
         }
 
         return mesh->n_faces() > 0;

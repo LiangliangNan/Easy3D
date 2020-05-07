@@ -103,6 +103,16 @@ namespace easy3d {
         void cleanup();
 
         /**
+         * @brief Generate 3D surface representation of a text and append the surface to an existing mesh.
+         * @param text The input text.
+         * @param x The x-coordinate of the starting position.
+         * @param y The y-coordinate of the starting position.
+         * @param extrude The height (in the Z direction) of the 3D model.
+         * @param True on success and false on failure.
+         */
+        bool _generate(SurfaceMesh* mesh, const std::wstring &text, float x, float y, float extrude = 16);
+
+        /**
          * @brief Generate contours for a text.
          * @param text The input text.
          * @param x The x-coordinate of the starting position.
