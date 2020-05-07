@@ -97,21 +97,29 @@ namespace easy3d {
          * @param y The y-coordinate of the starting position.
          * @param contours The contours of the text. The generated contours are simply appended to his variable.
          */
-        void generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours);
-        void generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours);
+        void generate(const std::string &text, float x, float y, std::vector<CharContour> &contours);
 
     private:
         void cleanup();
 
         /**
+         * @brief Generate contours for a text.
+         * @param text The input text.
+         * @param x The x-coordinate of the starting position.
+         * @param y The y-coordinate of the starting position.
+         * @param contours The contours of the text. The generated contours are simply appended to his variable.
+         */
+        void _generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours);
+
+        /**
          * @brief Generate contours for a single character.
-         * @param character The input character.
+         * @param c The input character.
          * @param x The x-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
          * @return The contours for this character.
          * FIXME: should this function be public?
          */
-        CharContour generate_contours(wchar_t character, float& x, float& y);
+        CharContour _generate_contours(wchar_t c, float& x, float& y);
 
     private:
         void *font_library_;

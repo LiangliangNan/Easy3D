@@ -548,14 +548,14 @@ namespace easy3d {
     }
 
 
-    TextMesher::CharContour TextMesher::generate_contours(wchar_t ch, float &x, float &y) {
+    TextMesher::CharContour TextMesher::_generate_contours(wchar_t c, float &x, float &y) {
         CharContour char_contour;
-        char_contour.character = ch;
+        char_contour.character = c;
 
-        unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), ch);
+        unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), c);
         if (cur_char_index == 0) {
-            LOG(WARNING) << "undefined character code for the character " << ch
-                         << " (your font may not support this character";
+            LOG(WARNING) << "undefined character code for character " << string::to_string({c})
+                         << " (your font may not support this character)";
             return char_contour;
         }
 
@@ -615,7 +615,7 @@ namespace easy3d {
     }
 
 
-    void TextMesher::generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours) {
+    void TextMesher::_generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours) {
         if (!ready_)
             return;
 
@@ -623,18 +623,16 @@ namespace easy3d {
         prev_rsb_delta_ = 0;
 
         for (int i = 0; i < text.size(); ++i) {
-            const auto &char_contour = generate_contours(text[i], x, y);
+            const auto &char_contour = _generate_contours(text[i], x, y);
             if (!char_contour.empty())
                 contours.push_back(char_contour);
-            else
-                LOG(WARNING) << "failed generating contour for character " << text[i];
         }
     }
 
 
-    void TextMesher::generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
+    void TextMesher::generate(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
         const std::wstring the_text = string::to_wstring(text);
-        generate_contours(the_text, x, y, contours);
+        _generate_contours(the_text, x, y, contours);
     }
 
 
@@ -648,16 +646,16 @@ namespace easy3d {
         // So I convert it to a muilti-byte character string
         const std::wstring text = string::to_wstring(input_text);
 
-        std::vector<CharContour> characters;
-        generate_contours(text, x, y, characters);
+        std::vector<CharContour> all_character_contours;
+        _generate_contours(text, x, y, all_character_contours);
 
-        if (characters.empty()) {
+        if (all_character_contours.empty()) {
             LOG(ERROR) << "no contour generated from the text using the specified font";
             return false;
         }
 
         Tessellator tess_face;
-        for (auto &ch : characters) {
+        for (auto &ch : all_character_contours) {
             //-------------------------------------------------------------------------------------
             // First, use another tessellator to generate simple contours
 
@@ -769,16 +767,16 @@ namespace easy3d {
                             tess_face.begin_contour();
                             // if clockwise: a -> c -> d -> b
                             Tessellator::Vertex vta(a);
-                            vta.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vta.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vta);
                             Tessellator::Vertex vtc(c);
-                            vtc.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtc.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtc);
                             Tessellator::Vertex vtd(d);
-                            vtd.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtd.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtd);
                             Tessellator::Vertex vtb(b);
-                            vtb.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtb.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtb);
                             tess_face.end_contour();
                             tess_face.end_polygon();
@@ -788,16 +786,16 @@ namespace easy3d {
                             tess_face.begin_polygon(n);
                             tess_face.begin_contour();
                             Tessellator::Vertex vta(a);
-                            vta.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vta.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vta);
                             Tessellator::Vertex vtb(b);
-                            vtb.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtb.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtb);
                             Tessellator::Vertex vtd(d);
-                            vtd.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtd.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtd);
                             Tessellator::Vertex vtc(c);
-                            vtc.push_back(index); // one extra bit to allow stitch within a coutour.
+                            vtc.push_back(index); // one extra bit to allow stitch within a contour.
                             tess_face.add_vertex(vtc);
                             tess_face.end_contour();
                             tess_face.end_polygon();
@@ -811,8 +809,9 @@ namespace easy3d {
             // now we can collect the triangle faces for this character
 
             const auto &elements = tess_face.elements();
-            if (elements.empty())
-                LOG(WARNING) << "failed generating contour for character " << ch;
+            if (elements.empty()) {
+                LOG(WARNING) << "failed generating surface for character " << string::to_string({wchar_t(ch.character)});
+            }
             else {
                 // the vertex index starts from 0 for each character.
                 const int offset = mesh->n_vertices();
