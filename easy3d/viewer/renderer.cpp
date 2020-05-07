@@ -47,9 +47,9 @@ namespace easy3d {
             assert(model);
             assert(drawable);
 
-            auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
-            if (primitive_index) { // model has segmentation information
-                drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
+            auto colors = model->get_vertex_property<vec3>("v:color");
+            if (colors) {
+                drawable->set_property_coloring(State::VERTEX, "v:color");
                 return;
             }
 
@@ -59,9 +59,9 @@ namespace easy3d {
                 return;
             }
 
-            auto colors = model->get_vertex_property<vec3>("v:color");
-            if (colors) {
-                drawable->set_property_coloring(State::VERTEX, "v:color");
+            auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
+            if (primitive_index) { // model has segmentation information
+                drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
                 return;
             }
 
@@ -75,15 +75,22 @@ namespace easy3d {
             assert(drawable);
 
             //  Priorities:
-            //      1. segmentation
-            //      2. per-halfedge/vertex texture coordinates
-            //      3. per-vertex texture coordinates
-            //      4: per-face color
-            //      5: per-vertex color
-            //      6: uniform color
-            auto segmentation = model->get_face_property<int>("f:chart");
-            if (segmentation) {
-                drawable->set_scalar_coloring(State::FACE, "f:chart");
+            //      1: per-face color
+            //      2: per-vertex color
+            //      3. per-halfedge texture coordinates
+            //      4. per-vertex texture coordinates
+            //      5. segmentation
+            //      6 uniform color
+
+            auto face_colors = model->get_face_property<vec3>("f:color");
+            if (face_colors) {
+                drawable->set_property_coloring(State::FACE, "f:color");
+                return;
+            }
+
+            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
+            if (vertex_colors) {
+                drawable->set_property_coloring(State::VERTEX, "v:color");
                 return;
             }
 
@@ -99,15 +106,9 @@ namespace easy3d {
                 return;
             }
 
-            auto face_colors = model->get_face_property<vec3>("f:color");
-            if (face_colors) {
-                drawable->set_property_coloring(State::FACE, "f:color");
-                return;
-            }
-
-            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
-            if (vertex_colors) {
-                drawable->set_property_coloring(State::VERTEX, "v:color");
+            auto segmentation = model->get_face_property<int>("f:chart");
+            if (segmentation) {
+                drawable->set_scalar_coloring(State::FACE, "f:chart");
                 return;
             }
 

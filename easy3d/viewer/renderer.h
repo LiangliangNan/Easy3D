@@ -48,9 +48,9 @@ namespace easy3d {
          * @details The default rendering state is determined by the availability of the vertex properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
-         *              1. segmentation: in "v:primitive_index";
+         *              1. per-vertex color: in "v:color";
          *              2. per-vertex texture coordinates: in "v:texcoord";
-         *              3: per-vertex color: in "v:color";
+         *              3. segmentation: in "v:primitive_index";
          *              4: uniform color.
          */
         void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
@@ -60,12 +60,12 @@ namespace easy3d {
          * @details The default rendering state is determined by the availability of the vertex/face properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
-         *              1. segmentation: in "f:chart";
-         *              2. per-halfedge texture coordinates: in "h:texcoord";
-         *              3. per-vertex texture coordinates: in "v:texcoord";
-         *              4: per-face color: in "f:color";
-         *              5: per-vertex color: in "v:color";
-         *              6: uniform color.
+         *              1: per-face color: in "f:color";
+         *              2: per-vertex color: in "v:color";
+         *              3. per-halfedge texture coordinates: in "h:texcoord";
+         *              4. per-vertex texture coordinates: in "v:texcoord";
+         *              5. segmentation: in "f:chart";
+         *              6 uniform color
          */
         void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
 
