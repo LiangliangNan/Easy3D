@@ -84,7 +84,6 @@ namespace easy3d {
             auto segmentation = model->get_face_property<int>("f:chart");
             if (segmentation) {
                 drawable->set_scalar_coloring(State::FACE, "f:chart");
-//                auto texture = TextureManager::request()
                 return;
             }
 
@@ -126,6 +125,11 @@ namespace details {
             inline void
             clamp_scalar_field(const std::vector<FT> &property, float &min_value, float &max_value, float dummy_lower,
                                float dummy_upper) {
+                if (property.empty()) {
+                    LOG(WARNING) << "empty property";
+                    return;
+                }
+
                 // sort curvature values
                 std::vector<FT> values = property;;
                 std::sort(values.begin(), values.end());
@@ -139,8 +143,9 @@ namespace details {
                 const int lower = static_cast<int>(dummy_lower * 100);
                 const int upper = static_cast<int>(dummy_upper * 100);
                 if (lower > 0 || upper > 0)
-                    LOG(INFO) << "scalar field range [" << values.front() << ", " << values.back() << "] clamped to ["
-                              << min_value << ", " << max_value << "]";
+                    LOG(INFO) << "scalar field range ["
+                              << static_cast<float>(values.front()) << ", " << static_cast<float>(values.back())
+                              << "] clamped to [" << min_value << ", " << max_value << "]";
             }
 
             template <typename FT>
@@ -148,6 +153,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -173,6 +183,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
@@ -197,6 +212,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -229,6 +249,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -266,6 +291,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
@@ -290,6 +320,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -376,6 +411,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
                  * buffer to minimize the number of vertices sent to the GPU.
@@ -460,6 +500,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
                 float min_value = std::numeric_limits<float>::max();
@@ -493,6 +538,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                 const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -529,6 +579,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 auto normals = model->get_vertex_property<vec3>("v:normal");
@@ -543,6 +598,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
@@ -559,6 +619,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_color_buffer(prop.vector());
@@ -570,6 +635,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(prop.vector());
@@ -579,6 +649,11 @@ namespace details {
             void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
                 assert(model);
                 assert(drawable);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -649,6 +724,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(fcolor);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -725,6 +805,11 @@ namespace details {
                 assert(drawable);
                 assert(vcolor);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
                  * buffer to minimize the number of vertices sent to the GPU.
@@ -798,6 +883,11 @@ namespace details {
                 assert(drawable);
                 assert(vtexcoords);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
                  * buffer to minimize the number of vertices sent to the GPU.
@@ -864,14 +954,6 @@ namespace details {
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
-#if 0 // Model has texture coordinates, should we put a default texture?
-                const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
-            auto tex = TextureManager::request(texture_file, GL_REPEAT);
-            drawable->set_texture(tex);
-            drawable->set_texture_repeat(10);
-            drawable->set_use_texture(true);
-#endif
-
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
@@ -880,6 +962,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(htexcoords);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 /**
                  * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -947,14 +1034,6 @@ namespace details {
                 drawable->update_normal_buffer(d_normals);
                 drawable->update_texcoord_buffer(d_texcoords);
 
-#if 0 // Model has texture coordinates, should we put a default texture?
-                const std::string texture_file = resource::directory() + "/textures/checkerboard_gray.png";
-            auto tex = TextureManager::request(texture_file, GL_REPEAT);
-            drawable->set_texture(tex);
-            drawable->set_texture_repeat(10);
-            drawable->set_use_texture(true);
-#endif
-
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
@@ -963,6 +1042,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points, d_colors;
@@ -987,6 +1071,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points, d_colors;
                 d_points.reserve(model->n_edges() * 2);
@@ -1010,6 +1099,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
                 std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
@@ -1032,6 +1126,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
                 std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
@@ -1050,6 +1149,11 @@ namespace details {
 
 
             void update_mesh_borders(SurfaceMesh *model, LinesDrawable *drawable) {
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto prop = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> points;
                 for (auto e : model->edges()) {
@@ -1063,6 +1167,11 @@ namespace details {
 
 
             void update_mesh_locked_vertices(SurfaceMesh *model, PointsDrawable *drawable) {
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto lock = model->get_vertex_property<bool>("v:lock");
                 if (lock) {
                     auto prop = model->get_vertex_property<vec3>("v:point");
@@ -1081,6 +1190,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_color_buffer(prop.vector());
@@ -1093,6 +1207,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(prop.vector());
@@ -1104,6 +1223,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points, d_colors;
@@ -1128,6 +1252,11 @@ namespace details {
                 assert(drawable);
                 assert(prop);
 
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
 
@@ -1149,6 +1278,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;
@@ -1174,6 +1308,11 @@ namespace details {
                 assert(model);
                 assert(drawable);
                 assert(prop);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
@@ -1202,6 +1341,11 @@ namespace details {
         void update_buffers(PointCloud *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
 
             const std::string& name = drawable->property_name();
             switch (drawable->coloring_method()) {
@@ -1262,6 +1406,11 @@ namespace details {
 
 
         void update_buffers_vector_field(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale) {
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
             auto prop = model->get_vertex_property<vec3>(field);
             if (!prop) {
                 LOG(ERROR) << "vector filed '" << field << " ' not found on the point cloud (wrong name?)";
@@ -1286,6 +1435,11 @@ namespace details {
 
 
         void colorize_segmentation(PointCloud *model, const std::string &segmentation, const std::string &color_name) {
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
             // segmentation information has been stored as properties:
             //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
             //      - "v:primitive_index" (-1, 0, 1, 2...)
@@ -1321,6 +1475,11 @@ namespace details {
         void update_buffers(SurfaceMesh *model, PointsDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
 
             if (drawable->name() == "locks") {
                 details::update_mesh_locked_vertices(model, drawable);
@@ -1373,13 +1532,14 @@ namespace details {
                     break;
                 }
 
-                default: // uniform color
+                default: { // uniform color
                     auto points = model->get_vertex_property<vec3>("v:point");
                     drawable->update_vertex_buffer(points.vector());
                     auto normals = model->get_vertex_property<vec3>("v:normal");
                     if (normals)
                         drawable->update_normal_buffer(normals.vector());
                     break;
+                }
             }
         }
 
@@ -1392,6 +1552,11 @@ namespace details {
         void update_buffers(SurfaceMesh *model, LinesDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
 
             if (drawable->name() == "borders") {
                 details::update_mesh_borders(model, drawable);
@@ -1525,6 +1690,11 @@ namespace details {
 
 
         void update_buffers_vector_field(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale) {
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
             if (location == 0) {
                 if (!model->get_face_property<vec3>(field)) {
                     LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh faces (wrong name?)";
@@ -1590,6 +1760,11 @@ namespace details {
         void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
 
             const std::string& name = drawable->property_name();
             switch (drawable->coloring_method()) {
@@ -1717,6 +1892,11 @@ namespace details {
             assert(model);
             assert(drawable);
 
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
             const std::string& name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
@@ -1780,6 +1960,11 @@ namespace details {
         void update_buffers(Graph *model, LinesDrawable *drawable) {
             assert(model);
             assert(drawable);
+
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
 
             const std::string& name = drawable->property_name();
             switch (drawable->coloring_method()) {
@@ -1967,6 +2152,11 @@ namespace details {
 
 
         void update_buffers(Model *model, Drawable *drawable) {
+            if (model->n_vertices() == 0) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
             if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud* cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
