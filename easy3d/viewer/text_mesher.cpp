@@ -551,7 +551,7 @@ namespace easy3d {
 
     TextMesher::CharContour TextMesher::_generate_contours(wchar_t c, float &x, float &y) {
         CharContour char_contour;
-        char_contour.character = c;
+        char_contour.character = static_cast<unsigned int>(c);
 
         unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), c);
         if (cur_char_index == 0) {
@@ -625,7 +625,7 @@ namespace easy3d {
 
         for (int i = 0; i < text.size(); ++i) {
             const auto &char_contour = _generate_contours(text[i], x, y);
-            // std::cout << i << ": " << string::to_string({wchar_t(char_contour.character)}) << std::endl;
+            // std::cout << i << ": " << string::to_string({wchar_t(char_contour.character)}) << ", to int: " << int(text[i]) << std::endl;
             if (!char_contour.empty())
                 contours.push_back(char_contour);
         }
@@ -823,7 +823,7 @@ namespace easy3d {
                 const int offset = mesh->n_vertices();
 
                 // store the character as a vertex property.
-                auto prop_char = mesh->vertex_property<char>("v:character");
+                auto prop_char = mesh->vertex_property<unsigned int>("v:character");
 
                 // use ManifoldBuilder (just in case there were self-intersecting contours).
                 ManifoldBuilder builder(mesh);
