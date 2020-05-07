@@ -98,6 +98,7 @@ namespace easy3d {
          * @param contours The contours of the text. The generated contours are simply appended to his variable.
          */
         void generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours);
+        void generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours);
 
     private:
         void cleanup();

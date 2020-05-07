@@ -553,6 +553,11 @@ namespace easy3d {
         char_contour.character = ch;
 
         unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), ch);
+        if (cur_char_index == 0) {
+            LOG(WARNING) << "undefined character code for the character " << ch
+                         << " (your font may not support this character";
+            return char_contour;
+        }
 
         if (FT_Load_Glyph(get_face(font_face_), cur_char_index, FT_LOAD_DEFAULT)) {
             LOG_FIRST_N(ERROR, 1) << "failed loading glyph";
@@ -610,35 +615,38 @@ namespace easy3d {
     }
 
 
-    void TextMesher::generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
+    void TextMesher::generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours) {
         if (!ready_)
             return;
 
         prev_char_index_ = 0;
         prev_rsb_delta_ = 0;
 
-#if 0
-        // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
-        // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
-        // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
         for (int i = 0; i < text.size(); ++i) {
             const auto &char_contour = generate_contours(text[i], x, y);
-            contours.push_back(char_contour);
+            if (!char_contour.empty())
+                contours.push_back(char_contour);
+            else
+                LOG(WARNING) << "failed generating contour for character " << text[i];
         }
-#else
-        // work on muilti-byte characters
-        std::wstring the_text = string::to_wstring(text);
-        for (int i = 0; i < the_text.size(); ++i) {
-            const auto &char_contour = generate_contours(the_text[i], x, y);
-            contours.push_back(char_contour);
-        }
-#endif
     }
 
 
-    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &text, float x, float y, float extrude) {
+    void TextMesher::generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
+        const std::wstring the_text = string::to_wstring(text);
+        generate_contours(the_text, x, y, contours);
+    }
+
+
+    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &input_text, float x, float y, float extrude) {
         if (!ready_)
             return false;
+
+        // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
+        // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
+        // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
+        // So I convert it to a muilti-byte character string
+        const std::wstring text = string::to_wstring(input_text);
 
         std::vector<CharContour> characters;
         generate_contours(text, x, y, characters);
@@ -801,30 +809,35 @@ namespace easy3d {
             //-------------------------------------------------------------------------------------
 
             // now we can collect the triangle faces for this character
-            // the vertex index starts from 0 for each character.
-            const int offset = mesh->n_vertices();
-
-            // store the character as a vertex property.
-            auto prop_char = mesh->vertex_property<char>("v:character");
-
-            // use ManifoldBuilder (just in case there were self-intersecting contours).
-            ManifoldBuilder builder(mesh);
-            builder.begin_surface();
-
-            const auto &final_vertices = tess_face.vertices();
-            for (const auto v : final_vertices) {
-                auto vtx = builder.add_vertex(vec3(v->data()));
-                prop_char[vtx] = ch.character;
-            }
 
             const auto &elements = tess_face.elements();
-            for (const auto &e : elements) {
-                builder.add_triangle(SurfaceMesh::Vertex(e[0] + offset),
-                                     SurfaceMesh::Vertex(e[1] + offset),
-                                     SurfaceMesh::Vertex(e[2] + offset));
-            }
+            if (elements.empty())
+                LOG(WARNING) << "failed generating contour for character " << ch;
+            else {
+                // the vertex index starts from 0 for each character.
+                const int offset = mesh->n_vertices();
 
-            builder.end_surface(false);
+                // store the character as a vertex property.
+                auto prop_char = mesh->vertex_property<char>("v:character");
+
+                // use ManifoldBuilder (just in case there were self-intersecting contours).
+                ManifoldBuilder builder(mesh);
+                builder.begin_surface();
+
+                const auto &final_vertices = tess_face.vertices();
+                for (const auto v : final_vertices) {
+                    auto vtx = builder.add_vertex(vec3(v->data()));
+                    prop_char[vtx] = ch.character;
+                }
+
+                for (const auto &e : elements) {
+                    builder.add_triangle(SurfaceMesh::Vertex(e[0] + offset),
+                                         SurfaceMesh::Vertex(e[1] + offset),
+                                         SurfaceMesh::Vertex(e[2] + offset));
+                }
+
+                builder.end_surface(false);
+            }
 
             // the tessellator runs for each character
             tess_face.reset();
