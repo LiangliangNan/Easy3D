@@ -115,9 +115,7 @@ namespace easy3d {
         }
 
 
-
-
-namespace details {
+        namespace details {
 
             // clamps scalar field values by the percentages specified by dummy_lower and dummy_upper.
             // min_value and max_value return the expected value range.
@@ -148,8 +146,9 @@ namespace details {
                               << "] clamped to [" << min_value << ", " << max_value << "]";
             }
 
-            template <typename FT>
-            inline void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<FT> prop) {
+            template<typename FT>
+            inline void
+            update_buffers(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -166,7 +165,8 @@ namespace details {
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
                 auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec2> d_texcoords;  d_texcoords.reserve(model->n_vertices());
+                std::vector<vec2> d_texcoords;
+                d_texcoords.reserve(model->n_vertices());
                 for (auto v : model->vertices()) {
                     float coord = (prop[v] - min_value) / (max_value - min_value);
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
@@ -208,7 +208,8 @@ namespace details {
 
 
             template<typename FT>
-            inline void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<FT> prop) {
+            inline void
+            update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -245,7 +246,8 @@ namespace details {
 
 
             template<typename FT>
-            inline void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            inline void
+            update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -326,81 +328,118 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
+                    const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                    const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+                    float min_value = std::numeric_limits<float>::max();
+                    float max_value = -std::numeric_limits<float>::max();
+                    details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    float coord = (prop[face] - min_value) / (max_value - min_value);
-
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        vertex.append(vec2(coord, 0.5f));
-                        tessellator.add_vertex(vertex);
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(model->n_faces() * 3);
+                    d_normals.reserve(model->n_faces() * 3);
+                    d_texcoords.reserve(model->n_faces() * 3);
+                    for (auto face : model->faces()) {
+                        const float coord = (prop[face] - min_value) / (max_value - min_value);
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            d_points.emplace_back(points[v]);
+                            d_normals.emplace_back(normals[v]);
+                            d_texcoords.emplace_back(vec2(coord, 0.5f));
+                        }
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+                    drawable->release_element_buffer();
+                } else {
+
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
+
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                    const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+                    float min_value = std::numeric_limits<float>::max();
+                    float max_value = -std::numeric_limits<float>::max();
+                    details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        float coord = (prop[face] - min_value) / (max_value - min_value);
+
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(vec2(coord, 0.5f));
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_texcoords.reserve(vts.size());
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_texcoords.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                std::vector<vec3> d_points, d_normals;
-                std::vector<vec2> d_texcoords;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_texcoords.emplace_back(v->data() + offset);
-                }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_texcoord_buffer(d_texcoords);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
@@ -416,81 +455,117 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
+                    const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                    const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+                    float min_value = std::numeric_limits<float>::max();
+                    float max_value = -std::numeric_limits<float>::max();
+                    details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-                
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-
-                        float coord = (prop[v] - min_value) / (max_value - min_value);
-                        vertex.append(vec2(coord, 0.5f));
-                        tessellator.add_vertex(vertex);
+                    std::vector<vec2> d_texcoords;
+                    d_texcoords.reserve(model->n_vertices());
+                    for (auto v : model->vertices()) {
+                        const float coord = (prop[v] - min_value) / (max_value - min_value);
+                        d_texcoords.emplace_back(vec2(coord, 0.5f));
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    std::vector<unsigned int> d_indices;
+                    d_indices.reserve(model->n_faces() * 3);
+                    for (auto f : model->faces()) {
+                        for (auto h : model->halfedges(f))
+                            d_indices.push_back(model->to_vertex(h).idx());
+                    }
+
+                    drawable->update_vertex_buffer(points.vector());
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(normals.vector());
+                    drawable->update_texcoord_buffer(d_texcoords);
                 }
+                else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                std::vector<vec3> d_points, d_normals;
-                std::vector<vec2> d_texcoords;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_texcoords.emplace_back(v->data() + offset);
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                    const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+                    float min_value = std::numeric_limits<float>::max();
+                    float max_value = -std::numeric_limits<float>::max();
+                    details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+
+                            float coord = (prop[v] - min_value) / (max_value - min_value);
+                            vertex.append(vec2(coord, 0.5f));
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_texcoords.reserve(vts.size());
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_texcoords.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_texcoord_buffer(d_texcoords);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
@@ -574,7 +649,7 @@ namespace details {
             }
 
 
-            void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec2> prop) {
+            void update_buffers(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -594,7 +669,7 @@ namespace details {
             }
 
 
-            void update_buffers(PointCloud* model, PointsDrawable* drawable, PointCloud::VertexProperty<vec3> prop) {
+            void update_buffers(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -614,7 +689,7 @@ namespace details {
             }
 
 
-            void update_buffers(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            void update_buffers(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -630,7 +705,7 @@ namespace details {
             }
 
 
-            void update_buffers(SurfaceMesh* model, PointsDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            void update_buffers(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -647,7 +722,6 @@ namespace details {
 
 
             void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
-#if 1
                 assert(model);
                 assert(drawable);
 
@@ -656,116 +730,90 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
-
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        tessellator.add_vertex(vertex);
+                    std::vector<unsigned int> d_indices;
+                    d_indices.reserve(model->n_faces() * 3);
+                    for (auto face : model->faces()) {
+                        for (auto h : model->halfedges(face))
+                            d_indices.push_back(model->to_vertex(h).idx());
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
+                    drawable->update_vertex_buffer(model->points());
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(normals.vector());
+                } else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
-                }
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
 
-                std::vector<vec3> d_points, d_normals;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                }
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
 
-                const auto &d_indices = tessellator.elements();
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
 
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
-#else
-                assert(model);
-                assert(drawable);
-
-                if (model->n_vertices() == 0) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
-
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                std::vector<unsigned int> d_indices;
-                d_indices.reserve(model->n_faces() * 3);
-                for (auto face : model->faces()) {
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        d_indices.push_back(v.idx());
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
                     }
-                    triangle_range[face] = std::make_pair(face.idx(), face.idx());
-                }
 
-                drawable->update_vertex_buffer(model->points());
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(normals.vector());
-#endif
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
+                }
             }
 
             // with a per-face color
-            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::FaceProperty<vec3> fcolor) {
+            void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable,
+                                SurfaceMesh::FaceProperty<vec3> fcolor) {
                 assert(model);
                 assert(drawable);
                 assert(fcolor);
@@ -775,77 +823,110 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
+                    std::vector<vec3> d_points, d_normals, d_colors;
+                    d_points.reserve(model->n_faces() * 3);
+                    d_normals.reserve(model->n_faces() * 3);
+                    d_colors.reserve(model->n_faces() * 3);
 
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    const vec3& color = fcolor[face];
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        vertex.append(color);
-                        tessellator.add_vertex(vertex);
+                    for (auto f : model->faces()) {
+                        const vec3 &color = fcolor[f];
+                        for (auto h : model->halfedges(f)) {
+                            auto v = model->to_vertex(h);
+                            d_points.push_back(points[v]);
+                            d_normals.push_back(normals[v]);
+                            d_colors.push_back(color);
+                        }
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_color_buffer(d_colors);
+                    drawable->release_element_buffer();
                 }
+                else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                std::vector<vec3> d_points, d_normals, d_colors;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_colors.emplace_back(v->data() + offset);
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        const vec3 &color = fcolor[face];
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(color);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals, d_colors;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_colors.reserve(vts.size());
+
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_colors.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_color_buffer(d_colors);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_color_buffer(d_colors);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
-            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
+            void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable,
+                                SurfaceMesh::VertexProperty<vec3> vcolor) {
                 assert(model);
                 assert(drawable);
                 assert(vcolor);
@@ -855,75 +936,100 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
-
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        vertex.append(vcolor[v]);
-                        tessellator.add_vertex(vertex);
+                    std::vector<unsigned int> d_indices;
+                    d_indices.reserve(model->n_faces() * 3);
+                    for (auto f : model->faces()) {
+                        for (auto h : model->halfedges(f))
+                            d_indices.push_back(model->to_vertex(h).idx());
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    drawable->update_vertex_buffer(points.vector());
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(normals.vector());
+                    drawable->update_color_buffer(vcolor.vector());
                 }
+                else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                std::vector<vec3> d_points, d_normals, d_colors;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_colors.emplace_back(v->data() + offset);
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(vcolor[v]);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals, d_colors;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_colors.reserve(vts.size());
+
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_colors.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_color_buffer(d_colors);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_color_buffer(d_colors);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
-            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> vtexcoords) {
+            void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable,
+                                SurfaceMesh::VertexProperty<vec2> vtexcoords) {
                 assert(model);
                 assert(drawable);
                 assert(vtexcoords);
@@ -933,77 +1039,102 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
-
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        vertex.append(vtexcoords[v]);
-                        tessellator.add_vertex(vertex);
+                    std::vector<unsigned int> d_indices;
+                    d_indices.reserve(model->n_faces() * 3);
+                    for (auto f : model->faces()) {
+                        for (auto h : model->halfedges(f))
+                            d_indices.push_back(model->to_vertex(h).idx());
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    drawable->update_vertex_buffer(points.vector());
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(normals.vector());
+                    drawable->update_texcoord_buffer(vtexcoords.vector());
                 }
+                else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                std::vector<vec3> d_points, d_normals;
-                std::vector<vec2> d_texcoords;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_texcoords.emplace_back(v->data() + offset);
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(vtexcoords[v]);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_texcoords.reserve(vts.size());
+
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_texcoords.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_texcoord_buffer(d_texcoords);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
-            void update_buffers(SurfaceMesh* model, TrianglesDrawable* drawable, SurfaceMesh::HalfedgeProperty<vec2> htexcoords) {
+            void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable,
+                                SurfaceMesh::HalfedgeProperty<vec2> htexcoords) {
                 assert(model);
                 assert(drawable);
                 assert(htexcoords);
@@ -1013,77 +1144,107 @@ namespace details {
                     return;
                 }
 
-                /**
-                 * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
+                if (model->is_triangle_mesh()) {
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
-                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
-                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
-                 * for the rendering purpose be shared for selection. Yeah, performance gain!
-                 */
-                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
-                int count_triangles = 0;
-
-                /**
-                 * Efficiency in switching between flat and smooth shading.
-                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
-                 * the fragment shader:
-                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
-                 * between flat and smooth shading without transferring different data to the GPU.
-                 */
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                model->update_vertex_normals();
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-
-                for (auto face : model->faces()) {
-                    tessellator.begin_polygon(model->compute_face_normal(face));
-                    // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                    tessellator.begin_contour();
-                    for (auto h : model->halfedges(face)) {
-                        auto v = model->to_vertex(h);
-                        Tessellator::Vertex vertex(points[v], v.idx());
-                        vertex.append(normals[v]);
-                        vertex.append(htexcoords[h]);
-                        tessellator.add_vertex(vertex);
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(model->n_faces() * 3),
+                    d_normals.reserve(model->n_faces() * 3);
+                    d_texcoords.reserve(model->n_faces() * 3);
+                    for (auto face : model->faces()) {
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            d_points.push_back(points[v]);
+                            d_normals.push_back(normals[v]);
+                            d_texcoords.push_back(htexcoords[h]);
+                        }
                     }
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
 
-                    std::size_t num = tessellator.num_elements_in_polygon();
-                    triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                    count_triangles += num;
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+                    drawable->release_element_buffer();
+                } else {
+                    /**
+                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
+
+                    /**
+                     * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                     * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                     * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                     * for the rendering purpose be shared for selection. Yeah, performance gain!
+                     */
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int count_triangles = 0;
+
+                    /**
+                     * Efficiency in switching between flat and smooth shading.
+                     * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                     * the fragment shader:
+                     *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                     * between flat and smooth shading without transferring different data to the GPU.
+                     */
+
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    model->update_vertex_normals();
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                    for (auto face : model->faces()) {
+                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto h : model->halfedges(face)) {
+                            auto v = model->to_vertex(h);
+                            Tessellator::Vertex vertex(points[v], v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(htexcoords[h]);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+
+                        std::size_t num = tessellator.num_elements_in_polygon();
+                        triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
+                        count_triangles += num;
+                    }
+
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+                    d_texcoords.reserve(vts.size());
+
+                    for (auto v :vts) {
+                        std::size_t offset = 0;
+                        d_points.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_normals.emplace_back(v->data() + offset);
+                        offset += 3;
+                        d_texcoords.emplace_back(v->data() + offset);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_element_buffer(d_indices);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_texcoord_buffer(d_texcoords);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                std::vector<vec3> d_points, d_normals;
-                std::vector<vec2> d_texcoords;
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                for (auto v :vts) {
-                    std::size_t offset = 0;
-                    d_points.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_normals.emplace_back(v->data() + offset);
-                    offset += 3;
-                    d_texcoords.emplace_back(v->data() + offset);
-                }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_element_buffer(d_indices);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_texcoord_buffer(d_texcoords);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
             }
 
 
-            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
+            void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1111,7 +1272,8 @@ namespace details {
             }
 
 
-            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            void
+            update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1139,7 +1301,8 @@ namespace details {
             }
 
 
-            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            void
+            update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1150,8 +1313,10 @@ namespace details {
                 }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
-                std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
+                std::vector<vec3> d_points;
+                d_points.reserve(model->n_edges() * 2);
+                std::vector<vec2> d_texcoords;
+                d_points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
                     SurfaceMesh::Vertex s = model->vertex(e, 0);
                     SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -1166,7 +1331,7 @@ namespace details {
             }
 
 
-            void update_buffers(SurfaceMesh* model, LinesDrawable* drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
+            void update_buffers(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1177,8 +1342,10 @@ namespace details {
                 }
 
                 auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> d_points;     d_points.reserve(model->n_edges() * 2);
-                std::vector<vec2> d_texcoords;  d_points.reserve(model->n_edges() * 2);
+                std::vector<vec3> d_points;
+                d_points.reserve(model->n_edges() * 2);
+                std::vector<vec2> d_texcoords;
+                d_points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
                     SurfaceMesh::Vertex s = model->vertex(e, 0);
                     SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -1201,6 +1368,7 @@ namespace details {
 
                 auto prop = model->get_vertex_property<vec3>("v:point");
                 std::vector<vec3> points;
+                points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
                     if (model->is_boundary(e)) {
                         points.push_back(prop[model->vertex(e, 0)]);
@@ -1230,7 +1398,7 @@ namespace details {
             }
 
 
-            void update_buffers(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            void update_buffers(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1247,7 +1415,7 @@ namespace details {
             }
 
 
-            void update_buffers(Graph* model, PointsDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            void update_buffers(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1264,7 +1432,7 @@ namespace details {
             }
 
 
-            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec3> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1292,7 +1460,7 @@ namespace details {
                 drawable->set_impostor_type(LinesDrawable::CYLINDER);
             }
 
-            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec2> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1308,6 +1476,7 @@ namespace details {
                 drawable->update_texcoord_buffer(prop.vector());
 
                 std::vector<unsigned int> indices;
+                indices.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
                     unsigned int s = model->vertex(e, 0).idx();
                     unsigned int t = model->vertex(e, 1).idx();
@@ -1319,7 +1488,7 @@ namespace details {
             }
 
 
-            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::EdgeProperty<vec2> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1349,7 +1518,7 @@ namespace details {
             }
 
 
-            void update_buffers(Graph* model, LinesDrawable* drawable, Graph::VertexProperty<vec3> prop) {
+            void update_buffers(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1365,6 +1534,7 @@ namespace details {
                 drawable->update_color_buffer(prop.vector());
 
                 std::vector<unsigned int> indices;
+                indices.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
                     unsigned int s = model->vertex(e, 0).idx();
                     unsigned int t = model->vertex(e, 1).idx();
@@ -1392,7 +1562,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
@@ -1450,7 +1620,8 @@ namespace details {
         }
 
 
-        void update_buffers_vector_field(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale) {
+        void update_buffers_vector_field(PointCloud *model, LinesDrawable *drawable, const std::string &field,
+                                         float scale) {
             if (model->n_vertices() == 0) {
                 LOG(WARNING) << "model has no valid geometry";
                 return;
@@ -1479,7 +1650,8 @@ namespace details {
         // -------------------------------------------------------------------------------------------------------------
 
 
-        void colorize_segmentation(PointCloud *model, const std::string &segmentation, const std::string &color_name) {
+        void
+        colorize_segmentation(PointCloud *model, const std::string &segmentation, const std::string &color_name) {
             if (model->n_vertices() == 0) {
                 LOG(WARNING) << "model has no valid geometry";
                 return;
@@ -1507,8 +1679,7 @@ namespace details {
                     else
                         colors[v] = color_table[idx];
                 }
-            }
-            else {
+            } else {
                 LOG(ERROR) << "segmentation '" << segmentation << "' does not exist";
             }
         }
@@ -1531,7 +1702,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
@@ -1608,7 +1779,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     switch (drawable->property_location()) {
@@ -1617,7 +1788,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on edges: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on edges: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::VERTEX: {
@@ -1625,7 +1797,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on vertices: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::FACE:
@@ -1719,6 +1892,7 @@ namespace details {
                 default: {// uniform color
                     // if reached here, we choose a uniform color.
                     std::vector<unsigned int> indices;
+                    indices.reserve(model->n_edges() * 2);
                     for (auto e : model->edges()) {
                         SurfaceMesh::Vertex s = model->vertex(e, 0);
                         SurfaceMesh::Vertex t = model->vertex(e, 1);
@@ -1734,7 +1908,8 @@ namespace details {
         }
 
 
-        void update_buffers_vector_field(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale) {
+        void update_buffers_vector_field(SurfaceMesh *model, LinesDrawable *drawable, const std::string &field,
+                                         int location, float scale) {
             if (model->n_vertices() == 0) {
                 LOG(WARNING) << "model has no valid geometry";
                 return;
@@ -1750,8 +1925,7 @@ namespace details {
                     LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh vertices (wrong name?)";
                     return;
                 }
-            }
-            else {
+            } else {
                 LOG(ERROR) << "invalid vector filed location";
                 return;
             }
@@ -1785,8 +1959,7 @@ namespace details {
                     d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
                     idx += 2;
                 }
-            }
-            else if (location == 1) {
+            } else if (location == 1) {
                 auto prop = model->get_vertex_property<vec3>(field);
                 d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
                 for (auto v: model->vertices()) {
@@ -1811,7 +1984,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     switch (drawable->property_location()) {
@@ -1820,7 +1993,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on vertices: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::HALFEDGE: {
@@ -1828,7 +2002,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on halfedges: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on halfedges: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::FACE:
@@ -1942,7 +2117,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
@@ -2011,7 +2186,7 @@ namespace details {
                 return;
             }
 
-            const std::string& name = drawable->property_name();
+            const std::string &name = drawable->property_name();
             switch (drawable->coloring_method()) {
                 case State::TEXTURED: {
                     switch (drawable->property_location()) {
@@ -2020,7 +2195,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on edges: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on edges: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::VERTEX: {
@@ -2028,7 +2204,8 @@ namespace details {
                             if (texcoord)
                                 details::update_buffers(model, drawable, texcoord);
                             else
-                                LOG(WARNING) << "texcoord property not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "texcoord property not found on vertices: "
+                                             << drawable->property_name();
                             break;
                         }
                         case State::FACE:
@@ -2122,11 +2299,10 @@ namespace details {
                 default: {// uniform color
                     // if reached here, we choose a uniform color.
                     std::vector<unsigned int> indices;
+                    indices.reserve(model->n_edges() * 2);
                     for (auto e : model->edges()) {
-                        Graph::Vertex s = model->vertex(e, 0);
-                        Graph::Vertex t = model->vertex(e, 1);
-                        indices.push_back(s.idx());
-                        indices.push_back(t.idx());
+                        indices.push_back(model->vertex(e, 0).idx());
+                        indices.push_back(model->vertex(e, 1).idx());
                     }
                     auto points = model->get_vertex_property<vec3>("v:point");
                     drawable->update_vertex_buffer(points.vector());
@@ -2203,7 +2379,7 @@ namespace details {
             }
 
             if (dynamic_cast<PointCloud *>(model)) {
-                PointCloud* cloud = dynamic_cast<PointCloud *>(model);
+                PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update_buffers(cloud, dynamic_cast<PointsDrawable *>(drawable));
@@ -2216,7 +2392,7 @@ namespace details {
                         break;
                 }
             } else if (dynamic_cast<Graph *>(model)) {
-                Graph* graph = dynamic_cast<Graph *>(model);
+                Graph *graph = dynamic_cast<Graph *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update_buffers(graph, dynamic_cast<PointsDrawable *>(drawable));
@@ -2229,7 +2405,7 @@ namespace details {
                         break;
                 }
             } else if (dynamic_cast<SurfaceMesh *>(model)) {
-                SurfaceMesh* mesh = dynamic_cast<SurfaceMesh *>(model);
+                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update_buffers(mesh, dynamic_cast<PointsDrawable *>(drawable));
