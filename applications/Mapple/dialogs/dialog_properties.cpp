@@ -252,9 +252,9 @@ namespace details {
             return "void";
     }
 
-    template<typename MODEL, typename SourceTarget, typename TargetType>
+    template<typename MODEL, typename SourceType, typename TargetType>
     inline bool create_vertex_property_from_data(MODEL *model, const std::string &name) {
-        auto old_prop = model->template get_vertex_property<SourceTarget>(name);
+        auto old_prop = model->template get_vertex_property<SourceType>(name);
         if (old_prop) {
             const auto &data = old_prop.vector();
             auto new_prop = model->template add_vertex_property<TargetType>(
@@ -270,9 +270,9 @@ namespace details {
     }
 
 
-    template<typename MODEL, typename SourceTarget, typename TargetType>
+    template<typename MODEL, typename SourceType, typename TargetType>
     inline bool create_face_property_from_data(MODEL *model, const std::string &name) {
-        auto old_prop = model->template get_face_property<SourceTarget>(name);
+        auto old_prop = model->template get_face_property<SourceType>(name);
         if (old_prop) {
             const auto &data = old_prop.vector();
             auto new_prop = model->template add_face_property<TargetType>(
@@ -288,9 +288,9 @@ namespace details {
     }
 
 
-    template<typename MODEL, typename SourceTarget, typename TargetType>
+    template<typename MODEL, typename SourceType, typename TargetType>
     inline bool create_edge_property_from_data(MODEL *model, const std::string &name) {
-        auto old_prop = model->template get_edge_property<SourceTarget>(name);
+        auto old_prop = model->template get_edge_property<SourceType>(name);
         if (old_prop) {
             const auto &data = old_prop.vector();
             auto new_prop = model->template add_edge_property<TargetType>(
@@ -306,9 +306,9 @@ namespace details {
     }
 
 
-    template<typename MODEL, typename SourceTarget, typename TargetType>
+    template<typename MODEL, typename SourceType, typename TargetType>
     inline bool create_halfedge_property_from_data(MODEL *model, const std::string &name) {
-        auto old_prop = model->template get_halfedge_property<SourceTarget>(name);
+        auto old_prop = model->template get_halfedge_property<SourceType>(name);
         if (old_prop) {
             const auto &data = old_prop.vector();
             auto new_prop = model->template add_halfedge_property<TargetType>(
