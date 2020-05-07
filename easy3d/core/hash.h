@@ -25,11 +25,17 @@
 #ifndef EASY3D_HASH_H
 #define EASY3D_HASH_H
 
+
+#include <cstdint>
 #include <functional>
 
 
 namespace easy3d
 {
+    /**
+     * Liangliang: std::size_t has 64 bits on 64-bit systems but 32 bits on 32-bit systems such as Windows.
+     *             To make the same code robustly work on both systems, we always use 64-bit integer.
+     */
 
 #if 0
     /**
@@ -48,27 +54,27 @@ namespace easy3d
     // code from CityHash
     // https://github.com/google/cityhash/blob/master/src/city.h
     template<class T>
-    inline void hash_combine(std::size_t &seed, T const& value) {
+    inline void hash_combine(uint64_t &seed, T const& value) {
         std::hash<T> hasher;
-        std::size_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
+        uint64_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
         a ^= (a >> 47);
-        std::size_t b = (seed ^ a) * 0x9ddfea08eb382d69ULL;
+        uint64_t b = (seed ^ a) * 0x9ddfea08eb382d69ULL;
         b ^= (b >> 47);
         seed = b * 0x9ddfea08eb382d69ULL;
     }
 #endif
 
     template <typename FT>
-    std::size_t hash(const Vec<2, FT>& value) {
-        std::size_t seed = 0;
+    uint64_t hash(const Vec<2, FT>& value) {
+        uint64_t seed = 0;
         hash_combine(seed, value.x);
         hash_combine(seed, value.y);
         return seed;
     }
 
     template <typename FT>
-    std::size_t hash(const Vec<3, FT>& value) {
-        std::size_t seed = 0;
+    uint64_t hash(const Vec<3, FT>& value) {
+        uint64_t seed = 0;
         hash_combine(seed, value.x);
         hash_combine(seed, value.y);
         hash_combine(seed, value.z);
@@ -77,17 +83,17 @@ namespace easy3d
 
 
     template <int DIM, typename FT> inline
-    std::size_t hash(const Vec<DIM, FT>& value) {
-        std::size_t seed = 0;
-        for (std::size_t i=0; i<DIM; ++i)
+    uint64_t hash(const Vec<DIM, FT>& value) {
+        uint64_t seed = 0;
+        for (uint64_t i=0; i<DIM; ++i)
             hash_combine(seed, value[i]);
         return seed;
     }
 
 
     template<class It>
-    inline std::size_t hash_range(It first, It last) {
-        std::size_t seed = 0;
+    inline uint64_t hash_range(It first, It last) {
+        uint64_t seed = 0;
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }
@@ -95,7 +101,7 @@ namespace easy3d
     }
 
     template<class It>
-    inline void hash_range(std::size_t &seed, It first, It last) {
+    inline void hash_range(uint64_t &seed, It first, It last) {
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }

@@ -50,15 +50,23 @@ namespace easy3d {
             }
 
             inline Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
-                std::size_t key = hash_range(v.begin(), v.end());
+                uint64_t key = hash_range(v.begin(), v.end());
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
                     auto vertex = new Tessellator::Vertex(v, v.index);
                     hash_table_[key] = unique_vertices_.size();
                     unique_vertices_.push_back(vertex);
                     return vertex;
-                } else
+                } else {
+#ifndef NDEBUG
+                    if (distance2(vec3(unique_vertices_[pos->second]->data()), vec3(v.data())) > 1e-6) {
+                        LOG_FIRST_N(ERROR, 5) << "bad: two distinct points have the same hash key\n"
+                                              << "\t\tpoint: " << vec3(unique_vertices_[pos->second]->data()) << " <-> "
+                                              << vec3(v.data()) << "\n" << "\t\thash key: " << key;
+                    }
+#endif
                     return unique_vertices_[pos->second];
+                }
             }
 
             inline void clear() {
@@ -76,7 +84,7 @@ namespace easy3d {
             std::vector<Tessellator::Vertex *> unique_vertices_;
 
             // key -> index
-            std::unordered_map<std::size_t, std::size_t> hash_table_;
+            std::unordered_map<uint64_t, std::size_t> hash_table_;
         };
     }
 
