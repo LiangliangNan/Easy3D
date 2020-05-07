@@ -41,7 +41,6 @@
 #ifndef __glu_h__
 #define __glu_h__
 
-// redefined to match glew.h's
 typedef unsigned char TESS_boolean;
 
 #define TESS_LINE_LOOP                  0x0002
