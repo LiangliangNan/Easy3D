@@ -74,8 +74,6 @@ namespace easy3d {
          * @param True on success and false on failure.
          */
         bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude = 16);
-
-    public:
         /**
          * A contour is a closed polygon and it has an orientation (clockwise or counter-clockwise)
          */
@@ -89,7 +87,7 @@ namespace easy3d {
          * CharContour represents the contours of a character, which may contain multiple contours.
          */
         struct CharContour : std::vector<Contour> {
-            char character;
+            unsigned int character;
         };
 
         /**
@@ -101,17 +99,18 @@ namespace easy3d {
          */
         void generate_contours(const std::string &text, float x, float y, std::vector<CharContour> &contours);
 
+    private:
+        void cleanup();
+
         /**
          * @brief Generate contours for a single character.
          * @param character The input character.
          * @param x The x-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
          * @return The contours for this character.
+         * FIXME: should this function be public?
          */
-        CharContour generate_contours(char character, float& x, float& y);
-
-    private:
-        void cleanup();
+        CharContour generate_contours(wchar_t character, float& x, float& y);
 
     private:
         void *font_library_;
@@ -126,7 +125,6 @@ namespace easy3d {
         unsigned short bezier_steps_;
 
         unsigned int prev_char_index_;
-        unsigned int cur_char_index_;
         signed long prev_rsb_delta_;;
     };
 }

@@ -44,7 +44,7 @@ void DialogSurfaceMeshFromText::setFontFile() {
 
     const std::string &file_name = fileName.toStdString();
     font_path_ = file_system::parent_directory(file_name);
-    const std::string& font_file = file_system::simple_name(file_name);
+    const std::string &font_file = file_system::simple_name(file_name);
     ui->lineEditFontFile->setText(QString::fromStdString(font_file));
 }
 

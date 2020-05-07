@@ -34,6 +34,7 @@
 #include <easy3d/viewer/tessellator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/string.h>
 
 
 namespace easy3d {
@@ -492,7 +493,7 @@ namespace easy3d {
 
 
     TextMesher::TextMesher(const std::string &font_file, int font_size)
-            : font_library_(nullptr), font_face_(nullptr), bezier_steps_(4), prev_char_index_(0), cur_char_index_(0),
+            : font_library_(nullptr), font_face_(nullptr), bezier_steps_(4), prev_char_index_(0),
               prev_rsb_delta_(0) {
         set_font(font_file, font_size);
     }
@@ -547,12 +548,13 @@ namespace easy3d {
     }
 
 
-    TextMesher::CharContour TextMesher::generate_contours(char ch, float &x, float &y) {
+    TextMesher::CharContour TextMesher::generate_contours(wchar_t ch, float &x, float &y) {
         CharContour char_contour;
         char_contour.character = ch;
 
-        cur_char_index_ = FT_Get_Char_Index(get_face(font_face_), ch);
-        if (FT_Load_Glyph(get_face(font_face_), cur_char_index_, FT_LOAD_DEFAULT)) {
+        unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), ch);
+
+        if (FT_Load_Glyph(get_face(font_face_), cur_char_index, FT_LOAD_DEFAULT)) {
             LOG_FIRST_N(ERROR, 1) << "failed loading glyph";
             return char_contour;
         }
@@ -570,7 +572,7 @@ namespace easy3d {
 
         if (FT_HAS_KERNING(get_face(font_face_)) && prev_char_index_) {
             FT_Vector kerning;
-            FT_Get_Kerning(get_face(font_face_), prev_char_index_, cur_char_index_, FT_KERNING_DEFAULT, &kerning);
+            FT_Get_Kerning(get_face(font_face_), prev_char_index_, cur_char_index, FT_KERNING_DEFAULT, &kerning);
             x += kerning.x / SCALE_TO_F26DOT6;
         }
 
@@ -601,7 +603,7 @@ namespace easy3d {
             }
         }
 
-        prev_char_index_ = cur_char_index_;
+        prev_char_index_ = cur_char_index;
         x += get_face(font_face_)->glyph->advance.x / SCALE_TO_F26DOT6;
 
         return char_contour;
@@ -613,13 +615,24 @@ namespace easy3d {
             return;
 
         prev_char_index_ = 0;
-        cur_char_index_ = 0;
         prev_rsb_delta_ = 0;
 
+#if 0
+        // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
+        // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
+        // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
         for (int i = 0; i < text.size(); ++i) {
             const auto &char_contour = generate_contours(text[i], x, y);
             contours.push_back(char_contour);
         }
+#else
+        // work on muilti-byte characters
+        std::wstring the_text = string::to_wstring(text);
+        for (int i = 0; i < the_text.size(); ++i) {
+            const auto &char_contour = generate_contours(the_text[i], x, y);
+            contours.push_back(char_contour);
+        }
+#endif
     }
 
 
