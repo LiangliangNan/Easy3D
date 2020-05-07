@@ -66,7 +66,7 @@
           <string>The image file of the texture</string>
          </property>
          <property name="text">
-          <string>Earth-Normal.ttf</string>
+          <string>en_Earth-Normal.ttf</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

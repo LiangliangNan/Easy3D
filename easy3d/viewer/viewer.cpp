@@ -1032,8 +1032,8 @@ namespace easy3d {
 
         // create TextRenderer renderer and load default fonts
         texter_ = new TextRenderer(dpi_scaling());
-        texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-        texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+        texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
+        texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
         // print usage
         std::cout << usage() << std::endl;
@@ -1221,8 +1221,10 @@ namespace easy3d {
 
 
     void Viewer::fit_screen(const easy3d::Model *model) {
-        if (!model && models_.empty() && drawables_.empty())
+        if (!model && models_.empty() && drawables_.empty()) {
+            camera_->showEntireScene();
             return;
+        }
 
         auto visual_box = [](const Model *m) -> Box3 {
             Box3 box = m->bounding_box();

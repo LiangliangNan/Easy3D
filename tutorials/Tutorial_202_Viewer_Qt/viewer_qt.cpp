@@ -174,8 +174,8 @@ void ViewerQt::initializeGL()
 
     // create TextRenderer renderer and load default fonts
     texter_ = new TextRenderer(dpi_scaling());
-    texter_->add_font(resource::directory() + "/fonts/Earth-Normal.ttf");
-    texter_->add_font(resource::directory() + "/fonts/Roboto-Medium.ttf");
+    texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
+    texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
     // create a GPU timer
     gpu_timer_ = new OpenGLTimer(false);

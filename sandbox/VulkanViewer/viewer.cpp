@@ -791,7 +791,7 @@ namespace easy3d {
                 box.add_box(m->bounding_box());
         }
 
-        if (box.initialized()) {
+        if (box.is_valid()) {
             camera_->setSceneBoundingBox(box.min(), box.max());
             camera_->showEntireScene();
             update();

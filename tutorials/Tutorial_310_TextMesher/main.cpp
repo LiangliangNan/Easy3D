@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     Viewer viewer("Tutorial_310_TextMesher");
 
     // Create an instance of mesher by specifying a font file.
-    const std::string font_file = resource::directory() + "/fonts/Earth-Normal.ttf";
+    const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
     TextMesher mesher(font_file, 48);   // font size is 48
 
 #if 1 // show the mesh
@@ -53,14 +53,14 @@ int main(int argc, char **argv) {
         viewer.add_model(mesh); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
-    mesher.set_font(resource::directory() + "/fonts/DroidSerif-Regular.ttf", 24);
+    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
     mesher.generate(mesh,"Makes 3D Easy!", 400, 0);
 
 #else // show the contours
     std::vector<TextMesher::CharContour> contours;
     mesher.set_font(resource::directory() + font_file, 48);
     mesher.generate_contours("Easy3D", 0, -60, contours);
-    mesher.set_font(resource::directory() + "/fonts/DroidSerif-Regular.ttf", 24);
+    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
     mesher.generate_contours("Makes 3D Easy!", 400, -60, contours);
     std::vector<vec3> points, colors;
     std::vector<unsigned int> indices;
