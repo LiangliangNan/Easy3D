@@ -149,9 +149,7 @@ namespace easy3d {
 		 * \param[in] quotes the quoting char (default is '"')
 		 * \return the quoted string
 		 */
-		std::string quote(
-			const std::string& s, char quotes = '\"'
-		);
+		std::string quote(const std::string& s, char quotes = '\"');
 
 		/**
 		 * \brief Checks if a string starts with a substring
@@ -160,9 +158,7 @@ namespace easy3d {
 		 * \return \c true if \p haystack starts with \p needle, \c false
 		 * otherwise.
 		 */
-		bool string_starts_with(
-			const std::string& haystack, const std::string& needle
-		);
+		bool string_starts_with(const std::string& haystack, const std::string& needle);
 
 		/**
 		 * \brief Checks if a string ends with a substring
@@ -171,30 +167,39 @@ namespace easy3d {
 		 * \return \c true if \p haystack ends with \p needle, \c false
 		 * otherwise.
 		 */
-		bool string_ends_with(
-			const std::string& haystack, const std::string& needle
-		);
+		bool string_ends_with(const std::string& haystack, const std::string& needle);
 
 		/**
-		* \brief Converts an integer v to a string of specified 'width' by
-		* filling with character 'fill'
-		*/
-		inline std::string from_integer(int v, int width, char fill) {
-			std::ostringstream string_stream;
-			string_stream << std::setfill(fill) << std::setw(width) << v;
-			return string_stream.str();
-		}
+		 * \brief Converts an integer v to a string. Different from the std::to_string, this method results in a
+		 * fixed-width string by filling the missing parts with character 'fill'.
+		 */
+		std::string from_integer(int value, int width, char fill);
 
-
-		// Return a C++ string.
+		/**
+		 * Return a C++ string and work like printf.
+		 */
 		std::string string_printf(const char* format, ...);
 
-		// Append result to a supplied string.
+		/**
+		 * @brief Append the resulting string to a supplied string.
+		 */
 		void string_appendf(std::string* dst, const char* format, ...);
 
-
-		// format example: "Fri Jan 09 11:39:32 2015"
+		/**
+		 * @brief Get the time string, e.g., "Fri Jan 09 11:39:32 2015"
+		 */
 		std::string from_current_time();
+
+		/**
+		 * @brief Convert from std::string to std::wstring.
+		 */
+        std::wstring to_wstring(const std::string& str);
+
+        /**
+         * @brief Convert from std::wstring to std::string.
+         */
+        std::string to_string(const std::wstring& wstr);
+
 	}
 
 }
