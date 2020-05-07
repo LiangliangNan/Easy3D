@@ -647,6 +647,7 @@ namespace details {
 
 
             void update_buffers(SurfaceMesh *model, TrianglesDrawable *drawable) {
+#if 1
                 assert(model);
                 assert(drawable);
 
@@ -717,6 +718,50 @@ namespace details {
                 drawable->update_normal_buffer(d_normals);
 
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();
+#else
+                assert(model);
+                assert(drawable);
+
+                if (model->n_vertices() == 0) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
+                /**
+                 * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
+                 * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
+                 * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
+                 * for the rendering purpose be shared for selection. Yeah, performance gain!
+                 */
+                auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                int count_triangles = 0;
+
+                /**
+                 * Efficiency in switching between flat and smooth shading.
+                 * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
+                 * the fragment shader:
+                 *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                 * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
+                 * between flat and smooth shading without transferring different data to the GPU.
+                 */
+
+                model->update_vertex_normals();
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+
+                std::vector<unsigned int> d_indices;
+                d_indices.reserve(model->n_faces() * 3);
+                for (auto face : model->faces()) {
+                    for (auto h : model->halfedges(face)) {
+                        auto v = model->to_vertex(h);
+                        d_indices.push_back(v.idx());
+                    }
+                    triangle_range[face] = std::make_pair(face.idx(), face.idx());
+                }
+
+                drawable->update_vertex_buffer(model->points());
+                drawable->update_element_buffer(d_indices);
+                drawable->update_normal_buffer(normals.vector());
+#endif
             }
 
             // with a per-face color
