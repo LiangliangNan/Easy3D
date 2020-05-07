@@ -8,12 +8,9 @@
 #include <QMimeData>
 #include <QSettings>
 #include <QMessageBox>
-#include <QToolBox>
 #include <QColorDialog>
 #include <QCoreApplication>
 #include <QPushButton>
-#include <QHBoxLayout>
-#include <QSpacerItem>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -998,8 +995,12 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 
 
 void MainWindow::surfaceMeshCreateMeshFromText() {
+#ifdef HAS_TEXT_MESHER
     auto dialog = new DialogSurfaceMeshFromText(this, dockWidgetCommand());
     showDialog(dialog);
+#else
+    LOG(WARNING) << "TextMesher requires FreeType but FreeType was not found.";
+#endif
 }
 
 

@@ -39,7 +39,6 @@ set(${PROJECT_NAME}_HEADERS
         tessellator.h
         texture.h
         texture_manager.h
-        text_mesher.h
         text_renderer.h
         transform.h
         transform_decompose.h
@@ -81,7 +80,6 @@ set(${PROJECT_NAME}_SOURCES
         tessellator.cpp
         texture.cpp
         texture_manager.cpp
-        text_mesher.cpp
         text_renderer.cpp
         opengl_timer.cpp
         transform.cpp

@@ -78,6 +78,7 @@ if (FREETYPE_FOUND)
     set(EASY3D_HAS_FREETYPE TRUE)
     add_definitions(-DHAS_TEXT_MESHER)
 else()
+    set(EASY3D_HAS_FREETYPE FALSE)
     message(WARNING "Freetype not found and TextMesher is disabled")
 endif()
 
