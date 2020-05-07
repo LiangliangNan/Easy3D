@@ -33,8 +33,8 @@
 namespace easy3d
 {
     /**
-     * Liangliang: std::size_t has 64 bits on 64-bit systems but 32 bits on 32-bit systems such as Windows.
-     *             To make the same code robustly work on both systems, we always use 64-bit integer.
+     * Liangliang: std::size_t has 32 bits on 32-bit systems (such as Windows).
+     *             To make the same code robustly run on both systems, I use 64-bit integer.
      */
 
 #if 0
