@@ -20,6 +20,24 @@
 
 using namespace easy3d;
 
+
+// reimplemented from QApplication so we can throw exceptions in slots/event handler
+class Mapple : public QApplication
+{
+public:
+    Mapple(int& argc, char ** argv) : QApplication(argc, argv) { }
+    virtual ~Mapple() { }
+    virtual bool notify(QObject * receiver, QEvent * event) {
+        try {
+            return QApplication::notify(receiver, event);
+        } catch(std::exception& e) {
+            LOG(ERROR) << "an exception was thrown: " << e.what();
+        }
+        return false;
+    }
+};
+
+
 int main(int argc, char *argv[])
 {
     // Note: Calling QSurfaceFormat::setDefaultFormat() before constructing the
@@ -54,7 +72,7 @@ int main(int argc, char *argv[])
     //QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
 #endif
 
-    QApplication app(argc, argv);
+    Mapple app(argc, argv);
 #ifdef _WIN32   // to have similar style as on macOS.
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
