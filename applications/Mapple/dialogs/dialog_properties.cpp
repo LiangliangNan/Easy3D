@@ -261,7 +261,7 @@ namespace details {
                     name + name);   // the old property has the same name, so ...
             if (new_prop) {
                 new_prop.vector().assign(data.begin(), data.end());
-                model->template remove_vertex_property(old_prop);
+                model->remove_vertex_property(old_prop);
                 new_prop.set_name(name);
                 return true;
             }
@@ -279,7 +279,7 @@ namespace details {
                     name + name);   // the old property has the same name, so ...
             if (new_prop) {
                 new_prop.vector().assign(data.begin(), data.end());
-                model->template remove_face_property(old_prop);
+                model->remove_face_property(old_prop);
                 new_prop.set_name(name);
                 return true;
             }
@@ -297,7 +297,7 @@ namespace details {
                     name + name);   // the old property has the same name, so ...
             if (new_prop) {
                 new_prop.vector().assign(data.begin(), data.end());
-                model->template remove_edge_property(old_prop);
+                model->remove_edge_property(old_prop);
                 new_prop.set_name(name);
                 return true;
             }
@@ -315,7 +315,7 @@ namespace details {
                     name + name);   // the old property has the same name, so ...
             if (new_prop) {
                 new_prop.vector().assign(data.begin(), data.end());
-                model->template remove_halfedge_property(old_prop);
+                model->remove_halfedge_property(old_prop);
                 new_prop.set_name(name);
                 return true;
             }
