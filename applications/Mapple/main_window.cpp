@@ -496,6 +496,12 @@ void MainWindow::onClearRecentFiles() {
 
 
 void MainWindow::showDialog(QDialog* dialog) {
+    // To make the dialog always on top on macOS:
+//    DialogProperties* dialog = new DialogProperties(this, dockWidgetCommand());;
+//    Qt::WindowFlags flags = dialog->windowFlags();
+//    dialog->setWindowFlags(flags | Qt::Tool);
+//    dialog->show();
+    // But in Mapple, I make it dockable.
     if (!dockWidgetCommand_) {
         dockWidgetCommand_ = new QDockWidget(this);
         dockWidgetCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);

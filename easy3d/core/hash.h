@@ -39,7 +39,7 @@ namespace easy3d
 
 #if 0
     /**
-     * The hash combine function copied from boost. I have an example to fail this function:
+     * The hash combine function copied from boost. I have an example to fail this function (tested on macOS):
      *      std::vector<float> a = {16, 0, 0};
      *      std::vector<float> b = {4, 12, 0}; // 15588749483758.
      *      std::cout << "a: " << hash_range(a.begin(), a.end()) << std::endl;
