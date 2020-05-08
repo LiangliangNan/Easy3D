@@ -37,7 +37,7 @@ namespace easy3d
      * robustly run on both 32-bit and 64-bit systems, I use 64-bit integer for hash values.
      */
 
-#if 1
+#if 0
     /**
      * The hash combine function copied from boost with the integer type std::size_t changed to uint64_t.
      * I found an example that can fail this function (tested on macOS Catalina Version 10.15.4):
@@ -45,6 +45,7 @@ namespace easy3d
      *      std::vector<float> b = {4, 12}; // hash: 240982999006
      *      std::cout << "a: " << hash_range(a.begin(), a.end()) << std::endl;
      *      std::cout << "b: " << hash_range(b.begin(), b.end()) << std::endl;
+     * That is why I need a function for 64-bit integers.
      */
     template<class T>
     inline void hash_combine(uint64_t &seed, T const& value) {
