@@ -2379,6 +2379,21 @@ namespace easy3d {
                 return;
             }
 
+            if (dynamic_cast<SurfaceMesh *>(model)) {
+                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+                switch (drawable->type()) {
+                    case Drawable::DT_TRIANGLES:
+                        update_buffers(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
+                        break;
+                    case Drawable::DT_LINES:
+                        update_buffers(mesh, dynamic_cast<LinesDrawable *>(drawable));
+                        break;
+                    case Drawable::DT_POINTS:
+                        update_buffers(mesh, dynamic_cast<PointsDrawable *>(drawable));
+                        break;
+                }
+            }
+
             if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
@@ -2403,19 +2418,6 @@ namespace easy3d {
                         break;
                     case Drawable::DT_TRIANGLES:
                         update_buffers(graph, dynamic_cast<TrianglesDrawable *>(drawable));
-                        break;
-                }
-            } else if (dynamic_cast<SurfaceMesh *>(model)) {
-                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-                switch (drawable->type()) {
-                    case Drawable::DT_POINTS:
-                        update_buffers(mesh, dynamic_cast<PointsDrawable *>(drawable));
-                        break;
-                    case Drawable::DT_LINES:
-                        update_buffers(mesh, dynamic_cast<LinesDrawable *>(drawable));
-                        break;
-                    case Drawable::DT_TRIANGLES:
-                        update_buffers(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
                         break;
                 }
             }
