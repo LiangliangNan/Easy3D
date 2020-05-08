@@ -1,6 +1,6 @@
 #include "dialog_surface_mesh_from_text.h"
 
-#include <easy3d/viewer/text_mesher.h>
+#include <easy3d/algo/text_mesher.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>

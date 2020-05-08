@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 
 #include <vector>
 #include <unordered_map>

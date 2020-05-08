@@ -31,7 +31,7 @@
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/camera.h>
 #include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 

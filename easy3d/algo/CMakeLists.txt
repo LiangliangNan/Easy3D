@@ -29,6 +29,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_subdivision.h
         surface_mesh_topology.h
         surface_mesh_triangulation.h
+        tessellator.h
         triangle_mesh_kdtree.h
         )
 
@@ -57,8 +58,15 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_subdivision.cpp
         surface_mesh_topology.cpp
         surface_mesh_triangulation.cpp
+        tessellator.cpp
         triangle_mesh_kdtree.cpp
         )
+
+if (EASY3D_HAS_FREETYPE)
+    list (APPEND ${PROJECT_NAME}_HEADERS text_mesher.h)
+    list (APPEND ${PROJECT_NAME}_SOURCES text_mesher.cpp)
+    message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
+endif()
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 
@@ -67,7 +75,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/RANSAC-1.1)
 
-target_link_libraries(${PROJECT_NAME} core kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tetgen)
+target_link_libraries(${PROJECT_NAME} core kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tetgen libtess)
 
 set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})
@@ -78,3 +86,8 @@ if (Boost_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
 endif ()
+
+if (EASY3D_HAS_FREETYPE)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
+endif()

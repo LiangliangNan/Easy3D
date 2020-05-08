@@ -25,8 +25,7 @@
 
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
-
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 
 
 namespace easy3d {

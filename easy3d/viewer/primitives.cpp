@@ -28,7 +28,7 @@
 #include <easy3d/viewer/shader_program.h>
 #include <easy3d/viewer/vertex_array_object.h>
 #include <easy3d/viewer/opengl.h>
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 
 
 namespace easy3d {

@@ -23,7 +23,7 @@
  */
 
 
-#include <easy3d/viewer/text_mesher.h>
+#include <easy3d/algo/text_mesher.h>
 
 #include <ft2build.h>
 #include <freetype/freetype.h>
@@ -31,7 +31,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>

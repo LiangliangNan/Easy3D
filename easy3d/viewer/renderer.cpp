@@ -32,7 +32,7 @@
 #include <easy3d/viewer/drawable_triangles.h>
 #include <easy3d/viewer/texture_manager.h>
 #include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/tessellator.h>
+#include <easy3d/algo/tessellator.h>
 #include <easy3d/core/random.h>
 
 #include <algorithm>

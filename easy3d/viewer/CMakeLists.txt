@@ -36,7 +36,6 @@ set(${PROJECT_NAME}_HEADERS
         soft_shadow.h
         state.h
         opengl_timer.h
-        tessellator.h
         texture.h
         texture_manager.h
         text_renderer.h
@@ -77,7 +76,6 @@ set(${PROJECT_NAME}_SOURCES
         shadow.cpp
         soft_shadow.cpp
         state.cpp
-        tessellator.cpp
         texture.cpp
         texture_manager.cpp
         text_renderer.cpp
@@ -191,12 +189,6 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
-if (EASY3D_HAS_FREETYPE)
-    list (APPEND ${PROJECT_NAME}_HEADERS text_mesher.h)
-    list (APPEND ${PROJECT_NAME}_SOURCES text_mesher.cpp)
-    message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
-endif()
-
 add_library(${PROJECT_NAME} STATIC
         ${${PROJECT_NAME}_SOURCES}
         ${${PROJECT_NAME}_HEADERS}
@@ -206,14 +198,9 @@ add_library(${PROJECT_NAME} STATIC
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} glew glfw libtess core util fileio)
+target_link_libraries(${PROJECT_NAME} glew glfw core util fileio algo)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
-
-if (EASY3D_HAS_FREETYPE)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
-endif()
 
 
 if (MSVC)
