@@ -97,9 +97,9 @@ set(${PROJECT_NAME}_FORMS
         widgets/widget_model_list.h
         )
 
-#set(${PROJECT_NAME}_RESOURCES
-#    Resources/Mapple.qrc
-#    )
+set(${PROJECT_NAME}_RESOURCES
+    mapple.qrc
+    )
 
 if (MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
@@ -141,8 +141,3 @@ endif ()
 if (APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Mac/Mapple.plist)
 endif ()
-
-## Resources
-# Copy resources dirs into our shadow build directory
-#file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/Resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

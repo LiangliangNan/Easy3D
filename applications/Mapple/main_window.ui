@@ -187,7 +187,7 @@
    </property>
    <property name="windowIcon">
     <iconset>
-     <normaloff>Resources/icons/options.png</normaloff>Resources/icons/options.png</iconset>
+     <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="features">
     <set>QDockWidget::DockWidgetClosable</set>
@@ -228,7 +228,7 @@
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/drawable_triangles.png</normaloff>Resources/icons/drawable_triangles.png</iconset>
+          <normaloff>:/resources/icons/drawable_triangles.png</normaloff>:/resources/icons/drawable_triangles.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Surface</string>
@@ -262,7 +262,7 @@
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/drawable_lines.png</normaloff>Resources/icons/drawable_lines.png</iconset>
+          <normaloff>:/resources/icons/drawable_lines.png</normaloff>:/resources/icons/drawable_lines.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Lines</string>
@@ -296,7 +296,7 @@
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/drawable_points.png</normaloff>Resources/icons/drawable_points.png</iconset>
+          <normaloff>:/resources/icons/drawable_points.png</normaloff>:/resources/icons/drawable_points.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Points</string>
@@ -330,7 +330,7 @@
         </property>
         <attribute name="icon">
          <iconset>
-          <normaloff>Resources/icons/light.png</normaloff>Resources/icons/light.png</iconset>
+          <normaloff>:/resources/icons/light.png</normaloff>:/resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
          <string>Global Setting</string>
@@ -527,8 +527,8 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset>
-     <normaloff>Resources/icons/fileopen.png</normaloff>Resources/icons/fileopen.png</iconset>
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -539,8 +539,8 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset>
-     <normaloff>Resources/icons/filesave.png</normaloff>Resources/icons/filesave.png</iconset>
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -562,7 +562,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/exit.png</normaloff>Resources/icons/exit.png</iconset>
+     <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -574,7 +574,7 @@
   <action name="actionAbout">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/help.png</normaloff>Resources/icons/help.png</iconset>
+     <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
    </property>
    <property name="text">
     <string>About Mapple</string>
@@ -583,7 +583,7 @@
   <action name="actionClearRecentFiles">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/clear.png</normaloff>Resources/icons/clear.png</iconset>
+     <normaloff>:/resources/icons/clear.png</normaloff>:/resources/icons/clear.png</iconset>
    </property>
    <property name="text">
     <string>Clear</string>
@@ -602,7 +602,7 @@
   <action name="actionSnapshot">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/snap_shot.png</normaloff>Resources/icons/snap_shot.png</iconset>
+     <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
     <string>Snapshot</string>
@@ -659,7 +659,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/select_lasso.png</normaloff>Resources/icons/select_lasso.png</iconset>
+     <normaloff>:/resources/icons/select_lasso.png</normaloff>:/resources/icons/select_lasso.png</iconset>
    </property>
    <property name="text">
     <string>Select Using the Lasso Tool</string>
@@ -690,7 +690,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/select_rect.png</normaloff>Resources/icons/select_rect.png</iconset>
+     <normaloff>:/resources/icons/select_rect.png</normaloff>:/resources/icons/select_rect.png</iconset>
    </property>
    <property name="text">
     <string>Select Using the Sketch Tool</string>
@@ -705,7 +705,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/manipulation.png</normaloff>Resources/icons/manipulation.png</iconset>
+     <normaloff>:/resources/icons/manipulation.png</normaloff>:/resources/icons/manipulation.png</iconset>
    </property>
    <property name="text">
     <string>Camera Manipulation</string>
@@ -720,7 +720,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/select_click.png</normaloff>Resources/icons/select_click.png</iconset>
+     <normaloff>:/resources/icons/select_click.png</normaloff>:/resources/icons/select_click.png</iconset>
    </property>
    <property name="text">
     <string>Select by Clicking</string>
@@ -737,7 +737,7 @@
   <action name="actionDownSampling">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/down_sample.png</normaloff>Resources/icons/down_sample.png</iconset>
+     <normaloff>:/resources/icons/down_sample.png</normaloff>:/resources/icons/down_sample.png</iconset>
    </property>
    <property name="text">
     <string>Down sampling</string>
@@ -746,7 +746,7 @@
   <action name="actionAddGaussianNoise">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/noise.png</normaloff>Resources/icons/noise.png</iconset>
+     <normaloff>:/resources/icons/noise.png</normaloff>:/resources/icons/noise.png</iconset>
    </property>
    <property name="text">
     <string>Add Gaussian noise</string>
@@ -755,7 +755,7 @@
   <action name="actionSettings">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/options.png</normaloff>Resources/icons/options.png</iconset>
+     <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -897,6 +897,8 @@
    <header>widgets/widget_model_list.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="mapple.qrc"/>
+ </resources>
  <connections/>
 </ui>

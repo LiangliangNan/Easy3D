@@ -90,7 +90,7 @@
   <action name="actionOpen">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/fileopen.png</normaloff>Resources/icons/fileopen.png</iconset>
+     <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
     <string>Open</string>
@@ -102,7 +102,7 @@
   <action name="actionSave">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/filesave.png</normaloff>Resources/icons/filesave.png</iconset>
+     <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
     <string>Save</string>
@@ -114,7 +114,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/exit.png</normaloff>Resources/icons/exit.png</iconset>
+     <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -126,7 +126,7 @@
   <action name="actionAbout">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/help.png</normaloff>Resources/icons/help.png</iconset>
+     <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
    </property>
    <property name="text">
     <string>About Easy3D</string>
@@ -138,7 +138,7 @@
   <action name="actionClearRecentFiles">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/clear.png</normaloff>Resources/icons/clear.png</iconset>
+     <normaloff>:/resources/icons/clear.png</normaloff>:/resources/icons/clear.png</iconset>
    </property>
    <property name="text">
     <string>Clear</string>
@@ -147,7 +147,7 @@
   <action name="actionSnapshot">
    <property name="icon">
     <iconset>
-     <normaloff>Resources/icons/snap_shot.png</normaloff>Resources/icons/snap_shot.png</iconset>
+     <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
     <string>Snapshot</string>

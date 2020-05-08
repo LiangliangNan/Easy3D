@@ -35,24 +35,24 @@ public:
 
     void setIcon(int column) {
         if (dynamic_cast<SurfaceMesh *>(model())) {
-            static QIcon iconMesh(QString::fromStdString(resource::directory() + "/icons/mesh.png"));
+            static QIcon iconMesh(QString::fromUtf8(":/resources/icons/mesh.png"));
             QTreeWidgetItem::setIcon(column, iconMesh);
         } else if (dynamic_cast<PointCloud *>(model())) {
-            static QIcon iconPointCloud(QString::fromStdString(resource::directory() + "/icons/point_cloud.png"));
+            static QIcon iconPointCloud(QString::fromUtf8(":/resources/icons/point_cloud.png"));
             QTreeWidgetItem::setIcon(column, iconPointCloud);
         } else if (dynamic_cast<Graph *>(model())) {
-            static QIcon iconGraph(QString::fromStdString(resource::directory() + "/icons/graph.png"));
+            static QIcon iconGraph(QString::fromUtf8(":/resources/icons/graph.png"));
             QTreeWidgetItem::setIcon(column, iconGraph);
         }
 //        else if (dynamic_cast<CGraph*>(model())) {
-//            static QIcon iconTetrahedra(QString::fromStdString(resource::directory() + "/icons/tetrahedra.png"));
+//            static QIcon iconTetrahedra(QString::fromUtf8(":/resources/icons/tetrahedra.png"));
 //            QTreeWidgetItem::setIcon(column, iconTetrahedra);
 //        }
     }
 
     void setVisibilityIcon(int column, bool visible) {
-        static QIcon iconShow(QString::fromStdString(resource::directory() + "/icons/show.png"));
-        static QIcon iconHide(QString::fromStdString(resource::directory() + "/icons/hide.png"));
+        static QIcon iconShow(QString::fromUtf8(":/resources/icons/show.png"));
+        static QIcon iconHide(QString::fromUtf8(":/resources/icons/hide.png"));
 
         if (visible)
             QTreeWidgetItem::setIcon(column, iconShow);
@@ -178,24 +178,24 @@ void WidgetModelList::prepareContextMenu(QMenu *menu) {
     // manipulation
     if (num_selected == 1) {
         QAction *actionDuplicateCurrent = menu->addAction(
-                QIcon(QString::fromStdString(resource::directory() + "/icons/duplicate.png")), "Duplicate");
+                QIcon(QString::fromUtf8(":/resources/icons/duplicate.png")), "Duplicate");
         connect(actionDuplicateCurrent, SIGNAL(triggered()), this, SLOT(duplicateCurrent()));
     } else if (num_selected > 1) {
         QAction *actionMergeSelected = menu->addAction(
-                QIcon(QString::fromStdString(resource::directory() + "/icons/merge.png")), "Merge");
+                QIcon(QString::fromUtf8(":/resources/icons/merge.png")), "Merge");
         connect(actionMergeSelected, SIGNAL(triggered()), this, SLOT(mergeSelected()));
     }
 
     if (num_selected_meshes > 0) {
         QAction *actionDecomposeSelected = menu->addAction(
-                QIcon(QString::fromStdString(resource::directory() + "/icons/decompose.png")), "Decompose");
+                QIcon(QString::fromUtf8(":/resources/icons/decompose.png")), "Decompose");
         connect(actionDecomposeSelected, SIGNAL(triggered()), this, SLOT(decomposeSelected()));
     }
 
     if (num_selected > 0) {
         menu->addSeparator();
         QAction *actionDeleteSelected = menu->addAction(
-                QIcon(QString::fromStdString(resource::directory() + "/icons/delete.png")), "Delete");
+                QIcon(QString::fromUtf8(":/resources/icons/delete.png")), "Delete");
         connect(actionDeleteSelected, SIGNAL(triggered()), this, SLOT(deleteSelected()));
     }
 }
