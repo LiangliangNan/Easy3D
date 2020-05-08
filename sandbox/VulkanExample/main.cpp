@@ -10,7 +10,7 @@ using namespace easy3d;
 int main() {
     logging::initialize();
 
-    ApplicationVulkan app;
+    Application app;
 
     try {
         app.run();
