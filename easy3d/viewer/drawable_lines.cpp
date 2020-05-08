@@ -47,7 +47,7 @@ namespace easy3d {
 
 
     void LinesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
-        if (update_requested_ || vertex_buffer_ == 0)
+        if (update_needed_ || vertex_buffer_ == 0)
             const_cast<LinesDrawable*>(this)->internal_update_buffers();
 
         switch (impostor_type_) {

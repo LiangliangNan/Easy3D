@@ -49,7 +49,7 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
-        if (update_requested_ || vertex_buffer_ == 0)
+        if (update_needed_ || vertex_buffer_ == 0)
             const_cast<TrianglesDrawable*>(this)->internal_update_buffers();
 
         if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))

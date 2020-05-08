@@ -45,7 +45,7 @@ namespace easy3d {
             , model_(model)
             , num_vertices_(0)
             , num_indices_(0)
-            , update_requested_(false)
+            , update_needed_(false)
             , update_func_(nullptr)
             , vertex_buffer_(0)
             , color_buffer_(0)
@@ -152,7 +152,7 @@ namespace easy3d {
 
     void Drawable::update() {
         bbox_.clear();
-        update_requested_ = true;
+        update_needed_ = true;
     }
 
 
@@ -166,12 +166,16 @@ namespace easy3d {
 
         if (update_func_)
             update_func_(model_, this);
-        else
-            renderer::update_buffers(model_, this);
+        else {
+            if (model_ && model_->n_vertices() == 0)
+                clear();
+            else
+                renderer::update_buffers(model_, this);
+        }
 
         LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "update rendering buffers took " << w.time_string();
-        
-        update_requested_ = false;
+
+        update_needed_ = false;
     }
 
 
@@ -266,7 +270,7 @@ namespace easy3d {
 
 
     void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
-        if (update_requested_ || vertex_buffer_ == 0)
+        if (update_needed_ || vertex_buffer_ == 0)
             const_cast<Drawable*>(this)->internal_update_buffers();
 
         vao_->bind();
