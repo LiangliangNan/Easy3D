@@ -35,7 +35,7 @@ add_subdirectory(Tutorial_305_Texture)
 add_subdirectory(Tutorial_306_Image)
 add_subdirectory(Tutorial_307_Tessellator)
 add_subdirectory(Tutorial_308_TexturedMesh)
-add_subdirectory(Tutorial_309_Text)
+add_subdirectory(Tutorial_309_TextRendering)
 add_subdirectory(Tutorial_310_TextMesher)
 
 # user interaction

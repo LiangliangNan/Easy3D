@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
     const std::string file_name = resource::directory() + "/data/sphere.obj";
 
-    TextRendering viewer("Tutorial_309_Text");
+    TextRendering viewer("Tutorial_309_TextRendering");
     viewer.add_model(file_name);
 
     // Run the viewer

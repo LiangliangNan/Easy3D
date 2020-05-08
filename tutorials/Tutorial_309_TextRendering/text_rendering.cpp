@@ -176,18 +176,18 @@ void TextRendering::draw() const {
     const float font_height = texter_->font_height(font_size);
 
     texter_->draw(
-            "This example shows how to render strings in an OpenGL application"
+            "This example shows how to render strings with Easy3D"
             "\n'+'/'-': increase/decrease font size"
             "\n'<'/'>': increase/decrease character spacing"
             "\n'up'/'down': increase/decrease line spacing"
             "\n'l'/'c'/'r': left/center/right align the multi-line text"
             "\n'o': switch the origin between 'upper left' and 'bottom left'"
             "\n'space': enable/disable kerning",
-            x * dpi_scaling(), y * dpi_scaling(), font_size, TextRenderer::Align(alignment_), 0, vec3(0, 0, 0),
+            x * dpi_scaling(), y * dpi_scaling(), font_size * 1.5, TextRenderer::Align(alignment_), 0, vec3(0, 0, 0),
             line_spacing_, upper_left_);
 
     // the new Y position to start; add extra space
-    y += font_height * (1.5 + line_spacing_) * 5;
+    y += font_height * 1.5 * (1.5 + line_spacing_) * 5;
 
     float next_x = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
