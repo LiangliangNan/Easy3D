@@ -1,12 +1,6 @@
 * easy3d (on going):
     - Add tutorials for algorithms: Delaunay2D, simplification, subdivision, smoothing, hole filling, curvatures, parameterization.
-    - Add a progress bar to Mapple;
-    - Test if the hash function in tessellator.cpp works on both 64-bit and 32-bit machines:
-                  inline void hash_combine(std::size_t &seed, T const &v) const {
-                      std::hash<T> hasher;
-                      seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-                  }
-      It seems two different coordinates can have the same hash value (see the tree.obj).
+    - Add CSG operations based on Tessellator;
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
@@ -20,14 +14,13 @@
 	            int viewport[4];
                 glGetIntegerv(GL_VIEWPORT, viewport);
 	- Save/load camera/viewer states, and settings (e.g., default rendering parameters);
-	- Walkthrough and animation;
+	- Walkthrough and animation; allow to modify the cameras interactively;
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
-	    * otherwise, use multi-thread
+	    * otherwise, use multi-thread;
 	    
-Longer term:
+Long term:
     - switch to Vulkan.
-    
     
     
 Text to 3D models
