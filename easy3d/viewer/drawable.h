@@ -177,7 +177,7 @@ namespace easy3d {
         std::size_t num_vertices_;
         std::size_t num_indices_;
 
-        bool update_requested_;
+        bool update_needed_;
         std::function<void(Model*, Drawable*)> update_func_;
 
         unsigned int vertex_buffer_;
