@@ -2,8 +2,8 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
-        ThreadPool/example.cpp
-#        main.cpp
+#        ThreadPool/example.cpp
+        main.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
