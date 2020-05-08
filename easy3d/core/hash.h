@@ -33,26 +33,30 @@
 namespace easy3d
 {
     /**
-     * Liangliang: std::size_t has 32 bits on 32-bit systems (such as Windows).
-     *             To make the same code robustly run on both systems, I use 64-bit integer.
+     * Liangliang: std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code
+     * robustly run on both 32-bit and 64-bit systems, I use 64-bit integer for hash values.
      */
 
-#if 0
+#if 1
     /**
-     * The hash combine function copied from boost. I have an example to fail this function (tested on macOS):
-     *      std::vector<float> a = {16, 0, 0};
-     *      std::vector<float> b = {4, 12, 0}; // 15588749483758.
+     * The hash combine function copied from boost with the integer type std::size_t changed to uint64_t.
+     * I found an example that can fail this function (tested on macOS Catalina Version 10.15.4):
+     *      std::vector<float> a = {16, 0}; // hash: 240982999006
+     *      std::vector<float> b = {4, 12}; // hash: 240982999006
      *      std::cout << "a: " << hash_range(a.begin(), a.end()) << std::endl;
      *      std::cout << "b: " << hash_range(b.begin(), b.end()) << std::endl;
      */
     template<class T>
-    inline void hash_combine(std::size_t &seed, T const& value) {
+    inline void hash_combine(uint64_t &seed, T const& value) {
         std::hash<T> hasher;
         seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
+
 #else
-    // code from CityHash
-    // https://github.com/google/cityhash/blob/master/src/city.h
+    /**
+     * The 64-bit hash combine algorithm from CityHash
+     * https://github.com/google/cityhash/blob/master/src/city.h
+     */
     template<class T>
     inline void hash_combine(uint64_t &seed, T const& value) {
         std::hash<T> hasher;
