@@ -25,9 +25,9 @@
 #ifndef EASY3D_MANIFOLD_BUILDER_H
 #define EASY3D_MANIFOLD_BUILDER_H
 
-#include <easy3d/core/surface_mesh.h>
 
-#include <map>
+#include <unordered_map>
+#include <easy3d/core/surface_mesh.h>
 
 
 namespace easy3d {
@@ -142,7 +142,7 @@ namespace easy3d {
         //
         // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
-        typedef std::map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex> > CopyRecord;
+        typedef std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash> CopyRecord;
 
         // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
