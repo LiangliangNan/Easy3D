@@ -30,7 +30,7 @@
 #include <freetype/ftglyph.h>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/algo/extrusion.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -209,6 +209,7 @@ namespace easy3d {
                 }
             }
 
+            bool IsClockWise() const { return clockwise; }
 
         private:
             /**
@@ -549,31 +550,28 @@ namespace easy3d {
     }
 
 
-    TextMesher::CharContour TextMesher::_generate_contours(wchar_t c, float &x, float &y) {
-        CharContour char_contour;
-        char_contour.character = static_cast<unsigned int>(c);
-
+    bool TextMesher::_generate_contours(wchar_t c, float &x, float &y, std::vector<Polygon2>& contours) {
         unsigned int cur_char_index = FT_Get_Char_Index(get_face(font_face_), c);
         if (cur_char_index == 0) {
             LOG(WARNING) << "undefined character code for character " << string::to_string({c})
                          << " (your font may not support this character)";
-            return char_contour;
+            return false;
         }
 
         if (FT_Load_Glyph(get_face(font_face_), cur_char_index, FT_LOAD_DEFAULT)) {
             LOG_FIRST_N(ERROR, 1) << "failed loading glyph";
-            return char_contour;
+            return false;
         }
 
         FT_Glyph glyph;
         if (FT_Get_Glyph(get_face(font_face_)->glyph, &glyph)) {
             LOG_FIRST_N(ERROR, 1) << "failed getting glyph";
-            return char_contour;
+            return false;
         }
 
         if (glyph->format != FT_GLYPH_FORMAT_OUTLINE) {
             LOG_FIRST_N(ERROR, 1) << "invalid glyph Format";
-            return char_contour;
+            return false;
         }
 
         if (FT_HAS_KERNING(get_face(font_face_)) && prev_char_index_) {
@@ -589,263 +587,104 @@ namespace easy3d {
 
         prev_rsb_delta_ = get_face(font_face_)->glyph->rsb_delta;
 
+        contours.clear();
         details::Vectoriser vectoriser(get_face(font_face_)->glyph, bezier_steps_);
         for (std::size_t c = 0; c < vectoriser.ContourCount(); ++c) {
             const details::Contour *contour = vectoriser.GetContour(c);
 
-            Contour polygon(contour->PointCount());
+            Polygon2 polygon(contour->PointCount());
             for (std::size_t p = 0; p < contour->PointCount(); ++p) {
                 const float *d = contour->GetPoint(p);
                 polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
             }
 
-            // ignore tiny contours (some fonts even have degenarate countours)
+            // ignore tiny contours (some fonts even have degenarate contours)
             if (polygon.area() >= font_size_ * font_size_ * 0.001) {
-                // The FTGL library must have a bug!!!
-                //polygon.clockwise = contour->GetDirection();
-                polygon.clockwise = polygon.is_clockwise();
-
-                char_contour.push_back(polygon);
+                if (polygon.is_clockwise())
+                    polygon.reverse_orientation();
+                contours.push_back(polygon);
             }
         }
 
         prev_char_index_ = cur_char_index;
         x += get_face(font_face_)->glyph->advance.x / SCALE_TO_F26DOT6;
 
-        return char_contour;
+        return !contours.empty();
     }
 
 
-    void TextMesher::_generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours) {
+    bool TextMesher::_generate_contours(const std::wstring &text, float x, float y,
+                                        std::vector< std::vector<Polygon2> > &results, bool collision_free) {
         if (!ready_)
-            return;
+            return false;
 
         prev_char_index_ = 0;
         prev_rsb_delta_ = 0;
+        results.clear();
 
-        for (int i = 0; i < text.size(); ++i) {
-            const auto &char_contour = _generate_contours(text[i], x, y);
-            // std::cout << i << ": " << string::to_string({wchar_t(char_contour.character)}) << ", to int: " << int(text[i]) << std::endl;
-            if (!char_contour.empty())
-                contours.push_back(char_contour);
+        if (collision_free) {
+            std::vector<Polygon2> all_contours;
+            for (int i = 0; i < text.size(); ++i) {
+                //std::cout << i << ": " << string::to_string({text[i]}) << ", int value: " << int(text[i]) << std::endl;
+                std::vector<Polygon2> contours;
+                if (_generate_contours(text[i], x, y, contours)) {
+                    // resolve intersections and determine interior/exterior for each char.
+                    tessellate(contours, Tessellator::WINDING_ODD);
+                    all_contours.insert(all_contours.end(), contours.begin(), contours.end());
+                }
+            }
+            // compute the union of all characters.
+            tessellate(all_contours, Tessellator::WINDING_NONZERO); // the union of the neighboring chars
+            results.push_back(all_contours);
         }
+        else {
+            for (int i = 0; i < text.size(); ++i) {
+                //std::cout << i << ": " << string::to_string({text[i]}) << ", int value: " << int(text[i]) << std::endl;
+                std::vector<Polygon2> contours;
+                if (_generate_contours(text[i], x, y, contours)) {
+                    // resolve intersections and determine interior/exterior for each char.
+                    tessellate(contours, Tessellator::WINDING_ODD);
+                    results.push_back(contours);
+                }
+            }
+        }
+
+        return !results.empty();
     }
 
 
-    void TextMesher::generate(const std::string &text, float x, float y, std::vector<CharContour> &contours) {
+    bool TextMesher::generate(const std::string &text, float x, float y, std::vector< std::vector<Polygon2> > &contours, bool collision_free) {
         const std::wstring the_text = string::to_wstring(text);
-        _generate_contours(the_text, x, y, contours);
+        return _generate_contours(the_text, x, y, contours, collision_free);
     }
 
 
-    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &text, float x, float y, float extrude) {
+    bool TextMesher::generate(SurfaceMesh *mesh, const std::string &text, float x, float y, float height, bool collision_free) {
+        if (!mesh)
+            return false;
+
         // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
         // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
         // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
         // So I convert it to a muilti-byte character string
         const std::wstring the_text = string::to_wstring(text);
-        return _generate(mesh, the_text, x, y, extrude);
+        return _generate(mesh, the_text, x, y, height, collision_free);
     }
 
 
-    bool TextMesher::_generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, float extrude) {
+    bool TextMesher::_generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, float height, bool collision_free) {
         if (!ready_)
             return false;
 
-        std::vector<CharContour> all_character_contours;
-        _generate_contours(text, x, y, all_character_contours);
-        if (all_character_contours.empty()) {
+        std::vector< std::vector<Polygon2> > contours;
+        if (!_generate_contours(text, x, y, contours, collision_free)) {
             LOG(WARNING) << "no contour generated from the text using the specified font";
             return false;
         }
 
-        ProgressLogger progress(text.size());
-        Tessellator tess_face;
-        for (auto &ch : all_character_contours) {
-            //-------------------------------------------------------------------------------------
-            // First, use another tessellator to generate simple contours
-
-            Tessellator tess_contour;
-            tess_contour.set_bounary_only(true);
-            vec3 normal(0, 0, 1);
-            tess_contour.begin_polygon(normal);
-            for (std::size_t id = 0; id < ch.size(); ++id) {
-                const Contour &contour = ch[id];
-                tess_contour.begin_contour();
-                for (const auto &p : contour)
-                    tess_contour.add_vertex(vec3(p, 0.0));
-                tess_contour.end_contour();
-            }
-            tess_contour.end_polygon();
-
-            ch.clear();
-            const auto &vertices = tess_contour.vertices();
-            const auto &contours = tess_contour.elements();
-
-            //-------------------------------------------------------------------------------------
-            // Second, generate top faces
-
-            tess_face.set_bounary_only(false);
-            if (1) {
-                tess_face.begin_polygon(vec3(0, 0, 1));
-                for (std::size_t index = 0; index < contours.size(); ++index) {
-                    Contour contour(contours[index].size());
-                    tess_face.set_winding_rule(Tessellator::WINDING_ODD);
-                    tess_face.begin_contour();
-                    for (int j = 0; j < contours[index].size(); ++j) {
-                        const int id = contours[index][j];
-                        const Tessellator::Vertex *v = vertices[id];
-                        const vec2 p = vec2(v->data());
-                        contour[j] = p;
-                        Tessellator::Vertex vt(vec3(p, extrude));
-                        vt.push_back(index); // one extra bit to allow stitch within a coutour.
-                        tess_face.add_vertex(vt);
-                    }
-                    contour.clockwise = contour.is_clockwise();
-                    ch.push_back(contour);
-                    tess_face.end_contour();
-                }
-                tess_face.end_polygon();
-            }
-
-            //-------------------------------------------------------------------------------------
-            // Third, generate bottom faces
-            if (1) {
-                tess_face.begin_polygon(vec3(0, 0, -1));
-                for (std::size_t index = 0; index < ch.size(); ++index) {
-                    const Contour &contour = ch[index];
-                    tess_face.set_winding_rule(Tessellator::WINDING_ODD);
-                    tess_face.begin_contour();
-                    for (int j = 0; j < contour.size(); ++j) {
-                        Tessellator::Vertex vt(vec3(contour[j], 0));
-                        vt.push_back(index); // one extra bit to allow stitch within a coutour.
-                        tess_face.add_vertex(vt);
-                    }
-                    tess_face.end_contour();
-                }
-                tess_face.end_polygon();
-            }
-
-
-            //-------------------------------------------------------------------------------------
-            if (1) { // Fourth, generate the side faces
-                // generate the side faces for this character.
-                // test if a contains the majority of b
-                auto contains = [](const Contour &contour_a, const Contour &contour_b) -> bool {
-                    int num_contained = 0;
-                    for (const auto &p : contour_b) {
-                        if (contour_a.contains(p))
-                            ++num_contained;
-                    }
-                    return num_contained > (contour_b.size() - num_contained);
-                };
-
-                // how many other contours contain a contour (given it index)
-                auto num_outer_contours = [&](int cur_idx, const CharContour &cha) -> int {
-                    const Contour &contour = cha[cur_idx];
-                    int num = 0;
-                    for (int idx = 0; idx < cha.size(); ++idx) {
-                        if (idx != cur_idx && contains(cha[idx], contour))
-                            ++num;
-                    }
-                    return num;
-                };
-
-                for (std::size_t index = 0; index < contours.size(); ++index) {
-                    const Contour &contour = ch[index];
-                    for (int j = 0; j < contours[index].size(); ++j) {
-                        int id_a = contours[index][j];
-                        int id_b = contours[index][(j + 1 + contours[index].size()) % contours[index].size()];
-                        const Tessellator::Vertex *va = vertices[id_a];
-                        const Tessellator::Vertex *vb = vertices[id_b];
-                        const vec3 a = vec3(vec2(va->data()), 0);
-                        const vec3 b = vec3(vec2(vb->data()), 0);
-                        const vec3 c = a + vec3(0, 0, extrude);
-                        const vec3 d = b + vec3(0, 0, extrude);
-                        // Though I've already known the vertex indices for the character's side triangles, I still use my
-                        // tessellator, which allows me to stitch the triangles into a closed mesh.
-                        if ((contour.clockwise && num_outer_contours(index, ch) % 2 == 0) ||
-                            (!contour.clockwise && num_outer_contours(index, ch) % 2 == 1)) {
-                            // if counter-clockwise: a -> b -> d -> c
-                            vec3 n = cross(c - a, b - a);
-                            n.normalize();
-                            tess_face.begin_polygon(n);
-                            tess_face.begin_contour();
-                            // if clockwise: a -> c -> d -> b
-                            Tessellator::Vertex vta(a);
-                            vta.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vta);
-                            Tessellator::Vertex vtc(c);
-                            vtc.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtc);
-                            Tessellator::Vertex vtd(d);
-                            vtd.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtd);
-                            Tessellator::Vertex vtb(b);
-                            vtb.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtb);
-                            tess_face.end_contour();
-                            tess_face.end_polygon();
-                        } else { // if counter-clockwise: a -> b -> d -> c
-                            vec3 n = cross(b - a, c - a);
-                            n.normalize();
-                            tess_face.begin_polygon(n);
-                            tess_face.begin_contour();
-                            Tessellator::Vertex vta(a);
-                            vta.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vta);
-                            Tessellator::Vertex vtb(b);
-                            vtb.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtb);
-                            Tessellator::Vertex vtd(d);
-                            vtd.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtd);
-                            Tessellator::Vertex vtc(c);
-                            vtc.push_back(index); // one extra bit to allow stitch within a contour.
-                            tess_face.add_vertex(vtc);
-                            tess_face.end_contour();
-                            tess_face.end_polygon();
-                        }
-                    }
-                }
-            }
-
-            //-------------------------------------------------------------------------------------
-
-            // now we can collect the triangle faces for this character
-
-            const auto &elements = tess_face.elements();
-            if (elements.empty()) {
-                LOG(WARNING) << "failed generating surface for character " << string::to_string({wchar_t(ch.character)});
-            }
-            else {
-                // the vertex index starts from 0 for each character.
-                const int offset = mesh->n_vertices();
-
-                // store the character as a vertex property.
-                auto prop_char = mesh->vertex_property<unsigned int>("v:character");
-
-                // use ManifoldBuilder (just in case there were self-intersecting contours).
-                ManifoldBuilder builder(mesh);
-                builder.begin_surface();
-
-                const auto &final_vertices = tess_face.vertices();
-                for (const auto v : final_vertices) {
-                    auto vtx = builder.add_vertex(vec3(v->data()));
-                    prop_char[vtx] = ch.character;
-                }
-
-                for (const auto &e : elements) {
-                    builder.add_triangle(SurfaceMesh::Vertex(e[0] + offset),
-                                         SurfaceMesh::Vertex(e[1] + offset),
-                                         SurfaceMesh::Vertex(e[2] + offset));
-                }
-
-                builder.end_surface(false);
-            }
-
-            // the tessellator runs for each character
-            tess_face.reset();
+        ProgressLogger progress(contours.size());
+        for (const auto& contour : contours) {
+            extrude(mesh, contour, height);
             progress.next();
         }
 
@@ -853,12 +692,12 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh *TextMesher::generate(const std::string &text, float x, float y, float extrude) {
+    SurfaceMesh *TextMesher::generate(const std::string &text, float x, float y, float extrude, bool collision_free) {
         if (!ready_)
             return nullptr;
 
         SurfaceMesh *mesh = new SurfaceMesh;
-        if (generate(mesh, text, x, y, extrude))
+        if (generate(mesh, text, x, y, extrude, collision_free))
             return mesh;
         else {
             delete mesh;

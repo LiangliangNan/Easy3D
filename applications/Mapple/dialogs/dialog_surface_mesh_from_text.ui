@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>300</width>
-    <height>203</height>
+    <height>232</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -204,6 +204,23 @@
        </item>
       </layout>
      </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="LabelCollisionFree">
+       <property name="text">
+        <string>Collision free</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QCheckBox" name="checkBoxCollisionFree">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -248,6 +265,7 @@
   <tabstop>toolButtonTFontFile</tabstop>
   <tabstop>spinBoxFontSize</tabstop>
   <tabstop>spinBoxExtrusion</tabstop>
+  <tabstop>checkBoxCollisionFree</tabstop>
   <tabstop>applyButton</tabstop>
  </tabstops>
  <resources/>

@@ -75,15 +75,17 @@ void DialogSurfaceMeshFromText::apply() {
         return;
     }
 
+    bool collision_free = ui->checkBoxCollisionFree->isChecked();
+
     TextMesher mesher(font_file, font_size);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh && mesh->name() == text) {
         mesh->clear();
-        mesher.generate(mesh, text, 0, 0, extrusion);
+        mesher.generate(mesh, text, 0, 0, extrusion, collision_free);
         mesh->update();
     } else {
-        mesh = mesher.generate(text, 0, 0, extrusion);
+        mesh = mesher.generate(text, 0, 0, extrusion, collision_free);
         if (mesh) {
             mesh->set_name(text);
             viewer_->addModel(mesh);

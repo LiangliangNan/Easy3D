@@ -43,7 +43,7 @@ namespace easy3d {
          * @param font_size The size of the font.
          * @note The font will be used in all subsequent generation procedure until the next call to set_font().
          */
-        TextMesher(const std::string &font_file, int font_size = 48);
+        TextMesher(const std::string &font_file, int font_size);
 
         ~TextMesher();
 
@@ -61,9 +61,10 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param extrude The height (in the Z direction) of the 3D model.
+         * @param collision_free True the mesh will be the union of all the characters.
          * @return The generated triangular surface mesh.
          */
-        SurfaceMesh *generate(const std::string &text, float x, float y, float extrude = 16);
+        SurfaceMesh *generate(const std::string &text, float x, float y, float extrude, bool collision_free = false);
 
         /**
          * @brief Generate 3D surface representation of a text and append the surface to an existing mesh.
@@ -71,33 +72,21 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param extrude The height (in the Z direction) of the 3D model.
+         * @param collision_free True the mesh will be the union of all the characters.
          * @param True on success and false on failure.
          */
-        bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude = 16);
-        /**
-         * A contour is a closed polygon and it has an orientation (clockwise or counter-clockwise)
-         */
-        struct Contour : Polygon2 {
-            Contour() : clockwise(false) {}
-            Contour(std::size_t size) : Polygon2(size), clockwise(false) {}
-            bool clockwise;
-        };
+        bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude, bool collision_free = false);
 
         /**
-         * CharContour represents the contours of a character, which may contain multiple contours.
-         */
-        struct CharContour : std::vector<Contour> {
-            unsigned int character;
-        };
-
-        /**
-         * @brief Generate contours for a text.
+         * @brief Generate contours from a text.
          * @param text The input text.
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
-         * @param contours The contours of the text. The generated contours are simply appended to his variable.
+         * @param contours The contours of the text (each character may have multiple contours). The generated contours
+         *        are simply appended to his variable.
+         * @param collision_free True the contours will be the union of the contours of all the characters.
          */
-        void generate(const std::string &text, float x, float y, std::vector<CharContour> &contours);
+        bool generate(const std::string &text, float x, float y, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
 
     private:
         void cleanup();
@@ -108,9 +97,10 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param extrude The height (in the Z direction) of the 3D model.
+         * @param collision_free True the mesh will be the union of all the characters.
          * @param True on success and false on failure.
          */
-        bool _generate(SurfaceMesh* mesh, const std::wstring &text, float x, float y, float extrude = 16);
+        bool _generate(SurfaceMesh* mesh, const std::wstring &text, float x, float y, float extrude, bool collision_free);
 
         /**
          * @brief Generate contours for a text.
@@ -118,18 +108,19 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param contours The contours of the text. The generated contours are simply appended to his variable.
+         * @param collision_free True the contours will be the union of the contours of all the characters.
          */
-        void _generate_contours(const std::wstring &text, float x, float y, std::vector<CharContour> &contours);
+        bool _generate_contours(const std::wstring &text, float x, float y, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
 
         /**
          * @brief Generate contours for a single character.
          * @param c The input character.
          * @param x The x-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
-         * @return The contours for this character.
-         * FIXME: should this function be public?
+         * @param contours The contours of this character.
+         * @note All generated contours are in CCW orientation, but they may have intersections.
          */
-        CharContour _generate_contours(wchar_t c, float& x, float& y);
+        bool _generate_contours(wchar_t c, float& x, float& y, std::vector<Polygon2>& contours);
 
     private:
         void *font_library_;
