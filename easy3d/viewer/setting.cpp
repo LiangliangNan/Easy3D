@@ -23,7 +23,6 @@
  */
 
 #include <easy3d/viewer/setting.h>
-#include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
