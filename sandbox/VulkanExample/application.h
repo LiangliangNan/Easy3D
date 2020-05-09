@@ -1,7 +1,13 @@
 #define GLFW_INCLUDE_VULKAN
 
+
+#include <vector>
+
+
 struct GLFWwindow;
+
 struct VkInstance_T;
+struct VkDebugUtilsMessengerEXT_T;
 
 class Application {
 public:
@@ -15,8 +21,13 @@ private:
 
 private:
     void createInstance();
+    std::vector<const char*> getRequiredExtensions();
+    bool checkValidationLayerSupport();
+    void setupDebugMessenger();
+
 
 private:
     GLFWwindow* window;
     VkInstance_T* instance;
+    VkDebugUtilsMessengerEXT_T* debugMessenger;
 };
