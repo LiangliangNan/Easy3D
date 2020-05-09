@@ -92,6 +92,8 @@ namespace easy3d {
 
     // -------------------------------------------------------------------------------------------------------------
 
+
+
     #define get_tess(x) (reinterpret_cast<GLUtesselator *>(x))
 
 
@@ -138,6 +140,12 @@ namespace easy3d {
     void Tessellator::begin_polygon(const vec3 &normal) {
         num_elements_in_polygon_ = 0;
         TessNormal(get_tess(tess_obj_), normal.x, normal.y, normal.z);
+        TessBeginPolygon(get_tess(tess_obj_), this);
+    }
+
+
+    void Tessellator::begin_polygon() {
+        num_elements_in_polygon_ = 0;
         TessBeginPolygon(get_tess(tess_obj_), this);
     }
 
@@ -373,6 +381,43 @@ namespace easy3d {
 
         elements_.clear();
         vertex_ids_.clear();
+    }
+
+
+
+    // -------------------------------------------------------------------------------------------------------------
+
+
+
+    void tessellate(std::vector<Polygon2> &contours, Tessellator::WindingRule rule) {
+//        std::cout << "input contours: " << contours.size() << std::endl;
+
+        Tessellator tessellator;
+        tessellator.set_bounary_only(true);
+        tessellator.begin_polygon(vec3(0, 0, 1));
+        tessellator.set_winding_rule(rule);
+        for (const auto &con : contours) {
+            tessellator.begin_contour();
+            for (const auto &p : con)
+                tessellator.add_vertex(vec3(p, 0.0));
+            tessellator.end_contour();
+        }
+        tessellator.end_polygon();
+
+        contours.clear();
+        const auto &vertices = tessellator.vertices();
+        const auto &elements = tessellator.elements();
+        for (const auto &indices : elements) {
+            Polygon2 con;
+            for (auto p : indices) {
+                auto v = vertices[p];
+                con.emplace_back(vec2(v->data()));
+            }
+
+            contours.push_back(con);
+        }
+
+//        std::cout << "output contours: " << contours.size() << std::endl << std::endl << std::endl;
     }
 
 

@@ -156,7 +156,12 @@ namespace easy3d {
          *        (where a CCW contour has positive area).
          * \attention The supplied normal persists until it is changed by another call to this function.
          */
-        void begin_polygon(const vec3 &normal = vec3(0, 0, 0));
+        void begin_polygon(const vec3 &normal);
+        /**
+         * @brief Begin the tessellation of a complex polygon.
+         * @details This function does not proivde the polygon normal and let the tessellator to decide.
+         */
+        void begin_polygon();
 
         /**
          * @brief Begin a contour of a complex polygon (a polygon may have multiple contours).
@@ -247,6 +252,18 @@ namespace easy3d {
         // The length of the vertex data. Used to handle user provided data in the combine function.
         unsigned int vertex_data_size_;
     };
+
+
+    /**
+     * Tessellate a set of contours of an unknown structure into simple contours according to the winding rule. Useful
+     * for complex CSG operations.
+     * The resulting contours will have the following properties:
+     *  - free of intersections,
+     *  - CCW contours define the outer boundary and CW contours define holes.
+     * @param contours The input contours, and the result on return.
+     * @rule The winding rule to determine the interior and exterior of the complex shape.
+     */
+    void tessellate(std::vector<Polygon2>& contours, Tessellator::WindingRule rule);
 
 }
 
