@@ -8,6 +8,7 @@ set(${PROJECT_NAME}_HEADERS
         delaunay.h
         delaunay_2d.h
         delaunay_3d.h
+        extrusion.h
         surface_mesh_geometry.h
         gaussian_noise.h
         point_cloud_normals.h
@@ -37,6 +38,7 @@ set(${PROJECT_NAME}_SOURCES
         delaunay.cpp
         delaunay_2d.cpp
         delaunay_3d.cpp
+        extrusion.cpp
         surface_mesh_geometry.cpp
         gaussian_noise.cpp
         point_cloud_normals.cpp
