@@ -89,10 +89,10 @@ void DialogSurfaceMeshFromText::apply() {
         if (mesh) {
             mesh->set_name(text);
             viewer_->addModel(mesh);
+            viewer_->fitScreen(mesh);
         }
     }
 
-    viewer_->fitScreen(mesh);
     window_->updateUi();
 #else
     LOG(WARNING) << "TextMesher requires FreeType but FreeType was not found.";
