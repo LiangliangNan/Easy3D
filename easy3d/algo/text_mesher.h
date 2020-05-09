@@ -61,7 +61,7 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param extrude The height (in the Z direction) of the 3D model.
-         * @param collision_free True the mesh will be the union of all the characters.
+         * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @return The generated triangular surface mesh.
          */
         SurfaceMesh *generate(const std::string &text, float x, float y, float extrude, bool collision_free = false);
@@ -72,7 +72,7 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param extrude The height (in the Z direction) of the 3D model.
-         * @param collision_free True the mesh will be the union of all the characters.
+         * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @param True on success and false on failure.
          */
         bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, float extrude, bool collision_free = false);
@@ -84,7 +84,7 @@ namespace easy3d {
          * @param y The y-coordinate of the starting position.
          * @param contours The contours of the text (each character may have multiple contours). The generated contours
          *        are simply appended to his variable.
-         * @param collision_free True the contours will be the union of the contours of all the characters.
+         * @param collision_free If true, the generated contours will be free of intersections between characters.
          */
         bool generate(const std::string &text, float x, float y, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
 
