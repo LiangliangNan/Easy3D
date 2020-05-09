@@ -48,7 +48,6 @@ namespace easy3d {
      *          builder.add_face(ids);
      *      builder.end_surface();
      * ---------------------------------------------------------
-     * TODO: make it work incrementally
      */
 
     class ManifoldBuilder {
