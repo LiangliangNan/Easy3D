@@ -48,20 +48,20 @@ int main(int argc, char **argv) {
 
 #if 1 // show the mesh
     // Generate a surface mesh for "Easy3D".
-    SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0);
+    SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 15, true);
     if (mesh)
         viewer.add_model(mesh); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
-    mesher.generate(mesh,"Makes 3D Easy!", 400, 0);
+    mesher.generate(mesh,"Makes 3D Easy!", 400, 0, 15, true);
 
 #else // show the contours
-    std::vector<TextMesher::CharContour> contours;
+    std::vector< std::vector<Polygon2> > contours;
     mesher.set_font(resource::directory() + font_file, 48);
-    mesher.generate_contours("Easy3D", 0, -60, contours);
+    mesher.generate("Easy3D", 0, -60, contours, true);
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
-    mesher.generate_contours("Makes 3D Easy!", 400, -60, contours);
+    mesher.generate("Makes 3D Easy!", 400, -60, contours, true);
     std::vector<vec3> points, colors;
     std::vector<unsigned int> indices;
     int offset = 0;
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     LinesDrawable *d = new LinesDrawable;
     d->update_vertex_buffer(points);
     d->update_color_buffer(colors);
-    d->update_index_buffer(indices);
+    d->update_element_buffer(indices);
     d->set_impostor_type(LinesDrawable::CONE);
     d->set_line_width(2);
     d->set_property_coloring(easy3d::State::VERTEX);
