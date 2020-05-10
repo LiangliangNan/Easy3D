@@ -12,7 +12,6 @@
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
     - The Graph data structure is not ready, not tested yet;
-    - Module dependence can be improved (core <- viewer; viewer <- core);  The IO examples should not depend on viewer.
     - Rendering performance can still be improved
         * Drawables (e.g., faces, edges, and vertices) of the same model can share the same vertex buffer;
     - Previous timer events may interrupt the current one when visualizing pivot points;
