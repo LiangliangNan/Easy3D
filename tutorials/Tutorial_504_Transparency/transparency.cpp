@@ -23,11 +23,11 @@
  */
 
 #include "transparency.h"
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/average_color_blending.h>
-#include <easy3d/viewer/dual_depth_peeling.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/model.h>
+#include <easy3d/renderer/average_color_blending.h>
+#include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -75,7 +75,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_DOWN) {
-        auto drawable = current_model()->get_triangles_drawable("faces");
+        auto drawable = current_model()->drawable("faces");
         if (drawable) {
             float o = drawable->opacity();
             if (o > 0)
@@ -89,7 +89,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_UP) {
-        auto drawable = current_model()->get_triangles_drawable("faces");
+        auto drawable = current_model()->drawable("faces");
         if (drawable) {
             float o = drawable->opacity();
             if (o > 0)
@@ -114,7 +114,7 @@ void TutorialTransparency::draw() const {
 
 	std::vector<TrianglesDrawable*> surfaces;
 	for (auto m : models_) {
-		for (auto d : m->triangles_drawables())
+		for (auto d : m->drawables(())
 			surfaces.push_back(d);
 	}
 	if (method_ != 0)

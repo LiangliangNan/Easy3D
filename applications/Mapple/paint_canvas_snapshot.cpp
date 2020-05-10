@@ -4,7 +4,7 @@
 #ifdef  USE_QT_FBO
 #include <QOpenGLFramebufferObject>
 #else
-#include <easy3d/viewer/framebuffer_object.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #endif
 
 #include <QOpenGLFunctions>
@@ -13,8 +13,8 @@
 #include "paint_canvas.h"
 #include "main_window.h"
 
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/transform.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
 

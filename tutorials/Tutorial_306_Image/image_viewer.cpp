@@ -24,8 +24,8 @@
 
 #include "image_viewer.h"
 
-#include <easy3d/viewer/texture.h>
-#include <easy3d/viewer/primitives.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/renderer/primitives.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/fileio/resources.h>
 

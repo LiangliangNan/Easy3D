@@ -25,9 +25,9 @@
 #include "point_selection.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/viewer/text_renderer.h>
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/renderer/text_renderer.h>
+#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -82,7 +82,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
                 model->garbage_collection();
                 LOG(INFO) << count << " points deleted" << std::endl;
 
-                auto drawable = model->get_points_drawable("vertices");
+                auto drawable = model->drawable("vertices");
                 drawable->update();
                 polygon_.clear();
             }

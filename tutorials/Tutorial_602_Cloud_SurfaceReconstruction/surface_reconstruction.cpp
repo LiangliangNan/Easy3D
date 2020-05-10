@@ -26,8 +26,8 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/algo/point_cloud_poisson_reconstruction.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -71,7 +71,7 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
         Model* surface = algo.apply(cloud);
         if (surface != nullptr) {
             add_model(surface, true);
-            surface->get_triangles_drawable("faces")->set_smooth_shading(false);
+            surface->drawable("faces")->set_smooth_shading(false);
             delete_model(cloud);
             update();
         }

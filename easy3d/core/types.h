@@ -115,27 +115,22 @@ namespace easy3d {
         }
 
         // bounding box for 3D/2D point set
-        template<typename Box, typename InputIterator>
-        inline Box bounding_box(InputIterator begin, InputIterator end) {
-            assert(begin != end);
+        template<typename Box, typename Container>
+        inline Box bounding_box(const Container& points) {
             Box result;
-            for (InputIterator it = begin; it != end; ++it) {
-                result.add_point(*it);
+            for (const auto& p : points) {
+                result.add_point(p);
             }
             return result;
         }
 
         // centroid for 3D/2D point set
-        template<typename Vec, typename InputIterator>
-        inline Vec centroid(InputIterator begin, InputIterator end) {
-            assert(begin != end);
-            Vec v;
-            unsigned int nb_pts = 0;
-            for (InputIterator it = begin; it != end; ++it) {
-                v += (*it);
-                ++nb_pts;
-            }
-            return v / nb_pts;
+        template<typename Vec, typename Container>
+        inline Vec centroid(const Container& points) {
+            Vec v(0);
+            for (const auto& p : points)
+                v += p;
+            return v / points.size();
         }
 
         template<typename Vec>

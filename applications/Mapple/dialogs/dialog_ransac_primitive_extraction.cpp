@@ -2,8 +2,8 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
 #include "main_window.h"
@@ -87,7 +87,7 @@ void DialogRansacPrimitiveExtraction::extract() {
         LOG(INFO) << num << " primitives extracted";
     }
 
-    auto vertices = cloud->get_points_drawable("vertices");
+    auto vertices = cloud->drawable("vertices");
     const std::string name = "v:color-segments";
 
     renderer::colorize_segmentation(cloud, "v:primitive_index", name);

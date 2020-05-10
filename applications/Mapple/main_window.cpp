@@ -16,9 +16,8 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -1194,7 +1193,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    mesh->get_triangles_drawable("faces")->set_property_coloring(State::FACE, color_name);
+    mesh->drawable("faces")->set_property_coloring(State::FACE, color_name);
 
     mesh->update();
     viewer()->update();

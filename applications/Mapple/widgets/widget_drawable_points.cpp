@@ -5,11 +5,10 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -272,7 +271,8 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetPointsDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || !model->is_visible() || model->points_drawables().empty()) {
+    auto d = dynamic_cast<PointsDrawable*>(drawable());
+    if (!model || !model->is_visible() || !d) {
         setEnabled(false);
         return;
     }
@@ -281,12 +281,11 @@ void WidgetPointsDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto d = dynamic_cast<PointsDrawable*>(drawable());
     auto &state = states_[d];
     auto &scheme = d->state();
 
     ui->comboBoxDrawables->clear();
-    const auto &drawables = model->points_drawables();
+    const auto &drawables = model->drawables();
     for (auto d : drawables)
         ui->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
     ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
@@ -392,15 +391,15 @@ Drawable *WidgetPointsDrawable::drawable() {
     auto model = viewer_->currentModel();
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->get_points_drawable(pos->second);
+        return model->drawable(pos->second);
     else {
-        const auto &drawables = model->points_drawables();
-        if (drawables.empty())
-            return nullptr;
-        else {
-            active_drawable_[model] = drawables[0]->name();
-            return drawables[0];
+        for (auto d : model->drawables() ) {
+            if (d->type() == easy3d::Drawable::DT_POINTS) {
+                active_drawable_[model] = d->name();
+                return d;
+            }
         }
+        return nullptr;
     }
 }
 
@@ -414,11 +413,11 @@ void WidgetPointsDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->get_points_drawable(name)) {
+    if (model->drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
-        const auto &drawables = model->points_drawables();
+        const auto &drawables = model->drawables();
         if (drawables.empty())
             LOG(ERROR) << "no points drawable defined on model: " << model->name();
         else
@@ -529,7 +528,7 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
 
     auto drawa = drawable();
     if (text == "disabled") {
-        const auto &drawables = model->lines_drawables();
+        const auto &drawables = model->drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - v") != std::string::npos)
                 d->set_visible(false);
@@ -539,7 +538,7 @@ void WidgetPointsDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(model, name);
 
-        auto d = model->get_lines_drawable("vector - " + name);
+        auto d = model->drawable("vector - " + name);
         d->set_visible(true);
 
         states_[drawa].vector_field = QString::fromStdString(name);
@@ -569,10 +568,10 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
     }
 
     // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-    auto drawable = model->get_lines_drawable("vector - v:normal");
+    auto drawable = model->drawable("vector - v:normal");
     if (!drawable) {
-        drawable = model->add_lines_drawable("vector - v:normal");
-        drawable->set_update_func([this](Model *m, Drawable *d) -> void {
+        auto new_drawable = new LinesDrawable("vector - v:normal", model);
+        new_drawable->set_update_func([this](Model *m, Drawable *d) -> void {
             const std::string& name = "v:normal";
             float scale = ui->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
@@ -580,6 +579,7 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
             else if (dynamic_cast<PointCloud *>(m))
                 renderer::update_buffers_vector_field(dynamic_cast<PointCloud*>(m), dynamic_cast<LinesDrawable*>(d), name, scale);
         });
+        model->add_drawable(new_drawable);
     }
 }
 

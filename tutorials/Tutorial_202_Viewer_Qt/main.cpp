@@ -33,7 +33,7 @@
 #include <QSurfaceFormat>
 #include <QStyleFactory>
 
-#include <easy3d/viewer/setting.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 
 #include "main_window.h"

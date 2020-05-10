@@ -24,8 +24,8 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/texture_manager.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>

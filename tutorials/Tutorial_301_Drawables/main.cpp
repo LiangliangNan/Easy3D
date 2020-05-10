@@ -23,10 +23,10 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/types.h>
 #include <easy3d/util/logging.h>

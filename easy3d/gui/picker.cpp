@@ -24,8 +24,8 @@
 
 
 #include <easy3d/gui/picker.h>
-#include <easy3d/viewer/framebuffer_object.h>
-#include <easy3d/viewer/opengl_error.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_error.h>
 
 
 namespace easy3d {

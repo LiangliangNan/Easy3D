@@ -25,7 +25,7 @@
 #ifndef PAINT_CANVAS_H
 #define PAINT_CANVAS_H
 
-#include <easy3d/viewer/opengl.h>
+#include <easy3d/renderer/opengl.h>
 
 #include <QOpenGLWidget>
 

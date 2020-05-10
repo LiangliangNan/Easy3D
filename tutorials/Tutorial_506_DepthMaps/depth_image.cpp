@@ -24,14 +24,14 @@
 
 #include "depth_image.h"
 
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/framebuffer_object.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/primitives.h>
+#include <easy3d/renderer/model.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/primitives.h>
 #include <easy3d/util/dialogs.h>
 
 using namespace easy3d;
@@ -82,13 +82,13 @@ void DepthImage::generate_depth() {
         program->bind();
         program->set_uniform("MVP", camera()->modelViewProjectionMatrix());
         for (auto m : models_) {
-            for (auto d : m->points_drawables()) {
+            for (auto d : m->drawables()) {
                 if (d->is_visible()) {
                     glPointSize(d->point_size());
                     d->gl_draw(false);
                 }
             }
-            for (auto d : m->triangles_drawables()) {
+            for (auto d : m->drawables(()) {
                 if (d->is_visible())
                     d->gl_draw(false);
             }

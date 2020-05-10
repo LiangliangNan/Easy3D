@@ -38,7 +38,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/model.h>
+#include <easy3d/renderer/model.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>

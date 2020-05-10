@@ -24,9 +24,9 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -51,7 +51,7 @@ void create_spheres(SurfaceMesh *mesh) {
 
 // render mesh edges as cylinders
 void create_cylinders(SurfaceMesh *mesh) {
-    LinesDrawable *drawable = mesh->add_lines_drawable("edges");
+    LinesDrawable *drawable = mesh->add_drawable("edges");
     drawable->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CYLINDER);
     drawable->set_line_width(6);
@@ -80,7 +80,7 @@ void create_cones(SurfaceMesh *mesh) {
         normal_points.push_back(t);
     }
 
-    LinesDrawable *drawable = mesh->add_lines_drawable("normals");
+    LinesDrawable *drawable = mesh->add_drawable("normals");
     drawable->update_vertex_buffer(normal_points);
     drawable->set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CONE);

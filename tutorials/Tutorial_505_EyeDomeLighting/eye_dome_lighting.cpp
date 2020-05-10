@@ -24,12 +24,12 @@
 
 #include "eye_dome_lighting.h"
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/eye_dome_lighting.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -91,7 +91,7 @@ void TutorialEyeDomeLighting::draw() const {
 		if (!program)
 			return;
 
-        auto drawable = current_model()->get_points_drawable("vertices");
+        auto drawable = current_model()->drawable("vertices");
         glPointSize(drawable->point_size());
 
         edl_->begin();

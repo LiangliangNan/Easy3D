@@ -23,9 +23,9 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/resources.h>
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
     viewer.add_model(mesh, true);
 
     // also show the borders
-    mesh->get_lines_drawable("edges")->set_visible(true);
+    mesh->drawable("edges")->set_visible(true);
 
     // Run the viewer
     return viewer.run();

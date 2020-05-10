@@ -25,12 +25,12 @@
 #include "real_camera.h"
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/manipulated_camera_frame.h>
-#include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/primitives.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/primitives.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -50,7 +50,7 @@ RealCamera::RealCamera(const std::string& title,
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
-        auto drawable = current_model()->get_points_drawable("vertices");
+        auto drawable = current_model()->drawable("vertices");
         drawable->set_point_size(5.0f);
 
         // Read the camera parameters from the bundler file.
@@ -115,7 +115,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_H) {
-        LinesDrawable* d = current_model()->get_lines_drawable("cameras");
+        LinesDrawable* d = current_model()->drawable("cameras");
         if (d) {
             d->set_visible(!d->is_visible());
             update();

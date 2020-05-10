@@ -26,8 +26,8 @@
 #define EASY3D_GUI_PICKER_MODEL_H
 
 #include <easy3d/gui/picker.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/state.h>
+#include <easy3d/core/state.h>
+#include <easy3d/renderer/camera.h>
 
 #include <vector>
 #include <unordered_map>

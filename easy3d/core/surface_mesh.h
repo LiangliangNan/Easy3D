@@ -40,7 +40,7 @@
 #ifndef EASY3D_SURFACE_MESH_H
 #define EASY3D_SURFACE_MESH_H
 
-#include <easy3d/viewer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/properties.h>
 
@@ -62,7 +62,7 @@ namespace easy3d {
      * @related ManifoldBuilder.
      */
 
-    class SurfaceMesh : public Model
+    class SurfaceMesh : public virtual Model
     {
 
     public: //------------------------------------------------------ topology types

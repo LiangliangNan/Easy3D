@@ -49,17 +49,17 @@
 // The idea behind is that point coordinates and associated attribute values are stored as
 // std::vector<T>.
 
-#ifndef EASY3D_POINT_CLOUD_H
-#define EASY3D_POINT_CLOUD_H
+#ifndef EASY3D_CORE_POINT_CLOUD_H
+#define EASY3D_CORE_POINT_CLOUD_H
 
-#include <easy3d/viewer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/properties.h>
 
 namespace easy3d {
 
     /// A for point clouds.
-    class PointCloud : public Model
+    class PointCloud : public virtual Model
     {
 
     public: //------------------------------------------------------ topology types

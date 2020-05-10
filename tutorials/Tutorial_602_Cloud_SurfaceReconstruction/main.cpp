@@ -23,8 +23,8 @@
  */
 
 #include "surface_reconstruction.h"
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_points.h>
+#include <easy3d/renderer/model.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    auto drawable = model->get_points_drawable("vertices");
+    auto drawable = model->drawable("vertices");
     drawable->set_point_size(5.0f);
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
 

@@ -27,12 +27,12 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/util/logging.h>
 
 
@@ -122,12 +122,12 @@ namespace easy3d {
             const vec4 color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
             if (dynamic_cast<SurfaceMesh *>(model))
-                draw(model->get_triangles_drawable("faces"), color);
+                draw(model->drawable("faces"), color);
             else if (dynamic_cast<PointCloud *>(model))
-                draw(model->get_points_drawable("vertices"), color);
+                draw(model->drawable("vertices"), color);
             else if (dynamic_cast<Graph *>(model)) {
-                draw(model->get_points_drawable("vertices"), color);
-                draw(model->get_lines_drawable("edges"), color);
+                draw(model->drawable("vertices"), color);
+                draw(model->drawable("edges"), color);
             }
         }
     }
@@ -135,6 +135,9 @@ namespace easy3d {
 
     // draw a drawable
     void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
+        if (!drawable)
+            return;
+
         // record
         states_[drawable] = drawable->state();
 

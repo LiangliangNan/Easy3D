@@ -4,9 +4,8 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/texture_manager.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -124,7 +123,8 @@ WidgetLinesDrawable::~WidgetLinesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetLinesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || !model->is_visible() || model->lines_drawables().empty()) {
+    auto d = dynamic_cast<LinesDrawable*>(drawable());
+    if (!model || !model->is_visible() || !d) {
         setEnabled(false);
         return;
     }
@@ -133,12 +133,11 @@ void WidgetLinesDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto d = dynamic_cast<LinesDrawable*>(drawable());
     auto &state = states_[d];
     auto &scheme = d->state();
 
     ui->comboBoxDrawables->clear();
-    const auto &drawables = model->lines_drawables();
+    const auto &drawables = model->drawables();
     for (auto d : drawables)
         ui->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
     ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
@@ -227,15 +226,15 @@ Drawable *WidgetLinesDrawable::drawable() {
     auto model = viewer_->currentModel();
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->get_lines_drawable(pos->second);
+        return model->drawable(pos->second);
     else {
-        const auto &drawables = model->lines_drawables();
-        if (drawables.empty())
-            return nullptr;
-        else {
-            active_drawable_[model] = drawables[0]->name();
-            return drawables[0];
+        for (auto d : model->drawables() ) {
+            if (d->type() == easy3d::Drawable::DT_LINES) {
+                active_drawable_[model] = d->name();
+                return d;
+            }
         }
+        return nullptr;
     }
 }
 
@@ -249,11 +248,11 @@ void WidgetLinesDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->get_lines_drawable(name)) {
+    if (model->drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
-        const auto &drawables = model->lines_drawables();
+        const auto &drawables = model->drawables();
         if (drawables.empty())
             LOG(ERROR) << "no lines drawable defined on model: " << model->name();
         else
@@ -444,7 +443,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
 
     auto d = drawable();
     if (text == "disabled") {
-        const auto &drawables = mesh->lines_drawables();
+        const auto &drawables = mesh->drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - ") != std::string::npos)
                 d->set_visible(false);
@@ -454,7 +453,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->get_lines_drawable("vector - f:normal");
+        auto d = mesh->drawable("vector - f:normal");
         d->set_visible(true);
 
         states_[d].vector_field = "f:normal";
@@ -481,9 +480,9 @@ void WidgetLinesDrawable::updateVectorFieldBuffer(Model *model, const std::strin
 //    }
 //
 //    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-//    auto drawable = mesh->get_lines_drawable("vector - f:normal");
+//    auto drawable = mesh->drawable("vector - f:normal");
 //    if (!drawable)
-//        drawable = mesh->add_lines_drawable("vector - f:normal");
+//        drawable = mesh->add_drawable("vector - f:normal");
 //
 //    auto points = mesh->get_vertex_property<vec3>("v:point");
 //

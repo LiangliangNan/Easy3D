@@ -1,7 +1,7 @@
 #include "application.h"
 
 
-#include <easy3d/viewer/transform.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/image_io.h>

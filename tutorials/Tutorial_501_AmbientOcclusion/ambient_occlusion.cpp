@@ -24,13 +24,13 @@
 
 #include "ambient_occlusion.h"
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/ambient_occlusion.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -123,7 +123,7 @@ void TutorialAmbientOcclusion::draw() const {
 			->set_uniform("ssaoEnabled", true)
 			->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
-		auto drawable = current_model()->get_triangles_drawable("faces");
+		auto drawable = current_model()->drawable("faces");
 
 		program->set_uniform("smooth_shading", drawable->smooth_shading())
 			->set_block_uniform("Material", "ambient", drawable->material().ambient)

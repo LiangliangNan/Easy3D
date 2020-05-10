@@ -26,7 +26,7 @@
 #define EASY3D_GUI_PICKER_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/camera.h>
 
 
 namespace easy3d {

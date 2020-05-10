@@ -24,7 +24,7 @@
 
 #include "transparency.h"
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    auto drawable = viewer.current_model()->get_triangles_drawable("faces");
+    auto drawable = viewer.current_model()->drawable("faces");
     drawable->set_smooth_shading(true);
 
     // Run the viewer

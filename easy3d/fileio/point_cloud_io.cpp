@@ -25,7 +25,6 @@
 #include <easy3d/fileio/point_cloud_io.h>
 
 #include <clocale>
-#include <fstream>
 
 #include <easy3d/fileio/point_cloud_io_vg.h>
 #include <easy3d/core/point_cloud.h>
