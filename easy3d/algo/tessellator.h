@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_TESSELLATOR_H
-#define EASY3D_TESSELLATOR_H
+#ifndef EASY3D_ALGO_TESSELLATOR_H
+#define EASY3D_ALGO_TESSELLATOR_H
 
 #include <vector>
 #include <easy3d/core/types.h>
@@ -254,17 +254,40 @@ namespace easy3d {
     };
 
 
-    /**
-     * Tessellate a set of contours of an unknown structure into simple contours according to the winding rule. Useful
-     * for complex CSG operations.
-     * The resulting contours will have the following properties:
-     *  - free of intersections,
-     *  - CCW contours define the outer boundary and CW contours define holes.
-     * @param contours The input contours, and the result on return.
-     * @rule The winding rule to determine the interior and exterior of the complex shape.
-     */
-    void tessellate(std::vector<Polygon2>& contours, Tessellator::WindingRule rule);
+    namespace csg {
+        /**
+         * Tessellate a set of polygons of an unknown structure into simple contours according to the winding rule.
+         * Useful for complex CSG operations.
+         * The resulting polygons will have the following properties:
+         *  - free of intersections,
+         *  - CCW contours define the outer boundary and CW contours define holes.
+         * @param polygons The input polygons, and the result on return.
+         * @rule The winding rule to determine the interior and exterior of the complex shape.
+         */
+        void tessellate(std::vector<Polygon2> &polygons, Tessellator::WindingRule rule);
+
+        /**
+         * Compute the union of a set of polygons.
+         * @param polygons The input polygons, and the result on return.
+         */
+        void union_of(std::vector<Polygon2> &polygons);
+
+        /**
+         * Compute the intersection of two polygons.
+         * @param polygon_a One of the two input polygons.
+         * @param result The result.
+         */
+        void intersection_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
+
+        /**
+         * Compute the difference of two polygons (i.e., A diff B)
+         * @param polygon_a The A polygon.
+         * @param polygon_b The B polygon.
+         * @param result The result.
+         */
+        void difference_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
+    }
 
 }
 
-#endif  // EASY3D_TESSELLATOR_H
+#endif  // EASY3D_ALGO_TESSELLATOR_H

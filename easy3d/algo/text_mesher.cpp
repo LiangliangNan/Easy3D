@@ -629,12 +629,12 @@ namespace easy3d {
                 std::vector<Polygon2> contours;
                 if (_generate_contours(text[i], x, y, contours)) {
                     // resolve intersections and determine interior/exterior for each char.
-                    tessellate(contours, Tessellator::WINDING_ODD);
+                    csg::tessellate(contours, Tessellator::WINDING_ODD);
                     all_contours.insert(all_contours.end(), contours.begin(), contours.end());
                 }
             }
             // compute the union of all characters.
-            tessellate(all_contours, Tessellator::WINDING_NONZERO); // the union of the neighboring chars
+            csg::tessellate(all_contours, Tessellator::WINDING_NONZERO); // the union of the neighboring chars
             results.push_back(all_contours);
         }
         else {
@@ -643,7 +643,7 @@ namespace easy3d {
                 std::vector<Polygon2> contours;
                 if (_generate_contours(text[i], x, y, contours)) {
                     // resolve intersections and determine interior/exterior for each char.
-                    tessellate(contours, Tessellator::WINDING_ODD);
+                    csg::tessellate(contours, Tessellator::WINDING_ODD);
                     results.push_back(contours);
                 }
             }

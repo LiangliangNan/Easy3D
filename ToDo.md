@@ -1,6 +1,13 @@
 * easy3d (on going):
-    - Add tutorials for algorithms: Delaunay2D, simplification, subdivision, smoothing, hole filling, curvatures, parameterization.
-    - Add CSG operations based on Tessellator;
+    - Add tutorials for algorithms: 
+            * Delaunay2D, 
+            * simplification
+            * subdivision
+            * smoothing
+            * hole filling
+            * curvature
+            * parameterization
+            * CSG operations
     - Support tetrahedron formats (e.g., *.mesh, *.meshb, *.tet); visualizing interiors and cross-sections;
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);

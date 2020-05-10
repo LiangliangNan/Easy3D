@@ -387,38 +387,62 @@ namespace easy3d {
 
     // -------------------------------------------------------------------------------------------------------------
 
+    namespace csg {
 
-
-    void tessellate(std::vector<Polygon2> &contours, Tessellator::WindingRule rule) {
-//        std::cout << "input contours: " << contours.size() << std::endl;
-
-        Tessellator tessellator;
-        tessellator.set_bounary_only(true);
-        tessellator.begin_polygon(vec3(0, 0, 1));
-        tessellator.set_winding_rule(rule);
-        for (const auto &con : contours) {
-            tessellator.begin_contour();
-            for (const auto &p : con)
-                tessellator.add_vertex(vec3(p, 0.0));
-            tessellator.end_contour();
-        }
-        tessellator.end_polygon();
-
-        contours.clear();
-        const auto &vertices = tessellator.vertices();
-        const auto &elements = tessellator.elements();
-        for (const auto &indices : elements) {
-            Polygon2 con;
-            for (auto p : indices) {
-                auto v = vertices[p];
-                con.emplace_back(vec2(v->data()));
+        void tessellate(std::vector<Polygon2> &polygons, Tessellator::WindingRule rule) {
+            Tessellator tessellator;
+            tessellator.set_bounary_only(true);
+            tessellator.begin_polygon(vec3(0, 0, 1));
+            tessellator.set_winding_rule(rule);
+            for (const auto &con : polygons) {
+                tessellator.begin_contour();
+                for (const auto &p : con)
+                    tessellator.add_vertex(vec3(p, 0.0));
+                tessellator.end_contour();
             }
+            tessellator.end_polygon();
 
-            contours.push_back(con);
+            polygons.clear();
+            const auto &vertices = tessellator.vertices();
+            const auto &elements = tessellator.elements();
+            for (const auto &indices : elements) {
+                Polygon2 con;
+                for (auto p : indices) {
+                    auto v = vertices[p];
+                    con.emplace_back(vec2(v->data()));
+                }
+
+                polygons.push_back(con);
+            }
         }
 
-//        std::cout << "output contours: " << contours.size() << std::endl << std::endl << std::endl;
-    }
 
+        void union_of(std::vector<Polygon2> &polygons) {
+            tessellate(polygons, Tessellator::WINDING_NONZERO);
+        }
+
+
+        void intersection_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result) {
+            result.clear();
+            result.push_back(polygon_a);
+            result.push_back(polygon_b);
+            tessellate(result, Tessellator::WINDING_ABS_GEQ_TWO);
+        }
+
+
+        void difference_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result) {
+            result.clear();
+
+            result.push_back(polygon_a);
+            if (polygon_a.is_clockwise())
+                result.back().reverse_orientation();
+
+            result.push_back(polygon_b);
+            if (!polygon_b.is_clockwise())
+                result.back().reverse_orientation();
+
+            tessellate(result, Tessellator::WINDING_POSITIVE);
+        }
+    }
 
 }
