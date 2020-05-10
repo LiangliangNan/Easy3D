@@ -271,6 +271,9 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetPointsDrawable::updatePanel() {
     auto model = viewer_->currentModel();
+    if (!model)
+        active_drawable_.clear();
+
     auto d = dynamic_cast<PointsDrawable*>(drawable());
     if (!model || !model->is_visible() || !d) {
         setEnabled(false);
@@ -389,6 +392,11 @@ void WidgetPointsDrawable::updatePanel() {
 
 Drawable *WidgetPointsDrawable::drawable() {
     auto model = viewer_->currentModel();
+    if (!model) {
+        active_drawable_.clear();
+        return nullptr;
+    }
+
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
         return model->drawable(pos->second);

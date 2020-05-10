@@ -123,6 +123,9 @@ WidgetLinesDrawable::~WidgetLinesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetLinesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
+    if (!model)
+        active_drawable_.clear();
+
     auto d = dynamic_cast<LinesDrawable*>(drawable());
     if (!model || !model->is_visible() || !d) {
         setEnabled(false);
@@ -224,6 +227,11 @@ void WidgetLinesDrawable::updatePanel() {
 
 Drawable *WidgetLinesDrawable::drawable() {
     auto model = viewer_->currentModel();
+    if (!model) {
+        active_drawable_.clear();
+        return nullptr;
+    }
+
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
         return model->drawable(pos->second);
