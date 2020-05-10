@@ -92,7 +92,8 @@ void TutorialEyeDomeLighting::draw() const {
 			return;
 
         auto drawable = current_model()->drawable("vertices");
-        glPointSize(drawable->point_size());
+        int point_size = dynamic_cast<PointsDrawable*>(drawable)->point_size();
+        glPointSize(point_size);
 
         edl_->begin();
 		program->bind();

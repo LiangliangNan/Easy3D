@@ -24,7 +24,7 @@
 
 #include "picker_viewer.h"
 #include <easy3d/gui/picker_model.h>
-#include <easy3d/renderer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>

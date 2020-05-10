@@ -23,7 +23,7 @@
  */
 
 #include "ambient_occlusion.h"
-#include <easy3d/renderer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>

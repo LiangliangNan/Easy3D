@@ -3,7 +3,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/renderer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>

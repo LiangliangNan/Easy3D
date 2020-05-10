@@ -69,10 +69,10 @@ namespace easy3d {
         /**
          * Add a drawable to this model. The model will take the ownership of the drawable (e.g., memory management).
          * @param drawable The drawable to be added to this model.
-         * @return True if the drawable has been successfully added to this model. False if a drawable with the same
-         *         name already exists and could not been added.
+         * @return The newly added drawable. This operation will fail if a drawable with the same name already exists.
+         *         In this case, a nullptr will be returned.
          */
-        bool add_drawable(Drawable* drawable);
+        Drawable* add_drawable(Drawable* drawable);
 
         /**
          * Get the drawable of a given name.

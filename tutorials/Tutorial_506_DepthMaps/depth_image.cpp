@@ -24,7 +24,7 @@
 
 #include "depth_image.h"
 
-#include <easy3d/renderer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -84,13 +84,12 @@ void DepthImage::generate_depth() {
         for (auto m : models_) {
             for (auto d : m->drawables()) {
                 if (d->is_visible()) {
-                    glPointSize(d->point_size());
+                    if (d->type() == Drawable::DT_POINTS) {
+                        float point_size = dynamic_cast<PointsDrawable*>(d)->point_size();
+                        glPointSize(point_size);
+                    }
                     d->gl_draw(false);
                 }
-            }
-            for (auto d : m->drawables(()) {
-                if (d->is_visible())
-                    d->gl_draw(false);
             }
         }
         program->release();

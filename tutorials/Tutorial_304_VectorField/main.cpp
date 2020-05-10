@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     }
 
     // Create a drawable for rendering the normal vectors.
-    auto drawable = model->add_drawable("normals");
+    auto drawable = new LinesDrawable("normals");
     // Upload the data to the GPU.
     drawable->update_vertex_buffer(points);
 
@@ -88,7 +88,10 @@ int main(int argc, char **argv) {
     // Set the line width
     drawable->set_line_width(3.0f);
 
-    // also show the standard "edges"
+    // Add the drawable to the model.
+    model->add_drawable(drawable);
+
+    // Also show the standard "edges"
     model->drawable("edges")->set_visible(true);
 
     // Run the viewer

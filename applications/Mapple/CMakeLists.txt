@@ -128,7 +128,7 @@ if (MSVC)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} viewer algo gui)
+target_link_libraries(${PROJECT_NAME} renderer algo gui)
 
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)

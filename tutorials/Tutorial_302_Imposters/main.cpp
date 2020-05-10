@@ -42,19 +42,21 @@ using namespace easy3d;
 
 // render mesh vertices as spheres
 void create_spheres(SurfaceMesh *mesh) {
-    PointsDrawable *drawable = mesh->add_points_drawable("vertices");
+    PointsDrawable *drawable = new PointsDrawable("vertices");
     drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     drawable->set_point_size(24.0f);
-    drawable->set_impostor_type(PointsDrawable::SPHERE);;
+    drawable->set_impostor_type(PointsDrawable::SPHERE);
+    mesh->add_drawable(drawable);
 }
 
 
 // render mesh edges as cylinders
 void create_cylinders(SurfaceMesh *mesh) {
-    LinesDrawable *drawable = mesh->add_drawable("edges");
+    LinesDrawable *drawable = new LinesDrawable("edges");
     drawable->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CYLINDER);
     drawable->set_line_width(6);
+     mesh->add_drawable(drawable);
 }
 
 
@@ -80,21 +82,22 @@ void create_cones(SurfaceMesh *mesh) {
         normal_points.push_back(t);
     }
 
-    LinesDrawable *drawable = mesh->add_drawable("normals");
+    LinesDrawable *drawable = new LinesDrawable("normals");
     drawable->update_vertex_buffer(normal_points);
     drawable->set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     drawable->set_impostor_type(LinesDrawable::CONE);
     drawable->set_line_width(8);
-
+    mesh->add_drawable(drawable);
 }
 
 
 // render mesh vertices as surfels
 void create_surfels(SurfaceMesh *mesh) {
-    PointsDrawable *drawable = mesh->add_points_drawable("vertices");
+    PointsDrawable *drawable = new PointsDrawable("vertices");
     drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     drawable->set_point_size(24.0f);
     drawable->set_impostor_type(PointsDrawable::SURFEL);
+     mesh->add_drawable(drawable);
 }
 
 

@@ -51,7 +51,7 @@ RealCamera::RealCamera(const std::string& title,
     // Read the point cloud
     if (add_model(cloud_file)) {
         auto drawable = current_model()->drawable("vertices");
-        drawable->set_point_size(5.0f);
+        dynamic_cast<PointsDrawable*>(drawable)->set_point_size(5.0f);
 
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
@@ -115,7 +115,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_H) {
-        LinesDrawable* d = current_model()->drawable("cameras");
+        auto d = current_model()->drawable("cameras");
         if (d) {
             d->set_visible(!d->is_visible());
             update();

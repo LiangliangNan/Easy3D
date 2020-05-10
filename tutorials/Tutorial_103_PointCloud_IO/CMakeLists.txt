@@ -14,4 +14,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 
-target_link_libraries(${PROJECT_NAME} core fileio viewer)
+target_link_libraries(${PROJECT_NAME} core fileio)

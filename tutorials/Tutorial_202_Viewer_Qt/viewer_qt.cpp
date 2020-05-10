@@ -24,38 +24,46 @@
 
 #include "viewer_qt.h"
 
-#include <QMouseEvent>
-#include <QPainter>
-#include <QTimer>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-#include <QOpenGLFramebufferObject>
-
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/graph.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_info.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/setting.h>
-#include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/opengl_timer.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/opengl_timer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+
+#include <QKeyEvent>
+#include <QPainter>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QOpenGLFramebufferObject>
+#include <QOpenGLFramebufferObjectFormat>
+#include <QApplication>
+#include <QClipboard>
+
 
 
 using namespace easy3d;
@@ -439,34 +447,48 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             camera()->keyFrameInterpolator()->startInterpolation();
     } else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
-            for (auto d : m->lines_drawables()) {
-                float size = d->line_width() - 1.0f;
-                if (size < 1)
-                    size = 1;
-                d->set_line_width(size);
+            for (auto d : m->drawables()) {
+                auto lines = dynamic_cast<LinesDrawable*>(d);
+                if (lines) {
+                    float size = lines->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    lines->set_line_width(size);
+                }
             }
         }
     } else if (e->key() == Qt::Key_BracketRight && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
-            for (auto d : m->lines_drawables()) {
-                float size = d->line_width() + 1.0f;
-                d->set_line_width(size);
+            for (auto m : models_) {
+                for (auto d : m->drawables()) {
+                    auto lines = dynamic_cast<LinesDrawable*>(d);
+                    if (lines) {
+                        float size = lines->line_width() + 1.0f;
+                        lines->set_line_width(size);
+                    }
+                }
             }
         }
     } else if (e->key() == Qt::Key_Minus && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->drawables()) {
-                float size = d->point_size() - 1.0f;
-                if (size < 1)
-                    size = 1;
-                d->set_point_size(size);
+                auto points = dynamic_cast<PointsDrawable*>(d);
+                if (points) {
+                    float size = points->point_size() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    points->set_point_size(size);
+                }
             }
         }
     } else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->drawables()) {
-                float size = d->point_size() + 1.0f;
-                d->set_point_size(size);
+                auto points = dynamic_cast<PointsDrawable*>(d);
+                if (points) {
+                    float size = points->point_size() + 1.0f;
+                    points->set_point_size(size);
+                }
             }
         }
     } else if (e->key() == Qt::Key_Comma && e->modifiers() == Qt::NoModifier) {
@@ -494,78 +516,85 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
             deleteModel(currentModel());
     } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
-            auto *edges = currentModel()->drawable("edges");
-            if (!edges) {
+            auto edges = currentModel()->drawable("edges");
+            if (edges)
+                edges->set_visible(!edges->is_visible());
+            else {
                 if (!dynamic_cast<PointCloud *>(currentModel())) { // no default "edges" drawable for point clouds
-                    edges = currentModel()->add_drawable("edges");
+                    auto new_edges = new LinesDrawable("edges", currentModel());
                     if (dynamic_cast<SurfaceMesh *>(currentModel())) {
-                        edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-                        edges->set_line_width(setting::surface_mesh_edges_line_width);
+                        new_edges->set_uniform_coloring(setting::surface_mesh_edges_color);
+                        new_edges->set_line_width(setting::surface_mesh_edges_line_width);
                     }
                     else if (dynamic_cast<Graph *>(currentModel())) {
-                        edges->set_uniform_coloring(setting::graph_edges_color);
-                        edges->set_line_width(setting::graph_edges_line_width);
-                        edges->set_impostor_type(LinesDrawable::CYLINDER);
+                        new_edges->set_uniform_coloring(setting::graph_edges_color);
+                        new_edges->set_line_width(setting::graph_edges_line_width);
+                        new_edges->set_impostor_type(LinesDrawable::CYLINDER);
                     }
+                    currentModel()->add_drawable(new_edges);
                 }
-            } else
-                edges->set_visible(!edges->is_visible());
+            }
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
             auto vertices = currentModel()->drawable("vertices");
-            if (!vertices) {
-                vertices = currentModel()->add_points_drawable("vertices");
-                if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-                    vertices->set_impostor_type(PointsDrawable::SPHERE);
-                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                }
-                else if (dynamic_cast<PointCloud*>(currentModel())) {
-                    vertices->set_point_size(setting::point_cloud_point_size);
-                    vertices->set_uniform_coloring(setting::point_cloud_points_color);
-                }
-                else if (dynamic_cast<Graph*>(currentModel())) {
-                    vertices->set_uniform_coloring(setting::graph_vertices_color);
-                    vertices->set_point_size(setting::graph_vertices_point_size);
-                    vertices->set_impostor_type(PointsDrawable::SPHERE);
-                }
-            } else
+            if (vertices)
                 vertices->set_visible(!vertices->is_visible());
+            else {
+                auto new_vertices = new PointsDrawable("vertices", currentModel());
+                if (dynamic_cast<SurfaceMesh *>(currentModel())) {
+                    new_vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
+                    new_vertices->set_impostor_type(PointsDrawable::SPHERE);
+                    new_vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                } else if (dynamic_cast<PointCloud *>(currentModel())) {
+                    new_vertices->set_point_size(setting::point_cloud_point_size);
+                    new_vertices->set_uniform_coloring(setting::point_cloud_points_color);
+                } else if (dynamic_cast<Graph *>(currentModel())) {
+                    new_vertices->set_uniform_coloring(setting::graph_vertices_color);
+                    new_vertices->set_point_size(setting::graph_vertices_point_size);
+                    new_vertices->set_impostor_type(PointsDrawable::SPHERE);
+                }
+                currentModel()->add_drawable(new_vertices);
+            }
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             auto borders = mesh->drawable("borders");
-            if (!borders) {
-                borders = mesh->add_drawable("borders");
-                borders->set_uniform_coloring(setting::surface_mesh_borders_color);
-                borders->set_impostor_type(LinesDrawable::CYLINDER);
-                borders->set_line_width(setting::surface_mesh_borders_line_width);
-            }
-            else
+            if (borders)
                 borders->set_visible(!borders->is_visible());
+            else {
+                auto new_borders = new LinesDrawable("borders", mesh);
+                new_borders->set_uniform_coloring(setting::surface_mesh_borders_color);
+                new_borders->set_impostor_type(LinesDrawable::CYLINDER);
+                new_borders->set_line_width(setting::surface_mesh_borders_line_width);
+                mesh->add_drawable(new_borders);
+            }
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
-            auto drawable = mesh->drawable("locks");
-            if (!drawable) {
-                drawable = mesh->add_points_drawable("locks");
-                drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
-                drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+            auto locks = mesh->drawable("locks");
+            if (locks)
+                locks->set_visible(!locks->is_visible());
+            else {
+                auto new_locks = new PointsDrawable("locks", mesh);
+                new_locks->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
+                new_locks->set_impostor_type(PointsDrawable::SPHERE);
+                new_locks->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+                mesh->add_drawable(new_locks);
             }
-            else
-                drawable->set_visible(!drawable->is_visible());
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
         if (dynamic_cast<SurfaceMesh *>(currentModel())) {
             auto drawable = currentModel()->drawable("faces");
-            if (drawable)
-                drawable->set_smooth_shading(!drawable->smooth_shading());
+            if (drawable->type() == easy3d::Drawable::DT_TRIANGLES) {
+                auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
+                faces->set_smooth_shading(!faces->smooth_shading());
+            }
         }
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
@@ -587,21 +616,10 @@ void ViewerQt::keyPressEvent(QKeyEvent* e) {
                 output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
                        << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
             }
-            if (!currentModel()->drawables().empty()) {
-                output << "points drawables:\n";
-                for (auto d : currentModel()->drawables())
-                    d->buffer_stats(output);
-            }
-            if (!currentModel()->drawables().empty()) {
-                output << "lines drawables:\n";
-                for (auto d : currentModel()->lines_drawables())
-                    d->buffer_stats(output);
-            }
-            if (!currentModel()->drawables().empty()) {
-                output << "triangles drawables:\n";
-                for (auto d : currentModel()->drawables(())
-                    d->buffer_stats(output);
-            }
+
+            output << "drawables:\n";
+            for (auto d : currentModel()->drawables())
+                d->buffer_stats(output);
 
             currentModel()->property_stats(output);
         }
@@ -685,8 +703,8 @@ void ViewerQt::addModel(Model* model) {
             return;
         }
     }
-    unsigned int num = model->n_vertices();
-    if (num == 0) {
+
+    if (model->empty()) {
         LOG(WARNING) << "model does not have vertices. Only complete model can be added to the viewer.";
         return;
     }
@@ -967,28 +985,30 @@ void ViewerQt::postDraw() {
 
 
 void ViewerQt::draw() {
+    easy3d_debug_log_gl_error;
+
     for (const auto m : models_) {
         if (!m->is_visible())
             continue;
 
         // temporarily change the depth range and depth comparison method to properly render edges.
         glDepthRange(0.001, 1.0);
-        for (auto d : m->drawables(()) {
-            if (d->is_visible())
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-        }
+        for (auto d : m->drawables()) {
+            if (d->is_visible() && d->type() == Drawable::DT_TRIANGLES)
+                d->draw(camera(), false);
+        } easy3d_debug_log_gl_error;
 
         glDepthRange(0.0, 1.0);
         glDepthFunc(GL_LEQUAL);
-        for (auto d : m->lines_drawables()) {
-            if (d->is_visible())
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-        }
+        for (auto d : m->drawables()) {
+            if (d->is_visible() && d->type() == Drawable::DT_LINES)
+                d->draw(camera(), false);
+        } easy3d_debug_log_gl_error;
         glDepthFunc(GL_LESS);
 
         for (auto d : m->drawables()) {
-            if (d->is_visible())
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-        }
+            if (d->is_visible() && d->type() == Drawable::DT_POINTS)
+                d->draw(camera(), false);
+        } easy3d_debug_log_gl_error;
     }
 }

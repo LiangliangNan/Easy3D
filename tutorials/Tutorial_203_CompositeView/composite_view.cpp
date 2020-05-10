@@ -23,7 +23,7 @@
  */
 
 #include "composite_view.h"
-#include <easy3d/renderer/model.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -60,9 +60,9 @@ void CompositeView::draw() const {
     // Upper left view (wireframe)
     glViewport(0, h / 2, w / 2, h / 2);
     glScissor(0, h / 2, w / 2, h / 2);
-    LinesDrawable* edges = current_model()->drawable("edges");
+    auto edges = current_model()->drawable("edges");
     if (!edges)
-        edges = current_model()->add_drawable("edges");
+        edges = current_model()->add_drawable(new LinesDrawable("edges"));
     edges->draw(camera(), false);
     draw_grid();
 
@@ -71,11 +71,12 @@ void CompositeView::draw() const {
     // Lower left view (wireframe + vertices)
     glViewport(0, 0, w / 2, h / 2);
     glScissor(0, 0, w / 2, h / 2);
-    PointsDrawable* vertices = current_model()->drawable("vertices");
+    auto vertices = current_model()->drawable("vertices");
     if (!vertices) {
-        vertices = current_model()->add_points_drawable("vertices");
-        vertices->set_point_size(15.0f);
-        vertices->set_impostor_type(PointsDrawable::SPHERE);
+        auto new_vertices = new PointsDrawable("vertices");
+        new_vertices->set_point_size(15.0f);
+        new_vertices->set_impostor_type(PointsDrawable::SPHERE);
+        current_model()->add_drawable(new_vertices);
     }
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
@@ -86,9 +87,9 @@ void CompositeView::draw() const {
     // Lower right view (faces)
     glViewport(w / 2, 0, w / 2, h / 2);
     glScissor(w / 2, 0, w / 2, h / 2);
-    TrianglesDrawable* faces = current_model()->drawable("faces");
+    auto faces = current_model()->drawable("faces");
     if (!faces)
-        faces = current_model()->add_triangles_drawable("faces");
+        faces = current_model()->add_drawable( new TrianglesDrawable("faces") );
     faces->draw(camera(), false);
     draw_grid();
 

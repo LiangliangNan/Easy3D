@@ -93,6 +93,11 @@ void TutorialAmbientOcclusion::draw() const {
         return;
     }
 
+    auto drawable = current_model()->drawable("faces");
+    auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
+    if (!faces)
+        return;
+
 	if (ao_enabled_) {
 		ao_->generate(models_);
 
@@ -123,28 +128,26 @@ void TutorialAmbientOcclusion::draw() const {
 			->set_uniform("ssaoEnabled", true)
 			->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
 
-		auto drawable = current_model()->drawable("faces");
+        program->set_uniform("smooth_shading", faces->smooth_shading())
+            ->set_block_uniform("Material", "ambient", faces->material().ambient)
+            ->set_block_uniform("Material", "specular", faces->material().specular)
+            ->set_block_uniform("Material", "shininess", &faces->material().shininess)
+            ->set_uniform("per_vertex_color", faces->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer())
+            ->set_uniform("default_color", faces->color());
 
-		program->set_uniform("smooth_shading", drawable->smooth_shading())
-			->set_block_uniform("Material", "ambient", drawable->material().ambient)
-			->set_block_uniform("Material", "specular", drawable->material().specular)
-			->set_block_uniform("Material", "shininess", &drawable->material().shininess)
-			->set_uniform("per_vertex_color", drawable->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer())
-			->set_uniform("default_color", drawable->color());
-
-		const auto& range = drawable->highlight_range();
+        const auto& range = faces->highlight_range();
 		program->set_uniform("hightlight_id_min", range.first)
 			->set_uniform("hightlight_id_max", range.second);
 
-        drawable->gl_draw(false);
+        faces->gl_draw(false);
 
 		program->release_texture();
 		program->release();
 
-		int x = 20 * dpi_scaling();
-		int y = 40 * dpi_scaling();
-        int w = width() / 4 * dpi_scaling();
-        int h = height() / 4 * dpi_scaling();
+        const int x = 20 * dpi_scaling();
+        const int y = 40 * dpi_scaling();
+        const int w = width() / 4 * dpi_scaling();
+        const int h = height() / 4 * dpi_scaling();
         const Rect quad(x, x+w, y, y+h);
         opengl::draw_depth_texture(quad, ao_->ssao_texture(), width() * dpi_scaling(), height() * dpi_scaling(), -0.9f);
         opengl::draw_quad_wire(quad, vec4(1, 0,0, 1), width() * dpi_scaling(), height() * dpi_scaling(), -0.99f);

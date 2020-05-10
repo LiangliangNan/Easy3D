@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
     // Compute the bounding box.
     LinesDrawable *bbox_drawable = new LinesDrawable("bbox");
-    const Box3 &box = geom::bounding_box<Box3, std::vector<vec3>::const_iterator>(points.begin(), points.end());
+    const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
     float xmin = box.min(0);
     float xmax = box.max(0);
     float ymin = box.min(1);

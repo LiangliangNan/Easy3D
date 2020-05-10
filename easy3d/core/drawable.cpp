@@ -49,26 +49,25 @@ namespace easy3d {
 
 
     void Drawable::buffer_stats(std::ostream &output) const {
-        std::cout << "\t" << name() << std::endl;
-
         if (vertex_buffer()) {
-            output << "\t\tVertex buffer:     " << num_vertices_ << " vertices, "
+            std::cout << "\t" << name() << std::endl;
+            output << "\t\tvertex buffer:     " << num_vertices_ << " vertices, "
                    << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (normal_buffer()) {
-            output << "\t\tNormal buffer:     " << num_vertices_ << " normals, "
+            output << "\t\tnormal buffer:     " << num_vertices_ << " normals, "
                    << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (color_buffer()) {
-            output << "\t\tColor buffer:      " << num_vertices_ << " colors, "
+            output << "\t\tcolor buffer:      " << num_vertices_ << " colors, "
                    << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
         if (texcoord_buffer()) {
-            output << "\t\tTexcoord buffer:   " << num_vertices_ << " texcoords, "
+            output << "\t\ttexcoord buffer:   " << num_vertices_ << " texcoords, "
                    << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
         }
         if (element_buffer()) {
-            output << "\t\tIndex buffer:      " << num_indices_ << " indices, "
+            output << "\t\tindex buffer:      " << num_indices_ << " indices, "
                    << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
         }
     }

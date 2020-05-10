@@ -64,16 +64,16 @@ namespace easy3d {
     }
 
 
-    bool Model::add_drawable(Drawable* drawable) {
+    Drawable* Model::add_drawable(Drawable* drawable) {
         for (auto d : drawables_) {
             if (d->name() == drawable->name()) {
                 LOG(ERROR) << "a previously created drawable with name '" << drawable->name() << "' already exists";
-                return false;
+                return nullptr;
             }
         }
         drawable->set_model(this);
         drawables_.push_back(drawable);
-        return true;
+        return drawable;
     }
 
 
