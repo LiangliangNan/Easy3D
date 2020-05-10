@@ -139,5 +139,5 @@ endif ()
 ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
 ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
 if (APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Mac/Mapple.plist)
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
 endif ()
