@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY_TRANSFORM_DECOMPOSE_H
-#define EASY_TRANSFORM_DECOMPOSE_H
+#ifndef EASY_RENDERER_TRANSFORM_DECOMPOSE_H
+#define EASY_RENDERER_TRANSFORM_DECOMPOSE_H
 
 
 #include <easy3d/core/types.h>
@@ -86,4 +86,4 @@ namespace easy3d {
 
 
 
-#endif  // EASY_TRANSFORM_DECOMPOSE_H
+#endif  // EASY_RENDERER_TRANSFORM_DECOMPOSE_H

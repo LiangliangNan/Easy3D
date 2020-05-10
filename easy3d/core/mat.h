@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_MAT_H
-#define EASY3D_MAT_H
+#ifndef EASY3D_CORE_MAT_H
+#define EASY3D_CORE_MAT_H
 
 #include <iostream>
 #include <iomanip>
@@ -2100,4 +2100,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_MAT_H
+#endif // EASY3D_CORE_MAT_H

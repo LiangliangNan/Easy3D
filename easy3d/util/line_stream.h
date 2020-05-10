@@ -22,61 +22,64 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_LINE_STREAM_STREAM_H
-#define EASY3D_LINE_STREAM_STREAM_H
+#ifndef EASY3D_UTIL_LINE_STREAM_H
+#define EASY3D_UTIL_LINE_STREAM_H
 
 #include <iostream>
 #include <sstream>
 
 
-
 namespace easy3d {
 
-namespace io {
+    namespace io {
 
 
-	class LineInputStream {
-	public:
-        LineInputStream(std::istream& in) : in_(in), line_in_(nullptr) {}
-		~LineInputStream() {
-            delete line_in_;
-            line_in_ = nullptr ;
-		}
+        class LineInputStream {
+        public:
+            LineInputStream(std::istream &in) : in_(in), line_in_(nullptr) {}
 
-		bool eof() const { return in_.eof() ; }
-        bool eol() const { return line_in_ == nullptr || line_in_->eof(); }
-		bool fail() const { return in_.fail() || line_in_->fail(); }
+            ~LineInputStream() {
+                delete line_in_;
+                line_in_ = nullptr;
+            }
 
-		void get_line() {
-			getline(in_, buffer_);
-			delete line_in_ ; 
-			line_in_ = new std::istringstream(buffer_) ;
-		}
+            bool eof() const { return in_.eof(); }
 
-		std::istream& line() { 
-            assert(line_in_ != nullptr) ;
-			return *line_in_ ; 
-		}
+            bool eol() const { return line_in_ == nullptr || line_in_->eof(); }
 
-		const std::string& current_line() const {
-			return buffer_;
-		}
+            bool fail() const { return in_.fail() || line_in_->fail(); }
 
-		template <class T> LineInputStream& operator>>(T& param) {
-			*line_in_ >> param;
-			return *this;
-		}
+            void get_line() {
+                getline(in_, buffer_);
+                delete line_in_;
+                line_in_ = new std::istringstream(buffer_);
+            }
 
-	private:
-		std::istream& in_ ;
-		std::istringstream* line_in_ ;
-		std::string buffer_;
-	} ;
+            std::istream &line() {
+                assert(line_in_ != nullptr);
+                return *line_in_;
+            }
+
+            const std::string &current_line() const {
+                return buffer_;
+            }
+
+            template<class T>
+            LineInputStream &operator>>(T &param) {
+                *line_in_ >> param;
+                return *this;
+            }
+
+        private:
+            std::istream &in_;
+            std::istringstream *line_in_;
+            std::string buffer_;
+        };
 
 
-} // namespace io
+    } // namespace io
 
 } // namespace easy3d
 
 
-#endif
+#endif  // EASY3D_UTIL_LINE_STREAM_H

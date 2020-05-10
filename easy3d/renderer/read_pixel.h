@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_OPENGL_READ_PIXEL_H
-#define EASY3D_OPENGL_READ_PIXEL_H
+#ifndef EASY3D_RENDERER_OPENGL_READ_PIXEL_H
+#define EASY3D_RENDERER_OPENGL_READ_PIXEL_H
 
 #include <string>
 #include <vector>
@@ -74,6 +74,6 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_OPENGL_READ_PIXEL_H
+#endif // EASY3D_RENDERER_OPENGL_READ_PIXEL_H
 
 

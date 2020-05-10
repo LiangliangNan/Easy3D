@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_HASH_H
-#define EASY3D_HASH_H
+#ifndef EASY3D_CORE_HASH_H
+#define EASY3D_CORE_HASH_H
 
 
 #include <cstdint>
@@ -114,4 +114,4 @@ namespace easy3d
 
 } // namespace easy3d
 
-#endif  // EASY3D_HASH_H
+#endif  // EASY3D_CORE_HASH_H

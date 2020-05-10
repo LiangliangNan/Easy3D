@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY_VERTEX_ARRAY_OBJECT_H
-#define EASY_VERTEX_ARRAY_OBJECT_H
+#ifndef EASY_RENDERER_VERTEX_ARRAY_OBJECT_H
+#define EASY_RENDERER_VERTEX_ARRAY_OBJECT_H
 
 #include <easy3d/renderer/opengl.h>
 
@@ -118,4 +118,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY_VERTEX_ARRAY_OBJECT_H
+#endif  // EASY_RENDERER_VERTEX_ARRAY_OBJECT_H

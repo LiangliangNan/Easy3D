@@ -23,8 +23,8 @@
  */
 
 
-#ifndef EASY3D_VEC_H
-#define EASY3D_VEC_H
+#ifndef EASY3D_CORE_VEC_H
+#define EASY3D_CORE_VEC_H
 
 #include <cassert>
 #include <iostream>
@@ -775,5 +775,5 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_VEC_H
+#endif  // EASY3D_CORE_VEC_H
 

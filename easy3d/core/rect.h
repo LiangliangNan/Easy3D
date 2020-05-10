@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RECTANGLE_H
-#define EASY3D_RECTANGLE_H
+#ifndef EASY3D_CORE_RECTANGLE_H
+#define EASY3D_CORE_RECTANGLE_H
 
 #include <algorithm>
 
@@ -100,4 +100,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RECTANGLE_H
+#endif  // EASY3D_CORE_RECTANGLE_H

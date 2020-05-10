@@ -31,7 +31,7 @@
 
 namespace easy3d {
 
-    /*
+    /**
      * Timer functionalities are usually implemented in large libraries
      * (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
      * This Timer class provides a single-header implementation.
@@ -91,7 +91,8 @@ namespace easy3d {
     public:
         Timer() : stopped_(false) {}
 
-        /* execute function 'func' after 'delay' milliseconds.
+        /**
+         * execute function 'func' after 'delay' milliseconds.
          * func:  the pointer to the function.
          * delay: the time to be delayed, in milliseconds.
          * NOTE: arguments must be "const", e.g.,
@@ -104,7 +105,8 @@ namespace easy3d {
         template < class Function, class... Args >
         static void single_shot(int delay, Function&& func, Args&&... args);
 
-        /* execute member function 'func' of class 'owner' after 'delay' milliseconds.
+        /**
+         * execute member function 'func' of class 'owner' after 'delay' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
          * delay: the time to be delayed, in milliseconds.
@@ -118,7 +120,8 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         static void single_shot(int delay, Function&& func, Class&& owner, Args&&... args);
 
-        /* the same as single_shot() except that it is not static.
+        /**
+         * the same as single_shot() except that it is not static.
          * execute function 'func' after 'delay' milliseconds.
          * func:  the pointer to the function.
          * delay: the time to be delayed, in milliseconds.
@@ -132,7 +135,8 @@ namespace easy3d {
         template <class Function, class... Args >
         void set_timeout(int delay, Function&& func, Args&&... args);
 
-        /* the same as single_shot() except that it is not static.
+        /**
+         * the same as single_shot() except that it is not static.
          * execute member function 'func' of class 'owner' after 'delay' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
@@ -147,7 +151,8 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void set_timeout(int delay, Function&& func, Class&& owner, Args&&... args);
 
-        /* execute function ‘func' for every 'interval' milliseconds.
+        /**
+         * execute function ‘func' for every 'interval' milliseconds.
          * func:  the pointer to the function.
          * interval: the interval, in milliseconds.
          * NOTE: arguments must be "const", e.g.,
@@ -159,7 +164,8 @@ namespace easy3d {
         template <class Function, class... Args >
         void set_interval(int interval, Function&& func, Args&&... args);
 
-        /* execute member function 'func' of class 'owner' for every 'interval' milliseconds.
+        /**
+         * execute member function 'func' of class 'owner' for every 'interval' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
          * interval: the interval, in milliseconds.
@@ -172,7 +178,7 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void set_interval(int interval, Function&& func, Class&& owner, Args&&... args);
 
-        // stop the timer.
+        /** stop the timer. */
         void stop() { stopped_ = true; }
 
     private:

@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_POLYGON_H
-#define EASY3D_POLYGON_H
+#ifndef EASY3D_CORE_POLYGON_H
+#define EASY3D_CORE_POLYGON_H
 
 
 #include <vector>
@@ -156,4 +156,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_POLYGON_H
+#endif  // EASY3D_CORE_POLYGON_H

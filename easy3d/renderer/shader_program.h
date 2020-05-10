@@ -36,8 +36,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_SHADER_PROGRAM_H
-#define EASY3D_SHADER_PROGRAM_H
+#ifndef EASY3D_RENDERER_SHADER_PROGRAM_H
+#define EASY3D_RENDERER_SHADER_PROGRAM_H
 
 #include <unordered_map>
 #include <vector>
@@ -341,4 +341,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_SHADER_PROGRAM_H
+#endif  // EASY3D_RENDERER_SHADER_PROGRAM_H

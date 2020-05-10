@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_ALGORITHM_EXT_MESH_SURFACER_H
-#define EASY3D_ALGORITHM_EXT_MESH_SURFACER_H
+#ifndef EASY3D_ALGO_MESH_SURFACER_H
+#define EASY3D_ALGO_MESH_SURFACER_H
 
 
 #include <vector>
@@ -74,5 +74,5 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_ALGORITHM_EXT_MESH_SURFACER_H
+#endif  // EASY3D_ALGO_MESH_SURFACER_H
 

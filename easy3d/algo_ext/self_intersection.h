@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H
-#define EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H
+#ifndef EASY3D_ALGO_SELF_INTERSECTION_H
+#define EASY3D_ALGO_SELF_INTERSECTION_H
 
 #include <vector>
 #include <unordered_map>

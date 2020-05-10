@@ -492,4 +492,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_POINT_CLOUD_H
+#endif // EASY3D_CORE_POINT_CLOUD_H

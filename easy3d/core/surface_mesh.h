@@ -37,8 +37,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_SURFACE_MESH_H
-#define EASY3D_SURFACE_MESH_H
+#ifndef EASY3D_CORE_SURFACE_MESH_H
+#define EASY3D_CORE_SURFACE_MESH_H
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
@@ -1924,4 +1924,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_SURFACE_MESH_H
+#endif // EASY3D_CORE_SURFACE_MESH_H

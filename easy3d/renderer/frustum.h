@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_FRUSTUM_H
-#define EASY3D_FRUSTUM_H
+#ifndef EASY3D_RENDERER_FRUSTUM_H
+#define EASY3D_RENDERER_FRUSTUM_H
 
 
 #include <vector>
@@ -92,4 +92,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_FRUSTUM_H
+#endif // EASY3D_RENDERER_FRUSTUM_H

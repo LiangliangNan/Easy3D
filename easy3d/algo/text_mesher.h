@@ -23,8 +23,8 @@
  */
 
 
-#ifndef EASY3D_TEXT_MESHER_H
-#define EASY3D_TEXT_MESHER_H
+#ifndef EASY3D_ALGO_TEXT_MESHER_H
+#define EASY3D_ALGO_TEXT_MESHER_H
 
 #include <string>
 
@@ -140,4 +140,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_TEXT_MESHER_H
+#endif  // EASY3D_ALGO_TEXT_MESHER_H

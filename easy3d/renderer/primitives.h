@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_PRIMITIVES_H
-#define EASY3D_PRIMITIVES_H
+#ifndef EASY3D_RENDERER_PRIMITIVES_H
+#define EASY3D_RENDERER_PRIMITIVES_H
 
 #include <vector>
 
@@ -193,4 +193,4 @@ namespace easy3d {
 }
 
 
-#endif
+#endif  // EASY3D_RENDERER_PRIMITIVES_H

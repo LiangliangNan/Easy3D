@@ -193,4 +193,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_DRAWABLE_H
+#endif  // EASY3D_CORE_DRAWABLE_H

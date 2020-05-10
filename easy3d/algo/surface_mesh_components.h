@@ -102,5 +102,5 @@ namespace easy3d {
 
 }
 
-#endif
+#endif  // EASY3D_ALGO_SURFACE_MESH_COMPONENTS_H
 

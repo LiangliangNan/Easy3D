@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_PRINCIPAL_AXIS_H
-#define EASY3D_PRINCIPAL_AXIS_H
+#ifndef EASY3D_CORE_PRINCIPAL_AXIS_H
+#define EASY3D_CORE_PRINCIPAL_AXIS_H
 
 #include <easy3d/core/types.h>
 
@@ -206,6 +206,5 @@ namespace easy3d {
 } // namespace easy3d
 
 
-
-#endif
+#endif  // EASY3D_CORE_PRINCIPAL_AXIS_H
 
