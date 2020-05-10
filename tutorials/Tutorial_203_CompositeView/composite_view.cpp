@@ -72,12 +72,10 @@ void CompositeView::draw() const {
     glViewport(0, 0, w / 2, h / 2);
     glScissor(0, 0, w / 2, h / 2);
     auto vertices = current_model()->drawable("vertices");
-    if (!vertices) {
-        auto new_vertices = new PointsDrawable("vertices");
-        new_vertices->set_point_size(15.0f);
-        new_vertices->set_impostor_type(PointsDrawable::SPHERE);
-        current_model()->add_drawable(new_vertices);
-    }
+    if (!vertices)
+        vertices = current_model()->add_drawable(new PointsDrawable("vertices"));
+    dynamic_cast<PointsDrawable*>(vertices)->set_point_size(15.0f);
+    dynamic_cast<PointsDrawable*>(vertices)->set_impostor_type(PointsDrawable::SPHERE);
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
     draw_grid();
