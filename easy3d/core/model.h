@@ -35,9 +35,6 @@
 namespace easy3d {
 
     class Drawable;
-    class PointsDrawable;
-    class LinesDrawable;
-    class TrianglesDrawable;
 
     /**
      * Model is the base class of renderable 3D models, e.g., SurfaceMesh, PointCloud, Graph.
