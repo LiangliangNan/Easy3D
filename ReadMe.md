@@ -67,7 +67,7 @@ need to do anything about third-party libraries. However, Easy3D optionally supp
 This can be enabled by switching on the corresponding CMake boolean option:
 
 - `EASY3D_ENABLE_QT`     Compile Qt-based examples and applications (e.g., 
-[`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) and [`Tutorial_303_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/applications/Mapple))
+[`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/master/applications/Mapple))
 
 To build Easy3D, you need [CMake](https://cmake.org/download/) and, of course, a compiler:
 
