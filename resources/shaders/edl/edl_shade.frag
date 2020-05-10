@@ -79,16 +79,16 @@ uniform vec3         L;         // [0.,0.,-1.] - Light direction [frontal]
 int    Nnb = 1;  // nombre de voisins par rayon
 float  Zm = 0.; // minimal z in image
 float  ZM = 1.; // maximal z in image
-float  Z;        // initial Z
+float  Z = 0.;        // initial Z
 
 vec3   WHITE3 = vec3(1., 1., 1.);
 
-float    t;
+float    t = 0.;
 vec4     Zn[8];  // profondeurs des voisins
 float    D[8];   // ombrage genere par les voisins
 vec4     tn, tnw, tw, tsw, ts, tse, te, tne;
 float    dn, dnw, dw, dsw, ds, dse, de, dne;
-float    S;      // image step, corresponds to one pixel size
+float    S = 0.;      // image step, corresponds to one pixel size
 /**************************************************/
 
 //////////////////////////////////////////////////////////////////////////
