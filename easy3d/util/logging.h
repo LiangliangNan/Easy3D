@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_LOGGING_H
-#define EASY3D_LOGGING_H
+#ifndef EASY3D_UTIL_LOGGING_H
+#define EASY3D_UTIL_LOGGING_H
 
 
 /* Make it easier for including the Google glog header file.
@@ -66,4 +66,4 @@ namespace easy3d
 
 }
 
-#endif // EASY3D_LOGGING_H
+#endif // EASY3D_UTIL_LOGGING_H

@@ -1,3 +1,28 @@
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 #include "main_window.h"
 
 #include <string>
@@ -16,9 +41,8 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -1194,7 +1218,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    mesh->get_triangles_drawable("faces")->set_property_coloring(State::FACE, color_name);
+    mesh->drawable("faces")->set_property_coloring(State::FACE, color_name);
 
     mesh->update();
     viewer()->update();

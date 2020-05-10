@@ -28,9 +28,9 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
-#include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -249,7 +249,7 @@ namespace easy3d {
 
             const auto &d_indices = tessellator.elements();
 
-            TrianglesDrawable *drawable = model->add_triangles_drawable("faces_" + std::to_string(i));
+            TrianglesDrawable *drawable = new TrianglesDrawable("faces_" + std::to_string(i));
 
             drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
@@ -271,7 +271,7 @@ namespace easy3d {
                 }
             }
 
-
+            model->add_drawable(drawable);
         }
 
         // the drawables have already been created

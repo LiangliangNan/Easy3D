@@ -3,12 +3,12 @@
 #include <QColorDialog>
 #include <QFileDialog>
 
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/texture_manager.h>
-#include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/renderer.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -145,7 +145,11 @@ WidgetTrianglesDrawable::~WidgetTrianglesDrawable() {
 // update the panel to be consistent with the drawable's rendering parameters
 void WidgetTrianglesDrawable::updatePanel() {
     auto model = viewer_->currentModel();
-    if (!model || !model->is_visible() || model->triangles_drawables().empty()) {
+    if (!model)
+        active_drawable_.clear();
+
+    auto d = dynamic_cast<TrianglesDrawable*>(drawable());
+    if (!model || !model->is_visible() || !d) {
         setEnabled(false);
         return;
     }
@@ -154,12 +158,11 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     disconnectAll();
 
-    auto d = dynamic_cast<TrianglesDrawable*>(drawable());
     auto& state = states_[d];
     auto& scheme = d->state();
 
     ui->comboBoxDrawables->clear();
-    const auto &drawables = model->triangles_drawables();
+    const auto &drawables = model->drawables();
     for (auto d : drawables)
         ui->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
     ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
@@ -348,17 +351,22 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
 
 Drawable *WidgetTrianglesDrawable::drawable() {
     auto model = viewer_->currentModel();
+    if (!model) {
+        active_drawable_.clear();
+        return nullptr;
+    }
+
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->get_triangles_drawable(pos->second);
+        return model->drawable(pos->second);
     else {
-        const auto &drawables = model->triangles_drawables();
-        if (drawables.empty())
-            return nullptr;
-        else {
-            active_drawable_[model] = drawables[0]->name();
-            return drawables[0];
+        for (auto d : model->drawables() ) {
+            if (d->type() == easy3d::Drawable::DT_TRIANGLES) {
+                active_drawable_[model] = d->name();
+                return d;
+            }
         }
+        return nullptr;
     }
 }
 
@@ -372,11 +380,11 @@ void WidgetTrianglesDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->get_triangles_drawable(name)) {
+    if (model->drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
-        const auto &drawables = model->triangles_drawables();
+        const auto &drawables = model->drawables();
         if (drawables.empty())
             LOG(ERROR) << "no triangles drawable defined on model: " << model->name();
         else
@@ -490,7 +498,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         return;
 
     if (text == "disabled") {
-        const auto &drawables = mesh->lines_drawables();
+        const auto &drawables = mesh->drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - f") != std::string::npos)
                 d->set_visible(false);
@@ -500,7 +508,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->get_lines_drawable("vector - " + name);
+        auto d = mesh->drawable("vector - " + name);
         if (d) { // just in case the vector field has been removed
             d->set_visible(true);
             states_[drawable()].vector_field = QString::fromStdString(name);
@@ -534,13 +542,14 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
         }
 
         // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-        auto drawable = mesh->get_lines_drawable("vector - f:normal");
+        auto drawable = mesh->drawable("vector - f:normal");
         if (!drawable) {
-            drawable = mesh->add_lines_drawable("vector - f:normal");
-            drawable->set_update_func([this](Model *m, Drawable *d) -> void {
+            auto new_drawable = new LinesDrawable("vector - f:normal");
+            new_drawable->set_update_func([this](Model *m, Drawable *d) -> void {
                 float scale = ui->doubleSpinBoxVectorFieldScale->value();
                 renderer::update_buffers_vector_field(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), "f:normal", 0, scale);
             });
+            mesh->add_drawable(new_drawable);
         }
     }
 }

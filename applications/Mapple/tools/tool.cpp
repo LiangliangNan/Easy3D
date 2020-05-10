@@ -27,9 +27,9 @@
 #include "tools/tool_manager.h"
 #include "tools/canvas.h"
 
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/opengl.h>
+#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/opengl.h>
 
 
 namespace easy3d {

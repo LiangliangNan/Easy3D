@@ -23,11 +23,11 @@
  */
 
 #include "transparency.h"
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/average_color_blending.h>
-#include <easy3d/viewer/dual_depth_peeling.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/average_color_blending.h>
+#include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -75,29 +75,31 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_DOWN) {
-        auto drawable = current_model()->get_triangles_drawable("faces");
-        if (drawable) {
-            float o = drawable->opacity();
+        auto drawable = current_model()->drawable("faces");
+        auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
+        if (faces) {
+            float o = faces->opacity();
             if (o > 0)
-                drawable->set_opacity(o - 0.1f);
+                faces->set_opacity(o - 0.1f);
             // make sure it is valid
-            if (drawable->opacity() <= 0)
-                drawable->set_opacity(0.1f);
-            std::cout << "opacity: " << drawable->opacity() << std::endl;
+            if (faces->opacity() <= 0)
+                faces->set_opacity(0.1f);
+            std::cout << "opacity: " << faces->opacity() << std::endl;
             update();
         }
         return true;
     }
     else if (key == GLFW_KEY_UP) {
-        auto drawable = current_model()->get_triangles_drawable("faces");
+        auto drawable = current_model()->drawable("faces");
+        auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
         if (drawable) {
-            float o = drawable->opacity();
+            float o = faces->opacity();
             if (o > 0)
-                drawable->set_opacity(o + 0.1f);
+                faces->set_opacity(o + 0.1f);
             // make sure it is valid
-            if (drawable->opacity() >= 1.0f)
-                drawable->set_opacity(1.0f);
-            std::cout << "opacity: " << drawable->opacity() << std::endl;
+            if (faces->opacity() >= 1.0f)
+                faces->set_opacity(1.0f);
+            std::cout << "opacity: " << faces->opacity() << std::endl;
             update();
         }
         return true;
@@ -112,11 +114,14 @@ void TutorialTransparency::draw() const {
         return;
     }
 
-	std::vector<TrianglesDrawable*> surfaces;
-	for (auto m : models_) {
-		for (auto d : m->triangles_drawables())
-			surfaces.push_back(d);
-	}
+    std::vector<TrianglesDrawable*> surfaces;
+    for (auto m : models_) {
+        for (auto d : m->drawables()) {
+            if (d->type() == Drawable::DT_TRIANGLES)
+                    surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d));
+        }
+    }
+
 	if (method_ != 0)
 		transparency_->draw(surfaces);
 	else

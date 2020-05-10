@@ -37,8 +37,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_PROPERTIES_H
-#define EASY3D_PROPERTIES_H
+#ifndef EASY3D_CORE_PROPERTIES_H
+#define EASY3D_CORE_PROPERTIES_H
 
 #include <vector>
 #include <string>
@@ -504,4 +504,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_PROPERTIES_H
+#endif // EASY3D_CORE_PROPERTIES_H

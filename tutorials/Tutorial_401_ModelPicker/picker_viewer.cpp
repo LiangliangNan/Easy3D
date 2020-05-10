@@ -24,9 +24,9 @@
 
 #include "picker_viewer.h"
 #include <easy3d/gui/picker_model.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -65,7 +65,7 @@ void PickerViewer::mark(easy3d::Model *model) {
         if (m == model)
             m->set_selected(!m->is_selected());
 
-        auto faces = m->get_triangles_drawable("faces");
+        auto faces = m->drawable("faces");
         if (m->is_selected())
             faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
         else

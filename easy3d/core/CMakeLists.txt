@@ -5,37 +5,43 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-		box.h
-		constant.h
-		curve.h
-		eigen_solver.h
-		graph.h
-		heap.h
-		line.h
-		mat.h
-		oriented_line.h
-		plane.h
-		point_cloud.h
-		principal_axes.h
-		properties.h
-		quat.h
-		random.h
-		rect.h
-		segment.h
-		signal.h
-		surface_mesh.h
-		manifold_builder.h
-		polygon.h
+        box.h
+        constant.h
+        curve.h
+        drawable.h
+        eigen_solver.h
+        graph.h
+        heap.h
+        line.h
+        mat.h
+        model.h
+        oriented_line.h
+        plane.h
+        point_cloud.h
+        principal_axes.h
+        properties.h
+        quat.h
+        random.h
+        rect.h
+        segment.h
+        signal.h
+        state.h
+        surface_mesh.h
+        manifold_builder.h
+        polygon.h
         types.h
         vec.h
         )
 
 set(${PROJECT_NAME}_SOURCES
+        drawable.cpp
         graph.cpp
+        model.cpp
         point_cloud.cpp
+        state.cpp
         surface_mesh.cpp
         manifold_builder.cpp
-		)
+        )
 
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})

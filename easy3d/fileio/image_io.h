@@ -147,4 +147,4 @@ namespace easy3d {
 } // namespace easy3d
 
 
-#endif
+#endif  // EASY3D_FILEIO_IMAGE_IO_H

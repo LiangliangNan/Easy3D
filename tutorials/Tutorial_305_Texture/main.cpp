@@ -23,10 +23,10 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/texture_manager.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -64,16 +64,16 @@ int main(int argc, char **argv) {
     SurfaceMesh *mesh = new SurfaceMesh;
     auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
-    float w = static_cast<float>(tex->width());
-    float h = static_cast<float>(tex->height());
+    const auto w = static_cast<float>(tex->width());
+    const auto h = static_cast<float>(tex->height());
     // create a quad face having an aspect ratio the same as the texture image
-    SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
+    auto v0 = mesh->add_vertex(vec3(0, 0, 0));
     texcoord[v0] = vec2(0, 0);
-    SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(w, 0, 0));
+    auto v1 = mesh->add_vertex(vec3(w, 0, 0));
     texcoord[v1] = vec2(1, 0);
-    SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(w, h, 0));
+    auto v2 = mesh->add_vertex(vec3(w, h, 0));
     texcoord[v2] = vec2(1, 1);
-    SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(0, h, 0));
+    auto v3 = mesh->add_vertex(vec3(0, h, 0));
     texcoord[v3] = vec2(0, 1);
     mesh->add_quad(v0, v1, v2, v3);
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     viewer.add_model(mesh, true);
 
     // set the texture of the default drawable "faces"
-    auto drawable = mesh->get_triangles_drawable("faces");
+    auto drawable = mesh->drawable("faces");
     drawable->set_texture(tex);
     drawable->set_texture_coloring(easy3d::State::VERTEX, "v:texcoord", tex);
 

@@ -23,8 +23,8 @@
  */
 
 #include "hard_shadow.h"
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -50,9 +50,9 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    auto drawable = model->get_triangles_drawable("faces");
+    auto drawable = model->drawable("faces");
     drawable->set_uniform_coloring(vec4(0.9f, 0.9f, 0.9f, 1.0f));
-    drawable->set_smooth_shading(true);
+    dynamic_cast<TrianglesDrawable*>(drawable)->set_smooth_shading(true);
 
     // Run the viewer
     return viewer.run();

@@ -24,8 +24,8 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/texture_manager.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     }
 
     // Add a TrianglesDrawable to visualize the surface.
-    auto drawable = model->add_triangles_drawable("faces");
+    auto drawable = new TrianglesDrawable("faces");
 
     // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color given in the
     // model file. In this tutorial, we define a scalar field on the mesh vertices: elevation (here the Z-component
@@ -65,9 +65,7 @@ int main(int argc, char **argv) {
     for (auto v : model->vertices())
         elevation[v] = model->position(v).z;
 
-    // Upload data to the GPU.
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation");
-    drawable->update();
 
     // Create texture for coloring the scalar field.
     const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
@@ -79,6 +77,9 @@ int main(int argc, char **argv) {
 
     // Use the texture
     drawable->set_texture(texture);
+
+    // add this drawable to the model
+    model->add_drawable(drawable);
 
     // Run the viewer
     return viewer.run();

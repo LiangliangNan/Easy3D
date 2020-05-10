@@ -76,8 +76,8 @@ namespace easy3d {
 
     };
 
-}   // EASY3D_ALGO_SURFACE_MESH_ENUMERATOR_H
+}   // namespace easy3d
 
 
-#endif
+#endif  // EASY3D_ALGO_SURFACE_MESH_ENUMERATOR_H
 

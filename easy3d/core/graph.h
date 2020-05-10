@@ -22,11 +22,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_GRAPH_H
-#define EASY3D_GRAPH_H
+#ifndef EASY3D_CORE_GRAPH_H
+#define EASY3D_CORE_GRAPH_H
 
 
-#include <easy3d/viewer/model.h>
+#include <easy3d/core/model.h>
 
 #include <vector>
 
@@ -42,7 +42,7 @@ namespace easy3d {
 	 */
 
 
-	class Graph : public Model
+	class Graph : public virtual Model
 	{
 
 	public: //------------------------------------------------------ topology types
@@ -930,6 +930,6 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_SURFACE_MESH_H
+#endif // EASY3D_CORE_GRAPH_H
 
 

@@ -24,7 +24,7 @@
 
 #include "text_rendering.h"
 
-#include <easy3d/viewer/text_renderer.h>
+#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/random.h>

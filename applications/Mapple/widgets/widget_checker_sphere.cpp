@@ -3,13 +3,13 @@
 #include <QMouseEvent>
 #include <QOpenGLFunctions>
 
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/opengl_info.h>
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/setting.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/setting.h>
 
 
 using namespace easy3d;

@@ -39,7 +39,7 @@
 #ifdef VISUALIZATION_FOR_DEBUGGING
 #include <easy3d/core/constant.h>
 #include <easy3d/core/random.h>
-#include <easy3d/viewer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines.h>
 #endif
 
 #endif
@@ -427,9 +427,9 @@ namespace easy3d {
 
 #ifdef VISUALIZATION_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph
-        LinesDrawable* mst_graph = cloud->get_lines_drawable("mst_graph");
+        LinesDrawable* mst_graph = cloud->drawable("mst_graph");
         if (!mst_graph)
-            mst_graph = cloud->add_lines_drawable("mst_graph");
+            mst_graph = cloud->add_drawable("mst_graph");
 
         auto point_prop = cloud->get_vertex_property<vec3>("v:point");
         std::vector<vec3> points, colors;

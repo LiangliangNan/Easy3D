@@ -29,8 +29,8 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/text_renderer.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/text_renderer.h>
+#include <easy3d/renderer/camera.h>
 
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>

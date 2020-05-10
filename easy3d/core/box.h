@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_GENERIC_BOX_H
-#define EASY3D_GENERIC_BOX_H
+#ifndef EASY3D_CORE_GENERIC_BOX_H
+#define EASY3D_CORE_GENERIC_BOX_H
 
 #include <cassert>
 #include <algorithm>
@@ -180,4 +180,4 @@ namespace easy3d {
 } // namespace easy3d
 
 
-#endif  // EASY3D_GENERIC_BOX_H
+#endif  // EASY3D_CORE_GENERIC_BOX_H

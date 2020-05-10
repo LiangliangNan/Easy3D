@@ -2,11 +2,11 @@
 
 #include <QColorDialog>
 
-#include <easy3d/viewer/setting.h>
-#include <easy3d/viewer/soft_shadow.h>
-#include <easy3d/viewer/ambient_occlusion.h>
-#include <easy3d/viewer/clipping_plane.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/camera.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"

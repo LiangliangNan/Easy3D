@@ -24,8 +24,9 @@
 
 #include "soft_shadow.h"
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/viewer/soft_shadow.h>
-#include <easy3d/viewer/camera.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/camera.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -65,11 +66,13 @@ void TutorialSoftShadow::draw() const {
         return;
     }
 
-	std::vector<TrianglesDrawable*> surfaces;
-	for (auto m : models_) {
-		for (auto d : m->triangles_drawables())
-			surfaces.push_back(d);
-	}
+    std::vector<TrianglesDrawable*> surfaces;
+    for (auto m : models_) {
+        for (auto d : m->drawables()) {
+            if (d->type() == Drawable::DT_TRIANGLES)
+                    surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d));
+        }
+    }
 	if (shadow_enabled_)
 		shadow_->draw(surfaces);
 	else

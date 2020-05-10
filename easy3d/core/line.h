@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_LINE_H
-#define EASY3D_LINE_H
+#ifndef EASY3D_CORE_LINE_H
+#define EASY3D_CORE_LINE_H
 
 #include <easy3d/core/vec.h>
 
@@ -93,5 +93,5 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_LINE_H
+#endif  // EASY3D_CORE_LINE_H
 

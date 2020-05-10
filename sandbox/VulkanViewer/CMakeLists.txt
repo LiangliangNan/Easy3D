@@ -32,7 +32,7 @@ if (Vulkan_FOUND)
     set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw core viewer util)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw core util renderer)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.obj DESTINATION ${CMAKE_BINARY_DIR}/resources/data/viking_room)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models/viking_room.png DESTINATION ${CMAKE_BINARY_DIR}/resources/data/viking_room)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders/vert.spv DESTINATION ${CMAKE_BINARY_DIR}/resources/shaders/vulkan)

@@ -24,11 +24,11 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/framebuffer_object.h>
-#include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/logging.h>
 
 
@@ -239,9 +239,11 @@ namespace easy3d {
 
 
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y) {
-        auto drawable = model->get_triangles_drawable("faces");
-        if (!drawable)
+        auto drawable = model->drawable("faces");
+        if (!drawable) {
+            LOG_FIRST_N(WARNING, 1) << "drawable 'faces' does not exist";
             return SurfaceMesh::Face();
+        }
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);

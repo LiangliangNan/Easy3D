@@ -3,11 +3,11 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/transform.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/manipulated_camera_frame.h>
-#include <easy3d/viewer/key_frame_interpolator.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>

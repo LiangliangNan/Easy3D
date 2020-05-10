@@ -25,12 +25,12 @@
 
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/framebuffer_object.h>
-#include <easy3d/viewer/opengl_error.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/opengl_info.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/opengl_info.h>
 #include <easy3d/util/logging.h>
 
 
@@ -151,7 +151,12 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->get_points_drawable("vertices");
+        auto drawable = model->drawable("vertices");
+        if (!drawable) {
+            LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
+            return 0;
+        }
+
 //        int num_before = drawable->num_selected();
 
         int viewport[4];
@@ -246,7 +251,12 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->get_points_drawable("vertices");
+        auto drawable = model->drawable("vertices");
+        if (!drawable) {
+            LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
+            return 0;
+        }
+
 //        int num_before = drawable->num_selected();
 
 //        // make sure the vertex buffer holds the right data.

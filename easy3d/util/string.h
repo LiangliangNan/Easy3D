@@ -205,5 +205,5 @@ namespace easy3d {
 }
 
 
-#endif
+#endif  // EASY3D_UTIL_STRING_H
 

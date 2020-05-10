@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RANDOM_H
-#define EASY3D_RANDOM_H
+#ifndef EASY3D_CORE_RANDOM_H
+#define EASY3D_CORE_RANDOM_H
 
 #include <random>
 
@@ -56,4 +56,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_RANDOM_H
+#endif // EASY3D_CORE_RANDOM_H

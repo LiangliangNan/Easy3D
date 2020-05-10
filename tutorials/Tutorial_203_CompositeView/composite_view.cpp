@@ -23,15 +23,15 @@
  */
 
 #include "composite_view.h"
-#include <easy3d/viewer/model.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_triangles.h>
-#include <easy3d/viewer/opengl.h>
-#include <easy3d/viewer/shader_program.h>
-#include <easy3d/viewer/shader_manager.h>
-#include <easy3d/viewer/primitives.h>
-#include <easy3d/viewer/transform.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/transform.h>
 
 
 using namespace easy3d;
@@ -60,9 +60,9 @@ void CompositeView::draw() const {
     // Upper left view (wireframe)
     glViewport(0, h / 2, w / 2, h / 2);
     glScissor(0, h / 2, w / 2, h / 2);
-    LinesDrawable* edges = current_model()->get_lines_drawable("edges");
+    auto edges = current_model()->drawable("edges");
     if (!edges)
-        edges = current_model()->add_lines_drawable("edges");
+        edges = current_model()->add_drawable(new LinesDrawable("edges"));
     edges->draw(camera(), false);
     draw_grid();
 
@@ -71,12 +71,11 @@ void CompositeView::draw() const {
     // Lower left view (wireframe + vertices)
     glViewport(0, 0, w / 2, h / 2);
     glScissor(0, 0, w / 2, h / 2);
-    PointsDrawable* vertices = current_model()->get_points_drawable("vertices");
-    if (!vertices) {
-        vertices = current_model()->add_points_drawable("vertices");
-        vertices->set_point_size(15.0f);
-        vertices->set_impostor_type(PointsDrawable::SPHERE);
-    }
+    auto vertices = current_model()->drawable("vertices");
+    if (!vertices)
+        vertices = current_model()->add_drawable(new PointsDrawable("vertices"));
+    dynamic_cast<PointsDrawable*>(vertices)->set_point_size(15.0f);
+    dynamic_cast<PointsDrawable*>(vertices)->set_impostor_type(PointsDrawable::SPHERE);
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
     draw_grid();
@@ -86,9 +85,9 @@ void CompositeView::draw() const {
     // Lower right view (faces)
     glViewport(w / 2, 0, w / 2, h / 2);
     glScissor(w / 2, 0, w / 2, h / 2);
-    TrianglesDrawable* faces = current_model()->get_triangles_drawable("faces");
+    auto faces = current_model()->drawable("faces");
     if (!faces)
-        faces = current_model()->add_triangles_drawable("faces");
+        faces = current_model()->add_drawable( new TrianglesDrawable("faces") );
     faces->draw(camera(), false);
     draw_grid();
 

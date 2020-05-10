@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CONSTANT_H
-#define EASY3D_CONSTANT_H
+#ifndef EASY3D_CORE_CONSTANT_H
+#define EASY3D_CORE_CONSTANT_H
 
 #include <cfloat>
 #include <climits>
@@ -64,4 +64,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_CONSTANT_H
+#endif // EASY3D_CORE_CONSTANT_H

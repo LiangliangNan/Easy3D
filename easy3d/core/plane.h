@@ -22,11 +22,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_PLANE_H
-#define EASY3D_PLANE_H
+#ifndef EASY3D_CORE_PLANE_H
+#define EASY3D_CORE_PLANE_H
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/line.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -343,4 +344,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_PLANE_H
+#endif  // EASY3D_CORE_PLANE_H

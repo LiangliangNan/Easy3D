@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_QUATERNION_H
-#define EASY3D_QUATERNION_H
+#ifndef EASY3D_CORE_QUATERNION_H
+#define EASY3D_CORE_QUATERNION_H
 
 #include <easy3d/core/constant.h>
 #include <easy3d/core/vec.h>
@@ -717,4 +717,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_QUATERNION_H
+#endif // EASY3D_CORE_QUATERNION_H

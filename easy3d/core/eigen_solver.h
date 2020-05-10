@@ -38,8 +38,8 @@
  *              http://www.magic-software.com/License/free.pdf
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_EIGEN_SOLVER_H
-#define EASY3D_EIGEN_SOLVER_H
+#ifndef EASY3D_CORE_EIGEN_SOLVER_H
+#define EASY3D_CORE_EIGEN_SOLVER_H
 
 #include <cmath>
 #include <cassert>
@@ -625,4 +625,4 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_EIGEN_SOLVER_H
+#endif  // EASY3D_CORE_EIGEN_SOLVER_H

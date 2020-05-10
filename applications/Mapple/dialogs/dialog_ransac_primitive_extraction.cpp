@@ -1,9 +1,34 @@
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 #include "dialog_ransac_primitive_extraction.h"
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
 #include "main_window.h"
@@ -87,7 +112,7 @@ void DialogRansacPrimitiveExtraction::extract() {
         LOG(INFO) << num << " primitives extracted";
     }
 
-    auto vertices = cloud->get_points_drawable("vertices");
+    auto vertices = cloud->drawable("vertices");
     const std::string name = "v:color-segments";
 
     renderer::colorize_segmentation(cloud, "v:primitive_index", name);

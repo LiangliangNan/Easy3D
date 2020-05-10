@@ -25,9 +25,9 @@
 #include "plane_extraction.h"
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/renderer.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -75,7 +75,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             std::cout << num << " primitives extracted" << std::endl;
 
             // assign each plane a unique color
-            auto drawable = cloud->get_points_drawable("vertices");
+            auto drawable = cloud->drawable("vertices");
 
             const std::string name = "v:color-segments";
             renderer::colorize_segmentation(cloud, "v:primitive_index", name);

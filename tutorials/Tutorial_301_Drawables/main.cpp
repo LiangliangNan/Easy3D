@@ -23,10 +23,10 @@
  */
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/camera.h>
-#include <easy3d/viewer/drawable_lines.h>
-#include <easy3d/viewer/drawable_points.h>
-#include <easy3d/viewer/drawable_triangles.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/types.h>
 #include <easy3d/util/logging.h>
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
     // Compute the bounding box.
     LinesDrawable *bbox_drawable = new LinesDrawable("bbox");
-    const Box3 &box = geom::bounding_box<Box3, std::vector<vec3>::const_iterator>(points.begin(), points.end());
+    const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
     float xmin = box.min(0);
     float xmax = box.max(0);
     float ymin = box.min(1);
