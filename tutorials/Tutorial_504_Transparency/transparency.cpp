@@ -27,7 +27,7 @@
 #include <easy3d/renderer/average_color_blending.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs

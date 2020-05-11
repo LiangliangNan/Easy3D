@@ -27,8 +27,8 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/rendering.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -79,7 +79,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             auto drawable = cloud->renderer()->get_points_drawable("vertices");
 
             const std::string name = "v:color-segments";
-            renderer::colorize_segmentation(cloud, "v:primitive_index", name);
+            Renderer::color_from_segmentation(cloud, cloud->get_vertex_property<int>("v:primitive_index"), name);
             drawable->set_property_coloring(State::VERTEX, name);
 
             drawable->update();

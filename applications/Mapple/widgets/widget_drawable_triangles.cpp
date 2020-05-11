@@ -8,8 +8,8 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/rendering.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -546,7 +546,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
             drawable = mesh->renderer()->add_lines_drawable("vector - f:normal");
             drawable->set_update_func([this](Model *m, Drawable *d) -> void {
                 float scale = ui->doubleSpinBoxVectorFieldScale->value();
-                renderer::update_buffers_vector_field(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), "f:normal", 0, scale);
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), "f:normal", 0, scale);
             });
         }
     }

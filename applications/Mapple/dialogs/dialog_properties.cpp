@@ -30,7 +30,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"

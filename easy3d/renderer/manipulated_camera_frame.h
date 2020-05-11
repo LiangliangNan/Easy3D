@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_RENDERING_MANIPULATED_CAMERA_FRAME_H
-#define EASY3D_RENDERING_MANIPULATED_CAMERA_FRAME_H
+#ifndef EASY3D_RENDERER_MANIPULATED_CAMERA_FRAME_H
+#define EASY3D_RENDERER_MANIPULATED_CAMERA_FRAME_H
 
 #include <easy3d/renderer/manipulated_frame.h>
 
@@ -180,4 +180,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_RENDERING_MANIPULATED_CAMERA_FRAME_H
+#endif // EASY3D_RENDERER_MANIPULATED_CAMERA_FRAME_H

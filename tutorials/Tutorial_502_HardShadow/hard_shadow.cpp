@@ -27,7 +27,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/shadow.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

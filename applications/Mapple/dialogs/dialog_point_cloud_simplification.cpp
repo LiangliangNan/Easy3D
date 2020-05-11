@@ -27,7 +27,7 @@
 
 #include <easy3d/kdtree/kdtree_search_eth.h>
 #include <easy3d/algo/point_cloud_simplification.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
 #include <QButtonGroup>

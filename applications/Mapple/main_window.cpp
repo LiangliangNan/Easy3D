@@ -42,7 +42,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>

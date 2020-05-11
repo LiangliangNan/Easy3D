@@ -28,8 +28,8 @@ set(${PROJECT_NAME}_HEADERS
         opengl_timer.h
         primitives.h
         read_pixel.h
+        buffers.h
         renderer.h
-        rendering.h
         setting.h
         shader_manager.h
         shader_program.h
@@ -68,8 +68,8 @@ set(${PROJECT_NAME}_SOURCES
         opengl_timer.cpp
         primitives.cpp
         read_pixel.cpp
+        buffers.cpp
         renderer.cpp
-        rendering.cpp
         setting.cpp
         shader_manager.cpp
         shader_program.cpp

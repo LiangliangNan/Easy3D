@@ -30,7 +30,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs

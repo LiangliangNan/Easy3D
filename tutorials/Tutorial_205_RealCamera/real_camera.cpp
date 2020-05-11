@@ -31,7 +31,7 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/primitives.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>

@@ -40,7 +40,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -56,7 +56,7 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>

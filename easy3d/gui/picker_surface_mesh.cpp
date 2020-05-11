@@ -24,7 +24,7 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>

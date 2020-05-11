@@ -32,7 +32,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
@@ -173,7 +173,7 @@ namespace easy3d {
         if (update_func_)
             update_func_(model_, this);
         else {
-            renderer::update_buffers(model_, this);
+            buffers::update(model_, this);
         }
         LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "rendering buffers updated. " << w.time_string();
         update_needed_ = false;

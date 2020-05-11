@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERING_OPENGL_ERROR_H
-#define EASY3D_RENDERING_OPENGL_ERROR_H
+#ifndef EASY3D_RENDERER_OPENGL_ERROR_H
+#define EASY3D_RENDERER_OPENGL_ERROR_H
 
 #include <string>
 #include <easy3d/util/logging.h>
@@ -91,6 +91,6 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERING_OPENGL_ERROR_H
+#endif  // EASY3D_RENDERER_OPENGL_ERROR_H
 
 

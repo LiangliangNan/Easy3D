@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_RENDERING_FRAME_H
-#define EASY3D_RENDERING_FRAME_H
+#ifndef EASY3D_RENDERER_FRAME_H
+#define EASY3D_RENDERER_FRAME_H
 
 #include <easy3d/core/types.h>
 #include <easy3d/core/signal.h>
@@ -375,4 +375,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_RENDERING_FRAME_H
+#endif // EASY3D_RENDERER_FRAME_H

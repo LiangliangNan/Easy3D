@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERING_DRAWABLE_POINTS_H
-#define EASY3D_RENDERING_DRAWABLE_POINTS_H
+#ifndef EASY3D_RENDERER_DRAWABLE_POINTS_H
+#define EASY3D_RENDERER_DRAWABLE_POINTS_H
 
 #include <easy3d/renderer/drawable.h>
 
@@ -77,4 +77,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERING_DRAWABLE_POINTS_H
+#endif  // EASY3D_RENDERER_DRAWABLE_POINTS_H

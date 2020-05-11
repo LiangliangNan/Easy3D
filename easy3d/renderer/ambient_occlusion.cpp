@@ -38,7 +38,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 
 
 const int  KERNEL_SIZE = 64;

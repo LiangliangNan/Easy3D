@@ -2,7 +2,7 @@
 
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/drawable_lines.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>

@@ -30,7 +30,7 @@
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
 

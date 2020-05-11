@@ -28,7 +28,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>

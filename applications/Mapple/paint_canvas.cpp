@@ -32,7 +32,7 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/primitives.h>
@@ -51,7 +51,7 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>

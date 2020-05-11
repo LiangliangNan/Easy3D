@@ -48,8 +48,8 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/opengl_timer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/surface_mesh_io.h>

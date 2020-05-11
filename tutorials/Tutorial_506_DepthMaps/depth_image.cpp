@@ -32,7 +32,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/dialogs.h>
 
 using namespace easy3d;

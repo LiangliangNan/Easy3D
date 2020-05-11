@@ -28,7 +28,7 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons

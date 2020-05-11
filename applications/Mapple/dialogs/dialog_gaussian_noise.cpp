@@ -28,7 +28,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/algo/gaussian_noise.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <QIntValidator>
 #include "paint_canvas.h"

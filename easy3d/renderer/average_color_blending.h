@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERING_AVERAGE_COLOR_BLENDING_H
-#define EASY3D_RENDERING_AVERAGE_COLOR_BLENDING_H
+#ifndef EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
+#define EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 
 #include <vector>
 #include <easy3d/renderer/transparency.h>
@@ -71,4 +71,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_RENDERING_AVERAGE_COLOR_BLENDING_H
+#endif // EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H

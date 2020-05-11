@@ -26,7 +26,7 @@
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/rendering.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/core/random.h>
