@@ -995,11 +995,6 @@ namespace easy3d {
         /// returns number of faces in the mesh
         unsigned int n_faces() const { return faces_size() - deleted_faces_; }
 
-
-        /// returns true iff the mesh is empty, i.e., has no vertices
-        unsigned int empty() const { return n_vertices() == 0; }
-
-
         /// clear mesh: remove all vertices, edges, faces
         void clear();
 

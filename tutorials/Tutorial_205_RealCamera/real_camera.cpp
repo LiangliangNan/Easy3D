@@ -31,6 +31,7 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -50,8 +51,8 @@ RealCamera::RealCamera(const std::string& title,
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
-        auto drawable = current_model()->drawable("vertices");
-        dynamic_cast<PointsDrawable*>(drawable)->set_point_size(5.0f);
+        auto drawable = current_model()->renderer()->get_points_drawable("vertices");
+        drawable->set_point_size(5.0f);
 
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
@@ -115,7 +116,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_H) {
-        auto d = current_model()->drawable("cameras");
+        auto d = current_model()->renderer()->get_lines_drawable("cameras");
         if (d) {
             d->set_visible(!d->is_visible());
             update();

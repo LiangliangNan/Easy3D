@@ -30,6 +30,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -93,7 +94,7 @@ void TutorialAmbientOcclusion::draw() const {
         return;
     }
 
-    auto drawable = current_model()->drawable("faces");
+    auto drawable = current_model()->renderer()->get_triangles_drawable("faces");
     auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
     if (!faces)
         return;

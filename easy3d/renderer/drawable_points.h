@@ -25,14 +25,14 @@
 #ifndef EASY3D_RENDERER_DRAWABLE_POINTS_H
 #define EASY3D_RENDERER_DRAWABLE_POINTS_H
 
-#include <easy3d/renderer/gl_drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 
 namespace easy3d {
 
 
     // The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh
-	class PointsDrawable : public DrawableGL {
+	class PointsDrawable : public Drawable {
 	public:
         PointsDrawable(const std::string& name = "", Model* model = nullptr);
 
@@ -44,6 +44,7 @@ namespace easy3d {
             SPHERE,
             SURFEL
         };
+
         /** Get/Set impostor type. */
         ImposterType impostor_type() const { return impostor_type_; }
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }

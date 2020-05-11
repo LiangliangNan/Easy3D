@@ -7,7 +7,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/file_system.h>
 
 #include <QMenu>
@@ -140,7 +140,7 @@ void WidgetModelList::prepareContextMenu(QMenu *menu) {
         } else
             ++num_unselected;
 
-        if (!model->is_visible()) {
+        if (!model->renderer()->is_visible()) {
             ++num_invisible;
             if (item->isSelected())
                 ++num_invisible_in_selected;
@@ -234,7 +234,7 @@ void WidgetModelList::updateModelList() {
 
         item->setData(0, Qt::DisplayRole, i + 1);
         item->setIcon(1);
-        item->setVisibilityIcon(2, model->is_visible());
+        item->setVisibilityIcon(2, model->renderer()->is_visible());
 
         item->setData(3, Qt::DisplayRole, QString::fromStdString(name));
 		item->setStatus(model == active_model);
@@ -305,9 +305,9 @@ void WidgetModelList::hideOtherModels(Model *cur) {
     for (int i = 0; i < models.size(); ++i) {
         Model *model = models[i];
         if (selected_only_ && model != cur)
-            model->set_visible(false);
+            model->renderer()->set_visible(false);
         else
-            model->set_visible(true);
+            model->renderer()->set_visible(true);
     }
 }
 
@@ -320,7 +320,7 @@ void WidgetModelList::showSelected() {
 	for (int i = 0; i < items.size(); ++i) {
 		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
 		Model* model = item->model();
-		model->set_visible(true);
+		model->renderer()->set_visible(true);
 	}
 
 	updateModelList();
@@ -336,7 +336,7 @@ void WidgetModelList::hideSelected() {
 	for (int i = 0; i < items.size(); ++i) {
 		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
 		Model* model = item->model();
-		model->set_visible(false);
+		model->renderer()->set_visible(false);
 	}
 
     updateModelList();
@@ -352,13 +352,13 @@ void WidgetModelList::invertShowHide() {
 		for (int i = 0; i < num; ++i) {
 			QTreeWidgetItem* item = topLevelItem(i);
 			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-			visible[i] = (!modelItem->model()->is_visible());
+			visible[i] = (!modelItem->model()->renderer()->is_visible());
 		}
 		mainWindow_->setShowSelectedOnly(false);
 		for (int i = 0; i < num; ++i) {
 			QTreeWidgetItem* item = topLevelItem(i);
 			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-			modelItem->model()->set_visible(visible[i]);
+			modelItem->model()->renderer()->set_visible(visible[i]);
 		}
 	}
 	else {
@@ -366,7 +366,7 @@ void WidgetModelList::invertShowHide() {
 			QTreeWidgetItem* item = topLevelItem(i);
 			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
 			Model* model = modelItem->model();
-			model->set_visible(!model->is_visible());;
+			model->renderer()->set_visible(!model->renderer()->is_visible());;
 		}
 	}
 
@@ -381,7 +381,7 @@ void WidgetModelList::showAllModels() {
     else {
         const std::vector<Model *> &models = viewer()->models();
         for (int i = 0; i < models.size(); ++i) {
-            models[i]->set_visible(true);
+            models[i]->renderer()->set_visible(true);
         }
         updateModelList();
         viewer()->update();
@@ -482,7 +482,7 @@ void WidgetModelList::modelItemSelectionChanged() {
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
         item->setStatus(item->model() == active_model);
-        item->model()->set_selected(item->isSelected());
+        item->model()->renderer()->set_selected(item->isSelected());
     }
 
 //	viewer()->configureManipulation();
@@ -498,9 +498,9 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
 
     if (column == 2 && !selected_only_) {
         Model *model = current_item->model();
-        bool visible = !model->is_visible();
+        bool visible = !model->renderer()->is_visible();
         current_item->setVisibilityIcon(2, visible);
-        model->set_visible(visible);
+        model->renderer()->set_visible(visible);
         viewer()->update();
         mainWindow_->updateRenderingPanel();
     }
@@ -509,7 +509,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         for (int i = 0; i < num; ++i) {
             ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
             item->setStatus(item == current_item);
-            item->setSelected(item->model()->is_selected());
+            item->setSelected(item->model()->renderer()->is_selected());
         }
         viewer()->setCurrentModel(current_item->model());
 
@@ -571,7 +571,7 @@ void WidgetModelList::setSelectedOnly(bool b) {
 	else {
 		const std::vector<Model*>& models = viewer()->models();
 		for (int i = 0; i < models.size(); ++i) {
-			models[i]->set_visible(true);
+			models[i]->renderer()->set_visible(true);
 		}
 	}
 
@@ -661,7 +661,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 		}
 
 		to->set_name("merged_mesh");
-		to->update();
+		to->renderer()->update();
 	}
 
 	if (clouds.size() > 1) {
@@ -682,7 +682,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 		}
 
 		to->set_name("merged_point_set");
-        to->update();
+        to->renderer()->update();
 	}
 
 	for (unsigned int i = 0; i < to_delete.size(); ++i) {

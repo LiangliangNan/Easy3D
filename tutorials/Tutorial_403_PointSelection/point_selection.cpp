@@ -28,6 +28,7 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -82,7 +83,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
                 model->garbage_collection();
                 LOG(INFO) << count << " points deleted" << std::endl;
 
-                auto drawable = model->drawable("vertices");
+                auto drawable = model->renderer()->get_points_drawable("vertices");
                 drawable->update();
                 polygon_.clear();
             }

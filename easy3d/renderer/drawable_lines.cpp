@@ -36,7 +36,7 @@ namespace easy3d {
 
 
     LinesDrawable::LinesDrawable(const std::string &name, Model* model)
-            : DrawableGL(name, model), line_width_(1.0f), impostor_type_(PLAIN) {
+            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN) {
        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 

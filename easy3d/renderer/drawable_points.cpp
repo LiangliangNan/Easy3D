@@ -37,7 +37,7 @@
 namespace easy3d {
 
     PointsDrawable::PointsDrawable(const std::string &name /*= ""*/, Model* model)
-            : DrawableGL(name, model), point_size_(2.0f), impostor_type_(PLAIN) {
+            : Drawable(name, model), point_size_(2.0f), impostor_type_(PLAIN) {
        set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     }
 

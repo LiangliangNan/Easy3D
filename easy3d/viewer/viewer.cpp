@@ -29,10 +29,8 @@
 
 
 #if !defined(_WIN32)
-
 #  include <unistd.h>
 #  include <sys/wait.h>
-
 #endif
 
 
@@ -42,6 +40,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -57,7 +56,7 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -452,8 +451,10 @@ namespace easy3d {
     }
 
     void Viewer::clear_scene() {
-        for (auto m : models_)
+        for (auto m : models_) {
+            delete m->renderer();
             delete m;
+        }
         models_.clear();
 
         for (auto d : drawables_)
@@ -683,13 +684,9 @@ namespace easy3d {
             }
 #else
             if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                auto drawables = current_model()->drawables();
-                for (auto d : drawables) {
-                    auto faces = dynamic_cast<TrianglesDrawable*>(d);
-                    if (faces) {
-                        faces->set_smooth_shading(!faces->smooth_shading());
-                    }
-                }
+                auto drawables = current_model()->renderer()->triangles_drawables();
+                for (auto d : drawables)
+                    d->set_smooth_shading(!d->smooth_shading());
             }
 #endif
         } else if (key == GLFW_KEY_P && modifiers == 0) {
@@ -742,47 +739,35 @@ namespace easy3d {
             show_camera_path_ = !show_camera_path_;
         } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
             for (auto m : models_) {
-                for (auto d : m->drawables()) {
-                    auto lines = dynamic_cast<LinesDrawable*>(d);
-                    if (lines) {
-                        float size = lines->line_width() - 1.0f;
-                        if (size < 1)
-                            size = 1;
-                        lines->set_line_width(size);
-                    }
+                for (auto d : m->renderer()->lines_drawables()) {
+                    float size = d->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_line_width(size);
                 }
             }
         }
         if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
             for (auto m : models_) {
-                for (auto d : m->drawables()) {
-                    auto lines = dynamic_cast<LinesDrawable*>(d);
-                    if (lines) {
-                        float size = lines->line_width() + 1.0f;
-                        lines->set_line_width(size);
-                    }
+                for (auto d : m->renderer()->lines_drawables()) {
+                    float size = d->line_width() + 1.0f;
+                    d->set_line_width(size);
                 }
             }
         } else if (key == GLFW_KEY_MINUS && modifiers == 0) {
             for (auto m : models_) {
-                for (auto d : m->drawables()) {
-                    auto points = dynamic_cast<PointsDrawable*>(d);
-                    if (points) {
-                        float size = points->point_size() - 1.0f;
-                        if (size < 1)
-                            size = 1;
-                        points->set_point_size(size);
-                    }
+                for (auto d : m->renderer()->points_drawables()) {
+                    float size = d->point_size() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_point_size(size);
                 }
             }
         } else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
             for (auto m : models_) {
-                for (auto d : m->drawables()) {
-                    auto points = dynamic_cast<PointsDrawable*>(d);
-                    if (points) {
-                        float size = points->point_size() + 1.0f;
-                        points->set_point_size(size);
-                    }
+                for (auto d : m->renderer()->points_drawables()) {
+                    float size = d->point_size() + 1.0f;
+                    d->set_point_size(size);
                 }
             }
         } else if (key == GLFW_KEY_COMMA && modifiers == 0) {
@@ -808,76 +793,70 @@ namespace easy3d {
                 delete_model(current_model());
         } else if (key == GLFW_KEY_E && modifiers == 0) {
             if (current_model()) {
-                auto edges = current_model()->drawable("edges");
-                if (edges)
-                    edges->set_visible(!edges->is_visible());
-                else {
+                auto *edges = current_model()->renderer()->get_lines_drawable("edges");
+                if (!edges) {
                     if (!dynamic_cast<PointCloud *>(current_model())) { // no default "edges" drawable for point clouds
-                        auto new_edges = new LinesDrawable("edges", current_model());
+                        edges = current_model()->renderer()->add_lines_drawable("edges");
                         if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                            new_edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-                            new_edges->set_line_width(setting::surface_mesh_edges_line_width);
+                            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
+                            edges->set_line_width(setting::surface_mesh_edges_line_width);
                         }
                         else if (dynamic_cast<Graph *>(current_model())) {
-                            new_edges->set_uniform_coloring(setting::graph_edges_color);
-                            new_edges->set_line_width(setting::graph_edges_line_width);
-                            new_edges->set_impostor_type(LinesDrawable::CYLINDER);
+                            edges->set_uniform_coloring(setting::graph_edges_color);
+                            edges->set_line_width(setting::graph_edges_line_width);
+                            edges->set_impostor_type(LinesDrawable::CYLINDER);
                         }
-                        current_model()->add_drawable(new_edges);
                     }
-                }
+                } else
+                    edges->set_visible(!edges->is_visible());
             }
         } else if (key == GLFW_KEY_V && modifiers == 0) {
             if (current_model()) {
-                auto vertices = current_model()->drawable("vertices");
-                if (vertices)
-                    vertices->set_visible(!vertices->is_visible());
-                else {
-                    auto new_vertices = new PointsDrawable("vertices", current_model());
+                auto vertices = current_model()->renderer()->get_points_drawable("vertices");
+                if (!vertices) {
+                    vertices = current_model()->renderer()->add_points_drawable("vertices");
                     if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                        new_vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-                        new_vertices->set_impostor_type(PointsDrawable::SPHERE);
-                        new_vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+                        vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
+                        vertices->set_impostor_type(PointsDrawable::SPHERE);
+                        vertices->set_point_size(setting::surface_mesh_vertices_point_size);
                     }
                     else if (dynamic_cast<PointCloud*>(current_model())) {
-                        new_vertices->set_point_size(setting::point_cloud_point_size);
-                        new_vertices->set_uniform_coloring(setting::point_cloud_points_color);
+                        vertices->set_point_size(setting::point_cloud_point_size);
+                        vertices->set_uniform_coloring(setting::point_cloud_points_color);
                     }
                     else if (dynamic_cast<Graph*>(current_model())) {
-                        new_vertices->set_uniform_coloring(setting::graph_vertices_color);
-                        new_vertices->set_point_size(setting::graph_vertices_point_size);
-                        new_vertices->set_impostor_type(PointsDrawable::SPHERE);
+                        vertices->set_uniform_coloring(setting::graph_vertices_color);
+                        vertices->set_point_size(setting::graph_vertices_point_size);
+                        vertices->set_impostor_type(PointsDrawable::SPHERE);
                     }
-                    current_model()->add_drawable(new_vertices);
-                }
+                } else
+                    vertices->set_visible(!vertices->is_visible());
             }
         } else if (key == GLFW_KEY_B && modifiers == 0) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
-                auto borders = mesh->drawable("borders");
-                if (borders)
-                    borders->set_visible(!borders->is_visible());
-                else {
-                    auto new_borders = new LinesDrawable("borders", mesh);
-                    new_borders->set_uniform_coloring(setting::surface_mesh_borders_color);
-                    new_borders->set_impostor_type(LinesDrawable::CYLINDER);
-                    new_borders->set_line_width(setting::surface_mesh_borders_line_width);
-                    mesh->add_drawable(new_borders);
+                auto drawable = mesh->renderer()->get_lines_drawable("borders");
+                if (!drawable) {
+                    drawable = mesh->renderer()->add_lines_drawable("borders");
+                    drawable->set_uniform_coloring(setting::surface_mesh_borders_color);
+                    drawable->set_impostor_type(LinesDrawable::CYLINDER);
+                    drawable->set_line_width(setting::surface_mesh_borders_line_width);
                 }
+                else
+                    drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
-                auto locks = mesh->drawable("locks");
-                if (locks)
-                    locks->set_visible(!locks->is_visible());
-                else {
-                    auto new_locks = new PointsDrawable("locks", mesh);
-                    new_locks->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
-                    new_locks->set_impostor_type(PointsDrawable::SPHERE);
-                    new_locks->set_point_size(setting::surface_mesh_vertices_point_size + 5);
-                    mesh->add_drawable(new_locks);
+                auto drawable = mesh->renderer()->get_points_drawable("locks");
+                if (!drawable) {
+                    drawable = mesh->renderer()->add_points_drawable("locks");
+                    drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
+                    drawable->set_impostor_type(PointsDrawable::SPHERE);
+                    drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
                 }
+                else
+                    drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_D && modifiers == 0) {
             if (current_model()) {
@@ -898,9 +877,21 @@ namespace easy3d {
                            << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
                 }
 
-                output << "drawables:\n";
-                for (auto d : current_model()->drawables())
-                    d->buffer_stats(output);
+                if (!current_model()->renderer()->points_drawables().empty()) {
+                    output << "points drawables:\n";
+                    for (auto d : current_model()->renderer()->points_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->lines_drawables().empty()) {
+                    std::cout << "lines drawables:\n";
+                    for (auto d : current_model()->renderer()->lines_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->triangles_drawables().empty()) {
+                    std::cout << "triangles drawables:\n";
+                    for (auto d : current_model()->renderer()->triangles_drawables())
+                        d->buffer_stats(output);
+                }
 
                 current_model()->property_stats(output);
             }
@@ -1137,12 +1128,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::create_drawables(Model *model) {
-        renderer::create_default_drawables(model);
-    }
-
-
-    Model *Viewer::add_model(Model *model, bool create_default_drawables) {
+    Model *Viewer::add_model(Model *model, bool create) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
             return nullptr;
@@ -1154,8 +1140,8 @@ namespace easy3d {
             }
         }
 
-        if (create_default_drawables)
-            create_drawables(model);
+        auto renderer = new Renderer(model, create);
+        model->set_renderer(renderer);
 
         int pre_idx = model_idx_;
         models_.push_back(model);
@@ -1239,8 +1225,9 @@ namespace easy3d {
 
         auto visual_box = [](const Model *m) -> Box3 {
             Box3 box = m->bounding_box();
-            for (auto d : m->drawables())
-                box.add_box(d->bounding_box());
+            for (auto d : m->renderer()->points_drawables()) box.add_box(d->bounding_box());
+            for (auto d : m->renderer()->lines_drawables()) box.add_box(d->bounding_box());
+            for (auto d : m->renderer()->triangles_drawables()) box.add_box(d->bounding_box());
             return box;
         };
 
@@ -1539,26 +1526,26 @@ namespace easy3d {
 
     void Viewer::draw() const {
         for (const auto m : models_) {
-            if (!m->is_visible())
+            if (!m->renderer()->is_visible())
                 continue;
 
             // temporarily change the depth range and depth comparison method to properly render edges.
             glDepthRange(0.001, 1.0);
-            for (auto d : m->drawables()) {
-                if (d->is_visible() && d->type() == Drawable::DT_TRIANGLES)
+            for (auto d : m->renderer()->triangles_drawables()) {
+                if (d->is_visible())
                     d->draw(camera(), false);
             } easy3d_debug_log_gl_error;
 
             glDepthRange(0.0, 1.0);
             glDepthFunc(GL_LEQUAL);
-            for (auto d : m->drawables()) {
-                if (d->is_visible() && d->type() == Drawable::DT_LINES)
+            for (auto d : m->renderer()->lines_drawables()) {
+                if (d->is_visible())
                     d->draw(camera(), false);
             } easy3d_debug_log_gl_error;
             glDepthFunc(GL_LESS);
 
-            for (auto d : m->drawables()) {
-                if (d->is_visible() && d->type() == Drawable::DT_POINTS)
+            for (auto d : m->renderer()->points_drawables()) {
+                if (d->is_visible())
                     d->draw(camera(), false);
             } easy3d_debug_log_gl_error;
         }

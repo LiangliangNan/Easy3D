@@ -23,9 +23,10 @@
  */
 
 #include "some_test.h"
-#include <easy3d/core/drawable.h>
+#include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/core/random.h>
@@ -33,7 +34,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/dialogs.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
+#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the KEYs
 
 
 namespace easy3d {
@@ -46,7 +47,7 @@ namespace easy3d {
 
     std::string SomeTest::usage() const {
         return Viewer::usage() +
-                (" ----------------------- SomeTest Usage --------------------------- \n"
+               (" ----------------------- SomeTest Usage --------------------------- \n"
                 "\tCtrl+O: Open file\n"
                 "\tG: Ground truth\n"
                 "\tE: Edges\n"
@@ -58,16 +59,17 @@ namespace easy3d {
     bool SomeTest::open() {
         const std::string title("Please choose a file");
         const std::string default_path("");
-        const std::vector<std::string>& filters = {
-                "Mesh Files (*.obj *.ply *.off *.stl *.poly)" , "*.obj *.ply *.off *.stl *.poly" ,
+        const std::vector<std::string> &filters = {
+                "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
                 "All Files (*.*)", "*"
         };
 
-        const std::string& file_name = dialog::open(title, default_path, filters);
+        const std::string &file_name = dialog::open(title, default_path, filters);
         auto mesh = SurfaceMeshIO::load(file_name);
         if (mesh) {
             clear_scene();
-            add_model(mesh, true);
+            add_model(mesh, false);
+            create_drawables(mesh);
             fit_screen();
             return true;
         }
@@ -86,8 +88,7 @@ namespace easy3d {
                 d->set_visible(true);
             update();
             return true;
-        }
-        else if (key == GLFW_KEY_E) {
+        } else if (key == GLFW_KEY_E) {
             std::cout << "Now I am showing edges" << std::endl;
             for (auto d : faces_ground_truth_)
                 d->set_visible(false);
@@ -97,8 +98,7 @@ namespace easy3d {
                 d->set_visible(true);
             update();
             return true;
-        }
-        else if (key == GLFW_KEY_C) {
+        } else if (key == GLFW_KEY_C) {
             std::cout << "Now I am showing all candidate faces" << std::endl;
             for (auto d : faces_ground_truth_)
                 d->set_visible(false);
@@ -108,14 +108,13 @@ namespace easy3d {
                 d->set_visible(true);
             update();
             return true;
-        }
-        else
+        } else
             return Viewer::key_press_event(key, modifiers);
     }
 
 
-    void SomeTest::create_drawables(Model* model) {
-        auto mesh = dynamic_cast<SurfaceMesh*>(model);
+    void SomeTest::create_drawables(Model *model) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
         if (!mesh)
             return;
 
@@ -124,23 +123,21 @@ namespace easy3d {
         candidate_faces_.clear();
 
         {   // candidate faces
-            auto faces = new TrianglesDrawable("faces");
+            auto faces = mesh->renderer()->add_triangles_drawable("faces");
             auto colors = mesh->face_property<vec3>("f:color");
             for (auto f : mesh->faces())
                 colors[f] = random_color();
             faces->set_lighting_two_sides(true);
             faces->set_visible(false);
             faces->set_property_coloring(State::FACE, "f:color");
-            mesh->add_drawable(faces);
             candidate_faces_.push_back(faces);
 
-            auto* edges = new LinesDrawable("edges");
+            auto *edges = mesh->renderer()->add_lines_drawable("edges");
             edges->set_visible(false);
             edges->set_line_width(2.0f);
-            mesh->add_drawable(edges);
             candidate_faces_.push_back(edges);
 
-            auto borders = new LinesDrawable("borders");
+            auto borders = mesh->renderer()->add_lines_drawable("borders");
             auto prop = mesh->get_vertex_property<vec3>("v:point");
             std::vector<vec3> points;
             for (auto e : mesh->edges()) {
@@ -154,7 +151,6 @@ namespace easy3d {
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
             borders->set_visible(false);
-            mesh->add_drawable(borders);
             candidate_faces_.push_back(borders);
         }
 
@@ -172,16 +168,14 @@ namespace easy3d {
                 copy->garbage_collection();
             }
 
-            auto faces = new TrianglesDrawable("faces");
+            auto faces = copy->renderer()->add_triangles_drawable("faces");
             faces->set_lighting_two_sides(true);
-            copy->add_drawable(faces);
             faces_ground_truth_.push_back(faces);
 
-            auto* edges = new LinesDrawable("edges");
-            copy->add_drawable(edges);
+            auto *edges = copy->renderer()->add_lines_drawable("edges");
             faces_ground_truth_.push_back(edges);
 
-            auto borders = new LinesDrawable("borders");
+            auto borders = copy->renderer()->add_lines_drawable("borders");
             auto prop = copy->get_vertex_property<vec3>("v:point");
             std::vector<vec3> points;
             for (auto e : copy->edges()) {
@@ -194,7 +188,6 @@ namespace easy3d {
             borders->set_uniform_coloring(setting::surface_mesh_borders_color);
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
-            copy->add_drawable(borders);
             faces_ground_truth_.push_back(borders);
         }
 
@@ -205,13 +198,13 @@ namespace easy3d {
             if (!prop)
                 return;
 
-            const std::vector<io::Element>& elements= prop.vector();
+            const std::vector<io::Element> &elements = prop.vector();
             if (elements.empty())
                 return;
 
-            const io::Element& element = elements[0];
+            const io::Element &element = elements[0];
             std::vector<int> edge_labels;
-            for (const auto& p : element.int_properties) {
+            for (const auto &p : element.int_properties) {
                 if (p.name == "label") {
                     edge_labels = p;
                 }
@@ -219,31 +212,30 @@ namespace easy3d {
             if (edge_labels.empty())
                 return;
 
-            const auto& points = mesh->points();
+            const auto &points = mesh->points();
             std::vector<vec3> pts, cls;
             for (auto indices : element.int_list_properties) {
                 if (indices.name == "vertex_indices") {
-                    for (std::size_t i=0; i<indices.size(); ++i) {
+                    for (int i = 0; i < indices.size(); ++i) {
                         if (edge_labels[i]) {
                             int s = indices[i][0];
                             int t = indices[i][1];
                             pts.push_back(points[s]);
                             pts.push_back(points[t]);
-                            const auto& c = random_color();
+                            const auto &c = random_color();
                             cls.insert(cls.end(), 2, c);
                         }
                     }
                 }
             }
 
-            auto* edges = new LinesDrawable("ground_truth_edges");
+            auto *edges = mesh->renderer()->add_lines_drawable("ground_truth_edges");
             edges->update_vertex_buffer(pts);
             edges->update_color_buffer(cls);
             edges->set_property_coloring(State::VERTEX);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_line_width(setting::surface_mesh_borders_line_width);
             edges->set_visible(false);
-            mesh->add_drawable(edges);
             edges_ground_truth_.push_back(edges);
         }
 

@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <QWidget>
 
-#include <easy3d/core/drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 namespace easy3d {
     class Model;

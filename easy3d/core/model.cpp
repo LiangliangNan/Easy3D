@@ -23,28 +23,19 @@
  */
 
 #include <easy3d/core/model.h>
-#include <easy3d/core/drawable.h>
+
 
 namespace easy3d {
 
     Model::Model(const std::string& name /* = "unknown" */)
             : name_(name)
             , bbox_known_(false)
-            , visible_(true)
-            , selected_(false)
+            , renderer_(nullptr)
     {
     }
 
 
     Model::~Model() {
-        for (auto d : drawables_)
-            delete d;
-    }
-
-
-    void Model::update() {
-        for (auto d : drawables_)
-            d->update();
     }
 
 
@@ -64,26 +55,8 @@ namespace easy3d {
     }
 
 
-    Drawable* Model::add_drawable(Drawable* drawable) {
-        for (auto d : drawables_) {
-            if (d->name() == drawable->name()) {
-                LOG(ERROR) << "a previously created drawable with name '" << drawable->name() << "' already exists";
-                return nullptr;
-            }
-        }
-        drawable->set_model(this);
-        drawables_.push_back(drawable);
-        return drawable;
+    void Model::update_bounding_box() {
+        bbox_known_ = false;
     }
-
-
-    Drawable* Model::drawable(const std::string& name) const {
-        for (auto d : drawables_) {
-            if (d->name() == name)
-                return d;
-        }
-        return nullptr;
-    }
-
 
 }

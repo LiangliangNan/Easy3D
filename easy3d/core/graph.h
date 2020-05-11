@@ -548,10 +548,6 @@ namespace easy3d {
 		/// returns number of edges in the mesh
 		unsigned int n_edges() const { return edges_size() - deleted_edges_; }
 
-		/// returns true iff the mesh is empty, i.e., has no vertices
-		unsigned int empty() const { return n_vertices() == 0; }
-
-
 		/// clear mesh: remove all vertices, edges, faces
 		void clear();
 

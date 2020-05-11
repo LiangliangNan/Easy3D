@@ -34,7 +34,7 @@
 
 namespace easy3d {
 
-    class Drawable;
+    class Renderer;
 
     /**
      * Model is the base class of renderable 3D models, e.g., SurfaceMesh, PointCloud, Graph.
@@ -50,7 +50,9 @@ namespace easy3d {
         void set_name(const std::string& n) { name_ = n; }
 
         /** The bounding box of the model. */
-        virtual const Box3& bounding_box() const;
+        const Box3& bounding_box() const;
+
+        void update_bounding_box();
 
         /** The vertices of the model. */
         virtual const std::vector<vec3>& points() const = 0;
@@ -58,48 +60,13 @@ namespace easy3d {
         /** Test if the model is empty. */
         bool empty() const { return points().empty(); };
 
-        /// prints the names of all properties to an output stream (e.g., std::cout).
+        /** prints the names of all properties to an output stream (e.g., std::cout). */
         virtual void property_stats(std::ostream &output) const = 0;
 
-        //-------------------- drawable management  -----------------------
-
-        /**
-         * Add a drawable to this model. The model will take the ownership of the drawable (e.g., memory management).
-         * @param drawable The drawable to be added to this model.
-         * @return The newly added drawable. This operation will fail if a drawable with the same name already exists.
-         *         In this case, a nullptr will be returned.
-         */
-        Drawable* add_drawable(Drawable* drawable);
-
-        /**
-         * Get the drawable of a given name.
-         * Return a nullptr if the drawable does not exist.
-         */
-        Drawable* drawable(const std::string& name) const;
-
-        // Return all available drawables.
-        const std::vector<Drawable*>&  drawables() const { return drawables_; }
-
-        //-------------------- rendering functionalities  -----------------------
-
-        bool is_visible() const { return visible_; }
-        void set_visible(bool b) { visible_ = b; }
-
-        bool is_selected() const { return selected_; }
-        void set_selected(bool b) { selected_ = b; }
-
-        /**
-         * @brief Sets the model modified after processing (e.g., remeshing, denoising). This ensure the OpenGL buffers
-         *        are up-to-date before rendering.
-         * @details All drawables associated with this model will be updated. This is equivalent to call the
-         *          update_buffers() function for all the drawables of this model. To achieve better performance (for
-         *          huge models), it is wiser to update only the affected drawables and buffers. For example, the change
-         *          in texture coordinates of a surface mesh doesn't change the rendering of its "edges" and "vertices".
-         *          It is not necessary to update "edges" and "vertices". Besides, the vertex buffer and the index
-         *          buffer of the "faces" are also not affected and can avoid update. So, you only need to update the
-         *          texcoord buffer of the "faces".
-         */
-        void update();
+        /** Set/Get the renderer of this model. */
+        void set_renderer(Renderer* r) { renderer_ = r; }
+        inline Renderer* renderer() { return renderer_; }
+        inline const Renderer* renderer() const { return renderer_; }
 
     protected:
         std::string	name_;
@@ -107,10 +74,7 @@ namespace easy3d {
         Box3		bbox_;
         bool		bbox_known_;
 
-        bool		visible_;
-        bool        selected_;
-
-        std::vector<Drawable*>  drawables_;
+        Renderer* renderer_;
     };
 }
 
