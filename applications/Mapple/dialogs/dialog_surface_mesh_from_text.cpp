@@ -118,6 +118,7 @@ void DialogSurfaceMeshFromText::apply() {
         }
     }
 
+    viewer_->update();
     window_->updateUi();
 #else
     LOG(WARNING) << "TextMesher requires FreeType but FreeType was not found.";

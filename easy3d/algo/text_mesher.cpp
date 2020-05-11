@@ -35,6 +35,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -681,8 +682,11 @@ namespace easy3d {
             return false;
         }
 
-        for (const auto& contour : contours)
+        ProgressLogger progress(contours.size());
+        for (const auto& contour : contours) {
             extrude(mesh, contour, height);
+            progress.next();
+        }
 
         return mesh->n_faces() > 0;
     }
