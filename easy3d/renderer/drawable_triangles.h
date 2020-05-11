@@ -22,10 +22,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_DRAWABLE_TRIANGLES_H
-#define EASY3D_RENDERER_DRAWABLE_TRIANGLES_H
+#ifndef EASY3D_RENDERING_DRAWABLE_TRIANGLES_H
+#define EASY3D_RENDERING_DRAWABLE_TRIANGLES_H
 
-#include <easy3d/renderer/gl_drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 
 namespace easy3d {
@@ -35,7 +35,7 @@ namespace easy3d {
     // NOTE: it supports triangles only. To visualize general polygons, the vertex coordinates
     //       and properties (e.g., color, normal) should be provided as consecutive triplets
     //       in an array to be transferred to GPU. See update_vertex_buffer().
-    class TrianglesDrawable : public DrawableGL {
+    class TrianglesDrawable : public Drawable {
 	public:
         TrianglesDrawable(const std::string& name = "", Model* model = nullptr);
 
@@ -74,4 +74,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERER_DRAWABLE_TRIANGLES_H
+#endif  // EASY3D_RENDERING_DRAWABLE_TRIANGLES_H

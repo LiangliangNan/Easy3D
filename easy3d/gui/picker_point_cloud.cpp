@@ -25,6 +25,7 @@
 
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -151,7 +152,7 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->drawable("vertices");
+        auto drawable = model->renderer()->get_points_drawable("vertices");
         if (!drawable) {
             LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
             return 0;
@@ -251,7 +252,7 @@ namespace easy3d {
         if (!model)
             return 0;
 
-        auto drawable = model->drawable("vertices");
+        auto drawable = model->renderer()->get_points_drawable("vertices");
         if (!drawable) {
             LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
             return 0;

@@ -2,6 +2,7 @@
 
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/core/model.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -193,7 +194,7 @@ void WidgetDrawable::setVectorFieldScale(double s) {
     auto d = drawable();
     states_[d].vector_field_scale = s;
 
-    auto drawa = viewer_->currentModel()->drawable("vector - " + states_[d].vector_field.toStdString());
+    auto drawa = viewer_->currentModel()->renderer()->get_lines_drawable("vector - " + states_[d].vector_field.toStdString());
     if (drawa) {
         drawa->update();
         viewer_->update();

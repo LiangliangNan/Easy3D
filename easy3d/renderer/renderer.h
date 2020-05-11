@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_RENDERER_H
-#define EASY3D_RENDERER_RENDERER_H
+#ifndef EASY3D_RENDERING_RENDERER_H
+#define EASY3D_RENDERING_RENDERER_H
 
 
 #include <string>
@@ -40,42 +40,6 @@ namespace easy3d {
     class TrianglesDrawable;
 
     namespace renderer {
-
-        // -------------------------------------------------------------------------------------------------------------
-
-        /**
-         * @brief Set the default rendering state of the "vertices" drawable of a point cloud.
-         * @details The default rendering state is determined by the availability of the vertex properties.
-         *          The motivation is that the most appealing rendering is demonstrated by default. The following
-         *          priority applies:
-         *              1. per-vertex color: in "v:color";
-         *              2. per-vertex texture coordinates: in "v:texcoord";
-         *              3. segmentation: in "v:primitive_index";
-         *              4: uniform color.
-         */
-        void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
-
-        /**
-         * @brief Set the default rendering state of the "faces" drawable of a surface mesh.
-         * @details The default rendering state is determined by the availability of the vertex/face properties.
-         *          The motivation is that the most appealing rendering is demonstrated by default. The following
-         *          priority applies:
-         *              1: per-face color: in "f:color";
-         *              2: per-vertex color: in "v:color";
-         *              3. per-halfedge texture coordinates: in "h:texcoord";
-         *              4. per-vertex texture coordinates: in "v:texcoord";
-         *              5. segmentation: in "f:chart";
-         *              6 uniform color
-         */
-        void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
-
-        // -------------------------------------------------------------------------------------------------------------
-
-        /**
-         * @brief Creates= default drawable for a model.
-         * @param model The model
-         */
-        void create_default_drawables(Model *model);
 
         // -------------------------------------------------------------------------------------------------------------
 
@@ -178,4 +142,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERER_RENDERER_H
+#endif  // EASY3D_RENDERING_RENDERER_H

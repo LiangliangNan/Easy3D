@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_OPENGL_TEXTURE_H
-#define EASY3D_RENDERER_OPENGL_TEXTURE_H
+#ifndef EASY3D_RENDERING_OPENGL_TEXTURE_H
+#define EASY3D_RENDERING_OPENGL_TEXTURE_H
 
 
 #include <string>
@@ -117,5 +117,5 @@ namespace easy3d {
 } // namespace easy3d
 
 
-#endif  // EASY3D_RENDERER_OPENGL_TEXTURE_H
+#endif  // EASY3D_RENDERING_OPENGL_TEXTURE_H
 

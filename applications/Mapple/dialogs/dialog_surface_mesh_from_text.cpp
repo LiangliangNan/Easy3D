@@ -27,6 +27,7 @@
 
 #include <easy3d/algo/text_mesher.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 
@@ -108,7 +109,7 @@ void DialogSurfaceMeshFromText::apply() {
     if (mesh && mesh->name() == text) {
         mesh->clear();
         mesher.generate(mesh, text, 0, 0, extrusion, collision_free);
-        mesh->update();
+        mesh->renderer()->update();
     } else {
         mesh = mesher.generate(text, 0, 0, extrusion, collision_free);
         if (mesh) {

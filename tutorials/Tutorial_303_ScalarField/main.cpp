@@ -24,6 +24,7 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -56,7 +57,7 @@ int main(int argc, char **argv) {
     }
 
     // Add a TrianglesDrawable to visualize the surface.
-    auto drawable = new TrianglesDrawable("faces");
+    auto drawable = model->renderer()->add_triangles_drawable("faces");
 
     // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color given in the
     // model file. In this tutorial, we define a scalar field on the mesh vertices: elevation (here the Z-component
@@ -77,9 +78,6 @@ int main(int argc, char **argv) {
 
     // Use the texture
     drawable->set_texture(texture);
-
-    // add this drawable to the model
-    model->add_drawable(drawable);
 
     // Run the viewer
     return viewer.run();

@@ -30,6 +30,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
+#include <easy3d/renderer/rendering.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"
@@ -1054,7 +1055,7 @@ void DialogProperties::applyCommand() {
         if (succeed) {
             Model *model = getModel();
             if (model)
-                model->update();
+                model->renderer()->update();
         }
     }
     else if (command == "Rename")

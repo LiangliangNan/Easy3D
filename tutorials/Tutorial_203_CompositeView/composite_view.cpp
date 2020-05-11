@@ -32,6 +32,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/rendering.h>
 
 
 using namespace easy3d;
@@ -60,9 +61,9 @@ void CompositeView::draw() const {
     // Upper left view (wireframe)
     glViewport(0, h / 2, w / 2, h / 2);
     glScissor(0, h / 2, w / 2, h / 2);
-    auto edges = current_model()->drawable("edges");
+    auto edges = current_model()->renderer()->get_lines_drawable("edges");
     if (!edges)
-        edges = current_model()->add_drawable(new LinesDrawable("edges"));
+        edges = current_model()->renderer()->add_lines_drawable("edges");
     edges->draw(camera(), false);
     draw_grid();
 
@@ -71,11 +72,11 @@ void CompositeView::draw() const {
     // Lower left view (wireframe + vertices)
     glViewport(0, 0, w / 2, h / 2);
     glScissor(0, 0, w / 2, h / 2);
-    auto vertices = current_model()->drawable("vertices");
+    auto vertices = current_model()->renderer()->get_points_drawable("vertices");
     if (!vertices)
-        vertices = current_model()->add_drawable(new PointsDrawable("vertices"));
-    dynamic_cast<PointsDrawable*>(vertices)->set_point_size(15.0f);
-    dynamic_cast<PointsDrawable*>(vertices)->set_impostor_type(PointsDrawable::SPHERE);
+        vertices = current_model()->renderer()->add_points_drawable("vertices");
+    vertices->set_point_size(15.0f);
+    vertices->set_impostor_type(PointsDrawable::SPHERE);
     vertices->draw(camera(), false);
     edges->draw(camera(), false);
     draw_grid();
@@ -85,9 +86,9 @@ void CompositeView::draw() const {
     // Lower right view (faces)
     glViewport(w / 2, 0, w / 2, h / 2);
     glScissor(w / 2, 0, w / 2, h / 2);
-    auto faces = current_model()->drawable("faces");
+    auto faces = current_model()->renderer()->get_triangles_drawable("faces");
     if (!faces)
-        faces = current_model()->add_drawable( new TrianglesDrawable("faces") );
+        faces = current_model()->renderer()->add_triangles_drawable("faces");
     faces->draw(camera(), false);
     draw_grid();
 

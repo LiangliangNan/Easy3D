@@ -319,19 +319,6 @@ namespace easy3d {
 	    virtual std::string usage() const;
 
 	protected:
-        /**
-         * @brief Create default drawables for rendering.
-         * @details This method creates defaults drawables for rendering a model. The supported
-         *          default drawables are
-         *              - for point clouds: "vertices".
-         *              - for surface meshes: "faces", "vertices", "edges", "borders".
-         *              - for graphs: "vertices", "edges".
-         *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, you can
-         *          override this function or set 'create_default_drawables' to false and create the
-         *          drawables by calling Model::add_[type]_drawable().
-         */
-        virtual void create_drawables(Model* model);
 
         // rendering. Users can put their additional rendering function here by reimplementing it.
         virtual void draw() const;

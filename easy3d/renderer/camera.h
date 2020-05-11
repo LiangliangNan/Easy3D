@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_RENDERER_CAMERA_H
-#define EASY3D_RENDERER_CAMERA_H
+#ifndef EASY3D_RENDERING_CAMERA_H
+#define EASY3D_RENDERING_CAMERA_H
 
 
 #include <easy3d/core/types.h>
@@ -508,4 +508,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_RENDERER_CAMERA_H
+#endif // EASY3D_RENDERING_CAMERA_H

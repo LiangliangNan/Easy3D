@@ -34,8 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_RENDERER_CONSTRAINT_H
-#define EASY3D_RENDERER_CONSTRAINT_H
+#ifndef EASY3D_RENDERING_CONSTRAINT_H
+#define EASY3D_RENDERING_CONSTRAINT_H
 
 #include <easy3d/core/types.h>
 
@@ -382,4 +382,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_RENDERER_CONSTRAINT_H
+#endif // EASY3D_RENDERING_CONSTRAINT_H

@@ -10,7 +10,7 @@ set(${PROJECT_NAME}_HEADERS
         camera.h
         clipping_plane.h
         constraint.h
-        gl_drawable.h
+        drawable.h
         drawable_lines.h
         drawable_points.h
         drawable_triangles.h
@@ -25,15 +25,17 @@ set(${PROJECT_NAME}_HEADERS
         opengl.h
         opengl_error.h
         opengl_info.h
+        opengl_timer.h
         primitives.h
         read_pixel.h
         renderer.h
+        rendering.h
         setting.h
         shader_manager.h
         shader_program.h
         shadow.h
         soft_shadow.h
-        opengl_timer.h
+        state.h
         texture.h
         texture_manager.h
         text_renderer.h
@@ -49,7 +51,7 @@ set(${PROJECT_NAME}_SOURCES
         camera.cpp
         clipping_plane.cpp
         constraint.cpp
-        gl_drawable.cpp
+        drawable.cpp
         drawable_lines.cpp
         drawable_points.cpp
         drawable_triangles.cpp
@@ -63,18 +65,20 @@ set(${PROJECT_NAME}_SOURCES
         manipulated_frame.cpp
         opengl_error.cpp
         opengl_info.cpp
+        opengl_timer.cpp
         primitives.cpp
         read_pixel.cpp
         renderer.cpp
+        rendering.cpp
         setting.cpp
         shader_manager.cpp
         shader_program.cpp
         shadow.cpp
         soft_shadow.cpp
+        state.cpp
         texture.cpp
         texture_manager.cpp
         text_renderer.cpp
-        opengl_timer.cpp
         transform.cpp
         transform_decompose.cpp
         vertex_array_object.cpp

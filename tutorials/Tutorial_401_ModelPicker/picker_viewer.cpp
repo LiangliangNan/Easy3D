@@ -26,6 +26,7 @@
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>
 
@@ -63,10 +64,10 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 void PickerViewer::mark(easy3d::Model *model) {
     for (auto m : models()) {
         if (m == model)
-            m->set_selected(!m->is_selected());
+            m->renderer()->set_selected(!m->renderer()->is_selected());
 
-        auto faces = m->drawable("faces");
-        if (m->is_selected())
+        auto faces = m->renderer()->get_triangles_drawable("faces");
+        if (m->renderer()->is_selected())
             faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
         else
             faces->set_uniform_coloring(setting::surface_mesh_faces_color);

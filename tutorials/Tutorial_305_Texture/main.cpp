@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
     viewer.add_model(mesh, true);
 
     // set the texture of the default drawable "faces"
-    auto drawable = mesh->drawable("faces");
+    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
     drawable->set_texture(tex);
     drawable->set_texture_coloring(easy3d::State::VERTEX, "v:texcoord", tex);
 

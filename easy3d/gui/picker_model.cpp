@@ -28,6 +28,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -113,7 +114,7 @@ namespace easy3d {
     void ModelPicker::draw(const std::vector<Model *> &models) {
         for (std::size_t i = 0; i < models.size(); ++i) {
             Model *model = models[i];
-            if (!model->is_visible())
+            if (!model->renderer()->is_visible())
                 continue;
 
             // the color used to render this model
@@ -122,12 +123,12 @@ namespace easy3d {
             const vec4 color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
             if (dynamic_cast<SurfaceMesh *>(model))
-                draw(model->drawable("faces"), color);
+                draw(model->renderer()->get_triangles_drawable("faces"), color);
             else if (dynamic_cast<PointCloud *>(model))
-                draw(model->drawable("vertices"), color);
+                draw(model->renderer()->get_points_drawable("vertices"), color);
             else if (dynamic_cast<Graph *>(model)) {
-                draw(model->drawable("vertices"), color);
-                draw(model->drawable("edges"), color);
+                draw(model->renderer()->get_points_drawable("vertices"), color);
+                draw(model->renderer()->get_lines_drawable("edges"), color);
             }
         }
     }

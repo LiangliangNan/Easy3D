@@ -5,6 +5,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -127,7 +128,7 @@ void WidgetLinesDrawable::updatePanel() {
         active_drawable_.clear();
 
     auto d = dynamic_cast<LinesDrawable*>(drawable());
-    if (!model || !model->is_visible() || !d) {
+    if (!model || !model->renderer()->is_visible() || !d) {
         setEnabled(false);
         return;
     }
@@ -140,7 +141,7 @@ void WidgetLinesDrawable::updatePanel() {
     auto &scheme = d->state();
 
     ui->comboBoxDrawables->clear();
-    const auto &drawables = model->drawables();
+    const auto &drawables = model->renderer()->lines_drawables();
     for (auto d : drawables)
         ui->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
     ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
@@ -234,13 +235,11 @@ Drawable *WidgetLinesDrawable::drawable() {
 
     auto pos = active_drawable_.find(model);
     if (pos != active_drawable_.end())
-        return model->drawable(pos->second);
+        return model->renderer()->get_lines_drawable(pos->second);
     else {
-        for (auto d : model->drawables() ) {
-            if (d->type() == easy3d::Drawable::DT_LINES) {
-                active_drawable_[model] = d->name();
-                return d;
-            }
+        for (auto d : model->renderer()->lines_drawables() ) {
+            active_drawable_[model] = d->name();
+            return d;
         }
         return nullptr;
     }
@@ -256,11 +255,11 @@ void WidgetLinesDrawable::setActiveDrawable(const QString &text) {
             return; // already active
     }
 
-    if (model->drawable(name)) {
+    if (model->renderer()->get_lines_drawable(name)) {
         active_drawable_[model] = name;
     } else {
         LOG(ERROR) << "drawable '" << name << "' not defined on model: " << model->name();
-        const auto &drawables = model->drawables();
+        const auto &drawables = model->renderer()->lines_drawables();
         if (drawables.empty())
             LOG(ERROR) << "no lines drawable defined on model: " << model->name();
         else
@@ -451,7 +450,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
 
     auto d = drawable();
     if (text == "disabled") {
-        const auto &drawables = mesh->drawables();
+        const auto &drawables = mesh->renderer()->lines_drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - ") != std::string::npos)
                 d->set_visible(false);
@@ -461,7 +460,7 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->drawable("vector - f:normal");
+        auto d = mesh->renderer()->get_lines_drawable("vector - f:normal");
         d->set_visible(true);
 
         states_[d].vector_field = "f:normal";

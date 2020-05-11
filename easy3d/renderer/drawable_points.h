@@ -22,17 +22,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_DRAWABLE_POINTS_H
-#define EASY3D_RENDERER_DRAWABLE_POINTS_H
+#ifndef EASY3D_RENDERING_DRAWABLE_POINTS_H
+#define EASY3D_RENDERING_DRAWABLE_POINTS_H
 
-#include <easy3d/renderer/gl_drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 
 namespace easy3d {
 
 
     // The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh
-	class PointsDrawable : public DrawableGL {
+	class PointsDrawable : public Drawable {
 	public:
         PointsDrawable(const std::string& name = "", Model* model = nullptr);
 
@@ -75,4 +75,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERER_DRAWABLE_POINTS_H
+#endif  // EASY3D_RENDERING_DRAWABLE_POINTS_H

@@ -31,6 +31,7 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -98,6 +99,8 @@ namespace easy3d {
         // clear the mesh in case of existing data
         SurfaceMesh *model = new SurfaceMesh;
         model->set_name(file_name);
+
+        Viewer::add_model(model, false);
 
         ManifoldBuilder builder(model);
         builder.begin_surface();
@@ -167,7 +170,7 @@ namespace easy3d {
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (materials.empty())
-            return Viewer::add_model(model, true);
+            return model;
 
         // ------------- group the faces according to the material -------------
         // each group is a set of faces sharing the same material
@@ -249,7 +252,7 @@ namespace easy3d {
 
             const auto &d_indices = tessellator.elements();
 
-            TrianglesDrawable *drawable = new TrianglesDrawable("faces_" + std::to_string(i));
+            TrianglesDrawable *drawable = model->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
 
             drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
@@ -261,7 +264,7 @@ namespace easy3d {
             drawable->set_material(State::Material(group.ambient, group.specular, group.shininess));
             drawable->set_uniform_coloring(vec4(group.diffuse, 1.0f));
 
-            std::string texname = group.tex_file;
+            const std::string texname = group.tex_file;
             if (!texname.empty()) {
                 const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
                 Texture *tex = TextureManager::request(texture_file, Texture::REPEAT);
@@ -270,12 +273,9 @@ namespace easy3d {
                     LOG(INFO) << "texture created from " << texname;
                 }
             }
-
-            model->add_drawable(drawable);
         }
 
-        // the drawables have already been created
-        return Viewer::add_model(model, false);
+        return model;
     }
 
 }

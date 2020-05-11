@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_OPENGL_H
-#define EASY3D_RENDERER_OPENGL_H
+#ifndef EASY3D_RENDERING_OPENGL_H
+#define EASY3D_RENDERING_OPENGL_H
 
 
 /* Make it easier for including the OpenGL header file.
@@ -40,4 +40,4 @@
 
 #include <3rd_party/glew/include/GL/glew.h>
 
-#endif // EASY3D_RENDERER_OPENGL_H
+#endif // EASY3D_RENDERING_OPENGL_H

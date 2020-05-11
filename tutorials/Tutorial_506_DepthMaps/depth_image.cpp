@@ -32,6 +32,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/util/dialogs.h>
 
 using namespace easy3d;
@@ -82,14 +83,15 @@ void DepthImage::generate_depth() {
         program->bind();
         program->set_uniform("MVP", camera()->modelViewProjectionMatrix());
         for (auto m : models_) {
-            for (auto d : m->drawables()) {
+            for (auto d : m->renderer()->points_drawables()) {
                 if (d->is_visible()) {
-                    if (d->type() == Drawable::DT_POINTS) {
-                        float point_size = dynamic_cast<PointsDrawable*>(d)->point_size();
-                        glPointSize(point_size);
-                    }
+                    glPointSize(d->point_size());
                     d->gl_draw(false);
                 }
+            }
+            for (auto d : m->renderer()->triangles_drawables()) {
+                if (d->is_visible())
+                    d->gl_draw(false);
             }
         }
         program->release();

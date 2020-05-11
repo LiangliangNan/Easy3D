@@ -26,6 +26,7 @@
 #include "dialog_surface_mesh_curvature.h"
 
 #include <easy3d/algo/surface_mesh_curvature.h>
+#include <easy3d/renderer/rendering.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"
@@ -66,7 +67,7 @@ void DialogSurfaceMeshCurvature::apply() {
     analyzer.compute_gauss_curvature();
     analyzer.compute_max_abs_curvature();
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
     window_->updateRenderingPanel();
 }

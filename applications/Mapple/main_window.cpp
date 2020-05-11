@@ -42,6 +42,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -925,7 +926,7 @@ void MainWindow::surfaceMeshTriangulation() {
     SurfaceMeshTriangulation triangulator(mesh);
     triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
 }
 
@@ -962,7 +963,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     MeshSurfacer ms;
     unsigned int num = ms.remove_duplicated_faces(mesh, true);
     if (num > 0) {
-        mesh->update();
+        mesh->renderer()->update();
         viewer_->update();
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
@@ -1012,7 +1013,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
         result->set_name(name);
         viewer()->addModel(result);
 		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
-        mesh->update();
+        mesh->renderer()->update();
         viewer_->update();
         updateUi();
     }
@@ -1043,7 +1044,7 @@ void MainWindow::pointCloudEstimateNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.estimate(cloud);
 
-    cloud->update();
+    cloud->renderer()->update();
     viewer()->update();
 }
 
@@ -1057,7 +1058,7 @@ void MainWindow::pointCloudReorientNormals() {
     std::cout << "show the parameter dialog" << std::endl;
     pcn.reorient(cloud);
 
-    cloud->update();
+    cloud->renderer()->update();
     viewer()->update();
 }
 
@@ -1077,7 +1078,7 @@ void MainWindow::pointCloudNormalizeNormals() {
     for (auto &n : normals)
         n.normalize();
 
-    cloud->update();
+    cloud->renderer()->update();
     viewer()->update();
 }
 
@@ -1196,7 +1197,7 @@ void MainWindow::computeHeightField() {
         }
     }
 
-    model->update();
+    model->renderer()->update();
     viewer()->update();
     updateRenderingPanel();
 }
@@ -1218,9 +1219,9 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    mesh->drawable("faces")->set_property_coloring(State::FACE, color_name);
+    mesh->renderer()->get_triangles_drawable("faces")->set_property_coloring(State::FACE, color_name);
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer()->update();
     updateRenderingPanel();
 }
@@ -1233,7 +1234,7 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
 
     if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
         mesh->update_vertex_normals();
-        mesh->update();
+        mesh->renderer()->update();
         viewer()->update();
     }
 }
@@ -1246,7 +1247,7 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
 
     if (SurfaceMeshSubdivision::loop(mesh)) {
         mesh->update_vertex_normals();
-        mesh->update();
+        mesh->renderer()->update();
         viewer()->update();
     }
 }
@@ -1259,7 +1260,7 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 
     if (SurfaceMeshSubdivision::sqrt3(mesh)) {
         mesh->update_vertex_normals();
-        mesh->update();
+        mesh->renderer()->update();
         viewer()->update();
     }
 }
@@ -1330,7 +1331,7 @@ void MainWindow::surfaceMeshSimplification() {
     ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
     ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer()->update();
 }
 
@@ -1365,7 +1366,7 @@ void MainWindow::surfaceMeshSmoothing() {
         smoother.implicit_smoothing(dt, uniform_laplace, rescale);
     }
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer()->update();
 }
 
@@ -1391,7 +1392,7 @@ void MainWindow::surfaceMeshFairing() {
             return;
     }
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer()->update();
 }
 
@@ -1429,7 +1430,7 @@ void MainWindow::surfaceMeshHoleFilling() {
         SurfaceMeshHoleFilling hf(mesh);
         hf.fill_hole(hmin);
 
-        mesh->update();
+        mesh->renderer()->update();
         viewer()->update();
     } else {
         LOG(WARNING) << "could not find a hole (i.e., manifold boundary loop)";
@@ -1466,7 +1467,7 @@ void MainWindow::surfaceMeshRemeshing() {
                 0.001 * bb); // approx. error
     }
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer()->update();
 }
 
@@ -1484,7 +1485,7 @@ void MainWindow::surfaceMeshParameterization() {
     else        // Discrete Harmonic parameterization
         para.harmonic();
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
     updateRenderingPanel();
 }
@@ -1517,7 +1518,7 @@ void MainWindow::surfaceMeshGeodesic() {
     SurfaceMeshGeodesic geodist(mesh);
     geodist.compute(seeds);
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
     updateRenderingPanel();
 }
@@ -1582,7 +1583,7 @@ void MainWindow::surfaceMeshStitchCoincidentEdges() {
     }
     mesh->garbage_collection();
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
     updateUi();
 }
@@ -1600,7 +1601,7 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
     }
     mesh->garbage_collection();
 
-    mesh->update();
+    mesh->renderer()->update();
     viewer_->update();
 }
 

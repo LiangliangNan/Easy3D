@@ -28,6 +28,8 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/algo/gaussian_noise.h>
+#include <easy3d/renderer/rendering.h>
+
 #include <QIntValidator>
 #include "paint_canvas.h"
 #include "main_window.h"
@@ -71,12 +73,12 @@ void DialogGaussianNoise::apply() {
     const float sigma = ui->lineEditGaussianNoiseSigma->text().toFloat();
     if (dynamic_cast<SurfaceMesh *>(model)) {
         GaussianNoise::apply(dynamic_cast<SurfaceMesh *>(model), sigma);
-        model->update();
+        model->renderer()->update();
         viewer_->update();
     }
     else if (dynamic_cast<PointCloud *>(model)) {
         GaussianNoise::apply(dynamic_cast<PointCloud *>(model), sigma);
-        model->update();
+        model->renderer()->update();
         viewer_->update();
     }
 }

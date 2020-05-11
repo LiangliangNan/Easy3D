@@ -27,6 +27,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -41,79 +42,6 @@
 namespace easy3d {
 
     namespace renderer {
-
-
-        void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            auto colors = model->get_vertex_property<vec3>("v:color");
-            if (colors) {
-                drawable->set_property_coloring(State::VERTEX, "v:color");
-                return;
-            }
-
-            auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
-            if (texcoord) {
-                drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
-                return;
-            }
-
-            auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
-            if (primitive_index) { // model has segmentation information
-                drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
-                return;
-            }
-
-            drawable->set_uniform_coloring(setting::point_cloud_points_color);
-        }
-
-
-        // -----------------------------------------------------------------------------------------------------------
-        void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            //  Priorities:
-            //      1: per-face color
-            //      2: per-vertex color
-            //      3. per-halfedge texture coordinates
-            //      4. per-vertex texture coordinates
-            //      5. segmentation
-            //      6 uniform color
-
-            auto face_colors = model->get_face_property<vec3>("f:color");
-            if (face_colors) {
-                drawable->set_property_coloring(State::FACE, "f:color");
-                return;
-            }
-
-            auto vertex_colors = model->get_vertex_property<vec3>("v:color");
-            if (vertex_colors) {
-                drawable->set_property_coloring(State::VERTEX, "v:color");
-                return;
-            }
-
-            auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
-            if (halfedge_texcoords) {
-                drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord");
-                return;
-            }
-
-            auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
-            if (vertex_texcoords) {
-                drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
-                return;
-            }
-
-            auto segmentation = model->get_face_property<int>("f:chart");
-            if (segmentation) {
-                drawable->set_scalar_coloring(State::FACE, "f:chart");
-                return;
-            }
-
-            drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
-        }
 
 
         namespace details {
@@ -2310,69 +2238,6 @@ namespace easy3d {
                     drawable->update_element_buffer(indices);
                     break;
                 }
-            }
-        }
-
-
-        // -------------------------------------------------------------------------------------------------------------
-
-
-        void create_default_drawables(Model *model) {
-            if (dynamic_cast<PointCloud *>(model)) {
-                PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-                auto vertices = new PointsDrawable("vertices", cloud);
-                vertices->set_point_size(setting::point_cloud_point_size);
-                vertices->set_visible(true);
-                set_default_rendering_state(cloud, vertices);
-                cloud->add_drawable(vertices);
-            } else if (dynamic_cast<SurfaceMesh *>(model)) {
-                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-
-                // faces
-                auto faces = new TrianglesDrawable("faces", mesh);
-                faces->set_visible(true);
-                set_default_rendering_state(mesh, faces);
-                mesh->add_drawable(faces);
-
-                // edges
-                auto edges = new LinesDrawable("edges", mesh);
-                edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-                edges->set_line_width(setting::surface_mesh_edges_line_width);
-                edges->set_visible(setting::surface_mesh_show_edges);
-                mesh->add_drawable(edges);
-
-                // vertices
-                auto vertices = new PointsDrawable("vertices", mesh);
-                vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-                vertices->set_impostor_type(PointsDrawable::SPHERE);
-                vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                vertices->set_visible(setting::surface_mesh_show_vertices);
-                mesh->add_drawable(vertices);
-
-                // borders
-                auto borders = new LinesDrawable("borders", mesh);
-                borders->set_uniform_coloring(setting::surface_mesh_borders_color);
-                borders->set_impostor_type(LinesDrawable::CYLINDER);
-                borders->set_line_width(setting::surface_mesh_borders_line_width);
-                borders->set_visible(setting::surface_mesh_show_borders);
-                mesh->add_drawable(borders);
-            } else if (dynamic_cast<Graph *>(model)) {
-                Graph *graph = dynamic_cast<Graph *>(model);
-                // create points drawable for the edges
-                auto vertices = new PointsDrawable("vertices", graph);
-                vertices->set_uniform_coloring(setting::graph_vertices_color);
-                vertices->set_point_size(setting::graph_vertices_point_size);
-                vertices->set_impostor_type(PointsDrawable::SPHERE);
-                vertices->set_visible(true);
-                graph->add_drawable(vertices);
-
-                // create liens drawable for the edges
-                auto edges = new LinesDrawable("edges", graph);
-                edges->set_uniform_coloring(setting::graph_edges_color);
-                edges->set_line_width(setting::graph_edges_line_width);
-                edges->set_impostor_type(LinesDrawable::CYLINDER);
-                edges->set_visible(true);
-                graph->add_drawable(edges);
             }
         }
 

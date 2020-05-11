@@ -35,7 +35,7 @@
 namespace easy3d {
 
     TrianglesDrawable::TrianglesDrawable(const std::string& name, Model* model)
-            : DrawableGL(name, model)
+            : Drawable(name, model)
             , smooth_shading_(setting::surface_mesh_phong_shading)
             , opacity_(0.6f)
     {

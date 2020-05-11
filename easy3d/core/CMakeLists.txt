@@ -8,7 +8,6 @@ set(${PROJECT_NAME}_HEADERS
         box.h
         constant.h
         curve.h
-        drawable.h
         eigen_solver.h
         graph.h
         heap.h
@@ -25,7 +24,6 @@ set(${PROJECT_NAME}_HEADERS
         rect.h
         segment.h
         signal.h
-        state.h
         surface_mesh.h
         manifold_builder.h
         polygon.h
@@ -34,11 +32,9 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
-        drawable.cpp
         graph.cpp
         model.cpp
         point_cloud.cpp
-        state.cpp
         surface_mesh.cpp
         manifold_builder.cpp
         )

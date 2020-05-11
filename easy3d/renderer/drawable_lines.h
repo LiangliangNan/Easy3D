@@ -22,16 +22,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_DRAWABLE_LINES_H
-#define EASY3D_RENDERER_DRAWABLE_LINES_H
+#ifndef EASY3D_RENDERING_DRAWABLE_LINES_H
+#define EASY3D_RENDERING_DRAWABLE_LINES_H
 
-#include <easy3d/renderer/gl_drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 
 namespace easy3d {
 
     // The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields
-	class LinesDrawable : public DrawableGL {
+	class LinesDrawable : public Drawable {
 	public:
         LinesDrawable(const std::string& name = "", Model* model = nullptr);
 
@@ -71,4 +71,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERER_DRAWABLE_LINES_H
+#endif  // EASY3D_RENDERING_DRAWABLE_LINES_H

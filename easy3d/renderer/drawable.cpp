@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/renderer/gl_drawable.h>
+#include <easy3d/renderer/drawable.h>
 
 #include <cassert>
 
@@ -40,12 +40,12 @@
 
 namespace easy3d {
 
-
-    DrawableGL::DrawableGL(const std::string &name, Model *model)
-            : Drawable(name, model)
-    {
+    Drawable::Drawable(const std::string &name, Model *model)
+            : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
+              update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
+              texcoord_buffer_(0), element_buffer_(0), storage_buffer_(0), current_storage_buffer_size_(0),
+              selection_buffer_(0), current_selection_buffer_size_(0) {
         vao_ = new VertexArrayObject;
-
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
         lighting_two_sides_ = setting::light_two_sides;
         distinct_back_color_ = setting::light_distinct_back_color;
@@ -53,12 +53,51 @@ namespace easy3d {
     }
 
 
-    DrawableGL::~DrawableGL() {
+    Drawable::~Drawable() {
         clear();
     }
 
 
-    void DrawableGL::clear() {
+    const Box3 &Drawable::bounding_box() const {
+        if (model_)
+            return model_->bounding_box();
+        else
+            return bbox_;
+    }
+
+
+    void Drawable::buffer_stats(std::ostream &output) const {
+        if (vertex_buffer()) {
+            std::cout << "\t" << name() << std::endl;
+            output << "\t\tvertex buffer:     " << num_vertices_ << " vertices, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+        if (normal_buffer()) {
+            output << "\t\tnormal buffer:     " << num_vertices_ << " normals, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+        if (color_buffer()) {
+            output << "\t\tcolor buffer:      " << num_vertices_ << " colors, "
+                   << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
+        }
+        if (texcoord_buffer()) {
+            output << "\t\ttexcoord buffer:   " << num_vertices_ << " texcoords, "
+                   << num_vertices_ * sizeof(vec2) << " bytes" << std::endl;
+        }
+        if (element_buffer()) {
+            output << "\t\tindex buffer:      " << num_indices_ << " indices, "
+                   << num_indices_ * sizeof(unsigned int) << " bytes" << std::endl;
+        }
+    }
+
+
+    void Drawable::update() {
+        bbox_.clear();
+        update_needed_ = true;
+    }
+
+
+    void Drawable::clear() {
         VertexArrayObject::release_buffer(vertex_buffer_);
         VertexArrayObject::release_buffer(color_buffer_);
         VertexArrayObject::release_buffer(normal_buffer_);
@@ -71,12 +110,12 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::release_element_buffer() {
+    void Drawable::release_element_buffer() {
         VertexArrayObject::release_buffer(element_buffer_);
     }
 
 
-    void DrawableGL::update_storage_buffer(const void *data, std::size_t datasize, unsigned int index /* = 1*/) {
+    void Drawable::update_storage_buffer(const void *data, std::size_t datasize, unsigned int index /* = 1*/) {
         assert(vao_);
 
         if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
@@ -89,7 +128,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_selection_buffer(unsigned int index/* = 1*/) {
+    void Drawable::update_selection_buffer(unsigned int index/* = 1*/) {
         assert(vao_);
 
         //if (selection_buffer_ == 0 || selections_.size() != current_selection_buffer_size_) {
@@ -116,7 +155,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::internal_update_buffers() {
+    void Drawable::internal_update_buffers() {
         if (!model_ && !update_func_) {
             LOG(ERROR) << "failed updating buffers: drawable not associated with a model and no update function has been specified.";
             return;
@@ -139,7 +178,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_vertex_buffer(const std::vector<vec3> &vertices) {
+    void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
@@ -164,7 +203,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_color_buffer(const std::vector<vec3> &colors) {
+    void Drawable::update_color_buffer(const std::vector<vec3> &colors) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
@@ -173,7 +212,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_normal_buffer(const std::vector<vec3> &normals) {
+    void Drawable::update_normal_buffer(const std::vector<vec3> &normals) {
         assert(vao_);
         bool success = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
                                                  normals.size() * sizeof(vec3), 3);
@@ -181,7 +220,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_texcoord_buffer(const std::vector<vec2> &texcoords) {
+    void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
@@ -190,7 +229,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_element_buffer(const std::vector<unsigned int> &indices) {
+    void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
         assert(vao_);
 
         bool status = vao_->create_element_buffer(element_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
@@ -201,7 +240,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
+    void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
         assert(vao_);
 
         if (type() == DT_POINTS) {
@@ -221,7 +260,7 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::fetch_selection_buffer() {
+    void Drawable::fetch_selection_buffer() {
         //    vao_->get_buffer_data(GL_SHADER_STORAGE_BUFFER, selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
 
         //starting from OpenGL 4.5, you can use the simpler version
@@ -229,9 +268,9 @@ namespace easy3d {
     }
 
 
-    void DrawableGL::gl_draw(bool with_storage_buffer /* = false */) const {
+    void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
         if (update_needed_ || vertex_buffer_ == 0)
-            const_cast<DrawableGL*>(this)->internal_update_buffers();
+            const_cast<Drawable*>(this)->internal_update_buffers();
 
         vao_->bind();
 

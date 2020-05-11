@@ -25,6 +25,7 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
@@ -78,7 +79,7 @@ int main(int argc, char **argv) {
     }
 
     // Create a drawable for rendering the normal vectors.
-    auto drawable = new LinesDrawable("normals");
+    auto drawable = model->renderer()->add_lines_drawable("normals");
     // Upload the data to the GPU.
     drawable->update_vertex_buffer(points);
 
@@ -88,11 +89,8 @@ int main(int argc, char **argv) {
     // Set the line width
     drawable->set_line_width(3.0f);
 
-    // Add the drawable to the model.
-    model->add_drawable(drawable);
-
     // Also show the standard "edges"
-    model->drawable("edges")->set_visible(true);
+    model->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // Run the viewer
     return viewer.run();

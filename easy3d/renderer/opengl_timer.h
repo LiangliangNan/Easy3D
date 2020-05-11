@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_OPENGL_TIMER_H
-#define EASY3D_RENDERER_OPENGL_TIMER_H
+#ifndef EASY3D_RENDERING_OPENGL_TIMER_H
+#define EASY3D_RENDERING_OPENGL_TIMER_H
 
 namespace easy3d {
 
@@ -75,4 +75,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RENDERER_OPENGL_TIMER_H
+#endif  // EASY3D_RENDERING_OPENGL_TIMER_H

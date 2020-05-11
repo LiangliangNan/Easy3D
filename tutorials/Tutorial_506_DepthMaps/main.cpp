@@ -26,6 +26,7 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/rendering.h>
 #include <easy3d/util/logging.h>
 
 
@@ -47,8 +48,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    auto drawable = model->drawable("vertices");
-    dynamic_cast<PointsDrawable*>(drawable)->set_point_size(5);
+    auto drawable = model->renderer()->get_points_drawable("vertices");
+    drawable->set_point_size(5);
 
     // Run the viewer
     return viewer.run();

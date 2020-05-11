@@ -22,16 +22,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CORE_DRAWABLE_H
-#define EASY3D_CORE_DRAWABLE_H
+#ifndef EASY3D_RENDERING_DRAWABLE_H
+#define EASY3D_RENDERING_DRAWABLE_H
 
 #include <string>
 #include <vector>
 #include <functional>
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/state.h>
-
+#include <easy3d/renderer/state.h>
 
 namespace easy3d {
 
@@ -41,26 +40,26 @@ namespace easy3d {
 
     /**
      * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
-     * @details A Drawable is an abstraction for "something that can be drawn" (i.e., drawable objects), e.g., a point
-     *          point cloud, the surface of a mesh, the wireframe of a surface mesh.
+     * @details A Drawable is an abstraction for "something that can be drawn", e.g., a point point cloud, the surface
+     *          of a mesh, the wireframe of a surface mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.
      *          A drawable can live independently or be associated with a Model.
-     * @related @class Model
+     * @related @class Renderer
      */
 
     class Drawable : public State {
     public:
-        // three types of drawables (the values are the same as GL_POINTS, GL_LINES, and GL_TRIANGLES).
+        // three types of drawables
         enum Type {
-            DT_POINTS = 0x0000,
-            DT_LINES = 0x0001,
-            DT_TRIANGLES = 0x0004
+            DT_POINTS = 0x0000,     // == GL_POINTS
+            DT_LINES = 0x0001,      // == GL_LINES
+            DT_TRIANGLES = 0x0004   // == GL_TRIANGLES
         };
 
     public:
         // a drawable can be stand-alone or attached to a model
         Drawable(const std::string &name = "unknown", Model *model = nullptr);
-        virtual ~Drawable() {}
+        ~Drawable();
 
         /// Returns the type of the drawable.
         virtual Type type() const = 0;
@@ -82,7 +81,7 @@ namespace easy3d {
         /// print statistics (e.g., num vertices, memory usage) of the buffers to an output stream (e.g., std::cout).
         void buffer_stats(std::ostream &output) const;
 
-        // ---------------------- buffer access ------------------------------
+        // ------------------- buffer access and management ------------------------
 
         unsigned int vertex_buffer() const { return vertex_buffer_; }
         unsigned int color_buffer() const { return color_buffer_; }
@@ -92,8 +91,6 @@ namespace easy3d {
         unsigned int storage_buffer() const { return storage_buffer_; }
         unsigned int selection_buffer() const { return selection_buffer_; }
 
-        // ------------------- buffer management ------------------------
-
         /**
          * Create/Update a single buffer.
          * Primitives like lines and triangles can be drawn with or without the element buffer.
@@ -102,27 +99,41 @@ namespace easy3d {
          *    be in a correct order, like f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3... This requires the shared vertices
          *    be duplicated in the vertex buffer.
          */
-        virtual void update_vertex_buffer(const std::vector<vec3> &vertices) = 0;
-        virtual void update_color_buffer(const std::vector<vec3> &colors) = 0;
-        virtual void update_normal_buffer(const std::vector<vec3> &normals) = 0;
-        virtual void update_texcoord_buffer(const std::vector<vec2> &texcoords) = 0;
-        virtual void update_element_buffer(const std::vector<unsigned int> &elements) = 0;
+        void update_vertex_buffer(const std::vector<vec3> &vertices);
+        void update_color_buffer(const std::vector<vec3> &colors);
+        void update_normal_buffer(const std::vector<vec3> &normals);
+        void update_texcoord_buffer(const std::vector<vec2> &texcoords);
+        void update_element_buffer(const std::vector<unsigned int> &elements);
 
         // entry must have 2 or 3 elements
-        virtual void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements) = 0;
+        void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements);
 
         /// selection buffer (internally based on a shader storage buffer)
         /// @param index: the index of the binding point.
         /// NOTE: the buffers should also be bound to this point in all shader code
-        virtual void update_selection_buffer(unsigned int index = 1) = 0;
+        void update_selection_buffer(unsigned int index = 1);
 
         /// generic storage buffer
         /// @param index: the index of the binding point.
         /// NOTE: the buffers should also be bound to this point in all shader code
-        virtual void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0) = 0;
+        void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0);
 
         /// Releases the element buffer if existing vertex data is sufficient (may require duplicating vertex data).
-        virtual void release_element_buffer() = 0;
+        void release_element_buffer();
+
+        // ----------------- access data from the buffers -------------------
+
+        void fetch_selection_buffer();
+
+        // -------------------------- rendering -----------------------------
+
+        /// The draw method.
+        virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
+
+        /// The internal draw method of this drawable.
+        /// NOTE: this functions should be called when your shader program is in use,
+        ///		 i.e., between glUseProgram(id) and glUseProgram(0);
+        void gl_draw(bool with_storage_buffer = false) const;
 
         /**
          * @brief Requests an update of the OpenGL buffers.
@@ -144,24 +155,12 @@ namespace easy3d {
          */
         void set_update_func(std::function<void(Model*, Drawable*)> func) { update_func_ = func; }
 
-        // ----------------- access data from the buffers -------------------
-
-        virtual void fetch_selection_buffer() = 0;
-
-        // -------------------------- rendering -----------------------------
-
-        /// The draw method.
-        virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
-
-        /// The internal draw method of this drawable.
-        /// NOTE: this functions should be called when your shader program is in use,
-        ///		 i.e., between glUseProgram(id) and glUseProgram(0);
-        virtual void gl_draw(bool with_storage_buffer = false) const = 0;
-
     protected:
-        virtual void internal_update_buffers() = 0;
-
         VertexArrayObject *vao() const { return vao_; }
+
+        void internal_update_buffers();
+
+        void clear();
 
     protected:
         std::string name_;
@@ -193,4 +192,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_CORE_DRAWABLE_H
+#endif  // EASY3D_RENDERING_DRAWABLE_H

@@ -30,6 +30,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
+#include <easy3d/renderer/rendering.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -91,8 +92,8 @@ void TutorialEyeDomeLighting::draw() const {
 		if (!program)
 			return;
 
-        auto drawable = current_model()->drawable("vertices");
-        int point_size = dynamic_cast<PointsDrawable*>(drawable)->point_size();
+        auto drawable = current_model()->renderer()->get_points_drawable("vertices");
+        int point_size = drawable->point_size();
         glPointSize(point_size);
 
         edl_->begin();

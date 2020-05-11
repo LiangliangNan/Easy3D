@@ -38,6 +38,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/rendering.h>
 
 
 const int  KERNEL_SIZE = 64;
@@ -186,13 +187,20 @@ namespace easy3d {
         program->set_uniform("PROJ", PROJ); easy3d_debug_log_gl_error
 
         for (auto model : models) {
-            if (model->is_visible()) {
-                for (auto d : model->drawables()) {
+            if (model->renderer()->is_visible()) {
+                for (auto d : model->renderer()->points_drawables()) {
+                    if (d->is_visible())
+                        d->gl_draw(false); easy3d_debug_log_gl_error
+                }
+                for (auto d : model->renderer()->triangles_drawables()) {
                     if (d->is_visible()) {
-                        if (d->type() == Drawable::DT_TRIANGLES)
-                            program->set_uniform("smooth_shading", dynamic_cast<TrianglesDrawable*>(d)->smooth_shading());
+                        program->set_uniform("smooth_shading", d->smooth_shading());
                         d->gl_draw(false); easy3d_debug_log_gl_error
                     }
+                }
+                for (auto d : model->renderer()->lines_drawables()) {
+                    if (d->is_visible())
+                        d->gl_draw(false); easy3d_debug_log_gl_error
                 }
             }
         }
