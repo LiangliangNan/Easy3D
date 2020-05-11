@@ -55,6 +55,7 @@ namespace easy3d {
 
     DrawableGL::~DrawableGL() {
         clear();
+        delete vao_;
     }
 
 
@@ -66,8 +67,6 @@ namespace easy3d {
         VertexArrayObject::release_buffer(element_buffer_);
         VertexArrayObject::release_buffer(storage_buffer_);
         VertexArrayObject::release_buffer(selection_buffer_);
-
-        delete vao_;
 
         num_vertices_ = 0;
         num_indices_ = 0;
