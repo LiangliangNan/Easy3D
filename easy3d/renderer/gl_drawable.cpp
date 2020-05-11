@@ -137,7 +137,7 @@ namespace easy3d {
                 renderer::update_buffers(model_, this);
         }
 
-        LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "update rendering buffers took " << w.time_string();
+        LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "rendering buffers updated. " << w.time_string();
 
         update_needed_ = false;
     }

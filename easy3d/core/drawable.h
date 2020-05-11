@@ -50,11 +50,11 @@ namespace easy3d {
 
     class Drawable : public State {
     public:
-        // three types of drawables (the values are the same as GL_POINTS, GL_LINES, and GL_TRIANGLES).
+        // three types of drawables
         enum Type {
-            DT_POINTS = 0x0000,
-            DT_LINES = 0x0001,
-            DT_TRIANGLES = 0x0004
+            DT_POINTS = 0x0000,     // == GL_POINTS
+            DT_LINES = 0x0001,      // == GL_LINES
+            DT_TRIANGLES = 0x0004   // == GL_TRIANGLES
         };
 
     public:
