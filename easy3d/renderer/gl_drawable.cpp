@@ -68,6 +68,10 @@ namespace easy3d {
         VertexArrayObject::release_buffer(selection_buffer_);
 
         delete vao_;
+
+        num_vertices_ = 0;
+        num_indices_ = 0;
+        bbox_.clear();
     }
 
 
