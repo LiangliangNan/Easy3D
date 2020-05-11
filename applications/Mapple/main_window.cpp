@@ -1232,9 +1232,9 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
         return;
 
     if (SurfaceMeshSubdivision::catmull_clark(mesh)) {
-        mesh->update_vertex_normals();
         mesh->update();
         viewer()->update();
+        updateUi();
     }
 }
 
@@ -1245,9 +1245,9 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
         return;
 
     if (SurfaceMeshSubdivision::loop(mesh)) {
-        mesh->update_vertex_normals();
         mesh->update();
         viewer()->update();
+        updateUi();
     }
 }
 
@@ -1258,9 +1258,9 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
         return;
 
     if (SurfaceMeshSubdivision::sqrt3(mesh)) {
-        mesh->update_vertex_normals();
         mesh->update();
         viewer()->update();
+        updateUi();
     }
 }
 
