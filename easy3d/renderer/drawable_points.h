@@ -44,10 +44,12 @@ namespace easy3d {
             SPHERE,
             SURFEL
         };
+
+        /** Get/Set impostor type. */
         ImposterType impostor_type() const { return impostor_type_; }
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
-        // default_color will be ignored if per_vertex_color is true and given.
+        /** Get/Set point size. */
         float point_size() const { return point_size_; }
         void set_point_size(float s) { point_size_ = s; }
 
