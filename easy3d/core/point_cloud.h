@@ -278,9 +278,6 @@ namespace easy3d {
         /// returns number of vertices in the cloud
         unsigned int n_vertices() const { return vertices_size() - deleted_vertices_; }
 
-        /// returns true iff the cloud is empty, i.e., has no vertices
-        unsigned int empty() const { return n_vertices() == 0; }
-
         /// clear cloud: remove all vertices
         void clear();
 
