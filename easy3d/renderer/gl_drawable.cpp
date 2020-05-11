@@ -121,23 +121,22 @@ namespace easy3d {
 
     void DrawableGL::internal_update_buffers() {
         if (!model_ && !update_func_) {
-            LOG(ERROR) << "failed updating buffers: drawable not associated with a model and no update function has been specified.";
+            LOG_FIRST_N(ERROR, 1)
+                    << "updating buffers failed: drawable not associated with a model and no update function specified.";
+            return;
+        } else if (model_ && model_->points().empty()) {
+            clear();
+            LOG_FIRST_N(WARNING, 1) << "model has no valid geometry";
             return;
         }
 
         StopWatch w;
-
         if (update_func_)
             update_func_(model_, this);
         else {
-            if (model_ && model_->points().empty())
-                clear();
-            else
-                renderer::update_buffers(model_, this);
+            renderer::update_buffers(model_, this);
         }
-
         LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "rendering buffers updated. " << w.time_string();
-
         update_needed_ = false;
     }
 
