@@ -52,7 +52,7 @@ namespace easy3d {
          *              - negative: clockwise
          *              - positive: counterclockwise
          */
-        bool is_clockwise() const { return signed_area() < 0; }
+        bool is_clockwise() const;
 
         // Reverse the orientation of the polygon. The first vertex remains the same.
         // First vertex: pointed to by `p.begin()`, or [0]
@@ -82,6 +82,21 @@ namespace easy3d {
     template<class InputIterator>
     inline GenericPolygon<FT>::GenericPolygon(InputIterator first, InputIterator last) {
         std::copy(first, last, BaseClass::end());
+    }
+
+    template<typename FT>
+    inline bool GenericPolygon<FT>::is_clockwise() const {
+    #if 0
+        return signed_area() < 0;
+    #else
+        double sum = 0;
+        for (std::size_t i = 0; i + 1 < BaseClass::size(); ++i) {
+            const auto &p1 = BaseClass::at(i);
+            const auto &p2 = BaseClass::at((i + 1) % BaseClass::size());
+            sum += (p2.x - p1.x) * (p2.y + p1.y);
+        }
+        return sum < 0.0;
+    #endif
     }
 
     template<typename FT>

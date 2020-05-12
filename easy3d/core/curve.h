@@ -86,43 +86,45 @@ namespace easy3d {
          * De Casteljau algorithm evaluating a quadratic or conic (second degree) curve.
          * Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
+         * @param include_end Ture to extend the curve to the end point.
          */
         template<typename Point>
         inline
-        void quadratic(const Point &A, const Point &B, const Point &C, unsigned int steps, std::vector<Point> &curve) {
+        void quadratic(const Point &A, const Point &B, const Point &C, unsigned int steps, std::vector<Point> &curve, bool include_end = false) {
             typedef typename Point::FT FT;
-            for (unsigned int i = 0; i < steps + 1; i++) {
+            for (unsigned int i = 0; i < steps; i++) {
                 const FT t = static_cast<FT>(i) / steps;
-
-                Point U = (1.0 - t) * A + t * B;
-                Point V = (1.0 - t) * B + t * C;
-
+                const Point U = (1.0 - t) * A + t * B;
+                const Point V = (1.0 - t) * B + t * C;
                 curve.push_back((1.0 - t) * U + t * V);
             }
+
+            if (include_end)
+                curve.push_back(C);
         }
 
         /**
          * De Casteljau algorithm evaluating a cubic (third degree) curve.
          * Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
+         * @param include_end Ture to extend the curve to the end point.
          */
         template<typename Point>
         inline
         void cubic(const Point &A, const Point &B, const Point &C, const Point &D, unsigned int steps,
-                   std::vector<Point> &curve) {
+                   std::vector<Point> &curve, bool include_end = false) {
             typedef typename Point::FT FT;
-            for (unsigned int i = 0; i < steps + 1; i++) {
+            for (unsigned int i = 0; i < steps; i++) {
                 const FT t = static_cast<FT>(i) / steps;
-
                 const Point U = (1.0 - t) * A + t * B;
                 const Point V = (1.0 - t) * B + t * C;
                 const Point W = (1.0 - t) * C + t * D;
-
                 const Point M = (1.0 - t) * U + t * V;
                 const Point N = (1.0 - t) * V + t * W;
-
                 curve.push_back((1.0 - t) * M + t * N);
             }
+            if (include_end)
+                curve.push_back(D);
         }
 
     }   // namespace curve
