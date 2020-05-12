@@ -5,6 +5,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/core/curve.h>
+#include <easy3d/util/string.h>
 
 #include <cstring>
 #include <cstdio>
@@ -31,17 +32,16 @@ int readFile(char const *filename, unsigned char **out) {
 }
 
 
-bool extract_contours(stbtt_fontinfo *font, int codePoint, std::vector<Polygon2> &contours, unsigned short bezier_steps, float offset_x, double offset_y) {
-    int glyphIndex = stbtt_FindGlyphIndex(font, codePoint);
+bool extract_contours(stbtt_fontinfo *font, int codepoint, std::vector<Polygon2> &contours, unsigned short bezier_steps, float offset_x, double offset_y) {
+    int glyphIndex = stbtt_FindGlyphIndex(font, codepoint);
     if (glyphIndex == 0) {
-        LOG(WARNING) << "undefined character code for character " << char(codePoint)
-                     << " (your font may not support this character)";
+        LOG(WARNING) << "given font does not support character " << string::to_string({wchar_t(codepoint)});
         return false;
     }
 
     std::size_t old_num = contours.size();
 
-    stbtt_vertex *vertices;
+    stbtt_vertex *vertices = nullptr;
     const int num_verts = stbtt_GetGlyphShape(font, glyphIndex, &vertices);
 
     int polygonBeginIndex = 0;
@@ -64,9 +64,9 @@ bool extract_contours(stbtt_fontinfo *font, int codePoint, std::vector<Polygon2>
             if (v2->type == STBTT_vline) // line
                 contour.push_back(p1);
             else if (v2->type == STBTT_vcurve)  //quadratic Bezier
-                curve::quadratic(p1, pc, p2, bezier_steps, contour);
+                curve::quadratic(p1, pc, p2, contour, bezier_steps);
             else if (v2->type == STBTT_vcubic)  //cubic Bezier
-                curve::cubic(p1, pc, pc1, p2, bezier_steps, contour);
+                curve::cubic(p1, pc, pc1, p2, contour, bezier_steps);
             else
                 LOG(ERROR) << "unrecognized contour point type";
         }
@@ -85,8 +85,9 @@ bool extract_contours(stbtt_fontinfo *font, int codePoint, std::vector<Polygon2>
 int main(int argc, char **argv) {
     std::ofstream output("easy3d.xyz");
 
-    const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
-    const std::string text = "Easy3D";
+//    const std::string font_file = resource::directory() + "/fonts/en_Roboto-Medium.ttf";
+    const std::string font_file = resource::directory() + "/fonts/cn_隶体.ttf";
+    const std::wstring text = L"中国人";
 
     // load font
     unsigned char *ttf;
