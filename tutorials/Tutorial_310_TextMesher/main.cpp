@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
     TextMesher mesher(font_file, 48);   // font size is 48
 
-#if 1 // show the mesh
+#if 0 // extract and visualize the mesh
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 15, true);
     if (mesh)
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
     mesher.generate(mesh,"Makes 3D Easy!", 400, 0, 15, true);
 
-#else // show the contours
+#else // extract and visualize the contours
     std::vector< std::vector<Polygon2> > contours;
     mesher.set_font(resource::directory() + font_file, 48);
     mesher.generate("Easy3D", 0, -60, contours, true);
