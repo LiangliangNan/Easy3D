@@ -61,9 +61,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
 
         auto normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
-            std::cerr << "Plane extraction using RANSAC requires normal information."
-                      << " Please provide normal information. Alternatively, you can use the "
-                      << " Tutorial_601_PointCloud_NormalEstimation for normal estimation" << std::endl;
+            std::cerr << "Plane extraction using RANSAC requires normal information but it is not available" << std::endl;
             return false;
         }
 
@@ -71,7 +69,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
         algo.add_primitive_type(PrimitivesRansac::PLANE);
 
         // you can try different parameters of RANSAC (usually you don't need to tune them)
-        int num = algo.detect(cloud, 200, 0.005f, 0.02f, 0.8f, 0.001f);
+        const int num = algo.detect(cloud, 200, 0.005f, 0.02f, 0.8f, 0.001f);
         if (num > 0) {
             std::cout << num << " primitives extracted" << std::endl;
 
@@ -79,7 +77,7 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             auto drawable = cloud->renderer()->get_points_drawable("vertices");
 
             const std::string name = "v:color-segments";
-            Renderer::color_from_segmentation(cloud, cloud->get_vertex_property<int>("v:primitive_index"), name);
+            Renderer::color_from_segmentation(cloud, "v:primitive_index", name);
             drawable->set_property_coloring(State::VERTEX, name);
 
             drawable->update();

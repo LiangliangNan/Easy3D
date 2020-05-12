@@ -30,9 +30,6 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-
 
 namespace easy3d {
 
@@ -45,17 +42,31 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * Model is the base class of renderable 3D models, e.g., SurfaceMesh, PointCloud, Graph.
-     * A Model can have multiple drawables, e.g., faces, vertices, edges.
+     * @brief A Renderer manages the drawables (and thus the rendering) of a model.
      */
-    class Renderer
-    {
+    class Renderer {
     public:
-        /// create == true: create default drawables. See create_default_drawables(...).
-        Renderer(Model* model, bool create = true);
+        /**
+         * @brief Constructor.
+         * @param model The model to which this renderer is attached.
+         * @param create_drawables True to create default drawables for this model. Skip the creation if false.
+         *        The supported default drawables are
+         *              - PointCloud: "vertices".
+         *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
+         *              - Graph: "vertices", "edges".
+         *        These default drawables are usually sufficient for basic rendering of a model. The rendering buffers
+         *        of the default drawables are also automatically updated when a model is modified. In case the default
+         *        drawables don't meet a particular visualization purpose, the client code should skip the creation of
+         *        the default drawables, create a necessary drawable, and specify the update function. See Drawable.
+         */
+        Renderer(Model *model, bool create_drawables = true);
+
         virtual ~Renderer();
 
-        Model* model() { return model_; }
+        /**
+         * @brief The model to which this renderer is attached.
+         */
+        Model *model() { return model_; }
 
         //-------------------- rendering functionalities  -----------------------
 
@@ -66,49 +77,80 @@ namespace easy3d {
         void set_selected(bool b) { selected_ = b; }
 
         /**
-         * @brief Sets the model modified after processing (e.g., remeshing, denoising). This ensure the OpenGL buffers
-         *        are up-to-date before rendering.
-         * @details All drawables associated with this model will be updated. This is equivalent to call the
-         *          update_buffers() function for all the drawables of this model. To achieve better performance (for
-         *          huge models), it is wiser to update only the affected drawables and buffers. For example, the change
-         *          in texture coordinates of a surface mesh doesn't change the rendering of its "edges" and "vertices".
-         *          It is not necessary to update "edges" and "vertices". Besides, the vertex buffer and the index
-         *          buffer of the "faces" are also not affected and can avoid update. So, you only need to update the
-         *          texcoord buffer of the "faces".
+         * @brief Invalidate the rendering buffers of the model and thus update the rendering.
+         * @details This method triggers an update of the rendering buffers of all the drawables of the model to which
+         *      this renderer is attached. The effect is equivalent to calling the update_[xxx]_buffer() functions
+         *      for all the drawables of this model.
+         * @Note: To achieve better performance, it is wiser to update only the affected drawables and buffers.
          */
         void update();
 
         //-------------------- drawable management  -----------------------
 
-        // Gets the drawable named 'name'.
-        // Returns a nullptr if the drawable does not exist.
-        PointsDrawable* get_points_drawable(const std::string& name) const;
-        LinesDrawable*  get_lines_drawable(const std::string& name) const;
-        TrianglesDrawable*  get_triangles_drawable(const std::string& name) const;
+        /**
+         * Get the points drawable with a given name.
+         * Return nullptr if the drawable does not exist.
+         */
+        PointsDrawable *get_points_drawable(const std::string &name) const;
 
         /**
-         * Adds a drawable to this model.
-         * @param name The name of the drawable to assign.
-         * @return The created drawable. If a drawable with 'name' already exists, the creation will be ignored and the
-         *         existing drawable is returned.
+         * Get the lines drawable with a given name.
+         * Return nullptr if the drawable does not exist.
          */
-        PointsDrawable* add_points_drawable(const std::string& name);
-        LinesDrawable*  add_lines_drawable(const std::string& name);
-        TrianglesDrawable*  add_triangles_drawable(const std::string& name);
+        LinesDrawable *get_lines_drawable(const std::string &name) const;
 
-        // Returns all available drawables.
-        const std::vector<PointsDrawable*>&  points_drawables() const { return points_drawables_; }
-        const std::vector<LinesDrawable*>&   lines_drawables() const { return lines_drawables_; }
-        const std::vector<TrianglesDrawable*>& triangles_drawables() const { return triangles_drawables_; }
+        /**
+         * Get the triangles drawable with a given name.
+         * Return nullptr if the drawable does not exist.
+         */
+        TrianglesDrawable *get_triangles_drawable(const std::string &name) const;
+
+        /**
+         * Create a new points drawable and add it to this renderer.
+         * @param name The name of the points drawable to be created.
+         * @return The created points drawable. If a points drawable with 'name' already exists, the creation will be
+         *         ignored and the existing drawable is returned.
+         */
+        PointsDrawable *add_points_drawable(const std::string &name);
+
+        /**
+         * Create a new lines drawable and add it to this renderer.
+         * @param name The name of the lines drawable to be created.
+         * @return The created lines drawable. If a lines drawable with 'name' already exists, the creation will be
+         *         ignored and the existing drawable is returned.
+         */
+        LinesDrawable *add_lines_drawable(const std::string &name);
+
+        /**
+         * Create a new triangles drawable and add it to this renderer.
+         * @param name The name of the triangles drawable to be created.
+         * @return The created triangles drawable. If a triangles drawable with 'name' already exists, the creation will
+         *         be ignored and the existing drawable is returned.
+         */
+        TrianglesDrawable *add_triangles_drawable(const std::string &name);
+
+        /**
+         * All available points drawables managed by this renderer.
+         */
+        const std::vector<PointsDrawable *> &points_drawables() const { return points_drawables_; }
+
+        /**
+         * All available lines drawables managed by this renderer.
+         */
+        const std::vector<LinesDrawable *> &lines_drawables() const { return lines_drawables_; }
+
+        /**
+         * All available triangles drawables managed by this renderer.
+         */
+        const std::vector<TrianglesDrawable *> &triangles_drawables() const { return triangles_drawables_; }
 
     public:
         /**
          * @brief Create default drawables for rendering.
-         * @details This method creates defaults drawables for rendering a model. The supported
-         *          default drawables are
-         *              - for point clouds: "vertices".
-         *              - for surface meshes: "faces", "vertices", "edges", "borders".
-         *              - for graphs: "vertices", "edges".
+         * @details This method creates defaults drawables for rendering a model. The supported default drawables are
+         *              - PointCloud: "vertices".
+         *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
+         *              - Graph: "vertices", "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
          *          override this function or set 'create_default_drawables' to false and create the
@@ -144,24 +186,26 @@ namespace easy3d {
          */
         static void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
 
+        // -------------------------------------------------------------------------------------------------------------
+
         /**
          * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
          * @param model  The model.
-         * @param segments  The <int> type vertex property storing the segmentation.
+         * @param segments  The name of the <int> type vertex property storing the segmentation.
          * @param color_name The name of the color property to be created.
          */
-        static void color_from_segmentation(PointCloud* model, PointCloud::VertexProperty<int> segments, const std::string& color_name = "v:segments");
-
+        static void color_from_segmentation(PointCloud *model, const std::string &segments,
+                                            const std::string &color_name = "v:segments");
 
     protected:
-        Model*  model_;
+        Model *model_;
 
-        bool	visible_;
-        bool    selected_;
+        bool visible_;
+        bool selected_;
 
-        std::vector<PointsDrawable*>    points_drawables_;
-        std::vector<LinesDrawable*>     lines_drawables_;
-        std::vector<TrianglesDrawable*> triangles_drawables_;
+        std::vector<PointsDrawable *> points_drawables_;
+        std::vector<LinesDrawable *> lines_drawables_;
+        std::vector<TrianglesDrawable *> triangles_drawables_;
     };
 }
 

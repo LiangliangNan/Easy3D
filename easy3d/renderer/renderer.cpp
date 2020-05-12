@@ -183,14 +183,15 @@ namespace easy3d {
     }
 
 
-    void Renderer::color_from_segmentation(PointCloud *model, PointCloud::VertexProperty<int> segments, const std::string &color_name) {
+    void Renderer::color_from_segmentation(PointCloud *model, const std::string &segments_name, const std::string &color_name) {
         if (model->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
 
-        if (segments) {
-            LOG(WARNING) << "specified segmentation is null";
+        auto segments = model->get_vertex_property<int>(segments_name);
+        if (!segments) {
+            LOG(WARNING) << "the point cloud does not have a vertex property named '" << segments_name << "\'";
             return;
         }
 
