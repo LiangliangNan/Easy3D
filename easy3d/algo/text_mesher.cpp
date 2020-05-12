@@ -598,7 +598,7 @@ namespace easy3d {
                 polygon[p] = vec2(d[0] / SCALE_TO_F26DOT6 + x, d[1] / SCALE_TO_F26DOT6 + y);
             }
 
-            // ignore tiny contours (some fonts even have degenarate contours)
+            // ignore tiny contours (some fonts even have degenerate contours)
             if (polygon.area() >= font_size_ * font_size_ * 0.001) {
                 if (polygon.is_clockwise())
                     polygon.reverse_orientation();
