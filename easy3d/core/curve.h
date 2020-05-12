@@ -86,14 +86,17 @@ namespace easy3d {
          * De Casteljau algorithm evaluating a quadratic or conic (second degree) curve.
          * Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
+         * @param bezier_steps Controls the smoothness of the curved corners. A greater value results in a smoother
+         *      transitions but more vertices. Suggested value is 4.
          * @param include_end Ture to extend the curve to the end point.
          */
         template<typename Point>
         inline
-        void quadratic(const Point &A, const Point &B, const Point &C, unsigned int steps, std::vector<Point> &curve, bool include_end = false) {
+        void quadratic(const Point &A, const Point &B, const Point &C, std::vector<Point> &curve,
+                       unsigned int bezier_steps = 4, bool include_end = false) {
             typedef typename Point::FT FT;
-            for (unsigned int i = 0; i < steps; i++) {
-                const FT t = static_cast<FT>(i) / steps;
+            for (unsigned int i = 0; i < bezier_steps; i++) {
+                const FT t = static_cast<FT>(i) / bezier_steps;
                 const Point U = (1.0 - t) * A + t * B;
                 const Point V = (1.0 - t) * B + t * C;
                 curve.push_back((1.0 - t) * U + t * V);
@@ -107,15 +110,17 @@ namespace easy3d {
          * De Casteljau algorithm evaluating a cubic (third degree) curve.
          * Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
+         * @param bezier_steps Controls the smoothness of the curved corners. A greater value results in a smoother
+         *      transitions but more vertices. Suggested value is 4.
          * @param include_end Ture to extend the curve to the end point.
          */
         template<typename Point>
         inline
-        void cubic(const Point &A, const Point &B, const Point &C, const Point &D, unsigned int steps,
-                   std::vector<Point> &curve, bool include_end = false) {
+        void cubic(const Point &A, const Point &B, const Point &C, const Point &D, std::vector<Point> &curve,
+                   unsigned int bezier_steps = 4, bool include_end = false) {
             typedef typename Point::FT FT;
-            for (unsigned int i = 0; i < steps; i++) {
-                const FT t = static_cast<FT>(i) / steps;
+            for (unsigned int i = 0; i < bezier_steps; i++) {
+                const FT t = static_cast<FT>(i) / bezier_steps;
                 const Point U = (1.0 - t) * A + t * B;
                 const Point V = (1.0 - t) * B + t * C;
                 const Point W = (1.0 - t) * C + t * D;
