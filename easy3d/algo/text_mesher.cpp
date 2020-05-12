@@ -620,7 +620,6 @@ namespace easy3d {
 
         prev_char_index_ = 0;
         prev_rsb_delta_ = 0;
-        results.clear();
 
         if (collision_free) {
             std::vector<Polygon2> all_contours;

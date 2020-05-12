@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
 #else // extract and visualize the contours
     std::vector< std::vector<Polygon2> > contours;
-    mesher.set_font(resource::directory() + font_file, 48);
+    mesher.set_font(font_file, 48);
     mesher.generate("Easy3D", 0, -60, contours, true);
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
     mesher.generate("Makes 3D Easy!", 400, -60, contours, true);
