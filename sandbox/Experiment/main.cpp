@@ -103,11 +103,6 @@ int main(int argc, char **argv) {
         return false;
     }
 
-    float size_in_pixels = 20.0f;
-    float scale = stbtt_ScaleForPixelHeight(&font, size_in_pixels);
-    int ascent, descent, linegap;
-    stbtt_GetFontVMetrics(&font, &ascent, &descent, &linegap);
-
     Graph g;
 
     float offset_x = 0;
