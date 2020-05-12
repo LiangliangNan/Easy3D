@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
     TextMesher mesher(font_file, 48);   // font size is 48
 
-#if 0 // extract and visualize the mesh
+#if 1 // extract and visualize the mesh
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 15, true);
     if (mesh)
