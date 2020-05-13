@@ -24,7 +24,7 @@
 
 
 #include <easy3d/renderer/text_renderer.h>
-
+#include <easy3d/util/string.h>
 
 namespace easy3d {
 
@@ -61,9 +61,9 @@ namespace easy3d {
 
         void sth_draw_text(struct sth_stash *stash,
                            int idx, float size,
-                           float x, float y, const char *string, float *dx);
+                           float x, float y, const wchar_t *string, float *dx);
 
-        void sth_dim_text(struct sth_stash *stash, int idx, float size, const char *string,
+        void sth_dim_text(struct sth_stash *stash, int idx, float size, const wchar_t *string,
                           float *minx, float *miny, float *maxx, float *maxy);
 
         void sth_vmetrics(struct sth_stash *stash,
@@ -168,51 +168,6 @@ namespace easy3d {
             float charSpacing;
             float dpiScale;
         };
-
-
-
-
-// Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-// See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-
-#define UTF8_ACCEPT 0
-
-        static const unsigned char utf8d[] = {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, // 00..1f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, // 20..3f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, // 40..5f
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, // 60..7f
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-                9, // 80..9f
-                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-                7, // a0..bf
-                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                2, // c0..df
-                0xa, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // e0..ef
-                0xb, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // f0..ff
-                0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1,
-                1, // s1..s2
-                1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1,
-                1, // s3..s4
-                1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1,
-                1, // s5..s6
-                1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                1, // s7..s8
-        };
-
-        static unsigned int decutf8(unsigned int *state, unsigned int *codep, unsigned int byte) {
-            unsigned int type = utf8d[byte];
-            *codep = (*state != UTF8_ACCEPT) ?
-                     (byte & 0x3fu) | (*codep << 6) :
-                     (0xff >> type) & (byte);
-            *state = utf8d[256 + *state * 16 + type];
-            return *state;
-        }
 
 
         struct sth_stash *sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale) {
@@ -376,7 +331,10 @@ namespace easy3d {
             // For truetype fonts: create this glyph.
             scale = stash->dpiScale * stbtt_ScaleForPixelHeight(&fnt->font, size);
             g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
-            if (!g) return 0; /* @rlyeh: glyph not found, ie, arab chars */
+            if (!g) {
+                LOG(WARNING) << "given font does not support character " << string::to_string({wchar_t(codepoint)});
+                return 0;
+            }
             stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
             stbtt_GetGlyphBitmapBox(&fnt->font, g, scale, scale, &x0, &y0, &x1, &y1);
 
@@ -576,7 +534,7 @@ namespace easy3d {
         void sth_draw_text(struct sth_stash *stash,
                            int idx, float size,
                            float x, float y,
-                           const char *s, float *dx) {
+                           const wchar_t *s, float *dx) {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
             struct sth_texture *texture = nullptr;
@@ -593,7 +551,7 @@ namespace easy3d {
             if (fnt == nullptr) return;
             if (fnt->type != BMFONT && !fnt->data) return;
 
-            int len = strlen(s);
+            int len = wcslen(s);
             float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
             int c = 0;
             float spacing = stash->charSpacing;
@@ -601,7 +559,8 @@ namespace easy3d {
             float dpiScale = stash->dpiScale;
 
             for (; *s; ++s) {
-                if (decutf8(&state, &codepoint, *(unsigned char *) s)) continue;
+                codepoint = static_cast<unsigned int>(*s);
+
                 glyph = get_glyph(stash, fnt, codepoint, isize);
                 if (!glyph) continue;
                 texture = glyph->texture;
@@ -632,7 +591,7 @@ namespace easy3d {
 
         void sth_dim_text(struct sth_stash *stash,
                           int idx, float size,
-                          const char *s,
+                          const wchar_t *s,
                           float *minx, float *miny, float *maxx, float *maxy) {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
@@ -650,14 +609,14 @@ namespace easy3d {
             if (fnt == nullptr) return;
             if (fnt->type != BMFONT && !fnt->data) return;
 
-            int len = strlen(s);
+            int len = wcslen(s);
             float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
             int c = 0;
             float spacing = stash->charSpacing;
             int doKerning = stash->doKerning;
 
             for (; *s; ++s) {
-                if (decutf8(&state, &codepoint, *(unsigned char *) s)) continue;
+                codepoint = static_cast<unsigned int>(*s);
                 glyph = get_glyph(stash, fnt, codepoint, isize);
                 if (!glyph) continue;
                 if (!get_quad(stash, fnt, glyph, isize, &x, &y, &q)) continue;
@@ -875,8 +834,9 @@ namespace easy3d {
             y = h - y - 1 - font_height(font_size);
         }
 
+        std::wstring the_text = string::to_wstring(text);
         // compute all necessary vertex/texture coordinates
-        sth_draw_text(get_stash(stash_), font_ids_[font_id], font_size, x, y, text.c_str(), &end_x);
+        sth_draw_text(get_stash(stash_), font_ids_[font_id], font_size, x, y, the_text.c_str(), &end_x);
         easy3d_debug_log_gl_error;
 
         // the actual rendering
@@ -1034,12 +994,14 @@ namespace easy3d {
                         break;
                 }
                 if (minDiffX > x) minDiffX = x;
+
+                std::wstring the_text = string::to_wstring(lines[i]);
                 sth_draw_text(get_stash(stash_),
                               font_ids_[font_id],
                               font_size,
                               x0 + x * get_stash(stash_)->dpiScale,
                               upper_left ? (h - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
-                              lines[i].c_str(),
+                              the_text.c_str(),
                               &dx
                 );
             }
@@ -1066,7 +1028,8 @@ namespace easy3d {
         Rect totalArea(0.0f, 0.0f, 0.0f, 0.0f);
         while (getline(ss, s, '\n')) {
             float w, h, x, y;
-            sth_dim_text(get_stash(stash_), font_ids_[0], font_size / get_stash(stash_)->dpiScale, s.c_str(), &x, &y, &w, &h);
+            std::wstring the_text = string::to_wstring(s);
+            sth_dim_text(get_stash(stash_), font_ids_[0], font_size / get_stash(stash_)->dpiScale, the_text.c_str(), &x, &y, &w, &h);
 
             totalArea.x() = x + xx;
             totalArea.y() = yy + y;
