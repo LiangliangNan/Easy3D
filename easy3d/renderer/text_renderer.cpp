@@ -332,7 +332,7 @@ namespace easy3d {
             scale = stash->dpiScale * stbtt_ScaleForPixelHeight(&fnt->font, size);
             g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
             if (!g) {
-                LOG(WARNING) << "given font does not support character " << string::to_string({wchar_t(codepoint)});
+//                LOG(WARNING) << "given font does not support character " << string::to_string({wchar_t(codepoint)});
                 return 0;
             }
             stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
