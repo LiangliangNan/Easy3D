@@ -89,7 +89,6 @@ namespace easy3d {
         bool generate(const std::string &text, float x, float y, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
 
     private:
-        void cleanup();
 
         /**
          * @brief Generate 3D surface representation of a text and append the surface to an existing mesh.
@@ -114,17 +113,16 @@ namespace easy3d {
 
         /**
          * @brief Generate contours for a single character.
-         * @param c The input character.
+         * @param c The codepoint of the input character.
          * @param x The x-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param contours The contours of this character.
          * @note All generated contours are in CCW orientation, but they may have intersections.
          */
-        bool _generate_contours(wchar_t c, float& x, float& y, std::vector<Polygon2>& contours);
+        bool _generate_contours(int codepoint, float& x, float& y, std::vector<Polygon2>& contours);
 
     private:
-        void *font_library_;
-        void *font_face_;
+        void *font_;
         bool ready_;
 
         std::string font_file_;
@@ -133,9 +131,6 @@ namespace easy3d {
         // Controls the smoothness of the curved corners. A greater value results in a smooth transitions but more
         // vertices. Suggested value is 4.
         unsigned short bezier_steps_;
-
-        unsigned int prev_char_index_;
-        signed long prev_rsb_delta_;;
     };
 }
 

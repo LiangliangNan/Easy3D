@@ -31,6 +31,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_topology.h
         surface_mesh_triangulation.h
         tessellator.h
+        text_mesher.h
         triangle_mesh_kdtree.h
         )
 
@@ -61,14 +62,10 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_topology.cpp
         surface_mesh_triangulation.cpp
         tessellator.cpp
+        text_mesher.cpp
         triangle_mesh_kdtree.cpp
         )
 
-if (EASY3D_HAS_FREETYPE)
-    list (APPEND ${PROJECT_NAME}_HEADERS text_mesher.h)
-    list (APPEND ${PROJECT_NAME}_SOURCES text_mesher.cpp)
-    message(STATUS "Freetype include dirs: ${FREETYPE_INCLUDE_DIRS} and libs: ${FREETYPE_LIBRARIES}")
-endif()
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 
@@ -88,8 +85,3 @@ if (Boost_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
 endif ()
-
-if (EASY3D_HAS_FREETYPE)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${FREETYPE_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARIES})
-endif()

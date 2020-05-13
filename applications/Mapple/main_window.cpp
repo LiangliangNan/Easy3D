@@ -1026,12 +1026,8 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 
 
 void MainWindow::surfaceMeshCreateMeshFromText() {
-#ifdef HAS_TEXT_MESHER
     auto dialog = new DialogSurfaceMeshFromText(this, dockWidgetCommand());
     showDialog(dialog);
-#else
-    LOG(WARNING) << "TextMesher requires FreeType but FreeType was not found.";
-#endif
 }
 
 

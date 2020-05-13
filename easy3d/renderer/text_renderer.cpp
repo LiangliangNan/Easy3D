@@ -83,7 +83,7 @@ namespace easy3d {
 #include <easy3d/renderer/opengl_error.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-
+#define STBTT_STATIC
 #include <3rd_party/stb/stb_truetype.h>
 
 

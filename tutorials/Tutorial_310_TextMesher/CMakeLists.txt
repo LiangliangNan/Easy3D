@@ -1,12 +1,6 @@
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
-
-find_package(Freetype)
-if (NOT FREETYPE_FOUND)
-    return()
-endif ()
-
 add_executable(${PROJECT_NAME}
         main.cpp
         )

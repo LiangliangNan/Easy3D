@@ -76,7 +76,6 @@ void DialogSurfaceMeshFromText::setFontFile() {
 
 
 void DialogSurfaceMeshFromText::apply() {
-#if HAS_TEXT_MESHER
     const std::string &text = ui->lineEditText->text().toStdString();
     if (text.empty()) {
         LOG(WARNING) << "text is empty";
@@ -121,7 +120,4 @@ void DialogSurfaceMeshFromText::apply() {
 
     viewer_->update();
     window_->updateUi();
-#else
-    LOG(WARNING) << "TextMesher requires FreeType but FreeType was not found.";
-#endif
 }
