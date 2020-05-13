@@ -1,4 +1,7 @@
 * easy3d (on going):
+    - Add a Font class that handles fonts
+            * use it in TextRenderer
+            * use it in TextMesher
     - Add tutorials for algorithms: 
             * Delaunay2D, 
             * simplification

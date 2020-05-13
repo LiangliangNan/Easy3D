@@ -44,24 +44,24 @@ int main(int argc, char **argv) {
 
     // Create an instance of mesher by specifying a font file.
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
-    TextMesher mesher(font_file, 48);   // font size is 48
+    TextMesher mesher(font_file);
 
 #if 1 // extract and visualize the mesh
     // Generate a surface mesh for "Easy3D".
-    SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 15, true);
+    SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 48, 15, true);
     if (mesh)
         viewer.add_model(mesh); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
-    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
-    mesher.generate(mesh,"Makes 3D Easy!", 400, 0, 15, true);
+    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
+    mesher.generate(mesh,"Makes 3D Easy!", 350, 0, 25, 15, true);
 
 #else // extract and visualize the contours
     std::vector< std::vector<Polygon2> > contours;
-    mesher.set_font(font_file, 48);
-    mesher.generate("Easy3D", 0, -60, contours, true);
-    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf", 24);
-    mesher.generate("Makes 3D Easy!", 400, -60, contours, true);
+    mesher.set_font(font_file);
+    mesher.generate("Easy3D", 0, -60, 48, contours, true);
+    mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
+    mesher.generate("Makes 3D Easy!", 350, -60, 25, contours, true);
     std::vector<vec3> points, colors;
     std::vector<unsigned int> indices;
     int offset = 0;
