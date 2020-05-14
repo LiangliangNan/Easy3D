@@ -749,7 +749,7 @@ namespace easy3d {
         font_ids_.push_back(id);
         const std::string simple_name = file_system::simple_name(font_file);
         font_names_.push_back(simple_name);
-        LOG(INFO) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
+//        LOG(INFO) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         return true;
     }
 
