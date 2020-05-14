@@ -196,7 +196,7 @@ namespace easy3d {
             issues += "\n\tSolution:";
             if (num_copy_occurrences > 0) {
                 issues += "\n\t\t" + std::to_string(num_non_manifold_vertices) + " vertices copied ("
-                          + std::to_string(num_copy_occurrences) + " occurrences) to ensure manifoldness";
+                          + std::to_string(num_copy_occurrences) + " occurrences)";
 
                 if (copied_vertices_for_linking_.size() > 0) {
                     std::size_t occurrences(0);
@@ -204,8 +204,8 @@ namespace easy3d {
                         LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
                         occurrences += copies.second.size();
                     }
-                    issues += " (among which " + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
-                              + std::to_string(occurrences) + " occurrences are for linking new faces)";
+                    issues += ", among which " + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
+                              + std::to_string(occurrences) + " occurrences for linking new faces";
                     copied_vertices_for_linking_.clear();
                 }
             }
