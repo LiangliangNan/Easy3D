@@ -100,9 +100,10 @@ void DialogSurfaceMeshFromText::apply() {
         return;
     }
 
+    const int bezier_steps = ui->spinBoxBezierSteps->value();
     bool collision_free = ui->checkBoxCollisionFree->isChecked();
 
-    TextMesher mesher(font_file);
+    TextMesher mesher(font_file, bezier_steps);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh && mesh->name() == text) {
