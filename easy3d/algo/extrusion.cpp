@@ -35,82 +35,77 @@ namespace easy3d {
 
     bool extrude(SurfaceMesh *mesh, const std::vector<Polygon2> &contours, float height) {
         Tessellator tessellator;
-        tessellator.set_bounary_only(false);
+        tessellator.set_winding_rule(Tessellator::WINDING_ODD);
 
-        // generate bottom faces
-        if (1) {
-            tessellator.begin_polygon(vec3(0, 0, -1));
-            for (std::size_t index = 0; index < contours.size(); ++index) {
-                const auto &contour = contours[index];
-                tessellator.set_winding_rule(
-                        contour.is_clockwise() ? Tessellator::WINDING_NONZERO : Tessellator::WINDING_ODD);
-                tessellator.begin_contour();
-                for (std::size_t j = 0; j < contour.size(); ++j) {
-                    const vec2 p = contour[j];
-                    Tessellator::Vertex vt(vec3(p, 0));
-                    vt.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vt);
-                }
-                tessellator.end_contour();
+#if 1   // generate bottom faces
+        tessellator.begin_polygon(vec3(0, 0, -1));
+        for (std::size_t index = 0; index < contours.size(); ++index) {
+            const auto &contour = contours[index];
+            tessellator.begin_contour();
+            for (std::size_t j = 0; j < contour.size(); ++j) {
+                const vec2 p = contour[j];
+                Tessellator::Vertex vt(vec3(p, 0));
+                vt.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vt);
             }
-            tessellator.end_polygon();
+            tessellator.end_contour();
         }
+        tessellator.end_polygon();
+#endif
 
-        // generate top faces
-        if (1) {
-            tessellator.begin_polygon(vec3(0, 0, 1));
-            for (std::size_t index = 0; index < contours.size(); ++index) {
-                const auto &contour = contours[index];
-                tessellator.set_winding_rule(Tessellator::WINDING_ODD);
-                tessellator.begin_contour();
-                for (std::size_t j = 0; j < contour.size(); ++j) {
-                    const vec2 p = contour[j];
-                    Tessellator::Vertex vt(vec3(p, height));
-                    vt.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vt);
-                }
-                tessellator.end_contour();
+#if 1   // generate top faces
+        tessellator.begin_polygon(vec3(0, 0, 1));
+        for (std::size_t index = 0; index < contours.size(); ++index) {
+            const auto &contour = contours[index];
+            tessellator.set_winding_rule(Tessellator::WINDING_ODD);
+            tessellator.begin_contour();
+            for (std::size_t j = 0; j < contour.size(); ++j) {
+                const vec2 p = contour[j];
+                Tessellator::Vertex vt(vec3(p, height));
+                vt.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vt);
             }
-            tessellator.end_polygon();
+            tessellator.end_contour();
         }
+        tessellator.end_polygon();
+#endif
 
         //-------------------------------------------------------------------------------------
-        if (1) { // generate the side faces
-            // generate the side faces for this character.
-            for (std::size_t index = 0; index < contours.size(); ++index) {
-                const Polygon2 &contour = contours[index];
-                for (int j = 0; j < contour.size(); ++j) {
-                    const vec3 a = vec3(contour[j], 0);
-                    const vec3 b = vec3(contour[(j + 1 + contour.size()) % contour.size()], 0);
-                    const vec3 c = a + vec3(0, 0, height);
-                    const vec3 d = b + vec3(0, 0, height);
-                    // Though I've already known the vertex indices for the character's side triangles, I still use my
-                    // tessellator, which allows me to stitch the triangles into a closed mesh.
-                    vec3 n = cross(b - a, c - a);
-                    n.normalize();
-                    tessellator.begin_polygon(n);
-                    tessellator.begin_contour();
-                    Tessellator::Vertex vta(a);
-                    vta.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vta);
-                    Tessellator::Vertex vtb(b);
-                    vtb.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vtb);
-                    Tessellator::Vertex vtd(d);
-                    vtd.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vtd);
-                    Tessellator::Vertex vtc(c);
-                    vtc.push_back(index); // one extra bit to allow stitch within a contour.
-                    tessellator.add_vertex(vtc);
-                    tessellator.end_contour();
-                    tessellator.end_polygon();
-                }
+#if 1 // generate the side faces
+        for (std::size_t index = 0; index < contours.size(); ++index) {
+            const Polygon2 &contour = contours[index];
+            for (int j = 0; j < contour.size(); ++j) {
+                const vec3 a = vec3(contour[j], 0);
+                const vec3 b = vec3(contour[(j + 1 + contour.size()) % contour.size()], 0);
+                const vec3 c = a + vec3(0, 0, height);
+                const vec3 d = b + vec3(0, 0, height);
+                // Though I've already known the vertex indices for the side triangles, I still use my
+                // tessellator, which allows me to stitch the triangles into a closed mesh.
+                vec3 n = cross(b - a, c - a);
+                n.normalize();
+                tessellator.begin_polygon(n);
+                tessellator.begin_contour();
+                Tessellator::Vertex vta(a);
+                vta.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vta);
+                Tessellator::Vertex vtb(b);
+                vtb.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vtb);
+                Tessellator::Vertex vtd(d);
+                vtd.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vtd);
+                Tessellator::Vertex vtc(c);
+                vtc.push_back(index); // one extra bit to allow stitching within a contour.
+                tessellator.add_vertex(vtc);
+                tessellator.end_contour();
+                tessellator.end_polygon();
             }
         }
+#endif
 
         //-------------------------------------------------------------------------------------
 
-        // now we can collect the triangle faces for this character
+        // now we can collect the triangle faces
 
         const auto &elements = tessellator.elements();
         if (elements.empty()) {
@@ -120,7 +115,7 @@ namespace easy3d {
             // the vertex index starts from 0 for each character.
             const int offset = mesh->n_vertices();
 
-            // use ManifoldBuilder (just in case there were self-intersecting contours).
+            // use ManifoldBuilder (ensuring the final model is manifold).
             ManifoldBuilder builder(mesh);
             builder.begin_surface();
 

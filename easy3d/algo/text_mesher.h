@@ -40,17 +40,18 @@ namespace easy3d {
         /**
          * @brief Create an instance of TextMesher.
          * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
-         * @note The font will be used in all subsequent generation procedure until the next call to set_font().
+         * @param quality This parameter controls the smoothness of the curved corners. A greater value results in a
+         *      smoother transitions but more vertices. The suggested value is 4.
+         * @note The font will be used in all subsequent generation until being modified by calling to set_font().
          */
-        TextMesher(const std::string &font_file);
+        TextMesher(const std::string &font_file, unsigned short quality = 4);
 
         ~TextMesher();
 
         /**
          * @brief Change the font.
          * @param font_file The full path name to a TrueType font file (normally with an "ttf" extension).
-         * @param font_size The size of the font.
-         * @note The font will be used in all subsequent generation procedure until the next call to set_font().
+         * @note The font will be used in all subsequent generation until being modified by calling to set_font().
          */
         void set_font(const std::string &font_file);
 
@@ -64,7 +65,8 @@ namespace easy3d {
          * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @return The generated triangular surface mesh.
          */
-        SurfaceMesh *generate(const std::string &text, float x, float y, int font_size, float extrude, bool collision_free = false);
+        SurfaceMesh *
+        generate(const std::string &text, float x, float y, int font_size, float extrude, bool collision_free = false);
 
         /**
          * @brief Generate 3D surface representation of a text and append the surface to an existing mesh.
@@ -76,7 +78,8 @@ namespace easy3d {
          * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @param True on success and false on failure.
          */
-        bool generate(SurfaceMesh* mesh, const std::string &text, float x, float y, int font_size, float extrude, bool collision_free = false);
+        bool generate(SurfaceMesh *mesh, const std::string &text, float x, float y, int font_size, float extrude,
+                      bool collision_free = false);
 
         /**
          * @brief Generate contours from a text.
@@ -88,7 +91,8 @@ namespace easy3d {
          *        are simply appended to his variable.
          * @param collision_free If true, the generated contours will be free of intersections between characters.
          */
-        bool generate(const std::string &text, float x, float y, int font_size, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
+        bool generate(const std::string &text, float x, float y, int font_size,
+                      std::vector<std::vector<Polygon2> > &contours, bool collision_free);
 
     private:
 
@@ -102,7 +106,8 @@ namespace easy3d {
          * @param collision_free True the mesh will be the union of all the characters.
          * @param True on success and false on failure.
          */
-        bool _generate(SurfaceMesh* mesh, const std::wstring &text, float x, float y, int font_size, float extrude, bool collision_free);
+        bool _generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, int font_size, float extrude,
+                       bool collision_free);
 
         /**
          * @brief Generate contours for a text.
@@ -113,18 +118,19 @@ namespace easy3d {
          * @param contours The contours of the text. The generated contours are simply appended to his variable.
          * @param collision_free True the contours will be the union of the contours of all the characters.
          */
-        bool _generate_contours(const std::wstring &text, float x, float y, int font_size, std::vector< std::vector<Polygon2> > &contours, bool collision_free);
+        bool _generate_contours(const std::wstring &text, float x, float y, int font_size,
+                                std::vector<std::vector<Polygon2> > &contours, bool collision_free);
 
         /**
          * @brief Generate contours for a single character.
-         * @param c The codepoint of the input character.
+         * @param codepoint The codepoint of the input character.
          * @param x The x-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param y The y-coordinate of the starting position. In return, the new value for the subsequent character.
          * @param font_size The size of the font.
          * @param contours The contours of this character.
          * @note All generated contours are in CCW orientation, but they may have intersections.
          */
-        bool _generate_contours(int codepoint, float& x, float& y, int font_size, std::vector<Polygon2>& contours);
+        bool _generate_contours(int codepoint, float &x, float &y, int font_size, std::vector<Polygon2> &contours);
 
     private:
         void *font_;

@@ -44,8 +44,8 @@ namespace easy3d {
 #define get_font(x)      (reinterpret_cast<stbtt_fontinfo*>(x))
 
 
-    TextMesher::TextMesher(const std::string &font_file)
-            : bezier_steps_(4) {
+    TextMesher::TextMesher(const std::string &font_file, unsigned short quality)
+            : bezier_steps_(quality) {
         font_ = new stbtt_fontinfo;
         set_font(font_file);
     }
@@ -67,7 +67,7 @@ namespace easy3d {
 
         ready_ = false;
 
-        auto read_font_file = [](const std::string &font_file, std::vector<unsigned char>& data) -> int {
+        auto read_font_file = [](const std::string &font_file, std::vector<unsigned char> &data) -> int {
             auto fp = fopen(font_file.c_str(), "rb");
             if (!fp)
                 return 0;
