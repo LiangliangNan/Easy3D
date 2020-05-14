@@ -67,15 +67,15 @@ namespace easy3d {
 
         ready_ = false;
 
-        auto read_font_file = [](const std::string &font_file, unsigned char **data) -> int {
+        auto read_font_file = [](const std::string &font_file, std::vector<unsigned char>& data) -> int {
             auto fp = fopen(font_file.c_str(), "rb");
             if (!fp)
                 return 0;
             fseek(fp, 0, SEEK_END);
             auto size = ftell(fp);
             fseek(fp, 0, SEEK_SET);
-            *data = (unsigned char *) malloc(size);
-            if (fread(*data, 1, size, fp) != size) {
+            data.resize(size);
+            if (fread(data.data(), 1, size, fp) != size) {
                 fclose(fp);
                 return 0;
             } else {
@@ -85,19 +85,19 @@ namespace easy3d {
         };
 
         // load font
-        unsigned char *ttf;
-        if (read_font_file(font_file.c_str(), &ttf) == 0) {
+        std::vector<unsigned char> ttf;
+        if (read_font_file(font_file.c_str(), ttf) == 0) {
             LOG(ERROR) << "failed loading font file: " << font_file;
             return;
         }
 
-        int font_offset = stbtt_GetFontOffsetForIndex(ttf, 0);
+        int font_offset = stbtt_GetFontOffsetForIndex(ttf.data(), 0);
         if (font_offset != 0) {
             LOG(ERROR) << "invalid font file";
             return;
         }
 
-        if (0 == stbtt_InitFont(get_font(font_), ttf, font_offset)) {
+        if (stbtt_InitFont(get_font(font_), ttf.data(), font_offset) == 0) {
             LOG(ERROR) << "init font (building font cache) failed";
             return;
         }
@@ -212,6 +212,19 @@ namespace easy3d {
             }
         }
 
+#if 0   // for debugging: save the contours as a graph
+        Graph g;
+        std::size_t offset_index = 0;
+        for (const auto &contour : contours) {
+            for (const auto &p : contour)
+                g.add_vertex(vec3(p, 0.0));
+            for (std::size_t j = 0; j < contour.size(); ++j)
+                g.add_edge(Graph::Vertex(offset_index + j), Graph::Vertex(offset_index + (j + 1) % contour.size()));
+
+            offset_index += contour.size();
+        }
+        GraphIO::save("contours.ply", &g);
+#endif
         return !results.empty();
     }
 
