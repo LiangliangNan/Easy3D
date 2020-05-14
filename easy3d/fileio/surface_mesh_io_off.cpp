@@ -33,6 +33,7 @@
 #include <cstring> // for strlen()
 
 
+#define RESOLVE_NONMANIFOLDNESS    1
 
 namespace easy3d {
 
@@ -65,8 +66,10 @@ namespace easy3d {
 
             mesh->clear();
 
+#if RESOLVE_NONMANIFOLDNESS
             ManifoldBuilder builder(mesh);
             builder.begin_surface();
+#endif
 
             // Vertex index starts by 0 in off format.
 
@@ -97,8 +100,13 @@ namespace easy3d {
                 vec3 p;
                 details::get_line(input);
                 input >> p;
-                if (!input.fail())
+                if (!input.fail()) {
+#if RESOLVE_NONMANIFOLDNESS
                     builder.add_vertex(p);
+#else
+                    mesh->add_vertex(p);
+#endif
+                }
                 else {
                     LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th vertex from file (this is the first record)";
                 }
@@ -121,7 +129,11 @@ namespace easy3d {
                             LOG_FIRST_N(ERROR, 1) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file (this is the first record)";
                         }
 					}
+#if RESOLVE_NONMANIFOLDNESS
 					builder.add_face(vertices);
+#else
+                    mesh->add_face(vertices);
+#endif
 				}
                 else {
                     LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th face from file (this is the first record)";
@@ -133,7 +145,9 @@ namespace easy3d {
 //                // read the edges
 //            }
 
+#if RESOLVE_NONMANIFOLDNESS
             builder.end_surface();
+#endif
             return mesh->n_faces() > 0;
 		}
 
