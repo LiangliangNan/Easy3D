@@ -441,12 +441,10 @@ namespace easy3d {
 #ifndef NDEBUG
                 static bool show = true;
                 if (show) {
-                    LOG(ERROR) << "the vertex coordinate: ";
-                    LOG(ERROR) << "\t\t" << vpoint_[vertices[i]];
-                    LOG(ERROR) << "the vertices of the face: ";
-                    for (int m = 0; m < vertices.size(); ++m) {
-                        LOG(ERROR) << "\t\t" << vertices[m] << ": " << vpoint_[vertices[m]];
-                    }
+                    LOG(ERROR) << "\tvertex coordinates: ";
+                    LOG(ERROR) << "\t\t" << vertices[i] << ": " << vpoint_[vertices[i]];
+                    LOG(ERROR) << "\tvertices of the face: ";
+                    for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
                     show = false;
                 }
 #endif
@@ -463,13 +461,11 @@ namespace easy3d {
 #ifndef NDEBUG
                 static bool show = true;
                 if (show) {
-                    LOG(ERROR) << "SurfaceMesh::add_face: coordinates: ";
-                    LOG(ERROR) << "\t\t" << vpoint_[vertices[i]];
-                    LOG(ERROR) << "\t\t" << vpoint_[vertices[ii]];
-                    LOG(ERROR) << "the vertices of the face: ";
-                    for (int m = 0; m < vertices.size(); ++m) {
-                        LOG(ERROR) << "\t\t" << vertices[m] << ": " << vpoint_[vertices[m]];
-                    }
+                    LOG(ERROR) << "\tvertex coordinates: ";
+                    LOG(ERROR) << "\t\t" << vertices[i] << ": " << vpoint_[vertices[i]];
+                    LOG(ERROR) << "\t\t" << vertices[ii] << ": " << vpoint_[vertices[ii]];
+                    LOG(ERROR) << "\tvertices of the face: ";
+                    for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
                     show = false;
                 }
 #endif
@@ -509,6 +505,14 @@ namespace easy3d {
                     if (boundary_next == inner_next)
                     {
                         LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: patch re-linking failed (" << vertices << ") (this is the first record)";
+#ifndef NDEBUG
+                        static bool show = true;
+                        if (show) {
+                            LOG(ERROR) << "\tvertices of the face: ";
+                            for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                            show = false;
+                        }
+#endif
                         return Face();
                     }
 
