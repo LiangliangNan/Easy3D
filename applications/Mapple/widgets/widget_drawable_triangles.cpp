@@ -510,7 +510,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
         auto d = mesh->renderer()->get_lines_drawable("vector - " + name);
         if (d) { // just in case the vector field has been removed
             d->set_visible(true);
-            states_[drawable()].vector_field = QString::fromStdString(name);
+            states_[drawable()].vector_field = text;
         }
     }
 
@@ -541,12 +541,12 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
         }
 
         // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-        auto drawable = mesh->renderer()->get_lines_drawable("vector - f:normal");
+        auto drawable = mesh->renderer()->get_lines_drawable("vector - " + name);
         if (!drawable) {
-            drawable = mesh->renderer()->add_lines_drawable("vector - f:normal");
-            drawable->set_update_func([this](Model *m, Drawable *d) -> void {
-                float scale = ui->doubleSpinBoxVectorFieldScale->value();
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), "f:normal", 0, scale);
+            drawable = mesh->renderer()->add_lines_drawable("vector - " + name);
+            drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
+                const float scale = ui->doubleSpinBoxVectorFieldScale->value();
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 0, scale);
             });
         }
     }

@@ -1129,7 +1129,7 @@ void MainWindow::computeHeightField() {
                 n += fnormals[f];
                 count += 1.0f;
             }
-            enormals[e].normalize();
+            enormals[e] = n.normalize();
         }
         progress.next();
     }

@@ -533,22 +533,22 @@ void WidgetPointsDrawable::setBackColor() {
 void WidgetPointsDrawable::setVectorField(const QString &text) {
     auto model = viewer_->currentModel();
 
-    auto drawa = drawable();
     if (text == "disabled") {
         const auto &drawables = model->renderer()->lines_drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - v") != std::string::npos)
                 d->set_visible(false);
         }
-        states_[drawa].vector_field = "disabled";
+        states_[drawable()].vector_field = "disabled";
     } else {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(model, name);
 
         auto d = model->renderer()->get_lines_drawable("vector - " + name);
-        d->set_visible(true);
-
-        states_[drawa].vector_field = QString::fromStdString(name);
+        if (d) {
+            d->set_visible(true);
+            states_[drawable()].vector_field = text;
+        }
     }
 
     viewer_->update();
@@ -575,12 +575,11 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
     }
 
     // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-    auto drawable = model->renderer()->get_lines_drawable("vector - v:normal");
+    auto drawable = model->renderer()->get_lines_drawable("vector - " + name);
     if (!drawable) {
-        drawable = model->renderer()->add_lines_drawable("vector - v:normal");
-        drawable->set_update_func([this](Model *m, Drawable *d) -> void {
-            const std::string& name = "v:normal";
-            float scale = ui->doubleSpinBoxVectorFieldScale->value();
+        drawable = model->renderer()->add_lines_drawable("vector - " + name);
+        drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
+            const float scale = ui->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
                 buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 1, scale);
             else if (dynamic_cast<PointCloud *>(m))

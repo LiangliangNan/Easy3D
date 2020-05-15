@@ -7,6 +7,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -448,22 +449,22 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
     if (!mesh)
         return;
 
-    auto d = drawable();
     if (text == "disabled") {
         const auto &drawables = mesh->renderer()->lines_drawables();
         for (auto d : drawables) {
             if (d->name().find("vector - ") != std::string::npos)
                 d->set_visible(false);
         }
-        states_[d].vector_field = "disabled";
+        states_[drawable()].vector_field = "disabled";
     } else {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
-        auto d = mesh->renderer()->get_lines_drawable("vector - f:normal");
-        d->set_visible(true);
-
-        states_[d].vector_field = "f:normal";
+        auto d = mesh->renderer()->get_lines_drawable("vector - " + name);
+        if (d) {
+            d->set_visible(true);
+            states_[drawable()].vector_field = text;
+        }
     }
 
     window_->updateUi();
@@ -472,56 +473,16 @@ void WidgetLinesDrawable::setVectorField(const QString &text) {
 
 
 void WidgetLinesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
-    LOG(ERROR) << "not implemented yet";
-
-//    if (name == "f:normal") {
-//        auto normals = mesh->get_face_property<vec3>(name);
-//        if (!normals)
-//            mesh->update_face_normals();
-//    }
-//
-//    auto prop = mesh->get_face_property<vec3>(name);
-//    if (!prop && name != "disabled") {
-//        LOG(ERROR) << "vector field '" << name << "' doesn't exist";
-//        return;
-//    }
-//
-//    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-//    auto drawable = mesh->drawable("vector - f:normal");
-//    if (!drawable)
-//        drawable = mesh->add_drawable("vector - f:normal");
-//
-//    auto points = mesh->get_vertex_property<vec3>("v:point");
-//
-//    // use a limited number of edge to compute the length of the vectors.
-//    float avg_edge_length = 0.0f;
-//    const int num = std::min(static_cast<unsigned int>(500), mesh->n_edges());
-//    for (unsigned int i = 0; i < num; ++i) {
-//        SurfaceMesh::Edge edge(i);
-//        auto vs = mesh->vertex(edge, 0);
-//        auto vt = mesh->vertex(edge, 1);
-//        avg_edge_length += distance(points[vs], points[vt]);
-//    }
-//    avg_edge_length /= num;
-//
-//    std::vector<vec3> vertices(mesh->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-//    int idx = 0;
-//    float scale = ui->doubleSpinBoxVectorFieldScale->value();
-//    for (
-//        auto f: mesh->faces()) {
-//        int size = 0;
-//        for (auto v: mesh->vertices(f)) {
-//            vertices[idx] += points[v];
-//            ++size;
-//        }
-//        vertices[idx] /= size;
-//        vertices[idx + 1] = vertices[idx] + prop[f] * avg_edge_length * scale;
-//        idx += 2;
-//    }
-//
-//    viewer_->makeCurrent();
-//    drawable->update_vertex_buffer(vertices);
-//    viewer_->doneCurrent();
+    // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
+    auto drawable = model->renderer()->get_lines_drawable("vector - " + name);
+    if (!drawable) {
+        drawable = model->renderer()->add_lines_drawable("vector - " + name);
+        drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
+            const float scale = ui->doubleSpinBoxVectorFieldScale->value();
+            if (dynamic_cast<SurfaceMesh *>(m))
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 2, scale);
+        });
+    }
 }
 
 

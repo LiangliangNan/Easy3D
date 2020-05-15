@@ -1799,19 +1799,28 @@ namespace easy3d {
                 return;
             }
 
-            if (location == 0) {
-                if (!model->get_face_property<vec3>(field)) {
-                    LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh faces (wrong name?)";
+            switch (location) {
+                case 0:
+                    if (!model->get_face_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh faces (wrong name?)";
+                        return;
+                    }
+                    break;
+                case 1:
+                    if (!model->get_vertex_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh vertices (wrong name?)";
+                        return;
+                    }
+                    break;
+                case 2:
+                    if (!model->get_edge_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh edges (wrong name?)";
+                        return;
+                    }
+                    break;
+                default:
+                    LOG(ERROR) << "vector field '" << field << "' not found (wrong name?)";
                     return;
-                }
-            } else if (location == 1) {
-                if (!model->get_vertex_property<vec3>(field)) {
-                    LOG(ERROR) << "vector filed '" << field << " ' not found on the mesh vertices (wrong name?)";
-                    return;
-                }
-            } else {
-                LOG(ERROR) << "invalid vector filed location";
-                return;
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
@@ -1829,29 +1838,45 @@ namespace easy3d {
 
             std::vector<vec3> d_points;
 
-            if (location == 0) {
-                auto prop = model->get_face_property<vec3>(field);
-                d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-                int idx = 0;
-                for (auto f: model->faces()) {
-                    int size = 0;
-                    for (auto v: model->vertices(f)) {
-                        d_points[idx] += points[v];
-                        ++size;
+            switch (location) {
+                case 0: {   // on faces
+                    auto prop = model->get_face_property<vec3>(field);
+                    d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    int idx = 0;
+                    for (auto f: model->faces()) {
+                        int size = 0;
+                        for (auto v: model->vertices(f)) {
+                            d_points[idx] += points[v];
+                            ++size;
+                        }
+                        d_points[idx] /= size;
+                        d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
+                        idx += 2;
                     }
-                    d_points[idx] /= size;
-                    d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
-                    idx += 2;
+                    break;
                 }
-            } else if (location == 1) {
-                auto prop = model->get_vertex_property<vec3>(field);
-                d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
-                for (auto v: model->vertices()) {
-                    d_points[v.idx() * 2] = points[v];
-                    d_points[v.idx() * 2 + 1] = points[v] + prop[v] * avg_edge_length * scale;
+                case 1: {   // on vertices
+                    auto prop = model->get_vertex_property<vec3>(field);
+                    d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    for (auto v: model->vertices()) {
+                        d_points[v.idx() * 2] = points[v];
+                        d_points[v.idx() * 2 + 1] = points[v] + prop[v] * avg_edge_length * scale;
+                    }
+                    break;
+                }
+                case 2: {   // on edges
+                    auto prop = model->get_edge_property<vec3>(field);
+                    d_points.resize(model->n_edges() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    for (auto e : model->edges()) {
+                        auto v0 = model->vertex(e, 0);
+                        auto v1 = model->vertex(e, 1);
+                        const auto p = (points[v0] + points[v1]) * 0.5f;
+                        d_points[e.idx() * 2] = p;
+                        d_points[e.idx() * 2 + 1] = p + prop[e] * avg_edge_length * scale;
+                    }
+                    break;
                 }
             }
-
             drawable->update_vertex_buffer(d_points);
         };
 

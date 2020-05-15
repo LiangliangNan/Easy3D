@@ -104,6 +104,7 @@ namespace easy3d {
          * @param location The location where the vector is defined.
          *         - 0: on faces;
          *         - 1: on vertices.
+         *         - 2: one edges
          * @param scale The scale of the vector length w.r.t. the average edge length of the surface mesh.
          */
         void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale);
