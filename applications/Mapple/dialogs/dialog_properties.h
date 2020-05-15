@@ -27,20 +27,18 @@
 #define DIALOG_PROPERTIES_H
 
 #include "dialog.h"
+#include "ui_dialog_properties.h"
 
-namespace Ui {
-    class DialogProperties;
-}
 
 namespace easy3d {
     class Model;
 }
 
-class DialogProperties : public Dialog {
+class DialogProperties : public Dialog, public Ui::DialogProperties {
 Q_OBJECT
 
 public:
-    DialogProperties(MainWindow *window, QDockWidget* dockWidgetCommand);
+    DialogProperties(MainWindow *window);
     ~DialogProperties();
 
 private Q_SLOTS:
@@ -59,9 +57,6 @@ private:
     bool removeProperty();
     bool renameProperty();
     bool convertPropertyDataType();
-
-private:
-    Ui::DialogProperties *ui;
 };
 
 #endif

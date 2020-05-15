@@ -27,16 +27,14 @@
 #define DIALOG_GAUSSIAN_NOISE_H
 
 #include "dialog.h"
+#include "ui_dialog_gaussian_noise.h"
 
-namespace Ui {
-    class DialogGaussianNoise;
-}
 
-class DialogGaussianNoise : public Dialog {
+class DialogGaussianNoise : public Dialog, public Ui::DialogGaussianNoise {
 Q_OBJECT
 
 public:
-    DialogGaussianNoise(MainWindow *window, QDockWidget* dockWidgetCommand);
+    DialogGaussianNoise(MainWindow *window);
     ~DialogGaussianNoise();
 
 private Q_SLOTS:
@@ -44,8 +42,6 @@ private Q_SLOTS:
     void computeBBox();
 
 private:
-    Ui::DialogGaussianNoise *ui;
-
     QString default_sigma_;
     double suggested_ratio_;
 };

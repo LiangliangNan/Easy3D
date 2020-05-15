@@ -34,29 +34,24 @@
 #include "paint_canvas.h"
 #include "main_window.h"
 
-#include "ui_dialog_gaussian_noise.h"
-
 
 using namespace easy3d;
 
-DialogGaussianNoise::DialogGaussianNoise(MainWindow *window, QDockWidget* dockWidgetCommand)
-        : Dialog(window, dockWidgetCommand)
-        , ui(new Ui::DialogGaussianNoise)
-{
-    ui->setupUi(this);
+DialogGaussianNoise::DialogGaussianNoise(MainWindow *window)
+        : Dialog(window) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     suggested_ratio_ = 0.01;
 
     default_sigma_ = "0.001";
-    ui->lineEditGaussianNoiseSigma->setValidator(new QDoubleValidator(0.00001, 1.0, 5, this));
-    ui->lineEditGaussianNoiseSigma->setText(default_sigma_);
+    lineEditGaussianNoiseSigma->setValidator(new QDoubleValidator(0.00001, 1.0, 5, this));
+    lineEditGaussianNoiseSigma->setText(default_sigma_);
 
-    ui->labelGaussianNoiseRadiusBBox->setText(QString("%1 * Bounding Sphere Radius").arg(suggested_ratio_));
+    labelGaussianNoiseRadiusBBox->setText(QString("%1 * Bounding Sphere Radius").arg(suggested_ratio_));
 
-    connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(apply()));
-    connect(ui->computeBBoxButton, SIGNAL(clicked()), this, SLOT(computeBBox()));
-
-    bestSize();
+    connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
+    connect(computeBBoxButton, SIGNAL(clicked()), this, SLOT(computeBBox()));
 }
 
 
@@ -70,13 +65,12 @@ void DialogGaussianNoise::apply() {
     if (!model)
         return;
 
-    const float sigma = ui->lineEditGaussianNoiseSigma->text().toFloat();
+    const float sigma = lineEditGaussianNoiseSigma->text().toFloat();
     if (dynamic_cast<SurfaceMesh *>(model)) {
         GaussianNoise::apply(dynamic_cast<SurfaceMesh *>(model), sigma);
         model->renderer()->update();
         viewer_->update();
-    }
-    else if (dynamic_cast<PointCloud *>(model)) {
+    } else if (dynamic_cast<PointCloud *>(model)) {
         GaussianNoise::apply(dynamic_cast<PointCloud *>(model), sigma);
         model->renderer()->update();
         viewer_->update();
@@ -93,5 +87,5 @@ void DialogGaussianNoise::computeBBox() {
     float radius = box.diagonal() * 0.5f;
 
     const std::string &str = std::to_string(radius * suggested_ratio_);
-    ui->lineEditGaussianNoiseRadiusBBox->setText(QString::fromStdString(str));
+    lineEditGaussianNoiseRadiusBBox->setText(QString::fromStdString(str));
 }

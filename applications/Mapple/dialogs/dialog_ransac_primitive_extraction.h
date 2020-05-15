@@ -26,18 +26,17 @@
 #ifndef DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
 #define DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
 
+
 #include "dialog.h"
+#include "ui_dialog_ransac_primitive_extraction.h"
 
-namespace Ui {
-    class DialogRansacPrimitiveExtraction;
-}
 
-class DialogRansacPrimitiveExtraction : public Dialog
+class DialogRansacPrimitiveExtraction : public Dialog, public Ui::DialogRansacPrimitiveExtraction
 {
     Q_OBJECT
 
 public:
-    explicit DialogRansacPrimitiveExtraction(MainWindow *window, QDockWidget* dockWidgetCommand);
+    explicit DialogRansacPrimitiveExtraction(MainWindow *window);
     ~DialogRansacPrimitiveExtraction();
 
     void setWorkOnSelectedPoints(bool b) { selected_only_ = b; }
@@ -47,8 +46,6 @@ private Q_SLOTS:
     void reset();
 
 private:
-    Ui::DialogRansacPrimitiveExtraction *ui;
-
     bool	selected_only_;
 
     int		default_min_support_;

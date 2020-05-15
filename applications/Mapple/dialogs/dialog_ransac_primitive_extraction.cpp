@@ -34,16 +34,14 @@
 
 #include "main_window.h"
 #include "paint_canvas.h"
-#include "ui_dialog_ransac_primitive_extraction.h"
 
 
 using namespace easy3d;
 
-DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *window, QDockWidget* dockWidgetCommand) :
-    Dialog(window, dockWidgetCommand),
-    ui(new Ui::DialogRansacPrimitiveExtraction)
-{
-    ui->setupUi(this);
+DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *window)
+        : Dialog(window) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     // default value
     default_min_support_ = 1000;
@@ -54,44 +52,39 @@ DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *win
 
     reset();
 
-    connect(ui->pushButtonReset, SIGNAL(clicked()), this, SLOT(reset()));
-    connect(ui->pushButtonExtract, SIGNAL(clicked()), this, SLOT(extract()));
-
-    bestSize();
+    connect(pushButtonReset, SIGNAL(clicked()), this, SLOT(reset()));
+    connect(pushButtonExtract, SIGNAL(clicked()), this, SLOT(extract()));
 }
 
-DialogRansacPrimitiveExtraction::~DialogRansacPrimitiveExtraction()
-{
-    delete ui;
+DialogRansacPrimitiveExtraction::~DialogRansacPrimitiveExtraction() {
 }
 
-void DialogRansacPrimitiveExtraction::reset()
-{
-    ui->spinBoxMinimumSupport->setValue(default_min_support_);
-    ui->doubleSpinBoxDistanceThreshold->setValue(default_distance_threshold_);
-    ui->doubleSpinBoxBitmapResolution->setValue(default_bitmap_resolution_);
-    ui->doubleSpinBoxNormalThreshold->setValue(default_normal_threshold_);
-    ui->doubleSpinBoxOverlookProbability->setValue(default_overlook_probability_);
+void DialogRansacPrimitiveExtraction::reset() {
+    spinBoxMinimumSupport->setValue(default_min_support_);
+    doubleSpinBoxDistanceThreshold->setValue(default_distance_threshold_);
+    doubleSpinBoxBitmapResolution->setValue(default_bitmap_resolution_);
+    doubleSpinBoxNormalThreshold->setValue(default_normal_threshold_);
+    doubleSpinBoxOverlookProbability->setValue(default_overlook_probability_);
 }
 
 
 void DialogRansacPrimitiveExtraction::extract() {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (!cloud)
         return;
 
-    int min_support = ui->spinBoxMinimumSupport->value();
-    double dist_thresh = ui->doubleSpinBoxDistanceThreshold->value();
-    double bitmap_reso = ui->doubleSpinBoxBitmapResolution->value();
-    double normal_thresh = ui->doubleSpinBoxNormalThreshold->value();
-    double overlook_prob = ui->doubleSpinBoxOverlookProbability->value();
+    int min_support = spinBoxMinimumSupport->value();
+    double dist_thresh = doubleSpinBoxDistanceThreshold->value();
+    double bitmap_reso = doubleSpinBoxBitmapResolution->value();
+    double normal_thresh = doubleSpinBoxNormalThreshold->value();
+    double overlook_prob = doubleSpinBoxOverlookProbability->value();
 
     PrimitivesRansac ransac;
-    if (ui->checkBoxPlane->isChecked())		ransac.add_primitive_type(PrimitivesRansac::PLANE);
-    if (ui->checkBoxCylinder->isChecked())	ransac.add_primitive_type(PrimitivesRansac::CYLINDER);
-    if (ui->checkBoxSphere->isChecked())	ransac.add_primitive_type(PrimitivesRansac::SPHERE);
-    if (ui->checkBoxCone->isChecked())		ransac.add_primitive_type(PrimitivesRansac::CONE);
-    if (ui->checkBoxTorus->isChecked())		ransac.add_primitive_type(PrimitivesRansac::TORUS);
+    if (checkBoxPlane->isChecked()) ransac.add_primitive_type(PrimitivesRansac::PLANE);
+    if (checkBoxCylinder->isChecked()) ransac.add_primitive_type(PrimitivesRansac::CYLINDER);
+    if (checkBoxSphere->isChecked()) ransac.add_primitive_type(PrimitivesRansac::SPHERE);
+    if (checkBoxCone->isChecked()) ransac.add_primitive_type(PrimitivesRansac::CONE);
+    if (checkBoxTorus->isChecked()) ransac.add_primitive_type(PrimitivesRansac::TORUS);
 
     if (selected_only_) {
         auto selected = cloud->get_vertex_property<bool>("v:select");
@@ -107,8 +100,7 @@ void DialogRansacPrimitiveExtraction::extract() {
 
         int num = ransac.detect(cloud, indices, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
         LOG(INFO) << num << " primitives extracted from the selected points";
-    }
-    else {
+    } else {
         int num = ransac.detect(cloud, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
         LOG(INFO) << num << " primitives extracted";
     }

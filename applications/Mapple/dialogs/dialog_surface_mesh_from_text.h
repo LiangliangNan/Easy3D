@@ -27,16 +27,14 @@
 #define DIALOG_SURFACE_CREATE_FROM_TEXT_H
 
 #include "dialog.h"
+#include "ui_dialog_surface_mesh_from_text.h"
 
-namespace Ui {
-    class DialogSurfaceMeshFromText;
-}
 
-class DialogSurfaceMeshFromText : public Dialog {
+class DialogSurfaceMeshFromText : public Dialog, public Ui::DialogSurfaceMeshFromText {
 Q_OBJECT
 
 public:
-    explicit DialogSurfaceMeshFromText(MainWindow *window, QDockWidget* dockWidgetCommand);
+    explicit DialogSurfaceMeshFromText(MainWindow *window);
 
     ~DialogSurfaceMeshFromText();
 
@@ -46,7 +44,6 @@ private Q_SLOTS:
     void apply();
 
 private:
-    Ui::DialogSurfaceMeshFromText *ui;
     std::string font_path_;
 };
 

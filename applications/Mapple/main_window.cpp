@@ -94,7 +94,6 @@ using namespace easy3d;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , dockWidgetCommand_(nullptr)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -520,25 +519,6 @@ void MainWindow::onClearRecentFiles() {
 }
 
 
-void MainWindow::showDialog(QDialog* dialog) {
-    // To make the dialog always on top on macOS:
-//    DialogProperties* dialog = new DialogProperties(this, dockWidgetCommand());;
-//    Qt::WindowFlags flags = dialog->windowFlags();
-//    dialog->setWindowFlags(flags | Qt::Tool);
-//    dialog->show();
-    // But in Mapple, I make it dockable.
-    if (!dockWidgetCommand_) {
-        dockWidgetCommand_ = new QDockWidget(this);
-        dockWidgetCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
-        dockWidgetCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
-        dockWidgetCommand_->setFloating(true);
-    }
-    delete dockWidgetCommand_->widget();
-    dockWidgetCommand_->setWidget(dialog);
-    dockWidgetCommand_->show();
-}
-
-
 void MainWindow::saveSnapshot() {
     const Model* model = viewer_->currentModel();
 
@@ -567,10 +547,9 @@ void MainWindow::saveSnapshot() {
     if (fileName.isEmpty())
         return;
 
-    auto dialog = new DialogSnapshot(this, dockWidgetCommand());
-    dialog->setImageFileName(fileName);
-    connect(viewer_, SIGNAL(resized()), dialog, SLOT(computeImageSize()));
-    showDialog(dialog);
+    DialogSnapshot dialog(this);
+    if (dialog.exec() == QDialog::Accepted)
+        dialog.saveSnapshot(fileName);
 }
 
 
@@ -1026,8 +1005,10 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 
 
 void MainWindow::surfaceMeshCreateMeshFromText() {
-    auto dialog = new DialogSurfaceMeshFromText(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogSurfaceMeshFromText* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshFromText(this);
+    dialog->show();
 }
 
 
@@ -1262,56 +1243,59 @@ void MainWindow::surfaceMeshSubdivisionSqrt3() {
 }
 
 
-QDockWidget* MainWindow::dockWidgetCommand() {
-    if (!dockWidgetCommand_) {
-        dockWidgetCommand_ = new QDockWidget(this);
-        dockWidgetCommand_->setFeatures(QDockWidget::DockWidgetClosable | QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
-        dockWidgetCommand_->setAllowedAreas(Qt::RightDockWidgetArea);
-        dockWidgetCommand_->setFloating(true);
-    }
-    return dockWidgetCommand_;
-}
-
-
 void MainWindow::manipulateProperties() {
-    auto dialog = new DialogProperties(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogProperties* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogProperties(this);
+    dialog->show();
 }
 
 
 void MainWindow::pointCloudPoissonSurfaceReconstruction() {
-    auto dialog = new DialogPoissonReconstruction(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogPoissonReconstruction* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogPoissonReconstruction(this);
+    dialog->show();
 }
 
 
 void MainWindow::pointCloudRansacPrimitiveExtraction() {
-    auto dialog = new DialogRansacPrimitiveExtraction(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogRansacPrimitiveExtraction* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogRansacPrimitiveExtraction(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshSampling() {
-    auto dialog = new DialogSurfaceMeshSampling(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogSurfaceMeshSampling* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshSampling(this);
+    dialog->show();
 }
 
 
 void MainWindow::pointCloudDownsampling() {
-    auto dialog = new DialogPointCloudSimplification(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogPointCloudSimplification* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogPointCloudSimplification(this);
+    dialog->show();
 }
 
 
 void MainWindow::addGaussianNoise() {
-    auto dialog = new DialogGaussianNoise(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogGaussianNoise* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogGaussianNoise(this);
+    dialog->show();
 }
 
 
 void MainWindow::computeSurfaceMeshCurvatures() {
-    auto dialog = new DialogSurfaceMeshCurvature(this, dockWidgetCommand());
-    showDialog(dialog);
+    static DialogSurfaceMeshCurvature* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshCurvature(this);
+    dialog->show();
 }
 
 
@@ -1441,7 +1425,7 @@ void MainWindow::surfaceMeshRemeshing() {
 
     bool uss_features = true;
     if (uss_features) {
-        static int feature_angle = 70;
+        int feature_angle = 70;
         SurfaceMeshFeatures sf(mesh);
         sf.clear();
         sf.detect_angle(feature_angle);

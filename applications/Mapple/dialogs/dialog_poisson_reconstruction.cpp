@@ -26,7 +26,6 @@
 #include "dialog_poisson_reconstruction.h"
 #include "main_window.h"
 #include "paint_canvas.h"
-#include "ui_dialog_poisson_reconstruction.h"
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
@@ -37,11 +36,10 @@
 
 using namespace easy3d;
 
-DialogPoissonReconstruction::DialogPoissonReconstruction(MainWindow *window, QDockWidget* dockWidgetCommand) :
-    Dialog(window, dockWidgetCommand),
-    ui(new Ui::DialogPoissonReconstruction)
-{
-    ui->setupUi(this);
+DialogPoissonReconstruction::DialogPoissonReconstruction(MainWindow *window) :
+        Dialog(window) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     // default value
     default_octree_depth_ = 8;
@@ -54,48 +52,47 @@ DialogPoissonReconstruction::DialogPoissonReconstruction(MainWindow *window, QDo
     resetParameters();
     showHint(false);
 
-    connect(ui->pushButtonHelp, SIGNAL(toggled(bool)), this, SLOT(showHint(bool)));
-    connect(ui->pushButtonDefault, SIGNAL(clicked()), this, SLOT(resetParameters()));
-    connect(ui->pushButtonReconstruct, SIGNAL(clicked()), this, SLOT(reconstruct()));
-    connect(ui->pushButtonTrim, SIGNAL(clicked()), this, SLOT(trim()));
-
-    bestSize();
+    connect(pushButtonHelp, SIGNAL(toggled(bool)), this, SLOT(showHint(bool)));
+    connect(pushButtonDefault, SIGNAL(clicked()), this, SLOT(resetParameters()));
+    connect(pushButtonReconstruct, SIGNAL(clicked()), this, SLOT(reconstruct()));
+    connect(pushButtonTrim, SIGNAL(clicked()), this, SLOT(trim()));
 }
 
-DialogPoissonReconstruction::~DialogPoissonReconstruction()
-{
-    delete ui;
+
+DialogPoissonReconstruction::~DialogPoissonReconstruction() {
 }
 
 
 void DialogPoissonReconstruction::resetParameters() {
-    ui->spinBoxOctreeDepth->setValue(default_octree_depth_);
-    ui->spinBoxSamplesPerNode->setValue(default_samples_per_node_);
+    spinBoxOctreeDepth->setValue(default_octree_depth_);
+    spinBoxSamplesPerNode->setValue(default_samples_per_node_);
 
-    ui->doubleSpinBoxTrimValue->setValue(default_trim_value_);
-    ui->doubleSpinBoxIslandAreaRatio->setValue(default_area_ratio_);
+    doubleSpinBoxTrimValue->setValue(default_trim_value_);
+    doubleSpinBoxIslandAreaRatio->setValue(default_area_ratio_);
 }
+
 
 void DialogPoissonReconstruction::showHint(bool b) {
     if (b)
-        ui->widgetHint->show();
+        widgetHint->show();
     else
-        ui->widgetHint->hide();
+        widgetHint->hide();
 }
 
+
 void DialogPoissonReconstruction::reconstruct() {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        int		octree_depth = ui->spinBoxOctreeDepth->value();
-        float	sampers_per_node = ui->spinBoxSamplesPerNode->value();
+        int octree_depth = spinBoxOctreeDepth->value();
+        float sampers_per_node = spinBoxSamplesPerNode->value();
 
         PoissonReconstruction recon;
         recon.set_depth(octree_depth);
         recon.set_sampers_per_node(sampers_per_node);
 
-        SurfaceMesh* mesh = recon.apply(cloud, density_attr_name_);
+        SurfaceMesh *mesh = recon.apply(cloud, density_attr_name_);
         if (mesh) {
-            const std::string& name = file_system::name_less_extension(cloud->name()) + "_poisson_reconstruction.ply";
+            const std::string &name = file_system::name_less_extension(cloud->name()) + "_poisson_reconstruction.ply";
             mesh->set_name(name);
             viewer_->addModel(mesh);
             window_->updateUi();
@@ -106,11 +103,11 @@ void DialogPoissonReconstruction::reconstruct() {
 
 
 void DialogPoissonReconstruction::trim() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
-        double	trim_value = ui->doubleSpinBoxTrimValue->value();
-        double  area_ratio = ui->doubleSpinBoxIslandAreaRatio->value();
-        bool    triangulate = false; // I can do it using my algorithm :-)
+        double trim_value = doubleSpinBoxTrimValue->value();
+        double area_ratio = doubleSpinBoxIslandAreaRatio->value();
+        bool triangulate = false; // I can do it using my algorithm :-)
 
         auto density = mesh->vertex_property<float>(density_attr_name_);
         if (!density) {
@@ -128,13 +125,14 @@ void DialogPoissonReconstruction::trim() {
 
         if (trim_value <= min_density || trim_value >= max_density) {
             LOG(WARNING) << "trim value (" << trim_value
-                << ") out of density range [" << min_density << ", " << max_density << "]";
+                         << ") out of density range [" << min_density << ", " << max_density << "]";
             return;
         }
 
-        SurfaceMesh* trimmed_mesh = PoissonReconstruction::trim(mesh, density_attr_name_, trim_value, area_ratio, triangulate);
+        SurfaceMesh *trimmed_mesh = PoissonReconstruction::trim(mesh, density_attr_name_, trim_value, area_ratio,
+                                                                triangulate);
         if (trimmed_mesh) {
-            const std::string& name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
+            const std::string &name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
             trimmed_mesh->set_name(name);
             viewer_->addModel(trimmed_mesh);
             window_->updateUi();

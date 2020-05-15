@@ -27,25 +27,20 @@
 #define DIALOG_SURFACE_CURVATURE_H
 
 #include "dialog.h"
+#include "ui_dialog_surface_mesh_curvature.h"
 
-namespace Ui {
-    class DialogSurfaceMeshCurvature;
-}
 
-class DialogSurfaceMeshCurvature : public Dialog {
+class DialogSurfaceMeshCurvature : public Dialog, public Ui::DialogSurfaceMeshCurvature {
 Q_OBJECT
 
 public:
-    explicit DialogSurfaceMeshCurvature(MainWindow *window, QDockWidget* dockWidgetCommand);
+    explicit DialogSurfaceMeshCurvature(MainWindow *window);
 
     ~DialogSurfaceMeshCurvature();
 
 private Q_SLOTS:
 
     void apply();
-
-private:
-    Ui::DialogSurfaceMeshCurvature *ui;
 };
 
 #endif // DIALOG_SURFACE_CURVATURE_H

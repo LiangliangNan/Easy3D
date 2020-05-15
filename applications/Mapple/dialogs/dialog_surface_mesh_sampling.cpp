@@ -32,24 +32,19 @@
 
 #include "main_window.h"
 #include "paint_canvas.h"
-#include "ui_dialog_surface_mesh_sampling.h"
 
 
 using namespace easy3d;
 
-DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(MainWindow *window, QDockWidget* dockWidgetCommand) :
-        Dialog(window, dockWidgetCommand),
-        ui(new Ui::DialogSurfaceMeshSampling) {
-    ui->setupUi(this);
-
-    connect(ui->okButton, SIGNAL(clicked()), this, SLOT(apply()));
-
-    bestSize();
+DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(MainWindow *window)
+        : Dialog(window) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
+    connect(okButton, SIGNAL(clicked()), this, SLOT(apply()));
 }
 
 
 DialogSurfaceMeshSampling::~DialogSurfaceMeshSampling() {
-    delete ui;
 }
 
 
@@ -58,7 +53,7 @@ void DialogSurfaceMeshSampling::apply() {
     if (!mesh)
         return;
 
-    int num = ui->spinBoxPointNumber->value();
+    int num = spinBoxPointNumber->value();
     if (num < mesh->n_vertices()) {
         LOG(WARNING) << "point num must >= the num of vertices of the input mesh";
         return;

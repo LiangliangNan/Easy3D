@@ -35,36 +35,31 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
-#include "ui_dialog_point_cloud_simplification.h"
 
 
 using namespace easy3d;
 
 
-DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *window, QDockWidget* dockWidgetCommand)
-        : Dialog(window, dockWidgetCommand)
-        , ui(new Ui::DialogPointCloudSimplification)
-        , kdtree_(nullptr)
-{
-    ui->setupUi(this);
+DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *window)
+        : Dialog(window), kdtree_(nullptr) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
     // default value
-    ui->lineEditDistanceThreshold->setText("0.01");
-    ui->lineEditAverageSpacing->setText("unknown");
-    ui->lineEditExpectedPointNumber->setText("100000");
-    ui->lineEditExpectedPointNumber->setValidator(new QIntValidator(1, 1000000000, this));
+    lineEditDistanceThreshold->setText("0.01");
+    lineEditAverageSpacing->setText("unknown");
+    lineEditExpectedPointNumber->setText("100000");
+    lineEditExpectedPointNumber->setValidator(new QIntValidator(1, 1000000000, this));
 
     QButtonGroup *buttonGroup = new QButtonGroup(this);
-    buttonGroup->addButton(ui->radioButtonExpectedPointNumber, 0);
-    buttonGroup->addButton(ui->radioButtonDistanceThreshold, 1);
+    buttonGroup->addButton(radioButtonExpectedPointNumber, 0);
+    buttonGroup->addButton(radioButtonDistanceThreshold, 1);
     connect(buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(strategyChanged(int)));
     strategyChanged(0);
 
-    connect(ui->buttonComputeAvgSpacing, SIGNAL(clicked()), this, SLOT(computeAvgSpacing()));
-    connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(apply()));
-    connect(ui->qureyButton, SIGNAL(clicked()), this, SLOT(query()));
-
-    bestSize();
+    connect(buttonComputeAvgSpacing, SIGNAL(clicked()), this, SLOT(computeAvgSpacing()));
+    connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
+    connect(qureyButton, SIGNAL(clicked()), this, SLOT(query()));
 }
 
 
@@ -84,7 +79,7 @@ void DialogPointCloudSimplification::showEvent(QShowEvent *e) {
     PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
         int num = cloud->n_vertices();
-        ui->lineEditExpectedPointNumber->setText(QString("%1").arg(num));
+        lineEditExpectedPointNumber->setText(QString("%1").arg(num));
     }
     QDialog::showEvent(e);
 }
@@ -92,17 +87,17 @@ void DialogPointCloudSimplification::showEvent(QShowEvent *e) {
 
 void DialogPointCloudSimplification::strategyChanged(int id) {
     if (id == 0) {
-        ui->lineEditExpectedPointNumber->setDisabled(false);
-        ui->lineEditDistanceThreshold->setDisabled(true);
-        ui->checkBoxUniform->setDisabled(true);
-        ui->lineEditAverageSpacing->setDisabled(true);
-        ui->buttonComputeAvgSpacing->setDisabled(true);
+        lineEditExpectedPointNumber->setDisabled(false);
+        lineEditDistanceThreshold->setDisabled(true);
+        checkBoxUniform->setDisabled(true);
+        lineEditAverageSpacing->setDisabled(true);
+        buttonComputeAvgSpacing->setDisabled(true);
     } else {
-        ui->lineEditExpectedPointNumber->setDisabled(true);
-        ui->lineEditDistanceThreshold->setDisabled(false);
-        ui->checkBoxUniform->setDisabled(false);
-        ui->lineEditAverageSpacing->setDisabled(false);
-        ui->buttonComputeAvgSpacing->setDisabled(false);
+        lineEditExpectedPointNumber->setDisabled(true);
+        lineEditDistanceThreshold->setDisabled(false);
+        checkBoxUniform->setDisabled(false);
+        lineEditAverageSpacing->setDisabled(false);
+        buttonComputeAvgSpacing->setDisabled(false);
     }
 }
 
@@ -127,7 +122,7 @@ void DialogPointCloudSimplification::computeAvgSpacing() {
 
         if (kdtree_) {
             float as = PointCloudSimplification::average_spacing(cloud, kdtree_, 6);
-            ui->lineEditAverageSpacing->setText(QString("%1").arg(as));
+            lineEditAverageSpacing->setText(QString("%1").arg(as));
             show();
         }
     }
@@ -137,17 +132,16 @@ void DialogPointCloudSimplification::computeAvgSpacing() {
 void DialogPointCloudSimplification::query() {
     PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        if (ui->radioButtonExpectedPointNumber->isChecked()) {
-            unsigned int expected_number = ui->lineEditExpectedPointNumber->text().toInt();
+        if (radioButtonExpectedPointNumber->isChecked()) {
+            unsigned int expected_number = lineEditExpectedPointNumber->text().toInt();
             points_to_remove_ = PointCloudSimplification::uniform_simplification(cloud, expected_number);
         } else {
-            float threshold = ui->lineEditDistanceThreshold->text().toFloat();
-            if (ui->checkBoxUniform->isChecked()) {
+            float threshold = lineEditDistanceThreshold->text().toFloat();
+            if (checkBoxUniform->isChecked()) {
                 if (!kdtree_)
                     constructKdTree();
                 points_to_remove_ = PointCloudSimplification::uniform_simplification(cloud, threshold, kdtree_);
-            }
-            else
+            } else
                 points_to_remove_ = PointCloudSimplification::grid_simplification(cloud, threshold);
         }
         LOG(INFO) << cloud->n_vertices() - points_to_remove_.size() << " points will remain";

@@ -38,8 +38,6 @@
 #include <algorithm>
 #include <QDockWidget>
 
-#include "ui_dialog_properties.h"
-
 
 static std::vector<std::string> key_words = {
         "v:point", "v:connectivity", "v:deleted", "v:normal", "f:normal",
@@ -50,43 +48,44 @@ static std::vector<std::string> key_words = {
 
 using namespace easy3d;
 
-DialogProperties::DialogProperties(MainWindow *window, QDockWidget *dockWidgetCommand)
-        : Dialog(window, dockWidgetCommand), ui(new Ui::DialogProperties) {
-    ui->setupUi(this);
+DialogProperties::DialogProperties(MainWindow *window)
+        : Dialog(window) {
+    setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
-    ui->comboBoxCommand->addItem("Remove");
-    ui->comboBoxCommand->addItem("Rename");
-    ui->comboBoxCommand->addItem("Convert Data Type");
-    ui->comboBoxCommand->setCurrentIndex(0);
+    comboBoxCommand->addItem("Remove");
+    comboBoxCommand->addItem("Rename");
+    comboBoxCommand->addItem("Convert Data Type");
+    comboBoxCommand->setCurrentIndex(0);
 
-    ui->comboBoxSourceType->setEditable(false);
+    comboBoxSourceType->setEditable(false);
 
-    ui->comboBoxTargetType->addItem("float");
-    ui->comboBoxTargetType->addItem("double");
-    ui->comboBoxTargetType->addItem("int");
-    ui->comboBoxTargetType->addItem("unsigned int");
-    ui->comboBoxTargetType->addItem("std::size_t");
-    ui->comboBoxTargetType->addItem("char");
-    ui->comboBoxTargetType->addItem("unsigned char");
-    ui->comboBoxTargetType->addItem("vec2");
-    ui->comboBoxTargetType->addItem("vec3");
+    comboBoxTargetType->addItem("float");
+    comboBoxTargetType->addItem("double");
+    comboBoxTargetType->addItem("int");
+    comboBoxTargetType->addItem("unsigned int");
+    comboBoxTargetType->addItem("std::size_t");
+    comboBoxTargetType->addItem("char");
+    comboBoxTargetType->addItem("unsigned char");
+    comboBoxTargetType->addItem("vec2");
+    comboBoxTargetType->addItem("vec3");
 
-    QMargins margins = ui->lineEditNewPropertyName->textMargins();
+    QMargins margins = lineEditNewPropertyName->textMargins();
     margins.setLeft(7);
-    ui->lineEditNewPropertyName->setTextMargins(margins);
+    lineEditNewPropertyName->setTextMargins(margins);
 
-    connect(ui->comboBoxCommand, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxCommand, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(commandChanged(const QString &)));
-    connect(ui->comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(modelChanged(const QString &)));
-    connect(ui->comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(locationChanged(const QString &)));
-    connect(ui->comboBoxPropertyName, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyName, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(propertyChanged(const QString &)));
-    connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateProperties()));
-    connect(ui->applyButton, SIGNAL(clicked()), this, SLOT(applyCommand()));
+    connect(updateButton, SIGNAL(clicked()), this, SLOT(updateProperties()));
+    connect(applyButton, SIGNAL(clicked()), this, SLOT(applyCommand()));
 
-    commandChanged(ui->comboBoxCommand->currentText());
+    commandChanged(comboBoxCommand->currentText());
 }
 
 
@@ -96,61 +95,59 @@ DialogProperties::~DialogProperties() {
 
 
 void DialogProperties::commandChanged(const QString &) {
-    const QString &command = ui->comboBoxCommand->currentText();
+    const QString &command = comboBoxCommand->currentText();
     if (command == "Remove") {
-        ui->labelPropertyName->setText("Property");
-        ui->labelNewPropertyName->setText("New name");
-        ui->labelNewPropertyName->setVisible(false);
-        ui->lineEditNewPropertyName->setVisible(false);
-        ui->labelDataType->setVisible(false);
-        ui->comboBoxSourceType->setVisible(false);
-        ui->labelPropertyTo->setVisible(false);
-        ui->comboBoxTargetType->setVisible(false);
+        labelPropertyName->setText("Property");
+        labelNewPropertyName->setText("New name");
+        labelNewPropertyName->setVisible(false);
+        lineEditNewPropertyName->setVisible(false);
+        labelDataType->setVisible(false);
+        comboBoxSourceType->setVisible(false);
+        labelPropertyTo->setVisible(false);
+        comboBoxTargetType->setVisible(false);
     } else if (command == "Rename") {
-        ui->labelPropertyName->setText("Property");
-        ui->labelNewPropertyName->setText("New name");
-        ui->labelNewPropertyName->setVisible(true);
-        ui->lineEditNewPropertyName->setVisible(true);
-        ui->labelDataType->setVisible(false);
-        ui->comboBoxSourceType->setVisible(false);
-        ui->labelPropertyTo->setVisible(false);
-        ui->comboBoxTargetType->setVisible(false);
+        labelPropertyName->setText("Property");
+        labelNewPropertyName->setText("New name");
+        labelNewPropertyName->setVisible(true);
+        lineEditNewPropertyName->setVisible(true);
+        labelDataType->setVisible(false);
+        comboBoxSourceType->setVisible(false);
+        labelPropertyTo->setVisible(false);
+        comboBoxTargetType->setVisible(false);
     } else if (command == "Convert Data Type") {
-        ui->labelPropertyName->setText("Property");
-        ui->labelNewPropertyName->setText("New name");
-        ui->labelNewPropertyName->setVisible(false);
-        ui->lineEditNewPropertyName->setVisible(false);
-        ui->labelDataType->setVisible(true);
-        ui->comboBoxSourceType->setVisible(true);
-        ui->labelPropertyTo->setVisible(true);
-        ui->comboBoxTargetType->setVisible(true);
+        labelPropertyName->setText("Property");
+        labelNewPropertyName->setText("New name");
+        labelNewPropertyName->setVisible(false);
+        lineEditNewPropertyName->setVisible(false);
+        labelDataType->setVisible(true);
+        comboBoxSourceType->setVisible(true);
+        labelPropertyTo->setVisible(true);
+        comboBoxTargetType->setVisible(true);
     } else if (command == "Split (Vector -> Scalars)") {
-        ui->labelPropertyName->setText("Property");
-        ui->labelNewPropertyName->setText("New property");
-        ui->labelNewPropertyName->setVisible(true);
-        ui->lineEditNewPropertyName->setVisible(true);
-        ui->labelDataType->setVisible(false);
-        ui->comboBoxSourceType->setVisible(false);
-        ui->labelPropertyTo->setVisible(false);
-        ui->comboBoxTargetType->setVisible(false);
+        labelPropertyName->setText("Property");
+        labelNewPropertyName->setText("New property");
+        labelNewPropertyName->setVisible(true);
+        lineEditNewPropertyName->setVisible(true);
+        labelDataType->setVisible(false);
+        comboBoxSourceType->setVisible(false);
+        labelPropertyTo->setVisible(false);
+        comboBoxTargetType->setVisible(false);
     } else if (command == "Merge (Scalars -> Vector)") {
-        ui->labelPropertyName->setText("Property 1");
-        ui->labelNewPropertyName->setText("New property");
-        ui->labelNewPropertyName->setVisible(true);
-        ui->lineEditNewPropertyName->setVisible(true);
-        ui->labelDataType->setVisible(false);
-        ui->comboBoxSourceType->setVisible(false);
-        ui->labelPropertyTo->setVisible(false);
-        ui->comboBoxTargetType->setVisible(false);
+        labelPropertyName->setText("Property 1");
+        labelNewPropertyName->setText("New property");
+        labelNewPropertyName->setVisible(true);
+        lineEditNewPropertyName->setVisible(true);
+        labelDataType->setVisible(false);
+        comboBoxSourceType->setVisible(false);
+        labelPropertyTo->setVisible(false);
+        comboBoxTargetType->setVisible(false);
     }
-
-    bestSize();
     updateProperties();
 }
 
 
 Model *DialogProperties::getModel() {
-    const std::string &text = ui->comboBoxModels->currentText().toStdString();
+    const std::string &text = comboBoxModels->currentText().toStdString();
     auto &models = viewer_->models();
     for (auto m : models) {
         const std::string &name = file_system::simple_name(m->name());
@@ -162,102 +159,102 @@ Model *DialogProperties::getModel() {
 
 
 void DialogProperties::modelChanged(const QString &text) {
-    const QString &location_text = ui->comboBoxPropertyLocation->currentText();
+    const QString &location_text = comboBoxPropertyLocation->currentText();
     bool location_text_has_match = false;
 
-    ui->comboBoxPropertyLocation->clear();
+    comboBoxPropertyLocation->clear();
 
     Model *model = getModel();
     if (!model)
         return;
 
-    disconnect(ui->comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    disconnect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
                SLOT(locationChanged(const QString &)));
 
     if (dynamic_cast<SurfaceMesh *>(model)) {
-        ui->comboBoxPropertyLocation->addItem("Vertex");
-        ui->comboBoxPropertyLocation->addItem("Face");
-        ui->comboBoxPropertyLocation->addItem("Edge");
-        ui->comboBoxPropertyLocation->addItem("Halfedge");
+        comboBoxPropertyLocation->addItem("Vertex");
+        comboBoxPropertyLocation->addItem("Face");
+        comboBoxPropertyLocation->addItem("Edge");
+        comboBoxPropertyLocation->addItem("Halfedge");
         location_text_has_match = true;
     } else if (dynamic_cast<Graph *>(model)) {
-        ui->comboBoxPropertyLocation->addItem("Vertex");
-        ui->comboBoxPropertyLocation->addItem("Edge");
+        comboBoxPropertyLocation->addItem("Vertex");
+        comboBoxPropertyLocation->addItem("Edge");
         if (location_text == "Vertex" || location_text == "Edge")
             location_text_has_match = true;
     } else if (dynamic_cast<PointCloud *>(model)) {
-        ui->comboBoxPropertyLocation->addItem("Vertex");
+        comboBoxPropertyLocation->addItem("Vertex");
         if (location_text == "Vertex")
             location_text_has_match = true;
     }
 
     if (location_text_has_match)
-        ui->comboBoxPropertyLocation->setCurrentText(location_text);
+        comboBoxPropertyLocation->setCurrentText(location_text);
     else
-        ui->comboBoxPropertyLocation->setCurrentIndex(0);
+        comboBoxPropertyLocation->setCurrentIndex(0);
 
-    locationChanged(ui->comboBoxPropertyLocation->currentText());
+    locationChanged(comboBoxPropertyLocation->currentText());
 
-    connect(ui->comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(locationChanged(const QString &)));
 }
 
 
 void DialogProperties::locationChanged(const QString &text) {
-    ui->comboBoxPropertyName->clear();
+    comboBoxPropertyName->clear();
 
     Model *model = getModel();
     if (!model)
         return;
 
-    const QString &location = ui->comboBoxPropertyLocation->currentText();
+    const QString &location = comboBoxPropertyLocation->currentText();
     if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (location == "Vertex") {
-            ui->lineEditNewPropertyName->setText("v:");
+            lineEditNewPropertyName->setText("v:");
             for (const auto &name : cloud->vertex_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<Graph *>(model)) {
         auto graph = dynamic_cast<Graph *>(model);
         if (location == "Vertex") {
-            ui->lineEditNewPropertyName->setText("v:");
+            lineEditNewPropertyName->setText("v:");
             for (const auto &name : graph->vertex_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
-            ui->lineEditNewPropertyName->setText("e:");
+            lineEditNewPropertyName->setText("e:");
             for (const auto &name : graph->edge_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<SurfaceMesh *>(model)) {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         if (location == "Vertex") {
-            ui->lineEditNewPropertyName->setText("v:");
+            lineEditNewPropertyName->setText("v:");
             for (const auto &name : mesh->vertex_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
-            ui->lineEditNewPropertyName->setText("e:");
+            lineEditNewPropertyName->setText("e:");
             for (const auto &name : mesh->edge_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Face") {
-            ui->lineEditNewPropertyName->setText("f:");
+            lineEditNewPropertyName->setText("f:");
             for (const auto &name : mesh->face_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Halfedge") {
-            ui->lineEditNewPropertyName->setText("h:");
+            lineEditNewPropertyName->setText("h:");
             for (const auto &name : mesh->halfedge_properties())
                 if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
-                    ui->comboBoxPropertyName->addItem(QString::fromStdString(name));
+                    comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     }
 
-    propertyChanged(ui->comboBoxPropertyName->currentText());
+    propertyChanged(comboBoxPropertyName->currentText());
 }
 
 
@@ -958,12 +955,12 @@ namespace details {
 
 
 void DialogProperties::propertyChanged(const QString &name) {
-    ui->comboBoxSourceType->clear();
+    comboBoxSourceType->clear();
 
     if (name.isEmpty())
         return;
 
-    const std::string &location = ui->comboBoxPropertyLocation->currentText().toStdString();
+    const std::string &location = comboBoxPropertyLocation->currentText().toStdString();
     if (location.empty())
         return;
 
@@ -1007,47 +1004,47 @@ void DialogProperties::propertyChanged(const QString &name) {
     }
 
     if (type != "void")
-        ui->comboBoxSourceType->addItem(type);
+        comboBoxSourceType->addItem(type);
     else
         LOG(WARNING) << "unrecognized data type for property '" << property_name << "' defined on '" << location << "'";
 }
 
 
 void DialogProperties::updateProperties() {
-    const std::string& model_text = ui->comboBoxModels->currentText().toStdString();
+    const std::string &model_text = comboBoxModels->currentText().toStdString();
     bool model_text_has_match = false;
 
-    disconnect(ui->comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
+    disconnect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
                SLOT(modelChanged(const QString &)));
-    ui->comboBoxModels->clear();
+    comboBoxModels->clear();
 
     auto &models = viewer_->models();
     for (auto m : models) {
         const std::string &name = file_system::simple_name(m->name());
         const QString str = QString::fromStdString(name);
-        ui->comboBoxModels->addItem(str);
+        comboBoxModels->addItem(str);
         if (name == model_text)
             model_text_has_match = true;
     }
 
     if (model_text_has_match)
-        ui->comboBoxModels->setCurrentText(QString::fromStdString(model_text));
+        comboBoxModels->setCurrentText(QString::fromStdString(model_text));
     else {
         auto model = viewer_->currentModel();
         if (model) {
             const std::string &name = file_system::simple_name(model->name());
-            ui->comboBoxModels->setCurrentText(QString::fromStdString(name));
+            comboBoxModels->setCurrentText(QString::fromStdString(name));
         }
     }
-    modelChanged(ui->comboBoxModels->currentText());
+    modelChanged(comboBoxModels->currentText());
 
-    connect(ui->comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
             SLOT(modelChanged(const QString &)));
 }
 
 
 void DialogProperties::applyCommand() {
-    const QString &command = ui->comboBoxCommand->currentText();
+    const QString &command = comboBoxCommand->currentText();
 
     bool succeed = false;
     if (command == "Remove") {
@@ -1057,8 +1054,7 @@ void DialogProperties::applyCommand() {
             if (model)
                 model->renderer()->update();
         }
-    }
-    else if (command == "Rename")
+    } else if (command == "Rename")
         succeed = renameProperty();
     else if (command == "Convert Data Type")
         succeed = convertPropertyDataType();
@@ -1075,8 +1071,8 @@ bool DialogProperties::removeProperty() {
     if (!model)
         return false;
 
-    const QString &location = ui->comboBoxPropertyLocation->currentText();
-    const std::string &property = ui->comboBoxPropertyName->currentText().toStdString();
+    const QString &location = comboBoxPropertyLocation->currentText();
+    const std::string &property = comboBoxPropertyName->currentText().toStdString();
     if (property.empty())
         return false;
 
@@ -1142,12 +1138,12 @@ bool DialogProperties::renameProperty() {
     if (!model)
         return false;
 
-    const QString &location = ui->comboBoxPropertyLocation->currentText();
-    const std::string &old_name = ui->comboBoxPropertyName->currentText().toStdString();
+    const QString &location = comboBoxPropertyLocation->currentText();
+    const std::string &old_name = comboBoxPropertyName->currentText().toStdString();
     if (old_name.empty())
         return false;
 
-    std::string new_name = ui->lineEditNewPropertyName->text().toStdString();
+    std::string new_name = lineEditNewPropertyName->text().toStdString();
     if (new_name.size() <= 2) { // because of the prefix "v:", "f:"...
         LOG(WARNING) << "property's new name cannot be empty";
         return false;
@@ -1229,10 +1225,10 @@ bool DialogProperties::convertPropertyDataType() {
     if (!model)
         return false;
 
-    const std::string &location = ui->comboBoxPropertyLocation->currentText().toStdString();
-    const std::string &name = ui->comboBoxPropertyName->currentText().toStdString();
-    const std::string &source_type = ui->comboBoxSourceType->currentText().toStdString();
-    const std::string &target_type = ui->comboBoxTargetType->currentText().toStdString();
+    const std::string &location = comboBoxPropertyLocation->currentText().toStdString();
+    const std::string &name = comboBoxPropertyName->currentText().toStdString();
+    const std::string &source_type = comboBoxSourceType->currentText().toStdString();
+    const std::string &target_type = comboBoxTargetType->currentText().toStdString();
     if (location.empty() || name.empty() || source_type.empty() || target_type.empty())
         return false;
 

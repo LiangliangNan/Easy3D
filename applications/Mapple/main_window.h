@@ -49,7 +49,6 @@ class PaintCanvas;
 class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
-class QDockWidget;
 
 class MainWindow : public QMainWindow, public easy3d::ProgressClient
 {
@@ -157,8 +156,6 @@ private:
 
     void createStatusBar();
 
-    void showDialog(QDialog*);
-
     bool okToContinue();
     void readSettings();
     void writeSettings();
@@ -166,8 +163,6 @@ private:
 
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
-
-    QDockWidget* dockWidgetCommand();
 
     void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override ;
 
@@ -187,8 +182,6 @@ private:
             *labelNumFaces_,
             *labelNumVertices_,
             *labelNumEdges_;
-
-    QDockWidget*                dockWidgetCommand_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

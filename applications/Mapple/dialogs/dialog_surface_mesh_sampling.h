@@ -27,25 +27,20 @@
 #define DIALOG_SURFACE_SAMPLING_H
 
 #include "dialog.h"
+#include "ui_dialog_surface_mesh_sampling.h"
 
-namespace Ui {
-    class DialogSurfaceMeshSampling;
-}
 
-class DialogSurfaceMeshSampling : public Dialog {
+class DialogSurfaceMeshSampling : public Dialog, public Ui::DialogSurfaceMeshSampling {
 Q_OBJECT
 
 public:
-    explicit DialogSurfaceMeshSampling(MainWindow *window, QDockWidget* dockWidgetCommand);
+    explicit DialogSurfaceMeshSampling(MainWindow *window);
 
     ~DialogSurfaceMeshSampling();
 
 private Q_SLOTS:
 
     void apply();
-
-private:
-    Ui::DialogSurfaceMeshSampling *ui;
 };
 
 #endif // DIALOG_SURFACE_SAMPLING_H
