@@ -137,6 +137,7 @@ namespace easy3d {
         bool ready_;
 
         std::string font_file_;
+        std::vector<unsigned char> font_data_;
 
         // Controls the smoothness of the curved corners. A greater value results in a smooth transitions but more
         // vertices. Suggested value is 4.

@@ -66,6 +66,7 @@ namespace easy3d {
             return;
 
         ready_ = false;
+        font_data_.clear();
 
         auto read_font_file = [](const std::string &font_file, std::vector<unsigned char> &data) -> int {
             auto fp = fopen(font_file.c_str(), "rb");
@@ -85,19 +86,18 @@ namespace easy3d {
         };
 
         // load font
-        std::vector<unsigned char> ttf;
-        if (read_font_file(font_file.c_str(), ttf) == 0) {
+        if (read_font_file(font_file.c_str(), font_data_) == 0) {
             LOG(ERROR) << "failed loading font file: " << font_file;
             return;
         }
 
-        int font_offset = stbtt_GetFontOffsetForIndex(ttf.data(), 0);
+        int font_offset = stbtt_GetFontOffsetForIndex(font_data_.data(), 0);
         if (font_offset != 0) {
             LOG(ERROR) << "invalid font file";
             return;
         }
 
-        if (stbtt_InitFont(get_font(font_), ttf.data(), font_offset) == 0) {
+        if (stbtt_InitFont(get_font(font_), font_data_.data(), font_offset) == 0) {
             LOG(ERROR) << "init font (building font cache) failed";
             return;
         }
