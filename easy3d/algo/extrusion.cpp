@@ -109,7 +109,7 @@ namespace easy3d {
 
         const auto &elements = tessellator.elements();
         if (elements.empty()) {
-            LOG(WARNING) << "extrusion failed: not faces generated";
+            LOG(WARNING) << "extrusion failed: no faces generated";
             return false;
         } else {
             // the vertex index starts from 0 for each character.
