@@ -17,10 +17,7 @@
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
   loading models from files ...
   
-* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, 
-  [Poisson Surface Reconstruction](http://www.cs.jhu.edu/~misha/MyPapers/ToG13.pdf), 
-  [RANSAC](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.481.1514&rep=rep1&type=pdf),
-  mesh simplification, subdivision, smoothing, parametrization, remeshing, and more.
+* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson Surface Reconstruction, RANSAC, mesh simplification, subdivision, smoothing, parametrization, remeshing, and more.
    
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
   soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
