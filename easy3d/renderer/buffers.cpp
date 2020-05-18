@@ -48,8 +48,8 @@ namespace easy3d {
             // min_value and max_value return the expected value range.
             template<typename FT>
             inline void
-            clamp_scalar_field(const std::vector<FT> &property, float &min_value, float &max_value, float dummy_lower,
-                               float dummy_upper) {
+            clamp_scalar_field(const std::vector<FT> &property, float &min_value, float &max_value, float dummy_lower_percent,
+                               float dummy_upper_percent) {
                 if (property.empty()) {
                     LOG(WARNING) << "empty property";
                     return;
@@ -59,18 +59,19 @@ namespace easy3d {
                 std::vector<FT> values = property;;
                 std::sort(values.begin(), values.end());
 
-                std::size_t n = values.size() - 1;
-                std::size_t index_lower = n * dummy_lower;
-                std::size_t index_upper = n - n * dummy_upper;
+                const std::size_t n = values.size() - 1;
+                const std::size_t index_lower = n * dummy_lower_percent;
+                const std::size_t index_upper = n - n * dummy_upper_percent;
                 min_value = values[index_lower];
                 max_value = values[index_upper];
 
-                const int lower = static_cast<int>(dummy_lower * 100);
-                const int upper = static_cast<int>(dummy_upper * 100);
+                const int lower = static_cast<int>(dummy_lower_percent * 100);
+                const int upper = static_cast<int>(dummy_upper_percent * 100);
                 if (lower > 0 || upper > 0)
                     LOG(INFO) << "scalar field range ["
-                              << static_cast<float>(values.front()) << ", " << static_cast<float>(values.back())
-                              << "] clamped to [" << min_value << ", " << max_value << "]";
+                              << static_cast<float>(values.front()) << ", " << static_cast<float>(values.back()) << "]"
+                              << " clamped (" << lower << "%, " << upper << "%) to [" << min_value << ", " << max_value
+                              << "]";
             }
 
             template<typename FT>
