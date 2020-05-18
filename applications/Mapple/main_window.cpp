@@ -55,13 +55,6 @@
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
-#include <easy3d/algo/surface_mesh_features.h>
-#include <easy3d/algo/surface_mesh_remeshing.h>
-#include <easy3d/algo/surface_mesh_parameterization.h>
-#include <easy3d/algo/surface_mesh_simplification.h>
-#include <easy3d/algo/surface_mesh_fairing.h>
-#include <easy3d/algo/surface_mesh_smoothing.h>
-#include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
@@ -80,7 +73,13 @@
 #include "dialogs/dialog_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
 #include "dialogs/dialog_gaussian_noise.h"
+#include "dialogs/dialog_surface_mesh_fairing.h"
 #include "dialogs/dialog_surface_mesh_from_text.h"
+#include "dialogs/dialog_surface_mesh_hole_filling.h"
+#include "dialogs/dialog_surface_mesh_parameterization.h"
+#include "dialogs/dialog_surface_mesh_remeshing.h"
+#include "dialogs/dialog_surface_mesh_smoothing.h"
+#include "dialogs/dialog_surface_mesh_simplification.h"
 
 #include "widgets/widget_global_setting.h"
 #include "widgets/widget_drawable_points.h"
@@ -1300,174 +1299,50 @@ void MainWindow::computeSurfaceMeshCurvatures() {
 
 
 void MainWindow::surfaceMeshSimplification() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    int target_percentage = 10;
-    int normal_deviation = 180;
-    int aspect_ratio = 10;
-    SurfaceMeshSimplification ss(mesh);
-    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
-    ss.simplify(mesh->n_vertices() * 0.01 * target_percentage);
-
-    mesh->renderer()->update();
-    viewer()->update();
+    static DialogSurfaceMeshSimplification* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshSimplification(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshSmoothing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // TODO: compute Mean Curvature first.
-
-    bool uniform_laplace = false;
-
-    SurfaceMeshSmoothing smoother(mesh);
-    if (0) {   // Explicit Smoothing
-        int iter = 10;
-        smoother.explicit_smoothing(iter, uniform_laplace);
-    }
-    else {    // Implicit Smoothing
-        float timestep = 0.001f;
-
-        // does the mesh have a boundary?
-        bool has_boundary = false;
-        for (auto v: mesh->vertices())
-            if (mesh->is_boundary(v))
-                has_boundary = true;
-
-        // only re-scale if we don't have a (fixed) boundary
-        bool rescale = !has_boundary;
-        float scene_radius = viewer()->camera()->sceneRadius();
-        float dt = uniform_laplace ? timestep : timestep * scene_radius * scene_radius;
-        smoother.implicit_smoothing(dt, uniform_laplace, rescale);
-    }
-
-    mesh->renderer()->update();
-    viewer()->update();
+    static DialogSurfaceMeshSmoothing* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshSmoothing(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshFairing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // TODO: compute Mean Curvature first.
-
-    int method = 2;
-
-    SurfaceMeshFairing fair(mesh);
-    switch (method) {
-        case 0: fair.minimize_area(); // Minimize Area
-            break;
-        case 1: fair.minimize_curvature(); // Minimize Curvature
-            break;
-        case 2: fair.fair(3);; // Minimize Curvature Variation
-            break;
-        default: std::cerr << "no such fairing method" << std::endl;
-            return;
-    }
-
-    mesh->renderer()->update();
-    viewer()->update();
+    static DialogSurfaceMeshFairing* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshFairing(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshHoleFilling() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // find the smallest hole
-    SurfaceMesh::Halfedge hmin;
-    unsigned int lmin(mesh->n_halfedges());
-    for (auto h : mesh->halfedges()) {
-        if (mesh->is_boundary(h)) {
-            float l(0);
-            SurfaceMesh::Halfedge hh = h;
-            do {
-                ++l;
-                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
-                    l += 123456;
-                    break;
-                }
-                hh = mesh->next_halfedge(hh);
-            } while (hh != h);
-
-            if (l < lmin) {
-                lmin = l;
-                hmin = h;
-            }
-        }
-    }
-
-    // close smallest hole
-    if (hmin.is_valid()) {
-        SurfaceMeshHoleFilling hf(mesh);
-        hf.fill_hole(hmin);
-
-        mesh->renderer()->update();
-        viewer()->update();
-    } else {
-        LOG(WARNING) << "could not find a hole (i.e., manifold boundary loop)";
-    }
+    static DialogSurfaceMeshHoleFilling* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshHoleFilling(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshRemeshing() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    bool uss_features = true;
-    if (uss_features) {
-        int feature_angle = 70;
-        SurfaceMeshFeatures sf(mesh);
-        sf.clear();
-        sf.detect_angle(feature_angle);
-        sf.detect_boundary();
-    }
-
-    if (true) { // Uniform remeshing
-        float len(0.0f);
-        for (auto eit : mesh->edges())
-            len += distance(mesh->position(mesh->vertex(eit, 0)),
-                            mesh->position(mesh->vertex(eit, 1)));
-        len /= (float) mesh->n_edges();
-        SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
-    } else { // Adaptive remeshing
-        auto bb = mesh->bounding_box().diagonal();
-        SurfaceMeshRemeshing(mesh).adaptive_remeshing(
-                0.001 * bb,  // min length
-                0.100 * bb,  // max length
-                0.001 * bb); // approx. error
-    }
-
-    mesh->renderer()->update();
-    viewer()->update();
+    static DialogSurfaceMeshRemeshing* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshRemeshing(this);
+    dialog->show();
 }
 
 
 void MainWindow::surfaceMeshParameterization() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshParameterization para(mesh);
-
-    bool LSCM = false;
-    if (LSCM)  // Least Squares Conformal Map
-        para.lscm();
-    else        // Discrete Harmonic parameterization
-        para.harmonic();
-
-    mesh->renderer()->update();
-    viewer_->update();
-    updateRenderingPanel();
+    static DialogSurfaceMeshParameterization* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogSurfaceMeshParameterization(this);
+    dialog->show();
 }
 
 

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogSurfaceMeshCurvature</class>
- <widget class="QDialog" name="DialogSurfaceMeshCurvature">
+ <class>DialogSurfaceMeshSmoothing</class>
+ <widget class="QDialog" name="DialogSurfaceMeshSmoothing">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>248</width>
-    <height>133</height>
+    <width>225</width>
+    <height>155</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,59 +17,50 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="labelPostSmoothingIterations">
+      <widget class="QLabel" name="labelScheme">
        <property name="text">
-        <string>Post-smoothing Iterations</string>
+        <string>Scheme</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QSpinBox" name="spinBoxPostSmoothingIterations">
-       <property name="minimumSize">
-        <size>
-         <width>20</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="minimum">
-        <number>0</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="singleStep">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-      </widget>
+      <widget class="QComboBox" name="comboBoxScheme"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="labelUseTwoRingNeighborhood">
+      <widget class="QLabel" name="labelIterations">
        <property name="text">
-        <string>Use 2-Ring Neighborhood</string>
+        <string>Interations</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QCheckBox" name="checkBoxUseTwoRingNeighborhood">
+      <widget class="QSpinBox" name="spinBoxIterations">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>5</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="labelUniformLaplace">
+       <property name="text">
+        <string>Uniform Laplace</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QCheckBox" name="checkBoxUniformLaplace">
        <property name="text">
         <string/>
        </property>
        <property name="checked">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
     </layout>
-   </item>
-   <item>
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -87,9 +78,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="applyButton">
+      <widget class="QPushButton" name="okButton">
        <property name="text">
-        <string>Apply</string>
+        <string>OK</string>
        </property>
        <property name="default">
         <bool>true</bool>
@@ -100,11 +91,6 @@
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>spinBoxPostSmoothingIterations</tabstop>
-  <tabstop>checkBoxUseTwoRingNeighborhood</tabstop>
-  <tabstop>applyButton</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>
