@@ -56,6 +56,7 @@
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
+#include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -1356,8 +1357,8 @@ void MainWindow::surfaceMeshGeodesic() {
         LOG(WARNING) << "mesh has " << components.size() << " connected components. Geodesic computation is valid on a single component";
 
     // pick a few a random vertices and mark them locked
-    auto lock = mesh->vertex_property<bool>("v:lock", false);
-    lock.vector().assign(mesh->n_vertices(), false);
+    auto locked = mesh->vertex_property<bool>("v:locked", false);
+    locked.vector().assign(mesh->n_vertices(), false);
 
     // setup seeds
     std::vector<SurfaceMesh::Vertex> seeds;
@@ -1366,7 +1367,7 @@ void MainWindow::surfaceMeshGeodesic() {
         const int idx = rand() % mesh->n_vertices();
         SurfaceMesh::Vertex v(idx);
         seeds.push_back(v);
-        lock[v] = true;
+        locked[v] = true;
     }
 
     // compute geodesic distance
@@ -1384,59 +1385,8 @@ void MainWindow::surfaceMeshStitchCoincidentEdges() {
     if (!mesh)
         return;
 
-    LOG(WARNING) << "TODO: This stitching function is based purely on vertex positions and no adjacency information is used. "
-                    "A stable stitching function taking into account the topology will be implemented in the near future.";
-
-    class CmpVec {
-    public:
-        CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
-
-        bool operator()(const vec3 &v0, const vec3 &v1) const {
-            if (fabs(v0[0] - v1[0]) <= eps_) {
-                if (fabs(v0[1] - v1[1]) <= eps_) {
-                    return (v0[2] < v1[2] - eps_);
-                } else return (v0[1] < v1[1] - eps_);
-            } else return (v0[0] < v1[0] - eps_);
-        }
-
-    private:
-        float eps_;
-    };
-
-    auto find_unique_vertex = [](SurfaceMesh* mesh, SurfaceMesh::Vertex v, std::map<vec3, SurfaceMesh::Vertex, CmpVec>& vMap) -> SurfaceMesh::Vertex {
-        const vec3& p = mesh->position(v);
-        // has vector been referenced before?
-        auto it = vMap.find(p);
-        if (it == vMap.end()) { // No : add vertex and remember idx/vector mapping
-            vMap[p] = v;
-            return v;
-        }
-        else // Yes : get index from map
-            return it->second;
-    };
-
-    auto copy(*mesh);
-    mesh->clear(); // clear the original mesh and it will be refilled.
-
-    CmpVec comp(FLT_MIN);
-    std::map<vec3, SurfaceMesh::Vertex, CmpVec> vMap(comp);
-
-    auto points = copy.vertex_property<vec3>("v:point");
-    for (auto v : copy.vertices())
-        mesh->add_vertex(points[v]);
-    for (auto f : copy.faces()) {
-        std::vector<SurfaceMesh::Vertex> vertices;
-        for (auto v : copy.vertices(f))
-            vertices.push_back(find_unique_vertex(&copy, v, vMap));
-        mesh->add_face(vertices);
-    }
-
-    // clean: remove isolated vertices
-    for (auto v : mesh->vertices()) {
-        if (mesh->is_isolated(v))
-            mesh->delete_vertex(v);
-    }
-    mesh->garbage_collection();
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
 
     mesh->renderer()->update();
     viewer_->update();

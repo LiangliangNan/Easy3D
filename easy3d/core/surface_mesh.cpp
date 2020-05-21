@@ -1257,6 +1257,177 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
+    bool SurfaceMesh::can_merge_vertices(Halfedge h0, Halfedge h1) {
+        // It's OK if they are already the same!
+        if (to_vertex(h0) == to_vertex(h1))
+            return true;
+
+        Halfedge cir_h0 = h0;
+        do {
+            // Number of potential opposites half_edges (should not be greater than 1)
+            int nb_common = 0;
+            Halfedge hh0 = opposite_halfedge(cir_h0);
+            Halfedge cir_h1 = h1;
+            do {
+                Halfedge hh1 = opposite_halfedge(cir_h1);
+                if (to_vertex(hh0) == to_vertex(hh1) ||
+                    (to_vertex(hh0) == from_vertex(h0) && to_vertex(hh1) == from_vertex(h1)) ||
+                    (to_vertex(hh0) == from_vertex(h1) && to_vertex(hh1) == from_vertex(h0))
+                    )
+                {
+                    if ((is_boundary(opposite_halfedge(hh0)) && is_boundary(hh1)) ||
+                        (is_boundary(hh0) && is_boundary(opposite_halfedge(hh1)))) {
+                        // Found a potential opposite edge.
+                        nb_common++;
+                    } else {
+                        // Potential opposite edge not on the border.
+                        return false;
+                    }
+                }
+                cir_h1 = prev_halfedge(opposite_halfedge(cir_h1));
+            } while (cir_h1 != h1);
+            if (nb_common > 1) {
+                return false;
+            }
+            cir_h0 = prev_halfedge(opposite_halfedge(cir_h0));
+        } while (cir_h0 != h0);
+        return true;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
+    bool SurfaceMesh::is_stitch_ok(Halfedge h0, Halfedge h1) {
+        // check if both halfedges are on the border.
+        if (!is_boundary(h0) || !is_boundary(h1)) {
+            return false;
+        }
+
+        // we cannot glue two halfedges on a same face
+        const auto opp_h0 = opposite_halfedge(h0);
+        const auto opp_h1 = opposite_halfedge(h1);
+        if (face(opp_h0) == face(opp_h1))
+            return false;
+
+        // don't merge two vertices on a same halfedge
+        if (find_halfedge(to_vertex(h0), from_vertex(h1)).is_valid() ||
+            find_halfedge(from_vertex(h0), to_vertex(h1)).is_valid()) {
+            return false;
+        }
+
+        if (!can_merge_vertices(h0, opp_h1) ||
+            !can_merge_vertices(h1, opp_h0)) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
+    void SurfaceMesh::stitch(Halfedge h0, Halfedge h1) {
+        // the new position of the end points
+        auto org0 = from_vertex(h0);
+        auto org1 = from_vertex(h1);
+        auto dest0 = to_vertex(h0);
+        auto dest1 = to_vertex(h1);
+
+        Halfedge new_h0 = new_edge(org1, org0);
+        Halfedge new_h1 = opposite_halfedge(new_h0);
+        vpoint_[org0] = geom::barycenter(vpoint_[org0], vpoint_[dest1]);
+        vpoint_[org1] = geom::barycenter(vpoint_[dest0], vpoint_[org1]);
+
+        set_vertex(new_h0, org0);
+        set_vertex(new_h1, org1);
+
+        auto op_h0 = opposite_halfedge(h0);
+        auto op_h1 = opposite_halfedge(h1);
+        set_vertex(prev_halfedge(op_h0), org1);
+        set_vertex(prev_halfedge(op_h1), org0);
+
+        if (halfedge(org0) == h0)
+            set_halfedge(org0, new_h1);
+        if (halfedge(org1) == h1)
+            set_halfedge(org1, new_h0);
+
+        // set face
+        auto f0 = face(op_h0);
+        set_face(new_h0, f0);
+        set_halfedge(f0, new_h0);
+        auto f1 = face(op_h1);
+        set_face(new_h1, f1);
+        set_halfedge(f1, new_h1);
+
+        auto locked = get_vertex_property<bool>("v:locked");
+        if (locked) {
+            if (locked[dest1])
+                locked[org0] = true;
+            if (locked[dest0])
+                locked[org1] = true;
+        }
+
+        auto set_vertex_on_orbit = [](SurfaceMesh* mesh, Halfedge h, Vertex v) ->void {
+            Halfedge it = h ;
+            do {
+                mesh->set_vertex(it, v);
+                it = mesh->prev_halfedge(mesh->opposite_halfedge(it));
+            } while(it != h) ;
+        };
+
+        if (org0 != dest1) {
+            set_vertex_on_orbit(this, h1, org0);
+            if (!vdeleted_[dest1]) {
+                vdeleted_[dest1] = true;
+                set_halfedge(dest1, Halfedge());
+                deleted_vertices_++;
+                garbage_ = true;
+            }
+        }
+
+        if (org1 != dest0) {
+            set_vertex_on_orbit(this, h0, org1);
+            if (!vdeleted_[dest0]) {
+                vdeleted_[dest0] = true;
+                set_halfedge(dest0, Halfedge());
+                deleted_vertices_++;
+                garbage_ = true;
+            }
+        }
+
+        // set halfedge connections
+        set_next_halfedge(prev_halfedge(op_h0), new_h0);
+        set_next_halfedge( new_h0, next_halfedge(op_h0));
+        set_next_halfedge(prev_halfedge(op_h1), new_h1);
+        set_next_halfedge( new_h1, next_halfedge(op_h1));
+        auto prev_h0 = prev_halfedge(h0);
+        if (is_boundary(prev_h0))
+            set_next_halfedge(prev_h0, next_halfedge(h1));
+        auto prev_h1 = prev_halfedge(h1);
+        if (is_boundary(prev_h1))
+            set_next_halfedge(prev_h1, next_halfedge(h0));
+
+        // mark the two edges deleted (done in garbage collection)
+        auto e0 = edge(h0);
+        if (!edeleted_[e0]) {
+            edeleted_[e0] = true;
+            deleted_edges_++;
+            garbage_ = true;
+        }
+        auto e1 = edge(h1);
+        if (!edeleted_[e1]) {
+            edeleted_[e1] = true;
+            deleted_edges_++;
+            garbage_ = true;
+        }
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
     bool
     SurfaceMesh::
     is_collapse_ok(Halfedge v0v1)

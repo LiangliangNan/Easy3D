@@ -1734,6 +1734,19 @@ namespace easy3d {
         void flip(Edge e);
 
 
+        /**
+         * Check whether the two specified halfedges can be glued. Two halfedges can be stitched if they are both on
+         * on the border and point in reverse directions
+         */
+        bool is_stitch_ok(Halfedge h0, Halfedge h1);
+
+        /**
+         * Stitch two halfedges h0 and h1.
+         * Precondition: h0 and h1 are both on the border and point in reversed directions.
+         */
+        void stitch(Halfedge h0, Halfedge h1);
+
+
         /** returns the valence (number of incident edges or neighboring vertices)
          of vertex \c v. */
         unsigned int valence(Vertex v) const;
@@ -1794,8 +1807,6 @@ namespace easy3d {
         //@}
 
 
-
-
     private: //---------------------------------------------- allocate new elements
 
         /// allocate a new vertex, resize vertex properties accordingly.
@@ -1835,7 +1846,7 @@ namespace easy3d {
 
         /**
          * [Liangliang]:
-         * The outgoing halfedges of the vertices may not be valid after many a sequence of add_face() operations or
+         * The outgoing halfedges of the vertices may not be valid after a sequence calls to add_face() operations or
          * after deleting faces, because manifoldness is not maintained). This function assigns the correct outgoing
          * halfedge to each vertex.
          */
@@ -1854,7 +1865,9 @@ namespace easy3d {
         /// are there deleted vertices, edges or faces?
         bool garbage() const { return garbage_; }
 
-
+        /// Helper for stitching edges. It checks whether the vertices pointed by h0 and h1 can be merged. It is called
+        /// twice by is_stitch_ok(), once per orientation of the edges.
+        bool can_merge_vertices(Halfedge h0, Halfedge h1);
 
     private: //------------------------------------------------------- private data
 

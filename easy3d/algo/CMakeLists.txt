@@ -24,9 +24,10 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_hole_filling.h
         surface_mesh_parameterization.h
         surface_mesh_remeshing.h
+        surface_mesh_sampler.h
         surface_mesh_simplification.h
         surface_mesh_smoothing.h
-        surface_mesh_sampler.h
+        surface_mesh_stitching.h
         surface_mesh_subdivision.h
         surface_mesh_topology.h
         surface_mesh_triangulation.h
@@ -55,9 +56,10 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_hole_filling.cpp
         surface_mesh_parameterization.cpp
         surface_mesh_remeshing.cpp
+        surface_mesh_sampler.cpp
         surface_mesh_simplification.cpp
         surface_mesh_smoothing.cpp
-        surface_mesh_sampler.cpp
+        surface_mesh_stitching.cpp
         surface_mesh_subdivision.cpp
         surface_mesh_topology.cpp
         surface_mesh_triangulation.cpp
