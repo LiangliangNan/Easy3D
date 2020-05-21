@@ -27,6 +27,7 @@
 	- Pick/select mechanism (points, faces, objects); object manipulation;
 	    * for OpenGL >= 4.3, use GPU;
 	    * otherwise, use multi-thread;
+	- Visualize the labels of vertices/edges/faces/halfedges (useful for debugging);
 	    
 Long term:
     - switch to Vulkan.
