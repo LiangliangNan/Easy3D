@@ -1310,12 +1310,12 @@ namespace easy3d {
                     return;
                 }
 
-                auto lock = model->get_vertex_property<bool>("v:lock");
-                if (lock) {
+                auto locked = model->get_vertex_property<bool>("v:locked");
+                if (locked) {
                     auto prop = model->get_vertex_property<vec3>("v:point");
                     std::vector<vec3> points;
                     for (auto v : model->vertices()) {
-                        if (lock[v])
+                        if (locked[v])
                             points.push_back(prop[v]);
                     }
                     drawable->update_vertex_buffer(points);

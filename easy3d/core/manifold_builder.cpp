@@ -77,15 +77,15 @@ namespace easy3d {
         mesh_->remove_vertex_property(original_vertex_);
 
         // now all copy occurrences are known
-        // mark all copied vertices in property "v:lock"
-        auto lock = mesh_->vertex_property<bool>("v:lock");
+        // mark all copied vertices in property "v:locked"
+        auto locked = mesh_->vertex_property<bool>("v:locked");
         std::size_t num_non_manifold_vertices = copied_vertices_.size();
         std::size_t num_copy_occurrences(0);
         for (const auto& copies : copied_vertices_) {
             LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
             num_copy_occurrences += copies.second.size();
             for (auto v : copies.second)
-                lock[v] = true;
+                locked[v] = true;
         }
         // Release memory immediately when not needed any more.
         copied_vertices_.clear();
