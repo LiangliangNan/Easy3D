@@ -1304,6 +1304,18 @@ namespace easy3d {
             return false;
         }
 
+        // the two halfedges must point to different directions
+        if (edge_length(edge(h0)) > 1e-6 && edge_length(edge(h1)) > 1e-6) {
+            auto s0 = from_vertex(h0);
+            auto t0 = to_vertex(h0);
+            auto s1 = from_vertex(h1);
+            auto t1 = to_vertex(h1);
+            const auto dir0 = position(t0) - position(s0);
+            const auto dir1 = position(t1) - position(s1);
+            if (dot(dir0, dir1) > 0)
+                return false;
+        }
+
         // we cannot glue two halfedges on a same face
         const auto opp_h0 = opposite_halfedge(h0);
         const auto opp_h1 = opposite_halfedge(h1);
@@ -1334,11 +1346,13 @@ namespace easy3d {
         auto org1 = from_vertex(h1);
         auto dest0 = to_vertex(h0);
         auto dest1 = to_vertex(h1);
+        const vec3& p_org0 = geom::barycenter(vpoint_[org0], vpoint_[dest1]);
+        const vec3& p_org1 = geom::barycenter(vpoint_[dest0], vpoint_[org1]);
 
         Halfedge new_h0 = new_edge(org1, org0);
         Halfedge new_h1 = opposite_halfedge(new_h0);
-        vpoint_[org0] = geom::barycenter(vpoint_[org0], vpoint_[dest1]);
-        vpoint_[org1] = geom::barycenter(vpoint_[dest0], vpoint_[org1]);
+        vpoint_[org0] = p_org0;
+        vpoint_[org1] = p_org1;
 
         set_vertex(new_h0, org0);
         set_vertex(new_h1, org1);

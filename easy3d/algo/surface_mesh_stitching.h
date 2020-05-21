@@ -60,6 +60,8 @@ namespace easy3d {
 
         bool lexicographically_smaller(const vec3 &p0, const vec3 &p1) const;
 
+        float squared_distance(SurfaceMesh::Halfedge h1, SurfaceMesh::Halfedge h2) const;
+
     protected:
         SurfaceMesh *mesh_;
 

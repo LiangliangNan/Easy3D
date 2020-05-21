@@ -126,7 +126,7 @@ namespace easy3d {
         squared_distances.reserve(num);
         for (int i = 0; i < num; ++i) {
             auto idx = closest_pts_idx[i];
-            if (border_edges_[idx].idx() != h.idx()) {  // exclude it self
+            if (border_edges_[idx] != h) {  // exclude it self
                 neighbors.push_back(border_edges_[idx]);
                 squared_distances.push_back(closest_pts_dists[i]); // ANN uses squared distance internally
             }
@@ -137,15 +137,36 @@ namespace easy3d {
     }
 
 
+    float SurfaceMeshStitching::squared_distance(SurfaceMesh::Halfedge h1, SurfaceMesh::Halfedge h2) const {
+        auto s1 = mesh_->from_vertex(h1);
+        auto t1 = mesh_->to_vertex(h1);
+        auto s2 = mesh_->from_vertex(h2);
+        auto t2 = mesh_->to_vertex(h2);
+        const float sd1 = distance2(mesh_->position(s1), mesh_->position(t2));
+        const float sd2 = distance2(mesh_->position(s2), mesh_->position(t1));
+        return std::max(sd1, sd2);
+    }
+
+
     SurfaceMesh::Halfedge
     SurfaceMeshStitching::matched_border(SurfaceMesh::Halfedge h, float squared_dist_threshold) const {
         std::vector<SurfaceMesh::Halfedge> neighbors;
         std::vector<float> squared_distances;
         borders_in_range(h, squared_dist_threshold, neighbors, squared_distances);
-        if (!neighbors.empty())
-            return neighbors[0];
-        else
-            return SurfaceMesh::Halfedge();
+
+        float min_sd = squared_dist_threshold;
+        SurfaceMesh::Halfedge best_match;
+
+        for (int i = 0; i < neighbors.size(); ++i) {
+            auto h2 = neighbors[i];
+            float sd = squared_distance(h, h2);
+            if (sd < min_sd) {
+                min_sd = sd;
+                best_match = h2;
+            }
+        }
+
+        return best_match;
     }
 
 
@@ -165,18 +186,20 @@ namespace easy3d {
             }
         }
 
+        std::size_t count = 0;
         if (!to_stitch.empty()) {
             for (const auto &ep : to_stitch) {
                 if (mesh_->is_stitch_ok(ep.first, ep.second)) {
                     mesh_->stitch(ep.first, ep.second);
-                } else {
-                    LOG(WARNING) << "could not stitch coincident edges: " << ep.first << " <-> " << ep.second;
+                    ++count;
                 }
             }
             mesh_->garbage_collection();
         } else {
             LOG(WARNING) << "no coincident edges can be found for stitching";
         }
+
+        LOG(INFO) << count << " pairs of edges stitched";
 
         mesh_->remove_halfedge_property(scheduled);
     }
