@@ -121,9 +121,9 @@ namespace easy3d {
         // properties
         vfeature_ = mesh_->vertex_property<bool>("v:feature", false);
         efeature_ = mesh_->edge_property<bool>("e:feature", false);
-        vlocked_ = mesh_->add_vertex_property<bool>("v:locked", false);
-        elocked_ = mesh_->add_edge_property<bool>("e:locked", false);
-        vsizing_ = mesh_->add_vertex_property<float>("v:sizing");
+        vlocked_ = mesh_->add_vertex_property<bool>("v:locked:SurfaceMeshRemeshing", false);
+        elocked_ = mesh_->add_edge_property<bool>("e:locked:SurfaceMeshRemeshing", false);
+        vsizing_ = mesh_->add_vertex_property<float>("v:sizing:SurfaceMeshRemeshing");
 
         // lock unselected vertices if some vertices are selected
         auto vselected = mesh_->get_vertex_property<bool>("v:selected");
