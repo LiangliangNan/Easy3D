@@ -42,16 +42,14 @@ namespace easy3d {
     private:
 
         // given a border halfedge h (its face is nullptr), return the matched border halfedge.
-        // if a matched border halfedge could not be found, return an invalid halfedge.
-        // Fixme: make public?
+        //  - if multiple edges match, return the closest one;
+        //  - if could not found, return an invalid halfedge.
         SurfaceMesh::Halfedge matched_border(SurfaceMesh::Halfedge h, float squared_dist_threshold) const;
 
-        // given a border halfedge h (its face is nullptr), return the all border halfedge that are within a distance
-        // threshold.
-        // Fixme: make public?
+        // given a border halfedge, return all border halfedges that are within a distance threshold.
         void borders_in_range(
                 SurfaceMesh::Halfedge h, float squared_dist_threshold,
-                std::vector<SurfaceMesh::Halfedge> &neighbors, std::vector<float> &squared_distances
+                std::vector<SurfaceMesh::Halfedge> &neighbors
         ) const;
 
         // the coordinates of an halfedge: represented by its two end points going from the xyz-lexicographically
