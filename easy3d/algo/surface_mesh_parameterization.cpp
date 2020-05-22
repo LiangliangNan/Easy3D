@@ -112,8 +112,8 @@ namespace easy3d {
 
         // get properties
         auto tex = mesh_->vertex_property<vec2>("v:texcoord");
-        auto eweight = mesh_->add_edge_property<float>("e:param");
-        auto idx = mesh_->add_vertex_property<int>("v:idx", -1);
+        auto eweight = mesh_->add_edge_property<float>("e:param:SurfaceMeshParameterization");
+        auto idx = mesh_->add_vertex_property<int>("v:idx:SurfaceMeshParameterization", -1);
 
         // compute Laplace weight per edge: cotan or uniform
         for (auto e : mesh_->edges()) {
@@ -196,7 +196,7 @@ namespace easy3d {
         // vertex properties
         auto pos = mesh_->vertex_property<vec3>("v:point");
         auto tex = mesh_->vertex_property<vec2>("v:texcoord");
-        auto locked = mesh_->add_vertex_property<bool>("v:locked", false);
+        auto locked = mesh_->add_vertex_property<bool>("v:locked:SurfaceMeshParameterization", false);
 
         // find boundary vertices and store handles in vector
         std::vector<SurfaceMesh::Vertex> boundary;
@@ -246,9 +246,9 @@ namespace easy3d {
         // properties
         auto pos = mesh_->vertex_property<vec3>("v:point");
         auto tex = mesh_->vertex_property<vec2>("v:texcoord");
-        auto idx = mesh_->add_vertex_property<int>("v:idx", -1);
-        auto weight = mesh_->add_halfedge_property<dvec2>("h:lscm");
-        auto locked = mesh_->get_vertex_property<bool>("v:locked");
+        auto idx = mesh_->add_vertex_property<int>("v:idx:SurfaceMeshParameterization", -1);
+        auto weight = mesh_->add_halfedge_property<dvec2>("h:lscm:SurfaceMeshParameterization");
+        auto locked = mesh_->get_vertex_property<bool>("v:locked:SurfaceMeshParameterization");
         assert(locked);
 
         // compute weights/gradients per face/halfedge
