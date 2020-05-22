@@ -26,9 +26,10 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/util/string.h>
 
+
 namespace easy3d {
 
-
+    //  \cond
     namespace details {
 
         // Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
@@ -74,6 +75,7 @@ namespace easy3d {
 
         void set_lod_bias(struct sth_stash *stash, float bias);
     }
+    //  \endcond
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +91,7 @@ namespace easy3d {
 
 namespace easy3d {
 
+    //  \cond
     namespace details {
 
 #define HASH_LUT_SIZE 256
@@ -696,8 +699,8 @@ namespace easy3d {
             free(stash);
         }
     }
+    //  \endcond
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

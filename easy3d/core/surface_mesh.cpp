@@ -923,7 +923,7 @@ namespace easy3d {
         /*
          Split an arbitrary face into triangles by connecting each vertex of fh to vh.
          - fh will remain valid (it will become one of the triangles)
-         - the halfedge handles of the new triangles will point to the old halfeges
+         - the halfedge handles of the new triangles will point to the old halfedges
          */
 
         Halfedge hend = halfedge(f);
@@ -1304,7 +1304,7 @@ namespace easy3d {
             return false;
         }
 
-        // the two halfedges must point to different directions
+        // the two halfedges must point in reverse directions
         if (edge_length(edge(h0)) > 1e-6 && edge_length(edge(h1)) > 1e-6) {
             auto s0 = from_vertex(h0);
             auto t0 = to_vertex(h0);
@@ -1341,6 +1341,12 @@ namespace easy3d {
 
 
     void SurfaceMesh::stitch(Halfedge h0, Halfedge h1) {
+        // CAUTION : Stitching two halfedges may result in a non-manifold mesh, hence check for yourself
+        // whether this operation is allowed or not!
+
+        //let's make it sure it is actually checked
+        assert(is_stitch_ok(h0, h1));
+
         // the new position of the end points
         auto org0 = from_vertex(h0);
         auto org1 = from_vertex(h1);
@@ -1510,6 +1516,9 @@ namespace easy3d {
     SurfaceMesh::
     collapse(Halfedge h)
     {
+        //let's make it sure it is actually checked
+        assert(is_collapse_ok(h));
+
         Halfedge h0 = h;
         Halfedge h1 = prev_halfedge(h0);
         Halfedge o0 = opposite_halfedge(h0);

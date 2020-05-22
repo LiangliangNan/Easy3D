@@ -1625,7 +1625,7 @@ namespace easy3d {
         void triangulate();
 
         /// triangulate the face \c f
-        /// \sa trianglate()
+        /// \sa triangulate()
         void triangulate(Face f);
 
 
@@ -1720,29 +1720,32 @@ namespace easy3d {
         Halfedge insert_edge(Halfedge h0, Halfedge h1);
 
 
-        /** Check whether flipping edge \c e is topologically
+        /**
+         * Check whether flipping edge \c e is topologically allowed.
          \attention This function is only valid for triangle meshes.
          \sa flip(Edge)
          */
         bool is_flip_ok(Edge e) const;
 
-        /** Flip edge \c e: Remove edge \c e and add an edge between the two vertices
-         opposite to edge \c e of the two incident triangles.
-         \attention This function is only valid for triangle meshes.
-         \sa is_flip_ok(Edge)
+        /**
+         * Flip edge \c e: Remove edge \c e and add an edge between the two vertices opposite to edge \c e of the two
+         * incident triangles.
+         * \attention This function is only valid for triangle meshes. \sa is_flip_ok(Edge)
          */
         void flip(Edge e);
 
 
         /**
-         * Check whether the two specified halfedges can be glued. Two halfedges can be stitched if they are both on
-         * on the border and point in reverse directions
+         * Check whether stitching two halfedges \c h0 an \c h1 is topologically allowed. Two halfedges can be stitched
+         * if they are both on on the border and point in reverse directions.
          */
         bool is_stitch_ok(Halfedge h0, Halfedge h1);
 
         /**
-         * Stitch two halfedges h0 and h1.
-         * Precondition: h0 and h1 are both on the border and point in reversed directions.
+         * @brief Stitch two halfedges h0 and h1. Precondition: h0 and h1 are both on the border and point in reversed
+         *      directions.
+         * @attention Stitching two halfedges changes the topology and geometry significantly, thus it may result in a
+         *      non-manifold mesh, client code must check if this operation can be executed. @see is_stitch_ok().
          */
         void stitch(Halfedge h0, Halfedge h1);
 

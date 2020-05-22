@@ -35,6 +35,7 @@
 
 namespace easy3d {
 
+    //  \cond
     namespace details {
 
         // VertexManager manages the actual vertices to make sure that the points are unique.
@@ -87,7 +88,7 @@ namespace easy3d {
             std::unordered_map<uint64_t, std::size_t> hash_table_;
         };
     }
-
+    //  \endcond
 
 
     // -------------------------------------------------------------------------------------------------------------

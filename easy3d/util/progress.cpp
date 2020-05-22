@@ -31,6 +31,7 @@
 
 namespace easy3d {
 
+    //  \cond
     namespace details {
 
         class Progress {
@@ -80,7 +81,7 @@ namespace easy3d {
                 client_->notify(new_val, show_text, update_viewer);
         }
     }
-
+    //  \endcond
 
     //_________________________________________________________
 

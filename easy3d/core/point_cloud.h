@@ -58,7 +58,9 @@
 
 namespace easy3d {
 
-    /// A for point clouds.
+    /**
+     * @brief A data structure for point clouds.
+     */
     class PointCloud : public virtual Model
     {
 

@@ -41,7 +41,7 @@ DialogSurfaceMeshSimplification::DialogSurfaceMeshSimplification(MainWindow *win
         : Dialog(window) {
     setupUi(this);
 
-    QValidator *validator = new QIntValidator(3, 99999999999, this);
+    QValidator *validator = new QIntValidator(3, 999999999, this);
     lineEditVertexNumber->setValidator(validator);
 
     SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());

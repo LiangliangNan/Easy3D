@@ -78,7 +78,9 @@ namespace easy3d {
     }
 
 
-    namespace internal {
+    //  \cond
+    namespace details {
+
         /// Utility class for grid simplification of point set.
         /// LessEpsilonPoints defines a 3D points order: two points are equal
         /// iff they belong to the same cell of a grid of cell size = epsilon.
@@ -124,6 +126,7 @@ namespace easy3d {
             float m_epsilon;
         };
     }
+    //  \endcond
 
 
     std::vector<PointCloud::Vertex> PointCloudSimplification::grid_simplification(PointCloud *cloud, float epsilon) {
@@ -136,7 +139,7 @@ namespace easy3d {
 
         // Merges points which belong to the same cell of a grid of cell size = epsilon.
         // points_to_keep will contain 1 point per cell; the others will be in points_to_remove.
-        std::set<Point, internal::LessEpsilonPoints<Point> > points_to_keep(epsilon);
+        std::set<Point, details::LessEpsilonPoints<Point> > points_to_keep(epsilon);
         std::vector<PointCloud::Vertex> points_to_remove;
 
         const auto &points = cloud->points();
@@ -199,7 +202,9 @@ namespace easy3d {
     //----- uniform simplification (specifying expected point number) ---------------------------------
 
 
-    namespace internal {
+    //  \cond
+    namespace details {
+
         struct PointPair {
             PointPair(unsigned int idx_a, unsigned int idx_b, float dist) : distance(dist) {
                 if (idx_a < idx_b) {
@@ -243,7 +248,7 @@ namespace easy3d {
 
             // the average squared distance to its nearest neighbor; smaller value means highter density
             std::vector<float> sqr_distance(cloud->n_vertices());
-            std::set<internal::PointPair, internal::LessDistPointPair> point_pairs;
+            std::set<details::PointPair, details::LessDistPointPair> point_pairs;
             for (unsigned int i = 0; i < num; ++i) {
                 const vec3 &p = points[i];
                 std::vector<int> neighbors;
@@ -253,7 +258,7 @@ namespace easy3d {
                     sqr_distance[i] = sqr_dists[1];
 
                     // now we get a pair of points
-                    internal::PointPair pair(i, neighbors[1], sqr_dists[1]);
+                    details::PointPair pair(i, neighbors[1], sqr_dists[1]);
                     point_pairs.insert(pair);
                 } else {
                     // ignore, no point will not be deleted
@@ -262,12 +267,12 @@ namespace easy3d {
 
             // Now the elements in point_pairs are sorted in an increasing order, so we can delete points now.
             unsigned int remaining_num = num;
-            std::set<internal::PointPair, internal::LessDistPointPair>::iterator pos = point_pairs.begin();
-            std::set<internal::PointPair, internal::LessDistPointPair>::iterator end = point_pairs.end();
+            std::set<details::PointPair, details::LessDistPointPair>::iterator pos = point_pairs.begin();
+            std::set<details::PointPair, details::LessDistPointPair>::iterator end = point_pairs.end();
             for (; pos != end; ++pos) {
                 if (remaining_num == expected_num)
                     break;
-                const internal::PointPair &pair = *pos;
+                const details::PointPair &pair = *pos;
                 unsigned int id_a = pair.index_a;
                 unsigned int id_b = pair.index_b;
                 if (sqr_distance[id_a] < sqr_distance[id_b])
@@ -280,6 +285,7 @@ namespace easy3d {
             return points_to_delete;
         }
     }
+    //  \endcond
 
 
     std::vector<PointCloud::Vertex>
@@ -304,7 +310,7 @@ namespace easy3d {
         bool cloud_is_new = false;
 
         while (points_to_delete.size() < num_should_delete) {
-            const std::vector<int> &to_delete = internal::uniform_simplification(point_cloud, num_expected);
+            const std::vector<int> &to_delete = details::uniform_simplification(point_cloud, num_expected);
 
             for (std::size_t i = 0; i < to_delete.size(); ++i) {
                 int new_id = to_delete[i];
