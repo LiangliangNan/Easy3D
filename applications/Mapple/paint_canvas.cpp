@@ -1412,24 +1412,31 @@ void PaintCanvas::draw() {
         if (!m->renderer()->is_visible())
             continue;
 
-        // temporarily change the depth range and depth comparison method to properly render edges.
-        glDepthRange(0.001, 1.0);
-        for (auto d : m->renderer()->triangles_drawables()) {
-            if (d->is_visible())
-                d->draw(camera(), false); easy3d_debug_log_gl_error;
-        }
-
-        glDepthRange(0.0, 1.0);
-        glDepthFunc(GL_LEQUAL);
+        // Let's check if edges and surfaces are both shown. If true, we
+        // make the depth coordinates of the surface smaller, so that displaying
+        // the mesh and the surface together does not cause Z-fighting.
+        std::size_t count = 0;
         for (auto d : m->renderer()->lines_drawables()) {
-            if (d->is_visible())
+            if (d->is_visible()) {
                 d->draw(camera(), false); easy3d_debug_log_gl_error;
+                ++count;
+            }
         }
-        glDepthFunc(GL_LESS);
 
         for (auto d : m->renderer()->points_drawables()) {
             if (d->is_visible())
                 d->draw(camera(), false); easy3d_debug_log_gl_error;
         }
+
+        if (count > 0) {
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(0.5f, -0.0001f);
+        }
+        for (auto d : m->renderer()->triangles_drawables()) {
+            if (d->is_visible())
+                d->draw(camera(), false); easy3d_debug_log_gl_error;
+        }
+        if (count > 0)
+            glDisable(GL_POLYGON_OFFSET_FILL);
     }
 }
