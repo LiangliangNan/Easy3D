@@ -394,9 +394,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::copy_vertex(SurfaceMesh::Vertex v) {
-        auto points = mesh_->vertex_property<vec3>("v:point");
-
-        const vec3 p = points[v]; // [Liangliang]: 'const vec3&' won't work because the vector is growing.
+        const vec3 p = mesh_->position(v); // [Liangliang]: 'const vec3&' won't work because the vector is growing.
         auto new_v = mesh_->add_vertex(p);
         original_vertex_[new_v] = v;
         copied_vertices_[v].push_back(new_v);
