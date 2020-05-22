@@ -195,12 +195,14 @@ namespace easy3d {
                 }
             }
             mesh_->garbage_collection();
+
+            if (count > 0)
+                LOG(INFO) << count << " (out of " << to_stitch.size() << ") pairs of edges stitched";
+            else
+                LOG(WARNING) << "none of the " << to_stitch.size() << " edge pairs can be stitched";
         } else {
             LOG(WARNING) << "no coincident edges can be found for stitching";
         }
-
-        if (count > 0)
-            LOG(INFO) << count << " (out of " << to_stitch.size() << ") pairs of edges stitched";
 
         mesh_->remove_halfedge_property(scheduled);
     }
