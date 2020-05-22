@@ -771,7 +771,7 @@ std::string PaintCanvas::usage() const {
             "  'z' + Right mouse:   Zoom o fit screen                           \n"
             "  Shift + Left mouse:  Define a target point on model              \n"
             "  Shift + Right mouse: Undefine the target point (if any) on model \n"
-            "  Ctrl + Left mouse:   Zoom too fit region                         \n"
+            "  Ctrl + Left mouse:   Zoom to fit region                          \n"
             " ------------------------------------------------------------------\n"
             "  '-'/'=':             Decrease/Increase point size                \n"
             "  '{'/'}':             Decrease/Increase line width                \n"
