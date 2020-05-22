@@ -110,30 +110,24 @@ namespace easy3d {
 
     void SurfaceMeshStitching::borders_in_range(
             SurfaceMesh::Halfedge h, float squared_dist_threshold,
-            std::vector<SurfaceMesh::Halfedge> &neighbors, std::vector<float> &squared_distances
+            std::vector<SurfaceMesh::Halfedge> &neighbors
     ) const {
         ANNcoord ann_p[6];
         assign_edge_coordinate(ann_p, h);
 
-        ANNidxArray closest_pts_idx = new ANNidx[k_for_radius_search_];        // near neighbor indices
-        ANNdistArray closest_pts_dists = new ANNdist[k_for_radius_search_];    // near neighbor distances
+        std::vector<int>    pts_indices(k_for_radius_search_);               // neighbor indices
+        std::vector<float>  pts_squared_distances(k_for_radius_search_);     // neighbor (squared) distances
         const int n = get_tree(tree_)->annkFRSearch(ann_p, squared_dist_threshold, k_for_radius_search_,
-                                                    closest_pts_idx,
-                                                    closest_pts_dists);
+                                                    pts_indices.data(), pts_squared_distances.data());
 
         const int num = std::min(n, k_for_radius_search_);
         neighbors.reserve(num);
-        squared_distances.reserve(num);
         for (int i = 0; i < num; ++i) {
-            auto idx = closest_pts_idx[i];
+            auto idx = pts_indices[i];
             if (border_edges_[idx] != h) {  // exclude it self
                 neighbors.push_back(border_edges_[idx]);
-                squared_distances.push_back(closest_pts_dists[i]); // ANN uses squared distance internally
             }
         }
-
-        delete[] closest_pts_idx;
-        delete[] closest_pts_dists;
     }
 
 
@@ -142,17 +136,16 @@ namespace easy3d {
         auto t1 = mesh_->to_vertex(h1);
         auto s2 = mesh_->from_vertex(h2);
         auto t2 = mesh_->to_vertex(h2);
-        const float sd1 = distance2(mesh_->position(s1), mesh_->position(t2));
-        const float sd2 = distance2(mesh_->position(s2), mesh_->position(t1));
-        return std::max(sd1, sd2);
+        return std::max(
+                distance2(mesh_->position(s1), mesh_->position(t2)),
+                distance2(mesh_->position(s2), mesh_->position(t1)));
     }
 
 
     SurfaceMesh::Halfedge
     SurfaceMeshStitching::matched_border(SurfaceMesh::Halfedge h, float squared_dist_threshold) const {
         std::vector<SurfaceMesh::Halfedge> neighbors;
-        std::vector<float> squared_distances;
-        borders_in_range(h, squared_dist_threshold, neighbors, squared_distances);
+        borders_in_range(h, squared_dist_threshold, neighbors);
 
         float min_sd = squared_dist_threshold;
         SurfaceMesh::Halfedge best_match;
