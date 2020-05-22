@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
 
 #ifdef NDEBUG
     // splash screen
-    const std::string file = resource::directory() + "/images/splash.png";
+    const std::string file = resource::directory() + "/images/overview.jpg";
     QPixmap pixmap(QString::fromStdString(file));
-    QSplashScreen splash(pixmap, Qt::WindowStaysOnTopHint);
+    QSplashScreen splash(pixmap.scaledToWidth(500), Qt::WindowStaysOnTopHint);
     QElapsedTimer splashTimer;
     splashTimer.start();
     splash.show();
@@ -141,13 +141,12 @@ int main(int argc, char *argv[])
     QApplication::processEvents();
 
     //we want the splash screen to be visible for a minimum amount of time
-    while (splashTimer.elapsed() < 200) {   // in milliseconds
+    while (splashTimer.elapsed() < 500) {   // in milliseconds
         splash.raise();
         QApplication::processEvents(); //to let the system breath!
     }
 #endif
 
-    int status = 0;
     try {
         MainWindow win;
         win.show();
@@ -157,7 +156,7 @@ int main(int argc, char *argv[])
         QApplication::processEvents();
 #endif
 
-        status = app.exec();
+        return app.exec();
     }
     catch (const std::exception& e) {
         const std::string msg =
@@ -167,5 +166,5 @@ int main(int argc, char *argv[])
         LOG(ERROR) << msg;
     }
 
-    return status;
+    return EXIT_FAILURE;
 }
