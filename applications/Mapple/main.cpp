@@ -65,6 +65,20 @@ public:
 
 int main(int argc, char *argv[])
 {
+    //Locale management
+    {
+        //Force 'English' locale so as to get a consistent behavior everywhere
+        QLocale locale = QLocale(QLocale::English);
+        locale.setNumberOptions(QLocale::c().numberOptions());
+        QLocale::setDefault(locale);
+
+#ifdef Q_OS_UNIX
+        //We reset the numeric locale for POSIX functions
+        //See http://qt-project.org/doc/qt-5/qcoreapplication.html#locale-settings
+        setlocale(LC_NUMERIC, "C");
+#endif
+    }
+
     // Note: Calling QSurfaceFormat::setDefaultFormat() before constructing the
     //       QApplication instance is mandatory on some platforms(for example, macOS)
     //       when an OpenGL core profile context is requested. This is to ensure
