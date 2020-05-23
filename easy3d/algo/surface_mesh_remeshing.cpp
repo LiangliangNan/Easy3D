@@ -264,8 +264,13 @@ namespace easy3d {
 
         // find closest triangle of reference mesh
         TriangleMeshKdTree::NearestNeighbor nn = kd_tree_->nearest(points_[v]);
-        const vec3 &p = nn.nearest;
         const SurfaceMesh::Face f = nn.face;
+        if (!f.is_valid()) {
+            LOG(WARNING) << "could not find the nearest face for " << v << " (" << points_[v] << ")";
+            return;
+        }
+
+        const vec3 &p = nn.nearest;
 
         // get face data
         SurfaceMesh::VertexAroundFaceCirculator fvIt = refmesh_->vertices(f);
@@ -568,7 +573,7 @@ namespace easy3d {
         vec3 u, n, t, b;
 
         // add property
-        SurfaceMesh::VertexProperty<vec3> update = mesh_->add_vertex_property<vec3>("v:update");
+        SurfaceMesh::VertexProperty<vec3> update = mesh_->add_vertex_property<vec3>("v:update", vec3(0, 0, 0));
 
         // project at the beginning to get valid sizing values and normal vectors
         // for vertices introduced by splitting
@@ -614,12 +619,13 @@ namespace easy3d {
 
                         assert(c == 2);
 
-                        u *= (1.0 / ww);
-                        u -= points_[v];
-                        t = normalize(t);
-                        u = t * dot(u, t);
-
-                        update[v] = u;
+                        if (ww > 0) {// to avoid overflow (i.e., ww == 0)
+                            u /= ww;
+                            u -= points_[v];
+                            t = normalize(t);
+                            u = t * dot(u, t);
+                            update[v] = u;
+                        }
                     } else {
                         u = vec3(0.0);
                         t = vec3(0.0);
@@ -646,12 +652,13 @@ namespace easy3d {
                             ww += w;
                         }
 
-                        u /= ww;
-                        u -= points_[v];
-                        n = vnormal_[v];
-                        u -= n * dot(u, n);
-
-                        update[v] = u;
+                        if (ww > 0) { // to avoid overflow (i.e., ww == 0)
+                            u /= ww;
+                            u -= points_[v];
+                            n = vnormal_[v];
+                            u -= n * dot(u, n);
+                            update[v] = u;
+                        }
                     }
                 }
             }
