@@ -26,6 +26,7 @@
 #include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo/triangle_mesh_kdtree.h>
+#include <easy3d/util/progress.h>
 
 #include <cmath>
 #include <algorithm>
@@ -61,6 +62,7 @@ namespace easy3d {
 
         preprocessing();
 
+        ProgressLogger progress(iterations);
         for (unsigned int i = 0; i < iterations; ++i) {
             split_long_edges();
 
@@ -71,6 +73,7 @@ namespace easy3d {
             flip_edges();
 
             tangential_smoothing(5);
+            progress.next();
         }
 
         remove_caps();
@@ -98,6 +101,7 @@ namespace easy3d {
 
         preprocessing();
 
+        ProgressLogger progress(iterations);
         for (unsigned int i = 0; i < iterations; ++i) {
             split_long_edges();
 
@@ -108,6 +112,7 @@ namespace easy3d {
             flip_edges();
 
             tangential_smoothing(5);
+            progress.next();
         }
 
         remove_caps();
