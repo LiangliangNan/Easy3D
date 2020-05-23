@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     // splash screen
     const std::string file = resource::directory() + "/images/overview.jpg";
     QPixmap pixmap(QString::fromStdString(file));
-    QSplashScreen splash(pixmap.scaledToWidth(500), Qt::WindowStaysOnTopHint);
+    QSplashScreen splash(pixmap.scaledToWidth(600), Qt::WindowStaysOnTopHint);
     QElapsedTimer splashTimer;
     splashTimer.start();
     splash.show();
