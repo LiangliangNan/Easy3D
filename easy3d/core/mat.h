@@ -1290,6 +1290,19 @@ namespace easy3d {
     }
 
 
+    /*----------------------------------------------------------------------------*/
+
+    template <size_t N, size_t M, typename T>
+    inline bool has_nan(const Mat<N, M, T>& m) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                if (std::isnan(m(i, j)) || std::isinf(m(i, j)))
+                    return true;
+            }
+        }
+        return false;
+    }
+
 
     /*******************************************************************************
 
