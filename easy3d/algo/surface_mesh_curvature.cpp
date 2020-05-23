@@ -172,10 +172,12 @@ namespace easy3d {
                 ev = (dvec3) mesh_->position(mesh_->to_vertex(h0));
                 ev -= (dvec3) mesh_->position(mesh_->to_vertex(h1));
                 l = norm(ev);
-                ev /= l;
-                l *= 0.5; // only consider half of the edge (matchig Voronoi area)
-                angle[e] = atan2(dot(cross(n0, n1), ev), dot(n0, n1));
-                evec[e] = sqrt(l) * ev;
+                if (l != 0) {   // avoid overflow in case of 0-length edges
+                    ev /= l;
+                    l *= 0.5; // only consider half of the edge (matchig Voronoi area)
+                    angle[e] = atan2(dot(cross(n0, n1), ev), dot(n0, n1));
+                    evec[e] = sqrt(l) * ev;
+                }
             }
         }
 
@@ -213,7 +215,8 @@ namespace easy3d {
                 }
 
                 // normalize tensor by accumulated
-                tensor /= A;
+                if (A != 0)     // avoid overflow in case of 0-area
+                    tensor /= A;
 
                 // Liangliang: eigen solver requires FT** as input matrix :-(
                 double **matrix = new double *[3];
