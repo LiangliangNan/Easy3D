@@ -181,6 +181,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
+    LOG(INFO) << "Mapple terminated. Bye!";
 }
 
 

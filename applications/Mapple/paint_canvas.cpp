@@ -115,8 +115,6 @@ PaintCanvas::~PaintCanvas() {
     cleanup();
 
     doneCurrent();
-
-    LOG(INFO) << "viewer terminated. Bye!";
 }
 
 
