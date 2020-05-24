@@ -90,11 +90,11 @@ namespace easy3d {
             int depth_bits /* = 24 */,
             int stencil_bits /* = 8 */
     )
-            : title_(title), camera_(nullptr), samples_(0), full_screen_(full_screen), process_events_(true),
-              texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
+            : window_(nullptr), dpi_scaling_(1.0), title_(title), camera_(nullptr), samples_(0),
+              full_screen_(full_screen), background_color_(0.9f, 0.9f, 1.0f, 1.0f),
+              process_events_(true), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
-              show_pivot_point_(false), drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1),
-              background_color_(0.9f, 0.9f, 1.0f, 1.0f) {
+              show_pivot_point_(false), drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1) {
         // Avoid locale-related number parsing issues.
         setlocale(LC_NUMERIC, "C");
 

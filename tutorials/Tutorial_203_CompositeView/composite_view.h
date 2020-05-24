@@ -56,7 +56,6 @@ protected:
 
 private:
     // Active view: -1: none, 0: upper left, 1: upper right, 2: lower left, 3: lower right
-    int active_view_;
     int grid_size_;
     easy3d::LinesDrawable* grid_;
 };
