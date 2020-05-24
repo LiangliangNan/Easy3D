@@ -541,7 +541,6 @@ namespace easy3d {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
             struct sth_texture *texture = nullptr;
-            unsigned int state = 0;
             struct sth_quad q;
             short isize = (short) (size * 10.0f);
             float *v;
@@ -598,7 +597,6 @@ namespace easy3d {
                           float *minx, float *miny, float *maxx, float *maxy) {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
-            unsigned int state = 0;
             struct sth_quad q;
             short isize = (short) (size * 10.0f);
             struct sth_font *fnt = nullptr;

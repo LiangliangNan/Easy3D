@@ -39,7 +39,7 @@ using namespace ANN;
 namespace easy3d {
 
     SurfaceMeshStitching::SurfaceMeshStitching(SurfaceMesh *mesh)
-            : mesh_(mesh), k_for_radius_search_(4), coordinates_(nullptr), tree_(nullptr) {
+            : mesh_(mesh), coordinates_(nullptr), tree_(nullptr), k_for_radius_search_(4) {
         for (auto h : mesh_->halfedges()) {
             if (mesh_->is_boundary(h))
                 border_edges_.push_back(h);
@@ -115,8 +115,8 @@ namespace easy3d {
         ANNcoord ann_p[6];
         assign_edge_coordinate(ann_p, h);
 
-        std::vector<int>    pts_indices(k_for_radius_search_);               // neighbor indices
-        std::vector<float>  pts_squared_distances(k_for_radius_search_);     // neighbor (squared) distances
+        std::vector<int> pts_indices(k_for_radius_search_);               // neighbor indices
+        std::vector<float> pts_squared_distances(k_for_radius_search_);     // neighbor (squared) distances
         const int n = get_tree(tree_)->annkFRSearch(ann_p, squared_dist_threshold, k_for_radius_search_,
                                                     pts_indices.data(), pts_squared_distances.data());
 
