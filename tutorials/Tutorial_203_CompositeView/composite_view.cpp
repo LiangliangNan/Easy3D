@@ -40,7 +40,6 @@ using namespace easy3d;
 
 CompositeView::CompositeView(const std::string& title)
     : Viewer(title)
-    , active_view_(-1)
     , grid_size_(30)
 {
     grid_ = new LinesDrawable;
