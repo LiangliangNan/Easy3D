@@ -37,7 +37,7 @@ namespace easy3d {
 
     /**
      * Extrude a 3D surface mesh from a set of simple contours.
-     * @param contours The input contours. They must be simple, i.e.,
+     * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.
      *      Simple contours can be obtained using the tessellator.
@@ -48,7 +48,7 @@ namespace easy3d {
 
     /**
      * Extrude a 3D surface mesh from a set of simple contours.
-     * @param contours The input contours. They must be simple, i.e.,
+     * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.
      *      Simple contours can be obtained using the tessellator.
