@@ -29,7 +29,7 @@ if (Vulkan_FOUND)
             main.cpp
             )
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
+    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "SandBox")
 
     target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR} ${Vulkan_INCLUDE_DIRS})
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Vulkan_LIBRARIES} glfw core util renderer)

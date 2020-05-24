@@ -10,8 +10,7 @@ add_executable(${PROJECT_NAME}
         some_test.cpp
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-                      FOLDER "tutorials")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "SandBox")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
