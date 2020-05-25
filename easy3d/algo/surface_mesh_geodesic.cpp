@@ -345,12 +345,6 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    bool valid_triangle(double a, double b, double c) {
-        return (a + b > c && a + c > b && b + c > a);
-    }
-
-    //-----------------------------------------------------------------------------
-
     float
     SurfaceMeshGeodesic::distance(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, float r0,
                                   float r1) {
