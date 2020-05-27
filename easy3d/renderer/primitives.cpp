@@ -78,6 +78,8 @@ namespace easy3d {
             glDrawArrays(GL_LINE_LOOP, 0, points.size());     easy3d_debug_log_gl_error;
             vao.release();  easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
         }
 
 
@@ -127,6 +129,9 @@ namespace easy3d {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             vao.release();   easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
+            VertexArrayObject::release_buffer(element_buffer);
         }
 
 
@@ -171,10 +176,10 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
+            unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+            vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
@@ -187,6 +192,10 @@ namespace easy3d {
             program->release_texture();
             vao.release();   easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
+            VertexArrayObject::release_buffer(texcoord_buffer);
+            VertexArrayObject::release_buffer(element_buffer);
         }
 
 
@@ -222,10 +231,10 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
+            unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+            vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
@@ -238,6 +247,10 @@ namespace easy3d {
             program->release_texture();
             vao.release();   easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
+            VertexArrayObject::release_buffer(texcoord_buffer);
+            VertexArrayObject::release_buffer(element_buffer);
         }
 
 
@@ -282,10 +295,10 @@ namespace easy3d {
 
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
-            unsigned int vertex_buffer = 0, tex_buffer = 0, element_buffer = 0;
+            unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
             VertexArrayObject vao; easy3d_debug_log_gl_error;
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(),points.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
-            vao.create_array_buffer(tex_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+            vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),true);    easy3d_debug_log_gl_error;
 
             program->bind();      easy3d_debug_log_gl_error;
@@ -298,6 +311,10 @@ namespace easy3d {
             program->release_texture();
             vao.release();   easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
+            VertexArrayObject::release_buffer(texcoord_buffer);
+            VertexArrayObject::release_buffer(element_buffer);
         }
 
 
@@ -459,6 +476,8 @@ namespace easy3d {
             glDrawArrays(GL_LINE_LOOP, 0, points.size());     easy3d_debug_log_gl_error;
             vao.release();  easy3d_debug_log_gl_error;
             program->release();     easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
         }
 
 
@@ -515,6 +534,9 @@ namespace easy3d {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
             vao.release();   easy3d_debug_log_gl_error;
             program->release();easy3d_debug_log_gl_error;
+
+            VertexArrayObject::release_buffer(vertex_buffer);
+            VertexArrayObject::release_buffer(element_buffer);
         }
 
 

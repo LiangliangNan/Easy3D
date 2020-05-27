@@ -908,6 +908,9 @@ namespace easy3d {
                 vao.release();
                 program->release_texture();
 
+                VertexArrayObject::release_buffer(vertex_buffer);
+                VertexArrayObject::release_buffer(element_buffer);
+
                 texture->nverts = 0;
             }
             texture = texture->next;
