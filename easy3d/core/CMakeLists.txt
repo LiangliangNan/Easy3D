@@ -10,6 +10,7 @@ set(${PROJECT_NAME}_HEADERS
         curve.h
         eigen_solver.h
         graph.h
+        hash.h
         heap.h
         line.h
         mat.h
