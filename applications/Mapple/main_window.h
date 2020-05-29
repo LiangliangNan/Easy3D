@@ -105,6 +105,7 @@ private slots:
     // surface mesh
     void surfaceMeshReportTopologyStatistics();
     void surfaceMeshExtractConnectedComponents();
+    void surfaceMeshPlanarPartition();
     void surfaceMeshTriangulation();
     void surfaceMeshDetectDuplicatedFaces();
     void surfaceMeshRemoveDuplicatedFaces();

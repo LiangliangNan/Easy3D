@@ -117,7 +117,9 @@
      <addaction name="actionSurfaceMeshSubdivisionSqrt3"/>
     </widget>
     <addaction name="actionTopologyStatistics"/>
+    <addaction name="separator"/>
     <addaction name="actionExtractConnectedComponents"/>
+    <addaction name="actionPlanarPartition"/>
     <addaction name="separator"/>
     <addaction name="actionSurfaceMeshStitchCoincidentEdges"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
@@ -186,7 +188,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="features">
@@ -227,7 +229,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset>
+         <iconset resource="mapple.qrc">
           <normaloff>:/resources/icons/drawable_triangles.png</normaloff>:/resources/icons/drawable_triangles.png</iconset>
         </attribute>
         <attribute name="label">
@@ -261,7 +263,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset>
+         <iconset resource="mapple.qrc">
           <normaloff>:/resources/icons/drawable_lines.png</normaloff>:/resources/icons/drawable_lines.png</iconset>
         </attribute>
         <attribute name="label">
@@ -295,7 +297,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset>
+         <iconset resource="mapple.qrc">
           <normaloff>:/resources/icons/drawable_points.png</normaloff>:/resources/icons/drawable_points.png</iconset>
         </attribute>
         <attribute name="label">
@@ -329,7 +331,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset>
+         <iconset resource="mapple.qrc">
           <normaloff>:/resources/icons/light.png</normaloff>:/resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
@@ -527,7 +529,7 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
@@ -539,7 +541,7 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
@@ -561,7 +563,7 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
    </property>
    <property name="text">
@@ -573,7 +575,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
    </property>
    <property name="text">
@@ -582,7 +584,7 @@
   </action>
   <action name="actionClearRecentFiles">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/clear.png</normaloff>:/resources/icons/clear.png</iconset>
    </property>
    <property name="text">
@@ -601,7 +603,7 @@
   </action>
   <action name="actionSnapshot">
    <property name="icon">
-    <iconset>
+    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
      <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
@@ -658,7 +660,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/select_lasso.png</normaloff>:/resources/icons/select_lasso.png</iconset>
    </property>
    <property name="text">
@@ -689,7 +691,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/select_rect.png</normaloff>:/resources/icons/select_rect.png</iconset>
    </property>
    <property name="text">
@@ -704,7 +706,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/manipulation.png</normaloff>:/resources/icons/manipulation.png</iconset>
    </property>
    <property name="text">
@@ -719,7 +721,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/select_click.png</normaloff>:/resources/icons/select_click.png</iconset>
    </property>
    <property name="text">
@@ -736,7 +738,7 @@
   </action>
   <action name="actionDownSampling">
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/down_sample.png</normaloff>:/resources/icons/down_sample.png</iconset>
    </property>
    <property name="text">
@@ -745,7 +747,7 @@
   </action>
   <action name="actionAddGaussianNoise">
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/noise.png</normaloff>:/resources/icons/noise.png</iconset>
    </property>
    <property name="text">
@@ -754,7 +756,7 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset>
+    <iconset resource="mapple.qrc">
      <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="text">
@@ -888,6 +890,11 @@
     <string>Create from text</string>
    </property>
   </action>
+  <action name="actionPlanarPartition">
+   <property name="text">
+    <string>Planar partition</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -898,6 +905,7 @@
   </customwidget>
  </customwidgets>
  <resources>
+  <include location="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc"/>
   <include location="mapple.qrc"/>
  </resources>
  <connections/>

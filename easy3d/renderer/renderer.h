@@ -191,6 +191,15 @@ namespace easy3d {
         /**
          * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
          * @param model  The model.
+         * @param segments  The name of the <int> type face property storing the segmentation.
+         * @param color_name The name of the color property to be created.
+         */
+        static void color_from_segmentation(SurfaceMesh *model, const std::string &segments,
+                                            const std::string &color_name = "f:color_segments");
+
+        /**
+         * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
+         * @param model  The model.
          * @param segments  The name of the <int> type vertex property storing the segmentation.
          * @param color_name The name of the color property to be created.
          */
