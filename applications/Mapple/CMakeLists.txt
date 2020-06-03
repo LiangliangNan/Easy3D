@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.1)
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
+
+add_subdirectory(tools)
+
 include(../../cmake/UseQt5.cmake)
 if (NOT QT5_FOUND)
     message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
@@ -15,7 +18,6 @@ endif ()
 
 # some algorithms may use OpenMP
 include(../../cmake/UseOpenMP.cmake)
-
 
 set(${PROJECT_NAME}_HEADERS
         main_window.h
@@ -44,12 +46,6 @@ set(${PROJECT_NAME}_HEADERS
         widgets/widget_drawable_lines.h
         widgets/widget_drawable_triangles.h
         widgets/widget_global_setting.h
-
-        tools/canvas.h
-        tools/tool.h
-        tools/tool_manager.h
-        tools/tool_selection_point_cloud.h
-        tools/tool_selection_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -82,11 +78,6 @@ set(${PROJECT_NAME}_SOURCES
         widgets/widget_drawable_triangles.cpp
         widgets/widget_global_setting.cpp
         widgets/widget_model_list.cpp
-
-        tools/tool.cpp
-        tools/tool_manager.cpp
-        tools/tool_selection_point_cloud.cpp
-        tools/tool_selection_surface_mesh.cpp
         )
 
 set(${PROJECT_NAME}_FORMS
@@ -116,8 +107,8 @@ set(${PROJECT_NAME}_FORMS
         )
 
 set(${PROJECT_NAME}_RESOURCES
-    mapple.qrc
-    )
+        mapple.qrc
+        )
 
 if (MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
@@ -146,7 +137,7 @@ if (MSVC)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} renderer algo gui)
+target_link_libraries(${PROJECT_NAME} renderer algo gui tools)
 
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)

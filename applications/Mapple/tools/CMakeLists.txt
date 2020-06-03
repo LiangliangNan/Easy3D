@@ -6,19 +6,17 @@ project(${PROJECT_NAME})
 
 set(${PROJECT_NAME}_HEADERS
         canvas.h
-        picker.h
-        picker_model.h
-        picker_point_cloud.h
-        picker_surface_mesh.h
+        tool.h
+        tool_manager.h
+        tool_segmentation_surface_mesh.h
+        tool_selection_point_cloud.h
+        tool_selection_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
-        picker.cpp
-        picker_model.cpp
-        picker_point_cloud.cpp
-        picker_surface_mesh.cpp
         tool.cpp
         tool_manager.cpp
+        tool_segmentation_surface_mesh.cpp
         tool_selection_point_cloud.cpp
         tool_selection_surface_mesh.cpp
         )
@@ -31,7 +29,11 @@ add_library(${PROJECT_NAME} STATIC
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} core util viewer)
+
+set(MAPPLE_DIR ${EASY3D_ROOT}/applications/Mapple)
+target_include_directories(${PROJECT_NAME} PRIVATE ${MAPPLE_DIR})
+
+target_link_libraries(${PROJECT_NAME} core util renderer)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
