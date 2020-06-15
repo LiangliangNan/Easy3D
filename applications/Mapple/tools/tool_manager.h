@@ -25,9 +25,10 @@
 #ifndef EASY3D_GUI_TOOL_MANAGER_H
 #define EASY3D_GUI_TOOL_MANAGER_H
 
-#include "tools/tool.h"
+#include <tools/tool.h>
 
 #include <map>
+
 
 namespace easy3d {
 

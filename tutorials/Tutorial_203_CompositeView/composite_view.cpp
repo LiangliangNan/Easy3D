@@ -130,7 +130,7 @@ void CompositeView::draw_grid() const {
     // the translation moves the grid to the view center
     program->set_uniform("MVP", proj * mat4::translation(w * 0.5f, h * 0.5f, 0.0f));
     program->set_uniform("per_vertex_color", false);
-    program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
+    program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
     grid_->gl_draw(false);
     program->release();
 

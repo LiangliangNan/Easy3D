@@ -23,9 +23,9 @@
  */
 
 
-#include "tools/tool.h"
-#include "tools/tool_manager.h"
-#include "tools/canvas.h"
+#include <tools/tool.h>
+#include <tools/tool_manager.h>
+#include <tools/canvas.h>
 
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>

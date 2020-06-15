@@ -23,9 +23,9 @@
  */
 
 
-#include "tools/tool_selection_surface_mesh.h"
-#include "tools/tool_manager.h"
-#include "tools/canvas.h"
+#include <tools/tool_selection_surface_mesh.h>
+#include <tools/tool_manager.h>
+#include <tools/canvas.h>
 
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_surface_mesh.h>

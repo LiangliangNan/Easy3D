@@ -25,7 +25,7 @@
 #ifndef EASY3D_GUI_TOOL_SELECTION_POINT_CLOUD_H
 #define EASY3D_GUI_TOOL_SELECTION_POINT_CLOUD_H
 
-#include "tools/tool.h"
+#include <tools/tool.h>
 #include <easy3d/core/types.h>
 
 

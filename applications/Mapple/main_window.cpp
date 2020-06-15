@@ -57,6 +57,7 @@
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
+#include <easy3d/algo/surface_mesh_planar_partition.h>
 #include <easy3d/algo_ext/mesh_surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -789,6 +790,7 @@ void MainWindow::createActionsForPointCloudMenu() {
 void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(surfaceMeshReportTopologyStatistics()));
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
+    connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
     connect(ui->actionSurfaceMeshStitchCoincidentEdges, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchCoincidentEdges()));
     connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
 
@@ -1197,7 +1199,28 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
             face_color[f] = color;
     }
 
-    mesh->renderer()->get_triangles_drawable("faces")->set_property_coloring(State::FACE, color_name);
+    auto faces = mesh->renderer()->get_triangles_drawable("faces");
+    faces->set_property_coloring(State::FACE, color_name);
+
+    mesh->renderer()->update();
+    viewer()->update();
+    updateRenderingPanel();
+}
+
+
+void MainWindow::surfaceMeshPlanarPartition() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    const std::string partition_name = "f:planar_partition";
+    SurfaceMeshPlanarPartition partition(mesh);
+    partition.apply(partition_name);
+
+    const std::string color_name = "f:color_planar_partition";
+    Renderer::color_from_segmentation(mesh, partition_name, color_name);
+    auto faces = mesh->renderer()->get_triangles_drawable("faces");
+    faces->set_property_coloring(State::FACE, color_name);
 
     mesh->renderer()->update();
     viewer()->update();

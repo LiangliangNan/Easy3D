@@ -183,6 +183,38 @@ namespace easy3d {
     }
 
 
+    void Renderer::color_from_segmentation(SurfaceMesh *model, const std::string &segments_name, const std::string &color_name) {
+        if (model->empty()) {
+            LOG(WARNING) << "model has no valid geometry";
+            return;
+        }
+
+        auto segments = model->get_face_property<int>(segments_name);
+        if (!segments) {
+            LOG(WARNING) << "the surface mesh does not have a face property named '" << segments_name << "\'";
+            return;
+        }
+
+        int max_index = 0;
+        for (auto f : model->faces())
+            max_index = std::max(max_index, segments[f]);
+
+        // assign each segment a unique color
+        std::vector<vec3> color_table(max_index + 1);   // index starts from 0
+        for (auto &c : color_table)
+            c = random_color();
+
+        auto colors = model->face_property<vec3>(color_name, vec3(0, 0, 0));
+        for (auto f : model->faces()) {
+            int idx = segments[f];
+            if (idx == -1)
+                colors[f] = vec3(0, 0, 0);
+            else
+                colors[f] = color_table[idx];
+        }
+    }
+
+
     void Renderer::color_from_segmentation(PointCloud *model, const std::string &segments_name, const std::string &color_name) {
         if (model->empty()) {
             LOG(WARNING) << "model has no valid geometry";
