@@ -954,7 +954,7 @@ void ViewerQt::postDraw() {
         program->bind();
         program->set_uniform("MVP", proj);
         program->set_uniform("per_vertex_color", false);
-        program->set_uniform("default_color", vec3(0.0f, 0.0f, 1.0f));
+        program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
         drawable.gl_draw(false);
         program->release();
         glEnable(GL_DEPTH_TEST);   // restore
