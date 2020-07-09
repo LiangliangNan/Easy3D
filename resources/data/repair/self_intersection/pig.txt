@@ -1,0 +1,4 @@
+3 pairs of triangles intersect.
+f535 <-> f505
+f535 <-> f504
+f535 <-> f533

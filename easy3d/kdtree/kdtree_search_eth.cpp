@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/kdtree/kdtree_search_eth.h>
 #include <easy3d/core/point_cloud.h>
@@ -93,13 +91,13 @@ namespace easy3d {
             squared_distance = get_tree(tree_)->getSquaredDistance(0);
             return get_tree(tree_)->getNeighbourPositionIndex(0);
         } else {
-            std::cerr << "no point found" << std::endl;
+            LOG(ERROR) << "no point found";
             return 0;
         }
     }
 
 
-    void KdTreeSearch_ETH::find_closest_K_points(
+    void KdTreeSearch_ETH::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -114,11 +112,11 @@ namespace easy3d {
                 }
             }
     // 		else
-    // 			std::cerr << "less than " << k << " points found" << std::endl;
+    // 			LOG(ERROR) << "less than " << k << " points found";
     }
 
 
-    void KdTreeSearch_ETH::find_closest_K_points(
+    void KdTreeSearch_ETH::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -135,11 +133,11 @@ namespace easy3d {
                 }
             }
     // 		else
-    // 			std::cerr << "less than " << k << " points found" << std::endl;
+    // 			LOG(ERROR) << "less than " << k << " points found";
     }
 
 
-    void KdTreeSearch_ETH::find_points_in_radius(
+    void KdTreeSearch_ETH::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );
@@ -153,7 +151,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ETH::find_points_in_radius(
+    void KdTreeSearch_ETH::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             kdtree::Vector3D v3d( p.x, p.y, p.z );

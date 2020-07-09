@@ -1,31 +1,30 @@
-﻿/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+﻿/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 
-#ifndef EASY3D_VEC_H
-#define EASY3D_VEC_H
+#ifndef EASY3D_CORE_VEC_H
+#define EASY3D_CORE_VEC_H
 
 #include <cassert>
 #include <iostream>
@@ -40,7 +39,8 @@ namespace easy3d {
     template <size_t N, class T>
     class Vec {
     public:
-        typedef Vec<N, T> thisclass;
+        typedef Vec<N, T>   thisclass;
+        typedef T           FT;
 
         Vec() { for (size_t i = 0; i < N; i++) { data_[i] = T(0); } }
 
@@ -84,15 +84,18 @@ namespace easy3d {
         operator const T*() const { return data_; }
         operator T*() { return data_; }
 
-        inline T& operator[](int idx) {
-            assert(idx < N);
-            return data()[idx];
-        }
-
-        inline const T& operator[](int idx) const {
-            assert(idx < N);
-            return data()[idx];
-        }
+		// Liangliang: The compiler can't decide whether to use your overloaded 
+		//			   operator[] or the built-in operator[] on the const T*.
+		// See https://stackoverflow.com/questions/1726740/c-error-operator-2-overloads-have-similar-conversions 
+        //inline T& operator[](size_t idx) {
+        //    assert(idx < N);
+        //    return data()[idx];
+        //}
+		//
+        //inline const T& operator[](size_t idx) const {
+        //    assert(idx < N);
+        //    return data()[idx];
+        //}
 
         inline T length2() const {
             T result = T(0);
@@ -279,6 +282,7 @@ namespace easy3d {
     class Vec<2, T> {
     public:
         typedef Vec<2, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0) { }
         Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
@@ -335,21 +339,24 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
-            assert(idx < 2);
-            return _array[idx];
-        }
-
-        inline const T& operator[](int idx) const {
-            assert(idx < 2);
-            return _array[idx];
-        }
+		// Liangliang: The compiler can't decide whether to use your overloaded 
+		//			   operator[] or the built-in operator[] on the const T*.
+		// See https://stackoverflow.com/questions/1726740/c-error-operator-2-overloads-have-similar-conversions 
+        //inline T& operator[](size_t idx) {
+        //    assert(idx < 2);
+        //    return _array[idx];
+        //}
+		//
+        //inline const T& operator[](size_t idx) const {
+        //    assert(idx < 2);
+        //    return _array[idx];
+        //}
 
         //data intentionally left public to allow vec.x
         union {
+            T _array[2];		// array access
             struct { T x, y; };	// standard names for components
             struct { T u, v; };	// standard names for components
-            T _array[2];		// array access
         };
     };
 
@@ -382,9 +389,10 @@ namespace easy3d {
     class Vec<3, T> {
     public:
         typedef Vec<3, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0), z(0) {}
-        Vec(const Vec<2, T>& v, const T& s = 0) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
+        explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
         Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {} // very useful for inverse promoting from homogeneous coordinates
 
         Vec(T x_in, T y_in, T z_in) : x(x_in), y(y_in), z(z_in) {}
@@ -443,22 +451,24 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
-            assert(idx < 3);
-            return _array[idx];
-        }
-
-        inline const T& operator[](int idx) const {
-            assert(idx < 3);
-            return _array[idx];
-        }
+		// Liangliang: The compiler can't decide whether to use your overloaded 
+		//			   operator[] or the built-in operator[] on the const T*.
+		// See https://stackoverflow.com/questions/1726740/c-error-operator-2-overloads-have-similar-conversions 
+        //inline T& operator[](size_t idx) {
+        //    assert(idx < 3);
+        //    return _array[idx];
+        //}
+		//
+        //inline const T& operator[](size_t idx) const {
+        //    assert(idx < 3);
+        //    return _array[idx];
+        //}
 
         //data intentionally left public to allow vec.x
         union {
-            struct { T x, y, z; };	// standard names for components
-            struct { T u, v, w; };	// standard names for components
-            struct { T r, g, b; };	// standard names for components
             T _array[3];			// array access
+            struct { T x, y, z; };	// standard names for components
+            struct { T r, g, b; };	// standard names for components
         };
     };
 
@@ -507,9 +517,10 @@ namespace easy3d {
     class Vec<4, T> {
     public:
         typedef Vec<4, T> thisclass;
+        typedef T         FT;
 
         Vec() : x(0), y(0), z(0), w(0) {}
-        Vec(const Vec<3, T>& v, const T& s = 0) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
+        explicit Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
         Vec(T x_in, T y_in, T z_in, T w_in) : x(x_in), y(y_in), z(z_in), w(w_in) {}
 
         explicit Vec(const T& s) : x(s), y(s), z(s), w(s) {  }
@@ -566,21 +577,24 @@ namespace easy3d {
         operator const T*() const { return _array; }
         operator T*() { return _array; }
 
-        inline T& operator[](int idx) {
-            assert(idx < 4);
-            return _array[idx];
-        }
-
-        inline const T& operator[](int idx) const {
-            assert(idx < 4);
-            return _array[idx];
-        }
+		// Liangliang: The compiler can't decide whether to use your overloaded 
+		//			   operator[] or the built-in operator[] on the const T*.
+		// See https://stackoverflow.com/questions/1726740/c-error-operator-2-overloads-have-similar-conversions 
+        //inline T& operator[](size_t idx) {
+        //    assert(idx < 4);
+        //    return _array[idx];
+        //}
+		//
+        //inline const T& operator[](size_t idx) const {
+        //    assert(idx < 4);
+        //    return _array[idx];
+        //}
 
         //data intentionally left public to allow vec.x
         union {
+            T _array[4];				// array access
             struct { T x, y, z, w; };	// standard names for components
             struct { T r, g, b, a; };	// standard names for components
-            T _array[4];				// array access
         };
     };
 
@@ -643,6 +657,34 @@ namespace easy3d {
         return in >> v.x >> v.y >> v.z >> v.w;
     }
 
+    //----------------------------------------------------------------------
+
+    template <size_t N, class T>
+    inline bool has_nan(const Vec<N, T> &v) {
+        for (std::size_t i = 0; i < N; ++i) {
+            if (std::isnan(v[i]) || std::isinf(v[i]))
+                return true;
+        }
+        return false;
+    }
+
+    //! return component-wise minimum
+    template <size_t N, class T>
+    inline Vec<N, T> comp_min(const Vec<N, T> &v1, const Vec<N, T> &v2) {
+        Vec<N, T> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = std::min(v1[i], v2[i]);
+        return result;
+    }
+
+    //! return component-wise minimum
+    template <size_t N, class T>
+    inline Vec<N, T> comp_max(const Vec<N, T> &v1, const Vec<N, T> &v2) {
+        Vec<N, T> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = std::max(v1[i], v2[i]);
+        return result;
+    }
 
 #else
 
@@ -733,5 +775,5 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_VEC_H
+#endif  // EASY3D_CORE_VEC_H
 

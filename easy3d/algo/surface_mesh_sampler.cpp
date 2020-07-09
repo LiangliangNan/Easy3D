@@ -1,44 +1,45 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work,
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan.
-*           Easy3D: a lightweight, easy-to-use, and efficient C++
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/algo/surface_mesh_sampler.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/util/file_system.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
 
 
-    PointCloud* SurfaceMeshSampler::apply(const SurfaceMesh* mesh, int num /* = 1000000 */)
-    {
-        PointCloud* cloud = new PointCloud;
-        cloud->set_name(mesh->name() + "_sampled");
+    PointCloud *SurfaceMeshSampler::apply(const SurfaceMesh *mesh, int num /* = 1000000 */) {
+        PointCloud *cloud = new PointCloud;
+        const std::string &name = file_system::name_less_extension(mesh->name()) + "_sampled.ply";
+        cloud->set_name(name);
+
         PointCloud::VertexProperty<vec3> normals = cloud->add_vertex_property<vec3>("v:normal");
 
-        std::cout << "sampling surface..." << std::endl;
+        LOG(INFO) << "sampling surface...";
 
         // add all mesh vertices (even the requestred number is smaller than the
         // number of vertices in the mesh.
@@ -59,16 +60,17 @@ namespace easy3d {
             return cloud;   // we got enougth points already
 
         // collect triangles and compute their areas
-        struct Triangle : std::vector<SurfaceMesh::Vertex> {};
+        struct Triangle : std::vector<SurfaceMesh::Vertex> {
+        };
 
         std::vector<Triangle> triangles;
-        std::vector<float>    triangle_areas;
-        std::vector<vec3>	  triangle_normals;
+        std::vector<float> triangle_areas;
+        std::vector<vec3> triangle_normals;
 
         auto mesh_face_normals = mesh->get_face_property<vec3>("f:normal");
         float surface_area = 0.0;
         for (auto f : mesh->faces()) {
-            const vec3& n = mesh_face_normals ? mesh_face_normals[f] : mesh->compute_face_normal(f);
+            const vec3 &n = mesh_face_normals ? mesh_face_normals[f] : mesh->compute_face_normal(f);
 
             SurfaceMesh::Halfedge start = mesh->halfedge(f);
             SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
@@ -96,14 +98,14 @@ namespace easy3d {
         std::size_t triangle_num = triangles.size();
         std::size_t num_generated = 0;
         std::size_t triangles_done = 0;
-//        ProgressLogger progress(triangle_num, title());
+        ProgressLogger progress(triangle_num, "Sampling mesh");
         for (std::size_t idx = 0; idx < triangle_num; ++idx) {
-            const Triangle& tri = triangles[idx];
-            const vec3& n = triangle_normals[idx];
+            const Triangle &tri = triangles[idx];
+            const vec3 &n = triangle_normals[idx];
 
             // samples number considering the facet size (i.e., area)
             float samples_num = triangle_areas[idx] * density;
-            std::size_t quant_samples_num = (std::size_t)samples_num;
+            std::size_t quant_samples_num = (std::size_t) samples_num;
 
             // adjust w.r.t. accumulated error
             samples_error += samples_num - quant_samples_num;
@@ -112,14 +114,15 @@ namespace easy3d {
                 quant_samples_num++;
             }
 
-            if (triangles_done == triangle_num - 1)		// override number to gather all remaining points if last facet
+            if (triangles_done ==
+                triangle_num - 1)        // override number to gather all remaining points if last facet
                 quant_samples_num = num_needed - num_generated;
 
             // generate points
             for (unsigned int j = 0; j < quant_samples_num; j++) {
                 // compute barycentric coords
-                double s = sqrt((double)rand() / (double)RAND_MAX);
-                double t = (double)rand() / (double)RAND_MAX;
+                double s = sqrt((double) rand() / (double) RAND_MAX);
+                double t = (double) rand() / (double) RAND_MAX;
                 double c[3];
 
                 c[0] = 1.0 - s;
@@ -136,10 +139,10 @@ namespace easy3d {
 
             num_generated += quant_samples_num;
             triangles_done++;
-//            progress.next();
+            progress.next();
         }
 
-        std::cout << "done. resulted point cloud has " << cloud->n_vertices() << " points" << std::endl;
+        LOG(INFO) << "done. resulted point cloud has " << cloud->n_vertices() << " points";
         return cloud;
     }
 

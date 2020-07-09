@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /** ----------------------------------------------------------
  *
@@ -36,9 +34,8 @@
  *
  *----------------------------------------------------------*/
 
-#ifndef EASY3D_QUATERNION_H
-#define EASY3D_QUATERNION_H
-
+#ifndef EASY3D_CORE_QUATERNION_H
+#define EASY3D_CORE_QUATERNION_H
 
 #include <easy3d/core/constant.h>
 #include <easy3d/core/vec.h>
@@ -708,7 +705,16 @@ namespace easy3d {
         return is >> Q[0] >> Q[1] >> Q[2] >> Q[3];
     }
 
+    template <class FT> inline
+    bool has_nan(const Quat<FT>& Q) {
+        for (int i=0; i<4; ++i) {
+            if (std::isnan(Q[i]) || std::isinf(Q[i]))
+                return true;
+        }
+        return false;
+    }
+
 }
 
 
-#endif // EASY3D_QUATERNION_H
+#endif // EASY3D_CORE_QUATERNION_H

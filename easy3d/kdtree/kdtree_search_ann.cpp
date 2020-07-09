@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <algorithm>
 
@@ -36,6 +34,10 @@ using namespace ANN;
 
 #define get_tree(x) (reinterpret_cast<ANNkd_tree*>(x))
 
+// ANN uses a bad storage for the points. People usually copy the entire point cloud.
+// Here I create an array to store the pointer of each point to save memory.
+// You can define COPY_POINT_CLOUD to 1 to allow copy of the entire point cloud.
+#define     COPY_POINT_CLOUD     0
 
 namespace easy3d {
 
@@ -44,13 +46,18 @@ namespace easy3d {
         points_num_ = 0;
         tree_ = nullptr;
         k_for_radius_search_ = 32;
-        std::cerr << "KdTreeSearch_ANN: k = 32 for radius search" << std::endl;
+        LOG(INFO) << "KdTreeSearch_ANN: k = 32 for radius search";
     }
 
 
     KdTreeSearch_ANN::~KdTreeSearch_ANN() {
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
+#else
+        if (points_)
+            delete[] points_;
+#endif
 
         delete get_tree(tree_);
         annClose();
@@ -60,8 +67,13 @@ namespace easy3d {
     void KdTreeSearch_ANN::begin()  {
         points_num_ = 0;
 
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         if (points_)
             annDeallocPts(points_);
+#else
+        if (points_)
+            delete[] points_;
+#endif
 
         delete get_tree(tree_);
         tree_ = nullptr;
@@ -75,8 +87,9 @@ namespace easy3d {
 
     void KdTreeSearch_ANN::add_point_cloud(PointCloud* cloud)  {
         points_num_ = int(cloud->n_vertices());
-        points_ = annAllocPts(points_num_, 3);
 
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+        points_ = annAllocPts(points_num_, 3);
         const std::vector<vec3>& pts = cloud->points();
         for (int i = 0; i < points_num_; ++i) {
             const vec3& p = pts[i];
@@ -84,6 +97,12 @@ namespace easy3d {
             points_[i][1] = p[1];
             points_[i][2] = p[2];
         }
+#else
+        points_ = new float*[points_num_];
+        std::vector<vec3>& pts = cloud->points();
+        for (int i = 0; i < points_num_; ++i)
+            points_[i] = pts[i];
+#endif
     }
 
 
@@ -119,7 +138,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ANN::find_closest_K_points(
+    void KdTreeSearch_ANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors
         )  const {
             ANNcoord ann_p[3];
@@ -134,7 +153,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ANN::find_closest_K_points(
+    void KdTreeSearch_ANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             ANNcoord ann_p[3];
@@ -148,7 +167,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ANN::find_points_in_radius(
+    void KdTreeSearch_ANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors
         )  const {
             ANNcoord ann_p[3];
@@ -171,7 +190,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_ANN::find_points_in_radius(
+    void KdTreeSearch_ANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
         )  const {
             ANNcoord ann_p[3];

@@ -1,0 +1,147 @@
+W0129 10:43:50.328332 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/complex_edges_0.off" has topological issues:
+		4 non-manifold vertices (fixed)
+		3 non-manifold edges (fixed)
+	Solution:
+		4 vertices copied (4 occurrences) to ensure manifoldness
+	Result:
+		9 faces
+		20 vertices
+		27 edges
+W0129 10:43:50.335844 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/complex_edges_1.off" has topological issues:
+		6 non-manifold vertices (fixed)
+		5 non-manifold edges (fixed)
+	Solution:
+		6 vertices copied (8 occurrences) to ensure manifoldness
+	Result:
+		9 faces
+		24 vertices
+		29 edges
+W0129 10:43:50.336673 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/complex_edges_2.off" has topological issues:
+		5 non-manifold vertices (fixed)
+		4 non-manifold edges (fixed)
+	Solution:
+		5 vertices copied (6 occurrences) to ensure manifoldness
+	Result:
+		9 faces
+		22 vertices
+		28 edges
+W0129 10:43:50.337553 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/complex_vertices.off" has topological issues:
+		1 non-manifold vertices (fixed)
+	Solution:
+		1 vertices copied (2 occurrences) to ensure manifoldness
+	Result:
+		3 faces
+		9 vertices
+		9 edges
+W0129 10:43:50.338337 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/complex_and_isolated_vertices.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		2 isolated vertices (removed)
+	Solution:
+		1 vertices copied (2 occurrences) to ensure manifoldness
+		2 isolated vertices deleted
+	Result:
+		3 faces
+		9 vertices
+		9 edges
+W0129 10:43:50.339366 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/2_umbrellas.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		1 isolated vertices (removed)
+	Solution:
+		1 vertices copied (1 occurrences) to ensure manifoldness
+		1 isolated vertices deleted
+	Result:
+		10 faces
+		12 vertices
+		20 edges
+W0129 10:43:50.340401 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/3_umbrellas.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		2 isolated vertices (removed)
+	Solution:
+		1 vertices copied (2 occurrences) to ensure manifoldness
+		2 isolated vertices deleted
+	Result:
+		15 faces
+		18 vertices
+		30 edges
+W0129 10:43:50.341682 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/5_umbrellas.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		4 isolated vertices (removed)
+	Solution:
+		1 vertices copied (4 occurrences) to ensure manifoldness
+		4 isolated vertices deleted
+	Result:
+		25 faces
+		30 vertices
+		50 edges
+W0129 10:43:50.342938 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/6_umbrellas.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		5 isolated vertices (removed)
+	Solution:
+		1 vertices copied (5 occurrences) to ensure manifoldness
+		5 isolated vertices deleted
+	Result:
+		30 faces
+		36 vertices
+		60 edges
+E0129 10:43:50.343756 59155904 surface_mesh_io_off.cpp:127] failed reading the 8_th face from file (this is the first record)
+W0129 10:43:50.344257 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/2_umbrellas_open.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		1 isolated vertices (removed)
+	Solution:
+		1 vertices copied (1 occurrences) to ensure manifoldness
+		1 isolated vertices deleted
+	Result:
+		8 faces
+		12 vertices
+		18 edges
+W0129 10:43:50.345398 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/3_umbrellas_open.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		2 isolated vertices (removed)
+	Solution:
+		1 vertices copied (2 occurrences) to ensure manifoldness
+		2 isolated vertices deleted
+	Result:
+		12 faces
+		18 vertices
+		27 edges
+W0129 10:43:50.346707 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/5_umbrellas_open.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		4 isolated vertices (removed)
+	Solution:
+		1 vertices copied (4 occurrences) to ensure manifoldness
+		4 isolated vertices deleted
+	Result:
+		20 faces
+		30 vertices
+		45 edges
+W0129 10:43:50.348191 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/repair/non_manifold/6_umbrellas_open.off" has topological issues:
+		1 non-manifold vertices (fixed)
+		5 isolated vertices (removed)
+	Solution:
+		1 vertices copied (5 occurrences) to ensure manifoldness
+		5 isolated vertices deleted
+	Result:
+		24 faces
+		36 vertices
+		54 edges
+W0129 10:43:50.422302 59155904 surface_mesh_io_obj.cpp:184] diffuse texture ignored: domik.jpg
+W0129 10:43:50.422374 59155904 surface_mesh_io_obj.cpp:184] diffuse texture ignored: alpha.jpg
+W0129 10:43:50.668700 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/house/house.obj" has topological issues:
+		1822 non-manifold vertices (fixed)
+		2094 non-manifold edges (fixed)
+		2302 isolated vertices (removed)
+	Solution:
+		1822 vertices copied (3251 occurrences) to ensure manifoldness (57 vertices with 57 occurrences for linking new faces)
+		2302 isolated vertices deleted
+	Result:
+		11262 faces
+		8919 vertices
+		19638 edges
+W0129 10:43:51.645700 59155904 manifold_builder.cpp:198] mesh "/Users/lnan/Projects/build-Easy3D-Desktop_Qt_clang_64bit-Debug/bin/resources/data/other/sponza/sponza.obj" has topological issues:
+		4951 non-manifold vertices (fixed)
+	Solution:
+		4951 vertices copied (7130 occurrences) to ensure manifoldness (46 vertices with 46 occurrences for linking new faces)
+	Result:
+		40211 faces
+		67978 vertices
+		99522 edges

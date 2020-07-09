@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work,
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan.
-*           Easy3D: a lightweight, easy-to-use, and efficient C++
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 
@@ -30,8 +28,10 @@
 #include <fstream>
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/util/file.h>
+#include <easy3d/util/file_system.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -59,7 +59,7 @@ namespace easy3d {
 			if (in_ == nullptr) {
 				input_ = new std::ifstream(file_name_.c_str());
 				if (input_->fail()) {
-                    std::cerr << "could not open file \'" << file_name_ << "\'" << std::endl;
+				    LOG(ERROR) << "could not open file: " << file_name_;
 					return nullptr;
 				}
 				in_ = new LineInputStream(*input_);
@@ -73,27 +73,33 @@ namespace easy3d {
 			{
 				unsigned int width = 0, height = 0;
 				in.get_line();
-				if (in.eof())
-					return nullptr;
+                if (in.eof())
+                    return nullptr;
+
 				in >> height;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 1) << "failed reading \'height\' from file header (this is the first record)";
+                }
 
 				in.get_line();
-				if (in.eof())
-					return nullptr;
-				in >> width;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 1) << "failed reading file header. Probably wrong file format (this is the first record)";
+                    return nullptr;
+                }
 
-				if (in.eof() || in.fail()) {
-					if (cloud_index_ == 0)
-						std::cerr << "wrong file format" << std::endl;
-					return nullptr;
-				}
+				in >> width;
+                if (in.fail() || in.eof()) {
+                    LOG_FIRST_N(ERROR, 1) << "failed reading \'width\' from file header (this is the first record)";
+                    return nullptr;
+                }
 				if (height == 0 || width == 0) {
-					std::cerr << "height == 0 || width == 0" << std::endl;
+                    LOG_FIRST_N(ERROR, 1) << "unrecognized file format: height == 0 || width == 0 (this is the first record)";
 					return nullptr;
 				}
 
 				num = width * height;
-				std::cout << "Loading scan #" << cloud_index_ << ": " << num << " points " << std::endl;
+                const std::string simple_name = file_system::simple_name(file_name_) + "-#" + std::to_string(cloud_index_);
+                LOG(INFO) << "loading sub scan " << simple_name  << " with " << num << " points...";
 
 				//read sensor transformation matrix
 				vec3 v3[4];
@@ -101,8 +107,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v3[i];
 					if (in.fail()) {
-						if (cloud_index_ == 0)
-							std::cerr << "wrong file format" << std::endl;
+                        LOG_FIRST_N(ERROR, 1) << "failed reading sensor transformation matrix (this is the first record)";
 						return nullptr;
 					}
 				}
@@ -114,8 +119,7 @@ namespace easy3d {
 					in.get_line();
 					in >> v4[i];
 					if (in.fail()) {
-						if (cloud_index_ == 0)
-							std::cerr << "wrong file format" << std::endl;
+                        LOG_FIRST_N(ERROR, 1) << "failed reading point cloud transformation matrix (this is the first record)";
 						return nullptr;
 					}
 				}
@@ -124,7 +128,7 @@ namespace easy3d {
 
 			//now we can read the grid cells
 			PointCloud* cloud = new PointCloud;
-			std::string cloud_name = file::base_name(file_name_) + "-#" + std::to_string(cloud_index_);
+            const std::string& cloud_name = file_system::name_less_extension(file_name_) + "-#" + std::to_string(cloud_index_);
 			cloud->set_name(cloud_name);
 
 			PointCloud::VertexProperty<vec3> colors;;
@@ -135,8 +139,7 @@ namespace easy3d {
 			in.get_line();
 			in >> p >> intensity;
 			if (in.fail()) {
-				if (cloud_index_ == 0)
-					std::cerr << "wrong file format" << std::endl;
+                LOG_FIRST_N(ERROR, 1) << "failed reading the first point (this is the first record)";
 				delete cloud;
 				return nullptr;
 			}
@@ -151,22 +154,34 @@ namespace easy3d {
 				}
 			}
 
-			//	ProgressLogger progress(num);
+			ProgressLogger progress(num);
 			for (unsigned int i = 1; i < num; ++i) {
-				//		if (progress.is_canceled()) {
-				//			delete cloud;
-				//          return nullptr;
-				//		}
-				//		progress.notify(i);
+                if (progress.is_canceled()) {
+                    delete cloud;
+                    return nullptr;
+                }
+                progress.notify(i);
 
 				in.get_line();
 				in >> p >> intensity;
-				v = cloud->add_vertex(cloudTransD * p);
+                if (!in.fail())
+                    v = cloud->add_vertex(cloudTransD * p);
+                else {
+                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th point (this is the first record)";
+                    delete cloud;
+                    return nullptr;
+                }
 
 				if (colors) {
 					vec3 c;
 					in >> c;
-					colors[v] = c / 255.0f;
+                    if (!in.fail())
+                        colors[v] = c / 255.0f;
+                    else {
+                        LOG_FIRST_N(ERROR, 1) << "failed reading color of the " << i << "_th point (this is the first record)";
+                        delete cloud;
+                        return nullptr;
+                    }
 				}
 			}
 

@@ -1,30 +1,30 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work,
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan.
-*           Easy3D: a lightweight, easy-to-use, and efficient C++
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
+#include <easy3d/util/logging.h>
 
 using namespace easy3d;
 
@@ -34,7 +34,10 @@ using namespace easy3d;
 //		- access existing properties.
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize();
+
 	// Initialize random number generator.
 	srand(0);
 
@@ -48,7 +51,7 @@ int main(int /*argc*/, char** /*argv*/) {
 	}
 	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
-	// In Easy3D, all actual 3D data an related information are stored as 
+	// In Easy3D, all actual 3D data and related information are stored as
 	// per-element (e.g., vertex, edge, and face) properties. A model can have 
 	// multiple properties and the properties can be accessed by their names. 
 	// So it is important to give each property a unique name. Easy3D will pop 

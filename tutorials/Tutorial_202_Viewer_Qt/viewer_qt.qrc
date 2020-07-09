@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/.."/>
+    <qresource prefix="/">
+        <file>resources/icons/filesave.png</file>
+        <file>resources/icons/exit.png</file>
+        <file>resources/icons/fileopen.png</file>
+        <file>resources/icons/clear.png</file>
+        <file>resources/icons/help.png</file>
+        <file>resources/icons/snap_shot.png</file>
+    </qresource>
+    <qresource prefix="/../.."/>
+    <qresource prefix="/."/>
+</RCC>

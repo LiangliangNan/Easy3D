@@ -224,20 +224,17 @@ endif()
 # OpenMP
 # ------------------------------------------------------------------------------
 # Liangliang: In the original RANSAC implementation, OpenMP is enabled if the
-#             DOPARALLEL micro is defined. However, it seems enabling OpenMP
-#             causes the process loops infinitely on Windows 10 and Ubuntu (it
-#             seems to be working on macOS). So I just don't enable it for
-#             Windows and Linux.
-find_package(OpenMP QUIET)
-#if (OPENMP_FOUND)
-if (OPENMP_FOUND AND NOT WIN32 AND NOT LINUX)
-    message("OpenMP found")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    # define DOPARALLEL to enable OpenMP
-    target_compile_definitions(${PROJECT_NAME} PRIVATE DOPARALLEL)
-endif()
+#             DOPARALLEL micro can be set. But the code with OpenMP enabled
+#             causes the process loops infinitely (tested on Windows, Mac, and Linux).
+#             So I just disable OpenMP.
+#include(../../cmake/UseOpenMP.cmake)
+#if (OpenMP_FOUND)
+#    # define DOPARALLEL to enable OpenMP
+#    target_compile_definitions(${PROJECT_NAME} PRIVATE DOPARALLEL)
+#    target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
+#    target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_LIBRARIES})
+#    message(STATUS "OpenMP support enabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
+#endif ()
 
 
 if (MSVC)

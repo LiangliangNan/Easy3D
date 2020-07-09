@@ -1,44 +1,44 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-
-#ifndef EASY3D_MAT_H
-#define EASY3D_MAT_H
+#ifndef EASY3D_CORE_MAT_H
+#define EASY3D_CORE_MAT_H
 
 #include <iostream>
 #include <iomanip>
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/constant.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
 
 
-    /*	NOTE: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR
-              is defined.*/
+    /**
+     * @Attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
+     **/
     //#define MATRIX_ROW_MAJOR
 
     template <typename T>	class Mat2;
@@ -46,14 +46,15 @@ namespace easy3d {
     template <typename T>	class Mat4;
 
 
-    /**	Base class for matrix types. Provides generic functionality for N by M matrices.
-    *		N: The number of rows in this matrix.
-    *		M: The number of columns in this matrix.
-    *		T: The scalar type for vector elements.
-    *		NOTE: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR
-    *			  is defined.
-    *		TODO: Add a transform() method or overload operator* so as to allow matrices to
-    *			  transform vectors that are M-1 in size, as vectors in	homogeneous space. */
+    /**
+     * Base class for matrix types. Provides generic functionality for N by M matrices.
+     *      N: The number of rows in this matrix.
+     *		M: The number of columns in this matrix.
+     *		T: The scalar type for vector elements.
+     *	@note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
+     *	TODO: Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
+     *	    M-1 in size, as vectors in	homogeneous space.
+     */
     template <size_t N, size_t M, typename T>
     class Mat
     {
@@ -62,8 +63,8 @@ namespace easy3d {
 
         /**	Default constructor.
          * Note: The matrix elements are intentionally not initialized. This is efficient
-         *       if the user assigns their values from subsequent compuations. Use Mat(T s)
-         *       to initialize the elmentment during construction. */
+         *       if the user assigns their values from subsequent computations. Use Mat(T s)
+         *       to initialize the elements during construction. */
         Mat();
 
         /**	Initialized with diagonal as s and others zeros. */
@@ -960,7 +961,7 @@ namespace easy3d {
 
             //	check for singular matrix:
             if (std::abs(result(maxc, maxc)) < epsilon<T>()) {
-                std::cerr << "input matrix is singular" << std::endl;
+                LOG(ERROR) << "input matrix is singular";
                 return result; // return partial result
             }
 
@@ -1288,6 +1289,19 @@ namespace easy3d {
         return input;
     }
 
+
+    /*----------------------------------------------------------------------------*/
+
+    template <size_t N, size_t M, typename T>
+    inline bool has_nan(const Mat<N, M, T>& m) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < M; j++) {
+                if (std::isnan(m(i, j)) || std::isinf(m(i, j)))
+                    return true;
+            }
+        }
+        return false;
+    }
 
 
     /*******************************************************************************
@@ -1699,10 +1713,10 @@ namespace easy3d {
     inline Mat3<T> Mat3<T>::rotation(const Quat<T> &q) {
         // input must be unit quaternion
         assert(std::abs(q.length() - 1) < epsilon<T>());
-        const T x = q.x();
-        const T y = q.y();
-        const T z = q.z();
-        const T w = q.w();
+        const T x = q.x;
+        const T y = q.y;
+        const T z = q.z;
+        const T w = q.w;
         Mat3<T> m;
         m(0, 0) = 1.0 - 2.0 * (y*y + z*z);    m(0, 1) = 2.0 * (x*y - w*z);          m(0, 2) = 2.0 * (x*z + w*y);
         m(1, 0) = 2.0 * (x*y + w*z);          m(1, 1) = 1.0 - 2.0 * (x*x + z*z);    m(1, 2) = 2.0 * (y*z - w*x);
@@ -1739,7 +1753,7 @@ namespace easy3d {
             case 231:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
-                std::cerr << "invalid rotation order" << std::endl;
+                LOG(ERROR) << "invalid rotation order";
                 return rx * rz * ry;
         }
     }
@@ -2026,10 +2040,10 @@ namespace easy3d {
     inline Mat4<T> Mat4<T>::rotation(const Quat<T> &q) {
         // input must be unit quaternion
         assert(std::abs(q.length() - 1) < epsilon<T>());
-        const T x = q.x();
-        const T y = q.y();
-        const T z = q.z();
-        const T w = q.w();
+        const T x = q.x;
+        const T y = q.y;
+        const T z = q.z;
+        const T w = q.w;
         Mat4<T> m;
         m(0, 0) = 1.0 - 2.0 * (y*y + z*z);    m(0, 1) = 2.0 * (x*y - w*z);          m(0, 2) = 2.0 * (x*z + w*y);          m(0, 3) = 0.0;
         m(1, 0) = 2.0 * (x*y + w*z);          m(1, 1) = 1.0 - 2.0 * (x*x + z*z);    m(1, 2) = 2.0 * (y*z - w*x);          m(1, 3) = 0.0;
@@ -2070,7 +2084,7 @@ namespace easy3d {
             case 231:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
-                std::cerr << "invalid rotation order" << std::endl;
+                LOG(ERROR) << "invalid rotation order";
                 return rx * rz * ry;
         }
     }
@@ -2099,4 +2113,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_MAT_H
+#endif // EASY3D_CORE_MAT_H

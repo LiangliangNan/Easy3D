@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/fileio/surface_mesh_io.h>
 
@@ -30,6 +28,22 @@
 #include <fstream>
 
 #include <easy3d/core/surface_mesh.h>
+
+
+/** ----------------------------------------------------------
+ *
+ * the code is adapted from Surface_mesh with modifications and
+ * significant enhancement.
+ *		- Surface_mesh (version 1.1)
+ * The original code is available at
+ * https://opensource.cit-ec.de/projects/surface_mesh
+ *
+ * Surface_mesh is a halfedge-based mesh data structure for
+ * representing and processing 2-manifold polygonal surface
+ * meshes. It is implemented in C++ and designed with an
+ * emphasis on simplicity and efficiency.
+ *
+ *----------------------------------------------------------*/
 
 
 namespace easy3d {
@@ -40,14 +54,14 @@ namespace easy3d {
         bool load_poly(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             // open file (in binary mode)
             std::ifstream input(file_name.c_str(), std::fstream::binary);
             if (input.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
@@ -90,14 +104,14 @@ namespace easy3d {
         bool save_poly(const std::string& file_name, const SurfaceMesh* mesh)
         {
             if (!mesh) {
-                std::cerr << "null mesh pointer" << std::endl;
+                LOG(ERROR) << "null mesh pointer";
                 return false;
             }
 
             // open file (in binary mode)
             std::ofstream output(file_name.c_str(), std::fstream::binary);
             if (output.fail()) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 

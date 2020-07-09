@@ -1,31 +1,29 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-
-#ifndef EASY3D_RECTANGLE_H
-#define EASY3D_RECTANGLE_H
+#ifndef EASY3D_CORE_RECTANGLE_H
+#define EASY3D_CORE_RECTANGLE_H
 
 #include <algorithm>
 
@@ -41,30 +39,41 @@ namespace easy3d {
     public:
         GenericRect(const Vec<2, FT>& p, const Vec<2, FT>& q) {
             x_min_ = std::min(q.x, p.x);
-            y_min_ = std::min(q.y, p.y);
             x_max_ = std::max(q.x, p.x);
-            y_max_ = std::max(q.x, p.y);
+            y_min_ = std::min(q.y, p.y);
+            y_max_ = std::max(q.y, p.y);
 
         }
 
         GenericRect(FT xmin, FT xmax, FT ymin, FT ymax)
-            : x_min_(xmin)
-            , x_max_(xmax)
-            , y_min_(ymin)
-            , y_max_(ymax)
+            : x_min_(std::min(xmin, xmax))
+            , y_min_(std::min(ymin, ymax))
+            , x_max_(std::max(xmin, xmax))
+            , y_max_(std::max(ymin, ymax))
         {
         }
 
+        FT& x_min() { return x_min_; }
+        FT& y_min() { return y_min_; }
+        FT& x_max() { return x_max_; }
+        FT& y_max() { return y_max_; }
         FT x_min() const { return x_min_; }
         FT y_min() const { return y_min_; }
         FT x_max() const { return x_max_; }
         FT y_max() const { return y_max_; }
 
-        FT x()  const { return x_min_; }
+        FT& x() { return x_min_; }
+        FT& y() { return y_min_; }
+        FT x() const { return x_min_; }
         FT y() const { return y_min_; }
+
         FT width()  const { return x_max() - x_min(); }
         FT height() const { return y_max() - y_min(); }
 
+        FT& left() { return x_min_; }
+        FT& top()  { return y_min_; }
+        FT& right() { return x_max_; }
+        FT& bottom() { return y_max_; }
         FT left() const { return x_min_; }
         FT top() const  { return y_min_; }
         FT right() const  { return x_max_; }
@@ -91,4 +100,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_RECTANGLE_H
+#endif  // EASY3D_CORE_RECTANGLE_H

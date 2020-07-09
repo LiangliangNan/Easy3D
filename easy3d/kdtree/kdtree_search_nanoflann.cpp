@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/kdtree/kdtree_search_nanoflann.h>
 #include <easy3d/core/point_cloud.h>
@@ -118,7 +116,7 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_NanoFLANN::find_closest_K_points(
+    void KdTreeSearch_NanoFLANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
     )  const
     {
@@ -134,16 +132,16 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_NanoFLANN::find_closest_K_points(
+    void KdTreeSearch_NanoFLANN::find_closest_k_points(
         const vec3& p, int k, std::vector<int>& neighbors
     )  const
     {
         std::vector<float> squared_distances;
-        return find_closest_K_points(p, k, neighbors, squared_distances);
+        return find_closest_k_points(p, k, neighbors, squared_distances);
     }
 
 
-    void KdTreeSearch_NanoFLANN::find_points_in_radius(
+    void KdTreeSearch_NanoFLANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
     )  const {
         std::vector<std::pair<std::size_t, float> >   matches;
@@ -161,12 +159,12 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_NanoFLANN::find_points_in_radius(
+    void KdTreeSearch_NanoFLANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors
     )  const
     {
         std::vector<float> sqr_distances;
-        return find_points_in_radius(p, squared_radius, neighbors, sqr_distances);
+        return find_points_in_range(p, squared_radius, neighbors, sqr_distances);
     }
 
 

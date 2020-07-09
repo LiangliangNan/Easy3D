@@ -1,27 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef EASY3D_UTIL_TIMER_H
 #define EASY3D_UTIL_TIMER_H
@@ -32,7 +31,7 @@
 
 namespace easy3d {
 
-    /*
+    /**
      * Timer functionalities are usually implemented in large libraries
      * (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
      * This Timer class provides a single-header implementation.
@@ -92,7 +91,8 @@ namespace easy3d {
     public:
         Timer() : stopped_(false) {}
 
-        /* execute function 'func' after 'delay' milliseconds.
+        /**
+         * execute function 'func' after 'delay' milliseconds.
          * func:  the pointer to the function.
          * delay: the time to be delayed, in milliseconds.
          * NOTE: arguments must be "const", e.g.,
@@ -105,7 +105,8 @@ namespace easy3d {
         template < class Function, class... Args >
         static void single_shot(int delay, Function&& func, Args&&... args);
 
-        /* execute member function 'func' of class 'owner' after 'delay' milliseconds.
+        /**
+         * execute member function 'func' of class 'owner' after 'delay' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
          * delay: the time to be delayed, in milliseconds.
@@ -119,7 +120,8 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         static void single_shot(int delay, Function&& func, Class&& owner, Args&&... args);
 
-        /* the same as single_shot() except that it is not static.
+        /**
+         * the same as single_shot() except that it is not static.
          * execute function 'func' after 'delay' milliseconds.
          * func:  the pointer to the function.
          * delay: the time to be delayed, in milliseconds.
@@ -133,7 +135,8 @@ namespace easy3d {
         template <class Function, class... Args >
         void set_timeout(int delay, Function&& func, Args&&... args);
 
-        /* the same as single_shot() except that it is not static.
+        /**
+         * the same as single_shot() except that it is not static.
          * execute member function 'func' of class 'owner' after 'delay' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
@@ -148,7 +151,8 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void set_timeout(int delay, Function&& func, Class&& owner, Args&&... args);
 
-        /* execute function ‘func' for every 'interval' milliseconds.
+        /**
+         * execute function ‘func' for every 'interval' milliseconds.
          * func:  the pointer to the function.
          * interval: the interval, in milliseconds.
          * NOTE: arguments must be "const", e.g.,
@@ -160,7 +164,8 @@ namespace easy3d {
         template <class Function, class... Args >
         void set_interval(int interval, Function&& func, Args&&... args);
 
-        /* execute member function 'func' of class 'owner' for every 'interval' milliseconds.
+        /**
+         * execute member function 'func' of class 'owner' for every 'interval' milliseconds.
          * owner: the pointer to 'Class' instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * func:  the pointer to the member function of 'Class', e.g., '&Class::foo()'.
          * interval: the interval, in milliseconds.
@@ -173,7 +178,7 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void set_interval(int interval, Function&& func, Class&& owner, Args&&... args);
 
-        // stop the timer.
+        /** stop the timer. */
         void stop() { stopped_ = true; }
 
     private:

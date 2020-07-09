@@ -1,102 +1,94 @@
-<img src="images/logo.jpg" width="400">
+<p align="right">
+    <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
+    <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
+</p>
 
-### Easy3D is an open source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
-### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
+  <img src="resources/images/logo.jpg" width="600">
 
+  (This 3D model of the Easy3D logo was generated and rendered by Easy3D).
 
-<center>
-	
-<img src="images/cloud.jpg" height="180">  |  <img src="images/mesh.jpg" height="180">  |  <img src="images/scalar.jpg" height="180">
-:-----------------------------------------:|:------------------------------------------:|:-------------------------------------------:
-Fig.1 Point cloud                          |  Fig.2 Mesh                                |  Fig.3 Scalar field
+#### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
+#### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
-<img src="images/vector.jpg" height="180"> |   <img src="images/scene.jpg" height="180">
-:-----------------------------------------:|:------------------------------------------:
-Vector field                               |   Rendering a model given camera intrinsic and extrinsic parameters
+  ![Overview of Easy3D](resources/images/overview.jpg)
 
-
-<img src="images/edl.jpg" height="180"> | <img src="images/shadow.jpg" height="180"> |  <img src="images/transparency.jpg" height="180">
-:--------------------------------------:|:------------------------------------------:|:------------------------------------------------:
-Eye-dome lighting                       |  Shadow  				     |   Transparency	  
-
-</center>
-
-  
 ### Key features ###
-* Efficient data structures for representing and managing 3D models (i.e., point clouds and meshes). Easy to add/access arbitrary types of per-element properties.
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster programmable-shader-style rendering, i.e., no fixed function calls). Users do not need to touch the low-level APIs of OpenGL. 
-* A bunch of rendering techniques, e.g., ambient occlusion (SSAO), hard shadow (shadow maps), soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average color blending, dual depth peeling), and more ...
+* Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). 
+  Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
+  loading models from files ...
+  
+* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson Surface Reconstruction, RANSAC, mesh simplification, subdivision, smoothing, parametrization, remeshing, and more.
+   
+* A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
+  soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
+  color blending, dual depth peeling), and more.
+   
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster 
+  programmable-shader-style rendering, i.e., no fixed function calls). Client code does not need to touch the low-level 
+  APIs of OpenGL. 
+  
+* Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and algorithms 
+  for 3D modeling and geometry processing. 
+    
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
-* Step-by-step tutorials to get acquainted with the data structures, rendering techniques, and processing algorithms for 3D modeling and geometry processing. 
 
-** In progress and planed for the next release (~Nov. 2019)**
- - Better documentation (basically more comments in API definition)
- - Textured rendering
- - Set line width for LinesDrawable
- - Line/point imposters
- - 2D Delaunay triangulation (based on Jonathan Richard Shewchuk's Triangle)
- - 3D Delaunay triangulation (based on Sihang's Tetgen)
- - Rendering meshes with concave faces and faces with holes
- - and more ...
+* A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data.
+
+<p align="center"> 
+     <img src="resources/images/mapple.jpg" width="600"> 
+</p>
  
 ### A quick glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, vector fields) can be rendered by writing a few lines of code. The following example loads a point cloud from a file, creates a drawable of the points, and then uses the default viewer to visualize the point cloud. The rendering result is shown in Figure 1.
+Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
+vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
+point cloud as a set of spheres
+
 ```c++
-	Viewer viewer;	// create the default Easy3D viewer
-
-	// load a point cloud from a file
-	PointCloud* cloud = PointCloudIO::load("../../../data/bunny.ply");
-	
-	// create a drawable (a set of points)
-	PointsDrawable* drawable = cloud->add_points_drawable("points");
-
-	// collect points, colors, and normals (if exist) and transfer them to GPU
-	auto points = cloud->get_vertex_property<vec3>("v:point");
-	drawable->update_vertex_buffer(points.vector());
-	auto normals = cloud->get_vertex_property<vec3>("v:normal");
-	if (normals)	// if normals exist
-		drawable->update_normal_buffer(normals.vector());
-	auto colors = cloud->get_vertex_property<vec3>("v:color");
-	if (colors)	// if colors exist
-		drawable->update_color_buffer(colors.vector());
-
-	// add the model to the viewer
-	viewer.add_model(cloud);
-
-	// run the viewer
-	viewer.run();
+        // assume your point cloud has been loaded to the viewer
+        PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
+        drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+        drawable->set_point_size(3.0f);    // set point size
 ```
+or as a set of surfels (i.e., 3D discs)
 
-Bellow is another example showing how to render a surface model (the result is in Figure 2).
-```c++
-        // create a surface mesh
-        SurfaceMesh* mesh = new SurfaceMesh;
-	
-	// create a drawable for rendering the surface of this model
-	TrianglesDrawable* drawable = mesh->add_triangles_drawable("surface");
+```c++ 
+        drawable->set_impostor_type(PointsDrawable::SURFEL);
+``` 
 
-	// transfer vertex coordinates and colors to the GPU. 
-        drawable->update_vertex_buffer(vertices);	// an array of 3D points
-        drawable->update_color_buffer(colors); 		// an array of colors
-	
-	drawable->set_per_vertex_color(true);	// vertices have different colors
-
-	// add the model to the viewer
-	viewer.add_model(mesh);
-```
-
-By abstracting geometric elements as one of the above drawables, more general visualization can be done very conveniently. Figure 3 shows the visualization of a scalar field (i.e., height) defined on the mesh vertices.
+By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
+scalar fields) can be done very conveniently.
 
 ### Build
+Easy3D depends on some third-party libraries. **All dependencies necessary for the core functionality and the basic 
+viewer are included** in the distribution. So you don't need to do anything about third-party libraries. Easy3D 
+also supports the use of Qt. You can switch on the following CMake option to include the related examples and 
+applications (e.g., 
+            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) 
+            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/master/applications/Mapple)) 
+in your build:
 
-Easy3D has been tested on macOS, Linux, and Windows. You should also be able to build it on other platforms.
+- `EASY3D_ENABLE_QT`
 
-Clone or download the repository, run CMake to generate Makefiles or CMake/Visual Studio project files, 
-and then use your favorite IDE to work with Easy3D.
+To build Easy3D, you need [CMake](https://cmake.org/download/) and, of course, a compiler:
 
-In case you use *Qt Creator* or other IDEs that can handle the CMakeLists.txt file, simply open that file and then all files 
-will be well organized as projects.
+- CMake `>= 3.1`
+- a compiler that supports `>= C++11`
+
+Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
+nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
+to build Easy3D on almost all platforms.
+
+There are many options to build Easy3D. Choose one of the following (or whatever you are familiar with):
+
+- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
+Easy3D. Then you should have obtained a usable project and just build. I recommend using 
+[CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
+- Option 2: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
+- Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
+  Visual Studio).
+
+Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./HowToBuild.md).
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
@@ -106,15 +98,16 @@ found in the accompanying 'License' file.
 
 ### Citation
 If Easy3D is useful in your research/work, I would be grateful if you show your appreciation by citing it:
-```
+
+```bibtex
 @misc{easy3d2018nan,
-  title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
-  author={Liangliang, Nan},
-  howpublished={\url{https://github.com/LiangliangNan/Easy3D}},
-  year={2018},
+  title = {Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
+  author = {Liangliang, Nan},
+  note = {\url{https://github.com/LiangliangNan/Easy3D}},
+  year = {2018},
 }
 ```
----
+---------
 
 Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
 

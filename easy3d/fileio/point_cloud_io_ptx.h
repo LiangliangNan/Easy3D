@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef EASY3D_FILEIO_POINT_CLOUD_IO_PTX_H
 #define EASY3D_FILEIO_POINT_CLOUD_IO_PTX_H
@@ -36,7 +34,7 @@ http://w3.leica-geosystems.com/kb/?guid=5532D590-114C-43CD-A55F-FE79E5937CB2
 Description:
 
 PTX is an ASCII based interchange format for point cloud data. It utilizes the concept of separate scans,
-each with points defined in their own coordinate system and a ��Registration�� of all of those point clouds
+each with points defined in their own coordinate system and a 'Registration' of all of those point clouds
 into a single coordinate system. The point data for each cloud is stored in its original coordinate system
 and a matrix of transforms for each point cloud are provided as header information.
 
@@ -46,7 +44,7 @@ Solution:
 
 A PTX file can have one or more point cloud. Each point cloud starts with a header. Each following line
 then describes one point in the cloud. Cyclone exports PTX with 7 columns when the cloud has RGB values
-from the digial camera (x, y, z, intensity, red, green, blue). Red, Green, Blue have the integer range [0, 255].
+from the digital camera (x, y, z, intensity, red, green, blue). Red, Green, Blue have the integer range [0, 255].
 A cloud in PTX has 4 columns (x, y, z, intensity) when the cloud does not have RGB values. PTX intensities
 use the decimal range [0, 1]. Individual values on the same line are separated by a blank space. The coordinate
 unit is always in meters. PTX can only be used on "[[KB:132:gridded]]" clouds (directly from scans), not unordered
@@ -116,12 +114,12 @@ namespace easy3d {
 
 		class LineInputStream;
 
-		/*
+		/**
 		 * Typical usage:
 		 *		PointCloudIO_ptx serializer(file_name);
+		 *		PointCloud* model = nullptr;
 		 *		while (model = serializer.load_next()) {
 		 *			addModel(model);
-		 *			canvas()->update_gui();
 		 *		}
 		 */
 

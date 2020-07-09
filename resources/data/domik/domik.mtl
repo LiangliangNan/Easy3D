@@ -1,0 +1,70 @@
+# 
+# Wavefront material file
+# Converted by the DEEP Exploration  Deep Exploration 6.3 6.3.3.8068
+# Right Hemisphere, LTD
+# http://www.righthemisphere.com/
+# 
+
+newmtl wire_176026026
+Ka 0 0 0
+Kd 0.670588 0.74902 0.639216
+Ks 0.35 0.35 0.35
+illum 2
+Ns 32
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 
+
+newmtl domik
+Ka 0 0 0
+Kd 0.588 0.588 0.588
+Ks 0 0 0
+illum 2
+Ns 10
+map_Kd domik.jpg
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA domik.jpg
+map_Ns 
+
+newmtl alpha
+Ka 0 0 0
+Kd 0.588 0.588 0.588
+Ks 0 0 0
+illum 2
+Ns 10
+map_Kd alpha.jpg
+map_bump 
+bump 
+map_opacity alpha.jpg
+map_d alpha.jpg
+refl 
+map_kS 
+map_kA alpha.jpg
+map_Ns 
+
+newmtl Explorer_Default
+Ka 0.117647 0.117647 0.117647
+Kd 0.752941 0.752941 0.752941
+Ks 0.752941 0.752941 0.752941
+illum 2
+Ns 8
+map_Kd 
+map_bump 
+bump 
+map_opacity 
+map_d 
+refl 
+map_kS 
+map_kA 
+map_Ns 

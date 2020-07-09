@@ -1,33 +1,33 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#ifndef EASY3D_PLANE_H
-#define EASY3D_PLANE_H
+#ifndef EASY3D_CORE_PLANE_H
+#define EASY3D_CORE_PLANE_H
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/line.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -137,14 +137,10 @@ namespace easy3d {
         coeff_[2] = n.z;
         coeff_[3] = -(coeff_[0] * p1.x + coeff_[1] * p1.y + coeff_[2] * p1.z);
 
-    #ifndef NDEBUG // degenerate case
-        if (length(n) < 1e-15) {
-            std::cerr << "degenerate plane constructed from 3 points:" << std::endl
-                << "\t(" << p1 << ")" << std::endl
-                << "\t(" << p2 << ")" << std::endl
-                << "\t(" << p3 << ")" << std::endl;
-        }
-    #endif
+        DLOG_IF(ERROR, length(n) < 1e-15) << "degenerate plane constructed from 3 points:"
+                                        << "\t(" << p1 << ")"
+                                        << "\t(" << p2 << ")"
+                                        << "\t(" << p3 << ")";
     }
 
     template <typename FT> inline
@@ -155,24 +151,15 @@ namespace easy3d {
         coeff_[2] = nn.z;
         coeff_[3] = -(coeff_[0] * p.x + coeff_[1] * p.y + coeff_[2] * p.z);
 
-    #ifndef NDEBUG // degenerate case
-        if (length(nn) < 1e-15) {
-            std::cerr << "degenerate plane constructed from point ("
-                << p << ") and normal (" << n << ")" << std::endl;
-        }
-    #endif
-    }
+		DLOG_IF(ERROR, length(nn) < 1e-15) << "degenerate plane constructed from point ("
+										   << p << ") and normal (" << n << ")";
+	}
 
 
     template <typename FT> inline
     typename GenericPlane<FT>::Vector3 GenericPlane<FT>::normal() const {
         Vector3 n = normalize(Vector3(coeff_[0], coeff_[1], coeff_[2]));
-
-    #ifndef NDEBUG // degenerate case
-        if (length(n) < 1e-15) {
-            std::cerr << "degenerate plane with normal: (" << n << ")" << std::endl;
-        }
-    #endif
+        DLOG_IF(ERROR, length(n) < 1e-15) << "degenerate plane with normal: (" << n << ")";
         return n;
     }
 
@@ -323,7 +310,7 @@ namespace easy3d {
             if (intersection(Line3::from_two_points(s, t), p))
                 return true;
             else {
-                std::cerr << "fatal error. Should have intersection" << std::endl;
+                LOG(ERROR) << "fatal error. Should have intersection";
                 return false;
             }
         }
@@ -357,4 +344,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_PLANE_H
+#endif  // EASY3D_CORE_PLANE_H

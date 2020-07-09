@@ -1,31 +1,29 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-
-#ifndef EASY3D_LINE_H
-#define EASY3D_LINE_H
+#ifndef EASY3D_CORE_LINE_H
+#define EASY3D_CORE_LINE_H
 
 #include <easy3d/core/vec.h>
 
@@ -59,7 +57,7 @@ namespace easy3d {
         // the projection of p on this line
         Point  projection(const Point &p) const { return p_ + dir_ * dot(p - p_, dir_); }
 
-        FT	   squared_ditance(const Point &p) const { return length2(projection(p) - p); }
+        FT	   squared_distance(const Point &p) const { return length2(projection(p) - p); }
 
     private:  // Ambiguities exist for this one.
         GenericLine(const Point & p, const Vector & dir);
@@ -72,14 +70,9 @@ namespace easy3d {
 
     template <int DIM, typename FT> inline
     GenericLine<DIM, FT>::GenericLine(const Point & p, const Vector & dir) : p_(p) {
-        dir_ = normalize(dir);
-
-    #ifndef NDEBUG // degenerate case
-        if (length(dir_) < 1e-15) {
-            std::cerr << "degenerate line constructed from point ("
-                << p << ") and direction (" << dir << ")" << std::endl;
-        }
-    #endif
+      dir_ = normalize(dir);
+      DLOG_IF(ERROR, length(dir_) < 1e-15)
+              << "degenerate line constructed from point (" << p << ") and direction (" << dir << ")";
     }
 
 
@@ -100,5 +93,5 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_LINE_H
+#endif  // EASY3D_CORE_LINE_H
 

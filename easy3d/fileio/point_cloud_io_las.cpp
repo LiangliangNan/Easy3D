@@ -1,28 +1,26 @@
-/*
-*	Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
-*	https://3d.bk.tudelft.nl/liangliang/
-*
-*	This file is part of Easy3D. If it is useful in your research/work, 
-*   I would be grateful if you show your appreciation by citing it:
-*   ------------------------------------------------------------------
-*           Liangliang Nan. 
-*           Easy3D: a lightweight, easy-to-use, and efficient C++ 
-*           library for processing and rendering 3D data. 2018.
-*   ------------------------------------------------------------------
-*
-*	Easy3D is free software; you can redistribute it and/or modify
-*	it under the terms of the GNU General Public License Version 3
-*	as published by the Free Software Foundation.
-*
-*	Easy3D is distributed in the hope that it will be useful,
-*	but WITHOUT ANY WARRANTY; without even the implied warranty of
-*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*	GNU General Public License for more details.
-*
-*	You should have received a copy of the GNU General Public License
-*	along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
+/**
+ * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++
+ *      library for processing and rendering 3D data. 2018.
+ * ------------------------------------------------------------------
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <easy3d/fileio/point_cloud_io.h>
 
@@ -48,18 +46,18 @@ namespace easy3d {
 
 			LASreader* lasreader = lasreadopener.open();
 			if (!lasreader || lasreader->npoints <= 0) {
-                std::cerr << "could not open file \'" << file_name << "\'" << std::endl;
+                LOG(ERROR) << "could not open file: " << file_name;
 				lasreader->close();
 				delete lasreader;
 				return false;
 			}
 
 			std::size_t num = lasreader->npoints;
-			std::cout << "reading " << num << " points..." << std::endl;
+			LOG(INFO) << "reading " << num << " points...";
 
 			// read the first point
 			if (!lasreader->read_point()) {
-				std::cerr << "failed reading point" << std::endl;
+				LOG(ERROR) << "failed reading point";
 				lasreader->close();
 				delete lasreader;
 				return false;
@@ -90,7 +88,7 @@ namespace easy3d {
 			double x0 = p0.coordinates[0];
 			double y0 = p0.coordinates[1];
 			double z0 = p0.coordinates[2];
-			std::cout << "first point (" << x0 << " " << y0 << " " << z0 << ")" << std::endl;
+			LOG(INFO) << "first point (" << x0 << " " << y0 << " " << z0 << ")";
 
 			// now we read the remaining points...
 			while (lasreader->read_point()) {
@@ -124,27 +122,27 @@ namespace easy3d {
 
 		bool save_las(const std::string& file_name, const PointCloud* cloud) {
 			if (!cloud) {
-				std::cerr << "null input point cloud pointer" << std::endl;
+				LOG(ERROR) << "null input point cloud pointer";
 				return false;
 			}
 
 			PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
 			if (normals)
-				std::cerr << "normals discarded when saving to LAS or LAZ format (future release may support)." << std::endl;
+				LOG(ERROR) << "normals discarded when saving to LAS or LAZ format (future release may support).";
 
 			LASwriteOpener laswriteopener;
 			laswriteopener.set_file_name(file_name.c_str());
 
 			// check output
 			if (!laswriteopener.active()) {
-				std::cerr << "could not save file" << std::endl;
+				LOG(ERROR) << "could not save file";
 				return false;
 			}
 
 			PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 			const Box3& box = cloud->bounding_box();
 			const vec3& center = box.center();
-			std::cout << "saving " << cloud->n_vertices() << " points..." << std::endl;
+			LOG(INFO) << "saving " << cloud->n_vertices() << " points...";
 
 			// init header
 			// to set a 'accurate enough' scale factor, I follow the suggestion here:
@@ -160,14 +158,14 @@ namespace easy3d {
 			lasheader.y_offset = center.y;	// box.y_min(); should also work
 			lasheader.z_offset = center.z;	// box.z_min(); should also work
 
-			std::cout << "scale factor: "
+			LOG(INFO) << "scale factor: "
 				<< lasheader.x_scale_factor << " "
 				<< lasheader.y_scale_factor << " "
-				<< lasheader.z_scale_factor << std::endl;
-			std::cout << "offset: " <<
+				<< lasheader.z_scale_factor;
+			LOG(INFO) << "offset: " <<
 				lasheader.x_offset << " " <<
 				lasheader.y_offset << " " <<
-				lasheader.z_offset << std::endl;
+				lasheader.z_offset;
 
 			// we need a new LAS point type for adding RGB
 			PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
@@ -187,7 +185,7 @@ namespace easy3d {
 			// open laswriter
 			LASwriter* laswriter = laswriteopener.open(&lasheader);
 			if (!laswriter) {
-				std::cerr << "could not save file" << std::endl;
+				LOG(ERROR) << "could not save file";
 				return false;
 			}
 
@@ -244,7 +242,7 @@ namespace easy3d {
 
 			// close the writer
 			I64 total_bytes = laswriter->close();
-			std::cout << total_bytes << " bytes for " << laswriter->npoints << " points" << std::endl;
+			LOG(INFO) << total_bytes << " bytes for " << laswriter->npoints << " points";
 			delete laswriter;
 
 			return laswriter->npoints > 0;

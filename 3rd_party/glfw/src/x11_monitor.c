@@ -161,6 +161,16 @@ void _glfwPollMonitorsX11(void)
                 heightMM = oi->mm_height;
             }
 
+            if (widthMM <= 0 || heightMM <= 0)
+            {
+                // HACK: If RandR does not provide a physical size, assume the
+                //       X11 default 96 DPI and calcuate from the CRTC viewport
+                // NOTE: These members are affected by rotation, unlike the mode
+                //       info and output info members
+                widthMM  = (int) (ci->width * 25.4f / 96.f);
+                heightMM = (int) (ci->height * 25.4f / 96.f);
+            }
+
             _GLFWmonitor* monitor = _glfwAllocMonitor(oi->name, widthMM, heightMM);
             monitor->x11.output = sr->outputs[i];
             monitor->x11.crtc   = oi->crtc;
@@ -312,12 +322,16 @@ void _glfwPlatformGetMonitorPos(_GLFWmonitor* monitor, int* xpos, int* ypos)
             XRRGetScreenResourcesCurrent(_glfw.x11.display, _glfw.x11.root);
         XRRCrtcInfo* ci = XRRGetCrtcInfo(_glfw.x11.display, sr, monitor->x11.crtc);
 
-        if (xpos)
-            *xpos = ci->x;
-        if (ypos)
-            *ypos = ci->y;
+        if (ci)
+        {
+            if (xpos)
+                *xpos = ci->x;
+            if (ypos)
+                *ypos = ci->y;
 
-        XRRFreeCrtcInfo(ci);
+            XRRFreeCrtcInfo(ci);
+        }
+
         XRRFreeScreenResources(sr);
     }
 }
@@ -483,9 +497,15 @@ void _glfwPlatformGetVideoMode(_GLFWmonitor* monitor, GLFWvidmode* mode)
             XRRGetScreenResourcesCurrent(_glfw.x11.display, _glfw.x11.root);
         XRRCrtcInfo* ci = XRRGetCrtcInfo(_glfw.x11.display, sr, monitor->x11.crtc);
 
-        *mode = vidmodeFromModeInfo(getModeInfo(sr, ci->mode), ci);
+        if (ci)
+        {
+            const XRRModeInfo* mi = getModeInfo(sr, ci->mode);
+            if (mi)  // mi can be NULL if the monitor has been disconnected
+                *mode = vidmodeFromModeInfo(mi, ci);
 
-        XRRFreeCrtcInfo(ci);
+            XRRFreeCrtcInfo(ci);
+        }
+
         XRRFreeScreenResources(sr);
     }
     else
