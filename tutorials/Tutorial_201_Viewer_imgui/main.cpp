@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     logging::initialize();
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
-    ViewerImGui viewer("Tutorial_201_imgui");
+    ViewerImGui viewer("Tutorial_201_viewer_imgui");
 
     if (!viewer.add_model(file_name)) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";

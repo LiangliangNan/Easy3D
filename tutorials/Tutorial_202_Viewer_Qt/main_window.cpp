@@ -236,6 +236,8 @@ void MainWindow::onCurrentModelChanged() {
         const std::string& name = m->name();
         setCurrentFile(QString::fromStdString(name));
     }
+    else
+        updateWindowTitle();
 }
 
 
@@ -377,7 +379,7 @@ void MainWindow::updateWindowTitle() {
 #ifndef NDEBUG
     QString title = "ViewerQt (Debug Version)";
 #else
-    QString title = "ViewerQt";
+    QString title = "Tutorial_202_Viewer_Qt";
 #endif // _DEBUG
 
     QString fileName("Untitled");

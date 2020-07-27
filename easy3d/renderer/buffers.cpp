@@ -286,6 +286,13 @@ namespace easy3d {
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_texcoord_buffer(d_texcoords);
                     drawable->release_element_buffer();
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
 
                     /**
@@ -412,6 +419,13 @@ namespace easy3d {
                     drawable->update_element_buffer(d_indices);
                     drawable->update_normal_buffer(normals.vector());
                     drawable->update_texcoord_buffer(d_texcoords);
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -670,6 +684,13 @@ namespace easy3d {
                     drawable->update_vertex_buffer(model->points());
                     drawable->update_element_buffer(d_indices);
                     drawable->update_normal_buffer(normals.vector());
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -775,6 +796,13 @@ namespace easy3d {
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_color_buffer(d_colors);
                     drawable->release_element_buffer();
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -879,6 +907,13 @@ namespace easy3d {
                     drawable->update_element_buffer(d_indices);
                     drawable->update_normal_buffer(normals.vector());
                     drawable->update_color_buffer(vcolor.vector());
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -981,6 +1016,13 @@ namespace easy3d {
                     drawable->update_element_buffer(d_indices);
                     drawable->update_normal_buffer(normals.vector());
                     drawable->update_texcoord_buffer(vtexcoords.vector());
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
@@ -1092,6 +1134,13 @@ namespace easy3d {
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_texcoord_buffer(d_texcoords);
                     drawable->release_element_buffer();
+
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    int idx = 0;
+                    for (auto face : model->faces()) {
+                        triangle_range[face] = std::make_pair(idx, idx);
+                        ++idx;
+                    }
                 } else {
                     /**
                      * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
