@@ -55,7 +55,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications"  OFF)
 # Build tutorials
-option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
+option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                OFF)
 # Build documentation
 option(EASY3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"            OFF)
 # Build sandbox
