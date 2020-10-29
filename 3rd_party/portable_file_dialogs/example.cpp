@@ -1,7 +1,7 @@
 //
 //  Portable File Dialogs
 //
-//  Copyright © 2018—2019 Sam Hocevar <sam@hocevar.net>
+//  Copyright © 2018—2020 Sam Hocevar <sam@hocevar.net>
 //
 //  This program is free software. It comes without any warranty, to
 //  the extent permitted by applicable law. You can redistribute it
@@ -22,8 +22,15 @@
 
 int main()
 {
+    // Check that a backend is available
+    if (!pfd::settings::available())
+    {
+        std::cout << "Portable File Dialogs are not available on this platform.\n";
+        return 1;
+    }
+
     // Set verbosity to true
-    pfd::settings::verbose(false);
+    pfd::settings::verbose(true);
 
     // Notification
     pfd::notify("Important Notification",
@@ -37,7 +44,7 @@ int main()
                           pfd::icon::warning);
 
     // Optional: do something while waiting for user action
-    while (!m.ready(1000))
+    for (int i = 0; i < 10 && !m.ready(1000); ++i)
         std::cout << "Waited 1 second for user input...\n";
 
     // Do something according to the selected button
@@ -57,7 +64,7 @@ int main()
     auto f = pfd::open_file("Choose files to read", DEFAULT_PATH,
                             { "Text Files (.txt .text)", "*.txt *.text",
                               "All Files", "*" },
-                            true);
+                            pfd::opt::multiselect);
     std::cout << "Selected files:";
     for (auto const &name : f.result())
         std::cout << " " + name;
