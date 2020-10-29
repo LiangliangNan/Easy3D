@@ -1063,27 +1063,29 @@ inline internal::file_dialog::file_dialog(type in_type,
 
         if (default_path.size())
             script += " default location " + osascript_quote(default_path);
+        script += " with prompt " + osascript_quote(title);
 
-#else       // Liangliang: make it to have a similar behavior as Windows.
-            // If a directory was provided, use it as the initial directory. If
-            // a valid path was provided, use it as the initial file. Otherwise,
-            // let macOS decide.
+#else
+        // Liangliang: make it to have a similar behavior as Windows.
+        // If a directory was provided, use it as the initial directory. If
+        // a valid path was provided, use it as the initial file. Otherwise,
+        // let macOS decide.
 
-            static const char* const PATH_SEPARATORS = "/\\";
-            std::string name = default_path; // file name without path
-            std::string::size_type slash = default_path.find_last_of(PATH_SEPARATORS);
-            if (slash != std::string::npos)
-                name = std::string(default_path.begin() + slash + 1, default_path.end());
+        static const char* const PATH_SEPARATORS = "/\\";
+        std::string name = default_path; // file name without path
+        std::string::size_type slash = default_path.find_last_of(PATH_SEPARATORS);
+        if (slash != std::string::npos)
+            name = std::string(default_path.begin() + slash + 1, default_path.end());
 
-            if (default_path.size()) {
-                if (in_type == type::save)
-                    script += " default name " + osascript_quote(name);
-                else
-                    script += " default location " + osascript_quote(default_path);
-            }
-#endif
+        if (default_path.size()) {
+            if (in_type == type::save)
+                script += " default name " + osascript_quote(name);
+            else
+                script += " default location " + osascript_quote(default_path);
+        }
 
         script += " with prompt " + osascript_quote(title);
+#endif
 
         if (in_type == type::open)
         {
@@ -1106,7 +1108,7 @@ inline internal::file_dialog::file_dialog(type in_type,
 #if 0 // Liangliang: no need to disable the filters if there is "*.*" or "*"
                 if (pat == "*" || pat == "*.*")
                     has_filter = false;
-                    else
+                else
 #endif
                 if (internal::starts_with(pat, "*."))
                     filter_list += (filter_list.size() == 0 ? "" : ",") +
