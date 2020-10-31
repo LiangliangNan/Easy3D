@@ -203,8 +203,8 @@ namespace easy3d {
         const std::vector<Vertex *> &vertices() const;
 
         /**
-         * The list of elements (triangle or contour) created over many calls. Each element is represented by the vertex
-         * indices of the element.
+         * The list of elements (triangle or contour) created over many calls. Each element is represented by its vertex
+         * indices.
          */
         const std::vector<std::vector<unsigned int> > &elements() const { return elements_; }
 
