@@ -56,7 +56,7 @@ namespace easy3d
 
         /**
          * \brief Open a native file open dialog.
-         * \param title The title of the dialog, e.g., "Please choose the file(s) to open".
+         * \param title The title of the dialog, e.g., "Please choose a file to open".
          * \param default_path The default file path, e.g., resource::directory() + "/data/".
          * \param filters The accepted file filters. For each filter, the string you see in the file
          *                dialog and the actual filter always come in pairs, e.g.,
@@ -69,7 +69,7 @@ namespace easy3d
          * @todo   A filter needs only one string (the filter can be extracted from the string).
          */
         std::string open(
-                const std::string& title = "Please choose the file(s) to open",
+                const std::string& title = "Please choose a file to open",
                 const std::string& default_directory = "",
                 const std::vector<std::string>& filters = { "All Files (*.*)", "*" }
                 );
@@ -157,7 +157,7 @@ namespace easy3d
          * @brief Message box.
          * @param title The title of the message box.
          * @param message The message string.
-         * @param choice The options for the user. Defauly is 'ok_cancel'. See 'Choice'.
+         * @param choice The options for the user. Default is 'ok_cancel'. See 'Choice'.
          * @param type The message type. Default is 'info'. See 'Type'.
          * @return The user's response. See "Response'.
          */

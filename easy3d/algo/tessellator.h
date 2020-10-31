@@ -40,6 +40,7 @@ namespace easy3d {
      *   - Triangulate non-triangle surfaces;
      *   - Stitch patches of a triangle meshes;
      *   - CSG operations
+     *  @see csg::tessellate(...), csg::union_of(...), intersection_of(...), and difference_of(...).
      */
 
     class Tessellator {
@@ -202,8 +203,8 @@ namespace easy3d {
         const std::vector<Vertex *> &vertices() const;
 
         /**
-         * The list of elements (triangle or contour) created over many calls. Each entry is the vertex indices of the
-         * element.
+         * The list of elements (triangle or contour) created over many calls. Each element is represented by the vertex
+         * indices of the element.
          */
         const std::vector<std::vector<unsigned int> > &elements() const { return elements_; }
 
