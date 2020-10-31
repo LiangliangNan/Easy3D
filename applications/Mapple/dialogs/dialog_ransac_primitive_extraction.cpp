@@ -43,6 +43,8 @@ DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *win
     setupUi(this);
     layout()->setSizeConstraint(QLayout::SetFixedSize);
 
+    selected_only_ = false;
+
     // default value
     default_min_support_ = 1000;
     default_distance_threshold_ = 0.005;

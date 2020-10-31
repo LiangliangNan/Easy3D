@@ -5,7 +5,7 @@
 
   <img src="resources/images/logo.jpg" width="600">
 
-  (The above 3D model of the Easy3D logo was generated and rendered by Easy3D).
+  (This 3D model of the Easy3D logo was generated and rendered by Easy3D).
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 #### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
@@ -17,13 +17,13 @@
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
   loading models from files ...
   
-* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson Surface Reconstruction, RANSAC, mesh simplification, subdivision, smoothing, parametrization, remeshing, and more.
+* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson Surface Reconstruction, RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more.
    
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
   soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
   color blending, dual depth peeling), and more.
    
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster 
+* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster
   programmable-shader-style rendering, i.e., no fixed function calls). Client code does not need to touch the low-level 
   APIs of OpenGL. 
   
@@ -60,7 +60,7 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries. **All dependencies necessary for the core functionality and the basic 
+Easy3D depends on some third-party libraries. **All dependencies necessary for the core functionality and the basic
 viewer are included** in the distribution. So you don't need to do anything about third-party libraries. Easy3D 
 also supports the use of Qt. You can switch on the following CMake option to include the related examples and 
 applications (e.g., 
