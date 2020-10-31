@@ -86,15 +86,15 @@ namespace easy3d
          *                  "Point Cloud Files (*.bin *.xyz *.ply)", "*.bin *.xyz *.ply",
          *                  "All Files (*.*)", "*.*"
          *              };
-         * \param warn_overwrite If set true (default value), prompt a confirm dialog if a
-		 *						 file with the same name already exists.
+         * \param confirm_overwrite If set true (default value), prompt a confirm dialog if a
+		 *						    file with the same name already exists.
          * @return The chosen file name (empty if no file name was chosen).
          */
         std::string save(
                 const std::string& title = "Please choose a file name",
                 const std::string& default_file_name = "",
                 const std::vector<std::string>& filters = { "All Files (*.*)", "*" },
-                bool warn_overwrite = true
+                bool confirm_overwrite = true
                 );
 
         // -----------------------------------------------------------------------------
