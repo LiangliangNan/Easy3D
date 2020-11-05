@@ -1826,6 +1826,9 @@ namespace easy3d {
     SurfaceMesh::
     garbage_collection()
     {
+        if (!garbage_)
+            return;
+
         int  i, i0, i1,
         nV(vertices_size()),
         nE(edges_size()),
