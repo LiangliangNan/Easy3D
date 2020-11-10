@@ -101,9 +101,9 @@ namespace easy3d {
 
         float length = 0.0f;
         for (auto h : halfedges_) {
-            if (mesh_->is_boundary(h)) {
-                auto s = mesh_->from_vertex(h);
-                auto t = mesh_->to_vertex(h);
+            if (mesh_->is_border(h)) {
+                auto s = mesh_->source(h);
+                auto t = mesh_->target(h);
                 length += distance(points[s], points[t]);
             }
         }
@@ -154,7 +154,7 @@ namespace easy3d {
         }
 
         for (auto h : mesh->halfedges()) {
-            auto v = mesh->to_vertex(h);
+            auto v = mesh->target(h);
             int idx = component_id[v];
             result[idx].halfedges_.push_back(h);
         }
@@ -191,7 +191,7 @@ namespace easy3d {
         }
 
         for (auto h : mesh->halfedges()) {
-            auto v = mesh->to_vertex(h);
+            auto v = mesh->target(h);
             if (component_id[v] == comp_id)
                 result.halfedges_.push_back(h);
         }
@@ -225,7 +225,7 @@ namespace easy3d {
         }
 
         for (auto h : mesh->halfedges()) {
-            auto v = mesh->to_vertex(h);
+            auto v = mesh->target(h);
             if (component_id[v] == comp_id)
                 result.halfedges_.push_back(h);
         }

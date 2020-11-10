@@ -292,14 +292,14 @@ namespace easy3d {
     {
         assert(is_valid(start) && is_valid(end));
 
-        Halfedge h  = halfedge(start);
+        Halfedge h  = out_halfedge(start);
         const Halfedge hh = h;
 
         if (h.is_valid())
         {
             do
             {
-                if (to_vertex(h) == end)
+                if (target(h) == end)
                     return h;
                 h = cw_rotated_halfedge(h);
             }
@@ -331,17 +331,17 @@ namespace easy3d {
 
         for (auto f : faces()) {
             for (auto h : halfedges(f)) {
-                auto v = from_vertex(h);
-                set_halfedge(v, h);
+                auto v = source(h);
+                set_out_halfedge(v, h);
                 adjust_outgoing_halfedge(v);
-                reachable[to_vertex(h)] = true;
+                reachable[target(h)] = true;
             }
         }
 
         for (auto v : vertices()) {
             if (!reachable[v]) {
                 // mark this vertex isolated (by assigning an invalid halfedge)
-                set_halfedge(v, Halfedge());
+                set_out_halfedge(v, Halfedge());
             }
         }
         remove_vertex_property(reachable);
@@ -351,16 +351,16 @@ namespace easy3d {
     SurfaceMesh::
     adjust_outgoing_halfedge(Vertex v)
     {
-        Halfedge h  = halfedge(v);
+        Halfedge h  = out_halfedge(v);
         const Halfedge hh = h;
 
         if (h.is_valid())
         {
             do
             {
-                if (is_boundary(h))
+                if (is_border(h))
                 {
-                    set_halfedge(v, h);
+                    set_out_halfedge(v, h);
                     return;
                 }
                 h = cw_rotated_halfedge(h);
@@ -434,7 +434,7 @@ namespace easy3d {
         // test for topological errors
         for (i=0, ii=1; i<n; ++i, ++ii, ii%=n)
         {
-            if ( !is_boundary(vertices[i]) )
+            if ( !is_border(vertices[i]) )
             {
                 LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex vertex (" << vertices[i] << ") (this is the first record)";
 
@@ -454,7 +454,7 @@ namespace easy3d {
             halfedges[i] = find_halfedge(vertices[i], vertices[ii]);
             is_new[i]    = !halfedges[i].is_valid();
 
-            if (!is_new[i] && !is_boundary(halfedges[i]))
+            if (!is_new[i] && !is_border(halfedges[i]))
             {
                 LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edge (" << vertices[i] << " -> " << vertices[ii] << ") (this is the first record)";
 
@@ -482,23 +482,23 @@ namespace easy3d {
                 inner_prev = halfedges[i];
                 inner_next = halfedges[ii];
 
-                if (next_halfedge(inner_prev) != inner_next)
+                if (next(inner_prev) != inner_next)
                 {
                     // here comes the ugly part... we have to relink a whole patch
 
                     // search a free gap
                     // free gap will be between boundary_prev and boundary_next
-                    outer_prev = opposite_halfedge(inner_next);
-                    outer_next = opposite_halfedge(inner_prev);
+                    outer_prev = opposite(inner_next);
+                    outer_next = opposite(inner_prev);
                     boundary_prev = outer_prev;
                     do
                     {
-                        boundary_prev = opposite_halfedge(next_halfedge(boundary_prev));
+                        boundary_prev = opposite(next(boundary_prev));
                     }
-                    while (!is_boundary(boundary_prev) || boundary_prev==inner_prev);
-                    boundary_next = next_halfedge(boundary_prev);
-                    assert(is_boundary(boundary_prev));
-                    assert(is_boundary(boundary_next));
+                    while (!is_border(boundary_prev) || boundary_prev==inner_prev);
+                    boundary_next = next(boundary_prev);
+                    assert(is_border(boundary_prev));
+                    assert(is_border(boundary_next));
 
 
                     // ok ?
@@ -517,8 +517,8 @@ namespace easy3d {
                     }
 
                     // other halfedges' handles
-                    patch_start = next_halfedge(inner_prev);
-                    patch_end   = prev_halfedge(inner_next);
+                    patch_start = next(inner_prev);
+                    patch_end   = prev(inner_next);
 
                     // relink
                     next_cache.push_back(NextCacheEntry(boundary_prev, patch_start));
@@ -560,34 +560,34 @@ namespace easy3d {
 
             if (id)
             {
-                outer_prev = opposite_halfedge(inner_next);
-                outer_next = opposite_halfedge(inner_prev);
+                outer_prev = opposite(inner_next);
+                outer_next = opposite(inner_prev);
 
                 // set outer links
                 switch (id)
                 {
                     case 1: // prev is new, next is old
-                        boundary_prev = prev_halfedge(inner_next);
+                        boundary_prev = prev(inner_next);
                         next_cache.push_back(NextCacheEntry(boundary_prev, outer_next));
-                        set_halfedge(v, outer_next);
+                        set_out_halfedge(v, outer_next);
                         break;
 
                     case 2: // next is new, prev is old
-                        boundary_next = next_halfedge(inner_prev);
+                        boundary_next = next(inner_prev);
                         next_cache.push_back(NextCacheEntry(outer_prev, boundary_next));
-                        set_halfedge(v, boundary_next);
+                        set_out_halfedge(v, boundary_next);
                         break;
 
                     case 3: // both are new
-                        if (!halfedge(v).is_valid())
+                        if (!out_halfedge(v).is_valid())
                         {
-                            set_halfedge(v, outer_next);
+                            set_out_halfedge(v, outer_next);
                             next_cache.push_back(NextCacheEntry(outer_prev, outer_next));
                         }
                         else
                         {
-                            boundary_next = halfedge(v);
-                            boundary_prev = prev_halfedge(boundary_next);
+                            boundary_next = out_halfedge(v);
+                            boundary_prev = prev(boundary_next);
                             next_cache.push_back(NextCacheEntry(boundary_prev, outer_next));
                             next_cache.push_back(NextCacheEntry(outer_prev, boundary_next));
                         }
@@ -597,7 +597,7 @@ namespace easy3d {
                 // set inner link
                 next_cache.push_back(NextCacheEntry(inner_prev, inner_next));
             }
-            else needs_adjust[ii] = (halfedge(v) == inner_next);
+            else needs_adjust[ii] = (out_halfedge(v) == inner_next);
 
 
             // set face handle
@@ -610,7 +610,7 @@ namespace easy3d {
         NextCache::const_iterator ncIt(next_cache.begin()), ncEnd(next_cache.end());
         for (; ncIt != ncEnd; ++ncIt)
         {
-            set_next_halfedge(ncIt->first, ncIt->second);
+            set_next(ncIt->first, ncIt->second);
         }
 
 
@@ -735,33 +735,33 @@ namespace easy3d {
          */
 
         Halfedge base_h  = halfedge(f);
-        Vertex   start_v = from_vertex(base_h);
-        Halfedge next_h  = next_halfedge(base_h);
+        Vertex   start_v = source(base_h);
+        Halfedge next_h  = next(base_h);
 
-        while (to_vertex(next_halfedge(next_h)) != start_v)
+        while (target(next(next_h)) != start_v)
         {
-            Halfedge next_next_h(next_halfedge(next_h));
+            Halfedge next_next_h(next(next_h));
 
             Face new_f = new_face();
             set_halfedge(new_f, base_h);
 
-            Halfedge new_h = new_edge(to_vertex(next_h), start_v);
+            Halfedge new_h = new_edge(target(next_h), start_v);
 
-            set_next_halfedge(base_h, next_h);
-            set_next_halfedge(next_h, new_h);
-            set_next_halfedge(new_h,  base_h);
+            set_next(base_h, next_h);
+            set_next(next_h, new_h);
+            set_next(new_h,  base_h);
 
             set_face(base_h, new_f);
             set_face(next_h, new_f);
             set_face(new_h,  new_f);
 
-            base_h = opposite_halfedge(new_h);
+            base_h = opposite(new_h);
             next_h = next_next_h;
         }
         set_halfedge(f, base_h);  //the last face takes the handle _fh
 
-        set_next_halfedge(base_h, next_h);
-        set_next_halfedge(next_halfedge(next_h), base_h);
+        set_next(base_h, next_h);
+        set_next(next(next_h), base_h);
 
         set_face(base_h, f);
     }
@@ -794,13 +794,13 @@ namespace easy3d {
         Halfedge h = halfedge(f);
         Halfedge hend = h;
 
-        vec3 p0 = vpoint_[to_vertex(h)];
-        h = next_halfedge(h);
-        vec3 p1 = vpoint_[to_vertex(h)];
-        h = next_halfedge(h);
-        vec3 p2 = vpoint_[to_vertex(h)];
+        vec3 p0 = vpoint_[target(h)];
+        h = next(h);
+        vec3 p1 = vpoint_[target(h)];
+        h = next(h);
+        vec3 p2 = vpoint_[target(h)];
 
-        if (next_halfedge(h) == hend) // face is a triangle
+        if (next(h) == hend) // face is a triangle
         {
             return cross(p2-=p1, p0-=p1).normalize();
         }
@@ -813,10 +813,10 @@ namespace easy3d {
             do
             {
                 n += cross(p2-p1, p0-p1);
-                h  = next_halfedge(h);
+                h  = next(h);
                 p0 = p1;
                 p1 = p2;
-                p2 = vpoint_[to_vertex(h)];
+                p2 = vpoint_[target(h)];
             }
             while (h != hend);
 
@@ -850,7 +850,7 @@ namespace easy3d {
     compute_vertex_normal(Vertex v) const
     {
         vec3     nn(0,0,0);
-        Halfedge  h = halfedge(v);
+        Halfedge  h = out_halfedge(v);
 
         if (h.is_valid())
         {
@@ -862,12 +862,12 @@ namespace easy3d {
 
             do
             {
-                if (!is_boundary(h))
+                if (!is_border(h))
                 {
-                    p1 = vpoint_[to_vertex(h)];
+                    p1 = vpoint_[target(h)];
                     p1 -= p0;
 
-                    p2 = vpoint_[from_vertex(prev_halfedge(h))];
+                    p2 = vpoint_[source(prev(h))];
                     p2 -= p0;
 
                     // check whether we can robustly compute angle
@@ -927,43 +927,43 @@ namespace easy3d {
          */
 
         Halfedge hend = halfedge(f);
-        Halfedge h    = next_halfedge(hend);
+        Halfedge h    = next(hend);
 
-        Halfedge hold = new_edge(to_vertex(hend), v);
+        Halfedge hold = new_edge(target(hend), v);
 
-        set_next_halfedge(hend, hold);
+        set_next(hend, hold);
         set_face(hold, f);
 
-        hold = opposite_halfedge(hold);
+        hold = opposite(hold);
 
         while (h != hend)
         {
-            Halfedge hnext = next_halfedge(h);
+            Halfedge hnext = next(h);
 
             Face fnew = new_face();
             set_halfedge(fnew, h);
 
-            Halfedge hnew = new_edge(to_vertex(h), v);
+            Halfedge hnew = new_edge(target(h), v);
 
-            set_next_halfedge(hnew, hold);
-            set_next_halfedge(hold, h);
-            set_next_halfedge(h,    hnew);
+            set_next(hnew, hold);
+            set_next(hold, h);
+            set_next(h,    hnew);
 
             set_face(hnew, fnew);
             set_face(hold, fnew);
             set_face(h,    fnew);
 
-            hold = opposite_halfedge(hnew);
+            hold = opposite(hnew);
 
             h = hnext;
         }
 
-        set_next_halfedge(hold, hend);
-        set_next_halfedge(next_halfedge(hend), hold);
+        set_next(hold, hend);
+        set_next(next(hend), hold);
 
         set_face(hold, f);
 
-        set_halfedge(v, hold);
+        set_out_halfedge(v, hold);
     }
 
 
@@ -977,26 +977,26 @@ namespace easy3d {
         Halfedge h0 = halfedge(e, 0);
         Halfedge o0 = halfedge(e, 1);
 
-        Vertex   v2 = to_vertex(o0);
+        Vertex   v2 = target(o0);
 
         Halfedge e1 = new_edge(v, v2);
-        Halfedge t1 = opposite_halfedge(e1);
+        Halfedge t1 = opposite(e1);
 
         Face     f0 = face(h0);
         Face     f3 = face(o0);
 
-        set_halfedge(v, h0);
-        set_vertex(o0, v);
+        set_out_halfedge(v, h0);
+        set_target(o0, v);
 
-        if (!is_boundary(h0))
+        if (!is_border(h0))
         {
-            Halfedge h1 = next_halfedge(h0);
-            Halfedge h2 = next_halfedge(h1);
+            Halfedge h1 = next(h0);
+            Halfedge h2 = next(h1);
 
-            Vertex   v1 = to_vertex(h1);
+            Vertex   v1 = target(h1);
 
             Halfedge e0 = new_edge(v, v1);
-            Halfedge t0 = opposite_halfedge(e0);
+            Halfedge t0 = opposite(e0);
 
             Face f1 = new_face();
             set_halfedge(f0, h0);
@@ -1010,31 +1010,31 @@ namespace easy3d {
             set_face(t1, f1);
             set_face(e0, f1);
 
-            set_next_halfedge(h0, h1);
-            set_next_halfedge(h1, t0);
-            set_next_halfedge(t0, h0);
+            set_next(h0, h1);
+            set_next(h1, t0);
+            set_next(t0, h0);
 
-            set_next_halfedge(e0, h2);
-            set_next_halfedge(h2, t1);
-            set_next_halfedge(t1, e0);
+            set_next(e0, h2);
+            set_next(h2, t1);
+            set_next(t1, e0);
         }
         else
         {
-            set_next_halfedge(prev_halfedge(h0), t1);
-            set_next_halfedge(t1, h0);
+            set_next(prev(h0), t1);
+            set_next(t1, h0);
             // halfedge handle of _vh already is h0
         }
 
 
-        if (!is_boundary(o0))
+        if (!is_border(o0))
         {
-            Halfedge o1 = next_halfedge(o0);
-            Halfedge o2 = next_halfedge(o1);
+            Halfedge o1 = next(o0);
+            Halfedge o2 = next(o1);
 
-            Vertex v3 = to_vertex(o1);
+            Vertex v3 = target(o1);
 
             Halfedge e2 = new_edge(v, v3);
-            Halfedge t2 = opposite_halfedge(e2);
+            Halfedge t2 = opposite(e2);
 
             Face f2 = new_face();
             set_halfedge(f2, o1);
@@ -1048,23 +1048,23 @@ namespace easy3d {
             set_face(o0, f3);
             set_face(e2, f3);
 
-            set_next_halfedge(e1, o1);
-            set_next_halfedge(o1, t2);
-            set_next_halfedge(t2, e1);
+            set_next(e1, o1);
+            set_next(o1, t2);
+            set_next(t2, e1);
 
-            set_next_halfedge(o0, e2);
-            set_next_halfedge(e2, o2);
-            set_next_halfedge(o2, o0);
+            set_next(o0, e2);
+            set_next(e2, o2);
+            set_next(o2, o0);
         }
         else
         {
-            set_next_halfedge(e1, next_halfedge(o0));
-            set_next_halfedge(o0, e1);
-            set_halfedge(v, e1);
+            set_next(e1, next(o0));
+            set_next(o0, e1);
+            set_out_halfedge(v, e1);
         }
 
-        if (halfedge(v2) == h0)
-            set_halfedge(v2, t1);
+        if (out_halfedge(v2) == h0)
+            set_out_halfedge(v2, t1);
 
         return t1;
     }
@@ -1091,32 +1091,32 @@ namespace easy3d {
         //   <------ <-------
         //     o0       o1
 
-        Halfedge h2 = next_halfedge(h0);
-        Halfedge o0 = opposite_halfedge(h0);
-        Halfedge o2 = prev_halfedge(o0);
-        Vertex   v2 = to_vertex(h0);
+        Halfedge h2 = next(h0);
+        Halfedge o0 = opposite(h0);
+        Halfedge o2 = prev(o0);
+        Vertex   v2 = target(h0);
         Face     fh = face(h0);
         Face     fo = face(o0);
 
         Halfedge h1 = new_edge(v, v2);
-        Halfedge o1 = opposite_halfedge(h1);
+        Halfedge o1 = opposite(h1);
 
         // adjust halfedge connectivity
-        set_next_halfedge(h1, h2);
-        set_next_halfedge(h0, h1);
-        set_vertex(h0, v);
-        set_vertex(h1, v2);
+        set_next(h1, h2);
+        set_next(h0, h1);
+        set_target(h0, v);
+        set_target(h1, v2);
         set_face(h1, fh);
 
-        set_next_halfedge(o1, o0);
-        set_next_halfedge(o2, o1);
-        set_vertex(o1, v);
+        set_next(o1, o0);
+        set_next(o2, o1);
+        set_target(o1, v);
         set_face(o1, fo);
 
         // adjust vertex connectivity
-        set_halfedge(v2, o1);
+        set_out_halfedge(v2, o1);
         adjust_outgoing_halfedge(v2);
-        set_halfedge(v, h1);
+        set_out_halfedge(v, h1);
         adjust_outgoing_halfedge(v);
 
         // adjust face connectivity
@@ -1137,14 +1137,14 @@ namespace easy3d {
         assert(face(h0) == face(h1));
         assert(face(h0).is_valid());
 
-        Vertex   v0 = to_vertex(h0);
-        Vertex   v1 = to_vertex(h1);
+        Vertex   v0 = target(h0);
+        Vertex   v1 = target(h1);
 
-        Halfedge h2 = next_halfedge(h0);
-        Halfedge h3 = next_halfedge(h1);
+        Halfedge h2 = next(h0);
+        Halfedge h3 = next(h1);
 
         Halfedge h4 = new_edge(v0, v1);
-        Halfedge h5 = opposite_halfedge(h4);
+        Halfedge h5 = opposite(h4);
 
         Face     f0 = face(h0);
         Face     f1 = new_face();
@@ -1152,17 +1152,17 @@ namespace easy3d {
         set_halfedge(f0, h0);
         set_halfedge(f1, h1);
 
-        set_next_halfedge(h0, h4);
-        set_next_halfedge(h4, h3);
+        set_next(h0, h4);
+        set_next(h4, h3);
         set_face(h4, f0);
 
-        set_next_halfedge(h1, h5);
-        set_next_halfedge(h5, h2);
+        set_next(h1, h5);
+        set_next(h5, h2);
         Halfedge h = h2;
         do
         {
             set_face(h, f1);
-            h = next_halfedge(h);
+            h = next(h);
         }
         while (h != h2);
 
@@ -1178,15 +1178,15 @@ namespace easy3d {
     is_flip_ok(Edge e) const
     {
         // boundary edges cannot be flipped
-        if (is_boundary(e)) return false;
+        if (is_border(e)) return false;
 
         // check if the flipped edge is already present in the mesh
 
         Halfedge h0 = halfedge(e, 0);
         Halfedge h1 = halfedge(e, 1);
 
-        Vertex v0 = to_vertex(next_halfedge(h0));
-        Vertex v1 = to_vertex(next_halfedge(h1));
+        Vertex v0 = target(next(h0));
+        Vertex v1 = target(next(h1));
 
         if (v0 == v1)   // this is generally a bad sign !!!
             return false;
@@ -1215,31 +1215,31 @@ namespace easy3d {
         Halfedge a0 = halfedge(e, 0);
         Halfedge b0 = halfedge(e, 1);
 
-        Halfedge a1 = next_halfedge(a0);
-        Halfedge a2 = next_halfedge(a1);
+        Halfedge a1 = next(a0);
+        Halfedge a2 = next(a1);
 
-        Halfedge b1 = next_halfedge(b0);
-        Halfedge b2 = next_halfedge(b1);
+        Halfedge b1 = next(b0);
+        Halfedge b2 = next(b1);
 
-        Vertex   va0 = to_vertex(a0);
-        Vertex   va1 = to_vertex(a1);
+        Vertex   va0 = target(a0);
+        Vertex   va1 = target(a1);
 
-        Vertex   vb0 = to_vertex(b0);
-        Vertex   vb1 = to_vertex(b1);
+        Vertex   vb0 = target(b0);
+        Vertex   vb1 = target(b1);
 
         Face     fa  = face(a0);
         Face     fb  = face(b0);
 
-        set_vertex(a0, va1);
-        set_vertex(b0, vb1);
+        set_target(a0, va1);
+        set_target(b0, vb1);
 
-        set_next_halfedge(a0, a2);
-        set_next_halfedge(a2, b1);
-        set_next_halfedge(b1, a0);
+        set_next(a0, a2);
+        set_next(a2, b1);
+        set_next(b1, a0);
 
-        set_next_halfedge(b0, b2);
-        set_next_halfedge(b2, a1);
-        set_next_halfedge(a1, b0);
+        set_next(b0, b2);
+        set_next(b2, a1);
+        set_next(a1, b0);
 
         set_face(a1, fb);
         set_face(b1, fa);
@@ -1247,10 +1247,10 @@ namespace easy3d {
         set_halfedge(fa, a0);
         set_halfedge(fb, b0);
 
-        if (halfedge(va0) == b0)
-            set_halfedge(va0, a1);
-        if (halfedge(vb0) == a0)
-            set_halfedge(vb0, b1);
+        if (out_halfedge(va0) == b0)
+            set_out_halfedge(va0, a1);
+        if (out_halfedge(vb0) == a0)
+            set_out_halfedge(vb0, b1);
     }
 
 
@@ -1259,24 +1259,24 @@ namespace easy3d {
 
     bool SurfaceMesh::can_merge_vertices(Halfedge h0, Halfedge h1) {
         // It's OK if they are already the same!
-        if (to_vertex(h0) == to_vertex(h1))
+        if (target(h0) == target(h1))
             return true;
 
         Halfedge cir_h0 = h0;
         do {
             // Number of potential opposites half_edges (should not be greater than 1)
             int nb_common = 0;
-            Halfedge hh0 = opposite_halfedge(cir_h0);
+            Halfedge hh0 = opposite(cir_h0);
             Halfedge cir_h1 = h1;
             do {
-                Halfedge hh1 = opposite_halfedge(cir_h1);
-                if (to_vertex(hh0) == to_vertex(hh1) ||
-                    (to_vertex(hh0) == from_vertex(h0) && to_vertex(hh1) == from_vertex(h1)) ||
-                    (to_vertex(hh0) == from_vertex(h1) && to_vertex(hh1) == from_vertex(h0))
+                Halfedge hh1 = opposite(cir_h1);
+                if (target(hh0) == target(hh1) ||
+                    (target(hh0) == source(h0) && target(hh1) == source(h1)) ||
+                    (target(hh0) == source(h1) && target(hh1) == source(h0))
                     )
                 {
-                    if ((is_boundary(opposite_halfedge(hh0)) && is_boundary(hh1)) ||
-                        (is_boundary(hh0) && is_boundary(opposite_halfedge(hh1)))) {
+                    if ((is_border(opposite(hh0)) && is_border(hh1)) ||
+                        (is_border(hh0) && is_border(opposite(hh1)))) {
                         // Found a potential opposite edge.
                         nb_common++;
                     } else {
@@ -1284,12 +1284,12 @@ namespace easy3d {
                         return false;
                     }
                 }
-                cir_h1 = prev_halfedge(opposite_halfedge(cir_h1));
+                cir_h1 = prev(opposite(cir_h1));
             } while (cir_h1 != h1);
             if (nb_common > 1) {
                 return false;
             }
-            cir_h0 = prev_halfedge(opposite_halfedge(cir_h0));
+            cir_h0 = prev(opposite(cir_h0));
         } while (cir_h0 != h0);
         return true;
     }
@@ -1300,16 +1300,16 @@ namespace easy3d {
 
     bool SurfaceMesh::is_stitch_ok(Halfedge h0, Halfedge h1) {
         // check if both halfedges are on the border.
-        if (!is_boundary(h0) || !is_boundary(h1)) {
+        if (!is_border(h0) || !is_border(h1)) {
             return false;
         }
 
         // the two halfedges must point in reverse directions
         if (edge_length(edge(h0)) > 1e-6 && edge_length(edge(h1)) > 1e-6) {
-            auto s0 = from_vertex(h0);
-            auto t0 = to_vertex(h0);
-            auto s1 = from_vertex(h1);
-            auto t1 = to_vertex(h1);
+            auto s0 = source(h0);
+            auto t0 = target(h0);
+            auto s1 = source(h1);
+            auto t1 = target(h1);
             const auto dir0 = position(t0) - position(s0);
             const auto dir1 = position(t1) - position(s1);
             if (dot(dir0, dir1) > 0)
@@ -1317,14 +1317,14 @@ namespace easy3d {
         }
 
         // we cannot glue two halfedges on a same face
-        const auto opp_h0 = opposite_halfedge(h0);
-        const auto opp_h1 = opposite_halfedge(h1);
+        const auto opp_h0 = opposite(h0);
+        const auto opp_h1 = opposite(h1);
         if (face(opp_h0) == face(opp_h1))
             return false;
 
         // don't merge two vertices on a same halfedge
-        if (find_halfedge(to_vertex(h0), from_vertex(h1)).is_valid() ||
-            find_halfedge(from_vertex(h0), to_vertex(h1)).is_valid()) {
+        if (find_halfedge(target(h0), source(h1)).is_valid() ||
+            find_halfedge(source(h0), target(h1)).is_valid()) {
             return false;
         }
 
@@ -1348,30 +1348,30 @@ namespace easy3d {
         assert(is_stitch_ok(h0, h1));
 
         // the new position of the end points
-        auto org0 = from_vertex(h0);
-        auto org1 = from_vertex(h1);
-        auto dest0 = to_vertex(h0);
-        auto dest1 = to_vertex(h1);
+        auto org0 = source(h0);
+        auto org1 = source(h1);
+        auto dest0 = target(h0);
+        auto dest1 = target(h1);
         const vec3& p_org0 = geom::barycenter(vpoint_[org0], vpoint_[dest1]);
         const vec3& p_org1 = geom::barycenter(vpoint_[dest0], vpoint_[org1]);
 
         Halfedge new_h0 = new_edge(org1, org0);
-        Halfedge new_h1 = opposite_halfedge(new_h0);
+        Halfedge new_h1 = opposite(new_h0);
         vpoint_[org0] = p_org0;
         vpoint_[org1] = p_org1;
 
-        set_vertex(new_h0, org0);
-        set_vertex(new_h1, org1);
+        set_target(new_h0, org0);
+        set_target(new_h1, org1);
 
-        auto op_h0 = opposite_halfedge(h0);
-        auto op_h1 = opposite_halfedge(h1);
-        set_vertex(prev_halfedge(op_h0), org1);
-        set_vertex(prev_halfedge(op_h1), org0);
+        auto op_h0 = opposite(h0);
+        auto op_h1 = opposite(h1);
+        set_target(prev(op_h0), org1);
+        set_target(prev(op_h1), org0);
 
-        if (halfedge(org0) == h0)
-            set_halfedge(org0, new_h1);
-        if (halfedge(org1) == h1)
-            set_halfedge(org1, new_h0);
+        if (out_halfedge(org0) == h0)
+            set_out_halfedge(org0, new_h1);
+        if (out_halfedge(org1) == h1)
+            set_out_halfedge(org1, new_h0);
 
         // set face
         auto f0 = face(op_h0);
@@ -1392,8 +1392,8 @@ namespace easy3d {
         auto set_vertex_on_orbit = [](SurfaceMesh* mesh, Halfedge h, Vertex v) ->void {
             Halfedge it = h ;
             do {
-                mesh->set_vertex(it, v);
-                it = mesh->prev_halfedge(mesh->opposite_halfedge(it));
+                mesh->set_target(it, v);
+                it = mesh->prev(mesh->opposite(it));
             } while(it != h) ;
         };
 
@@ -1401,7 +1401,7 @@ namespace easy3d {
             set_vertex_on_orbit(this, h1, org0);
             if (!vdeleted_[dest1]) {
                 vdeleted_[dest1] = true;
-                set_halfedge(dest1, Halfedge());
+                set_out_halfedge(dest1, Halfedge());
                 deleted_vertices_++;
                 garbage_ = true;
             }
@@ -1411,23 +1411,23 @@ namespace easy3d {
             set_vertex_on_orbit(this, h0, org1);
             if (!vdeleted_[dest0]) {
                 vdeleted_[dest0] = true;
-                set_halfedge(dest0, Halfedge());
+                set_out_halfedge(dest0, Halfedge());
                 deleted_vertices_++;
                 garbage_ = true;
             }
         }
 
         // set halfedge connections
-        set_next_halfedge(prev_halfedge(op_h0), new_h0);
-        set_next_halfedge( new_h0, next_halfedge(op_h0));
-        set_next_halfedge(prev_halfedge(op_h1), new_h1);
-        set_next_halfedge( new_h1, next_halfedge(op_h1));
-        auto prev_h0 = prev_halfedge(h0);
-        if (is_boundary(prev_h0))
-            set_next_halfedge(prev_h0, next_halfedge(h1));
-        auto prev_h1 = prev_halfedge(h1);
-        if (is_boundary(prev_h1))
-            set_next_halfedge(prev_h1, next_halfedge(h0));
+        set_next(prev(op_h0), new_h0);
+        set_next( new_h0, next(op_h0));
+        set_next(prev(op_h1), new_h1);
+        set_next( new_h1, next(op_h1));
+        auto prev_h0 = prev(h0);
+        if (is_border(prev_h0))
+            set_next(prev_h0, next(h1));
+        auto prev_h1 = prev(h1);
+        if (is_border(prev_h1))
+            set_next(prev_h1, next(h0));
 
         // mark the two edges deleted (done in garbage collection)
         auto e0 = edge(h0);
@@ -1452,31 +1452,31 @@ namespace easy3d {
     SurfaceMesh::
     is_collapse_ok(Halfedge v0v1)
     {
-        Halfedge  v1v0(opposite_halfedge(v0v1));
-        Vertex    v0(to_vertex(v1v0));
-        Vertex    v1(to_vertex(v0v1));
+        Halfedge  v1v0(opposite(v0v1));
+        Vertex    v0(target(v1v0));
+        Vertex    v1(target(v0v1));
         Vertex    vv, vl, vr;
         Halfedge  h1, h2;
 
 
         // the edges v1-vl and vl-v0 must not be both boundary edges
-        if (!is_boundary(v0v1))
+        if (!is_border(v0v1))
         {
-            vl = to_vertex(next_halfedge(v0v1));
-            h1 = next_halfedge(v0v1);
-            h2 = next_halfedge(h1);
-            if (is_boundary(opposite_halfedge(h1)) && is_boundary(opposite_halfedge(h2)))
+            vl = target(next(v0v1));
+            h1 = next(v0v1);
+            h2 = next(h1);
+            if (is_border(opposite(h1)) && is_border(opposite(h2)))
                 return false;
         }
 
 
         // the edges v0-vr and vr-v1 must not be both boundary edges
-        if (!is_boundary(v1v0))
+        if (!is_border(v1v0))
         {
-            vr = to_vertex(next_halfedge(v1v0));
-            h1 = next_halfedge(v1v0);
-            h2 = next_halfedge(h1);
-            if (is_boundary(opposite_halfedge(h1)) && is_boundary(opposite_halfedge(h2)))
+            vr = target(next(v1v0));
+            h1 = next(v1v0);
+            h2 = next(h1);
+            if (is_border(opposite(h1)) && is_border(opposite(h2)))
                 return false;
         }
 
@@ -1486,8 +1486,8 @@ namespace easy3d {
 
 
         // edge between two boundary vertices should be a boundary edge
-        if ( is_boundary(v0) && is_boundary(v1) &&
-            !is_boundary(v0v1) && !is_boundary(v1v0))
+        if ( is_border(v0) && is_border(v1) &&
+            !is_border(v0v1) && !is_border(v1v0))
             return false;
 
 
@@ -1520,17 +1520,17 @@ namespace easy3d {
         assert(is_collapse_ok(h));
 
         Halfedge h0 = h;
-        Halfedge h1 = prev_halfedge(h0);
-        Halfedge o0 = opposite_halfedge(h0);
-        Halfedge o1 = next_halfedge(o0);
+        Halfedge h1 = prev(h0);
+        Halfedge o0 = opposite(h0);
+        Halfedge o1 = next(o0);
 
         // remove edge
         remove_edge(h0);
 
         // remove loops
-        if (next_halfedge(next_halfedge(h1)) == h1)
+        if (next(next(h1)) == h1)
             remove_loop(h1);
-        if (next_halfedge(next_halfedge(o1)) == o1)
+        if (next(next(o1)) == o1)
             remove_loop(o1);
     }
 
@@ -1542,18 +1542,18 @@ namespace easy3d {
     SurfaceMesh::
     remove_edge(Halfedge h)
     {
-        Halfedge  hn = next_halfedge(h);
-        Halfedge  hp = prev_halfedge(h);
+        Halfedge  hn = next(h);
+        Halfedge  hp = prev(h);
 
-        Halfedge  o  = opposite_halfedge(h);
-        Halfedge  on = next_halfedge(o);
-        Halfedge  op = prev_halfedge(o);
+        Halfedge  o  = opposite(h);
+        Halfedge  on = next(o);
+        Halfedge  op = prev(o);
 
         Face      fh = face(h);
         Face      fo = face(o);
 
-        Vertex    vh = to_vertex(h);
-        Vertex    vo = to_vertex(o);
+        Vertex    vh = target(h);
+        Vertex    vo = target(o);
 
 
 
@@ -1562,14 +1562,14 @@ namespace easy3d {
         vh_it = vh_end = halfedges(vo);
         do
         {
-            set_vertex(opposite_halfedge(*vh_it), vh);
+            set_target(opposite(*vh_it), vh);
         }
         while (++vh_it != vh_end);
 
 
         // halfedge -> halfedge
-        set_next_halfedge(hp, hn);
-        set_next_halfedge(op, on);
+        set_next(hp, hn);
+        set_next(op, on);
 
 
         // face -> halfedge
@@ -1578,9 +1578,9 @@ namespace easy3d {
 
 
         // vertex -> halfedge
-        if (halfedge(vh) == o)  set_halfedge(vh, hn);
+        if (out_halfedge(vh) == o)  set_out_halfedge(vh, hn);
         adjust_outgoing_halfedge(vh);
-        set_halfedge(vo, Halfedge());
+        set_out_halfedge(vo, Halfedge());
 
 
         // delete stuff
@@ -1600,13 +1600,13 @@ namespace easy3d {
     remove_loop(Halfedge h)
     {
         Halfedge  h0 = h;
-        Halfedge  h1 = next_halfedge(h0);
+        Halfedge  h1 = next(h0);
 
-        Halfedge  o0 = opposite_halfedge(h0);
-        Halfedge  o1 = opposite_halfedge(h1);
+        Halfedge  o0 = opposite(h0);
+        Halfedge  o1 = opposite(h1);
 
-        Vertex    v0 = to_vertex(h0);
-        Vertex    v1 = to_vertex(h1);
+        Vertex    v0 = target(h0);
+        Vertex    v1 = target(h1);
 
         Face      fh = face(h0);
         Face      fo = face(o0);
@@ -1614,12 +1614,12 @@ namespace easy3d {
 
 
         // is it a loop ?
-        assert ((next_halfedge(h1) == h0) && (h1 != o0));
+        assert ((next(h1) == h0) && (h1 != o0));
 
 
         // halfedge -> halfedge
-        set_next_halfedge(h1, next_halfedge(o0));
-        set_next_halfedge(prev_halfedge(o0), h1);
+        set_next(h1, next(o0));
+        set_next(prev(o0), h1);
 
 
         // halfedge -> face
@@ -1627,8 +1627,8 @@ namespace easy3d {
 
 
         // vertex -> halfedge
-        set_halfedge(v0, h1);  adjust_outgoing_halfedge(v0);
-        set_halfedge(v1, o1);  adjust_outgoing_halfedge(v1);
+        set_out_halfedge(v0, h1);  adjust_outgoing_halfedge(v0);
+        set_out_halfedge(v1, o1);  adjust_outgoing_halfedge(v1);
 
 
         // face -> halfedge
@@ -1737,10 +1737,10 @@ namespace easy3d {
         {
             set_face(*hc, Face());
 
-            if (is_boundary(opposite_halfedge(*hc)))
+            if (is_border(opposite(*hc)))
                 deleted_edges.push_back(edge(*hc));
 
-            vertices.push_back(to_vertex(*hc));
+            vertices.push_back(target(*hc));
 
         } while (++hc != hc_end);
 
@@ -1758,18 +1758,18 @@ namespace easy3d {
             for (; del_it!=del_end; ++del_it)
             {
                 h0    = halfedge(*del_it, 0);
-                v0    = to_vertex(h0);
-                next0 = next_halfedge(h0);
-                prev0 = prev_halfedge(h0);
+                v0    = target(h0);
+                next0 = next(h0);
+                prev0 = prev(h0);
 
                 h1    = halfedge(*del_it, 1);
-                v1    = to_vertex(h1);
-                next1 = next_halfedge(h1);
-                prev1 = prev_halfedge(h1);
+                v1    = target(h1);
+                next1 = next(h1);
+                prev1 = prev(h1);
 
                 // adjust next and prev handles
-                set_next_halfedge(prev0, next1);
-                set_next_halfedge(prev1, next0);
+                set_next(prev0, next1);
+                set_next(prev1, next0);
 
                 // mark edge deleted
                 if (!edeleted_[*del_it])
@@ -1779,7 +1779,7 @@ namespace easy3d {
                 }
 
                 // update v0
-                if (halfedge(v0) == h1)
+                if (out_halfedge(v0) == h1)
                 {
                     if (next0 == h1)
                     {
@@ -1789,11 +1789,11 @@ namespace easy3d {
                             deleted_vertices_++;
                         }
                     }
-                    else set_halfedge(v0, next0);
+                    else set_out_halfedge(v0, next0);
                 }
 
                 // update v1
-                if (halfedge(v1) == h0)
+                if (out_halfedge(v1) == h0)
                 {
                     if (next1 == h0)
                     {
@@ -1803,7 +1803,7 @@ namespace easy3d {
                             deleted_vertices_++;
                         }
                     }
-                    else  set_halfedge(v1, next1);
+                    else  set_out_halfedge(v1, next1);
                 }
             }
         }
@@ -1924,7 +1924,7 @@ namespace easy3d {
         {
             v = Vertex(i);
             if (!is_isolated(v))
-                set_halfedge(v, hmap[halfedge(v)]);
+                set_out_halfedge(v, hmap[out_halfedge(v)]);
         }
 
 
@@ -1932,9 +1932,9 @@ namespace easy3d {
         for (i=0; i<nH; ++i)
         {
             h = Halfedge(i);
-            set_vertex(h, vmap[to_vertex(h)]);
-            set_next_halfedge(h, hmap[next_halfedge(h)]);
-            if (!is_boundary(h))
+            set_target(h, vmap[target(h)]);
+            set_next(h, hmap[next(h)]);
+            if (!is_border(h))
                 set_face(h, fmap[face(h)]);
         }
 

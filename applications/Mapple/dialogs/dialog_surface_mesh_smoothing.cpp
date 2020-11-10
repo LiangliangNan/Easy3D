@@ -86,7 +86,7 @@ void DialogSurfaceMeshSmoothing::apply() {
         // does the mesh have a boundary?
         bool has_boundary = false;
         for (auto v: mesh->vertices())
-            if (mesh->is_boundary(v))
+            if (mesh->is_border(v))
                 has_boundary = true;
 
         // only re-scale if we don't have a (fixed) boundary

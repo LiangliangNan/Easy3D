@@ -73,11 +73,11 @@ namespace easy3d {
             const vec3 &n = mesh_face_normals ? mesh_face_normals[f] : mesh->compute_face_normal(f);
 
             SurfaceMesh::Halfedge start = mesh->halfedge(f);
-            SurfaceMesh::Halfedge cur = mesh->next_halfedge(mesh->next_halfedge(start));
-            SurfaceMesh::Vertex va = mesh->to_vertex(start);
+            SurfaceMesh::Halfedge cur = mesh->next(mesh->next(start));
+            SurfaceMesh::Vertex va = mesh->target(start);
             while (cur != start) {
-                SurfaceMesh::Vertex vb = mesh->from_vertex(cur);
-                SurfaceMesh::Vertex vc = mesh->to_vertex(cur);
+                SurfaceMesh::Vertex vb = mesh->source(cur);
+                SurfaceMesh::Vertex vc = mesh->target(cur);
 
                 Triangle tri;
                 tri.push_back(va);
@@ -89,7 +89,7 @@ namespace easy3d {
                 triangle_normals.push_back(n);
                 surface_area += area;
 
-                cur = mesh->next_halfedge(cur);
+                cur = mesh->next(cur);
             }
         }
 

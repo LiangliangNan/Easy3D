@@ -59,16 +59,16 @@ void DialogSurfaceMeshHoleFilling::apply() {
     SurfaceMesh::Halfedge hmin;
     unsigned int lmin(mesh->n_halfedges());
     for (auto h : mesh->halfedges()) {
-        if (mesh->is_boundary(h)) {
+        if (mesh->is_border(h)) {
             float l(0);
             SurfaceMesh::Halfedge hh = h;
             do {
                 ++l;
-                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
+                if (!mesh->is_manifold(mesh->target(hh))) {
                     l += 123456;
                     break;
                 }
-                hh = mesh->next_halfedge(hh);
+                hh = mesh->next(hh);
             } while (hh != h);
 
             if (l < lmin) {
@@ -86,17 +86,17 @@ void DialogSurfaceMeshHoleFilling::apply() {
 
     auto visited = mesh->add_halfedge_property<bool>("DialogSurfaceMeshHoleFilling::h::visited", false);
     for (auto h : mesh->halfedges()) {
-        if (!visited[h] && mesh->is_boundary(h)) {
+        if (!visited[h] && mesh->is_border(h)) {
             int size = 0;
             SurfaceMesh::Halfedge hh = h;
             do {
                 visited[hh] = true;
                 ++size;
-                if (!mesh->is_manifold(mesh->to_vertex(hh))) {
+                if (!mesh->is_manifold(mesh->target(hh))) {
                     size += 123456;
                     break;
                 }
-                hh = mesh->next_halfedge(hh);
+                hh = mesh->next(hh);
             } while (hh != h);
 
             if (size < allowed_boundary_size) {

@@ -175,9 +175,9 @@ namespace easy3d {
             /// vertex the halfedge points to
             Vertex    vertex_;
             /// next halfedge within a face (or along a boundary)
-            Halfedge  next_halfedge_;
+            Halfedge  next_;
             /// previous halfedge within a face (or along a boundary)
-            Halfedge  prev_halfedge_;
+            Halfedge  prev_;
         };
 
 
@@ -603,7 +603,7 @@ namespace easy3d {
             VertexAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
             : mesh_(m), active_(true)
             {
-                if (mesh_) halfedge_ = mesh_->halfedge(v);
+                if (mesh_) halfedge_ = mesh_->out_halfedge(v);
             }
 
             /// are two circulators equal?
@@ -640,7 +640,7 @@ namespace easy3d {
             Vertex operator*()  const
             {
                 assert(mesh_);
-                return mesh_->to_vertex(halfedge_);
+                return mesh_->target(halfedge_);
             }
 
             /// cast to bool: true if vertex is not isolated
@@ -673,7 +673,7 @@ namespace easy3d {
             HalfedgeAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
             : mesh_(m), active_(true)
             {
-                if (mesh_) halfedge_ = mesh_->halfedge(v);
+                if (mesh_) halfedge_ = mesh_->out_halfedge(v);
             }
 
             /// are two circulators equal?
@@ -738,8 +738,8 @@ namespace easy3d {
             {
                 if (mesh_)
                 {
-                    halfedge_ = mesh_->halfedge(v);
-                    if (halfedge_.is_valid() && mesh_->is_boundary(halfedge_))
+                    halfedge_ = mesh_->out_halfedge(v);
+                    if (halfedge_.is_valid() && mesh_->is_border(halfedge_))
                         operator++();
                 }
             }
@@ -763,7 +763,7 @@ namespace easy3d {
                 assert(mesh_ && halfedge_.is_valid());
                 do {
                     halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
-                } while (mesh_->is_boundary(halfedge_));
+                } while (mesh_->is_border(halfedge_));
                 active_ = true;
                 return *this;
             }
@@ -774,7 +774,7 @@ namespace easy3d {
                 assert(mesh_ && halfedge_.is_valid());
                 do
                     halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
-                while (mesh_->is_boundary(halfedge_));
+                while (mesh_->is_border(halfedge_));
                 return *this;
             }
 
@@ -832,7 +832,7 @@ namespace easy3d {
             VertexAroundFaceCirculator& operator++()
             {
                 assert(mesh_ && halfedge_.is_valid());
-                halfedge_ = mesh_->next_halfedge(halfedge_);
+                halfedge_ = mesh_->next(halfedge_);
                 active_ = true;
                 return *this;
             }
@@ -841,7 +841,7 @@ namespace easy3d {
             VertexAroundFaceCirculator& operator--()
             {
                 assert(mesh_ && halfedge_.is_valid());
-                halfedge_ = mesh_->prev_halfedge(halfedge_);
+                halfedge_ = mesh_->prev(halfedge_);
                 return *this;
             }
 
@@ -849,7 +849,7 @@ namespace easy3d {
             Vertex operator*() const
             {
                 assert(mesh_ && halfedge_.is_valid());
-                return mesh_->to_vertex(halfedge_);
+                return mesh_->target(halfedge_);
             }
 
             // helper for C++11 range-based for-loops
@@ -896,7 +896,7 @@ namespace easy3d {
             HalfedgeAroundFaceCirculator& operator++()
             {
                 assert(mesh_ && halfedge_.is_valid());
-                halfedge_ = mesh_->next_halfedge(halfedge_);
+                halfedge_ = mesh_->next(halfedge_);
                 active_ = true;
                 return *this;
             }
@@ -905,7 +905,7 @@ namespace easy3d {
             HalfedgeAroundFaceCirculator& operator--()
             {
                 assert(mesh_ && halfedge_.is_valid());
-                halfedge_ = mesh_->prev_halfedge(halfedge_);
+                halfedge_ = mesh_->prev(halfedge_);
                 return *this;
             }
 
@@ -1079,28 +1079,28 @@ namespace easy3d {
 
         /// returns an outgoing halfedge of vertex \c v.
         /// if \c v is a boundary vertex this will be a boundary halfedge.
-        Halfedge halfedge(Vertex v) const
+        Halfedge out_halfedge(Vertex v) const
         {
             return vconn_[v].halfedge_;
         }
 
         /// set the outgoing halfedge of vertex \c v to \c h
-        void set_halfedge(Vertex v, Halfedge h)
+        void set_out_halfedge(Vertex v, Halfedge h)
         {
             vconn_[v].halfedge_ = h;
         }
 
         /// returns whether \c v is a boundary vertex
-        bool is_boundary(Vertex v) const
+        bool is_border(Vertex v) const
         {
-            Halfedge h(halfedge(v));
+            Halfedge h(out_halfedge(v));
             return (!(h.is_valid() && face(h).is_valid()));
         }
 
         /// returns whether \c v is isolated, i.e., not incident to any face
         bool is_isolated(Vertex v) const
         {
-            return !halfedge(v).is_valid();
+            return !out_halfedge(v).is_valid();
         }
 
         /// returns whether \c v is a manifold vertex (not incident to several patches)
@@ -1115,7 +1115,7 @@ namespace easy3d {
             HalfedgeAroundVertexCirculator hit = halfedges(v), hend=hit;
             if (hit) do
             {
-                if (is_boundary(*hit))
+                if (is_border(*hit))
                     ++n;
             }
             while (++hit!=hend);
@@ -1123,19 +1123,19 @@ namespace easy3d {
         }
 
         /// returns the vertex the halfedge \c h points to
-        Vertex to_vertex(Halfedge h) const
+        Vertex target(Halfedge h) const
         {
             return hconn_[h].vertex_;
         }
 
         /// returns the vertex the halfedge \c h emanates from
-        Vertex from_vertex(Halfedge h) const
+        Vertex source(Halfedge h) const
         {
-            return to_vertex(opposite_halfedge(h));
+            return target(opposite(h));
         }
 
         /// sets the vertex the halfedge \c h points to to \c v
-        void set_vertex(Halfedge h, Vertex v)
+        void set_target(Halfedge h, Vertex v)
         {
             hconn_[h].vertex_ = v;
         }
@@ -1153,26 +1153,26 @@ namespace easy3d {
         }
 
         /// returns the next halfedge within the incident face
-        Halfedge next_halfedge(Halfedge h) const
+        Halfedge next(Halfedge h) const
         {
-            return hconn_[h].next_halfedge_;
+            return hconn_[h].next_;
         }
 
         /// sets the next halfedge of \c h within the face to \c nh
-        void set_next_halfedge(Halfedge h, Halfedge nh)
+        void set_next(Halfedge h, Halfedge nh)
         {
-            hconn_[h].next_halfedge_ = nh;
-            hconn_[nh].prev_halfedge_ = h;
+            hconn_[h].next_ = nh;
+            hconn_[nh].prev_ = h;
         }
 
         /// returns the previous halfedge within the incident face
-        Halfedge prev_halfedge(Halfedge h) const
+        Halfedge prev(Halfedge h) const
         {
-            return hconn_[h].prev_halfedge_;
+            return hconn_[h].prev_;
         }
 
         /// returns the opposite halfedge of \c h
-        Halfedge opposite_halfedge(Halfedge h) const
+        Halfedge opposite(Halfedge h) const
         {
             return Halfedge((h.idx() & 1) ? h.idx()-1 : h.idx()+1);
         }
@@ -1181,14 +1181,14 @@ namespace easy3d {
         /// start vertex of \c h. it is the opposite halfedge of the previous halfedge of \c h.
         Halfedge ccw_rotated_halfedge(Halfedge h) const
         {
-            return opposite_halfedge(prev_halfedge(h));
+            return opposite(prev(h));
         }
 
         /// returns the halfedge that is rotated clockwise around the
         /// start vertex of \c h. it is the next halfedge of the opposite halfedge of \c h.
         Halfedge cw_rotated_halfedge(Halfedge h) const
         {
-            return next_halfedge(opposite_halfedge(h));
+            return next(opposite(h));
         }
 
         /// return the edge that contains halfedge \c h as one of its two halfedges.
@@ -1198,7 +1198,7 @@ namespace easy3d {
         }
 
         /// returns whether h is a boundary halfedge, i.e., if its face does not exist.
-        bool is_boundary(Halfedge h) const
+        bool is_border(Halfedge h) const
         {
             return !face(h).is_valid();
         }
@@ -1215,7 +1215,7 @@ namespace easy3d {
         Vertex vertex(Edge e, unsigned int i) const
         {
             assert(i<=1);
-            return to_vertex(halfedge(e, i));
+            return target(halfedge(e, i));
         }
 
         /// returns the face incident to the \c i'th halfedge of edge \c e. \c i has to be 0 or 1.
@@ -1227,9 +1227,9 @@ namespace easy3d {
 
         /// returns whether \c e is a boundary edge, i.e., if one of its
         /// halfedges is a boundary halfedge.
-        bool is_boundary(Edge e) const
+        bool is_border(Edge e) const
         {
-            return (is_boundary(halfedge(e, 0)) || is_boundary(halfedge(e, 1)));
+            return (is_border(halfedge(e, 0)) || is_border(halfedge(e, 1)));
         }
 
         /// returns a halfedge of face \c f
@@ -1245,15 +1245,15 @@ namespace easy3d {
         }
 
         /// returns whether \c f is a boundary face, i.e., it one of its edges is a boundary edge.
-        bool is_boundary(Face f) const
+        bool is_border(Face f) const
         {
             Halfedge h  = halfedge(f);
             Halfedge hh = h;
             do
             {
-                if (is_boundary(opposite_halfedge(h)))
+                if (is_border(opposite(h)))
                     return true;
-                h = next_halfedge(h);
+                h = next(h);
             }
             while (h != hh);
             return false;
@@ -1831,8 +1831,8 @@ namespace easy3d {
             Halfedge h0(halfedges_size()-2);
             Halfedge h1(halfedges_size()-1);
 
-            set_vertex(h0, end);
-            set_vertex(h1, start);
+            set_target(h0, end);
+            set_target(h1, start);
 
             return h0;
         }

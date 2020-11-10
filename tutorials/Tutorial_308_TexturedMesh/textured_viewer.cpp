@@ -119,7 +119,7 @@ namespace easy3d {
         auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
                                      SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
             for (auto h : mesh->halfedges(face)) {
-                if (mesh->to_vertex(h) == v)
+                if (mesh->target(h) == v)
                     return h;
             }
             LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
@@ -158,7 +158,7 @@ namespace easy3d {
                     int idx = 0;
                     do {
                         prop_texcoords[cur] = texcoords[texcoord_ids[idx++]];
-                        cur = model->next_halfedge(cur);
+                        cur = model->next(cur);
                     } while (cur != begin);
                 }
 
@@ -221,7 +221,7 @@ namespace easy3d {
                 tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
                 for (auto h : model->halfedges(face)) {
-                    auto v = model->to_vertex(h);
+                    auto v = model->target(h);
                     const vec3 &p = points[v];
                     const vec3 &n = normals[v];
                     if (prop_texcoords) {

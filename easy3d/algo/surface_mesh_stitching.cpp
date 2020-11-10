@@ -41,7 +41,7 @@ namespace easy3d {
     SurfaceMeshStitching::SurfaceMeshStitching(SurfaceMesh *mesh)
             : mesh_(mesh), coordinates_(nullptr), tree_(nullptr), k_for_radius_search_(4) {
         for (auto h : mesh_->halfedges()) {
-            if (mesh_->is_boundary(h))
+            if (mesh_->is_border(h))
                 border_edges_.push_back(h);
         }
 
@@ -90,8 +90,8 @@ namespace easy3d {
 
 
     void SurfaceMeshStitching::assign_edge_coordinate(float *coords, SurfaceMesh::Halfedge h) const {
-        const auto vs = mesh_->from_vertex(h);
-        const auto vt = mesh_->to_vertex(h);
+        const auto vs = mesh_->source(h);
+        const auto vt = mesh_->target(h);
         const vec3 &s = mesh_->position(vs);
         const vec3 &t = mesh_->position(vt);
         if (lexicographically_smaller(s, t)) {
@@ -132,10 +132,10 @@ namespace easy3d {
 
 
     float SurfaceMeshStitching::squared_distance(SurfaceMesh::Halfedge h1, SurfaceMesh::Halfedge h2) const {
-        auto s1 = mesh_->from_vertex(h1);
-        auto t1 = mesh_->to_vertex(h1);
-        auto s2 = mesh_->from_vertex(h2);
-        auto t2 = mesh_->to_vertex(h2);
+        auto s1 = mesh_->source(h1);
+        auto t1 = mesh_->target(h1);
+        auto s2 = mesh_->source(h2);
+        auto t2 = mesh_->target(h2);
         return std::max(
                 distance2(mesh_->position(s1), mesh_->position(t2)),
                 distance2(mesh_->position(s2), mesh_->position(t1)));

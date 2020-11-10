@@ -76,8 +76,8 @@ namespace easy3d {
                 id[top] = cur_id;
 
                 for (auto h : mesh->halfedges(top)) {
-                    auto op = mesh->opposite_halfedge(h);
-                    if (!mesh->is_boundary(op)) {
+                    auto op = mesh->opposite(h);
+                    if (!mesh->is_border(op)) {
                         auto f = mesh->face(op);
                         if (id[f] == -1) {
                             stack.push(f);

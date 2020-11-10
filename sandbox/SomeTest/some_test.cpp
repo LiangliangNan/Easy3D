@@ -141,7 +141,7 @@ namespace easy3d {
             auto prop = mesh->get_vertex_property<vec3>("v:point");
             std::vector<vec3> points;
             for (auto e : mesh->edges()) {
-                if (mesh->is_boundary(e)) {
+                if (mesh->is_border(e)) {
                     points.push_back(prop[mesh->vertex(e, 0)]);
                     points.push_back(prop[mesh->vertex(e, 1)]);
                 }
@@ -179,7 +179,7 @@ namespace easy3d {
             auto prop = copy->get_vertex_property<vec3>("v:point");
             std::vector<vec3> points;
             for (auto e : copy->edges()) {
-                if (copy->is_boundary(e)) {
+                if (copy->is_border(e)) {
                     points.push_back(prop[copy->vertex(e, 0)]);
                     points.push_back(prop[copy->vertex(e, 1)]);
                 }

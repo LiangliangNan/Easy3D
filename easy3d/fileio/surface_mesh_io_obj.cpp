@@ -103,7 +103,7 @@ namespace easy3d {
             auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
                                          SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
                 for (auto h : mesh->halfedges(face)) {
-                    if (mesh->to_vertex(h) == v)
+                    if (mesh->target(h) == v)
                         return h;
                 }
                 LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
@@ -142,7 +142,7 @@ namespace easy3d {
                         int idx = 0;
                         do {
                             prop_texcoords[cur] = texcoords[texcoord_ids[idx++]];
-                            cur = mesh->next_halfedge(cur);
+                            cur = mesh->next(cur);
                         } while (cur != begin);
                     }
 

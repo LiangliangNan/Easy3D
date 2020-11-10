@@ -90,12 +90,12 @@ namespace easy3d {
             const SurfaceMesh::Halfedge h0 = mesh->halfedge(e, 0);
             const SurfaceMesh::Halfedge h1 = mesh->halfedge(e, 1);
 
-            const dvec3 p0 = (dvec3) mesh->position(mesh->to_vertex(h0));
-            const dvec3 p1 = (dvec3) mesh->position(mesh->to_vertex(h1));
+            const dvec3 p0 = (dvec3) mesh->position(mesh->target(h0));
+            const dvec3 p1 = (dvec3) mesh->position(mesh->target(h1));
 
-            if (!mesh->is_boundary(h0)) {
+            if (!mesh->is_border(h0)) {
                 const dvec3 p2 =
-                        (dvec3) mesh->position(mesh->to_vertex(mesh->next_halfedge(h0)));
+                        (dvec3) mesh->position(mesh->target(mesh->next(h0)));
                 const dvec3 d0 = p0 - p2;
                 const dvec3 d1 = p1 - p2;
                 const double area = norm(cross(d0, d1));
@@ -105,9 +105,9 @@ namespace easy3d {
                 }
             }
 
-            if (!mesh->is_boundary(h1)) {
+            if (!mesh->is_border(h1)) {
                 const dvec3 p2 =
-                        (dvec3) mesh->position(mesh->to_vertex(mesh->next_halfedge(h1)));
+                        (dvec3) mesh->position(mesh->target(mesh->next(h1)));
                 const dvec3 d0 = p0 - p2;
                 const dvec3 d1 = p1 - p2;
                 const double area = norm(cross(d0, d1));
@@ -136,16 +136,16 @@ namespace easy3d {
 
                 for (auto h : mesh->halfedges(v)) {
                     h0 = h;
-                    h1 = mesh->next_halfedge(h0);
-                    h2 = mesh->next_halfedge(h1);
+                    h1 = mesh->next(h0);
+                    h2 = mesh->next(h1);
 
-                    if (mesh->is_boundary(h0))
+                    if (mesh->is_border(h0))
                         continue;
 
                     // three vertex positions
-                    p = (dvec3) mesh->position(mesh->to_vertex(h2));
-                    q = (dvec3) mesh->position(mesh->to_vertex(h0));
-                    r = (dvec3) mesh->position(mesh->to_vertex(h1));
+                    p = (dvec3) mesh->position(mesh->target(h2));
+                    q = (dvec3) mesh->position(mesh->target(h0));
+                    r = (dvec3) mesh->position(mesh->target(h1));
 
                     // edge vectors
                     (pq = q) -= p;
@@ -202,16 +202,16 @@ namespace easy3d {
                 vec3 q, r, pq, pr;
 
                 for (auto h : mesh->halfedges(v)) {
-                    if (mesh->is_boundary(h))
+                    if (mesh->is_border(h))
                         continue;
 
                     h0 = h;
-                    h1 = mesh->next_halfedge(h0);
+                    h1 = mesh->next(h0);
 
-                    pq = mesh->position(mesh->to_vertex(h0));
+                    pq = mesh->position(mesh->target(h0));
                     pq -= p;
 
-                    pr = mesh->position(mesh->to_vertex(h1));
+                    pr = mesh->position(mesh->target(h1));
                     pr -= p;
 
                     area += norm(cross(pq, pr)) / 3.0;
@@ -232,7 +232,7 @@ namespace easy3d {
                 for (auto h : mesh->halfedges(v)) {
                     weight = cotan_weight(mesh, mesh->edge(h));
                     sumWeights += weight;
-                    laplace += weight * mesh->position(mesh->to_vertex(h));
+                    laplace += weight * mesh->position(mesh->target(h));
                 }
 
                 laplace -= sumWeights * mesh->position(v);
@@ -247,13 +247,13 @@ namespace easy3d {
         float angle_sum(const SurfaceMesh *mesh, SurfaceMesh::Vertex v) {
             float angles(0.0);
 
-            if (!mesh->is_boundary(v)) {
+            if (!mesh->is_border(v)) {
                 const vec3 &p0 = mesh->position(v);
 
                 for (auto h : mesh->halfedges(v)) {
-                    const vec3 &p1 = mesh->position(mesh->to_vertex(h));
+                    const vec3 &p1 = mesh->position(mesh->target(h));
                     const vec3 &p2 =
-                            mesh->position(mesh->to_vertex(mesh->ccw_rotated_halfedge(h)));
+                            mesh->position(mesh->target(mesh->ccw_rotated_halfedge(h)));
 
                     const vec3 p01 = normalize(p1 - p0);
                     const vec3 p02 = normalize(p2 - p0);

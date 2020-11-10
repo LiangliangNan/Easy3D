@@ -169,8 +169,8 @@ namespace easy3d {
             // Uses Plucker coordinates (see OrientedLine)
             Sign face_sign = ZERO;
             for (auto h : model->halfedges(picked_face)) {
-                auto s = model->from_vertex(h);
-                auto t = model->to_vertex(h);
+                auto s = model->source(h);
+                auto t = model->target(h);
                 const OrientedLine3 edge_line(model->position(t), model->position(s));
                 Sign sign = OrientedLine3::side(line, edge_line);
                 if (sign != ZERO) {

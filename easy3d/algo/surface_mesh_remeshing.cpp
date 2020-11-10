@@ -191,7 +191,7 @@ namespace easy3d {
                     c = 0.0;
 
                     for (auto h : mesh_->halfedges(v)) {
-                        vv = mesh_->to_vertex(h);
+                        vv = mesh_->target(h);
                         if (!vfeature_[vv]) {
                             w = std::max(0.0, geom::cotan_weight(mesh_, mesh_->edge(h)));
                             ww += w;
@@ -335,7 +335,7 @@ namespace easy3d {
                     const vec3 &p1 = points_[v1];
 
                     is_feature = efeature_[e];
-                    is_boundary = mesh_->is_boundary(e);
+                    is_boundary = mesh_->is_border(e);
 
                     vnew = mesh_->add_vertex((p0 + p1) * 0.5f);
                     mesh_->split(e, vnew);
@@ -375,13 +375,13 @@ namespace easy3d {
                 if (!mesh_->is_deleted(e) && !elocked_[e]) {
                     h10 = mesh_->halfedge(e, 0);
                     h01 = mesh_->halfedge(e, 1);
-                    v0 = mesh_->to_vertex(h10);
-                    v1 = mesh_->to_vertex(h01);
+                    v0 = mesh_->target(h10);
+                    v1 = mesh_->target(h01);
 
                     if (is_too_short(v0, v1)) {
                         // get status
-                        b0 = mesh_->is_boundary(v0);
-                        b1 = mesh_->is_boundary(v1);
+                        b0 = mesh_->is_border(v0);
+                        b1 = mesh_->is_border(v1);
                         l0 = vlocked_[v0];
                         l1 = vlocked_[v1];
                         f0 = vfeature_[v0];
@@ -390,7 +390,7 @@ namespace easy3d {
 
                         // boundary rules
                         if (b0 && b1) {
-                            if (!mesh_->is_boundary(e))
+                            if (!mesh_->is_border(e))
                                 continue;
                         } else if (b0)
                             hcol01 = false;
@@ -412,14 +412,14 @@ namespace easy3d {
                                 continue;
 
                             // the other two edges removed by collapse must not be features
-                            h0 = mesh_->prev_halfedge(h01);
-                            h1 = mesh_->next_halfedge(h10);
+                            h0 = mesh_->prev(h01);
+                            h1 = mesh_->next(h10);
                             if (efeature_[mesh_->edge(h0)] ||
                                 efeature_[mesh_->edge(h1)])
                                 hcol01 = false;
                             // the other two edges removed by collapse must not be features
-                            h0 = mesh_->prev_halfedge(h10);
-                            h1 = mesh_->next_halfedge(h01);
+                            h0 = mesh_->prev(h10);
+                            h1 = mesh_->next(h01);
                             if (efeature_[mesh_->edge(h0)] ||
                                 efeature_[mesh_->edge(h1)])
                                 hcol10 = false;
@@ -506,11 +506,11 @@ namespace easy3d {
             for (auto e : mesh_->edges()) {
                 if (!elocked_[e] && !efeature_[e]) {
                     h = mesh_->halfedge(e, 0);
-                    v0 = mesh_->to_vertex(h);
-                    v2 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v0 = mesh_->target(h);
+                    v2 = mesh_->target(mesh_->next(h));
                     h = mesh_->halfedge(e, 1);
-                    v1 = mesh_->to_vertex(h);
-                    v3 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v1 = mesh_->target(h);
+                    v3 = mesh_->target(mesh_->next(h));
 
                     if (!vlocked_[v0] && !vlocked_[v1] && !vlocked_[v2] &&
                         !vlocked_[v3]) {
@@ -519,10 +519,10 @@ namespace easy3d {
                         val2 = valence[v2];
                         val3 = valence[v3];
 
-                        val_opt0 = (mesh_->is_boundary(v0) ? 4 : 6);
-                        val_opt1 = (mesh_->is_boundary(v1) ? 4 : 6);
-                        val_opt2 = (mesh_->is_boundary(v2) ? 4 : 6);
-                        val_opt3 = (mesh_->is_boundary(v3) ? 4 : 6);
+                        val_opt0 = (mesh_->is_border(v0) ? 4 : 6);
+                        val_opt1 = (mesh_->is_border(v1) ? 4 : 6);
+                        val_opt2 = (mesh_->is_border(v2) ? 4 : 6);
+                        val_opt3 = (mesh_->is_border(v3) ? 4 : 6);
 
                         ve0 = (val0 - val_opt0);
                         ve1 = (val1 - val_opt1);
@@ -584,7 +584,7 @@ namespace easy3d {
         // for vertices introduced by splitting
         if (use_projection_) {
             for (auto v : mesh_->vertices()) {
-                if (!mesh_->is_boundary(v) && !vlocked_[v]) {
+                if (!mesh_->is_border(v) && !vlocked_[v]) {
                     project_to_reference(v);
                 }
             }
@@ -592,7 +592,7 @@ namespace easy3d {
 
         for (unsigned int iters = 0; iters < iterations; ++iters) {
             for (auto v : mesh_->vertices()) {
-                if (!mesh_->is_boundary(v) && !vlocked_[v]) {
+                if (!mesh_->is_border(v) && !vlocked_[v]) {
                     if (vfeature_[v]) {
                         u = vec3(0.0);
                         t = vec3(0.0);
@@ -601,7 +601,7 @@ namespace easy3d {
 
                         for (auto h : mesh_->halfedges(v)) {
                             if (efeature_[mesh_->edge(h)]) {
-                                vv = mesh_->to_vertex(h);
+                                vv = mesh_->target(h);
 
                                 b = points_[v];
                                 b += points_[vv];
@@ -638,8 +638,8 @@ namespace easy3d {
 
                         for (auto h : mesh_->halfedges(v)) {
                             v1 = v;
-                            v2 = mesh_->to_vertex(h);
-                            v3 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                            v2 = mesh_->target(h);
+                            v3 = mesh_->target(mesh_->next(h));
 
                             b = points_[v1];
                             b += points_[v2];
@@ -670,7 +670,7 @@ namespace easy3d {
 
             // update vertex positions
             for (auto v : mesh_->vertices()) {
-                if (!mesh_->is_boundary(v) && !vlocked_[v]) {
+                if (!mesh_->is_border(v) && !vlocked_[v]) {
                     points_[v] += update[v];
                 }
             }
@@ -682,7 +682,7 @@ namespace easy3d {
         // project at the end
         if (use_projection_) {
             for (auto v : mesh_->vertices()) {
-                if (!mesh_->is_boundary(v) && !vlocked_[v]) {
+                if (!mesh_->is_border(v) && !vlocked_[v]) {
                     project_to_reference(v);
                 }
             }
@@ -704,16 +704,16 @@ namespace easy3d {
         for (auto e : mesh_->edges()) {
             if (!elocked_[e] && mesh_->is_flip_ok(e)) {
                 h = mesh_->halfedge(e, 0);
-                a = points_[mesh_->to_vertex(h)];
+                a = points_[mesh_->target(h)];
 
-                h = mesh_->next_halfedge(h);
-                b = points_[vb = mesh_->to_vertex(h)];
+                h = mesh_->next(h);
+                b = points_[vb = mesh_->target(h)];
 
                 h = mesh_->halfedge(e, 1);
-                c = points_[mesh_->to_vertex(h)];
+                c = points_[mesh_->target(h)];
 
-                h = mesh_->next_halfedge(h);
-                d = points_[vd = mesh_->to_vertex(h)];
+                h = mesh_->next(h);
+                d = points_[vd = mesh_->target(h)];
 
                 a0 = dot(normalize(a - b), normalize(c - b));
                 a1 = dot(normalize(a - d), normalize(c - d));

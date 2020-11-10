@@ -62,10 +62,10 @@ namespace easy3d {
             pp = mesh_->position(vv);
 
             for (auto h : mesh_->halfedges(vv)) {
-                if (!mesh_->is_boundary(h)) {
-                    vh0 = mesh_->to_vertex(h);
-                    hh = mesh_->next_halfedge(h);
-                    vh1 = mesh_->to_vertex(hh);
+                if (!mesh_->is_border(h)) {
+                    vh0 = mesh_->target(h);
+                    hh = mesh_->next(h);
+                    vh1 = mesh_->target(hh);
 
                     p0 = mesh_->position(vh0);
                     p1 = mesh_->position(vh1);
@@ -94,13 +94,13 @@ namespace easy3d {
 
                         start_vh0 = vh0;
                         start_vh1 = vh1;
-                        hhh = mesh_->opposite_halfedge(hh);
+                        hhh = mesh_->opposite(hh);
 
                         // unfold ...
                         while (((vh0 == start_vh0) || (vh1 == start_vh1)) &&
-                               (!mesh_->is_boundary(hhh))) {
+                               (!mesh_->is_border(hhh))) {
                             // get next point
-                            vhn = mesh_->to_vertex(mesh_->next_halfedge(hhh));
+                            vhn = mesh_->target(mesh_->next(hhh));
                             pn = mesh_->position(vhn);
                             d0 = (p1 - p0);
                             d1 = (pn - p0);
@@ -121,20 +121,20 @@ namespace easy3d {
 
                             // prepare next edge
                             if (vn[1] > 0.0) {
-                                hh = mesh_->opposite_halfedge(hh);
-                                hh = mesh_->next_halfedge(hh);
+                                hh = mesh_->opposite(hh);
+                                hh = mesh_->next(hh);
                                 vh1 = vhn;
                                 p1 = pn;
                                 v1 = vn;
                             } else {
-                                hh = mesh_->opposite_halfedge(hh);
-                                hh = mesh_->next_halfedge(hh);
-                                hh = mesh_->next_halfedge(hh);
+                                hh = mesh_->opposite(hh);
+                                hh = mesh_->next(hh);
+                                hh = mesh_->next(hh);
                                 vh0 = vhn;
                                 p0 = pn;
                                 v0 = vn;
                             }
-                            hhh = mesh_->opposite_halfedge(hh);
+                            hhh = mesh_->opposite(hh);
                         }
                     }
                 }
@@ -282,13 +282,13 @@ namespace easy3d {
         bool found(false);
 
         for (auto h : mesh_->halfedges(v)) {
-            if (!mesh_->is_boundary(h)) {
+            if (!mesh_->is_border(h)) {
                 ve_it = virtual_edges_.find(h);
 
                 // no virtual edge
                 if (ve_it == ve_end) {
-                    v0 = mesh_->to_vertex(h);
-                    v1 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v0 = mesh_->target(h);
+                    v1 = mesh_->target(mesh_->next(h));
 
                     if (processed_[v0] && processed_[v1]) {
                         dist = distance(v0, v1, v);
@@ -301,8 +301,8 @@ namespace easy3d {
 
                     // virtual edge
                 else {
-                    v0 = mesh_->to_vertex(h);
-                    v1 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v0 = mesh_->target(h);
+                    v1 = mesh_->target(mesh_->next(h));
                     vv = ve_it->second.vertex;
                     d = ve_it->second.length;
 

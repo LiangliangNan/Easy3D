@@ -110,11 +110,11 @@ namespace easy3d {
             for (auto v : mesh_->vertices()) {
                 vec3 l(0, 0, 0);
 
-                if (!mesh_->is_boundary(v)) {
+                if (!mesh_->is_border(v)) {
                     float w(0);
 
                     for (auto h : mesh_->halfedges(v)) {
-                        vv = mesh_->to_vertex(h);
+                        vv = mesh_->target(h);
                         e = mesh_->edge(h);
                         l += eweight[e] * (points[vv] - points[v]);
                         w += eweight[e];
@@ -168,7 +168,7 @@ namespace easy3d {
         std::vector<SurfaceMesh::Vertex> free_vertices;
         free_vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
-            if (!mesh_->is_boundary(v)) {
+            if (!mesh_->is_border(v)) {
                 idx[v] = i++;
                 free_vertices.push_back(v);
             }
@@ -196,12 +196,12 @@ namespace easy3d {
             // lhs row
             ww = 0.0;
             for (auto h : mesh_->halfedges(v)) {
-                vv = mesh_->to_vertex(h);
+                vv = mesh_->target(h);
                 e = mesh_->edge(h);
                 ww += eweight[e];
 
                 // fixed boundary vertex -> right hand side
-                if (mesh_->is_boundary(vv)) {
+                if (mesh_->is_border(vv)) {
                     b -= -timestep * eweight[e] * static_cast<dvec3>(points[vv]);
                 }
                     // free interior vertex -> matrix

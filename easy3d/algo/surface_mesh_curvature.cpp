@@ -59,7 +59,7 @@ namespace easy3d {
         for (auto v : mesh_->vertices()) {
             kmin = kmax = 0.0;
 
-            if (!mesh_->is_isolated(v) && !mesh_->is_boundary(v)) {
+            if (!mesh_->is_isolated(v) && !mesh_->is_border(v)) {
                 laplace = vec3(0.0);
                 sum_weights = 0.0;
                 sum_angles = 0.0;
@@ -70,9 +70,9 @@ namespace easy3d {
 
                 // Laplace & angle sum
                 for (auto vh : mesh_->halfedges(v)) {
-                    p1 = mesh_->position(mesh_->to_vertex(vh));
+                    p1 = mesh_->position(mesh_->target(vh));
                     p2 = mesh_->position(
-                            mesh_->to_vertex(mesh_->ccw_rotated_halfedge(vh)));
+                            mesh_->target(mesh_->ccw_rotated_halfedge(vh)));
 
                     weight = cotan[mesh_->edge(vh)];
                     sum_weights += weight;
@@ -101,12 +101,12 @@ namespace easy3d {
 
         // boundary vertices: interpolate from interior neighbors
         for (auto v : mesh_->vertices()) {
-            if (mesh_->is_boundary(v)) {
+            if (mesh_->is_border(v)) {
                 kmin = kmax = sum_weights = 0.0;
 
                 for (auto vh : mesh_->halfedges(v)) {
-                    v = mesh_->to_vertex(vh);
-                    if (!mesh_->is_boundary(v)) {
+                    v = mesh_->target(vh);
+                    if (!mesh_->is_border(v)) {
                         weight = cotan[mesh_->edge(vh)];
                         sum_weights += weight;
                         kmin += weight * min_curvature_[v];
@@ -169,8 +169,8 @@ namespace easy3d {
             if (f0.is_valid() && f1.is_valid()) {
                 n0 = normal[f0];
                 n1 = normal[f1];
-                ev = (dvec3) mesh_->position(mesh_->to_vertex(h0));
-                ev -= (dvec3) mesh_->position(mesh_->to_vertex(h1));
+                ev = (dvec3) mesh_->position(mesh_->target(h0));
+                ev -= (dvec3) mesh_->position(mesh_->target(h1));
                 l = norm(ev);
                 if (l != 0) {   // avoid overflow in case of 0-length edges
                     ev /= l;
@@ -309,7 +309,7 @@ namespace easy3d {
                 kmin = kmax = sum_weights = 0.0;
 
                 for (auto vh : mesh_->halfedges(v)) {
-                    auto tv = mesh_->to_vertex(vh);
+                    auto tv = mesh_->target(vh);
 
                     // don't consider feature vertices (high curvature)
                     if (vfeature && vfeature[tv])

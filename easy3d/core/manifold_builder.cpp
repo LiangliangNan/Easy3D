@@ -124,8 +124,8 @@ namespace easy3d {
         // Check if the mesh is valid
         for (auto v : mesh_->vertices()) {
             DLOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
-            DLOG_IF(ERROR, mesh_->from_vertex(mesh_->halfedge(v)) != v) << "vertex " << v << " is not valid";
-            DLOG_IF(ERROR, mesh_->to_vertex(mesh_->opposite_halfedge(mesh_->halfedge(v))) != v) << "vertex " << v << " is not valid";
+            DLOG_IF(ERROR, mesh_->source(mesh_->out_halfedge(v)) != v) << "vertex " << v << " is not valid";
+            DLOG_IF(ERROR, mesh_->target(mesh_->opposite(mesh_->out_halfedge(v))) != v) << "vertex " << v << " is not valid";
         }
         for (auto f : mesh_->faces())
             DLOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
@@ -133,7 +133,7 @@ namespace easy3d {
             DLOG_IF(ERROR, !mesh_->is_valid(e)) << "edge " << e << " is not valid";
         for (auto h : mesh_->halfedges()) {
             DLOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
-            DLOG_IF(ERROR, mesh_->opposite_halfedge(mesh_->opposite_halfedge(h)) != h) << "halfedge " << h << " is not valid";
+            DLOG_IF(ERROR, mesh_->opposite(mesh_->opposite(h)) != h) << "halfedge " << h << " is not valid";
         }
 
         // Check if there are still non-manifold vertices
@@ -303,7 +303,7 @@ namespace easy3d {
         // may make of copy of the first vertex. This is OK because a new copy won't change the validity of the first edge.
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
             auto h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
-            if (h.is_valid() && !mesh_->is_boundary(h)) {
+            if (h.is_valid() && !mesh_->is_border(h)) {
                 face_vertices_[t] = copy_vertex(vertices[t]);
                 h = mesh_->find_halfedge(face_vertices_[s], face_vertices_[t]);
             }
@@ -322,17 +322,17 @@ namespace easy3d {
             if (halfedge_esists[s] && halfedge_esists[t]) {
                 inner_prev = halfedges[s];
                 inner_next = halfedges[t];
-                if (mesh_->next_halfedge(inner_prev) != inner_next) {
+                if (mesh_->next(inner_prev) != inner_next) {
                     // search a free gap
                     // free gap will be between boundary_prev and boundary_next
-                    outer_prev = mesh_->opposite_halfedge(inner_next);
+                    outer_prev = mesh_->opposite(inner_next);
                     boundary_prev = outer_prev;
                     do {
-                        boundary_prev = mesh_->opposite_halfedge(mesh_->next_halfedge(boundary_prev));
-                    } while (!mesh_->is_boundary(boundary_prev) || boundary_prev == inner_prev);
-                    boundary_next = mesh_->next_halfedge(boundary_prev);
-                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_prev));
-                    DLOG_IF(FATAL, !mesh_->is_boundary(boundary_next));
+                        boundary_prev = mesh_->opposite(mesh_->next(boundary_prev));
+                    } while (!mesh_->is_border(boundary_prev) || boundary_prev == inner_prev);
+                    boundary_next = mesh_->next(boundary_prev);
+                    DLOG_IF(FATAL, !mesh_->is_border(boundary_prev));
+                    DLOG_IF(FATAL, !mesh_->is_border(boundary_next));
                     if (boundary_next == inner_next) {
                         face_vertices_[t] = copy_vertex(vertices[t]);
 
@@ -378,12 +378,12 @@ namespace easy3d {
     SurfaceMesh::Vertex ManifoldBuilder::get(SurfaceMesh::Vertex v) {
         auto pos = copied_vertices_.find(v);
         if (pos == copied_vertices_.end()) { // no copies
-            if (mesh_->is_boundary(v))
+            if (mesh_->is_border(v))
                 return v;
         } else { // has copies
             const auto &copies = pos->second;
             for (auto c : copies) {
-                if (mesh_->is_boundary(c))
+                if (mesh_->is_border(c))
                     return c;
             }
         }
@@ -442,7 +442,7 @@ namespace easy3d {
                 visited_halfedge[h] = true;
                 bool is_non_manifold = false;
 
-                auto v = mesh->to_vertex(h);
+                auto v = mesh->target(h);
                 if (visited_vertex[v] != null_h) // already seen this vertex, but not from this star
                 {
                     is_non_manifold = true;
@@ -463,10 +463,10 @@ namespace easy3d {
                 int border_counter = 0;
                 do {
                     visited_halfedge[ih] = true;
-                    if (mesh->is_boundary(ih))
+                    if (mesh->is_border(ih))
                         ++border_counter;
 
-                    ih = mesh->prev_halfedge(mesh->opposite_halfedge(ih));
+                    ih = mesh->prev(mesh->opposite(ih));
                 } while (ih != done);
 
                 if (border_counter > 1)
@@ -505,37 +505,37 @@ namespace easy3d {
         auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h,
                                                    SurfaceMesh::Halfedge sector_last_h,
                                                    SurfaceMesh *mesh) -> SurfaceMesh::Vertex {
-            auto old_v = mesh->to_vertex(sector_begin_h);
+            auto old_v = mesh->target(sector_begin_h);
 
             auto old_v_original = original_vertex_[old_v];
             auto new_v = copy_vertex(old_v_original);
 
-            mesh->set_halfedge(new_v, sector_begin_h);
+            mesh->set_out_halfedge(new_v, sector_begin_h);
             auto h = sector_begin_h;
             do {
-                mesh->set_vertex(h, new_v);
+                mesh->set_target(h, new_v);
                 if (h == sector_last_h)
                     break;
                 else
-                    h = mesh->prev_halfedge(mesh->opposite_halfedge(h));
+                    h = mesh->prev(mesh->opposite(h));
             } while (h != sector_begin_h); // for safety
             DLOG_ASSERT(h != sector_begin_h);
             return new_v;
         };
 
         std::size_t nb_new_vertices = 0;
-        auto old_v = mesh_->to_vertex(h);
+        auto old_v = mesh_->target(h);
 
         // count the number of borders
         int border_counter = 0;
         auto ih = h, done = ih, border_h = h;
         do {
-            if (mesh->is_boundary(ih)) {
+            if (mesh->is_border(ih)) {
                 border_h = ih;
                 ++border_counter;
             }
 
-            ih = mesh->prev_halfedge(mesh->opposite_halfedge(ih));
+            ih = mesh->prev(mesh->opposite(ih));
         } while (ih != done);
 
         bool is_non_manifold_within_umbrella = (border_counter > 1);
@@ -543,12 +543,12 @@ namespace easy3d {
             if (copy_record.find(old_v) == copy_record.end()) { // first time meeting the vertex
                 // The star is manifold, so if it is the first time we have met that vertex,
                 // there is nothing to do, we just keep the same vertex.
-                mesh->set_halfedge(old_v, h); // to ensure halfedge(old_v, pm) stays valid
+                mesh->set_out_halfedge(old_v, h); // to ensure halfedge(old_v, pm) stays valid
                 copy_record[old_v]; // so that we know we have met old_v already, next time, we'll have to duplicate
             } else {
                 // This is not the canonical star associated to 'v'.
                 // Create a new vertex, and move the whole star to that new vertex
-                auto last_h = mesh->opposite_halfedge(mesh->next_halfedge(h));
+                auto last_h = mesh->opposite(mesh->next(h));
                 auto new_v = create_new_vertex_for_sector(h, last_h, mesh);
                 copy_record[old_v].push_back(new_v);
                 nb_new_vertices = 1;
@@ -558,26 +558,26 @@ namespace easy3d {
         else {
             // the first manifold sector, described by two halfedges
             auto sector_start_h = border_h;
-            DLOG_ASSERT(mesh->is_boundary(border_h));
+            DLOG_ASSERT(mesh->is_border(border_h));
 
             bool should_stop = false;
             bool is_main_sector = true;
             do {
-                DLOG_ASSERT(mesh->is_boundary(sector_start_h));
+                DLOG_ASSERT(mesh->is_border(sector_start_h));
 
                 // collect the sector and split it away if it must be
                 auto sector_last_h = sector_start_h;
                 do {
-                    auto next_h = mesh->prev_halfedge(mesh->opposite_halfedge(sector_last_h));
-                    if (mesh->is_boundary(next_h))
+                    auto next_h = mesh->prev(mesh->opposite(sector_last_h));
+                    if (mesh->is_border(next_h))
                         break;
 
                     sector_last_h = next_h;
                 } while (sector_last_h != sector_start_h);
-                DLOG_ASSERT(!mesh->is_boundary(sector_last_h));
+                DLOG_ASSERT(!mesh->is_border(sector_last_h));
                 DLOG_ASSERT(sector_last_h != sector_start_h);
 
-                auto next_start_h = mesh->prev_halfedge(mesh->opposite_halfedge(sector_last_h));
+                auto next_start_h = mesh->prev(mesh->opposite(sector_last_h));
 
                 // there are multiple CCs incident to this particular vertex, and we should create a new vertex
                 // if it's not the first umbrella around 'old_v' or not the first sector, but only not if it's
@@ -585,7 +585,7 @@ namespace easy3d {
                 bool must_create_new_vertex = (!is_main_sector || copy_record.find(old_v) != copy_record.end());
 
                 // In any case, we must set up the next pointer correctly
-                mesh->set_next_halfedge(sector_start_h, mesh->opposite_halfedge(sector_last_h));
+                mesh->set_next(sector_start_h, mesh->opposite(sector_last_h));
 
                 if (must_create_new_vertex) {
                     auto new_v = create_new_vertex_for_sector(sector_start_h, sector_last_h, mesh);
@@ -593,7 +593,7 @@ namespace easy3d {
                     ++nb_new_vertices;
                 } else {
                     // Ensure that halfedge(old_v, pm) stays valid
-                    mesh->set_halfedge(old_v, sector_start_h);
+                    mesh->set_out_halfedge(old_v, sector_start_h);
                 }
 
                 is_main_sector = false;

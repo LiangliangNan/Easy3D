@@ -63,7 +63,7 @@ namespace easy3d {
         // compute edge vertices
         for (auto e : mesh->edges()) {
             // boundary or feature edge?
-            if (mesh->is_boundary(e) || (efeature && efeature[e])) {
+            if (mesh->is_border(e) || (efeature && efeature[e])) {
                 epoint[e] = 0.5f * (points[mesh->vertex(e, 0)] +
                                     points[mesh->vertex(e, 1)]);
             }
@@ -88,14 +88,14 @@ namespace easy3d {
             }
 
                 // boundary vertex?
-            else if (mesh->is_boundary(v)) {
-                auto h1 = mesh->halfedge(v);
-                auto h0 = mesh->prev_halfedge(h1);
+            else if (mesh->is_border(v)) {
+                auto h1 = mesh->out_halfedge(v);
+                auto h0 = mesh->prev(h1);
 
                 vec3 p = points[v];
                 p *= 6.0;
-                p += points[mesh->to_vertex(h1)];
-                p += points[mesh->from_vertex(h0)];
+                p += points[mesh->target(h1)];
+                p += points[mesh->source(h0)];
                 p *= 0.125;
 
                 vpoint[v] = p;
@@ -109,7 +109,7 @@ namespace easy3d {
 
                 for (auto h : mesh->halfedges(v)) {
                     if (efeature[mesh->edge(h)]) {
-                        p += points[mesh->to_vertex(h)];
+                        p += points[mesh->target(h)];
                         ++count;
                     }
                 }
@@ -155,9 +155,9 @@ namespace easy3d {
             // feature edge?
             if (efeature && efeature[e]) {
                 auto h = mesh->insert_vertex(e, epoint[e]);
-                auto v = mesh->to_vertex(h);
+                auto v = mesh->target(h);
                 auto e0 = mesh->edge(h);
-                auto e1 = mesh->edge(mesh->next_halfedge(h));
+                auto e1 = mesh->edge(mesh->next(h));
 
                 vfeature[v] = true;
                 efeature[e0] = true;
@@ -173,17 +173,17 @@ namespace easy3d {
         // split faces
         for (auto f : mesh->faces()) {
             auto h0 = mesh->halfedge(f);
-            mesh->insert_edge(h0, mesh->next_halfedge(mesh->next_halfedge(h0)));
+            mesh->insert_edge(h0, mesh->next(mesh->next(h0)));
 
-            auto h1 = mesh->next_halfedge(h0);
+            auto h1 = mesh->next(h0);
             mesh->insert_vertex(mesh->edge(h1), fpoint[f]);
 
             auto h =
-                    mesh->next_halfedge(mesh->next_halfedge(mesh->next_halfedge(h1)));
+                    mesh->next(mesh->next(mesh->next(h1)));
             while (h != h0) {
                 mesh->insert_edge(h1, h);
-                h = mesh->next_halfedge(
-                        mesh->next_halfedge(mesh->next_halfedge(h1)));
+                h = mesh->next(
+                        mesh->next(mesh->next(h1)));
             }
         }
 
@@ -227,14 +227,14 @@ namespace easy3d {
             }
 
                 // boundary vertex?
-            else if (mesh->is_boundary(v)) {
-                auto h1 = mesh->halfedge(v);
-                auto h0 = mesh->prev_halfedge(h1);
+            else if (mesh->is_border(v)) {
+                auto h1 = mesh->out_halfedge(v);
+                auto h0 = mesh->prev(h1);
 
                 vec3 p = points[v];
                 p *= 6.0;
-                p += points[mesh->to_vertex(h1)];
-                p += points[mesh->from_vertex(h0)];
+                p += points[mesh->target(h1)];
+                p += points[mesh->source(h0)];
                 p *= 0.125;
                 vpoint[v] = p;
             }
@@ -247,7 +247,7 @@ namespace easy3d {
 
                 for (auto h : mesh->halfedges(v)) {
                     if (efeature[mesh->edge(h)]) {
-                        p += points[mesh->to_vertex(h)];
+                        p += points[mesh->target(h)];
                         ++count;
                     }
                 }
@@ -283,7 +283,7 @@ namespace easy3d {
         // compute edge positions
         for (auto e : mesh->edges()) {
             // boundary or feature edge?
-            if (mesh->is_boundary(e) || (efeature && efeature[e])) {
+            if (mesh->is_border(e) || (efeature && efeature[e])) {
                 epoint[e] =
                         (points[mesh->vertex(e, 0)] + points[mesh->vertex(e, 1)]) *
                         float(0.5);
@@ -293,11 +293,11 @@ namespace easy3d {
             else {
                 auto h0 = mesh->halfedge(e, 0);
                 auto h1 = mesh->halfedge(e, 1);
-                vec3 p = points[mesh->to_vertex(h0)];
-                p += points[mesh->to_vertex(h1)];
+                vec3 p = points[mesh->target(h0)];
+                p += points[mesh->target(h1)];
                 p *= 3.0;
-                p += points[mesh->to_vertex(mesh->next_halfedge(h0))];
-                p += points[mesh->to_vertex(mesh->next_halfedge(h1))];
+                p += points[mesh->target(mesh->next(h0))];
+                p += points[mesh->target(mesh->next(h1))];
                 p *= 0.125;
                 epoint[e] = p;
             }
@@ -313,9 +313,9 @@ namespace easy3d {
             // feature edge?
             if (efeature && efeature[e]) {
                 auto h = mesh->insert_vertex(e, epoint[e]);
-                auto v = mesh->to_vertex(h);
+                auto v = mesh->target(h);
                 auto e0 = mesh->edge(h);
-                auto e1 = mesh->edge(mesh->next_halfedge(h));
+                auto e1 = mesh->edge(mesh->next(h));
 
                 vfeature[v] = true;
                 efeature[e0] = true;
@@ -332,11 +332,11 @@ namespace easy3d {
         SurfaceMesh::Halfedge h;
         for (auto f : mesh->faces()) {
             h = mesh->halfedge(f);
-            mesh->insert_edge(h, mesh->next_halfedge(mesh->next_halfedge(h)));
-            h = mesh->next_halfedge(h);
-            mesh->insert_edge(h, mesh->next_halfedge(mesh->next_halfedge(h)));
-            h = mesh->next_halfedge(h);
-            mesh->insert_edge(h, mesh->next_halfedge(mesh->next_halfedge(h)));
+            mesh->insert_edge(h, mesh->next(mesh->next(h)));
+            h = mesh->next(h);
+            mesh->insert_edge(h, mesh->next(mesh->next(h)));
+            h = mesh->next(h);
+            mesh->insert_edge(h, mesh->next(mesh->next(h)));
         }
 
         // clean-up properties
@@ -366,7 +366,7 @@ namespace easy3d {
         // compute new positions of old vertices
         auto new_pos = mesh->add_vertex_property<vec3>("v:np");
         for (auto v : mesh->vertices()) {
-            if (!mesh->is_boundary(v)) {
+            if (!mesh->is_border(v)) {
                 float n = mesh->valence(v);
                 float alpha = (4.0 - 2.0 * cos(2.0 * M_PI / n)) / 9.0;
                 vec3 p(0, 0, 0);
@@ -396,7 +396,7 @@ namespace easy3d {
 
         // set new positions of old vertices
         for (auto vit = mesh->vertices_begin(); vit != vend; ++vit) {
-            if (!mesh->is_boundary(*vit)) {
+            if (!mesh->is_border(*vit)) {
                 points[*vit] = new_pos[*vit];
             }
         }

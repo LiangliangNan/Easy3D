@@ -82,8 +82,8 @@ namespace easy3d {
                 planar_segments_[top] = id;
 
                 for (auto h : mesh_->halfedges(top)) {
-                    auto op = mesh_->opposite_halfedge(h);
-                    if (!mesh_->is_boundary(op)) {
+                    auto op = mesh_->opposite(h);
+                    if (!mesh_->is_border(op)) {
                         auto f = mesh_->face(op);
                         if (planar_segments_[f] == -1) {
                             stack.push(f);

@@ -56,7 +56,7 @@ namespace easy3d {
 
         // find 1st boundary vertex
         for (vit = mesh_->vertices_begin(); vit != vend; ++vit)
-            if (mesh_->is_boundary(*vit))
+            if (mesh_->is_border(*vit))
                 break;
 
         // no boundary found ?
@@ -67,11 +67,11 @@ namespace easy3d {
 
         // collect boundary loop
         vh = *vit;
-        hh = mesh_->halfedge(vh);
+        hh = mesh_->out_halfedge(vh);
         do {
-            loop.push_back(mesh_->to_vertex(hh));
-            hh = mesh_->next_halfedge(hh);
-        } while (hh != mesh_->halfedge(vh));
+            loop.push_back(mesh_->target(hh));
+            hh = mesh_->next(hh);
+        } while (hh != mesh_->out_halfedge(vh));
 
         // map boundary loop to unit circle in texture domain
         unsigned int i, n = loop.size();
@@ -126,7 +126,7 @@ namespace easy3d {
         std::vector<SurfaceMesh::Vertex> free_vertices;
         free_vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
-            if (!mesh_->is_boundary(v)) {
+            if (!mesh_->is_border(v)) {
                 idx[v] = i++;
                 free_vertices.push_back(v);
             }
@@ -151,12 +151,12 @@ namespace easy3d {
             // lhs row
             ww = 0.0;
             for (auto h : mesh_->halfedges(v)) {
-                vv = mesh_->to_vertex(h);
+                vv = mesh_->target(h);
                 e = mesh_->edge(h);
                 w = eweight[e];
                 ww += w;
 
-                if (mesh_->is_boundary(vv)) {
+                if (mesh_->is_border(vv)) {
                     b -= -w * static_cast<dvec2>(tex[vv]);
                 } else {
                     triplets.emplace_back(i, idx[vv], -w);
@@ -201,7 +201,7 @@ namespace easy3d {
         // find boundary vertices and store handles in vector
         std::vector<SurfaceMesh::Vertex> boundary;
         for (auto v : mesh_->vertices())
-            if (mesh_->is_boundary(v))
+            if (mesh_->is_border(v))
                 boundary.push_back(v);
 
         // no boundary?
@@ -262,9 +262,9 @@ namespace easy3d {
             auto hc = *fh_it;
 
             // collect face vertices
-            dvec3 a = (dvec3) pos[mesh_->to_vertex(ha)];
-            dvec3 b = (dvec3) pos[mesh_->to_vertex(hb)];
-            dvec3 c = (dvec3) pos[mesh_->to_vertex(hc)];
+            dvec3 a = (dvec3) pos[mesh_->target(ha)];
+            dvec3 b = (dvec3) pos[mesh_->target(hb)];
+            dvec3 c = (dvec3) pos[mesh_->target(hc)];
 
             // calculate local coordinate system
             dvec3 z = normalize(cross(normalize(c - b), normalize(a - b)));
@@ -342,22 +342,22 @@ namespace easy3d {
                 si = 0;
 
                 for (auto h : mesh_->halfedges(vi)) {
-                    vj = mesh_->to_vertex(h);
+                    vj = mesh_->target(h);
                     sj0 = sj1 = 0;
 
-                    if (!mesh_->is_boundary(h)) {
+                    if (!mesh_->is_border(h)) {
                         const dvec2 &wj = weight[h];
-                        const dvec2 &wi = weight[mesh_->prev_halfedge(h)];
+                        const dvec2 &wi = weight[mesh_->prev(h)];
 
                         sj0 += sign * wi[c0] * wj[0] + wi[c1] * wj[1];
                         sj1 += -sign * wi[c0] * wj[1] + wi[c1] * wj[0];
                         si += wi[0] * wi[0] + wi[1] * wi[1];
                     }
 
-                    h = mesh_->opposite_halfedge(h);
-                    if (!mesh_->is_boundary(h)) {
+                    h = mesh_->opposite(h);
+                    if (!mesh_->is_border(h)) {
                         const dvec2 &wi = weight[h];
-                        const dvec2 &wj = weight[mesh_->prev_halfedge(h)];
+                        const dvec2 &wj = weight[mesh_->prev(h)];
 
                         sj0 += sign * wi[c0] * wj[0] + wi[c1] * wj[1];
                         sj1 += -sign * wi[c0] * wj[1] + wi[c1] * wj[0];

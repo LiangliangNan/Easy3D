@@ -270,7 +270,7 @@ namespace easy3d {
         }
 
         // do not collapse boundary vertices to interior vertices
-        if (mesh_->is_boundary(cd.v0) && !mesh_->is_boundary(cd.v1))
+        if (mesh_->is_border(cd.v0) && !mesh_->is_border(cd.v1))
             return false;
 
         // there should be at least 2 incident faces at v0
@@ -332,10 +332,10 @@ namespace easy3d {
             SurfaceMesh::Face fll, frr;
             if (cd.vl.is_valid())
                 fll = mesh_->face(
-                        mesh_->opposite_halfedge(mesh_->prev_halfedge(cd.v0v1)));
+                        mesh_->opposite(mesh_->prev(cd.v0v1)));
             if (cd.vr.is_valid())
                 frr = mesh_->face(
-                        mesh_->opposite_halfedge(mesh_->next_halfedge(cd.v1v0)));
+                        mesh_->opposite(mesh_->next(cd.v1v0)));
 
             for (auto f : mesh_->faces(cd.v0)) {
                 if (f != cd.fl && f != cd.fr) {
@@ -545,24 +545,24 @@ namespace easy3d {
     SurfaceMeshSimplification::CollapseData::CollapseData(SurfaceMesh *sm, SurfaceMesh::Halfedge h)
             : mesh(sm) {
         v0v1 = h;
-        v1v0 = mesh->opposite_halfedge(v0v1);
-        v0 = mesh->to_vertex(v1v0);
-        v1 = mesh->to_vertex(v0v1);
+        v1v0 = mesh->opposite(v0v1);
+        v0 = mesh->target(v1v0);
+        v1 = mesh->target(v0v1);
         fl = mesh->face(v0v1);
         fr = mesh->face(v1v0);
 
         // get vl
         if (fl.is_valid()) {
-            v1vl = mesh->next_halfedge(v0v1);
-            vlv0 = mesh->next_halfedge(v1vl);
-            vl = mesh->to_vertex(v1vl);
+            v1vl = mesh->next(v0v1);
+            vlv0 = mesh->next(v1vl);
+            vl = mesh->target(v1vl);
         }
 
         // get vr
         if (fr.is_valid()) {
-            v0vr = mesh->next_halfedge(v1v0);
-            vrv1 = mesh->prev_halfedge(v0vr);
-            vr = mesh->from_vertex(vrv1);
+            v0vr = mesh->next(v1v0);
+            vrv1 = mesh->prev(v0vr);
+            vr = mesh->source(vrv1);
         }
     }
 

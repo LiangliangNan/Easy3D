@@ -104,13 +104,13 @@ int main(int argc, char** argv) {
 #ifdef USE_FOR_LOOP
         // loop over all incident outgoing/ingoing edges
         for (auto h : mesh->halfedges(v))
-            std::cout << h << "/" << mesh->opposite_halfedge(h) << " ";
+            std::cout << h << "/" << mesh->opposite(h) << " ";
 #else   // use circulator
         SurfaceMesh::HalfedgeAroundVertexCirculator cir = mesh->halfedges(v);
         SurfaceMesh::HalfedgeAroundVertexCirculator end = cir;
         do {
             SurfaceMesh::Halfedge h = *cir;
-            std::cout << h << "/" << mesh->opposite_halfedge(h) << " ";
+            std::cout << h << "/" << mesh->opposite(h) << " ";
             ++cir;
         } while (cir != end);
 #endif
@@ -207,13 +207,13 @@ int main(int argc, char** argv) {
 	for (auto e : mesh->edges()) {
         std::cout << "the two faces connected by edge " << e << ": ";
 		SurfaceMesh::Halfedge h0 = mesh->halfedge(e, 0);
-		if (mesh->is_boundary(h0))
+		if (mesh->is_border(h0))
 			std::cout << "NULL" << " ";
 		else
 			std::cout << mesh->face(h0) << " ";
 	
 		SurfaceMesh::Halfedge h1 = mesh->halfedge(e, 1);
-		if (mesh->is_boundary(h1))
+		if (mesh->is_border(h1))
 			std::cout << "NULL" << " ";
 		else
 			std::cout << mesh->face(h1) << " ";

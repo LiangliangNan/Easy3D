@@ -21,8 +21,8 @@ namespace easy3d {
         SurfaceMesh::Halfedge h = mesh_->find_halfedge(_a, _b);
         if (!h.is_valid())
             return false; // edge does not exist
-        return (!mesh_->is_boundary(h) &&
-                !mesh_->is_boundary(mesh_->opposite_halfedge(h)));
+        return (!mesh_->is_border(h) &&
+                !mesh_->is_border(mesh_->opposite(h)));
     }
 
     //-----------------------------------------------------------------------------
@@ -51,7 +51,7 @@ namespace easy3d {
 
     bool SurfaceMeshHoleFilling::fill_hole(SurfaceMesh::Halfedge _h) {
         // is it really a hole?
-        if (!mesh_->is_boundary(_h)) {
+        if (!mesh_->is_border(_h)) {
             return false;
         }
 
@@ -91,13 +91,13 @@ namespace easy3d {
         SurfaceMesh::Halfedge h = _h;
         do {
             // check for manifoldness
-            if (!mesh_->is_manifold(mesh_->to_vertex(h))) {
+            if (!mesh_->is_manifold(mesh_->target(h))) {
                 std::cerr << "[SurfaceMeshHoleFilling] Non-manifold hole\n";
                 return false;
             }
 
             hole_.push_back(h);
-        } while ((h = mesh_->next_halfedge(h)) != _h);
+        } while ((h = mesh_->next(h)) != _h);
         const int n = hole_.size();
 
         // compute minimal triangulation by dynamic programming
@@ -243,8 +243,8 @@ namespace easy3d {
                 if (!elocked_[e]) {
                     SurfaceMesh::Halfedge h10 = mesh_->halfedge(e, 0);
                     SurfaceMesh::Halfedge h01 = mesh_->halfedge(e, 1);
-                    const vec3 &p0 = points_[mesh_->to_vertex(h10)];
-                    const vec3 &p1 = points_[mesh_->to_vertex(h01)];
+                    const vec3 &p0 = points_[mesh_->target(h10)];
+                    const vec3 &p1 = points_[mesh_->target(h01)];
 
                     if (distance(p0, p1) > _lmax) {
                         mesh_->split(e, 0.5 * (p0 + p1));
@@ -268,8 +268,8 @@ namespace easy3d {
                 if (!mesh_->is_deleted(e) && !elocked_[e]) {
                     SurfaceMesh::Halfedge h10 = mesh_->halfedge(e, 0);
                     SurfaceMesh::Halfedge h01 = mesh_->halfedge(e, 1);
-                    SurfaceMesh::Vertex v0 = mesh_->to_vertex(h10);
-                    SurfaceMesh::Vertex v1 = mesh_->to_vertex(h01);
+                    SurfaceMesh::Vertex v0 = mesh_->target(h10);
+                    SurfaceMesh::Vertex v1 = mesh_->target(h01);
                     const vec3 &p0 = points_[v0];
                     const vec3 &p1 = points_[v1];
 
@@ -310,21 +310,21 @@ namespace easy3d {
             for (auto e : mesh_->edges()) {
                 if (!elocked_[e]) {
                     h = mesh_->halfedge(e, 0);
-                    v0 = mesh_->to_vertex(h);
-                    v2 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v0 = mesh_->target(h);
+                    v2 = mesh_->target(mesh_->next(h));
                     h = mesh_->halfedge(e, 1);
-                    v1 = mesh_->to_vertex(h);
-                    v3 = mesh_->to_vertex(mesh_->next_halfedge(h));
+                    v1 = mesh_->target(h);
+                    v3 = mesh_->target(mesh_->next(h));
 
                     val0 = mesh_->valence(v0);
                     val1 = mesh_->valence(v1);
                     val2 = mesh_->valence(v2);
                     val3 = mesh_->valence(v3);
 
-                    val_opt0 = (mesh_->is_boundary(v0) ? 4 : 6);
-                    val_opt1 = (mesh_->is_boundary(v1) ? 4 : 6);
-                    val_opt2 = (mesh_->is_boundary(v2) ? 4 : 6);
-                    val_opt3 = (mesh_->is_boundary(v3) ? 4 : 6);
+                    val_opt0 = (mesh_->is_border(v0) ? 4 : 6);
+                    val_opt1 = (mesh_->is_border(v1) ? 4 : 6);
+                    val_opt2 = (mesh_->is_border(v2) ? 4 : 6);
+                    val_opt3 = (mesh_->is_border(v3) ? 4 : 6);
 
                     ve0 = (val0 - val_opt0);
                     ve1 = (val1 - val_opt1);
@@ -381,7 +381,7 @@ namespace easy3d {
             }
         }
         for (auto h : hole_) {
-            constraints.push_back(mesh_->to_vertex(h));
+            constraints.push_back(mesh_->target(h));
         }
         const int m = constraints.size();
 

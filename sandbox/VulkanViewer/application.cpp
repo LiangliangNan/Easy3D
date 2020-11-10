@@ -1056,7 +1056,7 @@ namespace easy3d {
         int index = 0;
         for (auto f : model->faces()) {
             for (auto h : model->halfedges(f)) {
-                auto v = model->to_vertex(h);
+                auto v = model->target(h);
                 Vertex vertex{};
                 vertex.pos = points[v];
 

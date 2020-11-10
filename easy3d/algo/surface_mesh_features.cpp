@@ -47,11 +47,11 @@ namespace easy3d {
 
     void SurfaceMeshFeatures::detect_boundary() {
         for (auto v : mesh_->vertices())
-            if (mesh_->is_boundary(v))
+            if (mesh_->is_border(v))
                 vfeature_[v] = true;
 
         for (auto e : mesh_->edges())
-            if (mesh_->is_boundary(e))
+            if (mesh_->is_border(e))
                 efeature_[e] = true;
     }
 
@@ -61,7 +61,7 @@ namespace easy3d {
         const float feature_cosine = cos(angle / 180.0 * M_PI);
 
         for (auto e : mesh_->edges()) {
-            if (!mesh_->is_boundary(e)) {
+            if (!mesh_->is_border(e)) {
                 const auto f0 = mesh_->face(mesh_->halfedge(e, 0));
                 const auto f1 = mesh_->face(mesh_->halfedge(e, 1));
 

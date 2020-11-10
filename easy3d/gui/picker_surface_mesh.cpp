@@ -83,7 +83,7 @@ namespace easy3d {
         double squared_distance = FLT_MAX;
         SurfaceMesh::Vertex closest_vertex;
         for (auto h : model->halfedges(picked_face)) {
-            SurfaceMesh::Vertex v = model->to_vertex(h);
+            SurfaceMesh::Vertex v = model->target(h);
             double s = distance2(model->position(v), point);
             if (s < squared_distance) {
                 squared_distance = s;
@@ -128,8 +128,8 @@ namespace easy3d {
         // for edges that have duplicated vertices
         static double threshold = 1e-10;
         for (auto h : model->halfedges(picked_face)) {
-            const vec3 &s = model->position(model->from_vertex(h));
-            const vec3 &t = model->position(model->to_vertex(h));
+            const vec3 &s = model->position(model->source(h));
+            const vec3 &t = model->position(model->target(h));
             if (distance2(s, t) > threshold) {
                 Segment3 seg(s, t);
                 double d = seg.squared_ditance(point);
@@ -146,8 +146,8 @@ namespace easy3d {
         if (!closest_edge.is_valid())
             return SurfaceMesh::Halfedge();
 
-        const vec3 &s = model->position(model->from_vertex(closest_edge));
-        const vec3 &t = model->position(model->to_vertex(closest_edge));
+        const vec3 &s = model->position(model->source(closest_edge));
+        const vec3 &t = model->position(model->target(closest_edge));
         const Segment2 seg(project(s), project(t));
         float s_dist = seg.squared_ditance(vec2(static_cast<float>(x), static_cast<float>(y)));
         float dist = std::sqrt(s_dist);
@@ -167,7 +167,7 @@ namespace easy3d {
 
     Plane3 SurfaceMeshPicker::face_plane(SurfaceMesh *model, SurfaceMesh::Face face) const {
         auto h = model->halfedge(face);
-        auto v = model->to_vertex(h);
+        auto v = model->target(h);
         return Plane3(model->position(v), model->compute_face_normal(face));
     }
 

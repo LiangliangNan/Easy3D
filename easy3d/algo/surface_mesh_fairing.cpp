@@ -83,7 +83,7 @@ namespace easy3d {
         // lock k locked boundary rings
         for (auto v : mesh_->vertices()) {
             // lock boundary
-            if (mesh_->is_boundary(v)) {
+            if (mesh_->is_border(v)) {
                 vlocked_[v] = true;
 
                 // lock one-ring of boundary
@@ -212,7 +212,7 @@ namespace easy3d {
                 row[v] += t.weight_;
             }
 
-                // else if (d == 1 && mesh_.is_boundary(v))
+                // else if (d == 1 && mesh_.is_border(v))
                 // {
                 //     // ignore?
                 // }
@@ -222,7 +222,7 @@ namespace easy3d {
 
                 for (auto h : mesh_->halfedges(v)) {
                     auto e = mesh_->edge(h);
-                    auto vv = mesh_->to_vertex(h);
+                    auto vv = mesh_->target(h);
                     auto w = eweight[e];
 
                     if (d < laplace_degree)

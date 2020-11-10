@@ -40,13 +40,13 @@ namespace easy3d {
 
         for (auto h : comp->halfedges()) {
             auto cur = h;
-            if (mesh->is_boundary(cur) && !is_marked[cur]) {
+            if (mesh->is_border(cur) && !is_marked[cur]) {
                 ++number_of_borders_;
                 std::size_t border_size = 0;
                 do {
                     ++border_size;
                     is_marked[cur] = true;
-                    cur = mesh->next_halfedge(cur);
+                    cur = mesh->next(cur);
                 } while (cur != h);
                 largest_border_size_ = std::max(largest_border_size_, border_size);
             }

@@ -89,14 +89,14 @@ namespace easy3d {
         // return i'th vertex of hole
         SurfaceMesh::Vertex hole_vertex(unsigned int i) const {
             assert(i < hole_.size());
-            return mesh_->to_vertex(hole_[i]);
+            return mesh_->target(hole_[i]);
         }
 
         // return vertex opposite edge (i-1,i)
         SurfaceMesh::Vertex opposite_vertex(unsigned int i) const {
             assert(i < hole_.size());
-            return mesh_->to_vertex(
-                    mesh_->next_halfedge(mesh_->opposite_halfedge(hole_[i])));
+            return mesh_->target(
+                    mesh_->next(mesh_->opposite(hole_[i])));
         }
 
         // does interior edge (_a,_b) exist already?

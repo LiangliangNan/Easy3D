@@ -381,9 +381,9 @@ namespace easy3d {
     //    for (i=0; i<nH; ++i)
     //    {
     //        h = Halfedge(i);
-    //        set_vertex(h, vmap[to_vertex(h)]);
-    //        set_next_halfedge(h, hmap[next_halfedge(h)]);
-    //        if (!is_boundary(h))
+    //        set_vertex(h, vmap[target(h)]);
+    //        set_next(h, hmap[next(h)]);
+    //        if (!is_border(h))
     //            set_face(h, fmap[face(h)]);
     //    }
 
@@ -405,11 +405,11 @@ namespace easy3d {
 //        assert(v.is_valid());
 //        std::vector<Graph::Vertex> result;
 //        for (auto e : edges(v)) {
-//            Vertex another = from_vertex(e);
+//            Vertex another = source(e);
 //            if (another != v)
 //                result.push_back(another);
 //            else
-//                result.push_back(to_vertex(e));
+//                result.push_back(target(e));
 //        }
 
 //        return result;

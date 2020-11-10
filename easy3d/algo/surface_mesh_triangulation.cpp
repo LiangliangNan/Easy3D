@@ -54,14 +54,14 @@ namespace easy3d {
         vertices_.clear();
         SurfaceMesh::Halfedge h = h0;
         do {
-            if (!mesh_->is_manifold(mesh_->to_vertex(h))) {
+            if (!mesh_->is_manifold(mesh_->target(h))) {
                 std::cerr << "[SurfaceMeshTriangulation] Non-manifold polygon\n";
                 return;
             }
 
             halfedges_.push_back(h);
-            vertices_.push_back(mesh_->to_vertex(h));
-        } while ((h = mesh_->next_halfedge(h)) != h0);
+            vertices_.push_back(mesh_->target(h));
+        } while ((h = mesh_->next(h)) != h0);
 
         // do we have at least four vertices?
         const int n = halfedges_.size();
@@ -199,8 +199,8 @@ namespace easy3d {
         SurfaceMesh::Halfedge h = mesh_->find_halfedge(a, b);
         if (!h.is_valid())
             return false; // edge does not exist
-        return (!mesh_->is_boundary(h) &&
-                !mesh_->is_boundary(mesh_->opposite_halfedge(h)));
+        return (!mesh_->is_border(h) &&
+                !mesh_->is_border(mesh_->opposite(h)));
     }
 
     //-----------------------------------------------------------------------------
@@ -220,8 +220,8 @@ namespace easy3d {
         {
             SurfaceMesh::Halfedge h = h0;
             do {
-                h = mesh_->next_halfedge(h);
-                if (mesh_->to_vertex(h) == v1) {
+                h = mesh_->next(h);
+                if (mesh_->target(h) == v1) {
                     mesh_->insert_edge(h0, h);
                     return true;
                 }
@@ -232,8 +232,8 @@ namespace easy3d {
         {
             SurfaceMesh::Halfedge h = h1;
             do {
-                h = mesh_->next_halfedge(h);
-                if (mesh_->to_vertex(h) == v0) {
+                h = mesh_->next(h);
+                if (mesh_->target(h) == v0) {
                     mesh_->insert_edge(h1, h);
                     return true;
                 }

@@ -275,7 +275,7 @@ namespace easy3d {
                     for (auto face : model->faces()) {
                         const float coord = (prop[face] - min_value) / (max_value - min_value);
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             d_points.emplace_back(points[v]);
                             d_normals.emplace_back(normals[v]);
                             d_texcoords.emplace_back(vec2(coord, 0.5f));
@@ -336,7 +336,7 @@ namespace easy3d {
                         float coord = (prop[face] - min_value) / (max_value - min_value);
 
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(vec2(coord, 0.5f));
@@ -412,7 +412,7 @@ namespace easy3d {
                     d_indices.reserve(model->n_faces() * 3);
                     for (auto f : model->faces()) {
                         for (auto h : model->halfedges(f))
-                            d_indices.push_back(model->to_vertex(h).idx());
+                            d_indices.push_back(model->target(h).idx());
                     }
 
                     drawable->update_vertex_buffer(points.vector());
@@ -466,7 +466,7 @@ namespace easy3d {
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
 
@@ -679,7 +679,7 @@ namespace easy3d {
                     d_indices.reserve(model->n_faces() * 3);
                     for (auto face : model->faces()) {
                         for (auto h : model->halfedges(face))
-                            d_indices.push_back(model->to_vertex(h).idx());
+                            d_indices.push_back(model->target(h).idx());
                     }
                     drawable->update_vertex_buffer(model->points());
                     drawable->update_element_buffer(d_indices);
@@ -725,7 +725,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             tessellator.add_vertex(vertex);
@@ -785,7 +785,7 @@ namespace easy3d {
                     for (auto f : model->faces()) {
                         const vec3 &color = fcolor[f];
                         for (auto h : model->halfedges(f)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             d_points.push_back(points[v]);
                             d_normals.push_back(normals[v]);
                             d_colors.push_back(color);
@@ -838,7 +838,7 @@ namespace easy3d {
                         tessellator.begin_contour();
                         const vec3 &color = fcolor[face];
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(color);
@@ -900,7 +900,7 @@ namespace easy3d {
                     d_indices.reserve(model->n_faces() * 3);
                     for (auto f : model->faces()) {
                         for (auto h : model->halfedges(f))
-                            d_indices.push_back(model->to_vertex(h).idx());
+                            d_indices.push_back(model->target(h).idx());
                     }
 
                     drawable->update_vertex_buffer(points.vector());
@@ -947,7 +947,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(vcolor[v]);
@@ -1009,7 +1009,7 @@ namespace easy3d {
                     d_indices.reserve(model->n_faces() * 3);
                     for (auto f : model->faces()) {
                         for (auto h : model->halfedges(f))
-                            d_indices.push_back(model->to_vertex(h).idx());
+                            d_indices.push_back(model->target(h).idx());
                     }
 
                     drawable->update_vertex_buffer(points.vector());
@@ -1057,7 +1057,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(vtexcoords[v]);
@@ -1123,7 +1123,7 @@ namespace easy3d {
                     d_texcoords.reserve(model->n_faces() * 3);
                     for (auto face : model->faces()) {
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             d_points.push_back(points[v]);
                             d_normals.push_back(normals[v]);
                             d_texcoords.push_back(htexcoords[h]);
@@ -1175,7 +1175,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
-                            auto v = model->to_vertex(h);
+                            auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(htexcoords[h]);
@@ -1344,7 +1344,7 @@ namespace easy3d {
                 std::vector<vec3> points;
                 points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    if (model->is_boundary(e)) {
+                    if (model->is_border(e)) {
                         points.push_back(prop[model->vertex(e, 0)]);
                         points.push_back(prop[model->vertex(e, 1)]);
                     }
