@@ -177,8 +177,10 @@ namespace easy3d {
             // keep face, delete the duplicated ones
             for (auto f : entry.second) {
                 if (!deleted[f]) {
-                    if (f != face)
+                    if (f != face) {
                         mesh->delete_face(f);
+                        deleted[f] = true;
+                    }
                     else
                         LOG(ERROR) << "a face was marked duplicated with it self";
                 }
