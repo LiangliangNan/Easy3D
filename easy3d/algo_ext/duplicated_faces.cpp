@@ -167,7 +167,7 @@ namespace easy3d {
 
         // in each duplication set, we keep only one of the duplicated faces
         // we create a new property to mark if the face should be deleted.
-        auto deleted = mesh->get_face_property<bool>("f:deleted");
+        auto deleted = mesh->add_face_property<bool>("f:DuplicatedFaces:deleted", false);
 
     //#if 0	// randomly keep one in a duplication set
         for (const auto& entry : duplicated_faces) {
@@ -252,7 +252,7 @@ namespace easy3d {
     //	face_comp.unbind();
 
     //#endif
-
+        mesh->remove_face_property(deleted);
         mesh->garbage_collection();
 
         return prev_num_faces - mesh->n_faces();
