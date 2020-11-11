@@ -913,6 +913,29 @@ void MainWindow::surfaceMeshTriangulation() {
 }
 
 
+void MainWindow::surfaceMeshRemoveIsolatedVertices() {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    unsigned int prev_num_vertices = mesh->n_vertices();
+
+    // clean: remove isolated vertices
+    for (auto v : mesh->vertices()) {
+        if (mesh->is_isolated(v))
+            mesh->delete_vertex(v);
+    }
+    mesh->garbage_collection();
+
+    unsigned int count = prev_num_vertices - mesh->n_vertices();
+    LOG(INFO) << count << " isolated vertices deleted.";
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+}
+
+
 void MainWindow::surfaceMeshDetectDuplicatedFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
@@ -947,6 +970,7 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
     if (num > 0) {
         mesh->renderer()->update();
         viewer_->update();
+        updateUi();
     }
     LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
 #else
@@ -1415,23 +1439,6 @@ void MainWindow::surfaceMeshStitchCoincidentEdges() {
     mesh->renderer()->update();
     viewer_->update();
     updateUi();
-}
-
-
-void MainWindow::surfaceMeshRemoveIsolatedVertices() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    // clean: remove isolated vertices
-    for (auto v : mesh->vertices()) {
-        if (mesh->is_isolated(v))
-            mesh->delete_vertex(v);
-    }
-    mesh->garbage_collection();
-
-    mesh->renderer()->update();
-    viewer_->update();
 }
 
 
