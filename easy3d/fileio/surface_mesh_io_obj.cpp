@@ -32,6 +32,9 @@
 #include <easy3d/util/logging.h>
 
 
+//#define TRANSLATE_RELATIVE_TO_FIRST_POINT
+
+
 // this seems to be more robust and can handle multi-materials
 #define USE_TINY_OBJ_LOADER
 
@@ -90,10 +93,26 @@ namespace easy3d {
             builder.begin_surface();
 
             // add vertices
+#ifdef  TRANSLATE_RELATIVE_TO_FIRST_POINT
+            // the first point
+            auto p0 = attrib.vertices.data();
+            builder.add_vertex(vec3(0, 0, 0));
+
+            // remaining points
+            for (std::size_t v = 3; v < attrib.vertices.size(); v += 3) {
+                auto p = attrib.vertices.data() + v;
+                builder.add_vertex(
+                        vec3(static_cast<float>(p[0] - p0[0]),
+                             static_cast<float>(p[1] - p0[1]),
+                             static_cast<float>(p[2] - p0[2]))
+                );
+            }
+#else
             for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
                 // Should I create vertices later, to get rid of isolated vertices?
                 builder.add_vertex(vec3(attrib.vertices.data() + v));
             }
+#endif
 
             // create texture coordinate property if texture coordinates present
             if (!texcoords.empty())

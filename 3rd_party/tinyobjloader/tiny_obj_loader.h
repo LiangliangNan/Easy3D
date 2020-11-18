@@ -134,6 +134,7 @@ namespace tinyobj {
 //   -colorspace SPACE                      # Color space of the texture. e.g.
 //   'sRGB` or 'linear'
 //
+#define TINYOBJLOADER_USE_DOUBLE
 
 #ifdef TINYOBJLOADER_USE_DOUBLE
 //#pragma message "using double"
