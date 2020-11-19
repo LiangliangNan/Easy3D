@@ -166,95 +166,22 @@ namespace easy3d {
         unsigned int prev_num_faces = mesh->n_faces();
 
         // in each duplication set, we keep only one of the duplicated faces
-        // we create a new property to mark if the face should be deleted.
-        auto deleted = mesh->add_face_property<bool>("f:DuplicatedFaces:deleted", false);
+        auto deleted = mesh->face_property<bool>("f:deleted", false);
 
-    //#if 0	// randomly keep one in a duplication set
+        // for each duplication set, keep one face and and delete all its duplications
         for (const auto& entry : duplicated_faces) {
             SurfaceMesh::Face face = entry.first;
             if (deleted[face]) // this duplication set has been processed
                 continue;
-            // keep face, delete the duplicated ones
+            // delete the duplicated ones
             for (auto f : entry.second) {
-                if (!deleted[f]) {
-                    if (f != face) {
-                        mesh->delete_face(f);
-                        deleted[f] = true;
-                    }
-                    else
-                        LOG(ERROR) << "a face was marked duplicated with it self";
-                }
+                if (f != face)
+                    mesh->delete_face(f);
+                else
+                    LOG(ERROR) << "a face was marked duplicated with it self";
             }
         }
 
-    //#else
-    //	// faces from smaller connected components will be deleted first. This way I try to keep the
-    //	// connected components' original orientation.
-
-    //	SurfaceMeshComponentExtractor extractor;
-    //	const SurfaceMeshComponentList& components = extractor.extract(m);
-    //	MeshFacetAttribute<const SurfaceMeshComponent*> face_comp(m);
-    //	for (std::size_t i = 0; i < components.size(); ++i) {
-    //		const SurfaceMeshComponent* comp = components[i];
-    //		FOR_EACH_FACET_CONST(SurfaceMeshComponent, comp, it)
-    //			face_comp[it] = comp;
-    //	}
-
-    //	struct FaceAndComponent {
-    //		FaceAndComponent(const Mesh::Facet* f, const SurfaceMeshComponent* c) : face(f), comp(c) {}
-    //		const Mesh::Facet*   face;
-    //		const SurfaceMeshComponent* comp;
-    //	};
-
-    //	struct CompareGreater {
-    //		bool operator()(const FaceAndComponent& fc0, const FaceAndComponent& fc1) const {
-    //			int size_fc0 = fc0.comp->size_of_facets();
-    //			int size_fc1 = fc1.comp->size_of_facets();
-    //			// in case the parent components have the same size, we choose to
-    //			// delete those from the same component
-    //			if (size_fc0 == size_fc1)
-    //				return fc0.comp > fc1.comp;
-    //			else
-    //				return size_fc0 > size_fc1;
-    //		}
-    //	};
-
-    //	// now for each duplication set, we keep the one from the largest component
-    //	for (const auto& entry : duplicated_faces) {
-    //		bool had_processed = 0;
-    //		std::vector<FaceAndComponent> duplication_set;
-    //		Mesh::Facet* face = entry.first;
-    //		if (deleted[face]) {
-    //			had_processed = true;
-    //			continue;
-    //		}
-    //		duplication_set.push_back(FaceAndComponent(face, face_comp[face]));
-    //		for (auto f : entry.second) {
-    //			if (deleted[f]) {
-    //				had_processed = true;
-    //				break;
-    //			}
-    //			if (f != entry.first) {
-    //				duplication_set.push_back(FaceAndComponent(f, face_comp[f]));
-    //			}
-    //			else {
-    //				LOG(ERROR) << "error: a face was marked duplicated with it self";
-    //			}
-    //		}
-    //		if (had_processed)
-    //			continue;
-
-    //		std::sort(duplication_set.begin(), duplication_set.end(), CompareGreater());
-    //		// keep the first one (which belong to the largest component)
-    //		for (std::size_t i = 1; i < duplication_set.size(); ++i) {
-    //			deleted[duplication_set[i].face] = true;
-    //		}
-    //	}
-
-    //	face_comp.unbind();
-
-    //#endif
-        mesh->remove_face_property(deleted);
         mesh->garbage_collection();
 
         return prev_num_faces - mesh->n_faces();
