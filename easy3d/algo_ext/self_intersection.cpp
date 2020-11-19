@@ -400,7 +400,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh *SelfIntersection::remesh(SurfaceMesh *mesh, bool stitch) {
+    bool SelfIntersection::remesh(SurfaceMesh *mesh, bool stitch) {
 #ifdef REMESH_INTERSECTIONS_TIMING
         StopWatch w;
         w.start();
@@ -411,14 +411,14 @@ namespace easy3d {
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << intersecting_faces.size()
-                   << " pairs of intersecting triangles. " << w.time_string();
+                  << " pairs of intersecting triangles. " << w.time_string();
 
         w.restart();
         LOG(INFO) << "overlap analysis... ";
 #endif
 
         if (intersecting_faces.empty())
-            return nullptr;
+            return false;
 
         typedef std::pair<std::size_t, std::size_t> Edge;
         struct EdgeHash {
@@ -727,28 +727,33 @@ namespace easy3d {
 
         // Output resolved mesh.
 
-        SurfaceMesh *result = new SurfaceMesh;
+        SurfaceMesh *input = new SurfaceMesh(*mesh);
+        mesh->clear();
+
         std::vector<SurfaceMesh::Vertex> vertices;
-        auto points = mesh->get_vertex_property<vec3>("v:point");
-        for (auto p : mesh->vertices()) {
-            SurfaceMesh::Vertex v = result->add_vertex(points[p]);
+        auto points = input->get_vertex_property<vec3>("v:point");
+        for (auto p : input->vertices()) {
+            SurfaceMesh::Vertex v = mesh->add_vertex(points[p]);
             vertices.push_back(v);
         }
         for (auto p : new_vertices) {
-            SurfaceMesh::Vertex v = result->add_vertex(
+            SurfaceMesh::Vertex v = mesh->add_vertex(
                     vec3(CGAL::to_double(p[0]), CGAL::to_double(p[1]), CGAL::to_double(p[2])));
             vertices.push_back(v);
         }
 
         for (auto fvids : resolved_faces) {
-            result->add_face({vertices[fvids[0]], vertices[fvids[1]], vertices[fvids[2]]});
+            mesh->add_triangle(vertices[fvids[0]], vertices[fvids[1]], vertices[fvids[2]]);
         }
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << w.time_string();
 #endif
 
-        return result;
+        bool status = mesh->n_faces() != input->n_faces();
+        delete input;
+
+        return status;
     }
 
 

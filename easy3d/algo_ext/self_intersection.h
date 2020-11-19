@@ -65,14 +65,23 @@ namespace easy3d {
 
         ~SelfIntersection() {}
 
-        // detect and return the intersecting face pairs.
-        // construct == true: also construct the intersecting geometry.
+        /**
+         * Detect intersecting face pairs.
+         * @param mesh The input mesh.
+         * @param construct If true, also construct the intersecting geometry.
+         * @return The intersecting face pairs.
+         */
         std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
         detect(SurfaceMesh *mesh, bool construct = false);
 
-        // This function will detect and rememsh the intersecting faces.
-        // Result is stored and returned by a new mesh.
-        SurfaceMesh *remesh(SurfaceMesh *mesh, bool stitch);
+        /**
+         * Detect and remesh the intersecting faces.
+         * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
+         *             unchanged.
+         * @param stitch Stitch the borders
+         * @return true if remesh actually occurred (i.e., self intersection was detected).
+         */
+        bool remesh(SurfaceMesh *mesh, bool stitch);
 
     private:
 

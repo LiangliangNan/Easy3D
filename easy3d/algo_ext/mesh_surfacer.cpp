@@ -65,7 +65,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh* MeshSurfacer::remesh_self_intersections(SurfaceMesh* mesh, bool stitch /* = true */)
+    bool MeshSurfacer::remesh_self_intersections(SurfaceMesh* mesh, bool stitch /* = true */)
     {
         SelfIntersection msi;
         return msi.remesh(mesh, stitch);

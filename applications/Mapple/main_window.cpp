@@ -1013,12 +1013,8 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 
     auto size = mesh->n_faces();
     MeshSurfacer ms;
-    SurfaceMesh* result = ms.remesh_self_intersections(mesh, true);
-    if (result) {
-        const std::string& name = file_system::name_less_extension(mesh->name()) + "_remeshed." + file_system::extension(mesh->name());
-        result->set_name(name);
-        viewer()->addModel(result);
-		LOG(INFO) << "done. #faces " << size << " -> " << result->n_faces() << ". " << w.time_string();
+    if (ms.remesh_self_intersections(mesh, true)) {
+		LOG(INFO) << "done. #faces " << size << " -> " << mesh->n_faces() << ". " << w.time_string();
         mesh->renderer()->update();
         viewer_->update();
         updateUi();
