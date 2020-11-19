@@ -179,8 +179,10 @@ int main(int argc, char **argv) {
     // add the model to the viewer
     viewer.add_model(mesh, true);
 
-    // also show the borders
+    // show the edges
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
+    // also show the borders
+    mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
     // Run the viewer
     return viewer.run();
