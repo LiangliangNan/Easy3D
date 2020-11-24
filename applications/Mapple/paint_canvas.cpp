@@ -321,6 +321,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             cloud->renderer()->update();
             LOG(INFO) << count << " points deleted" << std::endl;
         }
+        window_->updateUi();
 #endif
     }
     else if (pressed_button_ == Qt::LeftButton && e->modifiers() == Qt::ControlModifier) { // ZOOM_ON_REGION
