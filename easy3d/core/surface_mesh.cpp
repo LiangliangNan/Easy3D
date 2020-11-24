@@ -837,8 +837,16 @@ namespace easy3d {
 
         // TODO: may not stable for concave vertices?
         VertexIterator vit, vend=vertices_end();
-        for (vit=vertices_begin(); vit!=vend; ++vit)
-            vnormal_[*vit] = compute_vertex_normal(*vit);
+        for (vit=vertices_begin(); vit!=vend; ++vit) {
+            if (!is_border(*vit))
+                vnormal_[*vit] = compute_vertex_normal(*vit);
+            else { // Liangliang: if on border, we use the face normal.
+                auto h = out_halfedge(*vit);
+                if (is_border(h))
+                    h = opposite(h);
+                vnormal_[*vit] = compute_face_normal(face(h));
+            }
+        }
     }
 
 

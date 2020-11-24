@@ -1801,7 +1801,8 @@ namespace easy3d {
         /// compute vertex normals by calling compute_vertex_normal(Vertex) for each vertex.
         void update_vertex_normals();
 
-        /// compute normal vector of vertex \c v.
+        /// compute normal vector of vertex \c v. This is the angle-weighted average of incident face normals.
+        /// TODO: not stable for concave vertices or vertices with spanning angles close to 0 or 180 degrees.
         vec3 compute_vertex_normal(Vertex v) const;
 
         /// compute the length of edge \c e.
