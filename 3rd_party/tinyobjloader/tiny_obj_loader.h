@@ -338,7 +338,7 @@ struct index_t {
 
 struct mesh_t {
   std::vector<index_t> indices;
-  std::vector<unsigned char>
+  std::vector<unsigned int> // Liangliang: changed from "unsigned char" to allow large size faces
       num_face_vertices;          // The number of vertices per
                                   // face. 3 = triangle, 4 = quad,
                                   // ... Up to 255 vertices per face.
@@ -1585,7 +1585,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
         }
 
         shape->mesh.num_face_vertices.push_back(
-            static_cast<unsigned char>(npolys));
+            static_cast<unsigned int>(npolys));  // Liangliang: changed from "unsigned char" to allow large size faces
         shape->mesh.material_ids.push_back(material_id);  // per face
         shape->mesh.smoothing_group_ids.push_back(
             face.smoothing_group_id);  // per face
