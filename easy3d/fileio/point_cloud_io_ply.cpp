@@ -23,9 +23,6 @@
  */
 
 #include <easy3d/fileio/point_cloud_io.h>
-
-#include <unordered_map>
-
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/types.h>
