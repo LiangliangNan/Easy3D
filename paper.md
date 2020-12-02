@@ -13,14 +13,14 @@ affiliations:
  - name: 3D Geoinformation Research Group, Delft University of Technology
    index: 1
 date: 2 December 2020
-bibliography: references.bib
+bibliography: paper.bib
 ---
 
 # Summary
 
 The amount of 3D data has been explosively increasing in the past decades, driven by the fast development of data acquisition techniques (e.g., laser scanning, photogrammetry, and 3D computer vision) and real-world applications (e.g., urban planning, autonomous driving, surveying, and entertainment). The processing and application of such data require specialized algorithms and software systems, for which great tools and algorithm libraries are available. For example, MeshLab [@meshlab:2008] and CloudCompare [@cloudcompare:2016]) provide easy-to-use GUIs (Graphical User Interface) for processing meshes and point clouds, respectively. Callable libraries, such as libigl [@libigl:2016], PMP [@pmp:2020], and CGAL [@cgal:2009], can be integrated into existing software systems. However, developing end-to-end 3D data processing software typically requires integrating different functionalities such as data structures (for representing 3D data) and rendering (for visualizing the data and the derived information). Thus, the development process has a high demand for the expertise of a developer in all the related aspects for 3D data processing, which hinders the fast development of advanced data processing algorithms.
 
-<center><img src="./easy3d.jpg"></center>
+<center><img src="./paper.jpg"></center>
 <center>An overview of the rendering functionalities of Easy3D</center>
 
 
