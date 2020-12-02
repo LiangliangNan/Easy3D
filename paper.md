@@ -22,10 +22,6 @@ The amount of 3D data has been explosively increasing in the past decades, drive
 
 ![An overview of the rendering functionalities of Easy3D](paper.jpg)
 
-<center><img src="paper.jpg"></center>
-<center>An overview of the rendering functionalities of Easy3D</center>
-
-
 *Easy3D* is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. The core features of *Easy3D* include:
 
 - Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when loading models from files.
