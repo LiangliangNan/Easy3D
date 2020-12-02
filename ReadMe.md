@@ -81,14 +81,18 @@ to build Easy3D on almost all platforms.
 
 There are many options to build Easy3D. Choose one of the following (or whatever you are familiar with):
 
-- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
-Easy3D. Then you should have obtained a usable project and just build. I recommend using 
+- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
 [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
 - Option 2: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
 - Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio).
 
 Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./HowToBuild.md).
+
+### [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/classes.html)
+Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) to generate documentation from source code. To build the Easy3D documentation, you first need to install Doxygen (please refer to the [Doxygen installation manual](https://www.doxygen.nl/manual/install.html) for more details). 
+Then switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt` file. Finally, build the `doc` target to generate the documentation. 
+
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
