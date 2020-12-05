@@ -47,13 +47,13 @@ namespace easy3d {
      *
      * @details Easy3D is really easy to use. That's why it has such a name.
      *
-     *   To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
-     *   -------------------------------------------------------------------
-     * 		MyViewer viewer("Example");
-     *      viewer.run();
-     *   -------------------------------------------------------------------
-     *   The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
-     *   by re-implementing some of its unctions (see the documentation of Viewer).
+     * To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
+     * \code
+     * MyViewer viewer("Example");
+     * viewer.run();
+     * \endcode
+     * The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
+     * by re-implementing some of its unctions (see the documentation of Viewer).
      */
 	class Viewer
 	{
