@@ -36,44 +36,55 @@ namespace easy3d {
     class TrianglesDrawable;
     class FramebufferObject;
 
-    // Code can be simplified by ommittting frustum and use the Camera class instead.
+    // Code can be simplified by omitting frustum and use the Camera class instead.
     // check line 611, void Camera::setFOVToFitScene(), in camera.cpp.
 
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.
 
-    // implemented the standard shadow map (hard shadow) algorithm.
+    /// \brief Shadow implements the standard shadow map (hard shadow) algorithm.
     class Shadow
     {
     public:
         Shadow(Camera* cam);
         virtual ~Shadow();
 
-        // A background plane perpendicular to the light direction and
-        // is placed at the far plane of the light frustum. This only
-        // works for directional lights.
-        bool ortho_background() const { return orhto_background_; }
-        void set_ortho_background(bool b) { orhto_background_ = b; }
-        void set_background_color(const vec3& c) { background_color_ = c; }
+        /// Shadow allows to have a virtual background as the shadow receiver. The virtual background plane is
+        /// perpendicular to the light direction and is placed at the far plane of the light frustum.
+        /// \note This only works for directional lights.
+        bool virtual_background() const { return virtual_background_; }
+        /// Enable/Disable the virtual background. \see virtual_background()
+        void set_virtual_background(bool b) { virtual_background_ = b; }
 
-        // assumed to be a square shadow map. Defauly: 1024.
+        /// Query the virtual background color.
+        const vec3& virtual_background_color(const vec3& c) { return virtual_background_color_; }
+        /// Set the virtual background color.
+        void set_virtual_background_color(const vec3& c) { virtual_background_color_ = c; }
+
+        /// Query the size of the shadow map. The shadow is assumed to be square.
         int shadow_map_size() const { return shadow_map_size_; }
+        /// Set/Change the size of the shadow map. The shadow is assumed to be square. Default: 1024 by 1024.
         void set_shadow_map_size(int size) { shadow_map_size_ = size; }
 
-        // the distance of the light source to the scene scene (w.r.t the
-        // scene radius). Value must be > 1.0. Default: 50 (large enough
-        // to mimic the directional light used in the default viewer).
+        /// The distance of the light source to the scene scene (w.r.t the scene radius).
         float light_distance() const { return light_distance_; }
+        /// Set/Change the distance of the light source to the scene scene (w.r.t the scene radius). Default value is
+        /// 50 (large enough to mimic the directional light used in the default viewer).
+        /// \note Value must be > 1.0.
         void set_light_distance(float dist);
 
-        // the darkness of the shadow region. Values must be in [0, 1.0].
-        // (0: no shadow at all; 1: completely dark/black). Default: 0.6.
+        /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
+        /// dark/black). \see set_darkness(float darkness).
         float darkness() const { return darkness_; }
+        /// Set the darkness of the shadow region. Values must be in [0, 1.0] (0: no shadow at all; 1: completely
+        /// dark/black). The default value is 0.6.
         void set_darkness(float darkness);
 
+        /// Rendering the surfaces.
         void draw(const std::vector<TrianglesDrawable*>& surfaces);
 
     protected:
+        ///
         virtual void ensure_fbo();
         virtual void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces);
         virtual void render_pass(const std::vector<TrianglesDrawable*>& surfaces);
@@ -91,7 +102,7 @@ namespace easy3d {
         // is placed at the far plane of the light frustum. This only
         // works for directional lights. It might be more natural to
         // have a *real* ground, i.e. up right, contacting the object.
-        virtual void update_ortho_background();
+        virtual void update_virtual_background();
 
     protected:
         Camera*	camera_;
@@ -106,9 +117,9 @@ namespace easy3d {
         int		shadow_map_size_;
 
         // the shadow is cast onto a minimum plane orthogonal to the light direction.
-        bool	orhto_background_;
-        TrianglesDrawable* background_;
-        vec3    background_color_;
+        bool	virtual_background_;
+        vec3    virtual_background_color_;
+        TrianglesDrawable* virtual_background_drawable_;
 
         float	light_distance_;	// for perspective light frustum only
         float	darkness_;

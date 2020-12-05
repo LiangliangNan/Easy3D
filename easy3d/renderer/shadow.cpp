@@ -51,9 +51,9 @@ namespace easy3d {
         , camera_frustum_(nullptr)
         , light_frustum_(nullptr)
         , shadow_map_size_(1024)
-        , orhto_background_(true)
-        , background_(nullptr)
-        , background_color_(1.0f, 1.0f, 1.0f)
+        , virtual_background_(true)
+        , virtual_background_drawable_(nullptr)
+        , virtual_background_color_(1.0f, 1.0f, 1.0f)
         , light_distance_(50.0f)
         , darkness_(0.6f)
     {
@@ -76,8 +76,8 @@ namespace easy3d {
         delete light_frustum_;
         light_frustum_ = nullptr;
 
-        delete background_;
-        background_ = nullptr;
+        delete virtual_background_drawable_;
+        virtual_background_drawable_ = nullptr;
     }
 
 
@@ -114,8 +114,8 @@ namespace easy3d {
 
         compute_light_frustum();
 
-        if (orhto_background_)
-            update_ortho_background();
+        if (virtual_background_)
+            update_virtual_background();
         else {
             // in perspective mode, the background is managed by the user
         }
@@ -238,10 +238,10 @@ namespace easy3d {
         }
 
         // draw the background plane
-        program->set_uniform("default_color", background_color_);				easy3d_debug_log_gl_error;
+        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
-        background_->gl_draw(false);
+        virtual_background_drawable_->gl_draw(false);
 
         program->release_texture();
         program->release();
@@ -294,7 +294,7 @@ namespace easy3d {
         if (p.z - radius < minZ)
             minZ = p.z - radius;  // not necessary for including the camera frustum
 
-        if (!orhto_background_) {
+        if (!virtual_background_) {
             // The light frustum at its far end should contain the camera's frustum, and
             // at its near end should contain all relevant shadow casters. This makes
             // sure that all visible regions in the camera view will get right shadows.
@@ -358,7 +358,7 @@ namespace easy3d {
     }
 
 
-    void Shadow::update_ortho_background() {
+    void Shadow::update_virtual_background() {
         vec3 normal = vec3(setting::light_position); // the background's normal in VC.
         const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
@@ -385,12 +385,12 @@ namespace easy3d {
         std::vector<vec3> normals;
         normals.resize(4, normal);
 
-        if (!background_)
-            background_ = new TrianglesDrawable;
-        background_->update_vertex_buffer(vertices);
-        background_->update_texcoord_buffer(texcoords);
-        background_->update_element_buffer(indices);
-        background_->update_normal_buffer(normals);
+        if (!virtual_background_drawable_)
+            virtual_background_drawable_ = new TrianglesDrawable;
+        virtual_background_drawable_->update_vertex_buffer(vertices);
+        virtual_background_drawable_->update_texcoord_buffer(texcoords);
+        virtual_background_drawable_->update_element_buffer(indices);
+        virtual_background_drawable_->update_normal_buffer(normals);
     }
 
 

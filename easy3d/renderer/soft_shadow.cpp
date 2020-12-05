@@ -156,10 +156,10 @@ namespace easy3d {
         }
 
         // draw the background plane
-        program->set_uniform("default_color", background_color_);				easy3d_debug_log_gl_error;
+        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
-        background_->gl_draw(false);
+        virtual_background_drawable_->gl_draw(false);
 
         program->release_texture();
         program->release();

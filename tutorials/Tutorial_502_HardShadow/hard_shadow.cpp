@@ -39,7 +39,7 @@ TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title)
     camera()->setViewDirection(vec3(0, 0, 1));
 
 	shadow_ = new Shadow(camera());
-    shadow_->set_background_color(background_color());
+    shadow_->set_virtual_background_color(background_color());
 	shadow_enabled_ = true;
 }
 
