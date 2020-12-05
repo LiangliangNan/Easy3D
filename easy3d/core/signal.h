@@ -33,9 +33,9 @@
 namespace easy3d {
 
     /**
-     * \brief Implementation of a simple signal-slot mechanism.
-     *        Multiple slots (a class and it member function) can be connected
-     *        to a signal object.
+     * \brief Implementation of a simple signal-slot mechanism. \par
+     * \class Signal
+     *        Multiple slots (classes and their member functions) can be connected to a signal object.
      *        You can connect functions to the signal which will be called when
      *        the trigger() method on the signal object is invoked. Any argument
      *        passed to emit() will be passed to the given functions.
@@ -52,11 +52,14 @@ namespace easy3d {
 	public:
         /**
          * \brief Connect a slot to this signal.
-         * \example
-         *        - If no overloaded function:
-         *              camera()->connect(this, &Viewer::update);
-         *        - If the function has been overloaded (of course you can always treat it this way):
-         *              camera()->connect(this, static_cast<void(Viewer::*)(void) const>(&Viewer::update));
+         *  - If no overloaded function:  \par
+         *      \code
+         *      camera()->connect(this, &Viewer::update);
+         *      \endcode
+         *  - If the function has been overloaded (of course you can always treat it this way):   \par
+         *      \code
+         *      camera()->connect(this, static_cast<void(Viewer::*)(void) const>(&Viewer::update));
+         *      \endcode
          */
         template < class Class, class Function, class... Args >
         void connect(Class&& owner, Function&& func, Args&&... args)  {
