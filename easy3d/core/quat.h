@@ -41,62 +41,62 @@
 #include <easy3d/core/vec.h>
 #include <easy3d/core/mat.h>
 
-/**
- * Euler angles VS Quaternion
- *
- * Euler angles are the easiest way to represent rotation. This representation simply
- * stores the three rotation angles around the X, Y and Z axes. These 3 rotations are
- * then applied successively, usually in this order: first Y, then Z, then X (but not
- * necessarily). Using a different order yields different results.
- * Euler angles are usually used to set a character's orientation since game characters
- * only rotate on the vertical axis. Therefore, it is easier to write, understand and
- * maintain "float direction" than 3 different orientations. Another good use of Euler
- * angles is an FPS camera: you have one angle for heading (Y), and one for up/down (X).
- * However, when things get more complex, Euler angle will be hard to work with, eg.,:
- *  - Interpolating smoothly between 2 orientations is hard. Naively interpolating the
- *    X, Y, and Z angles will be ugly.
- *  - Applying several rotations is complicated and unprecise: you have to compute the
- *    final rotation matrix, and guess the Euler angles from this matrix.
- *  - A well-known problem, the "Gimbal Lock", will sometimes block your rotations, and
- *    other singularities which will flip your model upside-down.
- *  - Different angles make the same rotation (-180 and 180 degrees, for instance)
- *  - It is a mess - as said above, usually the right order is YZX, but if you also use
- *    a library with a different order, you'll be in trouble.
- *  - Some operations are complicated, e.g., rotation of N degrees around a specific axis.
- * Quaternions are a tool to represent rotations, which solves these problems.
- *
- *
- * The Quaternion class represents 3D rotations and orientations.
- *
- * The Quaternion is an appropriate (although not very intuitive) representation for
- * 3D rotations and orientations. Many tools are provided to ease the definition of a
- * Quaternion: see constructors, set_axis_angle(), set_from_rotation_matrix(),
- * set_from_rotated_basis().
- *
- * You can apply the rotation represented by the Quaternion to 3D points using rotate()
- * and inverse_rotate().
- *
- * You can apply the Quaternion q rotation to the OpenGL matrices using
- *      glMultMatrixd(q.matrix());
- * which is equvalent to
- *      glRotate(q.angle()*180.0/M_PI, q.axis().x, q.axis().y, q.axis().z);
- *
- * Internal representation
- * The internal representation of a Quaternion is a set of 4 numbers, [x y z w], which
- * represents rotations the following way:
- *  x = axis.x * sin(angle / 2)
- *  y = axis.y * sin(angle / 2)
- *  z = axis.z * sin(angle / 2)
- *  w = cos(angle / 2)
- * NOTE:
- *   - the angle is in radians and the axis is a unit vector.
- *   - certain implementations place the cosine term in the first position (instead of last).
- *
- * A Quaternion is always normalized, so that its inverse() is actually its conjugate.
- */
 
 namespace easy3d {
 
+    /**
+     * \brief The Quaternion class represents 3D rotations and orientations.
+     *
+     * The Quaternion is an appropriate (although not very intuitive) representation for
+     * 3D rotations and orientations. Many tools are provided to ease the definition of a
+     * Quaternion: see constructors, set_axis_angle(), set_from_rotation_matrix(),
+     * set_from_rotated_basis().
+     *
+     * You can apply the rotation represented by the Quaternion to 3D points using rotate()
+     * and inverse_rotate().
+     *
+     * You can apply the Quaternion q rotation to the OpenGL matrices using
+     *      glMultMatrixd(q.matrix());
+     * which is equvalent to
+     *      glRotate(q.angle()*180.0/M_PI, q.axis().x, q.axis().y, q.axis().z);
+     *
+     * Internal representation
+     * The internal representation of a Quaternion is a set of 4 numbers, [x y z w], which
+     * represents rotations the following way:
+     *  x = axis.x * sin(angle / 2)
+     *  y = axis.y * sin(angle / 2)
+     *  z = axis.z * sin(angle / 2)
+     *  w = cos(angle / 2)
+     * \NOTE:
+     *   - the angle is in radians and the axis is a unit vector.
+     *   - certain implementations place the cosine term in the first position (instead of last).
+     *
+     * A Quaternion is always normalized, so that its inverse() is actually its conjugate.
+     *
+     *
+     * Euler angles VS Quaternion
+     *
+     * Euler angles are the easiest way to represent rotation. This representation simply
+     * stores the three rotation angles around the X, Y and Z axes. These 3 rotations are
+     * then applied successively, usually in this order: first Y, then Z, then X (but not
+     * necessarily). Using a different order yields different results.
+     * Euler angles are usually used to set a character's orientation since game characters
+     * only rotate on the vertical axis. Therefore, it is easier to write, understand and
+     * maintain "float direction" than 3 different orientations. Another good use of Euler
+     * angles is an FPS camera: you have one angle for heading (Y), and one for up/down (X).
+     * However, when things get more complex, Euler angle will be hard to work with, eg.,:
+     *  - Interpolating smoothly between 2 orientations is hard. Naively interpolating the
+     *    X, Y, and Z angles will be ugly.
+     *  - Applying several rotations is complicated and unprecise: you have to compute the
+     *    final rotation matrix, and guess the Euler angles from this matrix.
+     *  - A well-known problem, the "Gimbal Lock", will sometimes block your rotations, and
+     *    other singularities which will flip your model upside-down.
+     *  - Different angles make the same rotation (-180 and 180 degrees, for instance)
+     *  - It is a mess - as said above, usually the right order is YZX, but if you also use
+     *    a library with a different order, you'll be in trouble.
+     *  - Some operations are complicated, e.g., rotation of N degrees around a specific axis.
+     * Quaternions are a tool to represent rotations, which solves these problems.
+     */
 
     template <typename FT>
     class Quat
@@ -106,89 +106,107 @@ namespace easy3d {
         typedef Quat<FT>	thisclass;
 
     public:
-        /* Defining a Quat */
-        /* Default constructor, builds an identity rotation. */
+        /** \brief Default constructor, builds an identity rotation. */
         Quat()
         {
             _q[0] = _q[1] = _q[2] = FT(0);  _q[3] = FT(1);
         }
 
-        /* Constructor from rotation axis (non null) and angle (in radians). See also set_axis_angle(). */
+        /** \brief Constructor from rotation axis (non null) and angle (in radians). See also set_axis_angle(). */
         Quat(const Vec3& axis, FT angle)
         {
             set_axis_angle(axis, angle);
         }
 
-        /* Constructs a Quaternion that will rotate from the \p from direction to the \p to direction.
-        Note that this rotation is not uniquely defined. The selected axis is usually orthogonal to \p from
-        and \p to, minimizing the rotation angle. This method is robust and can handle small or almost identical vectors. */
+        /**
+         * \brief Constructs a quaternion that will rotate from the \p from direction to the \p to direction.
+         * \Note This rotation is not uniquely defined. The selected axis is usually orthogonal to \p from and \p to,
+         * minimizing the rotation angle. This method is robust and can handle small or almost identical vectors.
+         */
         Quat(const Vec3& from, const Vec3& to);
 
-        /* Constructor from the four values of a Quaternion. First three values are axis*sin(angle/2) and
-        last one is cos(angle/2).
-
-        \attention The identity Quaternion is Quat(0,0,0,1) and not Quat(0,0,0,0) (which is
-        not unitary). The default Quat() creates such identity Quaternion. */
+        /**
+         * \brief Constructor from the four values of a Quaternion. First three values are axis*sin(angle/2) and
+         * the last one is cos(angle/2).
+         * \attention The identity Quaternion is Quat(0,0,0,1) and not Quat(0,0,0,0) (which is not unitary). The
+         * default Quat() creates such identity Quaternion.
+         */
         Quat(FT q0, FT q1, FT q2, FT q3)
         { _q[0]=q0;    _q[1]=q1;    _q[2]=q2;    _q[3]=q3; }
 
-        /* Copy constructor. */
+        /** brief Copy constructor. */
         Quat(const thisclass& Q)
         { for (int i=0; i<4; ++i) _q[i] = Q._q[i]; }
 
-        /* Equal operator. */
+        /** brief Equal operator. */
         Quat& operator=(const thisclass& Q) {
             for (int i=0; i<4; ++i)
                 _q[i] = Q._q[i];
             return (*this);
         }
 
-        /* Sets the Quaternion as a rotation of axis and angle (in radians).
-        \p axis does not need to be normalized. A null axis will result in an identity Quaternion. */
+        /**
+         * brief Sets the Quaternion as a rotation of axis and angle (in radians).
+         * \p axis does not need to be normalized. A null axis will result in an identity Quaternion.
+         */
         void set_axis_angle(const Vec3& axis, FT angle);
 
-        /* Sets the Quaternion value. */
+        /** brief Sets the Quaternion value. */
         void set_value(FT q0, FT q1, FT q2, FT q3)
         { _q[0]=q0;    _q[1]=q1;    _q[2]=q2;    _q[3]=q3; }
 
-        /* Set the Quaternion from a (supposedly correct) 3x3 rotation matrix.
-        The matrix is expressed in European format: its three columns are the images by the rotation of
-        the three vectors of an orthogonal basis. */
-        // see http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+        /**
+         * \brief Set the Quaternion from a (supposedly correct) 3x3 rotation matrix.
+         * The matrix is expressed in European format: its three columns are the images by the rotation of the three
+         * vectors of an orthogonal basis.
+         * See http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+         */
         void set_from_rotation_matrix(const Mat3<FT>& m);
 
-        /* set_from_rotated_basis() sets a Quaternion from the three axis of a rotated frame. It actually fills
-        the three columns of a matrix with these rotated basis vectors and calls this method. */
+        /**
+         * \brief Set a Quaternion from the three axis of a rotated frame.
+         * It actually fills the three columns of a matrix with these rotated basis vectors and calls this method.
+         */
         void set_from_rotated_basis(const Vec3& X, const Vec3& Y, const Vec3& Z);
 
-        /* Returns the normalized axis direction of the rotation represented by the Quaternion.
-        It is null for an identity Quaternion. See also angle() and get_axis_angle(). */
+        /**
+         * \brief Returns the normalized axis direction of the rotation represented by the Quaternion.
+         * It is null for an identity Quaternion. See also angle() and get_axis_angle().
+         */
         Vec3 axis() const;
 
-        /* Returns the angle (in radians) of the rotation represented by the Quaternion.
-        This value is always in the range [0-pi]. Larger rotational angles are obtained by inverting the
-        axis() direction. See also axis() and get_axis_angle(). */
+        /**
+         * \brief Returns the angle (in radians) of the rotation represented by the Quaternion.
+         * This value is always in the range [0-pi]. Larger rotational angles are obtained by inverting the axis()
+         * direction. See also axis() and get_axis_angle().
+         */
         FT angle() const;
 
-        /* Returns the axis vector and the angle (in radians) of the rotation represented by the Quaternion.*/
+        /**
+         * \brief Returns the axis vector and the angle (in radians) of the rotation represented by the Quaternion.
+         */
         void get_axis_angle(Vec3& axis, FT& angle) const;
 
-        /* Bracket operator, with a constant return value. i must range in [0..3]. */
+        /**
+         * \brief Bracket operator, with a constant return value. i must range in [0..3].
+         */
         FT operator[](int i) const { return _q[i]; }
 
-        /* Bracket operator returning an l-value. i must range in [0..3]. */
+        /** \brief Bracket operator returning an l-value. i must range in [0..3]. */
         FT& operator[](int i) { return _q[i]; }
 
         /* Rotation computations */
 
-        /* Returns the composition of the a and b rotations.
-        The order is important. When applied to a Vec v (see operator*(const Quaternion&, const Vec&)
-        and rotate()) the resulting Quaternion acts as if b was applied first and then a was applied.
-        This is obvious since the image v' of v by the composited rotation satisfies:
-        v'= (a*b) * v = a * (b*v)
-        Note that a*b usually differs from b*a.
-        \attention For efficiency reasons, the resulting Quaternion is not normalized. Use normalize() in
-        case of numerical drift with small rotation composition. */
+        /**
+         * \brief Returns the composition of the a and b rotations.
+         * The order is important. When applied to a Vec v (see operator*(const Quaternion&, const Vec&) and rotate())
+         * the resulting Quaternion acts as if b was applied first and then a was applied. This is obvious since the
+         * image v' of v by the composited rotation satisfies:
+         *      v'= (a*b) * v = a * (b*v)
+         * Note that a*b usually differs from b*a.
+         * \attention For efficiency reasons, the resulting Quaternion is not normalized. Use normalize() in case of
+         * numerical drift with small rotation composition.
+         */
         friend Quat operator*(const Quat& a, const Quat& b)
         {
             return Quat(
@@ -199,56 +217,71 @@ namespace easy3d {
                 );
         }
 
-        /* Quaternion rotation is composed with q.
-        See operator*(), since this is equivalent to this = this * q.
-        \note For efficiency reasons, the resulting Quaternion is not normalized.
-        You may normalize() it after each application in case of numerical drift. */
+        /**
+         * \brief Quaternion rotation is composed with q.
+         * See operator*(), since this is equivalent to this = this * q.
+         * \note For efficiency reasons, the resulting Quaternion is not normalized.
+         * You may normalize() it after each application in case of numerical drift.
+         */
         Quat& operator*=(const Quat &q) {
             *this = (*this)*q;
             return *this;
         }
 
-        /* Returns the image of v by the rotation q.
-        Same as q.rotate(v). See rotate() and inverse_rotate(). */
+        /**
+         * \brief Returns the image of v by the rotation q.
+         * Same as q.rotate(v). \see rotate() and inverse_rotate().
+         */
         friend Vec3 operator*(const Quat& q, const Vec3& v) { return q.rotate(v); }
 
-        /* Returns the image of v by the Quaternion rotation.
-        See also inverse_rotate() and operator*(const Quat&, const Vec&). */
+        /**
+         * \brief Returns the image of v by the Quaternion rotation.
+         * \see inverse_rotate() and operator*(const Quat&, const Vec&).
+         */
         Vec3 rotate(const Vec3& v) const;
 
-        /* Returns the image of v by the Quaternion inverse() rotation.
-        rotate() performs an inverse transformation. Same as inverse().rotate(v). */
+        /**
+         * \brief Returns the image of v by the Quaternion inverse() rotation.
+         * rotate() performs an inverse transformation. Same as inverse().rotate(v).
+         */
         Vec3 inverse_rotate(const Vec3& v) const {
             return inverse().rotate(v);
         }
 
-        /* Inversion */
-        /* Returns the inverse Quaternion (inverse rotation).
-        Result has a negated axis() direction and the same angle(). A composition (see operator*()) of a
-        Quaternion and its inverse() results in an identity function.
-        Use invert() to actually modify the Quaternion. */
+        /** \brief Inversion.
+         * Returns the inverse Quaternion (inverse rotation). Result has a negated axis() direction and the same
+         * angle(). A composition (see operator*()) of a Quaternion and its inverse() results in an identity function.
+         * Use invert() to actually modify the Quaternion.
+         */
         Quat inverse() const { return Quat(-_q[0], -_q[1], -_q[2], _q[3]); }
 
-        /* Inverses the Quaternion (same rotation angle(), but negated axis()).
-        See also inverse(). */
+        /**
+         * \brief Inverses the Quaternion (same rotation angle(), but negated axis()).
+         * \see also inverse().
+         */
         void invert() { _q[0] = -_q[0]; _q[1] = -_q[1]; _q[2] = -_q[2]; }
 
-        /* Negates all the coefficients of the Quaternion.
-        This results in an other representation of the same rotation (opposite rotation angle, but with
-        a negated axis direction: the two cancel out). However, note that the results of axis() and
-        angle() are unchanged after a call to this method since angle() always returns a value in [0,pi].
-        This method is mainly useful for Quaternion interpolation, so that the spherical interpolation
-        takes the shortest path on the unit sphere. See slerp() for details. */
+        /**
+         * \brief Negates all the coefficients of the Quaternion.
+         * This results in an other representation of the same rotation (opposite rotation angle, but with a negated
+         * axis direction: the two cancel out). However, note that the results of axis() and angle() are unchanged
+         * after a call to this method since angle() always returns a value in [0,pi]. This method is mainly useful
+         * for Quaternion interpolation, so that the spherical interpolation takes the shortest path on the unit sphere.
+         * See slerp() for details.
+         */
         void negate() { invert(); _q[3] = -_q[3]; }
 
+        /** \brief Return the length of the quaternion. */
         FT length() const {
             return std::sqrt(_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
         }
 
-        /* Normalizes the Quaternion coefficients.
-        This method should not need to be called since we only deal with unit Quaternions. This is however
-        useful to prevent numerical drifts, especially with small rotational increments. See also
-        normalized(). */
+        /**
+         * \brief Normalizes the Quaternion coefficients.
+         * This method should not need to be called since we only deal with unit Quaternions. This is however useful to
+         * prevent numerical drifts, especially with small rotational increments.
+         * \see normalized().
+         */
         FT normalize() {
             const FT norm = std::sqrt(_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
             for (int i=0; i<4; ++i)
@@ -256,8 +289,10 @@ namespace easy3d {
             return norm;
         }
 
-        /* Returns a normalized version of the Quaternion.
-        See also normalize(). */
+        /**
+         * \brief Returns a normalized version of the Quaternion.
+         * \see normalize().
+         */
         Quat normalized() const {
             FT Q[4];
             const FT norm = std::sqrt(_q[0] * _q[0] + _q[1] * _q[1] + _q[2] * _q[2] + _q[3] * _q[3]);
@@ -266,50 +301,62 @@ namespace easy3d {
             return Quat(Q[0], Q[1], Q[2], Q[3]);
         }
 
-        /* Returns the Quaternion associated 4x4 rotation matrix.
-        Use glMultMatrixf(q.matrix()) to apply the rotation represented by Quaternion q to the
-        current OpenGL matrix. */
+        /**
+         * \brief Returns the Quaternion associated 4x4 rotation matrix.
+         * Use glMultMatrixf(q.matrix()) to apply the rotation represented by Quaternion q to the current OpenGL matrix.
+         */
         Mat4<FT> matrix() const;
 
-        /* Returns the associated 4x4 inverse rotation matrix. This is simply the matrix() of the inverse().*/
+        /** \brief Returns the associated 4x4 inverse rotation matrix. This is simply the matrix() of the inverse().*/
         Mat4<FT> inverse_matrix() const;
 
-        /* Interpolate between 2 quaternions */
-        /* Slerp(Spherical Linear intERPolation) interpolation */
-        /* Returns the slerp interpolation of Quaternions a and b, at time t. t should range in [0,1].
-        Result is a when t=0 and b when t=1.
-        When allowFlip is true (default) the slerp interpolation will always use the "shortest path" between
-        the Quaternions' orientations, by "flipping" the source Quaternion if needed (see negate()). */
+        /** Interpolate between 2 quaternions */
+
+        /**
+         * \brief Slerp(Spherical Linear intERPolation) interpolation.
+         * Returns the slerp interpolation of Quaternions a and b, at time t. t should range in [0,1].
+         * Result is a when t=0 and b when t=1.
+         * When allowFlip is true (default) the slerp interpolation will always use the "shortest path" between
+         * the Quaternions' orientations, by "flipping" the source Quaternion if needed (see negate()).
+         */
         static Quat slerp(const Quat<FT>& a, const Quat<FT>& b, FT t, bool allowFlip = true);
 
-        /* Returns the slerp interpolation of the two Quaternions a and b, at time t, using tangents tgA and tgB.
-        The resulting Quaternion is "between" a and b (result is a when t=0 and b for t=1).
-        Use squad_tangent() to define the Quaternion tangents tgA and tgB. */
+        /**
+         * \brief Returns the slerp interpolation of the two Quaternions a and b, at time t, using tangents tgA and tgB.
+         * The resulting Quaternion is "between" a and b (result is a when t=0 and b for t=1).
+         * Use squad_tangent() to define the Quaternion tangents tgA and tgB.
+         */
         static Quat squad(const Quat<FT>& a, const Quat<FT>& tgA, const Quat<FT>& tgB, const Quat<FT>& b, FT t);
 
-        /* Returns the "dot" product of a and b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]. */
+        /** \brief Returns the "dot" product of a and b: a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]. */
         static FT dot(const Quat<FT>& a, const Quat<FT>& b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]; }
 
-        /* Returns the logarithm of the Quaternion. See also exp(). */
+        /** \brief Returns the logarithm of the Quaternion. See also exp(). */
         Quat log();
-        /* Returns the exponential of the Quaternion. See also log(). */
+        /** \brief Returns the exponential of the Quaternion. See also log(). */
         Quat exp();
 
-        /* Returns log(a. inverse() * b). Useful for squad_tangent(). */
+        /** \brief Returns log(a. inverse() * b). Useful for squad_tangent(). */
         static Quat ln_dif(const Quat<FT>& a, const Quat<FT>& b);
-        /* Returns a tangent Quaternion for \p center, defined by \p before and \p after Quaternions.
-        Useful for smooth spline interpolation of Quaternion with squad() and slerp(). */
+        /**
+         * \brief Returns a tangent Quaternion for \p center, defined by \p before and \p after Quaternions.
+         * Useful for smooth spline interpolation of Quaternion with squad() and slerp().
+         */
         static Quat squad_tangent(const Quat<FT>& before, const Quat<FT>& center, const Quat<FT>& after);
 
-        /* Returns a random unit Quaternion.
-        You can create a randomly directed unit vector using:
-        Vec randomDir = Quat::random_quat() * Vec(1.0, 0.0, 0.0); // or any other Vec
-        \note This function uses rand() to create pseudo-random numbers and the random number generator can
-        be initialized using srand().*/
+        /**
+         * \brief Returns a random unit Quaternion.
+         * You can create a randomly directed unit vector using:
+         *      \code
+         *      Vec randomDir = Quat::random_quat() * Vec(1.0, 0.0, 0.0); // or any other Vec
+         *      \endcode
+         * \note This function uses rand() to create pseudo-random numbers and the random number generator can
+         * be initialized using srand().
+         */
         static thisclass random_quat();
 
         //data intentionally left public to allow q.x ...
-    public:
+    private:
         /* The internal data representation is private, use operator[] to access values. */
         union {
             struct { FT x; FT y; FT z; FT w; };

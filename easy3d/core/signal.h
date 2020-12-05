@@ -76,7 +76,7 @@ namespace easy3d {
         }
 
         /**
-         * Trigger all the connected slots.
+         * \brief Trigger all the connected slots.
          * \todo A better function name can be 'emit', but occupied by other software like Qt.
          *       Don't know how to still use 'emit'.
          */

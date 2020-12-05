@@ -47,7 +47,7 @@ namespace easy3d {
 
 
     /**
-     * Base class for matrix types. Provides generic functionality for N by M matrices.
+     * \brief Base class for matrix types. Provides generic functionality for N by M matrices.
      *      N: The number of rows in this matrix.
      *		M: The number of columns in this matrix.
      *		T: The scalar type for vector elements.
@@ -61,16 +61,16 @@ namespace easy3d {
     public:
         //	----------------- constructor and destructor -------------------
 
-        /**	Default constructor.
-         * Note: The matrix elements are intentionally not initialized. This is efficient
+        /**	\brief Default constructor.
+         * \note: The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent computations. Use Mat(T s)
          *       to initialize the elements during construction. */
         Mat();
 
-        /**	Initialized with diagonal as s and others zeros. */
+        /**	\brief Initialized with diagonal as s and others zeros. */
         explicit Mat(T s);
 
-        /**	Copy constructor for rN >= N, rM >= M.
+        /**	\brief Copy constructor for rN >= N, rM >= M.
         *	For smaller incoming matrices (i.e, rN < N, rM < M ) specialization
         *	is required in order to fill the remaining elements with appropriate
         *	values (usually 0 or 1).
@@ -84,128 +84,134 @@ namespace easy3d {
         template <size_t rN, size_t rM>
         explicit Mat(const Mat<rN, rM, T> &rhs);
 
-        /**	Initialize elements from an array of type T. */
+        /**	\brief Initialize elements from an array of type T. */
         explicit Mat(const T *m);
 
-        /**	Static constructor return an N x M identity matrix.
+        /**	\brief Static constructor return an N x M identity matrix.
         *	see also load_identity() */
         static Mat<N, M, T> identity();
 
         //	------------------- size query ---------------------
 
-        /**	Return the number of rows. */
+        /**	\brief Return the number of rows. */
         size_t num_rows() const { return N; }
 
-        /**	Return the number of columns. */
+        /**	\brief Return the number of columns. */
         size_t num_columns() const { return M; }
 
         //	--------------------- access -----------------------
 
-        /**	Return row r as a vector. */
+        /**	\brief Return row r as a vector. */
         Vec<M, T> row(size_t r) const;
 
-        /**	Return col c as a vector. */
+        /**	\brief Return col c as a vector. */
         Vec<N, T> col(size_t c) const;
 
-        /**	const row/column access to elements. */
+        /**	\brief Const row/column access to elements. */
         const T& operator()(size_t r, size_t c) const;
 
-        /**	Non-const row/column access to elements. */
+        /**	\brief Non-const row/column access to elements. */
         T& operator()(size_t r, size_t c);
 
-        /**	const array/low-level access to elements. */
+        /**	\brief const array/low-level access to elements. */
         operator const T*() const;
 
-        /**	Non-const array/low-level access to elements. */
+        /**	\brief Non-const array/low-level access to elements. */
         operator T*();
 
         //	--------------------- modification  ------------------
 
-        /**	Set all elements 0 */
+        /**	\brief Set all elements 0 */
         void load_zero();
 
-        /**	Set diagnal elements s and others 0 */
+        /**	\brief Set diagnal elements s and others 0 */
         void load_identity(T s = T(1));
 
-        /**	Set row r from vector v. This copies the first M components
-        *	from v, so vN must be >= M.
-        *	vN: Dimension (number of components) of v.*/
+        /**
+         * \brief Set row r from vector v. This copies the first M components
+         *	from v, so vN must be >= M.
+         *	vN: Dimension (number of components) of v.
+         */
         template <size_t vN>
         void set_row(size_t r, const Vec<vN, T> &v);
 
-        /**	Set col c from vector v. This copies the first N components
-        *	from v, so vN must be >= N.
-        *	vN: Dimension (number of components) in v. */
+        /**
+         * \brief Set col c from vector v. This copies the first N components
+         *	from v, so vN must be >= N.
+         *	vN: Dimension (number of components) in v.
+         */
         template <size_t vN>
         void set_col(size_t c, const Vec<vN, T> &v);
 
-        /**	Swaps row a with row b. */
+        /**	\brief Swaps row a with row b. */
         void swap_rows(size_t a, size_t b);
 
-        /**	Swaps col a with col b. */
+        /**	\brief Swaps col a with col b. */
         void swap_cols(size_t a, size_t b);
 
         //	------- matrix-matrix arithmetic operators --------
 
-        /**	Equality test. Uses sml::equal(). */
+        /**	\brief Equality test. Uses sml::equal(). */
         bool operator==(const Mat<N, M, T> &rhs) const;
 
-        /**	Inequality test. Uses sml::equal(). */
+        /**	I\brief nequality test. Uses sml::equal(). */
         bool operator!=(const Mat<N, M, T> &rhs) const;
 
-        /**	Matrix-matrix multiplication. rhs must have the same number of rows
-        *	as this matrix has columns.
-        *	rM: Columns in rhs.
-        *	return Matrix of dimensions N x rM */
+        /**
+         * \brief Matrix-matrix multiplication. rhs must have the same number of rows as this matrix has columns.
+         *	rM: Columns in rhs.
+         *	return Matrix of dimensions N x rM
+         */
         template <size_t rM>
         Mat<N, rM, T> operator*(const Mat<M, rM, T> &rhs) const;
 
-        /**	Component-wise matrix-matrix addition. */
+        /**	\brief Component-wise matrix-matrix addition. */
         Mat<N, M, T> operator+(const Mat<N, M, T> &rhs) const;
 
-        /**	Component-wise matrix-matrix subtraction.*/
+        /**	\brief Component-wise matrix-matrix subtraction.*/
         Mat<N, M, T> operator-(const Mat<N, M, T> &rhs) const;
 
-        /**	Component-wise matrix negation. */
+        /**	\brief Component-wise matrix negation. */
         Mat<N, M, T> operator-() const;
 
         //	------- matrix-vector arithmetic operators --------
 
-        /**	Matrix-vector multiplication. rhs must have the same number of
-        *	elements as this matrix has columns.
-        *	return vec of size N */
+        /**
+         * \brief Matrix-vector multiplication. rhs must have the same number of elements as this matrix has columns.
+         *	return vec of size N
+         */
         Vec<N, T> operator*(const Vec<M, T> &rhs) const;
 
         //	------- matrix-scalar arithmetic operators --------
 
-        /**	Component-wise matrix-scalar multiplication. */
+        /**	\brief Component-wise matrix-scalar multiplication. */
         Mat<N, M, T> operator*(T rhs) const;
-        /**	Component-wise matrix-scalar division. */
+        /**	\brief Component-wise matrix-scalar division. */
         Mat<N, M, T> operator/(T rhs) const;
 
         //	------- matrix-matrix assignment operators --------
 
-        /**	Matrix-matrix multiplication/assignment. */
+        /**	\brief Matrix-matrix multiplication/assignment. */
         Mat<N, M, T>& operator*=(const Mat<N, M, T> &rhs);
 
-        /**	Component-wise matrix-matrix addition/assignment. */
+        /**	\brief Component-wise matrix-matrix addition/assignment. */
         Mat<N, M, T>& operator+=(const Mat<N, M, T> &rhs);
 
-        /**	Component-wise matrix-matrix subtraction/assignment. */
+        /**	\brief Component-wise matrix-matrix subtraction/assignment. */
         Mat<N, M, T>& operator-=(const Mat<N, M, T> &rhs);
 
         //	------- matrix-scalar assignment operators --------
 
-        /**	Component-wise matrix-scalar multiplication/assignment. */
+        /**	\brief Component-wise matrix-scalar multiplication/assignment. */
         Mat<N, M, T>& operator*=(T rhs);
 
-        /**	Component-wise matrix-scalar division/assignment. */
+        /**	\brief Component-wise matrix-scalar division/assignment. */
         Mat<N, M, T>& operator/=(T rhs);
 
-        /**	Component-wise matrix-scalar addition/assignment. */
+        /**	\brief Component-wise matrix-scalar addition/assignment. */
         Mat<N, M, T>& operator+=(T rhs);
 
-        /**	Component-wise matrix-scalar subtraction/assignment. */
+        /**	\brief Component-wise matrix-scalar subtraction/assignment. */
         Mat<N, M, T>& operator-=(T rhs);
 
     protected:
@@ -216,33 +222,37 @@ namespace easy3d {
 
     //	------- global scalar-matrix arithmetic operators --------
 
-    /**	Component-wise scalar-matrix multiplication. */
+    /**	\brief Component-wise scalar-matrix multiplication. */
     template <size_t N, size_t M, typename T>
     Mat<N, M, T> operator*(T lhs, const Mat<N, M, T> &rhs);
 
     //	------- global matrix-matrix multiplication operators --------
 
-    /*	Specialized matrix-matrix multiplication for 2x2 matrices.*/
+    /**	\brief Specialized matrix-matrix multiplication for 2x2 matrices.*/
     template <typename T>
     Mat2<T> operator*(const Mat2<T> &lhs, const Mat2<T> &rhs);
 
-    /*	Specialized matrix-matrix multiplication for 3x3 matrices.*/
+    /**	\brief Specialized matrix-matrix multiplication for 3x3 matrices.*/
     template <typename T>
     Mat3<T> operator*(const Mat3<T> &lhs, const Mat3<T> &rhs);
 
-    /*	Specialized matrix-matrix multiplication for 4x4 matrices.*/
+    /** \brief Specialized matrix-matrix multiplication for 4x4 matrices.*/
     template <typename T>
     Mat4<T> operator*(const Mat4<T> &lhs, const Mat4<T> &rhs);
 
     //	------- global matrix-vector arithmetic operators --------
 
-    /**	Specialized matrix-vector multiplication for 4x4 matrices and 3D vectors.
-    *	rhs is treated as an homogeneous vector (with w = 1). */
+    /**
+     * \brief Specialized matrix-vector multiplication for 4x4 matrices and 3D vectors.
+     *	rhs is treated as an homogeneous vector (with w = 1).
+     */
     template <typename T>
     Vec<3, T> operator*(const Mat4<T> &lhs, const Vec<3, T> &rhs);
 
-    /**	Specialized matrix-vector multiplication for 3x3 matrices and 2D vectors.
-    *	rhs is treated as an homogeneous vector (with z = 1).*/
+    /**
+     * \brief Specialized matrix-vector multiplication for 3x3 matrices and 2D vectors.
+     *	rhs is treated as an homogeneous vector (with z = 1).
+     */
     template <typename T>
     Vec<2, T> operator*(const Mat3<T> &lhs, const Vec<2, T> &rhs);
 
@@ -256,41 +266,48 @@ namespace easy3d {
 
     //	-------------- global matrix related function ---------------
 
-    /**	Return the trace (sum of elements on the main diagonal) of N by N (square)
-    *	matrix m.*/
+    /**	\brief Return the trace (sum of elements on the main diagonal) of N by N (square) matrix m.*/
     template <size_t N, typename T>
     T trace(const Mat<N, N, T> &m);
 
-    /**	Return the determinant of N x N (square) matrix m.
-    *	NOTE: This is specialized for matrices up to 4x4 in order to achieve
-    *	better performance. The general case uses LU decomposition. */
+    /**
+     * \brief Return the determinant of N x N (square) matrix m.
+     * \NOTE: This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
+     * LU decomposition.
+     */
     template <size_t N, typename T, size_t A>
     T determinant(const Mat<N, N, T> &m);
 
-    /**	Transpose m. */
+    /**	\brief Transpose m. */
     template <size_t N, size_t M, typename T>
     Mat<M, N, T> transpose(const Mat<N, M, T> &m);
 
-    /**	Return the inverse of N x N (square) matrix m.
-    *	NOTE: This is specialized for matrices up to 4x4 in order to achieve
-    *		  better performance. The general case uses Gauss-Jordan elimination. */
+    /**
+     * \brief Return the inverse of N x N (square) matrix m.
+     * \NOTE: This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
+     * Gauss-Jordan elimination.
+     */
     template <size_t N, typename T>
     Mat<N, N, T> inverse(const Mat<N, N, T> &m);
 
-    /**	Return the tensor product (outer product) of vectors u and v, where
-    *	u is treated as a column vector and v is treated as a row vector. */
+    /**
+     * Return the tensor product (outer product) of vectors u and v, where u is treated as a column vector and v is
+     * treated as a row vector.
+     */
     template <size_t M, size_t N, typename T>
     Mat<N, M, T> tensor(const Vec<M, T> &u, const Vec<N, T> &v);
 
-    /**	Perform Gauss-Jordan elimination to solve a set of linear equations and
-    *	additionally compute the inverse of a.
-    *	a: N x N input matrix.
-    *	b: N x M input matrix containing right-hand vectors.
-    *	ainv: Output inverse of a. This may safely be the same location as a (a
-    *		  will be overwritten).
-    *	x: Output solution set. This may safely be the same location as b (b will
-    *	   be overwritten).
-    *	return true on success, false if a is a singular matrix.*/
+    /**
+     * \brief Perform Gauss-Jordan elimination to solve a set of linear equations and additionally compute the inverse
+     * of a.
+     *	a: N x N input matrix.
+     *	b: N x M input matrix containing right-hand vectors.
+     *	ainv: Output inverse of a. This may safely be the same location as a (a
+     *		  will be overwritten).
+     *	x: Output solution set. This may safely be the same location as b (b will
+     *	   be overwritten).
+     *	return true on success, false if a is a singular matrix.
+     */
     template <size_t N, size_t M, typename T>
     bool gauss_jordan_elimination(
         const Mat<N, N, T> &a,
@@ -300,14 +317,16 @@ namespace easy3d {
         );
 
 
-    /**	Perform LU decomposition on a. The outputs from this method should be
-    *	used with lu_back_substitution() to solve a set of linear equations or
-    *   compute the matrix inverse or determinant.
-    *	a: N x N input matrix.
-    *	alu: Output N x N matrix, the LU decomposition of a row-wise permutation
-    *		 of a. This may safely be the same location as a (a will be overwritten).
-    *	rowp: Output row permutation data for alu.
-    *	return true on success, false if a is a singular matrix.*/
+    /**
+     * \brief Perform LU decomposition on a. The outputs from this method should be
+     *	used with lu_back_substitution() to solve a set of linear equations or
+     *   compute the matrix inverse or determinant.
+     *	a: N x N input matrix.
+     *	alu: Output N x N matrix, the LU decomposition of a row-wise permutation
+     *		 of a. This may safely be the same location as a (a will be overwritten).
+     *	rowp: Output row permutation data for alu.
+     *	return true on success, false if a is a singular matrix.
+     */
     template <size_t N, typename T>
     bool lu_decomposition(
         const Mat<N, N, T> &a,
@@ -316,61 +335,63 @@ namespace easy3d {
         T *d
         );
 
-    /**	Solve a set of linear equations. Use outputs from lu_decomposition() as inputs.
-    *	Solve a linear system:
-    *	@code
-    *	//	inputs:
-    *	Mat<N, N, T> a; // input rhs matrix
-    *	Vec<N, T> b;	// input lhs vector
-    *	//	outputs:
-    *	Mat<N, N, T> alu;		// result of LU decomposition
-    *	Vec<N, size_t> rowp;	// result row permutation data for alu
-    *	T d;	// sign of determinant
-    *	Vec<N, size_t> x;		// result solution set
-    *	...
-    *	lu_decomposition(a, &alu, &rowp, &d);	// get lu decomposition
-    *	lu_back_substitution(alu, rowp, b, &x);	// get solution set
-    *	@endcode
-    *	The last line may be repeated for any number of b vectors using the
-    *	same alu and rowp inputs.
-    *
-    *	Find the inverse of a matrix:
-    *	@code
-    *	//	inputs:
-    *	Mat<N, N, T> a;		// input matrix
-    *	//	outputs:
-    *	Mat<N, N, T> alu;	// result of LU decomposition
-    *	Mat<N, N, T> ainv;	// result of inversion
-    *	Vec<N, size_t> rowp; // result row permutation data for alu
-    *	T d;	// sign of determinant
-    *	...
-    *	lu_decomposition(a, &alu, &rowp, &d); // get lu decomposition once
-    *	for (size_t i = 0; i < N; ++i) {	// find inverse by columns
-    *	Vec<N, T> b;
-    *	for (size_t j = 0; j < N; ++j)
-    *	b[j] = T(0);
-    *	b[i] = T(1);
-    *	lu_back_substitution(alu, rowp, b, &b);
-    *	ainv.set_col(i, b); // set ainv column
-    *	}
-    *	@endcode
-    *
-    *	Find the determinant of a matrix:
-    *	@code
-    *	//	inputs:
-    *	Mat<N, N, T> a; // input matrix
-    *	//	outpus:
-    *	Mat<N, N, T> alu; // result of LU decomposition
-    *	Vec<N, size_t> rowp; // result row permutation data for alu
-    *	T d; // output determinant
-    *	lu_decomposition(a, &alu, &rowp, &d);
-    *	for (size_t i = 0; i < N; ++i)
-    *		d *= alu(i, i);
-    *	@endcode
-    *	alu: N x N matrix, the result of a call to lu_decomposition()
-    *	rowp: Row permutation data for alu.
-    *	b: N -dimensional input right-hand vector.
-    *	x: Output N -dimensional solution set. */
+    /**
+     * \brief Solve a set of linear equations. Use outputs from lu_decomposition() as inputs.
+     *	Solve a linear system:
+     *	@code
+     *	//	inputs:
+     *	Mat<N, N, T> a; // input rhs matrix
+     *	Vec<N, T> b;	// input lhs vector
+     *	//	outputs:
+     *	Mat<N, N, T> alu;		// result of LU decomposition
+     *	Vec<N, size_t> rowp;	// result row permutation data for alu
+     *	T d;	// sign of determinant
+     *	Vec<N, size_t> x;		// result solution set
+     *	...
+     *	lu_decomposition(a, &alu, &rowp, &d);	// get lu decomposition
+     *	lu_back_substitution(alu, rowp, b, &x);	// get solution set
+     *	@endcode
+     *	The last line may be repeated for any number of b vectors using the
+     *	same alu and rowp inputs.
+     *
+     *	Find the inverse of a matrix:
+     *	@code
+     *	//	inputs:
+     *	Mat<N, N, T> a;		// input matrix
+     *	//	outputs:
+     *	Mat<N, N, T> alu;	// result of LU decomposition
+     *	Mat<N, N, T> ainv;	// result of inversion
+     *	Vec<N, size_t> rowp; // result row permutation data for alu
+     *	T d;	// sign of determinant
+     *	...
+     *	lu_decomposition(a, &alu, &rowp, &d); // get lu decomposition once
+     *	for (size_t i = 0; i < N; ++i) {	// find inverse by columns
+     *	Vec<N, T> b;
+     *	for (size_t j = 0; j < N; ++j)
+     *	b[j] = T(0);
+     *	b[i] = T(1);
+     *	lu_back_substitution(alu, rowp, b, &b);
+     *	ainv.set_col(i, b); // set ainv column
+     *	}
+     *	@endcode
+     *
+     *	Find the determinant of a matrix:
+     *	@code
+     *	//	inputs:
+     *	Mat<N, N, T> a; // input matrix
+     *	//	outpus:
+     *	Mat<N, N, T> alu; // result of LU decomposition
+     *	Vec<N, size_t> rowp; // result row permutation data for alu
+     *	T d; // output determinant
+     *	lu_decomposition(a, &alu, &rowp, &d);
+     *	for (size_t i = 0; i < N; ++i)
+     *		d *= alu(i, i);
+     *	@endcode
+     *	alu: N x N matrix, the result of a call to lu_decomposition()
+     *	rowp: Row permutation data for alu.
+     *	b: N -dimensional input right-hand vector.
+     *	x: Output N -dimensional solution set.
+     */
     template <size_t N, typename T>
     void lu_back_substitution(
         const Mat<N, N, T> &alu,
@@ -1310,58 +1331,73 @@ namespace easy3d {
 
     *******************************************************************************/
 
-    /**	Extends Mat with 2D-specific functionality and constructors.
-    *	T: The scalar type for vector elements. See Mat */
+    /**
+     * \brief Extends Mat with 2D-specific functionality and constructors.
+     *	T: The scalar type for vector elements. See Mat.
+     */
     template <typename T>
     class Mat2 : public Mat<2, 2, T>
     {
     public:
-        /**	Default constructor.
-         * Note: The matrix elements are intentionally not initialized. This is efficient
+        /**
+         * \brief Default constructor.
+         * \Note: The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat2(T s)
-         *       to initialize the elmentment during construction. */
+         *       to initialize the elmentment during construction.
+         */
         Mat2();
 
-        /**	Initialized with diagonal as s and others zeros.*/
+        /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat2(T s);
 
-        /**	Copy constructor. This provides compatibility with generic operations
-        *	implemented by Mat. */
+        /**	\brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
         Mat2(const Mat<2, 2, T> &rhs);
 
-        /**	Copies the top-left corner of rhs. This provides compatibility with
-        *	generic operations implemented by Mat. */
+        /**
+         * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
+         * by Mat.
+         */
         Mat2(const Mat<3, 3, T> &rhs);
 
-        /**	Initialize elements from individual scalars. The digits following s in
-        *	the parameter names indicate the row/column of the element being set. */
+        /**
+         * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
+         * the row/column of the element being set.
+         */
         Mat2(
             T s00, T s01,
             T s10, T s11
             );
 
-        /**	Initialize elements from an array of type T. */
+        /**	\brief Initialize elements from an array of type T. */
         explicit Mat2(const T *m);
 
-        /**	Initialize elements from two vectors. If MATRIX_ROW_MAJOR is defined,
-        *	x and y specify rows of the matrix, else columns. */
+        /**
+         * \brief Initialize elements from two vectors. If MATRIX_ROW_MAJOR is defined, x and y specify rows of the
+         * matrix, else columns.
+         */
         Mat2(
             const Vec<2, T> &x,
             const Vec<2, T> &y
             );
 
-        /**	Static constructor return a 2D rotation matrix.
-        *	angle: Angle of rotation in radians.
-        *	NOTE: Positive values of angle rotate counter-clockwise as per the
-        *	right-hand rule.*/
+        /**
+         * \brief Static constructor return a 2D rotation matrix.
+         *	@param angle Angle of rotation in radians.
+         *	\NOTE: Positive values of angle rotate counter-clockwise as per the right-hand rule.
+         */
         static Mat2<T> rotation(T angle);
 
-        /**	Static constructor return a 2D uniform scale matrix.
-        *	s: x, y scale. */
+        /**
+         * \brief Static constructor return a 2D uniform scale matrix.
+         * @param s x, y scale (uniform).
+         */
         static Mat2<T> scale(T s);
 
-        /**	Static constructor return a 2D non-uniform scale matrix.
-        *	x,y: x, y scale. */
+        /**
+         * \brief Static constructor return a 2D non-uniform scale matrix.
+         * @param x x scale.
+         * @param y y scale.
+         */
         static Mat2<T> scale(T x, T y);
 
     }; // class Mat2
@@ -1469,30 +1505,37 @@ namespace easy3d {
 
     template <typename T>	class Quat;
 
-    /**	3x3 matrix. Extends Mat with 3D-specific functionality and constructors.
-    *	T: The scalar type for vector elements. See Mat */
+    /**
+     * \brief 3x3 matrix. Extends Mat with 3D-specific functionality and constructors.
+     *	T: The scalar type for vector elements. See Mat.
+     */
     template <typename T>
     class Mat3 : public Mat<3, 3, T> {
     public:
-        /**	Default constructor.
-         * Note: The matrix elements are intentionally not initialized. This is efficient
+        /**
+         * \brief Default constructor.
+         * \Note: The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat3(T s)
-         *       to initialize the elmentment during construction. */
+         *       to initialize the elmentment during construction.
+         */
         Mat3();
 
-        /**	Initialized with diagonal as s and others zeros.*/
+        /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat3(T s);
 
-        /**	Copy constructor. This provides compatibility with generic operations
-        *	implemented by Mat. */
+        /** \brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
         Mat3(const Mat<3, 3, T> &rhs);
 
-        /**	Copies the top-left corner of rhs. This provides compatibility with
-        *	generic operations implemented by Mat. */
+        /**
+         * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
+         * by Mat.
+         */
         Mat3(const Mat<4, 4, T> &rhs);
 
-        /**	Initialize elements from individual scalars. The digits following s in
-        *	the parameter names indicate the row/column of the element being set. */
+        /**
+         * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
+         * the row/column of the element being set.
+         */
         Mat3(
             T s00, T s01, T s02,
             T s10, T s11, T s12,
@@ -1502,56 +1545,70 @@ namespace easy3d {
         /**	Initialize elements from an array of type T. */
         explicit Mat3(const T *m);
 
-        /**	Initialize elements from three vectors. If MATRIX_ROW_MAJOR is defined,
-        *	x, y and z specify rows of the matrix, else columns. */
+        /**
+         * \brief Initialize elements from three vectors. If MATRIX_ROW_MAJOR is defined, x, y and z specify rows of
+         * the matrix, else columns.
+         */
         Mat3(
             const Vec<3, T> &x,
             const Vec<3, T> &y,
             const Vec<3, T> &z
             );
 
-        /**	Initialize from a 2D matrix. rhs forms the upper-left 2x2 sub-matrix,
-        *	other elements are initialized as the identity. */
+        /**
+         * Initialize from a 2D matrix. rhs forms the upper-left 2x2 sub-matrix, other elements are initialized as the
+         * identity.
+         */
         explicit Mat3(const Mat<2, 2, T> &rhs);
 
-        /** the upper-left 2x2 sub-matrix. */
+        /** \brief the upper-left 2x2 sub-matrix. */
         Mat2<T> sub() const;
 
-        /**	Static constructor returning a 3D uniform scale matrix.
-        *	s: x, y, z scale. */
+        /**
+         * \brief Static constructor returning a 3D uniform scale matrix.
+         *	@param s x, y, z scale (uniform).
+         */
         static Mat3<T> scale(T s);
 
-        /**	Static constructor returning a 3D non-uniform scale matrix.
-        *	x,y,z: x, y, z scale. */
+        /**
+         * \brief Static constructor returning a 3D non-uniform scale matrix.
+         * @param x x scale.
+         * @param y y scale.
+         * @param z z scale.
+         */
         static Mat3<T> scale(T x, T y, T z);
 
-        /** Static constructor returning a 3D rotation matrix defined by its axis and angle.
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
          *        @param axis: Axis of rotation. This MUST be normalized.
          *        @param angle: Angle of rotation in radians. Positive values of angle
          *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  NOTE: The axis defines only the direction of the rotation axis, i.e., the
+         *  \NOTE: The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis, T angle);
         
-        /** Static constructor returning a 3D rotation matrix defined by the axis–angle
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by the axis–angle
          *  representation. Both the axis and the angle are represented by a vector
          *  codirectional with the rotation axis whose length is the rotation angle.
          *      @param axis_angle: direction is the axis and length is the angle (in radian)
-         *  NOTE: The axis defines only the direction of the rotation axis, i.e., the
+         *  \NOTE: The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis_angle);
         
-        /** Static constructor return a 3D rotation matrix defined by a quaternion.
-         *  NOTE: q is a unit quaternion representing a rotation. */
+        /**
+         * \brief Static constructor return a 3D rotation matrix defined by a quaternion.
+         * \NOTE: q is a unit quaternion representing a rotation. */
         static Mat3<T> rotation(const Quat<T> &q);
         
-        /**  Static constructor returning a 3D rotation matrix defined by Euler angles.
-         *   The three rotations are applied successively.
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
+         * The three rotations are applied successively.
          *        @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
          *        @param order: the order of the rotations to be applied. 1 first and 3 for last.
-         *   NOTE: Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \NOTE: Using a different order yields different results. The default order is first Y, then Z, then X.
          */
         static Mat3<T> rotation(T x, T y, T z, int order = 312);
 
@@ -1764,26 +1821,31 @@ namespace easy3d {
 
     *******************************************************************************/
 
-    /**	4x4 matrix. Extends Mat with 4D-specific functionality and constructors.
-    *	T: The scalar type for vector elements. See Mat */
+    /**
+     * \brief 4x4 matrix. Extends Mat with 4D-specific functionality and constructors.
+     *	T: The scalar type for vector elements. See Mat.
+     */
     template <typename T>
     class Mat4 : public Mat<4, 4, T> {
     public:
-        /**	Default constructor.
-         * Note: The matrix elements are intentionally not initialized. This is efficient
+        /**
+         * \brief Default constructor.
+         * \Note: The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat4(T s)
-         *       to initialize the elmentment during construction. */
+         *       to initialize the elmentment during construction.
+         */
         Mat4();
 
-        /**	Initialized with diagonal as s and others zeros.*/
+        /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat4(T s);
 
-        /**	Copy constructor. This provides compatibility with generic operations
-        *	implemented by Mat. */
+        /**	\brief Copy constructor. This provides compatibility with generic operations implemented by Mat. */
         Mat4(const Mat<4, 4, T> &rhs);
 
-        /**	Initialize elements from individual scalars. The digits following s in
-        *	the parameter names indicate the row/column of the element being set. */
+        /**
+         * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
+         * the row/column of the element being set.
+         */
         Mat4(
             T s00, T s01, T s02, T s03,
             T s10, T s11, T s12, T s13,
@@ -1791,11 +1853,13 @@ namespace easy3d {
             T s30, T s31, T s32, T s33
             );
 
-        /**	Initialize elements from an array of type T. */
+        /**	\brief Initialize elements from an array of type T. */
         explicit Mat4(const T *m);
 
-        /**	Initialize elements from four vectors. If MATRIX_ROW_MAJOR is defined,
-        *	x, y, z and w specify rows of the matrix, else columns. */
+        /**
+         * \brief Initialize elements from four vectors. If MATRIX_ROW_MAJOR is defined, x, y, z and w specify rows of
+         * the matrix, else columns.
+         */
         Mat4(
             const Vec<4, T> &x,
             const Vec<4, T> &y,
@@ -1803,58 +1867,74 @@ namespace easy3d {
             const Vec<4, T> &w
             );
 
-        /**	Initialize from a 3D matrix. rhs forms the upper-left 3x3 sub-matrix,
-        *	other elements are initialized as the identity. */
+        /**
+         * \brief Initialize from a 3D matrix. rhs forms the upper-left 3x3 sub-matrix, other elements are initialized
+         * as the identity.
+         */
         explicit Mat4(const Mat<3, 3, T> &rhs);
 
-        /**	Initialize from scale/rotation/translation. */
+        /**	\brief Initialize from scale/rotation/translation. */
         Mat4(const Vec<3, T> &s, const Quat<T> &r, const Vec<3, T> &t);
 
         // the upper-left 3x3 sub-matrix,
         Mat3<T> sub() const;
 
-        /**	Static constructor returning a 4D uniform scale matrix.
-         *	s: x, y, z, w scale. */
+        /**
+         * \brief Static constructor returning a 4D uniform scale matrix.
+         *	@param s x, y, z, w scale (uniform).
+         */
         static Mat4<T> scale(T s);
 
-        /**	Static constructor returning a 4D non-uniform scale matrix,
-         *	    @param x,y,z,w: x, y, z, w scale. */
+        /**
+         * \brief Static constructor returning a 4D non-uniform scale matrix,
+         *  @param x x scale.
+         *  @param y y scale.
+         *  @param z z scale.
+         *  @param w w scale.
+         */
         static Mat4<T> scale(const Vec<4, T>& s);  // set w to 1 for 3D scaling
         static Mat4<T> scale(T x, T y, T z, T w);  // set w to 1 for 3D scaling
         
-        /**	Static constructor returning a 3D rotation matrix defined by its axis and angle.
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
          *	    @param axis: Axis of rotation. This MUST be normalized.
          *	    @param angle: Angle of rotation in radians. Positive values of angle
          *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  NOTE: The axis defines only the direction of the rotation axis, i.e., the
+         *  \NOTE: The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
         
-        /** Static constructor returning a 3D rotation matrix defined by the axis–angle
-         *  representation. Both the axis and the angle are represented by a vector
-         *  codirectional with the rotation axis whose length is the rotation angle.
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by the axis–angle
+         * representation. Both the axis and the angle are represented by a vector
+         * codirectional with the rotation axis whose length is the rotation angle.
          *      @param axis_angle: direction is the axis and length is the angle (in radian)
-         *  NOTE: The axis defines only the direction of the rotation axis, i.e., the
+         * \NOTE: The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis_angle);
 
-        /**	Static constructor returning a 3D rotation matrix defined by a quaternion.
-        *	NOTE: q is a unit quaternion representing a rotation. */
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by a quaternion.
+         * \NOTE: q is a unit quaternion representing a rotation.
+         */
         static Mat4<T> rotation(const Quat<T> &q);
 
-        /**  Static constructor returning a 3D rotation matrix defined by Euler angles.
-         *   The three rotations are applied successively.
+        /**
+         * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
+         * The three rotations are applied successively.
          *	    @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
          *      @param order: the order of the rotations to be applied. 1 first and 3 for last.
-         *   NOTE: Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \NOTE: Using a different order yields different results. The default order is first Y, then Z, then X.
          *         See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
          */
         static Mat4<T> rotation(T x, T y, T z, int order = 312);
 
-        /**	Static constructor return a 3D translation matrix (as a 4D affine transformation).
-        *	t: Translation vector. */
+        /**
+         * \brief Static constructor return a 3D translation matrix (as a 4D affine transformation).
+         * \param t Translation vector.
+         */
         static Mat4<T> translation(const Vec<3, T> &t);
         static Mat4<T> translation(T x, T y, T z);
 
