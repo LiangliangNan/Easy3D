@@ -30,31 +30,31 @@
 namespace easy3d {
 
     /**
-     * A class for Laplacian smoothing. See the following papers for more details:
+     * \brief A class for Laplacian smoothing. See the following papers for more details:
      *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
      *  - Misha Kazhdan et al. Can mean‐curvature flow be modified to be non‐singular? CGF, 2012.
      */
     class SurfaceMeshSmoothing {
     public:
-        //! Construct with mesh to be smoothed.
+        //! \brief Construct with mesh to be smoothed.
         SurfaceMeshSmoothing(SurfaceMesh *mesh);
 
         // destructor
         ~SurfaceMeshSmoothing();
 
-        //! Perform \p iters iterations of explicit Laplacian smoothing.
+        //! \brief Perform \p iters iterations of explicit Laplacian smoothing.
         //! Decide whether to use uniform Laplacian or cotan Laplacian (default: cotan).
         void explicit_smoothing(unsigned int iters = 10,
                                 bool use_uniform_laplace = false);
 
-        //! Perform implicit Laplacian smoothing with \p timestep.
+        //! \brief Perform implicit Laplacian smoothing with \p timestep.
         //! Decide whether to use uniform Laplacian or cotan Laplacian (default: cotan).
         //! Decide whether to re-center and re-scale model after smoothing (default: true).
         void implicit_smoothing(float timestep = 0.001,
                                 bool use_uniform_laplace = false,
                                 bool rescale = true);
 
-        //! Initialize edge and vertex weights.
+        //! \brief Initialize edge and vertex weights.
         void initialize(bool use_uniform_laplace = false) {
             compute_edge_weights(use_uniform_laplace);
             compute_vertex_weights(use_uniform_laplace);

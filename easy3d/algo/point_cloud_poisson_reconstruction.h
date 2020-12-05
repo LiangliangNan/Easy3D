@@ -34,19 +34,34 @@ namespace easy3d {
     class PointCloud;
     class SurfaceMesh;
 
+    /// \brief Poisson surface reconstruction.
     class PoissonReconstruction {
     public:
         PoissonReconstruction(void);
         ~PoissonReconstruction(void);
 
-        // parameters
+        /**
+         * \brief Set reconstruction depth.
+         * This integer is the maximum depth of the tree that will be used for surface reconstruction. Running at depth
+         * d corresponds to solving on a voxel grid whose resolution is no larger than 2^d x 2^d x 2^d. Note that since
+         * the reconstructor adapts the octree to the sampling density, the specified reconstruction depth is only an
+         * upper bound. The default value for this parameter is 8.
+         */
         void set_depth(int d) { depth_ = d; }
+
+        /**
+         * \brief Set the minimum number of samples.
+         * This floating point value specifies the minimum number of sample points that should fall within an octree
+         * node as the octree construction is adapted to sampling density. For noise-free samples, small values in the
+         * range [1.0 - 5.0] can be used. For more noisy samples, larger values in the range [15.0 - 20.0] may be needed
+         * to provide a smoother, noise-reduced, reconstruction. The default value is 1.0.
+         */
         void set_sampers_per_node(float s) { samples_per_node_ = s; }
 
-        // reconstruction
+        /// \brief reconstruction
         SurfaceMesh *apply(const PointCloud *cloud, const std::string &density_attr_name = "v:density");
 
-        // trimming
+        /// \brief Trim the reconstructed surface model based on the density attribute.
         static SurfaceMesh *trim(
                 SurfaceMesh *mesh,
                 const std::string &density_attr_name,
@@ -54,7 +69,8 @@ namespace easy3d {
         );
 
     public:
-        // these parameters are usually not needed
+        /// \brief Other parameters for Poisson surface reconstruction algorithm.
+        /// These parameters are usually not needed
         void set_full_depth(int v) { full_depth_ = v; }
         void set_voxel_depth_(int v) { voxelDepth_ = v; }
         void set_cg_depth(int v) { cgDepth_ = v; }

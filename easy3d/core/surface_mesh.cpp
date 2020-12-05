@@ -842,9 +842,11 @@ namespace easy3d {
                 vnormal_[*vit] = compute_vertex_normal(*vit);
             else { // Liangliang: if on border, we use the face normal.
                 auto h = out_halfedge(*vit);
-                if (is_border(h))
-                    h = opposite(h);
-                vnormal_[*vit] = compute_face_normal(face(h));
+                if (h.is_valid()) { // might be an isolated vertex
+                    if (is_border(h))
+                        h = opposite(h);
+                    vnormal_[*vit] = compute_face_normal(face(h));
+                }
             }
         }
     }

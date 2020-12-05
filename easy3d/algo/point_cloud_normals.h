@@ -32,14 +32,16 @@ namespace easy3d {
 
     class PointCloud;
 
+    /// \brief Estimate point cloud normals. It also allows to reorients the point cloud normals based on a minimum
+    /// spanning tree algorithm.
     class PointCloudNormals {
     public:
-        /// Estimates the point cloud normals using PCA.
+        /// \brief Estimates the point cloud normals using PCA.
         /// @param k: the number of neighboring points to construct the covariance matrix.
         /// @param compute_curvature: also computes the curvature?
         bool estimate(PointCloud *cloud, unsigned int k = 16, bool compute_curvature = false) const;
 
-        /// Reorients the point cloud normals.
+        /// \brief Reorients the point cloud normals.
         /// This method implements the normal reorientation method described in
         /// Hoppe et al. Surface reconstruction from unorganized points. SIGGRAPH 1992.
         /// @param k: the number of neighboring points to construct the graph.

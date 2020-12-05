@@ -33,6 +33,7 @@
 
 namespace easy3d {
 
+    /// \brief Base class for Delaunay triangulation.
     class Delaunay {
 
     public:

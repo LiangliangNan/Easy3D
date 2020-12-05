@@ -34,10 +34,13 @@ namespace easy3d {
 
     class PointCloud;
 
-    // usage:
-    //    PrimitivesRansac ransac;
-    //    ransac.add_primitive_type(PrimitivesRansac::PLANE);
-    //    int num = ransac.detect(cloud);
+    /// \brief Extract primitives from point clouds using RANSAC.   \par
+    /// Usage example:
+    ///     \code
+    ///     PrimitivesRansac ransac;
+    ///     ransac.add_primitive_type(PrimitivesRansac::PLANE);
+    ///     int num = ransac.detect(cloud);
+    ///     \endcode
 
     class PrimitivesRansac {
     public:
@@ -51,17 +54,15 @@ namespace easy3d {
         };
 
     public:
-        // add/remove the primitive type to be extracted
+        /// \brief Setup the primitive types to be extracted. This is done by adding the interested primitive type one by one.
         void add_primitive_type(PrimType t);
 
-        void remove_primitive_type(PrimType t);
-
-        // extract primitive from the entire point cloud.
-        // returns the number of extracted primitives.
-        // result will store as properties:
-        //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-        //        primtive_type must be UNKNOWN.
+        /// \brief Extract primitives from the entire point cloud. \par
+        /// Returns the number of extracted primitives.
+        /// The extracted primitives are stored as properties:
+        ///      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+        ///      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+        ///        primtive_type must be UNKNOWN.
         int detect(
                 PointCloud *cloud,
                 unsigned int min_support = 1000,    // the minimal number of points required for a primitive
@@ -71,11 +72,12 @@ namespace easy3d {
                 float overlook_prob = 0.001f    // the probability with which a primitive is overlooked
         );
 
-        // extract primitive from a subset of a point cloud.
-        // result will store as properties:
-        //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-        //        primtive_type must be UNKNOWN.
+        /// \brief Extract primitives from a subset of a point cloud.
+        /// Returns the number of extracted primitives.
+        /// The extracted primitives are stored as properties:
+        ///      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+        ///      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+        ///        primtive_type must be UNKNOWN.
         int detect(
                 PointCloud *cloud,
                 const std::vector<int> &vertitces,

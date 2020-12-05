@@ -35,7 +35,7 @@ namespace easy3d {
     public:
 
         /**
-         * Propagates a connected component of a surface mesh from the seed vertex.
+         * \brief Propagates a connected component of a surface mesh from the seed vertex.
          * @param mesh The input mesh.
          * @param id The vertex property storing the result.
          * @param seed The seed vertex from which the connected component will be propagated.
@@ -47,7 +47,7 @@ namespace easy3d {
                                       int cur_id);
 
         /**
-         * Propagates a connected component of a surface mesh from the seed face.
+         * \brief Propagates a connected component of a surface mesh from the seed face.
          * @param mesh The input mesh.
          * @param id The face property storing the result.
          * @param seed The seed face from which the connected component will be propagated.
@@ -59,7 +59,7 @@ namespace easy3d {
                                       int cur_id);
 
         /**
-         * Enumerates the connected components of a surface mesh from its vertices.
+         * \brief Enumerates the connected components of a surface mesh from its vertices.
          * @param mesh The input mesh.
          * @param id The vertex property storing the result.
          * @return The number of connected components.
@@ -67,7 +67,7 @@ namespace easy3d {
         static int enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id);
 
         /**
-         * Enumerates the connected components of a surface mesh from its faces.
+         * \brief Enumerates the connected components of a surface mesh from its faces.
          * @param mesh The input mesh.
          * @param id The face property storing the result.
          * @return The number of connected components.

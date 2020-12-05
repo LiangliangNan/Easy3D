@@ -31,6 +31,8 @@
 
 namespace easy3d {
 
+
+    /// \brief Stitch coincident border edges of a surface mesh.
     class SurfaceMeshStitching {
     public:
         SurfaceMeshStitching(SurfaceMesh *mesh);

@@ -30,19 +30,19 @@
 
 namespace easy3d {
 
-    //! Detect and mark feature edges based on boundary or dihedral angle
+    //! \brief Detect and mark feature edges based on boundary or dihedral angle
     class SurfaceMeshFeatures {
     public:
-        //! Construct with mesh to be analyzed.
+        //! \brief Construct with mesh to be analyzed.
         SurfaceMeshFeatures(SurfaceMesh *mesh);
 
-        //! Clear features.
+        //! \brief Clear features.
         void clear();
 
-        //! Mark all boundary edges as features.
+        //! \brief Mark all boundary edges as features.
         void detect_boundary();
 
-        //! Mark edges with dihedral angle larger than \p angle as feature.
+        //! \brief Mark edges with dihedral angle larger than \p angle as feature.
         void detect_angle(float angle);
 
     private:

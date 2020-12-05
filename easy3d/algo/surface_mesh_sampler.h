@@ -31,12 +31,10 @@ namespace easy3d {
     class PointCloud;
     class SurfaceMesh;
 
-    // surface sampling algorithm.
-    // the result is a (near uniform) point set.
-
+    /// \brief Sample (near uniform) a surface mesh into a point cloud.
     class SurfaceMeshSampler {
     public:
-        // param num: expected point number
+        /// @param num The expected point number, much be greater than the number of vertices of the surface mesh.
         PointCloud *apply(const SurfaceMesh *mesh, int num = 1000000);
     };
 

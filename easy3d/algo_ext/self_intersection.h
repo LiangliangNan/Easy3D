@@ -41,23 +41,21 @@
 
 namespace easy3d {
 
-
-    // Given a triangle mesh compute a new mesh which is the same
-    // as the input mesh except that any self-intersecting triangles
-    // have been subdivided (new vertices and face created) so that
-    // the self-intersection contour lies exactly on edges in the
-    // the new mesh. New vertices will appear in original faces or
-    // on original edges. New vertices on edges are "merged" only
-    // across original faces sharing that edge. This means that if
-    // the input triangle mesh is a closed manifold the output will
-    // be too.
-    //
-    // Known issues:
-    // If an existing edge lies exactly on another face then any
-    // resulting additional vertices along that edge may not get
-    // properly connected so that the output mesh has the same
-    // global topology.
-
+    /// \brief Given a triangle mesh compute a new mesh which is the same
+    /// as the input mesh except that any self-intersecting triangles
+    /// have been subdivided (new vertices and face created) so that
+    /// the self-intersection contour lies exactly on edges in the
+    /// the new mesh. New vertices will appear in original faces or
+    /// on original edges. New vertices on edges are "merged" only
+    /// across original faces sharing that edge. This means that if
+    /// the input triangle mesh is a closed manifold the output will
+    /// be too.
+    ///
+    /// Known issues:
+    /// If an existing edge lies exactly on another face then any
+    /// resulting additional vertices along that edge may not get
+    /// properly connected so that the output mesh has the same
+    /// global topology.
 
     class SelfIntersection {
     public:
@@ -66,7 +64,7 @@ namespace easy3d {
         ~SelfIntersection() {}
 
         /**
-         * Detect intersecting face pairs.
+         * \brief Detect intersecting face pairs.
          * @param mesh The input mesh.
          * @param construct If true, also construct the intersecting geometry.
          * @return The intersecting face pairs.
@@ -75,7 +73,7 @@ namespace easy3d {
         detect(SurfaceMesh *mesh, bool construct = false);
 
         /**
-         * Detect and remesh the intersecting faces.
+         * \brief Detect and remesh the intersecting faces.
          * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
          *             unchanged.
          * @param stitch Stitch the borders

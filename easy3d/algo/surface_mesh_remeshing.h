@@ -32,7 +32,7 @@ namespace easy3d {
     class TriangleMeshKdTree;
 
     /**
-     * A class for uniform and adaptive surface remeshing.
+     * \brief A class for uniform and adaptive surface remeshing.
      * The algorithm implemented here performs incremental remeshing based on edge collapse, split, flip, and tangential
      * relaxation. See the following papers for more details:
      *  - Mario Botsch and Leif Kobbelt. A remeshing approach to multiresolution modeling. SGP, 2004.
@@ -45,11 +45,11 @@ namespace easy3d {
 
         ~SurfaceMeshRemeshing();
 
-        //! uniform remeshing with target edge length
+        //! \brief uniform remeshing with target edge length
         void uniform_remeshing(float edge_length, unsigned int iterations = 10,
                                bool use_projection = true);
 
-        //! adaptive remeshing with min/max edge length and approximation error
+        //! \brief adaptive remeshing with min/max edge length and approximation error
         void adaptive_remeshing(float min_edge_length, float max_edge_length,
                                 float approx_error, unsigned int iterations = 10,
                                 bool use_projection = true);

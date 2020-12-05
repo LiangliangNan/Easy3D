@@ -39,13 +39,13 @@ namespace easy3d {
      */
     class SurfaceMeshParameterization {
     public:
-        //! Construct with mesh to be parameterized.
+        //! \brief Construct with mesh to be parameterized.
         SurfaceMeshParameterization(SurfaceMesh *mesh);
 
-        //! Compute discrete harmonic parameterization.
+        //! \brief Compute discrete harmonic parameterization.
         void harmonic(bool use_uniform_weights = false);
 
-        //! Compute parameterization based on least squares conformal mapping.
+        //! \brief Compute parameterization based on least squares conformal mapping.
         void lscm();
 
     private:

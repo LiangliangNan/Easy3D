@@ -38,6 +38,7 @@ namespace easy3d {
 
     class VoronoiCell3d;
 
+    /// \brief 3D Delaunay triangulation, using Hang Si's tetgen.
     class Delaunay3 : public Delaunay {
     public:
         Delaunay3();

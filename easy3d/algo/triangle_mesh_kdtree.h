@@ -32,15 +32,15 @@
 
 namespace easy3d {
 
-    //! A k-d tree for triangular surface meshes
+    //! \brief A k-d tree for triangular surface meshes.
     class TriangleMeshKdTree {
     public:
-        //! construct with mesh
+        //! \brief construct with mesh
         TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
 
         ~TriangleMeshKdTree() { delete root_; }
 
-        //! nearest neighbor information
+        //! \brief nearest neighbor information
         struct NearestNeighbor {
             float dist;
             SurfaceMesh::Face face;
@@ -48,7 +48,7 @@ namespace easy3d {
             int tests;
         };
 
-        //! Return handle of the nearest neighbor
+        //! \brief Return handle of the nearest neighbor
         NearestNeighbor nearest(const vec3 &p) const;
 
     private:

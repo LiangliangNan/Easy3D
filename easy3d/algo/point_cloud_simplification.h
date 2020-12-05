@@ -35,11 +35,13 @@ namespace easy3d {
 
     class KdTreeSearch;
 
+    /// \brief PointCloudSimplification provides various point cloud simplification algorithms.
+
     class PointCloudSimplification {
     public:
 
         /**
-         * Query the average spacing of a point cloud.
+         * \brief Query the average spacing of a point cloud.
          * @param cloud The point cloud.
          * @param k The number of nearest points used.
          * @param accurate True to use every point to get an accurate calculation; false to obtain aa approximate
@@ -56,7 +58,7 @@ namespace easy3d {
         //----- simplification using a grid (non-uniform) ------------------------------------------------
 
         /**
-         * Simplification of a point cloud using a regular grid covering the bounding box of the points. Simplification
+         * \brief Simplification of a point cloud using a regular grid covering the bounding box of the points. Simplification
          * is done by keeping a representative point (chosen arbitrarily) for each cell of the grid. This is non-uniform
          * simplification since the representative point is chosen arbitrarily.
          * @param cloud The point cloud.

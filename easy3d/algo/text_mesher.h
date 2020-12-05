@@ -35,6 +35,7 @@ namespace easy3d {
 
     class SurfaceMesh;
 
+    /// \brief Generate a 3D surface mesh from a text string.
     class TextMesher {
     public:
         /**

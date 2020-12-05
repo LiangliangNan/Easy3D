@@ -40,6 +40,7 @@
 
 namespace easy3d {
 
+    /// \brief Detect/Remove duplicated faces for a surface mesh.
 
     class DuplicatedFaces
     {
@@ -47,16 +48,16 @@ namespace easy3d {
         DuplicatedFaces() {}
         ~DuplicatedFaces() {}
 
-        // detect and return the duplicated faces
-        // exact == true: do exact predict; otherwise use the distance threshold.
-        // upon return, the second component of each entry contains the set of faces
-        // duplicating the one stored as the first component.
+        /// \brief Detect and return the duplicated faces.
+        /// @param exact True: do exact predict; otherwise use the distance threshold.
+        /// Upon return, the second component of each entry contains the set of faces duplicating the one stored as
+        /// the first component.
         // TODO: implement using threshold (now only 'exact' is implemented).
         std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
         detect(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
-        // detect and remove duplicated faces. Returns the number of deleted faces.
-        // exact == true: do exact predict; otherwise use the distance threshold.
+        /// Detect and remove duplicated faces. Returns the number of deleted faces.
+        /// @param exact True: do exact predict; otherwise use the distance threshold.
         unsigned int remove(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
     private:

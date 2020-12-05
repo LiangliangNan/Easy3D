@@ -31,11 +31,12 @@ namespace easy3d {
     class SurfaceMesh;
     class PointCloud;
 
+    /// \brief Add Gaussian noise to 3D models.
     class GaussianNoise {
     public:
 
         /**
-         * Add Gaussian noise (that has a normal distribution) to the surface mesh.
+         * \brief Add Gaussian noise (that has a normal distribution) to the surface mesh.
          * @param mesh The surface mesh.
          * @param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
          *              within one standard deviation of the mean (mathematically, μ ± σ, where μ is the arithmetic
@@ -44,7 +45,7 @@ namespace easy3d {
         static void apply(SurfaceMesh *mesh, float sigma);
 
         /**
-        * Add Gaussian noise (that has a normal distribution) to a point cloud.
+         * \brief Add Gaussian noise (that has a normal distribution) to a point cloud.
          * @param mesh The point cloud.
          * @param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
          *              within one standard deviation of the mean (mathematically, μ ± σ, where μ is the arithmetic

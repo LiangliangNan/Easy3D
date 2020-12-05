@@ -33,13 +33,14 @@
 
 namespace easy3d {
 
+    /// \brief Decompose a surface mesh into planar regions.
     class SurfaceMeshPlanarPartition {
     public:
         SurfaceMeshPlanarPartition(SurfaceMesh *mesh);
         ~SurfaceMeshPlanarPartition(void);
 
         /**
-         * Result will save as an <int> type face property.
+         * \brief Result will save as an <int> type face property.
          * @param partition_name The name of the result face property.
          */
         void apply(const std::string& partition_name);

@@ -43,7 +43,7 @@ namespace easy3d {
     class SurfaceMeshTriangulation {
     public:
 
-        //! triangulation objective: find the triangulation that minimizes the
+        //! \brief triangulation objective: find the triangulation that minimizes the
         //! sum of squared triangle areas, or the one that maximizes the minimum
         //! angle.
         enum Objective {
@@ -52,10 +52,10 @@ namespace easy3d {
 
         SurfaceMeshTriangulation(SurfaceMesh *mesh);
 
-        //! triangulate all faces
+        //! \brief triangulate all faces
         void triangulate(Objective obj = MIN_AREA);
 
-        //! triangulate a particular face f
+        //! \brief triangulate a particular face f
         void triangulate(SurfaceMesh::Face f, Objective obj = MIN_AREA);
 
     private:

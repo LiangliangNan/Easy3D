@@ -33,9 +33,7 @@ struct triangulateio;
 namespace easy3d {
 
 
-    /**
-    * Uses Jonathan Richard Shewchuk's "triangle" implementation.
-    */
+    /// \brief 2D Delaunay triangulation, using Jonathan Richard Shewchuk's "triangle" implementation.
     class Delaunay2 : public Delaunay {
     public:
         Delaunay2();

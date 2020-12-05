@@ -224,11 +224,6 @@ namespace easy3d {
     }
 
 
-    void PrimitivesRansac::remove_primitive_type(PrimType t) {
-        types_.erase(t);
-    }
-
-
     int PrimitivesRansac::detect(
             PointCloud *cloud,
             unsigned int min_support /* = 1000 */,

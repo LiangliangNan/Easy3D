@@ -32,28 +32,37 @@ namespace easy3d {
 
     class SurfaceMeshComponent;
 
+    /// \brief Compute various topological characteristics of a surface mesh component.
     class SurfaceMeshTopology {
     public:
         SurfaceMeshTopology(const SurfaceMeshComponent *comp);
 
         /**
-         * returns the Euler-Poincare characteristic,
+         * \brief returns the Euler-Poincare characteristic,
          *   1: a disc
          *   2: a sphere
          */
         int euler_poincare() const;
 
-        /** returns 0 for a closed surface. */
+        /** \brief returns 0 for a closed surface. */
         std::size_t number_of_borders() const { return number_of_borders_; }
 
-        /** returns the number of edges in the largest border. */
+        /** \brief returns the number of edges in the largest border. */
         std::size_t largest_border_size() const { return largest_border_size_; }
 
+        /** \brief returns if the surface is closed. */
         bool is_closed() const { return number_of_borders_ == 0; }
 
+        /** \brief returns if the surface is topologically equivalent to a sphere. */
         bool is_sphere() const { return (number_of_borders() == 0) && (euler_poincare() == 2); }
+
+        /** \brief returns if the surface is topologically equivalent to a disk. */
         bool is_disc() const { return (number_of_borders() == 1) && (euler_poincare() == 1); }
+
+        /** \brief returns if the surface is topologically equivalent to a cylinder. */
         bool is_cylinder() const { return (number_of_borders() == 2) && (euler_poincare() == 0); }
+
+        /** \brief returns if the surface is topologically equivalent to a torus. */
         bool is_torus() const { return (number_of_borders() == 0) && (euler_poincare() == 0); }
 
     private:

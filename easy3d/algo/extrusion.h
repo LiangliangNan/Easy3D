@@ -36,7 +36,7 @@ namespace easy3d {
     class SurfaceMesh;
 
     /**
-     * Extrude a 3D surface mesh from a set of simple contours.
+     * \brief Extrude a 3D surface mesh from a set of simple contours.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.
@@ -47,7 +47,7 @@ namespace easy3d {
     SurfaceMesh *extrude(const std::vector<Polygon2> &simple_contours, float height);
 
     /**
-     * Extrude a 3D surface mesh from a set of simple contours.
+     * \brief Extrude a 3D surface mesh from a set of simple contours.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.

@@ -40,10 +40,10 @@ namespace easy3d {
      */
     class SurfaceMeshHoleFilling {
     public:
-        /// construct with mesh
+        /// \brief construct with mesh
         SurfaceMeshHoleFilling(SurfaceMesh *mesh);
 
-        /// fill the hole specified by halfedge h
+        /// \brief fill the hole specified by halfedge h
         bool fill_hole(SurfaceMesh::Halfedge h);
 
     private:

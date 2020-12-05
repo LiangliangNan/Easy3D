@@ -30,15 +30,16 @@ namespace easy3d {
 
     class SurfaceMesh;
 
+    /// \brief SurfaceMeshSubdivision implement several well-known subdivision algorithms.
     class SurfaceMeshSubdivision {
     public:
-        /** The Catmull-Clark subdivision. */
+        /** \brief The Catmull-Clark subdivision. */
         static bool catmull_clark(SurfaceMesh *mesh);
 
-        /** The Loop subdivision. */
+        /** \brief The Loop subdivision. */
         static bool loop(SurfaceMesh *mesh);
 
-        /** The sqrt3 subdivision. */
+        /** \brief The sqrt3 subdivision. */
         static bool sqrt3(SurfaceMesh *mesh);
     };
 
