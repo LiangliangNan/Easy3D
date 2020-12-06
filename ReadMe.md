@@ -89,7 +89,9 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 
 Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./HowToBuild.md).
 
-### [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/classes.html)
+### [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html)
+You can also build the Easy3D [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html)
+from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) to generate documentation from source code. To build the Easy3D documentation, you first need to install Doxygen (please refer to the [Doxygen installation manual](https://www.doxygen.nl/manual/install.html) for more details). 
 Then switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt` file. Finally, build the `doc` target to generate the documentation. 
 
