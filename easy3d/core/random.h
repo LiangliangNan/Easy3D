@@ -33,16 +33,17 @@
 namespace easy3d {
 
 
-    /* Random real in [0, 1]. */
+    /** \brief Random real in [0, 1]. */
     inline float random_float() {
         return float(std::rand()) / float(RAND_MAX);
     }
 
-    /* Random real number in the range [min, max] */
+    /** \brief Random real number in the range [min, max]. */
     inline float random_float(float min, float max) {
         return min + random_float() * (max - min);
     }
 
+    /** \brief Generates a random color. The parameter \p allow_dark controls if too dark colors are allowed. */
     inline vec3 random_color(bool allow_dark = false) {
         static float min_rgb = 0.3f;
         min_rgb = allow_dark ? 0.0f : min_rgb;

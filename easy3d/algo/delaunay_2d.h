@@ -40,8 +40,11 @@ namespace easy3d {
 
         virtual ~Delaunay2();
 
+        /// \brief Sets the vertices from an array of floating point numbers in which each consecutive number pair
+        /// denotes a 2D point.
         virtual void set_vertices(unsigned int nb_vertices, const float *pts);
 
+        /// \brief Sets the vertices from an array of 2D points.
         void set_vertices(const std::vector<vec2> &vertices) {
             set_vertices((unsigned int) vertices.size(), &vertices[0].x);
         }
@@ -64,9 +67,10 @@ namespace easy3d {
 
         int vertex_tri(int v) const { return vertex_cell(v); }
 
+        /// \brief Returns the number of triangles.
         unsigned int nb_triangles() const { return nb_cells(); }
 
-        // obtaining the index of the 'lv'_th vertex in the 't'_th triangle.
+        /// \brief Returns the index of the \p lv_th vertex in the \p t_th triangle.
         int tri_vertex(unsigned int t, unsigned int lv) const {
             return cell_vertex(t, lv);
         }

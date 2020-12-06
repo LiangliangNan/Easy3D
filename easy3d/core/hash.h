@@ -69,6 +69,7 @@ namespace easy3d
     }
 #endif
 
+    /// \brief Computes the hash value of a 2D vector.
     template <typename FT>
     uint64_t hash(const Vec<2, FT>& value) {
         uint64_t seed = 0;
@@ -77,6 +78,7 @@ namespace easy3d
         return seed;
     }
 
+    /// \brief Computes the hash value of a 3D vector.
     template <typename FT>
     uint64_t hash(const Vec<3, FT>& value) {
         uint64_t seed = 0;
@@ -87,6 +89,7 @@ namespace easy3d
     }
 
 
+    /// \brief Computes the hash value of a \p DIM dimensional vector.
     template <int DIM, typename FT> inline
     uint64_t hash(const Vec<DIM, FT>& value) {
         uint64_t seed = 0;
@@ -96,6 +99,7 @@ namespace easy3d
     }
 
 
+    /// \brief Computes the hash value of a 1D array.
     template<class It>
     inline uint64_t hash_range(It first, It last) {
         uint64_t seed = 0;
@@ -105,6 +109,8 @@ namespace easy3d
         return seed;
     }
 
+
+    /// \brief Computes the hash value of a 1D array with a given seed value.
     template<class It>
     inline void hash_range(uint64_t &seed, It first, It last) {
         for (; first != last; ++first) {

@@ -31,6 +31,7 @@
 namespace easy3d {
 
 
+    /// \brief A generic line representation, which supports both 2D and 3D lines.
     template <int DIM, typename FT>
     class GenericLine {
     public:
@@ -39,24 +40,30 @@ namespace easy3d {
         typedef GenericLine<DIM, FT> thisclass;
 
     public:
+        /// \brief Constructs a line from a point \p p and its direction \p dir.
         static GenericLine from_point_and_direction(const Point& p, const Vector& dir) { return GenericLine(p, dir); }
+        /// \brief Constructs a line from two points \p p and \p q.
         static GenericLine from_two_points(const Point& p, const Point& q)   { return GenericLine(p, q - p); }
 
+        /// \brief Default constructor.
         GenericLine() {}
+
+        /// \brief Sets a line from a point \p p and its direction \p dir.
         void set(const Point& p, const Vector& dir) {
             p_ = p;
             dir_ = normalize(dir);
         }
 
+        /// \brief Returns the direction of a line.
         const Vector& direction() const { return dir_; }
 
+        /// \brief Returns an arbitrary point on a line.
         const Point&  point() const { return p_; }
 
-        GenericLine opposite() const { return GenericLine(p_, -dir_); }
-
-        // the projection of p on this line
+        /// \brief Returns the projection of a point \p p on this line.
         Point  projection(const Point &p) const { return p_ + dir_ * dot(p - p_, dir_); }
 
+        /// \brief Returns the squared distance of a point \p p to this line.
         FT	   squared_distance(const Point &p) const { return length2(projection(p) - p); }
 
     private:  // Ambiguities exist for this one.

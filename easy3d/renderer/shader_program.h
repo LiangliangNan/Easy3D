@@ -136,8 +136,8 @@ namespace easy3d {
 		  * to linking the program, or, if the program is already linked, to
 		  * link it again afterwards (call method link_program)
 		  *
-		  * \param the semantic of the attribute
-		  * \param the name of the vertex attribute
+		  * \param at The semantic of the attribute
+		  * \param name The name of the vertex attribute
 		*/
 		void set_attrib_name(ShaderProgram::AttribType at, const std::string& name);
 		void set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes);
@@ -150,8 +150,8 @@ namespace easy3d {
 		/** bind a user-defined varying out variable to a fragment shader color number
 		  * Note: linking is required for this operation to take effect
 		  * (call method prepare_program afterwards)
-		  * \param index the fragment color number
-		  * \param the name of the fragment's shader variable
+		  * \param index The fragment color number
+		  * \param name The name of the fragment's shader variable
 		*/
 		void set_program_output(int index, const std::string& name);
 

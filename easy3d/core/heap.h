@@ -31,7 +31,7 @@ namespace easy3d {
 
     /**
      * An example of heap interface
-     * -----------------------------------------------------------------------------------------------------------
+     * \code
      *   class HeapInterface {
      *   public:
      *       HeapInterface(SurfaceMesh::VertexProperty<float> prio, SurfaceMesh::VertexProperty<int> pos)
@@ -47,60 +47,60 @@ namespace easy3d {
      *       SurfaceMesh::VertexProperty<float> prio_;
      *       SurfaceMesh::VertexProperty<int> pos_;
      *   };
-     * -----------------------------------------------------------------------------------------------------------
+     * \endcode
      */
 
 
-    //! A class implementing a heap.
+    //! \brief A class implementing a heap.
     template<class HeapEntry, class HeapInterface>
     class Heap : private std::vector<HeapEntry> {
     public:
         typedef Heap<HeapEntry, HeapInterface> This;
 
-        //! Constructor
+        //! \brief Constructor
         Heap() : HeapVector() {}
 
-        //! Construct with a given \c HeapInterface.
+        //! \brief Construct with a given \c HeapInterface.
         Heap(const HeapInterface &i) : HeapVector(), interface_(i) {}
 
-        //! Destructor.
+        //! \brief Destructor.
         ~Heap() {};
 
-        //! clear the heap
+        //! \brief clear the heap
         void clear() { HeapVector::clear(); }
 
-        //! is heap empty?
+        //! \brief is heap empty?
         bool empty() { return HeapVector::empty(); }
 
-        //! returns the size of heap
+        //! \brief returns the size of heap
         unsigned int size() { return (unsigned int) HeapVector::size(); }
 
-        //! reserve space for N entries
+        //! \brief reserve space for N entries
         void reserve(unsigned int n) { HeapVector::reserve(n); }
 
-        //! reset heap position to -1 (not in heap)
+        //! \brief reset heap position to -1 (not in heap)
         void reset_heap_position(HeapEntry h) {
             interface_.set_heap_position(h, -1);
         }
 
-        //! is an entry in the heap?
+        //! \brief is an entry in the heap?
         bool is_stored(HeapEntry h) {
             return interface_.get_heap_position(h) != -1;
         }
 
-        //! insert the entry h
+        //! \brief insert the entry h
         void insert(HeapEntry h) {
             This::push_back(h);
             upheap(size() - 1);
         }
 
-        //! get the first entry
+        //! \brief get the first entry
         HeapEntry front() {
             assert(!empty());
             return entry(0);
         }
 
-        //! delete the first entry
+        //! \brief delete the first entry
         void pop_front() {
             assert(!empty());
             interface_.set_heap_position(entry(0), -1);
@@ -112,7 +112,7 @@ namespace easy3d {
                 HeapVector::resize(size() - 1);
         }
 
-        //! remove an entry
+        //! \brief remove an entry
         void remove(HeapEntry h) {
             int pos = interface_.get_heap_position(h);
             interface_.set_heap_position(h, -1);
@@ -132,7 +132,7 @@ namespace easy3d {
             }
         }
 
-        //! update an entry: change the key and update the position to
+        //! \brief update an entry: change the key and update the position to
         //! reestablish the heap property.
         void update(HeapEntry h) {
             int pos = interface_.get_heap_position(h);
@@ -142,7 +142,7 @@ namespace easy3d {
             upheap(pos);
         }
 
-        //! check heap condition
+        //! \brief check heap condition
         bool check() {
             bool ok(true);
             unsigned int i, j;

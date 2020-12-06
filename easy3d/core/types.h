@@ -50,55 +50,87 @@ namespace easy3d {
 
     //____________________ default types___________________
 
+    /// \brief A 2D point/vector of \p float type.
     typedef Vec<2, float> vec2;
+    /// \brief A 3D point/vector of \p float type.
     typedef Vec<3, float> vec3;
+    /// \brief A 4D point/vector of \p float type.
     typedef Vec<4, float> vec4;
 
+    /// \brief A 2D point/vector of \p double type.
     typedef Vec<2, double> dvec2;
+    /// \brief A 3D point/vector of \p double type.
     typedef Vec<3, double> dvec3;
+    /// \brief A 4D point/vector of \p double type.
     typedef Vec<4, double> dvec4;
 
+    /// \brief A 2D point/vector of \p int32_t type.
     typedef Vec<2, int32_t> ivec2;
+    /// \brief A 3D point/vector of \p int32_t type.
     typedef Vec<3, int32_t> ivec3;
+    /// \brief A 4D point/vector of \p int32_t type.
     typedef Vec<4, int32_t> ivec4;
 
+    /// \brief A 2 by 2 matrix of \p float type.
     typedef Mat2<float> mat2;
+    /// \brief A 3 by 3 matrix of \p float type.
     typedef Mat3<float> mat3;
+    /// \brief A 4 by 4 matrix of \p float type.
     typedef Mat4<float> mat4;
+    /// \brief A 3 by 4 matrix of \p float type.
     typedef Mat<3, 4, float> mat34;
+    /// \brief A 4 by 3 matrix of \p float type.
     typedef Mat<4, 3, float> mat43;
 
+    /// \brief A 2 by 2 matrix of \p double type.
     typedef Mat2<double> dmat2;
+    /// \brief A 3 by 3 matrix of \p double type.
     typedef Mat3<double> dmat3;
+    /// \brief A 4 by 4 matrix of \p double type.
     typedef Mat4<double> dmat4;
+    /// \brief A 3 by 4 matrix of \p double type.
     typedef Mat<3, 4, double> dmat34;
+    /// \brief A 4 by 3 matrix of \p double type.
     typedef Mat<4, 3, double> dmat43;
 
+    /// \brief A quaternion of \p float type.
     typedef Quat<float> quat;
+    /// \brief A quaternion of \p double type.
     typedef Quat<double> dquat;
 
+    /// \brief A 2D line of \p float type.
     typedef GenericLine<2, float> Line2;
+    /// \brief A 3D line of \p float type.
     typedef GenericLine<3, float> Line3;
 
+    /// \brief A 3D oriented line of \p float type.
     typedef GenericOrientedLine<float> OrientedLine3;
 
+    /// \brief A 2D line segment of \p float type.
     typedef GenericSegment<2, float> Segment2;
+    /// \brief A 3D line segment of \p float type.
     typedef GenericSegment<3, float> Segment3;
 
+    /// \brief A 3D plane of \p float type.
     typedef GenericPlane<float> Plane3;
 
+    /// \brief A 2D axis-aligned bounding box of \p float type.
     typedef GenericBox<2, float> Box2;
+    /// \brief A 3D axis-aligned bounding box of \p float type.
     typedef GenericBox<3, float> Box3;
 
+    /// \brief A 2D axis-aligned rectangle of \p float type.
     typedef GenericRect<float> Rect;
+    /// \brief A 2D axis-aligned rectangle of \p int32_t type.
     typedef GenericRect<int32_t> iRect;
 
+    /// \brief A 2D polygon of \p float type.
     typedef GenericPolygon<float> Polygon2;
 
 
     namespace geom {
 
-        /* Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
+        /** \brief Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
         inline vec3 orthogonal(const vec3 &v) {
             const float absx = std::fabs(v.x);
             const float absy = std::fabs(v.y);
@@ -114,7 +146,7 @@ namespace easy3d {
             }
         }
 
-        // bounding box for 3D/2D point set
+        /** \brief Computes the bounding box of a set of points. */
         template<typename Box, typename Container>
         inline Box bounding_box(const Container& points) {
             Box result;
@@ -124,7 +156,7 @@ namespace easy3d {
             return result;
         }
 
-        // centroid for 3D/2D point set
+        /** \brief Computes the centroid of a set of points. */
         template<typename Vec, typename Container>
         inline Vec centroid(const Container& points) {
             Vec v(0);
@@ -133,21 +165,26 @@ namespace easy3d {
             return v / points.size();
         }
 
+        /** \brief Computes the barycenter of two points. */
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2) {
             return (p1 + p2) * 0.5f;
         }
 
+        /** \brief Computes the barycenter of three points. */
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2, const Vec &p3) {
             return (p1 + p2 + p3) / 3.0f;
         }
 
+        /** \brief Computes the barycenter of four points. */
         template<typename Vec>
         inline Vec barycenter(const Vec &p1, const Vec &p2, const Vec &p3, const Vec &p4) {
             return (p1 + p2 + p3 + p4) * 0.25f;
         }
 
+        /** \brief Computes the barycentric coordinates of a point \p p with respect to
+         * three points \p u, \p v, and \p w.*/
         template<typename FT>
         inline Vec<3, FT> barycentric_coordinates(const Vec<3, FT> &p,
                                                   const Vec<3, FT> &u,
@@ -155,54 +192,54 @@ namespace easy3d {
                                                   const Vec<3, FT> &w);
 
         /**
-         * test if a point lies inside or outside of a polygon.
-         * This function is robust to handle general polygons (both convex and concave).
+         * \brief Tests if a point \p p lies inside or outside of a \p polygon.
+         * This function is robust to handle general polygons (no matter convex or concave).
          */
         inline bool point_in_polygon(const vec2 &p, const std::vector<vec2> &polygon);
 
-        /** clamp cotangent values as if angles are in [1, 179]    */
+        /** \brief Clamps cotangent values as if angles are in [1, 179]    */
         inline double clamp_cot(const double v) {
             const double bound = 19.1; // 3 degrees
             return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        /** clamp cosine values as if angles are in [1, 179]    */
+        /** \brief Clamps cosine values as if angles are in [1, 179]    */
         inline double clamp_cos(const double v) {
             const double bound = 0.9986; // 3 degrees
             return (v < -bound ? -bound : (v > bound ? bound : v));
         }
 
-        /** compute cosine of angle between two (un-normalized) vectors */
+        /** \brief Computes cosine of angle between two (un-normalized) vectors */
         template<typename Vec>
         inline double cos_angle(const Vec &a, const Vec &b) {
             return dot(a, b) / std::sqrt(length2(a) * length2(b));
         }
 
-        /** compute sine of angle between two (un-normalized) vectors */
+        /** \brief Computes sine of angle between two (un-normalized) vectors */
         template<typename Vec>
         inline double sin_angle(const Vec &a, const Vec &b) {
             return norm(cross(a, b)) / (norm(a) * norm(b));
         }
 
-        /** compute cotangent of angle between two (un-normalized) vectors */
+        /** \brief Computes cotangent of angle between two (un-normalized) vectors */
         template<typename Vec>
         inline double cotan_angle(const Vec &a, const Vec &b) {
             return clamp_cot(dot(a, b) / norm(cross(a, b)));
         }
 
-        /** compute angle between two (un-normalized) vectors */
+        /** \brief Computes angle between two (un-normalized) vectors */
         template<typename Vec>
         inline double angle(const Vec &a, const Vec &b) {
             return atan2(norm(cross(a, b)), dot(a, b));
         }
 
-        // radians
+        /** \brief Converts an angle from degrees to radians. */
         template<typename T>
         inline T to_radians(T degrees) {
             return degrees * static_cast<T>(0.01745329251994329576923690768489);
         }
 
-        // degrees
+        /** \brief Converts an angle from radians to degrees. */
         template<typename T>
         inline T to_degrees(T radians) {
             return radians * static_cast<T>(57.295779513082320876798154814105);
@@ -223,34 +260,37 @@ namespace easy3d {
             return rval;
         }
 
-        /** compute area of a triangle given by three points */
+        /** \brief Computes area of a triangle given by three points. */
         inline float triangle_area(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             return 0.5f * length(cross(p2 - p1, p3 - p1));
         }
 
+        /** \brief Computes signed area of a triangle given by three points. */
         inline float triangle_signed_area(const vec2 &p1, const vec2 &p2, const vec2 &p3) {
             return 0.5f * det(p2 - p1, p3 - p1);
         }
 
+        /** \brief Computes the normal vector of a triangle given by three points. */
         inline vec3 triangle_normal(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             vec3 n = cross(p2 - p1, p3 - p2);
             return normalize(n);
         }
 
-        /** Compute the distance of a point p to a line segment given by vec3s (v0,v1). */
+        /** \brief Computes the distance of a point p to a line segment given by vec3s (v0,v1). */
         inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_vec3);
 
-        /** Compute the distance of a point p to the triangle given by vec3s (v0, v1, v2). */
+        /** \brief Computes the distance of a point p to the triangle given by vec3s (v0, v1, v2). */
         inline float
         dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_vec3);
 
+        /** \brief Computes the circum center of a tetrahedron. */
         inline vec3 tetra_circum_center(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4);
 
-        // round the given floating point number v to be num_digits.
-        // TODO: this function should not be in this file.
+        /** \brief Rounds the given floating point number \p v to have \p num digits.
+        \todo This function should not be in this file. */
         template<class T>
-        inline T truncate_digits(const T &v, int num_digits) {
-            T tmp = std::pow(10.0f, num_digits);
+        inline T truncate_digits(const T &v, int num) {
+            T tmp = std::pow(10.0f, num);
             long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
             T result = T(des) / tmp;
             return result;
@@ -263,41 +303,41 @@ namespace easy3d {
 
         //------- conversion between a RGB(A) color and an integer ----------
 
-        // get red part of RGB. [0, 255]
+        /// \brief Gets red part of RGB. [0, 255]
         inline int red(int color) { return ((color >> 16) & 0xff); }
 
-        // get green part of RGB. [0, 255]
+        /// \brief Gets green part of RGB. [0, 255]
         inline int green(int color) { return ((color >> 8) & 0xff); }
 
-        // get blue part of RGB. [0, 255]
+        /// \brief Gets blue part of RGB. [0, 255]
         inline int blue(int color) { return (color & 0xff); }
 
-        // get alpha part of RGBA. [0, 255]
+        /// \brief Gets alpha part of RGBA. [0, 255]
         inline int alpha(int color) { return color >> 24; }
 
-        // set RGB value. [0, 255]
+        /// \brief Encodes an RGB (each component in the range [0, 255]) color in an integer value.
         inline int rgb(int r, int g, int b) {
             return (0xffu << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
         }
 
-        // set RGBA value. [0, 255]
+        /// \brief Encodes an RGBA (each component in the range [0, 255]) color in an integer value.
         inline int rgba(int r, int g, int b, int a) {
             return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
         }
 
-        // convert R,G,B to gray [0, 255]
+        /// \brief Converts R,G,B to gray [0, 255]
         inline int gray(int r, int g, int b) {
             return (r * 11 + g * 16 + b * 5) / 32;
         }
 
-        // encode an integer value as R,G,B color. [0, 255]
+        /// \brief Decodes an integer value as RGB color (each component in the range [0, 255]).
         inline void encode(int value, int &r, int &g, int &b) {
             r = ((value >> 16) & 0xff);
             g = ((value >> 8) & 0xff);
             b = (value & 0xff);
         }
 
-        // encode an integer value as R,G,B,A color. [0, 255]
+        /// \brief Decodes an integer value as RGBA color (each component in the range [0, 255]).
         inline void encode(int value, int &r, int &g, int &b, int &a) {
             r = ((value >> 16) & 0xff);
             g = ((value >> 8) & 0xff);

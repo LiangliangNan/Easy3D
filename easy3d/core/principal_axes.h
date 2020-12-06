@@ -31,12 +31,10 @@
 namespace easy3d {
 
     /**
-    * PrincipalAxes computes the center and inertia axes of
-    * a set of 2D or 3D points.
-    * @tparam DIM dimension (must be 2 or 3)
-    */
-
-    //NOTE: 2D cases has not been tested!!!
+     * \brief Computes the center and inertia axes of a set of 2D or 3D points.
+     * \tparam DIM dimension (must be 2 or 3).
+     * \todo Test 2D cases.
+     */
 
     template <int DIM, typename FT>
     class PrincipalAxes {
@@ -44,20 +42,25 @@ namespace easy3d {
         PrincipalAxes();
         ~PrincipalAxes();
 
-        // add point one by one
+        /// \brief Begins adding points.
         void begin();
+        /// \brief Adds a point \p p with a \p weight.
         void add_point(const Vec<DIM, FT>& p, FT weight = FT(1.0));
+        /// \brief Ends adding points.
         void end();
 
-        // add a set of point (it internally calls add_point())
+        /// \brief Adds a set of points (internally it iteratively calls add_point())
         template <typename InputIterator>
         void add_points(InputIterator first, InputIterator last);
 
+        /// \brief The weighted average of the points.
         Vec<DIM, FT> center() const;
 
-        // eigen values are sorted in descending order,
-        // eigen vectors are sorted in accordance.
+        /// \brief The \p i_th axis
+        /// \note The eigenvectors are sorted in accordance with eigenvalues stored in the descending order.
         Vec<DIM, FT> axis(int i) const;
+        /// \brief The \p i_th eigenvalue.
+        /// \note The eigenvalues are sorted in descending order.
         FT eigen_value(int i) const ;
 
     private:

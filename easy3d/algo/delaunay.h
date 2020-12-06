@@ -33,29 +33,38 @@
 
 namespace easy3d {
 
-    /// \brief Base class for Delaunay triangulation.
+    /// \brief Base class for Delaunay triangulation. \see Delaunay2D, Delaunay3D.
     class Delaunay {
 
     public:
+        /// \brief Constructor.
+        /// \param dimension The dimension, must be either 2 or 3.
         Delaunay(unsigned int dimension);
 
         virtual ~Delaunay();
 
+        /// \brief Returns the dimension.
         unsigned int dimension() const { return dimension_; }
 
+        /// \brief Returns the size of the cell.
         unsigned int cell_size() const { return cell_size_; }
 
+        /// \brief Sets the vertices.
         virtual void set_vertices(unsigned int nb_vertices, const float *vertices);
 
+        /// \brief Returns the pointer to the vertices.
         const float *vertices_ptr() const { return vertices_; }
 
+        /// \brief Returns the pointer to the vertex of index \p i.
         const float *vertex_ptr(unsigned int i) const {
             assert(i < nb_vertices());
             return vertices_ + dimension() * i;
         }
 
+        /// \brief Returns the number of vertices.
         unsigned int nb_vertices() const { return nb_vertices_; }
 
+        /// \brief Returns the number of cells.
         unsigned int nb_cells() const { return nb_cells_; }
 
         const int *cell_to_v() const { return cell_to_v_; }
@@ -64,7 +73,7 @@ namespace easy3d {
 
         virtual unsigned int nearest_vertex(const float *p) const;
 
-        // obtaining the index of the 'lv'_th vertex in the 'c'_th cell.
+        /// \brief Returns the index of the \p lv_th vertex in the \p c_th cell.
         int cell_vertex(unsigned int c, unsigned int lv) const {
             assert(c < nb_cells());
             assert(lv < cell_size());
@@ -110,17 +119,15 @@ namespace easy3d {
         }
 
         /**
-        * Retreives the one-ring neighbors of vertex v.
-        */
-        virtual void get_neighbors(
-                unsigned int v, std::vector<unsigned int> &neighbors
-        ) const;
+         * \brief Retrieves the one-ring neighbors of vertex v.
+         */
+        virtual void get_neighbors(unsigned int v, std::vector<unsigned int> &neighbors) const;
 
 
         /**
-        * Checks for duplicated vertices in stored neighbor lists.
-        * Returns true if there where some duplicated vertices.
-        */
+         * \brief Checks for duplicated vertices in stored neighbor lists.
+         * Returns true if there where some duplicated vertices.
+         */
         bool check_duplicated_vertices();
 
     protected:

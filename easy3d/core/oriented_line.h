@@ -43,12 +43,10 @@ namespace easy3d {
     }
 
     /**
-     * OrientedLine implements plucker coordinates, which enables
-     *  oriented lines to be compared. The comparison, implemented by the
-     *  side() function, is a predicate similar to the right hand rule.
+     * \brief OrientedLine implements plucker coordinates, which enables oriented lines to be compared.
+     * The comparison, implemented by the side() function, is a predicate similar to the right hand rule.
      * For instance, this class is used for the line-polygon intersection test.
-     * (see D.M.Y. Sommerville, Analytical Geometry of Three Dimensions.
-     *  Cambridge University Press, 1959).
+     * (See D.M.Y. Sommerville, Analytical Geometry of Three Dimensions. Cambridge University Press, 1959).
      */
     template<class FT>
     class GenericOrientedLine {

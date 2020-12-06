@@ -34,6 +34,7 @@
 
 namespace easy3d {
 
+    /// \brief File input/output functionalities.
 	namespace io {
 
 		// VT: the value type, e.g., int, float, string, vec3, std::vector
@@ -71,9 +72,9 @@ namespace easy3d {
 		};
 
 
-		// A general purpose PLY file reader
-		// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
-		// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// A general purpose PLY file reader
+		/// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
 		class PlyReader
 		{
 		public:
@@ -122,9 +123,9 @@ namespace easy3d {
 		};
 
 
-		// A general purpose PLY file writer.
-		// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
-		// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// \brieff A general purpose PLY file writer.
+		/// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
 		class PlyWriter {
 		public:
 			bool write(

@@ -33,46 +33,49 @@
 
 namespace easy3d {
 
+    /// \brief A 2D polygon representation.
     template<typename FT>
     class GenericPolygon : public std::vector< Vec<2, FT> > {
         typedef std::vector< Vec<2, FT> > BaseClass;
 
     public:
+        /// \brief Default constructor.
         GenericPolygon() {}
 
-        // Initialize with a know size.
+        /// \brief Initializes with a know size.
         GenericPolygon(std::size_t size) { BaseClass::resize(size); }
 
+        /// \brief Initializes from a known range.
         template<class InputIterator>
         GenericPolygon(InputIterator first, InputIterator last);
 
         /**
-         * @brief Check if the polygon has a clockwise orientation (right-hand rule).
+         * @brief Checks if the polygon has a clockwise orientation (right-hand rule).
          * @details This method determines the orientation of a polygon based on the sign of its signed area:
          *              - negative: clockwise
          *              - positive: counterclockwise
          */
         bool is_clockwise() const;
 
-        // Reverse the orientation of the polygon. The first vertex remains the same.
-        // First vertex: pointed to by `p.begin()`, or [0]
+        /// \brief Reverses the orientation of the polygon. The first vertex (pointed to by `p.begin()`, or [0])
+        /// remains the same.
         void reverse_orientation();
 
-        // Test if point lies inside the polygon
+        /// \brief Tests if a \p point lies inside the polygon.
         bool contains(const Vec<2, FT> &point) const;
 
-        // Test if a polygon lies inside this polygon
+        /// \brief Tests if a polygon \p plg lies inside this polygon (i.e., all its vertices are inside).
         bool contains(const GenericPolygon<FT> &plg) const;
 
-        // Return the signed area of the polygon. This means that the
-        // area is positive for counter clockwise polygons and negative
-        // for clockwise polygons.
+        /// \brief Returns the signed area of the polygon. The signed area is positive for counter clockwise polygons
+        /// and negative for clockwise polygons.
         FT signed_area() const;
 
-        // Return the absolute value of the signed_area
+        /// \brief Returns the area of this polygon. This is the absolute value of the signed area, so it is always
+        /// positive.
         FT area() const;
 
-        // Return the smallest bounding box containing this polygon.
+        /// \brief Returns the smallest axix-aligned bounding box containing this polygon.
         GenericBox<2, FT> bbox() const;
     };
 

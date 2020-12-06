@@ -55,7 +55,7 @@ namespace easy3d {
     }
 
 
-    void Model::update_bounding_box() {
+    void Model::invalidate_bounding_box() {
         bbox_known_ = false;
     }
 

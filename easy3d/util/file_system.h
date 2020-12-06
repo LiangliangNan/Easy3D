@@ -93,11 +93,10 @@ namespace easy3d {
          * @param entries Return the entries of 'path'. Result strings are simple names (i.e.,
          *        without the 'path' part).
          * @param recursive Perform the query recursively if true.
-         * @related get_files(), get_sub_directories().
+         * @related get_files(const std::string& path, std::vector<std::string>& files, bool recursive),
+         * get_sub_directories(const std::string& path, std::vector<std::string>& subs, bool recursive).
          */
-        void	get_directory_entries(const std::string& path,
-                                      std::vector<std::string>& entries,
-                                      bool recursive);
+        void	get_directory_entries(const std::string& path, std::vector<std::string>& entries, bool recursive);
 
         /**
          * @brief Query file entries of a directory 'path'.
@@ -117,9 +116,7 @@ namespace easy3d {
          * @param recursive Perform the query recursively if true.
          * @related get_directory_entries(), get_files().
          */
-        void	get_sub_directories(const std::string& path,
-                                    std::vector<std::string>& subs,
-                                    bool recursive);
+        void	get_sub_directories(const std::string& path, std::vector<std::string>& subs, bool recursive);
 
         /**
          * @brief Query the current working directory.

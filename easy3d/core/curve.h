@@ -31,64 +31,45 @@
 
 namespace easy3d {
 
-    /*
-    unsigned int steps = 20;
-    {
-        vec3 a(0, 0, 0);
-        vec3 b(800, 0, 0);
-        vec3 c(800, 800, 0);
-
-        std::vector<vec3> points;
-        curve::quadratic(a, b, c, steps, points);
-        std::cout << "first point: " << points.front() << ", last point: " << points.back() << std::endl;
-
-        std::vector<unsigned int> indices;
-        for (unsigned int i=0; i<points.size() - 1; ++i) {
-            indices.push_back(i);
-            indices.push_back(i+1);
-        }
-        LinesDrawable *curve = new LinesDrawable;
-        curve->update_vertex_buffer(points);
-        curve->update_element_buffer(indices);
-        curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
-        curve->set_line_width(5);
-        curve->set_uniform_coloring(vec4(0, 0, 1, 1));
-        viewer.add_drawable(curve);
-    }
-
-    {
-        vec3 a(0, 0, 0);
-        vec3 b(400, 0, 0);
-        vec3 c(400, 800, 0);
-        vec3 d(800, 800, 0);
-        std::vector<vec3> points;
-        curve::cubic(a, b, c, d, steps, points);
-        std::cout << "first point: " << points.front() << ", last point: " << points.back() << std::endl;
-
-        std::vector<unsigned int> indices;
-        for (unsigned int i = 0; i < points.size() - 1; ++i) {
-            indices.push_back(i);
-            indices.push_back(i + 1);
-        }
-        LinesDrawable *curve = new LinesDrawable;
-        curve->update_vertex_buffer(points);
-        curve->update_element_buffer(indices);
-        curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
-        curve->set_line_width(5);
-        curve->set_uniform_coloring(vec4(0, 1, 0, 1));
-        viewer.add_drawable(curve);
-    }
+    /**
+     * @brief Algorithms for evaluating curves.
      */
-
     namespace curve {
 
         /**
-         * De Casteljau algorithm evaluating a quadratic or conic (second degree) curve.
-         * Works for both 2D and 3D.
+         * \brief De Casteljau algorithm evaluating a quadratic or conic (second degree) curve from the given control
+         * points \p A, \p B, and \p C. Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
          * @param bezier_steps Controls the smoothness of the curved corners. A greater value results in a smoother
          *      transitions but more vertices. Suggested value is 4.
          * @param include_end Ture to extend the curve to the end point.
+         *
+         * The following code shows how to visualize a quadratic curve (as a polyline):
+         * \code
+         * {
+         *     vec3 a(0, 0, 0);
+         *     vec3 b(800, 0, 0);
+         *     vec3 c(800, 800, 0);
+         *     unsigned int steps = 20;
+         *
+         *     std::vector<vec3> points;
+         *     curve::quadratic(a, b, c, steps, points);
+         *     std::cout << "first point: " << points.front() << ", last point: " << points.back() << std::endl;
+         *
+         *     std::vector<unsigned int> indices;
+         *     for (unsigned int i=0; i<points.size() - 1; ++i) {
+         *         indices.push_back(i);
+         *         indices.push_back(i+1);
+         *     }
+         *     LinesDrawable *curve = new LinesDrawable;
+         *     curve->update_vertex_buffer(points);
+         *     curve->update_element_buffer(indices);
+         *     curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
+         *     curve->set_line_width(5);
+         *     curve->set_uniform_coloring(vec4(0, 0, 1, 1));
+         *     viewer.add_drawable(curve);
+         * }
+         * \endcode
          */
         template<typename Point>
         inline
@@ -107,12 +88,40 @@ namespace easy3d {
         }
 
         /**
-         * De Casteljau algorithm evaluating a cubic (third degree) curve.
-         * Works for both 2D and 3D.
+         * \brief De Casteljau algorithm evaluating a cubic (third degree) curve from the given control points \p A,
+         * \p B, and \p C. Works for both 2D and 3D. Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
          * @param bezier_steps Controls the smoothness of the curved corners. A greater value results in a smoother
          *      transitions but more vertices. Suggested value is 4.
          * @param include_end Ture to extend the curve to the end point.
+         *
+         * The following code shows how to visualize a quadratic curve (as a polyline):
+         * \code
+         * {
+         *     vec3 a(0, 0, 0);
+         *     vec3 b(400, 0, 0);
+         *     vec3 c(400, 800, 0);
+         *     vec3 d(800, 800, 0);
+         *     unsigned int steps = 20;
+         *
+         *     std::vector<vec3> points;
+         *     curve::cubic(a, b, c, d, steps, points);
+         *     std::cout << "first point: " << points.front() << ", last point: " << points.back() << std::endl;
+         *
+         *     std::vector<unsigned int> indices;
+         *     for (unsigned int i = 0; i < points.size() - 1; ++i) {
+         *         indices.push_back(i);
+         *         indices.push_back(i + 1);
+         *     }
+         *     LinesDrawable *curve = new LinesDrawable;
+         *     curve->update_vertex_buffer(points);
+         *     curve->update_element_buffer(indices);
+         *     curve->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
+         *     curve->set_line_width(5);
+         *     curve->set_uniform_coloring(vec4(0, 1, 0, 1));
+         *     viewer.add_drawable(curve);
+         * }
+         * \endcode
          */
         template<typename Point>
         inline

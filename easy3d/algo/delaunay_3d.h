@@ -45,8 +45,11 @@ namespace easy3d {
 
         virtual ~Delaunay3();
 
+        /// \brief Sets the vertices from an array of floating point numbers in which each consecutive number triple
+        /// denotes a 3D point.
         virtual void set_vertices(unsigned int nb_vertices, const float *vertices);
 
+        /// \brief Sets the vertices from an array of 3D points.
         void set_vertices(const std::vector<vec3> &vertices) {
             // for QDel
             if (vertices.capacity() - vertices.size() < 8) {
@@ -55,6 +58,7 @@ namespace easy3d {
             set_vertices((unsigned int) vertices.size(), &vertices[0].x);
         }
 
+        /// \brief Returns the number of tetrahedra.
         unsigned int nb_tets() const { return nb_cells(); }
 
         const int *tet_to_v() const { return cell_to_v(); }
@@ -75,6 +79,7 @@ namespace easy3d {
             return *(const vec3 *) vertex_ptr(i);
         }
 
+        /// \brief Returns the index of the \p lv_th vertex in the \p t_th tetrahedron.
         int tet_vertex(unsigned int t, unsigned int lv) const {
             return cell_vertex(t, lv);
         }
@@ -120,7 +125,7 @@ namespace easy3d {
             return geom::tetra_circum_center(p0, p1, p2, p3);
         }
 
-        // Retrieves the Voronoi cell associated with vertex v.
+        /// \brief Returns the Voronoi cell associated with vertex v.
         void get_voronoi_cell(
                 unsigned int v, VoronoiCell3d &cell, bool geometry = true
         ) const;

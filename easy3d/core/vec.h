@@ -36,16 +36,25 @@
 namespace easy3d {
 
 #if 1
+
+    /**
+     * \brief Base class for vector types. It provides generic functionality for \p N dimensional vectors.
+     * \tparam N The dimension/size of a vector.
+     * \tparam T The scalar type of vector elements.
+     */
     template <size_t N, class T>
     class Vec {
     public:
         typedef Vec<N, T>   thisclass;
         typedef T           FT;
 
+        /// \brief Default constructor. All elements will be initialized to zero.
         Vec() { for (size_t i = 0; i < N; i++) { data_[i] = T(0); } }
 
+        /// \brief Constructs a vector from a scalar number \p s. All elements will be initialized to this value.
         explicit Vec(const T& s) { for (size_t i = 0; i < N; i++) { data_[i] = s; } }
 
+        /// \brief Constructs a vector from another vector of the same dimension/size.
         // This one should never be called : a template constructor cannot be a copy constructor
         template<class T2> explicit Vec(const Vec<N, T2>& rhs) {
             for (size_t i = 0; i < N; i++) {
@@ -53,6 +62,7 @@ namespace easy3d {
             }
         }
 
+        /// \brief Constructs a vector from another vector of the same dimension/size.
         // to avoid compilation problems
         template<class T2, size_t M> explicit Vec(const Vec<M, T2>& rhs) {
             assert(M == N);
@@ -60,28 +70,35 @@ namespace easy3d {
                 data_[i] = T(rhs[i]);
             }
         }
+
+        /// \brief Constructs a vector from an array of values.
         template<class T2> explicit Vec(const T2* rhs) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] = T(rhs[i]);
             }
         }
 
+        /// \brief Assignment operator. It assigns the value of this vector from another vector.
         thisclass& operator=(const thisclass& rhs) {
             memcpy(data_, rhs.data(), N*sizeof(T));
             return *this;
         }
 
+        /// \brief Returns the dimension/size of this vector.
         size_t dimension() const { return (size_t)N; }
+        /// \brief Returns the dimension/size of this vector.
         size_t size() const { return dimension(); }
 
-        // returns the memory address of the vector.
+        /// \brief Returns the memory address of the vector.
         T* data()             { return data_; }
+        /// \brief Returns the constant memory address of the vector.
         const T* data() const { return data_; }
 
-        // Conversion operator returning the memory address of the data.
-        // Very convenient to pass the data pointer as a parameter to functions.
-        // e.g., glVertex3fv(pos);
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions, e.g., \code glVertex3fv(pos); \endcode.
         operator const T*() const { return data_; }
+        /// \brief Conversion operator returning the memory address of the data. Very convenient to pass this vector
+        /// as a data pointer to functions, e.g., \code glVertex3fv(pos); \endcode.
         operator T*() { return data_; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -97,6 +114,7 @@ namespace easy3d {
         //    return data()[idx];
         //}
 
+        /// \brief Returns the squared length of this vector.
         inline T length2() const {
             T result = T(0);
             for (size_t i = 0; i < N; i++) {
@@ -105,14 +123,17 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Returns the length of this vector.
         inline T length() const {
             return sqrt(length2());
         }
 
+        /// \brief Returns the norm (i.e., length/magnitude0 of this vector.
         inline T norm() const {
             return length();
         }
 
+        /// \brief Returns the squared Euclidean distance to another vector.
         inline T distance2(const thisclass &rhs) const {
             T result = T(0);
             for (size_t i = 0; i < N; i++) {
@@ -122,6 +143,7 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Normalizes this vector.
         inline thisclass& normalize() {
             T s = length();
             s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -129,7 +151,7 @@ namespace easy3d {
             return *this;
         }
 
-        // operators
+        /// \brief Compound addition with another vector.
         inline thisclass& operator+=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] += v.data_[i];
@@ -137,6 +159,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Compound subtraction with another vector.
         inline thisclass& operator-=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] -= v.data_[i];
@@ -144,6 +167,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Compound component-wise multiplication with another vector.
         inline thisclass& operator*=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] *= v.data_[i];
@@ -151,6 +175,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Compound component-wise division with another vector.
         inline thisclass& operator/=(const thisclass& v) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] /= v.data_[i];
@@ -158,6 +183,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Compound vector-scalar multiplication.
         template <class T2> inline thisclass& operator*=(T2 s) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] *= T(s);
@@ -165,6 +191,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Compound vector-scalar division.
         template <class T2> inline thisclass& operator/=(T2 s) {
             for (size_t i = 0; i < N; i++) {
                 data_[i] /= T(s);
@@ -172,6 +199,7 @@ namespace easy3d {
             return *this;
         }
 
+        /// \brief Addition with another vector.
         inline thisclass operator+ (const thisclass& v) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -180,6 +208,7 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Subtraction with another vector.
         inline thisclass operator- (const thisclass& v) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -188,6 +217,7 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Vector-scalar multiplication.
         template <class T2> inline thisclass operator* (T2 s) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -196,6 +226,7 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Vector-scalar division.
         template <class T2> inline thisclass operator/ (T2 s) const {
             thisclass result(*this);
             for (size_t i = 0; i < N; i++) {
@@ -204,6 +235,7 @@ namespace easy3d {
             return result;
         }
 
+        /// \brief Negates this vector (i.e., adds a \c minus sign).
         inline thisclass operator- () const {
             thisclass result;
             for (size_t i = 0; i < N; i++) {

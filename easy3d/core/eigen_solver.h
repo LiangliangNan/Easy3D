@@ -47,29 +47,32 @@
 
 namespace easy3d {
 
+    /// \brief An easy-to-use eigen solver.
     template <typename FT>
     class EigenSolver
     {
     public:
+        /// \brief The sorting method for the eigenvalues and their corresponding eigen vectors.
         enum SortingMethod { NO_SORTING, INCREASING, DECREASING };
 
     public:
+        /// \brief Default constructor
         /// @param n: the size of the input matrix
         EigenSolver(int n);
         ~EigenSolver();
 
-        /// solve
+        /// \brief Computes the eigenvalues and eigenvectors of the input matrix \p mat.
         /// @param mat: the input matrix (row major 2D array)
         void solve(FT** mat, SortingMethod sm = NO_SORTING);
 
-        /// the i_th eigenvalue
+        /// \brief Returns the i_th eigenvalue.
         FT eigen_value(int i) const { return diag_[i]; }
-        /// the comp_th component of the i_th eigenvector
+        /// \brief Returns the \p comp_th component of the \p i_th eigenvector.
         FT eigen_vector(int comp, int i) const { return matrix_[comp][i]; }
 
-        /// the eigenvalues
+        /// \brief Returns the eigenvalues.
         FT* eigen_values() { return diag_; }
-        /// the eigenvectors (stored as the columns of the returned matrix)
+        /// \brief Returns the eigenvectors (stored as the columns of the returned matrix).
         FT** eigen_vectors() { return matrix_; }
 
     protected:

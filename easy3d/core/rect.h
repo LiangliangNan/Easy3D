@@ -32,11 +32,13 @@
 
 namespace easy3d {
 
-    // Seems duplicating 2D bounding box?
+    /// \brief The GenericRect class defines a rectangle in the 2D space.
+    /// A rectangle is normally expressed as a top-left corner and a size (width and height).
 
     template <typename FT>
     class GenericRect {
     public:
+        /// \brief Constructs a rectangle from two points \p p and \p q.
         GenericRect(const Vec<2, FT>& p, const Vec<2, FT>& q) {
             x_min_ = std::min(q.x, p.x);
             x_max_ = std::max(q.x, p.x);
@@ -45,6 +47,8 @@ namespace easy3d {
 
         }
 
+        /// \brief Constructs a rectangle from its min coordinates (\p xmin and \p ymin)
+        /// and max coordinates (\p xmax and \p ymax).
         GenericRect(FT xmin, FT xmax, FT ymin, FT ymax)
             : x_min_(std::min(xmin, xmax))
             , y_min_(std::min(ymin, ymax))
@@ -67,7 +71,9 @@ namespace easy3d {
         FT x() const { return x_min_; }
         FT y() const { return y_min_; }
 
+        /// \brief Returns the width of the rectangle.
         FT width()  const { return x_max() - x_min(); }
+        /// \brief Returns the height of the rectangle.
         FT height() const { return y_max() - y_min(); }
 
         FT& left() { return x_min_; }
@@ -79,13 +85,19 @@ namespace easy3d {
         FT right() const  { return x_max_; }
         FT bottom() const { return y_max_; }
 
+        /// \brief Returns the position of the rectangle's top-left corner.
         Vec<2, FT> top_left() const  { return Vec<2, FT>(x_min_, y_min_); }
+        /// \brief Returns the position of the rectangle's bottom-right corner.
         Vec<2, FT> bottom_right() const  { return Vec<2, FT>(x_max_, y_max_); }
+        /// \brief Returns the position of the rectangle's top-right corner.
         Vec<2, FT> top_right() const  { return Vec<2, FT>(x_max_, y_min_); }
+        /// \brief Returns the position of the rectangle's bottom-left corner.
         Vec<2, FT> bottom_left() const  { return Vec<2, FT>(x_min_, y_max_); }
 
         Vec<2, FT> min() const { return Vec<2, FT>(x_min_, y_min_); }
         Vec<2, FT> max() const { return Vec<2, FT>(x_max_, y_max_); }
+
+        /// \brief Returns the center point of the rectangle.
         Vec<2, FT> center() const {
             return Vec<2, FT>(FT(0.5) * (x_max() + x_min()), FT(0.5) * (y_max() + y_min()));
         }

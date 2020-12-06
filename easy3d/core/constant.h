@@ -43,12 +43,20 @@ namespace easy3d {
     // Function returning min/max for corresponding type
     template <typename FT> inline FT min();
     template <typename FT> inline FT max();
+
     // Template specializations for float and double
+
+    /// \brief Function returning \c min for int type numbers.
     template <> inline int   min<int>() { return INT_MIN; }
+    /// \brief Function returning \c max for int type numbers.
     template <> inline int   max<int>() { return INT_MAX; }
+    /// \brief Function returning \c min for float type numbers.
     template <> inline float   min<float>() { return FLT_MIN; }
+    /// \brief Function returning \c max for float type numbers.
     template <> inline float   max<float>() { return FLT_MAX; }
+    /// \brief Function returning \c min for double type numbers.
     template <> inline double  min<double>() { return DBL_MIN; }
+    /// \brief Function returning \c max for double type numbers.
     template <> inline double  max<double>() { return DBL_MAX; }
 
     // standard epsilon values
@@ -57,9 +65,13 @@ namespace easy3d {
     template <typename FT> inline FT epsilon_sqr();
 
     // Template specializations for float and double
+    /// \brief Function returning \c epsilon for float type numbers.
     template <> inline float  epsilon<float>() { return 1.0e-6f; }
+    /// \brief Function returning \c squared_epsilon for float type numbers.
     template <> inline float  epsilon_sqr<float>() { return 1.0e-12f; }
+    /// \brief Function returning \c epsilon for double type numbers.
     template <> inline double epsilon<double>() { return 1.0e-12; }
+    /// \brief Function returning \c squared_epsilon for double type numbers.
     template <> inline double epsilon_sqr<double>() { return 1.0e-24; }
 }
 
