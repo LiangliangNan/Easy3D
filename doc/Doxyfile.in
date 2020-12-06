@@ -828,7 +828,7 @@ EXCLUDE_SYMBOLS        =
 
 EXAMPLE_PATH           = @PROJECT_SOURCE_DIR@/tutorials
 
-# If the value of the EXAMEXAMPLE_PATH PLE_PATH tag contains directories, you can use the
+# If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
 # *.h) to filter out the source-files in the directories. If left blank all
 # files are included.
