@@ -54,9 +54,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_601_Cloud_NormalEstimation/main.cpp
      * The header file of the class:
-     * \include Tutorial_601_Cloud_NormalEstimation/normal_estimation.h
+     * \include Tutorial_601_Cloud_NormalEstimation/viewer.h
      * The source file of the class:
-     * \include Tutorial_601_Cloud_NormalEstimation/normal_estimation.cpp
+     * \include Tutorial_601_Cloud_NormalEstimation/viewer.cpp
      */
 
 } // namespace easy3d

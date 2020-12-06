@@ -416,9 +416,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_506_DepthMaps/main.cpp
      * The header file of the class:
-     * \include Tutorial_506_DepthMaps/depth_image.h
+     * \include Tutorial_506_DepthMaps/viewer.h
      * The source file of the class:
-     * \include Tutorial_506_DepthMaps/depth_image.cpp
+     * \include Tutorial_506_DepthMaps/viewer.cpp
      */
 
 

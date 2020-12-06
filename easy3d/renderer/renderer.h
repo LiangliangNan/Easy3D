@@ -227,9 +227,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_306_Image/main.cpp
      * The header file of the class:
-     * \include Tutorial_306_Image/image_viewer.h
+     * \include Tutorial_306_Image/viewer.h
      * The source file of the class:
-     * \include Tutorial_306_Image/image_viewer.cpp
+     * \include Tutorial_306_Image/viewer.cpp
      */
 
 }

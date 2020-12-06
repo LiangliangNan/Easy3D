@@ -138,9 +138,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_505_EyeDomeLighting/main.cpp
      * The header file of the class:
-     * \include Tutorial_505_EyeDomeLighting/eye_dome_lighting.h
+     * \include Tutorial_505_EyeDomeLighting/viewer.h
      * The source file of the class:
-     * \include Tutorial_505_EyeDomeLighting/eye_dome_lighting.cpp
+     * \include Tutorial_505_EyeDomeLighting/viewer.cpp
      */
 
 }

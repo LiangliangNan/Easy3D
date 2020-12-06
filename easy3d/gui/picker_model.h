@@ -73,9 +73,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_401_ModelPicker/main.cpp
      * The header file of the class:
-     * \include Tutorial_401_ModelPicker/picker_viewer.h
+     * \include Tutorial_401_ModelPicker/viewer.h
      * The source file of the class:
-     * \include Tutorial_401_ModelPicker/picker_viewer.cpp
+     * \include Tutorial_401_ModelPicker/viewer.cpp
      */
 
 }

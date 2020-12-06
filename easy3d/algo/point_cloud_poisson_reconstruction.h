@@ -136,9 +136,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_602_Cloud_SurfaceReconstruction/main.cpp
      * The header file of the class:
-     * \include Tutorial_602_Cloud_SurfaceReconstruction/surface_reconstruction.h
+     * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.h
      * The source file of the class:
-     * \include Tutorial_602_Cloud_SurfaceReconstruction/surface_reconstruction.cpp
+     * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.cpp
      */
 
 

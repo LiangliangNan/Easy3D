@@ -194,9 +194,9 @@ namespace easy3d {
      * The source file containing the main() function:
      * \include Tutorial_402_FacePicker/main.cpp
      * The header file of the class:
-     * \include Tutorial_402_FacePicker/picker_viewer.h
+     * \include Tutorial_402_FacePicker/viewer.h
      * The source file of the class:
-     * \include Tutorial_402_FacePicker/picker_viewer.cpp
+     * \include Tutorial_402_FacePicker/viewer.cpp
      */
 
 }
