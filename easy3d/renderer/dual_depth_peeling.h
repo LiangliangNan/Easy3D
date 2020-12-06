@@ -187,6 +187,17 @@ namespace easy3d {
         DualDepthPeeling& operator=(const DualDepthPeeling&);
     };
 
+
+    /**
+     * \example Tutorial_504_Transparency
+     * The source file containing the main() function:
+     * \include Tutorial_504_Transparency/main.cpp
+     * The header file of the class:
+     * \include Tutorial_504_Transparency/transparency.h
+     * The source file of the class:
+     * \include Tutorial_504_Transparency/transparency.cpp
+     */
+
 }
 
 

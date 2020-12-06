@@ -47,7 +47,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
 
-#include "viewer_qt.h"
+#include "viewer.h"
 
 #include <ui_main_window.h>
 

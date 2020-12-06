@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "image_viewer.h"
+#include "viewer.h"
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 

@@ -22,34 +22,35 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "surface_reconstruction.h"
+#include "viewer.h"
 
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/algo/point_cloud_poisson_reconstruction.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/algo/point_cloud_normals.h>
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
 
 using namespace easy3d;
 
-TutorialSurfaceReconstruction::TutorialSurfaceReconstruction(const std::string& title) : Viewer(title) {
+TutorialNormalEstimation::TutorialNormalEstimation(const std::string& title) : Viewer(title) {
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
     camera_->showEntireScene();
 }
 
 
-std::string TutorialSurfaceReconstruction::usage() const {
-    return ("-------------- Surface Reconstruction usage -------------- \n"
-            "Press key 'r' for surface reconstruction\n"
-            "---------------------------------------------------------- \n");
+std::string TutorialNormalEstimation::usage() const {
+    return ("----------- Normal Estimation usage ------------ \n"
+            "Press key 'e' to estimation point cloud normals\n"
+            "press key 'r' to re-orient the normals\n"
+            "------------------------------------------------ \n");
 }
 
 
-bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_R) {
+bool TutorialNormalEstimation::key_press_event(int key, int modifiers) {
+    if (key == GLFW_KEY_E) {
         PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
         if (cloud == nullptr) {
             if (!models().empty())
@@ -59,24 +60,48 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
             return false;
         }
 
-        auto normals = cloud->get_vertex_property<vec3>("v:normal");
-        if (!normals) {
-            std::cerr << "Poisson surface reconstruction method requires normal information."
-                      << " Please provide normal information. Alternatively, you can use the "
-                      << " Tutorial_601_PointCloud_NormalEstimation for normal estimation" << std::endl;
+        PointCloudNormals algo;
+        if (algo.estimate(cloud)) {
+            update_rendering();
+            return true;
+        }
+        else
+            return false;
+    }
+    else if (key == GLFW_KEY_R) {
+        PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
+        if (cloud == nullptr) {
+            if (!models().empty())
+                std::cerr << "current model is not a point cloud" << std::endl;
+            else
+                std::cerr << "point cloud does not exist" << std::endl;
             return false;
         }
 
-        PoissonReconstruction algo;
-        Model* surface = algo.apply(cloud);
-        if (surface != nullptr) {
-            add_model(surface, true);
-            delete_model(cloud);
-            update();
+        PointCloudNormals algo;
+        if (algo.reorient(cloud)) {
+            update_rendering();
+            return true;
         }
-
-        return true;
+        else
+            return false;
     }
    else
         return Viewer::key_press_event(key, modifiers);
+}
+
+
+void TutorialNormalEstimation::update_rendering() {
+    PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
+    if (cloud == nullptr)
+        return;
+
+    // The "normal" property
+    auto normals = cloud->get_vertex_property<vec3>("v:normal");
+    if (normals) {
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        // Upload the vertex normals to the GPU.
+        drawable->update_normal_buffer(normals.vector());
+        update();
+    }
 }

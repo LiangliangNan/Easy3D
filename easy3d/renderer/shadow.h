@@ -134,6 +134,17 @@ namespace easy3d {
         Shadow& operator=(const Shadow&);
     };
 
+
+    /**
+     * \example Tutorial_502_HardShadow
+     * The source file containing the main() function:
+     * \include Tutorial_502_HardShadow/main.cpp
+     * The header file of the class:
+     * \include Tutorial_502_HardShadow/viewer.h
+     * The source file of the class:
+     * \include Tutorial_502_HardShadow/viewer.cpp
+     */
+
 }
 
 #endif // EASY3D_RENDERER_SHADOW_H

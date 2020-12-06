@@ -216,6 +216,22 @@ namespace easy3d {
         std::vector<LinesDrawable *> lines_drawables_;
         std::vector<TrianglesDrawable *> triangles_drawables_;
     };
+
+
+    /// @example Tutorial_303_ScalarField   \include Tutorial_303_ScalarField/main.cpp
+    /// @example Tutorial_304_VectorField   \include Tutorial_304_VectorField/main.cpp
+    /// @example Tutorial_305_Texture       \include Tutorial_305_Texture/main.cpp
+
+    /**
+     * \example Tutorial_306_Image
+     * The source file containing the main() function:
+     * \include Tutorial_306_Image/main.cpp
+     * The header file of the class:
+     * \include Tutorial_306_Image/image_viewer.h
+     * The source file of the class:
+     * \include Tutorial_306_Image/image_viewer.cpp
+     */
+
 }
 
 #endif  // EASY3D_RENDERER_RENDERER_H

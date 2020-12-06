@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "text_rendering.h"
+#include "viewer.h"
 
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/util/file_system.h>

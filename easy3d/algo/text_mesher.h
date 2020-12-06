@@ -144,6 +144,10 @@ namespace easy3d {
         // vertices. Suggested value is 4.
         unsigned short bezier_steps_;
     };
+
+
+    /// @example Tutorial_310_TextMesher    \include Tutorial_310_TextMesher/main.cpp
+
 }
 
 

@@ -100,6 +100,17 @@ namespace easy3d {
         SoftShadow& operator=(const SoftShadow&);
     };
 
+
+    /**
+     * \example Tutorial_503_SoftShadow
+     * The source file containing the main() function:
+     * \include Tutorial_503_SoftShadow/main.cpp
+     * The header file of the class:
+     * \include Tutorial_503_SoftShadow/viewer.h
+     * The source file of the class:
+     * \include Tutorial_503_SoftShadow/viewer.cpp
+     */
+
 }
 
 #endif // EASY3D_RENDERER_SOFT_SHADOW_H

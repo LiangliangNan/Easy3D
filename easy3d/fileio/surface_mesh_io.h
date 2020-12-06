@@ -68,6 +68,10 @@ namespace easy3d {
 
 	} // namespace io
 
+
+    /// @example Tutorial_107_SurfaceMesh_IO    \include Tutorial_107_SurfaceMesh_IO/main.cpp
+
+
 } // namespace easy3d
 
 #endif // EASY3D_FILEIO_MESH_IO_H

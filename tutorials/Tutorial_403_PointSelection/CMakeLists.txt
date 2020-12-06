@@ -5,8 +5,8 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        point_selection.h
-        point_selection.cpp
+        viewer.h
+        viewer.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

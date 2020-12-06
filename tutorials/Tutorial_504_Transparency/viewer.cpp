@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "transparency.h"
+#include "viewer.h"
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/average_color_blending.h>
 #include <easy3d/renderer/dual_depth_peeling.h>

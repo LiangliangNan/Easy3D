@@ -194,6 +194,9 @@ namespace easy3d {
         std::vector<std::string> font_names_;
     };
 
+
+    /// @example Tutorial_309_TextRendering     \include Tutorial_309_TextRendering/main.cpp
+
 }
 
 #endif  // EASY3D_RENDERER_TEXT_RENDERER_H

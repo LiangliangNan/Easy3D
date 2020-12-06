@@ -28,7 +28,7 @@
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
-#include "viewer_imgui.h"
+#include "viewer.h"
 
 
 using namespace easy3d;

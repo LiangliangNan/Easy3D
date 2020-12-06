@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "depth_image.h"
+#include "viewer.h"
 #include <easy3d/fileio/resources.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>

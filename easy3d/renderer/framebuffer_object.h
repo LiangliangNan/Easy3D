@@ -411,6 +411,17 @@ namespace easy3d {
         FramebufferObject& operator=(const FramebufferObject&);
     };
 
+    /**
+     * \example Tutorial_506_DepthMaps
+     * The source file containing the main() function:
+     * \include Tutorial_506_DepthMaps/main.cpp
+     * The header file of the class:
+     * \include Tutorial_506_DepthMaps/depth_image.h
+     * The source file of the class:
+     * \include Tutorial_506_DepthMaps/depth_image.cpp
+     */
+
+
 } // namespace easy3d
 
 

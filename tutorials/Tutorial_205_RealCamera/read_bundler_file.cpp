@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "real_camera.h"
+#include "viewer.h"
 
 #include <fstream>
 #include <sstream>

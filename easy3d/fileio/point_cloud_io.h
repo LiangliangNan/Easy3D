@@ -34,19 +34,30 @@ namespace easy3d {
 
 	class PointCloud;
 
-    // TODO: add a general purpose file format 'map' capable of storing
-    //       point clouds, graphs, and meshes with arbitrary types of
-    //       properties (similar to PLY, each property is read/written
-    //       as a whole. Check PLY and POLY formats as reference.
-    //       When this is done, I don't need BIN and POLY any more).
+	/**
+	 * \brief File IO for point clouds.
+     * \todo Add a general purpose file format 'map' capable of storing
+     *       point clouds, graphs, and meshes with arbitrary types of
+     *       properties (similar to PLY, each property is read/written
+     *       as a whole. Check PLY and POLY formats as reference.
+     *       When this is done, I don't need BIN and POLY any more).
+     */
 
 	class PointCloudIO
 	{
 	public:
-        // return nullptr if failed
+        /**
+         * \brief Reads a point cloud from file \p file_name. Returns true if succeeded.
+         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg)
+         * and type (i.e. binary or ASCII).
+         */
 		static PointCloud* load(const std::string& file_name);
 
-		// save the cloud to a file. return false if failed.
+        /**
+         * \brief Saves a point cloud to file \p file_name. Returns true if succeeded.
+         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg)
+         * and type (i.e. binary or ASCII).
+         */
 		static bool	save(const std::string& file_name, const PointCloud* point_set);
 	};
 
@@ -70,6 +81,9 @@ namespace easy3d {
 		bool load_las(const std::string& file_name, PointCloud* cloud);
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
 	};
+
+
+    /// @example Tutorial_103_PointCloud_IO     \include Tutorial_103_PointCloud_IO/main.cpp
 
 
 } // namespace easy3d

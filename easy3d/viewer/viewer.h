@@ -445,6 +445,57 @@ namespace easy3d {
         std::vector<Drawable*> drawables_;
 	};
 
+
+    /**
+     * \example Tutorial_201_Viewer_imgui
+     * The source file containing the main() function:
+     * \include Tutorial_201_Viewer_imgui/main.cpp
+     * The header file of the class:
+     * \include Tutorial_201_Viewer_imgui/viewer.h
+     * The source file of the class:
+     * \include Tutorial_201_Viewer_imgui/viewer.cpp
+     */
+
+    /**
+     * \example Tutorial_202_Viewer_Qt
+     * The source file containing the main() function:
+     * \include Tutorial_202_Viewer_Qt/main.cpp
+     * The header file of the class:
+     * \include Tutorial_202_Viewer_Qt/viewer.h
+     * The source file of the class:
+     * \include Tutorial_202_Viewer_Qt/viewer.cpp
+     */
+
+    /**
+     * \example Tutorial_203_CompositeView
+     * The source file containing the main() function:
+     * \include Tutorial_203_CompositeView/main.cpp
+     * The header file of the class:
+     * \include Tutorial_203_CompositeView/viewer.h
+     * The source file of the class:
+     * \include Tutorial_203_CompositeView/viewer.cpp
+     */
+
+    /**
+     * \example Tutorial_204_CameraInterpolation
+     * The source file containing the main() function:
+     * \include Tutorial_204_CameraInterpolation/main.cpp
+     * The header file of the class:
+     * \include Tutorial_204_CameraInterpolation/viewer.h
+     * The source file of the class:
+     * \include Tutorial_204_CameraInterpolation/viewer.cpp
+     */
+
+    /**
+     * \example Tutorial_205_RealCamera
+     * The source file containing the main() function:
+     * \include Tutorial_205_RealCamera/main.cpp
+     * The header file of the class:
+     * \include Tutorial_205_RealCamera/viewer.h
+     * The source file of the class:
+     * \include Tutorial_205_RealCamera/viewer.cpp
+     */
+
 }
 
 

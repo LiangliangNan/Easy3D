@@ -1934,6 +1934,10 @@ namespace easy3d {
         return (os << 'f' << f.idx());
     }
 
+    /// @example Tutorial_104_SurfaceMesh               \include Tutorial_104_SurfaceMesh/main.cpp
+    /// @example Tutorial_105_SurfaceMesh_Connectivity  \include Tutorial_105_SurfaceMesh_Connectivity/main.cpp
+    /// @example Tutorial_106_SurfaceMesh_Property      \include Tutorial_106_SurfaceMesh_Property/main.cpp
+
 } // namespace easy3d
 
 #endif // EASY3D_CORE_SURFACE_MESH_H

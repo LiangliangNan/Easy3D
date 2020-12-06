@@ -7,10 +7,10 @@ project(${PROJECT_NAME})
 include( ../../cmake/UseOpenMP.cmake )
 
 add_executable(${PROJECT_NAME}
-                main.cpp
-                surface_reconstruction.h
-                surface_reconstruction.cpp
-)
+        main.cpp
+        viewer.h
+        viewer.cpp
+        )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

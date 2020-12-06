@@ -5,10 +5,10 @@ project(${PROJECT_NAME})
 
 
 add_executable(${PROJECT_NAME}
-                main.cpp
-                camera_interpolation.h
-                camera_interpolation.cpp
-)
+        main.cpp
+        viewer.h
+        viewer.cpp
+        )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

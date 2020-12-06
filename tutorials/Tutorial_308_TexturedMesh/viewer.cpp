@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "textured_viewer.h"
+#include "viewer.h"
 
 #include <unordered_map>
 

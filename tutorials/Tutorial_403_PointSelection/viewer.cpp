@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "point_selection.h"
+#include "viewer.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/renderer/text_renderer.h>

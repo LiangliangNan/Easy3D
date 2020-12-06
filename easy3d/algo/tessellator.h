@@ -295,6 +295,9 @@ namespace easy3d {
         void difference_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
     }
 
+
+    /// @example Tutorial_307_Tessellator   \include Tutorial_307_Tessellator/main.cpp
+
 }
 
 #endif  // EASY3D_ALGO_TESSELLATOR_H

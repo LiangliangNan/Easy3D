@@ -4,13 +4,13 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 # may use OpenMP
-include( ../../cmake/UseOpenMP.cmake )
+include(../../cmake/UseOpenMP.cmake)
 
 add_executable(${PROJECT_NAME}
-                main.cpp
-                normal_estimation.h
-                normal_estimation.cpp
-)
+        main.cpp
+        viewer.h
+        viewer.cpp
+        )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

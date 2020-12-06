@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "picker_viewer.h"
+#include "viewer.h"
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
