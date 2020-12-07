@@ -41,7 +41,7 @@
 namespace easy3d {
 
     /// \brief Detect/Remove duplicated faces for a surface mesh.
-
+    /// \class DuplicatedFaces  easy3d/algo_ext/duplicated_faces.h
     class DuplicatedFaces
     {
     public:

@@ -37,9 +37,9 @@ namespace easy3d {
     class SurfaceMesh;
 
     /// \brief Detect/Resolve topological issues (e.g., duplicate faces, self intersection) of a surface mesh.
-    /// This class simply collects the related algorithms implemented using CGAL (to eliminate including CGAL header
-    /// files from client code). \see DuplicatedFaces and SelfIntersection.
-
+    /// \class MeshSurfacer  easy3d/algo_ext/mesh_surfacer.h
+    /// \details This class simply collects the related algorithms implemented using CGAL (to eliminate including CGAL
+    /// header files from client code). \see DuplicatedFaces and SelfIntersection.
     class MeshSurfacer
     {
     public:

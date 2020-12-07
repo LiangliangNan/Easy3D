@@ -41,7 +41,8 @@
 
 namespace easy3d {
 
-    /// \brief Given a triangle mesh compute a new mesh which is the same
+    /// \brief Detects and resolves self-intersection for surface mesh.
+    /// \details Given a triangle mesh compute a new mesh which is the same
     /// as the input mesh except that any self-intersecting triangles
     /// have been subdivided (new vertices and face created) so that
     /// the self-intersection contour lies exactly on edges in the
@@ -56,6 +57,8 @@ namespace easy3d {
     /// resulting additional vertices along that edge may not get
     /// properly connected so that the output mesh has the same
     /// global topology.
+    ///
+    /// \class SelfIntersection  easy3d/algo_ext/self_intersection.h
 
     class SelfIntersection {
     public:
