@@ -31,7 +31,8 @@
 namespace easy3d {
 
 
-    // The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh
+    /// The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.
+
 	class PointsDrawable : public Drawable {
 	public:
         PointsDrawable(const std::string& name = "", Model* model = nullptr);

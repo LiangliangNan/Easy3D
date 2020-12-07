@@ -32,6 +32,8 @@ namespace easy3d {
 
 
     /// \brief A generic line representation, which supports both 2D and 3D lines.
+    /// \class GenericLine easy3d/core/line.h
+
     template <int DIM, typename FT>
     class GenericLine {
     public:

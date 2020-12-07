@@ -41,7 +41,7 @@ namespace easy3d {
     class AverageColorBlending : public Transparency
     {
     public:
-        AverageColorBlending(Camera* cam);
+        explicit AverageColorBlending(Camera* cam);
         ~AverageColorBlending() override;
 
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;

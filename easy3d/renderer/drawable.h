@@ -44,7 +44,7 @@ namespace easy3d {
      *          of a mesh, the wireframe of a surface mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.
      *          A drawable can live independently or be associated with a Model.
-     * @related @class Renderer
+     * @see Renderer
      */
 
     class Drawable : public State {
@@ -58,14 +58,14 @@ namespace easy3d {
 
     public:
         // a drawable can be stand-alone or attached to a model
-        Drawable(const std::string &name = "unknown", Model *model = nullptr);
-        ~Drawable();
+        explicit Drawable(const std::string &name = "unknown", Model *model = nullptr);
+        ~Drawable() override;
 
         /// Returns the type of the drawable.
         virtual Type type() const = 0;
 
         const std::string &name() const { return name_; }
-        void set_name(const std::string n) { name_ = n; }
+        void set_name(const std::string& n) { name_ = n; }
 
         /// the model to which the drawable is attached to (can be NULL).
         Model *model() { return model_; }
@@ -81,8 +81,8 @@ namespace easy3d {
         /// print statistics (e.g., num vertices, memory usage) of the buffers to an output stream (e.g., std::cout).
         void buffer_stats(std::ostream &output) const;
 
-        // ------------------- buffer access and management ------------------------
-
+        /// \name Buffer access and management
+        /// @{
         unsigned int vertex_buffer() const { return vertex_buffer_; }
         unsigned int color_buffer() const { return color_buffer_; }
         unsigned int normal_buffer() const { return normal_buffer_; }
@@ -92,7 +92,7 @@ namespace easy3d {
         unsigned int selection_buffer() const { return selection_buffer_; }
 
         /**
-         * Create/Update a single buffer.
+         * Creates/Updates a single buffer.
          * Primitives like lines and triangles can be drawn with or without the element buffer.
          *  - With an element buffer: this can reduce the GPU memory consumption.
          *  - Without an element buffer: easier data transfer, but uses more GPU memory. In this case, vertices need to
@@ -105,30 +105,33 @@ namespace easy3d {
         void update_texcoord_buffer(const std::vector<vec2> &texcoords);
         void update_element_buffer(const std::vector<unsigned int> &elements);
 
-        // entry must have 2 or 3 elements
+        /// Updates the element buffer.
+        /// \note Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).
         void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements);
 
         /// selection buffer (internally based on a shader storage buffer)
         /// @param index: the index of the binding point.
-        /// NOTE: the buffers should also be bound to this point in all shader code
+        /// \note The buffers should also be bound to this point in all shader code
         void update_selection_buffer(unsigned int index = 1);
 
         /// generic storage buffer
         /// @param index: the index of the binding point.
-        /// NOTE: the buffers should also be bound to this point in all shader code
+        /// \note The buffers should also be bound to this point in all shader code
         void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0);
 
         /// Releases the element buffer if existing vertex data is sufficient (may require duplicating vertex data).
         void release_element_buffer();
 
-        // ----------------- access data from the buffers -------------------
-
+        /// Accesses data from the selection buffers
         void fetch_selection_buffer();
 
-        // -------------------------- rendering -----------------------------
+        ///@}
+
+        /// \name Rendering
+        ///@{
 
         /// The draw method.
-        virtual void draw(const Camera *camera, bool with_storage_buffer = false) const = 0;
+        virtual void draw(const Camera *camera, bool with_storage_buffer) const = 0;
 
         /// The internal draw method of this drawable.
         /// NOTE: this functions should be called when your shader program is in use,
@@ -151,9 +154,11 @@ namespace easy3d {
          * @brief Setups how a drwable can update its OpenGL buffers. This function is required by only non-standard
          *        drawables for a special visualization purpose. Standard drawables can be automatically updated and
          *        do not require this function.
-         * @related renderer::update_buffers(...), update_buffers().
+         * @see renderer::update_buffers().
          */
-        void set_update_func(std::function<void(Model*, Drawable*)> func) { update_func_ = func; }
+        void set_update_func(const std::function<void(Model*, Drawable*)>& func) { update_func_ = func; }
+
+        ///@}
 
     protected:
         VertexArrayObject *vao() const { return vao_; }

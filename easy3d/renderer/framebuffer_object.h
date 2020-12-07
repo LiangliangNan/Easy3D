@@ -32,99 +32,98 @@
 #include <easy3d/renderer/opengl.h>
 
 
-/********************************************************************************************
-*
-* A framebuffer object (FBO) is conceptually a structure containing pointers to GPU memory. 
-* The memory pointed to is either an OpenGL texture or an OpenGL RenderBuffer. FBOs can be 
-* used to render to one or more textures, share depth buffers between multiple sets of 
-* color buffers/textures.
-* http://oss.sgi.com/projects/ogl-sample/registry/EXT/framebuffer_object.txt for details.
-*
-* Note that you need to create a FramebufferObject with more than one sample per pixel for
-* primitives to be antialiased. To create a multisample framebuffer object you should set
-* the sample property to a non-zero value. The default sample count of 0 represents a regular
-* non-multisample framebuffer object. If the desired amount of samples per pixel is not 
-* supported by the hardware then the maximum number of samples per pixel will be used. The
-* GL_EXT_framebuffer_multisample extension is required to create a framebuffer with more than
-* one sample per pixel.
-*
-* NOTE: A valid OpenGL context must be present when creating a FramebufferObject, otherwise
-*		initialization will fail.
-*
-*	Version:	 1.0
-*	created:	 April. 24, 2017
-*	author:		 Liangliang Nan
-*	contact:     liangliang.nan@gmail.com
-*
-********************************************************************************************
-* 
-*  NOTE: - GL_TEXTURE_2D textures must have a power of 2 width and height(e.g. 256x512), 
-*          unless you are using OpenGL 2.0 or higher.
-* 
-* 		 - To create a multisample framebuffer object you should set the sample property 
-* 		   to a non-zero value.
-* 
-* 		 - If you want to use a multisample framebuffer object a texture, you need to 
-* 		   blit it to a regular framebuffer object using blit_framebuffer().
-* 
-* 		 - It is more efficient(but not required) to call bind() on an FBO before making 
-* 		   multiple method calls. For example :
-* 				FramebufferObject fbo;
-* 				fbo.bind();
-* 				fbo.add_color_buffer();
-* 				fbo.add_color_buffer();
-* 				fbo.print_attachments();
-* 
-* 			To provide a complete encapsulation, the following usage pattern works 
-* 			correctly but is less efficient :
-* 				FramebufferObject fbo;
-* 				// NOTE: No bind() call
-* 				fbo.add_color_buffer();
-* 				fbo.add_color_buffer();
-* 				fbo.print_attachments();
-* 
-*  			The first usage pattern binds the FBO only once, whereas the second usage 
-* 			binds / unbinds the FBO for each method call.
-* 
-*  ----------------------------------------------------------------------------------------
-*  Example usage 1: draw to a fbo:
-* 		FramebufferObject fbo(w, h, 0);
-* 		fbo.add_color_texture();
-* 		fbo.add_depth_buffer();
-* 		fbo.bind();
-* 		fbo.activate_draw_buffer(0);
-* 		glClearDepthf(1.0f);								// optional, done by default
-* 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);				// optional, done by default
-* 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// optional, done by default
-* 		you draw code here...	
-* 		fbo.release();
-*       Now you can use fbo.color_texture() for other purposes.
-*  ----------------------------------------------------------------------------------------
-*  Example usage 2: draw the depth map of an object or a scene:
-* 		FramebufferObject fbo(w, h, 0);
-* 		fbo.add_depth_texture(); 
-* 		fbo.bind();
-* 		glClearDepthf(1.0f);				// optional, done by default
-* 		glClear(GL_DEPTH_BUFFER_BIT);	// optional, done by default
-* 		you draw code here...	
-* 		fbo.release();
-*       Now you use the fbo.depth_texture().
-*  For both the above examples, it's easy to enable MSAA by creating a multisample
-*  FBO and render to it. But do remember to blit to a normal FBO before using the 
-*  texture.
-*  -------------------------------------------------------------------------------
-*
-* Current implement support only GL_TEXTURE_2D (see the texture_target_ variable)
-* does not manage externally created textures.
-* TODO:
-*   - add a class TextureFormat for flexible format specification and add related 
-*     functions using the TextureFormat class.
-*   - modify the attach_color_texture() and attach_depth_texture() to use TextureFormat.
-*   - replace ColorAttachment by TextureFormat.  
-*/
-
-
 namespace easy3d {
+
+    /**
+     * \brief A framebuffer object (FBO) is conceptually a structure containing pointers to GPU memory.
+     * The memory pointed to is either an OpenGL texture or an OpenGL RenderBuffer. FBOs can be
+     * used to render to one or more textures, share depth buffers between multiple sets of
+     * color buffers/textures.
+     * http://oss.sgi.com/projects/ogl-sample/registry/EXT/framebuffer_object.txt for details.
+     *
+     * Note that you need to create a FramebufferObject with more than one sample per pixel for
+     * primitives to be antialiased. To create a multisample framebuffer object you should set
+     * the sample property to a non-zero value. The default sample count of 0 represents a regular
+     * non-multisample framebuffer object. If the desired amount of samples per pixel is not
+     * supported by the hardware then the maximum number of samples per pixel will be used. The
+     * GL_EXT_framebuffer_multisample extension is required to create a framebuffer with more than
+     * one sample per pixel.
+     *
+     * NOTE: A valid OpenGL context must be present when creating a FramebufferObject, otherwise
+     *		initialization will fail.
+     *
+     *	Version:	 1.0.
+     *	Created:	 April. 24, 2017.
+     *	Author:		 Liangliang Nan.
+     *	Contact:     liangliang.nan@gmail.com
+     *
+     *  \note
+     *      - GL_TEXTURE_2D textures must have a power of 2 width and height(e.g. 256x512), unless you are using OpenGL 2.0
+     *        or higher.
+     *      - To create a multisample framebuffer object you should set the sample property to a non-zero value.
+     *      - If you want to use a multisample framebuffer object a texture, you need to blit it to a regular framebuffer
+     *        object using blit_framebuffer().
+     *      - It is more efficient(but not required) to call bind() on an FBO before making multiple method calls.
+     *        For example :
+     * 		        \code
+     * 				FramebufferObject fbo;
+     * 				fbo.bind();
+     * 				fbo.add_color_buffer();
+     * 				fbo.add_color_buffer();
+     * 				fbo.print_attachments();
+     * 				\endcode
+     * 			To provide a complete encapsulation, the following usage pattern works
+     * 			correctly but is less efficient :
+     * 			    \code
+     * 				FramebufferObject fbo;
+     * 				// NOTE: No bind() call
+     * 				fbo.add_color_buffer();
+     * 				fbo.add_color_buffer();
+     * 				fbo.print_attachments();
+     * 				\endcode
+     *  		The first usage pattern binds the FBO only once, whereas the second usage
+     * 			binds / unbinds the FBO for each method call.
+     *
+     *  Example usage 1: draw to a fbo:
+     *      \code
+     * 		FramebufferObject fbo(w, h, 0);
+     * 		fbo.add_color_texture();
+     * 		fbo.add_depth_buffer();
+     * 		fbo.bind();
+     * 		fbo.activate_draw_buffer(0);
+     * 		glClearDepthf(1.0f);								// optional, done by default
+     * 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);				// optional, done by default
+     * 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// optional, done by default
+     * 		you draw code here...
+     * 		fbo.release();
+     *      //... Now you can use fbo.color_texture() for other purposes.
+     *      \endcode
+     *
+     *  Example usage 2: draw the depth map of an object or a scene:
+     *      \code
+     * 		FramebufferObject fbo(w, h, 0);
+     * 		fbo.add_depth_texture();
+     * 		fbo.bind();
+     * 		glClearDepthf(1.0f);				// optional, done by default
+     * 		glClear(GL_DEPTH_BUFFER_BIT);	    // optional, done by default
+     * 		you draw code here...
+     * 		fbo.release();
+     *      //... Now you can use the fbo.depth_texture().
+     *      \endcode
+     *
+     *  For both the above examples, it's easy to enable MSAA by creating a multisample
+     *  FBO and render to it. But do remember to blit to a normal FBO before using the
+     *  texture.
+     *  -------------------------------------------------------------------------------
+     *
+     * Current implement support only GL_TEXTURE_2D (see the texture_target_ variable)
+     * does not manage externally created textures.
+     * \todo:
+     *   - add a class TextureFormat for flexible format specification and add related
+     *     functions using the TextureFormat class.
+     *   - modify the attach_color_texture() and attach_depth_texture() to use TextureFormat.
+     *   - replace ColorAttachment by TextureFormat.
+     */
 
     class FramebufferObject
     {

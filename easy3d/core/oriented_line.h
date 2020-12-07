@@ -30,7 +30,6 @@
 
 namespace easy3d {
 
-
     enum Sign {
         NEGATIVE = -1,
         ZERO = 0,
@@ -44,22 +43,28 @@ namespace easy3d {
 
     /**
      * \brief OrientedLine implements plucker coordinates, which enables oriented lines to be compared.
-     * The comparison, implemented by the side() function, is a predicate similar to the right hand rule.
+     *
+     * \class GenericOrientedLine easy3d/core/oriented_line.h
+     *
+     * \details The comparison, implemented by the side() function, is a predicate similar to the right hand rule.
      * For instance, this class is used for the line-polygon intersection test.
      * (See D.M.Y. Sommerville, Analytical Geometry of Three Dimensions. Cambridge University Press, 1959).
      */
+
     template<class FT>
     class GenericOrientedLine {
     public:
         typedef Vec<3, FT> Point;
 
+        /// \brief Constructs a line from two points \p p and \p q.
         GenericOrientedLine(const Point &p, const Point &q);
-
         GenericOrientedLine();
 
         /**
          * "right hand rule" like predicate.
-         * @return +1 Positive side, -1 for negative side.
+         * @return
+         *  - +1 Positive side
+         *  - -1 for negative side.
          */
         static Sign side(const GenericOrientedLine<FT> &a, const GenericOrientedLine<FT> &b);
 
