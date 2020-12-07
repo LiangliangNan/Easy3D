@@ -35,50 +35,66 @@ namespace easy3d {
 	class PointCloud;
 
 	/**
-	 * \brief File IO for point clouds.
-     * \todo Add a general purpose file format 'map' capable of storing
-     *       point clouds, graphs, and meshes with arbitrary types of
-     *       properties (similar to PLY, each property is read/written
-     *       as a whole. Check PLY and POLY formats as reference.
-     *       When this is done, I don't need BIN and POLY any more).
+	 * \brief Implementation of file input/output operations for PointCloud.
+     * \class PointCloudIO easy3d/file_io/point_cloud_io.h
      */
-
 	class PointCloudIO
 	{
 	public:
         /**
-         * \brief Reads a point cloud from file \p file_name. Returns true if succeeded.
+         * \brief Reads a point cloud from file \p file_name.
          * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg)
          * and type (i.e. binary or ASCII).
+         * \return The pointer of the point cloud (nullptr if failed).
          */
 		static PointCloud* load(const std::string& file_name);
 
         /**
-         * \brief Saves a point cloud to file \p file_name. Returns true if succeeded.
-         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg)
-         * and type (i.e. binary or ASCII).
+         * \brief Saves a point_cloud to a file.
+         * \details File extension determines file format (bin, xyz/bxyz, ply, las/laz, vg/bvg) and type (i.e. binary
+         * or ASCII).
+         * \param file_name The file name.
+         * \param cloud The point cloud.
+         * \return The status of the operation
+         *      \arg true if succeeded
+         *      \arg false if failed
          */
-		static bool	save(const std::string& file_name, const PointCloud* point_set);
+		static bool	save(const std::string& file_name, const PointCloud* cloud);
 	};
 
 
 	namespace io {
-		// three blocks storing points, colors (optional), and normals (optional)
+
+	    /// \brief Reads point cloud from a \c bin format file.
+	    /// \details A typical \c bin format file contains three blocks storing points, colors (optional),
+	    /// and normals (optional).
 		bool load_bin(const std::string& file_name, PointCloud* cloud);
+        /// \brief Saves a point cloud to a \c bin format file.
+        /// \details A typical \c bin format file contains three blocks storing points, colors (optional),
+        /// and normals (optional).
 		bool save_bin(const std::string& file_name, const PointCloud* cloud);
 
-		// each line with only point: (x, y, z)
+
+        /// \brief Reads point cloud from an \c xyz format file.
+        /// \details Each line of an \c xyz file contains three floating point numbers representing the \p x, \p y, and
+        /// \p z coordinates of a point.
 		bool load_xyz(const std::string& file_name, PointCloud* cloud);
 		bool save_xyz(const std::string& file_name, const PointCloud* cloud);
+        /// \brief Reads point cloud from a binary \c xyz format file.
 		bool load_bxyz(const std::string& file_name, PointCloud* cloud);
+        /// \brief Saves a point cloud to a binary \c xyz format file.
 		bool save_bxyz(const std::string& file_name, const PointCloud* cloud);
 
+        /// \brief Reads point cloud from a \c ply format file.
 		bool load_ply(const std::string& file_name, PointCloud* cloud);
+        /// \brief Saves a point cloud to a \c ply format file.
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary = true);
 
-		// Read/Write both las and laz formats. Internally it uses the LASlib
-        // of martin.isenburg@rapidlasso.com, see http://rapidlasso.com
+        /// \brief Reads point cloud from an \c las/laz format file.
+        /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
 		bool load_las(const std::string& file_name, PointCloud* cloud);
+        /// \brief Saves a point cloud to an \c las/laz format file.
+        /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
 	};
 

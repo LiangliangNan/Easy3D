@@ -51,9 +51,9 @@ int main(int argc, char** argv) {
 
     std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 
-    // Now let's save the model into a file with customized format. In each
-    // line we store the x, y, z coordinates, followed by the normal (nx, ny,
-    // nz) and color (r, g, b) if they exist.
+    // You can save the model into a file of one of the supported file formats using 'PointCloudIO::save()'.
+    // In this example, let's save the model into a file with a special format. In each line we store the
+    // x, y, z coordinates, followed by the normal (nx, ny, nz) and color (r, g, b) if they exist.
     std::ofstream output("./bunny-copy.txt");
     if (output.is_open()) { // if the file has been successfully created
         // The point coordinates.

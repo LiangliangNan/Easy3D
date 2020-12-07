@@ -34,6 +34,7 @@ namespace easy3d {
 
     /**
      * \brief ManifoldBuilder is a helper class that resolves non-manifoldness while building a surface mesh.
+     * \class ManifoldBuilder easy3d/core/manifold_builder.h
      * It is typically used to load a model from a file (because you don't know if the mesh is manifold or not).
      * For meshes guaranteed to be manifold, you can also use the built-in add_vertex() and add_[face/triangle/quad]()
      * functions of SurfaceMesh for their construction.

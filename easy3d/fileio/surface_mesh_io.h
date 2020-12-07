@@ -33,37 +33,60 @@ namespace easy3d {
 
 	class SurfaceMesh;
 
-    // TODO: add a general purpose file format 'map' capable of storing
-    //       point clouds, graphs, and meshes with arbitrary types of
-    //       properties (similar to PLY, each property is read/written
-    //       as a whole. Check PLY and POLY formats as reference.
-    //       When this is done, I don't need BIN and POLY any more).
 
+    /**
+     * \brief Implementation of file input/output operations for SurfaceMesh.
+     * \class SurfaceMeshIO easy3d/file_io/surface_mesh_io.h
+     */
 	class SurfaceMeshIO
 	{
 	public:
-		// return nullptr if failed.
+
+        /**
+         * \brief Reads a surface mesh from a file.
+         * \details File extension determines file format (ply, obj, off, stl, poly) and type (i.e. binary or ASCII).
+         * \param file_name The file name.
+         * \return The pointer of the surface mesh (nullptr if failed).
+         */
 		static SurfaceMesh* load(const std::string& file_name);
 
-		// save the mesh to a file. return false if failed.
+        /**
+         * \brief Saves a surface mesh to a file.
+         * \details File extension determines file format (ply, obj, off, stl, poly) and type (i.e. binary or ASCII).
+         * \param file_name The file name.
+         * \param mesh The surface mesh.
+         * \return The status of the operation
+         *      \arg true if succeeded
+         *      \arg false if failed
+         */
 		static bool	save(const std::string& file_name, const SurfaceMesh* mesh);
 	};
 
 	namespace io {
 
+        /// Reads a surface mesh from a \p POLY format file.
         bool load_poly(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p POLY format file.
         bool save_poly(const std::string& file_name, const SurfaceMesh* mesh);
 
+        /// Reads a surface mesh from a \p PLY format file.
         bool load_ply(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p PLY format file.
         bool save_ply(const std::string& file_name, const SurfaceMesh* mesh, bool binary = true);
 
+        /// Reads a surface mesh from a \p OFF format file.
 		bool load_off(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p OFF format file.
 		bool save_off(const std::string& file_name, const SurfaceMesh* mesh);
 
+        /// Reads a surface mesh from a \p OBJ format file.
 		bool load_obj(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p OBJ format file.
 		bool save_obj(const std::string& file_name, const SurfaceMesh* mesh);
 
+        /// Reads a surface mesh from a \p STL format file.
 		bool load_stl(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p STL format file.
 		bool save_stl(const std::string& file_name, const SurfaceMesh* mesh);
 
 	} // namespace io

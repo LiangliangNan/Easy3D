@@ -34,8 +34,7 @@ namespace easy3d {
 
     /**
      * \brief Implementation of a simple signal-slot mechanism. \par
-     * \class Signal
-     *        Multiple slots (classes and their member functions) can be connected to a signal object.
+     * \details Multiple slots (classes and their member functions) can be connected to a signal object.
      *        You can connect functions to the signal which will be called when
      *        the trigger() method on the signal object is invoked. Any argument
      *        passed to emit() will be passed to the given functions.
@@ -46,6 +45,9 @@ namespace easy3d {
      *        function is connected to the camera.
      * \attention Current implementation can hold only one single function of each owner.
      *            (can be easily extended to multiple ones if needed).
+     *
+     * \class Signal easy3d/core/signal.h
+     *
      * \todo Extend this class to accept non-member functions and multiple functions of a class.
      */
     class Signal {

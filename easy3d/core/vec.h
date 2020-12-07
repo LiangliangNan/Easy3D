@@ -41,6 +41,8 @@ namespace easy3d {
      * \brief Base class for vector types. It provides generic functionality for \p N dimensional vectors.
      * \tparam N The dimension/size of a vector.
      * \tparam T The scalar type of vector elements.
+     *
+     * \class Vec easy3d/core/vec.h
      */
     template <size_t N, class T>
     class Vec {

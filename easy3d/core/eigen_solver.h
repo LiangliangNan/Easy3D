@@ -48,6 +48,7 @@
 namespace easy3d {
 
     /// \brief An easy-to-use eigen solver.
+    /// \class EigenSolver easy3d/core/eigen_solver.h
     template <typename FT>
     class EigenSolver
     {

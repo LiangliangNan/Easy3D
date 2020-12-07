@@ -33,26 +33,44 @@ namespace easy3d {
 
     class Graph;
 
-    // TODO: add a general purpose file format 'map' capable of storing
-    //       point clouds, graphs, and meshes with arbitrary types of
-    //       properties (similar to PLY, each property is read/written
-    //       as a whole. Check PLY and POLY formats as reference.
-    //       When this is done, I don't need BIN and POLY any more).
-
-
+    /// \brief Implementation of file input/output operations for Graph (Currently only PLY format is supported).
+    /// \class GraphIO easy3d/file_io/graph_io.h
     class GraphIO
 	{
 	public:
-        // return nullptr if failed. Currently only PLY format is supported.
+        /**
+         * \brief Reads a graph from file \p file_name.
+         * \return The pointer of the graph (nullptr if failed).
+         * \details File extension determines file format (currently only PLY format is supported).
+         */
         static Graph* load(const std::string& file_name);
 
-        // save the graph to a file. return false if failed.
+        /**
+         * \brief Saves \p graph to file \p file_name.
+         * \details File extension determines file format (currently only PLY format is supported).
+         * \return The status of the operation
+         *      \arg true if succeeded
+         *      \arg false if failed
+         */
         static bool	save(const std::string& file_name, const Graph* graph);
 	};
 
     namespace io {
 
+        /**
+         * \brief Loads \p graph from a PLY file \p file_name.
+         * \return The status of the operation
+         *      \arg true if succeeded
+         *      \arg false if failed
+         */
         bool load_ply(const std::string& file_name, Graph* graph);
+        /**
+         * \brief Saves \p graph into a PLY file \p file_name.
+         * \param binary true for binary format, otherwise ASCII format.
+         * \return The status of the operation
+         *      \arg true if succeeded
+         *      \arg false if failed
+         */
         bool save_ply(const std::string& file_name, const Graph* graph, bool binary = true);
 
     } // namespace io

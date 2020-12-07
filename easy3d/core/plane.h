@@ -34,6 +34,7 @@ namespace easy3d {
 
 
     /// \brief A 3D Plane of equation a*x + b*y + c*z + d = 0.
+    /// \class GenericPlane easy3d/core/plane.h
     template <typename FT>
     class GenericPlane
     {

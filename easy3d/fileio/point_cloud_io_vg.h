@@ -38,16 +38,96 @@ namespace easy3d {
 
     namespace io {
 
-
+        /**
+         * \brief Implementation of file input/output operations for vertex group (VG) format PointCloud.
+         * \class PointCloudIO_vg easy3d/file_io/point_cloud_io_vg.h
+         *
+         * \details The vertex group (VG) format stores the point cloud and its segmentation information. A segment is
+         * represented by a set of indices of the points in the segment.
+         *
+         *  File format specification
+         *      \code
+         *       num_points: N   // N is an integer denoting the number of points
+         *       x1  y1  z1	// 3 floating point numbers
+         *       ...
+         *       xN  yN  zN
+         *
+         *       // the colors of the points
+         *       num_colors: N      // N is an integer denoting the number of colors (can be 0; if not, it must equal to num_points)
+         *       r1 g1 b1	        // 3 floating point numbers
+         *       ...
+         *       rN gN bN
+         *
+         *       // the normals of the points
+         *       num_normals: N     // N is an integer denoting the number of normals (can be 0; if not, it must equal to num_points)
+         *       nx1  ny1  nz1	    // 3 floating point numbers
+         *       ...
+         *       nxN  nyN  nzN
+         *
+         *       // now we store the segmentation information
+         *       num_groups: M      // M is an integer denoting the number of segments/primitives/objects in this point cloud (can be 0)
+         *
+         *       // now the information for the 1st segment/primitive/object
+         *       group_type: type           // integer denoting the of the segment (0: PLANE, 1: CYLINDER, 2: SPHERE, 3: CONE, 4: TORUS, 5: GENERAL)
+         *       num_group_parameters: NUM_GROUP_PARAMETERS    // integer number denoting the number of floating point values representing the segment (e.g., 4 for planes)
+         *       group_parameters: float[NUM_GROUP_PARAMETERS] // a sequence of NUM_GROUP_PARAMETERS floating point numbers (e.g., a, b, c, and d for a plane)
+         *       group_label: label         // the label (a string) of the segment
+         *       group_color: r g b         // 3 floating point numbers denoting the color of this segment
+         *       group_num_points: N        // N is an integer denoting the number of points in this segment (can be 0)
+         *       id1 ... idN                // N integer numbers denoting the indices of the points in this segment
+         *       num_children: num          // a segment/primitive/object may contain subsegment (that has the same representation as this segment)
+         *       ...
+         *       group_type: type           // integer denoting the of the segment (0: PLANE, 1: CYLINDER, 2: SPHERE, 3: CONE, 4: TORUS, 5: GENERAL)
+         *       num_group_parameters: NUM_GROUP_PARAMETERS    // integer number denoting the number of floating point values representing the segment (e.g., 4 for planes)
+         *       group_parameters: float[NUM_GROUP_PARAMETERS] // a sequence of NUM_GROUP_PARAMETERS floating point numbers (e.g., a, b, c, and d for a plane)
+         *       group_label: label         // the label (a string) of the segment
+         *       group_color: r g b         // 3 floating point numbers denoting the color of this segment
+         *       group_num_points: N        // N is an integer denoting the number of points in this segment (can be 0)
+         *       id1 ... idN                // N integer numbers denoting the indices of the points in this segment
+         *       num_children: num          // a segment/primitive/object may contain subsegment (that has the same representation as this segment)
+         *       ...
+         *       \endcode
+         */
         class PointCloudIO_vg
         {
         public:
 
-            // labeled vertex groups
+            /**
+             * \brief Reads a point cloud from an ASCII file.
+             * \param file_name The file name.
+             * \param cloud The point cloud to write to.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
             static bool load_vg(const std::string& file_name, PointCloud* cloud);
+            /**
+             * \brief Saves a point_cloud to an ASCII file.
+             * \param file_name The file name.
+             * \param cloud The point cloud.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
             static bool save_vg(const std::string& file_name, const PointCloud* cloud);
 
+            /**
+             * \brief Reads a point cloud from a binary file.
+             * \param file_name The file name.
+             * \param cloud The point cloud to write to.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
             static bool load_bvg(const std::string& file_name, PointCloud* cloud);
+            /**
+             * \brief Saves a point_cloud to a binary file.
+             * \param file_name The file name.
+             * \param cloud The point cloud.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
             static bool save_bvg(const std::string& file_name, const PointCloud* cloud);
 
         private:

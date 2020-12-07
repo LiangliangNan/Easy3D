@@ -31,6 +31,11 @@
 
 namespace easy3d {
 
+
+    /**
+     * \brief File input/output functionalities.
+     * \namespace easy3d::io
+     */
     namespace io {
 
 

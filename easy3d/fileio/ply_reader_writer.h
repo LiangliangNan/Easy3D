@@ -35,9 +35,12 @@
 namespace easy3d {
 
     /// \brief File input/output functionalities.
+    /// \namespace easy3d::io
 	namespace io {
 
-		// VT: the value type, e.g., int, float, string, vec3, std::vector
+        /// \brief Generic property.
+        /// \class GenericProperty easy3d/file_io/ply_reader_writer.h
+		/// \tparam VT The value type, e.g., int, float, string, vec3, std::vector
 		template <typename VT>
         class GenericProperty : public std::vector<VT> {
         public:
@@ -53,7 +56,8 @@ namespace easy3d {
 		typedef GenericProperty< std::vector<float> >	FloatListProperty;
 		typedef GenericProperty< std::vector<int> >     IntListProperty;
 
-		// model element (e.g., faces, vertices, edges) with optional properties
+        /// \brief Model element (e.g., faces, vertices, edges) with optional properties
+        /// \class Element easy3d/file_io/ply_reader_writer.h
 		struct Element {
             Element(const std::string &elem_name, std::size_t n_instances = 0) : name(elem_name),
                                                                                  num_instances(n_instances) {}
@@ -72,15 +76,22 @@ namespace easy3d {
 		};
 
 
-		/// A general purpose PLY file reader
-		/// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// \brief A general purpose PLY file reader
+		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
 		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+        /// \class PlyReader easy3d/file_io/ply_reader_writer.h
 		class PlyReader
 		{
 		public:
             PlyReader() {}
             ~PlyReader();
 
+            /**
+             * \brief Reads a PLY file and stores the model as a set of \p elements.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
 			bool read(const std::string& file_name, std::vector<Element>& elements);
 
             /**
@@ -123,11 +134,19 @@ namespace easy3d {
 		};
 
 
-		/// \brieff A general purpose PLY file writer.
-		/// This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		/// \brief A general purpose PLY file writer.
+		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
 		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+        /// \class PlyWriter easy3d/file_io/ply_reader_writer.h
 		class PlyWriter {
 		public:
+            /**
+             * \brief Saves a model stored as a set of \p elements to file \p file_name.
+             * \param binary true for binary format, otherwise ASCII format.
+             * \return The status of the operation
+             *      \arg true if succeeded
+             *      \arg false if failed
+             */
 			bool write(
 					const std::string& file_name,
 					const std::vector<Element>& elements,

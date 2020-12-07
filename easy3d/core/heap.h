@@ -30,6 +30,9 @@
 namespace easy3d {
 
     /**
+     * \brief A class implementing a heap.
+     * \class Heap easy3d/core/heap.h
+     *
      * An example of heap interface
      * \code
      *   class HeapInterface {
@@ -50,8 +53,6 @@ namespace easy3d {
      * \endcode
      */
 
-
-    //! \brief A class implementing a heap.
     template<class HeapEntry, class HeapInterface>
     class Heap : private std::vector<HeapEntry> {
     public:

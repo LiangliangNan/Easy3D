@@ -34,6 +34,7 @@
 namespace easy3d {
 
     /// \brief A 2D polygon representation.
+    /// \class GenericPolygon easy3d/core/polygon.h
     template<typename FT>
     class GenericPolygon : public std::vector< Vec<2, FT> > {
         typedef std::vector< Vec<2, FT> > BaseClass;

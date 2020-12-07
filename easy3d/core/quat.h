@@ -47,7 +47,7 @@ namespace easy3d {
     /**
      * \brief The Quaternion class represents 3D rotations and orientations.
      *
-     * The Quaternion is an appropriate (although not very intuitive) representation for
+     * \details The Quaternion is an appropriate (although not very intuitive) representation for
      * 3D rotations and orientations. Many tools are provided to ease the definition of a
      * Quaternion: see constructors, set_axis_angle(), set_from_rotation_matrix(),
      * set_from_rotated_basis().
@@ -96,6 +96,8 @@ namespace easy3d {
      *    a library with a different order, you'll be in trouble.
      *  - Some operations are complicated, e.g., rotation of N degrees around a specific axis.
      * Quaternions are a tool to represent rotations, which solves these problems.
+     *
+     * \class Quat easy3d/core/quat.h
      */
 
     template <typename FT>

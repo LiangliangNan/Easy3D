@@ -33,6 +33,7 @@ namespace easy3d {
     /**
      * \brief Computes the center and inertia axes of a set of 2D or 3D points.
      * \tparam DIM dimension (must be 2 or 3).
+     * \class PrincipalAxes easy3d/core/principal_axes.h
      * \todo Test 2D cases.
      */
 

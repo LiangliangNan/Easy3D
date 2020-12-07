@@ -32,6 +32,8 @@
 namespace easy3d {
 
 
+    /// \brief Implementation of file input/output operations for images.
+    /// \class ImageIO easy3d/file_io/image_io.h
     class ImageIO
 	{
 	public:
@@ -71,13 +73,13 @@ namespace easy3d {
          *
          * \return Return true on success or false if failed.
          *
-         * Example usage: \par
-         * \code
-         *    int width, height, channels;
-         *    std::vector<unsigned char> data;
-         *    bool success = ImageIO::load(data, file_name, &width, &height, &channels, 0);
-         *    // ... process data if true returned ...
-         * \endcode
+         * Example usage:
+         *      \code
+         *      int width, height, channels;
+         *      std::vector<unsigned char> data;
+         *      bool success = ImageIO::load(data, file_name, &width, &height, &channels, 0);
+         *      // ... process data if true returned ...
+         *      \endcode
          */
         static bool load(
                 const std::string& file_name,

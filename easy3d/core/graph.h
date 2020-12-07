@@ -39,8 +39,8 @@ namespace easy3d {
 
 	/**
 	 * @brief A Graph data structure with easy property management.
+	 * \class Graph easy3d/core/graph.h
 	 */
-
 
 	class Graph : public virtual Model
 	{

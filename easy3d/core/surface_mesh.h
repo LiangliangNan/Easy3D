@@ -59,7 +59,8 @@ namespace easy3d {
      *          ManifoldBuilder should be used for the construction, which guarantees you end up with a polygonal mesh
      *          of a 2-manifold topology. In any case, client code is highly recommended to use ManifoldBuilder.
      *
-     * @related ManifoldBuilder.
+     * \class SurfaceMesh easy3d/core/surface_mesh.h
+     * \related ManifoldBuilder.
      */
 
     class SurfaceMesh : public virtual Model

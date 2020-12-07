@@ -33,7 +33,8 @@
 namespace easy3d {
 
     /**
-     * @brief A very basic file_system implementation.
+     * \brief A very basic file_system implementation.
+     * \namespace easy3d::file_system
      * @attention Functions are not sufficiently tested.
      * @todo [Liangliang] Comprehensive tests.
      *

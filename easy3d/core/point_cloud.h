@@ -22,21 +22,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** ----------------------------------------------------------
- *
- * The code is adapted from Surface_mesh with modifications and
- * significant enhancement.
- *		- Surface_mesh (version 1.1)
- * The original code is available at
- * https://opensource.cit-ec.de/projects/surface_mesh
- *
- * Surface_mesh is a halfedge-based mesh data structure for
- * representing and processing 2-manifold polygonal surface
- * meshes. It is implemented in C++ and designed with an
- * emphasis on simplicity and efficiency.
- *
- *----------------------------------------------------------*/
-
 // I would like to process/visualize huge scans (tens of millions of points, or even more),
 // an earlier implementation based on double-connected list has the following limitations:
 // 	1) no random access of the data;
@@ -60,6 +45,18 @@ namespace easy3d {
 
     /**
      * @brief A data structure for point clouds.
+     * \class PointCloud easy3d/core/point_cloud.h
+     *
+     * The code is adapted from Surface_mesh with modifications and
+     * significant enhancement.
+     *		- Surface_mesh (version 1.1)
+     * The original code is available at
+     * https://opensource.cit-ec.de/projects/surface_mesh
+     *
+     * Surface_mesh is a halfedge-based mesh data structure for
+     * representing and processing 2-manifold polygonal surface
+     * meshes. It is implemented in C++ and designed with an
+     * emphasis on simplicity and efficiency.
      */
     class PointCloud : public virtual Model
     {

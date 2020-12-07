@@ -29,10 +29,15 @@
 #include <vector>
 
 
+/**
+ * \brief The \c easy3D namespace.
+ * \namespace easy3d
+ */
 namespace easy3d {
 
     /**
-     * @brief Algorithms for evaluating curves.
+     * \brief Algorithms for evaluating curves.
+     * \namespace easy3d::curve
      */
     namespace curve {
 

@@ -36,6 +36,7 @@ namespace easy3d {
 
 
     /// \brief A generic segmentation representation, which supports both 2D and 3D line segments.
+    /// \class GenericSegment easy3d/core/segment.h
     template <int DIM, typename FT>
     class GenericSegment {
     public:

@@ -38,6 +38,7 @@ namespace easy3d {
 
     /**
      * \brief The base class of renderable 3D models, e.g., SurfaceMesh, PointCloud, Graph.
+     * \class Model easy3d/core/model.h
      * A Model can have multiple drawables, e.g., faces, vertices, edges.
      */
     class Model

@@ -54,6 +54,8 @@ namespace easy3d {
      *	@note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
      *	TODO: Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
      *	    M-1 in size, as vectors in	homogeneous space.
+     *
+     *	\class Mat easy3d/core/mat.h
      */
     template <size_t N, size_t M, typename T>
     class Mat
