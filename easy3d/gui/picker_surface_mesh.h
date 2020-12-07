@@ -34,6 +34,11 @@ namespace easy3d {
 
     class ShaderProgram;
 
+    /**
+     * \brief Implementation of picking elements (i.e, vertices, faces, edges) from a surface mesh.
+     * \class SurfaceMeshPicker easy3d/gui/picker_surface_mesh.h
+     * \see Picker, ModelPicker, PointCloudPicker
+     */
     class SurfaceMeshPicker : public Picker {
     public:
         SurfaceMeshPicker(const Camera *cam);
@@ -60,7 +65,7 @@ namespace easy3d {
         SurfaceMesh::Face pick_face(SurfaceMesh *model, int x, int y);
 
         /**
-         * Pick a vertex from a surface mesh given the cursor position.
+         * \brief Pick a vertex from a surface mesh given the cursor position.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
@@ -71,7 +76,7 @@ namespace easy3d {
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, int x, int y);
 
         /**
-         * Pick an edge from a surface mesh given the cursor position.
+         * \brief Pick an edge from a surface mesh given the cursor position.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
@@ -82,7 +87,7 @@ namespace easy3d {
         SurfaceMesh::Halfedge pick_edge(SurfaceMesh *model, int x, int y);
 
         /**
-         * Pick a vertex from a surface mesh given the cursor position and a known picked face.
+         * \brief Pick a vertex from a surface mesh given the cursor position and a known picked face.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @param picked_face The picked face.
@@ -93,11 +98,10 @@ namespace easy3d {
          * @attention This method must be called after calling to pick_face(). The result is valid only if the
          *            picked_face is valid.
          */
-        // @attention call this version if you already picked the face
         SurfaceMesh::Vertex pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y);
 
         /**
-         * Pick an edge from a surface mesh given the cursor position and a known picked face.
+         * \brief Pick an edge from a surface mesh given the cursor position and a known picked face.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @param picked_face The picked face.
@@ -113,7 +117,7 @@ namespace easy3d {
         //-------------------- query after picking ----------------------
 
         /**
-         * Query the previously picked face.
+         * \brief Query the previously picked face.
          * @return The previously picked face.
          * @attention This method must be called after calling to one of the above pick element methods. The results is
          *            valid only if a face has been picked.
@@ -121,8 +125,8 @@ namespace easy3d {
         SurfaceMesh::Face picked_face() const;
 
         /**
-         * Query the coordinate of the previously picked position, which is the intersection between the picking line
-         * and the picked face.
+         * \brief Query the coordinate of the previously picked position, which is the intersection between the picking
+         * line and the picked face.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @param picked_face The picked face.

@@ -33,6 +33,7 @@
 namespace easy3d {
 
     //! \brief A k-d tree for triangular surface meshes.
+    /// \class TriangleMeshKdTree easy3d/algo/triangle_mesh_kdtree.h
     class TriangleMeshKdTree {
     public:
         //! \brief construct with mesh

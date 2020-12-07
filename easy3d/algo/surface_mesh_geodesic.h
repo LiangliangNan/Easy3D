@@ -35,6 +35,7 @@ namespace easy3d {
 
     /**
      * \brief This class computes geodesic distance from a set of seed vertices.
+     * \class SurfaceMeshGeodesic easy3d/algo/surface_mesh_geodesic.h
      * \details The method works by a Dykstra-like breadth first traversal from the seed vertices, implemented by a
      * heap structure. See the following paper for more details:
      *  - Kimmel and Sethian. Computing geodesic paths on manifolds. Proceedings of the National Academy of Sciences,

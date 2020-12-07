@@ -34,6 +34,11 @@ namespace easy3d {
     class PointCloud;
     class ShaderProgram;
 
+    /**
+     * \brief Implementation of picking points from a point cloud.
+     * \class PointCloudPicker easy3d/gui/picker_point_cloud.h
+     * \see Picker, ModelPicker, SurfaceMeshPicker
+     */
     class PointCloudPicker : public Picker {
     public:
         PointCloudPicker(const Camera *cam);

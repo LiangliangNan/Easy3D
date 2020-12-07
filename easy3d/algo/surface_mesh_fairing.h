@@ -31,7 +31,9 @@
 namespace easy3d {
 
     /**
-     * \brief A class for implicitly fairing a surface mesh. See the following paper for more details:
+     * \brief A class for implicitly fairing a surface mesh.
+     * \class SurfaceMeshFairing easy3d/algo/surface_mesh_fairing.h
+     * See the following paper for more details:
      *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
      */
     class SurfaceMeshFairing {

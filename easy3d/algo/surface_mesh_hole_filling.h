@@ -33,6 +33,7 @@ namespace easy3d {
 
     /**
      * \brief This class closes simple holes in a surface mesh.
+     * \class SurfaceMeshHoleFilling easy3d/algo/surface_mesh_hole_filling.h
      * \details It closes simple holes (boundary loops of manifold vertices) by first filling the hole with an
      * angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing
      * fairing of the filled-in patch. See the following paper for more details:

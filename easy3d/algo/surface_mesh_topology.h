@@ -33,6 +33,7 @@ namespace easy3d {
     class SurfaceMeshComponent;
 
     /// \brief Compute various topological characteristics of a surface mesh component.
+    /// \class SurfaceMeshTopology easy3d/algo/surface_mesh_topology.h
     class SurfaceMeshTopology {
     public:
         SurfaceMeshTopology(const SurfaceMeshComponent *comp);

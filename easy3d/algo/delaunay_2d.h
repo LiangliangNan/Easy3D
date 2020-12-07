@@ -34,6 +34,9 @@ namespace easy3d {
 
 
     /// \brief 2D Delaunay triangulation, using Jonathan Richard Shewchuk's "triangle" implementation.
+    /// \class Delaunay2 easy3d/algo/delaunay_2d.h
+    /// \see Delaunay, Delaunay3.
+
     class Delaunay2 : public Delaunay {
     public:
         Delaunay2();

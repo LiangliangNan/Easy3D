@@ -32,10 +32,6 @@
 
 namespace easy3d
 {
-    /**
-     * Liangliang: std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code
-     * robustly run on both 32-bit and 64-bit systems, I use 64-bit integer for hash values.
-     */
 
 #if 0
     /**
@@ -47,7 +43,7 @@ namespace easy3d
      *      std::cout << "b: " << hash_range(b.begin(), b.end()) << std::endl;
      * That is why I need a function for 64-bit integers.
      */
-    template<class T>
+    template<typename T>
     inline void hash_combine(uint64_t &seed, T const& value) {
         std::hash<T> hasher;
         seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
@@ -55,10 +51,12 @@ namespace easy3d
 
 #else
     /**
-     * The 64-bit hash combine algorithm from CityHash
-     * https://github.com/google/cityhash/blob/master/src/city.h
+     * \brief std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code robustly
+     * run on both 32-bit and 64-bit systems, Easy3D uses 64-bit integer for hash values.
+     * This function implements the 64-bit hash combine algorithm (inspired by the \c Hash128to64 function in
+     * [CityHash](https://github.com/google/cityhash/blob/master/src/city.h)).
      */
-    template<class T>
+    template<typename T>
     inline void hash_combine(uint64_t &seed, T const& value) {
         std::hash<T> hasher;
         uint64_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
@@ -100,8 +98,8 @@ namespace easy3d
 
 
     /// \brief Computes the hash value of a 1D array.
-    template<class It>
-    inline uint64_t hash_range(It first, It last) {
+    template<typename Iterator>
+    inline uint64_t hash_range(Iterator first, Iterator last) {
         uint64_t seed = 0;
         for (; first != last; ++first) {
             hash_combine(seed, *first);
@@ -111,8 +109,8 @@ namespace easy3d
 
 
     /// \brief Computes the hash value of a 1D array with a given seed value.
-    template<class It>
-    inline void hash_range(uint64_t &seed, It first, It last) {
+    template<typename Iterator>
+    inline void hash_range(uint64_t &seed, Iterator first, Iterator last) {
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }

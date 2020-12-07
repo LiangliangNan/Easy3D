@@ -32,6 +32,7 @@ namespace easy3d {
     class PointCloud;
 
     /// \brief Add Gaussian noise to 3D models.
+    /// \class GaussianNoise easy3d/algo/gaussian_noise.h
     class GaussianNoise {
     public:
 

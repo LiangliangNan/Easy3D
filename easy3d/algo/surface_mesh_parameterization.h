@@ -33,7 +33,8 @@ namespace easy3d {
 
     /**
      * \brief A class for surface parameterization.
-     * \details It implmements two parameterization methods described in the following papers:
+     * \class SurfaceMeshParameterization easy3d/algo/surface_mesh_parameterization.h
+     * \details It implements two parameterization methods described in the following papers:
      *  - Bruno Lévy et al. Least squares conformal maps for automatic texture atlas generation. SIGGRAPH, 2002.
      *  - Mathieu Desbrun et al. Intrinsic parameterizations of surface meshes. CGF, 21(3):209–218, 2002.
      */

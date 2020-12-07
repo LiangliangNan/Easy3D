@@ -34,8 +34,7 @@
 
 namespace easy3d {
 
-    //! This class stores a quadric as a symmetrix 4x4 matrix. Used by the error
-    //! quadric mesh decimation algorithms.
+    //! A quadric as a symmetrix 4x4 matrix. Used by the error quadric mesh decimation algorithms.
     class Quadric {
     public:
         //! construct quadric from upper triangle of symmetric 4x4 matrix
@@ -112,7 +111,7 @@ namespace easy3d {
 
     //=============================================================================
 
-    //! A class implementing a normal cone.
+    /// A class implementing a normal cone.
     class NormalCone {
     public:
         //! default constructor (not initialized)
@@ -171,6 +170,7 @@ namespace easy3d {
 
     /**
      * \brief Surface mesh simplification based on approximation error and fairness criteria.
+     * \class SurfaceMeshSimplification easy3d/algo/surface_mesh_simplification.h
      * \details It performs incremental greedy mesh simplification based on halfedge collapses. See the following paper
      * for more details:
      *  - Michael Garland and Paul Seagrave Heckbert. Surface simplification using quadric error metrics. SIGGRAPH 1997.

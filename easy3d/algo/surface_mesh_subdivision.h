@@ -31,6 +31,7 @@ namespace easy3d {
     class SurfaceMesh;
 
     /// \brief SurfaceMeshSubdivision implement several well-known subdivision algorithms.
+    /// \class SurfaceMeshSubdivision easy3d/algo/surface_mesh_subdivision.h
     class SurfaceMeshSubdivision {
     public:
         /** \brief The Catmull-Clark subdivision. */

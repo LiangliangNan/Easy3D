@@ -33,7 +33,10 @@
 
 namespace easy3d {
 
-    /// \brief Base class for Delaunay triangulation. \see Delaunay2D, Delaunay3D.
+    /// \brief Base class for Delaunay triangulation.
+    /// \class Delaunay easy3d/algo/delaunay.h
+    /// \see Delaunay2D, Delaunay3D.
+
     class Delaunay {
 
     public:

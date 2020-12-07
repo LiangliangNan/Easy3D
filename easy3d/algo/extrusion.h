@@ -36,7 +36,7 @@ namespace easy3d {
     class SurfaceMesh;
 
     /**
-     * \brief Extrude a 3D surface mesh from a set of simple contours.
+     * \brief Extrudes a 3D surface mesh from a set of simple contours.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.
@@ -44,10 +44,10 @@ namespace easy3d {
      * @param height The height (in the Z direction) of the extruded 3D model.
      * @return The extruded surface mesh model. NULL on failure.
      */
-    SurfaceMesh *extrude(const std::vector<Polygon2> &simple_contours, float height);
+    SurfaceMesh *extrude(const std::vector<Polygon2> &contours, float height);
 
     /**
-     * \brief Extrude a 3D surface mesh from a set of simple contours.
+     * \brief Extrudes a 3D surface mesh from a set of simple contours.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.
@@ -55,7 +55,7 @@ namespace easy3d {
      * @param height The height (in the Z direction) of the extruded 3D model.
      * @return True on success and false on failure.
      */
-    bool extrude(SurfaceMesh *mesh, const std::vector<Polygon2> &simple_contours, float height);
+    bool extrude(SurfaceMesh *mesh, const std::vector<Polygon2> &contours, float height);
 
 }
 

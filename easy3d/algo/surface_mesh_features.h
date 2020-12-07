@@ -30,7 +30,8 @@
 
 namespace easy3d {
 
-    //! \brief Detect and mark feature edges based on boundary or dihedral angle
+    /// \brief Detect and mark feature edges based on boundary or dihedral angle
+    /// \class SurfaceMeshFeatures easy3d/algo/surface_mesh_features.h
     class SurfaceMeshFeatures {
     public:
         //! \brief Construct with mesh to be analyzed.

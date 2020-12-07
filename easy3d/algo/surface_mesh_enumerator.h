@@ -31,8 +31,28 @@
 
 namespace easy3d {
 
+    /**
+     * \brief Enumerates connected components for a surface mesh.
+     * \class SurfaceMeshEnumerator easy3d/algo/surface_mesh_enumerator.h
+     */
     class SurfaceMeshEnumerator {
     public:
+
+        /**
+         * \brief Enumerates the connected components of a surface mesh from its vertices.
+         * @param mesh The input mesh.
+         * @param id The vertex property storing the result.
+         * @return The number of connected components.
+         */
+        static int enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id);
+
+        /**
+         * \brief Enumerates the connected components of a surface mesh from its faces.
+         * @param mesh The input mesh.
+         * @param id The face property storing the result.
+         * @return The number of connected components.
+         */
+        static int enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id);
 
         /**
          * \brief Propagates a connected component of a surface mesh from the seed vertex.
@@ -57,22 +77,6 @@ namespace easy3d {
         static void
         propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id, SurfaceMesh::Face seed,
                                       int cur_id);
-
-        /**
-         * \brief Enumerates the connected components of a surface mesh from its vertices.
-         * @param mesh The input mesh.
-         * @param id The vertex property storing the result.
-         * @return The number of connected components.
-         */
-        static int enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id);
-
-        /**
-         * \brief Enumerates the connected components of a surface mesh from its faces.
-         * @param mesh The input mesh.
-         * @param id The face property storing the result.
-         * @return The number of connected components.
-         */
-        static int enumerate_connected_components(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id);
 
     };
 

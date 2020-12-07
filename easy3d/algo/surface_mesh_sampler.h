@@ -31,7 +31,8 @@ namespace easy3d {
     class PointCloud;
     class SurfaceMesh;
 
-    /// \brief Sample (near uniform) a surface mesh into a point cloud.
+    /// \brief Sample a surface mesh (near uniformly) into a point cloud.
+    /// \class SurfaceMeshSampler easy3d/algo/surface_mesh_sampler.h
     class SurfaceMeshSampler {
     public:
         /// @param num The expected point number, much be greater than the number of vertices of the surface mesh.

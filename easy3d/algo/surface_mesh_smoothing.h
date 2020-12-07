@@ -30,7 +30,9 @@
 namespace easy3d {
 
     /**
-     * \brief A class for Laplacian smoothing. See the following papers for more details:
+     * \brief A class for Laplacian smoothing.
+     * \class SurfaceMeshSmoothing easy3d/algo/surface_mesh_smoothing.h
+     * See the following papers for more details:
      *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
      *  - Misha Kazhdan et al. Can mean‐curvature flow be modified to be non‐singular? CGF, 2012.
      */

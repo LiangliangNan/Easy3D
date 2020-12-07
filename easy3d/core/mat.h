@@ -62,7 +62,7 @@ namespace easy3d {
         //	----------------- constructor and destructor -------------------
 
         /**	\brief Default constructor.
-         * \note: The matrix elements are intentionally not initialized. This is efficient
+         * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent computations. Use Mat(T s)
          *       to initialize the elements during construction. */
         Mat();
@@ -272,7 +272,7 @@ namespace easy3d {
 
     /**
      * \brief Return the determinant of N x N (square) matrix m.
-     * \NOTE: This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
+     * \note This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
      * LU decomposition.
      */
     template <size_t N, typename T, size_t A>
@@ -284,7 +284,7 @@ namespace easy3d {
 
     /**
      * \brief Return the inverse of N x N (square) matrix m.
-     * \note: This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
+     * \note This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
      * Gauss-Jordan elimination.
      */
     template <size_t N, typename T>
@@ -1341,7 +1341,7 @@ namespace easy3d {
     public:
         /**
          * \brief Default constructor.
-         * \Note: The matrix elements are intentionally not initialized. This is efficient
+         * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat2(T s)
          *       to initialize the elmentment during construction.
          */
@@ -1383,7 +1383,7 @@ namespace easy3d {
         /**
          * \brief Static constructor return a 2D rotation matrix.
          *	@param angle Angle of rotation in radians.
-         *	\note: Positive values of angle rotate counter-clockwise as per the right-hand rule.
+         *	\note Positive values of angle rotate counter-clockwise as per the right-hand rule.
          */
         static Mat2<T> rotation(T angle);
 
@@ -1514,7 +1514,7 @@ namespace easy3d {
     public:
         /**
          * \brief Default constructor.
-         * \Note: The matrix elements are intentionally not initialized. This is efficient
+         * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat3(T s)
          *       to initialize the elmentment during construction.
          */
@@ -1583,7 +1583,7 @@ namespace easy3d {
          *        @param axis: Axis of rotation. This MUST be normalized.
          *        @param angle: Angle of rotation in radians. Positive values of angle
          *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  \note: The axis defines only the direction of the rotation axis, i.e., the
+         *  \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis, T angle);
@@ -1593,14 +1593,14 @@ namespace easy3d {
          *  representation. Both the axis and the angle are represented by a vector
          *  codirectional with the rotation axis whose length is the rotation angle.
          *      @param axis_angle: direction is the axis and length is the angle (in radian)
-         *  \note: The axis defines only the direction of the rotation axis, i.e., the
+         *  \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis_angle);
         
         /**
          * \brief Static constructor return a 3D rotation matrix defined by a quaternion.
-         * \note: q is a unit quaternion representing a rotation. */
+         * \note q is a unit quaternion representing a rotation. */
         static Mat3<T> rotation(const Quat<T> &q);
         
         /**
@@ -1608,7 +1608,7 @@ namespace easy3d {
          * The three rotations are applied successively.
          *        @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
          *        @param order: the order of the rotations to be applied. 1 first and 3 for last.
-         * \note: Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \note Using a different order yields different results. The default order is first Y, then Z, then X.
          */
         static Mat3<T> rotation(T x, T y, T z, int order = 312);
 
@@ -1830,7 +1830,7 @@ namespace easy3d {
     public:
         /**
          * \brief Default constructor.
-         * \Note: The matrix elements are intentionally not initialized. This is efficient
+         * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent compuations. Use Mat4(T s)
          *       to initialize the elmentment during construction.
          */
@@ -1900,7 +1900,7 @@ namespace easy3d {
          *	    @param axis: Axis of rotation. This MUST be normalized.
          *	    @param angle: Angle of rotation in radians. Positive values of angle
          *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  \note: The axis defines only the direction of the rotation axis, i.e., the
+         *  \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
@@ -1910,14 +1910,14 @@ namespace easy3d {
          * representation. Both the axis and the angle are represented by a vector
          * codirectional with the rotation axis whose length is the rotation angle.
          *      @param axis_angle: direction is the axis and length is the angle (in radian)
-         * \note: The axis defines only the direction of the rotation axis, i.e., the
+         * \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis_angle);
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by a quaternion.
-         * \note: q is a unit quaternion representing a rotation.
+         * \note q is a unit quaternion representing a rotation.
          */
         static Mat4<T> rotation(const Quat<T> &q);
 
@@ -1926,7 +1926,7 @@ namespace easy3d {
          * The three rotations are applied successively.
          *	    @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
          *      @param order: the order of the rotations to be applied. 1 first and 3 for last.
-         * \note: Using a different order yields different results. The default order is first Y, then Z, then X.
+         * \note Using a different order yields different results. The default order is first Y, then Z, then X.
          *         See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
          */
         static Mat4<T> rotation(T x, T y, T z, int order = 312);

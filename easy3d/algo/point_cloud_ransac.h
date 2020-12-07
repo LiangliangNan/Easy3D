@@ -34,7 +34,8 @@ namespace easy3d {
 
     class PointCloud;
 
-    /// \brief Extract primitives from point clouds using RANSAC.   \par
+    /// \brief Extract primitives from point clouds using RANSAC.
+    /// \class PrimitivesRansac easy3d/algo/point_cloud_ransac.h
     /// Usage example:
     ///     \code
     ///     PrimitivesRansac ransac;

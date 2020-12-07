@@ -36,7 +36,7 @@ namespace easy3d {
     class KdTreeSearch;
 
     /// \brief PointCloudSimplification provides various point cloud simplification algorithms.
-
+    /// \class PointCloudSimplification easy3d/algo/point_cloud_simplification.h
     class PointCloudSimplification {
     public:
 

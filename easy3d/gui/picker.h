@@ -33,16 +33,22 @@ namespace easy3d {
 
     class FramebufferObject;
 
+    /**
+     * \brief Base class for picking mechanism.
+     * \class Picker easy3d/gui/picker.h
+     * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker
+     */
     class Picker {
     public:
         Picker(const Camera *cam);
 
         ~Picker();
 
+        /// \brief Returns the pointer of the camera.
         const Camera *camera() const { return camera_; }
 
         /**
-         * Construct a picking line.
+         * \brief Construct a picking line.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
@@ -56,7 +62,7 @@ namespace easy3d {
         }
 
         /**
-         * The picking direction, pointing inside the screen.
+         * \brief The picking direction, pointing inside the screen.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
@@ -68,7 +74,7 @@ namespace easy3d {
         }
 
         /**
-         * Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
+         * \brief Project a 3D point in the world coordinate system onto the 2D screen coordinate system.
          * @param p A 3D point in the world coordinate system.
          * @return The x and y components of the returned value denote the projected screen point expressed in the
          *         screen coordinate system, with (0, 0) being the upper left corner of the content area. The z
@@ -77,13 +83,12 @@ namespace easy3d {
          *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
          */
-        // 3D space to screen
         vec3 project(const vec3 &p) const {
             return camera()->projectedCoordinatesOf(p);
         }
 
         /**
-         * Compute the world coordinates of a point defined in the screen coordinate system.
+         * \brief Compute the world coordinates of a point defined in the screen coordinate system.
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @param depth The depth value of the screen point, ranging between 0.0 and 1.0 (excluded).
@@ -97,9 +102,9 @@ namespace easy3d {
         }
 
         /**
-         * Convert a point expressed in the screen coordinate system (with an origin in the upper left corner) into the
-         * OpenGL coordinate system (with an origin in the lower left corner). The high DPI scaling is also taken into
-         * consideration, so the result always corresponds to its image pixel.
+         * \brief Convert a point expressed in the screen coordinate system (with an origin in the upper left corner)
+         * into the OpenGL coordinate system (with an origin in the lower left corner). The high DPI scaling is also
+         * taken into consideration, so the result always corresponds to its image pixel.
          * @param x The x-coordinate, relative to the left edge of the content area.
          * @param y The y-coordinate, relative to the top edge of the content area.
          * @param gl_x Returns the x component of the point in the OpenGL coordinate system.

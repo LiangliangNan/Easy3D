@@ -36,6 +36,7 @@ namespace easy3d {
 
     /**
      * \brief Triangulate a polygonal mesh into a pure triangle mesh.
+     * \class SurfaceMeshTriangulation easy3d/algo/surface_mesh_triangulation.h
      * \details Tringulate n-gons into n-2 triangles. Find the triangulation that minimizes the sum of squared triangle
      * areas. See the following paper for more details:
      *  - Peter Liepa. Filling holes in meshes. SGP, 2003.

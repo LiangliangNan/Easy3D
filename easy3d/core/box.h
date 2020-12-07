@@ -35,7 +35,8 @@
 namespace easy3d {
 
     /**
-     * GenericBox represents the bounding box of shapes.
+     * \brief GenericBox represents the bounding box of shapes.
+     * \class GenericBox easy3d/core/box.h
      * @tparam DIM The dimention (i.e., 2 or 3).
      * @tparam FT The type of the floating point number (i.e., float or double).
      */
