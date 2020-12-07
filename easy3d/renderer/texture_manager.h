@@ -107,16 +107,6 @@ namespace easy3d {
     };
 
 
-    /**
-     * \example Tutorial_308_TexturedMesh
-     * The source file containing the main() function:
-     * \include Tutorial_308_TexturedMesh/main.cpp
-     * The header file of the class:
-     * \include Tutorial_308_TexturedMesh/viewer.h
-     * The source file of the class:
-     * \include Tutorial_308_TexturedMesh/viewer.cpp
-     */
-
 } // namespace easy3d
 
 

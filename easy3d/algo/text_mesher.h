@@ -146,9 +146,6 @@ namespace easy3d {
         unsigned short bezier_steps_;
     };
 
-
-    /// @example Tutorial_310_TextMesher    \include Tutorial_310_TextMesher/main.cpp
-
 }
 
 

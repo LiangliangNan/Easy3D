@@ -99,9 +99,6 @@ namespace easy3d {
 	};
 
 
-    /// @example Tutorial_103_PointCloud_IO     \include Tutorial_103_PointCloud_IO/main.cpp
-
-
 } // namespace easy3d
 
 

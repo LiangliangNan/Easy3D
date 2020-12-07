@@ -75,10 +75,6 @@ namespace easy3d {
         ImposterType    impostor_type_;
 	};
 
-
-    /// @example Tutorial_301_Drawables \include Tutorial_301_Drawables/main.cpp
-    /// @example Tutorial_302_Imposters \include Tutorial_302_Imposters/main.cpp
-
 }
 
 

@@ -93,17 +93,6 @@ namespace easy3d {
         std::set<PrimType> types_;
     };
 
-
-    /**
-     * \example Tutorial_603_Cloud_PlaneExtraction
-     * The source file containing the main() function:
-     * \include Tutorial_603_Cloud_PlaneExtraction/main.cpp
-     * The header file of the class:
-     * \include Tutorial_603_Cloud_PlaneExtraction/viewer.h
-     * The source file of the class:
-     * \include Tutorial_603_Cloud_PlaneExtraction/viewer.cpp
-     */
-
 }
 
 

@@ -194,17 +194,6 @@ namespace easy3d {
         std::vector<std::string> font_names_;
     };
 
-
-    /**
-     * \example Tutorial_309_TextRendering
-     * The source file containing the main() function:
-     * \include Tutorial_309_TextRendering/main.cpp
-     * The header file of the class:
-     * \include Tutorial_309_TextRendering/viewer.h
-     * The source file of the class:
-     * \include Tutorial_309_TextRendering/viewer.cpp
-     */
-
 }
 
 #endif  // EASY3D_RENDERER_TEXT_RENDERER_H

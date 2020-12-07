@@ -69,17 +69,6 @@ namespace easy3d {
         int pick_vertices_gpu(PointCloud *model, const Polygon2 &plg, bool deselect, ShaderProgram *program);
     };
 
-
-    /**
-     * \example Tutorial_403_PointSelection
-     * The source file containing the main() function:
-     * \include Tutorial_403_PointSelection/main.cpp
-     * The header file of the class:
-     * \include Tutorial_403_PointSelection/viewer.h
-     * The source file of the class:
-     * \include Tutorial_403_PointSelection/viewer.cpp
-     */
-
 }
 
 #endif // EASY3D_GUI_PICKER_POINT_CLOUD_H

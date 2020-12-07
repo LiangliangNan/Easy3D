@@ -486,9 +486,6 @@ namespace easy3d {
         return (os << 'v' << v.idx());
     }
 
-    /// @example Tutorial_101_PointCloud            \include Tutorial_101_PointCloud/main.cpp
-    /// @example Tutorial_102_PointCloud_Property   \include Tutorial_102_PointCloud_Property/main.cpp
-
 } // namespace easy3d
 
 #endif // EASY3D_CORE_POINT_CLOUD_H

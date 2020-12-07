@@ -192,17 +192,6 @@ namespace easy3d {
         SurfaceMesh::Face picked_face_;
     };
 
-
-    /**
-     * \example Tutorial_402_FacePicker
-     * The source file containing the main() function:
-     * \include Tutorial_402_FacePicker/main.cpp
-     * The header file of the class:
-     * \include Tutorial_402_FacePicker/viewer.h
-     * The source file of the class:
-     * \include Tutorial_402_FacePicker/viewer.cpp
-     */
-
 }
 
 
