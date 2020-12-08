@@ -253,7 +253,7 @@ namespace easy3d {
                 for (auto h : mesh->halfedges(v)) {
                     const vec3 &p1 = mesh->position(mesh->target(h));
                     const vec3 &p2 =
-                            mesh->position(mesh->target(mesh->ccw_rotated_halfedge(h)));
+                            mesh->position(mesh->target(mesh->prev_around_source(h)));
 
                     const vec3 p01 = normalize(p1 - p0);
                     const vec3 p02 = normalize(p2 - p0);

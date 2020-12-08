@@ -72,7 +72,7 @@ namespace easy3d {
                 for (auto vh : mesh_->halfedges(v)) {
                     p1 = mesh_->position(mesh_->target(vh));
                     p2 = mesh_->position(
-                            mesh_->target(mesh_->ccw_rotated_halfedge(vh)));
+                            mesh_->target(mesh_->prev_around_source(vh)));
 
                     weight = cotan[mesh_->edge(vh)];
                     sum_weights += weight;

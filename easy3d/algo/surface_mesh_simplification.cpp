@@ -274,7 +274,7 @@ namespace easy3d {
             return false;
 
         // there should be at least 2 incident faces at v0
-        if (mesh_->cw_rotated_halfedge(mesh_->cw_rotated_halfedge(cd.v0v1)) ==
+        if (mesh_->next_around_source(mesh_->next_around_source(cd.v0v1)) ==
             cd.v0v1)
             return false;
 
