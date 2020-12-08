@@ -906,7 +906,7 @@ void MainWindow::surfaceMeshTriangulation() {
         return;
 
     SurfaceMeshTriangulation triangulator(mesh);
-    triangulator.triangulate(SurfaceMeshTriangulation::MAX_ANGLE);
+    triangulator.triangulate(SurfaceMeshTriangulation::MIN_AREA);
 
     mesh->renderer()->update();
     viewer_->update();
