@@ -108,10 +108,6 @@ namespace easy3d {
             };
 
         private:
-            friend class VertexIterator;
-            friend class HalfedgeIterator;
-            friend class EdgeIterator;
-            friend class FaceIterator;
             friend class SurfaceMesh;
             int idx_;
         };
@@ -624,7 +620,7 @@ namespace easy3d {
             VertexAroundVertexCirculator& operator++()
             {
                 assert(mesh_);
-                halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
+                halfedge_ = mesh_->prev_around_source(halfedge_);
                 active_ = true;
                 return *this;
             }
@@ -633,7 +629,7 @@ namespace easy3d {
             VertexAroundVertexCirculator& operator--()
             {
                 assert(mesh_);
-                halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
+                halfedge_ = mesh_->next_around_source(halfedge_);
                 return *this;
             }
 
@@ -694,7 +690,7 @@ namespace easy3d {
             HalfedgeAroundVertexCirculator& operator++()
             {
                 assert(mesh_);
-                halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
+                halfedge_ = mesh_->prev_around_source(halfedge_);
                 active_ = true;
                 return *this;
             }
@@ -703,7 +699,7 @@ namespace easy3d {
             HalfedgeAroundVertexCirculator& operator--()
             {
                 assert(mesh_);
-                halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
+                halfedge_ = mesh_->next_around_source(halfedge_);
                 return *this;
             }
 
@@ -763,7 +759,7 @@ namespace easy3d {
             {
                 assert(mesh_ && halfedge_.is_valid());
                 do {
-                    halfedge_ = mesh_->ccw_rotated_halfedge(halfedge_);
+                    halfedge_ = mesh_->prev_around_source(halfedge_);
                 } while (mesh_->is_border(halfedge_));
                 active_ = true;
                 return *this;
@@ -774,7 +770,7 @@ namespace easy3d {
             {
                 assert(mesh_ && halfedge_.is_valid());
                 do
-                    halfedge_ = mesh_->cw_rotated_halfedge(halfedge_);
+                    halfedge_ = mesh_->next_around_source(halfedge_);
                 while (mesh_->is_border(halfedge_));
                 return *this;
             }
@@ -1178,18 +1174,32 @@ namespace easy3d {
             return Halfedge((h.idx() & 1) ? h.idx()-1 : h.idx()+1);
         }
 
-        /// returns the halfedge that is rotated counter-clockwise around the
+        /// returns the halfedge that is rotated \b counter-clockwise around the
         /// start vertex of \c h. it is the opposite halfedge of the previous halfedge of \c h.
-        Halfedge ccw_rotated_halfedge(Halfedge h) const
+        Halfedge prev_around_source(Halfedge h) const
         {
             return opposite(prev(h));
         }
 
-        /// returns the halfedge that is rotated clockwise around the
+        /// returns the halfedge that is rotated \b clockwise around the
         /// start vertex of \c h. it is the next halfedge of the opposite halfedge of \c h.
-        Halfedge cw_rotated_halfedge(Halfedge h) const
+        Halfedge next_around_source(Halfedge h) const
         {
             return next(opposite(h));
+        }
+
+        /// returns the halfedge that is rotated \b counter-clockwise around the
+        /// end vertex of \c h. it is the prev halfedge of the opposite halfedge of \c h.
+        Halfedge prev_around_target(Halfedge h) const
+        {
+            return prev(opposite(h));
+        }
+
+        /// returns the halfedge that is rotated \b clockwise around the
+        /// end vertex of \c h. it is the opposite halfedge of the next halfedge of \c h.
+        Halfedge next_around_target(Halfedge h) const
+        {
+            return opposite(next(h));
         }
 
         /// return the edge that contains halfedge \c h as one of its two halfedges.
