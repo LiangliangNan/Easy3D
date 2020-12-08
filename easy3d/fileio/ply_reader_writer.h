@@ -39,7 +39,7 @@ namespace easy3d {
 	namespace io {
 
         /// \brief Generic property.
-        /// \class GenericProperty easy3d/file_io/ply_reader_writer.h
+        /// \class GenericProperty easy3d/fileio/ply_reader_writer.h
 		/// \tparam VT The value type, e.g., int, float, string, vec3, std::vector
 		template <typename VT>
         class GenericProperty : public std::vector<VT> {
@@ -57,7 +57,7 @@ namespace easy3d {
 		typedef GenericProperty< std::vector<int> >     IntListProperty;
 
         /// \brief Model element (e.g., faces, vertices, edges) with optional properties
-        /// \class Element easy3d/file_io/ply_reader_writer.h
+        /// \class Element easy3d/fileio/ply_reader_writer.h
 		struct Element {
             Element(const std::string &elem_name, std::size_t n_instances = 0) : name(elem_name),
                                                                                  num_instances(n_instances) {}
@@ -79,7 +79,7 @@ namespace easy3d {
 		/// \brief A general purpose PLY file reader
 		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
 		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
-        /// \class PlyReader easy3d/file_io/ply_reader_writer.h
+        /// \class PlyReader easy3d/fileio/ply_reader_writer.h
 		class PlyReader
 		{
 		public:
@@ -137,7 +137,7 @@ namespace easy3d {
 		/// \brief A general purpose PLY file writer.
 		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
 		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
-        /// \class PlyWriter easy3d/file_io/ply_reader_writer.h
+        /// \class PlyWriter easy3d/fileio/ply_reader_writer.h
 		class PlyWriter {
 		public:
             /**

@@ -36,7 +36,7 @@ namespace easy3d {
      * \brief A connected component of a SurfaceMesh.
      * \details Internally, A connected component of a SurfaceMesh stores four lists of SurfaceMesh elements, i.e., vertices,
      * faces, edges, and halfedges.
-     * \class SurfaceMeshComponent easy3d/algo/surface_mesh_component.h
+     * \class SurfaceMeshComponent easy3d/algo/surface_mesh_components.h
      */
     class SurfaceMeshComponent {
     public:

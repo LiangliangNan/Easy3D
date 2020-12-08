@@ -34,7 +34,7 @@ namespace easy3d {
     class Graph;
 
     /// \brief Implementation of file input/output operations for Graph (Currently only PLY format is supported).
-    /// \class GraphIO easy3d/file_io/graph_io.h
+    /// \class GraphIO easy3d/fileio/graph_io.h
     class GraphIO
 	{
 	public:

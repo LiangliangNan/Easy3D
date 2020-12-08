@@ -37,7 +37,7 @@ namespace easy3d {
 
 		/**
          * \brief Implementation of file input/output operations for ASCII Cyclone pointcloud export format (PTX).
-         * \class PointCloudIO_ptx easy3d/file_io/point_cloud_io_ptx.h
+         * \class PointCloudIO_ptx easy3d/fileio/point_cloud_io_ptx.h
          *
          *  \details PTX is an ASCII based interchange format for point cloud data. It utilizes the concept of separate scans,
          *  each with points defined in their own coordinate system and a 'Registration' of all of those point clouds

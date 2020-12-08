@@ -33,7 +33,7 @@ namespace easy3d {
     /**
      * \brief Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges
      * into triangles or simple contours. \par
-     * \class Tessellator easy3d/algo/surface_mesh_tessellator.h
+     * \class Tessellator easy3d/algo/tessellator.h
      * This implementation is also able to keep track of the unique vertices and respective indices, which allows to
      * take advantage of the element buffer for efficient rendering (i.e., avoid sending duplicated vertices to GPU).
      * \par

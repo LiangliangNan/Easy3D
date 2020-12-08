@@ -36,7 +36,7 @@ namespace easy3d {
 
 	/**
 	 * \brief Implementation of file input/output operations for PointCloud.
-     * \class PointCloudIO easy3d/file_io/point_cloud_io.h
+     * \class PointCloudIO easy3d/fileio/point_cloud_io.h
      */
 	class PointCloudIO
 	{

@@ -35,7 +35,7 @@ namespace easy3d {
     class SurfaceMesh;
 
     /// \brief Poisson surface reconstruction.
-    /// \class PoissonReconstruction easy3d/algo/point_cloud_possion_reconstruction.h
+    /// \class PoissonReconstruction easy3d/algo/point_cloud_poisson_reconstruction.h
     class PoissonReconstruction {
     public:
         PoissonReconstruction(void);

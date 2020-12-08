@@ -33,7 +33,7 @@ namespace easy3d {
 
 
     /// \brief Implementation of file input/output operations for images.
-    /// \class ImageIO easy3d/file_io/image_io.h
+    /// \class ImageIO easy3d/fileio/image_io.h
     class ImageIO
 	{
 	public:

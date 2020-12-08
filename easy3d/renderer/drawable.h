@@ -40,6 +40,7 @@ namespace easy3d {
 
     /**
      * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
+     * \class Drawable easy3d/renderer/drawable.h
      * @details A Drawable is an abstraction for "something that can be drawn", e.g., a point point cloud, the surface
      *          of a mesh, the wireframe of a surface mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.

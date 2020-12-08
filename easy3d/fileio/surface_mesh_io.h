@@ -36,7 +36,7 @@ namespace easy3d {
 
     /**
      * \brief Implementation of file input/output operations for SurfaceMesh.
-     * \class SurfaceMeshIO easy3d/file_io/surface_mesh_io.h
+     * \class SurfaceMeshIO easy3d/fileio/surface_mesh_io.h
      */
 	class SurfaceMeshIO
 	{

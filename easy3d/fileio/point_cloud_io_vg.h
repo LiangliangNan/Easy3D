@@ -40,7 +40,7 @@ namespace easy3d {
 
         /**
          * \brief Implementation of file input/output operations for vertex group (VG) format PointCloud.
-         * \class PointCloudIO_vg easy3d/file_io/point_cloud_io_vg.h
+         * \class PointCloudIO_vg easy3d/fileio/point_cloud_io_vg.h
          *
          * \details The vertex group (VG) format stores the point cloud and its segmentation information. A segment is
          * represented by a set of indices of the points in the segment.

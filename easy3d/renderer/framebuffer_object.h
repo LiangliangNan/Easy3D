@@ -36,6 +36,7 @@ namespace easy3d {
 
     /**
      * \brief An implementation of framebuffer object (FBO).
+     * \class FramebufferObject easy3d/renderer/framebuffer_object.h
      * \details A framebuffer object is conceptually a structure containing pointers to GPU memory.
      * The memory pointed to is either an OpenGL texture or an OpenGL RenderBuffer. FBOs can be
      * used to render to one or more textures, share depth buffers between multiple sets of
