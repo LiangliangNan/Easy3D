@@ -837,9 +837,69 @@ namespace easy3d {
 
         VertexIterator vit, vend=vertices_end();
 
-        //\todo not stable for concave vertices
+#if 0   // not stable for concave vertices
         for (vit=vertices_begin(); vit!=vend; ++vit)
             vnormal_[*vit] = compute_vertex_normal(*vit);
+#else // the angle-weighted average of incident face average
+        
+        auto angle_weighted_face_normals = [this](Vertex v) -> vec3 {
+            vec3     nn(0,0,0);
+            Halfedge  h = out_halfedge(v);
+
+            if (h.is_valid())
+            {
+                const Halfedge hend = h;
+                const vec3& p0 = position(v);
+
+                vec3   n, p1, p2;
+                float  cosine, angle, denom;
+
+                do
+                {
+                    if (!is_border(h))
+                    {
+                        p1 = vpoint_[target(h)];
+                        p1 -= p0;
+
+                        p2 = vpoint_[source(prev(h))];
+                        p2 -= p0;
+
+                        // check whether we can robustly compute angle
+                        denom = sqrt(dot(p1,p1)*dot(p2,p2));
+                        if (denom > std::numeric_limits<float>::min())
+                        {
+                            cosine = dot(p1,p2) / denom;
+                            if      (cosine < -1.0) cosine = -1.0;
+                            else if (cosine >  1.0) cosine =  1.0;
+                            angle = acos(cosine);
+
+                            n   = fnormal_[face(h)];
+
+                            // check whether normal is != 0
+                            denom = norm(n);
+                            if (denom > std::numeric_limits<float>::min())
+                            {
+                                n  *= angle/denom;
+                                nn += n;
+                            }
+                        }
+                    }
+
+                    h  = next_around_source(h);
+                }
+                while (h != hend);
+
+                nn.normalize();
+            }
+
+            return nn;
+        };
+
+        if (!fnormal_)
+            update_face_normals();
+        for (vit=vertices_begin(); vit!=vend; ++vit)
+            vnormal_[*vit] = angle_weighted_face_normals(*vit);
+#endif
     }
 
 
