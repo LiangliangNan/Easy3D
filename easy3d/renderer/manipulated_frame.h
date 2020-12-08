@@ -109,7 +109,7 @@ namespace easy3d {
 	public:
 		ManipulatedFrame();
 		/*! Virtual destructor. Empty. */
-		virtual ~ManipulatedFrame() {}
+		~ManipulatedFrame() override {}
 
 		ManipulatedFrame(const ManipulatedFrame &mf);
 		ManipulatedFrame &operator=(const ManipulatedFrame &mf);
@@ -186,7 +186,7 @@ namespace easy3d {
 		float wheelSensitivity() const { return wheelSensitivity_; }
 		//@}
 
-		/*! @name frame manipulation */
+		/*! @name Frame manipulation */
 		//@{
 	public:
 		// Initiates the ManipulatedFrame mouse manipulation.
@@ -195,23 +195,24 @@ namespace easy3d {
 		// Stops the ManipulatedFrame mouse manipulation.
 		// This function should be called when an action (e.g., drag) ends, e.g., mouse released
 		virtual void action_end();
-		
-		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
-		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen = false);
+
+		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen);
+		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen);
 		virtual void action_zoom(int dy_wheel, Camera *const camera);
+		// @}
 
 #ifndef DOXYGEN
 	protected:
 		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, const Camera *const camera);
 
-		Constraint *previousConstraint_; // When manipulation is without Contraint.
+		Constraint *previousConstraint_; // When manipulation is without constraint.
 
 		int mouseOriginalDirection(int x, int y, int dx, int dy);
 
 		/*! Returns a screen scaled delta from event's position to prevPos_, along the
 				X or Y direction, whichever has the largest magnitude. */
 		float deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const;
-		/*! Returns a normalized wheel delta, proportionnal to wheelSensitivity(). */
+		/*! Returns a normalized wheel delta, proportional to wheelSensitivity(). */
 		float wheelDelta(int wheel_dy) const;
 
 #endif // DOXYGEN

@@ -997,24 +997,8 @@ namespace easy3d {
 	\attention setSceneCenter() changes this value. */
 	vec3 Camera::pivotPoint() const { return frame()->pivotPoint(); }
 
-	/*! Sets the Camera's position() and orientation() from an OpenGL ModelView
-	matrix.
 
-	This enables a Camera initialisation from an other OpenGL application. \p
-	modelView is a 16 double vector representing a valid OpenGL ModelView matrix,
-	such as one can get using: \code double mvm[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX, mvm);
-	myCamera->setFromModelViewMatrix(mvm);
-	\endcode
-
-	After this method has been called, getModelViewMatrix() returns a matrix
-	equivalent to \p modelView.
-
-	Only the orientation() and position() of the Camera are modified.
-
-	\note If you defined your matrix as \c double \c mvm[4][4], pass \c
-	&(mvm[0][0]) as a parameter. */
-	void Camera::setFromModelViewMatrix(const mat4& mv)
+	void Camera::set_from_model_view_matrix(const mat4& mv)
 	{
 		// Get upper left (rotation) matrix
 		mat3 rot(mv);

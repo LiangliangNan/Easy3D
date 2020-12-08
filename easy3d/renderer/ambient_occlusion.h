@@ -39,31 +39,36 @@ namespace easy3d {
     class FramebufferObject;
 
     /**
-     * \brief Traditional Screen Space Ambient Occlusion technique.
-     *
+     * \brief Traditional Screen Space Ambient Occlusion (SSAO) technique.
+     * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
      * geometry pass.
-     *
-     * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      */
     class AmbientOcclusion
     {   
     public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
 		AmbientOcclusion(Camera* cam);
         virtual ~AmbientOcclusion();
 
-        // used to compute sample radius (in pixels [0, 4]?).
-        float radius() const { return radius_; }
+        /// \brief Sets the sample radius (in pixels). Typical value is in range [0, 4].
         void  set_radius(float r) { radius_ = r; }
+        /// \brief Returns the sample radius.
+        float radius() const { return radius_; }
 
-        float bias() const { return bias_; }
+        /// \brief Sets the bias. Default value is 0.005.
         void  set_bias(float b) { bias_ = b; }
+        /// \brief Returns the bias.
+        float bias() const { return bias_; }
 
-        // generate and return the ssao texture
+        /// \brief Generates the SSAO texture
+        /// \return The SSAO texture ID
         virtual unsigned int generate(const std::vector<Model*>& models);
-        // return the ssao texture
+        /// \brief Returns the generated SSAO texture ID
         unsigned int ssao_texture() const;
 
+#ifndef DOXYGEN
     protected:
         void init(int w, int h);
 
@@ -84,6 +89,7 @@ namespace easy3d {
 
         std::vector<vec3> ssao_kernel_;
         unsigned int	  noise_texture_;
+#endif
 
     private:
         //copying disabled

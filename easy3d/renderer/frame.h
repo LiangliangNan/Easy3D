@@ -46,7 +46,8 @@ namespace easy3d {
 
 
     /*! \brief The Frame class represents a coordinate system, defined by a position
-      and an orientation. \class Frame frame.h easy3d/rendererframe.h
+      and an orientation.
+      \class Frame frame.h easy3d/renderer/frame.h
 
       A Frame is a 3D coordinate system, represented by a position() and an
       orientation(). The order of these transformations is important: the Frame is
@@ -298,6 +299,7 @@ namespace easy3d {
         vec3 coordinatesOfIn(const vec3 &src, const Frame *const in) const;
 
         vec3 coordinatesOfFrom(const vec3 &src, const Frame *const from) const;
+        //@}
 
         /*! @name Coordinate system transformation of vectors */
         // A frame is as a new coordinate system, defined with respect to a reference
@@ -337,6 +339,7 @@ namespace easy3d {
         vec3 transformOfIn(const vec3 &src, const Frame *const in) const;
 
         vec3 transformOfFrom(const vec3 &src, const Frame *const from) const;
+        //@}
 
         /*! @name Constraint on the displacement */
         //@{
@@ -386,6 +389,7 @@ namespace easy3d {
             return Frame(-(orientation().inverse_rotate(position())),
                          orientation().inverse());
         }
+        //@}
 
     private:
         // P o s i t i o n   a n d   o r i e n t a t i o n

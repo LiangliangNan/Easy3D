@@ -30,7 +30,11 @@
 
 namespace easy3d {
 
-    // The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields
+    /**
+     * \brief The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields
+     * \class LinesDrawable easy3d/renderer/drawable_lines.h
+     * \see PointsDrawable, TrianglesDrawable
+     */
 	class LinesDrawable : public Drawable {
 	public:
         LinesDrawable(const std::string& name = "", Model* model = nullptr);

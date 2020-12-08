@@ -46,6 +46,8 @@ namespace easy3d {
     class Shadow
     {
     public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
         Shadow(Camera* cam);
         virtual ~Shadow();
 

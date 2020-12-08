@@ -72,6 +72,8 @@ namespace easy3d {
         };
 
     public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
         SoftShadow(Camera* cam);
         virtual ~SoftShadow() override;
 

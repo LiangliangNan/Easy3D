@@ -33,12 +33,13 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using dual depth peeling.
+     *
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
+     *
      * \details DualDepthPeeling implements the dual depth peeling algorithm described in
-     * \code
-     * [Order independent transparency with dual depth peeling](http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
+     * [Order independent transparency with dual depth peeling]
+     * (http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
      * by L. Bavoil, K. Myers. February 2008.
-     * \endcode
      *
      * Depth peeling is traditionally used to perform order independent
      * transparency (OIT) with N geometry passes for N transparency
@@ -85,17 +86,22 @@ namespace easy3d {
     class DualDepthPeeling : public Transparency
     {
     public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
         DualDepthPeeling(Camera* cam);
         ~DualDepthPeeling() override;
 
-        // Defines the maximum number of peeling layers. Initial value is 4.
-        // A special value of 0 means no maximum limit. It has to be a positive value.
+        /// \brief Sets the maximum number of peeling layers.
+        /// \details It has to be a positive value. Default value is 4. A special value of 0 means no maximum limit.
         void set_max_peels(int n) { max_peels_ = n; }
 
+        /// \brief Returns the maximum number of peeling layers.
         int  max_peels() const { return max_peels_; }
 
+        /// \brief Renders the scene (a set of surfaces) with transparency effect
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
 
+#ifndef DOXYGEN
     protected:
 
         // Allocate and configure FBOs, initialize variables, query, etc.
@@ -125,6 +131,7 @@ namespace easy3d {
 
         // Release all FBOs, shader programs.
         void clear();
+#endif
 
     private:
         Camera* camera_;

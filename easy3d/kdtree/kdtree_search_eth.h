@@ -187,10 +187,11 @@ namespace easy3d {
         /**
          * \brief Queries the nearest neighbors within a cone.
          * \details Searches for the nearest points with a cone from \p p1 to \p p2.
+         * \param eye The view point.
          * \param p1 One end point of a line segment.
          * \param p2 The other end point of a line segment.
-         * \param radius The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p is a
-         * candidate point.
+         * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
+         * is a candidate point.
          * \param neighbors The indices of the neighbors found.
          * \param squared_distances The squared distances between the found neighbors to the query line segment.
          * The values are stored in accordance with their indices.
@@ -208,10 +209,11 @@ namespace easy3d {
         /**
          * \brief Queries the nearest neighbors within a cone.
          * \details Searches for the nearest points with a cone from \p p1 to \p p2.
+         * \param eye The view point.
          * \param p1 One end point of a line segment.
          * \param p2 The other end point of a line segment.
-         * \param radius The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p is a
-         * candidate point.
+         * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
+         * is a candidate point.
          * \param neighbors The indices of the neighbors found.
          * \param bToLine
          *      -  The points found are ordered by the distance to the line if <code>bToLine</code> is true.

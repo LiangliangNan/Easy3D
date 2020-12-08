@@ -61,6 +61,8 @@ namespace easy3d {
     class EyeDomeLighting
     {
     public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
         EyeDomeLighting(Camera* cam);
         virtual ~EyeDomeLighting();
 

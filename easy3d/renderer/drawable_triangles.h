@@ -31,10 +31,16 @@
 namespace easy3d {
 
 
-    // The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
-    // NOTE: it supports triangles only. To visualize general polygons, the vertex coordinates
-    //       and properties (e.g., color, normal) should be provided as consecutive triplets
-    //       in an array to be transferred to GPU. See update_vertex_buffer().
+    /**
+     * \brief The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
+     * \class TrianglesDrawable easy3d/renderer/drawable_triangles.h
+     * \see LinesDrawable, PointsDrawable
+     *
+     * \note TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating
+     * the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and properties
+     * (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to GPU.
+     * See Drawable::update_vertex_buffer().
+     */
     class TrianglesDrawable : public Drawable {
 	public:
         TrianglesDrawable(const std::string& name = "", Model* model = nullptr);

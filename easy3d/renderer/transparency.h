@@ -34,7 +34,7 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * \brief base class for rendering with transparency
+     * \brief Base class for rendering with transparency
      * \class Transparency easy3d/renderer/transparency.h
      * \see AverageColorBlending,
      */
@@ -44,6 +44,7 @@ namespace easy3d {
         Transparency() {}
         virtual ~Transparency() {}
 
+        /// \brief Renders the scene (a set of surfaces) with transparency effect
         virtual void draw(const std::vector<TrianglesDrawable*>& surfaces) = 0;
     };
 

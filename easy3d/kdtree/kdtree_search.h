@@ -36,6 +36,7 @@ namespace easy3d {
 
     /**
      * \brief Base class for nearest neighbor search using KdTree.
+     * \class KdTreeSearch easy3d/kdtree/kdtree_search.h
      * \see KdTreeSearch_ANN, KdTreeSearch_ETH, KdTreeSearch_FLANN, and KdTreeSearch_NanoFLANN
      *
      * \details Easy3D has a collection of KdTree implementations, including [ANN](http://www.cs.umd.edu/~mount/ANN/),

@@ -39,8 +39,12 @@ namespace easy3d {
     class LinesDrawable;
     class TrianglesDrawable;
 
+    /// \brief Functionalities for the management of render buffers of drawables.
+    /// \namespace easy3d::buffers
     namespace buffers {
 
+        /// \name The generic API for render buffer update
+        //@{
         // -------------------------------------------------------------------------------------------------------------
 
         /**
@@ -49,8 +53,10 @@ namespace easy3d {
          * @param drawable  The drawable.
          */
         void update(Model* model, Drawable* drawable);
+        //@}
 
-
+        /// \name Render buffer update for PointCloud
+        //@{
         // PointCloud -------------------------------------------------------------------------------------------------
 
         /**
@@ -69,7 +75,11 @@ namespace easy3d {
          * @param scale The length scale of the vectors w.r.t. (0.01 * radius) of the model's bounding sphere.
          */
         void update(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale);
+        //@}
 
+
+        /// \name Render buffer update for SurfaceMesh
+        //@{
         // SurfaceMesh ------------------------------------------------------------------------------------------------
 
         /**
@@ -108,8 +118,11 @@ namespace easy3d {
          * @param scale The scale of the vector length w.r.t. the average edge length of the surface mesh.
          */
         void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale);
+        //@}
 
 
+        /// \name Render buffer update for Graph
+        //@{
         // Graph ------------------------------------------------------------------------------------------------------
 
         /**
@@ -128,6 +141,7 @@ namespace easy3d {
          * @param drawable  The drawable.
          */
         void update(Graph* model, LinesDrawable* drawable);
+        //@}
 
     }   // namespaces buffers
 
