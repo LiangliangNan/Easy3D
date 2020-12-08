@@ -33,7 +33,7 @@
 namespace easy3d {
 
     /// \brief The GenericRect class defines a rectangle in the 2D space.
-    /// A rectangle is normally expressed as a top-left corner and a size (width and height).
+    /// \details A rectangle is normally expressed as a top-left corner and a size (width and height).
     /// \class GenericRect easy3d/core/rect.h
 
     template <typename FT>

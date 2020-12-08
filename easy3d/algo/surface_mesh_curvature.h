@@ -31,8 +31,10 @@ namespace easy3d {
 
     /**
      * \brief Compute per-vertex curvatures, i.e., principle (min, max), mean, Gaussian.
+     *
      * \class SurfaceMeshCurvature easy3d/algo/surface_mesh_curvature.h
-     * Curvature values for boundary vertices are interpolated from their interior neighbors.
+     *
+     * \details Curvature values for boundary vertices are interpolated from their interior neighbors.
      * Curvature values can be smoothed. For more details, please refer to the following papers:
      *    - Discrete Differential-Geometry Operators for Triangulated 2-Manifolds. Meyer et al. 2003.
      *    - Restricted Delaunay triangulations and normal cycle. Cohen-Steiner and Morvan. 2003.

@@ -43,14 +43,13 @@
 namespace easy3d {
 
 
-	/*! \brief A ManipulatedFrame is a Frame that can be rotated and translated
-	  using the mouse. \class ManipulatedFrame manipulatedFrame.h
-	  QGLViewer/manipulatedFrame.h
-
-	  It converts the mouse motion into a translation and an orientation updates. A
-	  ManipulatedFrame is used to move an object in the scene. Combined with object
-	  selection, its MouseGrabber properties and a dynamic update of the scene, the
-	  ManipulatedFrame introduces a great reactivity in your applications.
+	/*! \brief A Frame that can be rotated and translated using the mouse.
+	 * \class ManipulatedFrame easy3d/renderer/manipulated_frame.h
+	 *
+	 * \details A ManipulatedFrame converts the mouse motion into a translation and an orientation updates.
+	 * A ManipulatedFrame is used to move an object in the scene. Combined with object selection, its MouseGrabber
+	 * properties and a dynamic update of the scene, the ManipulatedFrame introduces a great reactivity in your
+	 * applications.
 
 	  A ManipulatedFrame is attached to a QGLViewer using
 	  QGLViewer::setManipulatedFrame(): \code init() { setManipulatedFrame( new

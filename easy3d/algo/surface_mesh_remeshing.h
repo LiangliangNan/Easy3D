@@ -33,9 +33,11 @@ namespace easy3d {
 
     /**
      * \brief A class for uniform and adaptive surface remeshing.
+     *
      * \class SurfaceMeshRemeshing easy3d/algo/surface_mesh_remeshing.h
-     * The algorithm implemented here performs incremental remeshing based on edge collapse, split, flip, and tangential
-     * relaxation. See the following papers for more details:
+     *
+     * \details The algorithm implemented here performs incremental remeshing based on edge collapse, split, flip,
+     * and tangential relaxation. See the following papers for more details:
      *  - Mario Botsch and Leif Kobbelt. A remeshing approach to multiresolution modeling. SGP, 2004.
      *  - Marion Dunyach et al. Adaptive remeshing for real-time mesh deformation. EG (Short Papers) 2013.
      */

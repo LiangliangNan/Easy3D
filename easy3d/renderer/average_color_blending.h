@@ -35,9 +35,14 @@ namespace easy3d {
     class TrianglesDrawable;
     class FramebufferObject;
 
-    // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
-    // can benefit from sharing the same geometry pass.
-
+    /**
+     * \brief Transparency effect using average color blending.
+     *
+     * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
+     * geometry pass.
+     *
+     * \class AverageColorBlending easy3d/renderer/average_color_blending.h
+     */
     class AverageColorBlending : public Transparency
     {
     public:

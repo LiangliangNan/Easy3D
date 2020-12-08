@@ -33,24 +33,26 @@
 namespace easy3d {
 
     /**
-    * usage example:
-    *   {
-    *      ChronoWatch t;
-    *	   t.start();
-    *
-    *      // do task_1 ...
-    *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
-    *
-    *	   t.reset(), t.start();
-    *      // do task_2 ...
-    *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
-    *   }
-    */
-
-    // Liangliang:
-    // std::chrono::high_resolution_clock has disappointing accuracy on windows.
-    // On windows, you should use the WinAPI QueryPerformanceFrequency().
-    // If you care much about accuracy, use the StopWatch instead.
+     * \brief A timer based on <code> std::chrono::high_resolution_clock </code>.
+     *
+     * \class ChronoWatch easy3d/util/chrono_watch.h
+     * \see StopWatch
+     *
+     * \note \c std::chrono::high_resolution_clock has disappointing accuracy on windows (on windows, one
+     * should use the WinAPI \c QueryPerformanceFrequency()). If you care much about accuracy, use the
+     * StopWatch class instead.
+     *
+     * Usage example:
+     *      \code
+     *      ChronoWatch t;
+     *	    t.start();
+     *      // do task_1 ...
+     *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
+     *	    t.reset(), t.start();
+     *      // do task_2 ...
+     *      LOG(INFO) << "task_1 done. Time: " << t.time_string();
+     *      \endcode
+     */
     class ChronoWatch
     {
     public:

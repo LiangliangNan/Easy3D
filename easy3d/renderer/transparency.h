@@ -33,8 +33,11 @@ namespace easy3d {
     class Camera;
     class TrianglesDrawable;
 
-    // base class for rendering with transparency
-
+    /**
+     * \brief base class for rendering with transparency
+     * \class Transparency easy3d/renderer/transparency.h
+     * \see AverageColorBlending,
+     */
     class Transparency
     {
     public:

@@ -37,13 +37,15 @@ namespace easy3d {
     class Model;
     class Camera;
     class FramebufferObject;
-	
-	// AmbientOcclusion implements the traditional Screen Space Ambient Occlusion technique. 
-    //
-    // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
-    // can benefit from sharing the same geometry pass.
 
-
+    /**
+     * \brief Traditional Screen Space Ambient Occlusion technique.
+     *
+     * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
+     * geometry pass.
+     *
+     * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
+     */
     class AmbientOcclusion
     {   
     public:

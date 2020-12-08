@@ -356,6 +356,8 @@ namespace easy3d {
 
 namespace easy3d {
 
+    /// \brief Functions for basic geometric computations.
+    /// \namespace easy3d::geom
     namespace geom {
 
         template<typename FT>

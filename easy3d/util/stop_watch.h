@@ -36,21 +36,23 @@
 
 namespace easy3d {
 
-    /* High resolution stop watch/timer.
-     * This timer is able to measure the elapsed time with 1 micro-second accuracy
-     * in both Windows, Linux, and Unix system.
+    /**
+     * \brief A high resolution stop watch/timer.
+     * \details This timer is able to measure the elapsed time with 1 micro-second accuracy on Windows, Linux, and Unix.
+     *
+     * \class StopWatch easy3d/util/stop_watch.h
+     * \see ChronoWatch
      *
      * Usage example:
-     *
+     *      \code
      *      StopWatch w ;
      *      // do task_1 ...
      *      LOG(INFO) << "task_1 done. Time: " << w.time_string() << " seconds";
-     *	   w.start();
+     *	    w.start();
      *      // do task_2 ...
      *      LOG(INFO) << "task_2 done. Time: " << w.time_string() << " seconds";
-     *
+     *      \endcode
      */
-
     class StopWatch {
     public:
         StopWatch(); // the watch will automatically start in construction

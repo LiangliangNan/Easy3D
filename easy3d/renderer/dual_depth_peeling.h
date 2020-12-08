@@ -31,12 +31,14 @@
 
 namespace easy3d {
 
-    /*
-     * DualDepthPeeling implements the dual depth peeling algorithm
-     * described in
-     * "Order independent transparency with dual depth peeling"
-     * by L. Bavoil, K. Myers. February 2008
-     * http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf
+    /**
+     * \brief Transparency effect using dual depth peeling.
+     * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
+     * \details DualDepthPeeling implements the dual depth peeling algorithm described in
+     * \code
+     * [Order independent transparency with dual depth peeling](http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
+     * by L. Bavoil, K. Myers. February 2008.
+     * \endcode
      *
      * Depth peeling is traditionally used to perform order independent
      * transparency (OIT) with N geometry passes for N transparency
@@ -64,10 +66,8 @@ namespace easy3d {
      *    produce the final image.
      *
      * Related articals or methods:
-     *  - VTK Technical Highlight: Dual Depth Peeling:
-     *    https://blog.kitware.com/vtk-technical-highlight-dual-depth-peeling/
-     *  - OpenGL 4.0+ ABuffer V2.0: Linked lists of fragment pages:
-     *    https://blog.icare3d.org/2010/07/opengl-40-abuffer-v20-linked-lists-of.html
+     *  - [VTK Technical Highlight: Dual Depth Peeling](https://blog.kitware.com/vtk-technical-highlight-dual-depth-peeling/)
+     *  - [OpenGL 4.0+ ABuffer V2.0: Linked lists of fragment pages](https://blog.icare3d.org/2010/07/opengl-40-abuffer-v20-linked-lists-of.html)
      *
      * About antialiasing:
      *    Dual depth peeling won't work with a multisample FBO, so for better

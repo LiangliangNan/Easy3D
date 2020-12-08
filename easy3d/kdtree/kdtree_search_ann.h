@@ -32,68 +32,131 @@ namespace easy3d {
 
     class PointCloud;
 
-    class KdTreeSearch_ANN : public KdTreeSearch  {
+    /**
+     * \brief KdTree implementation based on [ANN](http://www.cs.umd.edu/~mount/ANN/).
+     * \class KdTreeSearch_ANN easy3d/kdtree/kdtree_search_ann.h
+     * \see KdTreeSearch_ETH, KdTreeSearch_FLANN, and KdTreeSearch_NanoFLANN.
+     */
+    class KdTreeSearch_ANN : public KdTreeSearch {
     public:
         KdTreeSearch_ANN();
+
         virtual ~KdTreeSearch_ANN();
 
 
-        //______________ tree construction __________________________
+        /// \name Tree construction
+        /// @{
+        /**
+         * \brief Begins the construction of a KdTree.
+         */
+        virtual void begin();
 
-        virtual void begin() ;
-        virtual void add_point_cloud(PointCloud* cloud) ;
-        virtual void end() ;
+        /**
+         * \brief Sets the point cloud for which a KdTree will be constructed.
+         */
+        virtual void add_point_cloud(PointCloud *cloud);
 
-        //________________ closest point ____________________________
+        /**
+         * \brief Finalizes the construction of a KdTree.
+         */
+        virtual void end();
+        /// @}
 
-        // NOTE: *squared* distance is returned
-        virtual int find_closest_point(const vec3& p, float& squared_distance) const ;
+        /// \name Closest point query
+        /// @{
 
-        virtual int find_closest_point(const vec3& p) const ;
+        /**
+         * \brief Queries the closest point for a given point.
+         * \param p The query point.
+         * \param squared_distance The squared distance between the query point and its closest neighbor.
+         * \note A \b squared distance is returned by the second argument \p squared_distance.
+         * \return The index of the nearest neighbor found.
+         */
+        virtual int find_closest_point(const vec3 &p, float &squared_distance) const;
 
-        //_________________ K-nearest neighbors ____________________
+        /**
+         * \brief Queries the closest point for a given point.
+         * \param p The query point.
+         * \return The index of the nearest neighbor found.
+         */
+        virtual int find_closest_point(const vec3 &p) const;
+        /// @}
 
-        // NOTE: *squared* distances are returned
+        /// \name K nearest neighbors search
+        /// @{
+
+        /**
+         * \brief Queries the K nearest neighbors for a given point.
+         * \param p The query point.
+         * \param k The number of required neighbors.
+         * \param neighbors The indices of the neighbors found.
+         * \param squared_distances The squared distances between the query point and its K nearest neighbors.
+         * The values are stored in accordance with their indices.
+         * \note The \b squared distances are returned by the argument \p squared_distances.
+         */
         virtual void find_closest_k_points(
-            const vec3& p, int k,
-            std::vector<int>& neighbors, std::vector<float>& squared_distances
-            ) const ;
+                const vec3 &p, int k,
+                std::vector<int> &neighbors, std::vector<float> &squared_distances
+        ) const;
 
+        /**
+         * \brief Queries the K nearest neighbors for a given point.
+         * \param p The query point.
+         * \param k The number of required neighbors.
+         * \param neighbors The indices of the neighbors found.
+         */
         virtual void find_closest_k_points(
-            const vec3& p, int k,
-            std::vector<int>& neighbors
-            ) const ;
+                const vec3 &p, int k,
+                std::vector<int> &neighbors
+        ) const;
+        /// @}
 
-        //___________________ radius search __________________________
+        /// @name Fixed radius search
+        /// @{
 
-        // Liangliang: it seems ANN's annkFRSearch() needs to specify k.
-        /* "It does two things. First, it computes the k nearest neighbors within the radius bound.
-            Second, it returns the total number of points lying within the radius bound. It is
-            permitted to set k = 0, in which case it only answers a range counting query. */
+        /**
+         * \brief Sepcifies the K for fixed range search.
+         * \details ANN's annkFRSearch() needs to specify k. ANN's fixed range search is done in two steps.
+         * First, it computes the k nearest neighbors within the radius bound. Second, it returns the total number
+         * of points lying within the radius bound. It is permitted to set k = 0, in which case it only answers a range
+         * counting query.
+         */
         void set_k_for_radius_search(int k) { k_for_radius_search_ = k; }
 
-        // fixed-radius search. Search for all points in the range.
-        // NOTE: the range must be *squared* radius and *squared* distances are returned
+        /**
+         * \brief Queries the nearest neighbors within a fixed range.
+         * \param p The query point.
+         * \param squared_radius The search range (which is required to be \b squared).
+         * \param neighbors The indices of the neighbors found.
+         * \param squared_distances The squared distances between the query point and the neighbors found.
+         * The values are stored in accordance with their indices.
+         * \note The \b squared distances are returned by the argument \p squared_distances.
+         */
         virtual void find_points_in_range(
-            const vec3& p, float squared_radius,
-            std::vector<int>& neighbors, std::vector<float>& squared_distances
+                const vec3 &p, float squared_radius,
+                std::vector<int> &neighbors, std::vector<float> &squared_distances
         ) const;
 
-        // fixed-radius search. Search for all points in the range.
-        // NOTE: the range must be *squared* radius
+        /**
+         * \brief Queries the nearest neighbors within a fixed range.
+         * \param p The query point.
+         * \param squared_radius The search range (which is required to be \b squared).
+         * \param neighbors The indices of the neighbors found.
+         */
         virtual void find_points_in_range(
-            const vec3& p, float squared_radius,
-            std::vector<int>& neighbors
+                const vec3 &p, float squared_radius,
+                std::vector<int> &neighbors
         ) const;
+        /// @}
 
     protected:
-        int		points_num_;
+        int points_num_;
 
-        float**	points_; // a copy of the point cloud data (due to different data structure);
+        float **points_; // a copy of the point cloud data (due to different data structure);
 
-        void*	tree_;
-        int		k_for_radius_search_;
-    } ;
+        void *tree_;
+        int k_for_radius_search_;
+    };
 
 } // namespace easy3d
 

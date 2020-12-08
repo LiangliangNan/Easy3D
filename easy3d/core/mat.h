@@ -47,15 +47,17 @@ namespace easy3d {
 
 
     /**
-     * \brief Base class for matrix types. Provides generic functionality for N by M matrices.
-     *      N: The number of rows in this matrix.
-     *		M: The number of columns in this matrix.
-     *		T: The scalar type for vector elements.
-     *	@note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
-     *	TODO: Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
+     * \brief Base class for matrix types.
+     * \details Mat is a base matrix class that provides generic functionality for N by M matrices.
+     * \tparam N The number of rows in this matrix.
+     * \tparam M The number of columns in this matrix.
+     * \tparam T The scalar type for matrix elements.
+     * \note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
+     * \todo Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
      *	    M-1 in size, as vectors in	homogeneous space.
      *
      *	\class Mat easy3d/core/mat.h
+     *	\see Mat2, Mat3, and Mat4
      */
     template <size_t N, size_t M, typename T>
     class Mat
@@ -1334,8 +1336,9 @@ namespace easy3d {
     *******************************************************************************/
 
     /**
-     * \brief Extends Mat with 2D-specific functionality and constructors.
-     *	T: The scalar type for vector elements. See Mat.
+     * \brief 2 by 2 matrix. Extends Mat with 2D-specific functionality and constructors.
+     * \tparam T The scalar type for vector elements. \see Mat.
+     * \class Mat2 easy3d/core/mat.h
      */
     template <typename T>
     class Mat2 : public Mat<2, 2, T>
@@ -1509,7 +1512,8 @@ namespace easy3d {
 
     /**
      * \brief 3x3 matrix. Extends Mat with 3D-specific functionality and constructors.
-     *	T: The scalar type for vector elements. See Mat.
+     * \tparam T The scalar type for vector elements. \see Mat.
+     * \class Mat3 easy3d/core/mat.h
      */
     template <typename T>
     class Mat3 : public Mat<3, 3, T> {
@@ -1825,7 +1829,8 @@ namespace easy3d {
 
     /**
      * \brief 4x4 matrix. Extends Mat with 4D-specific functionality and constructors.
-     *	T: The scalar type for vector elements. See Mat.
+     * \tparam T The scalar type for vector elements. \see Mat.
+     * \class Mat2 easy3d/core/mat.h
      */
     template <typename T>
     class Mat4 : public Mat<4, 4, T> {

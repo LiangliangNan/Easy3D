@@ -43,11 +43,10 @@
 namespace easy3d {
 
 
-	/*! \brief The ManipulatedCameraFrame class represents a ManipulatedFrame with
-	  Camera specific mouse bindings. \class ManipulatedCameraFrame
-	  manipulatedCameraFrame.h QGLViewer/manipulatedCameraFrame.h
+	/*! \brief A manipulated frame with camera specific mouse bindings.
+	  \class ManipulatedCameraFrame easy3d/renderer/manipulated_camera_frame.h
 
-	  A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
+	  \details A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
 	  to be set as the Camera::frame(). Mouse motions are basically interpreted in a
 	  negated way: when the mouse goes to the right, the ManipulatedFrame
 	  translation goes to the right, while the ManipulatedCameraFrame has to go to
