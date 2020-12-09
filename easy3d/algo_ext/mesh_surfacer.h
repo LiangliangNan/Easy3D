@@ -48,14 +48,14 @@ namespace easy3d {
 
         // ------- detect/remove duplicated faces
 
-        /// \brief Detect and return the duplicated faces.
+        /// \brief Detects and return the duplicated faces.
         /// @param exact True: do exact predict; otherwise use the distance threshold.
         /// Upon return, the second component of each entry contains the set of faces duplicating the one stored as
         /// the first component.
         std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
         detect_duplicated_faces(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
-        /// \brief Detect and remove duplicated faces. Returns the number of deleted faces.
+        /// \brief Detects and remove duplicated faces. Returns the number of deleted faces.
         /// @param exact True: do exact predict; otherwise use the distance threshold.
         unsigned int remove_duplicated_faces(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
@@ -63,7 +63,7 @@ namespace easy3d {
         // ------- detect/remesh self intersections
 
         /**
-         * \brief Detect intersecting face pairs.
+         * \brief Detects intersecting face pairs.
          * @param mesh The input mesh.
          * @param construct If true, also construct the intersecting geometry.
          * @return The intersecting face pairs.
@@ -72,7 +72,7 @@ namespace easy3d {
         detect_self_intersections(SurfaceMesh* mesh);
 
         /**
-         * \brief Detect and remesh the intersecting faces.
+         * \brief Detects and remesh the intersecting faces.
          * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
          *             unchanged.
          * @param stitch Stitch the borders
