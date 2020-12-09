@@ -37,10 +37,16 @@ namespace easy3d {
     class Texture;
 
     /**
-     * A texture can be shared by multiple models, so it is wise to have a single instance of a texture.
+     * \brief Management of OpenGL textures.
+     *
+     * \class TextureManager easy3d/renderer/texture_manager.h
+     *
+     * \details A texture can be shared by multiple models, so it is wise to have a single instance of a texture.
      * TextureManager manages the texture creation and memories. It ensures no duplication.
-     * NOTE: make sure to call terminate() to destroy existing textures before the OpenGL context is deleted.
-     * TODO: allow to change the wrap/filter mode (i.e., multiple textures of different parameters from the same image).
+     *
+     * \note Make sure to call terminate() to destroy existing textures before the OpenGL context is deleted.
+     *
+     * \todo Allow to change the wrap/filter mode (i.e., multiple textures of different parameters from the same image).
      */
     class TextureManager {
     public:

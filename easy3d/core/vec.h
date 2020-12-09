@@ -312,6 +312,12 @@ namespace easy3d {
 
     //-------------------- vec2 -------------------------------------------------------------------
 
+    /**
+     * \brief A 2D vector (used for representing 2D points or vectors).
+     * \tparam T The scalar type of vector elements.
+     *
+     * \class Vec<2, T> easy3d/core/vec.h
+     */
     template <class T>
     class Vec<2, T> {
     public:
@@ -419,6 +425,12 @@ namespace easy3d {
 
     //---------------- vec3 ------------------------------------------------------------------------
 
+    /**
+     * \brief A 3D vector (used for representing 3D points or vectors).
+     * \tparam T The scalar type of vector elements.
+     *
+     * \class Vec<3, T> easy3d/core/vec.h
+     */
     template <class T>
     class Vec<3, T> {
     public:
@@ -547,6 +559,12 @@ namespace easy3d {
 
     // ----------------- vec4 ----------------------------------------------------------------------------------
 
+    /**
+     * \brief A 4D vector (used for representing 3D points or vectors in homogeneous coordinates).
+     * \tparam T The scalar type of vector elements.
+     *
+     * \class Vec<4, T> easy3d/core/vec.h
+     */
     template <class T>
     class Vec<4, T> {
     public:

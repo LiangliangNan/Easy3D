@@ -32,7 +32,8 @@
 namespace easy3d {
 
     /**
-     * The based class of GUI element showing the progress.
+     * \brief The based class of GUI element reporting the progress.
+     * \class ProgressClient easy3d/util/progress.h
      */
     class ProgressClient {
     public:
@@ -44,6 +45,10 @@ namespace easy3d {
 
     //_________________________________________________________
 
+    /**
+     * \brief An implementation of progress logging mechanism.
+     * \class ProgressLogger easy3d/util/progress.h
+     */
     class ProgressLogger {
     public:
         ProgressLogger(std::size_t max_val = 100, const std::string &task_name = "", bool quiet = false);

@@ -33,8 +33,9 @@
 
 namespace easy3d {
 
-	/*
+	/**
 	 * \brief String manipulation utilities.
+	 * \namespace easy3d::string
 	 */
 	namespace string {
 

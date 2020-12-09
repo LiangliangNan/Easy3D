@@ -33,6 +33,10 @@
 
 namespace easy3d {
 
+    /**
+     * \brief A Frustum description for perspective projection.
+     * \class Frustum easy3d/renderer/frustum.h
+     */
     class Frustum
     {
     public:

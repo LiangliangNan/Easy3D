@@ -52,32 +52,37 @@ namespace easy3d {
 
     namespace transform {
 
-        /* @brief Decompose a transformation matrix into its original components
-        *  @param M is the input transformation matrix
-        *  @param scaling receives the output scaling for the x, y, z axes
-        *  @param rotation receives the output rotation
-        *  @param translation receives the output translation for the x, y, z axes
-        * NOTE: this function can not handle skew and perspective transformation. See the overloaded function below
-        * TODO: add functions that extract single components, i.e.,
-        *      -) Quat extract_rotation(const mat4& M);
-        *      -) vec3 extract_scale(const mat4& M);
-        *      -) vec3 extract_translation(const mat4& M);
-        */
+        /**
+         * @brief Decomposes a transformation matrix into its original components
+         *  @param M is the input transformation matrix
+         *  @param scaling receives the output scaling for the x, y, z axes
+         *  @param rotation receives the output rotation
+         *  @param translation receives the output translation for the x, y, z axes
+         * \note This function can not handle skew and perspective transformation. See the overloaded function below
+         * \todo Add functions that extract single components, i.e.,
+         *      - Quat extract_rotation(const mat4& M);
+         *      - vec3 extract_scale(const mat4& M);
+         *      - vec3 extract_translation(const mat4& M);
+         */
         void decompose(const mat4& M, vec3& scaling, mat3& rotation, vec3& translation);
         void decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation);
 
-        /* @brief Decompose a transformation matrix with no scaling into its original components
-        *  @param rotation receives the output rotation
-        *  @param translation receives the output translation for the x, y, z axes
-        * NOTE: this function can not handle skew and perspective transformation. See the overloaded function below
-        * TODO: add functions that extract single components, i.e.,
-        *      -) Quat  extract_rotation(const mat4& M);
-        *      -) vec3  extract_translation(const mat4& M);
-        */
+        /**
+         * @brief Decomposes a transformation matrix with no scaling into its original components
+         *  @param rotation receives the output rotation
+         *  @param translation receives the output translation for the x, y, z axes
+         * \note This function can not handle skew and perspective transformation. See the overloaded function below
+         * \todo Add functions that extract single components, i.e.,
+         *      - Quat  extract_rotation(const mat4& M);
+         *      - vec3  extract_translation(const mat4& M);
+         */
         void decompose_no_scaling(const mat4& M, mat3& rotation, vec3& translation);
         void decompose_no_scaling(const mat4& M, quat& rotation, vec3& translation);
 
-        // Decomposes a transformation matrix into to its original components(i.e., scaling, rotation, translation, skew and perspective)
+        /**
+         * \brief Decomposes a transformation matrix into to its original components (i.e., scaling, rotation,
+         * translation, skew and perspective).
+         */
         bool decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation, vec3& skew, vec4& persp);
 
     }

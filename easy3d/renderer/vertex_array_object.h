@@ -32,26 +32,20 @@
 
 namespace easy3d {
 
-	/********************************************************************************************
-	*
-	* The VertexArrayObject class is a thin wrapper around an OpenGL Vertex Array Object (VAO).
-	* A VAO is an OpenGL container object that encapsulates the state needed to specify
-	* per-vertex attribute data to the OpenGL pipeline. To put it another way, a VAO
-	* remembers the states of buffer objects (i.e., vertex buffers) and their associated
-	* state (e.g. vertex attribute divisors). This allows a very easy and efficient method
-	* of switching between OpenGL buffer states for rendering different "objects" in a scene.
-	*
-	* NOTE: this implementation is more than the standard VAO. It also provides functions
-	*       for creating and managing other buffer objects (i.e., shader storage buffer).
-	*
-	*	Version:	 1.0
-	*	created:	 Dec. 14, 2015
-	*	author:		 Liangliang Nan
-	*	contact:     liangliang.nan@gmail.com
-	*
-	*********************************************************************************************/
-
-
+	/**
+	 * \brief A thin wrapper around an OpenGL Vertex Array Object (VAO).
+	 *
+	 * \class VertexArrayObject easy3d/renderer/vertex_array_object.h
+	 *
+	 * \details A VAO is an OpenGL container object that encapsulates the state needed to specify
+	 * per-vertex attribute data to the OpenGL pipeline. To put it another way, a VAO
+	 * remembers the states of buffer objects (i.e., vertex buffers) and their associated
+	 * state (e.g. vertex attribute divisors). This allows a very easy and efficient method
+	 * of switching between OpenGL buffer states for rendering different "objects" in a scene.
+	 *
+	 * \note This implementation is more than the standard VAO. It also provides functions
+	 *       for creating and managing other buffer objects (i.e., shader storage buffer).
+	 */
 	class VertexArrayObject
 	{
 	public:
@@ -67,7 +61,6 @@ namespace easy3d {
 
 		//------------------------- buffer management -------------------
 
-		// @param index: the index of the generic vertex attribute.
         /**
          * @brief Creates an OpenGL array buffer and upload data to the buffer.
          * @param handle The name of the buffer object.

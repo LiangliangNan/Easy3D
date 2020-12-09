@@ -47,26 +47,30 @@
 namespace easy3d {
 
 
-	// Liangliang: about Shader Compilation
-	// https://www.khronos.org/opengl/wiki/Shader_Compilation#Error_handling
-
-    // To use the shader program class, you need to do the following:
-    // - Call load_shader_from_code(ShaderProgram::VERTEX, vert_file/code) to create vertex shader and
-    //        load_shader_from_code(ShaderProgram::FRAGMENT, frag_file/code) to create fragment shader
-    //        (you may also need to create other types of shaders depending on your needs).
-    // - Call set_attrib_name(ShaderProgram::POSITION, "position") for vertex attribute "position".
-    //        You may also need to set other attributes like normal, color, etc. To know what vertex
-    //        attributes need to be set, check your shader code or call print_active_attributes().
-    // - Call link_program() to Link the program.
-    //
-    // For rendering
-    // - Call bind();
-    // - Call set_uniform() to set all the necessary uniforms. You may also need to call set_block(),
-    //        set_block_uniform(), and/or set_block_uniform_array_element(). To know what uniforms need to
-    //        be set, check your shader code or call print_active_uniforms(), print_active_uniform_blocks().
-    // - Call the drawable's draw() function
-    // - Call release();
-    // To retrieve the model view projection matrix, call modelViewProjectionMatrix().
+    /**
+     * \brief OpenGL Shader Compilation
+     *
+     * \class ShaderProgram easy3d/renderer/shader_program.h
+     *
+     * To use the shader program class, you need to do the following:
+     * - Call load_shader_from_code(ShaderProgram::VERTEX, vert_file) to create vertex shader and
+     *        load_shader_from_code(ShaderProgram::FRAGMENT, frag_file) to create fragment shader
+     *        (you may also need to create other types of shaders depending on your needs).
+     * - Call set_attrib_name(ShaderProgram::POSITION, "position") for vertex attribute "position".
+     *        You may also need to set other attributes like normal, color, etc. To know what vertex
+     *        attributes need to be set, check your shader code or call print_active_attributes().
+     * - Call link_program() to link the program.
+     *
+     * For rendering
+     * - Call bind();
+     * - Call set_uniform() to set all the necessary uniforms. You may also need to call set_block(),
+     *        set_block_uniform(), and/or set_block_uniform_array_element(). To know what uniforms need to
+     *        be set, check your shader code or call print_active_uniforms(), print_active_uniform_blocks().
+     * - Call the drawable's draw() function
+     * - Call release();
+     *
+     * To retrieve the model view projection matrix, call camera's <code> modelViewProjectionMatrix() </code>
+     */
 
 	class ShaderProgram
 	{

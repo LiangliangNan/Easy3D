@@ -30,10 +30,14 @@
 
 namespace easy3d {
 
-    /*
-     * SoftShadow implements Percentage-Closer Soft Shadows - by Randima Fernando
-     * See http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
-     * https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
+    /**
+     * \brief An implementation of the Percentage-Closer Soft Shadows
+     *
+     * \class SoftShadow easy3d/renderer/soft_shadow.h
+     *
+     * \details SoftShadow implements the Percentage-Closer Soft Shadows technique. See
+     *  - http://developer.download.nvidia.com/shaderlibrary/docs/shadow_PCSS.pdf
+     *  - https://http.download.nvidia.com/developer/presentations/2005/SIGGRAPH/Percentage_Closer_Soft_Shadows.pdf
      *
      * --- Overview ---
      * This sample demonstrates two techniques for rendering soft shadows: Percentage Closer Filtering (PCS) with

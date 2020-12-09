@@ -34,6 +34,11 @@ namespace easy3d {
     class Camera;
     class ShaderProgram;
 
+    /**
+     * \brief An implementation of clipping plane for visualization of model interiors and cross sections.
+     *
+     * \class ClippingPlane easy3d/renderer/clipping_plane.h
+     */
     class ClippingPlane {
     public:
         ClippingPlane();

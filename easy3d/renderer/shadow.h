@@ -43,6 +43,7 @@ namespace easy3d {
     // can benefit from sharing the same geometry pass.
 
     /// \brief Shadow implements the standard shadow map (hard shadow) algorithm.
+    /// \class Shadow easy3d/renderer/shadow.h
     class Shadow
     {
     public:

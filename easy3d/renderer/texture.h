@@ -32,7 +32,13 @@
 
 namespace easy3d {
 
-    // currently only TEXTURE_2D is supported
+    /**
+     * \brief OpenGL texture.
+     *
+     * \class Texture easy3d/renderer/texture.h
+     *
+     * \details currently only TEXTURE_2D is supported
+     */
     class Texture {
     public:
         enum WrapMode {
@@ -64,17 +70,21 @@ namespace easy3d {
         ~Texture();
 
         unsigned int id() const { return id_; }
+
         const std::string &name() const { return name_; }
 
         void bind(int unit = 0);
+
         void release();
 
         int width() const { return sizes_[0]; }
+
         int height() const { return sizes_[1]; }
 
         int channels() const { return sizes_[2]; }
 
         WrapMode wrap_mode() const { return wrap_mode_; }
+
         FilterMode filter_mode() const { return filter_mode_; }
 
     private:
@@ -91,6 +101,7 @@ namespace easy3d {
 
         //copying disabled
         Texture(const Texture &);
+
         Texture &operator=(const Texture &);
 
         friend class TextureManager;

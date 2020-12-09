@@ -31,13 +31,15 @@
 #include <easy3d/renderer/shader_program.h>
 
 
-// NOTE: make sure to call terminate() to destroy existing programs before the OpenGL context is deleted.
-
-
 namespace easy3d {
 
     class ShaderProgram;
 
+    /**
+     * \brief Management of shader programs.
+     * \class ShaderManager easy3d/renderer/shader_manager.h
+     * \note make sure to call terminate() to destroy existing programs before the OpenGL context is deleted.
+     */
     class ShaderManager
     {
     public:

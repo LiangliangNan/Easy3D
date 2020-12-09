@@ -29,30 +29,37 @@
 #include <string>
 
 namespace easy3d {
-    /*
-    * EyeDomeLighting implements an EDL offscreen shading method, which is usefull
-    * for rendering point clouds without normal information.
-    *
-    * Two image resolutions are used.
-    *
-    * This pass expects an initialized depth buffer and color buffer.
-    * Initialized buffers means they have been cleared with farest z-value and
-    * background color/gradient/transparent color.
-    * An opaque pass may have been performed right after the initialization.
-    *
-    * ptimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
-    * an benefit from sharing the same geometry pass.
-    *
-    * Example usage:
-    * 		if (camera()->type() == Camera::PERSPECTIVE)
-    *			edl_->begin(width(), height(), camera()->zNear(), camera()->zFar());
-    *		else {
-    *			float r = camera()->sceneRadius();
-    *			edl_->begin(width(), height(), 2.0f * r, 10.0f * r);
-    *		}
-    *      draw(); // your rendering code here
-    *      edl_->end(camera()->sceneRadius());
-    */
+
+
+    /**
+     * \brief An implementation of the Eye Dome Lighting (EDL) technique.
+     *
+     * \class EyeDomeLighting easy3d/renderer/eye_dome_lighting.h
+     *
+     * \details This class implements an EDL offscreen shading method, which is useful  for rendering point clouds
+     * without normal information.
+     *
+     * Two image resolutions are used.
+     *
+     * This pass expects an initialized depth buffer and color buffer. Initialized buffers means they have been
+     * cleared with farest z-value and background color/gradient/transparent color.
+     * An opaque pass may have been performed right after the initialization.
+     *
+     * Optimization tips:
+     * Rendering with multi-effects (e.g., shadowing, SSAO) an benefit from sharing the same geometry pass.
+     *
+     * Example usage:
+     *      \code
+     * 		if (camera()->type() == Camera::PERSPECTIVE)
+     *			edl_->begin(width(), height(), camera()->zNear(), camera()->zFar());
+     *		else {
+     *			float r = camera()->sceneRadius();
+     *			edl_->begin(width(), height(), 2.0f * r, 10.0f * r);
+     *		}
+     *      draw(); // your rendering code here
+     *      edl_->end(camera()->sceneRadius());
+     *      \endcode
+     */
 
     class Camera;
     class ShaderProgram;

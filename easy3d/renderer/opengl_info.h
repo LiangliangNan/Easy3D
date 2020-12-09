@@ -32,116 +32,139 @@
 
 namespace easy3d {
 
-	class OpenglInfo
-	{
-	public:
-		static bool init();
-		static bool is_initialized();
+    /**
+     * \brief Utilities for querying OpenGL states.
+     *
+     * \class OpenglInfo easy3d/renderer/opengl_info.h
+     */
+    class OpenglInfo {
+    public:
+        static bool init();
 
-		// -------------- general information --------------
+        static bool is_initialized();
 
-		// returns either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
-        static int  gl_profile();
+        // -------------- general information --------------
 
-        static bool is_supported(const std::string& name);  // e.g., "GL_VERSION_3_2", "GL_ARB_vertex_array_object"
-        static bool has_entension(const std::string& name); // e.g., "GL_EXT_framebuffer_object"
+        // returns either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
+        static int gl_profile();
 
-		static std::string glew_version();
+        static bool is_supported(const std::string &name);  // e.g., "GL_VERSION_3_2", "GL_ARB_vertex_array_object"
+        static bool has_entension(const std::string &name); // e.g., "GL_EXT_framebuffer_object"
 
-		static std::string gl_vendor();
-		static std::string gl_renderer();
-		static std::string gl_version();
-		static std::string gl_extensions();
-		static std::string glsl_version();
+        static std::string glew_version();
 
-		static int		   gl_major_version();
-		static int         gl_minor_version();
+        static std::string gl_vendor();
 
-		static float	   glew_version_number();
-		static float	   gl_version_number();
-		static float	   glsl_version_number();
+        static std::string gl_renderer();
 
-		// ----------------- GPU memory  -------------------
+        static std::string gl_version();
 
-		// in MB. 
-		// returns 0 if the query fails.
-		// NOTE: (1) OpenGL >= 2.0 is required.
-		//		 (2) currently only NVidia GPU is supported 
-		static int total_gpu_memory();
-		static int available_gpu_memory();
+        static std::string gl_extensions();
 
-        // ----------------- print information  -------------------
+        static std::string glsl_version();
 
-        // sets the output stream for the messages.
-        // if null, LOG(INFO) is the default output stream
-        static void set_output(std::ostream* out);
+        static int gl_major_version();
 
-		// --------------- buffer information ----------------
+        static int gl_minor_version();
 
-		/// display current binded buffer info
-		static void getCurrentBufferInfo();
-		/// display the buffer information
-		static void getBufferInfo(unsigned int target, int bufferName);
+        static float glew_version_number();
 
-		// --------------- GLSL information (GLSL version 4.2 is supported )----------------
+        static float gl_version_number();
 
-		// display VAO information, including its attributes
-		static void getVAOInfo(unsigned int buffer);
+        static float glsl_version_number();
 
-		/// display detailed info for a program
-		static void getProgramInfo(unsigned int program);
+// ----------------- GPU memory  -------------------
 
-		// display detailed info for attributes in a program
-		static void getAttributesInfo(unsigned int program);
+// in MB.
+// returns 0 if the query fails.
+// NOTE: (1) OpenGL >= 2.0 is required.
+//		 (2) currently only NVidia GPU is supported
+        static int total_gpu_memory();
 
-		// display info for all active uniforms in a program
-		static void getUniformsInfo(unsigned int program);
+        static int available_gpu_memory();
 
-		// display a uniform's value(s)
-		static void getUniformInfo(unsigned int program, const std::string& uniName);
+// ----------------- print information  -------------------
 
-		// display the values for a uniform in a named block
-		static void getUniformInBlockInfo(unsigned int program, const std::string& blockName, const std::string& uniName);
+// sets the output stream for the messages.
+// if null, LOG(INFO) is the default output stream
+        static void set_output(std::ostream *out);
 
-	private:
-		// printf() style + plus a newline at the end
-		static void _add_message(std::string format, ...);
+// --------------- buffer information ----------------
 
-		static bool _init();
+/// display current binded buffer info
+        static void getCurrentBufferInfo();
 
-		static int  _get_rows(unsigned int type);
-		static int  _get_columns(unsigned int type);
+/// display the buffer information
+        static void getBufferInfo(unsigned int target, int bufferName);
 
-		static void _display_uniformf(float *f, int rows, int columns);
-		static void _display_uniformi(int *f, int rows, int columns);
-		static void _display_uniformui(unsigned int *f, int rows, int columns);
-		static void _display_uniformd(double *f, int rows, int columns);
-		static int  _get_uniform_byte_size(int size, int uniType, int arrayStride, int matStride);
+// --------------- GLSL information (GLSL version 4.2 is supported )----------------
 
-		enum Types { DONT_KNOW, INT, UNSIGNED_INT, FLOAT, DOUBLE };
-		static Types _get_type(unsigned int type);
+// display VAO information, including its attributes
+        static void getVAOInfo(unsigned int buffer);
 
-	private:
-		static bool	_glew_initialized;
+/// display detailed info for a program
+        static void getProgramInfo(unsigned int program);
 
-		static bool _spInit;
+// display detailed info for attributes in a program
+        static void getAttributesInfo(unsigned int program);
 
-		static std::ostream*  _output_stream;
+// display info for all active uniforms in a program
+        static void getUniformsInfo(unsigned int program);
 
-        static std::unordered_map<int, std::string>	spBufferAccess;
-        static std::unordered_map<int, std::string>	spBufferUsage;
-        static std::unordered_map<int, std::string>	spBufferBinding;
-        static std::unordered_map<int, int>			spBufferBound;
-        static std::unordered_map<int, int>			spBoundBuffer;
-        static std::unordered_map<int, std::string>	spDataF;
-        static std::unordered_map<int, std::string>	spGLSLType;
-        static std::unordered_map<int, int> 		spGLSLTypeSize;
-        static std::unordered_map<int, std::string>	spShaderType;
-        static std::unordered_map<int, std::string>	spTransFeedBufferMode;
-        static std::unordered_map<int, std::string>	spGLSLPrimitives;
-        static std::unordered_map<int, std::string>	spTessGenSpacing;
-        static std::unordered_map<int, std::string>	spVertexOrder;
-	};
+// display a uniform's value(s)
+        static void getUniformInfo(unsigned int program, const std::string &uniName);
+
+// display the values for a uniform in a named block
+        static void
+        getUniformInBlockInfo(unsigned int program, const std::string &blockName, const std::string &uniName);
+
+    private:
+// printf() style + plus a newline at the end
+        static void _add_message(std::string format, ...);
+
+        static bool _init();
+
+        static int _get_rows(unsigned int type);
+
+        static int _get_columns(unsigned int type);
+
+        static void _display_uniformf(float *f, int rows, int columns);
+
+        static void _display_uniformi(int *f, int rows, int columns);
+
+        static void _display_uniformui(unsigned int *f, int rows, int columns);
+
+        static void _display_uniformd(double *f, int rows, int columns);
+
+        static int _get_uniform_byte_size(int size, int uniType, int arrayStride, int matStride);
+
+        enum Types {
+            DONT_KNOW, INT, UNSIGNED_INT, FLOAT, DOUBLE
+        };
+
+        static Types _get_type(unsigned int type);
+
+    private:
+        static bool _glew_initialized;
+
+        static bool _spInit;
+
+        static std::ostream *_output_stream;
+
+        static std::unordered_map<int, std::string> spBufferAccess;
+        static std::unordered_map<int, std::string> spBufferUsage;
+        static std::unordered_map<int, std::string> spBufferBinding;
+        static std::unordered_map<int, int> spBufferBound;
+        static std::unordered_map<int, int> spBoundBuffer;
+        static std::unordered_map<int, std::string> spDataF;
+        static std::unordered_map<int, std::string> spGLSLType;
+        static std::unordered_map<int, int> spGLSLTypeSize;
+        static std::unordered_map<int, std::string> spShaderType;
+        static std::unordered_map<int, std::string> spTransFeedBufferMode;
+        static std::unordered_map<int, std::string> spGLSLPrimitives;
+        static std::unordered_map<int, std::string> spTessGenSpacing;
+        static std::unordered_map<int, std::string> spVertexOrder;
+    };
 
 
 }

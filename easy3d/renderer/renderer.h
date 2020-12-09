@@ -42,6 +42,7 @@ namespace easy3d {
 
     /**
      * @brief A Renderer manages the drawables (and thus the rendering) of a model.
+     * \class Renderer easy3d/renderer/renderer.h
      */
     class Renderer {
     public:

@@ -34,13 +34,17 @@
 namespace easy3d {
 
     /**
-     * TextRenderer enables quick and easy string rendering in OpenGL applications. It supports truetype (TTF) fonts and
-     * unicode strings. All glyphs are cached in OpenGL textures and font rasterization is done using 'stb_truetype.h."
+     * \brief TextRenderer enables quick and easy string rendering in OpenGL applications.
+     *
+     * \class TextRenderer easy3d/renderer/text_renderer.h
+     *
+     * \details It supports truetype (TTF) fonts and unicode strings. All glyphs are cached in OpenGL textures and
+     * font rasterization is done using 'stb_truetype.h."
      * TextRenderer allows you to:
      *    - switch between fonts;
      *    - change character spacing;
      *    - enable/disable kerning;
-     * TODO: for a large number of strings/characters, it is necessary to separate buffer creation and rendering.
+     * \todo For a large number of strings/characters, it is necessary to separate buffer creation and rendering.
      */
 
     class TextRenderer {

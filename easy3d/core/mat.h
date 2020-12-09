@@ -1830,7 +1830,7 @@ namespace easy3d {
     /**
      * \brief 4x4 matrix. Extends Mat with 4D-specific functionality and constructors.
      * \tparam T The scalar type for vector elements. \see Mat.
-     * \class Mat2 easy3d/core/mat.h
+     * \class Mat4 easy3d/core/mat.h
      */
     template <typename T>
     class Mat4 : public Mat<4, 4, T> {

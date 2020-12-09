@@ -47,9 +47,9 @@ namespace easy3d {
 
     /*! \brief The Frame class represents a coordinate system, defined by a position
       and an orientation.
-      \class Frame frame.h easy3d/renderer/frame.h
+      \class Frame easy3d/renderer/frame.h
 
-      A Frame is a 3D coordinate system, represented by a position() and an
+      \details A Frame is a 3D coordinate system, represented by a position() and an
       orientation(). The order of these transformations is important: the Frame is
       first translated \e and \e then rotated around the new translated origin.
 

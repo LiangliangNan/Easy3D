@@ -47,9 +47,9 @@ namespace easy3d {
 	class Camera;
 
 	/*! \brief An interface class for Frame constraints.
-	  \class Constraint constraint.h QGLViewer/constraint.h
+	  \class Constraint easy3d/renderer/constraint.h
 
-	  This class defines the interface for the Constraints that can be applied to a
+	  \details This class defines the interface for the Constraints that can be applied to a
 	  Frame to limit its motion. Use Frame::setConstraint() to associate a
 	  Constraint to a Frame (default is a \c NULL Frame::constraint()).
 
@@ -172,9 +172,9 @@ namespace easy3d {
 
 	/*!
 	   \brief An abstract class for Frame Constraints defined by an axis or a plane.
-	   \class AxisPlaneConstraint constraint.h QGLViewer/constraint.h
+	   \class AxisPlaneConstraint easy3d/renderer/constraint.h
 
-	   AxisPlaneConstraint is an interface for (translation and/or rotation)
+	   \details AxisPlaneConstraint is an interface for (translation and/or rotation)
 	   Constraint that are defined by a direction. translationConstraintType() and
 	   rotationConstraintType() define how this direction should be interpreted: as
 	   an axis (AxisPlaneConstraint::AXIS) or as a plane normal
@@ -319,9 +319,9 @@ namespace easy3d {
 	};
 
 	/*! \brief An AxisPlaneConstraint defined in the Frame local coordinate system.
-	  \class LocalConstraint constraint.h QGLViewer/constraint.h
+	  \class LocalConstraint easy3d/renderer/constraint.h
 
-	  The translationConstraintDirection() and rotationConstraintDirection() are
+	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in the Frame local coordinate system (see Frame::referenceFrame()).
 
 	  See the <a href="../examples/constrainedFrame.html">constrainedFrame</a>
@@ -336,9 +336,9 @@ namespace easy3d {
 	};
 
 	/*! \brief An AxisPlaneConstraint defined in the world coordinate system.
-			\class WorldConstraint constraint.h QGLViewer/constraint.h
+			\class WorldConstraint easy3d/renderer/constraint.h
 
-	  The translationConstraintDirection() and rotationConstraintDirection() are
+	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in world coordinate system.
 
 	  See the <a href="../examples/constrainedFrame.html">constrainedFrame</a> and
@@ -354,9 +354,9 @@ namespace easy3d {
 	};
 
 	/*! \brief An AxisPlaneConstraint defined in the camera coordinate system.
-	  \class CameraConstraint constraint.h QGLViewer/constraint.h
+	  \class CameraConstraint easy3d/renderer/constraint.h
 
-	  The translationConstraintDirection() and rotationConstraintDirection() are
+	  \details The translationConstraintDirection() and rotationConstraintDirection() are
 	  expressed in the associated camera() coordinate system.
 
 	  See the <a href="../examples/constrainedFrame.html">constrainedFrame</a> and

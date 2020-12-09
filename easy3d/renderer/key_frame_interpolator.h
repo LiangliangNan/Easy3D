@@ -49,9 +49,9 @@ namespace easy3d {
     class LinesDrawable;
 
     /*! \brief A keyFrame Catmull-Rom Frame interpolator.
-      \class KeyFrameInterpolator keyFrameInterpolator.h QCanvas/keyFrameInterpolator.h
+      \class KeyFrameInterpolator easy3d/renderer/key_frame_interpolator.h
 
-      A KeyFrameInterpolator holds keyFrames (that define a path) and a pointer to a Frame of your
+      \details A KeyFrameInterpolator holds keyFrames (that define a path) and a pointer to a Frame of your
       application (which will be interpolated). When the user startInterpolation(), the
       KeyFrameInterpolator regularly updates the frame() position and orientation along the path.
 

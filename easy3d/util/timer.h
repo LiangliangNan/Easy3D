@@ -32,7 +32,11 @@
 namespace easy3d {
 
     /**
-     * Timer functionalities are usually implemented in large libraries
+     * \brief An light-weight implementation of the timer mechanism.
+     *
+     * \class Timer easy3d/util/timer.h
+     *
+     * \details Timer functionalities are usually implemented in large libraries
      * (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
      * This Timer class provides a single-header implementation.
      *
@@ -44,6 +48,7 @@ namespace easy3d {
      ** Code examples:
      *### Example 1: calling to non-member functions
      *   // the function you want to call at a constant interval
+     *   \code
      *   void foo(int value);
      *
      *   // the function to be called when timeout.
@@ -55,8 +60,10 @@ namespace easy3d {
      *
      *   // function "timeout()" will be executed after 3 seconds.
      *   t.set_timeout(3000, &timeout);
+     *   \endcode
      *
      *### Example 2: calling to member functions
+     *    \code
      *   // a trivial class
      *   class Car {
      *   public:
@@ -74,8 +81,10 @@ namespace easy3d {
      *   Car car2("Chevrolet", 120);
      *  t.set_interval(3000, &Car::print_speed, &car2);
      *  t.set_timeout(20000, &Car::stop, &car2);
+     *  \endcode
      *
      *### Example 3: calling to lambda functions
+     *    \code
      *  const float value = 5;
      *  t.set_interval(3000, [&](float, const std::string&) {
      *      std::cout << "After every 3 sec. value: " << value << ", message: " << msg << std::endl;
@@ -85,6 +94,7 @@ namespace easy3d {
      *      t.stop();
      *      std::cout << "After 8 sec, the timer is stopped!" << std::endl;
      *  });
+     *  \endcode
      */
 
     class Timer {

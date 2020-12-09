@@ -36,6 +36,8 @@ namespace easy3d {
 
     /**
      * @brief Class representing the rendering state of a drawable
+     *
+     * \class State easy3d/renderer/state.h
      */
 
     class State {

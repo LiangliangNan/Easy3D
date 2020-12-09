@@ -35,12 +35,8 @@
 #ifndef NV_TOKENIZER_H
 #define NV_TOKENIZER_H
 
-//#include <NvSimpleTypes.h>
 #include <string>
 #include <cstdlib>
-
-/// \file
-/// Classes for tokenizing of input character streams.
 
 #define NV_MAX_TOKEN_LEN  1024
 #define NV_MAX_DELIM_COUNT  16
@@ -48,6 +44,10 @@
 namespace easy3d {
 
 
+    /**
+     * \brief A class for tokenizing input character streams.
+     * \class Tokenizer easy3d/util/tokenizer.h
+     */
 	class Tokenizer
 	{
 	protected:
