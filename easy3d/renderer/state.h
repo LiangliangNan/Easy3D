@@ -54,7 +54,7 @@ namespace easy3d {
          *     e.g., "v:color", "f:color", "e:color";
          *   - scalar fields defined on vertices, faces, or edges. A scalar field is specified by its name, e.g.,
          *     "v:curvature", "v:height", "f:segment_id";
-         *   - texture coordinates defined on vertices or halfedges. A texture coordinates propery is specified by its
+         *   - texture coordinates defined on vertices or halfedges. A texture coordinates property is specified by its
          *     name, e.g., "v:texcoord", "h:texcoord".
          */
         enum Method {
