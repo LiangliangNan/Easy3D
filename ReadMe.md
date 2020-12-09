@@ -3,14 +3,13 @@
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
-  <img src="resources/images/logo.jpg" width="600">
-
-  (This 3D model of the Easy3D logo was generated and rendered by Easy3D).
+![Overview of Easy3D](resources/images/logo.jpg)
+(This 3D model of the Easy3D logo was generated and rendered by Easy3D).
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 #### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.
 
-  ![Overview of Easy3D](resources/images/overview.jpg)
+![Overview of Easy3D](resources/images/overview.jpg)
 
 ### Key features ###
 * Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). 
@@ -34,9 +33,7 @@
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
-<p align="center"> 
-     <img src="resources/images/mapple.jpg" width="600"> 
-</p>
+![Overview of Easy3D](resources/images/mapple.jpg)
  
 ### A quick glance ###
 
@@ -45,15 +42,15 @@ vector fields) can be rendered by writing a few lines of code with Easy3D. For e
 point cloud as a set of spheres
 
 ```c++
-        // assume your point cloud has been loaded to the viewer
-        PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
-        drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-        drawable->set_point_size(3.0f);    // set point size
+    // assume your point cloud has been loaded to the viewer
+    PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
+    drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+    drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 
 ```c++ 
-        drawable->set_impostor_type(PointsDrawable::SURFEL);
+    drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
@@ -97,7 +94,7 @@ The documentation for Easy3D-v2.4.1 is available [here](https://3d.bk.tudelft.nl
 The Easy3D [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html) is an on-going effort
 with more and more details being added. You can build the latest Easy3D documentation from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
-To build it from the source code, install [Doxygen](https://www.doxygen.nl/manual/install.html) first. 
+To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
 Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
 

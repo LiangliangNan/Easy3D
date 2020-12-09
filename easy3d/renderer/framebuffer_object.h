@@ -120,7 +120,7 @@ namespace easy3d {
      *
      * Current implement support only GL_TEXTURE_2D (see the texture_target_ variable)
      * does not manage externally created textures.
-     * \todo:
+     * \todo
      *   - add a class TextureFormat for flexible format specification and add related
      *     functions using the TextureFormat class.
      *   - modify the attach_color_texture() and attach_depth_texture() to use TextureFormat.
