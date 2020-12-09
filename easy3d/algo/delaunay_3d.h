@@ -170,12 +170,14 @@ namespace easy3d {
     //________________________________________________________________________________
 
     /**
-    * VoronoiCell stores the dual facets in a Compressed Row Storage array.
-    * - Each facet knows the bisector it is on, and the list of vertices/edges.
-    *    - Each vertex knows the tet it is dual to.
-    *    - Each edge knows the other bisector it is on (an edge is defined as the
-    * intersection between the facet bisector and the edge bisector).
-    */
+     * \brief A data structure for 3D Voronoi cells
+     * \class VoronoiCell3d easy3d/algo/delaunay_3d.h
+     * \details A 3D Voronoi cell stores the dual facets in a Compressed Row Storage array.
+     * - Each facet knows the bisector it is on, and the list of vertices/edges.
+     *    - Each vertex knows the tet it is dual to.
+     *    - Each edge knows the other bisector it is on (an edge is defined as the
+     * intersection between the facet bisector and the edge bisector).
+     */
     class VoronoiCell3d {
     public:
         VoronoiCell3d() { facet_ptr_.push_back(0); }
