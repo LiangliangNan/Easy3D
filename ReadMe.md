@@ -3,7 +3,7 @@
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
-![Overview of Easy3D](resources/images/logo.jpg)
+![](resources/images/logo.jpg)
 (This 3D model of the Easy3D logo was generated and rendered by Easy3D).
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
@@ -33,7 +33,7 @@
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
-![Overview of Easy3D](resources/images/mapple.jpg)
+![](resources/images/mapple.jpg)
  
 ### A quick glance ###
 
@@ -88,11 +88,11 @@ Don't have any experience with C/C++ programming?
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by step</a>.
 
 
-### [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html)
-The documentation for Easy3D-v2.4.1 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html).
+### Documentation
+The documentation for Easy3D-v2.4.1 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
 
-The Easy3D [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html) is an on-going effort
-with more and more details being added. You can build the latest Easy3D documentation from the source code.
+The Easy3D Documentation is an on-going effort with more and more details being added. You can build the latest Easy3D 
+documentation from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
 To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
 Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
