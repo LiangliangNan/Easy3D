@@ -146,14 +146,15 @@ namespace easy3d {
         /**
          * \brief Queries the nearest neighbors within a cylinder range.
          * \details Searches for the nearest points whose distances to line segment \p p1 - \p p2 are smaller than
-         * \p radius (\b not squared). If \p bToLine is true, the points found are ordered by their distances to the
-         * line segment. Otherwise, they are ordered by their distances to \p p1.
+         * \p radius (\b not squared).
          * \param p1 One end point of the query line segment.
          * \param p2 The other end point of the query line segment.
          * \param radius The search range (which is \b not squared).
          * \param neighbors The indices of the neighbors found.
-         * \param squared_distances The squared distances between the found neighbors to the query line.
-         * The values are stored in accordance with their indices.
+         * \param squared_distances The squared distances between the found neighbors to the query line. The values
+         * are stored in accordance with their indices.
+         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
+         * by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
          * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
          */
         int find_points_in_cylinder(
@@ -165,13 +166,14 @@ namespace easy3d {
         /**
          * \brief Queries the nearest neighbors within a cylinder range.
          * \details Searches for the nearest points whose distances to line segment \p p1 - \p p2 are smaller than
-         * \p radius (\b not squared). If \p bToLine is true, the points found are ordered by their distances to the
-         * line segment. Otherwise, they are ordered by their distances to \p p1.
+         * \p radius (\b not squared).
          * \param p1 One end point of the query line segment.
          * \param p2 The other end point of the query line segment.
          * \param radius The search range (which is \b not squared).
          * \param neighbors The indices of the neighbors found.
-         * \note The range is specified by radius (\b not squared).
+         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
+         * by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
+         * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
          */
         int find_points_in_cylinder(
                 const vec3 &p1, const vec3 &p2, float radius,
@@ -195,9 +197,8 @@ namespace easy3d {
          * \param neighbors The indices of the neighbors found.
          * \param squared_distances The squared distances between the found neighbors to the query line segment.
          * The values are stored in accordance with their indices.
-         * \param bToLine
-         *      -  The points found are ordered by the distance to the line if <code>bToLine</code> is true.
-         *      -  The points found are ordered by the distance to the view point if <code>bToLine</code> is false.
+         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
+         * by their distances to the line. Otherwise, they are ordered by their distances to the view point \p eye.
          * \note The angle is specified in \b radian and \b squared distances are returned.
          */
         int find_points_in_cone(
@@ -215,9 +216,8 @@ namespace easy3d {
          * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
          * is a candidate point.
          * \param neighbors The indices of the neighbors found.
-         * \param bToLine
-         *      -  The points found are ordered by the distance to the line if <code>bToLine</code> is true.
-         *      -  The points found are ordered by the distance to the view point if <code>bToLine</code> is false.
+         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
+         * by their distances to the line. Otherwise, they are ordered by their distances to the view point \p eye.
          * \note The angle is specified in \b radian and \b squared distances are returned.
          */
         int find_points_in_cone(

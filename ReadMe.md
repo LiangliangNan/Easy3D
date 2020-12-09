@@ -32,7 +32,7 @@
     
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 
-* A handy tool **_Mapple_** created out of the Easy3D library for rendering and processing 3D data.
+* A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
 <p align="center"> 
      <img src="resources/images/mapple.jpg" width="600"> 
@@ -87,13 +87,19 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 - Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio).
 
-Don't have any experience with C/C++ programming? Have a look at [How to build Easy3D step by step](./HowToBuild.md).
+Don't have any experience with C/C++ programming? 
+Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by step</a>.
+
 
 ### [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html)
-You can also build the Easy3D [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html)
-from the source code.
-Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) to generate documentation from source code. To build the Easy3D documentation, you first need to install Doxygen (please refer to the [Doxygen installation manual](https://www.doxygen.nl/manual/install.html) for more details). 
-Then switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt` file. Finally, build the `doc` target to generate the documentation. 
+The documentation for Easy3D-v2.4.1 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html).
+
+The Easy3D [Documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/classes.html) is an on-going effort
+with more and more details being added. You can build the latest Easy3D documentation from the source code.
+Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
+To build it from the source code, install [Doxygen](https://www.doxygen.nl/manual/install.html) first. 
+Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
+target to generate the documentation. 
 
 
 ### License
@@ -117,7 +123,7 @@ If Easy3D is useful in your research/work, I would be grateful if you show your 
 
 Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
 
-**_Liangliang Nan_**
+<b><i>Liangliang Nan</i></b>
 
 https://3d.bk.tudelft.nl/liangliang/
 
