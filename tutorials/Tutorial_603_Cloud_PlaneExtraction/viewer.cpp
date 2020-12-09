@@ -74,11 +74,13 @@ bool TutorialPlaneExtraction::key_press_event(int key, int modifiers) {
             std::cout << num << " primitives extracted" << std::endl;
 
             // assign each plane a unique color
-            auto drawable = cloud->renderer()->get_points_drawable("vertices");
+            auto segments = cloud->vertex_property<int>("v:primitive_index");
+            const std::string color_name = "v:color-segments";
+            auto coloring = cloud->vertex_property<vec3>(color_name, vec3(0, 0, 0));
+            Renderer::color_from_segmentation(cloud, segments, coloring);
 
-            const std::string name = "v:color-segments";
-            Renderer::color_from_segmentation(cloud, "v:primitive_index", name);
-            drawable->set_property_coloring(State::VERTEX, name);
+            auto drawable = cloud->renderer()->get_points_drawable("vertices");
+            drawable->set_property_coloring(State::VERTEX, color_name);
 
             drawable->update();
             update();

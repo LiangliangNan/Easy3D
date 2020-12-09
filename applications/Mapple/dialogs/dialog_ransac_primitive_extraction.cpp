@@ -107,10 +107,13 @@ void DialogRansacPrimitiveExtraction::extract() {
         LOG(INFO) << num << " primitives extracted";
     }
 
+    auto segments = cloud->vertex_property<int>("v:primitive_index");
+    const std::string color_name = "v:color-segments";
+    auto coloring = cloud->vertex_property<vec3>(color_name, vec3(0, 0, 0));
+    Renderer::color_from_segmentation(cloud, segments, coloring);
+
     auto vertices = cloud->renderer()->get_points_drawable("vertices");
-    const std::string name = "v:color-segments";
-    Renderer::color_from_segmentation(cloud, "v:primitive_index", name);
-    vertices->set_property_coloring(State::VERTEX, name);
+    vertices->set_property_coloring(State::VERTEX, color_name);
     vertices->update();
 
     viewer_->update();

@@ -1234,11 +1234,13 @@ void MainWindow::surfaceMeshPlanarPartition() {
         return;
 
     const std::string partition_name = "f:planar_partition";
+    auto planar_segments = mesh->face_property<int>(partition_name, -1);
     SurfaceMeshPlanarPartition partition(mesh);
-    partition.apply(partition_name);
+    partition.apply(planar_segments);
 
     const std::string color_name = "f:color_planar_partition";
-    Renderer::color_from_segmentation(mesh, partition_name, color_name);
+    auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));
+    Renderer::color_from_segmentation(mesh, planar_segments, coloring);
     auto faces = mesh->renderer()->get_triangles_drawable("faces");
     faces->set_property_coloring(State::FACE, color_name);
 

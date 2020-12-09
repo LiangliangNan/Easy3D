@@ -95,7 +95,9 @@ namespace easy3d {
     }
 
 
-    void SurfaceMeshPlanarPartition::apply(const std::string& partition_name) {
+    void SurfaceMeshPlanarPartition::apply(SurfaceMesh::FaceProperty<int> segments) {
+        planar_segments_ = segments;
+
         // we use (1 - max_abs_curvature) as a metric to measure the planarity.
         const unsigned int iter_smooth = 5;
         const bool two_ring = true;
@@ -137,7 +139,7 @@ namespace easy3d {
         float dist = mesh_->bounding_box().diagonal() * 0.005f;
         float max_allowed_sq_dist = dist * dist;
 
-        planar_segments_ = mesh_->face_property<int>(partition_name);
+        planar_segments_ = segments;
         planar_segments_.vector().assign(mesh_->n_faces(), -1);
         int id = 0;
         for (auto v : priority_queue) {

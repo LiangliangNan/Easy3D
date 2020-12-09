@@ -30,13 +30,12 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/surface_mesh.h>
 
 namespace easy3d {
 
     class Model;
-    class Graph;
-    class PointCloud;
-    class SurfaceMesh;
     class PointsDrawable;
     class LinesDrawable;
     class TrianglesDrawable;
@@ -189,22 +188,28 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
-         * @param model  The model.
-         * @param segments  The name of the <int> type face property storing the segmentation.
-         * @param color_name The name of the color property to be created.
+         * @brief Generates random colors for visualizing face-based segmentation of a SurfaceMesh.
+         * @param mesh  The surface mesh.
+         * @param segments The face property storing the segmentation of the surface mesh.
+         * @param colors The face property to store the colors. Must be allocated before hand.
          */
-        static void color_from_segmentation(SurfaceMesh *model, const std::string &segments,
-                                            const std::string &color_name = "f:color_segments");
+        static void color_from_segmentation(
+                SurfaceMesh *mesh,
+                const SurfaceMesh::FaceProperty<int> segments,
+                SurfaceMesh::FaceProperty<vec3> colors
+        );
 
         /**
-         * @brief Generate a color property for visualizing segmentation. Each segment will be given a random color.
-         * @param model  The model.
-         * @param segments  The name of the <int> type vertex property storing the segmentation.
-         * @param color_name The name of the color property to be created.
+         * @brief Generates random colors for visualizing the segmentation of a PointCloud.
+         * @param cloud  The point cloud.
+         * @param segments  The vertex property storing the segmentation of the point cloud.
+         * @param colors The vertex property to store the colors. Must be allocated before hand.
          */
-        static void color_from_segmentation(PointCloud *model, const std::string &segments,
-                                            const std::string &color_name = "v:segments");
+        static void color_from_segmentation(
+                PointCloud *cloud,
+                const PointCloud::VertexProperty<int> segments,
+                PointCloud::VertexProperty<vec3> colors
+        );
 
     protected:
         Model *model_;

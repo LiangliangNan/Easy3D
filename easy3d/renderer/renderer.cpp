@@ -183,15 +183,19 @@ namespace easy3d {
     }
 
 
-    void Renderer::color_from_segmentation(SurfaceMesh *model, const std::string &segments_name, const std::string &color_name) {
+    void Renderer::color_from_segmentation(SurfaceMesh *model, SurfaceMesh::FaceProperty<int> segments,
+                                           SurfaceMesh::FaceProperty<vec3> colors) {
         if (model->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
 
-        auto segments = model->get_face_property<int>(segments_name);
         if (!segments) {
-            LOG(WARNING) << "the surface mesh does not have a face property named '" << segments_name << "\'";
+            LOG(WARNING) << "the surface mesh does not have face property \'" << segments.name() << "\'";
+            return;
+        }
+        if (!colors) {
+            LOG(WARNING) << "color property no allocated" << "\'";
             return;
         }
 
@@ -204,7 +208,6 @@ namespace easy3d {
         for (auto &c : color_table)
             c = random_color();
 
-        auto colors = model->face_property<vec3>(color_name, vec3(0, 0, 0));
         for (auto f : model->faces()) {
             int idx = segments[f];
             if (idx == -1)
@@ -215,15 +218,20 @@ namespace easy3d {
     }
 
 
-    void Renderer::color_from_segmentation(PointCloud *model, const std::string &segments_name, const std::string &color_name) {
+    void Renderer::color_from_segmentation(PointCloud *model,
+                                           const PointCloud::VertexProperty<int> segments,
+                                           PointCloud::VertexProperty<vec3> colors) {
         if (model->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
 
-        auto segments = model->get_vertex_property<int>(segments_name);
         if (!segments) {
-            LOG(WARNING) << "the point cloud does not have a vertex property named '" << segments_name << "\'";
+            LOG(WARNING) << "the point cloud does not have vertex property \'" << segments.name() << "\'";
+            return;
+        }
+        if (!colors) {
+            LOG(WARNING) << "color property no allocated" << "\'";
             return;
         }
 
@@ -236,7 +244,6 @@ namespace easy3d {
         for (auto &c : color_table)
             c = random_color();
 
-        auto colors = model->vertex_property<vec3>(color_name, vec3(0, 0, 0));
         for (auto v : model->vertices()) {
             int idx = segments[v];
             if (idx == -1)
