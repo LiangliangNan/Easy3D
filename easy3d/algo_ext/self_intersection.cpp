@@ -279,6 +279,7 @@ namespace easy3d {
         total_comb_duplicated_faces_ = 0;
         total_geom_duplicated_faces_ = 0;
 
+        remove_degenerate_faces(mesh);
         triangle_faces_ = mesh_to_cgal_triangle_list(mesh);
 
         // bounding boxes of the triangles
@@ -302,10 +303,10 @@ namespace easy3d {
 
         std::string msg("");
         if (total_comb_duplicated_faces_ > 0)
-            msg += ("Model has " + std::to_string(total_comb_duplicated_faces_) +
+            msg += ("model has " + std::to_string(total_comb_duplicated_faces_) +
                     " combinatorially duplicated faces. ");
         if (total_geom_duplicated_faces_ > 0)
-            msg += ("Model has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
+            msg += ("odel has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
         if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
             msg += "Remove duplicated faces may produce better result";
             LOG(WARNING) << msg;
@@ -315,7 +316,7 @@ namespace easy3d {
     }
 
 
-    SelfIntersection::Triangles SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *mesh) {
+    SelfIntersection::Triangles SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *mesh) const {
         auto prop = mesh->get_vertex_property<vec3>("v:point");
 
         Triangles triangles;
@@ -339,6 +340,27 @@ namespace easy3d {
             }
         }
         return triangles;
+    }
+
+
+    int SelfIntersection::remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold) const {
+        int num = mesh->n_faces();
+
+        for (auto e : mesh->edges()) {
+            if (mesh->edge_length(e) < coincident_threshold) {
+                auto h = mesh->halfedge(e, 0);
+                if (mesh->is_collapse_ok(h))
+                    mesh->collapse(h);
+            }
+        }
+
+        mesh->garbage_collection();
+
+        int diff = num - mesh->n_faces();
+        if (diff > 0)
+            LOG(WARNING) << diff << " degenerate faces detected and removed" << std::endl;
+
+        return diff;
     }
 
 
@@ -749,6 +771,8 @@ namespace easy3d {
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << w.time_string();
 #endif
+
+        remove_degenerate_faces(mesh);
 
         bool status = mesh->n_faces() != input->n_faces();
         delete input;

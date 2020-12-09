@@ -127,7 +127,11 @@ namespace easy3d {
 
     private:
 
-        Triangles mesh_to_cgal_triangle_list(SurfaceMesh *mesh);
+        Triangles mesh_to_cgal_triangle_list(SurfaceMesh *mesh) const;
+
+        // remove degenerate faces by collapsing tiny length edges.
+        // returns the number of faces removed
+        int remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold = 1e-4) const;
 
         // test if two triangles intersect
         bool do_intersect(const Triangle &A, const Triangle &B);
