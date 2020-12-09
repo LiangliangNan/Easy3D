@@ -126,21 +126,19 @@ namespace easy3d {
 
     void PointCloud::clear()
     {
+        //---- clear without removing properties
+
         vprops_.resize(0);
 
-        free_memory();
+        vprops_.shrink_to_fit();
 
         deleted_vertices_ = 0;
         garbage_ = false;
-    }
 
+        //---- keep the standard properties and remove all the other properties
 
-    //-----------------------------------------------------------------------------
-
-
-    void PointCloud::free_memory()
-    {
-        vprops_.free_memory();
+        vprops_.resize_property_array(2);   // "v:point", "v:deleted"
+        mprops_.clear();
     }
 
 
@@ -231,7 +229,7 @@ namespace easy3d {
 
         // finally resize arrays
         vprops_.resize(nV);
-        vprops_.free_memory();
+        vprops_.shrink_to_fit();
 
         deleted_vertices_ = 0;
         garbage_ = false;

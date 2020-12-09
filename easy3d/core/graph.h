@@ -551,9 +551,6 @@ namespace easy3d {
 		/// clear mesh: remove all vertices, edges, faces
 		void clear();
 
-		/// remove unused memory from vectors
-		void free_memory();
-
 		/// reserve memory (mainly used in file readers)
 		void reserve(unsigned int nvertices, unsigned int nedges);
 

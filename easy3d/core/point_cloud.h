@@ -280,9 +280,6 @@ namespace easy3d {
         /// @brief clear cloud: remove all vertices
         void clear();
 
-        /// @brief remove unused memory from vectors
-        void free_memory();
-
         /// @brief resize space for vertices and their currently associated properties.
         void resize(unsigned int nv) { vprops_.resize(nv); }
 

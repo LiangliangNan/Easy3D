@@ -272,15 +272,6 @@ namespace easy3d {
     }
 
 
-//    bool ManifoldBuilder::halfedge_has_duplication(easy3d::SurfaceMesh::Vertex s, easy3d::SurfaceMesh::Vertex t) const {
-//        const auto &targets = outgoing_halfedges_[s.idx()];
-//        for (auto v : targets)
-//            if (v == t.idx())
-//                return true;
-//        return false;
-//    }
-
-
     SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
         if (!vertices_valid(vertices))
             return SurfaceMesh::Face();

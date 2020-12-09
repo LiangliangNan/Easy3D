@@ -176,31 +176,34 @@ namespace easy3d {
     SurfaceMesh::
     clear()
     {
+        //---- clear without removing properties
+
         vprops_.resize(0);
         hprops_.resize(0);
         eprops_.resize(0);
         fprops_.resize(0);
         mprops_.resize(0);
 
-        free_memory();
+        vprops_.shrink_to_fit(); // remove unused memory from vectors
+        hprops_.shrink_to_fit();
+        eprops_.shrink_to_fit();
+        fprops_.shrink_to_fit();
+        mprops_.shrink_to_fit();
 
         deleted_vertices_ = deleted_edges_ = deleted_faces_ = 0;
         garbage_ = false;
-    }
 
+        //---- keep the standard properties and remove all the other properties
 
-    //-----------------------------------------------------------------------------
+        vprops_.resize_property_array(3);   // "v:connectivity", "v:point", "v:deleted"
+        hprops_.resize_property_array(1);   // "h:connectivity"
+        eprops_.resize_property_array(1);   // "e:deleted"
+        fprops_.resize_property_array(2);   // "f:connectivity", "f:deleted"
+        mprops_.clear();
 
-
-    void
-    SurfaceMesh::
-    free_memory()
-    {
-        vprops_.free_memory();
-        hprops_.free_memory();
-        eprops_.free_memory();
-        fprops_.free_memory();
-        mprops_.free_memory();
+        // update/invalidate the normal properties
+        vnormal_  = VertexProperty<vec3>();
+        fnormal_  = FaceProperty<vec3>();
     }
 
 
@@ -2014,10 +2017,10 @@ namespace easy3d {
         remove_face_property(fmap);
 
         // finally resize arrays
-        vprops_.resize(nV); vprops_.free_memory();
-        hprops_.resize(nH); hprops_.free_memory();
-        eprops_.resize(nE); eprops_.free_memory();
-        fprops_.resize(nF); fprops_.free_memory();
+        vprops_.resize(nV); vprops_.shrink_to_fit();
+        hprops_.resize(nH); hprops_.shrink_to_fit();
+        eprops_.resize(nE); eprops_.shrink_to_fit();
+        fprops_.resize(nF); fprops_.shrink_to_fit();
 
         deleted_vertices_ = deleted_edges_ = deleted_faces_ = 0;
         garbage_ = false;

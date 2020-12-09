@@ -130,25 +130,24 @@ namespace easy3d {
 
     void Graph::clear()
     {
+        //---- clear without removing properties
+
         vprops_.resize(0);
         eprops_.resize(0);
         mprops_.resize(0);
 
-        free_memory();
+        vprops_.shrink_to_fit();
+        eprops_.shrink_to_fit();
+        mprops_.shrink_to_fit();
 
         deleted_vertices_ = deleted_edges_ = 0;
         garbage_ = false;
-    }
 
+        //---- keep the standard properties and remove all the other properties
 
-    //-----------------------------------------------------------------------------
-
-
-    void Graph::free_memory()
-    {
-        vprops_.free_memory();
-        eprops_.free_memory();
-        mprops_.free_memory();
+        vprops_.resize_property_array(3);   // "v:connectivity", "v:point", "v:deleted"
+        eprops_.resize_property_array(2);   // "e:connectivity", "e:deleted"
+        mprops_.clear();
     }
 
 

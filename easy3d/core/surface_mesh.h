@@ -995,9 +995,6 @@ namespace easy3d {
         /// clear mesh: remove all vertices, edges, faces
         void clear();
 
-        /// remove unused memory from vectors
-        void free_memory();
-
         /// reserve memory (mainly used in file readers)
         void reserve(unsigned int nvertices,
                      unsigned int nedges,
@@ -1900,7 +1897,7 @@ namespace easy3d {
         EdgeProperty<bool>    edeleted_;
         FaceProperty<bool>    fdeleted_;
 
-        VertexProperty<vec3>   vpoint_;
+        VertexProperty<vec3>  vpoint_;
         VertexProperty<vec3>  vnormal_;
         FaceProperty<vec3>    fnormal_;
 

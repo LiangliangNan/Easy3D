@@ -69,10 +69,16 @@ namespace easy3d {
         virtual void resize(size_t n) = 0;
 
         /// Free unused memory.
-        virtual void free_memory() = 0;
+        virtual void shrink_to_fit() = 0;
 
         /// Extend the number of elements by one.
         virtual void push_back() = 0;
+
+        /// Reset element to default value
+        virtual void reset(size_t idx) = 0;
+
+        virtual bool transfer(const BasePropertyArray& other) = 0;
+        virtual bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to) = 0;
 
         /// Let two elements swap their storage place.
         virtual void swap(size_t i0, size_t i1) = 0;
@@ -83,14 +89,22 @@ namespace easy3d {
         /// Return a deep copy of self.
         virtual BasePropertyArray* clone () const = 0;
 
+        /// Return a empty copy of self.
+        virtual BasePropertyArray* empty_clone () const = 0;
+
         /// Return the type_info of the property
-        virtual const std::type_info& type() = 0;
+        virtual const std::type_info& type() const = 0;
 
         /// Return the name of the property
         const std::string& name() const { return name_; }
 
         /// Set the name of the property
         void set_name(const std::string& n) { name_ = n; }
+
+        bool is_same (const BasePropertyArray& other)
+        {
+            return (name() == other.name() && type() == other.type());
+        }
 
     protected:
 
@@ -133,7 +147,34 @@ namespace easy3d {
             data_.push_back(value_);
         }
 
-        virtual void free_memory()
+        virtual void reset(size_t idx)
+        {
+            data_[idx] = value_;
+        }
+
+        bool transfer(const BasePropertyArray& other)
+        {
+            const PropertyArray<T>* pa = dynamic_cast<const PropertyArray*>(&other);
+            if(pa != nullptr){
+                std::copy((*pa).data_.begin(), (*pa).data_.end(), data_.end()-(*pa).data_.size());
+                return true;
+            }
+            return false;
+        }
+
+        bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to)
+        {
+            const PropertyArray<T>* pa = dynamic_cast<const PropertyArray*>(&other);
+            if (pa != nullptr)
+            {
+                data_[to] = (*pa)[from];
+                return true;
+            }
+
+            return false;
+        }
+
+        virtual void shrink_to_fit()
         {
             vector_type(data_).swap(data_);
         }
@@ -157,7 +198,13 @@ namespace easy3d {
             return p;
         }
 
-        virtual const std::type_info& type() { return typeid(T); }
+        virtual BasePropertyArray* empty_clone() const
+        {
+            PropertyArray<T>* p = new PropertyArray<T>(this->name_, this->value_);
+            return p;
+        }
+
+        virtual const std::type_info& type() const { return typeid(T); }
 
 
     public:
@@ -328,6 +375,50 @@ namespace easy3d {
             return *this;
         }
 
+        void transfer(const PropertyContainer& _rhs)
+        {
+            for(std::size_t i=0; i<parrays_.size(); ++i){
+                for (std::size_t j=0; j<_rhs.parrays_.size(); ++j){
+                    if(parrays_[i]->is_same (*(_rhs.parrays_[j]))){
+                        parrays_[i]->transfer(* _rhs.parrays_[j]);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Copy properties that don't already exist from another container
+        void copy_properties (const PropertyContainer& _rhs)
+        {
+            for (std::size_t i = 0; i < _rhs.parrays_.size(); ++ i)
+            {
+                bool property_already_exists = false;
+                for (std::size_t j = 0; j < parrays_.size(); ++ j)
+                    if (_rhs.parrays_[i]->is_same (*(parrays_[j])))
+                    {
+                        property_already_exists = true;
+                        break;
+                    }
+
+                if (property_already_exists)
+                    continue;
+
+                parrays_.push_back (_rhs.parrays_[i]->empty_clone());
+                parrays_.back()->resize(size_);
+            }
+        }
+
+        // Transfer one element with all properties
+        // WARNING: properties must be the same in the two containers
+        bool transfer(const PropertyContainer& _rhs, std::size_t from, std::size_t to)
+        {
+            bool out = true;
+            for(std::size_t i=0; i<parrays_.size(); ++i)
+                if (!(parrays_[i]->transfer(* _rhs.parrays_[i], from, to)))
+                    out = false;
+            return out;
+        }
+
         // returns the current size of the property arrays
         size_t size() const { return size_; }
 
@@ -471,11 +562,21 @@ namespace easy3d {
             size_ = n;
         }
 
+        // resize the vector of properties to n, deleting all other properties
+        void resize_property_array(size_t n)
+        {
+            if (parrays_.size()<=n)
+                return;
+            for (std::size_t i=n; i<parrays_.size(); ++i)
+                delete parrays_[i];
+            parrays_.resize(n);
+        }
+
         // free unused space in all arrays
-        void free_memory() const
+        void shrink_to_fit() const
         {
             for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->free_memory();
+                parrays_[i]->shrink_to_fit();
         }
 
         // add a new element to each vector
@@ -486,11 +587,25 @@ namespace easy3d {
             ++size_;
         }
 
+        // reset element to its default property values
+        void reset(size_t idx)
+        {
+            for (std::size_t i=0; i<parrays_.size(); ++i)
+                parrays_[i]->reset(idx);
+        }
+
         // swap elements i0 and i1 in all arrays
         void swap(size_t i0, size_t i1) const
         {
             for (size_t i=0; i<parrays_.size(); ++i)
                 parrays_[i]->swap(i0, i1);
+        }
+
+        // swap content with other Property_container
+        void swap (PropertyContainer& other)
+        {
+            this->parrays_.swap (other.parrays_);
+            std::swap(this->size_, other.size_);
         }
 
         // copy 'from' -> 'to' in all arrays
