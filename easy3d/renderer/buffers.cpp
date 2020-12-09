@@ -48,7 +48,8 @@ namespace easy3d {
             // min_value and max_value return the expected value range.
             template<typename FT>
             inline void
-            clamp_scalar_field(const std::vector<FT> &property, float &min_value, float &max_value, float dummy_lower_percent,
+            clamp_scalar_field(const std::vector<FT> &property, float &min_value, float &max_value,
+                               float dummy_lower_percent,
                                float dummy_upper_percent) {
                 if (property.empty()) {
                     LOG(WARNING) << "empty property";
@@ -1542,8 +1543,12 @@ namespace easy3d {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update(model, drawable, texcoord);
-                    else
-                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -1551,8 +1556,12 @@ namespace easy3d {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update(model, drawable, colors);
-                    else
-                        LOG(WARNING) << "color property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "color property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -1576,7 +1585,9 @@ namespace easy3d {
                         auto prop = model->get_vertex_property<unsigned char>(name);
                         details::update(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
+                        LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
                         return;
                     }
                     break;
@@ -1643,8 +1654,12 @@ namespace easy3d {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update(model, drawable, texcoord);
-                    else
-                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -1652,8 +1667,12 @@ namespace easy3d {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update(model, drawable, colors);
-                    else
-                        LOG(WARNING) << "color property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "color property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -1677,7 +1696,9 @@ namespace easy3d {
                         auto prop = model->get_vertex_property<unsigned char>(name);
                         details::update(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
+                        LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
                         return;
                     }
                     break;
@@ -1722,18 +1743,24 @@ namespace easy3d {
                             auto texcoord = model->get_edge_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on edges: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on edges (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on vertices: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::FACE:
@@ -1750,16 +1777,24 @@ namespace easy3d {
                             auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::FACE:
@@ -1786,7 +1821,9 @@ namespace easy3d {
                                 auto prop = model->get_edge_property<unsigned int>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on edges (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;
@@ -1811,7 +1848,9 @@ namespace easy3d {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;
@@ -1951,18 +1990,24 @@ namespace easy3d {
                             auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on vertices: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::HALFEDGE: {
                             auto texcoord = model->get_halfedge_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on halfedges: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on halfedges (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::FACE:
@@ -1979,16 +2024,24 @@ namespace easy3d {
                             auto colors = model->get_face_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::EDGE:
@@ -2015,7 +2068,9 @@ namespace easy3d {
                                 auto prop = model->get_face_property<unsigned int>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on faces (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;
@@ -2040,7 +2095,9 @@ namespace easy3d {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;
@@ -2082,8 +2139,12 @@ namespace easy3d {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
                         details::update(model, drawable, texcoord);
-                    else
-                        LOG(WARNING) << "texcoord property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -2091,8 +2152,12 @@ namespace easy3d {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
                         details::update(model, drawable, colors);
-                    else
-                        LOG(WARNING) << "color property not found: " << drawable->property_name();
+                    else {
+                        LOG(WARNING) << "color property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        return;
+                    }
                     break;
                 }
 
@@ -2116,7 +2181,9 @@ namespace easy3d {
                         auto prop = model->get_vertex_property<unsigned char>(name);
                         details::update(model, drawable, prop);
                     } else {
-                        LOG(WARNING) << "scalar field not found: " << drawable->property_name();
+                        LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
                         return;
                     }
                     break;
@@ -2153,18 +2220,24 @@ namespace easy3d {
                             auto texcoord = model->get_edge_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on edges: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on edges (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
                                 details::update(model, drawable, texcoord);
-                            else
-                                LOG(WARNING) << "texcoord property not found on vertices: "
-                                             << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::FACE:
@@ -2181,16 +2254,24 @@ namespace easy3d {
                             auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
                                 details::update(model, drawable, colors);
-                            else
-                                LOG(WARNING) << "color property not found: " << drawable->property_name();
+                            else {
+                                LOG(WARNING) << "color property \'" << drawable->property_name()
+                                             << "\' not found (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                return;
+                            }
                             break;
                         }
                         case State::FACE:
@@ -2217,7 +2298,9 @@ namespace easy3d {
                                 auto prop = model->get_edge_property<unsigned int>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on edges: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on edges (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;
@@ -2242,7 +2325,9 @@ namespace easy3d {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
                                 details::update(model, drawable, prop);
                             } else {
-                                LOG(WARNING) << "scalar field not found on vertices: " << drawable->property_name();
+                                LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                             << "\' not found on vertices (use uniform coloring)";
+                                drawable->set_coloring_method(State::UNIFORM_COLOR);
                                 return;
                             }
                             break;

@@ -93,6 +93,8 @@ namespace easy3d {
         bool is_visible() const { return visible_; }
         void set_visible(bool v) { visible_ = v; }
 
+        /// \name Coloring
+
         /**
          * Constructs a uniform coloring scheme.
          * @param color The color.
@@ -131,13 +133,20 @@ namespace easy3d {
 
         /**
          * Sets the coloring. A generic version of the set_[method]_coloring() method.
-         * @param method The the color method.
+         * @param method The coloring method.
          * @param location The the location of the coloring property.
          * @param name The name of the coloring property.
          * @param texture The texture for the coloring.
          */
         void set_coloring(Method method, PropertyLocation location, const std::string &name);
 
+        /**
+         * Sets the coloring method.
+         * \details It has the same effect as if set_coloring() is called without changing the location of coloring
+         * property (2nd argument) and the coloring property (3rd argument). \see set_coloring().
+         * @param method The coloring method.
+         */
+        void set_coloring_method(Method method) { coloring_method_ = method; }
 
         /** The coloring method. */
         Method coloring_method() const { return coloring_method_; }
