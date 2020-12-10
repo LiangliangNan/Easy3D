@@ -46,6 +46,8 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>
+#include <easy3d/algo/surface_mesh_components.h>
+#include <easy3d/algo/surface_mesh_topology.h>
 
 #include "viewer.h"
 
@@ -484,13 +486,58 @@ void MainWindow::createActionsForTopologyMenu() {
 
 
 void MainWindow::reportTopologyStatistics() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
     if (!mesh)
         return;
 
-    std::cout << "#face:   " << mesh->n_faces() << std::endl;
-    std::cout << "#vertex: " << mesh->n_vertices() << std::endl;
-    std::cout << "#edge:   " << mesh->n_edges() << std::endl;
-    std::cout << "#connected component:   " << "not implemented yet" << std::endl;
-    std::cout << "..." << std::endl;
+    const std::string simple_name = file_system::simple_name(mesh->name());
+    if (simple_name.empty())
+        std::cout << "#elements in model (with unknown name): ";
+    else
+        std::cout << "#elements in model '" << file_system::simple_name(mesh->name()) << "': ";
+
+    std::cout << "#face = " << mesh->n_faces() << ", #vertex = " << mesh->n_vertices() << ", #edge = "
+              << mesh->n_edges() << std::endl;
+
+    // count isolated vertices
+    std::size_t count = 0;
+    for (auto v : mesh->vertices()) {
+        if (mesh->is_isolated(v))
+            ++count;
+    }
+    if (count > 0)
+        std::cout << "#isolated vertices: " << count << std::endl;
+
+    const auto &components = SurfaceMeshComponent::extract(mesh);
+    std::cout << "#connected component: " << components.size() << std::endl;
+
+    const std::size_t num = 10;
+    if (components.size() > num)
+        std::cout << "\ttopology of the first " << num << " components:" << std::endl;
+
+    for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
+        const SurfaceMeshComponent& comp = components[i];
+        SurfaceMeshTopology topo(&comp);
+        std::string type = "unknown";
+        if (topo.is_sphere())
+            type = "sphere";
+        else if (topo.is_disc())
+            type = "disc";
+        else if (topo.is_cylinder())
+            type = "cylinder";
+        else if (topo.is_torus())
+            type = "torus";
+        else if (topo.is_closed())
+            type = "unknown closed";
+
+        std::cout << "\t\t" << i << ": "
+                  << type
+                  << ", #face = " << comp.n_faces() << ", #vertex = " << comp.n_vertices() << ", #edge = " << comp.n_edges()
+                  << ", #border = " << topo.number_of_borders();
+        if (topo.number_of_borders() == 1)
+            std::cout << ", border size = " << topo.largest_border_size();
+        else if (topo.number_of_borders() > 1)
+            std::cout << ", largest border size = " << topo.largest_border_size();
+        std::cout << std::endl;
+    }
 }
