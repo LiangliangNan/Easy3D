@@ -992,10 +992,12 @@ namespace easy3d {
         /// returns number of faces in the mesh
         unsigned int n_faces() const { return faces_size() - deleted_faces_; }
 
-        /// clear mesh: remove all vertices, edges, faces
+        /// \brief Removes all vertices, edges, faces, and properties (and resets garbage state).
+        /// \details After calling this method, the mesh is the same as newly constructed. The additional properties
+        /// (such as normal vectors) are also removed and must thus be re-added if needed.
         void clear();
 
-        /// reserve memory (mainly used in file readers)
+        /// reserves memory (mainly used in file readers)
         void reserve(unsigned int nvertices,
                      unsigned int nedges,
                      unsigned int nfaces );
