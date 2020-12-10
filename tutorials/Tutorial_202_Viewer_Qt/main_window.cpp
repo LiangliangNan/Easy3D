@@ -32,7 +32,6 @@
 #include <QMimeData>
 #include <QSettings>
 #include <QMessageBox>
-#include <QToolBox>
 #include <QColorDialog>
 
 #include <easy3d/core/surface_mesh.h>
