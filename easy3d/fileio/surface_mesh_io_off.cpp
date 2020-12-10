@@ -40,11 +40,14 @@ namespace easy3d {
 	namespace io {
 
         namespace details {
-            // Some OFF files may skip lines
+            // Some OFF files may skip lines or may have comments starting with '#'
             static void get_line(LineInputStream& in) {
                 in.get_line() ;
                 const char* p =  in.current_line().c_str();
-                while(!in.eof() && (strlen(p) == 0 || !isprint(*p))) {
+                while (!in.eof() && (
+                        (strlen(p) == 0 || !isprint(*p)) || // empty line
+                        (strlen(p) > 0 && p[0] == '#')
+                )) {
                     in.get_line() ;
                     p = in.current_line().c_str();
                 }
