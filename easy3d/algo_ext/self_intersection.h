@@ -80,7 +80,7 @@ namespace easy3d {
          * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
          *             unchanged.
          * @param stitch Stitch the borders
-         * @return true if remesh actually occurred (i.e., self intersection was detected).
+         * @return \c true if remesh actually occurred (i.e., self intersection was detected).
          */
         bool remesh(SurfaceMesh *mesh, bool stitch);
 

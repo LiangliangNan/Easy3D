@@ -306,7 +306,7 @@ namespace easy3d {
             msg += ("model has " + std::to_string(total_comb_duplicated_faces_) +
                     " combinatorially duplicated faces. ");
         if (total_geom_duplicated_faces_ > 0)
-            msg += ("odel has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
+            msg += ("model has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
         if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
             msg += "Remove duplicated faces may produce better result";
             LOG(WARNING) << msg;
@@ -749,12 +749,12 @@ namespace easy3d {
 
         // Output resolved mesh.
 
-        SurfaceMesh *input = new SurfaceMesh(*mesh);
+        SurfaceMesh input = *mesh;
         mesh->clear();
 
         std::vector<SurfaceMesh::Vertex> vertices;
-        auto points = input->get_vertex_property<vec3>("v:point");
-        for (auto p : input->vertices()) {
+        auto points = input.get_vertex_property<vec3>("v:point");
+        for (auto p : input.vertices()) {
             SurfaceMesh::Vertex v = mesh->add_vertex(points[p]);
             vertices.push_back(v);
         }
@@ -772,12 +772,7 @@ namespace easy3d {
         LOG(INFO) << "done. " << w.time_string();
 #endif
 
-        remove_degenerate_faces(mesh);
-
-        bool status = mesh->n_faces() != input->n_faces();
-        delete input;
-
-        return status;
+        return true;
     }
 
 
