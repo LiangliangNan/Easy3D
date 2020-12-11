@@ -159,16 +159,19 @@ namespace easy3d {
         //@{
 
         /**
-         * \brief Detects intersecting face pairs.
-         * @param mesh The input mesh.
-         * @param construct If true, also construct the intersecting geometry.
-         * @return The intersecting face pairs.
+         * \brief Collects all pairs of intersecting faces of a triangule surface mesh.
+         * \details Two faces are said to intersect if the corresponding triangles intersect and the intersection is
+         * not an edge nor a vertex incident to both faces.
+         * \pre mesh.is_triangle_mesh().
+         * \param mesh The triangle surface mesh to be checked.
+         * \return All pairs of non-adjacent faces that intersect.
          */
         static std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
         detect_self_intersections(SurfaceMesh* mesh);
 
         /**
          * \brief Detects and remesh the intersecting faces.
+         * \pre mesh.is_triangle_mesh().
          * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
          *             unchanged.
          * @param stitch Stitch the borders
