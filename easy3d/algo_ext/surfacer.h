@@ -95,6 +95,38 @@ namespace easy3d {
          */
         static bool orient_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
 
+        /**
+         * \brief Cleans a given polygon soup through various repairing operations.
+         * \details This function carries out the following tasks, in the same order as they are listed:
+         *  - merging of duplicate points, using CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup();
+         *  - simplification of polygons to remove geometrically identical consecutive vertices;
+         *  - splitting of "pinched" polygons, that is polygons in which a geometric position appears more than once.
+         *    The splitting process results in multiple non-pinched polygons;
+         *  - removal of invalid polygons, that is polygons with fewer than 2 vertices;
+         *  - removal of duplicate polygons, using Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup();
+         *  - removal of isolated points, using Polygon_mesh_processing::remove_isolated_points_in_polygon_soup().
+         * \note The point and polygon containers will be modified by the repairing operations, and thus the indexation
+         * of the polygons will also be changed.
+         */
+        static void clean_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
+
+        /**
+         * \brief Cleans a given polygon mesh through various repairing operations.
+         * \details This function carries out the following tasks, in the same order as they are listed:
+         *  - merging of duplicate points;
+         *  - simplification of faces to remove geometrically identical consecutive vertices;
+         *  - splitting of "pinched" faces, that is face in which a geometric position appears more than once.
+         *    The splitting process results in multiple non-pinched faces;
+         *  - removal of invalid faces, that is faces with fewer than 2 vertices;
+         *  - removal of duplicate faces;
+         *  - removal of isolated points.
+         * This function treats the input mesh as a polygon soup. Internally, it calls
+         * clean_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons).
+         * \note The point and face containers will be modified by the repairing operations, and thus the indexation
+         * of the polygons will also be changed.
+         */
+        static void clean_polygon_mesh(SurfaceMesh* mesh);
+
 
         /**
          * \brief Stitches together border halfedges in a polygon mesh.

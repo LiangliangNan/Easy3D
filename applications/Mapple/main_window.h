@@ -108,6 +108,7 @@ private slots:
     void surfaceMeshPlanarPartition();
     void surfaceMeshTriangulation();
 
+    void surfaceMeshClean();
     void surfaceMeshStitchConnectedComponents();
     void surfaceMeshStitchBordersWithoutReorientation();
     void surfaceMeshReverseOrientation();

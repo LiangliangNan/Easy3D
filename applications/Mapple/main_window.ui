@@ -121,14 +121,15 @@
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="separator"/>
+    <addaction name="actionCleanPolygonMesh"/>
+    <addaction name="separator"/>
+    <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
+    <addaction name="actionDetectDuplicateFaces"/>
+    <addaction name="actionRemoveDuplicateFaces"/>
+    <addaction name="separator"/>
     <addaction name="actionStitchConnectedComponents"/>
     <addaction name="actionStitchBordersWithoutReorientation"/>
     <addaction name="actionReverseOrientation"/>
-    <addaction name="separator"/>
-    <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
-    <addaction name="separator"/>
-    <addaction name="actionDetectDuplicateFaces"/>
-    <addaction name="actionRemoveDuplicateFaces"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
@@ -146,9 +147,8 @@
     <addaction name="actionSurfaceMeshHoleFilling"/>
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
-    <addaction name="actionSamplingSurfaceMesh"/>
-    <addaction name="separator"/>
     <addaction name="actionCreateSurfaceMeshFromText"/>
+    <addaction name="actionSamplingSurfaceMesh"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -903,6 +903,11 @@
   <action name="actionStitchBordersWithoutReorientation">
    <property name="text">
     <string>Stitch borders (no reorientation)</string>
+   </property>
+  </action>
+  <action name="actionCleanPolygonMesh">
+   <property name="text">
+    <string>Clean (remove isolated/duplicated + reorient)</string>
    </property>
   </action>
  </widget>

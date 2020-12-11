@@ -32,19 +32,19 @@
 
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
+#include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
 #include <CGAL/Polygon_mesh_processing/orientation.h>
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel          K;
-typedef CGAL::Surface_mesh<K::Point_3>                               CGALMesh;
-
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef CGAL::Surface_mesh<K::Point_3> CGALMesh;
 
 
 namespace easy3d {
 
     namespace details {
 
-        void easy3d_to_cgal(SurfaceMesh *input, CGALMesh &output) {
+        void to_cgal(SurfaceMesh *input, CGALMesh &output) {
             if (input->has_garbage())
                 input->collect_garbage();
 
@@ -63,7 +63,7 @@ namespace easy3d {
             }
         }
 
-        void cgal_to_easy3d(CGALMesh &input, SurfaceMesh *output) {
+        void to_easy3d(CGALMesh &input, SurfaceMesh *output) {
             if (input.has_garbage())
                 input.collect_garbage();
 
@@ -88,9 +88,109 @@ namespace easy3d {
         }
 
 
-        void easy3d_mesh_to_polygon_soup(SurfaceMesh *mesh,
-                                         std::vector<vec3> &points,
-                                         std::vector<Surfacer::Polygon> &polygons) {
+        void to_cgal(const std::vector<vec3> &input_points,
+                     const std::vector<Surfacer::Polygon> &input_polygons,
+                     std::vector<K::Point_3> &points,
+                     std::vector<std::vector<std::size_t> > &polygons) {
+            points.resize(input_points.size());
+            polygons.resize(input_polygons.size());
+
+            for (std::size_t i = 0; i < input_points.size(); ++i) {
+                const vec3 &p = input_points[i];
+                points[i] = K::Point_3(p.x, p.y, p.z);
+            }
+
+            for (std::size_t i = 0; i < input_polygons.size(); ++i) {
+                const auto &input_plg = input_polygons[i];
+                auto &plg = polygons[i];
+                plg.resize(input_plg.size());
+                for (std::size_t j = 0; j < input_plg.size(); ++j)
+                    plg[j] = input_plg[j];
+            }
+        }
+
+        void to_easy3d(const std::vector<K::Point_3> &input_points,
+                       const std::vector<std::vector<std::size_t> > &input_polygons,
+                       std::vector<vec3> &points,
+                       std::vector<Surfacer::Polygon> &polygons) {
+            points.resize(input_points.size());
+            polygons.resize(input_polygons.size());
+
+            for (std::size_t i = 0; i < input_points.size(); ++i) {
+                const auto &p = input_points[i];
+                points[i] = vec3(
+                        CGAL::to_double(p.x()),
+                        CGAL::to_double(p.y()),
+                        CGAL::to_double(p.z())
+                );
+            }
+
+            for (std::size_t i = 0; i < input_polygons.size(); ++i) {
+                const auto &input_plg = input_polygons[i];
+                auto &plg = polygons[i];
+                plg.resize(input_plg.size());
+                for (std::size_t j = 0; j < input_plg.size(); ++j)
+                    plg[j] = input_plg[j];
+            }
+        }
+
+
+        void remove_duplicate_vertices(std::vector<vec3> &points,
+                                       std::vector<Surfacer::Polygon> &polygons) {
+            // helper class for identifying coincident vertices
+            class CmpVec {
+            public:
+                CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
+
+                bool operator()(const vec3 &v0, const vec3 &v1) const {
+                    if (fabs(v0[0] - v1[0]) <= eps_) {
+                        if (fabs(v0[1] - v1[1]) <= eps_)
+                            return (v0[2] < v1[2] - eps_);
+                        else
+                            return (v0[1] < v1[1] - eps_);
+                    } else
+                        return (v0[0] < v1[0] - eps_);
+                }
+
+            private:
+                float eps_;
+            };
+
+            CmpVec comp(FLT_MIN);
+            std::map<vec3, int, CmpVec> vMap(comp);
+            std::map<vec3, int, CmpVec>::iterator vMapIt;
+            std::map<int, int> index_map;
+
+            std::vector<vec3> result_points = points;
+            std::vector<Surfacer::Polygon> input_polygons = polygons;
+            points.clear();
+            for (auto &plg : polygons)
+                plg.clear();
+
+            for (std::size_t i = 0; i < result_points.size(); ++i) {
+                const vec3 &p = result_points[i];
+
+                // has the point been referenced before?
+                vMapIt = vMap.find(p);
+                if (vMapIt == vMap.end()) {
+                    // No : add vertex and remember idx/vector mapping
+                    vMap[p] = points.size();
+                    index_map[i] = points.size();
+                    points.push_back(vec3(p.x, p.y, p.z));
+                } else {
+                    // Yes : get index from map
+                    index_map[i] = vMapIt->second;
+                }
+            }
+            for (std::size_t i = 0; i < input_polygons.size(); ++i) {
+                for (auto id : input_polygons[i])
+                    polygons[i].push_back(index_map[id]);
+            }
+        }
+
+
+        void to_polygon_soup(SurfaceMesh *mesh, std::vector<vec3> &points,
+                             std::vector<Surfacer::Polygon> &polygons) {
             if (!mesh)
                 return;
 
@@ -103,15 +203,14 @@ namespace easy3d {
             }
         }
 
-
-        void polygon_soup_to_easy3d_mesh(const std::vector<vec3> &points,
-                                         const std::vector<Surfacer::Polygon> &polygons,
-                                         SurfaceMesh *mesh) {
+        void to_polygon_mesh(const std::vector<vec3> &points,
+                             const std::vector<Surfacer::Polygon> &polygons,
+                             SurfaceMesh *mesh) {
             mesh->clear();
             for (auto p : points)
                 mesh->add_vertex(p);
 
-            for (const auto& plg : polygons) {
+            for (const auto &plg : polygons) {
                 std::vector<SurfaceMesh::Vertex> vts;
                 for (auto v : plg)
                     vts.push_back(SurfaceMesh::Vertex(v));
@@ -121,12 +220,9 @@ namespace easy3d {
     }
 
 
-
-
-
-    void Surfacer::merge_reversible_connected_components(SurfaceMesh* input) {
+    void Surfacer::merge_reversible_connected_components(SurfaceMesh *input) {
         CGALMesh mesh;
-        details::easy3d_to_cgal(input, mesh);
+        details::to_cgal(input, mesh);
 
         typedef boost::property_map<CGALMesh, CGAL::dynamic_face_property_t<std::size_t> >::type Fccmap;
         Fccmap fccmap = CGAL::get(CGAL::dynamic_face_property_t<std::size_t>(), mesh);
@@ -147,7 +243,7 @@ namespace easy3d {
             count_prev = count_now;
         } while (true);
 
-        details::cgal_to_easy3d(mesh, input);
+        details::to_easy3d(mesh, input);
         if (count_now != count_oirg)
             LOG(INFO) << count_oirg << " connected components merged into " << count_now;
         else
@@ -161,7 +257,7 @@ namespace easy3d {
         typedef std::vector<SurfaceMesh::Vertex> Polygon;
         std::vector<Polygon> polygons(mesh->n_faces());
         for (auto f : mesh->faces()) {
-            auto& plg = polygons[f.idx()];
+            auto &plg = polygons[f.idx()];
             for (auto v : mesh->vertices(f))
                 plg.push_back(v);
             std::reverse(plg.begin(), plg.end());
@@ -169,145 +265,119 @@ namespace easy3d {
 
         mesh->clear();
 
-        for (const auto& p : points)
+        for (const auto &p : points)
             mesh->add_vertex(p);
 
-        for (const auto& plg : polygons)
+        for (const auto &plg : polygons)
             mesh->add_face(plg);
     }
 
 
     bool Surfacer::orient_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+        details::remove_duplicate_vertices(input_points, input_polygons);
+
         std::vector<K::Point_3> points;
-        std::vector< std::vector<std::size_t> > polygons(input_polygons.size());
-
-        // helper class for identifying coincident vertices
-        class CmpVec {
-        public:
-            CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
-            bool operator()(const vec3 &v0, const vec3 &v1) const {
-                if (fabs(v0[0] - v1[0]) <= eps_) {
-                    if (fabs(v0[1] - v1[1]) <= eps_)
-                        return (v0[2] < v1[2] - eps_);
-                    else
-                        return (v0[1] < v1[1] - eps_);
-                } else
-                    return (v0[0] < v1[0] - eps_);
-            }
-        private:
-            float eps_;
-        };
-
-        CmpVec comp(FLT_MIN);
-        std::map<vec3, int, CmpVec>            vMap(comp);
-        std::map<vec3, int, CmpVec>::iterator  vMapIt;
-
-        std::map<int, int> index_map;
-
-        for (std::size_t i=0; i<input_points.size(); ++i) {
-            const vec3& p = input_points[i];
-
-            // has the point been referenced before?
-            vMapIt = vMap.find(p);
-            if (vMapIt == vMap.end()) {
-                // No : add vertex and remember idx/vector mapping
-                vMap[p] = points.size();
-                index_map[i] = points.size();
-                points.push_back(K::Point_3(p.x, p.y, p.z));
-            }
-            else {
-                // Yes : get index from map
-                index_map[i] = vMapIt->second;
-            }
-        }
-        for (std::size_t i=0; i<input_polygons.size(); ++i) {
-            for (auto id : input_polygons[i])
-                polygons[i].push_back(index_map[id]);
-        }
+        std::vector<std::vector<std::size_t> > polygons(input_polygons.size());
+        details::to_cgal(input_points, input_polygons, points, polygons);
 
         bool status = CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
-
-        if(!CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)) {
+        if (!CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)) {
             LOG(WARNING) << "the polygons after orientation do not define a valid polygon mesh";
             return false;
         }
 
         // convert to easy3d
-        input_points.resize(points.size());
-        input_polygons.resize(polygons.size());
-
-        for (std::size_t i=0; i<points.size(); ++i) {
-            const auto& p = points[i];
-            input_points[i] = vec3(
-                    CGAL::to_double(p.x()),
-                    CGAL::to_double(p.y()),
-                    CGAL::to_double(p.z())
-            );
-        }
-
-        for (std::size_t i=0; i<polygons.size(); ++i) {
-            const auto &plg_new = polygons[i];
-
-            auto &plg = input_polygons[i];
-            plg.resize(plg_new.size());
-            for (std::size_t j = 0; j < plg_new.size(); ++j)
-                plg[j] = plg_new[j];
-        }
+        details::to_easy3d(points, polygons, input_points, input_polygons);
 
         return status;
     }
 
 
-    int Surfacer::stitch_borders(SurfaceMesh* input) {
+    void Surfacer::clean_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+        details::remove_duplicate_vertices(input_points, input_polygons);
+
+        std::vector<K::Point_3> points;
+        std::vector<std::vector<std::size_t> > polygons(input_polygons.size());
+        details::to_cgal(input_points, input_polygons, points, polygons);
+
+        CGAL::Polygon_mesh_processing::repair_polygon_soup(points, polygons);
+
+        // let's also try to orient the polygon soup
+        CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
+        if (!CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)) {
+            LOG(WARNING) << "the polygons after orientation do not define a valid polygon mesh";
+            return;
+        }
+
+        details::to_easy3d(points, polygons, input_points, input_polygons);
+    }
+
+
+    void Surfacer::clean_polygon_mesh(SurfaceMesh *mesh) {
+        std::vector<vec3> points;
+        std::vector<Polygon> polygons;
+        details::to_polygon_soup(mesh, points, polygons);
+        const int num_vertices = mesh->n_vertices();
+        const int num_faces = mesh->n_faces();
+
+        clean_polygon_soup(points, polygons);
+
+        // convert to easy3d
+        details::to_polygon_mesh(points, polygons, mesh);
+
+        int diff_vertices = num_vertices - mesh->n_vertices();
+        int diff_faces = num_faces - mesh->n_faces();
+        LOG(INFO) << std::abs(diff_vertices) << " vertices " << (diff_vertices >= 0 ? "removed" : "inserted") << " and "
+                  << std::abs(diff_faces) << " faces " << (diff_faces >= 0 ? "removed" : "inserted");
+    }
+
+
+    int Surfacer::stitch_borders(SurfaceMesh *input) {
         CGALMesh mesh;
-        details::easy3d_to_cgal(input, mesh);
+        details::to_cgal(input, mesh);
         int num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
-        details::cgal_to_easy3d(mesh, input);
+        details::to_easy3d(mesh, input);
         LOG(INFO) << num << " pairs of halfedges have been stitched";
         return num;
     }
 
 
-    bool Surfacer::merge_reversible_connected_components_2(SurfaceMesh* mesh) {
+    bool Surfacer::merge_reversible_connected_components_2(SurfaceMesh *mesh) {
         if (!mesh)
             return false;
 
         std::vector<vec3> points;
         std::vector<Polygon> polygons;
-        details::easy3d_mesh_to_polygon_soup(mesh, points, polygons);
+        details::to_polygon_soup(mesh, points, polygons);
 
         bool status = orient_polygon_soup(points, polygons);
-        details::polygon_soup_to_easy3d_mesh(points, polygons, mesh);
+        details::to_polygon_mesh(points, polygons, mesh);
 
         return status;
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-    Surfacer::detect_duplicate_faces(SurfaceMesh* mesh, bool exact, double dist_threshold)
-    {
+    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+    Surfacer::detect_duplicate_faces(SurfaceMesh *mesh, bool exact, double dist_threshold) {
         easy3d::DuplicateFaces rdf;
         return rdf.detect(mesh, exact, dist_threshold);
     }
 
 
-    unsigned int Surfacer::remove_duplicate_faces(SurfaceMesh* mesh, bool exact, double dist_threshold)
-    {
+    unsigned int Surfacer::remove_duplicate_faces(SurfaceMesh *mesh, bool exact, double dist_threshold) {
         DuplicateFaces rdf;
         return rdf.remove(mesh, exact, dist_threshold);
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
-    Surfacer::detect_self_intersections(SurfaceMesh* mesh)
-    {
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
+    Surfacer::detect_self_intersections(SurfaceMesh *mesh) {
         SelfIntersection msi;
         return msi.detect(mesh, false);
     }
 
 
-    bool Surfacer::remesh_self_intersections(SurfaceMesh* mesh, bool stitch /* = true */)
-    {
+    bool Surfacer::remesh_self_intersections(SurfaceMesh *mesh, bool stitch /* = true */) {
         SelfIntersection msi;
         return msi.remesh(mesh, stitch);
     }
