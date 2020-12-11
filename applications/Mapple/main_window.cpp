@@ -796,6 +796,9 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
 
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
+    connect(ui->actionOrientSurface, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientSurface()));
+    connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
+
     connect(ui->actionDetectDuplicatedFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicatedFaces()));
     connect(ui->actionRemoveDuplicatedFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicatedFaces()));
 
@@ -910,6 +913,57 @@ void MainWindow::surfaceMeshTriangulation() {
 
     mesh->renderer()->update();
     viewer_->update();
+    updateUi();
+}
+
+
+void MainWindow::surfaceMeshOrientSurface() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    MeshSurfacer ms;
+    ms.orient(mesh);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+#endif
+}
+
+
+void MainWindow::surfaceMeshReverseOrientation() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+    const std::vector<vec3> points = mesh->points();
+
+    typedef std::vector<SurfaceMesh::Vertex> Polygon;
+    std::vector<Polygon> polygons(mesh->n_faces());
+    for (auto f : mesh->faces()) {
+        for (auto v : mesh->vertices(f)) {
+            auto& plg = polygons[f.idx()];
+            plg.push_back(v);
+            auto it = plg.begin();
+            std::reverse(++it, plg.end());
+        }
+    }
+
+    mesh->clear();
+
+    for (const auto& p : points)
+        mesh->add_vertex(p);
+
+    for (const auto& plg : polygons)
+        mesh->add_face(plg);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
 }
 
 

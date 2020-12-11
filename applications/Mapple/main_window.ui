@@ -121,6 +121,9 @@
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="separator"/>
+    <addaction name="actionOrientSurface"/>
+    <addaction name="actionReverseOrientation"/>
+    <addaction name="separator"/>
     <addaction name="actionSurfaceMeshStitchCoincidentEdges"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
     <addaction name="separator"/>
@@ -893,6 +896,16 @@
   <action name="actionPlanarPartition">
    <property name="text">
     <string>Planar partition</string>
+   </property>
+  </action>
+  <action name="actionOrientSurface">
+   <property name="text">
+    <string>Orient surface</string>
+   </property>
+  </action>
+  <action name="actionReverseOrientation">
+   <property name="text">
+    <string>Reverse orientation</string>
    </property>
   </action>
  </widget>

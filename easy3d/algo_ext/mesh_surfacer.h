@@ -46,6 +46,32 @@ namespace easy3d {
         MeshSurfacer();
         virtual ~MeshSurfacer();
 
+        /// \name Orient polygon soup
+        //@{
+
+        /**
+         * \brief Tries to consistently orient a polygon soup.
+         * \details When it is not possible to produce a combinatorial manifold surface, some points are duplicated.
+         * It also builds a polygon mesh if the oriented soup of polygons describes a consistently oriented polygon mesh.
+         * \param points Points of the soup of polygons. Some additional points might be pushed back to resolve
+         *        non-manifoldness or non-orientability issues.
+         * \param polygons Each element in the vector describes a polygon using the index of the points in points.
+         *        If needed the order of the indices of a polygon might be reversed.
+         * \return \c true if the orientation operation succeeded. \c false if some points were duplicated, thus
+         *         producing a self-intersecting polyhedron.
+         * The algorithm is described in
+         *   - A.Guéziec, et al. Cutting and stitching: Converting sets of polygons to manifold surfaces. TVCG 2001.
+         */
+        typedef std::vector<int> Polygon;
+        bool orient(std::vector<vec3>& points, std::vector<Polygon>& polygons);
+
+        /// \brief Tries to consistently orient a surface mesh.
+        /// \details The method treats the input mesh as a polygon soup and calls
+        /// <code> orient(std::vector<vec3>& points, std::vector<Polygon>& polygons) </code>.
+        bool orient(SurfaceMesh* mesh);
+
+        //@}
+
         // ------- detect/remove duplicated faces
 
         /// \brief Detects and return the duplicated faces.
