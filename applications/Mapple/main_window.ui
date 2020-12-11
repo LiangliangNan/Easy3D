@@ -121,14 +121,14 @@
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="separator"/>
-    <addaction name="actionOrientSurface"/>
+    <addaction name="actionStitchConnectedComponents"/>
+    <addaction name="actionStitchBordersWithoutReorientation"/>
     <addaction name="actionReverseOrientation"/>
     <addaction name="separator"/>
-    <addaction name="actionSurfaceMeshStitchCoincidentEdges"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
     <addaction name="separator"/>
-    <addaction name="actionDetectDuplicatedFaces"/>
-    <addaction name="actionRemoveDuplicatedFaces"/>
+    <addaction name="actionDetectDuplicateFaces"/>
+    <addaction name="actionRemoveDuplicateFaces"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
@@ -623,12 +623,12 @@
     <string>Sampling (to a point cloud)</string>
    </property>
   </action>
-  <action name="actionDetectDuplicatedFaces">
+  <action name="actionDetectDuplicateFaces">
    <property name="text">
     <string>Detect duplicate faces</string>
    </property>
   </action>
-  <action name="actionRemoveDuplicatedFaces">
+  <action name="actionRemoveDuplicateFaces">
    <property name="text">
     <string>Remove duplicate faces</string>
    </property>
@@ -860,14 +860,6 @@
     <string>Compute surface mesh curvatures</string>
    </property>
   </action>
-  <action name="actionSurfaceMeshStitchCoincidentEdges">
-   <property name="text">
-    <string>Stitch coincident edges</string>
-   </property>
-   <property name="toolTip">
-    <string>Stitch coincident edges</string>
-   </property>
-  </action>
   <action name="actionSurfaceMeshRemoveIsolatedVertices">
    <property name="text">
     <string>Remove isolated vertices</string>
@@ -898,14 +890,19 @@
     <string>Planar partition</string>
    </property>
   </action>
-  <action name="actionOrientSurface">
+  <action name="actionStitchConnectedComponents">
    <property name="text">
-    <string>Orient surface</string>
+    <string>Stitch connected components</string>
    </property>
   </action>
   <action name="actionReverseOrientation">
    <property name="text">
     <string>Reverse orientation</string>
+   </property>
+  </action>
+  <action name="actionStitchBordersWithoutReorientation">
+   <property name="text">
+    <string>Stitch borders (no reorientation)</string>
    </property>
   </action>
  </widget>

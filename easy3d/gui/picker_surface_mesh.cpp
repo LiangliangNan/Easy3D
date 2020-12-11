@@ -125,7 +125,7 @@ namespace easy3d {
         double squared_distance = FLT_MAX;
         SurfaceMesh::Halfedge closest_edge;
 
-        // for edges that have duplicated vertices
+        // for edges that have duplicate vertices
         static double threshold = 1e-10;
         for (auto h : model->halfedges(picked_face)) {
             const vec3 &s = model->position(model->source(h));

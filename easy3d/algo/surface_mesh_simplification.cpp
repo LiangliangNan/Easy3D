@@ -203,7 +203,7 @@ namespace easy3d {
 
         // clean up
         delete queue_;
-        mesh_->garbage_collection();
+        mesh_->collect_garbage();
         mesh_->remove_vertex_property(vpriority_);
         mesh_->remove_vertex_property(heap_pos_);
         mesh_->remove_vertex_property(vtarget_);

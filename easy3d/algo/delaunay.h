@@ -128,10 +128,10 @@ namespace easy3d {
 
 
         /**
-         * \brief Checks for duplicated vertices in stored neighbor lists.
-         * Returns true if there where some duplicated vertices.
+         * \brief Checks for duplicate vertices in stored neighbor lists.
+         * Returns true if there where some duplicate vertices.
          */
-        bool check_duplicated_vertices();
+        bool check_duplicate_vertices();
 
     protected:
 

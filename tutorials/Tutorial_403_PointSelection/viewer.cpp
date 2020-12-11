@@ -80,7 +80,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
                         ++count;
                     }
                 }
-                model->garbage_collection();
+                model->collect_garbage();
                 LOG(INFO) << count << " points deleted" << std::endl;
 
                 auto drawable = model->renderer()->get_points_drawable("vertices");

@@ -480,7 +480,7 @@ namespace easy3d {
             }
         }
 
-        mesh_->garbage_collection();
+        mesh_->collect_garbage();
     }
 
     //-----------------------------------------------------------------------------

@@ -58,7 +58,7 @@
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_planar_partition.h>
-#include <easy3d/algo_ext/mesh_surfacer.h>
+#include <easy3d/algo_ext/surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
 #include <easy3d/util/logging.h>
@@ -791,16 +791,16 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(surfaceMeshReportTopologyStatistics()));
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
-    connect(ui->actionSurfaceMeshStitchCoincidentEdges, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchCoincidentEdges()));
-    connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
 
+    connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
-    connect(ui->actionOrientSurface, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientSurface()));
+    connect(ui->actionStitchConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchConnectedComponents()));
+    connect(ui->actionStitchBordersWithoutReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchBordersWithoutReorientation()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
 
-    connect(ui->actionDetectDuplicatedFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicatedFaces()));
-    connect(ui->actionRemoveDuplicatedFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicatedFaces()));
+    connect(ui->actionDetectDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateFaces()));
+    connect(ui->actionRemoveDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicateFaces()));
 
     connect(ui->actionDetectSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectSelfIntersections()));
     connect(ui->actionRemeshSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshSelfIntersections()));
@@ -917,20 +917,41 @@ void MainWindow::surfaceMeshTriangulation() {
 }
 
 
-void MainWindow::surfaceMeshOrientSurface() {
+void MainWindow::surfaceMeshStitchConnectedComponents() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
-    MeshSurfacer ms;
-    ms.orient(mesh);
+    // Surfacer::merge_reversible_connected_components_2(mesh); // does the same, but treats the mesh as a polygon soup
+    Surfacer::merge_reversible_connected_components(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
     updateUi();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
+void MainWindow::surfaceMeshStitchBordersWithoutReorientation() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    Surfacer::stitch_borders(mesh);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
 #endif
 }
 
@@ -940,26 +961,7 @@ void MainWindow::surfaceMeshReverseOrientation() {
     if (!mesh)
         return;
 
-    const std::vector<vec3> points = mesh->points();
-
-    typedef std::vector<SurfaceMesh::Vertex> Polygon;
-    std::vector<Polygon> polygons(mesh->n_faces());
-    for (auto f : mesh->faces()) {
-        for (auto v : mesh->vertices(f)) {
-            auto& plg = polygons[f.idx()];
-            plg.push_back(v);
-            auto it = plg.begin();
-            std::reverse(++it, plg.end());
-        }
-    }
-
-    mesh->clear();
-
-    for (const auto& p : points)
-        mesh->add_vertex(p);
-
-    for (const auto& plg : polygons)
-        mesh->add_face(plg);
+    Surfacer::reverse_orientation(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
@@ -979,7 +981,7 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
         if (mesh->is_isolated(v))
             mesh->delete_vertex(v);
     }
-    mesh->garbage_collection();
+    mesh->collect_garbage();
 
     unsigned int count = prev_num_vertices - mesh->n_vertices();
     LOG(INFO) << count << " isolated vertices deleted.";
@@ -990,7 +992,7 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
 }
 
 
-void MainWindow::surfaceMeshDetectDuplicatedFaces() {
+void MainWindow::surfaceMeshDetectDuplicateFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -998,10 +1000,9 @@ void MainWindow::surfaceMeshDetectDuplicatedFaces() {
 #if HAS_CGAL
     StopWatch w;
     w.start();
-    LOG(INFO) << "detecting duplicated faces...";
+    LOG(INFO) << "detecting duplicate faces...";
 
-    MeshSurfacer ms;
-    const auto& faces = ms.detect_duplicated_faces(mesh, true);
+    const auto& faces = Surfacer::detect_duplicate_faces(mesh, true);
     LOG(INFO) << "done. " << faces.size() << " faces deleted. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
@@ -1009,7 +1010,7 @@ void MainWindow::surfaceMeshDetectDuplicatedFaces() {
 }
 
 
-void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
+void MainWindow::surfaceMeshRemoveDuplicateFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -1017,10 +1018,9 @@ void MainWindow::surfaceMeshRemoveDuplicatedFaces() {
 #if HAS_CGAL
     StopWatch w;
     w.start();
-	LOG(INFO) << "removing duplicated faces...";
+	LOG(INFO) << "removing duplicate faces...";
 
-    MeshSurfacer ms;
-    unsigned int num = ms.remove_duplicated_faces(mesh, true);
+    unsigned int num = Surfacer::remove_duplicate_faces(mesh, true);
     if (num > 0) {
         mesh->renderer()->update();
         viewer_->update();
@@ -1043,8 +1043,7 @@ void MainWindow::surfaceMeshDetectSelfIntersections() {
     w.start();
 	LOG(INFO) << "detecting intersecting faces...";
 
-    MeshSurfacer ms;
-    const auto& pairs = ms.detect_self_intersections(mesh);
+    const auto& pairs = Surfacer::detect_self_intersections(mesh);
     if (!pairs.empty())
 		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. " << w.time_string();
     else
@@ -1066,8 +1065,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 	LOG(INFO) << "remeshing intersecting faces...";
 
     auto size = mesh->n_faces();
-    MeshSurfacer ms;
-    if (ms.remesh_self_intersections(mesh, true)) {
+    if (Surfacer::remesh_self_intersections(mesh, true)) {
 		LOG(INFO) << "done. #faces " << size << " -> " << mesh->n_faces() << ". " << w.time_string();
         mesh->renderer()->update();
         viewer_->update();
@@ -1477,20 +1475,6 @@ void MainWindow::surfaceMeshGeodesic() {
     mesh->renderer()->update();
     viewer_->update();
     updateRenderingPanel();
-}
-
-
-void MainWindow::surfaceMeshStitchCoincidentEdges() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-
-    mesh->renderer()->update();
-    viewer_->update();
-    updateUi();
 }
 
 

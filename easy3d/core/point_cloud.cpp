@@ -194,7 +194,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void PointCloud::garbage_collection()
+    void PointCloud::collect_garbage()
     {
         int  nV(vertices_size());
 

@@ -297,7 +297,7 @@ namespace easy3d {
                 } else {
 
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -429,7 +429,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -694,7 +694,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -806,7 +806,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -917,7 +917,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -1026,7 +1026,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;
@@ -1144,7 +1144,7 @@ namespace easy3d {
                     }
                 } else {
                     /**
-                     * We use the Tessellator to eliminate duplicated vertices. This allows us to take advantage of element
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
                      * buffer to minimize the number of vertices sent to the GPU.
                      */
                     Tessellator tessellator;

@@ -1888,7 +1888,7 @@ namespace easy3d {
 
     void
     SurfaceMesh::
-    garbage_collection()
+    collect_garbage()
     {
         if (!garbage_)
             return;

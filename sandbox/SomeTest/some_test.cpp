@@ -165,7 +165,7 @@ namespace easy3d {
                     if (labels[f] == 0)
                         copy->delete_face(f);
                 }
-                copy->garbage_collection();
+                copy->collect_garbage();
             }
 
             auto faces = copy->renderer()->add_triangles_drawable("faces");

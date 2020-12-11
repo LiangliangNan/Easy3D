@@ -324,7 +324,7 @@ namespace easy3d {
             /// Default constructor
             VertexIterator(Vertex v=Vertex(), const SurfaceMesh* m=nullptr) : hnd_(v), mesh_(m)
             {
-                if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
             /// get the vertex the iterator refers to
@@ -347,7 +347,7 @@ namespace easy3d {
             {
                 ++hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
                 return *this;
             }
 
@@ -356,7 +356,7 @@ namespace easy3d {
             {
                 --hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
                 return *this;
             }
 
@@ -376,7 +376,7 @@ namespace easy3d {
             /// Default constructor
             HalfedgeIterator(Halfedge h=Halfedge(), const SurfaceMesh* m=nullptr) : hnd_(h), mesh_(m)
             {
-                if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
             /// get the halfedge the iterator refers to
@@ -399,7 +399,7 @@ namespace easy3d {
             {
                 ++hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
                 return *this;
             }
 
@@ -408,7 +408,7 @@ namespace easy3d {
             {
                 --hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
                 return *this;
             }
 
@@ -428,7 +428,7 @@ namespace easy3d {
             /// Default constructor
             EdgeIterator(Edge e=Edge(), const SurfaceMesh* m=nullptr) : hnd_(e), mesh_(m)
             {
-                if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
             /// get the edge the iterator refers to
@@ -451,7 +451,7 @@ namespace easy3d {
             {
                 ++hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
                 return *this;
             }
 
@@ -460,7 +460,7 @@ namespace easy3d {
             {
                 --hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
                 return *this;
             }
 
@@ -480,7 +480,7 @@ namespace easy3d {
             /// Default constructor
             FaceIterator(Face f=Face(), const SurfaceMesh* m=nullptr) : hnd_(f), mesh_(m)
             {
-                if (mesh_ && mesh_->garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
             /// get the face the iterator refers to
@@ -503,7 +503,7 @@ namespace easy3d {
             {
                 ++hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
                 return *this;
             }
 
@@ -512,7 +512,7 @@ namespace easy3d {
             {
                 --hnd_.idx_;
                 assert(mesh_);
-                while (mesh_->garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
+                while (mesh_->has_garbage() && mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) --hnd_.idx_;
                 return *this;
             }
 
@@ -1012,30 +1012,33 @@ namespace easy3d {
             fprops_.resize(nf);
         }
 
+        /// are there deleted vertices, edges or faces?
+        bool has_garbage() const { return garbage_; }
+
         /// remove deleted vertices/edges/faces
-        void garbage_collection();
+        void collect_garbage();
 
 
         /// returns whether vertex \c v is deleted
-        /// \sa garbage_collection()
+        /// \sa collect_garbage()
         bool is_deleted(Vertex v) const
         {
             return vdeleted_[v];
         }
         /// returns whether halfedge \c h is deleted
-        /// \sa garbage_collection()
+        /// \sa collect_garbage()
         bool is_deleted(Halfedge h) const
         {
             return edeleted_[edge(h)];
         }
         /// returns whether edge \c e is deleted
-        /// \sa garbage_collection()
+        /// \sa collect_garbage()
         bool is_deleted(Edge e) const
         {
             return edeleted_[e];
         }
         /// returns whether face \c f is deleted
-        /// \sa garbage_collection()
+        /// \sa collect_garbage()
         bool is_deleted(Face f) const
         {
             return fdeleted_[f];
@@ -1651,7 +1654,7 @@ namespace easy3d {
          \attention Halfedge collapses might lead to invalid faces. Call
          is_collapse_ok(Halfedge) to be sure the collapse is legal.
          \attention The removed items are only marked as deleted. You have
-         to call garbage_collection() to finally remove them.
+         to call collect_garbage() to finally remove them.
          */
         void collapse(Halfedge h);
 
@@ -1875,9 +1878,6 @@ namespace easy3d {
 
         /// Helper for halfedge collapse
         void remove_loop(Halfedge h);
-
-        /// are there deleted vertices, edges or faces?
-        bool garbage() const { return garbage_; }
 
         /// Helper for stitching edges. It checks whether the vertices pointed by h0 and h1 can be merged. It is called
         /// twice by is_stitch_ok(), once per orientation of the edges.

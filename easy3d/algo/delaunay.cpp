@@ -229,10 +229,10 @@ namespace easy3d {
     }
 
 
-    bool Delaunay::check_duplicated_vertices() {
+    bool Delaunay::check_duplicate_vertices() {
         bool result = false;
         if (neighbors_.size() != nb_vertices()) {
-            LOG(WARNING) << "failed checking duplicated vertices: neighbors not stored";
+            LOG(WARNING) << "failed checking duplicate vertices: neighbors not stored";
             return false;
         }
         for (unsigned int v = 0; v < nb_vertices(); v++) {

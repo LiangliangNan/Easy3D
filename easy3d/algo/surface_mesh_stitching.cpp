@@ -187,7 +187,7 @@ namespace easy3d {
                     ++count;
                 }
             }
-            mesh_->garbage_collection();
+            mesh_->collect_garbage();
 
             if (count > 0)
                 LOG(INFO) << count << " (out of " << to_stitch.size() << ") pairs of edges stitched";

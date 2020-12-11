@@ -48,7 +48,7 @@ namespace easy3d {
 
     void ManifoldBuilder::begin_surface() {
         num_faces_less_three_vertices_ = 0;
-        num_faces_duplicated_vertices_ = 0;
+        num_faces_duplicate_vertices = 0;
         num_faces_out_of_range_vertices_ = 0;
         num_faces_unknown_topology_ = 0;
 
@@ -115,7 +115,7 @@ namespace easy3d {
             }
         }
         if (num_isolated_vertices > 0)
-            mesh_->garbage_collection();
+            mesh_->collect_garbage();
 
         // ---------------------------------------------------------------------------------
 
@@ -159,9 +159,9 @@ namespace easy3d {
                       " faces with less than 3 vertices (ignored)";
         }
 
-        if (num_faces_duplicated_vertices_ > 0) {
-            issues += "\n\t\t" + std::to_string(num_faces_duplicated_vertices_) +
-                      " faces with duplicated vertices (ignored)";
+        if (num_faces_duplicate_vertices > 0) {
+            issues += "\n\t\t" + std::to_string(num_faces_duplicate_vertices) +
+                      " faces with duplicate vertices (ignored)";
         }
 
         if (num_faces_out_of_range_vertices_ > 0) {
@@ -244,12 +244,12 @@ namespace easy3d {
             return false;
         }
 
-        // Check #2; a face has duplicated vertices
+        // Check #2; a face has duplicate vertices
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
             if (vertices[s] == vertices[t]) {
-                LOG_FIRST_N(ERROR, 1) << "face has duplicated vertices: " << vertices
+                LOG_FIRST_N(ERROR, 1) << "face has duplicate vertices: " << vertices
                                       << " (this is the first record)";
-                ++num_faces_duplicated_vertices_;
+                ++num_faces_duplicate_vertices;
                 return false;
             }
         }
@@ -474,7 +474,7 @@ namespace easy3d {
         for (auto h : non_manifold_cones)
             resolve_non_manifold_vertex(h, mesh, copy_record);
 
-#if 0    // This is the history how vertices were duplicated.
+#if 0    // This is the history how vertices were duplicate.
         for (const auto& copy : dmap) {
             LOG(INFO) << "Non-manifold vertex " << copy.first << " was fixed by creating";
             for (auto v : copy.second)

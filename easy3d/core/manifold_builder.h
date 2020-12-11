@@ -159,8 +159,8 @@ namespace easy3d {
         // faces with less than three vertices
         std::size_t num_faces_less_three_vertices_;
 
-        // faces with duplicated vertices
-        std::size_t num_faces_duplicated_vertices_;
+        // faces with duplicate vertices
+        std::size_t num_faces_duplicate_vertices;
 
         // faces with out-of-range vertex indices
         std::size_t num_faces_out_of_range_vertices_;
@@ -180,7 +180,7 @@ namespace easy3d {
         SurfaceMesh::VertexProperty <SurfaceMesh::Vertex> original_vertex_;
 
         // The record of all halfedges (each associated with a valid face) originating from a vertex.
-        // This is used for fast query of duplicated edges. All vertices are their original indices.
+        // This is used for fast query of duplicate edges. All vertices are their original indices.
         //  - first: the index of a vertex
         //  - second: the indices of the target vertices
         std::unordered_map<int, std::vector<int> > outgoing_halfedges_;

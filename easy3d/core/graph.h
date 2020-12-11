@@ -213,7 +213,7 @@ namespace easy3d {
 			/// Default constructor
 			VertexIterator(Vertex v = Vertex(), const Graph* g = nullptr) : hnd_(v), graph_(g)
 			{
-				if (graph_ && graph_->garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
+				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
 
 			/// get the vertex the iterator refers to
@@ -236,7 +236,7 @@ namespace easy3d {
 			{
 				++hnd_.idx_;
 				assert(graph_);
-				while (graph_->garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
+				while (graph_->has_garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 				return *this;
 			}
 
@@ -245,7 +245,7 @@ namespace easy3d {
 			{
 				--hnd_.idx_;
 				assert(graph_);
-				while (graph_->garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) --hnd_.idx_;
+				while (graph_->has_garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) --hnd_.idx_;
 				return *this;
 			}
 
@@ -265,7 +265,7 @@ namespace easy3d {
 			/// Default constructor
 			EdgeIterator(Edge e = Edge(), const Graph* g = nullptr) : hnd_(e), graph_(g)
 			{
-				if (graph_ && graph_->garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
+				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
 
 			/// get the edge the iterator refers to
@@ -288,7 +288,7 @@ namespace easy3d {
 			{
 				++hnd_.idx_;
 				assert(graph_);
-				while (graph_->garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
+				while (graph_->has_garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 				return *this;
 			}
 
@@ -297,7 +297,7 @@ namespace easy3d {
 			{
 				--hnd_.idx_;
 				assert(graph_);
-				while (graph_->garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) --hnd_.idx_;
+				while (graph_->has_garbage() && graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) --hnd_.idx_;
 				return *this;
 			}
 
@@ -562,18 +562,21 @@ namespace easy3d {
 			eprops_.resize(ne);
 		}
 
-		/// remove deleted vertices/edges/faces
-		void garbage_collection();
+        /// are there deleted vertices or edges?
+        bool has_garbage() const { return garbage_; }
+
+		/// remove deleted vertices/edges
+		void collect_garbage();
 
 
 		/// returns whether vertex \c v is deleted
-		/// \sa garbage_collection()
+		/// \sa collect_garbage()
 		bool is_deleted(Vertex v) const
 		{
 			return vdeleted_[v];
 		}
 		/// returns whether edge \c e is deleted
-		/// \sa garbage_collection()
+		/// \sa collect_garbage()
 		bool is_deleted(Edge e) const
 		{
 			return edeleted_[e];
@@ -879,12 +882,6 @@ namespace easy3d {
 			eprops_.push_back();
 			return Edge(edges_size() - 1);
 		}
-
-
-	private: //--------------------------------------------------- helper functions
-
-		/// are there deleted vertices, edges or faces?
-		bool garbage() const { return garbage_; }
 
 
 	private: //------------------------------------------------------- private data

@@ -225,9 +225,9 @@ namespace easy3d {
         // which they were first found
         std::unordered_map<int, ObjectList> offending_;
 
-        // statistics on duplicated faces (to offer the user some feedback)
-        int total_comb_duplicated_faces_;    // Combinatorial duplicated faces
-        int total_geom_duplicated_faces_;    // Geometrically duplicated faces
+        // statistics on duplicate faces (to offer the user some feedback)
+        int total_comb_duplicate_face_;    // Combinatorial duplicate faces
+        int total_geom_duplicate_face_;    // Geometrically duplicate faces
     };
 
 } // namespace easy3d

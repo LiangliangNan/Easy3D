@@ -174,7 +174,7 @@ namespace easy3d {
             /// Default constructor
             VertexIterator(Vertex v=Vertex(), const PointCloud* m=nullptr) : hnd_(v), cloud_(m)
             {
-                if (cloud_ && cloud_->garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
+                if (cloud_ && cloud_->has_garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
             /// get the vertex the iterator refers to
@@ -197,7 +197,7 @@ namespace easy3d {
             {
                 ++hnd_.idx_;
                 assert(cloud_);
-                while (cloud_->garbage() && cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
+                while (cloud_->has_garbage() && cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
                 return *this;
             }
 
@@ -206,7 +206,7 @@ namespace easy3d {
             {
                 --hnd_.idx_;
                 assert(cloud_);
-                while (cloud_->garbage() && cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) --hnd_.idx_;
+                while (cloud_->has_garbage() && cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) --hnd_.idx_;
                 return *this;
             }
 
@@ -283,14 +283,17 @@ namespace easy3d {
         /// @brief resize space for vertices and their currently associated properties.
         void resize(unsigned int nv) { vprops_.resize(nv); }
 
+        /// are there deleted vertices?
+        bool has_garbage() const { return garbage_; }
+
         /// @brief remove deleted vertices
-        void garbage_collection();
+        void collect_garbage();
 
         /// @brief deletes the vertex \c v from the cloud
         void delete_vertex(Vertex v);
 
         /// @brief returns whether vertex \c v is deleted
-        /// \sa garbage_collection()
+        /// \sa collect_garbage()
         bool is_deleted(Vertex v) const
         {
             return vdeleted_[v];
@@ -457,11 +460,6 @@ namespace easy3d {
             return Vertex(vertices_size()-1);
         }
 
-
-    private: //--------------------------------------------------- helper functions
-
-        /// are there deleted vertices
-        bool garbage() const { return garbage_; }
 
     private: //------------------------------------------------------- private data
 

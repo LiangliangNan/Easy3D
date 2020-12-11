@@ -5,14 +5,14 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        duplicated_faces.h
-        mesh_surfacer.h
+        duplicate_faces.h
+        surfacer.h
         self_intersection.h
         )
 
 set(${PROJECT_NAME}_SOURCES
-        duplicated_faces.cpp
-        mesh_surfacer.cpp
+        duplicate_faces.cpp
+        surfacer.cpp
         self_intersection.cpp
         )
 

@@ -304,7 +304,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    void Graph::garbage_collection()
+    void Graph::collect_garbage()
     {
     //    int  i, i0, i1,
     //    nV(vertices_size()),

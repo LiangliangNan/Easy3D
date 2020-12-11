@@ -233,14 +233,14 @@ namespace easy3d {
         const int total_shared_vertices = num_comb_shared_vertices + num_geom_shared_vertices;
         if (num_comb_shared_vertices == 3) {
             assert(shared.size() == 3);
-            // Combinatorially duplicated faces should be removed before calling SelftIntersection.
-            ++total_comb_duplicated_faces_;
+            // Combinatorially duplicate faces should be removed before calling SelftIntersection.
+            ++total_comb_duplicate_face_;
             return false;
         }
         if (total_shared_vertices == 3) {
             assert(shared.size() == 3);
             // Geometrically duplicate faces should be removed before calling SelftIntersection.
-            ++total_geom_duplicated_faces_;
+            ++total_geom_duplicate_face_;
             return false;
         }
         if (total_shared_vertices == 2) {
@@ -276,8 +276,8 @@ namespace easy3d {
 
         construct_intersection_ = construct;
         offending_.clear();
-        total_comb_duplicated_faces_ = 0;
-        total_geom_duplicated_faces_ = 0;
+        total_comb_duplicate_face_ = 0;
+        total_geom_duplicate_face_ = 0;
 
         remove_degenerate_faces(mesh);
         triangle_faces_ = mesh_to_cgal_triangle_list(mesh);
@@ -302,13 +302,13 @@ namespace easy3d {
         }
 
         std::string msg("");
-        if (total_comb_duplicated_faces_ > 0)
-            msg += ("model has " + std::to_string(total_comb_duplicated_faces_) +
-                    " combinatorially duplicated faces. ");
-        if (total_geom_duplicated_faces_ > 0)
-            msg += ("model has " + std::to_string(total_geom_duplicated_faces_) + " geometrically duplicated faces. ");
-        if (total_comb_duplicated_faces_ > 0 || total_geom_duplicated_faces_ > 0) {
-            msg += "Remove duplicated faces may produce better result";
+        if (total_comb_duplicate_face_ > 0)
+            msg += ("model has " + std::to_string(total_comb_duplicate_face_) +
+                    " combinatorially duplicate faces. ");
+        if (total_geom_duplicate_face_ > 0)
+            msg += ("model has " + std::to_string(total_geom_duplicate_face_) + " geometrically duplicate faces. ");
+        if (total_comb_duplicate_face_ > 0 || total_geom_duplicate_face_ > 0) {
+            msg += "duplicate faces should be removed before resolving self intersections";
             LOG(WARNING) << msg;
         }
 
@@ -354,7 +354,7 @@ namespace easy3d {
             }
         }
 
-        mesh->garbage_collection();
+        mesh->collect_garbage();
 
         int diff = num - mesh->n_faces();
         if (diff > 0)

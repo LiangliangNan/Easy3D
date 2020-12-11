@@ -161,7 +161,7 @@ void DialogPointCloudSimplification::apply() {
         for (auto id : points_to_remove_)
             cloud->delete_vertex(PointCloud::Vertex(id));
 
-        cloud->garbage_collection();
+        cloud->collect_garbage();
 
         if (!points_to_remove_.empty()) {
             points_to_remove_.clear();

@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY_ALGO_DUPLICATED_FACES_H
-#define EASY_ALGO_DUPLICATED_FACES_H
+#ifndef EASY_ALGO_duplicate_face_H
+#define EASY_ALGO_duplicate_face_H
 
 
 #include <vector>
@@ -40,24 +40,24 @@
 
 namespace easy3d {
 
-    /// \brief Detect/Remove duplicated faces for a surface mesh.
-    /// \class DuplicatedFaces  easy3d/algo_ext/duplicated_faces.h
-    class DuplicatedFaces
+    /// \brief Detects/Removes duplicate faces for a surface mesh.
+    /// \class DuplicateFaces  easy3d/algo_ext/duplicate_face.h
+    class DuplicateFaces
     {
     public:
-        DuplicatedFaces() {}
-        ~DuplicatedFaces() {}
+        DuplicateFaces() {}
+        ~DuplicateFaces() {}
 
-        /// \brief Detect and return the duplicated faces.
+        /// \brief Detects duplicate faces.
         /// @param exact True: do exact predict; otherwise use the distance threshold.
-        /// Upon return, the second component of each entry contains the set of faces duplicating the one stored as
-        /// the first component.
-        // TODO: implement using threshold (now only 'exact' is implemented).
+        /// \return The set of duplicate faces, where the \c second of each entry contains the set of faces
+        /// duplicating the \c first.
         std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
         detect(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
-        /// Detect and remove duplicated faces. Returns the number of deleted faces.
-        /// @param exact True: do exact predict; otherwise use the distance threshold.
+        /// \brief Detects and removes duplicate faces.
+        /// @param exact \c true to do exact predict; otherwise use the distance threshold.
+        /// \return The number of faces that has been deleted.
         unsigned int remove(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
     private:
@@ -91,4 +91,4 @@ namespace easy3d {
 
 }   // namespace easy3d
 
-#endif  // EASY_ALGO_DUPLICATED_FACES_H
+#endif  // EASY_ALGO_duplicate_face_H
