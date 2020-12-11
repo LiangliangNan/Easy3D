@@ -116,7 +116,7 @@ private slots:
     void surfaceMeshDetectSelfIntersections();
     void surfaceMeshRemeshSelfIntersections();
 
-    void polygonSoupClean();
+    void polygonSoupRepair();
     void polygonSoupStitch();
 
     void surfaceMeshSampling();

@@ -795,7 +795,7 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
-    connect(ui->actionRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupClean()));
+    connect(ui->actionRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupRepair()));
     connect(ui->actionStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupStitch()));
 
     connect(ui->actionStitchConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchConnectedComponents()));
@@ -921,13 +921,13 @@ void MainWindow::surfaceMeshTriangulation() {
 
 
 
-void MainWindow::polygonSoupClean() {
+void MainWindow::polygonSoupRepair() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
-    Surfacer::clean_polygon_mesh(mesh);
+    Surfacer::repair_polygon_mesh(mesh);
 
     mesh->renderer()->update();
     viewer_->update();

@@ -96,7 +96,7 @@ namespace easy3d {
         static bool orient_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
 
         /**
-         * \brief Cleans a given polygon soup through various repairing operations.
+         * \brief Repairs a given polygon soup through various repairing operations.
          * \details This function carries out the following tasks, in the same order as they are listed:
          *  - merging of duplicate points, using CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup();
          *  - simplification of polygons to remove geometrically identical consecutive vertices;
@@ -108,10 +108,10 @@ namespace easy3d {
          * \note The point and polygon containers will be modified by the repairing operations, and thus the indexation
          * of the polygons will also be changed.
          */
-        static void clean_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
+        static void repair_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
 
         /**
-         * \brief Cleans a given polygon mesh through various repairing operations.
+         * \brief Repairs a given polygon mesh through various repairing operations.
          * \details This function carries out the following tasks, in the same order as they are listed:
          *  - merging of duplicate points;
          *  - simplification of faces to remove geometrically identical consecutive vertices;
@@ -125,7 +125,7 @@ namespace easy3d {
          * \note The point and face containers will be modified by the repairing operations, and thus the indexation
          * of the polygons will also be changed.
          */
-        static void clean_polygon_mesh(SurfaceMesh* mesh);
+        static void repair_polygon_mesh(SurfaceMesh* mesh);
 
 
         /**

@@ -293,7 +293,7 @@ namespace easy3d {
     }
 
 
-    void Surfacer::clean_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+    void Surfacer::repair_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
         details::remove_duplicate_vertices(input_points, input_polygons);
 
         std::vector<K::Point_3> points;
@@ -313,14 +313,17 @@ namespace easy3d {
     }
 
 
-    void Surfacer::clean_polygon_mesh(SurfaceMesh *mesh) {
+    void Surfacer::repair_polygon_mesh(SurfaceMesh *mesh) {
+        if (!mesh)
+            return;
+
         std::vector<vec3> points;
         std::vector<Polygon> polygons;
         details::to_polygon_soup(mesh, points, polygons);
         const int num_vertices = mesh->n_vertices();
         const int num_faces = mesh->n_faces();
 
-        clean_polygon_soup(points, polygons);
+        repair_polygon_soup(points, polygons);
 
         // convert to easy3d
         details::to_polygon_mesh(points, polygons, mesh);
