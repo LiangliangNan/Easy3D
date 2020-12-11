@@ -108,7 +108,6 @@ private slots:
     void surfaceMeshPlanarPartition();
     void surfaceMeshTriangulation();
 
-    void surfaceMeshClean();
     void surfaceMeshStitchConnectedComponents();
     void surfaceMeshStitchBordersWithoutReorientation();
     void surfaceMeshReverseOrientation();
@@ -116,6 +115,9 @@ private slots:
     void surfaceMeshRemoveDuplicateFaces();
     void surfaceMeshDetectSelfIntersections();
     void surfaceMeshRemeshSelfIntersections();
+
+    void polygonSoupClean();
+    void polygonSoupStitch();
 
     void surfaceMeshSampling();
     void surfaceMeshSubdivisionCatmullClark();

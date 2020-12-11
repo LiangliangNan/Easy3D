@@ -795,7 +795,9 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
-    connect(ui->actionCleanPolygonMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshClean()));
+    connect(ui->actionRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupClean()));
+    connect(ui->actionStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupStitch()));
+
     connect(ui->actionStitchConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchConnectedComponents()));
     connect(ui->actionStitchBordersWithoutReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchBordersWithoutReorientation()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
@@ -919,7 +921,7 @@ void MainWindow::surfaceMeshTriangulation() {
 
 
 
-void MainWindow::surfaceMeshClean() {
+void MainWindow::polygonSoupClean() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -944,8 +946,27 @@ void MainWindow::surfaceMeshStitchConnectedComponents() {
         return;
 
 #if HAS_CGAL
-//     Surfacer::merge_reversible_connected_components_2(mesh); // does the same, but treats the mesh as a polygon soup
     Surfacer::merge_reversible_connected_components(mesh);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
+// does the same as surfaceMeshStitchConnectedComponents(), but treats the mesh as a polygon soup
+void MainWindow::polygonSoupStitch() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    Surfacer::merge_reversible_connected_components_2(mesh);
 
     mesh->renderer()->update();
     viewer_->update();

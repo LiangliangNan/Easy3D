@@ -116,12 +116,22 @@
      <addaction name="actionSurfaceMeshSubdivisionCatmullClark"/>
      <addaction name="actionSurfaceMeshSubdivisionSqrt3"/>
     </widget>
+    <widget class="QMenu" name="menuPolygonSoupProcessing">
+     <property name="toolTip">
+      <string>Process surface mesh as a polygon soup</string>
+     </property>
+     <property name="title">
+      <string>Mesh processed as polygon soup</string>
+     </property>
+     <addaction name="actionRepairPolygonSoup"/>
+     <addaction name="actionStitchPolygonSoup"/>
+    </widget>
     <addaction name="actionTopologyStatistics"/>
     <addaction name="separator"/>
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="separator"/>
-    <addaction name="actionCleanPolygonMesh"/>
+    <addaction name="menuPolygonSoupProcessing"/>
     <addaction name="separator"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
     <addaction name="actionDetectDuplicateFaces"/>
@@ -147,8 +157,9 @@
     <addaction name="actionSurfaceMeshHoleFilling"/>
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
-    <addaction name="actionCreateSurfaceMeshFromText"/>
     <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="separator"/>
+    <addaction name="actionCreateSurfaceMeshFromText"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -905,9 +916,14 @@
     <string>Stitch borders (no reorientation)</string>
    </property>
   </action>
-  <action name="actionCleanPolygonMesh">
+  <action name="actionRepairPolygonSoup">
    <property name="text">
-    <string>Clean (remove isolated/duplicated + reorient)</string>
+    <string>Repair polygon soup</string>
+   </property>
+  </action>
+  <action name="actionStitchPolygonSoup">
+   <property name="text">
+    <string>Stitch polygon soup</string>
    </property>
   </action>
  </widget>
