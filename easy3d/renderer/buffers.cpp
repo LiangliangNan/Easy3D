@@ -1547,6 +1547,7 @@ namespace easy3d {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1560,6 +1561,7 @@ namespace easy3d {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1588,6 +1590,7 @@ namespace easy3d {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1658,6 +1661,7 @@ namespace easy3d {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1671,6 +1675,7 @@ namespace easy3d {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1699,6 +1704,7 @@ namespace easy3d {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -1747,6 +1753,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1759,6 +1766,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1781,6 +1789,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1793,6 +1802,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1824,6 +1834,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1851,6 +1862,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -1994,6 +2006,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2006,6 +2019,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on halfedges (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2028,6 +2042,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2040,6 +2055,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2071,6 +2087,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on faces (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2098,6 +2115,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2143,6 +2161,7 @@ namespace easy3d {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -2156,6 +2175,7 @@ namespace easy3d {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -2184,6 +2204,7 @@ namespace easy3d {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
                         drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
                         return;
                     }
                     break;
@@ -2224,6 +2245,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2236,6 +2258,7 @@ namespace easy3d {
                                 LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2258,6 +2281,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2270,6 +2294,7 @@ namespace easy3d {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2301,6 +2326,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
@@ -2328,6 +2354,7 @@ namespace easy3d {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
                                 drawable->set_coloring_method(State::UNIFORM_COLOR);
+                                update(model, drawable);
                                 return;
                             }
                             break;
