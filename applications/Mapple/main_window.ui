@@ -148,8 +148,9 @@
     <addaction name="actionReverseOrientation"/>
     <addaction name="separator"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
-    <addaction name="actionDetectDuplicateFaces"/>
-    <addaction name="actionRemoveDuplicateFaces"/>
+    <addaction name="separator"/>
+    <addaction name="actionDetectDuplicateAndFoldingFaces"/>
+    <addaction name="actionRemoveDuplicateAndFoldingFaces"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
@@ -645,14 +646,14 @@
     <string>Sampling (to a point cloud)</string>
    </property>
   </action>
-  <action name="actionDetectDuplicateFaces">
+  <action name="actionDetectDuplicateAndFoldingFaces">
    <property name="text">
-    <string>Detect duplicate faces</string>
+    <string>Detect duplicate/folding faces</string>
    </property>
   </action>
-  <action name="actionRemoveDuplicateFaces">
+  <action name="actionRemoveDuplicateAndFoldingFaces">
    <property name="text">
-    <string>Remove duplicate faces</string>
+    <string>Remove duplicate/folding faces</string>
    </property>
   </action>
   <action name="actionTopologyStatistics">

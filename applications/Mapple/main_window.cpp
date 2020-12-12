@@ -810,8 +810,8 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionOrientClosedTriangleMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientClosedTriangleMesh()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
 
-    connect(ui->actionDetectDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateFaces()));
-    connect(ui->actionRemoveDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicateFaces()));
+    connect(ui->actionDetectDuplicateAndFoldingFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateAndFoldingFaces()));
+    connect(ui->actionRemoveDuplicateAndFoldingFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicateAndFoldingFaces()));
 
     connect(ui->actionDetectSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectSelfIntersections()));
     connect(ui->actionRemeshSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshSelfIntersections()));
@@ -1193,7 +1193,7 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
 }
 
 
-void MainWindow::surfaceMeshDetectDuplicateFaces() {
+void MainWindow::surfaceMeshDetectDuplicateAndFoldingFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -1214,7 +1214,7 @@ void MainWindow::surfaceMeshDetectDuplicateFaces() {
 }
 
 
-void MainWindow::surfaceMeshRemoveDuplicateFaces() {
+void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
