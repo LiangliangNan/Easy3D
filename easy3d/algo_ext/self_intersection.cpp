@@ -270,8 +270,8 @@ namespace easy3d {
             return result;
 
         if (!mesh->is_triangle_mesh()) {
-            mesh->triangulate();
-            LOG(WARNING) << "input mesh triangulated to perform self intersection detection";
+            LOG(WARNING) << "input mesh is not a triangulated";
+            return result;
         }
 
         construct_intersection_ = construct;
