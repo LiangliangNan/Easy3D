@@ -35,9 +35,13 @@
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
 #include <CGAL/Polygon_mesh_processing/orientation.h>
+#include <CGAL/Polygon_mesh_processing/clip.h>
+#include <CGAL/Polygon_mesh_slicer.h>
+
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-typedef CGAL::Surface_mesh<K::Point_3> CGALMesh;
+typedef CGAL::Surface_mesh<K::Point_3>                      CGALMesh;
+typedef K::Plane_3                                          Plane_3;
 
 
 namespace easy3d {
@@ -273,6 +277,19 @@ namespace easy3d {
     }
 
 
+    void Surfacer::orient(SurfaceMesh* input_mesh) {
+        if (!input_mesh->is_triangle_mesh() || !input_mesh->is_closed()) {
+            LOG(WARNING) << "only closed triangle meshes can be oriented";
+            return;
+        }
+
+        CGALMesh mesh;
+        details::to_cgal(input_mesh, mesh);
+        CGAL::Polygon_mesh_processing::orient(mesh);
+        details::to_easy3d(mesh, input_mesh);
+    }
+
+
     bool Surfacer::orient_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
         details::remove_duplicate_vertices(input_points, input_polygons);
 
@@ -357,6 +374,96 @@ namespace easy3d {
         details::to_polygon_mesh(points, polygons, mesh);
 
         return status;
+    }
+
+
+    bool Surfacer::clip(SurfaceMesh *input_mesh, const Plane3 &input_plane, bool clip_volume) {
+        if (!input_mesh->is_triangle_mesh()) {
+            LOG(WARNING) << "only triangle meshes can be clipped";
+            return false;
+        }
+
+        CGALMesh mesh;
+        details::to_cgal(input_mesh, mesh);
+
+        Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
+        bool status = CGAL::Polygon_mesh_processing::clip(
+                mesh,
+                plane,
+                CGAL::Polygon_mesh_processing::parameters::clip_volume(clip_volume)
+        );
+
+        details::to_easy3d(mesh, input_mesh);
+        return status;
+    }
+
+
+    void Surfacer::split(SurfaceMesh *input_mesh, const Plane3 &input_plane) {
+        if (!input_mesh->is_triangle_mesh()) {
+            LOG(WARNING) << "only triangle meshes can be clipped";
+            return;
+        }
+
+        CGALMesh mesh;
+        details::to_cgal(input_mesh, mesh);
+
+        Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
+        CGAL::Polygon_mesh_processing::split(mesh, plane);
+
+        details::to_easy3d(mesh, input_mesh);
+    }
+
+
+    std::vector<Surfacer::Polyline> Surfacer::slice(SurfaceMesh *input_mesh, const Plane3 &input_plane) {
+        std::vector<Plane3> planes(1, input_plane);
+        const std::vector< std::vector<Surfacer::Polyline> >& result = slice(input_mesh, planes);
+        return result[0];
+    }
+
+
+    std::vector< std::vector<Surfacer::Polyline> > Surfacer::slice(SurfaceMesh *input_mesh, const std::vector<Plane3> &input_planes) {
+        std::vector< std::vector<Surfacer::Polyline> > result;
+        if (!input_mesh->is_triangle_mesh()) {
+            LOG(WARNING) << "only triangle meshes can be clipped";
+            return result;
+        }
+
+        typedef std::vector<K::Point_3> CGALPolyline;
+
+        auto to_easy3d = [](std::vector<CGALPolyline>& input) -> std::vector<Surfacer::Polyline> {
+            std::vector<Surfacer::Polyline> polylines(input.size());
+            for (std::size_t i = 0; i < input.size(); ++i) {
+                const CGALPolyline &pl = input[i];
+                polylines[i].resize(pl.size());
+                for (std::size_t j = 0; j < pl.size(); ++j) {
+                    const auto &p = pl[j];
+                    polylines[i][j] = vec3(
+                            CGAL::to_double(p.x()),
+                            CGAL::to_double(p.y()),
+                            CGAL::to_double(p.z())
+                    );
+                }
+            }
+            return polylines;
+        };
+
+        CGALMesh mesh;
+        details::to_cgal(input_mesh, mesh);
+        // Slicer constructor from the mesh
+        CGAL::Polygon_mesh_slicer<CGALMesh , K> slicer(mesh);
+
+        std::vector< std::vector<CGALPolyline> > CGALResult(input_planes.size());
+        for (std::size_t i=0; i<input_planes.size(); ++i) {
+            const auto &input_plane = input_planes[i];
+            Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
+
+            std::vector<CGALPolyline> lines;
+            slicer(plane, std::back_inserter(lines));
+
+            result.push_back(to_easy3d(lines));
+        }
+
+        return result;
     }
 
 

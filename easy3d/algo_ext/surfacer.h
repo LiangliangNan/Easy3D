@@ -36,17 +36,25 @@ namespace easy3d {
 
     class SurfaceMesh;
 
-    /// \brief A collection of mesh (and polygon soup) processing functions.
-    /// \class Surfacer  easy3d/algo_ext/surfacer.h
-    /// \details This class collects some related algorithms implemented using CGAL.
-    /// It allows (re)orientation, detecting and resolving topological issues (e.g., duplicate vertices/faces, self
-    /// intersection) of a surface mesh.
-    /// \see DuplicateFaces and SelfIntersection.
-    class Surfacer
-    {
+    /**
+     * \brief A collection of mesh (and polygon soup) processing functions.
+     *
+     * \class Surfacer  easy3d/algo_ext/surfacer.h
+     *
+     * \details This class collects some related algorithms implemented using CGAL.
+     *          It allows (re)orientation, detecting and resolving topological issues (e.g., duplicate vertices/faces,
+     *          self intersection), and clipping/splitting/slicing of a surface mesh.
+     *
+     * \see DuplicateFaces and SelfIntersection.
+     */
+    class Surfacer {
     public:
-        /// A polygon is represented by a list of vertex indices
+        /// A polygon represented by a list of vertex indices
         typedef std::vector<int> Polygon;
+
+        /// A polyline represented by a list of points.
+        /// If a polyline is closed, its first and last points will be identical.
+        typedef std::vector<vec3> Polyline;
 
     public:
 
@@ -62,7 +70,7 @@ namespace easy3d {
          *
          * \see merge_reversible_connected_components_2()
          */
-        static void merge_reversible_connected_components(SurfaceMesh* mesh);
+        static void merge_reversible_connected_components(SurfaceMesh *mesh);
 
         /**
          * \brief Stitches connected components of a surface mesh
@@ -72,12 +80,19 @@ namespace easy3d {
          *
          * \see merge_reversible_connected_components()
          */
-        static bool merge_reversible_connected_components_2(SurfaceMesh* mesh);
+        static bool merge_reversible_connected_components_2(SurfaceMesh *mesh);
 
         /**
          * \brief Reverses the orientation of the entire mesh
          */
-        static void reverse_orientation(SurfaceMesh* mesh);
+        static void reverse_orientation(SurfaceMesh *mesh);
+
+        /**
+         * \brief Makes each connected component of a closed triangle surface mesh inward or outward oriented.
+         * \pre mesh.is_triangle_mesh(), mesh.is_closed()
+         * @param mesh The input mesh.
+         */
+        static void orient(SurfaceMesh *mesh);
 
         /**
          * \brief Tries to consistently orient a polygon soup.
@@ -93,7 +108,7 @@ namespace easy3d {
          * \return \c true if the orientation operation succeeded. \c false if some points were duplicated, thus
          *         producing a self-intersecting polyhedron.
          */
-        static bool orient_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
+        static bool orient_polygon_soup(std::vector<vec3> &points, std::vector<Polygon> &polygons);
 
         /**
          * \brief Repairs a given polygon soup through various repairing operations.
@@ -108,7 +123,7 @@ namespace easy3d {
          * \note The point and polygon containers will be modified by the repairing operations, and thus the indexation
          * of the polygons will also be changed.
          */
-        static void repair_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons);
+        static void repair_polygon_soup(std::vector<vec3> &points, std::vector<Polygon> &polygons);
 
         /**
          * \brief Repairs a given polygon mesh through various repairing operations.
@@ -125,7 +140,7 @@ namespace easy3d {
          * \note The point and face containers will be modified by the repairing operations, and thus the indexation
          * of the polygons will also be changed.
          */
-        static void repair_polygon_mesh(SurfaceMesh* mesh);
+        static void repair_polygon_mesh(SurfaceMesh *mesh);
 
 
         /**
@@ -135,27 +150,28 @@ namespace easy3d {
          * of h1 are the same as those of the target and source vertices of h2 respectively.
          * @return The number of pairs of halfedges that were stitched.
          */
-        static int stitch_borders(SurfaceMesh* pmesh);
+        static int stitch_borders(SurfaceMesh *pmesh);
         //@}
 
 
-        /// \name Resolve duplicate faces
+        /// \name Duplicate faces
         //@{
 
         /// \brief Detects duplicate faces.
         /// @param exact True: do exact predict; otherwise use the distance threshold.
         /// \return The set of duplicate faces, where the \c second of each entry contains the set of faces
         /// duplicating the \c first.
-        static std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-        detect_duplicate_faces(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
+        static std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
+        detect_duplicate_faces(SurfaceMesh *mesh, bool exact = false, double dist_threshold = 1e-6);
 
         /// \brief Detects and removes duplicate faces.
         /// @param exact \c true to do exact predict; otherwise use the distance threshold.
         /// \return The number of faces that has been deleted.
-        static unsigned int remove_duplicate_faces(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
+        static unsigned int remove_duplicate_faces(SurfaceMesh *mesh, bool exact = false, double dist_threshold = 1e-6);
         //@}
 
-        /// \name Resovle self intersections
+
+        /// \name Self intersections
         //@{
 
         /**
@@ -166,8 +182,8 @@ namespace easy3d {
          * \param mesh The triangle surface mesh to be checked.
          * \return All pairs of non-adjacent faces that intersect.
          */
-        static std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
-        detect_self_intersections(SurfaceMesh* mesh);
+        static std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
+        detect_self_intersections(SurfaceMesh *mesh);
 
         /**
          * \brief Detects and remesh the intersecting faces.
@@ -177,10 +193,71 @@ namespace easy3d {
          * @param stitch Stitch the borders
          * @return \c true if remesh actually occurred (i.e., self intersection was detected).
          */
-        static bool remesh_self_intersections(SurfaceMesh* mesh, bool stitch = true);
+        static bool remesh_self_intersections(SurfaceMesh *mesh, bool stitch = true);
+        //@}
+
+
+
+        /// \name Clip, split, and slice
+        //@{
+
+        /**
+         * \brief Clips a triangle mesh by keeping the part on the negative side of a plane (side opposite to its
+         *       normal vector).
+         * \details If \p mesh is closed, the clipped part can be closed too if the named parameter \p clip_volume
+         *          is set to \c true.
+         * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
+         * @param mesh The input triangle mesh.
+         * @param plane The clipping plane whose negative side defines the half-space to intersect \p mesh with.
+         *
+         * @return \c true if the output surface mesh is manifold. If \c false is returned \par mesh is only refined
+         *         by the intersection with plane.
+         */
+        static bool clip(SurfaceMesh *mesh, const Plane3 &plane, bool clip_volume = false);
+
+        /**
+         * \brief Split a triangle mesh by a plane.
+         * \details It adds intersection edges of \p mesh and \p plane in \p mesh and duplicates those edges.
+         * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
+         * @param mesh The input triangle mesh.
+         * @param plane The plane that will be used to split \p mesh.
+         */
+        static void split(SurfaceMesh *mesh, const Plane3 &plane);
+
+        /**
+         * \brief Computes the intersection of a plane with a triangle surface mesh.
+         * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
+         * @param mesh The input triangle mesh.
+         * @param plane The plane to intersect the triangle surface mesh with.
+         * @return The intersecting polylines. Each resulting polyline \p P is oriented such that for two consecutive
+         *         points \p p and \p q in \p P, the normal vector of the face(s) containing the segment pq,
+         *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of
+         *         each face is chosen to point on the side of the face where its sequence of vertices is seen
+         *         counterclockwise.
+         * \note An edge shared by two faces included in plane will not be reported. For example, if plane passes
+         *       though one face of a cube, only one closed polyline will be reported (the boundary of the face).
+         * \see slice(SurfaceMesh *mesh, const std::vector<Plane3> &planes).
+         */
+        static std::vector<Polyline> slice(SurfaceMesh *mesh, const Plane3 &plane);
+
+        /**
+         * \brief Computes the intersection of a set of planes with a triangle surface mesh.
+         * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
+         * @param mesh The input triangle mesh.
+         * @param planes The set of planes to intersect the triangle surface mesh with.
+         * @return The intersecting polylines by all the planes. The \c i_th entry denotes the polylines created by
+         *         the \c i_th plane. Each resulting polyline \p P is oriented such that for two consecutive
+         *         points \p p and \p q in \p P, the normal vector of the face(s) containing the segment pq,
+         *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of
+         *         each face is chosen to point on the side of the face where its sequence of vertices is seen
+         *         counterclockwise.
+         * \note An edge shared by two faces included in plane will not be reported. For example, if plane passes
+         *       though one face of a cube, only one closed polyline will be reported (the boundary of the face).
+         * \see slice(SurfaceMesh *mesh, const Plane3 &plane).
+         */
+        static std::vector< std::vector<Polyline> > slice(SurfaceMesh *mesh, const std::vector<Plane3> &planes);
         //@}
     };
-
 }
 
 

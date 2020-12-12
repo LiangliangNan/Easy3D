@@ -123,8 +123,16 @@
      <property name="title">
       <string>Mesh processed as polygon soup</string>
      </property>
-     <addaction name="actionRepairPolygonSoup"/>
-     <addaction name="actionStitchPolygonSoup"/>
+     <addaction name="actionSurfaceMeshRepairPolygonSoup"/>
+     <addaction name="actionSurfaceMeshStitchPolygonSoup"/>
+    </widget>
+    <widget class="QMenu" name="menuClippingPlane">
+     <property name="title">
+      <string>Clipping plane</string>
+     </property>
+     <addaction name="actionSurfaceMeshClip"/>
+     <addaction name="actionSurfaceMeshSplit"/>
+     <addaction name="actionSurfaceMeshSlice"/>
     </widget>
     <addaction name="actionTopologyStatistics"/>
     <addaction name="separator"/>
@@ -139,6 +147,8 @@
     <addaction name="separator"/>
     <addaction name="actionStitchConnectedComponents"/>
     <addaction name="actionStitchBordersWithoutReorientation"/>
+    <addaction name="separator"/>
+    <addaction name="actionOrientSurface"/>
     <addaction name="actionReverseOrientation"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
@@ -157,8 +167,9 @@
     <addaction name="actionSurfaceMeshHoleFilling"/>
     <addaction name="actionSurfaceMeshParameterization"/>
     <addaction name="separator"/>
-    <addaction name="actionSamplingSurfaceMesh"/>
+    <addaction name="menuClippingPlane"/>
     <addaction name="separator"/>
+    <addaction name="actionSamplingSurfaceMesh"/>
     <addaction name="actionCreateSurfaceMeshFromText"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -916,14 +927,34 @@
     <string>Stitch borders (no reorientation)</string>
    </property>
   </action>
-  <action name="actionRepairPolygonSoup">
+  <action name="actionSurfaceMeshRepairPolygonSoup">
    <property name="text">
     <string>Repair polygon soup</string>
    </property>
   </action>
-  <action name="actionStitchPolygonSoup">
+  <action name="actionSurfaceMeshStitchPolygonSoup">
    <property name="text">
     <string>Stitch polygon soup</string>
+   </property>
+  </action>
+  <action name="actionOrientSurface">
+   <property name="text">
+    <string>Orient</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshClip">
+   <property name="text">
+    <string>Clip</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSplit">
+   <property name="text">
+    <string>Split</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshSlice">
+   <property name="text">
+    <string>Slice</string>
    </property>
   </action>
  </widget>

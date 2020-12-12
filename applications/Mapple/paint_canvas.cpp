@@ -806,7 +806,7 @@ void PaintCanvas::addModel(Model *model) {
     model->set_renderer(renderer);
 
     models_.push_back(model);
-    model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+//    model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 }
 
 

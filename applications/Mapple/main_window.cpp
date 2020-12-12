@@ -41,8 +41,10 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -795,11 +797,17 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
-    connect(ui->actionRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupRepair()));
-    connect(ui->actionStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(polygonSoupStitch()));
+    connect(ui->actionSurfaceMeshRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshRepairPolygonSoup()));
+    connect(ui->actionSurfaceMeshStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchPolygonSoup()));
+
+    connect(ui->actionSurfaceMeshClip, SIGNAL(triggered()), this, SLOT(surfaceMeshClip()));
+    connect(ui->actionSurfaceMeshSplit, SIGNAL(triggered()), this, SLOT(surfaceMeshSplit()));
+    connect(ui->actionSurfaceMeshSlice, SIGNAL(triggered()), this, SLOT(surfaceMeshSlice()));
 
     connect(ui->actionStitchConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchConnectedComponents()));
     connect(ui->actionStitchBordersWithoutReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchBordersWithoutReorientation()));
+
+    connect(ui->actionOrientSurface, SIGNAL(triggered()), this, SLOT(surfaceMeshOrient()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
 
     connect(ui->actionDetectDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateFaces()));
@@ -921,7 +929,7 @@ void MainWindow::surfaceMeshTriangulation() {
 
 
 
-void MainWindow::polygonSoupRepair() {
+void MainWindow::surfaceMeshRepairPolygonSoup() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -960,7 +968,7 @@ void MainWindow::surfaceMeshStitchConnectedComponents() {
 
 
 // does the same as surfaceMeshStitchConnectedComponents(), but treats the mesh as a polygon soup
-void MainWindow::polygonSoupStitch() {
+void MainWindow::surfaceMeshStitchPolygonSoup() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -979,6 +987,138 @@ void MainWindow::polygonSoupStitch() {
 }
 
 
+void MainWindow::surfaceMeshClip() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    auto clipping_plane = easy3d::setting::clipping_plane;
+    if (!clipping_plane || !clipping_plane->is_enabled()) {
+        LOG(WARNING) << "clipping plane is not defined";
+        return;
+    }
+
+    Surfacer::clip(mesh, clipping_plane->plane0(), false);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
+void MainWindow::surfaceMeshSplit() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    auto clipping_plane = easy3d::setting::clipping_plane;
+    if (!clipping_plane || !clipping_plane->is_enabled()) {
+        LOG(WARNING) << "clipping plane is not defined";
+        return;
+    }
+
+    Surfacer::split(mesh, clipping_plane->plane0());
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
+void MainWindow::surfaceMeshSlice() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+
+#if 1 // slice by the visual clipping plane
+
+    auto clipping_plane = easy3d::setting::clipping_plane;
+    if (!clipping_plane || !clipping_plane->is_enabled()) {
+        LOG(WARNING) << "clipping plane is not defined";
+        return;
+    }
+
+    const std::vector<Surfacer::Polyline>& polylines = Surfacer::slice(mesh, clipping_plane->plane0());
+
+    Graph* graph = new Graph;
+    for (const auto& polyline : polylines) {
+        for (const auto &p : polyline)
+            graph->add_vertex(p);
+    }
+
+    unsigned int idx = 0;
+    for (const auto& polyline : polylines) {
+        for (unsigned int i=0; i<polyline.size() - 1; ++i) {
+            graph->add_edge(Graph::Vertex(idx), Graph::Vertex(idx + 1));
+            ++idx;
+        }
+        ++idx;
+    }
+
+    graph->set_name(file_system::base_name(mesh->name()) + "-slice");
+    viewer()->addModel(graph);
+    ui->treeWidgetModels->addModel(graph, false);
+
+#else   // slices using a set of horizontal planes
+
+    float minz = mesh->bounding_box().min().z;
+    float maxz = mesh->bounding_box().max().z;
+
+    int num = 10;
+    float step = (maxz - minz) / num;
+
+    std::vector<Plane3> planes(num);
+    for (int i=0; i<num; ++i)
+        planes[i] = Plane3(vec3(0, 0, minz + i * step), vec3(0, 0, 1));
+
+    const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
+
+    Graph* graph = new Graph;
+    for (const auto& polylines : all_polylines) {
+        for (const auto &polyline : polylines) {
+            for (const auto &p : polyline)
+                graph->add_vertex(p);
+        }
+    }
+
+    unsigned int idx = 0;
+    for (const auto& polylines : all_polylines) {
+        for (const auto &polyline : polylines) {
+            for (unsigned int i = 0; i < polyline.size() - 1; ++i) {
+                graph->add_edge(Graph::Vertex(idx), Graph::Vertex(idx + 1));
+                ++idx;
+            }
+            ++idx;
+        }
+    }
+
+    graph->set_name(file_system::base_name(mesh->name()) + "-slice");
+    viewer()->addModel(graph);
+    ui->treeWidgetModels->addModel(graph, false);
+#endif
+
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
 void MainWindow::surfaceMeshStitchBordersWithoutReorientation() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
@@ -986,6 +1126,25 @@ void MainWindow::surfaceMeshStitchBordersWithoutReorientation() {
 
 #if HAS_CGAL
     Surfacer::stitch_borders(mesh);
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
+#else
+    SurfaceMeshStitching stitch(mesh);
+    stitch.apply();
+    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+#endif
+}
+
+
+void MainWindow::surfaceMeshOrient() {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    if (!mesh)
+        return;
+
+#if HAS_CGAL
+    Surfacer::orient(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
