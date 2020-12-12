@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY_ALGO_duplicate_face_H
-#define EASY_ALGO_duplicate_face_H
+#ifndef EASY_ALGO_DUPLICATE_FACES_H
+#define EASY_ALGO_DUPLICATE_FACES_H
 
 
 #include <vector>
@@ -31,7 +31,7 @@
 // Use this instead to mute errors resulting from bad CGAL assertions
 //#define CGAL_KERNEL_NO_ASSERTIONS
 
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/intersections.h>	// Triangle triangle intersection
 #include <CGAL/box_intersection_d.h>
 
@@ -41,7 +41,7 @@
 namespace easy3d {
 
     /// \brief Detects/Removes duplicate faces for a surface mesh.
-    /// \class DuplicateFaces  easy3d/algo_ext/duplicate_face.h
+    /// \class DuplicateFaces  easy3d/algo_ext/duplicate_faces.h
     class DuplicateFaces
     {
     public:
@@ -61,7 +61,7 @@ namespace easy3d {
         unsigned int remove(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
 
     private:
-        typedef CGAL::Exact_predicates_exact_constructions_kernel	Kernel;
+        typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
 
         typedef CGAL::Point_3<Kernel>		Point_3;
         typedef CGAL::Triangle_3<Kernel>	Triangle_3;
@@ -91,4 +91,4 @@ namespace easy3d {
 
 }   // namespace easy3d
 
-#endif  // EASY_ALGO_duplicate_face_H
+#endif  // EASY_ALGO_DUPLICATE_FACES_H
