@@ -104,8 +104,13 @@ void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
         setting::clipping_plane = new ClippingPlane;
 
     setting::clipping_plane->set_enabled(b);
-    if (b)
-        setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+    if (b) {
+        static bool init_size = false;
+        if (!init_size) {
+            setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+            init_size = true;
+        }
+    }
     viewer_->update();
     disableUnavailableOptions();
 
