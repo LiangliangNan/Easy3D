@@ -24,6 +24,7 @@
 
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
 
 #include <queue>
@@ -65,7 +66,7 @@ namespace easy3d {
         // (triangle). Either
         //   - the vertex of A (B) opposite the shared edge of lies on B (A), or
         //   - an edge of A intersects and edge of B without sharing a vertex
-        //
+//
         // Determine if the vertex opposite edge (a0,a1) in triangle A lies in
         // (intersects) triangle B
         const auto &opposite_point_inside = [](const Triangle_3 &A, const int a0, const int a1,
@@ -224,9 +225,13 @@ namespace easy3d {
                 if (A.vertices[ea] == B.vertices[eb]) {
                     ++num_comb_shared_vertices;
                     shared.emplace_back(ea, eb);
-                } else if (A.triangle.vertex(ea) == B.triangle.vertex(eb)) {
-                    ++num_geom_shared_vertices;
-                    shared.emplace_back(ea, eb);
+                } else {
+                    auto sd = CGAL::squared_distance(A.triangle.vertex(ea), B.triangle.vertex(eb));
+                    double sqr_dist = CGAL::to_double(sd);
+                    if (sqr_dist < FLT_MIN) {
+                        ++num_geom_shared_vertices;
+                        shared.emplace_back(ea, eb);
+                    }
                 }
             }
         }
@@ -301,15 +306,12 @@ namespace easy3d {
                 result.emplace_back(std::make_pair(ta.face, tb.face));
         }
 
-        std::string msg("");
         if (total_comb_duplicate_face_ > 0)
-            msg += ("model has " + std::to_string(total_comb_duplicate_face_) +
-                    " combinatorially duplicate faces. ");
+            LOG(WARNING) << "model has " + std::to_string(total_comb_duplicate_face_) + " combinatorially duplicate faces.";
         if (total_geom_duplicate_face_ > 0)
-            msg += ("model has " + std::to_string(total_geom_duplicate_face_) + " geometrically duplicate faces. ");
+            LOG(WARNING) << "model has " + std::to_string(total_geom_duplicate_face_) + " geometrically duplicate faces.";
         if (total_comb_duplicate_face_ > 0 || total_geom_duplicate_face_ > 0) {
-            msg += "duplicate faces should be removed before resolving self intersections";
-            LOG(WARNING) << msg;
+            LOG(WARNING) << "duplicate faces should be removed before resolving self intersections";
         }
 
         return result;
@@ -750,23 +752,27 @@ namespace easy3d {
         // Output resolved mesh.
 
         SurfaceMesh input = *mesh;
+
         mesh->clear();
+        ManifoldBuilder builder(mesh);
+        builder.begin_surface();
 
         std::vector<SurfaceMesh::Vertex> vertices;
         auto points = input.get_vertex_property<vec3>("v:point");
         for (auto p : input.vertices()) {
-            SurfaceMesh::Vertex v = mesh->add_vertex(points[p]);
+            SurfaceMesh::Vertex v = builder.add_vertex(points[p]);
             vertices.push_back(v);
         }
         for (auto p : new_vertices) {
-            SurfaceMesh::Vertex v = mesh->add_vertex(
+            SurfaceMesh::Vertex v = builder.add_vertex(
                     vec3(CGAL::to_double(p[0]), CGAL::to_double(p[1]), CGAL::to_double(p[2])));
             vertices.push_back(v);
         }
 
         for (auto fvids : resolved_faces) {
-            mesh->add_triangle(vertices[fvids[0]], vertices[fvids[1]], vertices[fvids[2]]);
+            builder.add_triangle(vertices[fvids[0]], vertices[fvids[1]], vertices[fvids[2]]);
         }
+        builder.end_surface(false);
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << w.time_string();

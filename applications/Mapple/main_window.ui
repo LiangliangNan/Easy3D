@@ -121,10 +121,10 @@
       <string>Process surface mesh as a polygon soup</string>
      </property>
      <property name="title">
-      <string>Mesh processed as polygon soup</string>
+      <string>Polygon soup</string>
      </property>
      <addaction name="actionSurfaceMeshRepairPolygonSoup"/>
-     <addaction name="actionSurfaceMeshStitchPolygonSoup"/>
+     <addaction name="actionSurfaceMeshOrientAndStitchPolygonSoup"/>
     </widget>
     <widget class="QMenu" name="menuClippingPlane">
      <property name="title">
@@ -141,15 +141,15 @@
     <addaction name="separator"/>
     <addaction name="menuPolygonSoupProcessing"/>
     <addaction name="separator"/>
+    <addaction name="actionStitchWithReorientation"/>
+    <addaction name="actionStitchWithoutReorientation"/>
+    <addaction name="separator"/>
+    <addaction name="actionOrientClosedTriangleMesh"/>
+    <addaction name="actionReverseOrientation"/>
+    <addaction name="separator"/>
     <addaction name="actionSurfaceMeshRemoveIsolatedVertices"/>
     <addaction name="actionDetectDuplicateFaces"/>
     <addaction name="actionRemoveDuplicateFaces"/>
-    <addaction name="separator"/>
-    <addaction name="actionStitchConnectedComponents"/>
-    <addaction name="actionStitchBordersWithoutReorientation"/>
-    <addaction name="separator"/>
-    <addaction name="actionOrientSurface"/>
-    <addaction name="actionReverseOrientation"/>
     <addaction name="separator"/>
     <addaction name="actionDetectSelfIntersections"/>
     <addaction name="actionRemeshSelfIntersections"/>
@@ -912,9 +912,9 @@
     <string>Planar partition</string>
    </property>
   </action>
-  <action name="actionStitchConnectedComponents">
+  <action name="actionStitchWithReorientation">
    <property name="text">
-    <string>Stitch connected components</string>
+    <string>Stitch (reorient if needed)</string>
    </property>
   </action>
   <action name="actionReverseOrientation">
@@ -922,24 +922,24 @@
     <string>Reverse orientation</string>
    </property>
   </action>
-  <action name="actionStitchBordersWithoutReorientation">
+  <action name="actionStitchWithoutReorientation">
    <property name="text">
-    <string>Stitch borders (no reorientation)</string>
+    <string>Stitch (no reorientation)</string>
    </property>
   </action>
   <action name="actionSurfaceMeshRepairPolygonSoup">
    <property name="text">
-    <string>Repair polygon soup</string>
+    <string>Repair</string>
    </property>
   </action>
-  <action name="actionSurfaceMeshStitchPolygonSoup">
+  <action name="actionSurfaceMeshOrientAndStitchPolygonSoup">
    <property name="text">
-    <string>Stitch polygon soup</string>
+    <string>Orient and stitch</string>
    </property>
   </action>
-  <action name="actionOrientSurface">
+  <action name="actionOrientClosedTriangleMesh">
    <property name="text">
-    <string>Orient</string>
+    <string>Orient outward</string>
    </property>
   </action>
   <action name="actionSurfaceMeshClip">

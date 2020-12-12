@@ -22,15 +22,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <easy3d/algo_ext/surfacer.h>
-
 #include <easy3d/algo_ext/duplicate_faces.h>
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/util/logging.h>
-
+#include <easy3d/core/manifold_builder.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
 #include <CGAL/Surface_mesh.h>
+#include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
@@ -211,16 +211,53 @@ namespace easy3d {
                              const std::vector<Surfacer::Polygon> &polygons,
                              SurfaceMesh *mesh) {
             mesh->clear();
+
+            ManifoldBuilder builder(mesh);
+            builder.begin_surface();
+
             for (auto p : points)
-                mesh->add_vertex(p);
+                builder.add_vertex(p);
 
             for (const auto &plg : polygons) {
                 std::vector<SurfaceMesh::Vertex> vts;
                 for (auto v : plg)
                     vts.push_back(SurfaceMesh::Vertex(v));
-                mesh->add_face(vts);
+                builder.add_face(vts);
             }
+            builder.end_surface(false);
         }
+
+        void to_polygon_mesh(std::vector<K::Point_3> &points,
+                             std::vector<std::vector<std::size_t>> &polygons,
+                             CGALMesh& mesh) {
+            mesh.clear();
+            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
+        }
+    }
+
+
+
+    int Surfacer::stitch_borders(SurfaceMesh *input) {
+        CGALMesh mesh;
+        details::to_cgal(input, mesh);
+        int num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
+        details::to_easy3d(mesh, input);
+        return num;
+    }
+
+
+    bool Surfacer::orient_and_stitch_polygon_soup(SurfaceMesh *mesh) {
+        if (!mesh)
+            return false;
+
+        std::vector<vec3> points;
+        std::vector<Polygon> polygons;
+        details::to_polygon_soup(mesh, points, polygons);
+
+        bool status = orient_and_stitch_polygon_soup(points, polygons);
+        details::to_polygon_mesh(points, polygons, mesh);
+
+        return status;
     }
 
 
@@ -230,28 +267,21 @@ namespace easy3d {
 
         typedef boost::property_map<CGALMesh, CGAL::dynamic_face_property_t<std::size_t> >::type Fccmap;
         Fccmap fccmap = CGAL::get(CGAL::dynamic_face_property_t<std::size_t>(), mesh);
-        int count_oirg = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
-        if (count_oirg <= 1) {
-            LOG(INFO) << "model has only one connected components, so nothing to merge";
+        int count_prev = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
+        if (count_prev <= 1) {
             return; // nothing to be merged
         }
 
         // iteratively merge the connected components until the no more connected components can be merged
-        int count_prev = count_oirg;
-        int count_now = -1;
         do {
             CGAL::Polygon_mesh_processing::merge_reversible_connected_components(mesh);
-            count_now = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
-            if (count_now == count_prev)
+            int count_now = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
+            if (count_now == 1 || count_now == count_prev)
                 break;
             count_prev = count_now;
         } while (true);
 
         details::to_easy3d(mesh, input);
-        if (count_now != count_oirg)
-            LOG(INFO) << count_oirg << " connected components merged into " << count_now;
-        else
-            LOG(INFO) << "model has " << count_oirg << " connected components but nothing could be merged";
     }
 
 
@@ -277,7 +307,7 @@ namespace easy3d {
     }
 
 
-    void Surfacer::orient(SurfaceMesh* input_mesh) {
+    void Surfacer::orient_closed_triangle_mesh(SurfaceMesh* input_mesh) {
         if (!input_mesh->is_triangle_mesh() || !input_mesh->is_closed()) {
             LOG(WARNING) << "only closed triangle meshes can be oriented";
             return;
@@ -290,7 +320,11 @@ namespace easy3d {
     }
 
 
-    bool Surfacer::orient_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+    bool Surfacer::orient_and_stitch_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+        const int num_vertices = input_points.size();
+        const int num_faces = input_polygons.size();
+
+        // stitch
         details::remove_duplicate_vertices(input_points, input_polygons);
 
         std::vector<K::Point_3> points;
@@ -306,11 +340,28 @@ namespace easy3d {
         // convert to easy3d
         details::to_easy3d(points, polygons, input_points, input_polygons);
 
+        std::string msg;
+        int diff_vertices = num_vertices - input_points.size();
+        int diff_faces = num_faces - input_polygons.size();
+        if (diff_vertices != 0) {
+            msg += std::to_string(std::abs(diff_vertices)) + " vertices " +
+                   (diff_vertices >= 0 ? "removed" : "inserted");
+            if (diff_faces != 0)
+                msg += " and ";
+        }
+        if (diff_faces != 0)
+            msg += std::to_string(std::abs(diff_faces)) + " faces " + (diff_faces >= 0 ? "removed" : "inserted");
+        if (!msg.empty())
+            LOG(INFO) << msg;
+
         return status;
     }
 
 
     void Surfacer::repair_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
+        const int num_vertices = input_points.size();
+        const int num_faces = input_polygons.size();
+
         details::remove_duplicate_vertices(input_points, input_polygons);
 
         std::vector<K::Point_3> points;
@@ -327,53 +378,34 @@ namespace easy3d {
         }
 
         details::to_easy3d(points, polygons, input_points, input_polygons);
+
+        std::string msg;
+        int diff_vertices = num_vertices - input_points.size();
+        int diff_faces = num_faces - input_polygons.size();
+        if (diff_vertices != 0) {
+            msg += std::to_string(std::abs(diff_vertices)) + " vertices " +
+                   (diff_vertices >= 0 ? "removed" : "inserted");
+            if (diff_faces != 0)
+                msg += " and ";
+        }
+        if (diff_faces != 0)
+            msg += std::to_string(std::abs(diff_faces)) + " faces " + (diff_faces >= 0 ? "removed" : "inserted");
+        LOG(INFO) << msg;
     }
 
 
-    void Surfacer::repair_polygon_mesh(SurfaceMesh *mesh) {
+    void Surfacer::repair_polygon_soup(SurfaceMesh *mesh) {
         if (!mesh)
             return;
 
         std::vector<vec3> points;
         std::vector<Polygon> polygons;
         details::to_polygon_soup(mesh, points, polygons);
-        const int num_vertices = mesh->n_vertices();
-        const int num_faces = mesh->n_faces();
 
         repair_polygon_soup(points, polygons);
 
         // convert to easy3d
         details::to_polygon_mesh(points, polygons, mesh);
-
-        int diff_vertices = num_vertices - mesh->n_vertices();
-        int diff_faces = num_faces - mesh->n_faces();
-        LOG(INFO) << std::abs(diff_vertices) << " vertices " << (diff_vertices >= 0 ? "removed" : "inserted") << " and "
-                  << std::abs(diff_faces) << " faces " << (diff_faces >= 0 ? "removed" : "inserted");
-    }
-
-
-    int Surfacer::stitch_borders(SurfaceMesh *input) {
-        CGALMesh mesh;
-        details::to_cgal(input, mesh);
-        int num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
-        details::to_easy3d(mesh, input);
-        LOG(INFO) << num << " pairs of halfedges have been stitched";
-        return num;
-    }
-
-
-    bool Surfacer::merge_reversible_connected_components_2(SurfaceMesh *mesh) {
-        if (!mesh)
-            return false;
-
-        std::vector<vec3> points;
-        std::vector<Polygon> polygons;
-        details::to_polygon_soup(mesh, points, polygons);
-
-        bool status = orient_polygon_soup(points, polygons);
-        details::to_polygon_mesh(points, polygons, mesh);
-
-        return status;
     }
 
 
@@ -482,8 +514,43 @@ namespace easy3d {
 
     std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
     Surfacer::detect_self_intersections(SurfaceMesh *mesh) {
+#if 1
         SelfIntersection msi;
         return msi.detect(mesh, false);
+#else // this ca
+        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
+        if (!mesh->is_triangle_mesh()) {
+            LOG(WARNING) << "only triangle meshes can be checked";
+            return result;
+        }
+
+        CGALMesh cgal_mesh;
+        details::to_cgal(mesh, cgal_mesh);
+
+        std::vector<CGALMesh::Face_index> degenerate_faces;
+        CGAL::Polygon_mesh_processing::degenerate_faces(cgal_mesh, std::back_inserter(degenerate_faces));
+
+        std::cout << "faces: " << cgal_mesh.number_of_faces() << std::endl;
+        for (auto f : degenerate_faces)
+            cgal_mesh.remove_face(f);
+        cgal_mesh.collect_garbage();
+        std::cout << "faces: " << cgal_mesh.number_of_faces() << std::endl;
+        std::cout << degenerate_faces.size() << " degenerate_faces deleted" << std::endl;
+        details::to_easy3d(cgal_mesh, mesh);
+
+        std::vector<std::pair<CGALMesh::Face_index, CGALMesh::Face_index> > intersected_tris;
+        CGAL::Polygon_mesh_processing::self_intersections<CGAL::Parallel_if_available_tag>(CGAL::faces(cgal_mesh), cgal_mesh, std::back_inserter(intersected_tris));
+
+        result.resize(intersected_tris.size());
+        for (std::size_t i=0; i<intersected_tris.size(); ++i) {
+            const auto& face_pair = intersected_tris[i];
+            result[i] = std::make_pair(
+                    SurfaceMesh::Face(face_pair.first),
+                    SurfaceMesh::Face(face_pair.second)
+            );
+        }
+        return result;
+    #endif
     }
 
 

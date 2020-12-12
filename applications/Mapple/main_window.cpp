@@ -798,16 +798,16 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
     connect(ui->actionSurfaceMeshRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshRepairPolygonSoup()));
-    connect(ui->actionSurfaceMeshStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchPolygonSoup()));
+    connect(ui->actionSurfaceMeshOrientAndStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientAndStitchPolygonSoup()));
 
     connect(ui->actionSurfaceMeshClip, SIGNAL(triggered()), this, SLOT(surfaceMeshClip()));
     connect(ui->actionSurfaceMeshSplit, SIGNAL(triggered()), this, SLOT(surfaceMeshSplit()));
     connect(ui->actionSurfaceMeshSlice, SIGNAL(triggered()), this, SLOT(surfaceMeshSlice()));
 
-    connect(ui->actionStitchConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchConnectedComponents()));
-    connect(ui->actionStitchBordersWithoutReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchBordersWithoutReorientation()));
+    connect(ui->actionStitchWithReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchWithReorientation()));
+    connect(ui->actionStitchWithoutReorientation, SIGNAL(triggered()), this, SLOT(surfaceMeshStitchWithoutReorientation()));
 
-    connect(ui->actionOrientSurface, SIGNAL(triggered()), this, SLOT(surfaceMeshOrient()));
+    connect(ui->actionOrientClosedTriangleMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientClosedTriangleMesh()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
 
     connect(ui->actionDetectDuplicateFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateFaces()));
@@ -935,7 +935,7 @@ void MainWindow::surfaceMeshRepairPolygonSoup() {
         return;
 
 #if HAS_CGAL
-    Surfacer::repair_polygon_mesh(mesh);
+    Surfacer::repair_polygon_soup(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
@@ -948,12 +948,13 @@ void MainWindow::surfaceMeshRepairPolygonSoup() {
 }
 
 
-void MainWindow::surfaceMeshStitchConnectedComponents() {
+void MainWindow::surfaceMeshStitchWithReorientation() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
+    Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
 
     mesh->renderer()->update();
@@ -967,14 +968,13 @@ void MainWindow::surfaceMeshStitchConnectedComponents() {
 }
 
 
-// does the same as surfaceMeshStitchConnectedComponents(), but treats the mesh as a polygon soup
-void MainWindow::surfaceMeshStitchPolygonSoup() {
+void MainWindow::surfaceMeshOrientAndStitchPolygonSoup() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
-    Surfacer::merge_reversible_connected_components_2(mesh);
+    Surfacer::orient_and_stitch_polygon_soup(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
@@ -1119,7 +1119,7 @@ void MainWindow::surfaceMeshSlice() {
 }
 
 
-void MainWindow::surfaceMeshStitchBordersWithoutReorientation() {
+void MainWindow::surfaceMeshStitchWithoutReorientation() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
@@ -1138,13 +1138,13 @@ void MainWindow::surfaceMeshStitchBordersWithoutReorientation() {
 }
 
 
-void MainWindow::surfaceMeshOrient() {
+void MainWindow::surfaceMeshOrientClosedTriangleMesh() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
-    Surfacer::orient(mesh);
+    Surfacer::orient_closed_triangle_mesh(mesh);
 
     mesh->renderer()->update();
     viewer_->update();
