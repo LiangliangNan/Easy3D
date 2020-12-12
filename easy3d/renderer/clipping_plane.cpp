@@ -112,9 +112,17 @@ namespace easy3d {
         easy3d_debug_log_gl_error;
         program->set_uniform("crossSectionEnabled", cross_section_);
         easy3d_debug_log_gl_error;
+
+#if 0
         program->set_uniform("clippingPlane0", plane0());
-        easy3d_debug_log_gl_error;
         program->set_uniform("clippingPlane1", plane1());
+#else   // strange GLSL behavior (maybe a bug of my GPU driver)?
+        const vec3& n = normal();
+        const Plane3 plane_0(center(), -n);
+        program->set_uniform("clippingPlane0", plane_0);
+        const Plane3 plane_1(center() - cross_section_width_ * size_ * n, n);
+        program->set_uniform("clippingPlane1", plane_1);
+#endif
         easy3d_debug_log_gl_error;
     }
 
