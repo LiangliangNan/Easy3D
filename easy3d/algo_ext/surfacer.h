@@ -45,7 +45,7 @@ namespace easy3d {
      *          It allows (re)orientation, detecting and resolving topological issues (e.g., duplicate vertices/faces,
      *          self intersection), and clipping/splitting/slicing of a surface mesh.
      *
-     * \see DuplicateFaces and SelfIntersection.
+     * \see OverlappingFaces and SelfIntersection.
      */
     class Surfacer {
     public:
@@ -160,17 +160,37 @@ namespace easy3d {
         /// \name Duplicate faces
         //@{
 
-        /// \brief Detects duplicate faces.
-        /// @param exact True: do exact predict; otherwise use the distance threshold.
-        /// \return The set of duplicate faces, where the \c second of each entry contains the set of faces
-        /// duplicating the \c first.
-        static std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-        detect_duplicate_faces(SurfaceMesh *mesh, bool exact = false, double dist_threshold = 1e-6);
+        /**
+         * \brief Detects duplicate faces and folding faces.
+         * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
+         *      the same if their distance is smaller than the distance threshold.
+         * \param duplicate_faces Returns the duplicate face pairs found. For each entry,the \c second contains the set
+         *      of faces that duplicate the \c first.
+         * \param folding_faces Returns the folding face pairs found. For each entry, the \c second contains the set of
+         *      faces that share (i.e., have the same geometry) one edge with the \c first.
+         * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
+         * \pre mesh.is_triangle_mesh().
+         */
+        static void detect_overlapping_faces(
+                SurfaceMesh *mesh,
+                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &duplicate_faces,
+                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &folding_faces,
+                double dist_threshold = 1e-12
+        );
 
-        /// \brief Detects and removes duplicate faces.
-        /// @param exact \c true to do exact predict; otherwise use the distance threshold.
-        /// \return The number of faces that has been deleted.
-        static unsigned int remove_duplicate_faces(SurfaceMesh *mesh, bool exact = false, double dist_threshold = 1e-6);
+        /**
+         * \brief Removes duplicate faces and and folding faces.
+         * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
+         *      the same if their distance is smaller than the distance threshold.
+         * \param folding_faces \c true also to remove folding faces.
+         * \return The number of faces that have been deleted.
+         * \pre mesh.is_triangle_mesh().
+         */
+        static unsigned int remove_overlapping_faces(
+                SurfaceMesh *mesh,
+                bool folding_faces = false,
+                double dist_threshold = 1e-12
+        );
         //@}
 
 

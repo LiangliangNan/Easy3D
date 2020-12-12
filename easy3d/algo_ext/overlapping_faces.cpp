@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/algo_ext/duplicate_faces.h>
+#include <easy3d/algo_ext/overlapping_faces.h>
 
 #include <set>
 #include <unordered_map>
@@ -34,7 +34,7 @@
 namespace easy3d {
 
 
-    DuplicateFaces::Triangles DuplicateFaces::mesh_to_cgal_triangle_list(SurfaceMesh* mesh) {
+    OverlappingFaces::Triangles OverlappingFaces::mesh_to_cgal_triangle_list(SurfaceMesh* mesh) {
         auto prop = mesh->get_vertex_property<vec3>("v:point");
 
         Triangles triangles;
@@ -61,8 +61,7 @@ namespace easy3d {
     }
 
 
-    bool DuplicateFaces::do_duplicate(const Triangle &A, const Triangle &B, bool exact, double sqr_eps)
-    {
+    OverlappingFaces::OverlapType OverlappingFaces::do_overlap(const Triangle &A, const Triangle &B, double sqr_eps) {
         // Number of combinatorially shared vertices
         int num_comb_shared_vertices = 0;
 
@@ -70,52 +69,88 @@ namespace easy3d {
         int num_geom_shared_vertices = 0;
 
         // Keep track of shared vertex indices
-        std::vector< std::pair<SurfaceMesh::Vertex, SurfaceMesh::Vertex> > shared;
+        std::vector< std::pair<unsigned short, unsigned short> > shared;
+
         for (unsigned short ea = 0; ea < 3; ++ea) {
             for (unsigned short eb = 0; eb < 3; ++eb) {
                 if (A.vertices[ea] == B.vertices[eb]) {
                     ++num_comb_shared_vertices;
                     shared.emplace_back(ea, eb);
                 }
-                else if (exact) {
-                    if (A.triangle.vertex(ea) == B.triangle.vertex(eb)) {
-                        ++num_geom_shared_vertices;
-                        shared.emplace_back(ea, eb);
-                    }
-                }
-                else {  // use distance threshold
-                    if (CGAL::squared_distance(A.triangle.vertex(ea), B.triangle.vertex(eb)) < sqr_eps) {
-                        ++num_geom_shared_vertices;
-                        shared.emplace_back(ea, eb);
-                    }
+                else if (CGAL::squared_distance(A.triangle.vertex(ea), B.triangle.vertex(eb)) < sqr_eps) {
+                    ++num_geom_shared_vertices;
+                    shared.emplace_back(ea, eb);
                 }
             }
         }
         const int total_shared_vertices = num_comb_shared_vertices + num_geom_shared_vertices;
         if (num_comb_shared_vertices == 3) {
             assert(shared.size() == 3);		// Combinatorially duplicate faces
-            return true;
+            return OT_SAME;
         }
         if (total_shared_vertices == 3) {
             assert(shared.size() == 3);		// Geometrically duplicate faces.
-            return true;
+            return OT_SAME;
         }
 
-        return false;
+#if 1   // Liangliang: let's handle coplanar and partial overlap
+        if (total_shared_vertices == 2) {
+            //
+            //  2  o    o 3
+            //     |\  /|
+            //     | \/ |
+            //     | /\ |
+            //     |/  \|
+            //  0  o----o 1
+            //
+            auto normalize = [](Vector_3& n) -> void { n /= std::sqrt(n.squared_length()); };
+            auto na = A.triangle.supporting_plane().orthogonal_vector();
+            auto nb = B.triangle.supporting_plane().orthogonal_vector();
+            normalize(na);
+            normalize(nb);
+            auto error = std::abs(std::abs(na * nb) - 1.0);
+            if (error < 1e-12) {    // considered coplanar
+                const auto plane = A.triangle.supporting_plane();
+
+                unsigned short A_v0 = shared[0].first;
+                auto v0 = plane.to_2d(A.triangle.vertex(A_v0));
+                unsigned short A_v1 = shared[1].first;
+                auto v1 = plane.to_2d(A.triangle.vertex(A_v1));
+
+                // the index of the detached vertex in A (6 = 0 + 1 + 2)
+                unsigned short A_v2 = 3 - shared[0].first - shared[1].first;
+                auto v2 = plane.to_2d(A.triangle.vertex(A_v2));
+                // the index of the detached vertex in B
+                unsigned short B_v3 = 3 - shared[0].second - shared[1].second;
+                auto v3 = plane.to_2d(B.triangle.vertex(B_v3));
+
+                // v2 and v3 on the same side of line v0-v1: the two triangles partially overlap
+                if (CGAL::orientation(v0, v1, v2) == CGAL::orientation(v0, v1, v3)) {
+                    return OT_FOLDING;
+                }
+            }
+        }
+#endif
+        return OT_NONE;
     }
 
 
-    std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-    DuplicateFaces::detect(SurfaceMesh* mesh, bool exact, double dist_threshold)
+    void OverlappingFaces::detect(
+            SurfaceMesh *mesh,
+            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &duplicate_faces,
+            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &folding_faces,
+            double dist_threshold)
     {
-        std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > result;
         if (!mesh)
-            return result;
+            return;
 
         if (!mesh->is_triangle_mesh()) {
             mesh->triangulate();
             LOG(WARNING) << "input mesh triangulated to perform duplication detection";
         }
+
+        duplicate_faces.clear();
+        folding_faces.clear();
 
         triangle_faces_ = mesh_to_cgal_triangle_list(mesh);
 
@@ -131,35 +166,53 @@ namespace easy3d {
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
-        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> duplicate_face;
+        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> tmp_duplicate_faces;
+        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> tmp_folding_faces;
+
         double sqr_eps = dist_threshold * dist_threshold;
         for (const auto& b : intersecting_boxes) {
             const Triangle& ta = *b.first;
             const Triangle& tb = *b.second;
-            if (do_duplicate(ta, tb, exact, sqr_eps)) {
-                duplicate_face[ta.face].insert(tb.face);
-                duplicate_face[tb.face].insert(ta.face);
+
+            auto type = do_overlap(ta, tb, sqr_eps);
+            if (type == OT_SAME) {
+                tmp_duplicate_faces[ta.face].insert(tb.face);
+                tmp_duplicate_faces[tb.face].insert(ta.face);
+            }
+            else if (type == OT_FOLDING) {
+                tmp_folding_faces[ta.face].insert(tb.face);
+                tmp_folding_faces[tb.face].insert(ta.face);
             }
         }
 
         // collect the result in the requested format
-        result.resize(duplicate_face.size());
+        duplicate_faces.resize(tmp_duplicate_faces.size());
         std::size_t idx = 0;
-        for (const auto& elem : duplicate_face) {
-            result[idx].first = elem.first;
+        for (const auto& elem : tmp_duplicate_faces) {
+            duplicate_faces[idx].first = elem.first;
             const auto& faces = elem.second;
-            result[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
+            duplicate_faces[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
             ++idx;
         }
 
-        return result;
+        folding_faces.resize(tmp_folding_faces.size());
+        idx = 0;
+        for (const auto& elem : tmp_folding_faces) {
+            folding_faces[idx].first = elem.first;
+            const auto& faces = elem.second;
+            folding_faces[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
+            ++idx;
+        }
     }
 
 
-    unsigned int DuplicateFaces::remove(SurfaceMesh* mesh, bool exact, double dist_threshold)
+    unsigned int OverlappingFaces::remove(SurfaceMesh *mesh, bool delete_folding_faces, double dist_threshold)
     {
-        const auto& duplicate_face = detect(mesh, exact, dist_threshold);
-        if (duplicate_face.empty())
+        std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> duplicate_faces;
+        std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> folding_faces;
+        detect(mesh, duplicate_faces, folding_faces, dist_threshold);
+
+        if (duplicate_faces.empty() && folding_faces.empty())
             return 0;
 
         unsigned int prev_num_faces = mesh->n_faces();
@@ -168,7 +221,19 @@ namespace easy3d {
         auto deleted = mesh->face_property<bool>("f:deleted", false);
 
         // for each duplication set, keep one face and and delete all its duplications
-        for (const auto& entry : duplicate_face) {
+        for (const auto& entry : duplicate_faces) {
+            SurfaceMesh::Face face = entry.first;
+            if (deleted[face]) // this duplication set has been processed
+                continue;
+            // delete the duplicated ones
+            for (auto f : entry.second) {
+                if (f != face)
+                    mesh->delete_face(f);
+                else
+                    LOG(ERROR) << "a face was marked duplicated with it self";
+            }
+        }
+        for (const auto& entry : folding_faces) {
             SurfaceMesh::Face face = entry.first;
             if (deleted[face]) // this duplication set has been processed
                 continue;
@@ -185,6 +250,5 @@ namespace easy3d {
 
         return prev_num_faces - mesh->n_faces();
     }
-
 
 }

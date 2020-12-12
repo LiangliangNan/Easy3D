@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <easy3d/algo_ext/surfacer.h>
-#include <easy3d/algo_ext/duplicate_faces.h>
+#include <easy3d/algo_ext/overlapping_faces.h>
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/core/manifold_builder.h>
@@ -499,16 +499,20 @@ namespace easy3d {
     }
 
 
-    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-    Surfacer::detect_duplicate_faces(SurfaceMesh *mesh, bool exact, double dist_threshold) {
-        easy3d::DuplicateFaces rdf;
-        return rdf.detect(mesh, exact, dist_threshold);
+    void Surfacer::detect_overlapping_faces(
+            SurfaceMesh *mesh,
+            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &duplicate_faces,
+            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &folding_faces,
+            double dist_threshold)
+    {
+        easy3d::OverlappingFaces rdf;
+        return rdf.detect(mesh, duplicate_faces, folding_faces, dist_threshold);
     }
 
 
-    unsigned int Surfacer::remove_duplicate_faces(SurfaceMesh *mesh, bool exact, double dist_threshold) {
-        DuplicateFaces rdf;
-        return rdf.remove(mesh, exact, dist_threshold);
+    unsigned int Surfacer::remove_overlapping_faces(SurfaceMesh *mesh, bool folding_faces, double dist_threshold) {
+        OverlappingFaces rdf;
+        return rdf.remove(mesh, folding_faces, dist_threshold);
     }
 
 

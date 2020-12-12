@@ -5,13 +5,13 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        duplicate_faces.h
+        overlapping_faces.h
         surfacer.h
         self_intersection.h
         )
 
 set(${PROJECT_NAME}_SOURCES
-        duplicate_faces.cpp
+        overlapping_faces.cpp
         surfacer.cpp
         self_intersection.cpp
         )

@@ -62,9 +62,8 @@ namespace easy3d {
 
     class SelfIntersection {
     public:
-        SelfIntersection() : construct_intersection_(false) {}
-
-        ~SelfIntersection() {}
+        SelfIntersection();
+        ~SelfIntersection();
 
         /**
          * \brief Detect intersecting face pairs.
@@ -127,11 +126,11 @@ namespace easy3d {
 
     private:
 
-        Triangles mesh_to_cgal_triangle_list(SurfaceMesh *mesh) const;
+        void mesh_to_cgal_triangle_list(SurfaceMesh *mesh);
 
         // remove degenerate faces by collapsing tiny length edges.
         // returns the number of faces removed
-        int remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold = 1e-5) const;
+        int remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold = 1e-6) const;
 
         // test if two triangles intersect
         bool do_intersect(const Triangle &A, const Triangle &B);
@@ -217,9 +216,14 @@ namespace easy3d {
         );
 
     private:
+        SurfaceMesh* mesh_;
+
         bool construct_intersection_;
 
         Triangles triangle_faces_;
+
+        // index in 'triangle_faces_' (degenerate faces removed) -> original face
+        std::unordered_map<int, SurfaceMesh::Face> original_face;
 
         // list of faces with intersections mapping to the order in
         // which they were first found

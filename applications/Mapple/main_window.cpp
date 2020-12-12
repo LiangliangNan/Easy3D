@@ -1201,10 +1201,13 @@ void MainWindow::surfaceMeshDetectDuplicateFaces() {
 #if HAS_CGAL
     StopWatch w;
     w.start();
-    LOG(INFO) << "detecting duplicate faces...";
+    LOG(INFO) << "detecting overlapping faces...";
 
-    const auto& faces = Surfacer::detect_duplicate_faces(mesh, true);
-    LOG(INFO) << "done. " << faces.size() << " faces deleted. " << w.time_string();
+    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > duplicate_faces;
+    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > folding_faces;
+    Surfacer::detect_overlapping_faces(mesh, duplicate_faces, folding_faces);
+    LOG(INFO) << "done. " << duplicate_faces.size() << " pairs of duplicate faces, " << folding_faces.size()
+              << " pairs of folding faces. " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
@@ -1219,9 +1222,9 @@ void MainWindow::surfaceMeshRemoveDuplicateFaces() {
 #if HAS_CGAL
     StopWatch w;
     w.start();
-	LOG(INFO) << "removing duplicate faces...";
+	LOG(INFO) << "removing overlapping faces...";
 
-    unsigned int num = Surfacer::remove_duplicate_faces(mesh, true);
+    unsigned int num = Surfacer::remove_overlapping_faces(mesh, true);
     if (num > 0) {
         mesh->renderer()->update();
         viewer_->update();

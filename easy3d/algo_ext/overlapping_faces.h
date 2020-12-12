@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY_ALGO_DUPLICATE_FACES_H
-#define EASY_ALGO_DUPLICATE_FACES_H
+#ifndef EASY_ALGO_OVERLAPPING_FACES_H
+#define EASY_ALGO_OVERLAPPING_FACES_H
 
 
 #include <vector>
@@ -40,30 +40,51 @@
 
 namespace easy3d {
 
-    /// \brief Detects/Removes duplicate faces for a surface mesh.
-    /// \class DuplicateFaces  easy3d/algo_ext/duplicate_faces.h
-    class DuplicateFaces
+    /// \brief Detects/Removes duplicate and folding faces for a triangle mesh.
+    /// \class OverlappingFaces  easy3d/algo_ext/overlapping_faces.h
+    class OverlappingFaces
     {
     public:
-        DuplicateFaces() {}
-        ~DuplicateFaces() {}
+        OverlappingFaces() {}
+        ~OverlappingFaces() {}
 
-        /// \brief Detects duplicate faces.
-        /// @param exact True: do exact predict; otherwise use the distance threshold.
-        /// \return The set of duplicate faces, where the \c second of each entry contains the set of faces
-        /// duplicating the \c first.
-        std::vector< std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > >
-        detect(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
+        /**
+          * \brief Detects duplicate faces and folding faces.
+          * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
+          *      the same if their distance is smaller than the distance threshold.
+          * \param duplicate_faces Returns the duplicate face pairs found. For each entry,the \c second contains the set
+          *      of faces that duplicate the \c first.
+          * \param folding_faces Returns the folding face pairs found. For each entry, the \c second contains the set of
+          *      faces that share (i.e., have the same geometry) one edge with the \c first.
+          * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
+          * \pre mesh.is_triangle_mesh().
+          */
+        void detect(
+                SurfaceMesh *mesh,
+                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &duplicate_faces,
+                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &folding_faces,
+                double dist_threshold = 1e-12
+        );
 
-        /// \brief Detects and removes duplicate faces.
-        /// @param exact \c true to do exact predict; otherwise use the distance threshold.
-        /// \return The number of faces that has been deleted.
-        unsigned int remove(SurfaceMesh* mesh, bool exact = false, double dist_threshold = 1e-6);
+        /**
+         * \brief Removes duplicate faces and and folding faces.
+         * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
+         *      the same if their distance is smaller than the distance threshold.
+         * \param folding_faces \c true also to remove folding faces.
+         * \return The number of faces that have been deleted.
+         * \pre mesh.is_triangle_mesh().
+         */
+        unsigned int remove(
+                SurfaceMesh *mesh,
+                bool folding_faces = false,
+                double dist_threshold = 1e-12
+        );
 
     private:
         typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
 
         typedef CGAL::Point_3<Kernel>		Point_3;
+        typedef CGAL::Vector_3<Kernel>		Vector_3;
         typedef CGAL::Triangle_3<Kernel>	Triangle_3;
 
     private:
@@ -84,11 +105,12 @@ namespace easy3d {
         Triangles mesh_to_cgal_triangle_list(SurfaceMesh* esh);
 
         // test if two triangles duplicate
-        bool do_duplicate(const Triangle& A, const Triangle& B, bool exact, double sqr_eps);
+        enum OverlapType {OT_NONE, OT_SAME, OT_FOLDING};
+        OverlapType do_overlap(const Triangle& A, const Triangle& B, double sqr_eps);
 
         Triangles triangle_faces_;
     };
 
 }   // namespace easy3d
 
-#endif  // EASY_ALGO_DUPLICATE_FACES_H
+#endif  // EASY_ALGO_OVERLAPPING_FACES_H

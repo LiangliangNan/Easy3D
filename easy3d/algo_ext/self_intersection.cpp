@@ -40,6 +40,70 @@
 namespace easy3d {
 
 
+    SelfIntersection::SelfIntersection()
+            : construct_intersection_(false), mesh_(nullptr) {}
+
+
+    SelfIntersection::~SelfIntersection() {
+        if (mesh_)
+            delete mesh_;
+    }
+
+
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
+    SelfIntersection::detect(SurfaceMesh *input_mesh, bool construct) {
+        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
+        if (!input_mesh)
+            return result;
+
+        if (!input_mesh->is_triangle_mesh()) {
+            LOG(WARNING) << "input mesh is not a triangulated";
+            return result;
+        }
+
+        construct_intersection_ = construct;
+        offending_.clear();
+        total_comb_duplicate_face_ = 0;
+        total_geom_duplicate_face_ = 0;
+
+        mesh_to_cgal_triangle_list(input_mesh);
+
+        // bounding boxes of the triangles
+        std::vector<Box> boxes;
+        for (TrianglesIterator it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
+            if (!it->triangle.is_degenerate())
+                boxes.push_back(Box(it->triangle.bbox(), it));
+        }
+        std::vector<std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
+        auto cb = [&intersecting_boxes](const Box &a, const Box &b) {
+            intersecting_boxes.push_back({a.handle(), b.handle()});
+        };
+        CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
+
+        for (const auto &b : intersecting_boxes) {
+            const Triangle &ta = *b.first;
+            const Triangle &tb = *b.second;
+            if (do_intersect(ta, tb)) {
+                auto fa = original_face[ta.index];
+                auto fb = original_face[tb.index];
+                result.emplace_back(std::make_pair(fa, fb));
+            }
+        }
+
+        if (total_comb_duplicate_face_ > 0)
+            LOG(WARNING)
+                    << "model has " + std::to_string(total_comb_duplicate_face_) + " combinatorially duplicate faces.";
+        if (total_geom_duplicate_face_ > 0)
+            LOG(WARNING)
+                    << "model has " + std::to_string(total_geom_duplicate_face_) + " geometrically duplicate faces.";
+        if (total_comb_duplicate_face_ > 0 || total_geom_duplicate_face_ > 0) {
+            LOG(WARNING) << "duplicate faces should be removed before resolving self intersections";
+        }
+
+        return result;
+    }
+
+
     void SelfIntersection::mark_offensive(int f) {
         if (offending_.count(f) == 0) {
             // first time marking, initialize with new id and empty list
@@ -57,16 +121,15 @@ namespace easy3d {
             const Triangle &B,
             const std::vector<std::pair<int, int> > &shared) {
         // must be co-planar
-        if (
-                A.triangle.supporting_plane() != B.triangle.supporting_plane() &&
-                A.triangle.supporting_plane() != B.triangle.supporting_plane().opposite()) {
+        if (A.triangle.supporting_plane() != B.triangle.supporting_plane() &&
+            A.triangle.supporting_plane() != B.triangle.supporting_plane().opposite()) {
             return false;
         }
         // Since A and B are non-degenerate the intersection must be a polygon
         // (triangle). Either
         //   - the vertex of A (B) opposite the shared edge of lies on B (A), or
         //   - an edge of A intersects and edge of B without sharing a vertex
-//
+        //
         // Determine if the vertex opposite edge (a0,a1) in triangle A lies in
         // (intersects) triangle B
         const auto &opposite_point_inside = [](const Triangle_3 &A, const int a0, const int a1,
@@ -93,11 +156,10 @@ namespace easy3d {
             return ret;
         };
 
-        if (
-                !opposite_point_inside(A.triangle, shared[0].first, shared[1].first, B.triangle) &&
-                !opposite_point_inside(B.triangle, shared[0].second, shared[1].second, A.triangle) &&
-                !opposite_edges_intersect(A.triangle, shared[0].first, B.triangle, shared[1].second) &&
-                !opposite_edges_intersect(A.triangle, shared[1].first, B.triangle, shared[0].second)) {
+        if (!opposite_point_inside(A.triangle, shared[0].first, shared[1].first, B.triangle) &&
+            !opposite_point_inside(B.triangle, shared[0].second, shared[1].second, A.triangle) &&
+            !opposite_edges_intersect(A.triangle, shared[0].first, B.triangle, shared[1].second) &&
+            !opposite_edges_intersect(A.triangle, shared[1].first, B.triangle, shared[0].second)) {
             return false;
         }
 
@@ -250,7 +312,7 @@ namespace easy3d {
         }
         if (total_shared_vertices == 2) {
             assert(shared.size() == 2);
-            // TODO: What about coplanar?
+            // TODO: What about coplanar? (I assume no such fold faces)
             //
             // o    o
             // |\  /|
@@ -268,64 +330,26 @@ namespace easy3d {
     }
 
 
-    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
-    SelfIntersection::detect(SurfaceMesh *mesh, bool construct) {
-        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
-        if (!mesh)
-            return result;
+    void SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *input_mesh) {
+        if (mesh_)
+            delete mesh_;
+        mesh_ = new SurfaceMesh(*input_mesh);
 
-        if (!mesh->is_triangle_mesh()) {
-            LOG(WARNING) << "input mesh is not a triangulated";
-            return result;
-        }
+        triangle_faces_.clear();
+        original_face.clear();
 
-        construct_intersection_ = construct;
-        offending_.clear();
-        total_comb_duplicate_face_ = 0;
-        total_geom_duplicate_face_ = 0;
+        // degenerate faces will be removed. This remembers the original face
+        auto to_input_face = mesh_->add_face_property<SurfaceMesh::Face>("f:original_face");
+        for (auto f : mesh_->faces())
+            to_input_face[f] = f;
 
-        remove_degenerate_faces(mesh);
-        triangle_faces_ = mesh_to_cgal_triangle_list(mesh);
+        remove_degenerate_faces(mesh_);
 
-        // bounding boxes of the triangles
-        std::vector<Box> boxes;
-        for (TrianglesIterator it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
-            if (!it->triangle.is_degenerate())
-                boxes.push_back(Box(it->triangle.bbox(), it));
-        }
-        std::vector<std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
-        auto cb = [&intersecting_boxes](const Box &a, const Box &b) {
-            intersecting_boxes.push_back({a.handle(), b.handle()});
-        };
-        CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
-
-        for (const auto &b : intersecting_boxes) {
-            const Triangle &ta = *b.first;
-            const Triangle &tb = *b.second;
-            if (do_intersect(ta, tb))
-                result.emplace_back(std::make_pair(ta.face, tb.face));
-        }
-
-        if (total_comb_duplicate_face_ > 0)
-            LOG(WARNING) << "model has " + std::to_string(total_comb_duplicate_face_) + " combinatorially duplicate faces.";
-        if (total_geom_duplicate_face_ > 0)
-            LOG(WARNING) << "model has " + std::to_string(total_geom_duplicate_face_) + " geometrically duplicate faces.";
-        if (total_comb_duplicate_face_ > 0 || total_geom_duplicate_face_ > 0) {
-            LOG(WARNING) << "duplicate faces should be removed before resolving self intersections";
-        }
-
-        return result;
-    }
-
-
-    SelfIntersection::Triangles SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *mesh) const {
-        auto prop = mesh->get_vertex_property<vec3>("v:point");
-
-        Triangles triangles;
-        for (auto f : mesh->faces()) {
+        auto prop = mesh_->get_vertex_property<vec3>("v:point");
+        for (auto f : mesh_->faces()) {
             std::vector<Point_3> points;
             std::vector<SurfaceMesh::Vertex> vertices;
-            for (auto v : mesh->vertices(f)) {
+            for (auto v : mesh_->vertices(f)) {
                 const vec3 &p = prop[v];
                 points.push_back(Point_3(p.x, p.y, p.z));
                 vertices.push_back(v);
@@ -333,15 +357,14 @@ namespace easy3d {
 
             if (points.size() == 3) {
                 Triangle t(points[0], points[1], points[2], f);
+                original_face[triangle_faces_.size()] = to_input_face[f];
                 t.index = f.idx();
                 t.vertices = vertices;
-                triangles.push_back(t);
+                triangle_faces_.push_back(t);
             } else {
                 LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
-                return triangles;
             }
         }
-        return triangles;
     }
 
 
@@ -356,11 +379,32 @@ namespace easy3d {
             }
         }
 
+        auto prop = mesh_->get_vertex_property<vec3>("v:point");
+        std::vector<SurfaceMesh::Face> to_delete;
+        for (auto f : mesh_->faces()) {
+            std::vector<Point_3> points;
+            for (auto v : mesh_->vertices(f)) {
+                const vec3 &p = prop[v];
+                points.push_back(Point_3(p.x, p.y, p.z));
+            }
+
+            if (points.size() == 3) {
+                const Triangle t(points[0], points[1], points[2], f);
+                if (t.triangle.is_degenerate())
+                    to_delete.push_back(f);
+            } else {
+                LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
+            }
+        }
+
+        for (auto f : to_delete)
+            mesh_->delete_face(f);
+
         mesh->collect_garbage();
 
         int diff = num - mesh->n_faces();
         if (diff > 0)
-            LOG(WARNING) << diff << " degenerate faces detected and removed" << std::endl;
+            LOG(WARNING) << diff << " degenerate faces detected" << std::endl;
 
         return diff;
     }
@@ -405,33 +449,31 @@ namespace easy3d {
         // Read off vertices of the cdt, remembering index
         std::map<typename CDT_plus_2::Vertex_handle, int> v2i;
         int count = 0;
-        for (
-                auto itr = cdt.finite_vertices_begin();
-                itr != cdt.finite_vertices_end();
-                itr++) {
+        for (auto itr = cdt.finite_vertices_begin();
+             itr != cdt.finite_vertices_end();
+             itr++) {
             vertices.push_back(P.to_3d(itr->point()));
             v2i[itr] = count;
             count++;
         }
         // Read off faces and store index triples
-        for (
-                auto itr = cdt.finite_faces_begin();
-                itr != cdt.finite_faces_end();
-                itr++) {
+        for (auto itr = cdt.finite_faces_begin();
+             itr != cdt.finite_faces_end();
+             itr++) {
             faces.push_back(
                     {v2i[itr->vertex(0)], v2i[itr->vertex(1)], v2i[itr->vertex(2)]});
         }
     }
 
 
-    bool SelfIntersection::remesh(SurfaceMesh *mesh, bool stitch) {
+    bool SelfIntersection::remesh(SurfaceMesh *input_mesh, bool stitch) {
 #ifdef REMESH_INTERSECTIONS_TIMING
         StopWatch w;
         w.start();
         LOG(INFO) << "detecting intersections... ";
 #endif
 
-        const auto &intersecting_faces = detect(mesh, true);
+        const auto &intersecting_faces = detect(input_mesh, true);
 
 #ifdef REMESH_INTERSECTIONS_TIMING
         LOG(INFO) << "done. " << intersecting_faces.size()
@@ -452,8 +494,8 @@ namespace easy3d {
         };
         typedef std::unordered_map<Edge, std::vector<int>, EdgeHash> EdgeMap;
 
-        const std::size_t num_faces = mesh->n_faces();
-        const std::size_t num_base_vertices = mesh->n_vertices();
+        const std::size_t num_faces = mesh_->n_faces();
+        const std::size_t num_base_vertices = mesh_->n_vertices();
         assert(num_faces == triangle_faces_.size());
 
         std::vector<bool> is_offending(num_faces, false);
@@ -656,12 +698,12 @@ namespace easy3d {
         };
 
         // Process un-touched faces.
-        for (auto f : mesh->faces()) {
+        for (auto f : mesh_->faces()) {
             const int fid = f.idx();
             if (!is_offending[fid] && !triangle_faces_[fid].triangle.is_degenerate()) {
                 SurfaceMesh::Face f = triangle_faces_[fid].face;
                 std::vector<int> ids;
-                for (auto v : mesh->vertices(f))
+                for (auto v : mesh_->vertices(f))
                     ids.push_back(v.idx());
                 resolved_faces.push_back(ids);
                 source_faces.push_back(fid);
@@ -751,15 +793,13 @@ namespace easy3d {
 
         // Output resolved mesh.
 
-        SurfaceMesh input = *mesh;
-
-        mesh->clear();
-        ManifoldBuilder builder(mesh);
+        input_mesh->clear();
+        ManifoldBuilder builder(input_mesh);
         builder.begin_surface();
 
         std::vector<SurfaceMesh::Vertex> vertices;
-        auto points = input.get_vertex_property<vec3>("v:point");
-        for (auto p : input.vertices()) {
+        auto points = mesh_->get_vertex_property<vec3>("v:point");
+        for (auto p : mesh_->vertices()) {
             SurfaceMesh::Vertex v = builder.add_vertex(points[p]);
             vertices.push_back(v);
         }
