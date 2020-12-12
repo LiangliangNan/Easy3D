@@ -1624,6 +1624,9 @@ namespace easy3d {
         /// \name Higher-level Topological Operations
         //@{
 
+        /// returns whether the mesh closed (i.e., no boundary edges)
+        bool is_closed() const;
+
         /// returns whether the mesh a triangle mesh. this function simply tests
         /// each face, and therefore is not very efficient.
         /// \sa trianglate(), triangulate(Face)
