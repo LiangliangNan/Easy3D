@@ -1203,8 +1203,8 @@ void MainWindow::surfaceMeshDetectDuplicateAndFoldingFaces() {
     w.start();
     LOG(INFO) << "detecting overlapping faces...";
 
-    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > duplicate_faces;
-    std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > folding_faces;
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > duplicate_faces;
+    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > folding_faces;
     Surfacer::detect_overlapping_faces(mesh, duplicate_faces, folding_faces);
     LOG(INFO) << "done. " << duplicate_faces.size() << " pairs of duplicate faces, " << folding_faces.size()
               << " pairs of folding faces. " << w.time_string();

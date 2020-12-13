@@ -501,8 +501,8 @@ namespace easy3d {
 
     void Surfacer::detect_overlapping_faces(
             SurfaceMesh *mesh,
-            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &duplicate_faces,
-            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &folding_faces,
+            std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &duplicate_faces,
+            std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &folding_faces,
             double dist_threshold)
     {
         easy3d::OverlappingFaces rdf;

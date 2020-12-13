@@ -50,26 +50,26 @@ namespace easy3d {
 
         /**
           * \brief Detects duplicate faces and folding faces.
-          * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
-          *      the same if their distance is smaller than the distance threshold.
-          * \param duplicate_faces Returns the duplicate face pairs found. For each entry,the \c second contains the set
-          *      of faces that duplicate the \c first.
-          * \param folding_faces Returns the folding face pairs found. For each entry, the \c second contains the set of
-          *      faces that share (i.e., have the same geometry) one edge with the \c first.
+          * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
+          *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
+          *         the same edge geometry), and partially overlap.
+          * \param duplicate_faces Returns the duplicate face pairs found.
+          * \param folding_faces Returns the folding face pairs found.
           * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
           * \pre mesh.is_triangle_mesh().
           */
         void detect(
                 SurfaceMesh *mesh,
-                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &duplicate_faces,
-                std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face> > > &folding_faces,
+                std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face > > &duplicate_faces,
+                std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face > > &folding_faces,
                 double dist_threshold = 1e-12
         );
 
         /**
          * \brief Removes duplicate faces and and folding faces.
-         * \details Two triangle faces are said duplicate if they have the same geometry. Two vertices are considered
-         *      the same if their distance is smaller than the distance threshold.
+          * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
+          *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
+          *         the same edge geometry), and partially overlap.
          * \param folding_faces \c true also to remove folding faces.
          * \return The number of faces that have been deleted.
          * \pre mesh.is_triangle_mesh().

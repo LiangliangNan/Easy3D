@@ -137,8 +137,8 @@ namespace easy3d {
 
     void OverlappingFaces::detect(
             SurfaceMesh *mesh,
-            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &duplicate_faces,
-            std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> &folding_faces,
+            std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &duplicate_faces,
+            std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &folding_faces,
             double dist_threshold)
     {
         if (!mesh)
@@ -166,50 +166,24 @@ namespace easy3d {
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
-        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> tmp_duplicate_faces;
-        std::unordered_map< SurfaceMesh::Face, std::set<SurfaceMesh::Face>, SurfaceMesh::Face::Hash> tmp_folding_faces;
-
         double sqr_eps = dist_threshold * dist_threshold;
         for (const auto& b : intersecting_boxes) {
             const Triangle& ta = *b.first;
             const Triangle& tb = *b.second;
 
             auto type = do_overlap(ta, tb, sqr_eps);
-            if (type == OT_SAME) {
-                tmp_duplicate_faces[ta.face].insert(tb.face);
-                tmp_duplicate_faces[tb.face].insert(ta.face);
-            }
-            else if (type == OT_FOLDING) {
-                tmp_folding_faces[ta.face].insert(tb.face);
-                tmp_folding_faces[tb.face].insert(ta.face);
-            }
-        }
-
-        // collect the result in the requested format
-        duplicate_faces.resize(tmp_duplicate_faces.size());
-        std::size_t idx = 0;
-        for (const auto& elem : tmp_duplicate_faces) {
-            duplicate_faces[idx].first = elem.first;
-            const auto& faces = elem.second;
-            duplicate_faces[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
-            ++idx;
-        }
-
-        folding_faces.resize(tmp_folding_faces.size());
-        idx = 0;
-        for (const auto& elem : tmp_folding_faces) {
-            folding_faces[idx].first = elem.first;
-            const auto& faces = elem.second;
-            folding_faces[idx].second = std::vector<SurfaceMesh::Face>(faces.begin(), faces.end());
-            ++idx;
+            if (type == OT_SAME)
+                duplicate_faces.emplace_back(std::make_pair(ta.face, tb.face));
+            else if (type == OT_FOLDING)
+                folding_faces.emplace_back(std::make_pair(ta.face, tb.face));
         }
     }
 
 
     unsigned int OverlappingFaces::remove(SurfaceMesh *mesh, bool delete_folding_faces, double dist_threshold)
     {
-        std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> duplicate_faces;
-        std::vector<std::pair<SurfaceMesh::Face, std::vector<SurfaceMesh::Face>>> folding_faces;
+        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > duplicate_faces;
+        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > folding_faces;
         detect(mesh, duplicate_faces, folding_faces, dist_threshold);
 
         if (duplicate_faces.empty() && folding_faces.empty())
@@ -220,31 +194,34 @@ namespace easy3d {
         // in each duplication set, we keep only one of the duplicate faces
         auto deleted = mesh->face_property<bool>("f:deleted", false);
 
+#if 1
         // for each duplication set, keep one face and and delete all its duplications
         for (const auto& entry : duplicate_faces) {
-            SurfaceMesh::Face face = entry.first;
-            if (deleted[face]) // this duplication set has been processed
+            if (deleted[entry.first]) // this duplication set has been processed
                 continue;
-            // delete the duplicated ones
-            for (auto f : entry.second) {
-                if (f != face)
-                    mesh->delete_face(f);
-                else
-                    LOG(ERROR) << "a face was marked duplicated with it self";
-            }
+            // delete the duplicated one
+            mesh->delete_face(entry.second);
         }
+
         for (const auto& entry : folding_faces) {
-            SurfaceMesh::Face face = entry.first;
-            if (deleted[face]) // this duplication set has been processed
+            if (deleted[entry.first]) // this duplication set has been processed
                 continue;
-            // delete the duplicated ones
-            for (auto f : entry.second) {
-                if (f != face)
-                    mesh->delete_face(f);
-                else
-                    LOG(ERROR) << "a face was marked duplicated with it self";
-            }
+            // delete the duplicated one
+            mesh->delete_face(entry.second);
         }
+
+#else
+
+        auto to_delete = mesh->add_face_property<bool>("f:remain", true);
+        for (const auto& entry : folding_faces) {
+            to_delete[entry.first] = false;
+            to_delete[entry.second] = false;
+        }
+
+        for (auto f : mesh->faces())
+            if (to_delete[f])
+                mesh->delete_face(f);
+#endif
 
         mesh->collect_garbage();
 
