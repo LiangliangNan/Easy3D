@@ -210,7 +210,10 @@ namespace easy3d {
             mesh->delete_face(entry.second);
         }
 
-#else
+        LOG(INFO) << duplicate_faces.size() << " pairs of duplicate faces, " << folding_faces.size()
+                  << " pairs of folding faces";
+
+#else   // just for debugging: visualizing the folding faces
 
         auto to_delete = mesh->add_face_property<bool>("f:remain", true);
         for (const auto& entry : folding_faces) {
