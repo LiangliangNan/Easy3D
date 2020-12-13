@@ -325,8 +325,8 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
+                "Mesh formats (*.ply *.obj *.off *.stl *.poly *.trilist)\n"
                 "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
                 "All formats (*.*)"
             );
@@ -416,7 +416,7 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg" || ext == "trilist") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
@@ -794,7 +794,6 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
 
-    connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
     connect(ui->actionSurfaceMeshRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshRepairPolygonSoup()));
@@ -810,9 +809,8 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionOrientClosedTriangleMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientClosedTriangleMesh()));
     connect(ui->actionReverseOrientation, SIGNAL(triggered()), this, SLOT(surfaceMeshReverseOrientation()));
 
-    connect(ui->actionDetectDuplicateAndFoldingFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectDuplicateAndFoldingFaces()));
+    connect(ui->actionSurfaceMeshRemoveIsolatedVertices, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveIsolatedVertices()));
     connect(ui->actionRemoveDuplicateAndFoldingFaces, SIGNAL(triggered()), this, SLOT(surfaceMeshRemoveDuplicateAndFoldingFaces()));
-
     connect(ui->actionDetectSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshDetectSelfIntersections()));
     connect(ui->actionRemeshSelfIntersections, SIGNAL(triggered()), this, SLOT(surfaceMeshRemeshSelfIntersections()));
 
@@ -1193,27 +1191,6 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
 }
 
 
-void MainWindow::surfaceMeshDetectDuplicateAndFoldingFaces() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
-    if (!mesh)
-        return;
-
-#if HAS_CGAL
-    StopWatch w;
-    w.start();
-    LOG(INFO) << "detecting overlapping faces...";
-
-    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > duplicate_faces;
-    std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > folding_faces;
-    Surfacer::detect_overlapping_faces(mesh, duplicate_faces, folding_faces);
-    LOG(INFO) << "done. " << duplicate_faces.size() << " pairs of duplicate faces, " << folding_faces.size()
-              << " pairs of folding faces. " << w.time_string();
-#else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
-#endif
-}
-
-
 void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
@@ -1224,13 +1201,15 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
     w.start();
 	LOG(INFO) << "removing overlapping faces...";
 
-    unsigned int num = Surfacer::remove_overlapping_faces(mesh, true);
-    if (num > 0) {
+    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5);
+    unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
+    if (num_degenerate + num_overlapping > 0) {
         mesh->renderer()->update();
         viewer_->update();
         updateUi();
     }
-    LOG(INFO) << "done. " << num << " faces deleted. " << w.time_string();
+    LOG(INFO) << "done. " << num_degenerate + num_overlapping << " faces deleted (" << num_degenerate
+              << " degenerate, " << num_overlapping << " overlapping). " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif

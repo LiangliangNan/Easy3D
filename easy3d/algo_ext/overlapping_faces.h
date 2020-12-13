@@ -31,7 +31,7 @@
 // Use this instead to mute errors resulting from bad CGAL assertions
 //#define CGAL_KERNEL_NO_ASSERTIONS
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Simple_cartesian.h>
 #include <CGAL/intersections.h>	// Triangle triangle intersection
 #include <CGAL/box_intersection_d.h>
 
@@ -62,7 +62,7 @@ namespace easy3d {
                 SurfaceMesh *mesh,
                 std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face > > &duplicate_faces,
                 std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face > > &folding_faces,
-                double dist_threshold = 1e-12
+                double dist_threshold = 1e-6
         );
 
         /**
@@ -77,11 +77,11 @@ namespace easy3d {
         unsigned int remove(
                 SurfaceMesh *mesh,
                 bool folding_faces = false,
-                double dist_threshold = 1e-12
+                double dist_threshold = 1e-6
         );
 
     private:
-        typedef CGAL::Exact_predicates_inexact_constructions_kernel	Kernel;
+        typedef CGAL::Simple_cartesian<double>	Kernel;
 
         typedef CGAL::Point_3<Kernel>		Point_3;
         typedef CGAL::Vector_3<Kernel>		Vector_3;

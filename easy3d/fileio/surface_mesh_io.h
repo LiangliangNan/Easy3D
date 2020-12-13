@@ -89,6 +89,10 @@ namespace easy3d {
         /// Saves a surface mesh to a \p STL format file.
 		bool save_stl(const std::string& file_name, const SurfaceMesh* mesh);
 
+		/// Reads a set of triangles (each line has coordinates of 3 points)
+		/// Mainly used for easy saving some triangles for debugging.
+        bool load_trilist(const std::string& file_name, SurfaceMesh* mesh);
+
 	} // namespace io
 
 } // namespace easy3d

@@ -109,7 +109,7 @@ namespace easy3d {
             normalize(na);
             normalize(nb);
             auto error = std::abs(std::abs(na * nb) - 1.0);
-            if (error < 1e-12) {    // considered coplanar
+            if (error < 1e-6) {    // considered coplanar
                 const auto plane = A.triangle.supporting_plane();
 
                 unsigned short A_v0 = shared[0].first;
@@ -126,6 +126,8 @@ namespace easy3d {
 
                 // v2 and v3 on the same side of line v0-v1: the two triangles partially overlap
                 if (CGAL::orientation(v0, v1, v2) == CGAL::orientation(v0, v1, v3)) {
+//                    std::cout << A.triangle << std::endl;
+//                    std::cout << B.triangle << std::endl;
                     return OT_FOLDING;
                 }
             }

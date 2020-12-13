@@ -499,6 +499,73 @@ namespace easy3d {
     }
 
 
+    int Surfacer::remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold) {
+        int num = mesh->n_faces();
+
+        for (auto e : mesh->edges()) {
+            if (mesh->edge_length(e) < length_threshold) {
+                auto h = mesh->halfedge(e, 0);
+                if (mesh->is_collapse_ok(h)) {
+                    mesh->collapse(h);
+                }
+                else {
+                    h = mesh->opposite(h);
+                    if (mesh->is_collapse_ok(h)) {
+                        mesh->collapse(h);
+                    }
+                }
+            }
+        }
+
+        typedef CGAL::Simple_cartesian<double>  Kernel;
+        typedef CGAL::Point_3<Kernel>           Point_3;
+        typedef CGAL::Triangle_3<Kernel>        Triangle_3;
+
+        auto prop = mesh->get_vertex_property<vec3>("v:point");
+
+        auto has_tiny_edge = [](SurfaceMesh* m, SurfaceMesh::Face f, double thresh) -> bool {
+            for (auto h : m->halfedges(f)) {
+                if (m->edge_length(m->edge(h)) < thresh)
+                    return true;
+            }
+            return false;
+        };
+
+        std::set<SurfaceMesh::Face> to_delete;
+        for (auto f : mesh->faces()) {
+            if (has_tiny_edge(mesh, f, length_threshold))
+                to_delete.insert(f);
+        }
+
+        for (auto f : mesh->faces()) {
+            std::vector<Point_3> points;
+            for (auto v : mesh->vertices(f)) {
+                const vec3 &p = prop[v];
+                points.push_back(Point_3(p.x, p.y, p.z));
+            }
+
+            if (points.size() == 3) {
+                const Triangle_3 t(points[0], points[1], points[2]);
+                if (t.is_degenerate())
+                    to_delete.insert(f);
+            } else {
+                LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
+            }
+        }
+
+        for (auto f : to_delete)
+            mesh->delete_face(f);
+
+        mesh->collect_garbage();
+
+        int diff = num - mesh->n_faces();
+        if (diff > 0)
+            LOG(INFO) << diff << " degenerate faces deleted" << std::endl;
+
+        return diff;
+    }
+
+
     void Surfacer::detect_overlapping_faces(
             SurfaceMesh *mesh,
             std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &duplicate_faces,

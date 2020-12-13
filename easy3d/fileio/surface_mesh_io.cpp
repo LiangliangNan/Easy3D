@@ -30,6 +30,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/line_stream.h>
 
 
 namespace easy3d {
@@ -56,6 +57,8 @@ namespace easy3d {
 			success = io::load_off(file_name, mesh);
 		else if (ext == "stl")
 			success = io::load_stl(file_name, mesh);
+        else if (ext == "trilist")
+            success = io::load_trilist(file_name, mesh);
 
 		//	else if (ext == "plg")
 		//        serializer = new MeshSerializer_plg();
@@ -136,5 +139,30 @@ namespace easy3d {
         }
 	}
 
+
+    bool io::load_trilist(const std::string& file_name, SurfaceMesh* mesh) {
+        std::ifstream input(file_name.c_str());
+        if (input.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
+            return false;
+        }
+
+        io::LineInputStream in(input);
+
+        vec3 a, b, c;
+        while (!input.eof()) {
+            in.get_line();;
+            in >> a >> b >> c;
+            if (!in.fail()) {
+                mesh->add_triangle(
+                        mesh->add_vertex(a),
+                        mesh->add_vertex(a),
+                        mesh->add_vertex(a)
+                );
+            }
+        }
+
+        return mesh->n_faces() > 0;
+	}
 
 } // namespace easy3d

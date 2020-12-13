@@ -26,6 +26,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/algo_ext/surfacer.h>
 
 #include <queue>
 
@@ -120,11 +121,26 @@ namespace easy3d {
             const Triangle &A,
             const Triangle &B,
             const std::vector<std::pair<int, int> > &shared) {
+
+#if 0 // allow some tolerance? May not work
+        auto normalize = [](Vector_3& n) -> void { n /= std::sqrt(CGAL::to_double(n.squared_length())); };
+        auto na = A.triangle.supporting_plane().orthogonal_vector();
+        auto nb = B.triangle.supporting_plane().orthogonal_vector();
+        normalize(na);
+        normalize(nb);
+        auto error = std::abs(std::abs(CGAL::to_double(na * nb)) - 1.0);
+        if (error > 1e-6)
+            return false;
+
+#else
+
         // must be co-planar
         if (A.triangle.supporting_plane() != B.triangle.supporting_plane() &&
             A.triangle.supporting_plane() != B.triangle.supporting_plane().opposite()) {
             return false;
         }
+#endif
+
         // Since A and B are non-degenerate the intersection must be a polygon
         // (triangle). Either
         //   - the vertex of A (B) opposite the shared edge of lies on B (A), or
@@ -312,7 +328,7 @@ namespace easy3d {
         }
         if (total_shared_vertices == 2) {
             assert(shared.size() == 2);
-            // TODO: What about coplanar? (I assume no such fold faces)
+            // TODO: What about coplanar? (Current implementation assumes no such folding face pairs)
             //
             // o    o
             // |\  /|
@@ -343,7 +359,7 @@ namespace easy3d {
         for (auto f : mesh_->faces())
             to_input_face[f] = f;
 
-        remove_degenerate_faces(mesh_);
+        Surfacer::remove_degenerate_faces(mesh_);
 
         auto prop = mesh_->get_vertex_property<vec3>("v:point");
         for (auto f : mesh_->faces()) {
@@ -365,48 +381,6 @@ namespace easy3d {
                 LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
             }
         }
-    }
-
-
-    int SelfIntersection::remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold) const {
-        int num = mesh->n_faces();
-
-        for (auto e : mesh->edges()) {
-            if (mesh->edge_length(e) < coincident_threshold) {
-                auto h = mesh->halfedge(e, 0);
-                if (mesh->is_collapse_ok(h))
-                    mesh->collapse(h);
-            }
-        }
-
-        auto prop = mesh_->get_vertex_property<vec3>("v:point");
-        std::vector<SurfaceMesh::Face> to_delete;
-        for (auto f : mesh_->faces()) {
-            std::vector<Point_3> points;
-            for (auto v : mesh_->vertices(f)) {
-                const vec3 &p = prop[v];
-                points.push_back(Point_3(p.x, p.y, p.z));
-            }
-
-            if (points.size() == 3) {
-                const Triangle t(points[0], points[1], points[2], f);
-                if (t.triangle.is_degenerate())
-                    to_delete.push_back(f);
-            } else {
-                LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
-            }
-        }
-
-        for (auto f : to_delete)
-            mesh_->delete_face(f);
-
-        mesh->collect_garbage();
-
-        int diff = num - mesh->n_faces();
-        if (diff > 0)
-            LOG(WARNING) << diff << " degenerate faces detected" << std::endl;
-
-        return diff;
     }
 
 

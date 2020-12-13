@@ -89,6 +89,7 @@ namespace easy3d {
 
         // 3D Primitives
         typedef CGAL::Point_3<Kernel> Point_3;
+        typedef CGAL::Vector_3<Kernel>	Vector_3;
         typedef CGAL::Triangle_3<Kernel> Triangle_3;
         typedef CGAL::Segment_3<Kernel> Segment_3;
         typedef CGAL::Plane_3<Kernel> Plane_3;
@@ -127,10 +128,6 @@ namespace easy3d {
     private:
 
         void mesh_to_cgal_triangle_list(SurfaceMesh *mesh);
-
-        // remove degenerate faces by collapsing tiny length edges.
-        // returns the number of faces removed
-        int remove_degenerate_faces(SurfaceMesh *mesh, double coincident_threshold = 1e-6) const;
 
         // test if two triangles intersect
         bool do_intersect(const Triangle &A, const Triangle &B);

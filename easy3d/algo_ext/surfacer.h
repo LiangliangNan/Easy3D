@@ -157,8 +157,17 @@ namespace easy3d {
         //@}
 
 
-        /// \name Duplicate faces
+        /// \name Degenerate, overlapping, and duplicate faces removal
         //@{
+
+        /**
+          * \brief Remove degenerate faces.
+          * \details Any triangle with an edge length smaller than a given threshold is consider degenerate and will
+          *         be removed by the edge collapse operation.
+          * \param length_threshold The edge length threshold.
+          * \return The number of faces removed.
+          */
+        static int remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold = 1e-5);
 
         /**
           * \brief Detects duplicate faces and folding faces.
@@ -174,7 +183,7 @@ namespace easy3d {
                 SurfaceMesh *mesh,
                 std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &duplicate_faces,
                 std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > &folding_faces,
-                double dist_threshold = 1e-12
+                double dist_threshold = 1e-6
         );
 
         /**
@@ -189,7 +198,7 @@ namespace easy3d {
         static unsigned int remove_overlapping_faces(
                 SurfaceMesh *mesh,
                 bool folding_faces = false,
-                double dist_threshold = 1e-12
+                double dist_threshold = 1e-6
         );
         //@}
 
