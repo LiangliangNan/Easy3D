@@ -59,7 +59,7 @@
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
-#include <easy3d/algo/surface_mesh_planar_partition.h>
+#include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo_ext/surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -1470,8 +1470,7 @@ void MainWindow::surfaceMeshPlanarPartition() {
 
     const std::string partition_name = "f:planar_partition";
     auto planar_segments = mesh->face_property<int>(partition_name, -1);
-    SurfaceMeshPlanarPartition partition(mesh);
-    partition.apply(planar_segments);
+    SurfaceMeshEnumerator::enumerate_planar_components(mesh, planar_segments, 1.0f);
 
     const std::string color_name = "f:color_planar_partition";
     auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));

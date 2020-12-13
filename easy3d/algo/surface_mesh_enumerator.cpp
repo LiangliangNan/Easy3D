@@ -102,4 +102,62 @@ namespace easy3d {
         return cur_id;
     }
 
+
+    void SurfaceMeshEnumerator::propagate_planar_component(SurfaceMesh *mesh,
+                                                           SurfaceMesh::FaceProperty<int> id,
+                                                           SurfaceMesh::Face seed, int cur_id,
+                                                           float angle_threshold
+    ) {
+        auto fnormals = mesh->get_face_property<vec3>("f:normal");
+        if (!fnormals) {
+            mesh->update_face_normals();
+            fnormals = mesh->get_face_property<vec3>("f:normal");
+        }
+
+        std::stack<SurfaceMesh::Face> stack;
+        stack.push(seed);
+
+        while (!stack.empty()) {
+            SurfaceMesh::Face top = stack.top();
+            stack.pop();
+            if (id[top] == -1) {
+                id[top] = cur_id;
+                const vec3 &n_top = fnormals[top];
+                for (auto h : mesh->halfedges(top)) {
+                    auto cur = mesh->face(mesh->opposite(h));
+                    if (cur.is_valid() && id[cur] == -1) {
+                        const vec3 &n_cur = fnormals[cur];
+                        auto angle = geom::angle(n_top, n_cur); // in [-pi, pi]
+                        angle = rad2deg(std::abs(angle));
+                        if (std::abs(angle) < angle_threshold)
+                            stack.push(cur);
+                    }
+                }
+            }
+        }
+    }
+
+
+    int SurfaceMeshEnumerator::enumerate_planar_components(
+            SurfaceMesh *mesh,
+            SurfaceMesh::FaceProperty<int> id,
+            float angle_threshold) {
+        auto fnormals = mesh->get_face_property<vec3>("f:normal");
+        if (!fnormals) {
+            mesh->update_face_normals();
+            fnormals = mesh->get_face_property<vec3>("f:normal");
+        }
+
+        for (auto f : mesh->faces())
+            id[f] = -1;
+
+        int cur_id = 0;
+        for (auto f : mesh->faces())
+            if (id[f] == -1) {
+                propagate_planar_component(mesh, id, f, cur_id, angle_threshold);
+                cur_id++;
+            }
+        return cur_id;
+    }
+
 }

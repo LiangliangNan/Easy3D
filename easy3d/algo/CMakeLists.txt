@@ -23,7 +23,6 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_geodesic.h
         surface_mesh_hole_filling.h
         surface_mesh_parameterization.h
-        surface_mesh_planar_partition.h
         surface_mesh_remeshing.h
         surface_mesh_sampler.h
         surface_mesh_simplification.h
@@ -56,7 +55,6 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_geodesic.cpp
         surface_mesh_hole_filling.cpp
         surface_mesh_parameterization.cpp
-        surface_mesh_planar_partition.cpp
         surface_mesh_remeshing.cpp
         surface_mesh_sampler.cpp
         surface_mesh_simplification.cpp
