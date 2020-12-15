@@ -1121,6 +1121,9 @@ namespace easy3d {
             return n<2;
         }
 
+        /// returns whether \c f is degenerate
+        bool is_degenerate(Face f) const;
+
         /// returns the vertex the halfedge \c h points to
         Vertex target(Halfedge h) const
         {
@@ -1669,7 +1672,7 @@ namespace easy3d {
          */
         Vertex split(Face f, const vec3& p) { Vertex v=add_vertex(p); split(f,v); return v; }
 
-        /** Split the face \c f by inserting edges between \c p and the vertices
+        /** Split the face \c f by inserting edges between \c v and the vertices
          of \c f. For a triangle this is a standard one-to-three split.
          \sa split(Face, const vec3&)
          */
@@ -1704,6 +1707,7 @@ namespace easy3d {
          points to \c p.
          \sa insert_vertex(Edge, Vertex)
          \sa insert_vertex(Halfedge, Vertex)
+         \related join_edges(Vertex)
          */
         Halfedge insert_vertex(Edge e, const vec3& p)
         {
@@ -1715,6 +1719,7 @@ namespace easy3d {
          edge or faces. It simply splits the edge. Returns halfedge that points to \c p.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Halfedge, Vertex)
+         \related join_edges(Vertex)
          */
         Halfedge insert_vertex(Edge e, Vertex v)
         {
@@ -1726,8 +1731,23 @@ namespace easy3d {
          edge or faces. It simply splits the edge. Returns halfedge that points to \c p.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Edge, Vertex)
+         \related join_edges(Vertex)
          */
         Halfedge insert_vertex(Halfedge h, Vertex v);
+
+        /**
+         * Merges the two incident edges of a 2-degree vertex. This is the reverse operation of insert_vertex().
+         * \pre valence(v) == 2.
+         * \sa insert_vertex(Edge, vec3)
+         * \sa insert_vertex(Edge, Vertex)
+         * \sa insert_vertex(Halfedge, Vertex)
+         */
+        bool join_edges(Vertex v);
+        /**
+         * Check whether the two incident edges of a vertex can be joined. It only allows for vertices of valence two.
+         * \sa join_edges(Vertex)
+         */
+        bool can_join_edges(Vertex v) const;
 
 
         /// insert edge between the to-vertices v0 of h0 and v1 of h1.

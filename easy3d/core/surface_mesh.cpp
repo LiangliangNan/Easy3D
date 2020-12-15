@@ -797,8 +797,17 @@ namespace easy3d {
 
         FaceIterator fit, fend=faces_end();
 
-        for (fit=faces_begin(); fit!=fend; ++fit)
-            fnormal_[*fit] = compute_face_normal(*fit);
+        int num_degenerate = 0;
+        for (fit=faces_begin(); fit!=fend; ++fit) {
+            if (is_degenerate(*fit)) {
+                ++num_degenerate;
+                fnormal_[*fit] = vec3(0, 0, 1);
+            } else
+                fnormal_[*fit] = compute_face_normal(*fit);
+        }
+
+        if (num_degenerate > 0)
+            LOG(WARNING) << "model has " << num_degenerate << " degenerate faces" << std::endl;
     }
 
 
@@ -838,7 +847,7 @@ namespace easy3d {
             }
             while (h != hend);
 
-            return n.normalize();
+                return n.normalize();
         }
     }
 
@@ -2049,5 +2058,97 @@ namespace easy3d {
 #endif
 
     }
+
+
+    bool SurfaceMesh::is_degenerate(Face f) const {
+        Halfedge h = halfedge(f);
+        Halfedge hend = h;
+
+        vec3 p0 = vpoint_[target(h)];
+        h = next(h);
+        vec3 p1 = vpoint_[target(h)];
+        h = next(h);
+        vec3 p2 = vpoint_[target(h)];
+
+        if (next(h) == hend) // face is a triangle
+        {
+            auto d1 = p2-p1; auto len1 = d1.length();
+            if (len1 < std::numeric_limits<float>::min())
+                return true;
+            auto d2 = p0-p1; auto len2 = d2.length();
+            if (len2 < std::numeric_limits<float>::min())
+                return true;
+
+            auto angle = geom::angle(d1, d2);
+            angle = rad2deg(std::abs(angle));
+            if (std::abs(angle) < std::numeric_limits<float>::min())
+                return true;
+
+            return false;
+        }
+
+        else // face is a general polygon
+        {
+            int num_good = 0;
+            hend = h;
+            do
+            {
+                auto d1 = p2-p1; auto len1 = d1.length();
+                if (len1 < std::numeric_limits<float>::min()) {
+                    h  = next(h);
+                    continue;
+                }
+                auto d2 = p0-p1; auto len2 = d2.length();
+                if (len2 < std::numeric_limits<float>::min()) {
+                    h  = next(h);
+                    continue;
+                }
+
+                auto angle = geom::angle(d1, d2);
+                angle = rad2deg(std::abs(angle));
+                if (std::abs(angle) < std::numeric_limits<float>::min()) {
+                    h  = next(h);
+                    continue;
+                }
+
+                ++num_good;
+                h  = next(h);
+                p0 = p1;
+                p1 = p2;
+                p2 = vpoint_[target(h)];
+            }
+            while (h != hend);
+
+            return (num_good == 0);
+        }
+    }
+
+
+    bool SurfaceMesh::can_join_edges(Vertex v) const {
+        if (valence(v) != 2) {
+            return false;
+        }
+        Halfedge h = out_halfedge(v);
+        if (!is_border(h) && valence(face(h)) < 4) {
+            return false;
+        }
+        h = opposite(h);
+        if (!is_border(h) && valence(face(h)) < 4) {
+            return false;
+        }
+        return true;
+    }
+
+
+    bool SurfaceMesh::join_edges(Vertex vt) {
+        if (!can_join_edges(vt)) {
+            return false;
+        }
+
+        auto hh = out_halfedge(vt);
+        remove_edge(hh);
+        return true;
+    }
+
 
 } // namespace easy3d
