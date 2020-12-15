@@ -504,23 +504,20 @@ namespace easy3d {
     int Surfacer::remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold) {
         int num = mesh->n_faces();
 
-        std::vector<SurfaceMesh::Halfedge> to_collapse;
         for (auto e : mesh->edges()) {
             if (mesh->edge_length(e) < length_threshold) {
                 auto h = mesh->halfedge(e, 0);
-                if (mesh->is_collapse_ok(h))
-                    to_collapse.push_back(h);
+                if (mesh->is_collapse_ok(h)) {
+                    mesh->collapse(h);
+                }
                 else {
                     h = mesh->opposite(h);
-                    if (mesh->is_collapse_ok(h))
-                        to_collapse.push_back(h);
+                    if (mesh->is_collapse_ok(h)) {
+                        mesh->collapse(h);
+                    }
                 }
             }
         }
-
-        for (auto h : to_collapse)
-            mesh->collapse(h);
-        LOG(INFO) << to_collapse << " edges collapsed";
 
         typedef CGAL::Simple_cartesian<double>  Kernel;
         typedef CGAL::Point_3<Kernel>           Point_3;
