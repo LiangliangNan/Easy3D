@@ -379,18 +379,20 @@ namespace easy3d {
 
         details::to_easy3d(points, polygons, input_points, input_polygons);
 
-        std::string msg;
         int diff_vertices = num_vertices - input_points.size();
         int diff_faces = num_faces - input_polygons.size();
-        if (diff_vertices != 0) {
-            msg += std::to_string(std::abs(diff_vertices)) + " vertices " +
-                   (diff_vertices >= 0 ? "removed" : "inserted");
+        if (diff_vertices + diff_faces != 0) {
+            std::string msg;
+            if (diff_vertices != 0) {
+                msg += std::to_string(std::abs(diff_vertices)) + " vertices " +
+                       (diff_vertices >= 0 ? "removed" : "inserted");
+                if (diff_faces != 0)
+                    msg += " and ";
+            }
             if (diff_faces != 0)
-                msg += " and ";
+                msg += std::to_string(std::abs(diff_faces)) + " faces " + (diff_faces >= 0 ? "removed" : "inserted");
+            LOG(INFO) << msg;
         }
-        if (diff_faces != 0)
-            msg += std::to_string(std::abs(diff_faces)) + " faces " + (diff_faces >= 0 ? "removed" : "inserted");
-        LOG(INFO) << msg;
     }
 
 
@@ -502,20 +504,23 @@ namespace easy3d {
     int Surfacer::remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold) {
         int num = mesh->n_faces();
 
+        std::vector<SurfaceMesh::Halfedge> to_collapse;
         for (auto e : mesh->edges()) {
             if (mesh->edge_length(e) < length_threshold) {
                 auto h = mesh->halfedge(e, 0);
-                if (mesh->is_collapse_ok(h)) {
-                    mesh->collapse(h);
-                }
+                if (mesh->is_collapse_ok(h))
+                    to_collapse.push_back(h);
                 else {
                     h = mesh->opposite(h);
-                    if (mesh->is_collapse_ok(h)) {
-                        mesh->collapse(h);
-                    }
+                    if (mesh->is_collapse_ok(h))
+                        to_collapse.push_back(h);
                 }
             }
         }
+
+        for (auto h : to_collapse)
+            mesh->collapse(h);
+        LOG(INFO) << to_collapse << " edges collapsed";
 
         typedef CGAL::Simple_cartesian<double>  Kernel;
         typedef CGAL::Point_3<Kernel>           Point_3;
