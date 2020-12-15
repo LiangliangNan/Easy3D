@@ -28,6 +28,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/util/logging.h>
 
 
@@ -182,19 +183,24 @@ namespace easy3d {
     }
 
 
-    unsigned int OverlappingFaces::remove(SurfaceMesh *mesh, bool delete_folding_faces, double dist_threshold)
+    unsigned int OverlappingFaces::remove(SurfaceMesh *input, bool delete_folding_faces, double dist_threshold)
     {
+        // remove faces may leave the mesh in an invalid state (e.g., non-manifold)
+        // so we use the manifold builder to construct the final mesh.
+
+        SurfaceMesh mesh = *input;
+
         std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > duplicate_faces;
         std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > folding_faces;
-        detect(mesh, duplicate_faces, folding_faces, dist_threshold);
+        detect(&mesh, duplicate_faces, folding_faces, dist_threshold);
 
         if (duplicate_faces.empty() && folding_faces.empty())
             return 0;
 
-        unsigned int prev_num_faces = mesh->n_faces();
+        unsigned int prev_num_faces = mesh.n_faces();
 
         // in each duplication set, we keep only one of the duplicate faces
-        auto deleted = mesh->face_property<bool>("f:deleted", false);
+        auto deleted = mesh.face_property<bool>("f:deleted", false);
 
 #if 1
         // for each duplication set, keep one face and and delete all its duplications
@@ -202,14 +208,14 @@ namespace easy3d {
             if (deleted[entry.first]) // this duplication set has been processed
                 continue;
             // delete the duplicated one
-            mesh->delete_face(entry.second);
+            mesh.delete_face(entry.second);
         }
 
         for (const auto& entry : folding_faces) {
             if (deleted[entry.first]) // this duplication set has been processed
                 continue;
             // delete the duplicated one
-            mesh->delete_face(entry.second);
+            mesh.delete_face(entry.second);
         }
 
         LOG(INFO) << duplicate_faces.size() << " pairs of duplicate faces, " << folding_faces.size()
@@ -218,19 +224,39 @@ namespace easy3d {
 #else   // just for debugging: visualizing the folding faces
 
         auto to_delete = mesh->add_face_property<bool>("f:remain", true);
-        for (const auto& entry : folding_faces) {
+        for (const auto &entry : folding_faces) {
             to_delete[entry.first] = false;
             to_delete[entry.second] = false;
         }
 
-        for (auto f : mesh->faces())
-            if (to_delete[f])
+        for (auto f : mesh->faces()) {
+            if (to_delete[f]) {
                 mesh->delete_face(f);
+            }
+        }
 #endif
+        mesh.collect_garbage();
 
-        mesh->collect_garbage();
+        // construct the new mesh
+        input->clear();
+        auto points = mesh.get_vertex_property<vec3>("v:point");
 
-        return prev_num_faces - mesh->n_faces();
+        ManifoldBuilder builder(input);
+        builder.begin_surface();
+
+        for (auto v : mesh.vertices())
+            builder.add_vertex(points[v]);
+
+        for (auto f : mesh.faces()) {
+            std::vector<SurfaceMesh::Vertex> vts;
+            for (auto v : mesh.vertices(f))
+                vts.push_back(v);
+            builder.add_face(vts);
+        }
+
+        builder.end_surface(false);
+
+        return prev_num_faces - input->n_faces();
     }
 
 }
