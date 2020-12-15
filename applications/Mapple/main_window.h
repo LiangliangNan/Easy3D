@@ -106,6 +106,7 @@ private slots:
     void surfaceMeshReportTopologyStatistics();
     void surfaceMeshExtractConnectedComponents();
     void surfaceMeshPlanarPartition();
+    void surfaceMeshPolygonization();
     void surfaceMeshTriangulation();
 
     void surfaceMeshStitchWithReorientation();

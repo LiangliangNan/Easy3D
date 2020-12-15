@@ -60,6 +60,7 @@
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
+#include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo_ext/surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -793,7 +794,7 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(surfaceMeshReportTopologyStatistics()));
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
-
+    connect(ui->actionPolygonization, SIGNAL(triggered()), this, SLOT(surfaceMeshPolygonization()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
 
     connect(ui->actionSurfaceMeshRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshRepairPolygonSoup()));
@@ -1434,7 +1435,7 @@ void MainWindow::computeHeightField() {
 
     model->renderer()->update();
     viewer()->update();
-    updateRenderingPanel();
+    updateUi();
 }
 
 
@@ -1459,7 +1460,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
 
     mesh->renderer()->update();
     viewer()->update();
-    updateRenderingPanel();
+    updateUi();
 }
 
 
@@ -1480,7 +1481,21 @@ void MainWindow::surfaceMeshPlanarPartition() {
 
     mesh->renderer()->update();
     viewer()->update();
-    updateRenderingPanel();
+    updateUi();
+}
+
+
+void MainWindow::surfaceMeshPolygonization() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    SurfaceMeshPolygonization polygonizer;
+    polygonizer.apply(mesh);
+
+    mesh->renderer()->update();
+    viewer()->update();
+    updateUi();
 }
 
 

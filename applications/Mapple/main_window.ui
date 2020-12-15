@@ -137,7 +137,9 @@
     <addaction name="actionTopologyStatistics"/>
     <addaction name="separator"/>
     <addaction name="actionExtractConnectedComponents"/>
+    <addaction name="separator"/>
     <addaction name="actionPlanarPartition"/>
+    <addaction name="actionPolygonization"/>
     <addaction name="separator"/>
     <addaction name="menuPolygonSoupProcessing"/>
     <addaction name="separator"/>
@@ -954,6 +956,11 @@
   <action name="actionSurfaceMeshSlice">
    <property name="text">
     <string>Slice</string>
+   </property>
+  </action>
+  <action name="actionPolygonization">
+   <property name="text">
+    <string>Polygonization</string>
    </property>
   </action>
  </widget>
