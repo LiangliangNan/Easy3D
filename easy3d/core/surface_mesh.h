@@ -942,7 +942,21 @@ namespace easy3d {
 
         /// assign \c rhs to \c *this. does not copy custom properties.
         SurfaceMesh& assign(const SurfaceMesh& rhs);
+        //@}
 
+        //!@}
+        //! \name File IO
+        //!@{
+
+        //! \brief Read mesh from a POLY file \p filename.
+        //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
+        //! \sa SurfaceMeshIO.
+        bool read_poly(const std::string& filename);
+
+        //! \brief Write mesh to a POLY file \p filename.
+        //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
+        //! \sa SurfaceMeshIO.
+        bool write_poly(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face

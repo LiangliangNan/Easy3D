@@ -41,6 +41,7 @@
 #include <easy3d/util/logging.h>
 
 #include <cmath>
+#include <fstream>
 
 namespace easy3d {
 
@@ -166,6 +167,105 @@ namespace easy3d {
         }
 
         return *this;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
+    bool SurfaceMesh::read_poly(const std::string &file_name)
+    {
+        clear();
+
+        // open file (in binary mode)
+        std::ifstream input(file_name.c_str(), std::fstream::binary);
+        if (input.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
+            return false;
+        }
+
+        // how many elements?
+        unsigned int nv, ne, nh, nf;
+        input.read((char*)&nv, sizeof(unsigned int));
+        input.read((char*)&ne, sizeof(unsigned int));
+        input.read((char*)&nf, sizeof(unsigned int));
+        nh = 2*ne;
+
+        // resize containers
+        resize(nv, ne, nf);
+
+        // get properties
+        auto vconn = vertex_property<SurfaceMesh::VertexConnectivity>("v:connectivity");
+        auto hconn = halfedge_property<SurfaceMesh::HalfedgeConnectivity>("h:connectivity");
+        auto fconn = face_property<SurfaceMesh::FaceConnectivity>("f:connectivity");
+        auto point = vertex_property<vec3>("v:point");
+
+        // read properties from file
+        input.read((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity)  );
+        input.read((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
+        input.read((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity)    );
+        input.read((char*)point.data(), nv * sizeof(vec3)                             );
+
+        bool has_colors = false;
+        input.read((char*)&has_colors, sizeof(bool));
+        if (has_colors) {
+            SurfaceMesh::VertexProperty<vec3> color = vertex_property<vec3>("v:color");
+            input.read((char*)color.data(), nv * sizeof(vec3));
+        }
+
+        return n_faces() > 0;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
+    bool SurfaceMesh::write_poly(const std::string& file_name) const
+    {
+        if (n_faces() == 0) {
+            LOG(ERROR) << "empty mesh";
+            return false;
+        }
+
+        // open file (in binary mode)
+        std::ofstream output(file_name.c_str(), std::fstream::binary);
+        if (output.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
+            return false;
+        }
+
+        // how many elements?
+        unsigned int nv, ne, nh, nf;
+        nv = n_vertices();
+        ne = n_edges();
+        nh = n_halfedges();
+        nf = n_faces();
+        nh = 2*ne;
+
+        output.write((char*)&nv, sizeof(unsigned int));
+        output.write((char*)&ne, sizeof(unsigned int));
+        output.write((char*)&nf, sizeof(unsigned int));
+
+        // get properties
+        auto vconn = get_vertex_property<SurfaceMesh::VertexConnectivity>("v:connectivity");
+        auto hconn = get_halfedge_property<SurfaceMesh::HalfedgeConnectivity>("h:connectivity");
+        auto fconn = get_face_property<SurfaceMesh::FaceConnectivity>("f:connectivity");
+        auto point = get_vertex_property<vec3>("v:point");
+
+        // write properties to file
+        output.write((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity));
+        output.write((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
+        output.write((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity));
+        output.write((char*)point.data(), nv * sizeof(vec3));
+
+        // check for colors
+        auto color = get_vertex_property<vec3>("v:color");
+        bool has_colors = color;
+        output.write((char*)&has_colors, sizeof(bool));
+        if (has_colors)
+            output.write((char*)color.data(), nv * sizeof(vec3));
+
+        return true;
     }
 
 
@@ -524,9 +624,23 @@ namespace easy3d {
                     patch_end   = prev(inner_next);
 
                     // relink
-                    next_cache.push_back(NextCacheEntry(boundary_prev, patch_start));
-                    next_cache.push_back(NextCacheEntry(patch_end, boundary_next));
-                    next_cache.push_back(NextCacheEntry(inner_prev, inner_next));
+#ifndef NDEBUG
+                    if (!boundary_prev.is_valid() || !patch_start.is_valid() || !patch_end.is_valid() ||
+                        !boundary_next.is_valid() || !inner_prev.is_valid() || !inner_next.is_valid())
+                    {
+                        LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                        static bool show = true;
+                        if (show) {
+                            LOG(ERROR) << "\tvertices of the face: ";
+                            for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                            show = false;
+                        }
+                        return Face();
+                    }
+#endif
+                    next_cache.emplace_back(NextCacheEntry(boundary_prev, patch_start));
+                    next_cache.emplace_back(NextCacheEntry(patch_end, boundary_next));
+                    next_cache.emplace_back(NextCacheEntry(inner_prev, inner_next));
                 }
             }
         }
@@ -571,13 +685,39 @@ namespace easy3d {
                 {
                     case 1: // prev is new, next is old
                         boundary_prev = prev(inner_next);
-                        next_cache.push_back(NextCacheEntry(boundary_prev, outer_next));
+#ifndef NDEBUG
+                        if (!boundary_prev.is_valid() || !outer_next.is_valid())
+                        {
+                            LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                            static bool show = true;
+                            if (show) {
+                                LOG(ERROR) << "\tvertices of the face: ";
+                                for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                                show = false;
+                            }
+                            return Face();
+                        }
+#endif
+                        next_cache.emplace_back(NextCacheEntry(boundary_prev, outer_next));
                         set_out_halfedge(v, outer_next);
                         break;
 
                     case 2: // next is new, prev is old
                         boundary_next = next(inner_prev);
-                        next_cache.push_back(NextCacheEntry(outer_prev, boundary_next));
+#ifndef NDEBUG
+                        if (!outer_prev.is_valid() || !boundary_next.is_valid())
+                        {
+                            LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                            static bool show = true;
+                            if (show) {
+                                LOG(ERROR) << "\tvertices of the face: ";
+                                for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                                show = false;
+                            }
+                            return Face();
+                        }
+#endif
+                        next_cache.emplace_back(NextCacheEntry(outer_prev, boundary_next));
                         set_out_halfedge(v, boundary_next);
                         break;
 
@@ -585,20 +725,59 @@ namespace easy3d {
                         if (!out_halfedge(v).is_valid())
                         {
                             set_out_halfedge(v, outer_next);
-                            next_cache.push_back(NextCacheEntry(outer_prev, outer_next));
+#ifndef NDEBUG
+                            if (!outer_prev.is_valid() || !outer_next.is_valid())
+                            {
+                                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                                static bool show = true;
+                                if (show) {
+                                    LOG(ERROR) << "\tvertices of the face: ";
+                                    for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                                    show = false;
+                                }
+                                return Face();
+                            }
+#endif
+                            next_cache.emplace_back(NextCacheEntry(outer_prev, outer_next));
                         }
                         else
                         {
                             boundary_next = out_halfedge(v);
                             boundary_prev = prev(boundary_next);
-                            next_cache.push_back(NextCacheEntry(boundary_prev, outer_next));
-                            next_cache.push_back(NextCacheEntry(outer_prev, boundary_next));
+#ifndef NDEBUG
+                            if (!boundary_prev.is_valid() || !outer_next.is_valid() || !outer_prev.is_valid() || !boundary_next.is_valid())
+                            {
+                                LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                                static bool show = true;
+                                if (show) {
+                                    LOG(ERROR) << "\tvertices of the face: ";
+                                    for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                                    show = false;
+                                }
+                                return Face();
+                            }
+#endif
+                            next_cache.emplace_back(NextCacheEntry(boundary_prev, outer_next));
+                            next_cache.emplace_back(NextCacheEntry(outer_prev, boundary_next));
                         }
                         break;
                 }
 
                 // set inner link
-                next_cache.push_back(NextCacheEntry(inner_prev, inner_next));
+#ifndef NDEBUG
+                if (!inner_prev.is_valid() || !inner_next.is_valid())
+                {
+                    LOG_FIRST_N(ERROR, 1) << "SurfaceMesh::add_face: complex edges (" << vertices << ") (this is the first record)";
+                    static bool show = true;
+                    if (show) {
+                        LOG(ERROR) << "\tvertices of the face: ";
+                        for (auto v : vertices) LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+                        show = false;
+                    }
+                    return Face();
+                }
+#endif
+                next_cache.emplace_back(NextCacheEntry(inner_prev, inner_next));
             }
             else needs_adjust[ii] = (out_halfedge(v) == inner_next);
 
