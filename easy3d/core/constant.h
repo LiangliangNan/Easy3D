@@ -30,15 +30,13 @@
 
 namespace easy3d {
 
-#ifndef EASY3D_PI
-#define EASY3D_PI			3.14159265358979323846264338327950288419716939937510582
-#endif
+    const double pi = 3.14159265358979323846264338327950288;
+    const double half_pi = pi * 0.5;
+    const double quarter_pi = pi * 0.25;
+    const double two_pi	 = pi * 2.0;
 
-#define half_pi			EASY3D_PI * 0.5
-#define quarter_pi		EASY3D_PI * 0.25
-#define two_pi			EASY3D_PI * 2.0
-#define rad2deg(a)		((a) * 180.0 / EASY3D_PI)
-#define deg2rad(a)		((a) * EASY3D_PI / 180.0)
+    double inline rad2deg(double rad) { return rad * 180.0 / pi; }
+    double inline deg2rad(double deg) { return deg * pi / 180.0; }
 
     // Function returning min/max for corresponding type
     template <typename FT> inline FT min();
