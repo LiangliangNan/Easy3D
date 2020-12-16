@@ -39,7 +39,10 @@ namespace easy3d {
             , smooth_shading_(setting::surface_mesh_phong_shading)
             , opacity_(0.6f)
     {
-       set_uniform_coloring(setting::surface_mesh_faces_color);
+        lighting_two_sides_ = setting::triangles_drawable_two_side_lighting;
+        distinct_back_color_ = setting::triangles_drawable_distinct_backside_color;
+        back_color_ = setting::triangles_drawable_backside_color;
+        set_uniform_coloring(setting::surface_mesh_faces_color);
     }
 
 

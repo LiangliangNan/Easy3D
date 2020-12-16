@@ -35,9 +35,13 @@
 namespace easy3d {
 
 
-    LinesDrawable::LinesDrawable(const std::string &name, Model* model)
-            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN) {
-       set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    LinesDrawable::LinesDrawable(const std::string &name, Model *model)
+            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN)
+    {
+        lighting_two_sides_ = setting::lines_drawable_two_side_lighting;
+        distinct_back_color_ = setting::lines_drawable_distinct_backside_color;
+        back_color_ = setting::lines_drawable_backside_color;
+        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 
 

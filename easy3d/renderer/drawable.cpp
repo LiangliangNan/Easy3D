@@ -47,9 +47,6 @@ namespace easy3d {
               selection_buffer_(0), current_selection_buffer_size_(0) {
         vao_ = new VertexArrayObject;
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
-        lighting_two_sides_ = setting::light_two_sides;
-        distinct_back_color_ = setting::light_distinct_back_color;
-        back_color_ = setting::back_color;
     }
 
 

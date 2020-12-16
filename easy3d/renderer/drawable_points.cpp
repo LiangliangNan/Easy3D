@@ -37,8 +37,12 @@
 namespace easy3d {
 
     PointsDrawable::PointsDrawable(const std::string &name /*= ""*/, Model* model)
-            : Drawable(name, model), point_size_(2.0f), impostor_type_(PLAIN) {
-       set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
+            : Drawable(name, model), point_size_(2.0f), impostor_type_(PLAIN)
+    {
+        lighting_two_sides_ = setting::points_drawable_two_side_lighting;
+        distinct_back_color_ = setting::points_drawable_distinct_backside_color;
+        back_color_ = setting::points_drawable_backside_color;
+        set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
     }
 
 
