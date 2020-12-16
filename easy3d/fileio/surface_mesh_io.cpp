@@ -30,7 +30,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/line_stream.h>
 
 
 namespace easy3d {
@@ -147,19 +146,11 @@ namespace easy3d {
             return false;
         }
 
-        io::LineInputStream in(input);
-
         vec3 a, b, c;
         while (!input.eof()) {
-            in.get_line();;
-            in >> a >> b >> c;
-            if (!in.fail()) {
-                mesh->add_triangle(
-                        mesh->add_vertex(a),
-                        mesh->add_vertex(a),
-                        mesh->add_vertex(a)
-                );
-            }
+            input >> a >> b >> c;
+            if (input.good())
+                mesh->add_triangle(mesh->add_vertex(a), mesh->add_vertex(b), mesh->add_vertex(c));
         }
 
         return mesh->n_faces() > 0;
