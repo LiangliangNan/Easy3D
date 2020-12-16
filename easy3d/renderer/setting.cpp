@@ -70,14 +70,14 @@ namespace easy3d {
         // point cloud
         bool point_cloud_use_color_property = true;
         bool point_cloud_show_points = true;
-        vec4 point_cloud_points_color = vec4(85 / 255.0f, 170 / 255.0f, 1.0f, 1.0f);
+        vec4 point_cloud_points_color = vec4(0.33f, 0.67f, 1.0f, 1.0f);
         float point_cloud_point_size = 2.0f;
         bool point_cloud_impostors = false;
 
         // surface mesh - surface
         bool surface_mesh_phong_shading = false;
         bool surface_mesh_show_faces = true;
-        vec4 surface_mesh_faces_color = vec4(0.4f, 0.8f, 0.8f, 1.0f);
+        vec4 surface_mesh_faces_color = vec4(1.0f, 0.8f, 0.4f, 1.0f);
         bool surface_mesh_use_color_property = true;
         float surface_mesh_opacity = 0.6f;
 
