@@ -115,7 +115,7 @@ namespace easy3d {
                 break;
             }
         }
-        builder.end_surface();
+        builder.end_surface(false);
 
         merge_colinear_edges(mesh);
     }
