@@ -28,6 +28,10 @@
 #include <easy3d/util/logging.h>
 
 
+
+
+#include <easy3d/fileio/surface_mesh_io.h>
+
 namespace easy3d {
 
 
@@ -88,31 +92,28 @@ namespace easy3d {
             }
         }
 
-        std::set<SurfaceMesh::Vertex> vertices;
-
         mesh->clear();
         ManifoldBuilder builder(mesh);
         builder.begin_surface();
 
-        auto vertex_index = model.add_vertex_property<int>("v:SurfaceMeshPolygonization:vertex_index", -1);
+        for (auto v : model.vertices())
+            builder.add_vertex(model.position(v));
+
         for (std::size_t i = 0; i < starters.size(); ++i) {
             const std::vector<SurfaceMesh::Halfedge> &loop = extract_boundary_loop(&model, i, starters[i]);
 
             std::vector<SurfaceMesh::Vertex> vts;
             for (std::size_t j = 0; j < loop.size(); ++j) {
                 SurfaceMesh::Vertex v = model.target(loop[j]);
-                int id = 0;
-                if (vertices.find(v) != vertices.end())
-                    id = vertex_index[v];
-                else {
-                    id = vertices.size();
-                    vertices.insert(v);
-                    vertex_index[v] = id;
-                    builder.add_vertex(model.position(v));
-                }
-                vts.push_back(SurfaceMesh::Vertex(id));
+                vts.push_back(v);
             }
-            builder.add_face(vts);
+            auto f = builder.add_face(vts);
+            if (!f.is_valid()) {
+                // for debug. I had some extremely complex examples!!!!
+//                SurfaceMeshIO::save("/Users/lnan/Desktop/bug2.off", mesh);
+//                mesh->write_poly("/Users/lnan/Desktop/bug2.poly");
+                break;
+            }
         }
         builder.end_surface();
 
