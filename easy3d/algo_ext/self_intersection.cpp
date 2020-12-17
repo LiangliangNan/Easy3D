@@ -766,7 +766,26 @@ namespace easy3d {
 #endif
 
         // Output resolved mesh.
+#if 0
+        {
+            std::ofstream out(mesh_->name() + "-remeshed.off");
+            out.precision(20);
 
+            out << "OFF" << std::endl;
+            out << mesh_->n_vertices() + new_vertices.size() << " " << resolved_faces.size() << " 0" << std::endl;
+
+            auto points = mesh_->get_vertex_property<vec3>("v:point");
+            for (auto p : mesh_->vertices())
+                out << points[p] << std::endl;
+            for (auto p : new_vertices)
+                out << CGAL::to_double(p[0]) << " " << CGAL::to_double(p[1]) << " " << CGAL::to_double(p[2]) << std::endl;
+            for (auto fvids : resolved_faces)
+                out << 3 << " " << fvids[0] << " " << fvids[1] << " " << fvids[2] << std::endl;
+        }
+#endif
+
+        // Output resolved mesh
+        /// Attention: converting from Epeck to float loses too much accuracy.
         input_mesh->clear();
         ManifoldBuilder builder(input_mesh);
         builder.begin_surface();
