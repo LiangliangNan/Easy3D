@@ -1188,7 +1188,7 @@ void MainWindow::surfaceMeshSlice() {
 
 #if HAS_CGAL
 
-#if 1 // slice by the visual clipping plane
+#if 0 // slice by the visual clipping plane
 
     auto clipping_plane = easy3d::setting::clipping_plane;
     if (!clipping_plane || !clipping_plane->is_enabled()) {
@@ -1733,7 +1733,8 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     Delaunay3 delaunay;
     delaunay.set_vertices(pts);
 
-    LOG(WARNING) << "triangulation done. TODO: implement a data structure to store and visualize the result";
+    LOG(INFO) << "triangulation done. num tetrahedra: " << delaunay.nb_tets();
+    LOG(WARNING) << "TODO: implement a data structure to store and visualize the result";
 
 //    CGraph* whet_grid = new CGraph;
 //    CGraphBuilder builder;
