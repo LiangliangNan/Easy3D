@@ -47,7 +47,7 @@ namespace easy3d {
 
     void Delaunay3::set_vertices(unsigned int nb_vertices, const float *vertices) {
         Delaunay::set_vertices(nb_vertices, vertices);
-        tetgen_out_->deinitialize();
+        tetgen_out_->clean_memory();
         tetgen_in_->numberofpoints = nb_vertices;
 
         // Liangliang: if you provide "vertices" as double type, you can just assign the pointer, but it
