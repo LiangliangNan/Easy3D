@@ -99,7 +99,7 @@ namespace easy3d
 
     /// \brief Computes the hash value of a 1D array.
     template<typename Iterator>
-    inline uint64_t hash_range(Iterator first, Iterator last) {
+    inline uint64_t hash(Iterator first, Iterator last) {
         uint64_t seed = 0;
         for (; first != last; ++first) {
             hash_combine(seed, *first);
@@ -110,7 +110,7 @@ namespace easy3d
 
     /// \brief Computes the hash value of a 1D array with a given seed value.
     template<typename Iterator>
-    inline void hash_range(uint64_t &seed, Iterator first, Iterator last) {
+    inline void hash(uint64_t &seed, Iterator first, Iterator last) {
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }

@@ -51,7 +51,7 @@ namespace easy3d {
             }
 
             inline Tessellator::Vertex *find_or_create(const Tessellator::Vertex &v) {
-                uint64_t key = hash_range(v.begin(), v.end());
+                uint64_t key = hash(v.begin(), v.end());
                 auto pos = hash_table_.find(key);
                 if (pos == hash_table_.end()) {
                     auto vertex = new Tessellator::Vertex(v, v.index);
@@ -78,7 +78,7 @@ namespace easy3d {
             }
 
             inline std::size_t vertex_id(const Tessellator::Vertex &v) {
-                return hash_table_[hash_range(v.begin(), v.end())];
+                return hash_table_[hash(v.begin(), v.end())];
             }
 
         private:
