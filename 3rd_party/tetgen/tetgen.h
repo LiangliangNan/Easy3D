@@ -79,6 +79,9 @@
 #include <math.h>
 #include <time.h>
 
+#include <string>
+#include <stdexcept>
+
 // The types 'intptr_t' and 'uintptr_t' are signed and unsigned integer types,
 //   respectively. They are guaranteed to be the same width as a pointer.
 //   They are defined in <stdint.h> by the C99 Standard.
@@ -2486,42 +2489,40 @@ void tetrahedralize(char *switches, tetgenio *in, tetgenio *out,
 
 inline void terminatetetgen(tetgenmesh *m, int x)
 {
-#ifdef TETLIBRARY
-  throw x;
-#else
-  switch (x) {
-  case 1: // Out of memory.
-    printf("Error:  Out of memory.\n"); 
-    break;
-  case 2: // Encounter an internal error.
-    printf("Please report this bug to Hang.Si@wias-berlin.de. Include\n");
-    printf("  the message above, your input data set, and the exact\n");
-    printf("  command line you used to run this program, thank you.\n");
-    break;
-  case 3:
-    printf("The input surface mesh contain self-intersections. Program stopped.\n");
-    //printf("Hint: use -d option to detect all self-intersections.\n");
-    break;
-  case 4:
-    printf("A very small input feature size was detected. Program stopped.\n");
-    if (m) {
-      printf("Hint: use -T option to set a smaller tolerance. Current is %g\n",
-             m->b->epsilon);
-    }
-    break;
-  case 5:
-    printf("Two very close input facets were detected. Program stopped.\n");
-    printf("Hint: use -Y option to avoid adding Steiner points in boundary.\n");
-    break;
-  case 10:
-    printf("An input error was detected. Program stopped.\n"); 
-    break;
-  case 200:
-    printf("Boundary contains Steiner points (-YY option). Program stopped.\n");
-    break;
-  } // switch (x)
-  exit(x);
-#endif // #ifdef TETLIBRARY
+    std::string msg;
+
+    switch (x) {
+        case 1: // Out of memory.
+            msg = "Error:  Out of memory.\n";
+            break;
+        case 2: // Encounter an internal error.
+            msg = "Please report this bug to Hang.Si@wias-berlin.de. Include\n"
+                  "  the message above, your input data set, and the exact\n"
+                  "  command line you used to run this program, thank you.\n";
+            break;
+        case 3:
+            msg = "The input surface mesh contain self-intersections. Program stopped.\n";
+            //printf("Hint: use -d option to detect all self-intersections.\n");
+            break;
+        case 4:
+            msg = "A very small input feature size was detected. Program stopped.\n";
+            if (m) {
+                msg += "Hint: use -T option to set a smaller tolerance. Current is " + std::to_string(m->b->epsilon) + "\n";
+            }
+            break;
+        case 5:
+            msg = "Two very close input facets were detected. Program stopped.\n"
+                  "Hint: use -Y option to avoid adding Steiner points in boundary.\n";
+            break;
+        case 10:
+            msg = "An input error was detected. Program stopped.\n";
+            break;
+        case 200:
+            msg = "Boundary contains Steiner points (-YY option). Program stopped.\n";
+            break;
+    } // switch (x)
+
+    throw std::runtime_error(msg);
 }
 
 //============================================================================//
