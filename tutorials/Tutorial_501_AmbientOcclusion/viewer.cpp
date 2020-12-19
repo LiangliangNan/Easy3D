@@ -122,7 +122,6 @@ void TutorialAmbientOcclusion::draw() const {
 			return;
 
 		program->bind();
-		program->bind();
 		program->set_uniform("MVP", MVP)
 			->set_uniform("wLightPos", wLightPos)
 			->set_uniform("wCamPos", wCamPos)
