@@ -103,15 +103,16 @@ public:
     // expand: expand the frustum to ensure the image aspect ratio
 	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
 
-    easy3d::AmbientOcclusion* ssao();
+    easy3d::AmbientOcclusion *ssao() { return ssao_; }
+    void enableSsao(bool b);
 
-    easy3d::Shadow* shadow();
+    easy3d::Shadow *shadow() { return shadow_; }
     void enableShadow(bool b);
 
-    easy3d::Transparency* transparency();
+    easy3d::Transparency *transparency() { return transparency_; }
     void enableTransparency(bool b);
 
-    easy3d::EyeDomeLighting* edl();
+    easy3d::EyeDomeLighting *edl() { return edl_; }
     void enableEyeDomeLighting(bool b);
 
 public slots:
@@ -246,13 +247,10 @@ protected:
     easy3d::AmbientOcclusion* ssao_;
 
     easy3d::Transparency* transparency_;
-    bool    transparency_enabled_;
 
     easy3d::Shadow* shadow_;
-    bool    shadow_enabled_;
 
     easy3d::EyeDomeLighting* edl_;
-    bool    edl_enabled_;
 };
 
 

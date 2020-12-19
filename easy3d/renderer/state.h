@@ -189,6 +189,11 @@ namespace easy3d {
         float texture_fractional_repeat() const { return texture_fractional_repeat_; };
         void set_texture_fractional_repeat(float fr) { texture_fractional_repeat_ = fr; };
 
+        // \todo: reuse the texture() and set_texture()
+        bool is_ssao_enabled() const { return ssao_enabled_; }
+        void enable_ssao(bool b) { ssao_enabled_ = b; }
+        void set_ssao_texture(unsigned int tex) { ssao_texture_ = tex; }
+
         /** Clamp the value range of a scalar field. */
         bool clamp_range() const { return clamp_range_; }
         void set_clamp_range(bool b) { clamp_range_ = b; }
@@ -240,6 +245,9 @@ namespace easy3d {
         float texture_repeat_;
         // Control at a finer level: 100 fractional repeat == repeat.
         float texture_fractional_repeat_;
+
+        bool ssao_enabled_;
+        unsigned int ssao_texture_;
 
         bool clamp_range_;
         float clamp_lower_;

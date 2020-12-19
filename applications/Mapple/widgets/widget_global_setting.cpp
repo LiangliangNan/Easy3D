@@ -177,9 +177,19 @@ void WidgetGlobalSetting::setCrossSectionThickness(double w) {
 
 void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
 //    if (algo != AmbientOcclusion_HBAO::SSAO_NONE && ui->checkBoxTransparency->isChecked())
-//        ui->checkBoxTransparency->setChecked(false);  // ssao and tranparency cannot co-exist
+//        ui->checkBoxTransparency->setChecked(false);
 //    viewer_->ssao()->set_algorithm(AmbientOcclusion_HBAO::Algorithm(algo));
 //    viewer_->update();
+//
+    viewer_->enableSsao(algo != 0);
+    if (algo != 0 && ui->checkBoxTransparency->isChecked()) // ssao and tranparency cannot co-exist
+        ui->checkBoxTransparency->setChecked(false);
+
+    std::cout << "TODO: shadow + SSAO" << std::endl;
+    if (algo != 0 && ui->checkBoxShadow->isChecked())
+        ui->checkBoxShadow->setChecked(false);
+
+    viewer_->update();
 }
 
 
@@ -216,8 +226,12 @@ void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
 void WidgetGlobalSetting::setTransparency(bool b) {
     if (b && ui->checkBoxShadow->isChecked())
         ui->checkBoxShadow->setChecked(false);  // shadow and tranparency cannot co-exist
+
 //    if (b && (ui->comboBoxSSAOAlgorithm->currentIndex() != 0 || viewer_->ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE))
 //        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);  // ssao and tranparency cannot co-exist
+    if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
+        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+
     viewer_->enableTransparency(b);
     viewer_->update();
 
@@ -227,6 +241,11 @@ void WidgetGlobalSetting::setTransparency(bool b) {
 void WidgetGlobalSetting::setShadow(bool b) {
     if (b && ui->checkBoxTransparency->isChecked())
         ui->checkBoxTransparency->setChecked(false);  // shadow and tranparency cannot co-exist
+
+    std::cout << "TODO: shadow + SSAO" << std::endl;
+    if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
+        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+
     viewer_->enableShadow(b);
     viewer_->update();
 }

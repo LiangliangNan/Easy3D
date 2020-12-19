@@ -88,11 +88,8 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , model_idx_(-1)
         , ssao_(nullptr)
         , transparency_(nullptr)
-        , transparency_enabled_(false)
         , shadow_(nullptr)
-        , shadow_enabled_(false)
         , edl_(nullptr)
-        , edl_enabled_(false)
 {
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::StrongFocus);
@@ -1139,55 +1136,73 @@ void PaintCanvas::postDraw() {
 }
 
 
-AmbientOcclusion *PaintCanvas::ssao() {
-    if (!ssao_)
-        ssao_ = new AmbientOcclusion(camera_);
-    return ssao_;
-}
+void PaintCanvas::enableSsao(bool b) {
+    if (b) {
+        if (!ssao_)
+            ssao_ = new AmbientOcclusion(camera_);
+    }
+    else {
+        delete ssao_;
+        ssao_ = nullptr;
+    }
 
-
-Shadow *PaintCanvas::shadow() {
-    if (!shadow_)
-        shadow_ = new SoftShadow(camera_);
-    return shadow_;
-}
-
-
-Transparency *PaintCanvas::transparency() {
-    if (!transparency_)
-        transparency_ = new DualDepthPeeling(camera_);
-    return transparency_;
-}
-
-
-easy3d::EyeDomeLighting *PaintCanvas::edl() {
-    if (!edl_)
-        edl_ = new EyeDomeLighting(camera_);
-    return edl_;
+    for (const auto m : models_) {
+        for (auto d : m->renderer()->lines_drawables()) {
+            d->enable_ssao(b);
+        }
+        for (auto d : m->renderer()->points_drawables()) {
+            d->enable_ssao(b);
+        }
+        for (auto d : m->renderer()->triangles_drawables()) {
+            d->enable_ssao(b);
+        }
+    }
 }
 
 
 void PaintCanvas::enableShadow(bool b) {
-    shadow_enabled_ = b;
-    // shadow and transparency cannot co-exist
-    if (shadow_enabled_ && transparency_enabled_)
-        transparency_enabled_ = false;
+    if (b) {
+        if (!shadow_)
+            shadow_ = new SoftShadow(camera_);
+
+        if (transparency()) {
+            delete transparency_;
+            transparency_ = nullptr;
+        }
+    }
+    else {
+        delete shadow_;
+        shadow_ = nullptr;
+    }
 }
 
 
 void PaintCanvas::enableTransparency(bool b) {
-    //    transparency_enabled_ = b;
-    //    // ssao and transparency cannot co-exist
-    //    if (transparency_enabled_ && ssao())
-    //        ssao()->set_algorithm(AmbientOcclusion_HBAO::SSAO_NONE);
-    //    // shadow and transparency cannot co-exist
-    //    if (transparency_enabled_ && shadow_enabled_)
-    //        shadow_enabled_ = false;
+    if (b) {
+        if (!transparency_)
+            transparency_ = new DualDepthPeeling(camera_);
+
+        if (shadow()) {
+            delete shadow_;
+            shadow_ = nullptr;
+        }
+    }
+    else {
+        delete transparency_;
+        transparency_ = nullptr;
+    }
 }
 
 
 void PaintCanvas::enableEyeDomeLighting(bool b) {
-    edl_enabled_ = b;
+    if (b) {
+        if (!edl_)
+            edl_ = new EyeDomeLighting(camera_);
+    }
+    else {
+        delete edl_;
+        edl_ = nullptr;
+    }
 }
 
 
@@ -1262,6 +1277,9 @@ void PaintCanvas::pasteCamera() {
 
 
 void PaintCanvas::draw() {
+    if (models_.empty())
+        return;
+
     easy3d_debug_log_gl_error;
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.
@@ -1271,139 +1289,24 @@ void PaintCanvas::draw() {
         for (auto d : m->renderer()->triangles_drawables())
             surfaces.push_back(d);
     }
-    if (shadow_enabled_) {
+    if (shadow()) {
         shadow()->draw(surfaces); easy3d_debug_log_gl_error;
         return;
-    } else if (transparency_enabled_) {
+    } else if (transparency()) {
         transparency()->draw(surfaces); easy3d_debug_log_gl_error;
         return;
     }
-    //    else if (ssao()) {
-    //        ssao()->draw(models_, 4);
-    //        return;
-    //    }
-
-
-    if (models_.empty())
-        return;
-
-    //    for (auto m : models_) {
-    //        if (!m->is_visible())
-    //            continue;
-    //        for (auto d : m->renderer()->renderer()->lines_drawables())
-    //            if (d->is_visible())
-    //    }
-    //
-    //    const mat4& MVP = camera_->modelViewProjectionMatrix();
-    //    // camera position is defined in world coordinate system.
-    //    const vec3& wCamPos = camera_->position();
-    //    // it can also be computed as follows:
-    //    //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-    //    const mat4& MV = camera_->modelViewMatrix();
-    //    const vec4& wLightPos = inverse(MV) * setting::light_position;
-    //
-    //    ShaderProgram* program = ShaderManager::get_program("surface_color");
-    //    if (!program) {
-    //        std::vector<ShaderProgram::Attribute> attributes;
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-    //        program = ShaderManager::create_program_from_files("surface_color", attributes);
-    //    }
-    //    if (program) {
-    //        program->bind();
-    //        program->set_uniform("MVP", MVP);
-    //        program->set_uniform("wLightPos", wLightPos);
-    //        program->set_uniform("wCamPos", wCamPos);
-    //        program->set_uniform("ssaoEnabled", ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE);
-    //        if (ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE)
-    //            program->bind_texture("ssaoTexture", ssao_->ssao_texture(), 0);
-    //        for (std::size_t idx = 0; idx < models_.size(); ++idx) {
-    //            Model* m = models_[idx];
-    //            if (!m->is_visible())
-    //                continue;
-    //            for (auto d : m->drawables(()) {
-    //                if (d->is_visible()) {
-    //                    program->set_uniform("per_vertex_color",  d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
-    //                    program->set_uniform("default_color", d->color());
-    //                    d->draw(false);
-    //                }
-    //            }
-    //        }
-    //        if (ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE)
-    //            program->release_texture();
-    //        program->release();
-    //    }
-    //
-    //    program = ShaderManager::get_program("lines_color");
-    //    if (!program) {
-    //        std::vector<ShaderProgram::Attribute> attributes;
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-    //        program = ShaderManager::create_program_from_files("lines_color", attributes);
-    //    }
-    //    if (program) {
-    //        program->bind();
-    //        program->set_uniform("MVP", MVP);
-    //        for (auto m : models_) {
-    //            if (!m->is_visible())
-    //                continue;
-    //            for (auto d : m->renderer()->renderer()->lines_drawables()) {
-    //                if (d->is_visible()) {
-    //                    program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
-    //                    program->set_uniform("default_color", d->color());
-    //                    d->draw(false);
-    //                }
-    //            }
-    //        }
-    //        program->release();
-    //    }
-    //
-    //    program = ShaderManager::get_program("points_color");
-    //    if (!program) {
-    //        std::vector<ShaderProgram::Attribute> attributes;
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-    //        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-    //        program = ShaderManager::create_program_from_files("points_color", attributes);
-    //    }
-    //    if (program) {
-    //
-    //        if (edl_enabled_)
-    //            edl()->begin();
-    //
-    //        //glDisable(GL_MULTISAMPLE);
-    //        program->bind();
-    //        program->set_uniform("MVP", MVP);
-    //        program->set_uniform("wLightPos", wLightPos);
-    //        program->set_uniform("wCamPos", wCamPos);
-    //        program->set_uniform("ssaoEnabled", ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE);
-    //        if (ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE)
-    //            program->bind_texture("ssaoTexture", ssao_->ssao_texture(), 0);
-    //        for (auto m : models_) {
-    //            if (!m->is_visible())
-    //                continue;
-    //            for (auto d : m->drawables()) {
-    //                if (d->is_visible()) {
-    //                    program->set_uniform("lighting", d->normal_buffer());
-    //                    program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
-    //                    program->set_uniform("default_color", d->color());
-    //                    d->draw(false);
-    //                }
-    //            }
-    //        }
-    //        if (ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE) {
-    //            program->release_texture();
-    //    #ifndef NDEBUG
-    //            ssao_->draw_occlusion(200, 10, 400, static_cast<int>(400.0f * height() / width()));
-    //    #endif
-    //        }
-    //        program->release();
-    //        //glEnable(GL_MULTISAMPLE);
-    //
-    //        if (edl_enabled_)
-    //            edl()->end();
-    //    }
+    else if (ssao()) {
+        auto ssao_texture = ssao()->generate(models());
+        for (const auto m : models_) {
+            for (auto d : m->renderer()->lines_drawables())
+                d->set_ssao_texture(ssao_texture);
+            for (auto d : m->renderer()->points_drawables())
+                d->set_ssao_texture(ssao_texture);
+            for (auto d : m->renderer()->triangles_drawables())
+                d->set_ssao_texture(ssao_texture);
+        }
+    }
 
     easy3d_debug_log_gl_error;
 
