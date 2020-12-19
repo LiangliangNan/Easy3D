@@ -50,8 +50,7 @@ namespace easy3d {
         tetgen_out_->clean_memory();
         tetgen_in_->numberofpoints = nb_vertices;
 
-        // Liangliang: if you provide "vertices" as double type, you can just assign the pointer, but it
-        //			   seems float may not work properly for some of my data, so I always use double.
+        // Liangliang: Tetgen uses double by default.
         //tetgen_in_->pointlist = (float*)vertices;
         tetgen_in_->pointlist = new double[tetgen_in_->numberofpoints * 3];
         for (unsigned int i = 0; i < nb_vertices * 3; ++i) {
