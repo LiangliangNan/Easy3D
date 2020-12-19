@@ -93,8 +93,8 @@ namespace easy3d {
         unsigned int selection_buffer() const { return selection_buffer_; }
 
         /**
-         * Creates/Updates a single buffer.
-         * Primitives like lines and triangles can be drawn with or without the element buffer.
+         * \brief Creates/Updates a single buffer.
+         * \details Primitives like lines and triangles can be drawn with or without the element buffer.
          *  - With an element buffer: this can reduce the GPU memory consumption.
          *  - Without an element buffer: easier data transfer, but uses more GPU memory. In this case, vertices need to
          *    be in a correct order, like f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3... This requires the shared vertices
@@ -106,18 +106,26 @@ namespace easy3d {
         void update_texcoord_buffer(const std::vector<vec2> &texcoords);
         void update_element_buffer(const std::vector<unsigned int> &elements);
 
-        /// Updates the element buffer.
-        /// \note Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).
+        /**
+         * \brief Updates the element buffer.
+         * \note Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).
+         */
         void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements);
 
-        /// selection buffer (internally based on a shader storage buffer)
-        /// @param index: the index of the binding point.
-        /// \note The buffers should also be bound to this point in all shader code
+        /**
+         * \brief Updates the selection buffer (internally based on a shader storage buffer)
+         * \param index: the index of the binding point.
+         * \note The buffers should also be bound to this point in all shader code
+         */
         void update_selection_buffer(unsigned int index = 1);
 
-        /// generic storage buffer
-        /// @param index: the index of the binding point.
-        /// \note The buffers should also be bound to this point in all shader code
+        /**
+         * Updates a generic storage buffer
+         * \param data The pointer to the data.
+         * \param datasize The size of the data in bytes.
+         * \param index: the index of the binding point.
+         * \note The buffers should also be bound to this point in all shader code
+         */
         void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0);
 
         /// Releases the element buffer if existing vertex data is sufficient (may require duplicating vertex data).
