@@ -76,7 +76,7 @@ namespace easy3d {
         bool empty() const { return points().empty(); };
 
         /** \brief Prints the names of all properties to an output stream (e.g., std::cout). */
-        virtual void property_stats(std::ostream &output) const = 0;
+        virtual void property_stats(std::ostream &output) const {}
 
         /** \brief Sets the renderer of this model. */
         void set_renderer(Renderer* r) { renderer_ = r; }
