@@ -27,6 +27,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/tetra_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -105,6 +106,28 @@ namespace easy3d {
             edges->set_line_width(setting::graph_edges_line_width);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_visible(true);
+        } else if (dynamic_cast<TetraMesh *>(model)) {
+            TetraMesh *mesh = dynamic_cast<TetraMesh *>(model);
+
+            // faces
+            auto faces = mesh->renderer()->add_triangles_drawable("faces");
+            faces->set_uniform_coloring(setting::surface_mesh_faces_color);
+            faces->set_distinct_back_color(true);
+            faces->set_lighting_two_sides(true);
+            faces->set_visible(true);
+
+            // edges
+            auto edges = mesh->renderer()->add_lines_drawable("edges");
+            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
+            edges->set_line_width(setting::surface_mesh_edges_line_width);
+            edges->set_visible(setting::surface_mesh_show_edges);
+
+            // vertices
+            auto vertices = mesh->renderer()->add_points_drawable("vertices");
+            vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
+            vertices->set_impostor_type(PointsDrawable::SPHERE);
+            vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+            vertices->set_visible(setting::surface_mesh_show_vertices);
         }
     }
 

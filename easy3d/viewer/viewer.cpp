@@ -40,6 +40,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/tetra_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -56,11 +57,11 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/tetra_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/dialogs.h>
@@ -1107,7 +1108,10 @@ namespace easy3d {
             model = SurfaceMeshIO::load(file_name);
         } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
             model = GraphIO::load(file_name);
-        } else { // point cloud
+        } else if (ext == "tet") {
+            model = TetraMeshIO::load(file_name);
+        }
+        else { // point cloud
             if (ext == "ptx") {
                 io::PointCloudIO_ptx serializer(file_name);
                 PointCloud *cloud = nullptr;
@@ -1253,9 +1257,10 @@ namespace easy3d {
         const std::string title("Please choose a file");
         const std::string &default_path = resource::directory() + "/data/";
         const std::vector<std::string> &filters = {
-                "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
-                "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
+                "Surface Mesh (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
+                "Tetrahedral Mesh (*.tet)", "*.tet",
                 "All Files (*.*)", "*"
         };
         const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
@@ -1286,6 +1291,7 @@ namespace easy3d {
                 "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
                 "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
+                "Tetrahedral Mesh (*.tet)", "*.tet",
                 "All Files (*.*)", "*"
         };
 

@@ -27,6 +27,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/tetra_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -2387,6 +2388,118 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
+        void update(TetraMesh* model, PointsDrawable* drawable) {
+            assert(model);
+            assert(drawable);
+
+            if (model->empty()) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
+            drawable->update_vertex_buffer(model->points());
+        }
+
+
+        void update(TetraMesh* model, LinesDrawable* drawable) {
+            std::cerr << "TODO: build topology" << std::endl;
+            assert(model);
+            assert(drawable);
+
+            if (model->empty()) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
+            const auto& verts = model->verts();
+            const auto& tets = model->tets();
+
+            // Go through every edge of every tetrahedron.
+            // Ignore an edge if the same edge has already been inserted.
+            std::set<ivec2> edges;
+            for (const auto& tet : tets) {
+                for (int i=0; i<4; ++i) {
+                    for (int j=i+1; j<4; ++j) {
+                        if (edges.find(ivec2(tet[i], tet[j])) == edges.end())
+                            edges.insert(ivec2(tet[i], tet[j]));
+                    }
+                }
+            }
+
+            std::vector<unsigned int> d_indices(edges.size() * 2);
+            int idx = 0;
+            for (const auto& e : edges) {
+                for (unsigned short v = 0; v < 2; ++v)
+                    d_indices[idx * 2 + v] = e[v];
+                ++idx;
+            }
+
+            drawable->update_vertex_buffer(model->points());
+            drawable->update_element_buffer(d_indices);
+        }
+
+
+        void update(TetraMesh* model, TrianglesDrawable* drawable) {
+            std::cerr << "TODO: build topology" << std::endl;
+            assert(model);
+            assert(drawable);
+
+            if (model->empty()) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
+            const auto& verts = model->verts();
+            const auto& tets = model->tets();
+
+            // Go through every triangle of every tetrahedron.
+            // Ignore a triangle if the same triangle has already been inserted.
+            std::set<ivec3> triangles;
+            ivec3 tet_tris[4];
+            ivec3 permuted_tris[3];
+
+            for (std::size_t tet = 0; tet < tets.size(); ++tet) {
+                // Consider each triangle
+                tet_tris[0] = ivec3(tets[tet][0], tets[tet][2], tets[tet][1]);
+                tet_tris[1] = ivec3(tets[tet][0], tets[tet][3], tets[tet][2]);
+                tet_tris[2] = ivec3(tets[tet][0], tets[tet][1], tets[tet][3]);
+                tet_tris[3] = ivec3(tets[tet][1], tets[tet][2], tets[tet][3]);
+
+                for (int tri = 0; tri < 4; ++tri) {
+                    // If the current triangle already exists in the found set 'triangles',
+                    // it will have opposite winding and an arbitrary first vertex.
+                    // Check all possible valid permutations.
+                    permuted_tris[0] = ivec3(tet_tris[tri][0], tet_tris[tri][2], tet_tris[tri][1]);
+                    permuted_tris[1] = ivec3(tet_tris[tri][1], tet_tris[tri][0], tet_tris[tri][2]);
+                    permuted_tris[2] = ivec3(tet_tris[tri][2], tet_tris[tri][1], tet_tris[tri][0]);
+
+                    // Attempt to insert a triangle face to the set.
+                    // If a permutation is found, it means the face is already there.
+                    if (triangles.find(permuted_tris[0]) == triangles.end() &&
+                        triangles.find(permuted_tris[1]) == triangles.end() &&
+                        triangles.find(permuted_tris[2]) == triangles.end()) {
+                        // Add the triangle to the set.
+                        triangles.insert(tet_tris[tri]);
+                    }
+                }
+            }
+
+            std::vector<unsigned int> d_indices(triangles.size() * 3);
+            int idx = 0;
+            for (const auto& t : triangles) {
+                for (unsigned short v = 0; v < 3; ++v)
+                    d_indices[idx * 3 + v] = t[v];
+                ++idx;
+            }
+
+            drawable->update_vertex_buffer(model->points());
+            drawable->update_element_buffer(d_indices);
+        }
+
+
+        // -------------------------------------------------------------------------------------------------------------
+
+
         void update(Model *model, Drawable *drawable) {
             if (model->empty()) {
                 LOG(WARNING) << "model has no valid geometry";
@@ -2406,9 +2519,7 @@ namespace easy3d {
                         update(mesh, dynamic_cast<PointsDrawable *>(drawable));
                         break;
                 }
-            }
-
-            if (dynamic_cast<PointCloud *>(model)) {
+            } else if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
@@ -2432,6 +2543,20 @@ namespace easy3d {
                         break;
                     case Drawable::DT_TRIANGLES:
                         update(graph, dynamic_cast<TrianglesDrawable *>(drawable));
+                        break;
+                }
+            }
+            else if (dynamic_cast<TetraMesh *>(model)) {
+                TetraMesh *mesh = dynamic_cast<TetraMesh *>(model);
+                switch (drawable->type()) {
+                    case Drawable::DT_TRIANGLES:
+                        update(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
+                        break;
+                    case Drawable::DT_LINES:
+                        update(mesh, dynamic_cast<LinesDrawable *>(drawable));
+                        break;
+                    case Drawable::DT_POINTS:
+                        update(mesh, dynamic_cast<PointsDrawable *>(drawable));
                         break;
                 }
             }

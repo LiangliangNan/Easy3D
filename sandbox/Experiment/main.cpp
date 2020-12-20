@@ -6,6 +6,7 @@
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/core/curve.h>
 #include <easy3d/util/string.h>
+#include <easy3d/core/tetra_mesh.h>
 
 #include <cstring>
 #include <cstdio>
@@ -20,66 +21,18 @@
 
 using namespace easy3d;
 
-std::string get_question(int x, int y, bool addition) {
-    std::ostringstream ss;
-    if (x < 10)
-        ss << " " << x;
-    else
-        ss << x;
-
-    if (addition)
-        ss << " + ";
-    else
-        ss << " - ";
-
-    if (y < 10)
-        ss << " " << y << " = \t\t";
-    else
-        ss << y << " = \t\t";
-    return ss.str();
-}
-
-
 int main(int argc, char **argv) {
-#if 1   // For Amy
-    std::string name = "Amy";
-    int x_max = 100;
-    int y_max = 100;
-    int per_line = 4;
-#else   // For Jessie
-    std::string name = "Jessie";
-    int x_max = 20;
-    int y_max = 10;
-    int per_line = 3;
-#endif
+    // Initialize logging.
+    logging::initialize();
 
+    const std::string file_name = resource::directory() + "/data/sphere.tet";
 
-    std::vector<std::string> questions;
-    for (int x=2; x<x_max; ++x) {
-        for (int y=2; y<y_max; ++y) {
-            questions.push_back(get_question(x, y, true));
-            if (x >= y)
-                questions.push_back(get_question(x, y, false));
-        }
+    Viewer viewer("TetMesh");
+    if (!viewer.add_model(file_name)) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
     }
 
-    std::ofstream output(name + ".txt");
-    int count = 0;
-    do {
-        int idx = rand() % (questions.size());
-        output << questions[idx];
-
-        ++count;
-        if (count % per_line == 0) {
-            output << std::endl << std::endl;
-        }
-        if (count % (per_line * 5) == 0) {
-            output << std::endl;
-        }
-
-        auto pos = std::find(questions.begin(), questions.end(), questions[idx]);
-        questions.erase(pos);
-    } while (!questions.empty());
-
-    return 0;
+    // Run the viewer
+    return viewer.run();
 }

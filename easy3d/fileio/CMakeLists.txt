@@ -5,39 +5,41 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-    image_io.h
-    graph_io.h
-    ply_reader_writer.h
-    point_cloud_io.h
-    point_cloud_io_ptx.h
-    point_cloud_io_vg.h
-    surface_mesh_io.h
-    resources.h
-    )
+        image_io.h
+        graph_io.h
+        ply_reader_writer.h
+        point_cloud_io.h
+        point_cloud_io_ptx.h
+        point_cloud_io_vg.h
+        surface_mesh_io.h
+        tetra_mesh_io.h
+        resources.h
+        )
 
 set(${PROJECT_NAME}_SOURCES
-    image_io.cpp
-    graph_io.cpp
-    graph_io_ply.cpp
-    ply_reader_writer.cpp
-    point_cloud_io.cpp
-    point_cloud_io_bin.cpp
-    point_cloud_io_las.cpp
-    point_cloud_io_ply.cpp
-    point_cloud_io_ptx.cpp
-    point_cloud_io_vg.cpp
-    point_cloud_io_xyz.cpp
-    surface_mesh_io.cpp
-    surface_mesh_io_obj.cpp
-    surface_mesh_io_off.cpp
-    surface_mesh_io_ply.cpp
-    surface_mesh_io_poly.cpp
-    surface_mesh_io_stl.cpp
-    resources.cpp
-    )
+        image_io.cpp
+        graph_io.cpp
+        graph_io_ply.cpp
+        ply_reader_writer.cpp
+        point_cloud_io.cpp
+        point_cloud_io_bin.cpp
+        point_cloud_io_las.cpp
+        point_cloud_io_ply.cpp
+        point_cloud_io_ptx.cpp
+        point_cloud_io_vg.cpp
+        point_cloud_io_xyz.cpp
+        surface_mesh_io.cpp
+        surface_mesh_io_obj.cpp
+        surface_mesh_io_off.cpp
+        surface_mesh_io_ply.cpp
+        surface_mesh_io_poly.cpp
+        surface_mesh_io_stl.cpp
+        tetra_mesh_io.cpp
+        resources.cpp
+        )
 
-	
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS} )
+
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
@@ -50,4 +52,4 @@ target_link_libraries(${PROJECT_NAME} core util LAStools rply)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
-endif()
+endif ()

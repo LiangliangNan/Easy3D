@@ -13,6 +13,7 @@ set(${PROJECT_NAME}_HEADERS
         hash.h
         heap.h
         line.h
+        manifold_builder.h
         mat.h
         model.h
         oriented_line.h
@@ -26,7 +27,7 @@ set(${PROJECT_NAME}_HEADERS
         segment.h
         signal.h
         surface_mesh.h
-        manifold_builder.h
+        tetra_mesh.h
         polygon.h
         types.h
         vec.h
@@ -34,10 +35,11 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
         graph.cpp
+        manifold_builder.cpp
         model.cpp
         point_cloud.cpp
         surface_mesh.cpp
-        manifold_builder.cpp
+        tetra_mesh.cpp
         )
 
 

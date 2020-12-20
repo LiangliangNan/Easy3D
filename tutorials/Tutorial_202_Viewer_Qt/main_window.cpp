@@ -37,9 +37,11 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/core/tetra_mesh.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/tetra_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/file_system.h>
@@ -110,9 +112,10 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
-                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.tet)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
+                "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
+                "Tetrahedral Mesh (*.tet)\n"
                 "All formats (*.*)"
             );
 
@@ -153,9 +156,10 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Mesh formats (*.ply *.obj *.off *.stl *.poly)\n"
-                "Point set formats (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.tet)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
+                "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
+                "Tetrahedral Mesh (*.tet)\n"
                 "All formats (*.*)"
     );
 
@@ -206,6 +210,8 @@ Model* MainWindow::open(const std::string& file_name) {
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
         model = GraphIO::load(file_name);
+    } else if (ext == "tet") {
+        model = TetraMeshIO::load(file_name);
     }
     else { // point cloud
         if (ext == "ptx") {
