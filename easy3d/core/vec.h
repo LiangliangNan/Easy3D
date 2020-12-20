@@ -738,6 +738,60 @@ namespace easy3d {
         return result;
     }
 
+
+    template <size_t N, class T>
+    inline bool operator==(const Vec<N,T> &a, const Vec<N,T> &b)
+    {
+        bool t = (a[0] == b[0]);
+        unsigned int i=1;
+        while(i<N && t) {
+            t = t && (a[i]==b[i]);
+            ++i;
+        }
+        return t;
+    }
+
+    template <size_t N, class T>
+    inline bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b)
+    {
+        bool t = (a[0] != b[0]);
+        unsigned int i=1;
+        while(i<N && !t) {
+            t = t || (a[i]!=b[i]);
+            ++i;
+        }
+        return t;
+    }
+
+    // lexicographic comparison
+    template <size_t N, class T>
+    inline bool operator<(const Vec<N,T> &a, const Vec<N,T> &b)
+    {
+        for(unsigned int i=0; i<N; ++i){
+            if(a[i]<b[i]) return true;
+            if(a[i]>b[i]) return false;
+        }
+        return false;
+    }
+
+
+    template <size_t N, class T>
+    inline T min(const Vec<N,T> &a)
+    {
+        T m=a[0];
+        for(unsigned int i=1; i<N; ++i) if(a[i]<m) m=a[i];
+        return m;
+    }
+
+
+    template <size_t N, class T>
+    inline T max(const Vec<N,T> &a)
+    {
+        T m=a[0];
+        for(unsigned int i=1; i<N; ++i) if(a[i]>m) m=a[i];
+        return m;
+    }
+
 #else
 
 
