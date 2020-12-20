@@ -2402,7 +2402,7 @@ namespace easy3d {
 
 
         void update(TetraMesh* model, LinesDrawable* drawable) {
-            std::cerr << "TODO: build topology" << std::endl;
+            LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
 
@@ -2411,8 +2411,8 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->verts();
-            const auto& tets = model->tets();
+            const auto& verts = model->points();
+            const auto& tets = model->cell_indices();
 
             // Go through every edge of every tetrahedron.
             // Ignore an edge if the same edge has already been inserted.
@@ -2440,7 +2440,7 @@ namespace easy3d {
 
 
         void update(TetraMesh* model, TrianglesDrawable* drawable) {
-            std::cerr << "TODO: build topology" << std::endl;
+            LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
 
@@ -2449,8 +2449,8 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->verts();
-            const auto& tets = model->tets();
+            const auto& verts = model->points();
+            const auto& tets = model->cell_indices();
 
             // Go through every triangle of every tetrahedron.
             // Ignore a triangle if the same triangle has already been inserted.

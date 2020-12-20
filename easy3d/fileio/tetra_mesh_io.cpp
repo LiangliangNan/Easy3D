@@ -54,22 +54,28 @@ namespace easy3d {
         TetraMesh* mesh = new TetraMesh;
         mesh->set_name(file_name);
 
-        std::vector<vec3>& verts = mesh->verts();
-        std::vector<ivec4>& tets = mesh->tets();
-
 		StopWatch w;
 
         std::string dummy;
         int num_vertices, num_tets;
         input >> dummy >> num_vertices >> num_tets;
-        verts.resize(num_vertices);
-        tets.resize(num_tets);
 
-        for (std::size_t i = 0; i < num_vertices; ++i)
-            input >> verts[i];
+        vec3 p;
+        for (std::size_t i = 0; i < num_vertices; ++i) {
+            input >> p;
+            mesh->add_vertex(p);
+        }
 
-        for (std::size_t i = 0; i < num_tets; ++i)
-            input >> tets[i];
+        ivec4 ids;
+        for (std::size_t i = 0; i < num_tets; ++i) {
+            input >> ids;
+            mesh->add_tetra(
+                    TetraMesh::Vertex(ids[0]),
+                    TetraMesh::Vertex(ids[1]),
+                    TetraMesh::Vertex(ids[2]),
+                    TetraMesh::Vertex(ids[3])
+                    );
+        }
 
 		if (num_vertices == 0 || num_tets == 0) {
             LOG(WARNING) << "no valid data in file: " << file_name;
@@ -78,8 +84,8 @@ namespace easy3d {
 		}
 		else {
             LOG(INFO) << "tetrhedral mesh loaded ("
-                      << "#vertex: " << mesh->vSize() << ", "
-                      << "#tetrahedra: " << mesh->tSize() << "). "
+                      << "#vertex: " << mesh->n_vertices() << ", "
+                      << "#cell: " << mesh->n_cells() << "). "
                       << w.time_string();
             return mesh;
         }
@@ -88,7 +94,7 @@ namespace easy3d {
 
 	bool TetraMeshIO::save(const std::string& file_name, const TetraMesh* mesh)
 	{
-        if (!mesh || mesh->vSize() == 0 || mesh->tSize() == 0) {
+        if (!mesh || mesh->n_vertices() == 0 || mesh->n_cells() == 0) {
 			LOG(ERROR) << "surface mesh is null";
 			return false;
 		}
@@ -105,8 +111,8 @@ namespace easy3d {
             return false;
         }
 
-        const std::vector<vec3>& verts = mesh->verts();
-        const std::vector<ivec4>& tets = mesh->tets();
+        const std::vector<vec3>& verts = mesh->points();
+        const std::vector<ivec4>& tets = mesh->cell_indices();
 
 		StopWatch w;
 
