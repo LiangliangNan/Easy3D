@@ -44,7 +44,7 @@ namespace easy3d {
 
     /**
      * @brief The built-in Easy3D Viewer.
-     *
+     * \class Viewer easy3d/viewer/viewer.h
      * @details Easy3D is really easy to use. That's why it has such a name.
      *
      * To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
