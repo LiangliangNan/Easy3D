@@ -2411,7 +2411,7 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->verts();
+            const auto& verts = model->points();
             const auto& tets = model->tets();
 
             // Go through every edge of every tetrahedron.
@@ -2449,7 +2449,7 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->verts();
+            const auto& verts = model->points();
             const auto& tets = model->tets();
 
             // Go through every triangle of every tetrahedron.
@@ -2459,6 +2459,17 @@ namespace easy3d {
             ivec3 permuted_tris[3];
 
             for (std::size_t tet = 0; tet < tets.size(); ++tet) {
+#if 0 // boundary only
+                for (unsigned short v = 0; v<4; ++v) {
+                    TetraMesh::Triangle *t = tets[tet].TF(v);
+                    if (model->isBoundary(t->FV(0)) &&
+                        model->isBoundary(t->FV(1)) &&
+                        model->isBoundary(t->FV(2))) {
+                        // Add the triangle to the set.
+                        triangles.insert(ivec3(t->FV(0), t->FV(1), t->FV(2)));
+                    }
+                }
+#else
                 // Consider each triangle
                 tet_tris[0] = ivec3(tets[tet][0], tets[tet][2], tets[tet][1]);
                 tet_tris[1] = ivec3(tets[tet][0], tets[tet][3], tets[tet][2]);
@@ -2481,7 +2492,9 @@ namespace easy3d {
                         // Add the triangle to the set.
                         triangles.insert(tet_tris[tri]);
                     }
+
                 }
+#endif
             }
 
             std::vector<unsigned int> d_indices(triangles.size() * 3);
