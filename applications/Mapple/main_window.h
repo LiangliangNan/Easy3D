@@ -108,24 +108,19 @@ private slots:
     void surfaceMeshPlanarPartition();
     void surfaceMeshPolygonization();
     void surfaceMeshTriangulation();
-
     void surfaceMeshStitchWithReorientation();
     void surfaceMeshStitchWithoutReorientation();
     void surfaceMeshOrientClosedTriangleMesh();
     void surfaceMeshReverseOrientation();
-
     void surfaceMeshRemoveIsolatedVertices();
     void surfaceMeshRemoveDuplicateAndFoldingFaces();
     void surfaceMeshDetectSelfIntersections();
     void surfaceMeshRemeshSelfIntersections();
-
     void surfaceMeshRepairPolygonSoup();
     void surfaceMeshOrientAndStitchPolygonSoup();
-
     void surfaceMeshClip();
     void surfaceMeshSplit();
     void surfaceMeshSlice();
-
     void surfaceMeshSampling();
     void surfaceMeshSubdivisionCatmullClark();
     void surfaceMeshSubdivisionLoop();
@@ -138,6 +133,9 @@ private slots:
     void surfaceMeshParameterization();
     void surfaceMeshGeodesic();
     void surfaceMeshCreateMeshFromText();
+
+    // polyhedral mesh
+    void polymeshExtractBoundary();
 
     // user interaction
     void operationModeChanged(QAction* act);
@@ -167,6 +165,7 @@ private:
     void createActionsForSelectMenu();
     void createActionsForPointCloudMenu();
     void createActionsForSurfaceMeshMenu();
+    void createActionsForPolyMeshMenu();
 
     void createStatusBar();
 
@@ -195,7 +194,8 @@ private:
             *labelPointUnderMouse_,
             *labelNumFaces_,
             *labelNumVertices_,
-            *labelNumEdges_;
+            *labelNumEdges_,
+            *labelNumCells_;
 
     WidgetPointsDrawable*       widgetPointsDrawable_;
     WidgetLinesDrawable*        widgetLinesDrawable_;

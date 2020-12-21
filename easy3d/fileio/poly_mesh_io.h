@@ -43,15 +43,15 @@ namespace easy3d {
 	public:
 
         /**
-         * \brief Reads a polytope mesh from a file.
+         * \brief Reads a polyhedral mesh from a file.
          * \details File extension determines file format (now only '*.tet' format is supported).
          * \param file_name The file name.
-         * \return The pointer of the polytope mesh (nullptr if failed).
+         * \return The pointer of the polyhedral mesh (nullptr if failed).
          */
 		static PolyMesh* load(const std::string& file_name);
 
         /**
-         * \brief Saves a polytope mesh to a file.
+         * \brief Saves a polyhedral mesh to a file.
          * \details File extension determines file format (now only '*.tet' format is supported).
          * \param file_name The file name.
          * \param mesh The Polytope mesh.

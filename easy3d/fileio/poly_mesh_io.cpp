@@ -83,12 +83,13 @@ namespace easy3d {
 			return nullptr;
 		}
 		else {
-            LOG(INFO) << "polytope mesh loaded ("
+            LOG(INFO) << "polyhedral mesh loaded ("
                       << "#vertex: " << mesh->n_vertices() << ", "
                       << "#edge: " << mesh->n_edges() << ", "
                       << "#face: " << mesh->n_faces() << ", "
                       << "#cell: " << mesh->n_cells() << "). "
                       << w.time_string();
+
             return mesh;
         }
 	}
@@ -113,18 +114,18 @@ namespace easy3d {
             return false;
         }
 
-        const std::vector<vec3>& verts = mesh->points();
-        const std::vector<ivec4>& tets = mesh->cell_indices();
-
 		StopWatch w;
 
-        output << "tet " << verts.size() << " " << tets.size() << std::endl;
+        output << "tet " << mesh->n_vertices() << " " << mesh->n_cells() << std::endl;
 
-        for (std::size_t i = 0; i < verts.size(); ++i)
-            output << verts[i] << std::endl;
+        for (auto v : mesh->vertices())
+            output << mesh->position(v) << std::endl;
 
-        for (std::size_t i = 0; i < tets.size(); ++i)
-            output << tets[i] << std::endl;
+        for (auto c : mesh->cells()) {
+            for (auto v : mesh->vertices(c))
+                output << v.idx() << " ";
+            output << std::endl;
+        }
 
         LOG(INFO) << "save model done. " << w.time_string();
         return true;

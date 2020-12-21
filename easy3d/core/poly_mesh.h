@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CORE_POLY_MESH_H
-#define EASY3D_CORE_POLY_MESH_H
+#ifndef EASY3D_CORE_POLYHEDRAL_MESH_H
+#define EASY3D_CORE_POLYHEDRAL_MESH_H
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
@@ -32,7 +32,7 @@
 namespace easy3d {
 
     /**
-     * \brief Data structure representing a polytope mesh.
+     * \brief Data structure representing a polyhedral mesh.
      * \class PolyMesh easy3d/core/poly_mesh.h
      */
 
@@ -123,7 +123,7 @@ namespace easy3d {
             std::ostream& operator<<(std::ostream& os) const { return os << 'f' << idx(); }
         };
 
-        /// this type represents a polytope cell (internally it is basically an index)
+        /// this type represents a polyhedral cell (internally it is basically an index)
         /// \sa Vertex, Edge, HalfFace
         struct Cell : public BaseHandle
         {
@@ -151,7 +151,7 @@ namespace easy3d {
         /// \sa VertexConnectivity, HalfFaceConnectivity, CellConnectivity
         struct EdgeConnectivity
         {
-            std::vector<Vertex>     vertices_;
+            std::vector<Vertex>  vertices_;
             std::set<HalfFace>   halffaces_;
             std::set<Cell>       cells_;
         };
@@ -679,7 +679,7 @@ namespace easy3d {
         bool write_tet(const std::string& filename) const;
         //@}
 
-    public: //----------------------------------------------- add new vertex / face
+    public: //----------------------------------------------- add new vertex / face / cell
 
         /// \name Add new elements by hand
         //@{
@@ -1138,6 +1138,12 @@ namespace easy3d {
         {
             return CellContainer(cells_begin(), cells_end());
         }
+        //@}
+
+    public: //--------------------------------------------- adjacency access
+
+        /// \name Adjacency access
+        //@{
 
         /// returns circulator for vertices around vertex \c v
         const std::set<Vertex>& vertices(Vertex v) const
@@ -1150,6 +1156,11 @@ namespace easy3d {
         {
             assert(i<=1);
             return HalfFace((f.idx() << 1) + i);
+        }
+
+        HalfFace opposite(HalfFace f) const
+        {
+            return hconn_[f].opposite_;
         }
 
         /// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
@@ -1190,9 +1201,9 @@ namespace easy3d {
         }
 
         /// returns circulator for vertices around vertex \c v
-        const std::set<Edge>& edges(Cell t) const
+        const std::set<Edge>& edges(Cell c) const
         {
-            return cconn_[t].edges_;
+            return cconn_[c].edges_;
         }
         
         /// returns circulator for faces around vertex \c v
@@ -1230,16 +1241,35 @@ namespace easy3d {
         {
             return hconn_[f].cell_;
         }
+        //@}
 
-        HalfFace opposite(HalfFace f) const
+    public: //--------------------------------------------- higher-level operations
+
+        /// \name Higher-level Topological Operations
+        //@{
+
+        /// returns whether the mesh a tetrahedral mesh.
+        bool is_tetraheral_mesh() const;
+
+        /// returns whether \c f is a boundary face, i.e., it is incident to only one cell.
+        bool is_border(Face f) const
         {
-            return hconn_[f].opposite_;
+            return is_border(halfface(f, 0)) || is_border(halfface(f, 1));
+        }
+
+        /// returns whether \c f is a boundary face, i.e., it is incident to only one cell.
+        bool is_border(HalfFace h) const
+        {
+            return (!cell(h).is_valid());
         }
 
         /// find the edge (a,b)
         Edge find_edge(Vertex a, Vertex b) const;
 
         HalfFace find_face(const std::vector<Vertex>& vertices) const;
+
+        /// returns whether \c f is degenerate
+        bool is_degenerate(HalfFace f) const;
         //@}
 
     public: //------------------------------------------ geometry-related functions
@@ -1250,14 +1280,8 @@ namespace easy3d {
         /// position of a vertex (read only)
         const vec3& position(Vertex v) const { return vpoint_[v]; }
 
-        /// position of a vertex (read only)
-        const ivec4& indices(Cell t) const { return tindices_[t]; }
-
         /// vector of vertex positions (read only)
         const std::vector<vec3>& points() const { return vpoint_.vector(); }
-
-        /// vector of vertex positions (read only)
-        const std::vector<ivec4>& cell_indices() const { return tindices_.vector(); }
 
         /// compute face normals by calling compute_face_normal(HalfFace) for each face.
         void update_face_normals();
@@ -1267,9 +1291,6 @@ namespace easy3d {
 
         /// compute the length of edge \c e.
         float edge_length(Edge e) const;
-
-        /// returns whether \c f is degenerate
-        bool is_degenerate(HalfFace f) const;
 
         //@}
 
@@ -1292,6 +1313,8 @@ namespace easy3d {
             econn_[e].vertices_ = {s, t};
             vconn_[s].edges_.insert(e);
             vconn_[t].edges_.insert(e);
+            vconn_[s].vertices_.insert(t);
+            vconn_[t].vertices_.insert(s);
             return e;
         }
 
@@ -1301,9 +1324,9 @@ namespace easy3d {
             fprops_.push_back();
             hprops_.push_back();
             hprops_.push_back();
-
             HalfFace f0(n_halffaces()-2);
             HalfFace f1(n_halffaces()-1);
+
             hconn_[f0].opposite_ = f1;
             hconn_[f1].opposite_ = f0;
 
@@ -1332,13 +1355,11 @@ namespace easy3d {
         CellProperty<CellConnectivity>          cconn_;
 
         VertexProperty<vec3>    vpoint_;
-        CellProperty<ivec4>     tindices_;
         HalfFaceProperty<vec3>  fnormal_;
     };
 
 
     //------------------------------------------------------------ output operators
-
 
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Vertex v)
     {
@@ -1350,17 +1371,21 @@ namespace easy3d {
         return (os << 'e' << e.idx());
     }
 
-    inline std::ostream& operator<<(std::ostream& os, PolyMesh::HalfFace f)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::HalfFace h)
+    {
+        return (os << 'h' << h.idx());
+    }
+
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Face f)
     {
         return (os << 'f' << f.idx());
     }
 
-    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Cell t)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Cell c)
     {
-        return (os << 't' << t.idx());
+        return (os << 'c' << c.idx());
     }
-
 
 } // namespace easy3d
 
-#endif // EASY3D_CORE_POLY_MESH_H
+#endif // EASY3D_CORE_POLYHEDRAL_MESH_H

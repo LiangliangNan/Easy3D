@@ -41,7 +41,6 @@ namespace easy3d {
         cconn_    = add_tetra_property<CellConnectivity>("c:connectivity");
 
         vpoint_   = add_vertex_property<vec3>("v:point");
-        tindices_ = add_tetra_property<ivec4>("t:indices");
 
         mprops_.push_back();
     }
@@ -71,13 +70,12 @@ namespace easy3d {
             mprops_ = rhs.mprops_;
 
             // property handles contain pointers, have to be reassigned
-            vconn_    = add_vertex_property<VertexConnectivity>("v:connectivity");
-            econn_    = add_edge_property<EdgeConnectivity>("e:connectivity");
-            hconn_    = add_halfface_property<HalfFaceConnectivity>("h:connectivity");
-            cconn_    = add_tetra_property<CellConnectivity>("c:connectivity");
+            vconn_    = vertex_property<VertexConnectivity>("v:connectivity");
+            econn_    = edge_property<EdgeConnectivity>("e:connectivity");
+            hconn_    = halfface_property<HalfFaceConnectivity>("h:connectivity");
+            cconn_    = cell_property<CellConnectivity>("c:connectivity");
 
             vpoint_   = vertex_property<vec3>("v:point");
-            tindices_ = cell_property<ivec4>("t:indices");
 
             // normals might be there, therefore use get_property
             fnormal_  = get_halfface_property<vec3>("f:normal");
@@ -109,7 +107,6 @@ namespace easy3d {
             cconn_    = add_tetra_property<CellConnectivity>("c:connectivity");
             
             vpoint_   = add_vertex_property<vec3>("v:point");
-            tindices_ = add_tetra_property<ivec4>("t:indices");
             
             // normals might be there, therefore use get_property
             fnormal_  = get_halfface_property<vec3>("f:normal");
@@ -182,10 +179,15 @@ namespace easy3d {
         }
 
         output << "tet " << n_vertices() << " " << n_cells() << std::endl;
+
         for (auto v : vertices())
             output << vpoint_[v] << std::endl;
-        for (auto t : cells())
-            output << tindices_[t] << std::endl;
+
+        for (auto c : cells()) {
+            for (auto v : vertices(c))
+                output << v.idx() << " ";
+            output << std::endl;
+        }
 
         return true;
     }
@@ -259,6 +261,14 @@ namespace easy3d {
                 output << "\t" << p << std::endl;
         }
 
+        props = halfface_properties();
+        if (!props.empty())
+        {
+            output << "halfface properties:\n";
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
+        }
+
         props = face_properties();
         if (!props.empty())
         {
@@ -298,20 +308,26 @@ namespace easy3d {
 
 
     PolyMesh::HalfFace PolyMesh::find_face(const std::vector<Vertex>& vts) const {
+        auto is_same_set = [](const std::vector<Vertex>& set1, const std::vector<Vertex>& set2) -> bool { // allows permutation
+            if (set1.size() != set2.size())
+                return false;
+            for (std::size_t start=0; start<set1.size(); ++start) {
+                bool found = true;
+                for (std::size_t id = 0; id < set1.size(); ++id) {
+                    if (set1[(id + start) % set1.size()] != set2[id]) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found)
+                    return true;
+            }
+            return false;
+        };
+
         assert(vts.size() >= 3);
         for (auto h : halffaces(vts[0])) {
-            std::set<Vertex> fvts;
-            for (auto v : vertices(h))
-                fvts.insert(v);
-
-            bool found = true;
-            for (auto v : vts) {
-                if (fvts.find(v) == fvts.end()) {
-                    found = false;
-                    break;
-                }
-            }
-            if (found)
+            if (is_same_set(vertices(h), vts))
                 return h;
         }
         return HalfFace();
@@ -337,17 +353,20 @@ namespace easy3d {
             hconn_[opposite(f)].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
         }
 
-        for (auto v : vertices)
+        for (auto v : vertices) {
             vconn_[v].halffaces_.insert(f);
+            vconn_[v].halffaces_.insert(opposite(f));
+        }
 
-        for (int i=0; i<vertices.size() - 1; ++i) {
+        for (int i=0; i<vertices.size(); ++i) {
             auto s = vertices[i];
-            auto t = vertices[i+1];
+            auto t = vertices[(i+1)%3];
             auto e = find_edge(s, t);
-            if (!e.is_valid()) {
-                auto e = new_edge(s, t);
-                econn_[e].halffaces_.insert(f);
-            }
+            if (!e.is_valid())
+                e = new_edge(s, t);
+            econn_[e].halffaces_.insert(f);
+            hconn_[f].edges_.insert(e);
+            hconn_[opposite(f)].edges_.insert(e);
         }
 
         return f;
@@ -372,11 +391,15 @@ namespace easy3d {
 
         for (auto f : faces) {
             hconn_[f].cell_ = c;
-            for (auto v : vertices(f))
+            for (auto v : vertices(f)) {
                 vconn_[v].cells_.insert(c);
+                cconn_[c].vertices_.insert(v);
+            }
+            for (auto e : edges(f)) {
+                cconn_[c].edges_.insert(e);
+                econn_[e].cells_.insert(c);
+            }
         }
-
-        LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
 
         return c;
     }
@@ -384,10 +407,10 @@ namespace easy3d {
 
     PolyMesh::Cell PolyMesh::add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         std::vector<HalfFace> faces = {
-                add_triangle(v0, v2, v1),
-                add_triangle(v0, v3, v2),
-                add_triangle(v0, v1, v3),
-                add_triangle(v1, v2, v3)
+                add_triangle(v0, v1, v2),
+                add_triangle(v1, v3, v2),
+                add_triangle(v0, v2, v3),
+                add_triangle(v1, v0, v3)
         };
 
         return add_cell(faces);
@@ -468,5 +491,19 @@ namespace easy3d {
 
         return false;
     }
+
+
+    bool PolyMesh::is_tetraheral_mesh() const {
+        for (auto f : faces()) {
+            if (vertices(f).size() != 3)
+                return false;
+        }
+        for (auto c : cells()) {
+            if (vertices(c).size() != 4)
+                return false;
+        }
+        return true;
+    }
+
 
 } // namespace easy3d

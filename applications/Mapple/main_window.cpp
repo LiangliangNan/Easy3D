@@ -42,6 +42,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/random.h>
+#include <easy3d/core/manifold_builder.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
@@ -154,6 +155,9 @@ MainWindow::MainWindow(QWidget *parent)
     // surface mesh menu
     createActionsForSurfaceMeshMenu();
 
+    // polyhedral mesh menu
+    createActionsForPolyMeshMenu();
+
     // status bar
     createStatusBar();
 
@@ -217,13 +221,13 @@ void MainWindow::createStatusBar()
     statusBar()->addWidget(labelStatusInfo_);
 
     labelPointUnderMouse_ = new QLabel("XYZ = [-, -, -]");
-    labelPointUnderMouse_->setFixedWidth(300);
+    labelPointUnderMouse_->setFixedWidth(400);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelPointUnderMouse_);
 
     //////////////////////////////////////////////////////////////////////////
 
-    const int length = 150;
+    const int length = 120;
     labelNumFaces_ = new QLabel;
     labelNumFaces_->setMinimumWidth(length);
     labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
@@ -238,6 +242,11 @@ void MainWindow::createStatusBar()
     labelNumEdges_->setMinimumWidth(length);
     labelNumEdges_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelNumEdges_);
+
+    labelNumCells_ = new QLabel;
+    labelNumCells_->setMinimumWidth(length);
+    labelNumCells_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    statusBar()->addWidget(labelNumCells_);
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -255,7 +264,7 @@ void MainWindow::createStatusBar()
 
 void MainWindow::updateStatusBar()
 {
-    QString faces(""), vertices(""), edges("");
+    QString faces(""), vertices(""), edges(""), cells("");
 
     Model* model = viewer_->currentModel();
     if (dynamic_cast<SurfaceMesh*>(model)) {
@@ -265,6 +274,7 @@ void MainWindow::updateStatusBar()
         edges = QString("#edges: %1").arg(mesh->n_edges());
         labelNumFaces_->setVisible(true);
         labelNumEdges_->setVisible(true);
+        labelNumCells_->setVisible(false);
     }
 
     else if (dynamic_cast<PointCloud*>(model)) {
@@ -272,18 +282,33 @@ void MainWindow::updateStatusBar()
         vertices = QString("#vertices: %1").arg(cloud->n_vertices());
         labelNumFaces_->setVisible(false);
         labelNumEdges_->setVisible(false);
+        labelNumCells_->setVisible(false);
     }
 
     else if (dynamic_cast<Graph*>(model)) {
         auto graph = dynamic_cast<Graph*>(model);
         vertices = QString("#vertices: %1").arg(graph->n_vertices());
-        edges = QString("#meta: %1").arg(graph->n_edges());
+        edges = QString("#edges: %1").arg(graph->n_edges());
         labelNumFaces_->setVisible(false);
         labelNumEdges_->setVisible(true);
+        labelNumCells_->setVisible(false);
     }
 
-    labelNumFaces_->setText( faces );
+    else if (dynamic_cast<PolyMesh*>(model)) {
+        auto mesh = dynamic_cast<PolyMesh*>(model);
+        faces = QString("#faces: %1").arg(mesh->n_faces());
+        vertices = QString("#vertices: %1").arg(mesh->n_vertices());
+        edges = QString("#edges: %1").arg(mesh->n_edges());
+        cells = QString("#cells: %1").arg(mesh->n_cells());
+        labelNumFaces_->setVisible(true);
+        labelNumEdges_->setVisible(true);
+        labelNumCells_->setVisible(true);
+    }
+
+
     labelNumVertices_->setText( vertices );
+    labelNumFaces_->setText( faces );
+    labelNumCells_->setText( cells );
     labelNumEdges_->setText( edges );
 }
 
@@ -841,6 +866,11 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
 }
 
 
+void MainWindow::createActionsForPolyMeshMenu() {
+    connect(ui->actionPolyMeshExtractBoundary, SIGNAL(triggered()), this, SLOT(polymeshExtractBoundary()));
+}
+
+
 void MainWindow::operationModeChanged(QAction* act) {
     if (act == ui->actionCameraManipulation) {
         viewer()->tool_manager()->set_tool(tools::ToolManager::EMPTY_TOOL);
@@ -1326,6 +1356,51 @@ void MainWindow::pointCloudNormalizeNormals() {
 
     cloud->renderer()->update();
     viewer()->update();
+}
+
+
+void MainWindow::polymeshExtractBoundary() {
+    PolyMesh* poly = dynamic_cast<PolyMesh*>(viewer()->currentModel());
+    if (!poly)
+        return;
+
+    std::unordered_map<PolyMesh::Vertex, SurfaceMesh::Vertex, PolyMesh::Vertex::Hash> unique_vertex;
+    std::vector<PolyMesh::Vertex> vertices;
+    std::vector< std::vector<SurfaceMesh::Vertex> > faces;
+
+    for (auto h : poly->halffaces()) {
+        if (poly->is_border(h)) {
+            std::vector<SurfaceMesh::Vertex> face;
+            for (auto v : poly->vertices(h)) {
+                auto pos = unique_vertex.find(v);
+                if (pos == unique_vertex.end()) {
+                    auto sv = SurfaceMesh::Vertex(vertices.size());
+                    unique_vertex[v] = sv;
+                    face.push_back(sv);
+                    vertices.push_back(v);
+                }
+                else
+                    face.push_back(pos->second);
+            }
+            faces.push_back(face);
+        }
+    }
+
+    SurfaceMesh* mesh = new SurfaceMesh;
+    const std::string &name = file_system::name_less_extension(poly->name()) + "_boundary.ply";
+    mesh->set_name(name);
+
+    ManifoldBuilder builder(mesh);
+    builder.begin_surface();
+    for (auto v : vertices)
+        builder.add_vertex(poly->position(v));
+    for (auto f : faces)
+        builder.add_face(f);
+    builder.end_surface();
+
+    viewer_->addModel(mesh);
+    updateUi();
+    viewer_->update();
 }
 
 

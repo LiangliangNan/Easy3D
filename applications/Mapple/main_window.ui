@@ -179,6 +179,12 @@
     </property>
     <addaction name="actionAddGaussianNoise"/>
    </widget>
+   <widget class="QMenu" name="menuPolyMesh">
+    <property name="title">
+     <string>Polyhedral Mesh</string>
+    </property>
+    <addaction name="actionPolyMeshExtractBoundary"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuProperty"/>
@@ -186,6 +192,7 @@
    <addaction name="menuSelect"/>
    <addaction name="menuPointCloud"/>
    <addaction name="menuSurfaceMesh"/>
+   <addaction name="menuPolyMesh"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -961,6 +968,11 @@
   <action name="actionPolygonization">
    <property name="text">
     <string>Polygonization</string>
+   </property>
+  </action>
+  <action name="actionPolyMeshExtractBoundary">
+   <property name="text">
+    <string>Extract boundary</string>
    </property>
   </action>
  </widget>

@@ -44,6 +44,7 @@
         <file>resources/icons/cancel.png</file>
         <file>resources/icons/select_lasso.png</file>
         <file>resources/icons/mesh.png</file>
+        <file>resources/icons/tetrahedra.png</file>
         <file>resources/icons/drawable_points.png</file>
         <file>resources/icons/record.png</file>
         <file>resources/icons/snap_shot.png</file>

@@ -151,7 +151,7 @@ namespace easy3d {
         // PolyMesh ------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a polytope mesh.
+         * @brief Update render buffers for the default "vertices" drawable of a polyhedral mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
@@ -159,7 +159,7 @@ namespace easy3d {
         void update(PolyMesh* model, PointsDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "edges" drawable of a polytope mesh.
+         * @brief Update render buffers for the default "edges" drawable of a polyhedral mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
@@ -167,7 +167,7 @@ namespace easy3d {
         void update(PolyMesh* model, LinesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "faces" drawable of a polytope mesh.
+         * @brief Update render buffers for the default "faces" drawable of a polyhedral mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
