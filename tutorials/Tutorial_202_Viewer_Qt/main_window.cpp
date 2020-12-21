@@ -115,7 +115,7 @@ bool MainWindow::onOpen() {
                 "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.tet)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Tetrahedral Mesh (*.tet)\n"
+                "Polytope Mesh (*.tet)\n"
                 "All formats (*.*)"
             );
 
@@ -159,7 +159,7 @@ bool MainWindow::onSave() {
                 "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.tet)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Tetrahedral Mesh (*.tet)\n"
+                "Polytope Mesh (*.tet)\n"
                 "All formats (*.*)"
     );
 

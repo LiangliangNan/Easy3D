@@ -83,8 +83,10 @@ namespace easy3d {
 			return nullptr;
 		}
 		else {
-            LOG(INFO) << "tetrhedral mesh loaded ("
+            LOG(INFO) << "polytope mesh loaded ("
                       << "#vertex: " << mesh->n_vertices() << ", "
+                      << "#edge: " << mesh->n_edges() << ", "
+                      << "#face: " << mesh->n_faces() << ", "
                       << "#cell: " << mesh->n_cells() << "). "
                       << w.time_string();
             return mesh;

@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_FILEIO_TETRA_MESH_IO_H
-#define EASY3D_FILEIO_TETRA_MESH_IO_H
+#ifndef EASY3D_FILEIO_TOLY_MESH_IO_H
+#define EASY3D_FILEIO_TOLY_MESH_IO_H
 
 
 #include <string>
@@ -36,25 +36,25 @@ namespace easy3d {
 
     /**
      * \brief Implementation of file input/output operations for PolyMesh.
-     * \class PolyMeshIO easy3d/fileio/tetra_mesh_io.h
+     * \class PolyMeshIO easy3d/fileio/poly_mesh_io.h
      */
 	class PolyMeshIO
 	{
 	public:
 
         /**
-         * \brief Reads a tetrahedral mesh from a file.
-         * \details File extension determines file format (now only tet format is supported).
+         * \brief Reads a polytope mesh from a file.
+         * \details File extension determines file format (now only '*.tet' format is supported).
          * \param file_name The file name.
-         * \return The pointer of the tetrahedral mesh (nullptr if failed).
+         * \return The pointer of the polytope mesh (nullptr if failed).
          */
 		static PolyMesh* load(const std::string& file_name);
 
         /**
-         * \brief Saves a tetrahedral mesh to a file.
-         * \details File extension determines file format (now only tet format is supported).
+         * \brief Saves a polytope mesh to a file.
+         * \details File extension determines file format (now only '*.tet' format is supported).
          * \param file_name The file name.
-         * \param mesh The tetrahedral mesh.
+         * \param mesh The Polytope mesh.
          * \return The status of the operation
          *      \arg true if succeeded
          *      \arg false if failed
@@ -64,4 +64,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_FILEIO_TETRA_MESH_IO_H
+#endif // EASY3D_FILEIO_TOLY_MESH_IO_H
