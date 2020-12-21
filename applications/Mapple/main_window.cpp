@@ -1814,38 +1814,33 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     if (!cloud)
         return;
 
-    const std::vector<vec3>& pts = cloud->points();
+    const std::vector<vec3>& points = cloud->points();
     Delaunay3 delaunay;
-    delaunay.set_vertices(pts);
+    delaunay.set_vertices(points);
 
-    LOG(INFO) << "triangulation done. num tetrahedra: " << delaunay.nb_tets();
-    LOG(WARNING) << "TODO: implement a data structure to store and visualize the result";
+    PolyMesh* mesh = new PolyMesh;
+    const std::string& name = file_system::parent_directory(cloud->name()) + "/" + file_system::base_name(cloud->name()) + "_delaunay";
+    mesh->set_name(name);
 
-//    CGraph* whet_grid = new CGraph;
-//    CGraphBuilder builder;
-//    builder.set_target(whet_grid);
-//    builder.begin_volume();
-//
-//    builder.build_meta_tetrahedron();
-//
-//    for (std::size_t i = 0; i < points.size(); i++) {
-//        builder.add_vertex(points[i]);
-//    }
-//
-//    std::cerr << "Nb tets = " << delaunay.nb_tets() << std::endl;
-//    for (unsigned int i = 0; i < delaunay.nb_tets(); i++) {
-//        builder.begin_cell(0);
-//        for (int j = 0; j < 4; j++) {
-//            int v = delaunay.tet_vertex(i, j);
-//            mpl_debug_assert(v >= 0);
-//            mpl_debug_assert(v < points.size());
-//            builder.add_vertex_to_cell(v);
-//        }
-//        builder.end_cell();
-//    }
-//    builder.end_volume();
-//
-//    const std::string& name = FileUtils::dir_name(pset->name()) + "/" + FileUtils::base_name(pset->name()) + "_delaunay";
-//    whet_grid->set_name(name);
-//    main_window_->addModel(whet_grid, true, false);
+    for (std::size_t i = 0; i < points.size(); i++) {
+        mesh->add_vertex(points[i]);
+    }
+
+    LOG(INFO) << "building tetrahedral mesh with " << delaunay.nb_tets() << " tetrahedra..." << std::endl;
+    StopWatch w;
+    for (unsigned int i = 0; i < delaunay.nb_tets(); i++) {
+        PolyMesh::Vertex vts[4];
+        for (int j = 0; j < 4; j++) {
+            int v = delaunay.tet_vertex(i, j);
+            assert(v >= 0);
+            assert(v < points.size());
+            vts[j] = PolyMesh::Vertex(v);
+        }
+        mesh->add_tetra(vts[0], vts[1], vts[2], vts[3]);
+    }
+    LOG(INFO) << "done." << w.time_string() << std::endl;
+
+    viewer_->addModel(mesh);
+    updateUi();
+    viewer_->update();
 }
