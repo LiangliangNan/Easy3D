@@ -64,6 +64,7 @@ void DialogSurfaceMeshSampling::apply() {
     if (cloud) {
         viewer_->addModel(cloud);
         window_->updateUi();
+        viewer_->update();
     }
 }
 

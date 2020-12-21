@@ -136,6 +136,7 @@ void DialogPoissonReconstruction::trim() {
             trimmed_mesh->set_name(name);
             viewer_->addModel(trimmed_mesh);
             window_->updateUi();
+            viewer_->update();
         }
     }
 }
