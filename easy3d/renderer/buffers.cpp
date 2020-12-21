@@ -2411,26 +2411,11 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->points();
-            const auto& tets = model->cell_indices();
-
-            // Go through every edge of every tetrahedron.
-            // Ignore an edge if the same edge has already been inserted.
-            std::set<ivec2> edges;
-            for (const auto& tet : tets) {
-                for (int i=0; i<4; ++i) {
-                    for (int j=i+1; j<4; ++j) {
-                        if (edges.find(ivec2(tet[i], tet[j])) == edges.end())
-                            edges.insert(ivec2(tet[i], tet[j]));
-                    }
-                }
-            }
-
-            std::vector<unsigned int> d_indices(edges.size() * 2);
+            std::vector<unsigned int> d_indices(model->n_edges() * 2);
             int idx = 0;
-            for (const auto& e : edges) {
-                for (unsigned short v = 0; v < 2; ++v)
-                    d_indices[idx * 2 + v] = e[v];
+            for (auto e : model->edges()) {
+                d_indices[idx * 2 ] = model->vertex(e, 0).idx();
+                d_indices[idx * 2 + 1] = model->vertex(e, 1).idx();
                 ++idx;
             }
 
@@ -2449,48 +2434,16 @@ namespace easy3d {
                 return;
             }
 
-            const auto& verts = model->points();
-            const auto& tets = model->cell_indices();
+            std::vector<unsigned int> d_indices;
 
-            // Go through every triangle of every tetrahedron.
-            // Ignore a triangle if the same triangle has already been inserted.
-            std::set<ivec3> triangles;
-            ivec3 tet_tris[4];
-            ivec3 permuted_tris[3];
-
-            for (std::size_t tet = 0; tet < tets.size(); ++tet) {
-                // Consider each triangle
-                tet_tris[0] = ivec3(tets[tet][0], tets[tet][2], tets[tet][1]);
-                tet_tris[1] = ivec3(tets[tet][0], tets[tet][3], tets[tet][2]);
-                tet_tris[2] = ivec3(tets[tet][0], tets[tet][1], tets[tet][3]);
-                tet_tris[3] = ivec3(tets[tet][1], tets[tet][2], tets[tet][3]);
-
-                for (int tri = 0; tri < 4; ++tri) {
-                    // If the current triangle already exists in the found set 'triangles',
-                    // it will have opposite winding and an arbitrary first vertex.
-                    // Check all possible valid permutations.
-                    permuted_tris[0] = ivec3(tet_tris[tri][0], tet_tris[tri][2], tet_tris[tri][1]);
-                    permuted_tris[1] = ivec3(tet_tris[tri][1], tet_tris[tri][0], tet_tris[tri][2]);
-                    permuted_tris[2] = ivec3(tet_tris[tri][2], tet_tris[tri][1], tet_tris[tri][0]);
-
-                    // Attempt to insert a triangle face to the set.
-                    // If a permutation is found, it means the face is already there.
-                    if (triangles.find(permuted_tris[0]) == triangles.end() &&
-                        triangles.find(permuted_tris[1]) == triangles.end() &&
-                        triangles.find(permuted_tris[2]) == triangles.end()) {
-                        // Add the triangle to the set.
-                        triangles.insert(tet_tris[tri]);
-                    }
+            for (auto f : model->faces()) {
+                auto hf = model->halfface(f, 0);
+                for (auto v : model->vertices(hf)) {
+                    d_indices.push_back(v.idx());
                 }
             }
 
-            std::vector<unsigned int> d_indices(triangles.size() * 3);
-            int idx = 0;
-            for (const auto& t : triangles) {
-                for (unsigned short v = 0; v < 3; ++v)
-                    d_indices[idx * 3 + v] = t[v];
-                ++idx;
-            }
+            std::cout << "triangles: " << d_indices.size() / 3 << std::endl;
 
             drawable->update_vertex_buffer(model->points());
             drawable->update_element_buffer(d_indices);
