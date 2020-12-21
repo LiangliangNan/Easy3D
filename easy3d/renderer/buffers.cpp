@@ -27,7 +27,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -2388,7 +2388,7 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
-        void update(TetraMesh* model, PointsDrawable* drawable) {
+        void update(PolyMesh* model, PointsDrawable* drawable) {
             assert(model);
             assert(drawable);
 
@@ -2401,7 +2401,7 @@ namespace easy3d {
         }
 
 
-        void update(TetraMesh* model, LinesDrawable* drawable) {
+        void update(PolyMesh* model, LinesDrawable* drawable) {
             LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
@@ -2439,7 +2439,7 @@ namespace easy3d {
         }
 
 
-        void update(TetraMesh* model, TrianglesDrawable* drawable) {
+        void update(PolyMesh* model, TrianglesDrawable* drawable) {
             LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
@@ -2546,8 +2546,8 @@ namespace easy3d {
                         break;
                 }
             }
-            else if (dynamic_cast<TetraMesh *>(model)) {
-                TetraMesh *mesh = dynamic_cast<TetraMesh *>(model);
+            else if (dynamic_cast<PolyMesh *>(model)) {
+                PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_TRIANGLES:
                         update(mesh, dynamic_cast<TrianglesDrawable *>(drawable));

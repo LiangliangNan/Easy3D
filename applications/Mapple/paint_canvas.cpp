@@ -29,7 +29,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>

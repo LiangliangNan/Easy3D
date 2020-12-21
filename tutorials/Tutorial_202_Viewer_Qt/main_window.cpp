@@ -37,11 +37,11 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/tetra_mesh_io.h>
+#include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/file_system.h>
@@ -211,7 +211,7 @@ Model* MainWindow::open(const std::string& file_name) {
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
         model = GraphIO::load(file_name);
     } else if (ext == "tet") {
-        model = TetraMeshIO::load(file_name);
+        model = PolyMeshIO::load(file_name);
     }
     else { // point cloud
         if (ext == "ptx") {

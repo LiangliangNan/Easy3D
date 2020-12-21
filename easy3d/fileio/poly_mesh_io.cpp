@@ -22,11 +22,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/fileio/tetra_mesh_io.h>
+#include <easy3d/fileio/poly_mesh_io.h>
 
 #include <clocale>
 
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 #include <easy3d/util/logging.h>
@@ -35,7 +35,7 @@
 namespace easy3d {
 
 
-	TetraMesh* TetraMeshIO::load(const std::string& file_name)
+	PolyMesh* PolyMeshIO::load(const std::string& file_name)
 	{
 		std::setlocale(LC_NUMERIC, "C");
 
@@ -51,7 +51,7 @@ namespace easy3d {
             return nullptr;
         }
 
-        TetraMesh* mesh = new TetraMesh;
+        PolyMesh* mesh = new PolyMesh;
         mesh->set_name(file_name);
 
 		StopWatch w;
@@ -70,10 +70,10 @@ namespace easy3d {
         for (std::size_t i = 0; i < num_tets; ++i) {
             input >> ids;
             mesh->add_tetra(
-                    TetraMesh::Vertex(ids[0]),
-                    TetraMesh::Vertex(ids[1]),
-                    TetraMesh::Vertex(ids[2]),
-                    TetraMesh::Vertex(ids[3])
+                    PolyMesh::Vertex(ids[0]),
+                    PolyMesh::Vertex(ids[1]),
+                    PolyMesh::Vertex(ids[2]),
+                    PolyMesh::Vertex(ids[3])
                     );
         }
 
@@ -92,7 +92,7 @@ namespace easy3d {
 	}
 
 
-	bool TetraMeshIO::save(const std::string& file_name, const TetraMesh* mesh)
+	bool PolyMeshIO::save(const std::string& file_name, const PolyMesh* mesh)
 	{
         if (!mesh || mesh->n_vertices() == 0 || mesh->n_cells() == 0) {
 			LOG(ERROR) << "surface mesh is null";

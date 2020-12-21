@@ -27,7 +27,7 @@ set(${PROJECT_NAME}_HEADERS
         segment.h
         signal.h
         surface_mesh.h
-        tetra_mesh.h
+        poly_mesh.h
         polygon.h
         types.h
         vec.h
@@ -39,7 +39,7 @@ set(${PROJECT_NAME}_SOURCES
         model.cpp
         point_cloud.cpp
         surface_mesh.cpp
-        tetra_mesh.cpp
+        poly_mesh.cpp
         )
 
 

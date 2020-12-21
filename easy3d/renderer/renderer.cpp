@@ -27,7 +27,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -106,8 +106,8 @@ namespace easy3d {
             edges->set_line_width(setting::graph_edges_line_width);
             edges->set_impostor_type(LinesDrawable::CYLINDER);
             edges->set_visible(true);
-        } else if (dynamic_cast<TetraMesh *>(model)) {
-            TetraMesh *mesh = dynamic_cast<TetraMesh *>(model);
+        } else if (dynamic_cast<PolyMesh *>(model)) {
+            PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
 
             // faces
             auto faces = mesh->renderer()->add_triangles_drawable("faces");

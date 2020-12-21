@@ -6,7 +6,7 @@
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/core/curve.h>
 #include <easy3d/util/string.h>
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 
 #include <cstring>
 #include <cstdio>

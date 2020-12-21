@@ -23,7 +23,7 @@
  */
 
 
-#include <easy3d/core/tetra_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/logging.h>
 
 #include <cmath>
@@ -31,7 +31,7 @@
 
 namespace easy3d {
 
-    TetraMesh::TetraMesh()
+    PolyMesh::PolyMesh()
     {
         // allocate standard properties
         // same list is used in operator=() and assign()
@@ -50,7 +50,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    TetraMesh::~TetraMesh()
+    PolyMesh::~PolyMesh()
     {
     }
 
@@ -58,7 +58,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    TetraMesh& TetraMesh::operator=(const TetraMesh& rhs)
+    PolyMesh& PolyMesh::operator=(const PolyMesh& rhs)
     {
         if (this != &rhs)
         {
@@ -89,7 +89,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    TetraMesh& TetraMesh::assign(const TetraMesh& rhs)
+    PolyMesh& PolyMesh::assign(const PolyMesh& rhs)
     {
         if (this != &rhs)
         {
@@ -133,7 +133,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool TetraMesh::read_tet(const std::string &file_name)
+    bool PolyMesh::read_tet(const std::string &file_name)
     {
         clear();
 
@@ -167,7 +167,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool TetraMesh::write_tet(const std::string &file_name) const {
+    bool PolyMesh::write_tet(const std::string &file_name) const {
         if (n_faces() == 0) {
             LOG(ERROR) << "empty mesh";
             return false;
@@ -192,7 +192,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void TetraMesh::clear()
+    void PolyMesh::clear()
     {
         //---- clear without removing properties
 
@@ -224,7 +224,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void TetraMesh::reserve(unsigned int nvertices, unsigned int ncells )
+    void PolyMesh::reserve(unsigned int nvertices, unsigned int ncells )
     {
         vprops_.reserve(nvertices);
         tprops_.reserve(ncells);
@@ -235,7 +235,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void TetraMesh::property_stats(std::ostream& output) const
+    void PolyMesh::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
 
@@ -284,7 +284,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    TetraMesh::Vertex TetraMesh::add_vertex(const vec3& p)
+    PolyMesh::Vertex PolyMesh::add_vertex(const vec3& p)
     {
         Vertex v = new_vertex();
         vpoint_[v] = p;
@@ -294,7 +294,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    TetraMesh::Tetra TetraMesh::add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+    PolyMesh::Tetra PolyMesh::add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
         std::vector<Vertex> vertices(4);
         vertices[0] = v0;
         vertices[1] = v1;
@@ -313,7 +313,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void TetraMesh::update_face_normals()
+    void PolyMesh::update_face_normals()
     {
         if (!fnormal_)
             fnormal_ = face_property<vec3>("f:normal");
@@ -337,7 +337,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    vec3 TetraMesh::compute_face_normal(Face f) const
+    vec3 PolyMesh::compute_face_normal(Face f) const
     {
         const auto& vts = vertices(f);
 
@@ -352,7 +352,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    float TetraMesh::edge_length(Edge e) const
+    float PolyMesh::edge_length(Edge e) const
     {
         return norm(vpoint_[vertex(e,0)] - vpoint_[vertex(e,1)]);
     }
@@ -361,7 +361,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool TetraMesh::is_degenerate(Face f) const {
+    bool PolyMesh::is_degenerate(Face f) const {
         const auto& vts = vertices(f);
 
         const vec3& p0 = vpoint_[vts[0]];

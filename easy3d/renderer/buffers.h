@@ -34,7 +34,7 @@ namespace easy3d {
     class Graph;
     class PointCloud;
     class SurfaceMesh;
-    class TetraMesh;
+    class PolyMesh;
     class Drawable;
     class PointsDrawable;
     class LinesDrawable;
@@ -146,33 +146,33 @@ namespace easy3d {
 
 
 
-        /// \name Render buffer update for TetraMesh
+        /// \name Render buffer update for PolyMesh
         //@{
-        // TetraMesh ------------------------------------------------------------------------------------------------
+        // PolyMesh ------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Update render buffers for the default "vertices" drawable of a tetraheral mesh.
+         * @brief Update render buffers for the default "vertices" drawable of a polytope mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update(TetraMesh* model, PointsDrawable* drawable);
+        void update(PolyMesh* model, PointsDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "edges" drawable of a tetraheral mesh.
+         * @brief Update render buffers for the default "edges" drawable of a polytope mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update(TetraMesh* model, LinesDrawable* drawable);
+        void update(PolyMesh* model, LinesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "faces" drawable of a tetraheral mesh.
+         * @brief Update render buffers for the default "faces" drawable of a polytope mesh.
          * Coloring determined by the drawable's coloring scheme.
          * @param model     The model.
          * @param drawable  The drawable.
          */
-        void update(TetraMesh* model, TrianglesDrawable* drawable);
+        void update(PolyMesh* model, TrianglesDrawable* drawable);
         //@}
 
     }   // namespaces buffers

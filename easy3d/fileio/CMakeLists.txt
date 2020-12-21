@@ -12,7 +12,7 @@ set(${PROJECT_NAME}_HEADERS
         point_cloud_io_ptx.h
         point_cloud_io_vg.h
         surface_mesh_io.h
-        tetra_mesh_io.h
+        poly_mesh_io.h
         resources.h
         )
 
@@ -34,7 +34,7 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_io_ply.cpp
         surface_mesh_io_poly.cpp
         surface_mesh_io_stl.cpp
-        tetra_mesh_io.cpp
+        poly_mesh_io.cpp
         resources.cpp
         )
 

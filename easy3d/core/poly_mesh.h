@@ -32,11 +32,11 @@
 namespace easy3d {
 
     /**
-     * \brief Data structure representing a tetrahedral mesh.
-     * \class TetraMesh easy3d/core/tetra_mesh.h
+     * \brief Data structure representing a polytope mesh.
+     * \class PolyMesh easy3d/core/tetra_mesh.h
      */
 
-    class TetraMesh : public virtual Model
+    class PolyMesh : public virtual Model
     {
 
     public: //------------------------------------------------------ topology types
@@ -81,7 +81,7 @@ namespace easy3d {
             };
 
         private:
-            friend class TetraMesh;
+            friend class PolyMesh;
             int idx_;
         };
 
@@ -296,7 +296,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            VertexIterator(Vertex v=Vertex(), const TetraMesh* m=nullptr) : hnd_(v), mesh_(m)
+            VertexIterator(Vertex v=Vertex(), const PolyMesh* m=nullptr) : hnd_(v), mesh_(m)
             {
                 if (mesh_) while (mesh_->is_valid(hnd_)) ++hnd_.idx_;
             }
@@ -336,7 +336,7 @@ namespace easy3d {
 
         private:
             Vertex  hnd_;
-            const TetraMesh* mesh_;
+            const PolyMesh* mesh_;
         };
 
 
@@ -348,7 +348,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            EdgeIterator(Edge e=Edge(), const TetraMesh* m=nullptr) : hnd_(e), mesh_(m)
+            EdgeIterator(Edge e=Edge(), const PolyMesh* m=nullptr) : hnd_(e), mesh_(m)
             {
                 if (mesh_) while (mesh_->is_valid(hnd_)) ++hnd_.idx_;
             }
@@ -388,7 +388,7 @@ namespace easy3d {
 
         private:
             Edge  hnd_;
-            const TetraMesh* mesh_;
+            const PolyMesh* mesh_;
         };
 
 
@@ -400,7 +400,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            FaceIterator(Face f=Face(), const TetraMesh* m=nullptr) : hnd_(f), mesh_(m)
+            FaceIterator(Face f=Face(), const PolyMesh* m=nullptr) : hnd_(f), mesh_(m)
             {
                 if (mesh_) while (mesh_->is_valid(hnd_)) ++hnd_.idx_;
             }
@@ -440,7 +440,7 @@ namespace easy3d {
 
         private:
             Face  hnd_;
-            const TetraMesh* mesh_;
+            const PolyMesh* mesh_;
         };
 
         
@@ -452,7 +452,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            TetraIterator(Tetra t=Tetra(), const TetraMesh* m=nullptr) : hnd_(t), mesh_(m)
+            TetraIterator(Tetra t=Tetra(), const PolyMesh* m=nullptr) : hnd_(t), mesh_(m)
             {
                 if (mesh_) while (mesh_->is_valid(hnd_)) ++hnd_.idx_;
             }
@@ -492,7 +492,7 @@ namespace easy3d {
 
         private:
             Tetra  hnd_;
-            const TetraMesh* mesh_;
+            const PolyMesh* mesh_;
         };
 
 
@@ -561,19 +561,19 @@ namespace easy3d {
         //@{
 
         /// default constructor
-        TetraMesh();
+        PolyMesh();
 
         // destructor (is virtual, since we inherit from Geometry_representation)
-        virtual ~TetraMesh();
+        virtual ~PolyMesh();
 
         /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
-        TetraMesh(const TetraMesh& rhs) { operator=(rhs); }
+        PolyMesh(const PolyMesh& rhs) { operator=(rhs); }
 
         /// assign \c rhs to \c *this. performs a deep copy of all properties.
-        TetraMesh& operator=(const TetraMesh& rhs);
+        PolyMesh& operator=(const PolyMesh& rhs);
 
         /// assign \c rhs to \c *this. does not copy custom properties.
-        TetraMesh& assign(const TetraMesh& rhs);
+        PolyMesh& assign(const PolyMesh& rhs);
         //@}
 
         //!@}
@@ -1138,22 +1138,22 @@ namespace easy3d {
     //------------------------------------------------------------ output operators
 
 
-    inline std::ostream& operator<<(std::ostream& os, TetraMesh::Vertex v)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Vertex v)
     {
         return (os << 'v' << v.idx());
     }
     
-    inline std::ostream& operator<<(std::ostream& os, TetraMesh::Edge e)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Edge e)
     {
         return (os << 'e' << e.idx());
     }
 
-    inline std::ostream& operator<<(std::ostream& os, TetraMesh::Face f)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Face f)
     {
         return (os << 'f' << f.idx());
     }
 
-    inline std::ostream& operator<<(std::ostream& os, TetraMesh::Tetra t)
+    inline std::ostream& operator<<(std::ostream& os, PolyMesh::Tetra t)
     {
         return (os << 't' << t.idx());
     }

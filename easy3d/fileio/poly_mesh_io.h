@@ -31,14 +31,14 @@
 
 namespace easy3d {
 
-	class TetraMesh;
+	class PolyMesh;
 
 
     /**
-     * \brief Implementation of file input/output operations for TetraMesh.
-     * \class TetraMeshIO easy3d/fileio/tetra_mesh_io.h
+     * \brief Implementation of file input/output operations for PolyMesh.
+     * \class PolyMeshIO easy3d/fileio/tetra_mesh_io.h
      */
-	class TetraMeshIO
+	class PolyMeshIO
 	{
 	public:
 
@@ -48,7 +48,7 @@ namespace easy3d {
          * \param file_name The file name.
          * \return The pointer of the tetrahedral mesh (nullptr if failed).
          */
-		static TetraMesh* load(const std::string& file_name);
+		static PolyMesh* load(const std::string& file_name);
 
         /**
          * \brief Saves a tetrahedral mesh to a file.
@@ -59,7 +59,7 @@ namespace easy3d {
          *      \arg true if succeeded
          *      \arg false if failed
          */
-		static bool	save(const std::string& file_name, const TetraMesh* mesh);
+		static bool	save(const std::string& file_name, const PolyMesh* mesh);
 	};
 
 } // namespace easy3d
