@@ -129,6 +129,7 @@ namespace easy3d {
         {
             /// default constructor (with invalid index)
             explicit Halfedge(int _idx=-1) : BaseHandle(_idx) {}
+            std::ostream& operator<<(std::ostream& os) const { return os << 'h' << idx(); }
         };
 
 
@@ -138,6 +139,7 @@ namespace easy3d {
         {
             /// default constructor (with invalid index)
             explicit Edge(int _idx=-1) : BaseHandle(_idx) {}
+            std::ostream& operator<<(std::ostream& os) const { return os << 'e' << idx(); }
         };
 
 
@@ -147,6 +149,7 @@ namespace easy3d {
         {
             /// default constructor (with invalid index)
             explicit Face(int _idx=-1) : BaseHandle(_idx) {}
+            std::ostream& operator<<(std::ostream& os) const { return os << 'f' << idx(); }
         };
 
 
