@@ -2402,7 +2402,6 @@ namespace easy3d {
 
 
         void update(PolyMesh* model, LinesDrawable* drawable) {
-            LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
 
@@ -2425,7 +2424,6 @@ namespace easy3d {
 
 
         void update(PolyMesh* model, TrianglesDrawable* drawable) {
-            LOG_FIRST_N(WARNING, 1) << "TODO: build adjacency" << std::endl;
             assert(model);
             assert(drawable);
 
@@ -2435,15 +2433,11 @@ namespace easy3d {
             }
 
             std::vector<unsigned int> d_indices;
-
             for (auto f : model->faces()) {
-                auto hf = model->halfface(f, 0);
-                for (auto v : model->vertices(hf)) {
+                for (auto v : model->vertices(f)) {
                     d_indices.push_back(v.idx());
                 }
             }
-
-            std::cout << "triangles: " << d_indices.size() / 3 << std::endl;
 
             drawable->update_vertex_buffer(model->points());
             drawable->update_element_buffer(d_indices);
