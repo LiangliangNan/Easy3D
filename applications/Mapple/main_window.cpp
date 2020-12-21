@@ -1838,7 +1838,7 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
         }
         mesh->add_tetra(vts[0], vts[1], vts[2], vts[3]);
     }
-    LOG(INFO) << "done." << w.time_string() << std::endl;
+    LOG(INFO) << "done. " << w.time_string() << std::endl;
 
     viewer_->addModel(mesh);
     updateUi();
