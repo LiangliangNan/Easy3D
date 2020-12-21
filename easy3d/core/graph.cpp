@@ -210,8 +210,7 @@ namespace easy3d {
     Graph::Edge Graph::add_edge(const Vertex& start, const Vertex& end) {
         assert(start != end);
         Edge e = new_edge();
-        econn_[e].source_ = start;
-        econn_[e].target_ = end;
+        econn_[e].vertices_ = {start, end};
         vconn_[start].edges_.push_back(e);
         vconn_[end].edges_.push_back(e);
         return e;
