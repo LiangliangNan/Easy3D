@@ -65,59 +65,59 @@ PolyMesh *old_mesh_from_previous_example() {
     vertices.push_back(v0);
     vertices.push_back(v1);
     vertices.push_back(v4);
-    PolyMesh::HalfFace f0 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h0 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v1);
     vertices.push_back(v2);
     vertices.push_back(v4);
-    PolyMesh::HalfFace f1 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h1 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v0);
     vertices.push_back(v1);
     vertices.push_back(v2);
-    PolyMesh::HalfFace f2 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h2 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v0);
     vertices.push_back(v4);
     vertices.push_back(v2);
-    PolyMesh::HalfFace f3 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h3 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v0);
     vertices.push_back(v4);
     vertices.push_back(v3);
-    PolyMesh::HalfFace f4 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h4 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v2);
     vertices.push_back(v3);
     vertices.push_back(v4);
-    PolyMesh::HalfFace f5 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h5 = mesh->add_face(vertices);
 
     vertices.clear();
     vertices.push_back(v0);
     vertices.push_back(v2);
     vertices.push_back(v3);
-    PolyMesh::HalfFace f6 = mesh->add_face(vertices);
+    PolyMesh::HalfFace h6 = mesh->add_face(vertices);
 
     std::vector<PolyMesh::HalfFace> halffaces;
 
     // Add first tetrahedron
-    halffaces.push_back(mesh->opposite(f0));
-    halffaces.push_back(mesh->opposite(f1));
-    halffaces.push_back(f2);
-    halffaces.push_back(mesh->opposite(f3));
+    halffaces.push_back(mesh->opposite(h0));
+    halffaces.push_back(mesh->opposite(h1));
+    halffaces.push_back(h2);
+    halffaces.push_back(mesh->opposite(h3));
     mesh->add_cell(halffaces);
 
     // Add second tetrahedron
     halffaces.clear();
-    halffaces.push_back(mesh->opposite(f4));
-    halffaces.push_back(mesh->opposite(f5));
-    halffaces.push_back(f3);
-    halffaces.push_back(f6);
+    halffaces.push_back(mesh->opposite(h4));
+    halffaces.push_back(mesh->opposite(h5));
+    halffaces.push_back(h3);
+    halffaces.push_back(h6);
     mesh->add_cell(halffaces);
 
     return mesh;

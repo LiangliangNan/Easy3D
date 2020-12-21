@@ -38,7 +38,7 @@ namespace easy3d {
         vconn_    = add_vertex_property<VertexConnectivity>("v:connectivity");
         econn_    = add_edge_property<EdgeConnectivity>("e:connectivity");
         hconn_    = add_halfface_property<HalfFaceConnectivity>("h:connectivity");
-        cconn_    = add_tetra_property<CellConnectivity>("c:connectivity");
+        cconn_    = add_cell_property<CellConnectivity>("c:connectivity");
 
         vpoint_   = add_vertex_property<vec3>("v:point");
 
@@ -104,7 +104,7 @@ namespace easy3d {
             vconn_    = add_vertex_property<VertexConnectivity>("v:connectivity");
             econn_    = add_edge_property<EdgeConnectivity>("e:connectivity");
             hconn_    = add_halfface_property<HalfFaceConnectivity>("h:connectivity");
-            cconn_    = add_tetra_property<CellConnectivity>("c:connectivity");
+            cconn_    = add_cell_property<CellConnectivity>("c:connectivity");
             
             vpoint_   = add_vertex_property<vec3>("v:point");
             
@@ -145,7 +145,6 @@ namespace easy3d {
         std::string dummy;
         int num_vertices, num_tets;
         input >> dummy >> num_vertices >> num_tets;
-        resize(num_vertices, num_tets);
 
         vec3 p;
         for (std::size_t i = 0; i < num_vertices; ++i) {
@@ -230,17 +229,6 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void PolyMesh::reserve(unsigned int nvertices, unsigned int ncells )
-    {
-        vprops_.reserve(nvertices);
-        cprops_.reserve(ncells);
-        mprops_.reserve(1);
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
     void PolyMesh::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
@@ -307,7 +295,7 @@ namespace easy3d {
     }
 
 
-    PolyMesh::HalfFace PolyMesh::find_face(const std::vector<Vertex>& vts) const {
+    PolyMesh::HalfFace PolyMesh::find_half_face(const std::vector<Vertex> &vts) const {
         auto is_same_set = [](const std::vector<Vertex>& set1, const std::vector<Vertex>& set2) -> bool { // allows permutation
             if (set1.size() != set2.size())
                 return false;
@@ -346,7 +334,7 @@ namespace easy3d {
 
 
     PolyMesh::HalfFace PolyMesh::add_face(const std::vector<Vertex>& vertices) {
-        auto f = find_face(vertices);
+        auto f = find_half_face(vertices);
         if (!f.is_valid()) {
             f = new_face();
             hconn_[f].vertices_ = vertices;
@@ -425,7 +413,7 @@ namespace easy3d {
         if (!fnormal_)
             fnormal_ = halfface_property<vec3>("f:normal");
 
-        HalffaceIterator fit, fend=halffaces_end();
+        HalfFaceIterator fit, fend=halffaces_end();
 
         int num_degenerate = 0;
         for (fit=halffaces_begin(); fit!=fend; ++fit) {
@@ -444,9 +432,9 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    vec3 PolyMesh::compute_face_normal(HalfFace f) const
+    vec3 PolyMesh::compute_face_normal(HalfFace h) const
     {
-        const auto& vts = vertices(f);
+        const auto& vts = vertices(h);
 
         const vec3& p0 = vpoint_[vts[0]];
         const vec3& p1 = vpoint_[vts[1]];
@@ -468,8 +456,8 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::is_degenerate(HalfFace f) const {
-        const auto& vts = vertices(f);
+    bool PolyMesh::is_degenerate(HalfFace h) const {
+        const auto& vts = vertices(h);
 
         const vec3& p0 = vpoint_[vts[0]];
         const vec3& p1 = vpoint_[vts[1]];

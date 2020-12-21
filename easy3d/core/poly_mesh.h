@@ -43,7 +43,7 @@ namespace easy3d {
 
 
         /// Base class for all topology types (internally it is basically an index)
-        /// \sa Vertex, Edge, HalfFace, Cell
+        /// \sa Vertex, Edge, HalfFace, Face, Cell
         class BaseHandle
         {
         public:
@@ -87,7 +87,7 @@ namespace easy3d {
 
 
         /// this type represents a vertex (internally it is basically an index)
-        ///  \sa Edge, HalfFace, Cell
+        ///  \sa Edge, HalfFace, Face, Cell
         struct Vertex : public BaseHandle
         {
             /// default constructor (with invalid index)
@@ -96,7 +96,7 @@ namespace easy3d {
         };
 
         /// this type represents an edge (internally it is basically an index)
-        /// \sa Vertex, HalfFace, Cell
+        /// \sa Vertex, HalfFace, Face, Cell
         struct Edge : public BaseHandle
         {
             /// default constructor (with invalid index)
@@ -106,7 +106,7 @@ namespace easy3d {
 
 
         /// this type represents a halfface (internally it is basically an index)
-        /// \sa Vertex, Edge, Cell
+        /// \sa Vertex, Edge, Face, Cell
         struct HalfFace : public BaseHandle
         {
             /// default constructor (with invalid index)
@@ -114,8 +114,8 @@ namespace easy3d {
             std::ostream& operator<<(std::ostream& os) const { return os << 'h' << idx(); }
         };
 
-        /// this type represents a halfface (internally it is basically an index)
-        /// \sa Vertex, Edge, Cell
+        /// this type represents a face (internally it is basically an index)
+        /// \sa Vertex, Edge, HalfFace, Cell
         struct Face : public BaseHandle
         {
             /// default constructor (with invalid index)
@@ -124,7 +124,7 @@ namespace easy3d {
         };
 
         /// this type represents a polyhedral cell (internally it is basically an index)
-        /// \sa Vertex, Edge, HalfFace
+        /// \sa Vertex, Edge, HalfFace, Face
         struct Cell : public BaseHandle
         {
             /// default constructor (with invalid index)
@@ -180,7 +180,7 @@ namespace easy3d {
     public: //------------------------------------------------------ property types
 
         /// Vertex property of type T
-        /// \sa EdgeProperty, HalfFaceProperty, CellProperty
+        /// \sa EdgeProperty, HalfFaceProperty, FaceProperty, CellProperty
         template <class T> class VertexProperty : public Property<T>
         {
         public:
@@ -202,8 +202,9 @@ namespace easy3d {
             }
         };
 
+
         /// Edge property of type T
-        /// \sa VertexProperty, HalfFaceProperty, CellProperty
+        /// \sa VertexProperty, HalfFaceProperty, FaceProperty, CellProperty
         template <class T> class EdgeProperty : public Property<T>
         {
         public:
@@ -227,7 +228,7 @@ namespace easy3d {
 
 
         /// HalfFace property of type T
-        /// \sa VertexProperty, EdgeProperty, CellProperty
+        /// \sa VertexProperty, EdgeProperty, FaceProperty, CellProperty
         template <class T> class HalfFaceProperty : public Property<T>
         {
         public:
@@ -236,23 +237,22 @@ namespace easy3d {
             explicit HalfFaceProperty() {}
             explicit HalfFaceProperty(Property<T> p) : Property<T>(p) {}
 
-            /// access the data stored for face \c f
-            typename Property<T>::reference operator[](HalfFace f)
+            /// access the data stored for halfface \c h
+            typename Property<T>::reference operator[](HalfFace h)
             {
-                return Property<T>::operator[](f.idx());
+                return Property<T>::operator[](h.idx());
             }
 
-            /// access the data stored for face \c f
-            typename Property<T>::const_reference operator[](HalfFace f) const
+            /// access the data stored for halfface \c h
+            typename Property<T>::const_reference operator[](HalfFace h) const
             {
-                return Property<T>::operator[](f.idx());
+                return Property<T>::operator[](h.idx());
             }
         };
 
 
-
-        /// HalfFace property of type T
-        /// \sa VertexProperty, EdgeProperty, CellProperty
+        /// Face property of type T
+        /// \sa VertexProperty, EdgeProperty, HalfFaceProperty, CellProperty
         template <class T> class FaceProperty : public Property<T>
         {
         public:
@@ -275,8 +275,8 @@ namespace easy3d {
         };
 
 
-        /// Halfedge property of type T
-        /// \sa VertexProperty, EdgeProperty, HalfFaceProperty
+        /// Cell property of type T
+        /// \sa VertexProperty, EdgeProperty, HalfFaceProperty, FaceProperty
         template <class T> class CellProperty : public Property<T>
         {
         public:
@@ -285,22 +285,22 @@ namespace easy3d {
             explicit CellProperty() {}
             explicit CellProperty(Property<T> p) : Property<T>(p) {}
 
-            /// access the data stored for halfedge \c h
-            typename Property<T>::reference operator[](Cell t)
+            /// access the data stored for Cell \c c
+            typename Property<T>::reference operator[](Cell c)
             {
-                return Property<T>::operator[](t.idx());
+                return Property<T>::operator[](c.idx());
             }
 
-            /// access the data stored for halfedge \c h
-            typename Property<T>::const_reference operator[](Cell t) const
+            /// access the data stored for Cell \c c
+            typename Property<T>::const_reference operator[](Cell c) const
             {
-                return Property<T>::operator[](t.idx());
+                return Property<T>::operator[](c.idx());
             }
         };
 
 
         /// Mesh property of type T
-        /// \sa VertexProperty, CellProperty, EdgeProperty
+        /// \sa VertexProperty, EdgeProperty, HalfFaceProperty, FaceProperty, CellProperty
         template <class T> class ModelProperty : public Property<T>
         {
         public:
@@ -328,7 +328,7 @@ namespace easy3d {
 
         /// this class iterates linearly over all vertices
         /// \sa vertices_begin(), vertices_end()
-        /// \sa CellIterator, EdgeIterator, FaceIterator
+        /// \sa EdgeIterator, HalfFaceIterator, FaceIterator, CellIterator
         class VertexIterator
         {
         public:
@@ -377,7 +377,7 @@ namespace easy3d {
 
         /// this class iterates linearly over all edges
         /// \sa edges_begin(), edges_end()
-        /// \sa VertexIterator, CellIterator, FaceIterator
+        /// \sa VertexIterator, HalfFaceIterator, FaceIterator, CellIterator
         class EdgeIterator
         {
         public:
@@ -424,35 +424,35 @@ namespace easy3d {
         };
 
 
-        /// this class iterates linearly over all faces
-        /// \sa faces_begin(), faces_end()
-        /// \sa VertexIterator, CellIterator, EdgeIterator
-        class HalffaceIterator
+        /// this class iterates linearly over all halffaces
+        /// \sa halffaces_begin(), halffaces_end()
+        /// \sa VertexIterator, EdgeIterator, FaceIterator, CellIterator
+        class HalfFaceIterator
         {
         public:
 
             /// Default constructor
-            HalffaceIterator(HalfFace f=HalfFace(), const PolyMesh* m=nullptr) : hnd_(f), mesh_(m)
+            HalfFaceIterator(HalfFace h=HalfFace(), const PolyMesh* m=nullptr) : hnd_(h), mesh_(m)
             {
             }
 
-            /// get the face the iterator refers to
+            /// get the halfface the iterator refers to
             HalfFace operator*()  const { return  hnd_; }
 
             /// are two iterators equal?
-            bool operator==(const HalffaceIterator& rhs) const
+            bool operator==(const HalfFaceIterator& rhs) const
             {
                 return (hnd_==rhs.hnd_);
             }
 
             /// are two iterators different?
-            bool operator!=(const HalffaceIterator& rhs) const
+            bool operator!=(const HalfFaceIterator& rhs) const
             {
                 return !operator==(rhs);
             }
 
             /// pre-increment iterator
-            HalffaceIterator& operator++()
+            HalfFaceIterator& operator++()
             {
                 ++hnd_.idx_;
                 assert(mesh_);
@@ -460,7 +460,7 @@ namespace easy3d {
             }
 
             /// pre-decrement iterator
-            HalffaceIterator& operator--()
+            HalfFaceIterator& operator--()
             {
                 --hnd_.idx_;
                 assert(mesh_);
@@ -475,7 +475,7 @@ namespace easy3d {
 
         /// this class iterates linearly over all faces
         /// \sa faces_begin(), faces_end()
-        /// \sa VertexIterator, CellIterator, EdgeIterator
+        /// \sa VertexIterator, EdgeIterator, HalfFaceIterator, CellIterator
         class FaceIterator
         {
         public:
@@ -522,19 +522,19 @@ namespace easy3d {
         };
 
 
-        /// this class iterates linearly over all halfedges
-        /// \sa tetrahedra_begin(), tetrahedra_end()
-        /// \sa VertexIterator, EdgeIterator, FaceIterator
+        /// this class iterates linearly over all cells
+        /// \sa cells_begin(), cells_end()
+        /// \sa VertexIterator, EdgeIterator, HalfFaceIterator, FaceIterator
         class CellIterator
         {
         public:
 
             /// Default constructor
-            CellIterator(Cell t=Cell(), const PolyMesh* m=nullptr) : hnd_(t), mesh_(m)
+            CellIterator(Cell c=Cell(), const PolyMesh* m=nullptr) : hnd_(c), mesh_(m)
             {
             }
 
-            /// get the halfedge the iterator refers to
+            /// get the cell the iterator refers to
             Cell operator*()  const { return  hnd_; }
 
             /// are two iterators equal?
@@ -602,16 +602,16 @@ namespace easy3d {
 
 
         /// this helper class is a container for iterating through all
-        /// faces using C++11 range-based for-loops.
-        /// \sa faces()
+        /// halffaces using C++11 range-based for-loops.
+        /// \sa halffaces()
         class HalffaceContainer
         {
         public:
-            HalffaceContainer(HalffaceIterator _begin, HalffaceIterator _end) : begin_(_begin), end_(_end) {}
-            HalffaceIterator begin() const { return begin_; }
-            HalffaceIterator end()   const { return end_;   }
+            HalffaceContainer(HalfFaceIterator _begin, HalfFaceIterator _end) : begin_(_begin), end_(_end) {}
+            HalfFaceIterator begin() const { return begin_; }
+            HalfFaceIterator end()   const { return end_;   }
         private:
-            HalffaceIterator begin_, end_;
+            HalfFaceIterator begin_, end_;
         };
 
 
@@ -630,8 +630,8 @@ namespace easy3d {
 
         
         /// this helper class is a container for iterating through all
-        /// halfedge using C++11 range-based for-loops.
-        /// \sa halfedges()
+        /// cells using C++11 range-based for-loops.
+        /// \sa cells()
         class CellContainer
         {
         public:
@@ -651,7 +651,7 @@ namespace easy3d {
         /// default constructor
         PolyMesh();
 
-        // destructor (is virtual, since we inherit from Geometry_representation)
+        // destructor
         virtual ~PolyMesh();
 
         /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
@@ -687,24 +687,25 @@ namespace easy3d {
         /// add a new vertex with position \c p
         Vertex add_vertex(const vec3& p);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \sa add_triangle, add_face
+        /// add a new face connecting \c vertices
+        /// \sa add_triangle, add_quad
         HalfFace add_face(const std::vector<Vertex>& vertices);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \sa add_triangle, add_face
+        /// add a new triangle face connecting vertices \c v1, \c v2, \c v3
+        /// \sa add_face, add_quad
         HalfFace add_triangle(Vertex v1, Vertex v2, Vertex v3);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
+        /// add a new quad face connecting vertices \c v1, \c v2, \c v3, \c v4
         /// \sa add_triangle, add_face
         HalfFace add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \sa add_triangle, add_face
+        /// add a new cell defined by \c faces
+        /// \sa add_face
         Cell add_cell(const std::vector<HalfFace>& faces);
 
-        /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \sa add_triangle, add_face
+        /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4
+        /// \details It creates all the faces and the cell, and adds them to the mesh.
+        /// \sa add_face, add_cell
         Cell add_tetra(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
         //@}
@@ -716,31 +717,20 @@ namespace easy3d {
 
         /// returns number of vertices in the mesh
         unsigned int n_vertices() const { return (unsigned int) vprops_.size(); }
-        /// returns number of tetrahedra in the mesh
-        unsigned int n_cells() const { return (unsigned int) cprops_.size(); }
         /// returns number of edges in the mesh
         unsigned int n_edges() const { return (unsigned int) eprops_.size(); }
-        /// returns number of faces in the mesh
-        unsigned int n_faces() const { return (unsigned int) fprops_.size(); }
         /// returns number of halffaces in the mesh
         unsigned int n_halffaces() const { return (unsigned int) hprops_.size(); }
+        /// returns number of faces in the mesh
+        unsigned int n_faces() const { return (unsigned int) fprops_.size(); }
+        /// returns number of cells in the mesh
+        unsigned int n_cells() const { return (unsigned int) cprops_.size(); }
 
-        /// \brief Removes all vertices, edges, faces, and properties (and resets garbage state).
+        /// \brief Removes all vertices, edges, halffaces, faces, cells and properties.
         /// \details After calling this method, the mesh is the same as newly constructed. The additional properties
         /// (such as normal vectors) are also removed and must thus be re-added if needed.
         void clear();
 
-        /// reserves memory (mainly used in file readers)
-        void reserve(unsigned int nvertices, unsigned int ncells );
-
-        /// resizes space for vertices, halfedges, edges, faces, and their currently
-        /// associated properties.
-        /// Note: ne is the number of edges. for halfedges, nh = 2 * ne. */
-        void resize(unsigned int nv, unsigned int nt) {
-            vprops_.resize(nv);
-            cprops_.resize(nt);
-        }
-        
 
         /// return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
         bool is_valid(Vertex v) const
@@ -752,20 +742,20 @@ namespace easy3d {
         {
             return (0 <= e.idx()) && (e.idx() < (int)n_edges());
         }
-        /// return whether face \c f is valid, i.e. the index is stores it within the array bounds.
-        bool is_valid(HalfFace f) const
+        /// return whether halfface \c h is valid, i.e. the index is stores it within the array bounds.
+        bool is_valid(HalfFace h) const
         {
-            return (0 <= f.idx()) && (f.idx() < (int)n_halffaces());
+            return (0 <= h.idx()) && (h.idx() < (int)n_halffaces());
         }
         /// return whether face \c f is valid, i.e. the index is stores it within the array bounds.
         bool is_valid(Face f) const
         {
             return (0 <= f.idx()) && (f.idx() < (int)n_faces());
         }
-        /// return whether halfedge \c h is valid, i.e. the index is stores it within the array bounds.
-        bool is_valid(Cell t) const
+        /// return whether cell \c h is valid, i.e. the index is stores it within the array bounds.
+        bool is_valid(Cell c) const
         {
-            return (0 <= t.idx()) && (t.idx() < (int)n_cells());
+            return (0 <= c.idx()) && (c.idx() < (int)n_cells());
         }
 
         //@}
@@ -783,13 +773,6 @@ namespace easy3d {
         {
             return VertexProperty<T>(vprops_.add<T>(name, t));
         }
-        /** add a halfedge property of type \c T with name \c name and default value \c t.
-         fails if a property named \c name exists already, since the name has to be unique.
-         in this case it returns an invalid property */
-        template <class T> CellProperty<T> add_tetra_property(const std::string& name, const T t=T())
-        {
-            return CellProperty<T>(cprops_.add<T>(name, t));
-        }
         /** add a edge property of type \c T with name \c name and default value \c t.
          fails if a property named \c name exists already, since the name has to be unique.
          in this case it returns an invalid property */
@@ -797,7 +780,7 @@ namespace easy3d {
         {
             return EdgeProperty<T>(eprops_.add<T>(name, t));
         }
-        /** add a face property of type \c T with name \c name and default value \c t.
+        /** add a halfface property of type \c T with name \c name and default value \c t.
          fails if a property named \c name exists already, since the name has to be unique.
          in this case it returns an invalid property */
         template <class T> HalfFaceProperty<T> add_halfface_property(const std::string& name, const T t=T())
@@ -810,6 +793,13 @@ namespace easy3d {
         template <class T> FaceProperty<T> add_face_property(const std::string& name, const T t=T())
         {
             return FaceProperty<T>(fprops_.add<T>(name, t));
+        }
+        /** add a cell property of type \c T with name \c name and default value \c t.
+         fails if a property named \c name exists already, since the name has to be unique.
+         in this case it returns an invalid property */
+        template <class T> CellProperty<T> add_cell_property(const std::string& name, const T t=T())
+        {
+            return CellProperty<T>(cprops_.add<T>(name, t));
         }
         /** add a model property of type \c T with name \c name and default value \c t.
          fails if a property named \c name exists already, since the name has to be unique.
@@ -827,25 +817,25 @@ namespace easy3d {
             return VertexProperty<T>(vprops_.get<T>(name));
         }
         /** get the edge property named \c name of type \c T. returns an invalid
-         VertexProperty if the property does not exist or if the type does not match. */
+         EdgeProperty if the property does not exist or if the type does not match. */
         template <class T> EdgeProperty<T> get_edge_property(const std::string& name) const
         {
             return EdgeProperty<T>(eprops_.get<T>(name));
         }
-        /** get the face property named \c name of type \c T. returns an invalid
-         VertexProperty if the property does not exist or if the type does not match. */
+        /** get the halfface property named \c name of type \c T. returns an invalid
+         HalfFaceProperty if the property does not exist or if the type does not match. */
         template <class T> HalfFaceProperty<T> get_halfface_property(const std::string& name) const
         {
             return HalfFaceProperty<T>(hprops_.get<T>(name));
         }
         /** get the face property named \c name of type \c T. returns an invalid
-         VertexProperty if the property does not exist or if the type does not match. */
+         FaceProperty if the property does not exist or if the type does not match. */
         template <class T> FaceProperty<T> get_face_property(const std::string& name) const
         {
             return FaceProperty<T>(fprops_.get<T>(name));
         }
-        /** get the halfedge property named \c name of type \c T. returns an invalid
-         VertexProperty if the property does not exist or if the type does not match. */
+        /** get the cell property named \c name of type \c T. returns an invalid
+         CellProperty if the property does not exist or if the type does not match. */
         template <class T> CellProperty<T> get_cell_property(const std::string& name) const
         {
             return CellProperty<T>(cprops_.get<T>(name));
@@ -870,7 +860,7 @@ namespace easy3d {
         {
             return EdgeProperty<T>(eprops_.get_or_add<T>(name, t));
         }
-        /** if a face property of type \c T with name \c name exists, it is returned.
+        /** if a halfface property of type \c T with name \c name exists, it is returned.
          otherwise this property is added (with default value \c t) */
         template <class T> HalfFaceProperty<T> halfface_property(const std::string& name, const T t=T())
         {
@@ -882,7 +872,7 @@ namespace easy3d {
         {
             return FaceProperty<T>(fprops_.get_or_add<T>(name, t));
         }
-        /** if a halfedge property of type \c T with name \c name exists, it is returned.
+        /** if a cell property of type \c T with name \c name exists, it is returned.
          otherwise this property is added (with default value \c t) */
         template <class T> CellProperty<T> cell_property(const std::string& name, const T t=T())
         {
@@ -910,11 +900,11 @@ namespace easy3d {
         /// remove the edge property named \c n
         bool remove_edge_property(const std::string &n) { return eprops_.remove(n); }
 
-        /// remove the face property \c p
+        /// remove the halfface property \c p
         template<class T>
         bool remove_halfface_property(HalfFaceProperty<T> &p) { return hprops_.remove(p); }
 
-        /// remove the face property named \c n
+        /// remove the halfface property named \c n
         bool remove_halfface_property(const std::string &n) { return hprops_.remove(n); }
 
         /// remove the face property \c p
@@ -924,11 +914,11 @@ namespace easy3d {
         /// remove the face property named \c n
         bool remove_face_property(const std::string &n) { return fprops_.remove(n); }
 
-        /// remove the halfedge property \c p
+        /// remove the cell property \c p
         template<class T>
         bool remove_cell_property(CellProperty<T> &p) { return cprops_.remove(p); }
 
-        /// remove the halfedge property named \c n
+        /// remove the cell property named \c n
         bool remove_cell_property(const std::string &n) { return cprops_.remove(n); }
 
         /// remove the model property \c p
@@ -943,7 +933,7 @@ namespace easy3d {
             return vprops_.rename(old_name, new_name);
         }
 
-        /// rename a face property given its name
+        /// rename a halfface property given its name
         bool rename_halfface_property(const std::string &old_name, const std::string &new_name) {
             return hprops_.rename(old_name, new_name);
         }
@@ -958,7 +948,7 @@ namespace easy3d {
             return eprops_.rename(old_name, new_name);
         }
 
-        /// rename a halfedge property given its name
+        /// rename a cell property given its name
         bool rename_cell_property(const std::string &old_name, const std::string &new_name) {
             return cprops_.rename(old_name, new_name);
         }
@@ -981,7 +971,7 @@ namespace easy3d {
         {
             return eprops_.get_type(name);
         }
-        /** get the type_info \c T of face property \p name. returns an typeid(void)
+        /** get the type_info \c T of halfface property \p name. returns an typeid(void)
          if the property does not exist or if the type does not match. */
         const std::type_info& get_halfface_property_type(const std::string& name) const
         {
@@ -993,7 +983,7 @@ namespace easy3d {
         {
             return fprops_.get_type(name);
         }
-        /** get the type_info \c T of halfedge property \p name. returns an typeid(void)
+        /** get the type_info \c T of cell property \p name. returns an typeid(void)
          if the property does not exist or if the type does not match. */
         const std::type_info& get_cell_property_type(const std::string& name) const
         {
@@ -1017,7 +1007,7 @@ namespace easy3d {
         {
             return eprops_.properties();
         }
-        /// returns the names of all face properties
+        /// returns the names of all halfface properties
         std::vector<std::string> halfface_properties() const
         {
             return hprops_.properties();
@@ -1027,7 +1017,7 @@ namespace easy3d {
         {
             return fprops_.properties();
         }
-        /// returns the names of all halfedge properties
+        /// returns the names of all cell properties
         std::vector<std::string> cell_properties() const
         {
             return cprops_.properties();
@@ -1085,19 +1075,19 @@ namespace easy3d {
             return EdgeContainer(edges_begin(), edges_end());
         }
 
-        /// returns start iterator for faces
-        HalffaceIterator halffaces_begin() const
+        /// returns start iterator for halffaces
+        HalfFaceIterator halffaces_begin() const
         {
-            return HalffaceIterator(HalfFace(0), this);
+            return HalfFaceIterator(HalfFace(0), this);
         }
 
-        /// returns end iterator for faces
-        HalffaceIterator halffaces_end() const
+        /// returns end iterator for halffaces
+        HalfFaceIterator halffaces_end() const
         {
-            return HalffaceIterator(HalfFace(n_halffaces()), this);
+            return HalfFaceIterator(HalfFace(n_halffaces()), this);
         }
 
-        /// returns face container for C++11 range-based for-loops
+        /// returns halfface container for C++11 range-based for-loops
         HalffaceContainer halffaces() const
         {
             return HalffaceContainer(halffaces_begin(), halffaces_end());
@@ -1121,19 +1111,19 @@ namespace easy3d {
             return FaceContainer(faces_begin(), faces_end());
         }
 
-        /// returns start iterator for halfedges
+        /// returns start iterator for cells
         CellIterator cells_begin() const
         {
             return CellIterator(Cell(0), this);
         }
 
-        /// returns end iterator for halfedges
+        /// returns end iterator for cells
         CellIterator cells_end() const
         {
             return CellIterator(Cell(n_cells()), this);
         }
 
-        /// returns halfedge container for C++11 range-based for-loops
+        /// returns cell container for C++11 range-based for-loops
         CellContainer cells() const
         {
             return CellContainer(cells_begin(), cells_end());
@@ -1145,22 +1135,23 @@ namespace easy3d {
         /// \name Adjacency access
         //@{
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns the vertices around vertex \c v
         const std::set<Vertex>& vertices(Vertex v) const
         {
             return vconn_[v].vertices_;
         }
 
-        /// returns the \c i'th halfedge of edge \c e. \c i has to be 0 or 1.
+        /// returns the \c i'th halfface of face \c f. \c i has to be 0 or 1.
         HalfFace halfface(Face f, unsigned int i) const
         {
             assert(i<=1);
             return HalfFace((f.idx() << 1) + i);
         }
 
-        HalfFace opposite(HalfFace f) const
+        /// returns the twin halfface of halfface \c h.
+        HalfFace opposite(HalfFace h) const
         {
-            return hconn_[f].opposite_;
+            return hconn_[h].opposite_;
         }
 
         /// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
@@ -1170,76 +1161,76 @@ namespace easy3d {
             return econn_[e].vertices_[i];
         }
 
-        /// returns circulator for vertices around vertex \c v
-        const std::vector<Vertex>& vertices(HalfFace f) const
+        /// returns the set of vertices around halfface \c h
+        const std::vector<Vertex>& vertices(HalfFace h) const
         {
-            return hconn_[f].vertices_;
+            return hconn_[h].vertices_;
         }
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns the set of vertices around face \c f
         const std::vector<Vertex>& vertices(Face f) const
         {
             return vertices(halfface(f, 0));
         }
 
-        /// returns circulator for vertices around vertex \c v
-        const std::set<Vertex>& vertices(Cell t) const
+        /// returns the set of vertices around cell \c c
+        const std::set<Vertex>& vertices(Cell c) const
         {
-            return cconn_[t].vertices_;
+            return cconn_[c].vertices_;
         }
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns the set of edges around vertex \c v
         const std::set<Edge>& edges(Vertex v) const
         {
             return vconn_[v].edges_;
         }
 
-        /// returns circulator for vertices around vertex \c v
-        const std::set<Edge>& edges(HalfFace f) const
+        /// returns the set of edges around halfface \c h
+        const std::set<Edge>& edges(HalfFace h) const
         {
-            return hconn_[f].edges_;
+            return hconn_[h].edges_;
         }
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns the set of edges around cell \c c
         const std::set<Edge>& edges(Cell c) const
         {
             return cconn_[c].edges_;
         }
         
-        /// returns circulator for faces around vertex \c v
+        /// returns the set of halffaces around vertex \c v
         const std::set<HalfFace>& halffaces(Vertex v) const
         {
             return vconn_[v].halffaces_;
         }
 
-        /// returns circulator for faces around vertex \c v
+        /// returns the set of halffaces around edge \c e
         const std::set<HalfFace>& halffaces(Edge e) const
         {
             return econn_[e].halffaces_;
         }
 
-        /// returns circulator for faces around vertex \c v
-        const std::vector<HalfFace>& halffaces(Cell t) const
+        /// returns the set of halffaces around cell \c c
+        const std::vector<HalfFace>& halffaces(Cell c) const
         {
-            return cconn_[t].halffaces_;
+            return cconn_[c].halffaces_;
         }
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns cthe set of cells around vertex \c v
         const std::set<Cell>& cells(Vertex v) const
         {
             return vconn_[v].cells_;
         }
 
-        /// returns circulator for vertices around vertex \c v
+        /// returns the set of cells around edge \c e
         const std::set<Cell>& cells(Edge e) const
         {
             return econn_[e].cells_;
         }
 
-        /// returns circulator for vertices around vertex \c v
-        Cell cell(HalfFace f) const
+        /// returns the cell associated with halfface \c h
+        Cell cell(HalfFace h) const
         {
-            return hconn_[f].cell_;
+            return hconn_[h].cell_;
         }
         //@}
 
@@ -1257,7 +1248,7 @@ namespace easy3d {
             return is_border(halfface(f, 0)) || is_border(halfface(f, 1));
         }
 
-        /// returns whether \c f is a boundary face, i.e., it is incident to only one cell.
+        /// returns whether \c f is a boundary face, i.e., it is not associated with a cell.
         bool is_border(HalfFace h) const
         {
             return (!cell(h).is_valid());
@@ -1266,10 +1257,11 @@ namespace easy3d {
         /// find the edge (a,b)
         Edge find_edge(Vertex a, Vertex b) const;
 
-        HalfFace find_face(const std::vector<Vertex>& vertices) const;
+        /// find the halfface defined by \c vertices (orientation sensitive)
+        HalfFace find_half_face(const std::vector<Vertex>& vertices) const;
 
-        /// returns whether \c f is degenerate
-        bool is_degenerate(HalfFace f) const;
+        /// returns whether halfface \c h is degenerate
+        bool is_degenerate(HalfFace h) const;
         //@}
 
     public: //------------------------------------------ geometry-related functions
@@ -1286,8 +1278,8 @@ namespace easy3d {
         /// compute face normals by calling compute_face_normal(HalfFace) for each face.
         void update_face_normals();
 
-        /// compute normal vector of face \c f.
-        vec3 compute_face_normal(HalfFace f) const;
+        /// compute normal vector of face \c h.
+        vec3 compute_face_normal(HalfFace h) const;
 
         /// compute the length of edge \c e.
         float edge_length(Edge e) const;
@@ -1304,7 +1296,7 @@ namespace easy3d {
             return Vertex(n_vertices()-1);
         }
 
-        /// allocate a new edge, resize edge and halfedge properties accordingly.
+        /// allocate a new edge, resize edge and edge properties accordingly.
         Edge new_edge(Vertex s, Vertex t)
         {
             assert(s != t);
@@ -1318,22 +1310,22 @@ namespace easy3d {
             return e;
         }
 
-        /// allocate a new face, resize face properties accordingly.
+        /// allocate a new face (i.e., creates two halffaces), resize face/halfface properties accordingly.
         HalfFace new_face()
         {
             fprops_.push_back();
             hprops_.push_back();
             hprops_.push_back();
-            HalfFace f0(n_halffaces()-2);
-            HalfFace f1(n_halffaces()-1);
+            HalfFace h0(n_halffaces()-2);
+            HalfFace h1(n_halffaces()-1);
 
-            hconn_[f0].opposite_ = f1;
-            hconn_[f1].opposite_ = f0;
+            hconn_[h0].opposite_ = h1;
+            hconn_[h1].opposite_ = h0;
 
-            return f0;
+            return h0;
         }
 
-        /// allocate a new face, resize face properties accordingly.
+        /// allocate a new cell, resize cell properties accordingly.
         Cell new_cell()
         {
             cprops_.push_back();
