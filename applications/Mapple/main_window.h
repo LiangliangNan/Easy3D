@@ -108,6 +108,7 @@ private slots:
     void surfaceMeshPlanarPartition();
     void surfaceMeshPolygonization();
     void surfaceMeshTriangulation();
+    void surfaceMeshTetrahedralization();
     void surfaceMeshStitchWithReorientation();
     void surfaceMeshStitchWithoutReorientation();
     void surfaceMeshOrientClosedTriangleMesh();

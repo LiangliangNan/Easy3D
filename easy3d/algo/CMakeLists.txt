@@ -30,6 +30,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_smoothing.h
         surface_mesh_stitching.h
         surface_mesh_subdivision.h
+        surface_mesh_tetrahedralization.h
         surface_mesh_topology.h
         surface_mesh_triangulation.h
         tessellator.h
@@ -63,6 +64,7 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_smoothing.cpp
         surface_mesh_stitching.cpp
         surface_mesh_subdivision.cpp
+        surface_mesh_tetrahedralization.cpp
         surface_mesh_topology.cpp
         surface_mesh_triangulation.cpp
         tessellator.cpp

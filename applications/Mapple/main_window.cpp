@@ -59,6 +59,7 @@
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
 #include <easy3d/algo/surface_mesh_triangulation.h>
+#include <easy3d/algo/surface_mesh_tetrahedralization.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/algo/surface_mesh_geodesic.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
@@ -831,6 +832,7 @@ void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
     connect(ui->actionPolygonization, SIGNAL(triggered()), this, SLOT(surfaceMeshPolygonization()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
+    connect(ui->actionSurfaceMeshTetrahedralization, SIGNAL(triggered()), this, SLOT(surfaceMeshTetrahedralization()));
 
     connect(ui->actionSurfaceMeshRepairPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshRepairPolygonSoup()));
     connect(ui->actionSurfaceMeshOrientAndStitchPolygonSoup, SIGNAL(triggered()), this, SLOT(surfaceMeshOrientAndStitchPolygonSoup()));
@@ -966,6 +968,27 @@ void MainWindow::surfaceMeshTriangulation() {
     updateUi();
 }
 
+
+void MainWindow::surfaceMeshTetrahedralization() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    StopWatch w;
+
+    SurfaceMeshTetrehedralization tetra;
+    PolyMesh* result = tetra.tetrahedralize(mesh);
+    if (result) {
+        LOG(INFO) << "done. " << w.time_string() << std::endl;
+
+        const std::string &name = file_system::name_less_extension(mesh->name()) + "_tetrahedralization.plm";
+        result->set_name(name);
+
+        viewer_->addModel(result);
+        updateUi();
+        viewer_->update();
+    }
+}
 
 
 void MainWindow::surfaceMeshRepairPolygonSoup() {
@@ -1785,7 +1808,7 @@ void MainWindow::pointCloudDelaunayTriangulation2D() {
     delaunay.set_vertices(points);
 
     SurfaceMesh* mesh = new SurfaceMesh;
-    const std::string& name = file_system::parent_directory(cloud->name()) + "/" + file_system::base_name(cloud->name()) + "_delaunay_XY";
+    const std::string &name = file_system::name_less_extension(mesh->name()) + "_delaunay_XY.ply";
     mesh->set_name(name);
 
     for (std::size_t i = 0; i < points.size(); i++) {
@@ -1819,7 +1842,7 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     delaunay.set_vertices(points);
 
     PolyMesh* mesh = new PolyMesh;
-    const std::string& name = file_system::parent_directory(cloud->name()) + "/" + file_system::base_name(cloud->name()) + "_delaunay";
+    const std::string &name = file_system::name_less_extension(mesh->name()) + "_delaunay.ply";
     mesh->set_name(name);
 
     for (std::size_t i = 0; i < points.size(); i++) {

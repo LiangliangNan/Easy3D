@@ -140,6 +140,7 @@
     <addaction name="separator"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="actionPolygonization"/>
+    <addaction name="actionSurfaceMeshTetrahedralization"/>
     <addaction name="separator"/>
     <addaction name="menuPolygonSoupProcessing"/>
     <addaction name="separator"/>
@@ -973,6 +974,11 @@
   <action name="actionPolyMeshExtractBoundary">
    <property name="text">
     <string>Extract boundary</string>
+   </property>
+  </action>
+  <action name="actionSurfaceMeshTetrahedralization">
+   <property name="text">
+    <string>Tetrahedralization</string>
    </property>
   </action>
  </widget>
