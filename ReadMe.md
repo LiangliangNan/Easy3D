@@ -12,11 +12,13 @@
 ![Overview of Easy3D](resources/images/overview.jpg)
 
 ### Key features ###
-* Efficient data structures for representing and managing 3D models (i.e., point clouds, meshes, and graphs). 
+* Efficient data structures for representing and managing 3D models such as point clouds, polygonal surfaces 
+  (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
   loading models from files ...
   
-* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson Surface Reconstruction, RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more.
+* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
+  RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more.
    
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
   soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
@@ -57,8 +59,8 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries. **All dependencies necessary for the core functionality and the basic
-viewer are included** in the distribution. So you don't need to do anything about third-party libraries. Easy3D 
+Easy3D depends on some third-party libraries. All dependencies necessary for the core functionality and the basic
+viewer are included in the distribution. So you don't need to do anything about third-party libraries. Easy3D 
 also supports the use of Qt. You can switch on the following CMake option to include the related examples and 
 applications (e.g., 
             [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) 
@@ -78,14 +80,16 @@ to build Easy3D on almost all platforms.
 
 There are many options to build Easy3D. Choose one of the following (or whatever you are familiar with):
 
-- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
+- Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
+  Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
 [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
 - Option 2: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
 - Option 3: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio).
 
 Don't have any experience with C/C++ programming? 
-Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by step</a>.
+Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by 
+step</a>.
 
 
 ### Documentation
