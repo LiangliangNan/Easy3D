@@ -1287,9 +1287,15 @@ void PaintCanvas::draw() {
 
     std::vector<TrianglesDrawable *> surfaces;
     for (auto m : models_) {
+        if (!m->renderer()->is_visible())
+            continue;
         for (auto d : m->renderer()->triangles_drawables())
             surfaces.push_back(d);
     }
+
+    if (edl())
+        edl()->begin();
+
     if (shadow()) {
         shadow()->draw(surfaces); easy3d_debug_log_gl_error;
         return;
@@ -1300,6 +1306,8 @@ void PaintCanvas::draw() {
     else if (ssao()) {
         auto ssao_texture = ssao()->generate(models());
         for (const auto m : models_) {
+            if (!m->renderer()->is_visible())
+                continue;
             for (auto d : m->renderer()->lines_drawables())
                 d->set_ssao_texture(ssao_texture);
             for (auto d : m->renderer()->points_drawables())
@@ -1342,4 +1350,7 @@ void PaintCanvas::draw() {
         if (count > 0)
             glDisable(GL_POLYGON_OFFSET_FILL);
     }
+
+    if (edl())
+        edl()->end();
 }
