@@ -167,12 +167,14 @@ namespace easy3d {
         void update(PolyMesh* model, LinesDrawable* drawable);
 
         /**
-         * @brief Update render buffers for the default "faces" drawable of a polyhedral mesh.
-         * Coloring determined by the drawable's coloring scheme.
+         * @brief Update render buffers for the default "faces" drawables of a polyhedral mesh.
+         * @note Interior and boundary faces are rendered using two drawables. Thus, this function has an extra
+         *      parameter to specify for which drawable the renderer buffers are be updated.
          * @param model     The model.
          * @param drawable  The drawable.
+         * @param border  \c true for the boundary drawable and \c false for the interior drawable.
          */
-        void update(PolyMesh* model, TrianglesDrawable* drawable);
+        void update(PolyMesh* model, TrianglesDrawable* drawable, bool border);
         //@}
 
     }   // namespaces buffers
