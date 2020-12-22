@@ -5,7 +5,7 @@
 // The code does not cover round caps.
 
 
-uniform mat4    PROJ;
+uniform mat4 PROJ;
 uniform bool	perspective;
 uniform float	radius;
 

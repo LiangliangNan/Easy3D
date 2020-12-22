@@ -96,7 +96,7 @@ namespace easy3d {
     }
 
 
-    void ClippingPlane::set_program(ShaderProgram *program) {
+    void ClippingPlane::set_program(ShaderProgram *program, bool plane_clipping_discard) {
         if (enabled_) {
             glEnable(GL_CLIP_DISTANCE0);
             if (cross_section_)
@@ -107,6 +107,8 @@ namespace easy3d {
             glDisable(GL_CLIP_DISTANCE0);
             glDisable(GL_CLIP_DISTANCE1);
         }
+
+        program->set_uniform("planeClippingDiscard", plane_clipping_discard);
 
         program->set_uniform("clippingPlaneEnabled", enabled_);
         easy3d_debug_log_gl_error;

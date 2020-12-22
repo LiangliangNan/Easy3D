@@ -211,6 +211,14 @@ namespace easy3d {
         void set_material(const Material &m) { material_ = m; }
 
         /**
+         * Controls the clipping behavior.
+         *  - true completely discard
+         *  - false standard plane clipping
+         */
+        bool plane_clipping_discard() const { return plane_clipping_discard_; };
+        void set_plane_clipping_discard(bool b) { plane_clipping_discard_ = b; };
+
+        /**
          * Highlight a subset of primitives of this drawable. Primitives with indices within the range
          * [highlight_id_low_, highlight_id_high_] will be highlighted.
          * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
@@ -254,6 +262,9 @@ namespace easy3d {
         float clamp_upper_;
 
         Material material_;
+
+        // Clipping plane behavior. true: completely discard a vertex in vertex shader; false: standard plane clipping
+        bool plane_clipping_discard_;
 
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
         bool highlight_;

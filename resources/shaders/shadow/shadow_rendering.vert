@@ -4,8 +4,15 @@ in  vec3 vtx_position;	// vertex position
 in  vec3 vtx_normal;	// vertex normal
 in  vec3 vtx_color;		// vertex color
 
-uniform mat4 MVP;
 uniform mat4 SHADOW;
+uniform mat4 MVP;
+uniform mat4 MANIP = mat4(1.0);
+
+uniform bool planeClippingDiscard = false;
+uniform bool clippingPlaneEnabled = false;
+uniform bool crossSectionEnabled = false;
+uniform vec4 clippingPlane0;
+uniform vec4 clippingPlane1;
 
 uniform vec3 default_color = vec3(0.3, 0.3, 0.7);
 uniform bool per_vertex_color = false;
@@ -20,15 +27,28 @@ out Data {
 
 
 void main() {
+	vec4 new_position = MANIP * vec4(vtx_position, 1.0);
+
+	if (clippingPlaneEnabled) {
+		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
+		if (planeClippingDiscard && gl_ClipDistance[0] < 0)
+			return;
+		if (crossSectionEnabled) {
+			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
+			if (planeClippingDiscard && gl_ClipDistance[1] < 0)
+				return;
+		}
+	}
+
 	if (per_vertex_color)	
 		DataOut.color = vtx_color;
 	else
 		DataOut.color = default_color;
-	
-        DataOut.normal = vtx_normal;
-        DataOut.position = vtx_position;
-        DataOut.shadowCoord = SHADOW * vec4(vtx_position, 1.0);
 
-        // the position of the vertex as seen from the current camera, in clip space
-        gl_Position = MVP * vec4(vtx_position, 1.0);
+	DataOut.normal = vtx_normal;
+	DataOut.position = new_position.xyz;
+	DataOut.shadowCoord = SHADOW * new_position;
+
+	// the position of the vertex as seen from the current camera, in clip space
+	gl_Position = MVP * new_position;
 }

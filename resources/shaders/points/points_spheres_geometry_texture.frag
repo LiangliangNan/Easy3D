@@ -1,7 +1,7 @@
 #version 330 core
 // please send comments or report bug to: liangliang.nan@gmail.com
 
-uniform mat4    PROJ;
+uniform mat4 PROJ;
 uniform bool	perspective;
 
 uniform vec3    eLightPos;

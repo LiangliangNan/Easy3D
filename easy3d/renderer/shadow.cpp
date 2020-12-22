@@ -33,6 +33,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/clipping_plane.h>
 
 
 // for debugging
@@ -188,6 +189,8 @@ namespace easy3d {
         program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
+                if (setting::clipping_plane)
+                    setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                 d->gl_draw(false);
             }
         }
@@ -233,6 +236,8 @@ namespace easy3d {
                 program->set_uniform("default_color", d->color());				easy3d_debug_log_gl_error;
                 program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                 program->set_uniform("is_background", false);
+                if (setting::clipping_plane)
+                    setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                 d->gl_draw(false);
             }
         }

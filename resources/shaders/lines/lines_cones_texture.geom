@@ -9,10 +9,10 @@
 layout(lines) in;
 layout(triangle_strip, max_vertices = 5) out;
 
-uniform mat4    PROJ;
-uniform mat4    invMV;
-uniform bool    perspective;
-uniform float   radius;
+uniform mat4 PROJ;
+uniform mat4 invMV;
+uniform bool perspective;
+uniform float radius;
 
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;

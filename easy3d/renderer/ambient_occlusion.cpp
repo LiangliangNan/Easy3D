@@ -39,6 +39,8 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/clipping_plane.h>
 
 
 const int  KERNEL_SIZE = 64;
@@ -189,18 +191,26 @@ namespace easy3d {
         for (auto model : models) {
             if (model->renderer()->is_visible()) {
                 for (auto d : model->renderer()->points_drawables()) {
-                    if (d->is_visible())
+                    if (d->is_visible()) {
+                        if (setting::clipping_plane)
+                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                         d->gl_draw(false); easy3d_debug_log_gl_error
+                    }
                 }
                 for (auto d : model->renderer()->triangles_drawables()) {
                     if (d->is_visible()) {
+                        if (setting::clipping_plane)
+                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                         program->set_uniform("smooth_shading", d->smooth_shading());
                         d->gl_draw(false); easy3d_debug_log_gl_error
                     }
                 }
                 for (auto d : model->renderer()->lines_drawables()) {
-                    if (d->is_visible())
+                    if (d->is_visible()) {
+                        if (setting::clipping_plane)
+                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                         d->gl_draw(false); easy3d_debug_log_gl_error
+                    }
                 }
             }
         }

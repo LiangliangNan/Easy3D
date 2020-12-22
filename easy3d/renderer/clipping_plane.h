@@ -68,7 +68,10 @@ namespace easy3d {
         float cross_section_width() { return cross_section_width_; }
         void set_cross_section_width(float w) { cross_section_width_ = w; }
 
-        void set_program(ShaderProgram *program);
+        // \param plane_clipping_discard Controls clipping plane behavior.
+        //  - true: completely discard a vertex in vertex shader
+        //  - false: standard plane clipping
+        void set_program(ShaderProgram *program, bool plane_clipping_discard = false);
 
         // arrow = true: also draw an arrow in the center of the plane.
         void draw(Camera* cam) const;

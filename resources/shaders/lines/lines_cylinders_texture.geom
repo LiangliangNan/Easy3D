@@ -9,8 +9,8 @@
 layout(lines) in;
 layout(triangle_strip, max_vertices = 6) out;
 
-uniform mat4    PROJ;
-uniform mat4    invMV;
+uniform mat4 PROJ;
+uniform mat4 invMV;
 uniform bool	perspective;
 uniform float	radius;
 

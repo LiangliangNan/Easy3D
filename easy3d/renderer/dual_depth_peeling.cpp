@@ -33,8 +33,8 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/file_system.h>
 
 //#define SAVE_ITERMEDIATE_FBO
@@ -191,6 +191,8 @@ namespace easy3d {
             program->set_uniform("MVP", MVP);
             for (auto d : surfaces) {
                 if (d->is_visible()) {
+                    if (setting::clipping_plane)
+                        setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                     d->gl_draw(false);
                 }
             }
@@ -237,6 +239,8 @@ namespace easy3d {
                     program->set_uniform("Alpha", d->opacity());
                     program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                     program->set_uniform("default_color", d->color());
+                    if (setting::clipping_plane)
+                        setting::clipping_plane->set_program(program, d->plane_clipping_discard());
                     d->gl_draw(false);
                 }
             }

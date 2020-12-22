@@ -4,7 +4,7 @@
 // It uses geometry shader for vertex generation.
 // The code does not cover round caps.
 
-uniform mat4    PROJ;
+uniform mat4 PROJ;
 uniform bool	perspective;
 uniform float	radius;
 

@@ -6,8 +6,8 @@
 layout(points) in;
 layout(triangle_strip, max_vertices = 4) out;
 
-uniform mat4    MV;
-uniform mat4    PROJ;
+uniform mat4 MV;
+uniform mat4 PROJ;
 uniform float	sphere_radius;
 
 uniform bool clippingPlaneEnabled = false;
