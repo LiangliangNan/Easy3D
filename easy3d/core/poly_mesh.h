@@ -668,15 +668,15 @@ namespace easy3d {
         //! \name File IO
         //!@{
 
-        //! \brief Read a tetrahedral mesh from a ".tet" file \p filename.
+        //! \brief Read a tetrahedral mesh from a ".plm" file \p filename.
         //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool read_tet(const std::string& filename);
+        bool read(const std::string& filename);
 
-        //! \brief Write a tetrahedral mesh to a ".tet" file \p filename.
+        //! \brief Write a tetrahedral mesh to a ".plm" file \p filename.
         //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool write_tet(const std::string& filename) const;
+        bool write(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face / cell

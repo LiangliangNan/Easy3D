@@ -132,7 +132,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::read_tet(const std::string &file_name)
+    bool PolyMesh::read(const std::string &file_name)
     {
         clear();
 
@@ -143,31 +143,41 @@ namespace easy3d {
         }
 
         std::string dummy;
-        int num_vertices, num_tets;
-        input >> dummy >> num_vertices >> num_tets;
+        int num_vertices, num_cells;
+        input >> dummy >> num_vertices >> dummy >> num_cells;
 
         vec3 p;
-        for (std::size_t i = 0; i < num_vertices; ++i) {
+        for (std::size_t v = 0; v < num_vertices; ++v) {
             input >> p;
             add_vertex(p);
         }
 
-        ivec4 ids;
-        for (std::size_t i = 0; i < num_tets; ++i) {
-            input >> ids;
-            add_tetra(Vertex(ids[0]), Vertex(ids[1]), Vertex(ids[2]), Vertex(ids[3]));
+        int num_halffaces, num_valence, idx;
+        for (std::size_t c = 0; c < num_cells; ++c) {
+            input >> num_halffaces;
+            std::vector<PolyMesh::HalfFace> halffaces(num_halffaces);
+            for (std::size_t hf = 0; hf < num_halffaces; ++hf) {
+                input >> num_valence;
+                std::vector<PolyMesh::Vertex> vts(num_valence);
+                for (std::size_t v = 0; v < num_valence; ++v) {
+                    input >> idx;
+                    vts[v] = PolyMesh::Vertex(idx);
+                }
+                halffaces[hf] = add_face(vts);
+            }
+            add_cell(halffaces);
         }
 
-        return num_tets > 0;
+        return num_vertices > 0 && num_cells > 0;
     }
 
 
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::write_tet(const std::string &file_name) const {
-        if (n_faces() == 0) {
-            LOG(ERROR) << "empty mesh";
+    bool PolyMesh::write(const std::string &file_name) const {
+        if (n_vertices() == 0 || n_faces() == 0 || n_cells() == 0) {
+            LOG(ERROR) << "empty polyhedral mesh";
             return false;
         }
 
@@ -177,15 +187,21 @@ namespace easy3d {
             return false;
         }
 
-        output << "tet " << n_vertices() << " " << n_cells() << std::endl;
+        output << "#vertices " << n_vertices() << std::endl
+               << "#cells    " << n_cells() << std::endl;
 
         for (auto v : vertices())
-            output << vpoint_[v] << std::endl;
+            output << position(v) << std::endl;
 
         for (auto c : cells()) {
-            for (auto v : vertices(c))
-                output << v.idx() << " ";
-            output << std::endl;
+            int num_halffaces = halffaces(c).size();
+            output << num_halffaces << std::endl;
+            for (auto h : halffaces(c)) {
+                output << vertices(h).size() << " ";
+                for (auto v : vertices(h))
+                    output << v.idx() << " ";
+                output << std::endl;
+            }
         }
 
         return true;

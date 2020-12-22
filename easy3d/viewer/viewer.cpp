@@ -1260,7 +1260,7 @@ namespace easy3d {
                 "Surface Mesh (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
                 "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-                "Polytope Mesh (*.tet)", "*.tet",
+                "Polytope Mesh (*.plm)", "*.plm",
                 "All Files (*.*)", "*"
         };
         const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
@@ -1291,7 +1291,7 @@ namespace easy3d {
                 "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
                 "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                "Polytope Mesh (*.tet)", "*.tet",
+                "Polytope Mesh (*.plm)", "*.plm",
                 "All Files (*.*)", "*"
         };
 

@@ -44,7 +44,7 @@ namespace easy3d {
 
         /**
          * \brief Reads a polyhedral mesh from a file.
-         * \details File extension determines file format (now only '*.tet' format is supported).
+         * \details File extension determines file format (now only '*.plm' format is supported).
          * \param file_name The file name.
          * \return The pointer of the polyhedral mesh (nullptr if failed).
          */
@@ -52,7 +52,7 @@ namespace easy3d {
 
         /**
          * \brief Saves a polyhedral mesh to a file.
-         * \details File extension determines file format (now only '*.tet' format is supported).
+         * \details File extension determines file format (now only '*.plm' format is supported).
          * \param file_name The file name.
          * \param mesh The Polytope mesh.
          * \return The status of the operation
