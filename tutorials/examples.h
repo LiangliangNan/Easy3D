@@ -19,6 +19,8 @@
 /// @example Tutorial_111_Graph_IO                  \include Tutorial_111_Graph_IO/main.cpp
 /// @example Tutorial_112_PolyMesh                  \include Tutorial_112_PolyMesh/main.cpp
 /// @example Tutorial_113_PolyMesh_Connectivity     \include Tutorial_113_PolyMesh_Connectivity/main.cpp
+/// @example Tutorial_106_PolyMesh_Property         \include Tutorial_106_PolyMesh_Property/main.cpp
+/// @example Tutorial_107_PolyMesh_IO               \include Tutorial_107_PolyMesh_IO/main.cpp
 
 /**
  * \example Tutorial_201_Viewer_imgui

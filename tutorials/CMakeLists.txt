@@ -20,8 +20,8 @@ add_subdirectory(Tutorial_111_Graph_IO)
 # polyhedral mesh
 add_subdirectory(Tutorial_112_PolyMesh)
 add_subdirectory(Tutorial_113_PolyMesh_Connectivity)
-#add_subdirectory(Tutorial_114_PolyMesh_Property)
-#add_subdirectory(Tutorial_115_PolyMesh_IO)
+add_subdirectory(Tutorial_114_PolyMesh_Property)
+add_subdirectory(Tutorial_115_PolyMesh_IO)
 
 # ui, viewer, and camera
 add_subdirectory(Tutorial_201_Viewer_imgui)

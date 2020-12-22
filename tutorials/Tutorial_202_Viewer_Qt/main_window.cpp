@@ -112,10 +112,10 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.tet)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Polytope Mesh (*.tet)\n"
+                "Polytope Mesh (*.plm)\n"
                 "All formats (*.*)"
             );
 
@@ -156,10 +156,10 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.tet)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Polytope Mesh (*.tet)\n"
+                "Polytope Mesh (*.plm)\n"
                 "All formats (*.*)"
     );
 
@@ -210,7 +210,7 @@ Model* MainWindow::open(const std::string& file_name) {
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
         model = GraphIO::load(file_name);
-    } else if (ext == "tet") {
+    } else if (ext == "plm") {
         model = PolyMeshIO::load(file_name);
     }
     else { // point cloud
