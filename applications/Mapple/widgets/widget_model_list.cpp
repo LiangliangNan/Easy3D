@@ -1,6 +1,6 @@
-#include <applications/Mapple/widgets/widget_model_list.h>
-#include <applications/Mapple/main_window.h>
-#include <applications/Mapple/paint_canvas.h>
+#include "widget_model_list.h"
+#include "main_window.h"
+#include "paint_canvas.h"
 
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
@@ -16,6 +16,7 @@
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <QMouseEvent>
+
 
 
 using namespace easy3d;
@@ -292,7 +293,7 @@ void WidgetModelList::duplicateCurrent() {
         }
 
         if (copy) {
-            const std::string name = file_system::parent_directory(model->name()) + "/" + file_system::base_name(model->name()) + "_copy";
+            const std::string &name = file_system::name_less_extension(model->name()) + "_copy";
             copy->set_name(name);
             viewer()->addModel(copy);
             addModel(copy, true);
