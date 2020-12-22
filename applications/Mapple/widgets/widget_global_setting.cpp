@@ -194,26 +194,34 @@ void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
 
 
 void WidgetGlobalSetting::setSSAORadius(int v) {
-    viewer_->ssao()->set_radius(v / 100.0f);
-    viewer_->update();
+    if (viewer_->ssao()) {
+        viewer_->ssao()->set_radius(v / 100.0f);
+        viewer_->update();
+    }
 }
 
 
 void WidgetGlobalSetting::setSSAOIntensity(int v) {
+    if (viewer_->ssao()) {
 //    viewer_->ssao()->set_intensity(v / 100.0f);
 //    viewer_->update();
+    }
 }
 
 
 void WidgetGlobalSetting::setSSAOBias(int v) {
-    viewer_->ssao()->set_bias(v / 100.0f);
-    viewer_->update();
+    if (viewer_->ssao()) {
+        viewer_->ssao()->set_bias(v / 100.0f);
+        viewer_->update();
+    }
 }
 
 
 void WidgetGlobalSetting::setSSAOSharpness(int v) {
+    if (viewer_->ssao()) {
 //    viewer_->ssao()->set_sharpness(v / 100.0f);
 //    viewer_->update();
+    }
 }
 
 
