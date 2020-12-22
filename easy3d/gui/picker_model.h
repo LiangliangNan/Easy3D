@@ -50,6 +50,7 @@ namespace easy3d {
 
         /**
          * \brief Pick a model from a set of models given the cursor position in the screen coordinate system.
+         * @param models The models
          * @param x The cursor x-coordinate, relative to the left edge of the content area.
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left

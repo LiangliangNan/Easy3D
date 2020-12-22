@@ -33,12 +33,12 @@
 namespace easy3d {
 
     /**
-     * \brief A very basic file_system implementation.
+     * \brief A very basic filesystem implementation.
      * \namespace easy3d::file_system
      * @attention Functions are not sufficiently tested.
      * @todo [Liangliang] Comprehensive tests.
      *
-     * @related ghc::filesystem - A C++17-like filesystem implementation for C++11/C++147/C++17
+     * @sa ghc::filesystem - A C++17-like filesystem implementation for C++11/C++147/C++17
      *          https://github.com/gulrak/filesystem/blob/master/include/ghc/filesystem.hpp
      */
     namespace file_system {
@@ -89,23 +89,22 @@ namespace easy3d {
         bool	delete_contents(const std::string& path);
 
         /**
-         * @brief Query the entries of a directory 'path' (including subdirectories and files).
+         * @brief Queries the entries of a directory (including subdirectories and files).
          * @param path The full path of a directory.
-         * @param entries Return the entries of 'path'. Result strings are simple names (i.e.,
-         *        without the 'path' part).
-         * @param recursive Perform the query recursively if true.
-         * @related get_files(const std::string& path, std::vector<std::string>& files, bool recursive),
-         * get_sub_directories(const std::string& path, std::vector<std::string>& subs, bool recursive).
+         * @param entries Return the entries of the directory. Result strings are simple names (i.e.,
+         *        without the \p path part).
+         * @param recursive Performs the query recursively if true.
+         * @sa get_files(), get_sub_directories().
          */
         void	get_directory_entries(const std::string& path, std::vector<std::string>& entries, bool recursive);
 
         /**
-         * @brief Query file entries of a directory 'path'.
+         * @brief Queries file entries of a directory 'path'.
          * @param path The full path of a directory.
          * @param files Return the file entries of 'path'. Result strings are simple names (i.e.,
          *        without the 'path' part).
          * @param recursive Perform the query recursively if true.
-         * @related get_directory_entries(), get_sub_directories().
+         * @sa get_directory_entries(), get_sub_directories().
          */
         void	get_files(const std::string& path, std::vector<std::string>& files, bool recursive);
 
@@ -115,7 +114,7 @@ namespace easy3d {
          * @param subs Return the subdirectory entries of 'path'. Result strings are only the
          *        names of the subdirectories (i.e., without the 'path' part).
          * @param recursive Perform the query recursively if true.
-         * @related get_directory_entries(), get_files().
+         * @sa get_directory_entries(), get_files().
          */
         void	get_sub_directories(const std::string& path, std::vector<std::string>& subs, bool recursive);
 
@@ -273,7 +272,7 @@ namespace easy3d {
          * @brief Converts the path to Windows style, i.e., forward slashes (/) to back slashes (\\).
          * @param path The path string.
          * @return The path in Windows style.
-         * @related convert_to_unix_style(), convert_to_native_style().
+         * @sa convert_to_unix_style(), convert_to_native_style().
          */
         std::string convert_to_windows_style(const std::string& path);
 
@@ -281,7 +280,7 @@ namespace easy3d {
          * @brief Converts the path to Unix style, i.e., back slashes (\\) to forward slashes (/).
          * @param path The path string.
          * @return The path in Unix style.
-         * @related convert_to_windows_style(), convert_to_native_style().
+         * @sa convert_to_windows_style(), convert_to_native_style().
          */
         std::string convert_to_unix_style(const std::string& path);
 
@@ -289,7 +288,7 @@ namespace easy3d {
          * @brief Convert sthe path to contain only the current platform's path separators.
          * @param path The path string.
          * @return The path in native style.
-         * @related convert_to_windows_style(), convert_to_unix_style().
+         * @sa convert_to_windows_style(), convert_to_unix_style().
          */
         std::string convert_to_native_style(const std::string& path);
 

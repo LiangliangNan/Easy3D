@@ -236,7 +236,7 @@ namespace easy3d {
         void interpolateToFitScene();
         void interpolateTo(const Frame &fr, double duration);
 
-        /* Draw animation path(s) */
+        /// Draw animation path(s)
         void draw_paths() const;
 
 	public:

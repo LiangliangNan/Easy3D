@@ -37,7 +37,7 @@ namespace easy3d {
 
 
     /**
-     * @Attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
+     * @attention: Matrices are stored internally as column - major unless MATRIX_ROW_MAJOR is defined.
      **/
     //#define MATRIX_ROW_MAJOR
 
@@ -1337,7 +1337,8 @@ namespace easy3d {
 
     /**
      * \brief 2 by 2 matrix. Extends Mat with 2D-specific functionality and constructors.
-     * \tparam T The scalar type for vector elements. \see Mat.
+     * \tparam T The scalar type for vector elements.
+     * \see Mat.
      * \class Mat2 easy3d/core/mat.h
      */
     template <typename T>
@@ -1347,8 +1348,8 @@ namespace easy3d {
         /**
          * \brief Default constructor.
          * \note The matrix elements are intentionally not initialized. This is efficient
-         *       if the user assigns their values from subsequent compuations. Use Mat2(T s)
-         *       to initialize the elmentment during construction.
+         *       if the user assigns their values from subsequent computations. Use Mat2(T s)
+         *       to initialize the elements during construction.
          */
         Mat2();
 

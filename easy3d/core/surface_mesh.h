@@ -102,7 +102,7 @@ namespace easy3d {
                 return idx_ < _rhs.idx_;
             }
 
-            // [Liangliang]: to be able to use std::unordered_map
+            /// helper structure to be able to use std::unordered_map
             struct Hash {
                 std::size_t operator()(const BaseHandle& h) const { return h.idx(); }
             };

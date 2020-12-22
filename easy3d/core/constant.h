@@ -30,16 +30,23 @@
 
 namespace easy3d {
 
+    /// \brief The PI.
     const double pi = 3.14159265358979323846264338327950288;
+    /// \brief The half PI (PI/2)
     const double half_pi = pi * 0.5;
+    /// \brief The quarter PI (PI/4)
     const double quarter_pi = pi * 0.25;
+    /// \brief The two PI (2 * PI).
     const double two_pi	 = pi * 2.0;
 
+    /// \brief Conversion from radian to degree
     double inline rad2deg(double rad) { return rad * 180.0 / pi; }
+    /// \brief Conversion from degree to radian
     double inline deg2rad(double deg) { return deg * pi / 180.0; }
 
-    // Function returning min/max for corresponding type
+    /// Function returning minimum representable value for a given type
     template <typename FT> inline FT min();
+    /// Function returning maximum representable value for a given type
     template <typename FT> inline FT max();
 
     // Template specializations for float and double
@@ -57,19 +64,19 @@ namespace easy3d {
     /// \brief Function returning \c max for double type numbers.
     template <> inline double  max<double>() { return DBL_MAX; }
 
-    // standard epsilon values
-    // Function returning epsilon for corresponding type
+    /// Function returning the epsilon value for a given type
     template <typename FT> inline FT epsilon();
+    /// Function returning the squared epsilon value for a given type
     template <typename FT> inline FT epsilon_sqr();
 
     // Template specializations for float and double
     /// \brief Function returning \c epsilon for float type numbers.
     template <> inline float  epsilon<float>() { return 1.0e-6f; }
-    /// \brief Function returning \c squared_epsilon for float type numbers.
+    /// \brief Function returning \c squared epsilon for float type numbers.
     template <> inline float  epsilon_sqr<float>() { return 1.0e-12f; }
     /// \brief Function returning \c epsilon for double type numbers.
     template <> inline double epsilon<double>() { return 1.0e-12; }
-    /// \brief Function returning \c squared_epsilon for double type numbers.
+    /// \brief Function returning \c squared epsilon for double type numbers.
     template <> inline double epsilon_sqr<double>() { return 1.0e-24; }
 }
 

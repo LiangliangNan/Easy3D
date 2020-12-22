@@ -38,7 +38,10 @@ namespace easy3d {
      */
     namespace io {
 
-
+        /**
+         * \brief Input stream class to operate on ASCII files.
+         * \clasa LineInputStream easy3d/util/line_stream.h
+         */
         class LineInputStream {
         public:
             LineInputStream(std::istream &in) : in_(in), line_in_(nullptr) {}

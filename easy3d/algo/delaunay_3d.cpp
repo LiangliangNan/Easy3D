@@ -50,8 +50,7 @@ namespace easy3d {
         tetgen_out_->clean_memory();
         tetgen_in_->numberofpoints = nb_vertices;
 
-        // Liangliang: Tetgen uses double by default.
-        //tetgen_in_->pointlist = (float*)vertices;
+        // Liangliang: tetgen uses double by default.
         tetgen_in_->pointlist = new double[tetgen_in_->numberofpoints * 3];
         for (unsigned int i = 0; i < nb_vertices * 3; ++i) {
             tetgen_in_->pointlist[i] = vertices[i];

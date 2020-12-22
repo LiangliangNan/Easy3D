@@ -68,7 +68,6 @@ namespace easy3d {
         /// \brief Returns the generated SSAO texture ID
         unsigned int ssao_texture() const;
 
-#ifndef DOXYGEN
     protected:
         void init(int w, int h);
 
@@ -89,7 +88,6 @@ namespace easy3d {
 
         std::vector<vec3> ssao_kernel_;
         unsigned int	  noise_texture_;
-#endif
 
     private:
         //copying disabled

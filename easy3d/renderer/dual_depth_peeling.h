@@ -101,7 +101,7 @@ namespace easy3d {
         /// \brief Renders the scene (a set of surfaces) with transparency effect
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
 
-#ifndef DOXYGEN
+
     protected:
 
         // Allocate and configure FBOs, initialize variables, query, etc.
@@ -131,7 +131,6 @@ namespace easy3d {
 
         // Release all FBOs, shader programs.
         void clear();
-#endif
 
     private:
         Camera* camera_;

@@ -47,7 +47,7 @@ namespace easy3d {
 
         /**
          * \brief Add Gaussian noise (that has a normal distribution) to a point cloud.
-         * @param mesh The point cloud.
+         * @param cloud The point cloud.
          * @param sigma The standard deviation of the noise distribution. So about 68 percent of the noise values are
          *              within one standard deviation of the mean (mathematically, μ ± σ, where μ is the arithmetic
          *              mean), about 95 percent are within two standard deviations (μ ± 2σ).
