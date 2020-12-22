@@ -2432,7 +2432,7 @@ namespace easy3d {
                 return;
             }
 
-            if (!model->is_tetraheral_mesh()) {
+            if (model->is_tetraheral_mesh()) {
                 std::vector<unsigned int> d_indices;
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
