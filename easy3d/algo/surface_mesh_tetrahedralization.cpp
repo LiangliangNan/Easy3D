@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <3rd_party/tetgen/tetgen.h>
 
@@ -56,6 +57,9 @@ namespace easy3d {
                 return nullptr;
             }
         }
+
+        StopWatch w;
+        LOG(INFO) << "tetrahedralizing...";
 
         tetgenbehavior *tetgen_args = new tetgenbehavior;
         // Create tetgen argument string from options.
@@ -106,12 +110,26 @@ namespace easy3d {
         try {
             ::tetrahedralize(tetgen_args, tetgen_surface, tetgen_volume);
         } catch (...) {
-            LOG(ERROR) << "tetgen encountered an error, relaunching in diagnose mode" << std::endl;
-            tetgen_args->parse_commandline(const_cast<char *>("d"));
-            ::tetrahedralize(tetgen_args, tetgen_surface, tetgen_volume);
+            LOG(ERROR) << "tetgen encountered an error, relaunching in diagnose mode";
+            tetgen_args->parse_commandline(const_cast<char *>("pd"));
+            try {
+                ::tetrahedralize(tetgen_args, tetgen_surface, tetgen_volume);
+            } catch (const std::exception& e) {
+                LOG(ERROR) << e.what() << " Result may not be valid.";
+            }
         }
 
         PolyMesh *result = to_easy3d_poly_mesh(tetgen_volume);
+
+        if (result) {
+            LOG(INFO) << "done. "
+                      << "#vertex: " << result->n_vertices() << ", "
+                      << "#edge: " << result->n_edges() << ", "
+                      << "#face: " << result->n_faces() << ", "
+                      << "#cell: " << result->n_cells() << "). "
+                      << w.time_string();
+        } else
+            LOG(WARNING) << "tetrehedralization failed. " << w.time_string();
 
         delete tetgen_args;
         delete tetgen_surface;
@@ -160,6 +178,9 @@ namespace easy3d {
 
 
     PolyMesh *SurfaceMeshTetrehedralization::to_easy3d_poly_mesh(tetgenio *volume) {
+        if (volume->numberofpoints <= 0 || volume->numberoftetrahedra <= 0)
+            return nullptr;
+
         PolyMesh *mesh = new PolyMesh;
 
         PolyMesh::CellProperty<double> region;
