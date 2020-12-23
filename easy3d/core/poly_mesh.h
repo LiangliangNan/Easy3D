@@ -146,8 +146,8 @@ namespace easy3d {
             std::set<HalfFace>   halffaces_;
             std::set<Cell>       cells_;
 
-            inline void read(std::istream& in);
-            inline void write(std::ostream& out) const;
+            void read(std::istream& in);
+            void write(std::ostream& out) const;
         };
 
 
@@ -159,8 +159,8 @@ namespace easy3d {
             std::set<HalfFace>   halffaces_;
             std::set<Cell>       cells_;
 
-            inline void read(std::istream& in);
-            inline void write(std::ostream& out) const;
+            void read(std::istream& in);
+            void write(std::ostream& out) const;
         };
 
         /// This type stores the halfface connectivity
@@ -172,8 +172,8 @@ namespace easy3d {
             Cell             cell_;
             HalfFace         opposite_;
 
-            inline void read(std::istream& in);
-            inline void write(std::ostream& out) const;
+            void read(std::istream& in);
+            void write(std::ostream& out) const;
         };
 
         /// This type stores the cell connectivity
@@ -184,8 +184,8 @@ namespace easy3d {
             std::set<Edge>       edges_;
             std::vector<HalfFace>   halffaces_;
 
-            inline void read(std::istream& in);
-            inline void write(std::ostream& out) const;
+            void read(std::istream& in);
+            void write(std::ostream& out) const;
         };
 
 
