@@ -472,24 +472,24 @@ namespace easy3d {
         auto f = find_half_face(vertices);
         if (!f.is_valid()) {
             f = new_face();
+            auto op = opposite(f);
             hconn_[f].vertices_ = vertices;
-            hconn_[opposite(f)].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
-        }
+            hconn_[op].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
 
-        for (auto v : vertices) {
-            vconn_[v].halffaces_.insert(f);
-            vconn_[v].halffaces_.insert(opposite(f));
-        }
+            for (int i=0; i<vertices.size(); ++i) {
+                auto s = vertices[i];
+                auto t = vertices[(i+1)%3];
+                auto e = find_edge(s, t);
+                if (!e.is_valid()) {
+                    e = new_edge(s, t);
+                    econn_[e].halffaces_.insert(f);
+                    hconn_[f].edges_.insert(e);
+                    hconn_[op].edges_.insert(e);
+                }
 
-        for (int i=0; i<vertices.size(); ++i) {
-            auto s = vertices[i];
-            auto t = vertices[(i+1)%3];
-            auto e = find_edge(s, t);
-            if (!e.is_valid())
-                e = new_edge(s, t);
-            econn_[e].halffaces_.insert(f);
-            hconn_[f].edges_.insert(e);
-            hconn_[opposite(f)].edges_.insert(e);
+                vconn_[s].halffaces_.insert(f);
+                vconn_[s].halffaces_.insert(op);
+            }
         }
 
         return f;
