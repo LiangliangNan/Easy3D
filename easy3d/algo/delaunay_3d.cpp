@@ -66,10 +66,8 @@ namespace easy3d {
             // V: verbose
             tetgen_args_.parse_commandline((char *) ("Qn"));
             ::tetrahedralize(&tetgen_args_, tetgen_in_, tetgen_out_);
-
-
-        } catch (...) {
-            LOG(ERROR) << "encountered a problem...";
+        } catch (const std::exception& e) {
+            LOG(ERROR) << "encountered a problem: " << e.what();
         }
 
         set_arrays(
