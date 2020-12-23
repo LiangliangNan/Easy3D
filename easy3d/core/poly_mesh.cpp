@@ -428,28 +428,31 @@ namespace easy3d {
 
 
     PolyMesh::HalfFace PolyMesh::find_half_face(const std::vector<Vertex> &vts) const {
-        auto is_same_set = [](const std::vector<Vertex>& set1, const std::vector<Vertex>& set2) -> bool { // allows permutation
-            if (set1.size() != set2.size())
-                return false;
-            for (std::size_t start=0; start<set1.size(); ++start) {
-                bool found = true;
-                for (std::size_t id = 0; id < set1.size(); ++id) {
-                    if (set1[(id + start) % set1.size()] != set2[id]) {
-                        found = false;
-                        break;
-                    }
-                }
-                if (found)
-                    return true;
-            }
-            return false;
-        };
-
         assert(vts.size() >= 3);
+
+        // loop over all the halffaces that involve the 1st vertex
         for (auto h : halffaces(vts[0])) {
-            if (is_same_set(vertices(h), vts))
-                return h;
+            const auto& tests = vertices(h);
+            if (tests.size() != vts.size())
+                continue;
+
+            // we first find the element (from the first set) to match the 1st element in the second set
+            for (std::size_t start = 0; start < tests.size(); ++start) {
+                if (tests[start] == vts[0]) {
+                    // test for the remaining elements
+                    bool all_matched = true;
+                    for (std::size_t id = 1; id < vts.size(); ++id) { // we can start from 1
+                        if (tests[(id + start) % tests.size()] != vts[id]) {
+                            all_matched = false;
+                            break;
+                        }
+                    }
+                    if (all_matched)
+                        return h;
+                }
+            }
         }
+
         return HalfFace();
     }
 
