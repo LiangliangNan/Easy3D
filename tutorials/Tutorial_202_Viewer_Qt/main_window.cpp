@@ -112,10 +112,10 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pmesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Polytope Mesh (*.plm)\n"
+                "Polytope Mesh (*.plm *.pmesh)\n"
                 "All formats (*.*)"
             );
 
@@ -156,10 +156,10 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pmesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Polytope Mesh (*.plm)\n"
+                "Polytope Mesh (*.plm *.pmesh)\n"
                 "All formats (*.*)"
     );
 
@@ -205,12 +205,12 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "smesh" || ext == "plg") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
         model = GraphIO::load(file_name);
-    } else if (ext == "plm") {
+    } else if (ext == "plm" || ext == "pmesh") {
         model = PolyMeshIO::load(file_name);
     }
     else { // point cloud

@@ -60,7 +60,7 @@ namespace easy3d {
         const std::string title("Please choose a file");
         const std::string default_path("");
         const std::vector<std::string> &filters = {
-                "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
+                "Mesh Files (*.obj *.ply *.off *.stl)", "*.obj *.ply *.off *.stl",
                 "All Files (*.*)", "*"
         };
 

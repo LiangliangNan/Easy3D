@@ -668,15 +668,15 @@ namespace easy3d {
         //! \name File IO
         //!@{
 
-        //! \brief Read a tetrahedral mesh from a ".plm" file \p filename.
-        //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
+        //! \brief Read mesh from a PMESH file \p filename.
+        //! Mainly for quite debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool read(const std::string& filename);
+        bool read_pmesh(const std::string& filename);
 
-        //! \brief Write a tetrahedral mesh to a ".plm" file \p filename.
-        //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
+        //! \brief Write mesh to a PMESH file \p filename.
+        //! Mainly for quite debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool write(const std::string& filename) const;
+        bool write_pmesh(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face / cell
@@ -704,7 +704,7 @@ namespace easy3d {
         Cell add_cell(const std::vector<HalfFace>& faces);
 
         /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \details It creates all the faces and the cell, and adds them to the mesh.
+        /// \details It creates all the faces and the cells, and adds them to the mesh.
         /// \sa add_face, add_cell
         Cell add_tetra(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
@@ -731,6 +731,16 @@ namespace easy3d {
         /// (such as normal vectors) are also removed and must thus be re-added if needed.
         void clear();
 
+        /// resizes space for vertices, edges, halffaces, and their currently
+        /// associated properties.
+        /// Note: nf is the number of faces. for halffaces, nh = 2 * nf. */
+        void resize(unsigned int nv, unsigned int ne, unsigned int nf, unsigned int nc) {
+            vprops_.resize(nv);
+            eprops_.resize(ne);
+            hprops_.resize(2 * nf);
+            fprops_.resize(nf);
+            cprops_.resize(nc);
+        }
 
         /// return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
         bool is_valid(Vertex v) const

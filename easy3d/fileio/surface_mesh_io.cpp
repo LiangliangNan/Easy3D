@@ -48,8 +48,8 @@ namespace easy3d {
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ply")
             success = io::load_ply(file_name, mesh);
-        else if (ext == "poly")
-            success = io::load_poly(file_name, mesh);
+        else if (ext == "smesh")
+            success = io::load_smesh(file_name, mesh);
         else if (ext == "obj")
 			success = io::load_obj(file_name, mesh);
 		else if (ext == "off")
@@ -72,7 +72,8 @@ namespace easy3d {
 			success = false;
 		}
 
-		if (!success || mesh->n_faces() == 0) {
+		if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
+            LOG(WARNING) << "no valid data in file: " << file_name;
 			delete mesh;
 			return nullptr;
 		}
@@ -110,8 +111,8 @@ namespace easy3d {
             }
             success = io::save_ply(final_name, mesh, true);
         }
-        else if (ext == "poly")
-            success = io::save_poly(final_name, mesh);
+        else if (ext == "smesh")
+            success = io::save_smesh(final_name, mesh);
         else if (ext == "obj")
             success = io::save_obj(final_name, mesh);
         else if (ext == "off")

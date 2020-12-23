@@ -132,77 +132,89 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::read(const std::string &file_name)
+    bool PolyMesh::read_pmesh(const std::string &file_name)
     {
         clear();
 
-        std::ifstream input(file_name.c_str());
+        // open file (in binary mode)
+        std::ifstream input(file_name.c_str(), std::fstream::binary);
         if (input.fail()) {
             LOG(ERROR) << "could not open file: " << file_name;
             return false;
         }
 
-        std::string dummy;
-        int num_vertices, num_cells;
-        input >> dummy >> num_vertices >> dummy >> num_cells;
+        // how many elements?
+        unsigned int nv, ne, nh, nf, nc;
+        input.read((char*)&nv, sizeof(unsigned int));
+        input.read((char*)&ne, sizeof(unsigned int));
+        input.read((char*)&nf, sizeof(unsigned int));
+        input.read((char*)&nc, sizeof(unsigned int));
+        nh = nf * 2;
 
-        vec3 p;
-        for (std::size_t v = 0; v < num_vertices; ++v) {
-            input >> p;
-            add_vertex(p);
-        }
+        // resize containers
+        resize(nv, ne, nf, nc);
 
-        int num_halffaces, num_valence, idx;
-        for (std::size_t c = 0; c < num_cells; ++c) {
-            input >> num_halffaces;
-            std::vector<PolyMesh::HalfFace> halffaces(num_halffaces);
-            for (std::size_t hf = 0; hf < num_halffaces; ++hf) {
-                input >> num_valence;
-                std::vector<PolyMesh::Vertex> vts(num_valence);
-                for (std::size_t v = 0; v < num_valence; ++v) {
-                    input >> idx;
-                    vts[v] = PolyMesh::Vertex(idx);
-                }
-                halffaces[hf] = add_face(vts);
-            }
-            add_cell(halffaces);
-        }
+        // get properties
+        auto vconn = vertex_property<PolyMesh::VertexConnectivity>("v:connectivity");
+        auto econn = edge_property<PolyMesh::EdgeConnectivity>("e:connectivity");
+        auto hconn = halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity");
+        auto cconn = cell_property<PolyMesh::CellConnectivity>("c:connectivity");
+        auto point = vertex_property<vec3>("v:point");
 
-        return num_vertices > 0 && num_cells > 0;
+        // read properties from file
+        input.read((char*)vconn.data(), nv * sizeof(PolyMesh::VertexConnectivity)  );
+        input.read((char*)econn.data(), ne * sizeof(PolyMesh::EdgeConnectivity));
+        input.read((char*)hconn.data(), nh * sizeof(PolyMesh::HalfFaceConnectivity));
+        input.read((char*)cconn.data(), nc * sizeof(PolyMesh::CellConnectivity)    );
+        input.read((char*)point.data(), nv * sizeof(vec3));
+
+        return (n_vertices() > 0 && n_faces() > 0 && n_cells() > 0);
     }
 
 
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::write(const std::string &file_name) const {
+    bool PolyMesh::write_pmesh(const std::string& file_name) const
+    {
         if (n_vertices() == 0 || n_faces() == 0 || n_cells() == 0) {
             LOG(ERROR) << "empty polyhedral mesh";
             return false;
         }
 
-        std::ofstream output(file_name.c_str());
+        // open file (in binary mode)
+        std::ofstream output(file_name.c_str(), std::fstream::binary);
         if (output.fail()) {
             LOG(ERROR) << "could not open file: " << file_name;
             return false;
         }
 
-        output << "#vertices " << n_vertices() << std::endl
-               << "#cells    " << n_cells() << std::endl;
+        // how many elements?
+        unsigned int nv, ne, nh, nf, nc;
+        nv = n_vertices();
+        ne = n_edges();
+        nf = n_faces();
+        nh = nf * 2;
+        nc = n_cells();
 
-        for (auto v : vertices())
-            output << position(v) << std::endl;
+        output.write((char*)&nv, sizeof(unsigned int));
+        output.write((char*)&ne, sizeof(unsigned int));
+        output.write((char*)&nf, sizeof(unsigned int));
+        output.write((char*)&nc, sizeof(unsigned int));
 
-        for (auto c : cells()) {
-            int num_halffaces = halffaces(c).size();
-            output << num_halffaces << std::endl;
-            for (auto h : halffaces(c)) {
-                output << vertices(h).size() << " ";
-                for (auto v : vertices(h))
-                    output << v.idx() << " ";
-                output << std::endl;
-            }
-        }
+        // get properties
+        auto vconn = get_vertex_property<PolyMesh::VertexConnectivity>("v:connectivity");
+        auto econn = get_edge_property<PolyMesh::EdgeConnectivity>("e:connectivity");
+        auto hconn = get_halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity");
+        auto cconn = get_cell_property<PolyMesh::CellConnectivity>("c:connectivity");
+        auto point = get_vertex_property<vec3>("v:point");
+
+        // write properties to file
+        output.write((char*)vconn.data(), nv * sizeof(PolyMesh::VertexConnectivity)  );
+        output.write((char*)econn.data(), ne * sizeof(PolyMesh::EdgeConnectivity));
+        output.write((char*)hconn.data(), nh * sizeof(PolyMesh::HalfFaceConnectivity));
+        output.write((char*)cconn.data(), nc * sizeof(PolyMesh::CellConnectivity)    );
+        output.write((char*)point.data(), nv * sizeof(vec3));
 
         return true;
     }
@@ -410,11 +422,19 @@ namespace easy3d {
 
 
     PolyMesh::Cell PolyMesh::add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
+        // for each face, its normal points inside the cell.
+        // the same as specified in Delaunay3::facet_vertex_
+        //      unsigned int Delaunay3::facet_vertex_[4][3] = {
+        //              {1, 2, 3},
+        //              {0, 3, 2},
+        //              {3, 0, 1},
+        //              {2, 1, 0}
+        //      };
         std::vector<HalfFace> faces = {
-                add_triangle(v0, v1, v2),
-                add_triangle(v1, v3, v2),
-                add_triangle(v0, v2, v3),
-                add_triangle(v1, v0, v3)
+                add_triangle(v1, v2, v3),
+                add_triangle(v0, v3, v2),
+                add_triangle(v3, v0, v1),
+                add_triangle(v2, v1, v0)
         };
 
         return add_cell(faces);

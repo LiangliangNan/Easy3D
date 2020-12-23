@@ -71,6 +71,7 @@ namespace easy3d {
 		}
 
 		if (!success || cloud->n_vertices() == 0) {
+            LOG(WARNING) << "no valid data in file: " << file_name;
 			delete cloud;
 			return nullptr;
 		}

@@ -951,15 +951,15 @@ namespace easy3d {
         //! \name File IO
         //!@{
 
-        //! \brief Read mesh from a POLY file \p filename.
+        //! \brief Read mesh from a SMESH file \p filename.
         //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
-        bool read_poly(const std::string& filename);
+        bool read_smesh(const std::string& filename);
 
-        //! \brief Write mesh to a POLY file \p filename.
+        //! \brief Write mesh to a SMESH file \p filename.
         //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
-        bool write_poly(const std::string& filename) const;
+        bool write_smesh(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face

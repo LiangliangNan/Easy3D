@@ -1103,12 +1103,12 @@ namespace easy3d {
             is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
         Model *model = nullptr;
-        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" ||
+        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "smesh" ||
             ext == "plg") { // mesh
             model = SurfaceMeshIO::load(file_name);
         } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
             model = GraphIO::load(file_name);
-        } else if (ext == "tet") {
+        } else if (ext == "plm" || ext == "pmesh") {
             model = PolyMeshIO::load(file_name);
         }
         else { // point cloud
@@ -1257,10 +1257,10 @@ namespace easy3d {
         const std::string title("Please choose a file");
         const std::string &default_path = resource::directory() + "/data/";
         const std::vector<std::string> &filters = {
-                "Surface Mesh (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
+                "Surface Mesh (*.obj *.ply *.off *.stl *.smesh)", "*.obj *.ply *.off *.stl *.smesh",
                 "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-                "Polytope Mesh (*.plm)", "*.plm",
+                "Polytope Mesh (*.plm *.pmesh)", "*.plm *.pmesh",
                 "All Files (*.*)", "*"
         };
         const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
@@ -1288,10 +1288,10 @@ namespace easy3d {
 
         const std::string &title = "Please choose a file name";
         const std::vector<std::string> &filters = {
-                "Mesh Files (*.obj *.ply *.off *.stl *.poly)", "*.obj *.ply *.off *.stl *.poly",
+                "Mesh Files (*.obj *.ply *.off *.stl *.smesh)", "*.obj *.ply *.off *.stl *.smesh",
                 "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                "Polytope Mesh (*.plm)", "*.plm",
+                "Polytope Mesh (*.plm *.pmesh)", "*.plm *.pmesh",
                 "All Files (*.*)", "*"
         };
 

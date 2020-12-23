@@ -38,69 +38,49 @@ namespace easy3d {
     PolyMesh *PolyMeshIO::load(const std::string &file_name) {
         std::setlocale(LC_NUMERIC, "C");
 
-        std::ifstream input(file_name.c_str());
-        if (input.fail()) {
-            LOG(ERROR) << "could not open file: " << file_name;
-            return nullptr;
-        }
-
-        const std::string &ext = file_system::extension(file_name, true);
-        if (ext != "plm") {
-            LOG(ERROR) << "unsupported file format: " << ext;
-            return nullptr;
-        }
-
-        PolyMesh *mesh = new PolyMesh;
+        PolyMesh* mesh = new PolyMesh;
         mesh->set_name(file_name);
 
         StopWatch w;
+        bool success = false;
 
-        std::string dummy;
-        int num_vertices, num_cells;
-        input >> dummy >> num_vertices >> dummy >> num_cells;
-
-        vec3 p;
-        for (std::size_t v = 0; v < num_vertices; ++v) {
-            input >> p;
-            mesh->add_vertex(p);
+        const std::string& ext = file_system::extension(file_name, true);
+        if (ext == "plm")
+            success = io::load_plm(file_name, mesh);
+        else if (ext == "pmesh")
+            success = io::load_pmesh(file_name, mesh);
+        else if (ext.empty()){
+            LOG(ERROR) << "unknown file format: no extension" << ext;
+            success = false;
+        }
+        else {
+            LOG(ERROR) << "unknown file format: " << ext;
+            success = false;
         }
 
-        int num_halffaces, num_valence, idx;
-        for (std::size_t c = 0; c < num_cells; ++c) {
-            input >> num_halffaces;
-            std::vector<PolyMesh::HalfFace> halffaces(num_halffaces);
-            for (std::size_t hf = 0; hf < num_halffaces; ++hf) {
-                input >> num_valence;
-                std::vector<PolyMesh::Vertex> vts(num_valence);
-                for (std::size_t v = 0; v < num_valence; ++v) {
-                    input >> idx;
-                    vts[v] = PolyMesh::Vertex(idx);
-                }
-                halffaces[hf] = mesh->add_face(vts);
-            }
-            mesh->add_cell(halffaces);
-        }
-
-        if (num_vertices == 0 || num_cells == 0) {
+        if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
             LOG(WARNING) << "no valid data in file: " << file_name;
             delete mesh;
             return nullptr;
-        } else {
+        }
+
+        if (success)
             LOG(INFO) << "polyhedral mesh loaded ("
                       << "#vertex: " << mesh->n_vertices() << ", "
                       << "#edge: " << mesh->n_edges() << ", "
                       << "#face: " << mesh->n_faces() << ", "
                       << "#cell: " << mesh->n_cells() << "). "
                       << w.time_string();
+        else
+            LOG(INFO) << "load surface mesh failed";
 
-            return mesh;
-        }
+        return mesh;
     }
 
 
     bool PolyMeshIO::save(const std::string &file_name, const PolyMesh *mesh) {
-        if (!mesh || mesh->n_vertices() == 0 || mesh->n_cells() == 0) {
-            LOG(ERROR) << "surface mesh is null";
+        if (!mesh || mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
+            LOG(ERROR) << "polyhedral mesh is null";
             return false;
         }
 
@@ -110,33 +90,34 @@ namespace easy3d {
             return false;
         }
 
-        const std::string &ext = file_system::extension(file_name, true);
-        if (ext != "plm") {
-            LOG(ERROR) << "unsupported file format: " << ext;
+        StopWatch w;
+        bool success = false;
+
+        std::string final_name = file_name;
+        const std::string& ext = file_system::extension(file_name, true);
+
+        if (ext == "plm" || ext.empty()) {
+            if (ext.empty()) {
+                LOG(WARNING) << "no extension specified, default to plm" << ext;
+                final_name = final_name + ".plm";
+            }
+            success = io::save_plm(final_name, mesh);
+        }
+        else if (ext == "pmesh")
+            success = io::save_pmesh(final_name, mesh);
+        else {
+            LOG(ERROR) << "unknown file format: " << ext;
+            success = false;
+        }
+
+        if (success) {
+            LOG(INFO) << "save model done. " << w.time_string();
+            return true;
+        }
+        else {
+            LOG(INFO) << "save model failed";
             return false;
         }
-
-        StopWatch w;
-
-        output << "#vertices " << mesh->n_vertices() << std::endl
-               << "#cells    " << mesh->n_cells() << std::endl;
-
-        for (auto v : mesh->vertices())
-            output << mesh->position(v) << std::endl;
-
-        for (auto c : mesh->cells()) {
-            int num_halffaces = mesh->halffaces(c).size();
-            output << num_halffaces << std::endl;
-            for (auto h : mesh->halffaces(c)) {
-                output << mesh->vertices(h).size() << " ";
-                for (auto v : mesh->vertices(h))
-                    output << v.idx() << " ";
-                output << std::endl;
-            }
-        }
-
-        LOG(INFO) << "save model done. " << w.time_string();
-        return true;
     }
 
 } // namespace easy3d

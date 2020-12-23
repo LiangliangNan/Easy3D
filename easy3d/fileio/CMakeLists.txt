@@ -32,9 +32,11 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_io_obj.cpp
         surface_mesh_io_off.cpp
         surface_mesh_io_ply.cpp
-        surface_mesh_io_poly.cpp
+        surface_mesh_io_smesh.cpp
         surface_mesh_io_stl.cpp
         poly_mesh_io.cpp
+        poly_mesh_io_plm.cpp
+        poly_mesh_io_pmesh.cpp
         resources.cpp
         )
 

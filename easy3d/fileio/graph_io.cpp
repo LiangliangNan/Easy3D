@@ -58,6 +58,7 @@ namespace easy3d {
         }
 
         if (!success || graph->n_vertices() == 0) {
+            LOG(WARNING) << "no valid data in file: " << file_name;
             delete graph;
             return nullptr;
         }

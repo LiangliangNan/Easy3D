@@ -173,7 +173,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool SurfaceMesh::read_poly(const std::string &file_name)
+    bool SurfaceMesh::read_smesh(const std::string &file_name)
     {
         clear();
 
@@ -220,7 +220,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool SurfaceMesh::write_poly(const std::string& file_name) const
+    bool SurfaceMesh::write_smesh(const std::string& file_name) const
     {
         if (n_faces() == 0) {
             LOG(ERROR) << "empty mesh";

@@ -354,10 +354,10 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.poly *.trilist)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pmesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh *.trilist)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Polytope Mesh (*.plm)\n"
+                "Polytope Mesh (*.plm *.pmesh)\n"
                 "All formats (*.*)"
             );
 
@@ -398,10 +398,10 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.poly *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.poly)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pmesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Polytope Mesh (*.plm)\n"
+                "Polytope Mesh (*.plm *.pmesh)\n"
                 "All formats (*.*)"
     );
 
@@ -451,12 +451,12 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "poly" || ext == "plg" || ext == "trilist") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "smesh" || ext == "plg" || ext == "trilist") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
         model = GraphIO::load(file_name);
-    } else if (ext == "plm") {
+    } else if (ext == "plm" || ext == "pmesh") {
         model = PolyMeshIO::load(file_name);
     }
     else { // point cloud
@@ -974,13 +974,9 @@ void MainWindow::surfaceMeshTetrahedralization() {
     if (!mesh)
         return;
 
-    StopWatch w;
-
     SurfaceMeshTetrehedralization tetra;
     PolyMesh* result = tetra.tetrahedralize(mesh);
     if (result) {
-        LOG(INFO) << "done. " << w.time_string() << std::endl;
-
         const std::string &name = file_system::name_less_extension(mesh->name()) + "_tetrahedralization.plm";
         result->set_name(name);
 
@@ -1842,7 +1838,7 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     delaunay.set_vertices(points);
 
     PolyMesh* mesh = new PolyMesh;
-    const std::string &name = file_system::name_less_extension(mesh->name()) + "_delaunay.ply";
+    const std::string &name = file_system::name_less_extension(cloud->name()) + "_delaunay.ply";
     mesh->set_name(name);
 
     for (std::size_t i = 0; i < points.size(); i++) {

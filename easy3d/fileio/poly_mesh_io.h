@@ -62,6 +62,21 @@ namespace easy3d {
 		static bool	save(const std::string& file_name, const PolyMesh* mesh);
 	};
 
+
+    namespace io {
+
+        /// Reads a polyhedral mesh from a \p PLM format file.
+        bool load_plm(const std::string& file_name, PolyMesh* mesh);
+        /// Saves a polyhedral mesh to a \p PLM format file.
+        bool save_plm(const std::string& file_name, const PolyMesh* mesh);
+
+        /// Reads a polyhedral mesh from a \p PMESH format file.
+        bool load_pmesh(const std::string& file_name, PolyMesh* mesh);
+        /// Saves a polyhedral mesh to a \p PMESH format file.
+        bool save_pmesh(const std::string& file_name, const PolyMesh* mesh);
+
+    } // namespace io
+
 } // namespace easy3d
 
 #endif // EASY3D_FILEIO_TOLY_MESH_IO_H
