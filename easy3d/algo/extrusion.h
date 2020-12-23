@@ -48,6 +48,7 @@ namespace easy3d {
 
     /**
      * \brief Extrudes a 3D surface mesh from a set of simple contours.
+     * \param mesh The output mesh model. Must be allocated before hand.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.

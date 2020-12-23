@@ -56,26 +56,41 @@ namespace easy3d {
     class ChronoWatch
     {
     public:
+        /// default constructor
         ChronoWatch();
+        /// destructor
         ~ChronoWatch() {}
 
+        /// starts the timer
         void start();
+        /// restarts the timer
         void restart();
 
+        /// pauses the timer
         void pause();
+        /// resumes the timer
         void resume();
 
+        /// resets the timer
         void reset();
 
+        /// the elapsed time in milliseconds
         float elapsed_milliseconds(int num_digits = 1) const;
+        /// the elapsed time in seconds
         float elapsed_seconds(int num_digits = 1) const;
+        /// the elapsed time in minutes
         float elapsed_minutes(int num_digits = 1) const;
+        /// the elapsed time in hours
         float elapsed_hours(int num_digits = 1) const;
 
+        /// prints the elapsed seconds to \c output stream.
         void print_seconds(std::ostream& output) const;
+        /// prints the elapsed minutes to \c output stream.
         void print_minutes(std::ostream& output) const;
+        /// prints the elapsed hours to \c output stream.
         void print_hours(std::ostream& output) const;
 
+        /// the elapsed time string, e.g., 88ms, 2.3s, 1.7m, 0.1h. This function automatically determines the best unit.
         std::string time_string(int num_digits = 1) const;
 
     private:

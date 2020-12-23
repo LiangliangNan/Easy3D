@@ -35,7 +35,8 @@ namespace easy3d {
     class ShaderProgram;
 
     /**
-     * \brief An implementation of clipping plane for visualization of model interiors and cross sections.
+     * \brief An implementation of a manipulable clipping plane for visualization of model interiors and cross sections.
+     * \details It also provides functions for visualizing the clipping plane itself.
      *
      * \class ClippingPlane easy3d/renderer/clipping_plane.h
      */
@@ -44,39 +45,58 @@ namespace easy3d {
         ClippingPlane();
         virtual ~ClippingPlane();
 
+        /// returns whether the clipping plane has been enabled.
         bool is_enabled() const { return enabled_; }
+        /// enables/disables the clipping plane.
         void set_enabled(bool b) { enabled_ = b; }
 
+        /// puts the clipping plane at the center of the scene.
         void fit_scene(const vec3 &center, float radius);
 
+        /// the center of the clipping plane. \sa normal()
         vec3 center() const;
+        /// the normal direction of the clipping plane. \sa center().
         vec3 normal() const;
 
-        Plane3 plane0() const;    // clipping plane0
-        Plane3 plane1() const;    // clipping plane1
+        /// the clipping plane
+        Plane3 plane0() const;
+        /// the other clipping plane. plane0() and plane1() together define a cross section.
+        Plane3 plane1() const;
 
+        /// returns whether the clipping plane is visible.
         bool is_visible() const { return visible_; }
+        /// shows/hides the clipping plane.
         void set_visible(bool v) { visible_ = v; }
 
+        /// returns the color of the clipping plane.
         const vec4& color() const { return color_; }
+        /// sets the color of the clipping plane.
         void set_color(const vec4& c) { color_ = c; }
 
+        /// returns whether cross section is enabled.
         bool cross_section() const { return cross_section_; }
+        /// enables/disables cross section.
         void set_cross_section(bool b) { cross_section_ = b; }
 
-        // relative to scene bounding box. Default value is 0.01;
+        /// returns the thickness of the cross section.
+        /// \details The thickness is defined relative to the scene bounding box. Default value is 0.01.
         float cross_section_width() { return cross_section_width_; }
+        /// sets the thickness of the cross section.
         void set_cross_section_width(float w) { cross_section_width_ = w; }
 
-        // \param plane_clipping_discard Controls clipping plane behavior.
-        //  - true: completely discard a vertex in vertex shader
-        //  - false: standard plane clipping
+        /// setups the shader program for rendering.
+        /// \param program The shader program.
+        /// \param plane_clipping_discard Controls clipping plane behavior.
+        ///     - true: completely discard a vertex in vertex shader
+        ///     - false: standard plane clipping
         void set_program(ShaderProgram *program, bool plane_clipping_discard = false);
 
-        // arrow = true: also draw an arrow in the center of the plane.
+        /// draws the clipping plane itself.
         void draw(Camera* cam) const;
 
+        /// returns the manipulated frame bound to the clipping plane.
         virtual ManipulatedFrame *manipulated_frame();
+        /// returns the manipulated frame bound to the clipping plane.
         virtual const ManipulatedFrame *manipulated_frame() const;
 
     protected:

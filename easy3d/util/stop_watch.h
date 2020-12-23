@@ -55,16 +55,20 @@ namespace easy3d {
      */
     class StopWatch {
     public:
-        StopWatch(); // the watch will automatically start in construction
+        /// default constructor. The watch will automatically start after construction.
+        StopWatch();
+        /// destructor.
         ~StopWatch();
 
+        /// starts the timer
         void start();
+        /// restarts the timer. It has the same effect as start()
+        void restart();
 
-        void restart(); // the same as start()
-
-        // returns user elapsed time since the construction / start in seconds.
+        /// returns user elapsed time (in seconds) since the construction / start.
         double elapsed_seconds(int num_digits = 1) const;
 
+        /// the elapsed time string, e.g., 88ms, 2.3s, 1.7m, 0.1h. This function automatically determines the best unit.
         std::string time_string(int num_digits = 1) const;
 
     private:

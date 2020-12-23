@@ -116,83 +116,88 @@ namespace easy3d {
     }
 
 
-    template<class Vertex>
-    SurfaceMesh *
-    convert_to_mesh(CoredFileMeshData<Vertex> &mesh, const XForm4x4<REAL> &iXForm, const std::string &density_attr_name,
-                    bool has_colors) {
-        std::size_t num_ic_pts = mesh.inCorePoints.size();
-        int num_ooc_pts = mesh.outOfCorePointCount();
-        int num_face = mesh.polygonCount();
-        if (num_face <= 0) {
-            LOG(ERROR) << "reconstructed mesh has 0 facet";
-            return nullptr;
-        }
+    // \cond
+    namespace details {
 
-        SurfaceMesh *result = new SurfaceMesh;
-        SurfaceMesh::VertexProperty<float> density = result->add_vertex_property<float>(density_attr_name);
-        SurfaceMesh::VertexProperty<vec3> color;
-        if (has_colors)
-            color = result->add_vertex_property<vec3>("v:color");
-
-        std::vector<SurfaceMesh::Vertex> all_vertices;
-
-        REAL min_density = FLT_MAX;
-        REAL max_density = -FLT_MAX;
-        mesh.resetIterator();
-        for (std::size_t i = 0; i < num_ic_pts; ++i) {
-            const Vertex &v = mesh.inCorePoints[i];
-            const Point3D<REAL> &pt = iXForm * v.point;
-            SurfaceMesh::Vertex vv = result->add_vertex(vec3(pt.coords[0], pt.coords[1], pt.coords[2]));
-            all_vertices.push_back(vv);
-            density[vv] = v.value;
-            min_density = std::min(min_density, v.value);
-            max_density = std::max(max_density, v.value);
-
-            if (has_colors) {
-                vec3 c(v.color);
-                color[vv] = c / 255.0f;
+        template<class Vertex>
+        SurfaceMesh *
+        convert_to_mesh(CoredFileMeshData<Vertex> &mesh, const XForm4x4<REAL> &iXForm,
+                        const std::string &density_attr_name,
+                        bool has_colors) {
+            std::size_t num_ic_pts = mesh.inCorePoints.size();
+            int num_ooc_pts = mesh.outOfCorePointCount();
+            int num_face = mesh.polygonCount();
+            if (num_face <= 0) {
+                LOG(ERROR) << "reconstructed mesh has 0 facet";
+                return nullptr;
             }
-        }
 
-        for (int i = 0; i < num_ooc_pts; ++i) {
-            Vertex v;
-            mesh.nextOutOfCorePoint(v);
-            const Point3D<REAL> &pt = iXForm * v.point;
-            SurfaceMesh::Vertex vv = result->add_vertex(vec3(pt.coords[0], pt.coords[1], pt.coords[2]));
-            all_vertices.push_back(vv);
-            density[vv] = v.value;
-            min_density = std::min(min_density, v.value);
-            max_density = std::max(max_density, v.value);
+            SurfaceMesh *result = new SurfaceMesh;
+            SurfaceMesh::VertexProperty<float> density = result->add_vertex_property<float>(density_attr_name);
+            SurfaceMesh::VertexProperty<vec3> color;
+            if (has_colors)
+                color = result->add_vertex_property<vec3>("v:color");
 
-            if (has_colors) {
-                vec3 c(v.color);
-                color[vv] = c / 255.0f;
+            std::vector<SurfaceMesh::Vertex> all_vertices;
+
+            REAL min_density = FLT_MAX;
+            REAL max_density = -FLT_MAX;
+            mesh.resetIterator();
+            for (std::size_t i = 0; i < num_ic_pts; ++i) {
+                const Vertex &v = mesh.inCorePoints[i];
+                const Point3D<REAL> &pt = iXForm * v.point;
+                SurfaceMesh::Vertex vv = result->add_vertex(vec3(pt.coords[0], pt.coords[1], pt.coords[2]));
+                all_vertices.push_back(vv);
+                density[vv] = v.value;
+                min_density = std::min(min_density, v.value);
+                max_density = std::max(max_density, v.value);
+
+                if (has_colors) {
+                    vec3 c(v.color);
+                    color[vv] = c / 255.0f;
+                }
             }
-        }
 
-        for (int i = 0; i < num_face; ++i) {
-            std::vector<CoredVertexIndex> vertices;
-            mesh.nextPolygon(vertices);
+            for (int i = 0; i < num_ooc_pts; ++i) {
+                Vertex v;
+                mesh.nextOutOfCorePoint(v);
+                const Point3D<REAL> &pt = iXForm * v.point;
+                SurfaceMesh::Vertex vv = result->add_vertex(vec3(pt.coords[0], pt.coords[1], pt.coords[2]));
+                all_vertices.push_back(vv);
+                density[vv] = v.value;
+                min_density = std::min(min_density, v.value);
+                max_density = std::max(max_density, v.value);
 
-            std::vector<SurfaceMesh::Vertex> face_vts;
-            for (unsigned int j = 0; j < vertices.size(); ++j) {
-                std::size_t id = vertices[j].idx;
-                if (!vertices[j].inCore)
-                    id += num_ic_pts;
-                face_vts.push_back(all_vertices[id]);
+                if (has_colors) {
+                    vec3 c(v.color);
+                    color[vv] = c / 255.0f;
+                }
             }
-            result->add_face(face_vts);
+
+            for (int i = 0; i < num_face; ++i) {
+                std::vector<CoredVertexIndex> vertices;
+                mesh.nextPolygon(vertices);
+
+                std::vector<SurfaceMesh::Vertex> face_vts;
+                for (unsigned int j = 0; j < vertices.size(); ++j) {
+                    std::size_t id = vertices[j].idx;
+                    if (!vertices[j].inCore)
+                        id += num_ic_pts;
+                    face_vts.push_back(all_vertices[id]);
+                }
+                result->add_face(face_vts);
+            }
+
+            LOG(INFO)
+                    << "vertex property \'" << density_attr_name << "\' added with range ["
+                    << min_density << ", " << max_density << "]";
+            if (has_colors)
+                LOG(INFO) << "vertex property 'v:color' added.";
+
+            return result;
         }
-
-        LOG(INFO)
-                << "vertex property \'" << density_attr_name << "\' added with range ["
-                << min_density << ", " << max_density << "]";
-        if (has_colors)
-            LOG(INFO) << "vertex property 'v:color' added.";
-
-        return result;
     }
-
+    // \endcond
 
     SurfaceMesh *PoissonReconstruction::apply(const PointCloud *cloud, const std::string &density_attr_name) {
         if (!cloud) {
@@ -483,7 +488,7 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
-        SurfaceMesh *result = convert_to_mesh(mesh, iXForm, density_attr_name, colors);
+        SurfaceMesh *result = details::convert_to_mesh(mesh, iXForm, density_attr_name, colors);
         const std::string &file_name = file_system::name_less_extension(cloud->name()) + "_Poisson.ply";
         result->set_name(file_name);
         LOG(INFO) << "total reconstruction time: " << w.time_string();

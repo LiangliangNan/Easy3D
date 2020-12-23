@@ -33,8 +33,10 @@
 
 namespace easy3d {
 
+    // \cond
     using SparseMatrix = Eigen::SparseMatrix<double>;
     using Triplet = Eigen::Triplet<double>;
+    // \endcond
 
     //=============================================================================
 

@@ -32,15 +32,20 @@
 
 namespace easy3d {
 
-    template<typename FT>
-    inline FT squared_distance(unsigned int dim, const FT *p1, const FT *p2) {
-        FT result(0);
-        for (unsigned int i = 0; i < dim; ++i) {
-            FT diff = p2[i] - p1[i];
-            result += diff * diff;
+
+    // \cond
+    namespace details {
+        template<typename FT>
+        inline FT squared_distance(unsigned int dim, const FT *p1, const FT *p2) {
+            FT result(0);
+            for (unsigned int i = 0; i < dim; ++i) {
+                FT diff = p2[i] - p1[i];
+                result += diff * diff;
+            }
+            return result;
         }
-        return result;
     }
+    // \endcond
 
 
     Delaunay::Delaunay(unsigned int dimension) {
@@ -85,13 +90,13 @@ namespace easy3d {
 
 
     unsigned int Delaunay::nearest_vertex(const float *p) const {
-        // Unefficient implementation (but at least it works).
+        // Inefficient implementation (but at least it works).
         std::cerr << "TODO: replace with line walk (or maybe we could use kd-tree here)" << std::endl;
         assert(nb_vertices() > 0);
         unsigned int result = 0;
-        float d = squared_distance(dimension(), vertex_ptr(0), p);
+        float d = details::squared_distance(dimension(), vertex_ptr(0), p);
         for (unsigned int i = 1; i < nb_vertices(); i++) {
-            float cur_d = squared_distance(dimension(), vertex_ptr(i), p);
+            float cur_d = details::squared_distance(dimension(), vertex_ptr(i), p);
             if (cur_d < d) {
                 d = cur_d;
                 result = i;
@@ -239,7 +244,7 @@ namespace easy3d {
             std::vector<unsigned int> N = neighbors_[v];
             for (unsigned int i = 0; i < N.size(); i++) {
                 unsigned int w = N[i];
-                double d = squared_distance(dimension(), vertex_ptr(v), vertex_ptr(w));
+                double d = details::squared_distance(dimension(), vertex_ptr(v), vertex_ptr(w));
                 if (d < 1e-30) {
                     LOG(WARNING) << "Vertices " << v << " and " << w << " are the same";
 

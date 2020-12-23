@@ -89,8 +89,8 @@ namespace easy3d {
             /**
              * \brief Reads a PLY file and stores the model as a set of \p elements.
              * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
+             *      - \c true if succeeded
+             *      - \c false if failed
              */
 			bool read(const std::string& file_name, std::vector<Element>& elements);
 
@@ -98,6 +98,7 @@ namespace easy3d {
              * \brief A quick check of the number of instances of a type of element. The typical use is to determine if
              * 		  a PLY file stores a point cloud, a graph, or a surface mesh. Internally it reads the ply file
              * 		  header only (without parsing the entire file).
+             * \param file_name The input file.
              * \param element_name A string denoting the type of the element to be checked. Typical elements are
              * 		  "vertex", "face", and "edge".
              * \return The number of instances of the element.
@@ -154,6 +155,7 @@ namespace easy3d {
 					bool binary = false
 			) const;
 
+			/// returns endianness of the system.
 			static bool is_big_endian();
 		};
 

@@ -106,12 +106,28 @@ namespace easy3d {
 
 //________________________________________________________________________________
 
-    inline bool contains(const std::vector<unsigned int> &V, unsigned int x) {
-        for (unsigned int i = 0; i < V.size(); i++) {
-            if (V[i] == x) { return true; }
+    // \cond
+    namespace details {
+
+        inline bool contains(const std::vector<unsigned int> &V, unsigned int x) {
+            for (unsigned int i = 0; i < V.size(); i++) {
+                if (V[i] == x) { return true; }
+            }
+            return false;
         }
-        return false;
+
+        inline unsigned int other(unsigned int i1, unsigned int i2, unsigned int i3) {
+            for (unsigned int i = 0; i < 4; i++) {
+                if (i != i1 && i != i2 && i != i3) {
+                    return i;
+                }
+            }
+            DLOG_ASSERT(false) << "should not have reached here";
+            return 4;
+        }
+
     }
+    // \endcond
 
     void Delaunay3::get_voronoi_cell(unsigned int v, VoronoiCell3d &cell, bool geometry) const {
         if (nb_cells() == 0) {
@@ -133,7 +149,7 @@ namespace easy3d {
             // For each edge (t,neigh) incident to v
             for (unsigned int lv = 0; lv < 4; lv++) {
                 unsigned int neigh = tet_vertex(t, lv);
-                if (lv != lvit && !contains(visited_neigh, neigh)) {
+                if (lv != lvit && !details::contains(visited_neigh, neigh)) {
                     visited_neigh.push_back(neigh);
                     get_voronoi_facet(cell, t, lvit, lv, geometry);
                 }
@@ -142,15 +158,6 @@ namespace easy3d {
         } while (t != vertex_cell(v));
     }
 
-    inline unsigned int other(unsigned int i1, unsigned int i2, unsigned int i3) {
-        for (unsigned int i = 0; i < 4; i++) {
-            if (i != i1 && i != i2 && i != i3) {
-                return i;
-            }
-        }
-        DLOG_ASSERT(false) << "should not have reached here";
-        return 4;
-    }
 
     void Delaunay3::get_voronoi_facet(
             VoronoiCell3d &cell, unsigned int t,
@@ -196,7 +203,7 @@ namespace easy3d {
             lv1 = index(cur, v1);
             lv2 = index(cur, v2);
             unsigned int f = next_around_halfedge_[lv1][lv2];
-            unsigned int lv3 = other(lv1, lv2, f);
+            unsigned int lv3 = details::other(lv1, lv2, f);
 
             if (geometry) {
                 cell.add_to_facet(tet_vertex(cur, lv3), tet_circumcenter(cur), false);

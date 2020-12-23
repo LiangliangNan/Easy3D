@@ -30,12 +30,14 @@
 
 namespace easy3d {
 
+    /// The sign.
     enum Sign {
         NEGATIVE = -1,
         ZERO = 0,
         POSITIVE = 1,
     };
 
+    /// returns the sign of a value.
     template<class T>
     inline Sign sign(T x) {
         return (x > 0) ? POSITIVE : ((x < 0) ? NEGATIVE : ZERO);

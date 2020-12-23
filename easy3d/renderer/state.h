@@ -71,9 +71,11 @@ namespace easy3d {
             VERTEX, FACE, EDGE, HALFEDGE
         };
 
+        /**
+         * Material definition.
+         */
         struct Material {
             Material();
-
             Material(const vec3 &ambi, const vec3 &spec, float shin);
 
             vec3 ambient;
@@ -163,18 +165,30 @@ namespace easy3d {
         /** The name of the color attribute. */
         const std::string &property_name() const { return property_name_; }
 
+        /// returns whether lighting is enabled.
         bool lighting() const { return lighting_; }
+        /// enables/disables lighting.
         void set_lighting(bool l) { lighting_ = l; }
 
+        /// returns whether double-sided lighting is enabled.
         bool lighting_two_sides() const { return lighting_two_sides_; }
+        /// enables/disables double-sided lighting.
         void set_lighting_two_sides(bool b) { lighting_two_sides_ = b; }
 
-        /// use a different color for the back side, valid only if two-side lighting is enabled
+        /// returns whether a different color is used for rendering the backside of a drawable.
+        /// \note effective only when two-sides lighting is enabled
         bool distinct_back_color() const { return distinct_back_color_; }
+        /// enables/disables different backside color.
+        /// \note effective only when two-sides lighting is enabled
         void set_distinct_back_color(bool b) { distinct_back_color_ = b; }
 
-        /// the back side color, valid only if two-side lighting is enabled and distinct back color is true
+        /// returns the backside color.
+        /// \note effective only when two-sides lighting and distinct back color are enabled.
+        /// \sa lighting_two_sides(), distinct_back_color()
         const vec4 &back_color() const { return back_color_; }
+        /// sets the backside color.
+        /// \note effective only when two-sides lighting and distinct back color are enabled.
+        /// \sa set_lighting_two_sides(), set_distinct_back_color()
         void set_back_color(const vec4 &c) { back_color_ = c; }
 
         /** Memory management of textures is the user's responsibility. */

@@ -40,7 +40,7 @@ namespace easy3d {
 
         /**
          * \brief Input stream class to operate on ASCII files.
-         * \clasa LineInputStream easy3d/util/line_stream.h
+         * \class LineInputStream easy3d/util/line_stream.h
          */
         class LineInputStream {
         public:

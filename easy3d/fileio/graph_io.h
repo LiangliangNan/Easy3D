@@ -66,10 +66,12 @@ namespace easy3d {
         bool load_ply(const std::string& file_name, Graph* graph);
         /**
          * \brief Saves \p graph into a PLY file \p file_name.
-         * \param binary true for binary format, otherwise ASCII format.
+         * \param file_name The full path of the file.
+         * \param graph The graph.
+         * \param binary \c true for binary format, otherwise ASCII format.
          * \return The status of the operation
-         *      \arg true if succeeded
-         *      \arg false if failed
+         *      \arg \c true if succeeded
+         *      \arg \c false if failed
          */
         bool save_ply(const std::string& file_name, const Graph* graph, bool binary = true);
 
