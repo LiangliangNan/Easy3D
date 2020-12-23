@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <set>
 
 #include <easy3d/core/poly_mesh.h>
 
@@ -60,17 +61,17 @@ namespace easy3d {
             mesh->resize(nv, ne, nf, nc);
 
             // get properties
-            auto vconn = mesh->vertex_property<PolyMesh::VertexConnectivity>("v:connectivity");
-            auto econn = mesh->edge_property<PolyMesh::EdgeConnectivity>("e:connectivity");
-            auto hconn = mesh->halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity");
-            auto cconn = mesh->cell_property<PolyMesh::CellConnectivity>("c:connectivity");
+            auto& vconn = mesh->vertex_property<PolyMesh::VertexConnectivity>("v:connectivity").vector();
+            auto& econn = mesh->edge_property<PolyMesh::EdgeConnectivity>("e:connectivity").vector();
+            auto& hconn = mesh->halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity").vector();
+            auto& cconn = mesh->cell_property<PolyMesh::CellConnectivity>("c:connectivity").vector();
             auto point = mesh->vertex_property<vec3>("v:point");
 
             // read properties from file
-            input.read((char*)vconn.data(), nv * sizeof(PolyMesh::VertexConnectivity)  );
-            input.read((char*)econn.data(), ne * sizeof(PolyMesh::EdgeConnectivity));
-            input.read((char*)hconn.data(), nh * sizeof(PolyMesh::HalfFaceConnectivity));
-            input.read((char*)cconn.data(), nc * sizeof(PolyMesh::CellConnectivity)    );
+            for (unsigned int i=0; i<nv; ++i)   vconn[i].read(input);
+            for (unsigned int i=0; i<ne; ++i)   econn[i].read(input);
+            for (unsigned int i=0; i<nh; ++i)   hconn[i].read(input);
+            for (unsigned int i=0; i<nc; ++i)   cconn[i].read(input);
             input.read((char*)point.data(), nv * sizeof(vec3));
 
             return (mesh->n_vertices() > 0 && mesh->n_faces() > 0 && mesh->n_cells() > 0);
@@ -113,19 +114,18 @@ namespace easy3d {
             output.write((char*)&nc, sizeof(unsigned int));
 
             // get properties
-            auto vconn = mesh->get_vertex_property<PolyMesh::VertexConnectivity>("v:connectivity");
-            auto econn = mesh->get_edge_property<PolyMesh::EdgeConnectivity>("e:connectivity");
-            auto hconn = mesh->get_halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity");
-            auto cconn = mesh->get_cell_property<PolyMesh::CellConnectivity>("c:connectivity");
+            const auto& vconn = mesh->get_vertex_property<PolyMesh::VertexConnectivity>("v:connectivity").vector();
+            const auto& econn = mesh->get_edge_property<PolyMesh::EdgeConnectivity>("e:connectivity").vector();
+            const auto& hconn = mesh->get_halfface_property<PolyMesh::HalfFaceConnectivity>("h:connectivity").vector();
+            const auto& cconn = mesh->get_cell_property<PolyMesh::CellConnectivity>("c:connectivity").vector();
             auto point = mesh->get_vertex_property<vec3>("v:point");
 
             // write properties to file
-            output.write((char*)vconn.data(), nv * sizeof(PolyMesh::VertexConnectivity)  );
-            output.write((char*)econn.data(), ne * sizeof(PolyMesh::EdgeConnectivity));
-            output.write((char*)hconn.data(), nh * sizeof(PolyMesh::HalfFaceConnectivity));
-            output.write((char*)cconn.data(), nc * sizeof(PolyMesh::CellConnectivity)    );
+            for (unsigned int i=0; i<nv; ++i)   vconn[i].write(output);
+            for (unsigned int i=0; i<ne; ++i)   econn[i].write(output);
+            for (unsigned int i=0; i<nh; ++i)   hconn[i].write(output);
+            for (unsigned int i=0; i<nc; ++i)   cconn[i].write(output);
             output.write((char*)point.data(), nv * sizeof(vec3));
-
             return true;
         }
 

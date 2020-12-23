@@ -29,6 +29,7 @@
 #include <easy3d/core/types.h>
 #include <easy3d/core/properties.h>
 
+
 namespace easy3d {
 
     /**
@@ -144,6 +145,9 @@ namespace easy3d {
             std::set<Edge>       edges_;
             std::set<HalfFace>   halffaces_;
             std::set<Cell>       cells_;
+
+            inline void read(std::istream& in);
+            inline void write(std::ostream& out) const;
         };
 
 
@@ -154,6 +158,9 @@ namespace easy3d {
             std::vector<Vertex>  vertices_;
             std::set<HalfFace>   halffaces_;
             std::set<Cell>       cells_;
+
+            inline void read(std::istream& in);
+            inline void write(std::ostream& out) const;
         };
 
         /// This type stores the halfface connectivity
@@ -164,6 +171,9 @@ namespace easy3d {
             std::set<Edge>   edges_;
             Cell             cell_;
             HalfFace         opposite_;
+
+            inline void read(std::istream& in);
+            inline void write(std::ostream& out) const;
         };
 
         /// This type stores the cell connectivity
@@ -173,6 +183,9 @@ namespace easy3d {
             std::set<Vertex>     vertices_;
             std::set<Edge>       edges_;
             std::vector<HalfFace>   halffaces_;
+
+            inline void read(std::istream& in);
+            inline void write(std::ostream& out) const;
         };
 
 
