@@ -1280,7 +1280,7 @@ namespace easy3d {
         /// find the edge (a,b)
         Edge find_edge(Vertex a, Vertex b) const;
 
-        /// find the halfface defined by \c vertices (orientation sensitive)
+        /// find the halfface defined by a sequence of \c vertices (orientation sensitive)
         HalfFace find_half_face(const std::vector<Vertex>& vertices) const;
 
         /// returns whether halfface \c h is degenerate
