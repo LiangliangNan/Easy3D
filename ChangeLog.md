@@ -1,3 +1,6 @@
+#### 22/12/2020
+- supports polyhedral meshes.
+
 #### 22/04/2020
   - easier rendering state management (with the new class State). 
 
