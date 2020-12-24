@@ -54,12 +54,18 @@ namespace easy3d {
 
         void set_max_tet_volume(double x) { max_tet_volume_ = x; }
 
+        /**
+         * Enables/Disables marking the cells.
+         * If enables, outer cells will be marked "-1" and inner cells will be marked "1".
+         * \note Effective only when
+         */
         void set_tag_regions(bool x) { tag_regions_ = x; }
 
         /** If specified, overrides all other options. */
         void set_command_line(const std::string &x) { cmdline_ = x; }
 
-        PolyMesh* tetrahedralize(SurfaceMesh *mesh);
+        /** Performs tetrahedralization on the input mesh. */
+        PolyMesh* apply(SurfaceMesh *mesh);
 
     protected:
         tetgenio* to_tetgen_surface(SurfaceMesh* mesh);

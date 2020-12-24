@@ -975,7 +975,7 @@ void MainWindow::surfaceMeshTetrahedralization() {
         return;
 
     SurfaceMeshTetrehedralization tetra;
-    PolyMesh* result = tetra.tetrahedralize(mesh);
+    PolyMesh* result = tetra.apply(mesh);
     if (result) {
         const std::string &name = file_system::name_less_extension(mesh->name()) + "_tetrahedralization.plm";
         result->set_name(name);

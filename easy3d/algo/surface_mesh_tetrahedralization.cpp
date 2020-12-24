@@ -45,7 +45,7 @@ namespace easy3d {
     }
 
 
-    PolyMesh *SurfaceMeshTetrehedralization::tetrahedralize(SurfaceMesh *mesh) {
+    PolyMesh *SurfaceMeshTetrehedralization::apply(SurfaceMesh *mesh) {
         if (!mesh) {
             LOG(WARNING) << "input mesh is NULL";
             return nullptr;
@@ -66,7 +66,7 @@ namespace easy3d {
         if (cmdline_ == "") {
             std::ostringstream s;
             // Q: quiet
-            // p: input data is surfacic
+            // p: input data is surface
             // n: output tet neighbors
             // q: desired quality
             // V: verbose
