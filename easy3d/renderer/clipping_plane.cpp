@@ -40,7 +40,7 @@ namespace easy3d {
     ClippingPlane::ClippingPlane()
             : manipulated_frame_(nullptr), enabled_(false), visible_(true),
               color_(setting::clipping_plane_color), cross_section_(false),
-              cross_section_width_(0.001f), size_(1.0f) {
+              cross_section_width_(0.001f), scene_radius_(1.0f) {
     }
 
 
@@ -68,7 +68,7 @@ namespace easy3d {
 
 
     void ClippingPlane::fit_scene(const vec3 &center, float radius) {
-        size_ = radius;
+        scene_radius_ = radius;
         //manipulated_frame()->setPositionAndOrientation(center_, quat());
         manipulated_frame()->setPosition(center); // keep the orientation
     }
@@ -81,7 +81,7 @@ namespace easy3d {
 
     Plane3 ClippingPlane::plane1() const {
         const vec3 &n = normal();
-        return Plane3(center() + cross_section_width_ * size_ * n, -n);
+        return Plane3(center() + cross_section_width_ * scene_radius_ * n, -n);
     }
 
 
@@ -122,7 +122,7 @@ namespace easy3d {
         const vec3& n = normal();
         const Plane3 plane_0(center(), -n);
         program->set_uniform("clippingPlane0", plane_0);
-        const Plane3 plane_1(center() - cross_section_width_ * size_ * n, n);
+        const Plane3 plane_1(center() - cross_section_width_ * scene_radius_ * n, n);
         program->set_uniform("clippingPlane1", plane_1);
 #endif
         easy3d_debug_log_gl_error;
@@ -138,11 +138,12 @@ namespace easy3d {
         bool status = enabled_;
         const_cast<ClippingPlane *>(this)->set_enabled(false);
 
+        const float size = scene_radius_ * 0.7;
         std::vector<vec3> corners = {
-                vec3(-size_, -size_, 0),
-                vec3(size_, -size_, 0),
-                vec3(size_, size_, 0),
-                vec3(-size_, size_, 0)
+                vec3(-size, -size, 0),
+                vec3(size, -size, 0),
+                vec3(size, size, 0),
+                vec3(-size, size, 0)
         };
         static std::vector<unsigned int> face_indices = {0, 1, 2, 0, 2, 3};
         static std::vector<unsigned int> wire_indices = {0, 1, 1, 2, 2, 3, 3, 0};

@@ -106,7 +106,7 @@ namespace easy3d {
         vec4 color_;
         bool cross_section_;
         float cross_section_width_;
-        float size_;
+        float scene_radius_;
     };
 
 }
