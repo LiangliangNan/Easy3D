@@ -86,7 +86,7 @@ namespace easy3d {
             // A: generate region tags for each shell.
             if (tag_regions_) {
                 s << "A";
-                LOG(INFO) << "assigning an integer number to all tetrahedra indicating different bounded regions";
+                LOG(INFO) << "adding a cell property \"c:region\" to indicate different bounded regions";
             }
 
             // Y: prohibit steiner points on boundaries
