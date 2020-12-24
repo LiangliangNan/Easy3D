@@ -37,8 +37,6 @@ namespace easy3d {
         inline void read(std::istream &input, std::set<T>& data) {
             unsigned int size(0);
             input.read((char*)&size, sizeof(unsigned int));
-            if (size == 0)
-                std::cout << "bug";
             std::vector<T> array(size);
             input.read((char*)array.data(), size * sizeof(T));
             data = std::set<T>(array.begin(), array.end());
@@ -47,8 +45,6 @@ namespace easy3d {
         template<typename T>
         inline void write(std::ostream &output, const std::set<T>& data) {
             unsigned int size = data.size();
-            if (size == 0)
-                std::cout << "bug";
             output.write((char*)&size, sizeof(unsigned int));
             std::vector<T> array(data.begin(), data.end());
             output.write((char*)array.data(), size * sizeof(T));
@@ -59,16 +55,12 @@ namespace easy3d {
             unsigned int size(0);
             input.read((char*)&size, sizeof(unsigned int));
             data.resize(size);
-            if (size == 0)
-                std::cout << "bug";
             input.read((char*)data.data(), size * sizeof(T));
         }
 
         template<typename T>
         inline void write(std::ostream &output, const std::vector<T>& data) {
             unsigned int size = data.size();
-            if (size == 0)
-                std::cout << "bug";
             output.write((char*)&size, sizeof(unsigned int));
             output.write((char*)data.data(), size * sizeof(T));
         }
@@ -568,7 +560,7 @@ namespace easy3d {
         }
 
         if (num_degenerate > 0)
-            LOG(WARNING) << "model has " << num_degenerate << " degenerate faces" << std::endl;
+            LOG(WARNING) << "model has " << num_degenerate << " degenerate faces";
     }
 
 
