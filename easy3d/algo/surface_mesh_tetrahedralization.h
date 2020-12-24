@@ -61,13 +61,13 @@ namespace easy3d {
         void set_max_tet_shape(double x) { max_tet_shape_ = x; }
 
         /**
-         * Sets the maximum allowable dihedral angle. Default value is 0.
+         * Sets the minimum allowable dihedral angle. Default value is 0.
          * The value controls how new points can be added to improve the mesh quality.
          * More complicated constraints can be set by using set_command_line(). See the "-q" switch in tetgen manual.
          * http://wias-berlin.de/software/tetgen/1.5/doc/manual/manual005.html#cmd-q
          * \sa set_max_tet_shape()
          */
-        void set_max_dihedral_angle(double x) { max_dihedral_angle_ = x; }
+        void set_min_dihedral_angle(double x) { min_dihedral_angle_ = x; }
 
         /**
          * Sets the maximum volume constraint on all tetrahedra. Default value is -1 (no max volume constraint).
@@ -99,7 +99,7 @@ namespace easy3d {
         bool allow_steiner_points_on_boundary_;
         bool tag_regions_;
         double max_tet_shape_;
-        double max_dihedral_angle_;
+        double min_dihedral_angle_;
         double max_tet_volume_;
         std::string command_line_;
     };

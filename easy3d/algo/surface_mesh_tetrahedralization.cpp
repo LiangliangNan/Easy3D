@@ -37,7 +37,7 @@ namespace easy3d {
 
     SurfaceMeshTetrehedralization::SurfaceMeshTetrehedralization()
             : allow_steiner_points_on_boundary_(true), tag_regions_(false), max_tet_shape_(2.0),
-              max_dihedral_angle_(0.0), max_tet_volume_(-1.0), command_line_("") {
+              min_dihedral_angle_(0.0), max_tet_volume_(-1.0), command_line_("") {
     }
 
 
@@ -71,11 +71,11 @@ namespace easy3d {
             // q: desired quality
             // V: verbose
             s << "Qpnq" << max_tet_shape_;
-            LOG(INFO) << "max allowed radius-edge ratio: " << max_tet_shape_;
+            LOG(INFO) << "maximum allowed radius-edge ratio: " << max_tet_shape_;
 
-            if (max_dihedral_angle_ > 0) {
-                s << "/" << max_dihedral_angle_;
-                LOG(INFO) << "max allowed dihedral angle: " << max_dihedral_angle_;
+            if (min_dihedral_angle_ > 0) {
+                s << "/" << min_dihedral_angle_;
+                LOG(INFO) << "minimum allowed dihedral angle: " << min_dihedral_angle_;
             }
 
             if (max_tet_volume_ > 0.0) {
