@@ -36,8 +36,8 @@ namespace easy3d {
 
 
     SurfaceMeshTetrehedralization::SurfaceMeshTetrehedralization()
-            : add_steiner_points_on_exterior_boundary_(true), add_steiner_points_on_interior_boundary_(true),
-              tag_regions_(false), max_tet_shape_(2.0), max_tet_volume_(-1.0) {
+            : allow_steiner_points_on_boundary_(true), tag_regions_(false), max_tet_shape_(2.0),
+              max_dihedral_angle_(0.0), max_tet_volume_(-1.0) {
     }
 
 
@@ -71,29 +71,30 @@ namespace easy3d {
             // q: desired quality
             // V: verbose
             s << "Qpnq" << max_tet_shape_;
+            LOG(INFO) << "max allowed radius-edge ratio: " << max_tet_shape_;
+
+            if (max_dihedral_angle_ > 0) {
+                s << "/" << max_dihedral_angle_;
+                LOG(INFO) << "max allowed dihedral angle: " << max_dihedral_angle_;
+            }
+
             if (max_tet_volume_ > 0.0) {
                 s << "a" << max_tet_volume_;
+                LOG(INFO) << "max allowed tetrahedron volume: " << max_tet_volume_;
             }
 
-            // AA: generate region tags for each shell.
+            // A: generate region tags for each shell.
             if (tag_regions_) {
-                s << "AA";
+                s << "A";
+                LOG(INFO) << "assigning an integer number to all tetrahedra indicating different bounded regions";
             }
 
-            // YY: prohibit steiner points on boundaries (first Y for exterior boundary, second Y for the other ones).
-            if (add_steiner_points_on_exterior_boundary_ && !add_steiner_points_on_interior_boundary_) {
-                LOG(WARNING)
-                        << "invalid combination of flags (does not preserve exterior boundary and preserves interior ones)"
-                        << " - preserving exterior boundary as well ...";
-                add_steiner_points_on_exterior_boundary_ = false;
-            }
-
-            if (!add_steiner_points_on_exterior_boundary_) {
+            // Y: prohibit steiner points on boundaries
+            if (allow_steiner_points_on_boundary_)
+                LOG(INFO) << "allowing Steiner points on the boundary edges and faces of the input surface";
+            if (!allow_steiner_points_on_boundary_) {
                 s << "Y";
-            }
-
-            if (!add_steiner_points_on_interior_boundary_) {
-                s << "Y";
+                LOG(INFO) << "preserving boundary edges and faces of the input surface";
             }
 
             std::string arg_str = s.str();
