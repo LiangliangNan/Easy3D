@@ -91,10 +91,10 @@ namespace easy3d {
 
             // Y: prohibit steiner points on boundaries
             if (allow_steiner_points_on_boundary_)
-                LOG(INFO) << "allowing Steiner points on the boundary edges and faces of the input surface";
+                LOG(INFO) << "allowing Steiner points on the boundary edges and faces";
             if (!allow_steiner_points_on_boundary_) {
                 s << "Y";
-                LOG(INFO) << "preserving boundary edges and faces of the input surface";
+                LOG(INFO) << "preserving boundary edges and faces";
             }
 
             std::string arg_str = s.str();
