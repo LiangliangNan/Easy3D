@@ -86,7 +86,7 @@ namespace easy3d {
         void set_tag_regions(bool x) { tag_regions_ = x; }
 
         /** If specified, overrides all other options. */
-        void set_command_line(const std::string &x) { cmdline_ = x; }
+        void set_command_line(const std::string &x) { command_line_ = x; }
 
         /** Performs tetrahedralization on the input mesh. */
         PolyMesh* apply(SurfaceMesh *mesh);
@@ -96,13 +96,12 @@ namespace easy3d {
         PolyMesh* to_easy3d_poly_mesh(tetgenio* volume);
 
     private:
-
         bool allow_steiner_points_on_boundary_;
         bool tag_regions_;
         double max_tet_shape_;
         double max_dihedral_angle_;
         double max_tet_volume_;
-        std::string cmdline_;
+        std::string command_line_;
     };
 
 }

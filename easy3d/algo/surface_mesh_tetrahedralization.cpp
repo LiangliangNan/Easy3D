@@ -37,7 +37,7 @@ namespace easy3d {
 
     SurfaceMeshTetrehedralization::SurfaceMeshTetrehedralization()
             : allow_steiner_points_on_boundary_(true), tag_regions_(false), max_tet_shape_(2.0),
-              max_dihedral_angle_(0.0), max_tet_volume_(-1.0) {
+              max_dihedral_angle_(0.0), max_tet_volume_(-1.0), command_line_("") {
     }
 
 
@@ -63,7 +63,7 @@ namespace easy3d {
 
         tetgenbehavior *tetgen_args = new tetgenbehavior;
         // Create tetgen argument string from options.
-        if (cmdline_ == "") {
+        if (command_line_.empty()) {
             std::ostringstream s;
             // Q: quiet
             // p: input data is surface
@@ -101,8 +101,8 @@ namespace easy3d {
             LOG(INFO) << "using command line: " << arg_str;
             tetgen_args->parse_commandline(const_cast<char *>(arg_str.c_str()));
         } else {
-            LOG(INFO) << "using user-specified command line: " << cmdline_;
-            tetgen_args->parse_commandline(const_cast<char *>(cmdline_.c_str()));
+            LOG(INFO) << "using user-specified command line: " << command_line_;
+            tetgen_args->parse_commandline(const_cast<char *>(command_line_.c_str()));
         }
 
         tetgenio *tetgen_surface = to_tetgen_surface(mesh);
