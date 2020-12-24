@@ -39,9 +39,9 @@ namespace easy3d {
     /// \brief The two PI (2 * PI).
     const double two_pi	 = pi * 2.0;
 
-    /// \brief Conversion from radian to degree
+    /// \brief Conversion from radians to degrees
     double inline rad2deg(double rad) { return rad * 180.0 / pi; }
-    /// \brief Conversion from degree to radian
+    /// \brief Conversion from degrees to radians
     double inline deg2rad(double deg) { return deg * pi / 180.0; }
 
     /// Function returning minimum representable value for a given type
