@@ -108,7 +108,8 @@ namespace easy3d {
             glDisable(GL_CLIP_DISTANCE1);
         }
 
-        program->set_uniform("planeClippingDiscard", plane_clipping_discard);
+        // don't discard vertices when visualizing cross sections
+        program->set_uniform("planeClippingDiscard", plane_clipping_discard && !cross_section_);
 
         program->set_uniform("clippingPlaneEnabled", enabled_);
         easy3d_debug_log_gl_error;
