@@ -8,6 +8,7 @@
             * curvature
             * parameterization
             * CSG operations
+    - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer);
     - Visualizing interiors and cross-sections of tetrahedron models ;
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
       An workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy calls);
