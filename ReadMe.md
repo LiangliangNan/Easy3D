@@ -35,8 +35,9 @@
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
-![](resources/images/mapple.jpg)
- 
+| ![Mapple](resources/images/mapple.jpg)  | ![Mapple](resources/images/mapple2.gif) |
+
+
 ### A quick glance ###
 
 Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
