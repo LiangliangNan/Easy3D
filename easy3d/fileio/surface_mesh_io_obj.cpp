@@ -35,11 +35,172 @@
 //#define TRANSLATE_RELATIVE_TO_FIRST_POINT
 
 
-// this seems to be more robust and can handle multi-materials
-#define USE_TINY_OBJ_LOADER
+#define USE_FAST_OBJ
 
 
-#ifdef USE_TINY_OBJ_LOADER
+#ifdef USE_FAST_OBJ
+
+#define FAST_OBJ_IMPLEMENTATION
+#include <3rd_party/fastobj/fast_obj.h>
+
+
+
+
+namespace easy3d {
+
+    namespace io {
+
+        bool load_obj(const std::string &file_name, SurfaceMesh *mesh) {
+            if (!mesh) {
+                LOG(ERROR) << "null mesh pointer";
+                return false;
+            }
+
+            if (!file_system::is_file(file_name)) {
+                LOG(ERROR) << "file does not exist: " << file_system::simple_name(file_name);
+                return false;
+            }
+
+            fastObjMesh *fom = fast_obj_read(file_name.c_str());
+            if (!fom) {
+                LOG(ERROR) << "failed reading file: " + file_name;
+                return false;
+            }
+
+            // Attention: Valid indices in the fastObjMesh::indices array start from 1.
+            // A dummy position, normal and texture coordinate are added to the corresponding fastObjMesh arrays at
+            // element 0 and then an index of 0 is used to indicate that attribute is not present at the vertex.
+
+            // ------------------------ build the mesh ------------------------
+
+            // clear the mesh in case of existing data
+            mesh->clear();
+
+            ManifoldBuilder builder(mesh);
+            builder.begin_surface();
+
+#ifdef  TRANSLATE_RELATIVE_TO_FIRST_POINT
+            // add vertices
+            // the first point
+            auto p0 = vec3(fom->positions + 3); // index starts from 1 and the first element is dummy
+            builder.add_vertex(vec3(0, 0, 0));
+
+            // remaining points
+            for (std::size_t v = 2; v < fom->position_count; ++v) {
+                // Should I create vertices later, to get rid of isolated vertices?
+                builder.add_vertex(vec3(fom->positions + v * 3) - p0);
+            }
+#else
+            // add vertices
+            // skip the first point
+            for (std::size_t v = 1; v < fom->position_count; ++v) {
+                // Should I create vertices later, to get rid of isolated vertices?
+                builder.add_vertex(vec3(fom->positions + v * 3));
+            }
+#endif
+
+            // create texture coordinate property if texture coordinates present
+            SurfaceMesh::HalfedgeProperty<vec2> prop_texcoords;
+            if (fom->texcoord_count > 0 && fom->texcoords) // index starts from 1 and the first element is dummy
+                prop_texcoords = mesh->add_halfedge_property<vec2>("h:texcoord");
+
+            // create face color property if material information exists
+            SurfaceMesh::FaceProperty<vec3> prop_face_color;
+            if (fom->material_count > 0 && fom->materials)  // index starts from 1 and the first element is dummy
+                prop_face_color = mesh->add_face_property<vec3>("f:color");
+
+            // find the face's halfedge that points to v.
+            auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
+                                         SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
+                for (auto h : mesh->halfedges(face)) {
+                    if (mesh->target(h) == v)
+                        return h;
+                }
+                LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
+                                      << " (this is the first record)";
+                return SurfaceMesh::Halfedge();
+            };
+
+            // for each shape
+            for (std::size_t ii = 0; ii < fom->group_count; ii++) {
+                const fastObjGroup &grp = fom->groups[ii];
+
+//                if (grp.name)
+//                    std::cout << "group name: " << std::string(grp.name) << std::endl;
+
+                unsigned int idx = 0;
+                for (unsigned int jj = 0; jj < grp.face_count; ++jj) {
+                    // number of vertices in the face
+                    unsigned int fv = fom->face_vertices[grp.face_offset + jj];
+                    std::vector<SurfaceMesh::Vertex> vertices;
+                    std::vector<unsigned int> texcoord_ids;
+                    for (unsigned int kk = 0; kk < fv; ++kk) {  // for each vertex in the face
+                        const fastObjIndex &mi = fom->indices[grp.index_offset + idx];
+                        if (mi.p)
+                            vertices.emplace_back(SurfaceMesh::Vertex(mi.p - 1));
+                        if (mi.t)
+                            texcoord_ids.emplace_back(mi.t);
+                        ++idx;
+                    }
+
+                    SurfaceMesh::Face face = builder.add_face(vertices);
+                    if (face.is_valid()) {
+                        // texture coordinates
+                        if (prop_texcoords && texcoord_ids.size() == vertices.size()) {
+                            auto begin = find_face_halfedge(mesh, face, builder.face_vertices()[0]);
+                            auto cur = begin;
+                            unsigned int vid = 0;
+                            do {
+                                unsigned int tid = texcoord_ids[vid++];
+                                prop_texcoords[cur] = vec2(fom->texcoords + 2 * tid);
+                                cur = mesh->next(cur);
+                            } while (cur != begin);
+                        }
+
+                        // now materials
+                        if (prop_face_color) {
+                            unsigned int mat_id = fom->face_materials[grp.face_offset + jj];
+                            const fastObjMaterial &mat = fom->materials[mat_id];
+                            prop_face_color[face] = vec3(mat.Kd); // currently easy3d uses only diffuse
+                        }
+                    }
+                }
+            }
+
+            builder.end_surface();
+
+            // report the unused textures
+            for (unsigned int i = 0; i < fom->material_count; ++i) {
+                const auto &mat = fom->materials[i];
+                if (mat.map_Ka.name && mat.map_Ka.path)
+                    LOG_IF(WARNING, strlen(mat.map_Ka.name) > 0) << "ambient texture ignored: " << mat.map_Ka.name;
+                if (mat.map_Kd.name && mat.map_Kd.path)
+                    LOG_IF(WARNING, strlen(mat.map_Kd.name) > 0) << "diffuse texture ignored: " << mat.map_Kd.name;
+                if (mat.map_Ks.name && mat.map_Ks.path)
+                    LOG_IF(WARNING, strlen(mat.map_Ks.name) > 0) << "specular texture ignored: " << mat.map_Ks.name;
+                if (mat.map_Ke.name && mat.map_Ke.path)
+                    LOG_IF(WARNING, strlen(mat.map_Ke.name) > 0) << "emission texture ignored: " << mat.map_Ke.name;
+                if (mat.map_Kt.name && mat.map_Kt.path)
+                    LOG_IF(WARNING, strlen(mat.map_Kt.name) > 0) << "transmittance texture ignored: " << mat.map_Kt.name;
+                if (mat.map_Ns.name && mat.map_Ns.path)
+                    LOG_IF(WARNING, strlen(mat.map_Ns.name) > 0) << "shininess texture ignored: " << mat.map_Ns.name;
+                if (mat.map_Ni.name && mat.map_Ni.path)
+                    LOG_IF(WARNING, strlen(mat.map_Ni.name) > 0) << "index of refraction texture ignored: " << mat.map_Ni.name;
+                if (mat.map_d.name && mat.map_d.path)
+                    LOG_IF(WARNING, strlen(mat.map_d.name) > 0) << "dissolve (alpha) texture ignored: " << mat.map_d.name;
+                if (mat.map_bump.name && mat.map_bump.path)
+                    LOG_IF(WARNING, strlen(mat.map_bump.name) > 0) << "bump texture ignored: " << mat.map_bump.name;
+            }
+
+            fast_obj_destroy(fom);
+
+            return mesh->n_faces() > 0;
+        }
+    }
+}
+
+// tinyobjloader is quite robust and can handle multi-materials
+#elif defined(USE_TINY_OBJ_LOADER)
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
@@ -692,7 +853,8 @@ namespace easy3d {
             //if so then add
             if (with_tex_coord) {
                 SurfaceMesh::HalfedgeProperty<vec2> tex_coord = mesh->get_halfedge_property<vec2>("h:texcoord");
-                for (SurfaceMesh::HalfedgeIterator hit = mesh->halfedges_begin(); hit != mesh->halfedges_end(); ++hit) {
+                for (SurfaceMesh::HalfedgeIterator hit = mesh->halfedges_begin();
+                     hit != mesh->halfedges_end(); ++hit) {
                     const vec2 &pt = tex_coord[*hit];
                     fprintf(out, "vt %.10f %.10f\n", pt[0], pt[1]);
                 }

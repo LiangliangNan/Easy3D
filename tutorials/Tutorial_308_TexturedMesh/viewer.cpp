@@ -36,7 +36,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
-#include <3rd_party/tinyobjloader/tiny_obj_loader.h>
+#include <3rd_party/fastobj/fast_obj.h>
 
 
 namespace easy3d {
@@ -50,7 +50,7 @@ namespace easy3d {
     namespace details {
 
         // each group is a set of faces (denoted by their indices) sharing the same material
-        struct Group : public std::vector<int> {
+        struct Group : public std::vector<SurfaceMesh::Face> {
             vec3 ambient;
             vec3 diffuse;
             vec3 specular;
@@ -69,53 +69,43 @@ namespace easy3d {
         if (file_system::extension(file_name, true) != "obj")
             return Viewer::add_model(file_name, create_default_drawables);
 
-        tinyobj::ObjReaderConfig config;
-        config.triangulate = false;
-        config.vertex_color = false;
-        tinyobj::ObjReader reader;
-        if (!reader.ParseFromFile(file_name, config)) {
-            LOG(ERROR) << "failed parsing file: " + file_name + ". " << reader.Error() << reader.Warning();
+        fastObjMesh *fom = fast_obj_read(file_name.c_str());
+        if (!fom) {
+            LOG(ERROR) << "failed reading file: " + file_name;
             return nullptr;
         }
 
-        // --------------------- collect the data ------------------------
-
-        const std::vector<tinyobj::shape_t> &shapes = reader.GetShapes();
-        if (shapes.empty()) {
-            LOG(WARNING) << "file contains no shape";
-            return nullptr;
-        }
-        const tinyobj::attrib_t &attrib = reader.GetAttrib();
-        const std::vector<tinyobj::material_t> &materials = reader.GetMaterials();
-
-        // for each texcoord
-        std::vector<vec2> texcoords;
-        for (std::size_t v = 0; v < attrib.texcoords.size(); v += 2) {
-            texcoords.push_back(vec2(attrib.texcoords.data() + v));
-        }
+        // Attention: Valid indices in the fastObjMesh::indices array start from 1.
+        // A dummy position, normal and texture coordinate are added to the corresponding fastObjMesh arrays at
+        // element 0 and then an index of 0 is used to indicate that attribute is not present at the vertex.
 
         // ------------------------ build the mesh ------------------------
 
         // clear the mesh in case of existing data
-        SurfaceMesh *model = new SurfaceMesh;
-        model->set_name(file_name);
+        SurfaceMesh *mesh = new SurfaceMesh;
+        mesh->set_name(file_name);
 
-        Viewer::add_model(model, false);
-
-        ManifoldBuilder builder(model);
+        ManifoldBuilder builder(mesh);
         builder.begin_surface();
 
         // add vertices
-        for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
+        // skip the first point
+        for (std::size_t v = 1; v < fom->position_count; ++v) {
             // Should I create vertices later, to get rid of isolated vertices?
-            builder.add_vertex(vec3(attrib.vertices.data() + v));
+            builder.add_vertex(vec3(fom->positions + v * 3));
         }
 
         // create texture coordinate property if texture coordinates present
-        if (!texcoords.empty())
-            model->add_halfedge_property<vec2>("h:texcoord");
-        auto prop_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
+        SurfaceMesh::HalfedgeProperty<vec2> prop_texcoords;
+        if (fom->texcoord_count > 0 && fom->texcoords) // index starts from 1 and the first element is dummy
+            prop_texcoords = mesh->add_halfedge_property<vec2>("h:texcoord");
 
+        // create face color property if material information exists
+        SurfaceMesh::FaceProperty<vec3> prop_face_color;
+        if (fom->material_count > 0 && fom->materials)  // index starts from 1 and the first element is dummy
+            prop_face_color = mesh->add_face_property<vec3>("f:color");
+
+        // find the face's halfedge that points to v.
         auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
                                      SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
             for (auto h : mesh->halfedges(face)) {
@@ -127,82 +117,99 @@ namespace easy3d {
             return SurfaceMesh::Halfedge();
         };
 
-        // invalid face will also be added, to ensure correct face indices
-        std::vector<SurfaceMesh::Face> faces;
+        // group the faces according to the material
+        // each group is a set of faces sharing the same material
+        std::vector<details::Group> groups(fom->material_count);
+
         // for each shape
-        for (size_t i = 0; i < shapes.size(); i++) {
-            std::size_t index_offset = 0;
-            LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.material_ids.size());
-            LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size());
+        for (std::size_t ii = 0; ii < fom->group_count; ii++) {
+            const fastObjGroup &grp = fom->groups[ii];
 
-            // For each face
-            for (std::size_t face_idx = 0; face_idx < shapes[i].mesh.num_face_vertices.size(); ++face_idx) {
-                std::size_t face_size = shapes[i].mesh.num_face_vertices[face_idx];
+//                if (grp.name)
+//                    std::cout << "group name: " << std::string(grp.name) << std::endl;
 
-                // For each vertex in the face
+            unsigned int idx = 0;
+            for (unsigned int jj = 0; jj < grp.face_count; ++jj) {
+                // number of vertices in the face
+                unsigned int fv = fom->face_vertices[grp.face_offset + jj];
                 std::vector<SurfaceMesh::Vertex> vertices;
-                std::vector<int> texcoord_ids;
-                for (std::size_t v = 0; v < face_size; v++) {
-                    const tinyobj::index_t &face = shapes[i].mesh.indices[index_offset + v];
-                    vertices.emplace_back(face.vertex_index);
-                    if (prop_texcoords)
-                        texcoord_ids.emplace_back(face.texcoord_index);
+                std::vector<unsigned int> texcoord_ids;
+                for (unsigned int kk = 0; kk < fv; ++kk) {  // for each vertex in the face
+                    const fastObjIndex &mi = fom->indices[grp.index_offset + idx];
+                    if (mi.p)
+                        vertices.emplace_back(SurfaceMesh::Vertex(mi.p - 1));
+                    if (mi.t)
+                        texcoord_ids.emplace_back(mi.t);
+                    ++idx;
                 }
 
                 SurfaceMesh::Face face = builder.add_face(vertices);
-                // invalid face will also be added, to ensure correct face indices
-                faces.push_back(face);
-                if (prop_texcoords && face.is_valid()) {
-                    auto begin = find_face_halfedge(model, face, builder.face_vertices()[0]);
-                    auto cur = begin;
-                    int idx = 0;
-                    do {
-                        prop_texcoords[cur] = texcoords[texcoord_ids[idx++]];
-                        cur = model->next(cur);
-                    } while (cur != begin);
-                }
+                if (face.is_valid()) {
+                    // texture coordinates
+                    if (prop_texcoords && texcoord_ids.size() == vertices.size()) {
+                        auto begin = find_face_halfedge(mesh, face, builder.face_vertices()[0]);
+                        auto cur = begin;
+                        unsigned int vid = 0;
+                        do {
+                            unsigned int tid = texcoord_ids[vid++];
+                            prop_texcoords[cur] = vec2(fom->texcoords + 2 * tid);
+                            cur = mesh->next(cur);
+                        } while (cur != begin);
+                    }
 
-                //int smoothing_group_id = shapes[i].mesh.smoothing_group_ids[f];
-                index_offset += face_size;
+                    // now materials
+                    if (prop_face_color) {
+                        unsigned int mat_id = fom->face_materials[grp.face_offset + jj];
+                        const fastObjMaterial &mat = fom->materials[mat_id];
+                        prop_face_color[face] = vec3(mat.Kd); // currently easy3d uses only diffuse
+                    }
+
+                    auto get_file_name = [](const char *name, const char* path) -> std::string {
+                        std::string file_name("");
+                        if (name && file_system::is_file(std::string(name)))
+                            file_name = std::string(name);
+                        else if (path && file_system::is_file(std::string(path)))
+                            file_name = std::string(path);
+                        else if (name && path){
+                            const std::string test_name = std::string(path) + "/" + std::string(name);
+                            if (file_system::is_file(test_name))
+                                file_name = test_name;
+                        }
+                        return file_name;
+                    };
+
+                    if (fom->material_count > 0 && fom->materials) {
+                        unsigned int mat_id = fom->face_materials[grp.face_offset + jj];
+                        const fastObjMaterial &mat = fom->materials[mat_id];
+                        auto &g = groups[mat_id];
+                        g.push_back(face);
+                        g.ambient = vec3(mat.Ka);
+                        g.diffuse = vec3(mat.Kd);
+                        g.specular = vec3(mat.Ks);
+                        g.shininess = mat.Ns;
+                        g.tex_file = get_file_name(mat.map_Ka.name, mat.map_Ka.path); // use ambient texture it exists
+                        if (g.tex_file.empty())
+                            g.tex_file = get_file_name(mat.map_Kd.name, mat.map_Kd.path); // then try diffuse texture
+                        if (g.tex_file.empty())
+                            g.tex_file = get_file_name(mat.map_Ks.name, mat.map_Ks.path); // then try diffuse texture
+                    }
+                }
             }
         }
+
         builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
-        if (materials.empty())
-            return model;
-
-        // ------------- group the faces according to the material -------------
-        // each group is a set of faces sharing the same material
-        std::vector<details::Group> groups(materials.size());
-
-        int face_idx = 0;
-        for (std::size_t i = 0; i < shapes.size(); i++) {
-            for (std::size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
-                auto face = faces[face_idx];
-                if (face.is_valid()) {
-                    // the material id of this face
-                    int material_id = shapes[i].mesh.material_ids[f];
-                    auto &g = groups[material_id];
-                    g.push_back(face_idx);
-                    const tinyobj::material_t &mat = materials[material_id];
-                    g.ambient = vec3(mat.ambient);
-                    g.diffuse = vec3(mat.diffuse);
-                    g.specular = vec3(mat.specular);
-                    g.shininess = mat.shininess;;
-                    g.tex_file = mat.ambient_texname;
-                    if (g.tex_file.empty())
-                        g.tex_file = mat.diffuse_texname;
-                    if (g.tex_file.empty())
-                        g.tex_file = mat.specular_texname;
-                }
-                ++face_idx;
-            }
+        if ((fom->material_count > 0 && fom->materials) == false) {
+            Viewer::add_model(mesh, true);
+            return mesh;
         }
+        else
+            Viewer::add_model(mesh, false);
 
-        auto points = model->get_vertex_property<vec3>("v:point");
-        model->update_vertex_normals();
-        auto normals = model->get_vertex_property<vec3>("v:normal");
+        mesh->update_vertex_normals();
+        auto normals = mesh->get_vertex_property<vec3>("v:normal");
+        auto points = mesh->get_vertex_property<vec3>("v:point");
 
         Tessellator tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
@@ -212,32 +219,25 @@ namespace easy3d {
 
             tessellator.reset();
 
-            for (auto f : group) {
-                auto face = faces[f];
-                if (!face.is_valid())
-                    continue;
-
-                tessellator.begin_polygon(model->compute_face_normal(face));
+            for (auto face : group) {
+                tessellator.begin_polygon(mesh->compute_face_normal(face));
                 tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                 tessellator.begin_contour();
-                for (auto h : model->halfedges(face)) {
-                    auto v = model->target(h);
-                    const vec3 &p = points[v];
-                    const vec3 &n = normals[v];
-                    if (prop_texcoords) {
-                        const vec2 &t = prop_texcoords[h];
-                        const float data[8] = {p.x, p.y, p.z, n.x, n.y, n.z, t.x, t.y};
-                        tessellator.add_vertex(data, 8, v.idx());
-                    } else {
-                        const float data[6] = {p.x, p.y, p.z, n.x, n.y, n.z};
-                        tessellator.add_vertex(data, 6, v.idx());
-                    }
+                for (auto h : mesh->halfedges(face)) {
+                    auto v = mesh->target(h);
+                    Tessellator::Vertex vtx(points[v], v.idx());
+                    vtx.append(normals[v]);
+                    if (prop_texcoords)
+                        vtx.append(prop_texcoords[h]);
+                    if (prop_face_color)
+                        vtx.append(prop_face_color[face]);
+                    tessellator.add_vertex(vtx);
                 }
                 tessellator.end_contour();
                 tessellator.end_polygon();
             }
 
-            std::vector<vec3> d_points, d_normals;
+            std::vector<vec3> d_points, d_colors, d_normals;
             std::vector<vec2> d_texcoords;
             const std::vector<Tessellator::Vertex*>& vts = tessellator.vertices();
             for (auto v :vts) {
@@ -246,36 +246,46 @@ namespace easy3d {
                 offset += 3;
                 d_normals.emplace_back(v->data() + offset);
                 offset += 3;
-                if (prop_texcoords)
+                if (prop_texcoords) {
                     d_texcoords.emplace_back(v->data() + offset);
+                    offset += 2;
+                }
+                if (prop_face_color)
+                    d_colors.emplace_back(v->data() + offset);
             }
 
             const auto &d_indices = tessellator.elements();
 
-            TrianglesDrawable *drawable = model->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
+            TrianglesDrawable *drawable = mesh->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
 
             drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
             drawable->update_normal_buffer(d_normals);
-            if (prop_texcoords)
+            if (!d_colors.empty())
+                drawable->update_color_buffer(d_colors);
+            if (!d_texcoords.empty())
                 drawable->update_texcoord_buffer(d_texcoords);
+
             drawable->set_smooth_shading(false);
-
-            drawable->set_material(State::Material(group.ambient, group.specular, group.shininess));
-            drawable->set_uniform_coloring(vec4(group.diffuse, 1.0f));
-
-            const std::string texname = group.tex_file;
-            if (!texname.empty()) {
-                const std::string texture_file = file_system::parent_directory(file_name) + "/" + texname;
-                Texture *tex = TextureManager::request(texture_file, Texture::REPEAT);
-                if (tex) {
-                    drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord", tex);
-                    LOG(INFO) << "texture created from " << texname;
+            if (prop_texcoords) {
+                if (!group.tex_file.empty()) {
+                    Texture *tex = TextureManager::request(group.tex_file, Texture::REPEAT);
+                    if (tex) {
+                        drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord", tex);
+                        LOG(INFO) << "texture created from " << group.tex_file;
+                    }
                 }
+            }
+
+            if (!drawable->texture()) { // in case texture creation failed
+                if (prop_face_color)
+                    drawable->set_property_coloring(State::PropertyLocation::FACE, "f:color");
+                else
+                    drawable->set_uniform_coloring(vec4(group.diffuse, 1.0f));
             }
         }
 
-        return model;
+        return mesh;
     }
 
 }
