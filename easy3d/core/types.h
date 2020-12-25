@@ -38,6 +38,7 @@
 #include <easy3d/core/box.h>
 #include <easy3d/core/quat.h>
 #include <easy3d/core/polygon.h>
+#include <easy3d/core/constant.h>
 
 
 /**
