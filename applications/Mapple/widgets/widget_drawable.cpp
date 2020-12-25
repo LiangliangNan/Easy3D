@@ -216,7 +216,7 @@ std::string WidgetDrawable::color_property_name(const std::string& name, const s
 State::Method WidgetDrawable::color_method(const std::string& name, const std::string& scalar_prefix) const {
     if (name == "uniform color")
         return State::UNIFORM_COLOR;
-    else if (name.find("v:color") != std::string::npos || name.find("f:color") != std::string::npos)
+    else if (name.find("v:color") != std::string::npos || name.find("e:color") != std::string::npos || name.find("f:color") != std::string::npos)
         return State::COLOR_PROPERTY;
     else if (name.find("texcoord") != std::string::npos)
         return State::TEXTURED;

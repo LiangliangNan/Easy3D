@@ -1298,11 +1298,14 @@ void MainWindow::surfaceMeshSlice() {
         }
     }
 
+    auto color = graph->add_edge_property<vec3>("e:color");
     unsigned int idx = 0;
     for (const auto& polylines : all_polylines) {
         for (const auto &polyline : polylines) {
+            const auto& c = random_color();
             for (unsigned int i = 0; i < polyline.size() - 1; ++i) {
-                graph->add_edge(Graph::Vertex(idx), Graph::Vertex(idx + 1));
+                auto e = graph->add_edge(Graph::Vertex(idx), Graph::Vertex(idx + 1));
+                color[e] = c;
                 ++idx;
             }
             ++idx;
