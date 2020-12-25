@@ -35,8 +35,9 @@
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
-| ![Mapple](resources/images/mapple.jpg)  | ![Mapple](resources/images/mapple2.gif) |
-
+|                 Scalar field                  |                   Polyhedral mesh                |
+|-----------------------------------------------|--------------------------------------------------|
+| ![Scalar field](resources/images/mapple.jpg)  | ![Polyhedral mesh](resources/images/mapple2.gif) |
 
 ### A quick glance ###
 
