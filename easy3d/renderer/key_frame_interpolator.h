@@ -344,7 +344,7 @@ namespace easy3d {
         virtual void on_frame_modified() { valuesAreValid_ = false; pathIsValid_ = false; splineCacheIsValid_ = false; }
 
     private:
-        // Copy constructor and opertor= are declared private and undefined
+        // Copy constructor and operator= are declared private and undefined
         // Prevents everyone from trying to use them
          KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
          KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
@@ -373,29 +373,28 @@ namespace easy3d {
             double time_;
         };
 
-
     #endif
 
-        // K e y F r a m e s
+        // Key Frames
         mutable std::vector<KeyFrame*> keyFrames_;
         std::vector<Frame> path_;
 
         std::vector<KeyFrame*>::iterator currentFrame_[4];
 
-        // A s s o c i a t e d   f r a m e
+        // Associated frame
         Frame* frame_;
 
-        // R h y t h m
+        // Rhythm
         Timer timer_;
         int period_;
         double interpolationTime_;
         double interpolationSpeed_;
         bool interpolationStarted_;
 
-        // M i s c
+        // Make a loop?
         bool loopInterpolation_;
 
-        // C a c h e d   v a l u e s   a n d   f l a g s
+        // Cached values and flags
         bool pathIsValid_;
         bool valuesAreValid_;
         bool currentFrameValid_;
