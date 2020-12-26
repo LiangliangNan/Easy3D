@@ -917,6 +917,46 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
+    void SurfaceMesh::reverse_orientation() {
+        auto reverse_orientation = [](SurfaceMesh::Halfedge first, SurfaceMesh &mesh) -> void {
+            if (first == SurfaceMesh::Halfedge())
+                return;
+            SurfaceMesh::Halfedge last = first;
+            SurfaceMesh::Halfedge prev = first;
+            SurfaceMesh::Halfedge start = first;
+            first = mesh.next(first);
+            SurfaceMesh::Vertex new_v = mesh.target(start);
+            while (first != last) {
+                SurfaceMesh::Vertex tmp_v = mesh.target(first);
+                mesh.set_target(first, new_v);
+                mesh.set_out_halfedge(new_v, first);
+                new_v = tmp_v;
+                SurfaceMesh::Halfedge n = mesh.next(first);
+                mesh.set_next(first, prev);
+                prev = first;
+                first = n;
+            }
+            mesh.set_target(start, new_v);
+            mesh.set_out_halfedge(new_v, start);
+            mesh.set_next(start, prev);
+        };
+
+        for (auto f : faces())
+            reverse_orientation(halfedge(f), *this);
+
+        // Note: A border edge is now parallel to its opposite edge.
+        // We scan all border edges for this property. If it holds, we reorient the associated hole and search
+        // again until no border edge with that property exists any longer. Then, all holes are reoriented.
+        for (auto h : halfedges()) {
+            if (is_border(h) && target(h) == target(opposite(h)))
+                reverse_orientation(h, *this);
+        }
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+
     void
     SurfaceMesh::
     triangulate(Face f)
@@ -1047,7 +1087,7 @@ namespace easy3d {
         for (vit=vertices_begin(); vit!=vend; ++vit)
             vnormal_[*vit] = compute_vertex_normal(*vit);
 #else // the angle-weighted average of incident face average
-        
+
         auto angle_weighted_face_normals = [this](Vertex v) -> vec3 {
             vec3     nn(0,0,0);
             Halfedge  h = out_halfedge(v);

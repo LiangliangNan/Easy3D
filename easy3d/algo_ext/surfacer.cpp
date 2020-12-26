@@ -285,28 +285,6 @@ namespace easy3d {
     }
 
 
-    void Surfacer::reverse_orientation(SurfaceMesh *mesh) {
-        const std::vector<vec3> points = mesh->points();
-
-        typedef std::vector<SurfaceMesh::Vertex> Polygon;
-        std::vector<Polygon> polygons(mesh->n_faces());
-        for (auto f : mesh->faces()) {
-            auto &plg = polygons[f.idx()];
-            for (auto v : mesh->vertices(f))
-                plg.push_back(v);
-            std::reverse(plg.begin(), plg.end());
-        }
-
-        mesh->clear();
-
-        for (const auto &p : points)
-            mesh->add_vertex(p);
-
-        for (const auto &plg : polygons)
-            mesh->add_face(plg);
-    }
-
-
     void Surfacer::orient_closed_triangle_mesh(SurfaceMesh* input_mesh) {
         if (!input_mesh->is_triangle_mesh() || !input_mesh->is_closed()) {
             LOG(WARNING) << "only closed triangle meshes can be oriented";

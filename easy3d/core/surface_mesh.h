@@ -1664,6 +1664,10 @@ namespace easy3d {
         /// \sa triangulate()
         void triangulate(Face f);
 
+        /// \brief Reverses the orientation of the entire mesh.
+        /// \details This function reverses for each face the order of the vertices along the face boundary.
+        /// As a consequence, the normal computed for each face using compute_face_normal() is also reversed.
+        void reverse_orientation();
 
         /// returns whether collapsing the halfedge \c h is topologically legal.
         /// \attention This function is only valid for triangle meshes.

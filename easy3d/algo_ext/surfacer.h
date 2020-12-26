@@ -95,11 +95,6 @@ namespace easy3d {
         static bool orient_and_stitch_polygon_soup(SurfaceMesh *mesh);
 
         /**
-         * \brief Reverses the orientation of the entire mesh
-         */
-        static void reverse_orientation(SurfaceMesh *mesh);
-
-        /**
          * \brief Makes each connected component of a closed triangle surface mesh inward or outward oriented.
          * \pre mesh.is_triangle_mesh(), mesh.is_closed()
          * @param mesh The input mesh.

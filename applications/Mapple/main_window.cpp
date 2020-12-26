@@ -999,9 +999,7 @@ void MainWindow::surfaceMeshRepairPolygonSoup() {
     viewer_->update();
     updateUi();
 #else
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -1014,15 +1012,15 @@ void MainWindow::surfaceMeshStitchWithReorientation() {
 #if HAS_CGAL
     Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
-
-    mesh->renderer()->update();
-    viewer_->update();
-    updateUi();
 #else
     SurfaceMeshStitching stitch(mesh);
     stitch.apply();
     LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
 #endif
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
 }
 
 
@@ -1033,15 +1031,15 @@ void MainWindow::surfaceMeshOrientAndStitchPolygonSoup() {
 
 #if HAS_CGAL
     Surfacer::orient_and_stitch_polygon_soup(mesh);
-
-    mesh->renderer()->update();
-    viewer_->update();
-    updateUi();
 #else
     SurfaceMeshStitching stitch(mesh);
     stitch.apply();
     LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
 #endif
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
 }
 
 
@@ -1052,15 +1050,15 @@ void MainWindow::surfaceMeshStitchWithoutReorientation() {
 
 #if HAS_CGAL
     Surfacer::stitch_borders(mesh);
-
-    mesh->renderer()->update();
-    viewer_->update();
-    updateUi();
 #else
     SurfaceMeshStitching stitch(mesh);
     stitch.apply();
     LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
 #endif
+
+    mesh->renderer()->update();
+    viewer_->update();
+    updateUi();
 }
 
 
@@ -1076,9 +1074,7 @@ void MainWindow::surfaceMeshOrientClosedTriangleMesh() {
     viewer_->update();
     updateUi();
 #else
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -1088,7 +1084,7 @@ void MainWindow::surfaceMeshReverseOrientation() {
     if (!mesh)
         return;
 
-    Surfacer::reverse_orientation(mesh);
+    mesh->reverse_orientation();
 
     mesh->renderer()->update();
     viewer_->update();
@@ -1208,9 +1204,7 @@ void MainWindow::surfaceMeshClip() {
     viewer_->update();
     updateUi();
 #else
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -1233,9 +1227,7 @@ void MainWindow::surfaceMeshSplit() {
     viewer_->update();
     updateUi();
 #else
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -1318,9 +1310,7 @@ void MainWindow::surfaceMeshSlice() {
 #endif
 
 #else
-    SurfaceMeshStitching stitch(mesh);
-    stitch.apply();
-    LOG(WARNING) << "install CGAL to allow stitching connected components with incompatible boundaries";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
 #endif
 }
 
@@ -1597,17 +1587,21 @@ void MainWindow::surfaceMeshPolygonization() {
     if (!mesh)
         return;
 
+#if HAS_CGAL
     // stitch first: to encourage large polyons
     Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
+#endif
 
     // polygonaization
     SurfaceMeshPolygonization polygonizer;
     polygonizer.apply(mesh);
 
+#if HAS_CGAL
     // stitch again (the "merge-edge" edge operation in polygonization may result in some borders)
     Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
+#endif
 
     mesh->renderer()->update();
     viewer()->update();
