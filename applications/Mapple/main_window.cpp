@@ -716,11 +716,11 @@ void MainWindow::onAbout()
 
     QString text = QMessageBox::tr(
         "<p><h4> Build %1</h4></p>"
-        "<p>Mapple is software for processing and rendering meshes and point clouds.</p>"
+        "<p>Mapple is software for processing and rendering point clouds, graphs, surface meshes, and polyhedral meshes.</p>"
         "<p>Liangliang Nan<br>"
         "<a href=\"mailto:liangliang.nan@gmail.com\">liangliang.nan@gmail.com</a><br>"
         "<a href=\"https://3d.bk.tudelft.nl/liangliang/\">https://3d.bk.tudelft.nl/liangliang/</a></p>"
-        ).arg("20181206");
+        ).arg("20201226");
 
     //QMessageBox::about(this, title, text);
     QMessageBox::about(this, "About Mapple", title + text);
