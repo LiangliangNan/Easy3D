@@ -64,6 +64,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QTime>
+#include <QMessageBox>
 
 
 using namespace easy3d;
@@ -1255,13 +1256,175 @@ void PaintCanvas::pasteCamera() {
 }
 
 
-void PaintCanvas::saveCameraStateToFile() {
-    LOG(WARNING) << "planned to be implemented in a future release";
+void PaintCanvas::saveStateToFile(const std::string& file_name) const {
+    if (file_name.empty())
+        return;
+
+    // Write the state to file
+    std::ofstream output(file_name.c_str());
+    if (output.fail()) {
+        QMessageBox::warning(window(), tr("Save state to file error"), tr("Unable to create file %1").arg(QString::fromStdString(file_name)));
+        return;
+    }
+
+    //-----------------------------------------------------
+
+    // first line is just a comment
+    output << "<Mapple state file>" << std::endl << std::endl;
+
+    //-----------------------------------------------------
+
+    // write foreground and background colors
+    output << "<color>" << std::endl;
+    output << "\t backGroundColor: " << backGroundColor() << std::endl;
+    output << "</color>" << std::endl << std::endl;
+
+    //-----------------------------------------------------
+
+    output << "<display>" << std::endl;
+    output << "\t cameraPathIsDrawn: " << show_camera_path_ << std::endl;
+    output << "</display>" << std::endl << std::endl;
+
+    //-----------------------------------------------------
+
+    output << "<windowState>" << std::endl;
+    output << "\t state: " << window()->windowState() << std::endl;;
+    if (window()->windowState() == Qt::WindowNoState) {
+        output << "\t size: " << window()->width() << " " << window()->height() << std::endl;
+        output << "\t position: " << window()->pos().x() << " " << window()->pos().y() << std::endl;
+    }
+    output << "</windowState>" << std::endl << std::endl;
+
+    //-----------------------------------------------------
+
+    output << "<camera>" << std::endl;
+//    // Restore original QCamera zClippingCoefficient before saving.
+//    if (cameraIsEdited())
+//        camera()->setZClippingCoefficient(previousCameraZClippingCoefficient_);
+
+    switch (camera()->type()) {
+        case Camera::PERSPECTIVE:	output << "\t type: " << "PERSPECTIVE" << std::endl;	break;
+        case Camera::ORTHOGRAPHIC:	output << "\t type: " << "ORTHOGRAPHIC" << std::endl;	break;
+    }
+    output << "\t zClippingCoefficient: " << camera()->zClippingCoefficient() << std::endl;
+    output << "\t zNearCoefficient: " << camera()->zNearCoefficient() << std::endl;
+    output << "\t sceneRadius: " << camera()->sceneRadius() << std::endl;
+    output << "\t fieldOfView: " << camera()->fieldOfView() << std::endl;
+    output << "\t sceneCenter: " << camera()->sceneCenter() << std::endl;
+
+    // ManipulatedCameraFrame
+    output << "\t position: " << camera()->frame()->position() << std::endl;
+    output << "\t orientation: " << camera()->frame()->orientation() << std::endl;
+    output << "\t wheelSens: " << camera()->frame()->wheelSensitivity() << std::endl;
+    output << "\t rotSens: " << camera()->frame()->rotationSensitivity() << std::endl;
+    output << "\t zoomSens: " << camera()->frame()->zoomSensitivity() << std::endl;
+    output << "\t transSens: " << camera()->frame()->translationSensitivity() << std::endl;
+    output << "\t zoomsOnPivotPoint: " << camera()->frame()->zoomsOnPivotPoint() << std::endl;
+    output << "\t pivotPoint: " << camera()->frame()->pivotPoint() << std::endl;
+
+//    if (cameraIsEdited())
+//        // #CONNECTION# 5.0 from setCameraIsEdited()
+//        camera()->setZClippingCoefficient(5.0);
+    output << "</camera>" << std::endl << std::endl;
 }
 
 
-void PaintCanvas::restoreCameraStateFromFile(){
-    LOG(WARNING) << "planned to be implemented in a future release";
+void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
+    if (file_name.empty())
+        return;
+
+    // read the state from file
+    std::ifstream input(file_name.c_str());
+    if (input.fail()) {
+        QMessageBox::warning(this, tr("Read state file error"), tr("Unable to read file %1").arg(QString::fromStdString(file_name)));
+        return;
+    }
+
+//    bool tmpCameraIsEdited = cameraIsEdited();
+
+    //-----------------------------------------------------
+
+    // first line is just a comment
+    char line[500];
+    input.getline(line, 500);	// just skip this line
+
+    //-----------------------------------------------------
+
+    // write foreground and background colors
+    std::string dummy;
+    input >> dummy;	// this skips the keyword
+    vec4 bc;
+    input >> dummy >> bc; setBackgroundColor(bc);
+    input >> dummy;	// this skips the keyword
+
+    //-----------------------------------------------------
+
+    input >> dummy;	// this skips the keyword
+    input >> dummy >> show_camera_path_;
+    input >> dummy;	// this skips the keyword
+
+    //-----------------------------------------------------
+
+    input >> dummy;	// this skips the keyword
+    int state;
+    input >> dummy >> state;
+    window()->setWindowState(Qt::WindowState(state));
+    if (Qt::WindowState(state) == Qt::WindowNoState) {
+        int w, h, x, y;
+        input >> dummy >> w >> h;	window()->resize(w, h);
+        input >> dummy >> x >> y;	window()->move(QPoint(x, y));
+        camera()->setScreenWidthAndHeight(this->width(), this->height());
+    }
+    input >> dummy;	// this skips the keyword
+
+    //-----------------------------------------------------
+
+    input >> dummy;	// this skips the keyword
+
+//    disConnectAllCameraKFIInterpolatedSignals();
+
+    std::string t;
+    input >> dummy >> t;
+    if (t == "PERSPECTIVE")
+        camera()->setType(Camera::PERSPECTIVE);
+    else if (t == "ORTHOGRAPHIC")
+        camera()->setType(Camera::ORTHOGRAPHIC);
+
+
+    float v;
+    vec3 p;
+    quat q;
+    input >> dummy >> v;	camera()->setZClippingCoefficient(v);
+    input >> dummy >> v;	camera()->setZNearCoefficient(v);
+    input >> dummy >> v;	camera()->setSceneRadius(v);
+    input >> dummy >> v;	camera()->setFieldOfView(v);
+    input >> dummy >> p;	camera()->setSceneCenter(p);
+//    connectAllCameraKFIInterpolatedSignals();
+
+    // ManipulatedCameraFrame
+    bool status;
+    input >> dummy >> p;	camera()->frame()->setPosition(p);
+    input >> dummy >> q;	camera()->frame()->setOrientation(q);
+    input >> dummy >> v;	camera()->frame()->setWheelSensitivity(v);
+    input >> dummy >> v;	camera()->frame()->setRotationSensitivity(v);
+    input >> dummy >> v;	camera()->frame()->setZoomSensitivity(v);
+    input >> dummy >> v;	camera()->frame()->setTranslationSensitivity(v);
+    input >> dummy >> status;	camera()->frame()->setZoomsOnPivotPoint(status);
+    input >> dummy >> p;	camera()->frame()->setPivotPoint(p);
+    input >> dummy;	// this skips the keyword
+
+    // The Camera always stores its "real" zClippingCoef in file. If it is edited,
+    // its "real" coef must be saved and the coef set to 5.0, as is done in setCameraIsEdited().
+    // BUT : Camera and Display are read in an arbitrary order. We must initialize Camera's
+    // "real" coef BEFORE calling setCameraIsEdited. Hence this temp cameraIsEdited and delayed call
+//    cameraIsEdited_ = tmpCameraIsEdited;
+//    if (cameraIsEdited_)
+//    {
+//        previousCameraZClippingCoefficient_ = camera()->zClippingCoefficient();
+//        // #CONNECTION# 5.0 from setCameraIsEdited.
+//        camera()->setZClippingCoefficient(5.0);
+//    }
+    update();
 }
 
 
@@ -1291,13 +1454,59 @@ void PaintCanvas::showCamaraPath(){
 }
 
 
-void PaintCanvas::importCameraPathFromFile(){
-    LOG(WARNING) << "planned to be implemented in a future release";
+void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
+    KeyFrameInterpolator* interpolator = camera()->keyFrameInterpolator();
+    if (!interpolator)
+        return;
+
+    std::ofstream output(file_name.c_str());
+    if (output.fail()) {
+        std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+        return;
+    }
+
+    int num = interpolator->numberOfKeyFrames();
+    output << "\tnum_key_frames: " << num << std::endl;
+
+    for (int j = 0; j < num; ++j) {
+        output << "\tframe: " << j << std::endl;
+        const Frame &frame = interpolator->keyFrame(j);
+        output << "\t\tposition: " << frame.position() << std::endl;
+        output << "\t\torientation: " << frame.orientation() << std::endl;
+    }
 }
 
 
-void PaintCanvas::exportCamaraPathToFile(){
-    LOG(WARNING) << "planned to be implemented in a future release";
+void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
+    std::ifstream input(file_name.c_str());
+    if (input.fail()) {
+        std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+        return;
+    }
+
+    // clean
+    KeyFrameInterpolator* interpolator = camera()->keyFrameInterpolator();
+    interpolator->deletePath();
+
+    // load path from file
+    std::string dummy;
+    int num_key_frames;
+    input >> dummy >> num_key_frames;
+    std::vector<Frame> key_frames;
+    for (int j = 0; j < num_key_frames; ++j) {
+        int frame_id;
+        input >> dummy >> frame_id;
+        vec3 pos;
+        quat orient;
+        input >> dummy >> pos >> dummy >> orient;
+        key_frames.push_back(Frame(pos, orient));
+    }
+    if (!key_frames.empty()) {
+        for (int j = 0; j < num_key_frames; ++j) {
+            interpolator->addKeyFrame(key_frames[j]);
+        }
+    }
+    update();
 }
 
 

@@ -83,14 +83,18 @@ private slots:
     // view
     void saveSnapshot();
     void setBackgroundColor();
-
-    // common edit
-    void addGaussianNoise();
+    void saveCameraStateToFile();
+    void restoreCameraStateFromFile();
+    void importCameraPathFromFile();
+    void exportCamaraPathToFile();
 
     // property
     void manipulateProperties();
     void computeHeightField();
     void computeSurfaceMeshCurvatures();
+
+    // edit
+    void addGaussianNoise();
 
     // point cloud
     void pointCloudDownsampling();
