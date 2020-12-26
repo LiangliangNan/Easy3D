@@ -379,9 +379,9 @@ namespace easy3d {
 
 
     // adjusts the scene radius so that the entire camera path is within the view frustum.
-    float KeyFrameInterpolator::adjust_scene_radius(Camera* cam) const {
+    double KeyFrameInterpolator::adjust_scene_radius(Camera* cam) const {
         // update scene bounding box to make sure the path is within the view frustum
-        float radius = cam->sceneRadius();
+        double radius = cam->sceneRadius();
         for (const auto frame : keyFrames_) {
             float dist = distance(cam->sceneCenter(), frame->position());
             if (dist > radius)

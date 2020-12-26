@@ -283,8 +283,9 @@ namespace easy3d {
     public:
         virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, float scale=1.0);
 
-        // adjusts the scene radius so that the entire camera path is within the view frustum.
-        float adjust_scene_radius(Camera* cam) const;
+        /// adjusts the scene radius so that the entire camera path is within the view frustum.
+        /// \related The adjusted scene radius.
+        double adjust_scene_radius(Camera* cam) const;
         //@}
 
     private:
