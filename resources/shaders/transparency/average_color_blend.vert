@@ -15,19 +15,19 @@ out vec2 texCoord;
 
 void main()
 {
-	vec4 new_position = MANIP * vec4(vtx_position, 1.0);
+	vec4 new_position = MANIP * vtx_position;
 
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
 		if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-		return;
+			return;
 		if (crossSectionEnabled) {
 			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
 			if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-			return;
+				return;
 		}
 	}
 
-	gl_Position = new_position.xyz;
+	gl_Position = new_position;
 	texCoord = vtx_texcoord;
 }
