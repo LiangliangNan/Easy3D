@@ -35,12 +35,12 @@
 namespace easy3d {
 
 
-    void SurfaceMeshPolygonization::apply(SurfaceMesh *mesh) {
+    void SurfaceMeshPolygonization::apply(SurfaceMesh *mesh, float angle_threshold) {
         int orig_faces = mesh->n_faces();
         int prev_faces(orig_faces), diff(0);
         do {
             prev_faces = mesh->n_faces();
-            internal_apply(mesh);
+            internal_apply(mesh, angle_threshold);
             diff = mesh->n_faces() - prev_faces;
         } while (diff != 0);
 
@@ -50,7 +50,7 @@ namespace easy3d {
     }
 
 
-    void SurfaceMeshPolygonization::internal_apply(SurfaceMesh *mesh) {
+    void SurfaceMeshPolygonization::internal_apply(SurfaceMesh *mesh, float angle_threshold) {
         if (!mesh)
             return;
 
@@ -65,7 +65,7 @@ namespace easy3d {
                 planar_segments_[f] = -1;
         }
 
-        int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_);
+        int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_, angle_threshold);
         // for each planar patch, find a starting halfedge
         std::vector<SurfaceMesh::Halfedge> starters(num, SurfaceMesh::Halfedge());
 
@@ -117,7 +117,7 @@ namespace easy3d {
         }
         builder.end_surface(false);
 
-        merge_colinear_edges(mesh);
+        merge_colinear_edges(mesh, angle_threshold);
     }
 
 
@@ -154,7 +154,7 @@ namespace easy3d {
     }
 
 
-    void SurfaceMeshPolygonization::merge_colinear_edges(SurfaceMesh *mesh) {
+    void SurfaceMeshPolygonization::merge_colinear_edges(SurfaceMesh *mesh, float angle_threshold) {
         if (!mesh)
             return;
 
@@ -175,7 +175,7 @@ namespace easy3d {
             v2.normalize();
             auto angle = geom::angle(v1, v2); // in [-pi, pi]
             angle = rad2deg(std::abs(angle));
-            if (std::abs(angle) < 1.0f)
+            if (std::abs(angle) < angle_threshold)
                 vertices.push_back(v);
         }
 

@@ -39,20 +39,28 @@ namespace easy3d {
 
         /**
          * \brief Merges connected coplanar faces into a general polygon face.
-         * \details The result is a general polgyonal mesh.
+         * \details The result is a general polygonal mesh.
+         * \param mesh The input surface mesh. Upon return, the mesh will be modified.
+         * \param angle_threshold Two faces sharing a common edge are considered coplanar if the dihedral angle is
+         *      smaller than \p angle_threshold (in degrees).
          */
-        void apply(SurfaceMesh *mesh);
+        void apply(SurfaceMesh *mesh, float angle_threshold = 1.0f);
 
         /**
-         * Merges the two incident edges of each 2-degree vertex.
+         * \brief Removes 2-degree vertices.
+         * \details For every 2-degree vertex, if the angle between its two incident edges is smaller than a threshold,
+         * merge the two incident edges by removing this vertex.
+         * \param mesh The input surface mesh. Upon return, the mesh will be modified.
+         * \param angle_threshold Two edges sharing the same vertex are considered colinear if their angle is smaller
+         *      than \p angle_threshold (in degrees).
          */
-        void merge_colinear_edges(SurfaceMesh *mesh);
+        void merge_colinear_edges(SurfaceMesh *mesh, float angle_threshold);
 
     private:
         std::vector<SurfaceMesh::Halfedge>
         extract_boundary_loop(SurfaceMesh *mesh, int comp_id, SurfaceMesh::Halfedge start);
 
-        void internal_apply(SurfaceMesh *mesh);
+        void internal_apply(SurfaceMesh *mesh, float angle_threshold);
 
     private:
         SurfaceMesh::FaceProperty<int> planar_segments_;
