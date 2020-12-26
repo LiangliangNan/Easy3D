@@ -767,6 +767,15 @@ void MainWindow::createActionsForViewMenu() {
     connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));
     connect(ui->actionPasteCamera, SIGNAL(triggered()), viewer_, SLOT(pasteCamera()));
 
+    connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), viewer_, SLOT(saveCameraStateToFile()));
+    connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), viewer_, SLOT(restoreCameraStateFromFile()));
+    connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
+    connect(ui->actionPlayCameraPath, SIGNAL(triggered()), viewer_, SLOT(playCameraPath()));
+    connect(ui->actionShowCamaraPath, SIGNAL(triggered()), viewer_, SLOT(showCamaraPath()));
+    connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), viewer_, SLOT(importCameraPathFromFile()));
+    connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), viewer_, SLOT(exportCamaraPathToFile()));
+    connect(ui->actionDeleteCameraPath, SIGNAL(triggered()), viewer_, SLOT(deleteCameraPath()));
+
     QAction* actionToggleDockWidgetRendering = ui->dockWidgetRendering->toggleViewAction();
     actionToggleDockWidgetRendering->setText("Rendering Panel");
     ui->menuView->addAction(actionToggleDockWidgetRendering);

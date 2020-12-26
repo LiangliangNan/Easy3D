@@ -85,7 +85,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , pressed_key_(-1)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
-        , show_camera_path_(false)
+        , show_camera_path_(true)
         , model_idx_(-1)
         , ssao_(nullptr)
         , transparency_(nullptr)
@@ -500,29 +500,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     else if (e->key() == Qt::Key_Equal && e->modifiers() == Qt::ControlModifier)
         camera_->frame()->action_zoom(1, camera_);
 
-    else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
-        easy3d::Frame *frame = camera()->frame();
-        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
-        // update scene bounding box to make sure the path is within the view frustum
-        float old_radius = camera()->sceneRadius();
-        float candidate_radius = distance(camera()->sceneCenter(), frame->position());
-        camera()->setSceneRadius(std::max(old_radius, candidate_radius));
-    } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier) { // delete path
-        camera()->keyFrameInterpolator()->deletePath();
-
-        // update scene bounding box
-        Box3 box;
-        for (auto m : models_)
-            box.add_box(m->bounding_box());
-        camera_->setSceneBoundingBox(box.min(), box.max());
-    } else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
-        if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-            camera()->keyFrameInterpolator()->stopInterpolation();
-        else
-            camera()->keyFrameInterpolator()->startInterpolation();
-    } else if (e->key() == Qt::Key_T && e->modifiers() == Qt::NoModifier) {
-        show_camera_path_ = !show_camera_path_;
-    } else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
+    else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->renderer()->lines_drawables()) {
                 float size = d->line_width() - 1.0f;
@@ -1208,12 +1186,12 @@ void PaintCanvas::enableEyeDomeLighting(bool b) {
 
 
 void PaintCanvas::invertSelection() {
-    std::cout << "not implemented yet" << std::endl;
+    LOG(WARNING) << "planned to be implemented in a future release";
 }
 
 
 void PaintCanvas::deleteSelectedPrimitives() {
-    std::cout << "not implemented yet" << std::endl;
+    LOG(WARNING) << "planned to be implemented in a future release";
 }
 
 
@@ -1274,6 +1252,64 @@ void PaintCanvas::pasteCamera() {
     const float duration = 0.5f;
     camera()->interpolateTo(new_frame, duration);
     update();
+}
+
+
+void PaintCanvas::saveCameraStateToFile() {
+    LOG(WARNING) << "planned to be implemented in a future release";
+}
+
+
+void PaintCanvas::restoreCameraStateFromFile(){
+    LOG(WARNING) << "planned to be implemented in a future release";
+}
+
+
+void PaintCanvas::addKeyFrame(){
+    easy3d::Frame *frame = camera()->frame();
+    camera()->keyFrameInterpolator()->addKeyFrame(*frame);
+    // update scene bounding box to make sure the path is within the view frustum
+    float old_radius = camera()->sceneRadius();
+    float candidate_radius = distance(camera()->sceneCenter(), frame->position());
+    camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+    LOG(INFO) << "key frame added to camera path";
+    update();
+}
+
+
+void PaintCanvas::playCameraPath(){
+    if (camera()->keyFrameInterpolator()->interpolationIsStarted())
+        camera()->keyFrameInterpolator()->stopInterpolation();
+    else
+        camera()->keyFrameInterpolator()->startInterpolation();
+}
+
+
+void PaintCanvas::showCamaraPath(){
+    show_camera_path_ = !show_camera_path_;
+    update();
+}
+
+
+void PaintCanvas::importCameraPathFromFile(){
+    LOG(WARNING) << "planned to be implemented in a future release";
+}
+
+
+void PaintCanvas::exportCamaraPathToFile(){
+    LOG(WARNING) << "planned to be implemented in a future release";
+}
+
+
+void PaintCanvas::deleteCameraPath(){
+    camera()->keyFrameInterpolator()->deletePath();
+    // update scene bounding box
+    Box3 box;
+    for (auto m : models_)
+        box.add_box(m->bounding_box());
+    camera_->setSceneBoundingBox(box.min(), box.max());
+    update();
+    LOG(INFO) << "camera path deleted";
 }
 
 

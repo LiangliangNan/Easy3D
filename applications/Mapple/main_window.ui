@@ -56,8 +56,15 @@
     <addaction name="actionPasteCamera"/>
     <addaction name="actionCopyCamera"/>
     <addaction name="separator"/>
-    <addaction name="actionSaveCameraState"/>
-    <addaction name="actionRestoreCameraState"/>
+    <addaction name="actionSaveCameraStateToFile"/>
+    <addaction name="actionRestoreCameraStateFromFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionAddKeyFrame"/>
+    <addaction name="actionPlayCameraPath"/>
+    <addaction name="actionShowCamaraPath"/>
+    <addaction name="actionImportCameraPathFromFile"/>
+    <addaction name="actionExportCamaraPathToFile"/>
+    <addaction name="actionDeleteCameraPath"/>
     <addaction name="separator"/>
     <addaction name="actionBackgroundColor"/>
     <addaction name="separator"/>
@@ -585,14 +592,14 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionSaveCameraState">
+  <action name="actionSaveCameraStateToFile">
    <property name="text">
-    <string>Save camera state</string>
+    <string>Save camera state to file</string>
    </property>
   </action>
-  <action name="actionRestoreCameraState">
+  <action name="actionRestoreCameraStateFromFile">
    <property name="text">
-    <string>Restore camera state</string>
+    <string>Restore camera state from file</string>
    </property>
   </action>
   <action name="actionExit">
@@ -979,6 +986,54 @@
   <action name="actionSurfaceMeshTetrahedralization">
    <property name="text">
     <string>Tetrahedralization</string>
+   </property>
+  </action>
+  <action name="actionAddKeyFrame">
+   <property name="text">
+    <string>Add key frame to camera path</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+K</string>
+   </property>
+  </action>
+  <action name="actionPlayCameraPath">
+   <property name="text">
+    <string>Play camera path</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+K</string>
+   </property>
+  </action>
+  <action name="actionDeleteCameraPath">
+   <property name="text">
+    <string>Delete camera path</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+D</string>
+   </property>
+  </action>
+  <action name="actionShowCamaraPath">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show camara path</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionExportCamaraPathToFile">
+   <property name="text">
+    <string>Export camara path to file</string>
+   </property>
+  </action>
+  <action name="actionImportCameraPathFromFile">
+   <property name="text">
+    <string>Import camera path from file</string>
    </property>
   </action>
  </widget>

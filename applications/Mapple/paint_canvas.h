@@ -122,6 +122,15 @@ public slots:
     void copyCamera();
     void pasteCamera();
 
+    void saveCameraStateToFile();
+    void restoreCameraStateFromFile();
+    void addKeyFrame();
+    void playCameraPath();
+    void showCamaraPath();
+    void importCameraPathFromFile();
+    void exportCamaraPathToFile();
+    void deleteCameraPath();
+
 protected:
 
     /* Set up required OpenGL resources/state and then calls user-defined init().
