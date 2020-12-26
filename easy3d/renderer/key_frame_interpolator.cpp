@@ -38,7 +38,7 @@
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/primitives.h>
-#include <easy3d/renderer/camera.h>   // for scene raduis (to draw cameras in a proper size)
+#include <easy3d/renderer/camera.h>   // for scene radius (to draw cameras in a proper size)
 
 #include <easy3d/util/timer.h>
 
@@ -58,20 +58,18 @@ namespace easy3d {
         , interpolationTime_(0.0)
         , interpolationSpeed_(1.0)
         , interpolationStarted_(false)
-        , closedPath_(false)
         , loopInterpolation_(false)
         , pathIsValid_(false)
         , valuesAreValid_(true)
         , currentFrameValid_(false)
-        // #CONNECTION# Values cut pasted initFromDOMElement()
         , path_drawable_(nullptr)
         , cameras_drawable_(nullptr)
     {
-        if (keyFrame_.size() < 2)
+        if (keyFrames_.size() < 2)
             return;
 
         for (int i=0; i<4; ++i)
-            currentFrame_[i] = keyFrame_.begin();
+            currentFrame_[i] = keyFrames_.begin();
     }
 
     /*! Virtual destructor. Clears the keyFrame path. */
@@ -98,26 +96,26 @@ namespace easy3d {
 
         interpolationTime_ += interpolationSpeed() * interpolationPeriod() / 1000.0;
 
-        if (interpolationTime() > keyFrame_.back()->time())
+        if (interpolationTime() > keyFrames_.back()->time())
         {
             if (loopInterpolation())
-                setInterpolationTime(keyFrame_.front()->time() + interpolationTime_ - keyFrame_.back()->time());
+                setInterpolationTime(keyFrames_.front()->time() + interpolationTime_ - keyFrames_.back()->time());
             else
             {
                 // Make sure last KeyFrame is reached and displayed
-                interpolateAtTime(keyFrame_.back()->time());
+                interpolateAtTime(keyFrames_.back()->time());
                 stopInterpolation();
             }
             timer_.stop();
         }
-        else if (interpolationTime() < keyFrame_.front()->time())
+        else if (interpolationTime() < keyFrames_.front()->time())
         {
             if (loopInterpolation())
-                setInterpolationTime(keyFrame_.back()->time() - keyFrame_.front()->time() + interpolationTime_);
+                setInterpolationTime(keyFrames_.back()->time() - keyFrames_.front()->time() + interpolationTime_);
             else
             {
                 // Make sure first KeyFrame is reached and displayed
-                interpolateAtTime(keyFrame_.front()->time());
+                interpolateAtTime(keyFrames_.front()->time());
                 stopInterpolation();
             }
             timer_.stop();
@@ -150,12 +148,12 @@ namespace easy3d {
         if (period >= 0)
             setInterpolationPeriod(period);
 
-        if (!keyFrame_.empty())
+        if (!keyFrames_.empty())
         {
-            if ((interpolationSpeed() > 0.0) && (interpolationTime() >= keyFrame_.back()->time()))
-                setInterpolationTime(keyFrame_.front()->time());
-            if ((interpolationSpeed() < 0.0) && (interpolationTime() <= keyFrame_.front()->time()))
-                setInterpolationTime(keyFrame_.back()->time());
+            if ((interpolationSpeed() > 0.0) && (interpolationTime() >= keyFrames_.back()->time()))
+                setInterpolationTime(keyFrames_.front()->time());
+            if ((interpolationSpeed() < 0.0) && (interpolationTime() <= keyFrames_.front()->time()))
+                setInterpolationTime(keyFrames_.back()->time());
              interpolationStarted_ = true;
             update();
             timer_.set_interval(interpolationPeriod(), &KeyFrameInterpolator::update, this);
@@ -191,13 +189,13 @@ namespace easy3d {
       The keyFrameTime() have to be monotonously increasing over keyFrames. */
     void KeyFrameInterpolator::addKeyFrame(const Frame& frame, double time)
     {
-        if (keyFrame_.empty())
+        if (keyFrames_.empty())
             interpolationTime_ = time;
 
-        if ( (!keyFrame_.empty()) && (keyFrame_.back()->time() > time) )
+        if ( (!keyFrames_.empty()) && (keyFrames_.back()->time() > time) )
             LOG(ERROR) << "Error in KeyFrameInterpolator::addKeyFrame: time is not monotone";
         else
-            keyFrame_.push_back(new KeyFrame(frame, time));
+            keyFrames_.push_back(new KeyFrame(frame, time));
 
         valuesAreValid_ = false;
         pathIsValid_ = false;
@@ -212,10 +210,10 @@ namespace easy3d {
     void KeyFrameInterpolator::addKeyFrame(const Frame& frame)
     {
         double time;
-        if (keyFrame_.empty())
+        if (keyFrames_.empty())
             time = 0.0;
         else
-            time = keyFrame_.back()->time() + 1.0;
+            time = keyFrames_.back()->time() + 1.0;
 
         addKeyFrame(frame, time);
     }
@@ -224,10 +222,10 @@ namespace easy3d {
     void KeyFrameInterpolator::deletePath()
     {
         stopInterpolation();
-        for (auto f : keyFrame_) {
+        for (auto f : keyFrames_) {
             delete f;
         }
-        keyFrame_.clear();
+        keyFrames_.clear();
         pathIsValid_ = false;
         valuesAreValid_ = false;
         currentFrameValid_ = false;
@@ -273,7 +271,7 @@ namespace easy3d {
       \endcode */
     void KeyFrameInterpolator::drawPath(const Camera* cam, int mask, int nbFrames, float scale)
     {
-        if (keyFrame_.empty())
+        if (keyFrames_.empty())
             return;
 
         const int nbSteps = 30;
@@ -293,18 +291,18 @@ namespace easy3d {
             if (!valuesAreValid_)
                 updateModifiedFrameValues();
 
-            if (keyFrame_.front() == keyFrame_.back())
-                path_.push_back(Frame(keyFrame_.front()->position(), keyFrame_.front()->orientation()));
+            if (keyFrames_.front() == keyFrames_.back())
+                path_.push_back(Frame(keyFrames_.front()->position(), keyFrames_.front()->orientation()));
             else
             {
                 static Frame fr;
                 KeyFrame* kf_[4];
-                kf_[0] = keyFrame_.front();
+                kf_[0] = keyFrames_.front();
                 kf_[1] = kf_[0];
                 int index = 1;
-                kf_[2] = (index < keyFrame_.size()) ? keyFrame_.at(index) : nullptr;
+                kf_[2] = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
                 index++;
-                kf_[3] = (index < keyFrame_.size()) ? keyFrame_.at(index) : nullptr;
+                kf_[3] = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
 
                 while (kf_[2])
                 {
@@ -326,7 +324,7 @@ namespace easy3d {
                     kf_[1] = kf_[2];
                     kf_[2] = kf_[3];
                     index++;
-                    kf_[3] = (index < keyFrame_.size()) ? keyFrame_.at(index) : nullptr;
+                    kf_[3] = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
                 }
                 // Add last KeyFrame
                 path_.push_back(Frame(kf_[1]->position(), kf_[1]->orientation()));
@@ -356,10 +354,10 @@ namespace easy3d {
             std::vector<vec3> points;
 
             // camera representation
-            for (std::size_t i=0; i<keyFrame_.size(); ++i) {
+            for (std::size_t i=0; i<keyFrames_.size(); ++i) {
                 std::vector<vec3> cam_points;
                 opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.03f * scale, static_cast<float>(cam->screenHeight())/cam->screenWidth());
-                const mat4& m = Frame(keyFrame_[i]->position(), keyFrame_[i]->orientation()).matrix();
+                const mat4& m = Frame(keyFrames_[i]->position(), keyFrames_[i]->orientation()).matrix();
                 for (auto& p : cam_points) {
                     points.push_back(m * p);
                 }
@@ -379,23 +377,38 @@ namespace easy3d {
             cameras_drawable_->draw(cam);
     }
 
+
+    // adjusts the scene radius so that the entire camera path is within the view frustum.
+    float KeyFrameInterpolator::adjust_scene_radius(Camera* cam) const {
+        // update scene bounding box to make sure the path is within the view frustum
+        float radius = cam->sceneRadius();
+        for (const auto frame : keyFrames_) {
+            float dist = distance(cam->sceneCenter(), frame->position());
+            if (dist > radius)
+                radius = dist;
+        }
+        cam->setSceneRadius(radius);
+        return radius;
+    }
+
+
     void KeyFrameInterpolator::updateModifiedFrameValues()
     {
-        quat prevQ = keyFrame_.front()->orientation();
+        quat prevQ = keyFrames_.front()->orientation();
         KeyFrame* kf;
-        for (int i=0; i<keyFrame_.size(); ++i)
+        for (int i=0; i<keyFrames_.size(); ++i)
         {
-            kf = keyFrame_.at(i);
+            kf = keyFrames_.at(i);
             kf->flipOrientationIfNeeded(prevQ);
             prevQ = kf->orientation();
         }
 
-        KeyFrame* prev = keyFrame_.front();
-        kf = keyFrame_.front();
+        KeyFrame* prev = keyFrames_.front();
+        kf = keyFrames_.front();
         int index = 1;
         while (kf)
         {
-            KeyFrame* next = (index < keyFrame_.size()) ? keyFrame_.at(index) : nullptr;
+            KeyFrame* next = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
             index++;
             if (next)
                 kf->computeTangent(prev, next);
@@ -407,24 +420,17 @@ namespace easy3d {
         valuesAreValid_ = true;
     }
 
-    /*! Returns the Frame associated with the keyFrame at index \p index.
 
-     See also keyFrameTime(). \p index has to be in the range 0..numberOfKeyFrames()-1.
-
-     \note If this keyFrame was defined using a pointer to a Frame (see addKeyFrame(const Frame*
-      const)), the \e current pointed Frame state is returned. */
     Frame KeyFrameInterpolator::keyFrame(int index) const
     {
-        const KeyFrame* const kf = keyFrame_.at(index);
+        const KeyFrame* const kf = keyFrames_.at(index);
         return Frame(kf->position(), kf->orientation());
     }
 
-    /*! Returns the time corresponding to the \p index keyFrame.
 
-     See also keyFrame(). \p index has to be in the range 0..numberOfKeyFrames()-1. */
     double KeyFrameInterpolator::keyFrameTime(int index) const
     {
-        return keyFrame_.at(index)->time();
+        return keyFrames_.at(index)->time();
     }
 
     /*! Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
@@ -441,10 +447,10 @@ namespace easy3d {
     Returns 0.0 if the path is empty. See also lastTime(), duration() and keyFrameTime(). */
     double KeyFrameInterpolator::firstTime() const
     {
-        if (keyFrame_.empty())
+        if (keyFrames_.empty())
             return 0.0;
         else
-            return keyFrame_.front()->time();
+            return keyFrames_.front()->time();
     }
 
     /*! Returns the time corresponding to the last keyFrame, expressed in seconds.
@@ -452,27 +458,27 @@ namespace easy3d {
     Returns 0.0 if the path is empty. See also firstTime(), duration() and keyFrameTime(). */
     double KeyFrameInterpolator::lastTime() const
     {
-        if (keyFrame_.empty())
+        if (keyFrames_.empty())
             return 0.0;
         else
-            return keyFrame_.back()->time();
+            return keyFrames_.back()->time();
     }
 
 
     void KeyFrameInterpolator::updateCurrentKeyFrameForTime(double time)
     {
         // Assertion: times are sorted in monotone order.
-        // Assertion: keyFrame_ is not empty
+        // Assertion: keyFrames_ is not empty
 
         // TODO: Special case for loops when closed path is implemented !!
         if (!currentFrameValid_)
             // Recompute everything from scrach
-            currentFrame_[1] = keyFrame_.begin(); // points to the first one
+            currentFrame_[1] = keyFrames_.begin(); // points to the first one
 
         while ((*currentFrame_[1])->time() > time)
         {
             currentFrameValid_ = false;
-            if (currentFrame_[1] == keyFrame_.begin()) // alreay the first one
+            if (currentFrame_[1] == keyFrames_.begin()) // alreay the first one
                 break;
             --currentFrame_[1]; // points to the previous one
         }
@@ -483,7 +489,7 @@ namespace easy3d {
         while ((*currentFrame_[2])->time() < time)
         {
             currentFrameValid_ = false;
-            if (*currentFrame_[2] == keyFrame_.back()) // already the last one
+            if (*currentFrame_[2] == keyFrames_.back()) // already the last one
                 break;
             ++currentFrame_[2];// points to the next one
         }
@@ -491,16 +497,16 @@ namespace easy3d {
         if (!currentFrameValid_)
         {
             currentFrame_[1] = currentFrame_[2];
-            if ((currentFrame_[1] != keyFrame_.begin()) && (time < (*currentFrame_[2])->time()))
+            if ((currentFrame_[1] != keyFrames_.begin()) && (time < (*currentFrame_[2])->time()))
                 --currentFrame_[1];
 
             currentFrame_[0] = currentFrame_[1];
-            if (currentFrame_[0] != keyFrame_.begin())
+            if (currentFrame_[0] != keyFrames_.begin())
                 --currentFrame_[0];
 
             currentFrame_[3] = currentFrame_[2];
 
-            if ((*currentFrame_[3]) != keyFrame_.back()) // has next
+            if ((*currentFrame_[3]) != keyFrames_.back()) // has next
                 ++currentFrame_[3];
 
             currentFrameValid_ = true;
@@ -532,7 +538,7 @@ namespace easy3d {
     {
        setInterpolationTime(time);
 
-        if ((keyFrame_.empty()) || (!frame()))
+        if ((keyFrames_.empty()) || (!frame()))
             return;
 
         if (!valuesAreValid_)

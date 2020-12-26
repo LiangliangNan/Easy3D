@@ -191,10 +191,22 @@ namespace easy3d {
         /*! @name Path parameters */
         //@{
     public:
-        Frame keyFrame(int index) const;
-        double keyFrameTime(int index) const;
         /*! Returns the number of keyFrames used by the interpolation. Use addKeyFrame() to add new keyFrames. */
-        std::size_t numberOfKeyFrames() const { return keyFrame_.size(); }
+        std::size_t numberOfKeyFrames() const { return keyFrames_.size(); }
+
+        /**
+         * \brief Returns the Frame associated with the keyFrame at index \p index.
+         * See also keyFrameTime(). \p index has to be in the range [0, numberOfKeyFrames()-1].
+         * \note If this keyFrame was defined using a pointer to a Frame (see addKeyFrame(const Frame* const)),
+         *      the \e current pointed Frame state is returned.
+         */
+        Frame keyFrame(int index) const;
+
+        /*! Returns the time corresponding to the \p index keyFrame.
+         * See also keyFrame(). \p index has to be in the range [0, numberOfKeyFrames()-1].
+         */
+        double keyFrameTime(int index) const;
+
         double duration() const;
         double firstTime() const;
         double lastTime() const;
@@ -235,14 +247,7 @@ namespace easy3d {
 
         In both cases, the endReached() signal is emitted. */
         bool loopInterpolation() const { return loopInterpolation_; }
-    #ifndef DOXYGEN
-        /*! Whether or not (default) the path defined by the keyFrames is a closed loop. When \c true,
-        the last and the first KeyFrame are linked by a new spline segment.
 
-        Use setLoopInterpolation() to create a continuous animation over the entire path.
-        \attention The closed path feature is not yet implemented. */
-        bool closedPath() const { return closedPath_; }
-    #endif
     public:
         /*! Sets the interpolationTime().
 
@@ -256,12 +261,7 @@ namespace easy3d {
         void setInterpolationPeriod(int period) { period_ = period; }
         /*! Sets the loopInterpolation() value. */
         void setLoopInterpolation(bool loop=true) { loopInterpolation_ = loop; }
-    #ifndef DOXYGEN
-        /*! Sets the closedPath() value. \attention The closed path feature is not yet implemented. */
-        void setClosedPath(bool closed=true) { closedPath_ = closed; }
-    #endif
         //@}
-
 
         /*! @name Interpolation */
         //@{
@@ -282,6 +282,9 @@ namespace easy3d {
         //@{
     public:
         virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, float scale=1.0);
+
+        // adjusts the scene radius so that the entire camera path is within the view frustum.
+        float adjust_scene_radius(Camera* cam) const;
         //@}
 
     private:
@@ -322,7 +325,7 @@ namespace easy3d {
     #endif
 
         // K e y F r a m e s
-        mutable std::vector<KeyFrame*> keyFrame_;
+        mutable std::vector<KeyFrame*> keyFrames_;
         std::vector<Frame> path_;
 
         std::vector<KeyFrame*>::iterator currentFrame_[4];
@@ -338,7 +341,6 @@ namespace easy3d {
         bool interpolationStarted_;
 
         // M i s c
-        bool closedPath_;
         bool loopInterpolation_;
 
         // C a c h e d   v a l u e s   a n d   f l a g s

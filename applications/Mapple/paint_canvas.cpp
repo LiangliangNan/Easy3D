@@ -1431,10 +1431,8 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 void PaintCanvas::addKeyFrame(){
     easy3d::Frame *frame = camera()->frame();
     camera()->keyFrameInterpolator()->addKeyFrame(*frame);
-    // update scene bounding box to make sure the path is within the view frustum
-    float old_radius = camera()->sceneRadius();
-    float candidate_radius = distance(camera()->sceneCenter(), frame->position());
-    camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+    camera()->keyFrameInterpolator()->adjust_scene_radius(camera());
+
     LOG(INFO) << "key frame added to camera path";
     update();
 }
@@ -1450,6 +1448,10 @@ void PaintCanvas::playCameraPath(){
 
 void PaintCanvas::showCamaraPath(){
     show_camera_path_ = !show_camera_path_;
+
+    if (show_camera_path_)
+        camera()->keyFrameInterpolator()->adjust_scene_radius(camera());
+
     update();
 }
 
@@ -1465,10 +1467,10 @@ void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
         return;
     }
 
-    int num = interpolator->numberOfKeyFrames();
+    std::size_t num = interpolator->numberOfKeyFrames();
     output << "\tnum_key_frames: " << num << std::endl;
 
-    for (int j = 0; j < num; ++j) {
+    for (std::size_t j = 0; j < num; ++j) {
         output << "\tframe: " << j << std::endl;
         const Frame &frame = interpolator->keyFrame(j);
         output << "\t\tposition: " << frame.position() << std::endl;
