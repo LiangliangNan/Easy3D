@@ -40,6 +40,9 @@ namespace easy3d {
 	/**
 	 * @brief A Graph data structure with easy property management.
 	 * \class Graph easy3d/core/graph.h
+     *
+     * This implementation is inspired by Surface_mesh
+     * https://opensource.cit-ec.de/projects/surface_mesh
 	 */
 
 	class Graph : public virtual Model
@@ -104,7 +107,7 @@ namespace easy3d {
 		};
 
 		/// this type represents an edge (internally it is basically an index)
-		/// \sa Vertex, Halfedge, Face
+		/// \sa Vertex
 		struct Edge : public BaseHandle
 		{
 			/// default constructor (with invalid index)
@@ -115,7 +118,7 @@ namespace easy3d {
 	public: //-------------------------------------------------- connectivity types
 
 		/// This type stores the vertex connectivity
-		/// \sa HalfedgeConnectivity, FaceConnectivity
+		/// \sa EdgeConnectivity
 		struct VertexConnectivity
 		{
 			/// all edges connected with the vertex
@@ -127,14 +130,15 @@ namespace easy3d {
 		/// \sa VertexConnectivity
 		struct EdgeConnectivity
 		{
-            std::vector<Vertex>  vertices_;
+            Vertex source_;
+            Vertex target_;
 		};
 
 
 	public: //------------------------------------------------------ property types
 
 		/// Vertex property of type T
-		/// \sa HalfedgeProperty, EdgeProperty, FaceProperty
+		/// \sa EdgeProperty
 		template <class T> class VertexProperty : public Property<T>
 		{
 		public:
@@ -158,7 +162,7 @@ namespace easy3d {
 
 
 		/// Edge property of type T
-		/// \sa VertexProperty, HalfedgeProperty, FaceProperty
+		/// \sa VertexProperty
 		template <class T> class EdgeProperty : public Property<T>
 		{
 		public:
@@ -190,13 +194,13 @@ namespace easy3d {
 			explicit ModelProperty() {}
 			explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
-			/// access the data stored for the mesh
+			/// access the data stored for the graph
 			typename Property<T>::reference operator[](size_t idx)
 			{
 				return Property<T>::operator[](idx);
 			}
 
-			/// access the data stored for the mesh
+			/// access the data stored for the graph
 			typename Property<T>::const_reference operator[](size_t idx) const
 			{
 				return Property<T>::operator[](idx);
@@ -511,7 +515,7 @@ namespace easy3d {
 		/// default constructor
 		Graph();
 
-		// destructor (is virtual, since we inherit from Geometry_representation)
+		/// destructor
 		virtual ~Graph();
 
 		/// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
@@ -542,25 +546,25 @@ namespace easy3d {
 		/// \name Memory Management
 		//@{
 
-		/// returns number of (deleted and valid) vertices in the mesh
+		/// returns number of (deleted and valid) vertices in the graph
 		unsigned int vertices_size() const { return (unsigned int)vprops_.size(); }
-		/// returns number of (deleted and valid)edges in the mesh
+		/// returns number of (deleted and valid)edges in the graph
 		unsigned int edges_size() const { return (unsigned int)eprops_.size(); }
 
-		/// returns number of vertices in the mesh
+		/// returns number of vertices in the graph
 		unsigned int n_vertices() const { return vertices_size() - deleted_vertices_; }
-		/// returns number of edges in the mesh
+		/// returns number of edges in the graph
 		unsigned int n_edges() const { return edges_size() - deleted_edges_; }
 
-		/// clear mesh: remove all vertices, edges, faces
+        /// \brief Removes all vertices, edges, and properties (and resets garbage state).
+        /// \details After calling this method, the graph is the same as newly constructed.
 		void clear();
 
 		/// reserve memory (mainly used in file readers)
 		void reserve(unsigned int nvertices, unsigned int nedges);
 
-		/// Resize space for vertices, halfedges, edges, faces, and their currently
-		/// associated properties.
-		/// Note: ne is the number of edges. for halfedges, nh = 2 * ne. */
+		/// Resize space for vertices, edges, and their currently associated properties.
+		/// Note: ne is the number of edges.
 		void resize(unsigned int nv, unsigned int ne) {
 			vprops_.resize(nv);
 			eprops_.resize(ne);
@@ -614,9 +618,17 @@ namespace easy3d {
 		Vertex vertex(Edge e, unsigned int i) const
 		{
 			assert(i<=1);
-			return econn_[e].vertices_[i];
+			if (i == 0)
+			    return econn_[e].source_;
+			else
+                return econn_[e].target_;
 		}
 
+        /// returns the starting vertex of an edge, which is equal to vertex(e, 0).
+        Vertex source(Edge e) const { return econn_[e].source_; }
+
+        /// returns the ending vertex of an edge, which is equal to vertex(e, 1).
+        Vertex target(Edge e) const { return econn_[e].target_; }
 		//@}
 
 	public: //--------------------------------------------------- property handling
@@ -833,10 +845,10 @@ namespace easy3d {
 		/// find the edge (a,b)
 		Edge find_edge(Vertex a, Vertex b) const;
 
-		/// deletes the vertex \c v from the mesh
+		/// deletes the vertex \c v from the graph
 		void delete_vertex(Vertex v);
 
-		/// deletes the edge \c e from the mesh
+		/// deletes the edge \c e from the graph
 		void delete_edge(Edge e);
 		//@}
 
@@ -873,7 +885,7 @@ namespace easy3d {
 			return Vertex(vertices_size() - 1);
 		}
 
-		/// allocate a new edge, resize edge roperties accordingly.
+		/// allocate a new edge, resize edge properties accordingly.
 		Edge new_edge()
 		{
 			eprops_.push_back();

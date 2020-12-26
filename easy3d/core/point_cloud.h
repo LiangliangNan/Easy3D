@@ -22,17 +22,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// I would like to process/visualize huge scans (tens of millions of points, or even more),
-// an earlier implementation based on double-connected list has the following limitations:
-// 	1) no random access of the data;
-//  2) OpenGL renderring overhead (needs packing to transfer data to GPU);
-//  3) hard to employ OMP support;
-//  4) file management (unable to read and write large blocks);
-//  5) selection, etc.
-// Thus I have this implementation inspired by (actually some code is taken from) 
-// Surface_mesh: https://opensource.cit-ec.de/projects/surface_mesh
-// The idea behind is that point coordinates and associated attribute values are stored as
-// std::vector<T>.
 
 #ifndef EASY3D_CORE_POINT_CLOUD_H
 #define EASY3D_CORE_POINT_CLOUD_H
@@ -47,16 +36,8 @@ namespace easy3d {
      * @brief A data structure for point clouds.
      * \class PointCloud easy3d/core/point_cloud.h
      *
-     * The code is adapted from Surface_mesh with modifications and
-     * significant enhancement.
-     *		- Surface_mesh (version 1.1)
-     * The original code is available at
+     * This implementation is inspired by Surface_mesh
      * https://opensource.cit-ec.de/projects/surface_mesh
-     *
-     * Surface_mesh is a halfedge-based mesh data structure for
-     * representing and processing 2-manifold polygonal surface
-     * meshes. It is implemented in C++ and designed with an
-     * emphasis on simplicity and efficiency.
      */
     class PointCloud : public virtual Model
     {

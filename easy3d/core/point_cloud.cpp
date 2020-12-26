@@ -22,20 +22,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** ----------------------------------------------------------
- *
- * the code is adapted from Surface_mesh with modifications and
- * significant enhancement.
- *		- Surface_mesh (version 1.1)
- * The original code is available at
- * https://opensource.cit-ec.de/projects/surface_mesh
- *
- * Surface_mesh is a halfedge-based mesh data structure for
- * representing and processing 2-manifold polygonal surface
- * meshes. It is implemented in C++ and designed with an
- * emphasis on simplicity and efficiency.
- *
- *----------------------------------------------------------*/
 
 #include <easy3d/core/point_cloud.h>
 

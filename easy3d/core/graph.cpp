@@ -103,7 +103,7 @@ namespace easy3d {
             vdeleted_ = add_vertex_property<bool>("v:deleted", false);
             edeleted_ = add_edge_property<bool>("e:deleted", false);
 
-            // copy properties from other mesh
+            // copy properties from other graph
             vconn_.array()     = rhs.vconn_.array();
             econn_.array()     = rhs.econn_.array();
             vpoint_.array()    = rhs.vpoint_.array();
@@ -209,11 +209,18 @@ namespace easy3d {
 
     Graph::Edge Graph::add_edge(const Vertex& start, const Vertex& end) {
         assert(start != end);
-        Edge e = new_edge();
-        econn_[e].vertices_ = {start, end};
-        vconn_[start].edges_.push_back(e);
-        vconn_[end].edges_.push_back(e);
-        return e;
+        auto e = find_edge(start, end);
+        if (e.is_valid()) {
+            LOG(WARNING) << "edge already exists [" << start << ", " <<  end << "]";
+            return e;
+        } else {
+            e = new_edge();
+            econn_[e].source_ = start;
+            econn_[e].target_ = end;
+            vconn_[start].edges_.push_back(e);
+            vconn_[end].edges_.push_back(e);
+            return e;
+        }
     }
 
 

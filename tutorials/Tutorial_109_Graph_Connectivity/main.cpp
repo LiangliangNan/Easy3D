@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         std::cout << vt << " " << std::endl;
     }
 
-    // Delete the mesh (i.e., release memory)
+    // Delete the graph (i.e., release memory)
     delete g;
 
     return EXIT_SUCCESS;

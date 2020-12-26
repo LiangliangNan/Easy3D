@@ -35,6 +35,10 @@ namespace easy3d {
     /**
      * \brief Data structure representing a polyhedral mesh.
      * \class PolyMesh easy3d/core/poly_mesh.h
+     * \note PolyMesh assumes the half-face normals pointing inside the cells.
+     *
+     * This implementation is inspired by Surface_mesh
+     * https://opensource.cit-ec.de/projects/surface_mesh
      */
 
     class PolyMesh : public virtual Model
