@@ -236,9 +236,6 @@ namespace easy3d {
         void interpolateToFitScene();
         void interpolateTo(const Frame &fr, double duration);
 
-        /// Draw animation path(s)
-        void draw_paths() const;
-
 	public:
 		/**
 		 * \brief Returns the Camera::Type of the Camera. Set by setType(). Mainly used by loadProjectionMatrix().

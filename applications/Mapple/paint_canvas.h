@@ -44,6 +44,7 @@ namespace easy3d {
     class Transparency;
     class EyeDomeLighting;
     class TextRenderer;
+    class KeyFrameInterpolator;
 }
 
 class QWidget;
@@ -225,6 +226,7 @@ protected:
 
 protected:
     MainWindow* window_;
+    easy3d::KeyFrameInterpolator* kfi_;
 
 	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member 
 	// variable). Having it as a member can eliminate including the header file.

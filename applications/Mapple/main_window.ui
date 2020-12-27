@@ -60,11 +60,13 @@
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
     <addaction name="actionAddKeyFrame"/>
+    <addaction name="actionDeleteCameraPath"/>
+    <addaction name="separator"/>
+    <addaction name="actionExportCamaraPathToFile"/>
+    <addaction name="actionImportCameraPathFromFile"/>
+    <addaction name="separator"/>
     <addaction name="actionPlayCameraPath"/>
     <addaction name="actionShowCamaraPath"/>
-    <addaction name="actionImportCameraPathFromFile"/>
-    <addaction name="actionExportCamaraPathToFile"/>
-    <addaction name="actionDeleteCameraPath"/>
     <addaction name="separator"/>
     <addaction name="actionBackgroundColor"/>
     <addaction name="separator"/>
@@ -1014,9 +1016,6 @@
   </action>
   <action name="actionShowCamaraPath">
    <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">

@@ -701,24 +701,6 @@ namespace easy3d {
     }
 
 
-    /*! Draws all the Camera paths defined by the keyFrameInterpolator().
-
-     Simply calls KeyFrameInterpolator::drawPath() for all the defined paths. The
-     path color is the current \c glColor().
-
-     \attention The OpenGL state is modified by this method: see
-     KeyFrameInterpolator::drawPath(). */
-    void Camera::draw_paths() const {
-//      for (QMap<unsigned int, KeyFrameInterpolator *>::ConstIterator
-//               it = kfi_.begin(),
-//               end = kfi_.end();
-//           it != end; ++it)
-//        (it.value())->drawPath(3, 5, sceneRadius());
-        interpolationKfi_->drawPath(this);
-    }
-
-
-
 	/*! Moves the Camera so that the entire scene is visible.
 
 	 Simply calls fitSphere() on a sphere defined by sceneCenter() and

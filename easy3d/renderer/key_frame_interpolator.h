@@ -312,7 +312,8 @@ namespace easy3d {
         /*! @name Path drawing */
         //@{
     public:
-        /*! Draws the path used to interpolate the frame().
+
+        /*! Draws the camera path used to interpolate the frame().
          *
          * \p mask controls what is drawn: if (mask & 1) (default), the position path is drawn. If (mask & 2),
          * a camera representation is regularly drawn and if (mask & 4), an oriented axis is regularly drawn.

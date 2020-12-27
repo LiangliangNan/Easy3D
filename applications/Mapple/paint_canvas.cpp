@@ -86,7 +86,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , pressed_key_(-1)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
-        , show_camera_path_(true)
+        , show_camera_path_(false)
         , model_idx_(-1)
         , ssao_(nullptr)
         , transparency_(nullptr)
@@ -103,6 +103,8 @@ PaintCanvas::PaintCanvas(MainWindow* window)
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
     camera_->connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
+
+    kfi_ = new KeyFrameInterpolator(camera_->frame());
 }
 
 
@@ -124,6 +126,7 @@ void PaintCanvas::cleanup() {
     }
 
     delete camera_;
+    delete kfi_;
     delete drawable_axes_;
     delete ssao_;
     delete shadow_;
@@ -1048,8 +1051,8 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
-        camera()->draw_paths();
+    if (show_camera_path_ && !kfi_->interpolationIsStarted())
+        kfi_->drawPath(camera());
     easy3d_debug_log_gl_error;
 
     if (show_pivot_point_) {
@@ -1251,7 +1254,8 @@ void PaintCanvas::pasteCamera() {
     new_frame.setPosition(pos);
     new_frame.setOrientation(orient);
     const float duration = 0.5f;
-    camera()->interpolateTo(new_frame, duration);
+    camera()->interpolateTo(new_frame, duration); // this will override the camera path
+
     update();
 }
 
@@ -1430,19 +1434,18 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 
 void PaintCanvas::addKeyFrame(){
     easy3d::Frame *frame = camera()->frame();
-    camera()->keyFrameInterpolator()->addKeyFrame(*frame);
-    camera()->keyFrameInterpolator()->adjust_scene_radius(camera());
-
+    kfi_->addKeyFrame(*frame);
+    kfi_->adjust_scene_radius(camera());
     LOG(INFO) << "key frame added to camera path";
     update();
 }
 
 
 void PaintCanvas::playCameraPath(){
-    if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-        camera()->keyFrameInterpolator()->stopInterpolation();
+    if (kfi_->interpolationIsStarted())
+        kfi_->stopInterpolation();
     else
-        camera()->keyFrameInterpolator()->startInterpolation();
+        kfi_->startInterpolation();
 }
 
 
@@ -1450,15 +1453,14 @@ void PaintCanvas::showCamaraPath(){
     show_camera_path_ = !show_camera_path_;
 
     if (show_camera_path_)
-        camera()->keyFrameInterpolator()->adjust_scene_radius(camera());
+        kfi_->adjust_scene_radius(camera());
 
     update();
 }
 
 
 void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
-    KeyFrameInterpolator* interpolator = camera()->keyFrameInterpolator();
-    if (!interpolator)
+    if (!kfi_)
         return;
 
     std::ofstream output(file_name.c_str());
@@ -1467,12 +1469,12 @@ void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
         return;
     }
 
-    std::size_t num = interpolator->numberOfKeyFrames();
+    std::size_t num = kfi_->numberOfKeyFrames();
     output << "\tnum_key_frames: " << num << std::endl;
 
     for (std::size_t j = 0; j < num; ++j) {
         output << "\tframe: " << j << std::endl;
-        const Frame &frame = interpolator->keyFrame(j);
+        const Frame &frame = kfi_->keyFrame(j);
         output << "\t\tposition: " << frame.position() << std::endl;
         output << "\t\torientation: " << frame.orientation() << std::endl;
     }
@@ -1487,33 +1489,30 @@ void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
     }
 
     // clean
-    KeyFrameInterpolator* interpolator = camera()->keyFrameInterpolator();
-    interpolator->deletePath();
+    kfi_->deletePath();
 
     // load path from file
     std::string dummy;
     int num_key_frames;
     input >> dummy >> num_key_frames;
-    std::vector<Frame> key_frames;
     for (int j = 0; j < num_key_frames; ++j) {
         int frame_id;
         input >> dummy >> frame_id;
         vec3 pos;
         quat orient;
         input >> dummy >> pos >> dummy >> orient;
-        key_frames.push_back(Frame(pos, orient));
+        kfi_->addKeyFrame(Frame(pos, orient));
     }
-    if (!key_frames.empty()) {
-        for (int j = 0; j < num_key_frames; ++j) {
-            interpolator->addKeyFrame(key_frames[j]);
-        }
-    }
+
+    if (show_camera_path_)
+        kfi_->adjust_scene_radius(camera());
+
     update();
 }
 
 
 void PaintCanvas::deleteCameraPath(){
-    camera()->keyFrameInterpolator()->deletePath();
+    kfi_->deletePath();
     // update scene bounding box
     Box3 box;
     for (auto m : models_)
