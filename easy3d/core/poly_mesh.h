@@ -709,6 +709,11 @@ namespace easy3d {
         /// \sa add_tetra(), add_face(), add_triangle(), add_quad().
         Cell add_cell(const std::vector<HalfFace>& faces);
 
+        /// add a new tetrahedron defined by its faces.
+        /// \param {f1, f2, f3, f4} The input faces created by add_face(), add_face(), or add_triangle().
+        /// \sa add_cell(), add_tetra(), add_face(), add_triangle().
+        Cell add_tetra(HalfFace f1, HalfFace f2, HalfFace f3, HalfFace f4) { return add_cell({f1, f2, f3, f4}); }
+
         /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4.
         /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
         /// \details It creates all the faces and the cells, and adds them to the mesh.
