@@ -722,7 +722,7 @@ namespace easy3d {
             kfi_->addKeyFrame(*frame);
             kfi_->adjust_scene_radius(camera());
             LOG(INFO) << "key frame added to camera path";
-        } else if (key == GLFW_KEY_D && modifiers == EASY3D_MOD_CONTROL) { // delete path
+        } else if (key == GLFW_KEY_D && modifiers == GLFW_MOD_ALT) { // delete path
             kfi_->deletePath();
             // update scene bounding box
             Box3 box;
@@ -735,7 +735,7 @@ namespace easy3d {
                 kfi_->stopInterpolation();
             else
                 kfi_->startInterpolation();
-        } else if (key == GLFW_KEY_T && modifiers == 0) {
+        } else if (key == GLFW_KEY_T && modifiers == EASY3D_MOD_CONTROL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_)
                 kfi_->adjust_scene_radius(camera());
