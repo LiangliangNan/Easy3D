@@ -702,28 +702,33 @@ namespace easy3d {
         //@{
 
         /// add a new vertex with position \c p
-        Vertex add_vertex(const vec3& p);
+        Vertex add_vertex(const vec3& p) { Vertex v = new_vertex(); vpoint_[v] = p; return v; }
+
+        /// add a new cell defined by \c faces.
+        /// \param faces The input faces created by add_face(), add_triangle(), or add_quad().
+        /// \sa add_tetra(), add_face(), add_triangle(), add_quad().
+        Cell add_cell(const std::vector<HalfFace>& faces);
+
+        /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4.
+        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
+        /// \details It creates all the faces and the cells, and adds them to the mesh.
+        /// \sa add_cell()
+        Cell add_tetra(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
         /// add a new face connecting \c vertices
-        /// \sa add_triangle, add_quad
+        /// \param vertices The input vertices created by add_vertex().
+        /// \sa add_triangle(), add_quad()
         HalfFace add_face(const std::vector<Vertex>& vertices);
 
         /// add a new triangle face connecting vertices \c v1, \c v2, \c v3
-        /// \sa add_face, add_quad
-        HalfFace add_triangle(Vertex v1, Vertex v2, Vertex v3);
+        /// \param {v1, v2, v3} The input vertices created by add_vertex().
+        /// \sa add_face(), add_quad()
+        HalfFace add_triangle(Vertex v1, Vertex v2, Vertex v3) { return add_face({ v1, v2, v3 }); }
 
         /// add a new quad face connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \sa add_triangle, add_face
-        HalfFace add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
-
-        /// add a new cell defined by \c faces
-        /// \sa add_face
-        Cell add_cell(const std::vector<HalfFace>& faces);
-
-        /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \details It creates all the faces and the cells, and adds them to the mesh.
-        /// \sa add_face, add_cell
-        Cell add_tetra(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
+        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
+        /// \sa add_face(), add_triangle()
+        HalfFace add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4) { return add_face({ v1, v2, v3, v4 }); }
 
         //@}
 
@@ -1266,19 +1271,34 @@ namespace easy3d {
         /// \name Higher-level Topological Operations
         //@{
 
-        /// returns whether the mesh a tetrahedral mesh.
+        /// returns whether the mesh a tetrahedral mesh, i.e., every cell is a tetrahedron.
         bool is_tetraheral_mesh() const;
 
-        /// returns whether \c f is a boundary face, i.e., it is incident to only one cell.
-        bool is_border(Face f) const
-        {
-            return is_border(halfface(f, 0)) || is_border(halfface(f, 1));
+        /// returns whether \c v is a boundary vertex, i.e., at least one of its incident halfface
+        /// is not associated with a cell.
+        bool is_border(Vertex v) const {
+            for (auto h : halffaces(v)) { if (is_border(h)) return true; }
+            return false;
+        }
+
+        /// returns whether \c e is a boundary edge, i.e., at least one of its incident halfface
+        /// is not associated with a cell.
+        bool is_border(Edge e) const {
+            for (auto h : halffaces(e)) {
+                if (is_border(h))
+                    return true;
+            }
+            return false;
         }
 
         /// returns whether \c f is a boundary face, i.e., it is not associated with a cell.
-        bool is_border(HalfFace h) const
-        {
+        bool is_border(HalfFace h) const {
             return (!cell(h).is_valid());
+        }
+
+        /// returns whether \c f is a boundary face, i.e., it is incident to only one cell.
+        bool is_border(Face f) const {
+            return is_border(halfface(f, 0)) || is_border(halfface(f, 1));
         }
 
         /// find the edge (a,b)

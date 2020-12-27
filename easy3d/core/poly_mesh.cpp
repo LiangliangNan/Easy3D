@@ -452,51 +452,32 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    PolyMesh::Vertex PolyMesh::add_vertex(const vec3& p)
-    {
-        Vertex v = new_vertex();
-        vpoint_[v] = p;
-        return v;
-    }
-
-
     PolyMesh::HalfFace PolyMesh::add_face(const std::vector<Vertex>& vertices) {
-        auto f = find_half_face(vertices);
-        if (!f.is_valid()) {
-            f = new_face();
-            auto op = opposite(f);
-            hconn_[f].vertices_ = vertices;
-            hconn_[op].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
+        auto h = find_half_face(vertices);
+        if (!h.is_valid()) {
+            h = new_face();
+            auto oh = opposite(h);
+            hconn_[h].vertices_ = vertices;
+            hconn_[oh].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
 
             for (int i=0; i<vertices.size(); ++i) {
                 auto s = vertices[i];
                 auto t = vertices[(i+1)%3];
                 auto e = find_edge(s, t);
-                if (!e.is_valid()) {
+                if (!e.is_valid())
                     e = new_edge(s, t);
-                    econn_[e].halffaces_.insert(f);
-                    hconn_[f].edges_.insert(e);
-                    hconn_[op].edges_.insert(e);
-                }
 
-                vconn_[s].halffaces_.insert(f);
-                vconn_[s].halffaces_.insert(op);
+                econn_[e].halffaces_.insert(h);
+                econn_[e].halffaces_.insert(oh);
+                hconn_[h].edges_.insert(e);
+                hconn_[oh].edges_.insert(e);
+
+                vconn_[s].halffaces_.insert(h);
+                vconn_[s].halffaces_.insert(oh);
             }
         }
 
-        return f;
-    }
-
-
-    PolyMesh::HalfFace PolyMesh::add_triangle(Vertex v1, Vertex v2, Vertex v3) {
-        std::vector<Vertex> vertices = { v1, v2, v3 };
-        return add_face(vertices);
-    }
-
-
-    PolyMesh::HalfFace PolyMesh::add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4) {
-        std::vector<Vertex> vertices = { v1, v2, v3, v4 };
-        return add_face(vertices);
+        return h;
     }
 
 
