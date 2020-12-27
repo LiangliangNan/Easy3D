@@ -1253,7 +1253,7 @@ void PaintCanvas::pasteCamera() {
     new_frame.setPosition(pos);
     new_frame.setOrientation(orient);
     const float duration = 0.5f;
-    camera()->interpolateTo(new_frame, duration); // this will override the camera path
+    camera()->interpolateTo(new_frame, duration);
 
     update();
 }
@@ -1453,6 +1453,12 @@ void PaintCanvas::showCamaraPath(){
 
     if (show_camera_path_)
         kfi_->adjust_scene_radius(camera());
+    else {
+        Box3 box;
+        for (auto m : models_)
+            box.add_box(m->bounding_box());
+        camera_->setSceneBoundingBox(box.min(), box.max());
+    }
 
     update();
 }
