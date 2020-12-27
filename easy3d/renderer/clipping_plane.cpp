@@ -139,7 +139,7 @@ namespace easy3d {
         bool status = enabled_;
         const_cast<ClippingPlane *>(this)->set_enabled(false);
 
-        const float size = scene_radius_ * 0.7;
+        const float size = scene_radius_;
         std::vector<vec3> corners = {
                 vec3(-size, -size, 0),
                 vec3(size, -size, 0),
