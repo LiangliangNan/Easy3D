@@ -24,8 +24,8 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from Surface_mesh with modifications and
- * significant enhancement.
+ * the code is adapted from Surface_mesh with significant modifications
+ * and enhancement.
  *		- Surface_mesh (version 1.1)
  * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
@@ -45,8 +45,7 @@
 
 namespace easy3d {
 
-    SurfaceMesh::
-    SurfaceMesh()
+    SurfaceMesh::SurfaceMesh()
     {
         // allocate standard properties
         // same list is used in operator=() and assign()
@@ -68,8 +67,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::
-    ~SurfaceMesh()
+    SurfaceMesh::~SurfaceMesh()
     {
     }
 
@@ -77,9 +75,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh&
-    SurfaceMesh::
-    operator=(const SurfaceMesh& rhs)
+    SurfaceMesh& SurfaceMesh::operator=(const SurfaceMesh& rhs)
     {
         if (this != &rhs)
         {
@@ -117,9 +113,106 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh&
-    SurfaceMesh::
-    assign(const SurfaceMesh& rhs)
+    SurfaceMesh &SurfaceMesh::join(const SurfaceMesh &other) {
+        // increase capacity
+        const unsigned int nv = vertices_size(), nh = halfedges_size(), nf = faces_size();
+        resize(vertices_size() + other.vertices_size(),
+               edges_size() + other.edges_size(),
+               faces_size() + other.faces_size());
+
+        // append properties in the free space created by resize
+        vprops_.transfer(other.vprops_);
+        hprops_.transfer(other.hprops_);
+        fprops_.transfer(other.fprops_);
+        eprops_.transfer(other.eprops_);
+
+        // translate halfedge index in vertex -> halfedge
+        for (unsigned int i = nv; i < nv + other.vertices_size(); i++) {
+            Vertex vi(i);
+            if (vconn_[vi].halfedge_ != Halfedge()) {
+                vconn_[vi].halfedge_ = Halfedge(vconn_[vi].halfedge_.idx() + nh);
+            }
+        }
+        // translate halfedge index in face -> halfedge
+        for (unsigned int i = nf; i < nf + other.faces_size(); i++) {
+            Face fi(i);
+            if (fconn_[fi].halfedge_ != Halfedge()) {
+                fconn_[fi].halfedge_ = Halfedge(fconn_[fi].halfedge_.idx() + nh);
+            }
+        }
+        // translate indices in halfedge -> face, halfedge -> target, halfedge -> prev, and halfedge -> next
+        for (unsigned int i = nh; i < nh + other.halfedges_size(); i++) {
+            Halfedge hi(i);
+            if (hconn_[hi].face_ != Face()) {
+                hconn_[hi].face_ = Face(hconn_[hi].face_.idx() + nf);
+            }
+            if (hconn_[hi].vertex_ != Vertex()) {
+                hconn_[hi].vertex_ = Vertex(hconn_[hi].vertex_.idx() + nv);
+            }
+            if (hconn_[hi].next_ != Halfedge()) {
+                hconn_[hi].next_ = Halfedge(hconn_[hi].next_.idx() + nh);
+            }
+            if (hconn_[hi].prev_ != Halfedge()) {
+                hconn_[hi].prev_ = Halfedge(hconn_[hi].prev_.idx() + nh);
+            }
+        }
+//        unsigned int inf_value = (std::numeric_limits<unsigned int>::max)();
+//
+//        // merge vertex free list
+//        if(other.vertices_freelist_ != inf_value){
+//            Vertex vi(nv+other.vertices_freelist_);
+//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
+//            // correct the indices in the linked list of free vertices copied (due to vconn_ translation)
+//            while(vconn_[vi].halfedge_ != inf){
+//                Vertex corrected_vi = Vertex(unsigned int(vconn_[vi].halfedge_)+nv-nh);
+//                vconn_[vi].halfedge_ = Halfedge(corrected_vi);
+//                vi = corrected_vi;
+//            }
+//            // append the vertex free linked list of `this` to the copy of `other`
+//            vconn_[vi].halfedge_ = Halfedge(vertices_freelist_);
+//            // update the begin of the vertex free linked list
+//            vertices_freelist_ = nv + other.vertices_freelist_;
+//        }
+//        // merge face free list
+//        if(other.faces_freelist_ != inf_value){
+//            Face fi(nf+other.faces_freelist_);
+//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
+//            // correct the indices in the linked list of free faces copied (due to fconn_ translation)
+//            while(fconn_[fi].halfedge_ != inf){
+//                Face corrected_fi = Face(unsigned int(fconn_[fi].halfedge_)+nf-nh);
+//                fconn_[fi].halfedge_ = Halfedge(corrected_fi);
+//                fi = corrected_fi;
+//            }
+//            // append the face free linked list of `this` to the copy of `other`
+//            fconn_[fi].halfedge_ = Halfedge(faces_freelist_);
+//            // update the begin of the face free linked list
+//            faces_freelist_ = nf + other.faces_freelist_;
+//        }
+//        // merge edge free list
+//        if(other.edges_freelist_ != inf_value){
+//            Halfedge hi(nh+other.edges_freelist_);
+//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
+//            while(hconn_[hi].next_ != inf){
+//                hi = hconn_[hi].next_;
+//            }
+//            // append the halfedge free linked list of `this` to the copy of `other`
+//            hconn_[hi].next_ = Halfedge(edges_freelist_);
+//            // update the begin of the halfedge free linked list
+//            edges_freelist_ = nh + other.edges_freelist_;
+//        }
+        // update garbage infos
+        garbage_ = garbage_ || other.garbage_;
+        deleted_vertices_ += other.deleted_vertices_;
+        deleted_edges_ += other.deleted_edges_;
+        deleted_faces_ += other.deleted_faces_;
+        return *this;
+    }
+
+
+    //-----------------------------------------------------------------------------
+
+    
+    SurfaceMesh& SurfaceMesh::assign(const SurfaceMesh& rhs)
     {
         if (this != &rhs)
         {
@@ -272,9 +365,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    clear()
+    void SurfaceMesh::clear()
     {
         //---- clear without removing properties
 
@@ -310,9 +401,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    reserve(unsigned int nvertices,
+    void SurfaceMesh::reserve(unsigned int nvertices,
             unsigned int nedges,
             unsigned int nfaces )
     {
@@ -376,22 +465,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Vertex
-    SurfaceMesh::
-    add_vertex(const vec3& p)
-    {
-        Vertex v = new_vertex();
-        vpoint_[v] = p;
-        return v;
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
-    SurfaceMesh::Halfedge
-    SurfaceMesh::
-    find_halfedge(Vertex start, Vertex end) const
+    SurfaceMesh::Halfedge SurfaceMesh::find_halfedge(Vertex start, Vertex end) const
     {
         assert(is_valid(start) && is_valid(end));
 
@@ -416,9 +490,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Edge
-    SurfaceMesh::
-    find_edge(Vertex a, Vertex b) const
+    SurfaceMesh::Edge SurfaceMesh::find_edge(Vertex a, Vertex b) const
     {
         Halfedge h = find_halfedge(a,b);
         return h.is_valid() ? edge(h) : Edge();
@@ -427,8 +499,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    void
-    SurfaceMesh::adjust_outgoing_halfedges() {
+    void SurfaceMesh::adjust_outgoing_halfedges() {
         // We need to take care of isolated vertices
         auto reachable = add_vertex_property<bool>("v:temp:reachable", false);
 
@@ -450,9 +521,7 @@ namespace easy3d {
         remove_vertex_property(reachable);
     }
 
-    void
-    SurfaceMesh::
-    adjust_outgoing_halfedge(Vertex v)
+    void SurfaceMesh::adjust_outgoing_halfedge(Vertex v)
     {
         Halfedge h  = out_halfedge(v);
         const Halfedge hh = h;
@@ -476,9 +545,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Face
-    SurfaceMesh::
-    add_triangle(Vertex v0, Vertex v1, Vertex v2)
+    SurfaceMesh::Face SurfaceMesh::add_triangle(Vertex v0, Vertex v1, Vertex v2)
     {
         add_face_vertices_.resize(3);
         add_face_vertices_[0] = v0;
@@ -491,9 +558,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Face
-    SurfaceMesh::
-    add_quad(Vertex v0, Vertex v1, Vertex v2, Vertex v3)
+    SurfaceMesh::Face SurfaceMesh::add_quad(Vertex v0, Vertex v1, Vertex v2, Vertex v3)
     {
         add_face_vertices_.resize(4);
         add_face_vertices_[0] = v0;
@@ -507,9 +572,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Face
-    SurfaceMesh::
-    add_face(const std::vector<Vertex>& vertices)
+    SurfaceMesh::Face SurfaceMesh::add_face(const std::vector<Vertex>& vertices)
     {
         const std::size_t n(vertices.size());
         assert (n > 2);
@@ -814,9 +877,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    unsigned int
-    SurfaceMesh::
-    valence(Vertex v) const
+    unsigned int SurfaceMesh::valence(Vertex v) const
     {
         unsigned int count(0);
 
@@ -834,9 +895,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    unsigned int
-    SurfaceMesh::
-    valence(Face f) const
+    unsigned int SurfaceMesh::valence(Face f) const
     {
         unsigned int count(0);
 
@@ -853,9 +912,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool
-    SurfaceMesh::
-    is_closed() const
+    bool SurfaceMesh::is_closed() const
     {
         EdgeIterator eit=edges_begin(), eend=edges_end();
         for (; eit!=eend; ++eit)
@@ -868,9 +925,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool
-    SurfaceMesh::
-    is_triangle_mesh() const
+    bool SurfaceMesh::is_triangle_mesh() const
     {
         FaceIterator fit=faces_begin(), fend=faces_end();
         for (; fit!=fend; ++fit)
@@ -884,9 +939,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool
-    SurfaceMesh::
-    is_quad_mesh() const
+    bool SurfaceMesh::is_quad_mesh() const
     {
         FaceIterator fit=faces_begin(), fend=faces_end();
         for (; fit!=fend; ++fit)
@@ -900,9 +953,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    triangulate()
+    void SurfaceMesh::triangulate()
     {
         /* The iterators will stay valid, even though new faces are added,
          because they are now implemented index-based instead of
@@ -957,9 +1008,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    triangulate(Face f)
+    void SurfaceMesh::triangulate(Face f)
     {
         /*
          Split an arbitrary face into triangles by connecting
@@ -1007,9 +1056,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    update_face_normals()
+    void SurfaceMesh::update_face_normals()
     {
         if (!fnormal_)
             fnormal_ = face_property<vec3>("f:normal");
@@ -1033,9 +1080,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    vec3
-    SurfaceMesh::
-    compute_face_normal(Face f) const
+    vec3 SurfaceMesh::compute_face_normal(Face f) const
     {
         Halfedge h = halfedge(f);
         Halfedge hend = h;
@@ -1074,9 +1119,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    update_vertex_normals()
+    void SurfaceMesh::update_vertex_normals()
     {
         if (!vnormal_)
             vnormal_ = vertex_property<vec3>("v:normal");
@@ -1152,9 +1195,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    vec3
-    SurfaceMesh::
-    compute_vertex_normal(Vertex v) const
+    vec3 SurfaceMesh::compute_vertex_normal(Vertex v) const
     {
         vec3     nn(0,0,0);
         Halfedge  h = out_halfedge(v);
@@ -1212,9 +1253,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    float
-    SurfaceMesh::
-    edge_length(Edge e) const
+    float SurfaceMesh::edge_length(Edge e) const
     {
         return norm(vpoint_[vertex(e,0)] - vpoint_[vertex(e,1)]);
     }
@@ -1223,9 +1262,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    split(Face f, Vertex v)
+    void SurfaceMesh::split(Face f, Vertex v)
     {
         /*
          Split an arbitrary face into triangles by connecting each vertex of fh to vh.
@@ -1277,9 +1314,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Halfedge
-    SurfaceMesh::
-    split(Edge e, Vertex v)
+    SurfaceMesh::Halfedge SurfaceMesh::split(Edge e, Vertex v)
     {
         Halfedge h0 = halfedge(e, 0);
         Halfedge o0 = halfedge(e, 1);
@@ -1380,9 +1415,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Halfedge
-    SurfaceMesh::
-    insert_vertex(Halfedge h0, Vertex v)
+    SurfaceMesh::Halfedge SurfaceMesh::insert_vertex(Halfedge h0, Vertex v)
     {
         // before:
         //
@@ -1437,9 +1470,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::Halfedge
-    SurfaceMesh::
-    insert_edge(Halfedge h0, Halfedge h1)
+    SurfaceMesh::Halfedge SurfaceMesh::insert_edge(Halfedge h0, Halfedge h1)
     {
         assert(face(h0) == face(h1));
         assert(face(h0).is_valid());
@@ -1480,9 +1511,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool
-    SurfaceMesh::
-    is_flip_ok(Edge e) const
+    bool SurfaceMesh::is_flip_ok(Edge e) const
     {
         // boundary edges cannot be flipped
         if (is_border(e)) return false;
@@ -1508,9 +1537,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    flip(Edge e)
+    void SurfaceMesh::flip(Edge e)
     {
         // CAUTION : Flipping a halfedge may result in
         // a non-manifold mesh, hence check for yourself
@@ -1755,9 +1782,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool
-    SurfaceMesh::
-    is_collapse_ok(Halfedge v0v1)
+    bool SurfaceMesh::is_collapse_ok(Halfedge v0v1)
     {
         Halfedge  v1v0(opposite(v0v1));
         Vertex    v0(target(v1v0));
@@ -1819,9 +1844,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    collapse(Halfedge h)
+    void SurfaceMesh::collapse(Halfedge h)
     {
         //let's make it sure it is actually checked
         assert(is_collapse_ok(h));
@@ -1845,9 +1868,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    remove_edge(Halfedge h)
+    void SurfaceMesh::remove_edge(Halfedge h)
     {
         Halfedge  hn = next(h);
         Halfedge  hp = prev(h);
@@ -1902,9 +1923,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    remove_loop(Halfedge h)
+    void SurfaceMesh::remove_loop(Halfedge h)
     {
         Halfedge  h0 = h;
         Halfedge  h1 = next(h0);
@@ -1955,9 +1974,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    delete_vertex(Vertex v)
+    void SurfaceMesh::delete_vertex(Vertex v)
     {
         if (vdeleted_[v])  return;
 
@@ -1994,9 +2011,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    delete_edge(Edge e)
+    void SurfaceMesh::delete_edge(Edge e)
     {
         if (edeleted_[e])  return;
 
@@ -2010,9 +2025,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    void
-    SurfaceMesh::
-    delete_face(Face f)
+    void SurfaceMesh::delete_face(Face f)
     {
         if (fdeleted_[f])  return;
 
@@ -2129,9 +2142,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    void
-    SurfaceMesh::
-    collect_garbage()
+    void SurfaceMesh::collect_garbage()
     {
         if (!garbage_)
             return;

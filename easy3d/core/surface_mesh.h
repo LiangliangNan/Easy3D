@@ -24,8 +24,8 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from Surface_mesh with modifications and
- * significant enhancement.
+ * the code is adapted from Surface_mesh with significant modifications
+ * and enhancement.
  *		- Surface_mesh (version 1.1)
  * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
@@ -588,8 +588,6 @@ namespace easy3d {
 
 
 
-
-
     public: //---------------------------------------------------- circulator types
 
         /// this class circulates through all one-ring neighbors of a vertex.
@@ -943,6 +941,22 @@ namespace easy3d {
         /// assign \c rhs to \c *this. performs a deep copy of all properties.
         SurfaceMesh& operator=(const SurfaceMesh& rhs);
 
+        /// \brief Merges another surface mesh into the current one.
+        /// Shifts the indices of vertices of the other mesh by `number_of_vertices() + number_of_removed_vertices()`
+        /// and analogously for halfedges, edges, and faces.
+        /// Copies entries of all property maps which have the same name in both meshes. That is, properties maps which
+        /// are only in `other` are ignored.
+        /// Also copies elements which are marked as removed, and concatenates the freelists of both meshes.
+        SurfaceMesh& operator+=(const SurfaceMesh& other) { join(other); return *this; }
+
+        /// \brief Merges another surface mesh into the current one.
+        /// Shifts the indices of vertices of the other mesh by `number_of_vertices() + number_of_removed_vertices()`
+        /// and analogously for halfedges, edges, and faces.
+        /// Copies entries of all property maps which have the same name in both meshes. That is, properties maps which
+        /// are only in `other` are ignored.
+        /// Also copies elements which are marked as removed, and concatenates the freelists of both meshes.
+        SurfaceMesh& join(const SurfaceMesh& other);
+
         /// assign \c rhs to \c *this. does not copy custom properties.
         SurfaceMesh& assign(const SurfaceMesh& rhs);
         //@}
@@ -968,17 +982,20 @@ namespace easy3d {
         //@{
 
         /// add a new vertex with position \c p
-        Vertex add_vertex(const vec3& p);
+        Vertex add_vertex(const vec3& p) { Vertex v = new_vertex(); vpoint_[v] = p; return v; }
 
         /// add a new face with vertex list \c vertices
+        /// \param vertices The input vertices created by add_vertex().
         /// \sa add_triangle, add_quad
         Face add_face(const std::vector<Vertex>& vertices);
 
         /// add a new triangle connecting vertices \c v1, \c v2, \c v3
+        /// \param {v1, v2, v3} The input vertices created by add_vertex().
         /// \sa add_face, add_quad
         Face add_triangle(Vertex v1, Vertex v2, Vertex v3);
 
         /// add a new quad connecting vertices \c v1, \c v2, \c v3, \c v4
+        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
         /// \sa add_triangle, add_face
         Face add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 

@@ -646,18 +646,8 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 			if (logger.is_canceled())
 				break;
 
-			const int offset = to->n_vertices();
             SurfaceMesh* from = meshes[i];
-			auto points = from->get_vertex_property<vec3>("v:point");
-            for (auto v : from->vertices())
-                to->add_vertex(points[v]);
-
-			for (auto f : from->faces()) {
-			    std::vector<SurfaceMesh::Vertex> vertices;
-			    for (auto v : from->vertices(f))
-			        vertices.emplace_back(SurfaceMesh::Vertex(v.idx() + offset));
-			    to->add_face(vertices);
-			}
+            to->join(*from);
 
 			to_delete.push_back(from);
 		}
