@@ -43,6 +43,7 @@ namespace easy3d {
          * \param mesh The input surface mesh. Upon return, the mesh will be modified.
          * \param angle_threshold Two faces sharing a common edge are considered coplanar if the dihedral angle is
          *      smaller than \p angle_threshold (in degrees).
+         * \attention The current implementation doesn't support polygon faces with holes.
          */
         void apply(SurfaceMesh *mesh, float angle_threshold = 1.0f);
 
@@ -54,7 +55,7 @@ namespace easy3d {
          * \param angle_threshold Two edges sharing the same vertex are considered colinear if their angle is smaller
          *      than \p angle_threshold (in degrees).
          */
-        void merge_colinear_edges(SurfaceMesh *mesh, float angle_threshold);
+        void merge_colinear_edges(SurfaceMesh *mesh, float angle_threshold = 1.0f);
 
     private:
         std::vector<SurfaceMesh::Halfedge>

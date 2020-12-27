@@ -110,8 +110,6 @@ namespace easy3d {
             auto f = builder.add_face(vts);
             if (!f.is_valid()) {
                 LOG_FIRST_N(WARNING, 1) << "failed to add a face to the surface mesh";
-                // for debug. I had some extremely complex examples!!!!
-//                SurfaceMeshIO::save("/Users/lnan/Desktop/bug2.off", mesh);
                 break;
             }
         }
