@@ -1115,7 +1115,7 @@ namespace easy3d {
             model = SurfaceMeshIO::load(file_name);
         } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
             model = GraphIO::load(file_name);
-        } else if (ext == "plm" || ext == "pmesh") {
+        } else if (ext == "plm" || ext == "pm" || ext == "mesh") {
             model = PolyMeshIO::load(file_name);
         }
         else { // point cloud
@@ -1267,7 +1267,7 @@ namespace easy3d {
                 "Surface Mesh (*.obj *.ply *.off *.stl *.smesh)", "*.obj *.ply *.off *.stl *.smesh",
                 "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-                "Polytope Mesh (*.plm *.pmesh)", "*.plm *.pmesh",
+                "Polytope Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
                 "All Files (*.*)", "*"
         };
         const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
@@ -1295,10 +1295,10 @@ namespace easy3d {
 
         const std::string &title = "Please choose a file name";
         const std::vector<std::string> &filters = {
-                "Mesh Files (*.obj *.ply *.off *.stl *.smesh)", "*.obj *.ply *.off *.stl *.smesh",
-                "Point Cloud Files (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
+                "Surface Mesh (*.obj *.ply *.off *.stl *.smesh)", "*.obj *.ply *.off *.stl *.smesh",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                "Polytope Mesh (*.plm *.pmesh)", "*.plm *.pmesh",
+                "Polytope Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
                 "All Files (*.*)", "*"
         };
 

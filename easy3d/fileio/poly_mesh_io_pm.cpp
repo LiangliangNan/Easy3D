@@ -35,7 +35,7 @@ namespace easy3d {
 
     namespace io {
 
-        bool load_pmesh(const std::string& file_name, PolyMesh* mesh)
+        bool load_pm(const std::string& file_name, PolyMesh* mesh)
         {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";
@@ -81,7 +81,7 @@ namespace easy3d {
         //-----------------------------------------------------------------------------
 
 
-        bool save_pmesh(const std::string& file_name, const PolyMesh* mesh)
+        bool save_pm(const std::string& file_name, const PolyMesh* mesh)
         {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";

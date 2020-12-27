@@ -65,15 +65,20 @@ namespace easy3d {
 
     namespace io {
 
-        /// Reads a polyhedral mesh from a \p PLM format file.
+        /// Reads a polyhedral mesh from a \p PM format file. This is the built-in binary format of Easy3D.
+        bool load_pm(const std::string& file_name, PolyMesh* mesh);
+        /// Saves a polyhedral mesh to a \p PM format file. This is the built-in binary format of Easy3D.
+        bool save_pm(const std::string& file_name, const PolyMesh* mesh);
+
+        /// Reads a polyhedral mesh from a \p PLM format file. This is the built-in ASCII format of Easy3D.
         bool load_plm(const std::string& file_name, PolyMesh* mesh);
-        /// Saves a polyhedral mesh to a \p PLM format file.
+        /// Saves a polyhedral mesh to a \p PLM format file. This is the built-in ASCII format of Easy3D.
         bool save_plm(const std::string& file_name, const PolyMesh* mesh);
 
-        /// Reads a polyhedral mesh from a \p PMESH format file.
-        bool load_pmesh(const std::string& file_name, PolyMesh* mesh);
-        /// Saves a polyhedral mesh to a \p PMESH format file.
-        bool save_pmesh(const std::string& file_name, const PolyMesh* mesh);
+        /// Reads a polyhedral mesh from a \p MESH format file. This ASCII format is supported by Tetgen and Medit.
+        bool load_mesh(const std::string& file_name, PolyMesh* mesh);
+        /// Saves a polyhedral mesh to a \p MESH format file. This ASCII format is supported by Tetgen and Medit.
+        bool save_mesh(const std::string& file_name, const PolyMesh* mesh);
 
     } // namespace io
 

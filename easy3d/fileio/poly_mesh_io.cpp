@@ -47,8 +47,10 @@ namespace easy3d {
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "plm")
             success = io::load_plm(file_name, mesh);
-        else if (ext == "pmesh")
-            success = io::load_pmesh(file_name, mesh);
+        else if (ext == "pm")
+            success = io::load_pm(file_name, mesh);
+        else if (ext == "mesh")
+            success = io::load_mesh(file_name, mesh);
         else if (ext.empty()){
             LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
@@ -103,8 +105,10 @@ namespace easy3d {
             }
             success = io::save_plm(final_name, mesh);
         }
-        else if (ext == "pmesh")
-            success = io::save_pmesh(final_name, mesh);
+        else if (ext == "pm")
+            success = io::save_pm(final_name, mesh);
+        else if (ext == "mesh")
+            success = io::save_mesh(file_name, mesh);
         else {
             LOG(ERROR) << "unknown file format: " << ext;
             success = false;
