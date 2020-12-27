@@ -314,26 +314,10 @@ namespace easy3d {
     public:
 
         /*! Draws the camera path used to interpolate the frame().
-         *
-         * \p mask controls what is drawn: if (mask & 1) (default), the position path is drawn. If (mask & 2),
-         * a camera representation is regularly drawn and if (mask & 4), an oriented axis is regularly drawn.
-         * Examples:
-         *      \code
-         *      drawPath();  // Simply draws the interpolation path
-         *      drawPath(3); // Draws path and cameras
-         *      drawPath(5); // Draws path and axis
-         *      \endcode
-         *
-         * In the case where camera or axis is drawn, \p nbFrames controls the number of objects (axis or
-         * camera) drawn between two successive keyFrames. When \p nbFrames=1, only the path KeyFrames are
-         * drawn. \p nbFrames=2 also draws the intermediate orientation, etc. The maximum value is 30. \p
-         * nbFrames should divide 30 so that an object is drawn for each KeyFrame. Default value is 6.
-         *
-         * \p scale (default=1.0) controls the scaling of the camera and axis drawing. A value of
-         * Canvas::sceneRadius() should give good results.
-         *
+         * \param camera The current camera used by the viewer.
+         * \param scale Controls the size of the cameras. Default value is 1.0, which should give good results.
          * The rendering state can be changes by calling the path/cameras drawable's related methods. */
-        virtual void drawPath(const Camera* cam, int mask=1, int nbFrames=6, float scale=1.0);
+        virtual void draw_path(const Camera* camera, float scale=1.0);
 
         /// adjusts the scene radius so that the entire camera path is within the view frustum.
         /// \related The adjusted scene radius.

@@ -1052,7 +1052,7 @@ void PaintCanvas::postDraw() {
 
     // shown only when it is not animating
     if (show_camera_path_ && !kfi_->interpolationIsStarted())
-        kfi_->drawPath(camera());
+        kfi_->draw_path(camera());
     easy3d_debug_log_gl_error;
 
     if (show_pivot_point_) {
@@ -1075,8 +1075,7 @@ void PaintCanvas::postDraw() {
         };
         drawable.update_vertex_buffer(points); easy3d_debug_log_gl_error;
 
-        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f, 0.0f,
-                                            -1.0f);
+        const mat4 &proj = transform::ortho(0.0f, width(), height(), 0.0f, 0.0f,-1.0f);
         glDisable(GL_DEPTH_TEST);   // always on top
         program->bind();
         program->set_uniform("MVP", proj);

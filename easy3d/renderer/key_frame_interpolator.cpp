@@ -175,7 +175,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::drawPath(const Camera *cam, int mask, int nbFrames, float scale) {
+    void KeyFrameInterpolator::draw_path(const Camera *cam, float scale) {
         if (keyFrames_.empty())
             return;
 
