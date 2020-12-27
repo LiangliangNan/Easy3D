@@ -1568,6 +1568,30 @@ namespace easy3d {
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
+
+#if 0 // draw face ids
+            auto mesh = dynamic_cast<SurfaceMesh*>(m);
+            if (mesh && texter_) {
+                const auto& points = mesh->points();
+                for (auto f : mesh->faces()) {
+                    int count = 0;
+                    vec3 c(0, 0, 0);
+                    for (auto v : mesh->vertices(f)) {
+                        c += points[v.idx()];
+                        ++count;
+                    }
+                    c /= count;
+
+                    const vec3 p = camera()->projectedCoordinatesOf(c);
+                    float depth = 1.0f;
+                    glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
+                    glReadPixels(p.x * dpi_scaling_, p.y * dpi_scaling_, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+
+                    if (std::abs(depth - p.z) < 0.001)
+                        texter_->draw(std::to_string(f.idx()), p.x * dpi_scaling_, p.y * dpi_scaling_, 14, 0);
+                }
+            }
+#endif
         }
 
         for (auto d : drawables_) {
