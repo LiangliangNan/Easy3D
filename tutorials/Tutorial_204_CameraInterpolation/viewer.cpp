@@ -37,6 +37,13 @@ using namespace easy3d;
 CameraIntrepolation::CameraIntrepolation(const std::string& title)
     : Viewer(title)
 {
+    interpolator_ = new KeyFrameInterpolator(camera_->frame());
+}
+
+
+CameraIntrepolation::~CameraIntrepolation()
+{
+    delete interpolator_;
 }
 
 
@@ -52,31 +59,25 @@ std::string CameraIntrepolation::usage() const {
 bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {
-        easy3d::Frame* frame = camera()->frame();
-        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
+        easy3d::Frame *frame = camera()->frame();
+        interpolator_->addKeyFrame(*frame);
+        interpolator_->adjust_scene_radius(camera());
         std::cout << "Key frame added" << std::endl;
-
-        // update scene bounding box to make sure the path is within the view frustum
-        float old_radius = camera()->sceneRadius();
-        float candidate_radius = distance(camera()->sceneCenter(), frame->position());
-        camera()->setSceneRadius(std::max(old_radius, candidate_radius));
-
         return true;
     }
     else if (key == GLFW_KEY_SPACE && modifiers == 0) {
-        if (camera()->keyFrameInterpolator()->interpolationIsStarted()) {
-            camera()->keyFrameInterpolator()->stopInterpolation();
+        if (interpolator_->interpolationIsStarted()) {
+            interpolator_->stopInterpolation();
             std::cout << "Animation stopped." << std::endl;
         }
         else {
-            camera()->keyFrameInterpolator()->startInterpolation();
+            interpolator_->startInterpolation();
             std::cout << "Animation started." << std::endl;
         }
         return true;
     }
     else if (key == GLFW_KEY_D && modifiers == 0) {
-        camera()->keyFrameInterpolator()->deletePath();
-
+        interpolator_->deletePath();
         // update scene bounding box
         Box3 box;
         for (auto m : models_)
@@ -94,6 +95,6 @@ void CameraIntrepolation::draw() const {
     Viewer::draw();
 
     // shown only when it is not animating
-    if (!camera()->keyFrameInterpolator()->interpolationIsStarted())
-        camera()->draw_paths();
+    if (!interpolator_->interpolationIsStarted())
+        interpolator_->draw_path(camera());
 }

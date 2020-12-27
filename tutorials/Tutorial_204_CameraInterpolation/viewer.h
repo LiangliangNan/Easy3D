@@ -28,6 +28,10 @@
 #include <easy3d/viewer/viewer.h>
 
 
+namespace easy3d {
+    class KeyFrameInterpolator;
+}
+
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
 
@@ -35,6 +39,7 @@ class CameraIntrepolation : public easy3d::Viewer
 {
 public:
     CameraIntrepolation(const std::string& title);
+    ~CameraIntrepolation();
     
 protected:
     bool key_press_event(int key, int modifiers) override;
@@ -42,6 +47,9 @@ protected:
     void draw() const override;
 
     std::string usage() const override ;
+
+private:
+    easy3d::KeyFrameInterpolator* interpolator_;
 };
 
 

@@ -112,6 +112,8 @@ namespace easy3d {
         camera_->showEntireScene();
         camera_->connect(this, &Viewer::update);
 
+        kfi_ = new KeyFrameInterpolator(camera_->frame());
+
         sprintf(gpu_time_, "fps: __ (__ ms/frame)");
 
         int fw, fh;
@@ -469,6 +471,7 @@ namespace easy3d {
             return;
 
         delete camera_;
+        delete kfi_;
         delete drawable_axes_;
         delete texter_;
 
@@ -716,28 +719,32 @@ namespace easy3d {
 
         if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
-            camera()->keyFrameInterpolator()->addKeyFrame(*frame);
-            // update scene bounding box to make sure the path is within the view frustum
-            float old_radius = camera()->sceneRadius();
-            float candidate_radius = distance(camera()->sceneCenter(), frame->position());
-            camera()->setSceneRadius(std::max(old_radius, candidate_radius));
+            kfi_->addKeyFrame(*frame);
+            kfi_->adjust_scene_radius(camera());
+            LOG(INFO) << "key frame added to camera path";
         } else if (key == GLFW_KEY_D && modifiers == EASY3D_MOD_CONTROL) { // delete path
-            camera()->keyFrameInterpolator()->deletePath();
-
+            kfi_->deletePath();
             // update scene bounding box
             Box3 box;
             for (auto m : models_)
                 box.add_box(m->bounding_box());
-            for (auto d : drawables_)
-                box.add_box(d->bounding_box());
             camera_->setSceneBoundingBox(box.min(), box.max());
+            LOG(INFO) << "camera path deleted";
         } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
-            if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-                camera()->keyFrameInterpolator()->stopInterpolation();
+            if (kfi_->interpolationIsStarted())
+                kfi_->stopInterpolation();
             else
-                camera()->keyFrameInterpolator()->startInterpolation();
+                kfi_->startInterpolation();
         } else if (key == GLFW_KEY_T && modifiers == 0) {
             show_camera_path_ = !show_camera_path_;
+            if (show_camera_path_)
+                kfi_->adjust_scene_radius(camera());
+            else {
+                Box3 box;
+                for (auto m : models_)
+                    box.add_box(m->bounding_box());
+                camera_->setSceneBoundingBox(box.min(), box.max());
+            }
         } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
             for (auto m : models_) {
                 for (auto d : m->renderer()->lines_drawables()) {
@@ -1470,8 +1477,8 @@ namespace easy3d {
         }
 
         // shown only when it is not animating
-        if (show_camera_path_ && !camera()->keyFrameInterpolator()->interpolationIsStarted())
-            camera()->draw_paths();
+        if (show_camera_path_ && !kfi_->interpolationIsStarted())
+            kfi_->draw_path(camera());
 
         if (show_pivot_point_) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");

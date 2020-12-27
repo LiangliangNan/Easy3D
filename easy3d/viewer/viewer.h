@@ -41,6 +41,7 @@ namespace easy3d {
     class Drawable;
     class TrianglesDrawable;
     class TextRenderer;
+    class KeyFrameInterpolator;
 
     /**
      * @brief The built-in Easy3D Viewer.
@@ -406,6 +407,8 @@ namespace easy3d {
 
 		std::string	title_;
 		Camera*		camera_;
+
+        easy3d::KeyFrameInterpolator* kfi_;
 
         int		samples_;	// the actual samples
 
