@@ -228,7 +228,7 @@ void WidgetTrianglesDrawable::updatePanel() {
         bool highlight = d->highlight();
         ui->checkBoxHighlight->setChecked(highlight);
 
-        const auto &range = d->highlight_range();
+        const auto& range = states_[d].highlight_range;
         ui->spinBoxHighlightMin->setValue(range.first);
         ui->spinBoxHighlightMax->setValue(range.second);
     }
@@ -550,6 +550,78 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
             });
         }
     }
+}
+
+
+
+namespace details {
+    void set_highlight_range(SurfaceMesh* m, Drawable* d, const std::pair<int, int>& range) {
+        if (range.second < 0 || range.second < range.first) {
+            d->set_highlight_range(std::make_pair(-1, -1));
+            LOG(INFO) << "no face can be highlighted";
+            return;
+        }
+
+        // convert to triangle range
+        int f_min = (range.first < 0 ? 0 : range.first);
+        int f_max = (range.second >= m->n_faces() ? m->n_faces() - 1 : range.second);
+        int t_min = std::numeric_limits<int>::max();
+        int t_max = -std::numeric_limits<int>::max();
+        auto triangle_range = m->get_face_property<std::pair<int, int> >("f:triangle_range");
+        if (triangle_range) {
+            for (int fid = f_min; fid <= f_max; ++fid) {
+                auto f = SurfaceMesh::Face(fid);
+                const auto &range = triangle_range[f];
+                t_min = std::min(t_min, range.first);
+                t_max = std::max(t_max, range.second);
+            }
+
+            d->set_highlight_range(std::make_pair(t_min, t_max));
+            if (f_min != t_min || f_max != t_max)
+                LOG(INFO) << "highlighting faces [" << f_min << ", " << f_max << "] (= triangles ["
+                          << t_min << ", " << t_max << "])";
+            else
+                LOG(INFO) << "highlighting faces [" << f_min << ", " << f_max << "]";
+        } else {
+            LOG_FIRST_N(ERROR, 1) << "face property \'f:triangle_range\' not defined";
+        }
+    }
+}
+
+
+void WidgetTrianglesDrawable::setHighlightMin(int v) {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    auto d = drawable();
+    if (d->name() != "faces")
+        return;
+
+    // face range
+    auto& face_range = states_[d].highlight_range;
+    face_range.first = v;
+
+    details::set_highlight_range(mesh, d, face_range);
+    viewer_->update();
+}
+
+
+void WidgetTrianglesDrawable::setHighlightMax(int v) {
+    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    auto d = drawable();
+    if (d->name() != "faces")
+        return;
+
+    // face range
+    auto& face_range = states_[d].highlight_range;
+    face_range.second = v;
+
+    details::set_highlight_range(mesh, d, face_range);
+    viewer_->update();
 }
 
 

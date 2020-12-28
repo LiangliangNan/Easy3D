@@ -47,8 +47,8 @@ public slots:
     void setVectorFieldScale(double);
 
     void setHighlight(bool);
-    void setHighlightMin(int);
-    void setHighlightMax(int);
+    virtual void setHighlightMin(int);
+    virtual void setHighlightMax(int);
 
 protected:
     easy3d::Texture* colormapTexture(int, bool, int) const;
@@ -69,12 +69,15 @@ protected:
 
     // the extended rendering state
     struct StateExt {
-        StateExt() : scalar_style(0), discrete_color(false), num_stripes(16), vector_field("disabled"), vector_field_scale(1.0) {}
+        StateExt() : scalar_style(0), discrete_color(false), num_stripes(16), vector_field("disabled"),
+                     vector_field_scale(1.0), highlight_range(-1, -1) {}
         int scalar_style;
         bool discrete_color;
         int num_stripes;
         QString vector_field;
         double vector_field_scale;
+        // the face range for highlighting polygon faces (not the triangle range)
+        std::pair<int, int> highlight_range;
     };
 
 protected:

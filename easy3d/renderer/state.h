@@ -238,9 +238,9 @@ namespace easy3d {
          * @param range Specifies the min and max indices of the primitives to be highlighted. Providing [-1, -1] will
          *              un-highlight any previously highlighted primitives.
          * @attention For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a
-         *            unified rendering APIs. Thus for performance reasons, the selection of polygonal faces is also
-         *            internally implemented by selecting triangle primitives using shaders. This allows data
-         *            uploaded to the GPU for the rendering purpose be shared for selection. Yeah, performance gain!
+         *            unified rendering APIs. The range must be given on the triangulated faces! If you have face range,
+         *            you should convert the face range to triangle range. For each face, its triangles are defined on
+         *            SurfaceMesh::face_property<std::pair<int, int> >("f:triangle_range").
          */
         bool highlight() const { return highlight_; };
         void set_highlight(bool b) { highlight_ = b; }

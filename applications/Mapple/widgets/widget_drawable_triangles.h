@@ -33,6 +33,9 @@ public slots:
     void setScalarFieldStyle(int);
     void setVectorField(const QString &);
 
+    virtual void setHighlightMin(int) override;
+    virtual void setHighlightMax(int) override;
+
 private:
     void connectAll();
     void disconnectAll();
