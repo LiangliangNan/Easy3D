@@ -35,7 +35,7 @@ namespace easy3d {
     /**
      * \brief Data structure representing a polyhedral mesh.
      * \class PolyMesh easy3d/core/poly_mesh.h
-     * \note PolyMesh assumes the half-face normals pointing inside the cells.
+     * \note PolyMesh assumes the half-face normals pointing outside the cells.
      *
      * This implementation is inspired by Surface_mesh
      * https://opensource.cit-ec.de/projects/surface_mesh
@@ -1198,7 +1198,8 @@ namespace easy3d {
             return econn_[e].vertices_[i];
         }
 
-        /// returns the set of vertices around halfface \c h
+        /// returns the set of vertices around halfface \c h.
+        /// The vertices are ordered in a way such that its normal points outside of the cell associated with \c h.
         const std::vector<Vertex>& vertices(HalfFace h) const
         {
             return hconn_[h].vertices_;

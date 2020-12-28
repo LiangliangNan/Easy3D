@@ -502,7 +502,7 @@ namespace easy3d {
 
 
     PolyMesh::Cell PolyMesh::add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3) {
-        // for each face, its normal points inside the cell.
+        // for each face, its normal points outside the cell.
         // the same as specified in Delaunay3::facet_vertex_
         //      unsigned int Delaunay3::facet_vertex_[4][3] = {
         //              {1, 2, 3},
