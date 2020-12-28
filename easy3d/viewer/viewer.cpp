@@ -962,7 +962,7 @@ namespace easy3d {
         int glx = x;
         int gly = height() - 1 - y;
 
-        // NOTE: when dealing with OpenGL, we alway work in the highdpi screen space
+        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
 #if defined(__APPLE__)
         glx = static_cast<int>(glx * dpi_scaling());
         gly = static_cast<int>(gly * dpi_scaling());
@@ -1374,7 +1374,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::draw_corner_axes() {
+    void Viewer::draw_corner_axes() const {
         ShaderProgram *program = ShaderManager::get_program("surface/surface_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -1400,7 +1400,7 @@ namespace easy3d {
             opengl::prepare_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                                  colors);
             opengl::prepare_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-            drawable_axes_ = new TrianglesDrawable("corner_axes");
+            const_cast<Viewer*>(this)->drawable_axes_ = new TrianglesDrawable("corner_axes");
             drawable_axes_->update_vertex_buffer(points);
             drawable_axes_->update_normal_buffer(normals);
             drawable_axes_->update_color_buffer(colors);
@@ -1537,6 +1537,49 @@ namespace easy3d {
     }
 
 
+    void Viewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        const auto &points = mesh->points();
+        for (auto f : mesh->faces()) {
+            int count = 0;
+            vec3 c(0, 0, 0);
+            for (auto v : mesh->vertices(f)) {
+                c += points[v.idx()];
+                ++count;
+            }
+            c /= count;
+
+            const vec3 p = camera()->projectedCoordinatesOf(c);
+            double x = p.x * dpi_scaling_;
+            double y = (height() - 1 - p.y) * dpi_scaling_;
+
+            float depth = 1.0f;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
+            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
+                texter->draw(std::to_string(f.idx()), x, p.y * dpi_scaling_, 16, font_id, color);
+        }
+    }
+
+
+    void Viewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        const auto &points = mesh->points();
+        for (std::size_t id = 0; id < points.size(); ++id) {
+            const vec3& v = points[id];
+            const vec3 p = camera()->projectedCoordinatesOf(v);
+            double x = p.x * dpi_scaling_;
+            double y = (height() - 1 - p.y) * dpi_scaling_;
+
+            float depth = 1.0f;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
+            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
+                texter->draw(std::to_string(id), x, p.y * dpi_scaling_, 16, font_id, color);
+        }
+    }
+
+
     void Viewer::draw() const {
         for (const auto m : models_) {
             if (!m->renderer()->is_visible())
@@ -1568,37 +1611,19 @@ namespace easy3d {
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
-
-#if 0 // draw face ids
-            auto mesh = dynamic_cast<SurfaceMesh*>(m);
-            if (mesh && texter_) {
-                const auto& points = mesh->points();
-                for (auto f : mesh->faces()) {
-                    int count = 0;
-                    vec3 c(0, 0, 0);
-                    for (auto v : mesh->vertices(f)) {
-                        c += points[v.idx()];
-                        ++count;
-                    }
-                    c /= count;
-
-                    const vec3 p = camera()->projectedCoordinatesOf(c);
-                    float depth = 1.0f;
-                    glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
-                    glReadPixels(p.x * dpi_scaling_, p.y * dpi_scaling_, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
-
-                    if (std::abs(depth - p.z) < 0.001)
-                        texter_->draw(std::to_string(f.idx()), p.x * dpi_scaling_, p.y * dpi_scaling_, 14, 0);
-                }
-            }
-#endif
         }
 
         for (auto d : drawables_) {
             if (d->is_visible())
                 d->draw(camera(), false);
         }
-    }
 
+#if 0 // draw face labels and vertex labels
+        if (dynamic_cast<SurfaceMesh *>(current_model()) && texter_ && texter_->num_fonts() > 1) {
+            draw_face_labels(current_model(), texter_, 1, vec3(0, 0, 1));
+            draw_vertex_labels(current_model(), texter_, 1, vec3(0, 1, 0));
+        }
+#endif
+    }
 
 }

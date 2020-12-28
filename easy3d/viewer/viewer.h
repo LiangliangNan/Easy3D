@@ -399,7 +399,10 @@ namespace easy3d {
         virtual bool callback_event_scroll(double dx, double dy);
         virtual void callback_event_resize(int w, int h);
 
-        void draw_corner_axes();
+        void draw_corner_axes() const;
+
+        void draw_face_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
+        void draw_vertex_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
 
 	protected:
 		GLFWwindow*	window_;
@@ -408,7 +411,7 @@ namespace easy3d {
 		std::string	title_;
 		Camera*		camera_;
 
-        easy3d::KeyFrameInterpolator* kfi_;
+        KeyFrameInterpolator* kfi_;
 
         int		samples_;	// the actual samples
 

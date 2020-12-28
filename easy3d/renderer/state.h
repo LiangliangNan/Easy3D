@@ -144,13 +144,13 @@ namespace easy3d {
 
         /**
          * Sets the coloring method.
-         * \details It has the same effect as if set_coloring() is called without changing the location of coloring
-         * property (2nd argument) and the coloring property (3rd argument). \see set_coloring().
+         * \details It has the same effect as if set_coloring() is called without changing the location (2nd argument)
+         *      and name (3rd argument) of the coloring property. \see set_coloring()
          * @param method The coloring method.
          */
         void set_coloring_method(Method method) { coloring_method_ = method; }
 
-        /** The coloring method. */
+        /** Returns the coloring method being used for rendering. */
         Method coloring_method() const { return coloring_method_; }
 
         /**
