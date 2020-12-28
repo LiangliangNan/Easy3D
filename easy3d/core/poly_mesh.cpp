@@ -597,6 +597,9 @@ namespace easy3d {
     }
 
 
+    //-----------------------------------------------------------------------------
+
+
     bool PolyMesh::is_tetraheral_mesh() const {
         for (auto f : faces()) {
             if (vertices(f).size() != 3)
@@ -609,5 +612,17 @@ namespace easy3d {
         return true;
     }
 
+
+    //-----------------------------------------------------------------------------
+
+
+    void PolyMesh::extract_boundary(std::vector<std::vector<Vertex> > &faces) const {
+        faces.clear();
+        for (auto h : halffaces()) {
+            if (!is_border(h))
+                continue;
+            faces.push_back(vertices(h));
+        }
+    }
 
 } // namespace easy3d

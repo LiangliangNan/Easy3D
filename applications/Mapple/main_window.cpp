@@ -1457,27 +1457,11 @@ void MainWindow::polymeshExtractBoundary() {
     if (!poly)
         return;
 
-    std::unordered_map<PolyMesh::Vertex, SurfaceMesh::Vertex, PolyMesh::Vertex::Hash> unique_vertex;
-    std::vector<PolyMesh::Vertex> vertices;
-    std::vector< std::vector<SurfaceMesh::Vertex> > faces;
+    std::vector<std::vector<PolyMesh::Vertex> > faces;
+    poly->extract_boundary(faces);
 
-    for (auto h : poly->halffaces()) {
-        if (poly->is_border(h)) {
-            std::vector<SurfaceMesh::Vertex> face;
-            for (auto v : poly->vertices(h)) {
-                auto pos = unique_vertex.find(v);
-                if (pos == unique_vertex.end()) {
-                    auto sv = SurfaceMesh::Vertex(vertices.size());
-                    unique_vertex[v] = sv;
-                    face.push_back(sv);
-                    vertices.push_back(v);
-                }
-                else
-                    face.push_back(pos->second);
-            }
-            faces.push_back(face);
-        }
-    }
+    std::unordered_map<PolyMesh::Vertex, SurfaceMesh::Vertex, PolyMesh::Vertex::Hash> unique_vertex;
+
 
     SurfaceMesh* mesh = new SurfaceMesh;
     const std::string &name = file_system::name_less_extension(poly->name()) + "_boundary.ply";
@@ -1485,10 +1469,19 @@ void MainWindow::polymeshExtractBoundary() {
 
     ManifoldBuilder builder(mesh);
     builder.begin_surface();
-    for (auto v : vertices)
-        builder.add_vertex(poly->position(v));
-    for (auto f : faces)
-        builder.add_face(f);
+    for (auto f : faces) {
+        std::vector<SurfaceMesh::Vertex> vts;
+        for (auto pv : f) {
+            auto pos = unique_vertex.find(pv);
+            if (pos == unique_vertex.end()) {
+                auto sv = builder.add_vertex(poly->position(pv));
+                unique_vertex[pv] = sv;
+                vts.push_back(sv);
+            } else
+                vts.push_back(pos->second);
+        }
+        builder.add_face(vts);
+    }
     builder.end_surface();
 
     viewer_->addModel(mesh);

@@ -1314,6 +1314,9 @@ namespace easy3d {
 
         /// returns whether halfface \c h is degenerate
         bool is_degenerate(HalfFace h) const;
+
+        /// extracts the boundary surface and return its faces
+        void extract_boundary(std::vector< std::vector<Vertex> >& faces) const;
         //@}
 
     public: //------------------------------------------ geometry-related functions
