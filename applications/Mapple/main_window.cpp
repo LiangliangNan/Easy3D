@@ -214,6 +214,34 @@ void MainWindow::notify(std::size_t value, bool show_text, bool update_viewer) {
 }
 
 
+void MainWindow::output(int severity, const std::string &message) {
+//    static QMutex mutex;
+//    mutex.lock();
+    std::string line("");
+	switch (severity) {
+        case 0:
+            ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + message));
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
+            break;
+        case 1:
+            ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + message));
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::blue);
+            break;
+        case 2:
+            ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + message));
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::cyan);
+            break;
+        case 3:
+            ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + message));
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
+            break;
+    }
+
+    ui->listWidgetLog->scrollToBottom();
+//	mutex.unlock();
+}
+
+
 void MainWindow::createStatusBar()
 {
     labelStatusInfo_ = new QLabel("Ready");
@@ -856,7 +884,7 @@ void MainWindow::createActionsForViewMenu() {
     actionToggleDockWidgetModels->setText("Model Panel");
     ui->menuView->addAction(actionToggleDockWidgetModels);
 
-    QAction* actionToggleDockWidgetLogger = ui->dockWidgetLogger->toggleViewAction();
+    QAction* actionToggleDockWidgetLogger = ui->dockWidgetLog->toggleViewAction();
     actionToggleDockWidgetLogger->setText("Logger Panel");
     ui->menuView->addAction(actionToggleDockWidgetLogger);
 

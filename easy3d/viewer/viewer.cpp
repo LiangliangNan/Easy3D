@@ -218,11 +218,11 @@ namespace easy3d {
         opengl::setup_gl_debug_callback();
 #endif
 
-        LOG(INFO) << "OpenGL vendor:            " << glGetString(GL_VENDOR);
-        LOG(INFO) << "OpenGL renderer:          " << glGetString(GL_RENDERER);
+        LOG(INFO) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+        LOG(INFO) << "OpenGL renderer: " << glGetString(GL_RENDERER);
         LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor;
-        LOG(INFO) << "OpenGL version received:  " << glGetString(GL_VERSION);
-        LOG(INFO) << "GLSL version received:    " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+        LOG(INFO) << "OpenGL version received: " << glGetString(GL_VERSION);
+        LOG(INFO) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
         glGetIntegerv(GL_SAMPLES, &samples_);
         int max_num = 0;
@@ -236,13 +236,13 @@ namespace easy3d {
                 LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
                              << " requested but max support is " << max_num << ")";
         } else
-            LOG(INFO) << "samples received:         " << samples_ << " (" << samples << " requested, max support is "
+            LOG(INFO) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
                       << max_num << ")";
 
-        float xscale, yscale;
+        float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
         dpi_scaling_ = static_cast<double>(xscale + yscale) * 0.5;
-        LOG(INFO) << "DPI scaling:              " << dpi_scaling();
+        LOG(INFO) << "DPI scaling: " << dpi_scaling();
 
         return window;
     }
@@ -254,7 +254,7 @@ namespace easy3d {
             if (!viewer->process_events_)
                 return;
 
-            int w, h;
+            int w(0), h(0);
             glfwGetWindowSize(win, &w, &h);
             if (x >= 0 && x <= w && y >= 0 && y <= h)
                 viewer->callback_event_cursor_pos(x, y);

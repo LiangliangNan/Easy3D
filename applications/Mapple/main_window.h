@@ -34,6 +34,7 @@
 #include <QLabel>
 
 #include <easy3d/util/progress.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/core/types.h>
 
 
@@ -50,7 +51,7 @@ class WidgetPointsDrawable;
 class WidgetLinesDrawable;
 class WidgetTrianglesDrawable;
 
-class MainWindow : public QMainWindow, public easy3d::ProgressClient
+class MainWindow : public QMainWindow, public easy3d::ProgressClient, public easy3d::logging::LogClient
 {
     Q_OBJECT
 
@@ -182,7 +183,8 @@ private:
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
-    void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override ;
+    void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override;
+    void output(int severity, const std::string &message) override;
 
 private:
     PaintCanvas*   viewer_;

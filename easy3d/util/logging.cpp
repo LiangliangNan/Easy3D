@@ -86,6 +86,22 @@ namespace easy3d
 			DLOG(INFO) << "executable path: " << file_system::executable_directory();
 			DLOG(INFO) << "current working dir: " << file_system::current_working_directory();
 		}
+
+
+
+        LogClient::LogClient() {
+		    google::AddLogSink(this);
+		}
+
+
+        void LogClient::send(google::LogSeverity severity, const char *full_filename,
+                  const char *base_filename, int line,
+                  const struct ::tm *tm_time,
+                  const char *message, size_t message_len)
+        {
+		    if (message && message_len > 0)
+                output(severity, std::string(message, message + message_len));
+		}
 	}
 
 }

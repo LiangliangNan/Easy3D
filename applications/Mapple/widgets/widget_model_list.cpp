@@ -106,7 +106,7 @@ void WidgetModelList::init(MainWindow *w) {
     for (int i = 0; i < columnCount(); ++i)
         headerItem()->setTextAlignment(i, Qt::AlignLeft);
 
-    header()->setDefaultSectionSize(50);
+    header()->setDefaultSectionSize(60);
 
 //    setColumnWidth(0, 50);
     setIndentation(10);

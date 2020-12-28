@@ -62,7 +62,29 @@ namespace easy3d
 		 */
 		void initialize(bool severity_dependent = false, const std::string& log_dir = "", int stderr_threshold = google::GLOG_WARNING);
 
-	}
+
+        // Base class for a log client.
+        // Users should subclass LogClient and override output to do whatever they want.
+        class LogClient : public google::LogSink {
+        public:
+            LogClient();
+
+            // severity
+            //  0: INFO
+            //  1: WARNING
+            //  2: ERROR
+            //  3: FATAL
+            virtual void output(int severity, const std::string &message) = 0;
+
+            // This method implements the output of the logger. It internally calls the above output() method.
+            void send(google::LogSeverity severity, const char *full_filename,
+                      const char *base_filename, int line,
+                      const struct ::tm *tm_time,
+                      const char *message, size_t message_len) override;
+
+        };
+
+    };
 
 }
 

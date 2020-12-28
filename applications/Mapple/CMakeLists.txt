@@ -46,6 +46,7 @@ set(${PROJECT_NAME}_HEADERS
         widgets/widget_drawable_lines.h
         widgets/widget_drawable_triangles.h
         widgets/widget_global_setting.h
+        widgets/widget_log.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -78,6 +79,7 @@ set(${PROJECT_NAME}_SOURCES
         widgets/widget_drawable_triangles.cpp
         widgets/widget_global_setting.cpp
         widgets/widget_model_list.cpp
+        widgets/widget_log.cpp
         )
 
 set(${PROJECT_NAME}_FORMS

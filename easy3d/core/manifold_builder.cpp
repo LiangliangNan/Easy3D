@@ -155,47 +155,47 @@ namespace easy3d {
 
         std::string issues("");
         if (num_faces_less_three_vertices_ > 0) {
-            issues += "\n\t\t" + std::to_string(num_faces_less_three_vertices_) +
+            issues += "\n   - " + std::to_string(num_faces_less_three_vertices_) +
                       " faces with less than 3 vertices (ignored)";
         }
 
         if (num_faces_duplicate_vertices > 0) {
-            issues += "\n\t\t" + std::to_string(num_faces_duplicate_vertices) +
+            issues += "\n   - " + std::to_string(num_faces_duplicate_vertices) +
                       " faces with duplicate vertices (ignored)";
         }
 
         if (num_faces_out_of_range_vertices_ > 0) {
-            issues += "\n\t\t" + std::to_string(num_faces_out_of_range_vertices_) +
+            issues += "\n   - " + std::to_string(num_faces_out_of_range_vertices_) +
                       " faces with out-of-range vertices (ignored)";
         }
 
         if (num_faces_unknown_topology_ > 0) {
-            issues += "\n\t\t" + std::to_string(num_faces_unknown_topology_) +
+            issues += "\n   - " + std::to_string(num_faces_unknown_topology_) +
                       " complex faces with unknown topology (ignored)";
         }
 
         // ----------------------------------------------------------------------------------
 
         if (num_non_manifold_vertices > 0) {
-            issues += "\n\t\t" + std::to_string(num_non_manifold_vertices) + " non-manifold vertices (fixed)";
+            issues += "\n   - " + std::to_string(num_non_manifold_vertices) + " non-manifold vertices (fixed)";
         }
 
         if (num_non_manifold_edges > 0) {
-            issues += "\n\t\t" + std::to_string(num_non_manifold_edges) + " non-manifold edges (fixed)";
+            issues += "\n   - " + std::to_string(num_non_manifold_edges) + " non-manifold edges (fixed)";
         }
 
         // ----------------------------------------------------------------------------------
 
         if (num_isolated_vertices > 0) {
-            issues += "\n\t\t" + std::to_string(num_isolated_vertices) + " isolated vertices (removed)";
+            issues += "\n   - " + std::to_string(num_isolated_vertices) + " isolated vertices (removed)";
         }
 
         // ----------------------------------------------------------------------------------
 
         if (num_copy_occurrences > 0 || num_isolated_vertices > 0) {
-            issues += "\n\tSolution:";
+            issues += "\n  Solution: ";
             if (num_copy_occurrences > 0) {
-                issues += "\n\t\t" + std::to_string(num_non_manifold_vertices) + " vertices copied ("
+                issues += "\n   - " + std::to_string(num_non_manifold_vertices) + " vertices copied ("
                           + std::to_string(num_copy_occurrences) + " occurrences)";
 
                 if (copied_vertices_for_linking_.size() > 0) {
@@ -210,19 +210,13 @@ namespace easy3d {
                 }
             }
             if (num_isolated_vertices > 0)
-                issues += "\n\t\t" + std::to_string(num_isolated_vertices) + " isolated vertices deleted";
+                issues += "\n   - " + std::to_string(num_isolated_vertices) + " isolated vertices deleted";
         }
 
         // ----------------------------------------------------------------------------------
 
-        const std::string header = "mesh '" + file_system::simple_name(mesh_->name()) + "'";
-        if (!issues.empty()) {
-            LOG(WARNING) << header << " has topological issues:" << issues
-                         << "\n\tResult: \n\t\t"
-                         << std::to_string(mesh_->n_faces()) + " faces\n\t\t"
-                         << std::to_string(mesh_->n_vertices()) + " vertices\n\t\t"
-                         << std::to_string(mesh_->n_edges()) + " edges";
-        }
+        if (!issues.empty())
+            LOG(WARNING) << " mesh has topological issues:" << issues;
     }
 
 

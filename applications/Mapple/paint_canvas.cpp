@@ -166,11 +166,11 @@ void PaintCanvas::initializeGL() {
 
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
-    LOG(INFO) << "OpenGL vendor:            " << func_->glGetString(GL_VENDOR);
-    LOG(INFO) << "OpenGL renderer:          " << func_->glGetString(GL_RENDERER);
+    LOG(INFO) << "OpenGL vendor: " << func_->glGetString(GL_VENDOR);
+    LOG(INFO) << "OpenGL renderer: " << func_->glGetString(GL_RENDERER);
     LOG(INFO) << "OpenGL version requested: " << major_requested << "." << minor_requested;
-    LOG(INFO) << "OpenGL version received:  " << func_->glGetString(GL_VERSION);
-    LOG(INFO) << "GLSL version received:    " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION);
+    LOG(INFO) << "OpenGL version received: " << func_->glGetString(GL_VERSION);
+    LOG(INFO) << "GLSL version received: " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     int major = 0;
     func_->glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -185,7 +185,7 @@ void PaintCanvas::initializeGL() {
 #else
     dpi_scaling_ = devicePixelRatio();
 #endif
-    LOG(INFO) << "DPI scaling:              " << dpi_scaling();
+    LOG(INFO) << "DPI scaling: " << dpi_scaling();
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
@@ -903,7 +903,7 @@ void PaintCanvas::paintGL() {
                 LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
                              << " requested but max support is " << max_num << ")";
         } else
-            LOG(INFO) << "Samples received:         " << samples_ << " (" << samples << " requested, max support is "
+            LOG(INFO) << "Samples received: " << samples_ << " (" << samples << " requested, max support is "
                       << max_num << ")";
 
         queried = true;
