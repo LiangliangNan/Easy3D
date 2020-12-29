@@ -1062,9 +1062,6 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
    <property name="text">
     <string>Show IDs of face and its vertices under mouse</string>
    </property>
@@ -1074,9 +1071,6 @@
   </action>
   <action name="actionShowCordinatesUnderMouse">
    <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">
