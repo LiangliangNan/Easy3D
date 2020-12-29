@@ -123,10 +123,13 @@ public slots:
     void copyCamera();
     void pasteCamera();
 
+    void showCamaraPath(bool);
     void addKeyFrame();
     void playCameraPath();
-    void showCamaraPath();
     void deleteCameraPath();
+
+    void showFaceVertexLabelsUnderMouse(bool);
+    void showCordinatesUnderMouse(bool);
 
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
@@ -223,6 +226,7 @@ protected:
 
 protected:
     void drawCornerAxes();
+    void drawFaceAndVertexLabels(const QColor& face_color, const QColor& vertex_color);
 
 protected:
     MainWindow* window_;
@@ -256,6 +260,11 @@ protected:
 
     // camera path
     bool	show_camera_path_;
+
+    bool    show_labels_under_mouse_;
+    int     picked_face_index_;
+
+    bool    show_coordinates_under_mouse_;
 
     std::vector<easy3d::Model*> models_;
     int model_idx_;

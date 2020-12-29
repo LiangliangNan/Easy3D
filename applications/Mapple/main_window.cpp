@@ -225,11 +225,11 @@ void MainWindow::output(int severity, const std::string &message) {
             break;
         case 1:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + message));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::blue);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkBlue);
             break;
         case 2:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + message));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::cyan);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkMagenta);
             break;
         case 3:
             ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + message));
@@ -249,7 +249,7 @@ void MainWindow::createStatusBar()
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelStatusInfo_);
 
-    labelPointUnderMouse_ = new QLabel("XYZ = [-, -, -]");
+    labelPointUnderMouse_ = new QLabel("");
     labelPointUnderMouse_->setFixedWidth(400);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelPointUnderMouse_);
@@ -561,16 +561,13 @@ void MainWindow::setShowSelectedOnly(bool b) {
 }
 
 
-void MainWindow::showPointUnderMouse(const easy3d::vec3 &p, bool found) {
-	QString coordString = "XYZ = [-, -, -]";
-	if (found)
-		coordString = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
-	labelPointUnderMouse_->setText(coordString);
+void MainWindow::setPointUnderMouse(const QString &text) {
+	labelPointUnderMouse_->setText(text);
+    labelPointUnderMouse_->update();
 }
 
 
-void MainWindow::onOpenRecentFile()
-{
+void MainWindow::onOpenRecentFile() {
     if (okToContinue()) {
         QAction *action = qobject_cast<QAction *>(sender());
         if (action) {
@@ -860,21 +857,8 @@ void MainWindow::createActionsForFileMenu() {
 
 
 void MainWindow::createActionsForViewMenu() {
-    connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
-
-    ui->menuView->addSeparator();
-
-    connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));
-    connect(ui->actionPasteCamera, SIGNAL(triggered()), viewer_, SLOT(pasteCamera()));
-
-    connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), this, SLOT(saveCameraStateToFile()));
-    connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), this, SLOT(restoreCameraStateFromFile()));
-    connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
-    connect(ui->actionPlayCameraPath, SIGNAL(triggered()), viewer_, SLOT(playCameraPath()));
-    connect(ui->actionShowCamaraPath, SIGNAL(triggered()), viewer_, SLOT(showCamaraPath()));
-    connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
-    connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
-    connect(ui->actionDeleteCameraPath, SIGNAL(triggered()), viewer_, SLOT(deleteCameraPath()));
+    connect(ui->actionShowFaceVertexLabelsUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showFaceVertexLabelsUnderMouse(bool)));
+    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showCordinatesUnderMouse(bool)));
 
     QAction* actionToggleDockWidgetRendering = ui->dockWidgetRendering->toggleViewAction();
     actionToggleDockWidgetRendering->setText("Rendering Panel");
@@ -885,10 +869,43 @@ void MainWindow::createActionsForViewMenu() {
     ui->menuView->addAction(actionToggleDockWidgetModels);
 
     QAction* actionToggleDockWidgetLogger = ui->dockWidgetLog->toggleViewAction();
-    actionToggleDockWidgetLogger->setText("Logger Panel");
+    actionToggleDockWidgetLogger->setText("Log Panel");
     ui->menuView->addAction(actionToggleDockWidgetLogger);
 
-    connect(ui->actionBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
+    connect(ui->actionSetBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
+}
+
+
+void MainWindow::createActionsForCameraMenu() {
+    connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
+
+    connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));
+    connect(ui->actionPasteCamera, SIGNAL(triggered()), viewer_, SLOT(pasteCamera()));
+
+    connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), this, SLOT(saveCameraStateToFile()));
+    connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), this, SLOT(restoreCameraStateFromFile()));
+
+    connect(ui->actionShowCamaraPath, SIGNAL(toggled(bool)), viewer_, SLOT(showCamaraPath(bool)));
+
+    connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
+    connect(ui->actionPlayCameraPath, SIGNAL(triggered()), viewer_, SLOT(playCameraPath()));
+
+    connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
+    connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
+
+    connect(ui->actionDeleteCameraPath, SIGNAL(triggered()), viewer_, SLOT(deleteCameraPath()));
+}
+
+
+void MainWindow::createActionsForPropertyMenu() {
+    connect(ui->actionManipulateProperties, SIGNAL(triggered()), this, SLOT(manipulateProperties()));
+    connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
+    connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
+}
+
+
+void MainWindow::createActionsForEditMenu() {
+    connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
 }
 
 
@@ -905,18 +922,6 @@ void MainWindow::createActionsForSelectMenu() {
     actionGroup->addAction(ui->actionSelectLasso);
 
     connect(actionGroup, SIGNAL(triggered(QAction*)), this, SLOT(operationModeChanged(QAction*)));
-}
-
-
-void MainWindow::createActionsForEditMenu() {
-    connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
-}
-
-
-void MainWindow::createActionsForPropertyMenu() {
-    connect(ui->actionManipulateProperties, SIGNAL(triggered()), this, SLOT(manipulateProperties()));
-    connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
-    connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
 }
 
 

@@ -54,8 +54,9 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -87,6 +88,9 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
         , show_camera_path_(false)
+        , show_labels_under_mouse_(true)
+        , picked_face_index_(-1)
+        , show_coordinates_under_mouse_(true)
         , model_idx_(-1)
         , ssao_(nullptr)
         , transparency_(nullptr)
@@ -392,11 +396,26 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
 
-    bool found = false;
-    makeCurrent();
-    easy3d::vec3 p = pointUnderPixel(e->pos(), found);
-    doneCurrent();
-    window_->showPointUnderMouse(p, found);
+    if (show_labels_under_mouse_) {
+        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        if (mesh) {
+            makeCurrent();
+            SurfaceMeshPicker picker(camera());
+            picked_face_index_ = picker.pick_face(mesh, mouse_current_pos_.x(), mouse_current_pos_.y()).idx();
+            doneCurrent();
+        }
+        else
+            picked_face_index_ = -1;
+    }
+
+    if (show_coordinates_under_mouse_) {
+        bool found = false;
+        const easy3d::vec3 p = pointUnderPixel(e->pos(), found);
+        QString coords= "XYZ = [-, -, -]";
+        if (found)
+            coords = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
+        window_->setPointUnderMouse(coords);
+    }
 
     update();
 }
@@ -1005,6 +1024,44 @@ void PaintCanvas::drawCornerAxes() {
 }
 
 
+void PaintCanvas::drawFaceAndVertexLabels(const QColor& face_color, const QColor& vertex_color) {
+    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+    if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= mesh->n_faces())
+        return;
+
+    // using QPainter
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.beginNativePainting();
+
+    // draw labels for the vertices of the picked face
+    vec3 face_center(0, 0, 0);
+    int valence = 0;
+    for (auto v : mesh->vertices(SurfaceMesh::Face(picked_face_index_))) {
+        const auto& p = mesh->position(v);
+        face_center += p;
+        const vec3 proj = camera()->projectedCoordinatesOf(p);
+        painter.setPen(vertex_color);
+        painter.drawText(proj.x, proj.y, QString::fromStdString("v" + std::to_string(v.idx())));
+        ++valence;
+    }
+
+    // draw label for the picked face
+    const vec3 proj = camera()->projectedCoordinatesOf(face_center/valence);
+    painter.setPen(face_color);
+    painter.drawText(proj.x, proj.y, QString::fromStdString("f" + std::to_string(picked_face_index_)));
+    easy3d_debug_log_gl_error;
+
+    // finish
+    painter.endNativePainting();
+    painter.end();
+    // Liangliang: it seems QPainter disables depth test?
+    func_->glEnable(GL_DEPTH_TEST);
+}
+
+
 void PaintCanvas::preDraw() {
     // For normal drawing, i.e., drawing triggered by the paintEvent(),
     // the clearing is done before entering paintGL().
@@ -1035,7 +1092,7 @@ void PaintCanvas::postDraw() {
             fpsCounter = 0;
         }
 
-#if 0   // draw frame rate text using my TextRenderer
+#if 0   // draw frame rate text using Easy3D's built-in TextRenderer
         texter_->draw(fpsString.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
 #else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
@@ -1086,6 +1143,13 @@ void PaintCanvas::postDraw() {
         glEnable(GL_DEPTH_TEST);   // restore
     }
     easy3d_debug_log_gl_error;
+
+    if (show_labels_under_mouse_) {
+        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        if (mesh && picked_face_index_ >= 0 && picked_face_index_ < mesh->n_faces()) {
+            drawFaceAndVertexLabels(Qt::darkBlue, Qt::darkMagenta);
+        }
+    }
 
     // ------------- draw the picking region with transparency  ---------------
 
@@ -1431,7 +1495,7 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 }
 
 
-void PaintCanvas::addKeyFrame(){
+void PaintCanvas::addKeyFrame() {
     easy3d::Frame *frame = camera()->frame();
     kfi_->addKeyFrame(*frame);
     kfi_->adjust_scene_radius(camera());
@@ -1440,7 +1504,7 @@ void PaintCanvas::addKeyFrame(){
 }
 
 
-void PaintCanvas::playCameraPath(){
+void PaintCanvas::playCameraPath() {
     if (kfi_->interpolationIsStarted())
         kfi_->stopInterpolation();
     else
@@ -1448,8 +1512,8 @@ void PaintCanvas::playCameraPath(){
 }
 
 
-void PaintCanvas::showCamaraPath(){
-    show_camera_path_ = !show_camera_path_;
+void PaintCanvas::showCamaraPath(bool b) {
+    show_camera_path_ = b;
 
     if (show_camera_path_)
         kfi_->adjust_scene_radius(camera());
@@ -1516,7 +1580,7 @@ void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
 }
 
 
-void PaintCanvas::deleteCameraPath(){
+void PaintCanvas::deleteCameraPath() {
     kfi_->deletePath();
     // update scene bounding box
     Box3 box;
@@ -1525,6 +1589,22 @@ void PaintCanvas::deleteCameraPath(){
     camera_->setSceneBoundingBox(box.min(), box.max());
     update();
     LOG(INFO) << "camera path deleted";
+}
+
+
+void PaintCanvas::showFaceVertexLabelsUnderMouse(bool b) {
+    show_labels_under_mouse_ = b;
+    update();
+}
+
+
+void PaintCanvas::showCordinatesUnderMouse(bool b) {
+    show_coordinates_under_mouse_ = b;
+
+    QString coords("");
+    if (show_coordinates_under_mouse_)
+        coords = "XYZ = [-, -, -]";
+    window_->setPointUnderMouse(coords);
 }
 
 

@@ -51,24 +51,10 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionSnapshot"/>
+    <addaction name="actionShowFaceVertexLabelsUnderMouse"/>
+    <addaction name="actionShowCordinatesUnderMouse"/>
     <addaction name="separator"/>
-    <addaction name="actionPasteCamera"/>
-    <addaction name="actionCopyCamera"/>
-    <addaction name="separator"/>
-    <addaction name="actionSaveCameraStateToFile"/>
-    <addaction name="actionRestoreCameraStateFromFile"/>
-    <addaction name="separator"/>
-    <addaction name="actionAddKeyFrame"/>
-    <addaction name="actionDeleteCameraPath"/>
-    <addaction name="separator"/>
-    <addaction name="actionExportCamaraPathToFile"/>
-    <addaction name="actionImportCameraPathFromFile"/>
-    <addaction name="separator"/>
-    <addaction name="actionPlayCameraPath"/>
-    <addaction name="actionShowCamaraPath"/>
-    <addaction name="separator"/>
-    <addaction name="actionBackgroundColor"/>
+    <addaction name="actionSetBackgroundColor"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
@@ -195,8 +181,30 @@
     </property>
     <addaction name="actionPolyMeshExtractBoundary"/>
    </widget>
+   <widget class="QMenu" name="menuCamera">
+    <property name="title">
+     <string>Camera</string>
+    </property>
+    <addaction name="actionSnapshot"/>
+    <addaction name="separator"/>
+    <addaction name="actionCopyCamera"/>
+    <addaction name="actionPasteCamera"/>
+    <addaction name="separator"/>
+    <addaction name="actionSaveCameraStateToFile"/>
+    <addaction name="actionRestoreCameraStateFromFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowCamaraPath"/>
+    <addaction name="actionAddKeyFrame"/>
+    <addaction name="actionPlayCameraPath"/>
+    <addaction name="separator"/>
+    <addaction name="actionExportCamaraPathToFile"/>
+    <addaction name="actionImportCameraPathFromFile"/>
+    <addaction name="separator"/>
+    <addaction name="actionDeleteCameraPath"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuCamera"/>
    <addaction name="menuProperty"/>
    <addaction name="menuEdit"/>
    <addaction name="menuSelect"/>
@@ -668,7 +676,7 @@
     <string>Snapshot</string>
    </property>
   </action>
-  <action name="actionBackgroundColor">
+  <action name="actionSetBackgroundColor">
    <property name="text">
     <string>Background color</string>
    </property>
@@ -1048,6 +1056,34 @@
   <action name="actionImportCameraPathFromFile">
    <property name="text">
     <string>Import camera path from file</string>
+   </property>
+  </action>
+  <action name="actionShowFaceVertexLabelsUnderMouse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show IDs of face and its vertices under mouse</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the IDs of face and its vertices under mouse</string>
+   </property>
+  </action>
+  <action name="actionShowCordinatesUnderMouse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show cordinates under mouse</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the XYZ cordinates under mouse</string>
    </property>
   </action>
  </widget>

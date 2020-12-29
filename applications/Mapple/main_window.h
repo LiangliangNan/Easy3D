@@ -68,7 +68,7 @@ public:
 
     void setShowSelectedOnly(bool b);
 
-    void showPointUnderMouse(const easy3d::vec3& p, bool found);
+    void setPointUnderMouse(const QString& text);
 
 public slots:
     void enableCameraManipulation();
@@ -84,6 +84,8 @@ private slots:
     // view
     void saveSnapshot();
     void setBackgroundColor();
+
+    // camera
     void saveCameraStateToFile();
     void restoreCameraStateFromFile();
     void importCameraPathFromFile();
@@ -166,8 +168,9 @@ private:
 private:
     void createActionsForFileMenu();
     void createActionsForViewMenu();
-    void createActionsForEditMenu();
+    void createActionsForCameraMenu();
     void createActionsForPropertyMenu();
+    void createActionsForEditMenu();
     void createActionsForSelectMenu();
     void createActionsForPointCloudMenu();
     void createActionsForSurfaceMeshMenu();
