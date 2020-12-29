@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Add contents and brief info for each model in WidgetModelList.
     - Add tutorials for algorithms:
         - Delaunay2D,
         - simplification
