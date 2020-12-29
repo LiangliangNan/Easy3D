@@ -3,6 +3,7 @@
     <qresource prefix="/">
         <file>resources/icons/down_sample.png</file>
         <file>resources/icons/addtab.png</file>
+        <file>resources/icons/color.png</file>
         <file>resources/icons/scalar.png</file>
         <file>resources/icons/filesave.png</file>
         <file>resources/icons/duplicate.png</file>
@@ -50,6 +51,7 @@
         <file>resources/icons/snap_shot.png</file>
         <file>resources/icons/drawable_lines.png</file>
         <file>resources/icons/tree.png</file>
+        <file>resources/icons/walkthrough.png</file>
         <file>resources/icons/Mapple.ico</file>
         <file>resources/icons/Mapple.icns</file>
     </qresource>
