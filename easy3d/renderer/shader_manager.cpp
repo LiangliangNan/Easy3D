@@ -80,12 +80,14 @@ namespace easy3d {
 
         bool success = program->load_shader_from_file(ShaderProgram::VERTEX, vs_file);
         if (!success) {
+            attempt_load_program_[base_name] = false;
             delete program;
             return nullptr;
         }
 
         success = program->load_shader_from_file(ShaderProgram::FRAGMENT, fs_file);
         if (!success) {
+            attempt_load_program_[base_name] = false;
             delete program;
             return nullptr;
         }
@@ -93,6 +95,7 @@ namespace easy3d {
         if (geom_shader) {
             success = program->load_shader_from_file(ShaderProgram::GEOMETRY, gs_file);
             if (!success) {
+                attempt_load_program_[base_name] = false;
                 delete program;
                 return nullptr;
             }
