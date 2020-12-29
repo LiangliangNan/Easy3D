@@ -481,7 +481,7 @@ void MainWindow::createActionsForViewMenu() {
 
     ui->menuView->addSeparator();
 
-    connect(ui->actionBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
+    connect(ui->actionSetBackgroundColor, SIGNAL(triggered()), this, SLOT(setBackgroundColor()));
 }
 
 

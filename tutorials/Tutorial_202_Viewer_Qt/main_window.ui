@@ -53,7 +53,7 @@
     </property>
     <addaction name="actionSnapshot"/>
     <addaction name="separator"/>
-    <addaction name="actionBackgroundColor"/>
+    <addaction name="actionSetBackgroundColor"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -156,7 +156,7 @@
     <string>S</string>
    </property>
   </action>
-  <action name="actionBackgroundColor">
+  <action name="actionSetBackgroundColor">
    <property name="text">
     <string>Background Color</string>
    </property>
