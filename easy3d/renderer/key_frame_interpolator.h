@@ -324,6 +324,15 @@ namespace easy3d {
         double adjust_scene_radius(Camera* cam) const;
         //@}
 
+        /*! @name File io */
+        //@{
+    public:
+        /// saves the camera path to a file
+        void save_path(const std::string& file_name) const;
+        /// reads camera path from a file
+        void read_path(const std::string& file_name);
+        //@}
+
     private:
         virtual void update();
         virtual void on_frame_modified() { valuesAreValid_ = false; pathIsValid_ = false; splineCacheIsValid_ = false; }

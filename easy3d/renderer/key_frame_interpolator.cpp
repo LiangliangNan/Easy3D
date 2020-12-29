@@ -35,11 +35,13 @@
  *----------------------------------------------------------*/
 
 #include <easy3d/renderer/key_frame_interpolator.h>
+
+#include <fstream>
+
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for scene radius (to draw cameras in a proper size)
-
 #include <easy3d/util/timer.h>
 
 
@@ -76,6 +78,9 @@ namespace easy3d {
       debugging purpose. stopInterpolation() is called when interpolationTime() reaches firstTime() or
       lastTime(), unless loopInterpolation() is \c true. */
     void KeyFrameInterpolator::update() {
+        static std::mutex mutex;
+        mutex.try_lock();
+
         interpolateAtTime(interpolationTime());
 
         interpolationTime_ += interpolationSpeed() * interpolationPeriod() / 1000.0;
@@ -99,6 +104,8 @@ namespace easy3d {
             }
             timer_.stop();
         }
+
+        mutex.unlock();
     }
 
 
@@ -296,6 +303,49 @@ namespace easy3d {
     }
 
 
+    void KeyFrameInterpolator::save_path(const std::string &file_name) const {
+        std::ofstream output(file_name.c_str());
+        if (output.fail()) {
+            std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+            return;
+        }
+
+        output << "\tnum_key_frames: " << keyFrames_.size() << std::endl;
+
+        for (std::size_t id = 0; id < keyFrames_.size(); ++id) {
+            output << "\tframe: " << id << std::endl;
+            const KeyFrame* frame = keyFrames_[id];
+            output << "\t\tposition: " << frame->position() << std::endl;
+            output << "\t\torientation: " << frame->orientation() << std::endl;
+        }
+    }
+
+
+    void KeyFrameInterpolator::read_path(const std::string &file_name) {
+        std::ifstream input(file_name.c_str());
+        if (input.fail()) {
+            std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+            return;
+        }
+
+        // clean
+        deletePath();
+
+        // load path from file
+        std::string dummy;
+        int num_key_frames;
+        input >> dummy >> num_key_frames;
+        for (int j = 0; j < num_key_frames; ++j) {
+            int frame_id;
+            input >> dummy >> frame_id;
+            vec3 pos;
+            quat orient;
+            input >> dummy >> pos >> dummy >> orient;
+            addKeyFrame(Frame(pos, orient));
+        }
+    }
+
+
     void KeyFrameInterpolator::updateModifiedFrameValues() {
         quat prevQ = keyFrames_.front()->orientation();
         KeyFrame *kf;
@@ -425,7 +475,7 @@ namespace easy3d {
         if (!splineCacheIsValid_)
             updateSplineCache();
 
-        double alpha;
+        double alpha = 0.0;
         const double dt = (*currentFrame_[2])->time() - (*currentFrame_[1])->time();
         if (dt == 0.0)
             alpha = 0.0;
