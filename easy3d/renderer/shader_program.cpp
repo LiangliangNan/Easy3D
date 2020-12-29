@@ -171,8 +171,9 @@ namespace easy3d {
 			return false;
 		}
         unsigned int shader = glCreateShader(spGLShaderTypes[type]);
+		easy3d_debug_log_gl_error;
+        easy3d_debug_log_frame_buffer_error;
 		if (!glIsShader(shader)) {
-			
 			LOG(ERROR) << "failed creating shader";
 			return false;
 		}
