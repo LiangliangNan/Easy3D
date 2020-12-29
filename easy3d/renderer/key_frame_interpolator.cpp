@@ -142,7 +142,7 @@ namespace easy3d {
             interpolationTime_ = time;
 
         if ((!keyFrames_.empty()) && (keyFrames_.back()->time() > time))
-            LOG(ERROR) << "Error in KeyFrameInterpolator::addKeyFrame: time is not monotone";
+            LOG(ERROR) << "time is not monotone";
         else
             keyFrames_.push_back(new KeyFrame(frame, time));
 
