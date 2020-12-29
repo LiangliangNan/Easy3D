@@ -141,6 +141,9 @@ MainWindow::MainWindow(QWidget *parent)
     // view menu
     createActionsForViewMenu();
 
+    // view menu
+    createActionsForCameraMenu();
+
     // edit menu
     createActionsForEditMenu();
 
