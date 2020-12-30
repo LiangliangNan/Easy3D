@@ -28,6 +28,7 @@
 #include <string>
 #include <iostream>
 
+#include <QMutex>
 #include <QFileDialog>
 #include <QDropEvent>
 #include <QMimeData>

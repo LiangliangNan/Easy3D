@@ -37,6 +37,7 @@
 #include <easy3d/renderer/key_frame_interpolator.h>
 
 #include <fstream>
+#include <mutex>
 
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -223,7 +224,7 @@ namespace easy3d {
 
                     // cout << kf_[0]->time() << " , " << kf_[1]->time() << " , " << kf_[2]->time() << " , " << kf_[3]->time() << endl;
                     for (int step = 0; step < nbSteps; ++step) {
-                        double alpha = step / static_cast<double>(nbSteps);
+                        float alpha = step / static_cast<float>(nbSteps);
                         fr.setPosition(kf_[1]->position() + alpha * (kf_[1]->tgP() + alpha * (v1 + alpha * v2)));
                         fr.setOrientation(
                                 quat::squad(kf_[1]->orientation(), kf_[1]->tgQ(), kf_[2]->tgQ(), kf_[2]->orientation(),
