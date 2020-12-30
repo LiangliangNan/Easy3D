@@ -123,9 +123,17 @@ public:
     void enableEyeDomeLighting(bool b);
 
 public slots:
+    void showFaceVertexLabelsUnderMouse(bool);
+    void showCordinatesUnderMouse(bool);
+
+    void showEasy3DLogo(bool);
+    void showFrameRate(bool);
+    void showAxes(bool);
+
     void invertSelection();
     void deleteSelectedPrimitives();
 
+    void setPerspective(bool);
     void copyCamera();
     void pasteCamera();
 
@@ -137,9 +145,6 @@ public slots:
     // true to start and false to stop
     // returns if the command succeeded
     bool recordAnimation(bool b);
-
-    void showFaceVertexLabelsUnderMouse(bool);
-    void showCordinatesUnderMouse(bool);
 
 signals:
     void recordingFinished();
@@ -182,15 +187,15 @@ protected:
      */
     virtual void init();
 
-    /* Sets up the OpenGL viewport, projection, etc. Gets called whenever the 
-	 * widget has been resized (and also when it is shown for the first time 
+    /* Sets up the OpenGL viewport, projection, etc. Gets called whenever the
+	 * widget has been resized (and also when it is shown for the first time
 	 * because all newly created widgets get a resize event automatically).
      * If you overload this method, first call the inherited method in which
      * the projection matrix is updated.
      */
     virtual void resizeGL(int width, int height) override;
 
-    /* Renders the OpenGL scene. Gets called whenever the widget needs to 
+    /* Renders the OpenGL scene. Gets called whenever the widget needs to
 	 * be updated. Internally, it calls the following methods in order:
      *  - preDraw(): places the camera in the world coordinate system;
      *  - draw(): main drawing method. Should be overloaded.
@@ -256,12 +261,15 @@ protected:
     MainWindow* window_;
     easy3d::WalkThrough* walk_through_;
 
-	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member 
+	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member
 	// variable). Having it as a member can eliminate including the header file.
 	QOpenGLFunctions* func_;
 
     QElapsedTimer timer_;
     easy3d::TextRenderer* texter_;
+
+    bool show_easy3d_logo_;
+    bool show_frame_rate_;
 
     double  dpi_scaling_;
     int     samples_;

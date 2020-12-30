@@ -865,6 +865,10 @@ void MainWindow::createActionsForViewMenu() {
     connect(ui->actionShowFaceVertexLabelsUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showFaceVertexLabelsUnderMouse(bool)));
     connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showCordinatesUnderMouse(bool)));
 
+    connect(ui->actionShowEasy3DLogo, SIGNAL(toggled(bool)), viewer_, SLOT(showEasy3DLogo(bool)));
+    connect(ui->actionShowFrameRate, SIGNAL(toggled(bool)), viewer_, SLOT(showFrameRate(bool)));
+    connect(ui->actionShowAxes, SIGNAL(toggled(bool)), viewer_, SLOT(showAxes(bool)));
+
     QAction* actionToggleDockWidgetRendering = ui->dockWidgetRendering->toggleViewAction();
     actionToggleDockWidgetRendering->setText("Rendering Panel");
     ui->menuView->addAction(actionToggleDockWidgetRendering);
@@ -882,6 +886,7 @@ void MainWindow::createActionsForViewMenu() {
 
 
 void MainWindow::createActionsForCameraMenu() {
+    connect(ui->actionPerspectiveOrthographic, SIGNAL(toggled(bool)), viewer_, SLOT(setPerspective(bool)));
     connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
 
     connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));

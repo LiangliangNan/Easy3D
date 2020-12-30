@@ -54,6 +54,10 @@
     <addaction name="actionShowFaceVertexLabelsUnderMouse"/>
     <addaction name="actionShowCordinatesUnderMouse"/>
     <addaction name="separator"/>
+    <addaction name="actionShowEasy3DLogo"/>
+    <addaction name="actionShowFrameRate"/>
+    <addaction name="actionShowAxes"/>
+    <addaction name="separator"/>
     <addaction name="actionSetBackgroundColor"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
@@ -185,6 +189,8 @@
     <property name="title">
      <string>Camera</string>
     </property>
+    <addaction name="actionPerspectiveOrthographic"/>
+    <addaction name="separator"/>
     <addaction name="actionSnapshot"/>
     <addaction name="separator"/>
     <addaction name="actionCopyCamera"/>
@@ -193,10 +199,10 @@
     <addaction name="actionSaveCameraStateToFile"/>
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
+    <addaction name="actionAddKeyFrame"/>
     <addaction name="actionWalkThrough"/>
     <addaction name="separator"/>
     <addaction name="actionShowCamaraPath"/>
-    <addaction name="actionAddKeyFrame"/>
     <addaction name="separator"/>
     <addaction name="actionPlayCameraPath"/>
     <addaction name="actionRecordAnimation"/>
@@ -686,7 +692,7 @@
      <normaloff>:/resources/icons/color.png</normaloff>:/resources/icons/color.png</iconset>
    </property>
    <property name="text">
-    <string>Background color</string>
+    <string>Set background color</string>
    </property>
   </action>
   <action name="actionSamplingSurfaceMesh">
@@ -1110,6 +1116,50 @@
    </property>
    <property name="statusTip">
     <string>Record the animation as a sequence of images into a specified folder</string>
+   </property>
+  </action>
+  <action name="actionShowEasy3DLogo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Easy3D logo</string>
+   </property>
+  </action>
+  <action name="actionShowFrameRate">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show frame rate</string>
+   </property>
+  </action>
+  <action name="actionShowAxes">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show axes</string>
+   </property>
+  </action>
+  <action name="actionPerspectiveOrthographic">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Perspective/Orthographic</string>
    </property>
   </action>
  </widget>

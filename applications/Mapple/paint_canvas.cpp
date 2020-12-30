@@ -76,6 +76,8 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , window_(window)
         , func_(nullptr)
         , texter_(nullptr)
+        , show_easy3d_logo_(true)
+        , show_frame_rate_(true)
         , dpi_scaling_(1.0)
         , samples_(0)
         , camera_(nullptr)
@@ -226,6 +228,26 @@ void PaintCanvas::setBackgroundColor(const vec4 &c) {
     makeCurrent();
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
+}
+
+
+void PaintCanvas::showEasy3DLogo(bool b) {
+    show_easy3d_logo_ = b;
+    update();
+}
+
+
+void PaintCanvas::showFrameRate(bool b) {
+    show_frame_rate_ = b;
+    update();
+}
+
+
+void PaintCanvas::showAxes(bool b) {
+    if (drawable_axes_) {
+        drawable_axes_->set_visible(b);
+        update();
+    }
 }
 
 
@@ -504,19 +526,11 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
                e->modifiers() == (Qt::KeypadModifier | Qt::ControlModifier)) {    // move camera down
         float step = 0.05f * camera_->sceneRadius();
         camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
-    } else if (e->key() == Qt::Key_A && e->modifiers() == Qt::NoModifier) {
-        if (drawable_axes_)
-            drawable_axes_->set_visible(!drawable_axes_->is_visible());
     } else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             fitScreen(currentModel());
     } else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
         fitScreen();
-    } else if (e->key() == Qt::Key_P && e->modifiers() == Qt::NoModifier) {
-        if (camera_->type() == Camera::PERSPECTIVE)
-            camera_->setType(Camera::ORTHOGRAPHIC);
-        else
-            camera_->setType(Camera::PERSPECTIVE);
     } else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
         // Aligns camera
         Frame frame;
@@ -753,13 +767,9 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  F1:                  Help                                        \n"
             " ------------------------------------------------------------------\n"
-            "  Ctrl + 'o':          Open file                                   \n"
-            "  Ctrl + 's':          Save file                                   \n"
             "  Fn + Delete:         Delete current model                        \n"
             "  '<' or '>':          Switch between models                       \n"
-            "  's':                 Snapshot                                    \n"
             " ------------------------------------------------------------------\n"
-            "  'p':                 Toggle perspective/orthographic projection)	\n"
             "  Left mouse:          Orbit-rotate the camera                     \n"
             "  Right mouse:         Pan-move the camera                         \n"
             "  'x' + Left mouse:    Orbit-rotate the camera (screen based)      \n"
@@ -781,7 +791,6 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  '-'/'=':             Decrease/Increase point size                \n"
             "  '{'/'}':             Decrease/Increase line width                \n"
-            "  'a':                 Toggle axes									\n"
             "  'b':                 Toggle borders								\n"
             "  'e':                 Toggle edges							    \n"
             "  'v':                 Toggle vertices                             \n"
@@ -1084,13 +1093,14 @@ void PaintCanvas::preDraw() {
 void PaintCanvas::postDraw() {
     easy3d_debug_log_gl_error;
 
-    // draw the Easy3D logo and GPU time
-    if (texter_ && texter_->num_fonts() >=2)
-    {
+    // draw the Easy3D logo and frame rate
+    if (show_easy3d_logo_ && texter_ && texter_->num_fonts() >=2) {
         const float font_size = 15.0f;
         const float offset = 20.0f * dpi_scaling();
         texter_->draw("Easy3D", offset, offset, font_size, 0);
+    }
 
+    if (show_frame_rate_) {
         // FPS computation
         static unsigned int fpsCounter = 0;
         static double fps = 0.0;
@@ -1269,6 +1279,15 @@ void PaintCanvas::invertSelection() {
 
 void PaintCanvas::deleteSelectedPrimitives() {
     LOG(WARNING) << "planned to be implemented in a future release";
+}
+
+
+void PaintCanvas::setPerspective(bool b) {
+    if (b)
+        camera_->setType(Camera::PERSPECTIVE);
+    else
+        camera_->setType(Camera::ORTHOGRAPHIC);
+    update();
 }
 
 
