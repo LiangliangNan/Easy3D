@@ -96,5 +96,5 @@ void CameraIntrepolation::draw() const {
 
     // shown only when it is not animating
     if (!interpolator_->interpolationIsStarted())
-        interpolator_->draw_path(camera());
+        interpolator_->draw_path(camera(), camera()->sceneRadius() * 0.05f);
 }
