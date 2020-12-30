@@ -242,7 +242,7 @@ namespace easy3d {
 
         float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
-        dpi_scaling_ = static_cast<double>(xscale + yscale) * 0.5;
+        dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
         LOG(INFO) << "DPI scaling: " << dpi_scaling();
 
         return window;
@@ -1479,7 +1479,7 @@ namespace easy3d {
 
         // shown only when it is not animating
         if (show_camera_path_ && !kfi_->interpolationIsStarted())
-            kfi_->draw_path(camera());
+            kfi_->draw_path(camera(), camera()->sceneRadius() * 0.05f);
 
         if (show_pivot_point_) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
@@ -1551,8 +1551,8 @@ namespace easy3d {
             c /= count;
 
             const vec3 p = camera()->projectedCoordinatesOf(c);
-            double x = p.x * dpi_scaling_;
-            double y = (height() - 1 - p.y) * dpi_scaling_;
+            float x = p.x * dpi_scaling_;
+            float y = (height() - 1 - p.y) * dpi_scaling_;
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
@@ -1569,8 +1569,8 @@ namespace easy3d {
         for (std::size_t id = 0; id < points.size(); ++id) {
             const vec3& v = points[id];
             const vec3 p = camera()->projectedCoordinatesOf(v);
-            double x = p.x * dpi_scaling_;
-            double y = (height() - 1 - p.y) * dpi_scaling_;
+            float x = p.x * dpi_scaling_;
+            float y = (height() - 1 - p.y) * dpi_scaling_;
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;

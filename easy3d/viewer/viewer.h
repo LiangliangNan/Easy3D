@@ -131,7 +131,7 @@ namespace easy3d {
          * @brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
          * @return The high DPI scaling factor.
          */
-        double dpi_scaling() const { return dpi_scaling_; }
+        float dpi_scaling() const { return dpi_scaling_; }
 
         /**
          * @brief Set the background color of the viewer
@@ -406,7 +406,7 @@ namespace easy3d {
 
 	protected:
 		GLFWwindow*	window_;
-        double      dpi_scaling_;
+        float       dpi_scaling_;
 
 		std::string	title_;
 		Camera*		camera_;
