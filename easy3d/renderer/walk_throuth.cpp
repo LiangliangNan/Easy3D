@@ -24,6 +24,7 @@
 
 
 #include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/core//model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -37,11 +38,10 @@ namespace easy3d {
 
     WalkThrough::WalkThrough(Camera* camera)
             : camera_(camera)
-            , active_(false)
             , ground_plane_normal_(0, 0, 1)
             , height_factor_(0.1f)
-            , distance_factor_(1.8f)
-            , show_path_(false)
+            , third_person_forward_factor_(1.8f)
+            , path_visible_(false)
             , current_position_idx_(-1)
             , buffer_up_to_date_(false)
             , character_drawable_(nullptr)
@@ -56,6 +56,57 @@ namespace easy3d {
     WalkThrough::~WalkThrough() {
         delete_path();
         delete kfi_;
+    }
+
+
+    void WalkThrough::add_key_frame(const Frame &frame) {
+        kfi_->addKeyFrame(frame);
+        kfi_->adjust_scene_radius(camera_);
+        LOG(INFO) << "a key frame added to camera path";
+    }
+
+
+    void WalkThrough::start_walking(const std::vector<Model *> &scene) {
+        Box3 box;
+        for (const auto& m : scene)
+            box += m->bounding_box();
+        scene_box_ = box;
+        buffer_up_to_date_ = false;
+    }
+
+
+    void WalkThrough::walk_to(const vec3 &pos) {
+        const vec3 &head = character_head(pos);
+        const vec3 view_dir = head - camera_->position();
+        add_position(pos, view_dir);
+
+        // set the pivot point ahead of he new position.
+        camera_->setPivotPoint(pos + view_dir);
+    }
+
+
+    void WalkThrough::set_height_factor(float f) {
+        height_factor_ = f;
+        buffer_up_to_date_ = false;
+        move_to(current_position_idx_);
+    }
+
+
+    void WalkThrough::set_third_person_forward_factor(float f) {
+        third_person_forward_factor_ = f;
+        buffer_up_to_date_ = false;
+        move_to(current_position_idx_);
+    }
+
+
+    void WalkThrough::delete_last_position() {
+        if (path_.empty())
+            return;
+
+        if (current_position_idx_ == path_.size() - 1)
+            --current_position_idx_;
+        path_.pop_back();
+        buffer_up_to_date_ = false;
     }
 
 
@@ -85,81 +136,7 @@ namespace easy3d {
     }
 
 
-    void WalkThrough::set_scene_bbox(const Box3 &box) {
-        scene_box_ = box;
-        buffer_up_to_date_ = false;
-    }
-
-
-    float WalkThrough::character_height() const {
-        return scene_box_.range(2) * height_factor_;
-    }
-
-
-    float WalkThrough::character_distance() const {
-        return character_height() * distance_factor_;
-    }
-
-
-    vec3 WalkThrough::character_head(const vec3 &pos) const {
-        const vec3 &head = pos + ground_plane_normal_ * character_height();
-        return head;
-    }
-
-
-    vec3 WalkThrough::camera_position(const vec3 &pos, const vec3 &view_dir) const {
-        const vec3 &cam_pos = character_head(pos) - view_dir * character_distance();
-        return cam_pos;
-    }
-
-
-    // the character will be standing at pos looking in view_dir direction
-    void WalkThrough::add_position(const vec3 &pos, const vec3 &view_dir) {
-        vec3 dir = view_dir;
-        dir.z = 0; // force looking at horizontal direction
-        dir.normalize();
-
-        if (!path_.empty())
-            path_.back().second = dir;
-
-        path_.push_back({pos, dir});
-        buffer_up_to_date_ = false;
-
-        LOG(INFO) << "a standing point added to walk through";
-
-        move_to(path_.size() - 1);
-        path_modified.send();
-    }
-
-
-    // the character will be standing at pos looking in view_dir direction
-    void WalkThrough::add_position(const vec3 &pos) {
-        const vec3 &head = character_head(pos);
-        const vec3 view_dir = head - camera_->position();
-        add_position(pos, view_dir);
-    }
-
-
-    // the character will be standing at pos looking in view_dir direction
-    void WalkThrough::delete_last_position() {
-        if (path_.empty())
-            return;
-
-        if (current_position_idx_ == path_.size() - 1)
-            --current_position_idx_;
-        path_.pop_back();
-        buffer_up_to_date_ = false;
-    }
-
-
-    void WalkThrough::add_key_frame(const Frame &frame) {
-        kfi_->addKeyFrame(frame);
-        kfi_->adjust_scene_radius(camera_);
-        LOG(INFO) << "a key frame added to camera path";
-    }
-
-
-    void WalkThrough::animate_path() {
+    void WalkThrough::animate() {
         if (kfi_->interpolationIsStarted())
             kfi_->stopInterpolation();
         else {
@@ -170,20 +147,6 @@ namespace easy3d {
             }
             kfi_->startInterpolation();
         }
-    }
-
-
-    void WalkThrough::set_height_factor(float f) {
-        height_factor_ = f;
-        buffer_up_to_date_ = false;
-        move_to(current_position_idx_);
-    }
-
-
-    void WalkThrough::set_distance_factor(float f) {
-        distance_factor_ = f;
-        buffer_up_to_date_ = false;
-        move_to(current_position_idx_);
     }
 
 
@@ -214,6 +177,55 @@ namespace easy3d {
     }
 
 
+    void WalkThrough::draw() const {
+        if (!path_.empty())
+            draw_path();
+        else
+            kfi_->draw_path(camera_);
+    }
+
+
+    // the character will be standing at pos looking in view_dir direction
+    void WalkThrough::add_position(const vec3 &pos, const vec3 &view_dir) {
+        vec3 dir = view_dir;
+        dir.z = 0; // force looking at horizontal direction
+        dir.normalize();
+
+        if (!path_.empty())
+            path_.back().second = dir;
+
+        path_.push_back({pos, dir});
+        buffer_up_to_date_ = false;
+
+        LOG(INFO) << "a standing point added to walk through";
+
+        move_to(path_.size() - 1);
+        path_modified.send();
+    }
+
+
+    float WalkThrough::character_height() const {
+        return scene_box_.range(2) * height_factor_;
+    }
+
+
+    float WalkThrough::third_person_forward_distance() const {
+        return character_height() * third_person_forward_factor_;
+    }
+
+
+    vec3 WalkThrough::character_head(const vec3 &pos) const {
+        const vec3 &head = pos + ground_plane_normal_ * character_height();
+        return head;
+    }
+
+
+    vec3 WalkThrough::camera_position(const vec3 &pos, const vec3 &view_dir) const {
+        const vec3 &cam_pos = character_head(pos) - view_dir * third_person_forward_distance();
+        return cam_pos;
+    }
+
+
     Frame WalkThrough::to_frame(const vec3 &pos, const vec3 &view_dir) const {
         const vec3 &cam_pos = camera_position(pos, view_dir);
 
@@ -229,14 +241,6 @@ namespace easy3d {
         orient.set_from_rotated_basis(xAxis, up_dir, -view_dir);
 
         return Frame(cam_pos, orient);
-    }
-
-
-    void WalkThrough::draw() const {
-        if (!path_.empty())
-            draw_path();
-        else
-            kfi_->draw_path(camera_);
     }
 
 

@@ -1872,12 +1872,7 @@ void MainWindow::setupWalkThrough() {
     if (!dialog)
         dialog = new DialogWalkThrough(this);
 
-    Box3 scene_bbox;
-    const std::vector<Model*>& models = viewer_->models();
-    for (std::size_t i = 0; i < models.size(); ++i)
-        scene_bbox += models[i]->bounding_box();
-    dialog->walkThrough()->set_scene_bbox(scene_bbox);
-    dialog->walkThrough()->set_active(true);
+    dialog->walkThrough()->start_walking(viewer_->models());
     dialog->show();
     if (!ui->actionShowCamaraPath->isChecked())
         ui->actionShowCamaraPath->setChecked(true);

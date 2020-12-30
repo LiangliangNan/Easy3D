@@ -281,8 +281,8 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
         if (e->modifiers() == Qt::ControlModifier) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
-            if (found && walkThrough()->is_active() && !walkThrough()->interpolator()->interpolationIsStarted()) {
-                walkThrough()->add_position(p);
+            if (found && !walkThrough()->interpolator()->interpolationIsStarted()) {
+                walkThrough()->walk_to(p);
             }
         }
     }
@@ -1118,7 +1118,7 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (walk_through_ && walk_through_->show_path() && !walk_through_->interpolator()->interpolationIsStarted())
+    if (walk_through_ && walk_through_->is_path_visible() && !walk_through_->interpolator()->interpolationIsStarted())
         walk_through_->draw();
     easy3d_debug_log_gl_error;
 
@@ -1362,7 +1362,7 @@ void PaintCanvas::saveStateToFile(const std::string& file_name) const {
     //-----------------------------------------------------
 
     output << "<display>" << std::endl;
-    output << "\t cameraPathIsDrawn: " << walk_through_->show_path() << std::endl;
+    output << "\t cameraPathIsDrawn: " << walk_through_->is_path_visible() << std::endl;
     output << "</display>" << std::endl << std::endl;
 
     //-----------------------------------------------------
@@ -1442,7 +1442,7 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
     bool status = false;
     input >> dummy;	// this skips the keyword
     input >> dummy >> status;
-    walk_through_->set_show_path(status);
+    walk_through_->set_path_visible(status);
     input >> dummy;	// this skips the keyword
 
     //-----------------------------------------------------
@@ -1463,7 +1463,8 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 
     input >> dummy;	// this skips the keyword
 
-//    disConnectAllCameraKFIInterpolatedSignals();
+    // don't allow modify view when the camera parameters are changing.
+    easy3d::disconnect(&camera_->frame_modified, this);
 
     std::string t;
     input >> dummy >> t;
@@ -1471,7 +1472,6 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
         camera()->setType(Camera::PERSPECTIVE);
     else if (t == "ORTHOGRAPHIC")
         camera()->setType(Camera::ORTHOGRAPHIC);
-
 
     float v;
     vec3 p;
@@ -1481,7 +1481,6 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
     input >> dummy >> v;	camera()->setSceneRadius(v);
     input >> dummy >> v;	camera()->setFieldOfView(v);
     input >> dummy >> p;	camera()->setSceneCenter(p);
-//    connectAllCameraKFIInterpolatedSignals();
 
     // ManipulatedCameraFrame
     input >> dummy >> p;	camera()->frame()->setPosition(p);
@@ -1493,6 +1492,9 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
     input >> dummy >> status;	camera()->frame()->setZoomsOnPivotPoint(status);
     input >> dummy >> p;	camera()->frame()->setPivotPoint(p);
     input >> dummy;	// this skips the keyword
+
+    // now camera parameters are all up-to-date, enable updating the rendering
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     // The Camera always stores its "real" zClippingCoef in file. If it is edited,
     // its "real" coef must be saved and the coef set to 5.0, as is done in setCameraIsEdited().
@@ -1530,7 +1532,7 @@ void PaintCanvas::playCameraPath() {
 
 
 void PaintCanvas::showCamaraPath(bool b) {
-    walk_through_->set_show_path(b);
+    walk_through_->set_path_visible(b);
     if (b)
         walk_through_->interpolator()->adjust_scene_radius(camera());
     else {
@@ -1552,7 +1554,7 @@ void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
 void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
     if (walk_through_) {
         walk_through_->interpolator()->read_path(file_name);
-        if (walk_through_->show_path())
+        if (walk_through_->is_path_visible())
             walk_through_->interpolator()->adjust_scene_radius(camera());
 
         // move to the beginning view point

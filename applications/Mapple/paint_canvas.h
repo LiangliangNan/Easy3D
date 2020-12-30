@@ -51,6 +51,7 @@ class QWidget;
 class QOpenGLFunctions;
 class MainWindow;
 
+
 class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
 {
        Q_OBJECT

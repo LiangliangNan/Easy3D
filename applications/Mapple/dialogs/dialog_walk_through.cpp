@@ -80,14 +80,12 @@ easy3d::WalkThrough* DialogWalkThrough::walkThrough() {
 
 void DialogWalkThrough::showEvent(QShowEvent* e) {
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
-	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->distance_factor());
-	walkThrough()->set_active(true);
+	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->third_person_forward_factor());
 	QDialog::showEvent(e);
 }
 
 
 void DialogWalkThrough::closeEvent(QCloseEvent* e) {
-	walkThrough()->set_active(false);
     QDialog::closeEvent(e);
 	viewer_->update();
 }
@@ -100,7 +98,7 @@ void DialogWalkThrough::setCharacterHeightFactor(double h) {
 
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
-    walkThrough()->set_distance_factor(d);
+    walkThrough()->set_third_person_forward_factor(d);
     viewer_->update();
 }
 
@@ -182,7 +180,7 @@ void DialogWalkThrough::startAnimation() {
         LOG(INFO) << "nothing to animate (path is empty)";
         return;
     }
-    walkThrough()->animate_path();
+    walkThrough()->animate();
     viewer_->update();
 }
 
