@@ -111,7 +111,7 @@ namespace easy3d {
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
         camera_->showEntireScene();
 
-        easy3d::connect(&camera_->frame_modified_, this, &Viewer::update);
+        easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
 
         kfi_ = new KeyFrameInterpolator(camera_->frame());
 
