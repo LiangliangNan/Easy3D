@@ -212,14 +212,16 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 // true to start the recording and false to stop the recording.
 bool PaintCanvas::recordAnimation(bool b) {
-    if (walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
+    auto kfi = walkThrough()->interpolator();
+    if (kfi->numberOfKeyFrames() == 0) {
         if (b)
-            LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or creat it by adding key frames";
+            LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
+                            " creat it by adding key frames";
         window_->stopRecordAnimation();
         return false;
     }
 
-    // must be static because of the lambda call
+    // must be static because of the lambda function called in the animation thread
     static QString recordDir;
     static int snapshotCounter = 0;
     static QMetaObject::Connection connection;
@@ -227,14 +229,13 @@ bool PaintCanvas::recordAnimation(bool b) {
     auto snapshotFramebuffer = [&]() -> void {
         const QString count = QString("%1").arg(snapshotCounter++, 4, 10,QChar('0'));
         const QString fileName = recordDir +  QString("/snapshot-") + count + QString(".png");
-        // to correctly grab the frame buffer, the viewer window must be raised in front of other windows
-        raise();
+        raise(); // to correctly grab the frame buffer, the viewer window must be raised in front of other windows
         const QImage snapshot = grabFramebuffer();
         if (!snapshot.save(fileName, "png"))
             LOG(WARNING) << "unable to save snapshot in " << fileName.toStdString();
     };
 
-    auto interpolationFinished = [&]() -> void { emit recordingFinished(); };
+    auto interpolationFinished = [this]() -> void { emit recordingFinished(); };
 
     if (b) {
         std::string model_dir = file_system::parent_directory(currentModel()->name());
@@ -252,22 +253,22 @@ bool PaintCanvas::recordAnimation(bool b) {
         // Liangliang: MainWindow::stopRecordAnimation will be called from the animation thread, which causes the
         //             error: "QObject::startTimer: Timers cannot be started from another thread". To workaround,
         //             I invoke MainWindow::stopRecordAnimation by a viewer signal.
-        //walkThrough()->interpolator()->connect(window_, &MainWindow::stopRecordAnimation);
+        //kfi->connect(window_, &MainWindow::stopRecordAnimation);
+        kfi->connect(0, interpolationFinished);
         connect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
-        walkThrough()->interpolator()->connect( interpolationFinished);
 
-        if (walkThrough()->interpolator()->interpolationIsStarted()) // stop first if is playing now
-            walkThrough()->interpolator()->stopInterpolation();
+        if (kfi->interpolationIsStarted()) // stop first if is playing now
+            kfi->stopInterpolation();
         playCameraPath();
         LOG(INFO) << "recording animation started...";
     }
     else {
         QObject::disconnect(connection);
+        kfi->disconnect(0);
         disconnect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
-        walkThrough()->interpolator()->disconnect(window_, &MainWindow::stopRecordAnimation);
-//        walkThrough()->interpolator()->disconnect(interpolationFinished);
-        if (walkThrough()->interpolator()->interpolationIsStarted())
-            walkThrough()->interpolator()->stopInterpolation();
+
+        if (kfi->interpolationIsStarted())
+            kfi->stopInterpolation();
 
         LOG(INFO) << "recording animation finished. " << snapshotCounter << " snapshots recorded";
     }
