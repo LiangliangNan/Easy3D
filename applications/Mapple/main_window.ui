@@ -193,9 +193,13 @@
     <addaction name="actionSaveCameraStateToFile"/>
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
+    <addaction name="actionWalkThrough"/>
+    <addaction name="separator"/>
     <addaction name="actionShowCamaraPath"/>
     <addaction name="actionAddKeyFrame"/>
+    <addaction name="separator"/>
     <addaction name="actionPlayCameraPath"/>
+    <addaction name="actionRecordAnimation"/>
     <addaction name="separator"/>
     <addaction name="actionExportCamaraPathToFile"/>
     <addaction name="actionImportCameraPathFromFile"/>
@@ -677,6 +681,10 @@
    </property>
   </action>
   <action name="actionSetBackgroundColor">
+   <property name="icon">
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/color.png</normaloff>:/resources/icons/color.png</iconset>
+   </property>
    <property name="text">
     <string>Background color</string>
    </property>
@@ -1078,6 +1086,30 @@
    </property>
    <property name="statusTip">
     <string>Show the XYZ cordinates under mouse</string>
+   </property>
+  </action>
+  <action name="actionWalkThrough">
+   <property name="icon">
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/walkthrough.png</normaloff>:/resources/icons/walkthrough.png</iconset>
+   </property>
+   <property name="text">
+    <string>Walk Through</string>
+   </property>
+  </action>
+  <action name="actionRecordAnimation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/record.png</normaloff>:/resources/icons/record.png</iconset>
+   </property>
+   <property name="text">
+    <string>Record animation</string>
+   </property>
+   <property name="statusTip">
+    <string>Record the animation as a sequence of images into a specified folder</string>
    </property>
   </action>
  </widget>

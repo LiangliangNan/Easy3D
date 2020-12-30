@@ -38,6 +38,7 @@
 #define EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/signal.h>
 #include <easy3d/util/timer.h>
 
 #include <vector>
@@ -134,7 +135,7 @@ namespace easy3d {
       \endcode
       You may want to temporally disconnect the \c kfi interpolated() signal from the
       QCanvas::update() slot before calling this code. \nosubgrouping */
-    class KeyFrameInterpolator
+    class KeyFrameInterpolator : public Signal
     {
     public:
         /*! Creates a KeyFrameInterpolator, with \p frame as associated frame().
@@ -335,7 +336,6 @@ namespace easy3d {
 
     private:
         virtual void update();
-        virtual void on_frame_modified() { valuesAreValid_ = false; pathIsValid_ = false; splineCacheIsValid_ = false; }
 
     private:
         // Copy constructor and operator= are declared private and undefined

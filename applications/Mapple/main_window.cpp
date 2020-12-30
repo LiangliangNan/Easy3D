@@ -47,6 +47,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -89,6 +90,7 @@
 #include "dialogs/dialog_surface_mesh_remeshing.h"
 #include "dialogs/dialog_surface_mesh_smoothing.h"
 #include "dialogs/dialog_surface_mesh_simplification.h"
+#include "dialogs/dialog_walk_through.h"
 
 #include "widgets/widget_global_setting.h"
 #include "widgets/widget_drawable_points.h"
@@ -218,8 +220,8 @@ void MainWindow::notify(std::size_t value, bool show_text, bool update_viewer) {
 
 
 void MainWindow::output(int severity, const std::string &message) {
-//    static QMutex mutex;
-//    mutex.lock();
+    static QMutex mutex;
+    mutex.lock();
     std::string line("");
 	switch (severity) {
         case 0:
@@ -241,7 +243,7 @@ void MainWindow::output(int severity, const std::string &message) {
     }
 
     ui->listWidgetLog->scrollToBottom();
-//	mutex.unlock();
+	mutex.unlock();
 }
 
 
@@ -892,6 +894,9 @@ void MainWindow::createActionsForCameraMenu() {
 
     connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
     connect(ui->actionPlayCameraPath, SIGNAL(triggered()), viewer_, SLOT(playCameraPath()));
+
+    connect(ui->actionRecordAnimation, SIGNAL(toggled(bool)), this, SLOT(recordAnimation(bool)));
+    connect(ui->actionWalkThrough, SIGNAL(triggered()), this, SLOT(setupWalkThrough()));
 
     connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
     connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
@@ -1859,6 +1864,39 @@ void MainWindow::surfaceMeshParameterization() {
     if (!dialog)
         dialog = new DialogSurfaceMeshParameterization(this);
     dialog->show();
+}
+
+
+void MainWindow::setupWalkThrough() {
+    static DialogWalkThrough* dialog = nullptr;
+    if (!dialog)
+        dialog = new DialogWalkThrough(this);
+
+    Box3 scene_bbox;
+    const std::vector<Model*>& models = viewer_->models();
+    for (std::size_t i = 0; i < models.size(); ++i)
+        scene_bbox += models[i]->bounding_box();
+    dialog->walkThrough()->set_scene_bbox(scene_bbox);
+    dialog->walkThrough()->set_active(true);
+    dialog->show();
+    if (!ui->actionShowCamaraPath->isChecked())
+        ui->actionShowCamaraPath->setChecked(true);
+}
+
+
+void MainWindow::recordAnimation(bool b) {
+    if (viewer_->recordAnimation(b)) {
+        for (auto action : ui->menuCamera->actions()) {
+            if (action != ui->actionRecordAnimation)
+                action->setEnabled(!b);
+        }
+    }
+}
+
+
+void MainWindow::stopRecordAnimation() {
+    if (ui->actionRecordAnimation->isChecked())
+        ui->actionRecordAnimation->setChecked(false);
 }
 
 

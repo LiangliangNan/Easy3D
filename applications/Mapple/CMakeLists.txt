@@ -39,6 +39,7 @@ set(${PROJECT_NAME}_HEADERS
         dialogs/dialog_surface_mesh_sampling.h
         dialogs/dialog_snapshot.h
         dialogs/dialog_point_cloud_simplification.h
+        dialogs/dialog_walk_through.h
 
         widgets/widget_checker_sphere.h
         widgets/widget_drawable.h
@@ -71,6 +72,7 @@ set(${PROJECT_NAME}_SOURCES
         dialogs/dialog_surface_mesh_sampling.cpp
         dialogs/dialog_snapshot.cpp
         dialogs/dialog_point_cloud_simplification.cpp
+        dialogs/dialog_walk_through.cpp
 
         widgets/widget_checker_sphere.cpp
         widgets/widget_drawable.cpp
@@ -100,6 +102,7 @@ set(${PROJECT_NAME}_FORMS
         dialogs/dialog_surface_mesh_sampling.ui
         dialogs/dialog_snapshot.ui
         dialogs/dialog_point_cloud_simplification.ui
+        dialogs/dialog_walk_through.ui
 
         widgets/widget_drawable_points.ui
         widgets/widget_drawable_lines.ui

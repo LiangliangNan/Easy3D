@@ -44,7 +44,7 @@ namespace easy3d {
     class Transparency;
     class EyeDomeLighting;
     class TextRenderer;
-    class KeyFrameInterpolator;
+    class WalkThrough;
 }
 
 class QWidget;
@@ -79,6 +79,9 @@ public:
     // the camera
     easy3d::Camera* camera() override { return camera_; }
     const easy3d::Camera* camera() const override { return camera_; }
+    // the walkthrough
+    easy3d::WalkThrough* walkThrough() { return walk_through_; }
+    const easy3d::WalkThrough* walkThrough() const { return walk_through_; }
 
 	// moves the camera so that the 'model' is centered on the screen.
 	// if 'model' is NULL, it centers the entire scene (all models).
@@ -104,6 +107,8 @@ public:
     // expand: expand the frustum to ensure the image aspect ratio
 	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
 
+public:
+
     easy3d::AmbientOcclusion *ssao() { return ssao_; }
     void enableSsao(bool b);
 
@@ -127,6 +132,10 @@ public slots:
     void addKeyFrame();
     void playCameraPath();
     void deleteCameraPath();
+
+    // true to start and false to stop
+    // returns if the command succeeded
+    bool recordAnimation(bool b);
 
     void showFaceVertexLabelsUnderMouse(bool);
     void showCordinatesUnderMouse(bool);
@@ -213,6 +222,17 @@ protected:
     //		 inherited function.
     virtual void cleanup();
 
+signals:
+    /*! Signal emitted at the end of the paintGL() method, when frame is drawn.
+        Can be used to notify an image grabbing process that the image is ready. A typical example is to
+        connect this signal to the saveSnapshot() method, so that a (numbered) snapshot is generated after
+        each new display, in order to create a movie:
+        \code
+        connect(viewer, SIGNAL(drawFinished()), SLOT(saveSnapshot()));
+        \endcode
+     */
+    void drawFinished();
+
 protected:
     virtual void mousePressEvent(QMouseEvent *) override;    // Mouse button press event handler
     virtual void mouseMoveEvent(QMouseEvent *) override;
@@ -230,7 +250,7 @@ protected:
 
 protected:
     MainWindow* window_;
-    easy3d::KeyFrameInterpolator* kfi_;
+    easy3d::WalkThrough* walk_through_;
 
 	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member 
 	// variable). Having it as a member can eliminate including the header file.
@@ -251,15 +271,12 @@ protected:
     QPoint  mouse_pressed_pos_;     // mouse pos when pressed
     int pressed_key_;
 
-    bool    show_pivot_point_;
+    bool show_pivot_point_;
 
     //----------------- viewer data -------------------
 
     // corner axes
     easy3d::TrianglesDrawable* drawable_axes_;
-
-    // camera path
-    bool	show_camera_path_;
 
     bool    show_labels_under_mouse_;
     int     picked_face_index_;

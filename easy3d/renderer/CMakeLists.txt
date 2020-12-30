@@ -43,6 +43,7 @@ set(${PROJECT_NAME}_HEADERS
         transform_decompose.h
         transparency.h
         vertex_array_object.h
+        walk_throuth.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -82,6 +83,7 @@ set(${PROJECT_NAME}_SOURCES
         transform.cpp
         transform_decompose.cpp
         vertex_array_object.cpp
+        walk_throuth.cpp
         )
 
 

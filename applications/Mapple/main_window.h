@@ -73,7 +73,7 @@ public:
 public slots:
     void enableCameraManipulation();
 
-private slots:
+public slots:
 
     // file
     bool onOpen();
@@ -90,6 +90,9 @@ private slots:
     void restoreCameraStateFromFile();
     void importCameraPathFromFile();
     void exportCamaraPathToFile();
+    void setupWalkThrough();
+    void recordAnimation(bool);
+    void stopRecordAnimation();
 
     // property
     void manipulateProperties();

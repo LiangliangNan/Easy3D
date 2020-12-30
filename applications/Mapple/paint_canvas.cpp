@@ -52,7 +52,7 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/util/file_system.h>
@@ -87,7 +87,6 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , pressed_key_(-1)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
-        , show_camera_path_(false)
         , show_labels_under_mouse_(false)
         , picked_face_index_(-1)
         , show_coordinates_under_mouse_(false)
@@ -108,7 +107,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
     camera_->showEntireScene();
     camera_->connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
-    kfi_ = new KeyFrameInterpolator(camera_->frame());
+    walk_through_ = new WalkThrough(camera_);
 }
 
 
@@ -130,7 +129,7 @@ void PaintCanvas::cleanup() {
     }
 
     delete camera_;
-    delete kfi_;
+    delete walk_through_;
     delete drawable_axes_;
     delete ssao_;
     delete shadow_;
@@ -277,6 +276,14 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                     camera()->interpolateToFitScene();
             }
         }
+
+        if (e->modifiers() == Qt::ControlModifier) {
+            bool found = false;
+            const vec3 p = pointUnderPixel(e->pos(), found);
+            if (found && walkThrough()->is_active() && !walkThrough()->interpolator()->interpolationIsStarted()) {
+                walkThrough()->add_position(p);
+            }
+        }
     }
 
     QOpenGLWidget::mousePressEvent(e);
@@ -351,7 +358,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 
 void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     int x = e->pos().x(), y = e->pos().y();
-    if (x < 0 || x > width() || y < 0 || y > height()) {
+    if (x < 0 || x > width() || y < 0 || y > height() || walkThrough()->interpolator()->interpolationIsStarted()) {
         e->ignore();
         return;
     }
@@ -935,6 +942,8 @@ void PaintCanvas::paintGL() {
 
     // Add visual hints: axis, camera, grid...
     postDraw();
+
+    Q_EMIT drawFinished();
 }
 
 
@@ -1108,8 +1117,8 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (show_camera_path_ && !kfi_->interpolationIsStarted())
-        kfi_->draw_path(camera());
+    if (walk_through_ && walk_through_->show_path() && !walk_through_->interpolator()->interpolationIsStarted())
+        walk_through_->draw();
     easy3d_debug_log_gl_error;
 
     if (show_pivot_point_) {
@@ -1280,6 +1289,9 @@ void PaintCanvas::copyCamera() {
 
 
 void PaintCanvas::pasteCamera() {
+    if (walkThrough()->interpolator()->interpolationIsStarted())
+        return;
+
     // get the camera parameters from clipboard string
     const QString str = qApp->clipboard()->text();
     const QStringList list = str.split(" ", QString::SkipEmptyParts);
@@ -1349,7 +1361,7 @@ void PaintCanvas::saveStateToFile(const std::string& file_name) const {
     //-----------------------------------------------------
 
     output << "<display>" << std::endl;
-    output << "\t cameraPathIsDrawn: " << show_camera_path_ << std::endl;
+    output << "\t cameraPathIsDrawn: " << walk_through_->show_path() << std::endl;
     output << "</display>" << std::endl << std::endl;
 
     //-----------------------------------------------------
@@ -1426,14 +1438,16 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 
     //-----------------------------------------------------
 
+    bool status = false;
     input >> dummy;	// this skips the keyword
-    input >> dummy >> show_camera_path_;
+    input >> dummy >> status;
+    walk_through_->set_show_path(status);
     input >> dummy;	// this skips the keyword
 
     //-----------------------------------------------------
 
     input >> dummy;	// this skips the keyword
-    int state;
+    int state = -1;
     input >> dummy >> state;
     window()->setWindowState(Qt::WindowState(state));
     if (Qt::WindowState(state) == Qt::WindowNoState) {
@@ -1469,7 +1483,6 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 //    connectAllCameraKFIInterpolatedSignals();
 
     // ManipulatedCameraFrame
-    bool status;
     input >> dummy >> p;	camera()->frame()->setPosition(p);
     input >> dummy >> q;	camera()->frame()->setOrientation(q);
     input >> dummy >> v;	camera()->frame()->setWheelSensitivity(v);
@@ -1497,98 +1510,70 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 
 void PaintCanvas::addKeyFrame() {
     easy3d::Frame *frame = camera()->frame();
-    kfi_->addKeyFrame(*frame);
-    kfi_->adjust_scene_radius(camera());
-    LOG(INFO) << "key frame added to camera path";
+    walk_through_->add_key_frame(*frame);
     update();
 }
 
 
 void PaintCanvas::playCameraPath() {
-    if (kfi_->interpolationIsStarted())
-        kfi_->stopInterpolation();
+    if (walk_through_->interpolator()->numberOfKeyFrames() == 0) {
+        LOG(WARNING) << "camera path is empty. You may import a camera path from a file or creat it by adding key frames";
+        return;
+    }
+
+    if (walk_through_->interpolator()->interpolationIsStarted())
+        walk_through_->interpolator()->stopInterpolation();
     else
-        kfi_->startInterpolation();
+        walk_through_->interpolator()->startInterpolation();
 }
 
 
 void PaintCanvas::showCamaraPath(bool b) {
-    show_camera_path_ = b;
-
-    if (show_camera_path_)
-        kfi_->adjust_scene_radius(camera());
+    walk_through_->set_show_path(b);
+    if (b)
+        walk_through_->interpolator()->adjust_scene_radius(camera());
     else {
         Box3 box;
         for (auto m : models_)
             box.add_box(m->bounding_box());
         camera_->setSceneBoundingBox(box.min(), box.max());
     }
-
     update();
 }
 
 
 void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
-    if (!kfi_)
-        return;
-
-    std::ofstream output(file_name.c_str());
-    if (output.fail()) {
-        std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
-        return;
-    }
-
-    std::size_t num = kfi_->numberOfKeyFrames();
-    output << "\tnum_key_frames: " << num << std::endl;
-
-    for (std::size_t j = 0; j < num; ++j) {
-        output << "\tframe: " << j << std::endl;
-        const Frame &frame = kfi_->keyFrame(j);
-        output << "\t\tposition: " << frame.position() << std::endl;
-        output << "\t\torientation: " << frame.orientation() << std::endl;
-    }
+    if (walk_through_)
+        walk_through_->interpolator()->save_path(file_name);
 }
 
 
 void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
-    std::ifstream input(file_name.c_str());
-    if (input.fail()) {
-        std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
-        return;
+    if (walk_through_) {
+        walk_through_->interpolator()->read_path(file_name);
+        if (walk_through_->show_path())
+            walk_through_->interpolator()->adjust_scene_radius(camera());
+
+        // move to the beginning view point
+        walk_through_->interpolator()->interpolateAtTime(0);
+
+        update();
     }
-
-    // clean
-    kfi_->deletePath();
-
-    // load path from file
-    std::string dummy;
-    int num_key_frames;
-    input >> dummy >> num_key_frames;
-    for (int j = 0; j < num_key_frames; ++j) {
-        int frame_id;
-        input >> dummy >> frame_id;
-        vec3 pos;
-        quat orient;
-        input >> dummy >> pos >> dummy >> orient;
-        kfi_->addKeyFrame(Frame(pos, orient));
-    }
-
-    if (show_camera_path_)
-        kfi_->adjust_scene_radius(camera());
-
-    update();
 }
 
 
 void PaintCanvas::deleteCameraPath() {
-    kfi_->deletePath();
-    // update scene bounding box
-    Box3 box;
-    for (auto m : models_)
-        box.add_box(m->bounding_box());
-    camera_->setSceneBoundingBox(box.min(), box.max());
-    update();
-    LOG(INFO) << "camera path deleted";
+    if (walk_through_) {
+        walk_through_->interpolator()->deletePath();
+
+        // update scene bounding box
+        Box3 box;
+        for (auto m : models_)
+            box.add_box(m->bounding_box());
+        camera_->setSceneBoundingBox(box.min(), box.max());
+        update();
+        LOG(INFO) << "camera path deleted";
+    }
 }
 
 
