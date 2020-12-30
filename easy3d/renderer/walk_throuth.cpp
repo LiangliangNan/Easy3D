@@ -39,7 +39,7 @@ namespace easy3d {
     WalkThrough::WalkThrough(Camera* camera)
             : camera_(camera)
             , ground_plane_normal_(0, 0, 1)
-            , height_factor_(0.1f)
+            , height_factor_(0.2f)
             , third_person_forward_factor_(1.8f)
             , path_visible_(false)
             , current_position_idx_(-1)
@@ -169,9 +169,20 @@ namespace easy3d {
             camera_->setUpVector(up_dir);
         }
 
-        camera_->setPivotPoint(pos);
         current_position_idx_ = idx;
         path_modified.send();
+
+        camera_->setPivotPoint(pos);
+
+        // set the pivot point ahead of he new position.
+        if (idx + 1 < path_.size()) {
+            // set it to be the next position in the front
+            camera_->setPivotPoint(path_[idx + 1].first);
+        }
+        else {
+            // set it to be the character height ahead
+            camera_->setPivotPoint(pos + normalize(view_dir) * character_height());
+        }
 
         return current_position_idx_;
     }
@@ -180,8 +191,9 @@ namespace easy3d {
     void WalkThrough::draw() const {
         if (!path_.empty())
             draw_path();
-        else
-            kfi_->draw_path(camera_);
+
+        if (kfi_->numberOfKeyFrames() > 0)
+            kfi_->draw_path(camera_, character_height() * 0.1f);
     }
 
 
@@ -205,7 +217,10 @@ namespace easy3d {
 
 
     float WalkThrough::character_height() const {
-        return scene_box_.range(2) * height_factor_;
+        if (scene_box_.is_valid())
+            return scene_box_.range(2) * height_factor_;
+        else
+            return camera_->sceneRadius() * height_factor_;
     }
 
 
