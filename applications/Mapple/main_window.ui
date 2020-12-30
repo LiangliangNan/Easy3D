@@ -202,7 +202,7 @@
     <addaction name="actionAddKeyFrame"/>
     <addaction name="actionWalkThrough"/>
     <addaction name="separator"/>
-    <addaction name="actionShowCamaraPath"/>
+    <addaction name="actionShowCameraPath"/>
     <addaction name="separator"/>
     <addaction name="actionPlayCameraPath"/>
     <addaction name="actionRecordAnimation"/>
@@ -1051,12 +1051,12 @@
     <string>Alt+D</string>
    </property>
   </action>
-  <action name="actionShowCamaraPath">
+  <action name="actionShowCameraPath">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show camara path</string>
+    <string>Show/Hide camera path</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>

@@ -1550,7 +1550,7 @@ void PaintCanvas::playCameraPath() {
 }
 
 
-void PaintCanvas::showCamaraPath(bool b) {
+void PaintCanvas::showCameraPath(bool b) {
     walk_through_->set_path_visible(b);
     if (b)
         walk_through_->interpolator()->adjust_scene_radius(camera());

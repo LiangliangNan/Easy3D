@@ -137,7 +137,8 @@ public slots:
     void copyCamera();
     void pasteCamera();
 
-    void showCamaraPath(bool);
+    void showCameraPath(bool);
+
     void addKeyFrame();
     void playCameraPath();
     void deleteCameraPath();

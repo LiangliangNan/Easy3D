@@ -120,7 +120,7 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="labelCharacter">
+        <widget class="QLabel" name="labelCharacterDistanceToEye">
          <property name="text">
           <string>Character distance to eye</string>
          </property>
@@ -190,6 +190,15 @@
       <widget class="QPushButton" name="startAnimationButton">
        <property name="text">
         <string>Annimate</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+       <property name="default">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

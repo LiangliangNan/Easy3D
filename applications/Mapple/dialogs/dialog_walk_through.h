@@ -50,13 +50,18 @@ public Q_SLOTS :
 
     void goToPosition(int);
 
-	void startAnimation();
+	void startAnimation(bool);
 	void exportAnimation();
     void clearPath();
 
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
 	void setInterpolationSpeed(double);
+
+	void resetUIAfterAnimationStopped();
+
+signals:
+    void animationFinished();
 
 protected:
 	virtual	void showEvent(QShowEvent* e);

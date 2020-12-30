@@ -50,7 +50,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
 
-    connect(startAnimationButton, SIGNAL(clicked()), this, SLOT(startAnimation()));
+    connect(startAnimationButton, SIGNAL(toggled(bool)), this, SLOT(startAnimation(bool)));
     connect(exportAnimationButton, SIGNAL(clicked()), this, SLOT(exportAnimation()));
     connect(clearPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
 
@@ -164,7 +164,7 @@ void DialogWalkThrough::goToPosition(int p) {
 
 void DialogWalkThrough::clearPath() {
     if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
-        LOG(INFO) << "nothing to clear (path is empty)";
+        LOG(WARNING) << "nothing to clear (path is empty)";
         return;
     }
 
@@ -180,13 +180,61 @@ void DialogWalkThrough::clearPath() {
 }
 
 
-void DialogWalkThrough::startAnimation() {
+void DialogWalkThrough::startAnimation(bool b) {
     if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
-        LOG(INFO) << "nothing to animate (path is empty)";
+        startAnimationButton->setChecked(false);
         return;
     }
-    walkThrough()->animate();
+
+    auto interpolationFinished = [this]() -> void { emit animationFinished(); };
+
+    if (b) {
+        labelDefineStartingPoint->setEnabled(false);
+        labelDefinePath->setEnabled(false);
+        labelCharacterHeightFactor->setEnabled(false);
+        labelCharacterDistanceToEye->setEnabled(false);
+        doubleSpinBoxCharacterHeightFactor->setEnabled(false);
+        doubleSpinBoxCharacterDistanceFactor->setEnabled(false);
+        previousPositionButton->setEnabled(false);
+        nextPositionButton->setEnabled(false);
+        removeLastPositionButton->setEnabled(false);
+        horizontalSliderPreview->setEnabled(false);
+        exportAnimationButton->setEnabled(false);
+        clearPathButton->setEnabled(false);
+
+        easy3d::connect(&walkThrough()->interpolator()->end_reached, 0, interpolationFinished);
+        QObject::connect(this, &DialogWalkThrough::animationFinished, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+
+        walkThrough()->animate();
+        LOG(INFO) << "animation started...";
+    }
+    else {
+        labelDefineStartingPoint->setEnabled(true);
+        labelDefinePath->setEnabled(true);
+        labelCharacterHeightFactor->setEnabled(true);
+        labelCharacterDistanceToEye->setEnabled(true);
+        doubleSpinBoxCharacterHeightFactor->setEnabled(true);
+        doubleSpinBoxCharacterDistanceFactor->setEnabled(true);
+        previousPositionButton->setEnabled(true);
+        nextPositionButton->setEnabled(true);
+        removeLastPositionButton->setEnabled(true);
+        horizontalSliderPreview->setEnabled(true);
+        exportAnimationButton->setEnabled(true);
+        clearPathButton->setEnabled(true);
+
+        easy3d::disconnect(&walkThrough()->interpolator()->end_reached, 0);
+        QObject::disconnect(this, &DialogWalkThrough::animationFinished, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+
+        walkThrough()->interpolator()->stopInterpolation();
+        LOG(INFO) << "animation finished";
+    }
+
     viewer_->update();
+}
+
+
+void DialogWalkThrough::resetUIAfterAnimationStopped() {
+    startAnimationButton->setChecked(false);
 }
 
 
