@@ -35,20 +35,14 @@ namespace easy3d {
     /**
      * \brief Implementation of a simple signal-slot mechanism. \par
      * \details Multiple slots (classes and their member functions) can be connected to a signal object.
-     *        You can connect functions to the signal which will be called when
-     *        the trigger() method on the signal object is invoked. Any argument
-     *        passed to emit() will be passed to the given functions.
-     *        A typical usage of Signal in Easy3D is camera manipulation. When
-     *        the camera has been manipulated, the viewer should be notified (e.g.,
-     *        a repaint event should be triggered). This is done by calling
-     *        to the viewer's update() function. So in Easy3D, the viewer's update
-     *        function is connected to the camera.
-     * \attention Current implementation can hold only one single function of each owner.
-     *            (can be easily extended to multiple ones if needed).
-     *
+     *        You can connect functions to the signal which will be called when the trigger() method on the signal
+     *        object is invoked. Any argument passed to emit() will be passed to the given functions. A typical usage
+     *        of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the viewer should be
+     *        notified (e.g., a repaint event should be triggered). This is done by calling to the viewer's update()
+     *        function. So in Easy3D, the viewer's update function is connected to the camera.
+     * \note Current implementation can hold only one single function of each owner.
      * \class Signal easy3d/core/signal.h
-     *
-     * \todo Extend this class to accept non-member functions and multiple functions of a class.
+     * \todo Extend this class to accept multiple functions of a class.
      */
     class Signal {
 	public:
@@ -66,32 +60,31 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void connect(Class&& owner, Function&& func, Args&&... args)  {
             if (owner && func)
-                owner_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
+                owned_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
+        }
+
+        /**
+         * \brief Disconnect all the slots of a owner from this signal.
+         */
+        template < class Class >
+        void disconnect(Class&& owner)  {
+            owned_slots_.erase(owner);
         }
 
         /**
          * \brief Connect a free (i.e., not owned by any class) slot to this signal.
+         * A unique index of the function must be provided (to differentiate with other free functions).
          */
         template < class Function, class... Args >
-        void connect(Function&& func, Args&&... args) {
-            auto f = std::bind(func, std::forward<Args>(args)...);
-            free_slots_.push_back(f);
-        }
-
-        template < class Function >
-        void disconnect(Function&& func) {
-            std::cout << "num free slots before disconnect(): " << free_slots_.size() << std::endl;
-            free_slots_.erase(std::find(free_slots_.begin(), free_slots_.end(), func));
-            std::cout << "num free slots after disconnect():  " << free_slots_.size() << std::endl;
+        void connect(int idx, Function&& func, Args&&... args) {
+            free_slots_[idx] = std::bind(func, std::forward<Args>(args)...);
         }
 
         /**
-         * \brief Disconnect a slot from this signal.
+         * \brief Disconnect a free slot function from this signal.
+         * The slot is identified by its unique index.
          */
-        template < class Class, class Function >
-        void disconnect(Class&& owner, Function&& func)  {
-            owner_slots_.erase(owner);
-        }
+        void disconnect(int idx) { free_slots_.erase(idx); }
 
         /**
          * \brief Trigger all the connected slots.
@@ -100,17 +93,20 @@ namespace easy3d {
          */
         template < class ... Args >
         void trigger(Args&&... args) {
-            for(auto it : owner_slots_) {
+            for(auto it : owned_slots_) {
                 it.second(std::forward<Args>(args)...);
             }
-            for(auto func : free_slots_) {
-                func(std::forward<Args>(args)...);
+            for(auto it : free_slots_) {
+                it.second(std::forward<Args>(args)...);
             }
         }
 
     private:
-        std::unordered_map<void*, std::function<void(void)> > owner_slots_;
-        std::vector< std::function<void(void)> > free_slots_;
+        // the key value is the pointer to the owner of the slot (to differentiate with slots of other owners)
+        std::unordered_map<void*, std::function<void(void)> > owned_slots_;
+
+        // the key value is the unique index of a slot function (to differentiate with other free functions)
+        std::unordered_map<int, std::function<void(void)> > free_slots_;
 	};
 
 }
