@@ -160,7 +160,7 @@ void DialogWalkThrough::goToPosition(int p) {
 
 
 void DialogWalkThrough::clearPath() {
-    if (walkThrough()->num_positions() == 0) {
+    if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
         LOG(INFO) << "nothing to clear (path is empty)";
         return;
     }
