@@ -234,6 +234,8 @@ bool PaintCanvas::recordAnimation(bool b) {
             LOG(WARNING) << "unable to save snapshot in " << fileName.toStdString();
     };
 
+    auto interpolationFinished = [&]() -> void { emit recordingFinished(); };
+
     if (b) {
         std::string model_dir = file_system::parent_directory(currentModel()->name());
         recordDir = QFileDialog::getExistingDirectory(
@@ -246,7 +248,13 @@ bool PaintCanvas::recordAnimation(bool b) {
 
         snapshotCounter = 0;
         connection = QObject::connect(this, &PaintCanvas::drawFinished, snapshotFramebuffer);
-        walkThrough()->interpolator()->connect(window_, &MainWindow::stopRecordAnimation);
+
+        // Liangliang: MainWindow::stopRecordAnimation will be called from the animation thread, which causes the
+        //             error: "QObject::startTimer: Timers cannot be started from another thread". To workaround,
+        //             I invoke MainWindow::stopRecordAnimation by a viewer signal.
+        //walkThrough()->interpolator()->connect(window_, &MainWindow::stopRecordAnimation);
+        connect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+        walkThrough()->interpolator()->connect( interpolationFinished);
 
         if (walkThrough()->interpolator()->interpolationIsStarted()) // stop first if is playing now
             walkThrough()->interpolator()->stopInterpolation();
@@ -255,7 +263,9 @@ bool PaintCanvas::recordAnimation(bool b) {
     }
     else {
         QObject::disconnect(connection);
-        walkThrough()->interpolator()->disconnect(window_);
+        disconnect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+        walkThrough()->interpolator()->disconnect(window_, &MainWindow::stopRecordAnimation);
+//        walkThrough()->interpolator()->disconnect(interpolationFinished);
         if (walkThrough()->interpolator()->interpolationIsStarted())
             walkThrough()->interpolator()->stopInterpolation();
 

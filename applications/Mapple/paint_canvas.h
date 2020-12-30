@@ -140,6 +140,9 @@ public slots:
     void showFaceVertexLabelsUnderMouse(bool);
     void showCordinatesUnderMouse(bool);
 
+signals:
+    void recordingFinished();
+
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
     Use restoreStateFromFile() to restore this state, or you can restore it in your init() method).
