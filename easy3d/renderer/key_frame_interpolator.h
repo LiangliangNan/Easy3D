@@ -316,9 +316,10 @@ namespace easy3d {
 
         /*! Draws the camera path used to interpolate the frame().
          * \param camera The current camera used by the viewer.
-         * \param scale Controls the size of the cameras. Default value is 1.0, which should give good results.
+         * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
+         *      10% of the character height (in walking mode).
          * The rendering state can be changes by calling the path/cameras drawable's related methods. */
-        virtual void draw_path(const Camera* camera, float scale=1.0);
+        virtual void draw_path(const Camera* camera, float camera_width);
 
         /// adjusts the scene radius so that the entire camera path is within the view frustum.
         /// \related The adjusted scene radius.

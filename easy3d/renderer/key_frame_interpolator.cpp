@@ -185,7 +185,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::draw_path(const Camera *cam, float scale) {
+    void KeyFrameInterpolator::draw_path(const Camera *cam, float camera_width) {
         if (keyFrames_.empty())
             return;
 
@@ -218,9 +218,9 @@ namespace easy3d {
                 kf_[3] = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
 
                 while (kf_[2]) {
-                    vec3 diff = kf_[2]->position() - kf_[1]->position();
-                    vec3 v1 = 3.0 * diff - 2.0 * kf_[1]->tgP() - kf_[2]->tgP();
-                    vec3 v2 = -2.0 * diff + kf_[1]->tgP() + kf_[2]->tgP();
+                    const vec3 diff = kf_[2]->position() - kf_[1]->position();
+                    const vec3 v1 = 3.0 * diff - 2.0 * kf_[1]->tgP() - kf_[2]->tgP();
+                    const vec3 v2 = -2.0 * diff + kf_[1]->tgP() + kf_[2]->tgP();
 
                     // cout << kf_[0]->time() << " , " << kf_[1]->time() << " , " << kf_[2]->time() << " , " << kf_[3]->time() << endl;
                     for (int step = 0; step < nbSteps; ++step) {
@@ -257,7 +257,7 @@ namespace easy3d {
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);
-                path_drawable_->set_uniform_coloring(vec4(1.0f, 0.67f, 0.5f, 1.0f));
+                path_drawable_->set_uniform_coloring(vec4(1.0f, 0.2f, 0.2f, 1.0f));
                 path_drawable_->set_line_width(2);
                 path_drawable_->set_impostor_type(LinesDrawable::CYLINDER);
             }
@@ -269,7 +269,7 @@ namespace easy3d {
             // camera representation
             for (std::size_t i = 0; i < keyFrames_.size(); ++i) {
                 std::vector<vec3> cam_points;
-                opengl::prepare_camera(cam_points, cam->sceneRadius() * 0.03f * scale,
+                opengl::prepare_camera(cam_points, camera_width,
                                        static_cast<float>(cam->screenHeight()) / cam->screenWidth());
                 const mat4 &m = Frame(keyFrames_[i]->position(), keyFrames_[i]->orientation()).matrix();
                 for (auto &p : cam_points) {
