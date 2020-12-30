@@ -498,7 +498,7 @@ namespace easy3d {
                 return dd;
             }
 
-            float inv_d = 1.0 / d;
+            float inv_d = 1.0f / d;
             vec3 v1v2 = v2;
             v1v2 -= v1;
             vec3 v0p = p;
