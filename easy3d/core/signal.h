@@ -53,7 +53,7 @@ namespace easy3d {
     class Signal {
 	public:
         /**
-         * \brief Connect a slot to this signal.
+         * \brief Connect an owned slot to this signal.
          *  - If no overloaded function:  \par
          *      \code
          *      camera()->connect(this, &Viewer::update);
@@ -66,15 +66,31 @@ namespace easy3d {
         template < class Class, class Function, class... Args >
         void connect(Class&& owner, Function&& func, Args&&... args)  {
             if (owner && func)
-                slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
+                owner_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
+        }
+
+        /**
+         * \brief Connect a free (i.e., not owned by any class) slot to this signal.
+         */
+        template < class Function, class... Args >
+        void connect(Function&& func, Args&&... args) {
+            auto f = std::bind(func, std::forward<Args>(args)...);
+            free_slots_.push_back(f);
+        }
+
+        template < class Function >
+        void disconnect(Function&& func) {
+            std::cout << "num free slots before disconnect(): " << free_slots_.size() << std::endl;
+            free_slots_.erase(std::find(free_slots_.begin(), free_slots_.end(), func));
+            std::cout << "num free slots after disconnect():  " << free_slots_.size() << std::endl;
         }
 
         /**
          * \brief Disconnect a slot from this signal.
          */
-        template < class Class >
-        void disconnect(Class&& owner)  {
-            slots_.erase(owner);
+        template < class Class, class Function >
+        void disconnect(Class&& owner, Function&& func)  {
+            owner_slots_.erase(owner);
         }
 
         /**
@@ -84,13 +100,17 @@ namespace easy3d {
          */
         template < class ... Args >
         void trigger(Args&&... args) {
-            for(auto it : slots_) {
+            for(auto it : owner_slots_) {
                 it.second(std::forward<Args>(args)...);
+            }
+            for(auto func : free_slots_) {
+                func(std::forward<Args>(args)...);
             }
         }
 
     private:
-        std::unordered_map<void*, std::function<void(void)>> slots_;
+        std::unordered_map<void*, std::function<void(void)> > owner_slots_;
+        std::vector< std::function<void(void)> > free_slots_;
 	};
 
 }
