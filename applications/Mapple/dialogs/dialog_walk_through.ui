@@ -26,7 +26,7 @@
    <item>
     <widget class="QLabel" name="labelDefineStartingPoint">
      <property name="text">
-      <string>Step 1: Define a start view point</string>
+      <string>Step 1: Find a start view point</string>
      </property>
     </widget>
    </item>
@@ -64,7 +64,7 @@
        <item row="1" column="1">
         <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterDistanceFactor">
          <property name="decimals">
-          <number>1</number>
+          <number>2</number>
          </property>
          <property name="maximum">
           <double>100.000000000000000</double>
@@ -73,7 +73,7 @@
           <double>0.100000000000000</double>
          </property>
          <property name="value">
-          <double>1.700000000000000</double>
+          <double>1.900000000000000</double>
          </property>
         </widget>
        </item>
@@ -99,7 +99,7 @@
        <item row="0" column="1">
         <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterHeightFactor">
          <property name="decimals">
-          <number>1</number>
+          <number>2</number>
          </property>
          <property name="maximum">
           <double>100.000000000000000</double>
@@ -108,7 +108,7 @@
           <double>0.100000000000000</double>
          </property>
          <property name="value">
-          <double>1.700000000000000</double>
+          <double>0.200000000000000</double>
          </property>
         </widget>
        </item>
@@ -122,7 +122,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="labelCharacter">
          <property name="text">
-          <string>Character forward</string>
+          <string>Character distance to eye</string>
          </property>
         </widget>
        </item>

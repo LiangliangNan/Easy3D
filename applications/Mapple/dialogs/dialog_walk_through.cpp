@@ -66,7 +66,12 @@ DialogWalkThrough::~DialogWalkThrough()
 void DialogWalkThrough::newPositionAdded() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
     int num = walkThrough()->num_positions();
-    horizontalSliderPreview->setRange(0, std::max(0, num - 1));
+    if (num == 1) // range is [0, 0]
+        horizontalSliderPreview->setEnabled(false);
+    else {
+        horizontalSliderPreview->setEnabled(true);
+        horizontalSliderPreview->setRange(0, std::max(0, num - 1));
+    }
     int pos = walkThrough()->current_position();
     horizontalSliderPreview->setValue(pos);
     connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
