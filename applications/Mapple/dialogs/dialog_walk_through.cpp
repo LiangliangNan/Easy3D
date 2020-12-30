@@ -54,7 +54,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(exportAnimationButton, SIGNAL(clicked()), this, SLOT(exportAnimation()));
     connect(clearPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
 
-    walkThrough()->connect(this, &DialogWalkThrough::newPositionAdded);
+    easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::newPositionAdded);
 }
 
 

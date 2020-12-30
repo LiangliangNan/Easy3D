@@ -250,12 +250,15 @@ bool PaintCanvas::recordAnimation(bool b) {
         snapshotCounter = 0;
         connection = QObject::connect(this, &PaintCanvas::drawFinished, snapshotFramebuffer);
 
+#if 0
         // Liangliang: MainWindow::stopRecordAnimation will be called from the animation thread, which causes the
         //             error: "QObject::startTimer: Timers cannot be started from another thread". To workaround,
         //             I invoke MainWindow::stopRecordAnimation by a viewer signal.
-        //kfi->connect(window_, &MainWindow::stopRecordAnimation);
-        kfi->connect(0, interpolationFinished);
-        connect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+//        easy3d::connect(kfi, window_, &MainWindow::stopRecordAnimation);
+#else
+        easy3d::connect(&kfi->end_reached, 0, interpolationFinished);
+        QObject::connect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+#endif
 
         if (kfi->interpolationIsStarted()) // stop first if is playing now
             kfi->stopInterpolation();
@@ -264,8 +267,8 @@ bool PaintCanvas::recordAnimation(bool b) {
     }
     else {
         QObject::disconnect(connection);
-        kfi->disconnect(0);
-        disconnect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+        easy3d::disconnect(&kfi->end_reached, 0);
+        QObject::disconnect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
 
         if (kfi->interpolationIsStarted())
             kfi->stopInterpolation();

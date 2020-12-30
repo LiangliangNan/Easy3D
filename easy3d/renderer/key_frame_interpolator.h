@@ -135,7 +135,7 @@ namespace easy3d {
       \endcode
       You may want to temporally disconnect the \c kfi interpolated() signal from the
       QCanvas::update() slot before calling this code. \nosubgrouping */
-    class KeyFrameInterpolator : public Signal
+    class KeyFrameInterpolator
     {
     public:
         /*! Creates a KeyFrameInterpolator, with \p frame as associated frame().
@@ -397,6 +397,9 @@ namespace easy3d {
 
         LinesDrawable* path_drawable_;
         LinesDrawable* cameras_drawable_;
+
+    public:
+        Signal end_reached;
     };
 
 }

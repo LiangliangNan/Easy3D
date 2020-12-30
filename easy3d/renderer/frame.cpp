@@ -250,7 +250,7 @@ namespace easy3d {
 				rot(i, j) = m(i, j) / w;
 		}
 		q_.set_from_rotation_matrix(rot);
-        trigger();
+        modified.send();
 	}
 
 
@@ -280,7 +280,7 @@ namespace easy3d {
 		if (constraint())
 			constraint()->constrainTranslation(t, this);
 		t_ += t;
-        trigger();
+		modified.send();
 	}
 
 	/*! Rotates the Frame by \p q (defined in the Frame coordinate system): R = R*q.
@@ -305,7 +305,7 @@ namespace easy3d {
 			constraint()->constrainRotation(q, this);
 		q_ *= q;
 		q_.normalize(); // Prevents numerical drift
-        trigger();
+		modified.send();
 	}
 
 	/*! Makes the Frame rotate() by \p rotation around \p point.
@@ -332,7 +332,7 @@ namespace easy3d {
 		if (constraint())
 			constraint()->constrainTranslation(trans, this);
 		t_ += trans;
-        trigger();
+		modified.send();
 	}
 
 	/*! Same as rotateAroundPoint(), but with a \c const \p rotation quat.
@@ -374,7 +374,7 @@ namespace easy3d {
 			t_ = position;
 			q_ = orientation;
 		}
-        trigger();
+        modified.send();
 	}
 
 	/*! Same as successive calls to setTranslation() and then setRotation().
@@ -386,7 +386,7 @@ namespace easy3d {
 		const quat &rotation) {
 		t_ = translation;
 		q_ = rotation;
-        trigger();
+        modified.send();
 	}
 
 	/*! Sets the orientation() of the Frame, defined in the world coordinate system.
@@ -481,7 +481,7 @@ namespace easy3d {
 		translation = this->translation();
 		rotation = this->rotation();
 
-        trigger();
+        modified.send();
 	}
 
 	/*! Same as setPosition(), but \p position is modified so that the potential
@@ -539,7 +539,7 @@ namespace easy3d {
 			bool identical = (referenceFrame_ == refFrame);
 			referenceFrame_ = refFrame;
 			if (!identical)
-                trigger();
+                modified.send();
 		}
 	}
 

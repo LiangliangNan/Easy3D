@@ -147,7 +147,7 @@ namespace easy3d {
       scene with the mouse.
 
       */
-    class Frame : public Signal {
+    class Frame {
     public:
         Frame();
 
@@ -194,7 +194,7 @@ namespace easy3d {
         of the Frame. */
         void setTranslation(const vec3 &translation) {
             t_ = translation;
-            trigger();
+            modified.send();
         }
 
         void setTranslationWithConstraint(vec3 &translation);
@@ -211,7 +211,7 @@ namespace easy3d {
          setRotationWithConstraint() instead. */
         void setRotation(const quat &rotation) {
             q_ = rotation;
-            trigger();
+            modified.send();
         }
 
         void setRotationWithConstraint(quat &rotation);
@@ -401,6 +401,9 @@ namespace easy3d {
 
         // F r a m e   c o m p o s i t i o n
         const Frame *referenceFrame_;
+
+    public:
+        Signal modified;
     };
 
 }

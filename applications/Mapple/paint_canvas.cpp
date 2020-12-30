@@ -105,7 +105,8 @@ PaintCanvas::PaintCanvas(MainWindow* window)
     camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
-    camera_->connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
+
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     walk_through_ = new WalkThrough(camera_);
 }

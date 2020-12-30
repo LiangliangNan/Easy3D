@@ -41,7 +41,7 @@ namespace easy3d {
     /// Walk through a scene (or object) by creating a camera path.
     /// \class WalkThrough easy3d/renderer/walk_through.h
     /// \attention Walk through requires that the object is in upright orientation, i.e., (0, 0, 1).
-    class WalkThrough : public Signal {
+    class WalkThrough {
     public:
         WalkThrough(Camera* camera);
         virtual ~WalkThrough();
@@ -129,6 +129,9 @@ namespace easy3d {
         PointsDrawable *character_head_drawable_;
         LinesDrawable *view_direction_base_drawable_;
         LinesDrawable *view_direction_arraw_drawable_;
+
+    public:
+        Signal path_modified;
     };
 
 }

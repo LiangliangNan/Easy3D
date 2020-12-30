@@ -101,7 +101,7 @@ namespace easy3d {
 			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
 			rotateAroundPoint(rot, pivotPoint());
 		}
-        trigger();
+        modified.send();
 	}
 
 
@@ -156,7 +156,7 @@ namespace easy3d {
 			}
 			translate(inverseTransformOf(translationSensitivity() * trans));
 		}
-        trigger();
+        modified.send();
 	}
 
 
@@ -219,7 +219,7 @@ namespace easy3d {
             translate(offset);
 		}
 
-        trigger();
+        modified.send();
 
 		// #CONNECTION# startAction should always be called before
 		if (previousConstraint_)
@@ -231,7 +231,7 @@ namespace easy3d {
 		// The rotation around current camera Y, proportional to the horizontal mouse position
         const quat rot(vec3(0.0, 1.0, 0.0), angle_radian);
 		rotate(rot);
-        trigger();
+        modified.send();
 	}
 
 }

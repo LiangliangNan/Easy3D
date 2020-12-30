@@ -82,7 +82,8 @@ ViewerQt::ViewerQt(QWidget *parent /* = nullptr*/)
     camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
     camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
     camera_->showEntireScene();
-    camera_->connect(this, static_cast<void (ViewerQt::*)(void)>(&ViewerQt::update));
+
+    easy3d::connect(&camera_->frame_modified_, this, static_cast<void (ViewerQt::*)(void)>(&ViewerQt::update));
 }
 
 

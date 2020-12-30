@@ -59,8 +59,7 @@ namespace easy3d {
          */
         template < class Class, class Function, class... Args >
         void connect(Class&& owner, Function&& func, Args&&... args)  {
-            if (owner && func)
-                owned_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
+            owned_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
         }
 
         /**
@@ -87,12 +86,12 @@ namespace easy3d {
         void disconnect(int idx) { free_slots_.erase(idx); }
 
         /**
-         * \brief Trigger all the connected slots.
+         * \brief Trigger all the execution of all connected slot functions.
          * \todo A better function name can be 'emit', but occupied by other software like Qt.
          *       Don't know how to still use 'emit'.
          */
         template < class ... Args >
-        void trigger(Args&&... args) {
+        void send(Args&&... args) {
             for(auto it : owned_slots_) {
                 it.second(std::forward<Args>(args)...);
             }
@@ -109,6 +108,27 @@ namespace easy3d {
         std::unordered_map<int, std::function<void(void)> > free_slots_;
 	};
 
+
+    template < class Class, class Function, class... Args >
+    inline void connect(Signal* signal, Class&& owner, Function&& func, Args&&... args) {
+        signal->connect(owner, std::bind(func, owner, std::forward<Args>(args)...));
+    }
+
+    template < class Function, class... Args >
+    inline void connect(Signal* signal, int idx, Function&& func, Args&&... args) {
+        signal->connect(idx, std::bind(func, std::forward<Args>(args)...));
+    }
+
+    template < class Class >
+    inline void disconnect(Signal* signal, Class&& owner) {
+        signal->disconnect(owner);
+    }
+
+    inline void disconnect(Signal* signal, int idx) {
+        signal->disconnect(idx);
+    }
+
 }
+
 
 #endif // EASY3D_CORE_SIGNAL_H

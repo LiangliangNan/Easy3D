@@ -54,8 +54,8 @@ namespace easy3d {
 
 
     WalkThrough::~WalkThrough() {
-        delete kfi_;
         delete_path();
+        delete kfi_;
     }
 
 
@@ -128,7 +128,7 @@ namespace easy3d {
         LOG(INFO) << "a standing point added to walk through";
 
         move_to(path_.size() - 1);
-        trigger();
+        path_modified.send();
     }
 
 
@@ -208,7 +208,7 @@ namespace easy3d {
 
         camera_->setPivotPoint(pos);
         current_position_idx_ = idx;
-        trigger();
+        path_modified.send();
 
         return current_position_idx_;
     }

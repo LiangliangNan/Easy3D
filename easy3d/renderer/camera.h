@@ -110,7 +110,7 @@ namespace easy3d {
      *
      * To retrieve the model view projection matrix, call <code> camera_->modelViewProjectionMatrix() </code>
 	  */
-    class Camera : public Signal
+    class Camera
 	{
 	public:
 		Camera();
@@ -443,7 +443,7 @@ namespace easy3d {
 		//@}
 
 	private:
-        void trigger();
+        void modified();
 
 	private:
 		// Frame
@@ -465,6 +465,9 @@ namespace easy3d {
 
         // Key frame interpolation
         KeyFrameInterpolator* interpolationKfi_;
+
+	public:
+	    Signal frame_modified;
 	};
 
 }

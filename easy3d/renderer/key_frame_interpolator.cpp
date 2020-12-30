@@ -94,7 +94,7 @@ namespace easy3d {
                 stopInterpolation();
             }
             timer_.stop();
-            trigger();
+            end_reached.send();
         } else if (interpolationTime() < keyFrames_.front()->time()) {
             if (loopInterpolation())
                 setInterpolationTime(keyFrames_.back()->time() - keyFrames_.front()->time() + interpolationTime_);
@@ -104,7 +104,7 @@ namespace easy3d {
                 stopInterpolation();
             }
             timer_.stop();
-            trigger();
+            end_reached.send();
         }
 
         mutex.unlock();

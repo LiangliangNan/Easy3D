@@ -297,9 +297,11 @@ namespace easy3d {
 
 		frame_ = mcf;
         interpolationKfi_->setFrame(frame());
-        frame_->connect(this, &Camera::trigger);
 
-        trigger();
+        easy3d::connect(&frame_->modified,  this,  &Camera::modified);
+        // frame_->modified.connect(this, &Camera::modified); // this should also work
+        
+        modified();
 	}
 
 	/*! Returns the distance from the Camera center to sceneCenter(), projected
@@ -1505,13 +1507,11 @@ namespace easy3d {
 	}
 
 
-    void Camera::trigger() {
+    void Camera::modified() {
 		projectionMatrixIsUpToDate_ = false;
 		modelViewMatrixIsUpToDate_ = false;
-        Signal::trigger();
+        frame_modified.send();
 	}
-
-
 
 
 	/*
