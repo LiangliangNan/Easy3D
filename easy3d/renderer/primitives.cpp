@@ -780,8 +780,8 @@ namespace easy3d {
         }
 
 
-        void prepare_camera(std::vector<vec3> &points, float size, float hw_ratio) {
-            const float halfWidth = size;
+        void prepare_camera(std::vector<vec3> &points, float width, float hw_ratio) {
+            const float halfWidth = width * 0.5f;
             const float halfHeight = halfWidth * hw_ratio;
             const float dist = halfHeight / tan(float(M_PI) / 8.0f);
 
