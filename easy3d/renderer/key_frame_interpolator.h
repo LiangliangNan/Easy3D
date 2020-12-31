@@ -126,8 +126,8 @@ namespace easy3d {
       KeyFrameInterpolator kfi( new Frame() );
       // calls to kfi.addKeyFrame() to define the path.
 
-      const double deltaTime = 0.04; // output a position every deltaTime seconds
-      for (double time=kfi.firstTime(); time<=kfi.lastTime(); time += deltaTime)
+      const float deltaTime = 0.04f; // output a position every deltaTime seconds
+      for (float time=kfi.firstTime(); time<=kfi.lastTime(); time += deltaTime)
       {
         kfi.interpolateAtTime(time);
         cout << "t=" << time << "\tpos=" << kfi.frame()->position() << endl;
@@ -150,14 +150,14 @@ namespace easy3d {
         //@{
     public:
         /*! Appends a new keyFrame to the path.
-         * Same as addKeyFrame(const Frame& frame, double), except that the keyFrameTime() is automatically set
+         * Same as addKeyFrame(const Frame& frame, float), except that the keyFrameTime() is automatically set
          * to previous keyFrameTime() plus one second (or 0.0 if there is no previous keyFrame). */
         void addKeyFrame(const Frame& frame);
 
         /*! Appends a new keyFrame to the path, with its associated \p time (in seconds).
          * The path will use the current \p frame state.
          * \attention The keyFrameTime() have to be monotonously increasing over keyFrames. */
-        void addKeyFrame(const Frame& frame, double time);
+        void addKeyFrame(const Frame& frame, float time);
 
         /*! Removes all keyFrames from the path. The numberOfKeyFrames() is set to 0. */
         void deletePath();
@@ -191,27 +191,27 @@ namespace easy3d {
          * \note If this keyFrame was defined using a pointer to a Frame (see addKeyFrame(const Frame* const)),
          *      the \e current pointed Frame state is returned.
          */
-        Frame keyFrame(int index) const;
+        Frame keyFrame(std::size_t index) const;
 
         /*! Returns the time corresponding to the \p index keyFrame.
          * See also keyFrame(). \p index has to be in the range [0, numberOfKeyFrames()-1].
          */
-        double keyFrameTime(int index) const;
+        float keyFrameTime(std::size_t index) const;
 
         /*! Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
          * Simply corresponds to lastTime() - firstTime(). Returns 0.0 if the path has less than 2 keyFrames.
          * \sa keyFrameTime(). */
-        double duration() const;
+        float duration() const;
 
         /*! Returns the time corresponding to the first keyFrame, expressed in seconds.
          * Returns 0.0 if the path is empty.
          * \sa lastTime(), duration() and keyFrameTime(). */
-        double firstTime() const;
+        float firstTime() const;
 
         /*! Returns the time corresponding to the last keyFrame, expressed in seconds.
          * Returns 0.0 if the path is empty.
          * \sa firstTime(), duration() and keyFrameTime(). */
-        double lastTime() const;
+        float lastTime() const;
         //@}
 
         /*! @name Interpolation parameters */
@@ -221,7 +221,7 @@ namespace easy3d {
 
         This time is regularly updated when interpolationIsStarted(). Can be set directly with
         setInterpolationTime() or interpolateAtTime(). */
-        double interpolationTime() const { return interpolationTime_; }
+        float interpolationTime() const { return interpolationTime_; }
         /*! Returns the current interpolation speed.
 
         Default value is 1.0, which means keyFrameTime() will be matched during the interpolation
@@ -229,7 +229,7 @@ namespace easy3d {
 
         A negative value will result in a reverse interpolation of the keyFrames. See also
         interpolationPeriod(). */
-        double interpolationSpeed() const { return interpolationSpeed_; }
+        float interpolationSpeed() const { return interpolationSpeed_; }
         /*! Returns the current interpolation period, expressed in milliseconds.
 
         The update of the frame() state will be done by a timer at this period when
@@ -256,9 +256,9 @@ namespace easy3d {
         \attention The frame() state is not affected by this method. Use this function to define the
         starting time of a future interpolation (see startInterpolation()). Use interpolateAtTime() to
         actually interpolate at a given time. */
-        void setInterpolationTime(double time) { interpolationTime_ = time; }
+        void setInterpolationTime(float time) { interpolationTime_ = time; }
         /*! Sets the interpolationSpeed(). Negative or null values are allowed. */
-        void setInterpolationSpeed(double speed) { interpolationSpeed_ = speed; }
+        void setInterpolationSpeed(float speed) { interpolationSpeed_ = speed; }
         /*! Sets the interpolationPeriod(). */
         void setInterpolationPeriod(int period) { period_ = period; }
         /*! Sets the loopInterpolation() value. */
@@ -279,9 +279,6 @@ namespace easy3d {
          * orientation. interpolationIsStarted() will return \c true until stopInterpolation() or
          * toggleInterpolation() is called.
          *
-         * If \p period is positive, it is set as the new interpolationPeriod(). The previous interpolationPeriod() is
-         * used otherwise (default).
-         *
          * If interpolationTime() is larger than lastTime(), interpolationTime() is reset to firstTime() before
          * interpolation starts (and inversely for negative interpolationSpeed()).
          *
@@ -289,7 +286,7 @@ namespace easy3d {
          *
          * \attention The keyFrames must be defined (see addKeyFrame()) \e before you startInterpolation(), or else
          * the interpolation will naturally immediately stop. */
-        void startInterpolation(int period = -1);
+        void startInterpolation();
 
         /*! Stops an interpolation started with startInterpolation().
          * \sa startInterpolation(), interpolationIsStarted(), and toggleInterpolation(). */
@@ -307,7 +304,17 @@ namespace easy3d {
          *
          * If you simply want to change interpolationTime() but not the frame() state, use setInterpolationTime()
          * instead.  */
-        virtual void interpolateAtTime(double time);
+        virtual void interpolateAtTime(float time);
+        //@}
+
+        /*! @name Computes the interpolation */
+        //@{
+    public:
+        /// Computes and returns the interpolated frame at time \p time (expressed in seconds).
+        Frame compute_at_time(float time) const;
+
+        /// Computes and returns all the interpolated frames.
+        std::vector<Frame> compute_all() const;
         //@}
 
         /*! @name Path drawing */
@@ -323,7 +330,7 @@ namespace easy3d {
 
         /// Adjusts the scene radius so that the entire camera path is within the view frustum.
         /// \related The adjusted scene radius.
-        double adjust_scene_radius(Camera* cam) const;
+        float adjust_scene_radius(Camera* cam) const;
         //@}
 
         /*! @name File io */
@@ -341,40 +348,37 @@ namespace easy3d {
     private:
         // Copy constructor and operator= are declared private and undefined
         // Prevents everyone from trying to use them
-         KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
-         KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
-
-        void updateCurrentKeyFrameForTime(double time);
-        void updateModifiedFrameValues();
-        void updateSplineCache();
+        KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
+        KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
 
     #ifndef DOXYGEN
         // Internal private KeyFrame representation
         class KeyFrame
         {
         public:
-            KeyFrame(const Frame& fr, double t);
+            KeyFrame(const Frame& fr, float t);
 
             vec3 position() const { return p_; }
             quat orientation() const { return q_; }
             vec3 tgP() const { return tgP_; }
             quat tgQ() const { return tgQ_; }
-            double time() const { return time_; }
+            float time() const { return time_; }
             void flipOrientationIfNeeded(const quat& prev);
             void computeTangent(const KeyFrame* const prev, const KeyFrame* const next);
         private:
             vec3 p_, tgP_;
             quat q_, tgQ_;
-            double time_;
+            float time_;
         };
 
-    #endif
+        void updateModifiedFrameValues();
+        void getRelatedKeyFramesForTime(float time, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
+        void computeSpline(const std::vector<KeyFrame*>::const_iterator* relatedFrames, vec3& v1, vec3& v2) const;
+#endif
 
         // Key Frames
         std::vector<KeyFrame*> keyFrames_;
-        std::vector<Frame> path_;
-
-        std::vector<KeyFrame*>::iterator currentFrame_[4];
+        std::vector<Frame> interpolated_path_;
 
         // Associated frame
         Frame* frame_;
@@ -382,19 +386,15 @@ namespace easy3d {
         // Rhythm
         Timer timer_;
         int period_;
-        double interpolationTime_;
-        double interpolationSpeed_;
+        float interpolationTime_;
+        float interpolationSpeed_;
         bool interpolationStarted_;
 
         // Make a loop?
         bool loopInterpolation_;
 
-        // Cached values and flags
+        // is path valid? Adding new keyframes, editing an a keyframe invalidates the path
         bool pathIsValid_;
-        bool valuesAreValid_;
-        bool currentFrameValid_;
-        bool splineCacheIsValid_;
-        vec3 v1, v2;
 
         LinesDrawable* path_drawable_;
         LinesDrawable* cameras_drawable_;
