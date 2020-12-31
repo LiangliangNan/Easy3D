@@ -56,10 +56,13 @@ namespace easy3d {
       application (which will be interpolated). When the user startInterpolation(), the
       KeyFrameInterpolator regularly updates the frame() position and orientation along the path.
 
+     \note The default duration of any two consecutive keyframes is the same. So for a smoother animation, it is
+     suggested to regularly (as equally as possible) sample the viewpoints.
+     \todo Allow edit the duration for each keyframe?  (not sure due to many keyframes and can be annoying).
+     
       Here is a typical utilization example (see also the <a href="../examples/keyFrames.html">keyFrames
       example</a>):
       \code
-
 
       init()
       {
