@@ -314,14 +314,14 @@ namespace easy3d {
         //@{
     public:
 
-        /*! Draws the camera path used to interpolate the frame().
+        /*! Draws the interpolated camera path along with virtual 3D cameras for the keyframes.
          * \param camera The current camera used by the viewer.
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
-         *      10% of the character height (in walking mode).
+         *      10% of the character height (in walking mode), for instance.
          * The rendering state can be changes by calling the path/cameras drawable's related methods. */
         virtual void draw_path(const Camera* camera, float camera_width);
 
-        /// adjusts the scene radius so that the entire camera path is within the view frustum.
+        /// Adjusts the scene radius so that the entire camera path is within the view frustum.
         /// \related The adjusted scene radius.
         double adjust_scene_radius(Camera* cam) const;
         //@}
@@ -371,7 +371,7 @@ namespace easy3d {
     #endif
 
         // Key Frames
-        mutable std::vector<KeyFrame*> keyFrames_;
+        std::vector<KeyFrame*> keyFrames_;
         std::vector<Frame> path_;
 
         std::vector<KeyFrame*>::iterator currentFrame_[4];

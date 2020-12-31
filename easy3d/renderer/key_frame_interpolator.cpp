@@ -43,7 +43,29 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for scene radius (to draw cameras in a proper size)
-#include <easy3d/util/timer.h>
+
+
+
+//#define DEBUG_INTERPOLATED_FRAMES
+#ifdef DEBUG_INTERPOLATED_FRAMES
+static int num_frames = 0;
+static std::vector<easy3d::Frame> frames;
+
+void save_interpolation() {
+    std::string file = "interpolated_frames.path";
+    std::ofstream output(file.c_str());
+    if (output.fail())
+        std::cout << "could not open file: " << file << std::endl;
+    output << "\tnum_key_frames: " << frames.size() << std::endl;
+    for (std::size_t id = 0; id < frames.size(); ++id) {
+        output << "\tframe: " << id << std::endl;
+        const easy3d::Frame& frame = frames[id];
+        output << "\t\tposition: " << frame.position() << std::endl;
+        output << "\t\torientation: " << frame.orientation() << std::endl;
+    }
+}
+
+#endif
 
 
 namespace easy3d {
@@ -96,6 +118,10 @@ namespace easy3d {
             }
             timer_.stop();
             end_reached.send();
+#ifdef DEBUG_INTERPOLATED_FRAMES
+            std::cout << "total frames: " << num_frames << std::endl;
+            save_interpolation();
+#endif
         } else if (interpolationTime() < keyFrames_.front()->time()) {
             if (loopInterpolation())
                 setInterpolationTime(keyFrames_.back()->time() - keyFrames_.front()->time() + interpolationTime_);
@@ -106,8 +132,15 @@ namespace easy3d {
             }
             timer_.stop();
             end_reached.send();
+#ifdef DEBUG_INTERPOLATED_FRAMES
+            std::cout << "total frames: " << num_frames << std::endl;
+            save_interpolation();
+#endif
         }
 
+#ifdef DEBUG_INTERPOLATED_FRAMES
+        ++num_frames;
+#endif
         mutex.unlock();
     }
 
@@ -122,8 +155,14 @@ namespace easy3d {
             if ((interpolationSpeed() < 0.0) && (interpolationTime() <= keyFrames_.front()->time()))
                 setInterpolationTime(keyFrames_.back()->time());
             interpolationStarted_ = true;
-            update();
-            timer_.set_interval(interpolationPeriod(), &KeyFrameInterpolator::update, this);
+
+#ifdef DEBUG_INTERPOLATED_FRAMES
+            num_frames = 0;
+            frames.clear();
+#endif
+            update();  // for the starting view point
+
+            timer_.set_interval(interpolationPeriod(), this, &KeyFrameInterpolator::update);
         }
     }
 
@@ -351,7 +390,7 @@ namespace easy3d {
 
     void KeyFrameInterpolator::updateModifiedFrameValues() {
         quat prevQ = keyFrames_.front()->orientation();
-        KeyFrame *kf;
+        KeyFrame *kf = nullptr;
         for (int i = 0; i < keyFrames_.size(); ++i) {
             kf = keyFrames_.at(i);
             kf->flipOrientationIfNeeded(prevQ);
@@ -418,7 +457,7 @@ namespace easy3d {
 
         while ((*currentFrame_[1])->time() > time) {
             currentFrameValid_ = false;
-            if (currentFrame_[1] == keyFrames_.begin()) // alreay the first one
+            if (currentFrame_[1] == keyFrames_.begin()) // already the first one
                 break;
             --currentFrame_[1]; // points to the previous one
         }
@@ -491,6 +530,14 @@ namespace easy3d {
         quat q = quat::squad((*currentFrame_[1])->orientation(), (*currentFrame_[1])->tgQ(),
                              (*currentFrame_[2])->tgQ(), (*currentFrame_[2])->orientation(), alpha);
         frame()->setPositionAndOrientationWithConstraint(pos, q);
+
+#ifdef DEBUG_INTERPOLATED_FRAMES
+        std::cout << num_frames << "\t" << std::setprecision(2) << time << "\t" << std::setprecision(4) << pos << "\t" << q << std::endl;
+        Frame f;
+        f.setPosition(pos);
+        f.setOrientation(q);
+        frames.push_back(f);
+#endif
     }
 
 #ifndef DOXYGEN
