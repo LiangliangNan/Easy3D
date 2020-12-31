@@ -215,6 +215,9 @@ namespace easy3d {
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
 
+        /** \brief Returns whether the timer has been stopped. */
+        bool is_stopped() const { return stopped_; }
+
     private:
        bool stopped_;
     };
