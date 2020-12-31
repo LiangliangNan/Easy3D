@@ -48,6 +48,24 @@
 namespace easy3d {
 
 
+    // allow to save interpolated frames as keyframes (so I can visualize them)
+//#define DEBUG_INTERPOLATED_FRAMES
+#ifdef DEBUG_INTERPOLATED_FRAMES
+void save_interpolation(const std::vector<easy3d::Frame>& frames) {
+    std::string file = "interpolated_frames.path";
+    std::ofstream output(file.c_str());
+    if (output.fail())
+        std::cout << "could not open file: " << file << std::endl;
+    output << "\tnum_key_frames: " << frames.size() << std::endl;
+    for (std::size_t id = 0; id < frames.size(); ++id) {
+        output << "\tframe: " << id << std::endl;
+        const easy3d::Frame& frame = frames[id];
+        output << "\t\tposition: " << frame.position() << std::endl;
+        output << "\t\torientation: " << frame.orientation() << std::endl;
+    }
+}
+#endif
+
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
             : frame_(frame), period_(40)   // 25 frames per second
             , interpolationTime_(0.0), interpolationSpeed_(1.0), interpolationStarted_(false),
@@ -376,7 +394,7 @@ namespace easy3d {
 
         float alpha = 0.0f;
         const float dt = (*relatedFrames[2])->time() - (*relatedFrames[1])->time();
-        if (dt == 0.0f)
+        if (std::abs(dt) < epsilon<float>())
             alpha = 0.0f;
         else
             alpha = (time - (*relatedFrames[1])->time()) / dt;
@@ -393,7 +411,7 @@ namespace easy3d {
 
 
     void KeyFrameInterpolator::interpolateAtTime(float time) {
-        std::cout << "time: " << time << std::endl;
+//        std::cout << "time: " << time << std::endl;
         const Frame f = compute_at_time(time);
         vec3 pos = f.position();
         quat ori = f.orientation();
@@ -410,7 +428,20 @@ namespace easy3d {
     }
 
     void KeyFrameInterpolator::KeyFrame::computeTangent(const KeyFrame *const prev, const KeyFrame *const next) {
+#if 1   // compensated tangent
+        float sd_prev = distance2(prev->position(), position());
+        float sd_next = distance2(next->position(), position());
+        if (sd_prev < sd_next) {
+            vec3 new_next = position() + (next->position() - position()).normalize() * std::sqrt(sd_prev);
+            tgP_ = 0.5 * (new_next - prev->position());
+        }
+        else {
+            vec3 new_prev = position() +(prev->position() - position()).normalize() * std::sqrt(sd_next);
+            tgP_ = 0.5 * (next->position() - new_prev);
+        }
+#else
         tgP_ = 0.5 * (next->position() - prev->position());
+#endif
         tgQ_ = quat::squad_tangent(prev->orientation(), q_, next->orientation());
     }
 
@@ -463,17 +494,21 @@ namespace easy3d {
     }
 
 
-    std::vector<Frame> KeyFrameInterpolator::compute_all() const {
-        std::vector<Frame> frames;
+    const std::vector<Frame>& KeyFrameInterpolator::compute_all() {
+        interpolated_path_.clear();
         if (keyFrames_.empty())
-            return frames;
+            return interpolated_path_;
 
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
         for (float time = firstTime(); time < lastTime() + interval; time += interval) {
             const Frame f = compute_at_time(time);
-            frames.push_back(f);
+            interpolated_path_.push_back(f);
         }
-        return frames;
+
+#ifdef DEBUG_INTERPOLATED_FRAMES
+        save_interpolation(interpolated_path_);
+#endif
+        return interpolated_path_;
     }
 
 }

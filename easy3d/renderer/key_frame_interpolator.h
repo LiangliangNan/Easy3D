@@ -314,7 +314,7 @@ namespace easy3d {
         Frame compute_at_time(float time) const;
 
         /// Computes and returns all the interpolated frames.
-        std::vector<Frame> compute_all() const;
+        const std::vector<Frame>& compute_all();
         //@}
 
         /*! @name Path drawing */
