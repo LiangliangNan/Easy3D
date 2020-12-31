@@ -71,6 +71,7 @@ namespace easy3d {
         for (const auto& m : scene)
             box += m->bounding_box();
         scene_box_ = box;
+        camera_->setSceneRadius(box.radius() * 1.1f);
         buffer_up_to_date_ = false;
     }
 
