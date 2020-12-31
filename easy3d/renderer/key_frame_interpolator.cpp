@@ -101,12 +101,26 @@ namespace easy3d {
       debugging purpose. stopInterpolation() is called when interpolationTime() reaches firstTime() or
       lastTime(), unless loopInterpolation() is \c true. */
     void KeyFrameInterpolator::update() {
+#if 0 // animate using only the keyframes (i.e., no interpolation)
+        static int idx = 0;
+        if (idx >= numberOfKeyFrames())
+            return;
+        Frame f = keyFrame(idx++);
+        frame()->setPositionAndOrientation(f.position(), f.orientation());
+        if (idx == numberOfKeyFrames()) {
+            idx = 0; // so I can restart again
+            stopInterpolation();
+            end_reached.send();
+        }
+        return;
+#endif
+
         static std::mutex mutex;
         mutex.try_lock();
 
         interpolateAtTime(interpolationTime());
 
-        interpolationTime_ += interpolationSpeed() * interpolationPeriod() / 1000.0;
+        interpolationTime_ += interpolationSpeed() * interpolationPeriod() / 1000.0f;
 
         if (interpolationTime() > keyFrames_.back()->time()) {
             if (loopInterpolation())
@@ -116,7 +130,6 @@ namespace easy3d {
                 interpolateAtTime(keyFrames_.back()->time());
                 stopInterpolation();
             }
-            timer_.stop();
             end_reached.send();
 #ifdef DEBUG_INTERPOLATED_FRAMES
             std::cout << "total frames: " << num_frames << std::endl;
@@ -130,7 +143,6 @@ namespace easy3d {
                 interpolateAtTime(keyFrames_.front()->time());
                 stopInterpolation();
             }
-            timer_.stop();
             end_reached.send();
 #ifdef DEBUG_INTERPOLATED_FRAMES
             std::cout << "total frames: " << num_frames << std::endl;
