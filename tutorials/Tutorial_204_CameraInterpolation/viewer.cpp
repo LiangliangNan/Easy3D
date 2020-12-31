@@ -61,7 +61,9 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
     if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
         interpolator_->addKeyFrame(*frame);
-        interpolator_->adjust_scene_radius(camera());
+        float dist = distance(camera_->sceneCenter(), frame->position());
+        if (dist > camera_->sceneRadius())
+            camera_->setSceneRadius(dist);
         std::cout << "Key frame added" << std::endl;
         return true;
     }

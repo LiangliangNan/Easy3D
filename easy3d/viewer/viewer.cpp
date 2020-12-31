@@ -721,7 +721,6 @@ namespace easy3d {
         if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
             kfi_->addKeyFrame(*frame);
-            kfi_->adjust_scene_radius(camera());
             LOG(INFO) << "key frame added to camera path";
         } else if (key == GLFW_KEY_D && modifiers == GLFW_MOD_ALT) { // delete path
             kfi_->deletePath();
@@ -738,8 +737,16 @@ namespace easy3d {
                 kfi_->startInterpolation();
         } else if (key == GLFW_KEY_T && modifiers == EASY3D_MOD_CONTROL) {
             show_camera_path_ = !show_camera_path_;
-            if (show_camera_path_)
-                kfi_->adjust_scene_radius(camera());
+            if (show_camera_path_) {
+                const int count = kfi_->numberOfKeyFrames();
+                float radius = camera_->sceneRadius();
+                for (int i=0; i<count; ++i) {
+                    radius = std::max( radius,
+                            distance(camera_->sceneCenter(), kfi_->keyFrame(i).position())
+                    );
+                }
+                camera_->setSceneRadius(radius);
+            }
             else {
                 Box3 box;
                 for (auto m : models_)
