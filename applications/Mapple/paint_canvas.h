@@ -138,17 +138,7 @@ public slots:
     void pasteCamera();
 
     void showCameraPath(bool);
-
     void addKeyFrame();
-    void playCameraPath();
-    void deleteCameraPath();
-
-    // true to start and false to stop
-    // returns if the command succeeded
-    bool recordAnimation(bool b);
-
-signals:
-    void recordingFinished();
 
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.

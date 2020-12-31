@@ -1537,23 +1537,18 @@ void PaintCanvas::addKeyFrame() {
 }
 
 
-void PaintCanvas::playCameraPath() {
-    if (walk_through_->interpolator()->numberOfKeyFrames() == 0) {
-        LOG(WARNING) << "camera path is empty. You may import a camera path from a file or creat it by adding key frames";
-        return;
-    }
-
-    if (walk_through_->interpolator()->interpolationIsStarted())
-        walk_through_->interpolator()->stopInterpolation();
-    else
-        walk_through_->interpolator()->startInterpolation();
-}
-
-
 void PaintCanvas::showCameraPath(bool b) {
     walk_through_->set_path_visible(b);
-    if (b)
-        walk_through_->interpolator()->adjust_scene_radius(camera());
+    if (b) {
+        const int count = walk_through_->interpolator()->numberOfKeyFrames();
+        float radius = camera_->sceneRadius();
+        for (int i=0; i<count; ++i) {
+            radius = std::max( radius,
+                    distance(camera_->sceneCenter(), walk_through_->interpolator()->keyFrame(i).position())
+            );
+        }
+        camera_->setSceneRadius(radius);
+    }
     else {
         Box3 box;
         for (auto m : models_)
@@ -1563,38 +1558,29 @@ void PaintCanvas::showCameraPath(bool b) {
     update();
 }
 
-
 void PaintCanvas::exportCamaraPathToFile(const std::string& file_name) const {
     if (walk_through_)
-        walk_through_->interpolator()->save_path(file_name);
+        walk_through_->interpolator()->save_keyframes(file_name);
 }
 
 
 void PaintCanvas::importCameraPathFromFile(const std::string& file_name) {
     if (walk_through_) {
-        walk_through_->interpolator()->read_path(file_name);
-        if (walk_through_->is_path_visible())
-            walk_through_->interpolator()->adjust_scene_radius(camera());
-
-        // move to the beginning view point
-        walk_through_->interpolator()->interpolateAtTime(0);
+        walk_through_->interpolator()->read_keyframes(file_name);
+        if (walk_through_->is_path_visible()) {
+            // update scene radius to make sure the path is within the view frustum
+            int num = walk_through_->interpolator()->numberOfKeyFrames();
+            float radius = camera_->sceneRadius();
+            for (int i = 0; i < num; ++i) {
+                radius = std::max(
+                        radius,
+                        distance(camera_->sceneCenter(), walk_through_->interpolator()->keyFrame(i).position())
+                );
+            }
+            camera_->setSceneRadius(radius);
+        }
 
         update();
-    }
-}
-
-
-void PaintCanvas::deleteCameraPath() {
-    if (walk_through_) {
-        walk_through_->interpolator()->deletePath();
-
-        // update scene bounding box
-        Box3 box;
-        for (auto m : models_)
-            box.add_box(m->bounding_box());
-        camera_->setSceneBoundingBox(box.min(), box.max());
-        update();
-        LOG(INFO) << "camera path deleted";
     }
 }
 

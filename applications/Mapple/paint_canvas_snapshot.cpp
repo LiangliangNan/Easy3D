@@ -203,11 +203,13 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 }
 
 
+#if 0
 #include <QFileInfo>
 #include <QFileDialog>
 
 #include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+
 
 
 // true to start the recording and false to stop the recording.
@@ -235,7 +237,7 @@ bool PaintCanvas::recordAnimation(bool b) {
             LOG(WARNING) << "unable to save snapshot in " << fileName.toStdString();
     };
 
-    auto interpolationFinished = [this]() -> void { emit recordingFinished(); };
+    auto interpolationStopped = [this]() -> void { emit recordingStopped(); };
 
     if (b) {
         std::string model_dir = file_system::parent_directory(currentModel()->name());
@@ -256,19 +258,23 @@ bool PaintCanvas::recordAnimation(bool b) {
         //             I invoke MainWindow::stopRecordAnimation by a viewer signal.
 //        easy3d::connect(kfi, window_, &MainWindow::stopRecordAnimation);
 #else
-        easy3d::connect(&kfi->end_reached, 0, interpolationFinished);
-        QObject::connect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+        easy3d::connect(&kfi->interpolation_stopped, 0, interpolationStopped);
+        QObject::connect(this, &PaintCanvas::recordingStopped, window_, &MainWindow::stopRecordAnimation);
 #endif
 
         if (kfi->interpolationIsStarted()) // stop first if is playing now
             kfi->stopInterpolation();
-        playCameraPath();
+
+        if (walk_through_->interpolator()->interpolationIsStarted())
+            walk_through_->interpolator()->stopInterpolation();
+        else
+            walk_through_->interpolator()->startInterpolation();
         LOG(INFO) << "recording animation started...";
     }
     else {
         QObject::disconnect(connection);
-        easy3d::disconnect(&kfi->end_reached, 0);
-        QObject::disconnect(this, &PaintCanvas::recordingFinished, window_, &MainWindow::stopRecordAnimation);
+        easy3d::disconnect(&kfi->interpolation_stopped, 0);
+        QObject::disconnect(this, &PaintCanvas::recordingStopped, window_, &MainWindow::stopRecordAnimation);
 
         if (kfi->interpolationIsStarted())
             kfi->stopInterpolation();
@@ -278,3 +284,6 @@ bool PaintCanvas::recordAnimation(bool b) {
 
     return true;
 }
+
+
+#endif

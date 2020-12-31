@@ -61,7 +61,12 @@ namespace easy3d {
 
     void WalkThrough::add_key_frame(const Frame &frame) {
         kfi_->addKeyFrame(frame);
-        kfi_->adjust_scene_radius(camera_);
+
+        // update scene radius to make sure the path is within the view frustum
+        float dist = distance(camera_->sceneCenter(), frame.position());
+        if (dist > camera_->sceneRadius())
+            camera_->setSceneRadius(dist);
+
         LOG(INFO) << "a key frame added to camera path";
     }
 

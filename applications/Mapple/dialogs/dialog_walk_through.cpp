@@ -186,7 +186,7 @@ void DialogWalkThrough::startAnimation(bool b) {
         return;
     }
 
-    auto interpolationFinished = [this]() -> void { emit animationFinished(); };
+    auto interpolationStopped = [this]() -> void { emit animationStopped(); };
 
     if (b) {
         labelDefineStartingPoint->setEnabled(false);
@@ -202,8 +202,8 @@ void DialogWalkThrough::startAnimation(bool b) {
         exportAnimationButton->setEnabled(false);
         clearPathButton->setEnabled(false);
 
-        easy3d::connect(&walkThrough()->interpolator()->end_reached, 0, interpolationFinished);
-        QObject::connect(this, &DialogWalkThrough::animationFinished, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+        easy3d::connect(&walkThrough()->interpolator()->interpolation_stopped, 0, interpolationStopped);
+        QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
 
         walkThrough()->animate();
         LOG(INFO) << "animation started...";
@@ -222,8 +222,8 @@ void DialogWalkThrough::startAnimation(bool b) {
         exportAnimationButton->setEnabled(true);
         clearPathButton->setEnabled(true);
 
-        easy3d::disconnect(&walkThrough()->interpolator()->end_reached, 0);
-        QObject::disconnect(this, &DialogWalkThrough::animationFinished, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+        easy3d::disconnect(&walkThrough()->interpolator()->interpolation_stopped, 0);
+        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
 
         walkThrough()->interpolator()->stopInterpolation();
         LOG(INFO) << "animation finished";

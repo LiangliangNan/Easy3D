@@ -61,7 +61,7 @@ public Q_SLOTS :
 	void resetUIAfterAnimationStopped();
 
 signals:
-    void animationFinished();
+    void animationStopped();
 
 protected:
 	virtual	void showEvent(QShowEvent* e);

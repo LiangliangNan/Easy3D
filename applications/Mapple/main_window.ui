@@ -200,17 +200,11 @@
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
     <addaction name="actionAddKeyFrame"/>
-    <addaction name="actionWalkThrough"/>
-    <addaction name="separator"/>
     <addaction name="actionShowCameraPath"/>
-    <addaction name="separator"/>
-    <addaction name="actionPlayCameraPath"/>
-    <addaction name="actionRecordAnimation"/>
+    <addaction name="actionWalkThrough"/>
     <addaction name="separator"/>
     <addaction name="actionExportCamaraPathToFile"/>
     <addaction name="actionImportCameraPathFromFile"/>
-    <addaction name="separator"/>
-    <addaction name="actionDeleteCameraPath"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>

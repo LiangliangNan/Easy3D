@@ -144,7 +144,7 @@ namespace easy3d {
 		frame_->setPosition(camera.position());
 		frame_->setOrientation(camera.orientation());
 
-        interpolationKfi_->resetInterpolation();
+        interpolationKfi_->stopInterpolation();
 
 		computeProjectionMatrix();
 		computeModelViewMatrix();

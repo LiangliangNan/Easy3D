@@ -898,15 +898,10 @@ void MainWindow::createActionsForCameraMenu() {
 
     connect(ui->actionShowCameraPath, SIGNAL(toggled(bool)), viewer_, SLOT(showCameraPath(bool)));
     connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
-    connect(ui->actionPlayCameraPath, SIGNAL(triggered()), viewer_, SLOT(playCameraPath()));
-
-    connect(ui->actionRecordAnimation, SIGNAL(toggled(bool)), this, SLOT(recordAnimation(bool)));
     connect(ui->actionWalkThrough, SIGNAL(triggered()), this, SLOT(setupWalkThrough()));
 
     connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
     connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
-
-    connect(ui->actionDeleteCameraPath, SIGNAL(triggered()), viewer_, SLOT(deleteCameraPath()));
 }
 
 
@@ -1883,21 +1878,6 @@ void MainWindow::setupWalkThrough() {
         ui->actionShowCameraPath->setChecked(true);
 }
 
-
-void MainWindow::recordAnimation(bool b) {
-    if (viewer_->recordAnimation(b)) {
-        for (auto action : ui->menuCamera->actions()) {
-            if (action != ui->actionRecordAnimation)
-                action->setEnabled(!b);
-        }
-    }
-}
-
-
-void MainWindow::stopRecordAnimation() {
-    if (ui->actionRecordAnimation->isChecked())
-        ui->actionRecordAnimation->setChecked(false);
-}
 
 
 void MainWindow::surfaceMeshGeodesic() {
