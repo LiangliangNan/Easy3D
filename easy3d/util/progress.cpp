@@ -113,8 +113,6 @@ namespace easy3d {
     }
 
     ProgressLogger::~ProgressLogger() {
-        details::Progress::instance()->notify(100, true);
-        details::Progress::instance()->notify(0, false);
         details::Progress::instance()->pop();
     }
 
