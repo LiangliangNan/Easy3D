@@ -102,13 +102,30 @@ public:
     //		 along the viewing direction.
     easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found) const;
 
-	// Save snapshot. This function has no limit on the image size.
-    // file_name: the image file name
-	// w, h: the width and height of the require snapshot
-    // bk_color: the background color
-    // expand: expand the frustum to ensure the image aspect ratio
+	/// \brief Saves snapshot.
+	/// This function renders the scene into a framebuffer and takes a snapshot of the framebuffer. Thus, it has no
+	/// limit on the image size (if memory allows).
+    /// \param w The required width of the snapshot image
+    /// \param h The required height of the snapshot image
+    /// \param samples The required number of samples for rendering (can be different from the default framebuffer).
+    /// \param file_name The image file name
+    /// \param bk_white \c true to use a white background color, or use the current background color.
+    /// \param expand expand the frustum to ensure the image aspect ratio.
+    /// \param logger The optional progress logger.
 	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true, easy3d::ProgressLogger* logger = nullptr);
-    void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10000, bool bk_white = true, easy3d::ProgressLogger* logger = nullptr);
+
+    /// \brief Records the animation of a camera path.
+    /// \details This function generates an animation from a camera path and renders the animation into a video (if
+    ///         ffmpeg exists, otherwise into a sequence of images). It renders all frames of the animation into a
+    ///         framebuffer and streams the framebuffer snapshots into a video file (or a set of images).
+    /// \param file_name Specifies the file name of the video/images (in case of images, suffixes of unique indices
+    ///         will be added to the file names).
+    /// \param fps The desired frame rate.
+    /// \param bitrate The desired bit rate in Mbps (i.e., M bits per second). Larger value for better quality but a
+    ///         a larger file size.
+    /// \param bk_white \c true to use a white background color, or use the current background color.
+    /// \param logger The optional progress logger.
+	void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10, bool bk_white = true, easy3d::ProgressLogger* logger = nullptr);
 
 public:
 
