@@ -243,15 +243,14 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         QApplication::processEvents();
     }
 
-    int bitrate = bit_rate * 1024 * 1024;
-    int gop = fps;
-    bool success = true;
+    const int bitrate = bit_rate * 1024 * 1024;
+    const int gop = fps;
+    const double timeStep = 1.0 / fps;
     double currentTime = 0.0;
-    double timeStep = 1.0 / fps;
+    bool success = true;
 
     const int fw = w * dpi_scaling();
     const int fh = h * dpi_scaling();
-
     QVideoEncoder encoder(file_name, fw, fh, bitrate, gop, fps);
     QString errorString;
     if (!encoder.open(&errorString)) {
