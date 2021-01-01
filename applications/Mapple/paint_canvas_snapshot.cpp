@@ -36,12 +36,15 @@
 
 #include <QOpenGLFunctions>
 #include <QMessageBox>
+#include <QApplication>
 
 #include "paint_canvas.h"
 #include "main_window.h"
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/core//model.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
@@ -207,14 +210,9 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 }
 
 
-#include <QFileInfo>
-#include <QFileDialog>
+#if 0
 
-#include <easy3d/renderer/walk_throuth.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
-
-// true to start the recording and false to stop the recording.
-void PaintCanvas::renderToImages() {
+void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
     if (kfi->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
@@ -222,107 +220,145 @@ void PaintCanvas::renderToImages() {
         return;
     }
 
-    // must be static because of the lambda function called in the animation thread
-    static QString recordDir;
-    static int snapshotCounter = 0;
-    static QMetaObject::Connection connection;
-
-    auto snapshotFramebuffer = [&]() -> void {
-        const QString count = QString("%1").arg(snapshotCounter++, 4, 10, QChar('0'));
-        const QString fileName = recordDir + QString("/snapshot-") + count + QString(".png");
-        raise(); // to correctly grab the frame buffer, the viewer window must be raised in front of other windows
-        const QImage snapshot = grabFramebuffer();
-        if (!snapshot.save(fileName, "png"))
-            LOG(WARNING) << "unable to save snapshot in " << fileName.toStdString();
-    };
-
-//    auto interpolationStopped = [this]() -> void { emit recordingStopped(); };
-//
-//    if (b) {
-//        std::string model_dir = file_system::parent_directory(currentModel()->name());
-//        recordDir = QFileDialog::getExistingDirectory(
-//                this, tr("Please choose a directory"), QString::fromStdString(model_dir)
-//        );
-//        if (recordDir.isEmpty()) {
-//            window_->stopRecordAnimation();
-//            return false;
-//        }
-//
-//        snapshotCounter = 0;
-//        connection = QObject::connect(this, &PaintCanvas::drawFinished, snapshotFramebuffer);
-//
-//#if 0
-//        // Liangliang: MainWindow::stopRecordAnimation will be called from the animation thread, which causes the
-//        //             error: "QObject::startTimer: Timers cannot be started from another thread". To workaround,
-//        //             I invoke MainWindow::stopRecordAnimation by a viewer signal.
-////        easy3d::connect(kfi, window_, &MainWindow::stopRecordAnimation);
-//#else
-//        easy3d::connect(&kfi->interpolation_stopped, 0, interpolationStopped);
-//        QObject::connect(this, &PaintCanvas::recordingStopped, window_, &MainWindow::stopRecordAnimation);
-//#endif
-//
-//        if (kfi->interpolationIsStarted()) // stop first if is playing now
-//            kfi->stopInterpolation();
-//
-//        if (walk_through_->interpolator()->interpolationIsStarted())
-//            walk_through_->interpolator()->stopInterpolation();
-//        else
-//            walk_through_->interpolator()->startInterpolation();
-//        LOG(INFO) << "recording animation started...";
-//    }
-//    else {
-//        QObject::disconnect(connection);
-//        easy3d::disconnect(&kfi->interpolation_stopped, 0);
-//        QObject::disconnect(this, &PaintCanvas::recordingStopped, window_, &MainWindow::stopRecordAnimation);
-//
-//        if (kfi->interpolationIsStarted())
-//            kfi->stopInterpolation();
-//
-//        LOG(INFO) << "recording animation finished. " << snapshotCounter << " snapshots recorded";
-//    }
-}
-
-
-#include <QProgressDialog>
-#include <QApplication>
-#include <QDir>
-#include <QFileDialog>
-#include <QFileInfo>
-
-#include "video/QVideoEncoder.h"
-#include <easy3d/renderer/manipulated_camera_frame.h>
-
-void PaintCanvas::renderToVideo(const QString &outputFilename) {
-    auto kfi = walk_through_->interpolator();
-
-    int frameCount = 40;
-
-    const auto &frames = kfi->interpolate();
-
-    int original_width = width();
-    int original_height = height();
+    // make the image dimensions multiples of 8 (to have the same size as if video saved using ffmpeg)
+    const int original_width = width();
+    const int original_height = height();
     int w = original_width;
     int h = original_height;
-    //hack: as the encoder requires that the video dimensions are multiples of 8, we resize the window a little bit...
-    {
-        //find the nearest multiples of 8
-        if (original_width % 8)
-            w = (original_width / 8 + 1) * 8;
-        if (original_height % 8)
-            h = (original_height / 8 + 1) * 8;
-        if (w != original_width || h != original_height) {
-            setFixedSize(w, h);
-            QApplication::processEvents();
-        }
+    //find the nearest multiples of 8
+    if (original_width % 8)
+        w = (original_width / 8 + 1) * 8;
+    if (original_height % 8)
+        h = (original_height / 8 + 1) * 8;
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(w, h);
+        update();
+        QApplication::processEvents();
     }
 
-    float animScale = 1.0f;
-    int bitrate = /*bitrateSpinBox->value()*/ w * h  * dpi_scaling()  * dpi_scaling();
+    const int fw = w * dpi_scaling();
+    const int fh = h * dpi_scaling();
+    const auto &frames = kfi->interpolate();
+    makeCurrent();
+
+#ifdef USE_QT_FBO
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(samples());
+    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
+    fbo->addColorAttachment(fw, fh);
+#else
+    FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
+    fbo->add_color_buffer();
+    fbo->add_depth_buffer();
+#endif
+
+    bool success = true;
+    const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
+    ProgressLogger progress(frames.size());
+    for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+        const auto &f = frames[frame_index];
+        camera_->setPosition(f.position());
+        camera_->setOrientation(f.orientation());
+
+        fbo->bind();
+
+        if (bk_white)
+            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        else
+            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+                                background_color_[3]);
+        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        draw();
+
+        fbo->release();
+
+        //---------------------------------------------------------------------------
+
+#ifdef USE_QT_FBO
+        const QImage image = fbo->toImage();
+        if (image.isNull()) {
+            QMessageBox::critical(this, "Error", "Failed to grab the framebuffer!");
+            success = false;
+            break;
+        }
+#else
+        QImage image(fw, fh, QImage::Format_RGBA8888);
+        fbo->read_color(0, image.bits(), GL_RGBA);
+#endif
+        const QString full_name = ext_less_name + QString("-%1.png").arg(frame_index, 4, 10, QChar('0'));
+        if (!image.save(full_name)) {
+            QMessageBox::critical(this, "Error", QString("failed to save the %1-th frame").arg(frame_index));
+            success = false;
+            break;
+        }
+
+#ifdef SHOW_PROGRESS
+        progress.next(false);
+        // this very important (the progress bar may interfere the framebuffer
+        makeCurrent();
+#endif
+    }
+
+    // clean
+    delete fbo;
+
+    // restore the clear color
+    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    doneCurrent();
+
+    // restore the viewer size
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(original_width, original_height);
+        update();
+    }
+
+    if (success)
+        LOG(INFO) << "the animation (i.e., " << frames.size() << "images) have been saved successfully";
+    else
+        LOG(ERROR) << "animation recording failed";
+}
+
+#else
+
+#include "video/QVideoEncoder.h"
+
+void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
+    auto kfi = walkThrough()->interpolator();
+    if (kfi->numberOfKeyFrames() == 0) {
+        LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
+                        " creat it by adding key frames";
+        return;
+    }
+
+    // make the image dimensions multiples of 8 (to have the same size as if video saved using ffmpeg)
+    const int original_width = width();
+    const int original_height = height();
+    int w = original_width;
+    int h = original_height;
+    //find the nearest multiples of 8
+    if (original_width % 8)
+        w = (original_width / 8 + 1) * 8;
+    if (original_height % 8)
+        h = (original_height / 8 + 1) * 8;
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(w, h);
+        update();
+        QApplication::processEvents();
+    }
+
+    int bitrate = 10000 * 1024; // bitrateSpinBox->value() * 1024;
     int fps = 25;
     int gop = fps;
+    bool success = true;
+    double currentTime = 0.0;
+    double timeStep = 1.0 / fps;
 
-    QVideoEncoder encoder(outputFilename, width() * dpi_scaling() * animScale, height() * dpi_scaling() * animScale, bitrate, gop, fps);
-    std::cout << "viewer size: " << width() << ", " << height() << ". QVideoEncoder size: " << width() * dpi_scaling() * animScale << ", " << height() * dpi_scaling() * animScale << std::endl;
+    const int fw = w * dpi_scaling();
+    const int fh = h * dpi_scaling();
+
+    QVideoEncoder encoder(file_name, fw, fh, bitrate, gop, fps);
     QString errorString;
     if (!encoder.open(&errorString)) {
         QMessageBox::critical(this, "Error", QString("Failed to open file for output: %1").arg(errorString));
@@ -330,44 +366,59 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
         return;
     }
 
-    QDir outputDir(QFileInfo(outputFilename).absolutePath());
+    const auto &frames = kfi->interpolate();
+    makeCurrent();
 
-    bool success = true;
-    double currentTime = 0.0;
-    double currentStepStartTime = 0.0;
-    double timeStep = 1.0 / fps;
-    std::size_t vp1Index = 0;
+#ifdef USE_QT_FBO
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(samples());
+    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
+    fbo->addColorAttachment(fw, fh);
+#else
+    FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
+    fbo->add_color_buffer();
+    fbo->add_depth_buffer();
+#endif
 
-    for (std::size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex) {
-        const auto &f = frames[frameIndex];
-        camera_->frame()->setPositionAndOrientation(f.position(), f.orientation());
-        update();
-        QApplication::processEvents();
+    const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
+    ProgressLogger progress(frames.size());
+    for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+        const auto &f = frames[frame_index];
+        camera_->setPosition(f.position());
+        camera_->setOrientation(f.orientation());
 
-        QImage image = grabFramebuffer();
+        fbo->bind();
+
+        if (bk_white)
+            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        else
+            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+                                background_color_[3]);
+        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        draw();
+
+        fbo->release();
+
+        //---------------------------------------------------------------------------
+
+#ifdef USE_QT_FBO
+        const QImage image = fbo->toImage();
         if (image.isNull()) {
-            QMessageBox::critical(this, "Error", "Failed to grab the screen!");
+            QMessageBox::critical(this, "Error", "Failed to grab the framebuffer!");
             success = false;
             break;
         }
-
-        std::cout << "captured image size: " << image.width() << ", " << image.height() << std::endl;
-
-        if (image.width() % 8 || image.height() % 8) {
-            std::cerr << "image size: " << image.width() << ", " << image.height() << " -> " << w << ", " << h << ". check why image size is not equal to viewer size" << std::endl;
-            image = image.scaled(w * dpi_scaling() * 2, h * dpi_scaling() * 2);
-        }
-
-//		  if (renderingMode == SUPER_RESOLUTION && superRes > 1)
-//        {
-//				image = image.scaled(image.width() / superRes, image.height() / superRes, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-//        }
-
+#else
+        QImage image(fw, fh, QImage::Format_RGBA8888);
+        fbo->read_color(0, image.bits(), GL_RGBA);
+#endif
 
         QString errorString;
-        if (!encoder.encodeImage(image, frameIndex, &errorString)) {
+        if (!encoder.encodeImage(image, frame_index, &errorString)) {
             QMessageBox::critical(this, "Error",
-                                  QString("Failed to encode frame #%1: %2").arg(frameIndex + 1).arg(errorString));
+                                  QString("Failed to encode frame #%1: %2").arg(frame_index + 1).arg(errorString));
             success = false;
             break;
         }
@@ -375,29 +426,32 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
         //next frame
         currentTime += timeStep;
 
-//			progressDialog.setValue(frameIndex);
-//			QApplication::processEvents();
-//			if (progressDialog.wasCanceled())
-//			{
-//				QMessageBox::warning(this, "Warning", QString("Process has been cancelled"));
-//				success = false;
-//				break;
-//			}
+#ifdef SHOW_PROGRESS
+        progress.next(false);
+        // this very important (the progress bar may interfere the framebuffer
+        makeCurrent();
+#endif
     }
 
+    // clean
+    delete fbo;
+
+    // restore the clear color
+    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    doneCurrent();
 
     encoder.close();
-    //restore original size
-    if (w != original_width || h != original_height)
-        resize(original_width, original_height);
-//    progressDialog.hide();
-    QApplication::processEvents();
 
-    if (success) {
-        QMessageBox::information(this, "Job done", "The animation has been saved successfully");
+    // restore the viewer size
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(original_width, original_height);
+        update();
     }
 
-    setEnabled(true);
+    if (success)
+        LOG(INFO) << "the animation has been saved successfully";
+    else
+        LOG(ERROR) << "animation recording failed";
 }
 
-
+#endif

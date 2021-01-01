@@ -107,6 +107,7 @@ public:
     // bk_color: the background color
     // expand: expand the frustum to ensure the image aspect ratio
 	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
+    void recordAnimation(const QString& file_name, bool bk_white = true);
 
 public:
 
@@ -139,9 +140,6 @@ public slots:
 
     void showCameraPath(bool);
     void addKeyFrame();
-
-    void renderToImages();
-    void renderToVideo(const QString& file_name);
 
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.

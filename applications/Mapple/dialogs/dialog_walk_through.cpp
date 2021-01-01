@@ -236,9 +236,10 @@ void DialogWalkThrough::record(bool b) {
         return;
     }
 
-    QString file = "video.mp4";
+    QString file = "tmp/video.mp4";
 //    const QString file = lineEditOutputFile->text();
-    viewer_->renderToVideo(file);
+//    viewer_->renderToVideo(file);
+    viewer_->recordAnimation(file);
     return;
 
 
