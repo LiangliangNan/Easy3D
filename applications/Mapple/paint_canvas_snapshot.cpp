@@ -301,7 +301,7 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
 
     float animScale = 1.0f;
     int bitrate = /*bitrateSpinBox->value()*/ 1000 * 1024  * dpi_scaling()  * dpi_scaling();
-    int fps = 24;
+    int fps = 25;
     int gop = fps;
 
 
@@ -317,12 +317,13 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
         if (original_height % 8)
             h = (original_height / 8 + 1) * 8;
         if (w != original_width || h != original_height) {
-            resize(w, h);
+            setFixedSize(w, h);
             QApplication::processEvents();
         }
     }
 
     QVideoEncoder encoder(outputFilename, width() * dpi_scaling() * animScale, height() * dpi_scaling() * animScale, bitrate, gop, fps);
+    std::cout << "viewer size: " << width() << ", " << height() << ". QVideoEncoder size: " << width() * dpi_scaling() * animScale << ", " << height() * dpi_scaling() * animScale << std::endl;
     QString errorString;
     if (!encoder.open(&errorString)) {
         QMessageBox::critical(this, "Error", QString("Failed to open file for output: %1").arg(errorString));
@@ -350,6 +351,8 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
             success = false;
             break;
         }
+
+        std::cout << "captured image size: " << image.width() << ", " << image.height() << std::endl;
 
         if (image.width() % 8 || image.height() % 8) {
             std::cerr << "image size: " << image.width() << ", " << image.height() << " -> " << w << ", " << h << ". check why image size is not equal to viewer size" << std::endl;

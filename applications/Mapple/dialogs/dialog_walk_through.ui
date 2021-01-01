@@ -198,108 +198,83 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QFrame" name="horizontalLayoutBitrateFrame">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <property name="leftMargin">
-          <number>0</number>
+        <widget class="QLabel" name="labelFrameRate">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>1</y>
+           <width>64</width>
+           <height>16</height>
+          </rect>
          </property>
-         <property name="topMargin">
-          <number>0</number>
+         <property name="text">
+          <string>Frame rate</string>
          </property>
-         <property name="rightMargin">
-          <number>0</number>
+        </widget>
+        <widget class="QSpinBox" name="spinBoxFPS">
+         <property name="geometry">
+          <rect>
+           <x>83</x>
+           <y>1</y>
+           <width>58</width>
+           <height>21</height>
+          </rect>
          </property>
-         <property name="bottomMargin">
-          <number>0</number>
+         <property name="toolTip">
+          <string>Number of frames per second</string>
          </property>
-         <item>
-          <spacer name="horizontalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelFrameRate">
-           <property name="text">
-            <string>Frame rate</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBoxFPS">
-           <property name="toolTip">
-            <string>Number of frames per second</string>
-           </property>
-           <property name="suffix">
-            <string> fps</string>
-           </property>
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="value">
-            <number>25</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>10</width>
-             <height>0</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelBitRate">
-           <property name="text">
-            <string>Bitrate</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QSpinBox" name="spinBoxBitRate">
-           <property name="toolTip">
-            <string>Bitrate (in kbit/s)
+         <property name="suffix">
+          <string> fps</string>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="value">
+          <number>25</number>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelBitRate">
+         <property name="geometry">
+          <rect>
+           <x>171</x>
+           <y>1</y>
+           <width>40</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Bitrate</string>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="spinBoxBitRate">
+         <property name="geometry">
+          <rect>
+           <x>219</x>
+           <y>1</y>
+           <width>106</width>
+           <height>21</height>
+          </rect>
+         </property>
+         <property name="toolTip">
+          <string>Bitrate (in kbit/s)
 The higher the better the quality (but the bigger the file)</string>
-           </property>
-           <property name="suffix">
-            <string> kbps</string>
-           </property>
-           <property name="minimum">
-            <number>100</number>
-           </property>
-           <property name="maximum">
-            <number>1000000</number>
-           </property>
-           <property name="singleStep">
-            <number>100</number>
-           </property>
-           <property name="value">
-            <number>1000</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         </property>
+         <property name="suffix">
+          <string> kbps</string>
+         </property>
+         <property name="minimum">
+          <number>100</number>
+         </property>
+         <property name="maximum">
+          <number>1000000</number>
+         </property>
+         <property name="singleStep">
+          <number>100</number>
+         </property>
+         <property name="value">
+          <number>1000</number>
+         </property>
+        </widget>
        </widget>
       </item>
       <item>
