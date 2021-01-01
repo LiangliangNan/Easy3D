@@ -50,9 +50,10 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
 
-    connect(startAnimationButton, SIGNAL(toggled(bool)), this, SLOT(startAnimation(bool)));
-    connect(exportAnimationButton, SIGNAL(clicked()), this, SLOT(exportAnimation()));
     connect(clearPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
+
+    connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
+    connect(recordButton, SIGNAL(clicked()), this, SLOT(record()));
 
     easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::newPositionAdded);
 }
@@ -60,6 +61,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 DialogWalkThrough::~DialogWalkThrough()
 {
+    easy3d::disconnect(&walkThrough()->path_modified, this);
 }
 
 
@@ -180,9 +182,9 @@ void DialogWalkThrough::clearPath() {
 }
 
 
-void DialogWalkThrough::startAnimation(bool b) {
+void DialogWalkThrough::preview(bool b) {
     if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
-        startAnimationButton->setChecked(false);
+        previewButton->setChecked(false);
         return;
     }
 
@@ -199,7 +201,7 @@ void DialogWalkThrough::startAnimation(bool b) {
         nextPositionButton->setEnabled(false);
         removeLastPositionButton->setEnabled(false);
         horizontalSliderPreview->setEnabled(false);
-        exportAnimationButton->setEnabled(false);
+        recordButton->setEnabled(false);
         clearPathButton->setEnabled(false);
 
         easy3d::connect(&walkThrough()->interpolator()->interpolation_stopped, 0, interpolationStopped);
@@ -219,7 +221,7 @@ void DialogWalkThrough::startAnimation(bool b) {
         nextPositionButton->setEnabled(true);
         removeLastPositionButton->setEnabled(true);
         horizontalSliderPreview->setEnabled(true);
-        exportAnimationButton->setEnabled(true);
+        recordButton->setEnabled(true);
         clearPathButton->setEnabled(true);
 
         easy3d::disconnect(&walkThrough()->interpolator()->interpolation_stopped, 0);
@@ -234,7 +236,7 @@ void DialogWalkThrough::startAnimation(bool b) {
 
 
 void DialogWalkThrough::resetUIAfterAnimationStopped() {
-    startAnimationButton->setChecked(false);
+    recordButton->setChecked(false);
 }
 
 

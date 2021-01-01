@@ -896,10 +896,8 @@ void MainWindow::createActionsForCameraMenu() {
     connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), this, SLOT(saveCameraStateToFile()));
     connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), this, SLOT(restoreCameraStateFromFile()));
 
-    connect(ui->actionShowCameraPath, SIGNAL(toggled(bool)), viewer_, SLOT(showCameraPath(bool)));
-    connect(ui->actionAddKeyFrame, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
-    connect(ui->actionWalkThrough, SIGNAL(triggered()), this, SLOT(setupWalkThrough()));
-
+    connect(ui->actionAddKeyframe, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
+    connect(ui->actionAnimation, SIGNAL(triggered()), this, SLOT(animation()));
     connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
     connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
 }
@@ -1874,8 +1872,6 @@ void MainWindow::setupWalkThrough() {
 
     dialog->walkThrough()->start_walking(viewer_->models());
     dialog->show();
-    if (!ui->actionShowCameraPath->isChecked())
-        ui->actionShowCameraPath->setChecked(true);
 }
 
 

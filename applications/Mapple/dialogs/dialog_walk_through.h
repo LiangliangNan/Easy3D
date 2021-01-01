@@ -50,7 +50,7 @@ public Q_SLOTS :
 
     void goToPosition(int);
 
-	void startAnimation(bool);
+	void preview(bool);
 	void exportAnimation();
     void clearPath();
 

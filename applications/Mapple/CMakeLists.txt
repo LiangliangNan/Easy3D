@@ -4,7 +4,6 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-add_subdirectory(tools)
 
 include(../../cmake/UseQt5.cmake)
 if (NOT QT5_FOUND)
@@ -14,6 +13,10 @@ if (NOT QT5_FOUND)
             "containing the 'bin' folder.")
     return()
 endif ()
+
+
+add_subdirectory(tools)
+add_subdirectory(video)
 
 
 # some algorithms may use OpenMP
@@ -142,7 +145,7 @@ if (MSVC)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} renderer algo tools)
+target_link_libraries(${PROJECT_NAME} renderer algo tools video)
 
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
@@ -155,3 +158,15 @@ endif ()
 if (APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
 endif ()
+
+
+# FFmpeg support
+target_link_ffmpeg( ${PROJECT_NAME} )
+export_ffmpeg_dlls( ${CLOUDCOMPARE_DEST_FOLDER} )
+
+
+find_library(CORE_FOUNDATION Foundation)
+find_library(APPLICATION_SERVICES ApplicationServices)
+find_library(CORE_SERVICES CoreServices)
+set(EXTRA_LIBS ${CORE_FOUNDATION} ${APPLICATION_SERVICES} ${CORE_SERVICES})
+target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS})

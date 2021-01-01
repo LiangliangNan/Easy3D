@@ -140,6 +140,9 @@ public slots:
     void showCameraPath(bool);
     void addKeyFrame();
 
+    void renderToImages();
+    void renderToVideo();
+
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
     Use restoreStateFromFile() to restore this state, or you can restore it in your init() method).
