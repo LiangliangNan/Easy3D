@@ -51,6 +51,9 @@ public Q_SLOTS :
     void goToPosition(int);
 
 	void preview(bool);
+    void record(bool);
+
+
 	void exportAnimation();
     void clearPath();
 
@@ -67,7 +70,9 @@ protected:
 	virtual	void showEvent(QShowEvent* e);
 	virtual void closeEvent(QCloseEvent* e);
 
-	void newPositionAdded();
+	void enableAllButtons(bool);
+
+    void newPositionAdded();
 };
 
 #endif // DIALOG_WALK_THROUGH_H

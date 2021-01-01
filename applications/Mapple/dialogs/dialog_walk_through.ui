@@ -359,6 +359,9 @@ The higher the better the quality (but the bigger the file)</string>
           <property name="text">
            <string>Record</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>

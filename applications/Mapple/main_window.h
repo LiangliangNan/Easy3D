@@ -89,7 +89,7 @@ public slots:
     void saveCameraStateToFile();
     void restoreCameraStateFromFile();
 
-    void setupWalkThrough();
+    void animation();
     void importCameraPathFromFile();
     void exportCamaraPathToFile();
 

@@ -4,39 +4,77 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-include( ../../../cmake/FFmpegSupport.cmake )
+include(../../../cmake/UseQt5.cmake)
+if (NOT QT5_FOUND)
+    message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
+            "directory containing 'Qt5Config.cmake' or 'qt5-config.cmake'. "
+            "Optionally, you can set the Qt5 root directory 'QT5_ROOT_PATH' to the directory "
+            "containing the 'bin' folder.")
+    return()
+endif ()
 
-add_library( ${PROJECT_NAME} SHARED )
 
-set_target_properties( ${PROJECT_NAME} PROPERTIES
-	AUTOMOC OFF
-	AUTORCC OFF
-	AUTOUIC OFF
-)
+find_package(FFMPEG)
+if (NOT FFMPEG_FOUND)
+    message(FATAL "${PROJECT_NAME} requires FFMPEG but FFMPEG was not found. You can set 'FFMPEG_DIR' to the "
+            "directory containing 'FFMPEGConfig.cmake' or 'ffmpeg-config.cmake'")
+    return()
+else ()
+    message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
+    message(STATUS "   FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES}")
+endif ()
 
-target_sources( ${PROJECT_NAME}
-	PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/QVideoEncoder.h
-		${CMAKE_CURRENT_LIST_DIR}/QVideoEncoder.cpp
-)
 
-target_include_directories( ${PROJECT_NAME}
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
-		${FFMPEG_INCLUDE_DIR}
-)
+set(${PROJECT_NAME}_HEADERS
+        QVideoEncoder.h
+        )
 
-target_link_libraries( ${PROJECT_NAME}
-	Qt5::Gui
-)
+set(${PROJECT_NAME}_SOURCES
+        QVideoEncoder.cpp
+        )
+
+add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE  ${FFMPEG_DEFINITIONS})
+
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        AUTOMOC OFF
+        AUTORCC OFF
+        AUTOUIC OFF
+        )
+
+
+target_include_directories(${PROJECT_NAME}
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${FFMPEG_INCLUDE_DIRS}
+        )
+
+target_link_libraries(${PROJECT_NAME}
+        Qt5::Gui
+        ${FFMPEG_LIBRARIES}
+		swscale
+        )
 
 # FFmpeg support
-target_link_ffmpeg( ${PROJECT_NAME} )
-export_ffmpeg_dlls( ${CLOUDCOMPARE_DEST_FOLDER} )
+
+#find_library(FOUNDATION Foundation)
+#find_library(CORE_FOUNDATION CoreFoundation)
+#find_library(APPLICATION_SERVICES ApplicationServices)
+#find_library(CORE_SERVICES CoreServices)
+#find_library(AUDIO_UNIT AudioUnit)
+#find_library(AUDIO_TOOL_BOX AudioToolbox)
+#find_library(CORE_AUDIO CoreAudio)
+#
+#target_link_libraries(${PROJECT_NAME}
+#        ${FOUNDATION}
+#        ${CORE_FOUNDATION}
+#        ${APPLICATION_SERVICES}
+#        ${CORE_SERVICES}
+#        ${AUDIO_UNIT}
+#        ${AUDIO_TOOL_BOX}
+#        ${CORE_AUDIO}
+#        )
 
 
-find_library(CORE_FOUNDATION Foundation)
-find_library(APPLICATION_SERVICES ApplicationServices)
-find_library(CORE_SERVICES CoreServices)
-set(EXTRA_LIBS ${CORE_FOUNDATION} ${APPLICATION_SERVICES} ${CORE_SERVICES})
-target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS})

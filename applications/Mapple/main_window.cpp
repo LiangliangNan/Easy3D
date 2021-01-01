@@ -1865,7 +1865,7 @@ void MainWindow::surfaceMeshParameterization() {
 }
 
 
-void MainWindow::setupWalkThrough() {
+void MainWindow::animation() {
     static DialogWalkThrough* dialog = nullptr;
     if (!dialog)
         dialog = new DialogWalkThrough(this);

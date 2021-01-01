@@ -141,7 +141,7 @@ public slots:
     void addKeyFrame();
 
     void renderToImages();
-    void renderToVideo();
+    void renderToVideo(const QString& file_name);
 
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.

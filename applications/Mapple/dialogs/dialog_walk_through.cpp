@@ -53,7 +53,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(clearPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
 
     connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
-    connect(recordButton, SIGNAL(clicked()), this, SLOT(record()));
+    connect(recordButton, SIGNAL(toggled(bool)), this, SLOT(record(bool)));
 
     easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::newPositionAdded);
 }
@@ -61,7 +61,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 DialogWalkThrough::~DialogWalkThrough()
 {
-    easy3d::disconnect(&walkThrough()->path_modified, this);
 }
 
 
@@ -182,6 +181,23 @@ void DialogWalkThrough::clearPath() {
 }
 
 
+void DialogWalkThrough::enableAllButtons(bool b) {
+    labelDefineStartingPoint->setEnabled(b);
+    labelDefinePath->setEnabled(b);
+    labelCharacterHeightFactor->setEnabled(b);
+    labelCharacterDistanceToEye->setEnabled(b);
+    doubleSpinBoxCharacterHeightFactor->setEnabled(b);
+    doubleSpinBoxCharacterDistanceFactor->setEnabled(b);
+    previousPositionButton->setEnabled(b);
+    nextPositionButton->setEnabled(b);
+    removeLastPositionButton->setEnabled(b);
+    horizontalSliderPreview->setEnabled(b);
+    previewButton->setEnabled(b);
+    recordButton->setEnabled(b);
+    clearPathButton->setEnabled(b);
+}
+
+
 void DialogWalkThrough::preview(bool b) {
     if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
         previewButton->setChecked(false);
@@ -191,18 +207,8 @@ void DialogWalkThrough::preview(bool b) {
     auto interpolationStopped = [this]() -> void { emit animationStopped(); };
 
     if (b) {
-        labelDefineStartingPoint->setEnabled(false);
-        labelDefinePath->setEnabled(false);
-        labelCharacterHeightFactor->setEnabled(false);
-        labelCharacterDistanceToEye->setEnabled(false);
-        doubleSpinBoxCharacterHeightFactor->setEnabled(false);
-        doubleSpinBoxCharacterDistanceFactor->setEnabled(false);
-        previousPositionButton->setEnabled(false);
-        nextPositionButton->setEnabled(false);
-        removeLastPositionButton->setEnabled(false);
-        horizontalSliderPreview->setEnabled(false);
-        recordButton->setEnabled(false);
-        clearPathButton->setEnabled(false);
+        enableAllButtons(false);
+        previewButton->setEnabled(true);
 
         easy3d::connect(&walkThrough()->interpolator()->interpolation_stopped, 0, interpolationStopped);
         QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
@@ -211,18 +217,7 @@ void DialogWalkThrough::preview(bool b) {
         LOG(INFO) << "animation started...";
     }
     else {
-        labelDefineStartingPoint->setEnabled(true);
-        labelDefinePath->setEnabled(true);
-        labelCharacterHeightFactor->setEnabled(true);
-        labelCharacterDistanceToEye->setEnabled(true);
-        doubleSpinBoxCharacterHeightFactor->setEnabled(true);
-        doubleSpinBoxCharacterDistanceFactor->setEnabled(true);
-        previousPositionButton->setEnabled(true);
-        nextPositionButton->setEnabled(true);
-        removeLastPositionButton->setEnabled(true);
-        horizontalSliderPreview->setEnabled(true);
-        recordButton->setEnabled(true);
-        clearPathButton->setEnabled(true);
+        enableAllButtons(true);
 
         easy3d::disconnect(&walkThrough()->interpolator()->interpolation_stopped, 0);
         QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
@@ -235,8 +230,59 @@ void DialogWalkThrough::preview(bool b) {
 }
 
 
+void DialogWalkThrough::record(bool b) {
+    if (walkThrough()->num_positions() == 0 && walkThrough()->interpolator()->numberOfKeyFrames() == 0) {
+        previewButton->setChecked(false);
+        return;
+    }
+
+    QString file = "video.mp4";
+//    const QString file = lineEditOutputFile->text();
+    viewer_->renderToVideo(file);
+    return;
+
+
+
+
+
+
+    auto recordingStopped = [this]() -> void { emit animationStopped(); };
+
+    if (b) {
+        enableAllButtons(false);
+        previewButton->setEnabled(true);
+
+        easy3d::connect(&walkThrough()->interpolator()->interpolation_stopped, 1, recordingStopped);
+        QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+
+        walkThrough()->animate();
+        LOG(INFO) << "recording started...";
+    }
+    else {
+        enableAllButtons(true);
+
+        easy3d::disconnect(&walkThrough()->interpolator()->interpolation_stopped, 1);
+        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+
+        walkThrough()->interpolator()->stopInterpolation();
+        LOG(INFO) << "recording finished";
+    }
+
+    viewer_->update();
+}
+
+
+
 void DialogWalkThrough::resetUIAfterAnimationStopped() {
+
+    disconnect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
+    disconnect(recordButton, SIGNAL(toggled(bool)), this, SLOT(record(bool)));
+    previewButton->setChecked(false);
     recordButton->setChecked(false);
+    connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
+    connect(recordButton, SIGNAL(toggled(bool)), this, SLOT(record(bool)));
+
+    enableAllButtons(true);
 }
 
 

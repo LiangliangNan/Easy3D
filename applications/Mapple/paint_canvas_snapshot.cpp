@@ -292,23 +292,39 @@ void PaintCanvas::renderToImages() {
 #include "video/QVideoEncoder.h"
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
-void PaintCanvas::renderToVideo() {
+void PaintCanvas::renderToVideo(const QString &outputFilename) {
     auto kfi = walk_through_->interpolator();
 
-    QString outputFilename = "video.mp4";
     int frameCount = 40;
 
     const auto &frames = kfi->interpolate();
 
     float animScale = 1.0f;
-    int bitrate = /*bitrateSpinBox->value()*/ 1000 * 1024;
+    int bitrate = /*bitrateSpinBox->value()*/ 1000 * 1024  * dpi_scaling()  * dpi_scaling();
     int fps = 24;
     int gop = fps;
 
-    QScopedPointer<QVideoEncoder> encoder(0);
-    encoder.reset(new QVideoEncoder(outputFilename, width() * animScale, height() * animScale, bitrate, gop, fps));
+
+    int original_width = width();
+    int original_height = height();
+    int w = original_width;
+    int h = original_height;
+    //hack: as the encoder requires that the video dimensions are multiples of 8, we resize the window a little bit...
+    {
+        //find the nearest multiples of 8
+        if (original_width % 8)
+            w = (original_width / 8 + 1) * 8;
+        if (original_height % 8)
+            h = (original_height / 8 + 1) * 8;
+        if (w != original_width || h != original_height) {
+            resize(w, h);
+            QApplication::processEvents();
+        }
+    }
+
+    QVideoEncoder encoder(outputFilename, width() * dpi_scaling() * animScale, height() * dpi_scaling() * animScale, bitrate, gop, fps);
     QString errorString;
-    if (!encoder->open(&errorString)) {
+    if (!encoder.open(&errorString)) {
         QMessageBox::critical(this, "Error", QString("Failed to open file for output: %1").arg(errorString));
         setEnabled(true);
         return;
@@ -335,6 +351,11 @@ void PaintCanvas::renderToVideo() {
             break;
         }
 
+        if (image.width() % 8 || image.height() % 8) {
+            std::cerr << "image size: " << image.width() << ", " << image.height() << " -> " << w << ", " << h << ". check why image size is not equal to viewer size" << std::endl;
+            image = image.scaled(w * dpi_scaling() * 2, h * dpi_scaling() * 2);
+        }
+
 //		  if (renderingMode == SUPER_RESOLUTION && superRes > 1)
 //        {
 //				image = image.scaled(image.width() / superRes, image.height() / superRes, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
@@ -342,7 +363,7 @@ void PaintCanvas::renderToVideo() {
 
 
         QString errorString;
-        if (!encoder->encodeImage(image, frameIndex, &errorString)) {
+        if (!encoder.encodeImage(image, frameIndex, &errorString)) {
             QMessageBox::critical(this, "Error",
                                   QString("Failed to encode frame #%1: %2").arg(frameIndex + 1).arg(errorString));
             success = false;
@@ -363,14 +384,10 @@ void PaintCanvas::renderToVideo() {
     }
 
 
-    if (encoder) {
-        encoder->close();
-
-        //hack: restore original size
-//		m_view3d->resize(originalViewSize);
-        QApplication::processEvents();
-    }
-
+    encoder.close();
+    //restore original size
+    if (w != original_width || h != original_height)
+        resize(original_width, original_height);
 //    progressDialog.hide();
     QApplication::processEvents();
 

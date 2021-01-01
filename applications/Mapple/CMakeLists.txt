@@ -161,12 +161,11 @@ endif ()
 
 
 # FFmpeg support
-target_link_ffmpeg( ${PROJECT_NAME} )
-export_ffmpeg_dlls( ${CLOUDCOMPARE_DEST_FOLDER} )
-
-
-find_library(CORE_FOUNDATION Foundation)
-find_library(APPLICATION_SERVICES ApplicationServices)
-find_library(CORE_SERVICES CoreServices)
-set(EXTRA_LIBS ${CORE_FOUNDATION} ${APPLICATION_SERVICES} ${CORE_SERVICES})
-target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS})
+#target_link_ffmpeg( ${PROJECT_NAME} )
+#export_ffmpeg_dlls( ${CLOUDCOMPARE_DEST_FOLDER} )
+#
+#find_library(CORE_FOUNDATION Foundation)
+#find_library(APPLICATION_SERVICES ApplicationServices)
+#find_library(CORE_SERVICES CoreServices)
+#set(EXTRA_LIBS ${CORE_FOUNDATION} ${APPLICATION_SERVICES} ${CORE_SERVICES})
+#target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS})
