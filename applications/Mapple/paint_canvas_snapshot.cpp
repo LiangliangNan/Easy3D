@@ -299,12 +299,6 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
 
     const auto &frames = kfi->interpolate();
 
-    float animScale = 1.0f;
-    int bitrate = /*bitrateSpinBox->value()*/ 1000 * 1024  * dpi_scaling()  * dpi_scaling();
-    int fps = 25;
-    int gop = fps;
-
-
     int original_width = width();
     int original_height = height();
     int w = original_width;
@@ -321,6 +315,11 @@ void PaintCanvas::renderToVideo(const QString &outputFilename) {
             QApplication::processEvents();
         }
     }
+
+    float animScale = 1.0f;
+    int bitrate = /*bitrateSpinBox->value()*/ w * h  * dpi_scaling()  * dpi_scaling();
+    int fps = 25;
+    int gop = fps;
 
     QVideoEncoder encoder(outputFilename, width() * dpi_scaling() * animScale, height() * dpi_scaling() * animScale, bitrate, gop, fps);
     std::cout << "viewer size: " << width() << ", " << height() << ". QVideoEncoder size: " << width() * dpi_scaling() * animScale << ", " << height() * dpi_scaling() * animScale << std::endl;
