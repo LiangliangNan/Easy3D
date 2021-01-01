@@ -15,8 +15,19 @@ if (NOT QT5_FOUND)
 endif ()
 
 
+find_package(FFMPEG)
+if (NOT FFMPEG_FOUND)
+    message(WARNING "${PROJECT_NAME} requires FFMPEG but FFMPEG was not found. You can set 'FFMPEG_DIR' to the "
+            "directory containing 'FFMPEGConfig.cmake' or 'ffmpeg-config.cmake'")
+else ()
+    add_subdirectory(video)
+    add_definitions(-DHAS_FFMPEG)
+    message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
+    message(STATUS "   FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES}")
+endif ()
+
+
 add_subdirectory(tools)
-add_subdirectory(video)
 
 
 # some algorithms may use OpenMP
@@ -147,6 +158,10 @@ endif ()
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 target_link_libraries(${PROJECT_NAME} renderer algo tools video)
 
+if (FFMPEG_FOUND)
+    target_link_libraries(${PROJECT_NAME} video)
+endif ()
+
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
 endif ()
@@ -158,14 +173,3 @@ endif ()
 if (APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
 endif ()
-
-
-# FFmpeg support
-#target_link_ffmpeg( ${PROJECT_NAME} )
-#export_ffmpeg_dlls( ${CLOUDCOMPARE_DEST_FOLDER} )
-#
-#find_library(CORE_FOUNDATION Foundation)
-#find_library(APPLICATION_SERVICES ApplicationServices)
-#find_library(CORE_SERVICES CoreServices)
-#set(EXTRA_LIBS ${CORE_FOUNDATION} ${APPLICATION_SERVICES} ${CORE_SERVICES})
-#target_link_libraries(${PROJECT_NAME} ${EXTRA_LIBS})

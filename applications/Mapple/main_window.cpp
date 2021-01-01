@@ -680,42 +680,6 @@ void MainWindow::restoreCameraStateFromFile() {
 }
 
 
-void MainWindow::exportCamaraPathToFile() {
-    QString suggested_name = curDataDirectory_;
-    if (viewer()->currentModel()) {
-        const std::string name = file_system::replace_extension(viewer()->currentModel()->name(), "path");
-        suggested_name = QString::fromStdString(name);
-    }
-    const QString fileName = QFileDialog::getSaveFileName(
-            this,
-            "Export camera path to file",
-            suggested_name,
-            "Camera state (*.path)\n"
-            "All formats (*.*)"
-    );
-
-    if (!fileName.isEmpty()) {
-        viewer_->exportCamaraPathToFile(fileName.toStdString());
-        // assume the user will soon restore the state from this file.
-        curDataDirectory_ = fileName.left(fileName.lastIndexOf("/"));
-    }
-}
-
-
-void MainWindow::importCameraPathFromFile() {
-    const QString fileName = QFileDialog::getOpenFileName(
-            this,
-            "Import camera path from file",
-            curDataDirectory_,
-            "Camera path (*.path)\n"
-            "All formats (*.*)"
-    );
-
-    if (!fileName.isEmpty())
-        viewer_->importCameraPathFromFile(fileName.toStdString());
-}
-
-
 bool MainWindow::okToContinue()
 {
     if (isWindowModified()) {
@@ -903,10 +867,7 @@ void MainWindow::createActionsForCameraMenu() {
     connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), this, SLOT(saveCameraStateToFile()));
     connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), this, SLOT(restoreCameraStateFromFile()));
 
-    connect(ui->actionAddKeyframe, SIGNAL(triggered()), viewer_, SLOT(addKeyFrame()));
     connect(ui->actionAnimation, SIGNAL(triggered()), this, SLOT(animation()));
-    connect(ui->actionImportCameraPathFromFile, SIGNAL(triggered()), this, SLOT(importCameraPathFromFile()));
-    connect(ui->actionExportCamaraPathToFile, SIGNAL(triggered()), this, SLOT(exportCamaraPathToFile()));
 }
 
 

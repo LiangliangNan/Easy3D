@@ -53,7 +53,7 @@
 
 using namespace easy3d;
 
-bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand) {
+bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand, ProgressLogger* progress) {
     int max_samples = 0;
     makeCurrent();
     func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
@@ -107,7 +107,8 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     if (nbX * sub_w < w) ++nbX;
     if (nbY * sub_h < h) ++nbY;
 
-    ProgressLogger progress(nbX * nbY * 1.2f); // the extra 0.2 is for saving the "big" image
+    if (progress)
+        progress->reset(nbX * nbY * 1.2f, true); // the extra 0.2 is for saving the "big" image
 
     // remember the current projection matrix
     // const mat4& proj_matrix = camera()->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
@@ -130,6 +131,11 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     int count = 0;
     for (int i = 0; i < nbX; i++) {
         for (int j = 0; j < nbY; j++) {
+            if (progress && progress->is_canceled()) {
+                LOG(WARNING) << "snapshot cancelled";
+                break;
+            }
+
             if (camera()->type() == Camera::PERSPECTIVE) {
                 // change the projection matrix of the camera.
                 const mat4 &proj = transform::frustum(-xMin + i * deltaX, -xMin + (i + 1) * deltaX,
@@ -187,7 +193,8 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             ++count;
 
 #ifdef SHOW_PROGRESS
-            progress.next(false);
+            if (progress)
+                progress->next(false);
             // this very important (the progress bar may interfere the framebuffer
             makeCurrent();
 #endif
@@ -203,128 +210,16 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
-    bool saved = image.save(file_name);
-    progress.done();
-
-    return saved;
+    return image.save(file_name);
 }
 
 
-#if 0
+#ifdef HAS_FFMPEG
 
-void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
-    auto kfi = walkThrough()->interpolator();
-    if (kfi->numberOfKeyFrames() == 0) {
-        LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
-                        " creat it by adding key frames";
-        return;
-    }
-
-    // make the image dimensions multiples of 8 (to have the same size as if video saved using ffmpeg)
-    const int original_width = width();
-    const int original_height = height();
-    int w = original_width;
-    int h = original_height;
-    //find the nearest multiples of 8
-    if (original_width % 8)
-        w = (original_width / 8 + 1) * 8;
-    if (original_height % 8)
-        h = (original_height / 8 + 1) * 8;
-    if (w != original_width || h != original_height) {
-        camera_->setScreenWidthAndHeight(w, h);
-        update();
-        QApplication::processEvents();
-    }
-
-    const int fw = w * dpi_scaling();
-    const int fh = h * dpi_scaling();
-    const auto &frames = kfi->interpolate();
-    makeCurrent();
-
-#ifdef USE_QT_FBO
-    QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    format.setSamples(samples());
-    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
-    fbo->addColorAttachment(fw, fh);
-#else
-    FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
-    fbo->add_color_buffer();
-    fbo->add_depth_buffer();
-#endif
-
-    bool success = true;
-    const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    ProgressLogger progress(frames.size());
-    for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
-        const auto &f = frames[frame_index];
-        camera_->setPosition(f.position());
-        camera_->setOrientation(f.orientation());
-
-        fbo->bind();
-
-        if (bk_white)
-            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        else
-            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
-                                background_color_[3]);
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        draw();
-
-        fbo->release();
-
-        //---------------------------------------------------------------------------
-
-#ifdef USE_QT_FBO
-        const QImage image = fbo->toImage();
-        if (image.isNull()) {
-            QMessageBox::critical(this, "Error", "Failed to grab the framebuffer!");
-            success = false;
-            break;
-        }
-#else
-        QImage image(fw, fh, QImage::Format_RGBA8888);
-        fbo->read_color(0, image.bits(), GL_RGBA);
-#endif
-        const QString full_name = ext_less_name + QString("-%1.png").arg(frame_index, 4, 10, QChar('0'));
-        if (!image.save(full_name)) {
-            QMessageBox::critical(this, "Error", QString("failed to save the %1-th frame").arg(frame_index));
-            success = false;
-            break;
-        }
-
-#ifdef SHOW_PROGRESS
-        progress.next(false);
-        // this very important (the progress bar may interfere the framebuffer
-        makeCurrent();
-#endif
-    }
-
-    // clean
-    delete fbo;
-
-    // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-    doneCurrent();
-
-    // restore the viewer size
-    if (w != original_width || h != original_height) {
-        camera_->setScreenWidthAndHeight(original_width, original_height);
-        update();
-    }
-
-    if (success)
-        LOG(INFO) << "the animation (i.e., " << frames.size() << "images) have been saved successfully";
-    else
-        LOG(ERROR) << "animation recording failed";
-}
-
-#else
 
 #include "video/QVideoEncoder.h"
 
-void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
+void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white, ProgressLogger* progress) {
     auto kfi = walkThrough()->interpolator();
     if (kfi->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
@@ -348,8 +243,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
         QApplication::processEvents();
     }
 
-    int bitrate = 10000 * 1024; // bitrateSpinBox->value() * 1024;
-    int fps = 25;
+    int bitrate = bit_rate * 1024;
     int gop = fps;
     bool success = true;
     double currentTime = 0.0;
@@ -382,8 +276,14 @@ void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
 #endif
 
     const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    ProgressLogger progress(frames.size());
+    if (progress)
+        progress->reset(frames.size(), true);
     for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+        if (progress && progress->is_canceled()) {
+            success = false;
+            LOG(WARNING) << "animation recording cancelled";
+            break;
+        }
         const auto &f = frames[frame_index];
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
@@ -427,7 +327,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
         currentTime += timeStep;
 
 #ifdef SHOW_PROGRESS
-        progress.next(false);
+        if (progress)
+            progress->next(false);
         // this very important (the progress bar may interfere the framebuffer
         makeCurrent();
 #endif
@@ -453,5 +354,123 @@ void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white) {
     else
         LOG(ERROR) << "animation recording failed";
 }
+
+#else
+
+void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white, ProgressLogger* progress) {
+    auto kfi = walkThrough()->interpolator();
+    if (kfi->numberOfKeyFrames() == 0) {
+        LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
+                        " creat it by adding key frames";
+        return;
+    }
+
+    // make the image dimensions multiples of 8 (to have the same size as if video saved using ffmpeg)
+    const int original_width = width();
+    const int original_height = height();
+    int w = original_width;
+    int h = original_height;
+    //find the nearest multiples of 8
+    if (original_width % 8)
+        w = (original_width / 8 + 1) * 8;
+    if (original_height % 8)
+        h = (original_height / 8 + 1) * 8;
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(w, h);
+        update();
+        QApplication::processEvents();
+    }
+
+    const int fw = w * dpi_scaling();
+    const int fh = h * dpi_scaling();
+    const auto &frames = kfi->interpolate();
+    makeCurrent();
+
+#ifdef USE_QT_FBO
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(samples());
+    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
+    fbo->addColorAttachment(fw, fh);
+#else
+    FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
+    fbo->add_color_buffer();
+    fbo->add_depth_buffer();
+#endif
+
+    bool success = true;
+    const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
+    if (progress)
+        progress->reset(frames.size(), true);
+    for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+        if (progress && progress->is_canceled()) {
+            success = false;
+            LOG(WARNING) << "animation recording cancelled";
+            break;
+        }
+        const auto &f = frames[frame_index];
+        camera_->setPosition(f.position());
+        camera_->setOrientation(f.orientation());
+
+        fbo->bind();
+
+        if (bk_white)
+            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        else
+            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+                                background_color_[3]);
+        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        draw();
+
+        fbo->release();
+
+        //---------------------------------------------------------------------------
+
+#ifdef USE_QT_FBO
+        const QImage image = fbo->toImage();
+        if (image.isNull()) {
+            QMessageBox::critical(this, "Error", "Failed to grab the framebuffer!");
+            success = false;
+            break;
+        }
+#else
+        QImage image(fw, fh, QImage::Format_RGBA8888);
+        fbo->read_color(0, image.bits(), GL_RGBA);
+#endif
+        const QString full_name = ext_less_name + QString("-%1.png").arg(frame_index, 4, 10, QChar('0'));
+        if (!image.save(full_name)) {
+            QMessageBox::critical(this, "Error", QString("failed to save the %1-th frame").arg(frame_index));
+            success = false;
+            break;
+        }
+
+#ifdef SHOW_PROGRESS
+        if (progress)
+            progress->next(false);
+        // this very important (the progress bar may interfere the framebuffer
+        makeCurrent();
+#endif
+    }
+
+    // clean
+    delete fbo;
+
+    // restore the clear color
+    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    doneCurrent();
+
+    // restore the viewer size
+    if (w != original_width || h != original_height) {
+        camera_->setScreenWidthAndHeight(original_width, original_height);
+        update();
+    }
+
+    if (success)
+        LOG(INFO) << "the animation (i.e., " << frames.size() << "images) have been saved successfully";
+    else
+        LOG(ERROR) << "animation recording failed";
+}
+
 
 #endif

@@ -16,10 +16,10 @@ endif ()
 
 find_package(FFMPEG)
 if (NOT FFMPEG_FOUND)
-    message(FATAL "${PROJECT_NAME} requires FFMPEG but FFMPEG was not found. You can set 'FFMPEG_DIR' to the "
+    message(WARNING "${PROJECT_NAME} requires FFMPEG but FFMPEG was not found. You can set 'FFMPEG_DIR' to the "
             "directory containing 'FFMPEGConfig.cmake' or 'ffmpeg-config.cmake'")
-    return()
 else ()
+    add_definitions(-DHAS_FFMPEG)
     message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
     message(STATUS "   FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES}")
 endif ()
@@ -56,25 +56,4 @@ target_link_libraries(${PROJECT_NAME}
         ${FFMPEG_LIBRARIES}
 		swscale
         )
-
-# FFmpeg support
-
-#find_library(FOUNDATION Foundation)
-#find_library(CORE_FOUNDATION CoreFoundation)
-#find_library(APPLICATION_SERVICES ApplicationServices)
-#find_library(CORE_SERVICES CoreServices)
-#find_library(AUDIO_UNIT AudioUnit)
-#find_library(AUDIO_TOOL_BOX AudioToolbox)
-#find_library(CORE_AUDIO CoreAudio)
-#
-#target_link_libraries(${PROJECT_NAME}
-#        ${FOUNDATION}
-#        ${CORE_FOUNDATION}
-#        ${APPLICATION_SERVICES}
-#        ${CORE_SERVICES}
-#        ${AUDIO_UNIT}
-#        ${AUDIO_TOOL_BOX}
-#        ${CORE_AUDIO}
-#        )
-
 

@@ -45,6 +45,7 @@ namespace easy3d {
     class EyeDomeLighting;
     class TextRenderer;
     class WalkThrough;
+    class ProgressLogger;
 }
 
 class QWidget;
@@ -106,8 +107,8 @@ public:
 	// w, h: the width and height of the require snapshot
     // bk_color: the background color
     // expand: expand the frustum to ensure the image aspect ratio
-	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
-    void recordAnimation(const QString& file_name, bool bk_white = true);
+	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true, easy3d::ProgressLogger* logger = nullptr);
+    void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10000, bool bk_white = true, easy3d::ProgressLogger* logger = nullptr);
 
 public:
 
@@ -138,9 +139,6 @@ public slots:
     void copyCamera();
     void pasteCamera();
 
-    void showCameraPath(bool);
-    void addKeyFrame();
-
 public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
     Use restoreStateFromFile() to restore this state, or you can restore it in your init() method).
@@ -148,9 +146,6 @@ public:
     void saveStateToFile(const std::string& file_name) const;
     /*! Restores the viewer state from previously saved file. */
     void restoreStateFromFile(const std::string& file_name);
-
-    void importCameraPathFromFile(const std::string& file_name);
-    void exportCamaraPathToFile(const std::string& file_name) const;
 
 protected:
 

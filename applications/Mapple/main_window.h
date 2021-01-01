@@ -90,8 +90,6 @@ public slots:
     void restoreCameraStateFromFile();
 
     void animation();
-    void importCameraPathFromFile();
-    void exportCamaraPathToFile();
 
     // property
     void manipulateProperties();

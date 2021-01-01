@@ -199,11 +199,7 @@
     <addaction name="actionSaveCameraStateToFile"/>
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
-    <addaction name="actionAddKeyframe"/>
     <addaction name="actionAnimation"/>
-    <addaction name="separator"/>
-    <addaction name="actionExportCamaraPathToFile"/>
-    <addaction name="actionImportCameraPathFromFile"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -1015,16 +1011,6 @@
     <string>Tetrahedralization</string>
    </property>
   </action>
-  <action name="actionExportCamaraPathToFile">
-   <property name="text">
-    <string>Export camara path to file</string>
-   </property>
-  </action>
-  <action name="actionImportCameraPathFromFile">
-   <property name="text">
-    <string>Import camera path from file</string>
-   </property>
-  </action>
   <action name="actionShowFaceVertexLabelsUnderMouse">
    <property name="checkable">
     <bool>true</bool>
@@ -1101,11 +1087,6 @@
    </property>
    <property name="text">
     <string>Perspective/Orthographic</string>
-   </property>
-  </action>
-  <action name="actionAddKeyframe">
-   <property name="text">
-    <string>Add keyframe</string>
    </property>
   </action>
  </widget>

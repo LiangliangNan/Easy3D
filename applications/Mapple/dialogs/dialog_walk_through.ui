@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>432</width>
-    <height>474</height>
+    <width>396</width>
+    <height>528</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -22,113 +22,266 @@
   <property name="windowTitle">
    <string>Walk through</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
     <widget class="QGroupBox" name="groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="title">
       <string>Camera path</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QLabel" name="labelDefineStartingPoint">
-        <property name="text">
-         <string>Step 1: Find a start view point</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="labelDefinePath">
-        <property name="text">
-         <string>Step 2: Click (Ctrl + Left button) on the ground to define a path</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayoutParameters">
-        <item>
-         <spacer name="horizontalSpacer">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0" colspan="2">
+         <widget class="QLabel" name="labelCharacterHeightFactor_4">
+          <property name="text">
+           <string>Load/Save camera path</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <spacer name="horizontalSpacer_9">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>50</width>
-            <height>18</height>
+            <width>10</width>
+            <height>15</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="2" column="0">
-           <widget class="QLabel" name="labelInterpolationSpeed">
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons_3">
+          <item>
+           <widget class="QPushButton" name="importCameraPathButton">
             <property name="text">
-             <string>Interpolation speed</string>
+             <string>Import</string>
+            </property>
+            <property name="default">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterDistanceFactor">
-            <property name="decimals">
-             <number>2</number>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.900000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QDoubleSpinBox" name="doubleSpinBoxInterpolationSpeed">
-            <property name="decimals">
-             <number>1</number>
-            </property>
-            <property name="minimum">
-             <double>-10.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterHeightFactor">
-            <property name="decimals">
-             <number>2</number>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.200000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="labelCharacterHeightFactor">
+          <item>
+           <widget class="QPushButton" name="exportCameraPathButton">
             <property name="text">
-             <string>Character height</string>
+             <string>Export</string>
+            </property>
+            <property name="default">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="labelCharacterDistanceToEye">
+          <item>
+           <spacer name="horizontalSpacer_10">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>10</width>
+              <height>15</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxShowCameraPath">
             <property name="text">
-             <string>Character distance to eye</string>
+             <string>Show path</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="QLabel" name="labelCharacterHeightFactor_3">
+          <property name="text">
+           <string>Define a camera path</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <spacer name="horizontalSpacer_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>10</width>
+            <height>15</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="3" column="1">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QRadioButton" name="radioButtonFreeMode">
+              <property name="text">
+               <string>Free mode  </string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QPushButton" name="addKeyframeButton">
+              <property name="text">
+               <string>Add keyframe</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <spacer name="horizontalSpacer_8">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>50</width>
+                <height>18</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="1" column="0" colspan="3">
+             <widget class="QRadioButton" name="radioButtonWalkingMode">
+              <property name="text">
+               <string>Walking mode ('Ctrl + Left' click on the ground)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayoutParameters">
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Preferred</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>18</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QGridLayout" name="gridLayout">
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterDistanceFactor">
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>100.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.900000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="labelCharacterHeight">
+                <property name="text">
+                 <string>Character height</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="labelCharacterDistanceToEye">
+                <property name="text">
+                 <string>Character distance to eye</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="doubleSpinBoxCharacterHeightFactor">
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>100.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.200000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons">
+            <item>
+             <widget class="QPushButton" name="previousPositionButton">
+              <property name="text">
+               <string>Back</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="nextPositionButton">
+              <property name="text">
+               <string>Next</string>
+              </property>
+              <property name="default">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="removeLastPositionButton">
+              <property name="text">
+               <string>Undo</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="clearCameraPathButton">
+              <property name="text">
+               <string>Clear</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QSlider" name="horizontalSliderPreview">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksAbove</enum>
             </property>
            </widget>
           </item>
@@ -136,146 +289,106 @@
         </item>
        </layout>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons">
-        <item>
-         <widget class="QPushButton" name="previousPositionButton">
-          <property name="text">
-           <string>Back</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="nextPositionButton">
-          <property name="text">
-           <string>Next</string>
-          </property>
-          <property name="default">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="removeLastPositionButton">
-          <property name="text">
-           <string>Undo</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="clearPathButton">
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QSlider" name="horizontalSliderPreview">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="tickPosition">
-         <enum>QSlider::TicksBothSides</enum>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
    <item>
     <widget class="QGroupBox" name="videoOutputGroupBox">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Video output</string>
+      <string>Output</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QFrame" name="horizontalLayoutBitrateFrame">
-        <widget class="QLabel" name="labelFrameRate">
-         <property name="geometry">
-          <rect>
-           <x>11</x>
-           <y>1</y>
-           <width>64</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Frame rate</string>
-         </property>
-        </widget>
-        <widget class="QSpinBox" name="spinBoxFPS">
-         <property name="geometry">
-          <rect>
-           <x>83</x>
-           <y>1</y>
-           <width>58</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Number of frames per second</string>
-         </property>
-         <property name="suffix">
-          <string> fps</string>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="value">
-          <number>25</number>
-         </property>
-        </widget>
-        <widget class="QLabel" name="labelBitRate">
-         <property name="geometry">
-          <rect>
-           <x>171</x>
-           <y>1</y>
-           <width>40</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Bitrate</string>
-         </property>
-        </widget>
-        <widget class="QSpinBox" name="spinBoxBitRate">
-         <property name="geometry">
-          <rect>
-           <x>219</x>
-           <y>1</y>
-           <width>106</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Bitrate (in kbit/s)
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>13</width>
+            <height>13</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelFrameRate">
+          <property name="text">
+           <string>Frame rate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBoxFPS">
+          <property name="toolTip">
+           <string>Number of frames per second</string>
+          </property>
+          <property name="suffix">
+           <string> fps</string>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <number>25</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>13</width>
+            <height>18</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelBitRate">
+          <property name="text">
+           <string>Bitrate</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinBoxBitRate">
+          <property name="toolTip">
+           <string>Bitrate (in kbit/s)
 The higher the better the quality (but the bigger the file)</string>
-         </property>
-         <property name="suffix">
-          <string> kbps</string>
-         </property>
-         <property name="minimum">
-          <number>100</number>
-         </property>
-         <property name="maximum">
-          <number>1000000</number>
-         </property>
-         <property name="singleStep">
-          <number>100</number>
-         </property>
-         <property name="value">
-          <number>1000</number>
-         </property>
-        </widget>
-       </widget>
+          </property>
+          <property name="suffix">
+           <string> kbps</string>
+          </property>
+          <property name="minimum">
+           <number>100</number>
+          </property>
+          <property name="maximum">
+           <number>1000000</number>
+          </property>
+          <property name="singleStep">
+           <number>100</number>
+          </property>
+          <property name="value">
+           <number>10000</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutOutputFile">
@@ -301,17 +414,30 @@ The higher the better the quality (but the bigger the file)</string>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <spacer name="horizontalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QLabel" name="labelInterpolationSpeed">
+          <property name="text">
+           <string>Speed</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="doubleSpinBoxInterpolationSpeed">
+          <property name="decimals">
+           <number>1</number>
           </property>
-         </spacer>
+          <property name="minimum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="previewButton">
@@ -324,10 +450,20 @@ The higher the better the quality (but the bigger the file)</string>
           <property name="checked">
            <bool>false</bool>
           </property>
-          <property name="default">
-           <bool>true</bool>
-          </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
         </item>
         <item>
          <widget class="QPushButton" name="recordButton">
@@ -364,13 +500,6 @@ The higher the better the quality (but the bigger the file)</string>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="checkBoxExportCameraPath">
-        <property name="text">
-         <string>Export camera path</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -378,22 +507,27 @@ The higher the better the quality (but the bigger the file)</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>importCameraPathButton</tabstop>
+  <tabstop>exportCameraPathButton</tabstop>
+  <tabstop>checkBoxShowCameraPath</tabstop>
+  <tabstop>radioButtonFreeMode</tabstop>
+  <tabstop>addKeyframeButton</tabstop>
+  <tabstop>radioButtonWalkingMode</tabstop>
   <tabstop>doubleSpinBoxCharacterHeightFactor</tabstop>
   <tabstop>doubleSpinBoxCharacterDistanceFactor</tabstop>
-  <tabstop>doubleSpinBoxInterpolationSpeed</tabstop>
   <tabstop>previousPositionButton</tabstop>
   <tabstop>nextPositionButton</tabstop>
   <tabstop>removeLastPositionButton</tabstop>
-  <tabstop>clearPathButton</tabstop>
+  <tabstop>clearCameraPathButton</tabstop>
   <tabstop>horizontalSliderPreview</tabstop>
   <tabstop>spinBoxFPS</tabstop>
   <tabstop>spinBoxBitRate</tabstop>
   <tabstop>lineEditOutputFile</tabstop>
   <tabstop>browseButton</tabstop>
+  <tabstop>doubleSpinBoxInterpolationSpeed</tabstop>
   <tabstop>previewButton</tabstop>
   <tabstop>recordButton</tabstop>
   <tabstop>checkBoxStartFromCurrentStep</tabstop>
-  <tabstop>checkBoxExportCameraPath</tabstop>
  </tabstops>
  <resources/>
  <connections/>
