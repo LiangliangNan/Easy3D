@@ -49,6 +49,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -512,6 +513,12 @@ Model* MainWindow::open(const std::string& file_name) {
         viewer_->addModel(model);
         viewer_->fitScreen(model);
         ui->treeWidgetModels->addModel(model, true);
+
+        const auto animation_file = file_system::replace_extension(model->name(), "path");
+        if (file_system::is_file(animation_file)) {
+            if (viewer_->walkThrough()->interpolator()->read_keyframes(animation_file))
+                LOG(INFO) << "model has an accompanying animation file (also loaded)";
+        }
     }
 
     return model;
