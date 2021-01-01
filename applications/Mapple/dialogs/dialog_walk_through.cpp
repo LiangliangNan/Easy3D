@@ -229,7 +229,7 @@ void DialogWalkThrough::clearPath() {
     if (QMessageBox::warning(
             viewer_, "Please confirm!",
             "This will delete the previously defined animation path, which cannot be undone.\n"
-            "You may export the path to a file (using the \'Camera\' menu) before you delete it."
+            "You may export the path to a file before you delete it."
             "\nContinue to delete?", QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         walkThrough()->delete_path();
