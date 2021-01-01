@@ -224,11 +224,11 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    void KeyFrameInterpolator::save_keyframes(const std::string &file_name) const {
+    bool KeyFrameInterpolator::save_keyframes(const std::string &file_name) const {
         std::ofstream output(file_name.c_str());
         if (output.fail()) {
             std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
-            return;
+            return false;
         }
 
         output << "\tnum_key_frames: " << keyFrames_.size() << std::endl;
@@ -239,14 +239,16 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             output << "\t\tposition: " << frame->position() << std::endl;
             output << "\t\torientation: " << frame->orientation() << std::endl;
         }
+
+        return keyFrames_.size() > 0;
     }
 
 
-    void KeyFrameInterpolator::read_keyframes(const std::string &file_name) {
+    bool KeyFrameInterpolator::read_keyframes(const std::string &file_name) {
         std::ifstream input(file_name.c_str());
         if (input.fail()) {
             std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
-            return;
+            return false;
         }
 
         // clean
@@ -264,6 +266,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             input >> dummy >> pos >> dummy >> orient;
             addKeyFrame(Frame(pos, orient));
         }
+
+        return keyFrames_.size() > 0;
     }
 
 
