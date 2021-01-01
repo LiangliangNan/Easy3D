@@ -307,22 +307,9 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>13</width>
-            <height>13</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <widget class="QLabel" name="labelFrameRate">
           <property name="text">
-           <string>Frame rate</string>
+           <string>Frame rate (fps)</string>
           </property>
          </widget>
         </item>
@@ -330,9 +317,6 @@
          <widget class="QSpinBox" name="spinBoxFPS">
           <property name="toolTip">
            <string>Number of frames per second</string>
-          </property>
-          <property name="suffix">
-           <string> fps</string>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -361,32 +345,42 @@
         <item>
          <widget class="QLabel" name="labelBitRate">
           <property name="text">
-           <string>Bitrate</string>
+           <string>Bitrate (Mbps)</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QSpinBox" name="spinBoxBitRate">
           <property name="toolTip">
-           <string>Bitrate (in kbit/s)
-The higher the better the quality (but the bigger the file)</string>
-          </property>
-          <property name="suffix">
-           <string> kbps</string>
+           <string>Bitrate (in Mbps)
+The higher the better the quality (but the larger file size of the video)</string>
           </property>
           <property name="minimum">
-           <number>100</number>
+           <number>1</number>
           </property>
           <property name="maximum">
-           <number>1000000</number>
+           <number>1000</number>
           </property>
           <property name="singleStep">
-           <number>100</number>
+           <number>1</number>
           </property>
           <property name="value">
-           <number>10000</number>
+           <number>10</number>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>13</width>
+            <height>13</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -400,7 +394,11 @@ The higher the better the quality (but the bigger the file)</string>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEditOutputFile"/>
+         <widget class="QLineEdit" name="lineEditOutputFile">
+          <property name="toolTip">
+           <string>The recording file name</string>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QToolButton" name="browseButton">

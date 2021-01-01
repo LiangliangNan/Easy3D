@@ -243,7 +243,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         QApplication::processEvents();
     }
 
-    int bitrate = bit_rate * 1024;
+    int bitrate = bit_rate * 1024 * 1024;
     int gop = fps;
     bool success = true;
     double currentTime = 0.0;
