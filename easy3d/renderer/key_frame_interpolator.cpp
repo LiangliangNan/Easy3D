@@ -53,7 +53,7 @@ namespace easy3d {
 //#define DEBUG_INTERPOLATED_FRAMES
 #ifdef DEBUG_INTERPOLATED_FRAMES
 void save_interpolation(const std::vector<easy3d::Frame>& frames) {
-    std::string file = "interpolated_frames.path";
+    std::string file = "interpolated_frames.kf";
     std::ofstream output(file.c_str());
     if (output.fail())
         std::cout << "could not open file: " << file << std::endl;
@@ -227,7 +227,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     bool KeyFrameInterpolator::save_keyframes(const std::string &file_name) const {
         std::ofstream output(file_name.c_str());
         if (output.fail()) {
-            std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+            LOG(ERROR) << "unable to open \'" << file_name << "\'";
             return false;
         }
 
@@ -247,7 +247,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     bool KeyFrameInterpolator::read_keyframes(const std::string &file_name) {
         std::ifstream input(file_name.c_str());
         if (input.fail()) {
-            std::cerr << "unable to open \'" << file_name << "\'" << std::endl;
+            LOG(ERROR) << "unable to open \'" << file_name << "\'";
             return false;
         }
 

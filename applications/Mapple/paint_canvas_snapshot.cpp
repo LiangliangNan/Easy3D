@@ -212,8 +212,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 }
 
 
-//#ifdef HAS_FFMPEG
-#if 0
+#ifdef HAS_FFMPEG
 
 #include "video/QVideoEncoder.h"
 

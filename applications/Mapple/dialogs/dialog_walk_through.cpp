@@ -352,21 +352,23 @@ void DialogWalkThrough::exportCameraPathToFile() {
         return;
     }
 
-    std::string name = "./animation.path";
+    std::string name = "./keyframes.kf";
     if (viewer_->currentModel())
-        name = file_system::replace_extension(viewer_->currentModel()->name(), "path");
+        name = file_system::replace_extension(viewer_->currentModel()->name(), "kf");
 
     QString suggested_name = QString::fromStdString(name);
     const QString fileName = QFileDialog::getSaveFileName(
             this,
-            "Export camera path to file",
+            "Export keyframes to file",
             suggested_name,
-            "Camera state (*.path)\n"
+            "Keyframe file (*.kf)\n"
             "All formats (*.*)"
     );
 
-    if (!fileName.isEmpty())
-        interpolator()->save_keyframes(fileName.toStdString());
+    if (!fileName.isEmpty()) {
+        if (interpolator()->save_keyframes(fileName.toStdString()))
+            LOG(INFO) << "keyframes saved to file";
+    }
 }
 
 
@@ -377,27 +379,30 @@ void DialogWalkThrough::importCameraPathFromFile() {
     QString suggested_dir = QString::fromStdString(dir);
     const QString fileName = QFileDialog::getOpenFileName(
             this,
-            "Import camera path from file",
+            "Import keyframes from file",
             suggested_dir,
-            "Camera path (*.path)\n"
+            "Keyframe file (*.kf)\n"
             "All formats (*.*)"
     );
 
     if (fileName.isEmpty())
         return;
 
-    interpolator()->read_keyframes(fileName.toStdString());
-    if (walkThrough()->is_path_visible()) {
-        // update scene radius to make sure the path is within the view frustum
-        int num = interpolator()->numberOfKeyFrames();
-        float radius = viewer_->camera()->sceneRadius();
-        for (int i = 0; i < num; ++i) {
-            radius = std::max(
-                    radius,
-                    distance(viewer_->camera()->sceneCenter(), interpolator()->keyFrame(i).position())
-            );
+    if (interpolator()->read_keyframes(fileName.toStdString())) {
+        LOG(INFO) << "keyframe file loaded";
+        if (walkThrough()->is_path_visible()) {
+            // update scene radius to make sure the path is within the view frustum
+            int num = interpolator()->numberOfKeyFrames();
+            float radius = viewer_->camera()->sceneRadius();
+            for (int i = 0; i < num; ++i) {
+                radius = std::max(
+                        radius,
+                        distance(viewer_->camera()->sceneCenter(), interpolator()->keyFrame(i).position())
+                );
+            }
+            viewer_->camera()->setSceneRadius(radius);
         }
-        viewer_->camera()->setSceneRadius(radius);
     }
+
     update();
 }

@@ -527,10 +527,12 @@ Model* MainWindow::open(const std::string& file_name) {
         viewer_->fitScreen(model);
         ui->treeWidgetModels->addModel(model, true);
 
-        const auto animation_file = file_system::replace_extension(model->name(), "path");
-        if (file_system::is_file(animation_file)) {
-            if (viewer_->walkThrough()->interpolator()->read_keyframes(animation_file))
-                LOG(INFO) << "model has an accompanying animation file (also loaded)";
+        const auto keyframe_file = file_system::replace_extension(model->name(), "kf");
+        if (file_system::is_file(keyframe_file)) {
+            if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file))
+                LOG(INFO) << "model has an accompanying animation file \'"
+                          << file_system::simple_name(keyframe_file)
+                          << "\' (also loaded)";
         }
     }
 
