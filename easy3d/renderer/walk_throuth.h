@@ -35,8 +35,6 @@ namespace easy3d {
     class Frame;
     class Camera;
     class Model;
-    class LinesDrawable;
-    class PointsDrawable;
     class KeyFrameInterpolator;
 
     /// \brief WalkThrough enables to interactively creat a camera path for visualizing large scenes or demonstrating
@@ -65,10 +63,10 @@ namespace easy3d {
         /// \param box The bounding box of the scene, which is used to initialize parameters of the character.
         void start_walking(const std::vector<Model*> &scene);
 
-        /// \brief Walks the character to the \c target position.
-        /// \details Upon return, the character will be standing at the \p target position looking in a direction
+        /// \brief Walks the character to the \c ground_point position.
+        /// \details Upon return, the character will be standing at the \p ground_point position looking in a direction
         ///     defined by the character's current head position -> character's next head position.
-        void walk_to(const vec3 &target);
+        void walk_to(const vec3 &ground_point);
         //@}
 
 
@@ -102,23 +100,18 @@ namespace easy3d {
         /// Clears the entire walking path, i.e., all positions added by walk_to().
         void delete_path();
 
-        /// Returns the number of positions (i.e., keyframes) in the walking path.
-        int num_positions() const { return path_.size(); }
-        //@}
-
-
         /// \name Walking through, animation, and visualization.
         //@{
 
         /// Walking through the scene using the created camera path.
         void animate();
 
-        /// Places the character at the idx_th position of the path and modifies the camera view accordingly.
-        /// \return The current position index of the character.
+        /// Places the character at the idx_th keyframe of the path and modifies the camera view accordingly.
+        /// \return The index of current keyframe.
         int move_to(int idx, bool animation = true, float duration = 0.5f);
 
-        /// Returns the current position index of the character, which equal to the return value of move_to (if called).
-        int current_position() const { return current_position_idx_; }
+        /// Returns the index of current keyframe, which is equal to the return value of move_to (if called).
+        int current_keyframe_index() const { return current_frame_idx_; }
 
         /// Shows/Hides the path.
         void set_path_visible(bool b)  { path_visible_ = b; }
@@ -126,7 +119,6 @@ namespace easy3d {
         /// Returns whether the path is visible.
         bool is_path_visible() const { return path_visible_; }
 
-        /// Draws the path as a sequence of characters on the keyframe positions (for the walking mode).
         /// Draws the camera path for the free mode.
         void draw() const;
         //@}
@@ -135,8 +127,7 @@ namespace easy3d {
         KeyFrameInterpolator* interpolator() const { return kfi_; }
 
     protected:
-        // the character will be standing at pos looking in view_dir direction
-        void add_position(const vec3 &pos, const vec3 &view_dir);
+        void add_key_frame(const vec3 &cam_pos, const vec3 &view_dir);
 
         // the actual height of the character
         // defined as the distance between the character eye position and the ground plane.
@@ -145,12 +136,9 @@ namespace easy3d {
         // the actual distance from character's eye to the observer's eye (i.e., camera)
         float third_person_forward_distance() const;
 
-        void draw_path() const;
-        void draw_character() const;
-        vec3 character_head(const vec3 &pos) const;
-        vec3 camera_position(const vec3 &pos, const vec3 &view_dir) const;
+        vec3 character_head(const vec3 &foot) const;
 
-        // converts (character pos, character view direction) to a key frame
+        // convert camera pos and view direction into to a key frame
         Frame to_frame(const vec3 &pos, const vec3 &view_dir) const;
 
     protected:
@@ -172,15 +160,7 @@ namespace easy3d {
         float third_person_forward_factor_;
 
         bool path_visible_;
-        int current_position_idx_;
-
-        std::vector<std::pair<vec3, vec3> > path_;
-        bool buffer_up_to_date_;
-
-        LinesDrawable *character_drawable_;
-        PointsDrawable *character_head_drawable_;
-        LinesDrawable *view_direction_base_drawable_;
-        LinesDrawable *view_direction_arraw_drawable_;
+        int current_frame_idx_;
 
     public:
         Signal path_modified;
