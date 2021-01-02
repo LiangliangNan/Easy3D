@@ -50,6 +50,10 @@ namespace easy3d {
         WalkThrough(Camera* camera);
         virtual ~WalkThrough();
 
+        enum Status { STOPPED, WALKING_MODE, FREE_MODE};
+        Status status() const { return status_; }
+        void set_status(Status s) { status_ = s; }
+
         /// \name Keyframe creation for the free mode
         //@{
         /// adds a key frame to the camera path (for free mode only)
@@ -144,6 +148,8 @@ namespace easy3d {
     protected:
         Camera* camera_;
         KeyFrameInterpolator* kfi_;
+
+        Status status_;
 
         Box3 scene_box_;
 

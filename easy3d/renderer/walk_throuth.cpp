@@ -37,6 +37,7 @@ namespace easy3d {
 
     WalkThrough::WalkThrough(Camera* camera)
             : camera_(camera)
+            , status_(STOPPED)
             , ground_plane_normal_(0, 0, 1)
             , height_factor_(0.2f)
             , third_person_forward_factor_(1.8f)
@@ -76,6 +77,11 @@ namespace easy3d {
 
 
     void WalkThrough::walk_to(const vec3 &ground_point) {
+        if (status_ != WALKING_MODE) {
+            LOG(WARNING) << "wrong status: walk_to() is for the walking mode only";
+            return;
+        }
+
         const vec3 head = character_head(ground_point);
         vec3 view_dir = head - camera_->position();
         view_dir.z = 0;

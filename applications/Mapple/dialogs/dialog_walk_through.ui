@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>427</width>
-    <height>521</height>
+    <height>474</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,7 +54,7 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>10</width>
+            <width>13</width>
             <height>15</height>
            </size>
           </property>
@@ -124,7 +124,7 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>10</width>
+            <width>13</width>
             <height>15</height>
            </size>
           </property>
@@ -133,42 +133,18 @@
         <item row="3" column="1">
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <item row="0" column="0">
-             <widget class="QRadioButton" name="radioButtonFreeMode">
-              <property name="text">
-               <string>Free mode  </string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QPushButton" name="addKeyframeButton">
-              <property name="text">
-               <string>Add keyframe</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_8">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>50</width>
-                <height>18</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item row="1" column="0" colspan="3">
-             <widget class="QRadioButton" name="radioButtonWalkingMode">
-              <property name="text">
-               <string>Walking mode ('Alt + Left' click on the ground)</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QRadioButton" name="radioButtonFreeMode">
+            <property name="text">
+             <string>Free mode (Ctrl + C) </string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="radioButtonWalkingMode">
+            <property name="text">
+             <string>Walking mode (Alt + Left click on the ground)</string>
+            </property>
+           </widget>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayoutParameters">
@@ -240,54 +216,54 @@
             </item>
            </layout>
           </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons">
-            <item>
-             <widget class="QPushButton" name="previousPositionButton">
-              <property name="text">
-               <string>Back</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="nextPositionButton">
-              <property name="text">
-               <string>Next</string>
-              </property>
-              <property name="default">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="removeLastPositionButton">
-              <property name="text">
-               <string>Undo</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="clearCameraPathButton">
-              <property name="text">
-               <string>Clear</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QSlider" name="horizontalSliderPreview">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="tickPosition">
-             <enum>QSlider::TicksAbove</enum>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
        </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons">
+        <item>
+         <widget class="QPushButton" name="previousPositionButton">
+          <property name="text">
+           <string>Back</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="nextPositionButton">
+          <property name="text">
+           <string>Next</string>
+          </property>
+          <property name="default">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeLastPositionButton">
+          <property name="text">
+           <string>Undo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="clearCameraPathButton">
+          <property name="text">
+           <string>Clear</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="horizontalSliderPreview">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::TicksAbove</enum>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -321,8 +297,11 @@
           <property name="minimum">
            <number>1</number>
           </property>
+          <property name="maximum">
+           <number>60</number>
+          </property>
           <property name="value">
-           <number>25</number>
+           <number>30</number>
           </property>
          </widget>
         </item>
@@ -389,7 +368,7 @@ The higher the better the quality (but the larger file size of the video)</strin
         <item>
          <widget class="QLabel" name="labelOutputFile">
           <property name="text">
-           <string>Output file</string>
+           <string>Output</string>
           </property>
          </widget>
         </item>
@@ -484,16 +463,6 @@ The higher the better the quality (but the larger file size of the video)</strin
         </item>
        </layout>
       </item>
-      <item>
-       <widget class="QCheckBox" name="checkBoxStartFromCurrentStep">
-        <property name="text">
-         <string>Start from current step</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -505,7 +474,6 @@ The higher the better the quality (but the larger file size of the video)</strin
   <tabstop>exportCameraPathButton</tabstop>
   <tabstop>checkBoxShowCameraPath</tabstop>
   <tabstop>radioButtonFreeMode</tabstop>
-  <tabstop>addKeyframeButton</tabstop>
   <tabstop>radioButtonWalkingMode</tabstop>
   <tabstop>doubleSpinBoxCharacterHeightFactor</tabstop>
   <tabstop>doubleSpinBoxCharacterDistanceFactor</tabstop>
@@ -521,7 +489,6 @@ The higher the better the quality (but the larger file size of the video)</strin
   <tabstop>browseButton</tabstop>
   <tabstop>previewButton</tabstop>
   <tabstop>recordButton</tabstop>
-  <tabstop>checkBoxStartFromCurrentStep</tabstop>
  </tabstops>
  <resources/>
  <connections/>

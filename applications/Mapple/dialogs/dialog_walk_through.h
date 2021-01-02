@@ -52,8 +52,6 @@ public Q_SLOTS :
     void showCameraPath(bool);
     void clearPath();
 
-    void addKeyFrame();
-
     void setWalkingMode(bool);
 
     void goToPosition(int);
@@ -70,16 +68,10 @@ public Q_SLOTS :
 	void setInterpolationSpeed(double);
 	void setFrameRate(int);
 
-	void resetUIAfterAnimationStopped();
-
-signals:
-    void animationStopped();
-
 protected:
 	virtual	void showEvent(QShowEvent* e);
 	virtual void closeEvent(QCloseEvent* e);
 
-	void enableAllButtons(bool);
     void keyFrameAdded();
 };
 

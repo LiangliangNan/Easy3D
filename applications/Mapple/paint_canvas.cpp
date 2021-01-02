@@ -303,8 +303,13 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
         if (e->modifiers() == Qt::AltModifier) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
-            if (found && !walkThrough()->interpolator()->interpolationIsStarted()) {
+            if (found && (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE) &&
+                (!walkThrough()->interpolator()->interpolationIsStarted()))
+            {
                 walkThrough()->walk_to(p);
+            }
+            else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
+                LOG(WARNING) << "wrong status: Alt + Left clik is for the walking mode only";
             }
         }
     }
@@ -1255,9 +1260,15 @@ void PaintCanvas::setPerspective(bool b) {
 
 
 void PaintCanvas::copyCamera() {
-    if (camera()->frame()) {
-        const vec3 pos = camera()->position();
-        const quat q = camera()->orientation();
+    const vec3 pos = camera()->position();
+    const quat q = camera()->orientation();
+    if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
+        Frame frame;
+        frame.setPosition(camera()->position());
+        frame.setOrientation(q);
+        walkThrough()->add_key_frame(frame);
+    }
+    else if (walkThrough()->status() == easy3d::WalkThrough::STOPPED) {
         const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")
                 .arg(pos[0])
                 .arg(pos[1])
@@ -1268,11 +1279,13 @@ void PaintCanvas::copyCamera() {
                 .arg(q[3]);
         qApp->clipboard()->setText(cam_str);
     }
+    else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
+        LOG(WARNING) << "wrong status: Ctrl + C is for the free mode only";
 }
 
 
 void PaintCanvas::pasteCamera() {
-    if (walkThrough()->interpolator()->interpolationIsStarted())
+    if (walkThrough()->interpolator()->interpolationIsStarted() || walkThrough()->status() != easy3d::WalkThrough::STOPPED )
         return;
 
     // get the camera parameters from clipboard string
@@ -1304,7 +1317,7 @@ void PaintCanvas::pasteCamera() {
     }
 
     //////////////////////////////////////////////////////////////////////////
-    // change view
+    // change view directly
     // 	camera()->setPosition(pos);
     // 	camera()->setOrientation(orient);
     // I prefer to make animation

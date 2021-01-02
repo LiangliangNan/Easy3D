@@ -108,12 +108,16 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
                                    }
                                    const auto &f = interpolated_path_[id];
                                    frame()->setPositionAndOrientation(f.position(), f.orientation());
-                                   const int interval = interpolationPeriod() / interpolationSpeed(); // interval in ms
+                                   // interval in ms. 0.9 for (approximatelyy) compensating the timer overhead
+                                   const int interval = interpolationPeriod() / interpolationSpeed() * 0.9f;
                                    std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                                    if (id == interpolated_path_.size() - 1)  // reaches the end frame
                                        last_stopped_index = 0;
+
+//                                   const float percent = static_cast<float>(id) / interpolated_path_.size();
+//                                   current_frame_finished.send();
                                }
-                               interpolation_stopped.send();
+//                               interpolation_stopped.send();
                                interpolationStarted_ = false;
                            }
         );
@@ -457,7 +461,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         if (keyFrames_.empty())
             return interpolated_path_;
 
-        LOG(INFO) << "interpolating " << keyFrames_.size() << " keyframes...";
+        if (keyFrames_.size() > 2)
+            LOG(INFO) << "interpolating " << keyFrames_.size() << " keyframes...";
 
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
          for (float time = firstTime(); time < lastTime() + interval; time += interval) {
@@ -501,7 +506,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #ifdef DEBUG_INTERPOLATED_FRAMES
         save_interpolation(interpolated_path_);
 #endif
-        LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
+        if (keyFrames_.size() > 2)
+            LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
 
         pathIsValid_ = true;
         return interpolated_path_;

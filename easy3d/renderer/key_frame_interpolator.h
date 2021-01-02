@@ -38,10 +38,10 @@
 #define EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/signal.h>
 #include <easy3d/util/timer.h>
 
 #include <vector>
+
 
 namespace easy3d {
 
@@ -365,9 +365,6 @@ namespace easy3d {
 
         LinesDrawable* path_drawable_;
         LinesDrawable* cameras_drawable_;
-
-    public:
-        Signal interpolation_stopped;
     };
 
 }

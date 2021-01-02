@@ -328,6 +328,9 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 #endif
     }
 
+    // this very important (the progress bar may interfere the framebuffer
+    makeCurrent();
+
     // clean
     delete fbo;
 
@@ -444,6 +447,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         makeCurrent();
 #endif
     }
+    // this very important (the progress bar may interfere the framebuffer
+    makeCurrent();
 
     // clean
     delete fbo;

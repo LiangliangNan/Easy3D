@@ -46,6 +46,9 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 {
 	setupUi(this);
 
+	spinBoxFPS->setValue(interpolator()->frame_rate());
+	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolationSpeed());
+
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
@@ -55,8 +58,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
     connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
     connect(checkBoxShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(showCameraPath(bool)));
-
-    connect(addKeyframeButton, SIGNAL(clicked()), this, SLOT(addKeyFrame()));
 
     connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
 
@@ -112,6 +113,11 @@ easy3d::KeyFrameInterpolator* DialogWalkThrough::interpolator() {
 
 
 void DialogWalkThrough::showEvent(QShowEvent* e) {
+    if (radioButtonWalkingMode->isChecked())
+        walkThrough()->set_status(easy3d::WalkThrough::WALKING_MODE);
+    else
+        walkThrough()->set_status(easy3d::WalkThrough::FREE_MODE);
+
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
 	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->third_person_forward_factor());
 
@@ -131,16 +137,11 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
 
 
 void DialogWalkThrough::closeEvent(QCloseEvent* e) {
+    walkThrough()->set_status(easy3d::WalkThrough::STOPPED);
     QDialog::closeEvent(e);
 	viewer_->update();
 }
 
-
-void DialogWalkThrough::addKeyFrame() {
-    easy3d::Frame *frame = viewer_->camera()->frame();
-    walkThrough()->add_key_frame(*frame);
-    viewer_->update();
-}
 
 void DialogWalkThrough::setCharacterHeightFactor(double h) {
     walkThrough()->set_height_factor(h);
@@ -167,12 +168,15 @@ void DialogWalkThrough::setFrameRate(int fps) {
 
 
 void DialogWalkThrough::setWalkingMode(bool b) {
-    addKeyframeButton->setEnabled(!b);
-
     labelCharacterHeight->setEnabled(b);
     labelCharacterDistanceToEye->setEnabled(b);
     doubleSpinBoxCharacterHeightFactor->setEnabled(b);
     doubleSpinBoxCharacterDistanceFactor->setEnabled(b);
+
+    if (b)
+        walkThrough()->set_status(easy3d::WalkThrough::WALKING_MODE);
+    else
+        walkThrough()->set_status(easy3d::WalkThrough::FREE_MODE);
 }
 
 
@@ -240,23 +244,6 @@ void DialogWalkThrough::clearPath() {
 }
 
 
-void DialogWalkThrough::enableAllButtons(bool b) {
-    labelCharacterHeight->setEnabled(b);
-    labelCharacterDistanceToEye->setEnabled(b);
-    doubleSpinBoxCharacterHeightFactor->setEnabled(b);
-    doubleSpinBoxCharacterDistanceFactor->setEnabled(b);
-    previousPositionButton->setEnabled(b);
-    nextPositionButton->setEnabled(b);
-    removeLastPositionButton->setEnabled(b);
-    horizontalSliderPreview->setEnabled(b);
-    previewButton->setEnabled(b);
-    recordButton->setEnabled(b);
-    clearCameraPathButton->setEnabled(b);
-    update();
-    QApplication::processEvents();
-}
-
-
 void DialogWalkThrough::browse() {
     std::string suggested_name;
     if (viewer_->currentModel())
@@ -271,34 +258,83 @@ void DialogWalkThrough::browse() {
 
 
 void DialogWalkThrough::preview(bool b) {
-    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
-        previewButton->setChecked(false);
-        return;
-    }
+#if 1
+    // this single line works: very efficient (in another thread without overhead).
+    walkThrough()->animate();
 
-    auto interpolationStopped = [this]() -> void { emit animationStopped(); };
-
+#elif 0 // this also works. But std::this_thread::sleep_for() is not efficient and frame rate is low.
     if (b) {
-        enableAllButtons(false);
-        previewButton->setEnabled(true);
+        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+            recordButton->setChecked(false);
+            return;
+        }
+        static int last_stopped_index = 0;
+        const auto &frames = interpolator()->interpolate();
 
-        easy3d::connect(&interpolator()->interpolation_stopped, 0, interpolationStopped);
-        QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+        setEnabled(false);
+        LOG(INFO) << "preview started...";
 
-        walkThrough()->animate();
-        LOG(INFO) << "animation started...";
+        ProgressLogger progress(frames.size(), true);
+        for (int id = last_stopped_index; id < frames.size(); ++id) {
+            if (progress.is_canceled()) {
+                last_stopped_index = id;
+                LOG(INFO) << "preview cancelled";
+                break;
+            }
+            const auto &f = frames[id];
+            viewer_->camera()->frame()->setPositionAndOrientation(f.position(), f.orientation());
+            const int interval = interpolator()->interpolationPeriod() / interpolator()->interpolationSpeed();
+            std::cout << "interval: " << interval << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+            if (id == frames.size() - 1)  // reaches the end frame
+                last_stopped_index = 0;
+
+            progress.next();
+        }
+
+        if (last_stopped_index == 0)
+            LOG(INFO) << "preview finished";
+
+        setEnabled(true);
+        previewButton->setChecked(false);
     }
-    else {
-        enableAllButtons(true);
+    else
+        recordButton->setChecked(false);
 
-        easy3d::disconnect(&interpolator()->interpolation_stopped, 0);
-        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+#else
 
-        interpolator()->stopInterpolation();
-        LOG(INFO) << "animation finished";
-    }
-
-    viewer_->update();
+    // this also handles the UI, but too complicated. I don't like it.
+//    auto interpolationStopped = [this]() -> void { emit animationStopped(); };
+//    auto currentFrameFinished = [this]() -> void { emit oneFrameFinished(); };
+//
+//    if (b) {
+//        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+//            previewButton->setChecked(false);
+//            return;
+//        }
+//
+//        easy3d::connect(&interpolator()->interpolation_stopped, 0, interpolationStopped);
+//        easy3d::connect(&interpolator()->current_frame_finished, 0, currentFrameFinished);
+//        QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+//        QObject::connect(this, &DialogWalkThrough::oneFrameFinished, this, &DialogWalkThrough::onOneFrameFinished);
+//
+//        setEnabled(false);
+//
+//        LOG(INFO) << "preview started...";
+//    }
+//    else {
+//        easy3d::disconnect(&interpolator()->interpolation_stopped, 0);
+//        easy3d::disconnect(&interpolator()->current_frame_finished, 0);
+//        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
+//        QObject::disconnect(this, &DialogWalkThrough::oneFrameFinished, this, &DialogWalkThrough::onOneFrameFinished);
+//
+//        interpolator()->stopInterpolation();
+//        LOG(INFO) << "animation finished";
+//
+//        setEnabled(true);
+//        previewButton->setChecked(false);
+//    }
+#endif
 }
 
 
@@ -313,21 +349,13 @@ void DialogWalkThrough::record(bool b) {
         const int fps = spinBoxFPS->value();
         const int bitrate = spinBoxBitRate->value();
 
-        enableAllButtons(false);
-        recordButton->setEnabled(true);
+        setEnabled(false);
         viewer_->recordAnimation(file, fps, bitrate, true);
-        enableAllButtons(true);
+        setEnabled(true);
         recordButton->setChecked(false);
     }
     else
         recordButton->setChecked(false);
-}
-
-
-void DialogWalkThrough::resetUIAfterAnimationStopped() {
-    previewButton->setChecked(false);
-    recordButton->setChecked(false);
-    enableAllButtons(true);
 }
 
 
