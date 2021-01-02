@@ -45,7 +45,6 @@ namespace easy3d {
     class EyeDomeLighting;
     class TextRenderer;
     class WalkThrough;
-    class ProgressLogger;
 }
 
 class QWidget;
@@ -111,8 +110,7 @@ public:
     /// \param file_name The image file name
     /// \param bk_white \c true to use a white background color, or use the current background color.
     /// \param expand expand the frustum to ensure the image aspect ratio.
-    /// \param logger The optional progress logger.
-	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true, easy3d::ProgressLogger* logger = nullptr);
+	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
 
     /// \brief Records the animation of a camera path.
     /// \details This function generates an animation from a camera path and renders the animation into a video (if
@@ -124,8 +122,7 @@ public:
     /// \param bitrate The desired bit rate in Mbps (i.e., M bits per second). Larger value for better quality but a
     ///         a larger file size.
     /// \param bk_white \c true to use a white background color, or use the current background color.
-    /// \param logger The optional progress logger.
-	void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10, bool bk_white = true, easy3d::ProgressLogger* logger = nullptr);
+	void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10, bool bk_white = true);
 
 public:
 

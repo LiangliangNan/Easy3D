@@ -36,7 +36,9 @@
 #include <QMessageBox>
 #include <QColorDialog>
 #include <QCoreApplication>
+#include <QLabel>
 #include <QPushButton>
+#include <QProgressBar>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -177,7 +179,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
     connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
 
-    setWindowIcon(QIcon(QString::fromStdString(resource::directory() + "/icons/Mapple.png")));
+    setWindowIcon(QIcon(QString::fromStdString(":/resources/icons/Mapple.png")));
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);
 
@@ -206,22 +208,25 @@ MainWindow::~MainWindow() {
 void MainWindow::notify(std::size_t value, bool show_text, bool update_viewer) {
     progress_bar_->setValue(int(value));
     progress_bar_->setTextVisible(show_text);
+    cancelTaskButton_->setVisible(value > 0 && value < 100);
     progress_bar_->setVisible(value > 0 && value < 100);
 
     if (update_viewer) {
         viewer_->update();
-        // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
-        // in parallel-calling one of them would effectively halt the other until the first one is finished
-        // (so you can't distribute computing power among different tasks). It also makes the application react
-        // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
-        // is only suited for short and simple problems that are to be processed in a single thread, such as
-        // splash screens and the monitoring of short operations.
-        QCoreApplication::processEvents();
     }
+
+    // Force to update UI.
+    // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
+    // in parallel-calling one of them would effectively halt the other until the first one is finished
+    // (so you can't distribute computing power among different tasks). It also makes the application react
+    // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
+    // is only suited for short and simple problems that are to be processed in a single thread, such as
+    // splash screens and the monitoring of short operations.
+    QApplication::processEvents();
 }
 
 
-void MainWindow::output(int severity, const std::string &message) {
+void MainWindow::send(int severity, const std::string &message) {
     static QMutex mutex;
     mutex.lock();
     std::string line("");
@@ -251,12 +256,12 @@ void MainWindow::output(int severity, const std::string &message) {
 
 void MainWindow::createStatusBar()
 {
-    labelStatusInfo_ = new QLabel("Ready");
+    labelStatusInfo_ = new QLabel("Ready", this);
     labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width());
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelStatusInfo_);
 
-    labelPointUnderMouse_ = new QLabel("");
+    labelPointUnderMouse_ = new QLabel(this);
     labelPointUnderMouse_->setFixedWidth(400);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelPointUnderMouse_);
@@ -264,29 +269,37 @@ void MainWindow::createStatusBar()
     //////////////////////////////////////////////////////////////////////////
 
     const int length = 120;
-    labelNumFaces_ = new QLabel;
+    labelNumFaces_ = new QLabel(this);
     labelNumFaces_->setMinimumWidth(length);
     labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelNumFaces_);
 
-    labelNumVertices_ = new QLabel;
+    labelNumVertices_ = new QLabel(this);
     labelNumVertices_->setMinimumWidth(length);
     labelNumVertices_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelNumVertices_);
 
-    labelNumEdges_ = new QLabel;
+    labelNumEdges_ = new QLabel(this);
     labelNumEdges_->setMinimumWidth(length);
     labelNumEdges_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelNumEdges_);
 
-    labelNumCells_ = new QLabel;
+    labelNumCells_ = new QLabel(this);
     labelNumCells_->setMinimumWidth(length);
     labelNumCells_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelNumCells_);
 
     //////////////////////////////////////////////////////////////////////////
 
-    progress_bar_ = new QProgressBar;
+    cancelTaskButton_ = new QPushButton(this);
+    cancelTaskButton_->setVisible(false);
+    cancelTaskButton_->setFlat(true);
+    cancelTaskButton_->setIcon(QIcon(":/resources/icons/cancel.png"));
+    cancelTaskButton_->setFixedSize(30, 30);
+    statusBar()->addPermanentWidget(cancelTaskButton_, 1);
+    connect(cancelTaskButton_, SIGNAL(pressed()), this,  SLOT(cancelTask()));
+
+    progress_bar_ = new QProgressBar(this);
     progress_bar_->setVisible(false);
     progress_bar_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     progress_bar_->setMinimumWidth(ui->dockWidgetModels->sizeHint().width());
@@ -353,12 +366,12 @@ void MainWindow::cancelTask() {
     int value = progress_bar_->value() ;
 
     cancel();
+
+    cancelTaskButton_->setVisible(false);
     progress_bar_->reset();
     progress_bar_->setTextVisible(false);
+    progress_bar_->setVisible(false);
     viewer_->update();
-
-    if (value != -1 && value != 0)
-        LOG(WARNING) << "task canceled" << std::endl;
 }
 
 

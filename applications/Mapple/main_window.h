@@ -30,13 +30,20 @@
 #include <string>
 
 #include <QMainWindow>
-#include <QProgressBar>
-#include <QLabel>
 
 #include <easy3d/util/progress.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/core/types.h>
 
+
+class QLabel;
+class QProgressBar;
+class QPushButton;
+
+class PaintCanvas;
+class WidgetPointsDrawable;
+class WidgetLinesDrawable;
+class WidgetTrianglesDrawable;
 
 namespace Ui {
     class MainWindow;
@@ -46,10 +53,6 @@ namespace easy3d {
     class Model;
 }
 
-class PaintCanvas;
-class WidgetPointsDrawable;
-class WidgetLinesDrawable;
-class WidgetTrianglesDrawable;
 
 class MainWindow : public QMainWindow, public easy3d::ProgressClient, public easy3d::logging::LogClient
 {
@@ -187,7 +190,7 @@ private:
     QString strippedName(const QString &fullFileName);
 
     void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override;
-    void output(int severity, const std::string &message) override;
+    void send(int severity, const std::string &message) override;
 
 private:
     PaintCanvas*   viewer_;
@@ -199,6 +202,7 @@ private:
     QAction *actionsRecentFile[MaxRecentFiles],
         *actionSeparator;
 
+    QPushButton*    cancelTaskButton_;
     QProgressBar*	progress_bar_;
     QLabel *labelStatusInfo_,
             *labelPointUnderMouse_,

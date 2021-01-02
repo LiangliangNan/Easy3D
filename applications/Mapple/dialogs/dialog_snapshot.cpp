@@ -24,6 +24,8 @@
 
 #include "dialog_snapshot.h"
 
+#include <easy3d/util/file_system.h>
+
 #include "main_window.h"
 #include "paint_canvas.h"
 
@@ -75,6 +77,11 @@ void DialogSnapshot::saveSnapshot(const QString& fileName) {
                           checkBoxUseWhiteBackground->isChecked(),
                           checkBoxExpandFrustum->isChecked()
     );
+
+    if (checkBoxSaveWindowState) {
+        const auto state_file = file_system::replace_extension(fileName.toStdString(), "view");
+        viewer_->saveStateToFile(state_file);
+    }
 
     // restore the ui
     window_->setEnabled(true);

@@ -33,7 +33,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/progress.h>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -73,8 +72,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::newPositionAdded);
 
-    progress_ = new ProgressLogger;
-
     QButtonGroup* group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
     group->addButton(radioButtonWalkingMode);
@@ -84,7 +81,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 DialogWalkThrough::~DialogWalkThrough()
 {
-    delete progress_;
 }
 
 
@@ -312,7 +308,7 @@ void DialogWalkThrough::record(bool b) {
 
         enableAllButtons(false);
         recordButton->setEnabled(true);
-        viewer_->recordAnimation(file, fps, bitrate, true, progress_);
+        viewer_->recordAnimation(file, fps, bitrate, true);
         enableAllButtons(true);
         recordButton->setChecked(false);
     }

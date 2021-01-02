@@ -53,7 +53,7 @@
 
 using namespace easy3d;
 
-bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand, ProgressLogger* progress) {
+bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand) {
     int max_samples = 0;
     makeCurrent();
     func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
@@ -107,8 +107,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     if (nbX * sub_w < w) ++nbX;
     if (nbY * sub_h < h) ++nbY;
 
-    if (progress)
-        progress->reset(nbX * nbY * 1.2f, true); // the extra 0.2 is for saving the "big" image
+    ProgressLogger progress(nbX * nbY * 1.1f); // the extra 0.1 is for saving the "big" image (time consuming)
 
     // remember the current projection matrix
     // const mat4& proj_matrix = camera()->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
@@ -131,7 +130,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     int count = 0;
     for (int i = 0; i < nbX; i++) {
         for (int j = 0; j < nbY; j++) {
-            if (progress && progress->is_canceled()) {
+            if (progress.is_canceled()) {
                 LOG(WARNING) << "snapshot cancelled";
                 break;
             }
@@ -193,8 +192,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             ++count;
 
 #ifdef SHOW_PROGRESS
-            if (progress)
-                progress->next(false);
+            progress.next(false);
             // this very important (the progress bar may interfere the framebuffer
             makeCurrent();
 #endif
@@ -214,12 +212,12 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 }
 
 
-#ifdef HAS_FFMPEG
-
+//#ifdef HAS_FFMPEG
+#if 0
 
 #include "video/QVideoEncoder.h"
 
-void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white, ProgressLogger* progress) {
+void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
     if (kfi->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
@@ -275,10 +273,9 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 #endif
 
     const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    if (progress)
-        progress->reset(frames.size(), true);
+    ProgressLogger progress(frames.size());
     for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
-        if (progress && progress->is_canceled()) {
+        if (progress.is_canceled()) {
             success = false;
             LOG(WARNING) << "animation recording cancelled";
             break;
@@ -326,8 +323,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         currentTime += timeStep;
 
 #ifdef SHOW_PROGRESS
-        if (progress)
-            progress->next(false);
+        progress.next(false);
         // this very important (the progress bar may interfere the framebuffer
         makeCurrent();
 #endif
@@ -356,7 +352,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
 #else
 
-void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_white, easy3d::ProgressLogger *progress) {
+void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
     if (kfi->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
@@ -399,10 +395,9 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 
     bool success = true;
     const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    if (progress)
-        progress->reset(frames.size(), true);
+    ProgressLogger progress(frames.size());
     for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
-        if (progress && progress->is_canceled()) {
+        if (progress.is_canceled()) {
             success = false;
             LOG(WARNING) << "animation recording cancelled";
             break;
@@ -445,8 +440,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         }
 
 #ifdef SHOW_PROGRESS
-        if (progress)
-            progress->next(false);
+        progress.next(false);
         // this very important (the progress bar may interfere the framebuffer
         makeCurrent();
 #endif

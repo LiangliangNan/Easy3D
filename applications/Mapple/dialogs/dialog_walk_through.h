@@ -32,7 +32,6 @@
 namespace easy3d {
     class WalkThrough;
     class KeyFrameInterpolator;
-    class ProgressLogger;
 }
 
 
@@ -81,9 +80,6 @@ protected:
 
 	void enableAllButtons(bool);
     void newPositionAdded();
-
-private:
-    easy3d::ProgressLogger* progress_;
 };
 
 #endif // DIALOG_WALK_THROUGH_H
