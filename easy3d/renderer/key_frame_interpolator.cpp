@@ -132,6 +132,13 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
+    void KeyFrameInterpolator::deleteLastKeyFrame() {
+        keyFrames_.pop_back();
+        pathIsValid_ = false;
+        stopInterpolation();
+    }
+
+
     void KeyFrameInterpolator::addKeyFrame(const Frame &frame) {
         float time = 0.0f;
         if (keyFrames_.empty())

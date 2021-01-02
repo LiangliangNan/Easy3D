@@ -149,7 +149,7 @@ namespace easy3d {
         /*! Virtual destructor. Clears the keyFrame path. */
         virtual ~KeyFrameInterpolator();
 
-        /*! @name Path creation */
+        /*! @name Path creation and modification*/
         //@{
     public:
         /*! Appends a new keyFrame to the path.
@@ -161,6 +161,10 @@ namespace easy3d {
          * The path will use the current \p frame state.
          * \attention The keyFrameTime() have to be monotonously increasing over keyFrames. */
         void addKeyFrame(const Frame& frame, float time);
+
+        /*! Removes the lastly added keyFrame from the path.
+         */
+        void deleteLastKeyFrame();
 
         /*! Removes all keyFrames from the path. The numberOfKeyFrames() is set to 0. */
         void deletePath();
