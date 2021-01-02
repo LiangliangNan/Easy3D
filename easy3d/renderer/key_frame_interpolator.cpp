@@ -150,8 +150,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             time = keyFrames_.back()->time() + 1.0f;
 #else
         static float period_reference_distance = 0.0f;
-        // interval between first two keyframes is 1.0 sec.
-        // Others are computed relative to distance between two consecutive keyframes
+        // interval between first two keyframes is 1.0 sec. and their distant is recorded.
+        // The time intervals between other consecutive keyframes are computed relative to this distance.
         float time = 0.0f;
         if (keyFrames_.empty())
             time = 0.0;
@@ -352,48 +352,6 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    Frame KeyFrameInterpolator::interpolate(float time) const {
-        if (!pathIsValid_)
-            const_cast<KeyFrameInterpolator*>(this)->updateModifiedFrameValues();
-
-        std::vector<KeyFrame *>::const_iterator relatedFrames[4];
-        getRelatedKeyFramesForTime(time, relatedFrames);
-
-        vec3 v1, v2;
-        computeSpline(relatedFrames, v1, v2);
-
-        float alpha = 0.0f;
-        const float dt = (*relatedFrames[2])->time() - (*relatedFrames[1])->time();
-        if (std::abs(dt) < epsilon<float>())
-            alpha = 0.0f;
-        else
-            alpha = (time - (*relatedFrames[1])->time()) / dt;
-
-#if 0   // linear interpolation - not smooth
-        vec3 pos = alpha*((*relatedFrames[2])->position()) + (1.0f-alpha)*((*relatedFrames[1])->position());
-        quat a = (*relatedFrames[1])->orientation();
-        quat b = (*relatedFrames[2])->orientation();
-        quat q = quat(
-                alpha * b[0] + (1.0f -alpha) * a[0],
-                alpha * b[1] + (1.0f -alpha) * a[1],
-                alpha * b[2] + (1.0f -alpha) * a[2],
-                alpha * b[3] + (1.0f -alpha) * a[3]
-        );
-        q.normalize();
-
-#else   // spline interpolation
-        const vec3 pos =
-                (*relatedFrames[1])->position() + alpha * ((*relatedFrames[1])->tgP() + alpha * (v1 + alpha * v2));
-        const quat q = quat::squad((*relatedFrames[1])->orientation(), (*relatedFrames[1])->tgQ(),
-                                   (*relatedFrames[2])->tgQ(), (*relatedFrames[2])->orientation(), alpha);
-#endif
-        Frame f;
-        f.setPosition(pos);
-        f.setOrientation(q);
-        return f;
-    }
-
-
 #ifndef DOXYGEN
 
     //////////// KeyFrame private class implementation /////////
@@ -475,6 +433,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
         if (pathIsValid_)
             return interpolated_path_;
+        else
+            updateModifiedFrameValues();
 
         interpolated_path_.clear();
         if (keyFrames_.empty())
@@ -484,8 +444,41 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
          for (float time = firstTime(); time < lastTime() + interval; time += interval) {
-            const Frame f = interpolate(time);
-            interpolated_path_.push_back(f);
+             std::vector<KeyFrame *>::const_iterator relatedFrames[4];
+             getRelatedKeyFramesForTime(time, relatedFrames);
+
+             vec3 v1, v2;
+             computeSpline(relatedFrames, v1, v2);
+
+             float alpha = 0.0f;
+             const float dt = (*relatedFrames[2])->time() - (*relatedFrames[1])->time();
+             if (std::abs(dt) < epsilon<float>())
+                 alpha = 0.0f;
+             else
+                 alpha = (time - (*relatedFrames[1])->time()) / dt;
+
+#if 0   // linear interpolation - not smooth
+             vec3 pos = alpha*((*relatedFrames[2])->position()) + (1.0f-alpha)*((*relatedFrames[1])->position());
+        quat a = (*relatedFrames[1])->orientation();
+        quat b = (*relatedFrames[2])->orientation();
+        quat q = quat(
+                alpha * b[0] + (1.0f -alpha) * a[0],
+                alpha * b[1] + (1.0f -alpha) * a[1],
+                alpha * b[2] + (1.0f -alpha) * a[2],
+                alpha * b[3] + (1.0f -alpha) * a[3]
+        );
+        q.normalize();
+
+#else   // spline interpolation
+             const vec3 pos =
+                     (*relatedFrames[1])->position() + alpha * ((*relatedFrames[1])->tgP() + alpha * (v1 + alpha * v2));
+             const quat q = quat::squad((*relatedFrames[1])->orientation(), (*relatedFrames[1])->tgQ(),
+                                        (*relatedFrames[2])->tgQ(), (*relatedFrames[2])->orientation(), alpha);
+#endif
+             Frame f;
+             f.setPosition(pos);
+             f.setOrientation(q);
+             interpolated_path_.push_back(f);
         }
 
 #ifdef DEBUG_INTERPOLATED_FRAMES

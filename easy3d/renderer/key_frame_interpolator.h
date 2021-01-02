@@ -279,11 +279,7 @@ namespace easy3d {
         /*! Calls startInterpolation() or stopInterpolation(), depending on interpolationIsStarted(). */
         void toggleInterpolation() { if (interpolationIsStarted()) stopInterpolation(); else startInterpolation(); }
 
-        /*! Interpolates frame() at time \p time (expressed in seconds).
-         *  This method computes and returns the interpolated frame at time \p time (expressed in seconds).
-         */
-        Frame interpolate(float time) const;
-
+    public:
         /// Computes and returns all the interpolated frames.
         const std::vector<Frame>& interpolate();
         //@}
@@ -339,6 +335,7 @@ namespace easy3d {
         void updateModifiedFrameValues();
         void getRelatedKeyFramesForTime(float time, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
         void computeSpline(const std::vector<KeyFrame*>::const_iterator* relatedFrames, vec3& v1, vec3& v2) const;
+
 #endif
 
     private:
