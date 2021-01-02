@@ -43,7 +43,7 @@
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/primitives.h>
-#include <easy3d/renderer/camera.h>   // for scene radius (to draw cameras in a proper size)
+#include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
 
 
 namespace easy3d {
@@ -53,7 +53,7 @@ namespace easy3d {
 //#define DEBUG_INTERPOLATED_FRAMES
 #ifdef DEBUG_INTERPOLATED_FRAMES
 void save_interpolation(const std::vector<easy3d::Frame>& frames) {
-    std::string file = "interpolated_frames.kf";
+    std::string file = "interpolated_frames2.kf";
     std::ofstream output(file.c_str());
     if (output.fail())
         std::cout << "could not open file: " << file << std::endl;
@@ -68,7 +68,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #endif
 
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
-            : frame_(frame), period_(40)   // 25 frames per second
+            : frame_(frame), period_(10)   // 25 frames per second
             , interpolationSpeed_(1.0), interpolationStarted_(false), start_position_(0), pathIsValid_(false),
               path_drawable_(nullptr), cameras_drawable_(nullptr) {
         if (keyFrames_.size() < 2)
@@ -122,10 +122,11 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 
     void KeyFrameInterpolator::addKeyFrame(const Frame &frame, float time) {
-        if ((!keyFrames_.empty()) && (keyFrames_.back()->time() > time))
+        if ((!keyFrames_.empty()) && (keyFrames_.back()->time() >= time))
             LOG(ERROR) << "time is not monotone";
-        else
+        else {
             keyFrames_.push_back(new KeyFrame(frame, time));
+        }
 
         pathIsValid_ = false;
         stopInterpolation();
@@ -140,11 +141,27 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 
     void KeyFrameInterpolator::addKeyFrame(const Frame &frame) {
+#if 0
+        // interval of each consecutive keyframes is 1.0 sec.
         float time = 0.0f;
         if (keyFrames_.empty())
             time = 0.0;
         else
             time = keyFrames_.back()->time() + 1.0f;
+#else
+        static float period_reference_distance = 0.0f;
+        // interval between first two keyframes is 1.0 sec.
+        // Others are computed relative to distance between two consecutive keyframes
+        float time = 0.0f;
+        if (keyFrames_.empty())
+            time = 0.0;
+        else if (keyFrames_.size() == 1) {
+            time = 1.0f;
+            period_reference_distance = distance(keyFrames_[0]->position(), frame.position());
+        }
+        else
+            time = keyFrames_.back()->time() + 1.0f * distance(keyFrames_.back()->position(), frame.position()) / period_reference_distance;
+#endif
 
         addKeyFrame(frame, time);
     }
@@ -387,20 +404,21 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
     void KeyFrameInterpolator::KeyFrame::computeTangent(const KeyFrame *const prev, const KeyFrame *const next) {
-#if 1   // distance(prev, cur) and distance(cur, next) can have a big difference.
+#if 1
+        // distance(prev, cur) and distance(cur, next) can have a big difference.
         // we compensate this
         float sd_prev = distance2(prev->position(), position());
         float sd_next = distance2(next->position(), position());
         if (sd_prev < sd_next) {
             vec3 new_next = position() + (next->position() - position()).normalize() * std::sqrt(sd_prev);
-            tgP_ = 0.5 * (new_next - prev->position());
+            tgP_ = 0.5f * (new_next - prev->position());
         }
         else {
             vec3 new_prev = position() +(prev->position() - position()).normalize() * std::sqrt(sd_next);
-            tgP_ = 0.5 * (next->position() - new_prev);
+            tgP_ = 0.5f * (next->position() - new_prev);
         }
 #else
-        tgP_ = 0.5 * (next->position() - prev->position());
+        tgP_ = 0.5f * (next->position() - prev->position());
 #endif
         tgQ_ = quat::squad_tangent(prev->orientation(), q_, next->orientation());
     }
@@ -444,14 +462,6 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
         if ((*relatedFrames[3]) != keyFrames_.back()) // has next
             ++relatedFrames[3];
-
-//        if (std::abs(round(time) - time) < 1e-4) {
-//            std::cout << "time: " << time << "\n\trelated frames: "
-//                      << relatedFrames[0] - keyFrames_.begin() << ", "
-//                      << relatedFrames[1] - keyFrames_.begin() << ", "
-//                      << relatedFrames[2] - keyFrames_.begin() << ", "
-//                      << relatedFrames[3] - keyFrames_.begin() << std::endl;
-//        }
     }
 
 
@@ -463,12 +473,17 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
+        if (pathIsValid_)
+            return interpolated_path_;
+
         interpolated_path_.clear();
         if (keyFrames_.empty())
             return interpolated_path_;
 
+        LOG(INFO) << "interpolating " << keyFrames_.size() << " keyframes...";
+
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
-        for (float time = firstTime(); time < lastTime() + interval; time += interval) {
+         for (float time = firstTime(); time < lastTime() + interval; time += interval) {
             const Frame f = interpolate(time);
             interpolated_path_.push_back(f);
         }
@@ -476,6 +491,9 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #ifdef DEBUG_INTERPOLATED_FRAMES
         save_interpolation(interpolated_path_);
 #endif
+        LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
+
+        pathIsValid_ = true;
         return interpolated_path_;
     }
 
