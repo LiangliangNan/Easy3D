@@ -447,8 +447,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool recompute_everying) {
-        if (pathIsValid_ && !recompute_everying)
+    const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
+        if (pathIsValid_)
             return interpolated_path_;
         else
             updateModifiedFrameValues();
