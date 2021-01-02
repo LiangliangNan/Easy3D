@@ -68,7 +68,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #endif
 
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
-            : frame_(frame), period_(10)   // 25 frames per second
+            : frame_(frame), period_(40)   // 25 frames per second
             , interpolationSpeed_(1.0), interpolationStarted_(false), start_position_(0), pathIsValid_(false),
               path_drawable_(nullptr), cameras_drawable_(nullptr) {
         if (keyFrames_.size() < 2)
