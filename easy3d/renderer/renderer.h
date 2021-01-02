@@ -41,23 +41,31 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /**
-     * @brief A Renderer manages the drawables (and thus the rendering) of a model.
+     * \brief A Renderer manages the drawables (and thus the rendering) of a model.
+     * \details Renderer also allow to create default drawables for most rendering purposes.
      * \class Renderer easy3d/renderer/renderer.h
+     * \sa Drawable, PointsDrawable, LinesDrawable, TrianglesDrawable
      */
     class Renderer {
     public:
         /**
          * @brief Constructor.
          * @param model The model to which this renderer is attached.
-         * @param create_drawables True to create default drawables for this model. Skip the creation if false.
+         * @param create_drawables \c true to create default drawables for this model. Skip the creation if \c false.
          *        The supported default drawables are
          *              - PointCloud: "vertices".
-         *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
-         *              - Graph: "vertices", "edges".
-         *        These default drawables are usually sufficient for basic rendering of a model. The rendering buffers
-         *        of the default drawables are also automatically updated when a model is modified. In case the default
-         *        drawables don't meet a particular visualization purpose, the client code should skip the creation of
-         *        the default drawables, create a necessary drawable, and specify the update function. See Drawable.
+         *              - SurfaceMesh: "faces", "vertices", "edges", and "borders".
+         *              - Graph: "vertices", and "edges".
+         *              - PolyMesh: "faces:border" and "faces:interior".
+         * After the \c model has been changed or modified (in geometry, texture, color, etc.), client code
+         * can call update() for the rendering buffers of its default drawable to be automatically updated
+         * during the rendering stage.
+         * In case the default drawables don't meet a particular visualization purpose, client code should skip
+         * the creation of the default drawables (by passing \c fase to \p create_drawables). Instead, create a
+         * customized drawable and update the buffers accordingly. If the drawable changes or will be modified
+         * frequently and its visualization is expected to be automatically updated after each change, provide
+         * an update function.
+         * \sa update(),
          */
         Renderer(Model *model, bool create_drawables = true);
 
@@ -77,11 +85,12 @@ namespace easy3d {
         void set_selected(bool b) { selected_ = b; }
 
         /**
-         * @brief Invalidate the rendering buffers of the model and thus update the rendering.
+         * @brief Invalidates the rendering buffers of the model and thus updates the rendering (delayed in rendering).
          * @details This method triggers an update of the rendering buffers of all the drawables of the model to which
-         *      this renderer is attached. The effect is equivalent to calling the update_[xxx]_buffer() functions
-         *      for all the drawables of this model.
+         *      this renderer is attached. The effect is equivalent to calling Drawable::update() functions for all
+         *      the drawables of this model.
          * @Note: To achieve better performance, it is wiser to update only the affected drawables and buffers.
+         * \sa  Drawable::update()
          */
         void update();
 

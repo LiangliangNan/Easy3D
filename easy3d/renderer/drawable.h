@@ -42,10 +42,10 @@ namespace easy3d {
      * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
      * \class Drawable easy3d/renderer/drawable.h
      * @details A Drawable is an abstraction for "something that can be drawn", e.g., a point point cloud, the surface
-     *          of a mesh, the wireframe of a surface mesh.
+     *          of a mesh, the wireframe of a surface mesh, the vertices of a graph, the border of a polyhedral mesh.
      *          A drawable manages its rendering status and controls the upload of the data to the GPU.
      *          A drawable can live independently or be associated with a Model.
-     * @see Renderer
+     * @sa Renderer
      */
 
     class Drawable : public State {
@@ -149,13 +149,15 @@ namespace easy3d {
 
         /**
          * @brief Requests an update of the OpenGL buffers.
-         * @details This function sets the status to trigger an update of the OpenGL buffers. The actual update does not
-         *          occur immediately but is deferred to the rendering phase.
-         * @attention This method works for standard drawables (no update function required) and non-standard drawable
-         *            (update function required). Standard drawables include:
-         *              - SurfaceMesh: "faces", "edges", "vertices", "borders", "locks";
-         *              - PointCloud: "vertices";
-         *              - Graph: "edges", "vertices".
+         * @details This function sets the status to trigger an update of the OpenGL buffers. The actual update does
+         *      not occur immediately but is deferred to the rendering phase.
+         * @note This method works for both standard drawables (no update function required) and non-standard
+         *      drawable (update function required). Standard drawables include:
+         *            - SurfaceMesh: "faces", "edges", "vertices", "borders", and "locks";
+         *            - PointCloud: "vertices";
+         *            - Graph: "edges", and "vertices",
+         *            - PolyMesh: "faces:border" and "faces:interior".
+         * \sa set_update_func(), Renderer::update()
          */
         void update();
 
@@ -163,7 +165,7 @@ namespace easy3d {
          * @brief Setups how a drwable can update its OpenGL buffers. This function is required by only non-standard
          *        drawables for a special visualization purpose. Standard drawables can be automatically updated and
          *        do not require this function.
-         * @see renderer::update_buffers().
+         * @sa update(), Renderer::update().
          */
         void set_update_func(const std::function<void(Model*, Drawable*)>& func) { update_func_ = func; }
 
