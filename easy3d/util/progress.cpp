@@ -38,7 +38,7 @@ namespace easy3d {
         public:
             static Progress* instance();
 
-            virtual void notify(std::size_t new_val, bool show_text = true, bool update_viewer = true);
+            virtual void notify(std::size_t percent, bool update_viewer);
 
             void set_client(ProgressClient *c) { client_ = c; }
 
@@ -76,9 +76,9 @@ namespace easy3d {
             level_--;
         }
 
-        void Progress::notify(std::size_t new_val, bool show_text, bool update_viewer) {
+        void Progress::notify(std::size_t percent, bool update_viewer) {
             if (client_ != nullptr && level_ < 2)
-                client_->notify(new_val, show_text, update_viewer);
+                client_->notify(percent, update_viewer);
         }
     }
     //  \endcond
@@ -97,46 +97,56 @@ namespace easy3d {
     //_________________________________________________________
 
 
-    ProgressLogger::ProgressLogger(std::size_t max_val, const std::string &task_name, bool quiet)
-            : max_val_(max_val), task_name_(task_name), quiet_(quiet) {
-        cur_val_ = 0;
-        cur_percent_ = 0;
+    ProgressLogger::ProgressLogger(std::size_t max_val, bool update_viewer, bool quiet)
+            : max_val_(max_val)
+            , cur_val_(0)
+            , cur_percent_(0)
+            , quiet_(quiet)
+            , update_viewer_(update_viewer)
+    {
         details::Progress::instance()->push();
         if (!quiet_) {
-            details::Progress::instance()->notify(0, true);
+            details::Progress::instance()->notify(0, update_viewer_);
         }
     }
 
-    void ProgressLogger::reset(std::size_t max_val, bool show_text) {
-        max_val_ = max_val;
-        reset(show_text);
-    }
 
     ProgressLogger::~ProgressLogger() {
+        // one more notification to make sure the progress reaches its end
+        details::Progress::instance()->notify(100, update_viewer_);
         details::Progress::instance()->pop();
     }
 
-    void ProgressLogger::next(bool update_viewer) {
-        cur_val_++;
-        update(true, update_viewer);
+
+    void ProgressLogger::notify(std::size_t new_value) {
+        cur_val_ = new_value;
+        update();
     }
+
+
+    void ProgressLogger::next() {
+        cur_val_++;
+        update();
+    }
+
 
     bool ProgressLogger::is_canceled() const {
         return details::Progress::instance()->is_canceled();
     }
 
-    void ProgressLogger::notify(std::size_t new_value, bool show_text, bool update_viewer) {
-        cur_val_ = new_value;
-        update(show_text, update_viewer);
+
+    void ProgressLogger::reset(std::size_t max_val) {
+        max_val_ = max_val;
+        reset();
     }
 
 
-    void ProgressLogger::update(bool show_text, bool update_viewer) {
+    void ProgressLogger::update() {
         std::size_t percent = cur_val_ * 100 / std::max<std::size_t>(1, max_val_ - 1);
         if (percent != cur_percent_) {
             cur_percent_ = percent;
             if (!quiet_) {
-                details::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), show_text, update_viewer);
+                details::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), update_viewer_);
             }
         }
     }

@@ -62,8 +62,13 @@ namespace easy3d {
 
         preprocessing();
 
-        ProgressLogger progress(iterations);
+        ProgressLogger progress(iterations, false, false);
         for (unsigned int i = 0; i < iterations; ++i) {
+            if (progress.is_canceled()) {
+                LOG(WARNING) << "remeshing surface mesh cancelled";
+                return;
+            }
+
             split_long_edges();
 
             mesh_->update_vertex_normals();
@@ -101,8 +106,12 @@ namespace easy3d {
 
         preprocessing();
 
-        ProgressLogger progress(iterations);
+        ProgressLogger progress(iterations, false, false);
         for (unsigned int i = 0; i < iterations; ++i) {
+            if (progress.is_canceled()) {
+                LOG(WARNING) << "remeshing surface mesh cancelled";
+                return;
+            }
             split_long_edges();
 
             mesh_->update_vertex_normals();

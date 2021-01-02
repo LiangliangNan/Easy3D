@@ -109,8 +109,12 @@ void DialogSurfaceMeshHoleFilling::apply() {
     // close holes whose sizes are smaller than the min allowed boundary size
     int num_closed = 0;
 
-    ProgressLogger progress(holes.size());
+    ProgressLogger progress(holes.size(), true, false);
     for (const auto &hole : holes) {
+        if (progress.is_canceled()) {
+            LOG(WARNING) << "hole filling cancelled";
+            return;
+        }
         SurfaceMeshHoleFilling hf(mesh);
         hf.fill_hole(hole.first);
         mesh->renderer()->update();

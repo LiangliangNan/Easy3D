@@ -189,7 +189,7 @@ private:
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
 
-    void notify(std::size_t value, bool show_text = true, bool update_viewer = true) override;
+    void notify(std::size_t percent, bool update_viewer) override;
     void send(int severity, const std::string &message) override;
 
 private:

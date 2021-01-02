@@ -300,7 +300,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             }
         }
 
-        if (e->modifiers() == Qt::ControlModifier) {
+        if (e->modifiers() == Qt::AltModifier) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
             if (found && !walkThrough()->interpolator()->interpolationIsStarted()) {

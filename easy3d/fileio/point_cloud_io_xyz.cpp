@@ -49,10 +49,14 @@ namespace easy3d {
             input.seekg(0, input.end);
             std::streamoff length = input.tellg();
             input.seekg(0, input.beg);
-            ProgressLogger progress(length);
+            ProgressLogger progress(length, false, false);
 
 			vec3 p;
 			while (!input.eof()) {
+			    if (progress.is_canceled()) {
+                    LOG(WARNING) << "saving point cloud file cancelled";
+                    return false;
+                }
 				in.get_line();;
 				if (in.current_line()[0] != '#') {
 					in >> p;
@@ -79,8 +83,12 @@ namespace easy3d {
 
 			PointCloud::VertexProperty<vec3> points = cloud->get_vertex_property<vec3>("v:point");
 
-            ProgressLogger progress(cloud->n_vertices());
+            ProgressLogger progress(cloud->n_vertices(), false, false);
             for (auto v : cloud->vertices()) {
+                if (progress.is_canceled()) {
+                    LOG(WARNING) << "saving point cloud file cancelled";
+                    return false;
+                }
                 output << points[v] << std::endl;
                 progress.next();
             }

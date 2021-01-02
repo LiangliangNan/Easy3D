@@ -39,7 +39,7 @@ namespace easy3d {
     public:
         ProgressClient();
         virtual ~ProgressClient() {}
-        virtual void notify(std::size_t new_value, bool show_text = true, bool update_viewer = true) = 0;
+        virtual void notify(std::size_t percent, bool update_viewer) = 0;
         virtual void cancel();
     };
 
@@ -51,27 +51,32 @@ namespace easy3d {
      */
     class ProgressLogger {
     public:
-        ProgressLogger(std::size_t max_val = 100, const std::string &task_name = "", bool quiet = false);
+        /// \param max_val The max value (i.e., upper bound) of the progress range.
+        /// \param update_viewer \c true to trigger the viewer to update for each step.
+        /// \param quiet \c true to make the logger quiet (i.e., don't notify the client).
+        ProgressLogger(std::size_t max_val, bool update_viewer, bool quiet = false);
         virtual ~ProgressLogger();
 
-        virtual void notify(std::size_t new_value, bool show_text = true, bool update_viewer = true);
-        virtual void next(bool update_viewer = true);
+        virtual void notify(std::size_t new_value);
+        virtual void next();
         virtual void done() { notify(max_val_); }
 
         bool is_canceled() const;
 
-        void reset(bool show_text = true) { notify(0, show_text); }
-        void reset(std::size_t max_val, bool show_text = true);
+        /// Resets the progress logger without changing the progress range.
+        void reset() { notify(0); }
+        /// Resets the progress logger, and meanwhile changes the progress range.
+        void reset(std::size_t max_val);
 
     protected:
-        virtual void update(bool show_text, bool update_viewer);
+        virtual void update();
 
     private:
         std::size_t max_val_;
-        std::string task_name_;
         std::size_t cur_val_;
         std::size_t cur_percent_;
         bool quiet_;
+        bool update_viewer_;
     };
 
 }   // namespace easy3d

@@ -262,8 +262,12 @@ namespace easy3d {
             return false;
         }
 
-        ProgressLogger progress(contours.size());
+        ProgressLogger progress(contours.size(), false, false);
         for (const auto &contour : contours) {
+            if (progress.is_canceled()) {
+                LOG(WARNING) << "generating surface mesh from text cancelled";
+                return false;
+            }
             extrude(mesh, contour, height);
             progress.next();
         }

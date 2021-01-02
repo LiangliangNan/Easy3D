@@ -154,9 +154,10 @@ namespace easy3d {
 				}
 			}
 
-			ProgressLogger progress(num);
+			ProgressLogger progress(num, false, false);
 			for (unsigned int i = 1; i < num; ++i) {
                 if (progress.is_canceled()) {
+                    LOG(WARNING) << "loading point cloud file cancelled";
                     delete cloud;
                     return nullptr;
                 }

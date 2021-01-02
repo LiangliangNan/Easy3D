@@ -205,15 +205,13 @@ MainWindow::~MainWindow() {
 }
 
 
-void MainWindow::notify(std::size_t value, bool show_text, bool update_viewer) {
-    progress_bar_->setValue(int(value));
-    progress_bar_->setTextVisible(show_text);
-    cancelTaskButton_->setVisible(value > 0 && value < 100);
-    progress_bar_->setVisible(value > 0 && value < 100);
+void MainWindow::notify(std::size_t percent, bool update_viewer) {
+    progress_bar_->setValue(int(percent));
+    cancelTaskButton_->setVisible(percent > 0 && percent < 100);
+    progress_bar_->setVisible(percent > 0 && percent < 100);
 
-    if (update_viewer) {
+    if (update_viewer)
         viewer_->update();
-    }
 
     // Force to update UI.
     // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
@@ -416,10 +414,12 @@ bool MainWindow::onOpen() {
         return false;
 
     int count = 0;
-	ProgressLogger progress(fileNames.size());
+	ProgressLogger progress(fileNames.size(), true, false);
     for (const auto& name : fileNames) {
-        if (progress.is_canceled())
+        if (progress.is_canceled()) {
+            LOG(WARNING) << "opening files cancelled";
             break;
+        }
         if (open(name.toStdString()))
             ++count;
         progress.next();
@@ -1519,7 +1519,7 @@ void MainWindow::computeHeightField() {
     if (dynamic_cast<SurfaceMesh*>(model)) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
 
-        ProgressLogger progress(4);
+        ProgressLogger progress(4, false, false);
 
         auto v_height_x = mesh->vertex_property<float>("v:height_x");
         auto v_height_y = mesh->vertex_property<float>("v:height_y");

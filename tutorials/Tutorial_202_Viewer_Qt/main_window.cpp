@@ -126,10 +126,12 @@ bool MainWindow::onOpen() {
         return false;
 
     int count = 0;
-	ProgressLogger progress(fileNames.size());
+    ProgressLogger progress(fileNames.size(), false, false);
     for (const auto& name : fileNames) {
-        if (progress.is_canceled())
+        if (progress.is_canceled()) {
+            LOG(WARNING) << "opening files cancelled";
             break;
+        }
         if (open(name.toStdString()))
             ++count;
         progress.next();

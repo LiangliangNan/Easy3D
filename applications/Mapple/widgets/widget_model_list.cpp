@@ -640,7 +640,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 	if (meshes.size() > 1) {
 		SurfaceMesh* to = meshes[0];
-		ProgressLogger logger(meshes.size() - 1, "Merge meshes");
+		ProgressLogger logger(meshes.size() - 1, false, false);
 		for (std::size_t i = 1; i < meshes.size(); ++i) {
 		    logger.notify(i);
 			if (logger.is_canceled())
@@ -658,7 +658,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 	if (clouds.size() > 1) {
 		PointCloud* to = clouds[0];
-		ProgressLogger logger(clouds.size() - 1, "Merge point sets");
+		ProgressLogger logger(clouds.size() - 1, false, false);
 		for (int i = 1; i < clouds.size(); ++i) {
             logger.notify(i);
             if (logger.is_canceled())
@@ -705,12 +705,17 @@ void WidgetModelList::decomposeModel(Model *model) {
 
 	const std::string base_name = file_system::parent_directory(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
 
-	ProgressLogger logger(components.size(), "dispatch components");
+	ProgressLogger progress(components.size(), false, false);
 	for (unsigned int i = 0; i < components.size(); i++) {
-		logger.notify(i);
+        if (progress.is_canceled()) {
+            LOG(WARNING) << "decomposing model cancelled";
+            return;
+        }
+
 		SurfaceMesh* new_mesh = components[i].to_mesh();
 		new_mesh->set_name(base_name + std::to_string(i + 1));
 		viewer()->addModel(new_mesh);
+		progress.next();
 	}
 
     // delete the original model

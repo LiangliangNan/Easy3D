@@ -71,7 +71,6 @@ namespace easy3d {
         float surface_area = 0.0;
         for (auto f : mesh->faces()) {
             const vec3 &n = mesh_face_normals ? mesh_face_normals[f] : mesh->compute_face_normal(f);
-
             SurfaceMesh::Halfedge start = mesh->halfedge(f);
             SurfaceMesh::Halfedge cur = mesh->next(mesh->next(start));
             SurfaceMesh::Vertex va = mesh->target(start);
@@ -98,8 +97,14 @@ namespace easy3d {
         std::size_t triangle_num = triangles.size();
         std::size_t num_generated = 0;
         std::size_t triangles_done = 0;
-        ProgressLogger progress(triangle_num, "Sampling mesh");
+        ProgressLogger progress(triangle_num, false, false);
         for (std::size_t idx = 0; idx < triangle_num; ++idx) {
+            if (progress.is_canceled()) {
+                LOG(WARNING) << "sampling surface mesh cancelled";
+                delete cloud;
+                return nullptr;
+            }
+
             const Triangle &tri = triangles[idx];
             const vec3 &n = triangle_normals[idx];
 
