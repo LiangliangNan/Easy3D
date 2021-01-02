@@ -810,68 +810,27 @@ namespace easy3d {
         } else if (key == GLFW_KEY_E && modifiers == 0) {
             if (current_model()) {
                 auto *edges = current_model()->renderer()->get_lines_drawable("edges");
-                if (!edges) {
-                    if (!dynamic_cast<PointCloud *>(current_model())) { // no default "edges" drawable for point clouds
-                        edges = current_model()->renderer()->add_lines_drawable("edges");
-                        if (dynamic_cast<SurfaceMesh *>(current_model())) {
-                            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-                            edges->set_line_width(setting::surface_mesh_edges_line_width);
-                        }
-                        else if (dynamic_cast<Graph *>(current_model())) {
-                            edges->set_uniform_coloring(setting::graph_edges_color);
-                            edges->set_line_width(setting::graph_edges_line_width);
-                            edges->set_impostor_type(LinesDrawable::CYLINDER);
-                        }
-                    }
-                } else
+                if (edges)
                     edges->set_visible(!edges->is_visible());
             }
         } else if (key == GLFW_KEY_V && modifiers == 0) {
             if (current_model()) {
                 auto vertices = current_model()->renderer()->get_points_drawable("vertices");
-                if (!vertices) {
-                    vertices = current_model()->renderer()->add_points_drawable("vertices");
-                    if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                        vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-                        vertices->set_impostor_type(PointsDrawable::SPHERE);
-                        vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                    }
-                    else if (dynamic_cast<PointCloud*>(current_model())) {
-                        vertices->set_point_size(setting::point_cloud_point_size);
-                        vertices->set_uniform_coloring(setting::point_cloud_points_color);
-                    }
-                    else if (dynamic_cast<Graph*>(current_model())) {
-                        vertices->set_uniform_coloring(setting::graph_vertices_color);
-                        vertices->set_point_size(setting::graph_vertices_point_size);
-                        vertices->set_impostor_type(PointsDrawable::SPHERE);
-                    }
-                } else
+                if (vertices)
                     vertices->set_visible(!vertices->is_visible());
             }
         } else if (key == GLFW_KEY_B && modifiers == 0) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_lines_drawable("borders");
-                if (!drawable) {
-                    drawable = mesh->renderer()->add_lines_drawable("borders");
-                    drawable->set_uniform_coloring(setting::surface_mesh_borders_color);
-                    drawable->set_impostor_type(LinesDrawable::CYLINDER);
-                    drawable->set_line_width(setting::surface_mesh_borders_line_width);
-                }
-                else
+                if (drawable)
                     drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_points_drawable("locks");
-                if (!drawable) {
-                    drawable = mesh->renderer()->add_points_drawable("locks");
-                    drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
-                    drawable->set_impostor_type(PointsDrawable::SPHERE);
-                    drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
-                }
-                else
+                if (drawable)
                     drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_D && modifiers == 0) {

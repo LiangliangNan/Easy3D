@@ -610,75 +610,38 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     } else if (e->key() == Qt::Key_E && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
             auto *edges = currentModel()->renderer()->get_lines_drawable("edges");
-            if (!edges) {
-                if (!dynamic_cast<PointCloud *>(currentModel())) { // no default "edges" drawable for point clouds
-                    edges = currentModel()->renderer()->add_lines_drawable("edges");
-                    if (dynamic_cast<SurfaceMesh *>(currentModel())) {
-                        edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-                        edges->set_line_width(setting::surface_mesh_edges_line_width);
-                    }
-                    else if (dynamic_cast<Graph *>(currentModel())) {
-                        edges->set_uniform_coloring(setting::graph_edges_color);
-                        edges->set_line_width(setting::graph_edges_line_width);
-                        edges->set_impostor_type(LinesDrawable::CYLINDER);
-                    }
-                }
-            } else
+            if (edges) {
                 edges->set_visible(!edges->is_visible());
-            window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
+            }
         }
     } else if (e->key() == Qt::Key_V && e->modifiers() == Qt::NoModifier) {
         if (currentModel()) {
             auto vertices = currentModel()->renderer()->get_points_drawable("vertices");
-            if (!vertices) {
-                vertices = currentModel()->renderer()->add_points_drawable("vertices");
-                if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-                    vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-                    vertices->set_impostor_type(PointsDrawable::SPHERE);
-                    vertices->set_point_size(setting::surface_mesh_vertices_point_size);
-                }
-                else if (dynamic_cast<PointCloud*>(currentModel())) {
-                    vertices->set_point_size(setting::point_cloud_point_size);
-                    vertices->set_uniform_coloring(setting::point_cloud_points_color);
-                }
-                else if (dynamic_cast<Graph*>(currentModel())) {
-                    vertices->set_uniform_coloring(setting::graph_vertices_color);
-                    vertices->set_point_size(setting::graph_vertices_point_size);
-                    vertices->set_impostor_type(PointsDrawable::SPHERE);
-                }
-            } else
+            if (vertices) {
                 vertices->set_visible(!vertices->is_visible());
-            window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
+            }
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             auto borders = mesh->renderer()->get_lines_drawable("borders");
-            if (!borders) {
-                borders = mesh->renderer()->add_lines_drawable("borders");
-                borders->set_uniform_coloring(setting::surface_mesh_borders_color);
-                borders->set_impostor_type(LinesDrawable::CYLINDER);
-                borders->set_line_width(setting::surface_mesh_borders_line_width);
-            }
-            else
+            if (borders) {
                 borders->set_visible(!borders->is_visible());
-            window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
+            }
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
         SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             auto drawable = mesh->renderer()->get_points_drawable("locks");
-            if (!drawable) {
-                drawable = mesh->renderer()->add_points_drawable("locks");
-                drawable->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
-                drawable->set_point_size(setting::surface_mesh_vertices_point_size + 5);
-            }
-            else
+            if (drawable) {
                 drawable->set_visible(!drawable->is_visible());
-            window_->updateRenderingPanel();
+                window_->updateRenderingPanel();
+            }
         }
     }
     else if (e->key() == Qt::Key_M && e->modifiers() == Qt::NoModifier) {
