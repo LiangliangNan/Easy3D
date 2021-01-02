@@ -44,6 +44,8 @@
 namespace easy3d
 {
 
+    /// \brief The logging mechanism.
+    /// \namespace easy3d::logging
 	namespace logging
 	{
 
@@ -74,7 +76,7 @@ namespace easy3d
             //  1: WARNING
             //  2: ERROR
             //  3: FATAL
-            virtual void output(int severity, const std::string &message) = 0;
+            virtual void send(int severity, const std::string &message) = 0;
 
             // This method implements the output of the logger. It internally calls the above output() method.
             void send(google::LogSeverity severity, const char *full_filename,

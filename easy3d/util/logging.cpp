@@ -100,7 +100,7 @@ namespace easy3d
                   const char *message, size_t message_len)
         {
 		    if (message && message_len > 0)
-                output(severity, std::string(message, message + message_len));
+                send(severity, std::string(message, message + message_len));
 		}
 	}
 
