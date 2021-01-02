@@ -48,6 +48,9 @@ QVideoEncoder::QVideoEncoder(QString filename, int width, int height, unsigned b
 	, m_isOpen(false)
 	, m_ff(new FFmpegStuffEnc)
 {
+#ifdef NDEBUG
+    av_log_set_level(AV_LOG_QUIET);
+#endif
 }
 
 QVideoEncoder::~QVideoEncoder()
