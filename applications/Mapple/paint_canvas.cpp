@@ -1095,7 +1095,7 @@ void PaintCanvas::postDraw() {
         walk_through_->draw();
     easy3d_debug_log_gl_error;
 
-    if (show_pivot_point_) {
+    if (show_pivot_point_ || pressed_button_ != Qt::NoButton) {
         ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
