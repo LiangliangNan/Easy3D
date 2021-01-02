@@ -177,7 +177,8 @@ namespace easy3d {
          *              1. per-vertex color: in "v:color";
          *              2. per-vertex texture coordinates: in "v:texcoord";
          *              3. segmentation: in "v:primitive_index";
-         *              4: uniform color.
+         *              4. scalar field;
+         *              5: uniform color.
          */
         static void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
 
@@ -191,7 +192,8 @@ namespace easy3d {
          *              3. per-halfedge texture coordinates: in "h:texcoord";
          *              4. per-vertex texture coordinates: in "v:texcoord";
          *              5. segmentation: in "f:chart";
-         *              6 uniform color
+         *              6. scalar field;
+         *              7 uniform color
          */
         static void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
 

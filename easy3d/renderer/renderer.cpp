@@ -167,10 +167,21 @@ namespace easy3d {
             return;
         }
 
+        // segmentation
         auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
         if (primitive_index) { // model has segmentation information
             drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
             return;
+        }
+
+        // other unknown scalar fields
+        const auto properties = model->vertex_properties();
+        for (const auto& name : properties) {
+            if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
+                model->get_vertex_property<float>(name)) {
+                drawable->set_scalar_coloring(State::VERTEX, name);
+                return;
+            }
         }
 
         drawable->set_uniform_coloring(setting::point_cloud_points_color);
@@ -215,10 +226,21 @@ namespace easy3d {
             return;
         }
 
+        // segmentation
         auto segmentation = model->get_face_property<int>("f:chart");
         if (segmentation) {
             drawable->set_scalar_coloring(State::FACE, "f:chart");
             return;
+        }
+
+        // other unknown scalar fields
+        const auto properties = model->vertex_properties();
+        for (const auto& name : properties) {
+            if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
+                model->get_vertex_property<float>(name)) {
+                drawable->set_scalar_coloring(State::FACE, name);
+                return;
+            }
         }
 
         drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
