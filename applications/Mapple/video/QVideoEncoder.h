@@ -30,7 +30,7 @@ public:
 	
 	virtual ~QVideoEncoder();
 
-	//! Creates an (empty) video/anmiation file
+	//! Creates an (empty) video/animation file
 	/** The codec is automatically guessed from the filename.
 		If it can't be guessed this way then MPEG is used by default.
 		\return success

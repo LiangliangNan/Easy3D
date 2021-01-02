@@ -356,7 +356,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
 #else
 
-void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white, ProgressLogger* progress) {
+void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_white, easy3d::ProgressLogger *progress) {
     auto kfi = walkThrough()->interpolator();
     if (kfi->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
@@ -466,7 +466,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, bool bk_white, Progr
     }
 
     if (success)
-        LOG(INFO) << "the animation (i.e., " << frames.size() << "images) have been saved successfully";
+        LOG(INFO) << "the animation (in " << frames.size() << " images) have been saved successfully";
     else
         LOG(ERROR) << "animation recording failed";
 }

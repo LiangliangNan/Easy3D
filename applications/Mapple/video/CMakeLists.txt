@@ -14,10 +14,13 @@ if (NOT QT5_FOUND)
 endif ()
 
 
-find_package(FFMPEG)
+find_package(FFMPEG QUIET)
 if (NOT FFMPEG_FOUND)
-    message(WARNING "${PROJECT_NAME} requires FFMPEG but FFMPEG was not found. You can set 'FFMPEG_DIR' to the "
-            "directory containing 'FFMPEGConfig.cmake' or 'ffmpeg-config.cmake'")
+    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files for animations but FFMPEG was not found. "
+            "Without FFMPEG, animations can only be recorded as a sequence of images. "
+            "To use FFMPEG, first set 'FFMPEG_DIR' to 'cmake/ffmpeg-config.cmake'. Then modify the 'ffmpeg_path' "
+            "variable in 'cmake/ffmpeg-config.cmake' to point to the folder in which FFMPEG was installed."
+            )
 else ()
     add_definitions(-DHAS_FFMPEG)
     message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
@@ -56,4 +59,3 @@ target_link_libraries(${PROJECT_NAME}
         ${FFMPEG_LIBRARIES}
 		swscale
         )
-
