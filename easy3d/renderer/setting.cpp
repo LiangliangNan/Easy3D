@@ -71,7 +71,7 @@ namespace easy3d {
         bool point_cloud_use_color_property = true;
         bool point_cloud_show_points = true;
         vec4 point_cloud_points_color = vec4(0.33f, 0.67f, 1.0f, 1.0f);
-        float point_cloud_point_size = 2.0f;
+        float point_cloud_point_size = 3.0f;
         bool point_cloud_impostors = false;
 
         // surface mesh - surface
