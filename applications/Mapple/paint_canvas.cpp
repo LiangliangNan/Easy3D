@@ -309,7 +309,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 walkThrough()->walk_to(p);
             }
             else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
-                LOG(WARNING) << "wrong status: Alt + Left clik is for the walking mode only";
+                LOG(WARNING) << "Alt + Left click is for the walking mode only. Use Ctrl + C instead";
             }
         }
     }
@@ -1280,7 +1280,7 @@ void PaintCanvas::copyCamera() {
         qApp->clipboard()->setText(cam_str);
     }
     else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
-        LOG(WARNING) << "wrong status: Ctrl + C is for the free mode only";
+        LOG(WARNING) << "Ctrl + C is for the free mode only. Use Alt + Left click instead";
 }
 
 
