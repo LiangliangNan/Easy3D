@@ -164,7 +164,7 @@
             <item row="1" column="0" colspan="3">
              <widget class="QRadioButton" name="radioButtonWalkingMode">
               <property name="text">
-               <string>Walking mode ('Ctrl + Left' click on the ground)</string>
+               <string>Walking mode ('Alt + Left' click on the ground)</string>
               </property>
              </widget>
             </item>
@@ -427,10 +427,10 @@ The higher the better the quality (but the larger file size of the video)</strin
            <number>1</number>
           </property>
           <property name="minimum">
-           <double>1.000000000000000</double>
+           <double>0.100000000000000</double>
           </property>
           <property name="maximum">
-           <double>10.000000000000000</double>
+           <double>100.000000000000000</double>
           </property>
           <property name="singleStep">
            <double>0.100000000000000</double>

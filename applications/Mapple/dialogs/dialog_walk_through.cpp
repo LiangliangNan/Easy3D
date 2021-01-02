@@ -400,6 +400,7 @@ void DialogWalkThrough::importCameraPathFromFile() {
                 );
             }
             viewer_->camera()->setSceneRadius(radius);
+            viewer_->update();
         }
     }
 
