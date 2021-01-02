@@ -68,9 +68,13 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #endif
 
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
-            : frame_(frame), period_(40)   // 25 frames per second
-            , interpolationSpeed_(1.0), interpolationStarted_(false), start_position_(0), pathIsValid_(false),
-              path_drawable_(nullptr), cameras_drawable_(nullptr) {
+            : frame_(frame)
+            , fps_(30)
+            , interpolationSpeed_(1.0f)
+            , interpolationStarted_(false)
+            , pathIsValid_(false)
+            , path_drawable_(nullptr)
+            , cameras_drawable_(nullptr) {
         if (keyFrames_.size() < 2)
             return;
     }
@@ -96,9 +100,10 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         // all done in another thread.
         interpolationStarted_ = true;
         timer_.set_timeout(0, [this]() {
-                               for (int id = start_position_; id < interpolated_path_.size(); ++id) {
+                               static int last_stopped_index = 0;
+                               for (int id = last_stopped_index; id < interpolated_path_.size(); ++id) {
                                    if (timer_.is_stopped()) {
-                                       start_position_ = id;
+                                       last_stopped_index = id;
                                        break;
                                    }
                                    const auto &f = interpolated_path_[id];
@@ -106,7 +111,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
                                    const int interval = interpolationPeriod() / interpolationSpeed(); // interval in ms
                                    std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                                    if (id == interpolated_path_.size() - 1)  // reaches the end frame
-                                       start_position_ = 0;
+                                       last_stopped_index = 0;
                                }
                                interpolation_stopped.send();
                                interpolationStarted_ = false;
@@ -352,6 +357,18 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
+    void KeyFrameInterpolator::setInterpolationSpeed(float speed) {
+        interpolationSpeed_ = speed;
+        pathIsValid_ = false;
+    }
+
+
+    void KeyFrameInterpolator::set_frame_rate(int fps) {
+        fps_ = fps;
+        pathIsValid_ = false;
+    }
+
+
 #ifndef DOXYGEN
 
     //////////// KeyFrame private class implementation /////////
@@ -430,8 +447,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
-        if (pathIsValid_)
+    const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool recompute_everying) {
+        if (pathIsValid_ && !recompute_everying)
             return interpolated_path_;
         else
             updateModifiedFrameValues();

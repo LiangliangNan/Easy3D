@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>386</width>
-    <height>522</height>
+    <width>427</width>
+    <height>521</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -309,7 +309,7 @@
         <item>
          <widget class="QLabel" name="labelFrameRate">
           <property name="text">
-           <string>Frame rate (fps)</string>
+           <string>Frame rate</string>
           </property>
          </widget>
         </item>
@@ -325,22 +325,6 @@
            <number>25</number>
           </property>
          </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>13</width>
-            <height>18</height>
-           </size>
-          </property>
-         </spacer>
         </item>
         <item>
          <widget class="QLabel" name="labelBitRate">
@@ -369,10 +353,39 @@ The higher the better the quality (but the larger file size of the video)</strin
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QLabel" name="labelInterpolationSpeed">
+          <property name="text">
+           <string>Speed</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="doubleSpinBoxInterpolationSpeed">
+          <property name="decimals">
+           <number>1</number>
+          </property>
+          <property name="minimum">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutOutputFile">
+        <property name="spacing">
+         <number>1</number>
+        </property>
         <item>
          <widget class="QLabel" name="labelOutputFile">
           <property name="text">
@@ -415,32 +428,6 @@ The higher the better the quality (but the larger file size of the video)</strin
          </spacer>
         </item>
         <item>
-         <widget class="QLabel" name="labelInterpolationSpeed">
-          <property name="text">
-           <string>Speed</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="doubleSpinBoxInterpolationSpeed">
-          <property name="decimals">
-           <number>1</number>
-          </property>
-          <property name="minimum">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="maximum">
-           <double>100.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>0.100000000000000</double>
-          </property>
-          <property name="value">
-           <double>1.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="previewButton">
           <property name="text">
            <string>Preview</string>
@@ -479,6 +466,22 @@ The higher the better the quality (but the larger file size of the video)</strin
           </property>
          </widget>
         </item>
+        <item>
+         <spacer name="horizontalSpacer_11">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
        </layout>
       </item>
       <item>
@@ -513,9 +516,9 @@ The higher the better the quality (but the larger file size of the video)</strin
   <tabstop>horizontalSliderPreview</tabstop>
   <tabstop>spinBoxFPS</tabstop>
   <tabstop>spinBoxBitRate</tabstop>
+  <tabstop>doubleSpinBoxInterpolationSpeed</tabstop>
   <tabstop>lineEditOutputFile</tabstop>
   <tabstop>browseButton</tabstop>
-  <tabstop>doubleSpinBoxInterpolationSpeed</tabstop>
   <tabstop>previewButton</tabstop>
   <tabstop>recordButton</tabstop>
   <tabstop>checkBoxStartFromCurrentStep</tabstop>

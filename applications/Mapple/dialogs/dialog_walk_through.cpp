@@ -48,6 +48,8 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
+
+    connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
     connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
 
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
@@ -154,6 +156,12 @@ void DialogWalkThrough::setCharacterDistanceFactor(double d) {
 
 void DialogWalkThrough::setInterpolationSpeed(double s) {
     interpolator()->setInterpolationSpeed(s);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setFrameRate(int fps) {
+    interpolator()->set_frame_rate(fps);
     viewer_->update();
 }
 

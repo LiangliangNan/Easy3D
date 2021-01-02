@@ -240,13 +240,20 @@ namespace easy3d {
         This period (multiplied by interpolationSpeed()) is added to the interpolationTime() at each
         update, and the frame() state is modified accordingly (see interpolateAtTime()). Default value
         is 40 milliseconds. */
-        int interpolationPeriod() const { return period_; }
+        int interpolationPeriod() const { return static_cast<int>(1000.0 / fps_); }
+
+        /**
+         * \brief Returns the desired frame rate. Default value is 30.
+         * \details The frame_rate() multiplied by interpolationPeriod() is always equal to 1.0.
+         */
+        int frame_rate() const { return fps_; }
 
     public:
         /*! Sets the interpolationSpeed(). Negative or null values are allowed. */
-        void setInterpolationSpeed(float speed) { interpolationSpeed_ = speed; }
-        /*! Sets the interpolationPeriod(). */
-        void setInterpolationPeriod(int period) { period_ = period; }
+        void setInterpolationSpeed(float speed);
+
+        /// Sets the desired frame rate.
+        void set_frame_rate(int fps);
         //@}
 
         /*! @name Interpolation */
@@ -349,10 +356,9 @@ namespace easy3d {
 
         // Rhythm
         Timer timer_;
-        int period_;
+        int fps_;
         float interpolationSpeed_;
         bool interpolationStarted_;
-        int start_position_;
 
         // is path valid? Adding new keyframes, editing an a keyframe invalidates the path
         bool pathIsValid_;

@@ -68,6 +68,7 @@ public Q_SLOTS :
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
 	void setInterpolationSpeed(double);
+	void setFrameRate(int);
 
 	void resetUIAfterAnimationStopped();
 
