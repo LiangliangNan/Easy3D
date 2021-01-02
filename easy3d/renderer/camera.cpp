@@ -525,7 +525,7 @@ namespace easy3d {
 	\attention This methods also sets focusDistance() to sceneRadius() /
 	tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
 	void Camera::setSceneRadius(float radius) {
-		if (radius <= 0.0f) {
+		if (radius <= epsilon<float>()) {
 			LOG(ERROR) << "Scene radius must be positive (value is: " << radius << ")";
 			return;
 		}
@@ -586,9 +586,9 @@ namespace easy3d {
 		switch (type()) {
 		case Camera::PERSPECTIVE:
 			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
-				tan(fieldOfView() / 2.0f) / screenHeight();
+				std::tan(fieldOfView() / 2.0f) / screenHeight();
 		case Camera::ORTHOGRAPHIC: {
-			float w, h;
+			float w(0), h(0);
 			getOrthoWidthHeight(w, h);
 			return 2.0f * h / screenHeight();
 		}
