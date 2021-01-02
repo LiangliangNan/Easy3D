@@ -1866,11 +1866,14 @@ void MainWindow::surfaceMeshGeodesic() {
         seeds.push_back(v);
         locked[v] = true;
     }
+    LOG(WARNING) << "this only demonstrates Geodesic w.r.t. " << num_seeds << " randomly picked vertices. TODO: ask for user input";
 
     // compute geodesic distance
     SurfaceMeshGeodesic geodist(mesh);
     geodist.compute(seeds);
 
+    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
+    drawable->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:geodesic:distance");
     mesh->renderer()->update();
     viewer_->update();
     updateRenderingPanel();
