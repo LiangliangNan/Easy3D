@@ -45,8 +45,7 @@ namespace easy3d {
     public:
         //! \brief Construct from mesh.
         //! \param mesh The mesh on which to compute the geodesic distances.
-        //! \param use_virtual_edges A flag to control the use of virtual edges.
-        //! Default: true.
+        //! \param use_virtual_edges A flag to control the use of virtual edges. Default: true.
         //! \sa compute() to actually compute the geodesic distances.
         SurfaceMeshGeodesic(SurfaceMesh *mesh, bool use_virtual_edges = true);
 
@@ -54,6 +53,7 @@ namespace easy3d {
         ~SurfaceMeshGeodesic();
 
         //! \brief Compute geodesic distances from specified seed points.
+        //! \details The results are store as SurfaceMesh::VertexProperty<float> with a name "v:geodesic:distance".
         //! \param[in] seed The vector of seed vertices.
         //! \param[in] maxdist The maximum distance up to which to compute the
         //! geodesic distances.
