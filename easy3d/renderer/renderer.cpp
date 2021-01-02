@@ -91,6 +91,14 @@ namespace easy3d {
             borders->set_impostor_type(LinesDrawable::CYLINDER);
             borders->set_line_width(setting::surface_mesh_borders_line_width);
             borders->set_visible(setting::surface_mesh_show_borders);
+
+            auto locks = mesh->renderer()->get_points_drawable("locks");
+            if (!locks) {
+                locks = mesh->renderer()->add_points_drawable("locks");
+                locks->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
+                locks->set_impostor_type(PointsDrawable::SPHERE);
+                locks->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+            }
         } else if (dynamic_cast<Graph *>(model)) {
             Graph *graph = dynamic_cast<Graph *>(model);
             // create points drawable for the edges
