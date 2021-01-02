@@ -70,7 +70,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
 
-    easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::newPositionAdded);
+    easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::keyFrameAdded);
 
     QButtonGroup* group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
@@ -84,16 +84,16 @@ DialogWalkThrough::~DialogWalkThrough()
 }
 
 
-void DialogWalkThrough::newPositionAdded() {
+void DialogWalkThrough::keyFrameAdded() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
-    int num = walkThrough()->num_positions();
+    int num = interpolator()->numberOfKeyFrames();
     if (num == 1) // range is [0, 0]
         horizontalSliderPreview->setEnabled(false);
     else {
         horizontalSliderPreview->setEnabled(true);
         horizontalSliderPreview->setRange(0, std::max(0, num - 1));
     }
-    int pos = walkThrough()->current_position();
+    int pos = walkThrough()->current_keyframe_index();
     horizontalSliderPreview->setValue(pos);
     connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
 }
@@ -170,37 +170,35 @@ void DialogWalkThrough::setWalkingMode(bool b) {
 
 void DialogWalkThrough::goToPreviousPosition()
 {
-    int pos = walkThrough()->current_position();
-    int new_pos = walkThrough()->move_to(pos - 1);
-    viewer_->update();
-
-    if (new_pos == pos)
-        LOG(INFO) << "no previous position found (current position is " << new_pos << ")";
+    int pos = walkThrough()->current_keyframe_index();
+    if (pos <= 0)  // if not started (or at the 1st keyframe), move to the start view point
+        walkThrough()->move_to(0);
     else
-        LOG(INFO) << "moved to position " << new_pos;
+        walkThrough()->move_to(pos - 1);
+    viewer_->update();
+    LOG(INFO) << "moved to position " << walkThrough()->current_keyframe_index();
 }
 
 
 void DialogWalkThrough::goToNextPosition()
 {
-    int pos = walkThrough()->current_position();
-    int new_pos = walkThrough()->move_to(pos + 1);
-    viewer_->update();
-
-    if (new_pos == pos)
-        LOG(INFO) << "no next position found (current position is " << new_pos << ")";
+    int pos = walkThrough()->current_keyframe_index();
+    if (pos >= interpolator()->numberOfKeyFrames() - 1)  // if already at the end, move to the last view point
+        walkThrough()->move_to(interpolator()->numberOfKeyFrames() - 1);
     else
-        LOG(INFO) << "moved to position " << new_pos;
+        walkThrough()->move_to(pos + 1);
+    viewer_->update();
+    LOG(INFO) << "moved to position " << walkThrough()->current_keyframe_index();
 }
 
 
 void DialogWalkThrough::removeLastPosition() {
-    if (walkThrough()->num_positions() == 0) {
+    if (interpolator()->numberOfKeyFrames() == 0) {
         LOG(INFO) << "no position can be removed (path is empty)";
     }
     else {
-        int pos = walkThrough()->current_position();
-        if (pos == walkThrough()->num_positions() - 1)  // currently viewing at the last position
+        int pos = walkThrough()->current_keyframe_index();
+        if (pos == interpolator()->numberOfKeyFrames() - 1)  // currently viewing at the last position
             pos = walkThrough()->move_to(pos - 1);  // move to the previous position
         walkThrough()->delete_last_position();
         viewer_->update();
@@ -217,7 +215,7 @@ void DialogWalkThrough::goToPosition(int p) {
 
 
 void DialogWalkThrough::clearPath() {
-    if (walkThrough()->num_positions() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
         LOG(WARNING) << "nothing to clear (path is empty)";
         return;
     }
@@ -252,19 +250,20 @@ void DialogWalkThrough::enableAllButtons(bool b) {
 
 
 void DialogWalkThrough::browse() {
-    std::string dir;
+    std::string suggested_name;
     if (viewer_->currentModel())
-        dir = file_system::parent_directory(viewer_->currentModel()->name());
+        suggested_name = file_system::replace_extension(viewer_->currentModel()->name(), "mp4");
     const QString fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Choose a file name"), QString::fromStdString(dir),
-                                                    tr("Supported formats (*.png *.mp4)")
+                                                          tr("Choose a file name"), QString::fromStdString(suggested_name),
+                                                          tr("Supported formats (*.png *.mp4)")
     );
-    lineEditOutputFile->setText(fileName);
+    if (!fileName.isEmpty())
+        lineEditOutputFile->setText(fileName);
 }
 
 
 void DialogWalkThrough::preview(bool b) {
-    if (walkThrough()->num_positions() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
         previewButton->setChecked(false);
         return;
     }
@@ -297,7 +296,7 @@ void DialogWalkThrough::preview(bool b) {
 
 void DialogWalkThrough::record(bool b) {
     if (b) {
-        if (walkThrough()->num_positions() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
             recordButton->setChecked(false);
             return;
         }
@@ -347,7 +346,7 @@ void DialogWalkThrough::showCameraPath(bool b) {
 
 
 void DialogWalkThrough::exportCameraPathToFile() {
-    if (walkThrough()->num_positions() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
         LOG(INFO) << "nothing can be exported (path is empty)";
         return;
     }

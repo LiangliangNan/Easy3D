@@ -79,7 +79,7 @@ protected:
 	virtual void closeEvent(QCloseEvent* e);
 
 	void enableAllButtons(bool);
-    void newPositionAdded();
+    void keyFrameAdded();
 };
 
 #endif // DIALOG_WALK_THROUGH_H
