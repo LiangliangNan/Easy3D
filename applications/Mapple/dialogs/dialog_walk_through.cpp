@@ -145,14 +145,14 @@ void DialogWalkThrough::closeEvent(QCloseEvent* e) {
 
 void DialogWalkThrough::setCharacterHeightFactor(double h) {
     walkThrough()->set_height_factor(h);
-    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
+    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here" << std::endl;
     viewer_->update();
 }
 
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
-    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
+    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here" << std::endl;
     viewer_->update();
 }
 

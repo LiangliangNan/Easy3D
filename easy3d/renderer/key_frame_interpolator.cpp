@@ -519,15 +519,15 @@ namespace easy3d {
             total_length += distance(keyframes[i - 1].position(), keyframes[i].position());
             sub_lengths[i] = total_length;
         }
+        if (total_length < epsilon_sqr<float>())
+            total_length = 1.0f;
 
         const float t0 = keyframes[0].time();
         const float total_time = keyframes.back().time() - t0;
-        for (std::size_t i=1; i<keyframes.size(); ++i) { // don't modify the time for the first keyframe
+        for (std::size_t i=1; i<keyframes.size()-1; ++i) { // don't modify the first and the last keyframes
             const float t = t0 + sub_lengths[i] / total_length * total_time;
             keyframes[i].set_time(t);
         }
-
-        DCHECK(std::abs(keyframes.back().time() - total_time) < std::numeric_limits<float>::min());
     }
 
 }
