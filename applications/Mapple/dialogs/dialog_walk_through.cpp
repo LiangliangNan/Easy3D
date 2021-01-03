@@ -145,12 +145,14 @@ void DialogWalkThrough::closeEvent(QCloseEvent* e) {
 
 void DialogWalkThrough::setCharacterHeightFactor(double h) {
     walkThrough()->set_height_factor(h);
+//    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
+//    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
@@ -346,6 +348,11 @@ void DialogWalkThrough::record(bool b) {
             return;
         }
 
+        // make sure the path is not visible in recording
+        const bool visible = walkThrough()->is_path_visible();
+        if (visible)
+            walkThrough()->set_path_visible(false);
+
         const QString file = lineEditOutputFile->text();
         const int fps = spinBoxFPS->value();
         const int bitrate = spinBoxBitRate->value();
@@ -354,6 +361,10 @@ void DialogWalkThrough::record(bool b) {
         viewer_->recordAnimation(file, fps, bitrate, true);
         setEnabled(true);
         recordButton->setChecked(false);
+
+        // restore
+        if (visible)
+            walkThrough()->set_path_visible(true);
     }
     else
         recordButton->setChecked(false);

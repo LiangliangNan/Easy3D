@@ -361,6 +361,7 @@ namespace easy3d {
         int fps_;
         float interpolationSpeed_;
         bool interpolationStarted_;
+        int last_stopped_index_;
 
         // is path valid? Adding new keyframes, editing an a keyframe invalidates the path
         bool pathIsValid_;

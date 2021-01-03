@@ -72,6 +72,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             , fps_(30)
             , interpolationSpeed_(1.0f)
             , interpolationStarted_(false)
+            , last_stopped_index_(0)
             , pathIsValid_(false)
             , path_drawable_(nullptr)
             , cameras_drawable_(nullptr) {
@@ -100,10 +101,9 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         // all done in another thread.
         interpolationStarted_ = true;
         timer_.set_timeout(0, [this]() {
-                               static int last_stopped_index = 0;
-                               for (int id = last_stopped_index; id < interpolated_path_.size(); ++id) {
+                               for (int id = last_stopped_index_; id < interpolated_path_.size(); ++id) {
                                    if (timer_.is_stopped()) {
-                                       last_stopped_index = id;
+                                       last_stopped_index_ = id;
                                        break;
                                    }
                                    const auto &f = interpolated_path_[id];
@@ -112,7 +112,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
                                    const int interval = interpolationPeriod() / interpolationSpeed() * 0.9f;
                                    std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                                    if (id == interpolated_path_.size() - 1)  // reaches the end frame
-                                       last_stopped_index = 0;
+                                       last_stopped_index_ = 0;
 
 //                                   const float percent = static_cast<float>(id) / interpolated_path_.size();
 //                                   current_frame_finished.send();
@@ -138,6 +138,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         }
 
         pathIsValid_ = false;
+        last_stopped_index_ = 0; // may not be valid any more
         stopInterpolation();
     }
 
@@ -145,6 +146,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     void KeyFrameInterpolator::deleteLastKeyFrame() {
         keyFrames_.pop_back();
         pathIsValid_ = false;
+        last_stopped_index_ = 0; // may not be valid any more
         stopInterpolation();
     }
 
@@ -184,6 +186,7 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         keyFrames_.clear();
         interpolated_path_.clear();
         pathIsValid_ = false;
+        last_stopped_index_ = 0;
 
         delete path_drawable_;
         path_drawable_ = nullptr;
@@ -457,11 +460,9 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         if (pathIsValid_)
             return interpolated_path_;
 
-        if (keyFrames_.size() > 2)
-            LOG(INFO) << "interpolating " << keyFrames_.size() << " keyframes...";
+        LOG_IF(INFO, keyFrames_.size() > 2) << "interpolating " << keyFrames_.size() << " keyframes...";
         do_interpolate(interpolated_path_, keyFrames_);
-        if (keyFrames_.size() > 2)
-            LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
+        LOG_IF(INFO, keyFrames_.size() > 2) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
 
         // more iterations do not provide further improvement
         const int num_iter = 1;
@@ -501,15 +502,15 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 #if 0   // linear interpolation - not smooth
             vec3 pos = alpha*((*relatedFrames[2])->position()) + (1.0f-alpha)*((*relatedFrames[1])->position());
-        quat a = (*relatedFrames[1])->orientation();
-        quat b = (*relatedFrames[2])->orientation();
-        quat q = quat(
-                alpha * b[0] + (1.0f -alpha) * a[0],
-                alpha * b[1] + (1.0f -alpha) * a[1],
-                alpha * b[2] + (1.0f -alpha) * a[2],
-                alpha * b[3] + (1.0f -alpha) * a[3]
-        );
-        q.normalize();
+            quat a = (*relatedFrames[1])->orientation();
+            quat b = (*relatedFrames[2])->orientation();
+            quat q = quat(
+                    alpha * b[0] + (1.0f -alpha) * a[0],
+                    alpha * b[1] + (1.0f -alpha) * a[1],
+                    alpha * b[2] + (1.0f -alpha) * a[2],
+                    alpha * b[3] + (1.0f -alpha) * a[3]
+            );
+            q.normalize();
 
 #else   // spline interpolation
             const vec3 pos =
