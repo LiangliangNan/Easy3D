@@ -261,6 +261,7 @@ void DialogWalkThrough::preview(bool b) {
 #if 1
     // this single line works: very efficient (in another thread without overhead).
     walkThrough()->animate();
+    viewer_->update();
 
 #elif 0 // this also works. But std::this_thread::sleep_for() is not efficient and frame rate is low.
     if (b) {
