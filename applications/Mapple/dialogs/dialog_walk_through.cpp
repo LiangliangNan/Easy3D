@@ -47,13 +47,13 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	setupUi(this);
 
 	spinBoxFPS->setValue(interpolator()->frame_rate());
-	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolationSpeed());
+	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolation_speed());
 
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
     connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
-    connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
+    connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(set_interpolation_speed(double)));
 
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
     connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
@@ -89,7 +89,7 @@ DialogWalkThrough::~DialogWalkThrough()
 
 void DialogWalkThrough::keyFrameAdded() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
-    int num = interpolator()->numberOfKeyFrames();
+    int num = interpolator()->number_of_keyframes();
     if (num == 1) // range is [0, 0]
         horizontalSliderPreview->setEnabled(false);
     else {
@@ -157,8 +157,8 @@ void DialogWalkThrough::setCharacterDistanceFactor(double d) {
 }
 
 
-void DialogWalkThrough::setInterpolationSpeed(double s) {
-    interpolator()->setInterpolationSpeed(s);
+void DialogWalkThrough::set_interpolation_speed(double s) {
+    interpolator()->set_interpolation_speed(s);
     viewer_->update();
 }
 
@@ -197,8 +197,8 @@ void DialogWalkThrough::goToPreviousPosition()
 void DialogWalkThrough::goToNextPosition()
 {
     int pos = walkThrough()->current_keyframe_index();
-    if (pos >= interpolator()->numberOfKeyFrames() - 1)  // if already at the end, move to the last view point
-        walkThrough()->move_to(interpolator()->numberOfKeyFrames() - 1);
+    if (pos >= interpolator()->number_of_keyframes() - 1)  // if already at the end, move to the last view point
+        walkThrough()->move_to(interpolator()->number_of_keyframes() - 1);
     else
         walkThrough()->move_to(pos + 1);
     viewer_->update();
@@ -207,12 +207,12 @@ void DialogWalkThrough::goToNextPosition()
 
 
 void DialogWalkThrough::removeLastPosition() {
-    if (interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->number_of_keyframes() == 0) {
         LOG(INFO) << "no position can be removed (path is empty)";
     }
     else {
         int pos = walkThrough()->current_keyframe_index();
-        if (pos == interpolator()->numberOfKeyFrames() - 1)  // currently viewing at the last position
+        if (pos == interpolator()->number_of_keyframes() - 1)  // currently viewing at the last position
             pos = walkThrough()->move_to(pos - 1);  // move to the previous position
         walkThrough()->delete_last_position();
         viewer_->update();
@@ -229,7 +229,7 @@ void DialogWalkThrough::goToPosition(int p) {
 
 
 void DialogWalkThrough::clearPath() {
-    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
         LOG(WARNING) << "nothing to clear (path is empty)";
         return;
     }
@@ -267,7 +267,7 @@ void DialogWalkThrough::preview(bool b) {
 
 #elif 0 // this also works. But std::this_thread::sleep_for() is not efficient and frame rate is low.
     if (b) {
-        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
             recordButton->setChecked(false);
             return;
         }
@@ -286,7 +286,7 @@ void DialogWalkThrough::preview(bool b) {
             }
             const auto &f = frames[id];
             viewer_->camera()->frame()->setPositionAndOrientation(f.position(), f.orientation());
-            const int interval = interpolator()->interpolationPeriod() / interpolator()->interpolationSpeed();
+            const int interval = interpolator()->interpolation_period() / interpolator()->interpolation_speed();
             std::cout << "interval: " << interval << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             if (id == frames.size() - 1)  // reaches the end frame
@@ -311,7 +311,7 @@ void DialogWalkThrough::preview(bool b) {
 //    auto currentFrameFinished = [this]() -> void { emit oneFrameFinished(); };
 //
 //    if (b) {
-//        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+//        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
 //            previewButton->setChecked(false);
 //            return;
 //        }
@@ -331,7 +331,7 @@ void DialogWalkThrough::preview(bool b) {
 //        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
 //        QObject::disconnect(this, &DialogWalkThrough::oneFrameFinished, this, &DialogWalkThrough::onOneFrameFinished);
 //
-//        interpolator()->stopInterpolation();
+//        interpolator()->stop_interpolation();
 //        LOG(INFO) << "animation finished";
 //
 //        setEnabled(true);
@@ -343,7 +343,7 @@ void DialogWalkThrough::preview(bool b) {
 
 void DialogWalkThrough::record(bool b) {
     if (b) {
-        if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
             recordButton->setChecked(false);
             return;
         }
@@ -374,11 +374,11 @@ void DialogWalkThrough::record(bool b) {
 void DialogWalkThrough::showCameraPath(bool b) {
     walkThrough()->set_path_visible(b);
     if (b) {
-        const int count = interpolator()->numberOfKeyFrames();
+        const int count = interpolator()->number_of_keyframes();
         float radius = viewer_->camera()->sceneRadius();
         for (int i=0; i<count; ++i) {
             radius = std::max( radius,
-                               distance(viewer_->camera()->sceneCenter(), interpolator()->keyFrame(i).position())
+                               distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position())
             );
         }
         viewer_->camera()->setSceneRadius(radius);
@@ -394,7 +394,7 @@ void DialogWalkThrough::showCameraPath(bool b) {
 
 
 void DialogWalkThrough::exportCameraPathToFile() {
-    if (interpolator()->numberOfKeyFrames() == 0 && interpolator()->numberOfKeyFrames() == 0) {
+    if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
         LOG(INFO) << "nothing can be exported (path is empty)";
         return;
     }
@@ -436,15 +436,15 @@ void DialogWalkThrough::importCameraPathFromFile() {
         return;
 
     if (interpolator()->read_keyframes(fileName.toStdString())) {
-        LOG(INFO) << "keyframe file loaded";
+        LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
         if (walkThrough()->is_path_visible()) {
             // update scene radius to make sure the path is within the view frustum
-            int num = interpolator()->numberOfKeyFrames();
+            int num = interpolator()->number_of_keyframes();
             float radius = viewer_->camera()->sceneRadius();
             for (int i = 0; i < num; ++i) {
                 radius = std::max(
                         radius,
-                        distance(viewer_->camera()->sceneCenter(), interpolator()->keyFrame(i).position())
+                        distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position())
                 );
             }
             viewer_->camera()->setSceneRadius(radius);

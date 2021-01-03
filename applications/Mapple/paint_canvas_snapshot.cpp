@@ -218,7 +218,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
-    if (kfi->numberOfKeyFrames() == 0) {
+    if (kfi->number_of_keyframes() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
                         " creat it by adding key frames";
         return;
@@ -356,7 +356,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
 void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
-    if (kfi->numberOfKeyFrames() == 0) {
+    if (kfi->number_of_keyframes() == 0) {
         LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
                         " creat it by adding key frames";
         return;

@@ -57,7 +57,7 @@ namespace easy3d {
         /// \name Keyframe creation for the free mode
         //@{
         /// adds a key frame to the camera path (for free mode only)
-        void add_key_frame(const Frame &frame);
+        void add_keyframe(const Frame &frame);
         //@}
 
 
@@ -131,7 +131,7 @@ namespace easy3d {
         KeyFrameInterpolator* interpolator() const { return kfi_; }
 
     protected:
-        void add_key_frame(const vec3 &cam_pos, const vec3 &view_dir);
+        void add_keyframe(const vec3 &cam_pos, const vec3 &view_dir);
 
         // the actual height of the character
         // defined as the distance between the character eye position and the ground plane.

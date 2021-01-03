@@ -24,13 +24,11 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from libQGLViewer with modifications.
+ * The code in this file is adapted from Surface_mesh with significant
+ * modifications and enhancement.
  *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
- * http://libqglviewer.com/
- *
- * libQGLViewer is a C++ library based on Qt that eases the
- * creation of OpenGL 3D viewers.
+ *      http://libqglviewer.com/
  *
  *----------------------------------------------------------*/
 
@@ -38,6 +36,7 @@
 #define EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/signal.h>
 #include <easy3d/util/timer.h>
 
 #include <vector>
@@ -49,208 +48,190 @@ namespace easy3d {
     class Camera;
     class LinesDrawable;
 
-    /*! \brief A keyFrame Catmull-Rom Frame interpolator.
-      \class KeyFrameInterpolator easy3d/renderer/key_frame_interpolator.h
-
-      \details A KeyFrameInterpolator holds keyFrames (that define a path) and a pointer to a Frame of your
-      application (which will be interpolated). When the user startInterpolation(), the
-      KeyFrameInterpolator regularly updates the frame() position and orientation along the path.
-
-     \note The default duration of any two consecutive keyframes is the same. So for a smoother animation, it is
-     suggested to regularly (as equally as possible) sample the viewpoints.
-     \todo Allow edit the duration for each keyframe?  (not sure due to many keyframes and can be annoying).
-
-      Here is a typical utilization example (see also the <a href="../examples/keyFrames.html">keyFrames
-      example</a>):
-      \code
-
-      init()
-      {
-        // The KeyFrameInterpolator kfi is given the Frame that it will drive over time.
-        kfi = new KeyFrameInterpolator( new Frame() );
-        kfi->addKeyFrame( Frame( vec3(1,0,0), Quaternion() ) );
-        kfi->addKeyFrame( new Frame( vec3(2,1,0), Quaternion() ) );
-        // ...and so on for all the keyFrames.
-
-        // Ask for a display update after each update of the KeyFrameInterpolator
-        connect(kfi, SIGNAL(interpolated()), SLOT(update()));
-
-        kfi->startInterpolation();
-      }
-
-      draw()
-      {
-        glPushMatrix();
-        glMultMatrixd( kfi->frame()->matrix() );
-        // Draw your object here. Its position and orientation are interpolated.
-        glPopMatrix();
-      }
-      \endcode
-
-      The keyFrames are defined by a Frame and a time, expressed in seconds. The Frame can be provided
-      as a const reference or as a pointer to a Frame (see the addKeyFrame() methods). In the latter
-      case, the path will automatically be updated when the Frame is modified (using the
-      Frame::modified() signal).
-
-      The time has to be monotonously increasing over keyFrames. When interpolationSpeed() equals 1.0
-      (default value), these times correspond to actual user's seconds during interpolation (provided
-      that your main loop is fast enough). The interpolation is then real-time: the keyFrames will be
-      reached at their keyFrameTime().
-
-      <h3>Interpolation details</h3>
-
-      When the user startInterpolation(), a timer is started which will update the frame()'s position
-      and orientation every interpolationPeriod() milliseconds. This update increases the
-      interpolationTime() by interpolationPeriod() * interpolationSpeed() milliseconds.
-
-      Note that this mechanism ensures that the number of interpolation steps is constant and equal to
-      the total path duration() divided by the interpolationPeriod() * interpolationSpeed(). This is
-      especially useful for benchmarking or movie creation (constant number of snapshots).
-
-      During the interpolation, the KeyFrameInterpolator emits an interpolated() signal, which will
-      usually be connected to the QCanvas::update() slot. The interpolation is stopped when
-      interpolationTime() is greater than the lastTime() (unless loopInterpolation() is \c true) and the
-      endReached() signal is then emitted.
-
-      Note that a QCamera has QCamera::keyFrameInterpolator(), that can be used to drive the QCamera along a
-      path, or to restore a saved position (a path made of a single keyFrame). Press Alt+Fx to define a
-      new keyFrame for path x. Pressing Fx plays/pauses path interpolation. See QCanvas::pathKey() and
-      the <a href="../keyboard.html">keyboard page</a> for details.
-
-      \attention If a Constraint is attached to the frame() (see Frame::constraint()), it should be
-      deactivated before interpolationIsStarted(), otherwise the interpolated motion (computed as if
-      there was no constraint) will probably be erroneous.
-
-      <h3>Retrieving interpolated values</h3>
-
-      This code defines a KeyFrameInterpolator, and displays the positions that will be followed by the
-      frame() along the path:
-      \code
-      KeyFrameInterpolator kfi( new Frame() );
-      // calls to kfi.addKeyFrame() to define the path.
-
-      const float deltaTime = 0.04f; // output a position every deltaTime seconds
-      for (float time=kfi.firstTime(); time<=kfi.lastTime(); time += deltaTime)
-      {
-        kfi.interpolateAtTime(time);
-        cout << "t=" << time << "\tpos=" << kfi.frame()->position() << endl;
-      }
-      \endcode
-      You may want to temporally disconnect the \c kfi interpolated() signal from the
-      QCanvas::update() slot before calling this code. \nosubgrouping */
+    /**
+     * \brief A keyframe interpolator for animation generation.
+     * \class KeyFrameInterpolator easy3d/renderer/key_frame_interpolator.h
+     *
+     * \details A KeyFrameInterpolator holds keyframes (that define a path) and a pointer to a frame (which will be
+     *      interpolated) of your application. When the user start_interpolation(), the KeyFrameInterpolator regularly
+     *      updates the frame() position and orientation along the path.
+     *
+     *      A keyframes is defined by a Frame and a time, expressed in seconds. The time has to be monotonously
+     *      increasing over keyframes. When interpolation_speed() equals 1.0 (default value), these times correspond
+     *      to actual user's seconds during interpolation (provided that your main loop is fast enough).
+     *      The interpolation is then real-time: the keyframes will be reached at their keyframe_time().
+     *
+     *      When the user start_interpolation(), a timer is started which will update the frame()'s position and
+     *      orientation every interpolation_period() milliseconds. This update increases the time by
+     *      interpolation_period() * interpolation_speed() milliseconds. This mechanism ensures that the number of
+     *      interpolation steps is constant and equal to the total path duration() divided by the
+     *      interpolation_period() * interpolation_speed(). This is especially useful for benchmarking or movie
+     *      creation (constant number of snapshots).
+     *
+     *      During the interpolation, the KeyFrameInterpolator emits an \c frame_interpolated Signal which will usually
+     *      be connected to the viewer's update() method. The interpolation is stopped when duration has reached.
+     *      Another Signal interpolation_stopped will be emited when the interpolation reaches its end or the when the
+     *      stop_interpolation() method was triggered.
+     *
+     *      Note that a Camera has a keyframe_interpolator() method, that can be used to drive the Camera along a
+     *      path, or to restore a saved position (a path made of a single keyframe).
+     *      
+     * \note The default duration of any two consecutive keyframes is the same. So for a smoother animation, it is
+     *      suggested to regularly (as equally as possible) sample the viewpoints.
+     *      
+     * \attention If a Constraint is attached to the frame() (see Frame::constraint()), it should be deactivated before 
+     *      is_interpolation_started(), otherwise the interpolated motion (computed as if there was no constraint) will 
+     *      probably be erroneous.
+     *
+     * Animation example:
+     *      \code
+     *          // the KeyFrameInterpolator kfi is given the camera's frame that it will be driven over time.
+     *          kfi = new KeyFrameInterpolator( camera()->frame() );
+     *          kfi->add_keyframe(...);
+     *          kfi->add_keyframe(...);
+     *          // ...and so on for all the keyframes.
+     *          // starts animation
+     *          kfi->start_interpolation();
+     *      \endcode
+     *      
+     * \todo Allow edit the duration for each keyframe?  (not sure due to many keyframes and can be annoying).
+     */
     class KeyFrameInterpolator
     {
     public:
-        /*! Creates a KeyFrameInterpolator, with \p frame as associated frame().
-         * \details The frame() can be set or changed using setFrame().
-         * interpolationTime(), interpolationSpeed() and interpolationPeriod() are set to their default values. */
-        KeyFrameInterpolator(Frame* fr=nullptr);
+        /**
+         * \brief Creates a KeyFrameInterpolator, with \p frame as associated frame().
+         * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and 
+         *      interpolation_period() are set to their default values. 
+         */
+        KeyFrameInterpolator(Frame* frame=nullptr);
 
-        /*! Virtual destructor. Clears the keyFrame path. */
+        /** Virtual destructor. Clears the keyframe path. */
         virtual ~KeyFrameInterpolator();
 
         /*! @name Path creation and modification*/
         //@{
     public:
-        /*! Appends a new keyFrame to the path.
-         * Same as addKeyFrame(const Frame& frame, float), except that the keyFrameTime() is automatically set
-         * to previous keyFrameTime() plus one second (or 0.0 if there is no previous keyFrame). */
-        void addKeyFrame(const Frame& frame);
-
-        /*! Appends a new keyFrame to the path, with its associated \p time (in seconds).
-         * The path will use the current \p frame state.
-         * \attention The keyFrameTime() have to be monotonously increasing over keyFrames. */
-        void addKeyFrame(const Frame& frame, float time);
-
-        /*! Removes the lastly added keyFrame from the path.
+        /**
+         * \brief Appends a new keyframe to the path.
+         * \details Same as add_keyframe(const Frame&, float), except that the keyframe_time() is automatically set
+         *      to previous keyframe_time() plus one second (or 0.0 if there is no previous keyframe).
          */
-        void deleteLastKeyFrame();
+        void add_keyframe(const Frame& frame);
 
-        /*! Removes all keyFrames from the path. The numberOfKeyFrames() is set to 0. */
-        void deletePath();
+        /**
+         * \brief Appends a new keyframe to the path, with its associated \p time (in seconds).
+         * \details The path will use the current \p frame state.
+         * \attention The keyframe_time() have to be monotonously increasing over keyframes.
+         */
+        void add_keyframe(const Frame& frame, float time);
+
+        /**
+         * \brief Removes the lastly added keyframe from the path.
+         * \details This is the reverse operation of add_keyframe(const Frame&) and add_keyframe(const Frame&, float).
+         */
+        void delete_last_keyframe();
+
+        /**
+         * \brief Removes all keyframes from the path.
+         * \details Upon return, the number_of_keyframes() will return 0.
+         */
+        void delete_path();
         //@}
 
         /*! @name Associated Frame */
         //@{
     public:
-        /*! Returns the associated Frame and that is interpolated by the KeyFrameInterpolator.
-
-        When interpolationIsStarted(), this Frame's position and orientation will regularly be updated
-        by a timer, so that they follow the KeyFrameInterpolator path.
-
-        Set using setFrame() or with the KeyFrameInterpolator constructor. */
+        /**
+         * \brief Returns the associated Frame and that is interpolated by the KeyFrameInterpolator.
+         * \details The returned Frame was set using set_frame() or with the KeyFrameInterpolator constructor.
+         *      When is_interpolation_started(), this Frame's position and orientation will regularly be updated
+         *      by a timer, so that they follow the KeyFrameInterpolator path.
+         * \sa set_frame()
+         */
         Frame* frame() const { return frame_; }
 
     public:
-        /*! Sets the frame() associated to the KeyFrameInterpolator. */
+        /** Sets the frame() associated to the KeyFrameInterpolator. */
         void setFrame(Frame* const frame);
         //@}
 
         /*! @name Path parameters */
         //@{
     public:
-        /*! Returns the number of keyFrames used by the interpolation. Use addKeyFrame() to add new keyFrames. */
-        std::size_t numberOfKeyFrames() const { return keyFrames_.size(); }
+        /**
+         * \brief Returns the number of keyframes used by the interpolation.
+         * \details Use add_keyframe() to add new keyframes.
+         */
+        std::size_t number_of_keyframes() const { return keyframes_.size(); }
 
         /**
-         * \brief Returns the Frame associated with the keyFrame at index \p index.
-         * See also keyFrameTime(). \p index has to be in the range [0, numberOfKeyFrames()-1].
-         * \note If this keyFrame was defined using a pointer to a Frame (see addKeyFrame(const Frame* const)),
-         *      the \e current pointed Frame state is returned.
+         * \brief Returns the Frame associated with the keyframe at \p index.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa keyframe_time()
          */
-        Frame keyFrame(std::size_t index) const;
+        Frame keyframe(std::size_t index) const;
 
-        /*! Returns the time corresponding to the \p index keyFrame.
-         * See also keyFrame(). \p index has to be in the range [0, numberOfKeyFrames()-1].
+        /**
+         * \brief Returns the time corresponding to the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa keyframe().
          */
-        float keyFrameTime(std::size_t index) const;
+        float keyframe_time(std::size_t index) const;
 
-        /*! Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
-         * Simply corresponds to lastTime() - firstTime(). Returns 0.0 if the path has less than 2 keyFrames.
-         * \sa keyFrameTime(). */
+        /**
+         * \brief Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
+         * \details The duration simply corresponds to lastTime() - firstTime(). It returns 0.0 if the path has less
+         *      than 2 keyframes.
+         * \sa keyframe_time().
+         */
         float duration() const;
 
-        /*! Returns the time corresponding to the first keyFrame, expressed in seconds.
-         * Returns 0.0 if the path is empty.
-         * \sa lastTime(), duration() and keyFrameTime(). */
+        /**
+         * \brief Returns the time corresponding to the first keyframe, expressed in seconds.
+         * \details Returns 0.0 if the path is empty.
+         * \sa lastTime(), duration(), and keyframe_time().
+         */
         float firstTime() const;
 
-        /*! Returns the time corresponding to the last keyFrame, expressed in seconds.
-         * Returns 0.0 if the path is empty.
-         * \sa firstTime(), duration() and keyFrameTime(). */
+        /**
+         * \brief Returns the time corresponding to the last keyframe, expressed in seconds.
+         * \details Returns 0.0 if the path is empty.
+         * \sa firstTime(), duration(), and keyframe_time().
+         */
         float lastTime() const;
         //@}
 
         /*! @name Interpolation parameters */
         //@{
     public:
-        /*! Returns the current interpolation speed.
+        /**
+         * \brief Returns the current interpolation speed.
+         * \details Default value is 1.0, which means keyframe_time() will be matched during the interpolation
+         *      (provided that your main loop is fast enough).
+         */
+        float interpolation_speed() const { return interpolation_speed_; }
 
-        Default value is 1.0, which means keyFrameTime() will be matched during the interpolation
-        (provided that your main loop is fast enough).
-
-        A negative value will result in a reverse interpolation of the keyFrames. See also
-        interpolationPeriod(). */
-        float interpolationSpeed() const { return interpolationSpeed_; }
-        /*! Returns the current interpolation period, expressed in milliseconds.
-
-        The update of the frame() state will be done by a timer at this period when
-        interpolationIsStarted().
-
-        This period (multiplied by interpolationSpeed()) is added to the interpolationTime() at each
-        update, and the frame() state is modified accordingly (see interpolateAtTime()). Default value
-        is 40 milliseconds. */
-        int interpolationPeriod() const { return static_cast<int>(1000.0 / fps_); }
+        /**
+         * \brief Returns the current interpolation period, expressed in milliseconds.
+         * \details The update of the frame() state will be done by a timer at this period when
+         *      is_interpolation_started(). This period (multiplied by interpolation_speed()) will be added to be the
+         *      next frame's time.
+         *      The interpolation_period() multiplied by frame_rate() is always equal to 1.0.
+         */
+        int interpolation_period() const { return static_cast<int>(1000.0 / fps_); }
 
         /**
          * \brief Returns the desired frame rate. Default value is 30.
-         * \details The frame_rate() multiplied by interpolationPeriod() is always equal to 1.0.
+         * \details The frame_rate() multiplied by interpolation_period() is always equal to 1.0.
          */
         int frame_rate() const { return fps_; }
 
     public:
-        /*! Sets the interpolationSpeed(). Negative or null values are allowed. */
-        void setInterpolationSpeed(float speed);
+        /**
+         * \brief Sets the interpolation_speed().
+         */
+        void set_interpolation_speed(float speed);
 
         /// Sets the desired frame rate.
         void set_frame_rate(int fps);
@@ -259,32 +240,39 @@ namespace easy3d {
         /*! @name Interpolation */
         //@{
     public:
-        /*! Returns \c true when the interpolation is being performed. Use startInterpolation(),
-        stopInterpolation() or toggleInterpolation() to modify this state. */
-        bool interpolationIsStarted() const { return interpolationStarted_; }
+        /**
+         * \brief Returns whether the interpolation is being performed.
+         * \details Use start_interpolation(), stop_interpolation() or toggleInterpolation() to modify this state.
+         */
+        bool is_interpolation_started() const { return interpolation_started_; }
+
     public:
 
-        /*! Starts the interpolation process.
-         *
-         * A timer is started with an interpolationPeriod() period that updates the frame()'s position and
-         * orientation. interpolationIsStarted() will return \c true until stopInterpolation() or
-         * toggleInterpolation() is called.
-         *
-         * If interpolationTime() is larger than lastTime(), interpolationTime() is reset to firstTime() before
-         * interpolation starts (and inversely for negative interpolationSpeed()).
-         *
-         * Use setInterpolationTime() before calling this method to change the starting interpolationTime().
-         *
-         * \attention The keyFrames must be defined (see addKeyFrame()) \e before you startInterpolation(), or else
-         * the interpolation will naturally immediately stop. */
-        void startInterpolation();
+        /**
+         * \brief Starts the interpolation process.
+         * \details A timer is started with an interpolation_period() period that updates the frame()'s position and
+         *      orientation. is_interpolation_started() will return \c true until stop_interpolation() or
+         *      toggleInterpolation() is called.
+         * \note The keyframes must be defined (see add_keyframe()) \e before you start_interpolation(), or else
+         *      the interpolation will naturally immediately stop.
+         */
+        void start_interpolation();
 
-        /*! Stops an interpolation started with startInterpolation().
-         * \sa startInterpolation(), interpolationIsStarted(), and toggleInterpolation(). */
-        void stopInterpolation();
+        /**
+         * \brief Stops an interpolation started with start_interpolation().
+         * \sa start_interpolation(), is_interpolation_started(), and toggleInterpolation().
+         */
+        void stop_interpolation();
 
-        /*! Calls startInterpolation() or stopInterpolation(), depending on interpolationIsStarted(). */
-        void toggleInterpolation() { if (interpolationIsStarted()) stopInterpolation(); else startInterpolation(); }
+        /**
+         * \brief Calls start_interpolation() or stop_interpolation(), depending on is_interpolation_started().
+         */
+        void toggleInterpolation() {
+            if (is_interpolation_started())
+                stop_interpolation();
+            else
+                start_interpolation();
+        }
 
     public:
         /// Computes and returns all the interpolated frames.
@@ -295,7 +283,8 @@ namespace easy3d {
         //@{
     public:
 
-        /*! Draws the interpolated camera path along with virtual 3D cameras for the keyframes.
+        /**
+         * \brief Draws the interpolated camera path along with virtual 3D cameras for the keyframes.
          * \param camera The current camera used by the viewer.
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
          *      10% of the character height (in walking mode), for instance.
@@ -340,17 +329,21 @@ namespace easy3d {
             float time_;
         };
 
-        void updateModifiedFrameValues(std::vector<KeyFrame*>& keyFrames);
-        void getRelatedKeyFramesForTime(float time, const std::vector<KeyFrame*>& keyFrames, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
+        // The algorithm for Catmull-Rom is described here:
+        //      https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
+        // Here is an implementation of the algorithm:
+        //      https://github.com/chen0040/cpp-spline
+        void updateModifiedFrameValues(std::vector<KeyFrame*>& keyframes);
+        void getRelatedKeyFramesForTime(float time, const std::vector<KeyFrame*>& keyframes, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
         void computeSpline(const std::vector<KeyFrame*>::const_iterator* relatedFrames, vec3& v1, vec3& v2) const;
-        void do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyFrames);
+        void do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyframes);
         void smooth(std::vector<Frame>& frames);
 #endif
 
     private:
 
         // Key Frames
-        std::vector<KeyFrame*> keyFrames_;
+        std::vector<KeyFrame*> keyframes_;
         std::vector<Frame> interpolated_path_;
 
         // Associated frame
@@ -359,8 +352,8 @@ namespace easy3d {
         // Rhythm
         Timer timer_;
         int fps_;
-        float interpolationSpeed_;
-        bool interpolationStarted_;
+        float interpolation_speed_;
+        bool interpolation_started_;
         int last_stopped_index_;
 
         // is path valid? Adding new keyframes, editing an a keyframe invalidates the path
@@ -368,6 +361,10 @@ namespace easy3d {
 
         LinesDrawable* path_drawable_;
         LinesDrawable* cameras_drawable_;
+
+    public:
+        Signal frame_interpolated;
+        Signal interpolation_stopped;
     };
 
 }

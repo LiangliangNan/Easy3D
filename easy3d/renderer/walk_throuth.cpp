@@ -54,8 +54,8 @@ namespace easy3d {
     }
 
 
-    void WalkThrough::add_key_frame(const Frame &frame) {
-        kfi_->addKeyFrame(frame);
+    void WalkThrough::add_keyframe(const Frame &frame) {
+        kfi_->add_keyframe(frame);
 
         // update scene radius to make sure the path is within the view frustum
         float dist = distance(camera_->sceneCenter(), frame.position());
@@ -87,7 +87,7 @@ namespace easy3d {
         view_dir.z = 0;
         view_dir.normalize();
         const vec3 &cam_pos = head - view_dir * third_person_forward_distance();
-        add_key_frame(cam_pos, view_dir);
+        add_keyframe(cam_pos, view_dir);
 
         // set the pivot point ahead of the character.
         camera_->setPivotPoint(ground_point + view_dir * third_person_forward_distance());
@@ -107,33 +107,33 @@ namespace easy3d {
 
 
     void WalkThrough::delete_last_position() {
-        if (kfi_->numberOfKeyFrames() == 0)
+        if (kfi_->number_of_keyframes() == 0)
             return;
 
-        kfi_->deleteLastKeyFrame();
+        kfi_->delete_last_keyframe();
         --current_frame_idx_;
     }
 
 
     void WalkThrough::delete_path() {
-        kfi_->deletePath();
+        kfi_->delete_path();
         current_frame_idx_ = -1;
     }
 
 
     void WalkThrough::animate() {
-        if (kfi_->interpolationIsStarted())
-            kfi_->stopInterpolation();
+        if (kfi_->is_interpolation_started())
+            kfi_->stop_interpolation();
         else
-            kfi_->startInterpolation();
+            kfi_->start_interpolation();
     }
 
 
     int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /* = 0.5f */) {
-        if (kfi_->numberOfKeyFrames() == 0 || idx < 0 || idx >= kfi_->numberOfKeyFrames())
+        if (kfi_->number_of_keyframes() == 0 || idx < 0 || idx >= kfi_->number_of_keyframes())
             return current_frame_idx_;
 
-        const auto frame = kfi_->keyFrame(idx);
+        const auto frame = kfi_->keyframe(idx);
         if (animation)
             camera_->interpolateTo(frame, duration);
         else
@@ -157,13 +157,13 @@ namespace easy3d {
     }
 
 
-    void WalkThrough::add_key_frame(const vec3 &cam_pos, const vec3 &view_dir) {
+    void WalkThrough::add_keyframe(const vec3 &cam_pos, const vec3 &view_dir) {
         vec3 dir = view_dir;
         dir.z = 0; // force looking at horizontal direction
         dir.normalize();
 
-        add_key_frame(to_frame(cam_pos, dir));
-        move_to(kfi_->numberOfKeyFrames() - 1); // move to the new view point.
+        add_keyframe(to_frame(cam_pos, dir));
+        move_to(kfi_->number_of_keyframes() - 1); // move to the new view point.
     }
 
 

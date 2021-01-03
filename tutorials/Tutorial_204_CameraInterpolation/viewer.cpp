@@ -60,7 +60,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
-        interpolator_->addKeyFrame(*frame);
+        interpolator_->add_keyframe(*frame);
         float dist = distance(camera_->sceneCenter(), frame->position());
         if (dist > camera_->sceneRadius())
             camera_->setSceneRadius(dist);
@@ -68,18 +68,18 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
         return true;
     }
     else if (key == GLFW_KEY_SPACE && modifiers == 0) {
-        if (interpolator_->interpolationIsStarted()) {
-            interpolator_->stopInterpolation();
+        if (interpolator_->is_interpolation_started()) {
+            interpolator_->stop_interpolation();
             std::cout << "Animation stopped." << std::endl;
         }
         else {
-            interpolator_->startInterpolation();
+            interpolator_->start_interpolation();
             std::cout << "Animation started." << std::endl;
         }
         return true;
     }
     else if (key == GLFW_KEY_D && modifiers == 0) {
-        interpolator_->deletePath();
+        interpolator_->delete_path();
         // update scene bounding box
         Box3 box;
         for (auto m : models_)
@@ -97,6 +97,6 @@ void CameraIntrepolation::draw() const {
     Viewer::draw();
 
     // shown only when it is not animating
-    if (!interpolator_->interpolationIsStarted())
+    if (!interpolator_->is_interpolation_started())
         interpolator_->draw_path(camera(), camera()->sceneRadius() * 0.05f);
 }

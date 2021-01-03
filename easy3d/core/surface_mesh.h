@@ -24,8 +24,8 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from Surface_mesh with significant modifications
- * and enhancement.
+ * The code in this file is adapted from Surface_mesh with significant
+ * modifications and enhancement.
  *		- Surface_mesh (version 1.1)
  * The original code is available at
  * https://opensource.cit-ec.de/projects/surface_mesh
@@ -60,7 +60,7 @@ namespace easy3d {
      *          of a 2-manifold topology. In any case, client code is highly recommended to use ManifoldBuilder.
      *
      * \class SurfaceMesh easy3d/core/surface_mesh.h
-     * \related ManifoldBuilder.
+     * \sa ManifoldBuilder.
      */
 
     class SurfaceMesh : public virtual Model

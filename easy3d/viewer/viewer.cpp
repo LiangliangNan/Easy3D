@@ -720,10 +720,10 @@ namespace easy3d {
 
         if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
-            kfi_->addKeyFrame(*frame);
+            kfi_->add_keyframe(*frame);
             LOG(INFO) << "key frame added to camera path";
         } else if (key == GLFW_KEY_D && modifiers == GLFW_MOD_ALT) { // delete path
-            kfi_->deletePath();
+            kfi_->delete_path();
             // update scene bounding box
             Box3 box;
             for (auto m : models_)
@@ -731,18 +731,18 @@ namespace easy3d {
             camera_->setSceneBoundingBox(box.min(), box.max());
             LOG(INFO) << "camera path deleted";
         } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
-            if (kfi_->interpolationIsStarted())
-                kfi_->stopInterpolation();
+            if (kfi_->is_interpolation_started())
+                kfi_->stop_interpolation();
             else
-                kfi_->startInterpolation();
+                kfi_->start_interpolation();
         } else if (key == GLFW_KEY_T && modifiers == EASY3D_MOD_CONTROL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
-                const int count = kfi_->numberOfKeyFrames();
+                const int count = kfi_->number_of_keyframes();
                 float radius = camera_->sceneRadius();
                 for (int i=0; i<count; ++i) {
                     radius = std::max( radius,
-                            distance(camera_->sceneCenter(), kfi_->keyFrame(i).position())
+                            distance(camera_->sceneCenter(), kfi_->keyframe(i).position())
                     );
                 }
                 camera_->setSceneRadius(radius);
@@ -1444,7 +1444,7 @@ namespace easy3d {
         }
 
         // shown only when it is not animating
-        if (show_camera_path_ && !kfi_->interpolationIsStarted())
+        if (show_camera_path_ && !kfi_->is_interpolation_started())
             kfi_->draw_path(camera(), camera()->sceneRadius() * 0.05f);
 
         if (show_pivot_point_) {

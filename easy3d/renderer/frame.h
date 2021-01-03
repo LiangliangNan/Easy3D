@@ -150,12 +150,10 @@ namespace easy3d {
     class Frame {
     public:
         Frame();
-
         /*! Virtual destructor. Empty. */
         virtual ~Frame();
 
         Frame(const Frame &frame);
-
         Frame &operator=(const Frame &frame);
 
     public:

@@ -710,13 +710,13 @@ namespace easy3d {
 
         if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
-            camera()->keyFrameInterpolator()->addKeyFrame(*frame);
+            camera()->keyframe_interpolator()->add_keyframe(*frame);
             // update scene bounding box to make sure the path is within the view frustum
             float old_radius = camera()->sceneRadius();
             float candidate_radius = distance(camera()->sceneCenter(), frame->position());
             camera()->setSceneRadius(std::max(old_radius, candidate_radius));
         } else if (key == GLFW_KEY_D && modifiers == EASY3D_MOD_CONTROL) { // delete path
-            camera()->keyFrameInterpolator()->deletePath();
+            camera()->keyframe_interpolator()->delete_path();
 
             // update scene bounding box
             Box3 box;
@@ -726,10 +726,10 @@ namespace easy3d {
 //                box.add_box(d->bounding_box());
             camera_->setSceneBoundingBox(box.min(), box.max());
         } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
-            if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-                camera()->keyFrameInterpolator()->stopInterpolation();
+            if (camera()->keyframe_interpolator()->is_interpolation_started())
+                camera()->keyframe_interpolator()->stop_interpolation();
             else
-                camera()->keyFrameInterpolator()->startInterpolation();
+                camera()->keyframe_interpolator()->start_interpolation();
         } else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {
             glfwSetWindowShouldClose(window, true);
         }

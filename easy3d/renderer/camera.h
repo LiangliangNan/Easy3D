@@ -230,7 +230,7 @@ namespace easy3d {
 		void centerScene();
 
     public:
-        KeyFrameInterpolator *keyFrameInterpolator() const { return interpolationKfi_; }
+        KeyFrameInterpolator *keyframe_interpolator() const { return interpolationKfi_; }
 
         void interpolateToLookAt(const vec3& point);
         void interpolateToFitScene();

@@ -304,7 +304,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
             if (found && (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE) &&
-                (!walkThrough()->interpolator()->interpolationIsStarted()))
+                (!walkThrough()->interpolator()->is_interpolation_started()))
             {
                 walkThrough()->walk_to(p);
             }
@@ -386,7 +386,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 
 void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     int x = e->pos().x(), y = e->pos().y();
-    if (x < 0 || x > width() || y < 0 || y > height() || walkThrough()->interpolator()->interpolationIsStarted()) {
+    if (x < 0 || x > width() || y < 0 || y > height() || walkThrough()->interpolator()->is_interpolation_started()) {
         e->ignore();
         return;
     }
@@ -1096,7 +1096,7 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (walk_through_ && walk_through_->is_path_visible() && !walk_through_->interpolator()->interpolationIsStarted())
+    if (walk_through_ && walk_through_->is_path_visible() && !walk_through_->interpolator()->is_interpolation_started())
         walk_through_->draw();
     easy3d_debug_log_gl_error;
 
@@ -1266,7 +1266,7 @@ void PaintCanvas::copyCamera() {
         Frame frame;
         frame.setPosition(camera()->position());
         frame.setOrientation(q);
-        walkThrough()->add_key_frame(frame);
+        walkThrough()->add_keyframe(frame);
     }
     else if (walkThrough()->status() == easy3d::WalkThrough::STOPPED) {
         const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")
@@ -1285,7 +1285,7 @@ void PaintCanvas::copyCamera() {
 
 
 void PaintCanvas::pasteCamera() {
-    if (walkThrough()->interpolator()->interpolationIsStarted() || walkThrough()->status() != easy3d::WalkThrough::STOPPED )
+    if (walkThrough()->interpolator()->is_interpolation_started() || walkThrough()->status() != easy3d::WalkThrough::STOPPED )
         return;
 
     // get the camera parameters from clipboard string

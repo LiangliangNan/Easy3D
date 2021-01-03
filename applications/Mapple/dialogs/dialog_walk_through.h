@@ -65,7 +65,7 @@ public Q_SLOTS :
 
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
-	void setInterpolationSpeed(double);
+	void set_interpolation_speed(double);
 	void setFrameRate(int);
 
 protected:

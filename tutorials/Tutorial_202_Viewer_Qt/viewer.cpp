@@ -418,13 +418,13 @@ void ViewerQt::keyPressEvent(QKeyEvent *e) {
 
     else if (e->key() == Qt::Key_K && e->modifiers() == Qt::AltModifier) { // add key frame
         easy3d::Frame *frame = camera()->frame();
-        camera()->keyFrameInterpolator()->addKeyFrame(*frame);
+        camera()->keyframe_interpolator()->add_keyframe(*frame);
         // update scene bounding box to make sure the path is within the view frustum
         float old_radius = camera()->sceneRadius();
         float candidate_radius = distance(camera()->sceneCenter(), frame->position());
         camera()->setSceneRadius(std::max(old_radius, candidate_radius));
     } else if (e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier) { // delete path
-        camera()->keyFrameInterpolator()->deletePath();
+        camera()->keyframe_interpolator()->delete_path();
 
         // update scene bounding box
         Box3 box;
@@ -432,10 +432,10 @@ void ViewerQt::keyPressEvent(QKeyEvent *e) {
             box.add_box(m->bounding_box());
         camera_->setSceneBoundingBox(box.min(), box.max());
     } else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
-        if (camera()->keyFrameInterpolator()->interpolationIsStarted())
-            camera()->keyFrameInterpolator()->stopInterpolation();
+        if (camera()->keyframe_interpolator()->is_interpolation_started())
+            camera()->keyframe_interpolator()->stop_interpolation();
         else
-            camera()->keyFrameInterpolator()->startInterpolation();
+            camera()->keyframe_interpolator()->start_interpolation();
     } else if (e->key() == Qt::Key_BracketLeft && e->modifiers() == Qt::NoModifier) {
         for (auto m : models_) {
             for (auto d : m->renderer()->lines_drawables()) {
