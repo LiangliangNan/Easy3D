@@ -145,14 +145,14 @@ void DialogWalkThrough::closeEvent(QCloseEvent* e) {
 
 void DialogWalkThrough::setCharacterHeightFactor(double h) {
     walkThrough()->set_height_factor(h);
-//    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
+    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
-//    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
+    std::cerr << " ----- allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
@@ -262,7 +262,7 @@ void DialogWalkThrough::browse() {
 void DialogWalkThrough::preview(bool b) {
 #if 1
     // this single line works: very efficient (in another thread without overhead).
-    walkThrough()->animate();
+    walkThrough()->preview();
     viewer_->update();
 
 #elif 0 // this also works. But std::this_thread::sleep_for() is not efficient and frame rate is low.
@@ -347,6 +347,9 @@ void DialogWalkThrough::record(bool b) {
             recordButton->setChecked(false);
             return;
         }
+
+        if (previewButton->isChecked())
+            previewButton->setChecked(false);
 
         // make sure the path is not visible in recording
         const bool visible = walkThrough()->is_path_visible();

@@ -68,6 +68,8 @@ namespace easy3d {
 
 
     void WalkThrough::start_walking(const std::vector<Model *> &scene) {
+        if (scene.empty())
+            return;
         Box3 box;
         for (const auto& m : scene)
             box += m->bounding_box();
@@ -121,7 +123,7 @@ namespace easy3d {
     }
 
 
-    void WalkThrough::animate() {
+    void WalkThrough::preview() {
         if (kfi_->is_interpolation_started())
             kfi_->stop_interpolation();
         else

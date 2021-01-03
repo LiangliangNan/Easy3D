@@ -296,7 +296,7 @@ namespace easy3d {
 			return;
 
 		frame_ = mcf;
-        interpolationKfi_->setFrame(frame());
+        interpolationKfi_->set_frame(frame());
 
         easy3d::connect(&frame_->modified,  this,  &Camera::modified);
         // frame_->modified.connect(this, &Camera::modified); // this should also work
@@ -691,14 +691,7 @@ namespace easy3d {
 
         interpolationKfi_->delete_path();
         interpolationKfi_->add_keyframe(*frame());
-
-#if 0
-        // add an intermediate frame to make the transition smoother (starts faster but ends slower)
-        interpolationKfi_->add_keyframe(Frame(0.3 * frame()->position() + 0.7 * fr.position(), frame()->orientation()), 0.4);
-#endif
-
         interpolationKfi_->add_keyframe(fr, duration);
-
         interpolationKfi_->start_interpolation();
     }
 

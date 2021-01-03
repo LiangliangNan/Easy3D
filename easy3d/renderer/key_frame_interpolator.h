@@ -104,7 +104,7 @@ namespace easy3d {
          * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and 
          *      interpolation_period() are set to their default values. 
          */
-        KeyFrameInterpolator(Frame* frame=nullptr);
+        KeyFrameInterpolator(Frame *frame = nullptr);
 
         /** Virtual destructor. Clears the keyframe path. */
         virtual ~KeyFrameInterpolator();
@@ -133,6 +133,28 @@ namespace easy3d {
         void delete_last_keyframe();
 
         /**
+         * \brief Sets the time corresponding to the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \note The time \c t have to be monotonously increasing over keyframes.
+         * \sa keyframe_time()
+         */
+        void set_keyframe_time(std::size_t index, float t);
+
+        /**
+         * \brief Sets the position of the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa keyframe_time()
+         */
+        void set_keyframe_position(std::size_t index, const vec3& pos);
+
+        /**
+         * \brief Sets the orientation of the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa keyframe_time()
+         */
+        void set_keyframe_orientation(std::size_t index, const quat& q);
+
+        /**
          * \brief Removes all keyframes from the path.
          * \details Upon return, the number_of_keyframes() will return 0.
          */
@@ -153,10 +175,10 @@ namespace easy3d {
 
     public:
         /** Sets the frame() associated to the KeyFrameInterpolator. */
-        void setFrame(Frame* const frame);
+        void set_frame(Frame* const frame) { frame_ = frame; }
         //@}
 
-        /*! @name Path parameters */
+        /*! @name Access keyframe and path parameters */
         //@{
     public:
         /**
@@ -175,9 +197,22 @@ namespace easy3d {
         /**
          * \brief Returns the time corresponding to the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
-         * \sa keyframe().
+         * \sa set_keyframe_time().
          */
         float keyframe_time(std::size_t index) const;
+
+        /**
+         * \brief Returns the position of the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa set_keyframe_position()
+         */
+        const vec3& keyframe_position(std::size_t index);
+        /**
+         * \brief Returns the orientation of the \p index-th keyframe.
+         * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \sa set_keyframe_orientation()
+         */
+        const quat& keyframe_orientation(std::size_t index);
 
         /**
          * \brief Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
@@ -276,7 +311,7 @@ namespace easy3d {
 
     public:
         /// Computes and returns all the interpolated frames.
-        const std::vector<Frame>& interpolate();
+        const std::vector<Frame>& interpolate(bool smoothing = true);
         //@}
 
         /*! @name Path drawing */
@@ -309,20 +344,22 @@ namespace easy3d {
         KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
 
 #ifndef DOXYGEN
-        // Internal private KeyFrame representation
-        class KeyFrame
+        // Internal private Keyframe representation
+        class Keyframe
         {
         public:
-            KeyFrame(const Frame& fr, float t);
+            Keyframe(const Frame& fr, float t);
 
-            vec3 position() const { return p_; }
-            quat orientation() const { return q_; }
-            vec3 tgP() const { return tgP_; }
-            quat tgQ() const { return tgQ_; }
+            const vec3& position() const { return p_; }
+            const quat& orientation() const { return q_; }
+            const vec3& tgP() const { return tgP_; }
+            const quat& tgQ() const { return tgQ_; }
             float time() const { return time_; }
             void set_time(float t) { time_ = t; }
-            void flipOrientationIfNeeded(const quat& prev);
-            void computeTangent(const KeyFrame* const prev, const KeyFrame* const next);
+            void set_position(const vec3& p) { p_ = p; }
+            void set_orientation(const quat& q) { q_ = q; }
+            void flip_if_needed(const quat& prev); // flip its orientation if needed
+            void compute_tangent(const Keyframe& prev, const Keyframe& next);
         private:
             vec3 p_, tgP_;
             quat q_, tgQ_;
@@ -333,21 +370,23 @@ namespace easy3d {
         //      https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
         // Here is an implementation of the algorithm:
         //      https://github.com/chen0040/cpp-spline
-        void updateModifiedFrameValues(std::vector<KeyFrame*>& keyframes);
-        void getRelatedKeyFramesForTime(float time, const std::vector<KeyFrame*>& keyframes, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
-        void computeSpline(const std::vector<KeyFrame*>::const_iterator* relatedFrames, vec3& v1, vec3& v2) const;
-        void do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyframes);
-        void smooth(std::vector<Frame>& frames);
+        void update_keyframe_values(std::vector<Keyframe>& keyframes);
+        void get_keyframes_at_time(float time, const std::vector<Keyframe>& keyframes, std::vector<Keyframe>::const_iterator* related) const;
+        void compute_spline(const std::vector<Keyframe>::const_iterator* related, vec3& v1, vec3& v2) const;
+        void do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes);
+
+        // adjusts the keyframe times with respect to the accumulated path length
+        // so keyframes.front().time() and keyframes.back().time() are both preserved.
+        void adjust_keyframe_times(std::vector<Keyframe>& keyframes);
 #endif
 
     private:
-
-        // Key Frames
-        std::vector<KeyFrame*> keyframes_;
-        std::vector<Frame> interpolated_path_;
-
         // Associated frame
         Frame* frame_;
+
+        // Key Frames
+        std::vector<Keyframe> keyframes_;
+        std::vector<Frame> interpolated_path_;
 
         // Rhythm
         Timer timer_;
@@ -368,7 +407,6 @@ namespace easy3d {
     };
 
 }
-
 
 
 #endif // EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H

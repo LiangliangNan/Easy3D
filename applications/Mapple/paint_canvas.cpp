@@ -1263,10 +1263,7 @@ void PaintCanvas::copyCamera() {
     const vec3 pos = camera()->position();
     const quat q = camera()->orientation();
     if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
-        Frame frame;
-        frame.setPosition(camera()->position());
-        frame.setOrientation(q);
-        walkThrough()->add_keyframe(frame);
+        walkThrough()->add_keyframe(Frame(camera()->position(), q));
     }
     else if (walkThrough()->status() == easy3d::WalkThrough::STOPPED) {
         const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")

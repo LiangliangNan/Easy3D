@@ -107,8 +107,8 @@ namespace easy3d {
         /// \name Walking through, animation, and visualization.
         //@{
 
-        /// Walking through the scene using the created camera path.
-        void animate();
+        /// Previews the animation definded by the keyframes.
+        void preview();
 
         /// Places the character at the idx_th keyframe of the path and modifies the camera view accordingly.
         /// \return The index of current keyframe.
