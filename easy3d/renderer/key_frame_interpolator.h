@@ -331,6 +331,7 @@ namespace easy3d {
             vec3 tgP() const { return tgP_; }
             quat tgQ() const { return tgQ_; }
             float time() const { return time_; }
+            void set_time(float t) { time_ = t; }
             void flipOrientationIfNeeded(const quat& prev);
             void computeTangent(const KeyFrame* const prev, const KeyFrame* const next);
         private:
@@ -339,10 +340,11 @@ namespace easy3d {
             float time_;
         };
 
-        void updateModifiedFrameValues();
-        void getRelatedKeyFramesForTime(float time, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
+        void updateModifiedFrameValues(std::vector<KeyFrame*>& keyFrames);
+        void getRelatedKeyFramesForTime(float time, const std::vector<KeyFrame*>& keyFrames, std::vector<KeyFrame*>::const_iterator* relatedFrames) const;
         void computeSpline(const std::vector<KeyFrame*>::const_iterator* relatedFrames, vec3& v1, vec3& v2) const;
-
+        void do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyFrames);
+        void smooth(std::vector<Frame>& frames);
 #endif
 
     private:

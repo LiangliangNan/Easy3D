@@ -209,6 +209,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             interpolated_path_ = interpolate();
             pathIsValid_ = true;
         }
+        if (interpolated_path_.empty()) // interpolation may have failed.
+            return;
 
         if (!path_drawable_) {
             std::vector<vec3> points;
@@ -304,20 +306,20 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    void KeyFrameInterpolator::updateModifiedFrameValues() {
-        quat prevQ = keyFrames_.front()->orientation();
+    void KeyFrameInterpolator::updateModifiedFrameValues(std::vector<KeyFrame*>& keyFrames) {
+        quat prevQ = keyFrames.front()->orientation();
         KeyFrame *kf = nullptr;
-        for (std::size_t i = 0; i < keyFrames_.size(); ++i) {
-            kf = keyFrames_.at(i);
+        for (std::size_t i = 0; i < keyFrames.size(); ++i) {
+            kf = keyFrames.at(i);
             kf->flipOrientationIfNeeded(prevQ);
             prevQ = kf->orientation();
         }
 
-        KeyFrame *prev = keyFrames_.front();
-        kf = keyFrames_.front();
+        KeyFrame *prev = keyFrames.front();
+        kf = keyFrames.front();
         std::size_t index = 1;
         while (kf) {
-            KeyFrame *next = (index < keyFrames_.size()) ? keyFrames_.at(index) : nullptr;
+            KeyFrame *next = (index < keyFrames.size()) ? keyFrames.at(index) : nullptr;
             index++;
             if (next)
                 kf->computeTangent(prev, next);
@@ -408,38 +410,38 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
     }
 
 
-    void KeyFrameInterpolator::getRelatedKeyFramesForTime(float time, std::vector<KeyFrame *>::const_iterator *relatedFrames) const {
+    void KeyFrameInterpolator::getRelatedKeyFramesForTime(float time, const std::vector<KeyFrame*>& keyFrames, std::vector<KeyFrame *>::const_iterator *relatedFrames) const {
         // Assertion: times are sorted in monotone order.
         // Assertion: keyFrames_ is not empty
 
         // TODO: Special case for loops when closed path is implemented !!
         // Recompute everything from scratch
-        relatedFrames[1] = keyFrames_.begin(); // points to the first one
+        relatedFrames[1] = keyFrames.begin(); // points to the first one
 
         while ((*relatedFrames[1])->time() > time) {
-            if (relatedFrames[1] == keyFrames_.begin()) // already the first one
+            if (relatedFrames[1] == keyFrames.begin()) // already the first one
                 break;
             --relatedFrames[1]; // points to the previous one
         }
 
         relatedFrames[2] = relatedFrames[1];
         while ((*relatedFrames[2])->time() < time) {
-            if (*relatedFrames[2] == keyFrames_.back()) // already the last one
+            if (*relatedFrames[2] == keyFrames.back()) // already the last one
                 break;
             ++relatedFrames[2];// points to the next one
         }
 
         relatedFrames[1] = relatedFrames[2];
-        if ((relatedFrames[1] != keyFrames_.begin()) && (time < (*relatedFrames[2])->time()))
+        if ((relatedFrames[1] != keyFrames.begin()) && (time < (*relatedFrames[2])->time()))
             --relatedFrames[1];
 
         relatedFrames[0] = relatedFrames[1];
-        if (relatedFrames[0] != keyFrames_.begin())
+        if (relatedFrames[0] != keyFrames.begin())
             --relatedFrames[0];
 
         relatedFrames[3] = relatedFrames[2];
 
-        if ((*relatedFrames[3]) != keyFrames_.back()) // has next
+        if ((*relatedFrames[3]) != keyFrames.back()) // has next
             ++relatedFrames[3];
     }
 
@@ -452,35 +454,55 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
-        if (pathIsValid_)
+        if (keyFrames_.size() < 2)
             return interpolated_path_;
-        else
-            updateModifiedFrameValues();
 
-        interpolated_path_.clear();
-        if (keyFrames_.empty())
+        if (pathIsValid_)
             return interpolated_path_;
 
         if (keyFrames_.size() > 2)
             LOG(INFO) << "interpolating " << keyFrames_.size() << " keyframes...";
+        do_interpolate(interpolated_path_, keyFrames_);
+        if (keyFrames_.size() > 2)
+            LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
+
+        const int num_iter = 3;
+        if (num_iter > 0) {
+            LOG(INFO) << "smoothing...";
+            for (int i = 0; i < num_iter; ++i)
+                smooth(interpolated_path_);
+            LOG(INFO) << "smoothing done";
+        }
+
+        pathIsValid_ = true;
+        return interpolated_path_;
+    }
+
+
+    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyFrames) {
+        frames.clear();
+        if (keyFrames.empty())
+            return;
+
+        updateModifiedFrameValues(keyFrames);
 
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
-         for (float time = firstTime(); time < lastTime() + interval; time += interval) {
-             std::vector<KeyFrame *>::const_iterator relatedFrames[4];
-             getRelatedKeyFramesForTime(time, relatedFrames);
+        for (float time = keyFrames.front()->time(); time < keyFrames.back()->time() + interval; time += interval) {
+            std::vector<KeyFrame *>::const_iterator relatedFrames[4];
+            getRelatedKeyFramesForTime(time, keyFrames, relatedFrames);
 
-             vec3 v1, v2;
-             computeSpline(relatedFrames, v1, v2);
+            vec3 v1, v2;
+            computeSpline(relatedFrames, v1, v2);
 
-             float alpha = 0.0f;
-             const float dt = (*relatedFrames[2])->time() - (*relatedFrames[1])->time();
-             if (std::abs(dt) < epsilon<float>())
-                 alpha = 0.0f;
-             else
-                 alpha = (time - (*relatedFrames[1])->time()) / dt;
+            float alpha = 0.0f;
+            const float dt = (*relatedFrames[2])->time() - (*relatedFrames[1])->time();
+            if (std::abs(dt) < epsilon<float>())
+                alpha = 0.0f;
+            else
+                alpha = (time - (*relatedFrames[1])->time()) / dt;
 
 #if 0   // linear interpolation - not smooth
-             vec3 pos = alpha*((*relatedFrames[2])->position()) + (1.0f-alpha)*((*relatedFrames[1])->position());
+            vec3 pos = alpha*((*relatedFrames[2])->position()) + (1.0f-alpha)*((*relatedFrames[1])->position());
         quat a = (*relatedFrames[1])->orientation();
         quat b = (*relatedFrames[2])->orientation();
         quat q = quat(
@@ -492,26 +514,58 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         q.normalize();
 
 #else   // spline interpolation
-             const vec3 pos =
-                     (*relatedFrames[1])->position() + alpha * ((*relatedFrames[1])->tgP() + alpha * (v1 + alpha * v2));
-             const quat q = quat::squad((*relatedFrames[1])->orientation(), (*relatedFrames[1])->tgQ(),
-                                        (*relatedFrames[2])->tgQ(), (*relatedFrames[2])->orientation(), alpha);
+            const vec3 pos =
+                    (*relatedFrames[1])->position() + alpha * ((*relatedFrames[1])->tgP() + alpha * (v1 + alpha * v2));
+            const quat q = quat::squad((*relatedFrames[1])->orientation(), (*relatedFrames[1])->tgQ(),
+                                       (*relatedFrames[2])->tgQ(), (*relatedFrames[2])->orientation(), alpha);
 #endif
-             Frame f;
-             f.setPosition(pos);
-             f.setOrientation(q);
-             interpolated_path_.push_back(f);
+            Frame f;
+            f.setPosition(pos);
+            f.setOrientation(q);
+            frames.push_back(f);
         }
 
 #ifdef DEBUG_INTERPOLATED_FRAMES
-        save_interpolation(interpolated_path_);
+        save_interpolation(frames);
 #endif
-        if (keyFrames_.size() > 2)
-            LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
-
-        pathIsValid_ = true;
-        return interpolated_path_;
     }
+
+    void KeyFrameInterpolator::smooth(std::vector<Frame>& frames) {
+        if (frames.empty())
+            return;
+
+        // use the interpolated frames as keyframes -> another round interpolation
+
+        const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
+        float period_reference_distance = 0.0f;
+        std::vector<KeyFrame *> as_key_frames;
+        for (std::size_t i = 0; i < frames.size(); ++i) {
+            // interval between first two keyframes is 1.0 sec. and their distant is recorded.
+            // The time intervals between other consecutive keyframes are computed relative to this distance.
+            float time = 0.0f;
+            if (as_key_frames.empty())
+                time = 0.0;
+            else if (as_key_frames.size() == 1) { // all equal intervals
+                time = interval;
+                period_reference_distance = distance(as_key_frames[0]->position(), frames[i].position());
+            } else
+                time = as_key_frames.back()->time() +
+                        interval * distance(as_key_frames.back()->position(), frames[i].position()) / period_reference_distance;
+
+            as_key_frames.push_back(new KeyFrame(frames[i], time));
+        }
+
+        // adjust the period
+        float ratio = duration() / (as_key_frames.back()->time() - as_key_frames.front()->time());
+        for (auto& f : as_key_frames)
+            f->set_time(f->time() * ratio);
+
+        do_interpolate(frames, as_key_frames);
+
+        for (auto f : as_key_frames)
+            delete f;
+    }
+
 
 }
 
