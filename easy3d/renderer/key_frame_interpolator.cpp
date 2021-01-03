@@ -454,9 +454,6 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
-        if (keyFrames_.size() < 2)
-            return interpolated_path_;
-
         if (pathIsValid_)
             return interpolated_path_;
 
@@ -466,28 +463,29 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
         if (keyFrames_.size() > 2)
             LOG(INFO) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
 
-        const int num_iter = 3;
-        if (num_iter > 0) {
-            LOG(INFO) << "smoothing...";
-            for (int i = 0; i < num_iter; ++i)
-                smooth(interpolated_path_);
-            LOG(INFO) << "smoothing done";
-        }
+        // more iterations do not provide further improvement
+        const int num_iter = 1;
+        for (int i = 0; i < num_iter; ++i)
+            smooth(interpolated_path_);
 
         pathIsValid_ = true;
         return interpolated_path_;
     }
 
 
+//    int idx = 0;
+
     void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<KeyFrame*>& keyFrames) {
         frames.clear();
         if (keyFrames.empty())
             return;
 
+//        std::ofstream  output ("tmp-iner-" + std::to_string(idx++) + ".xyz");
+
         updateModifiedFrameValues(keyFrames);
 
         const float interval = interpolationSpeed() * interpolationPeriod() / 1000.0f;
-        for (float time = keyFrames.front()->time(); time < keyFrames.back()->time() + interval; time += interval) {
+        for (float time = firstTime(); time < lastTime() + interval; time += interval) {
             std::vector<KeyFrame *>::const_iterator relatedFrames[4];
             getRelatedKeyFramesForTime(time, keyFrames, relatedFrames);
 
@@ -523,6 +521,8 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             f.setPosition(pos);
             f.setOrientation(q);
             frames.push_back(f);
+
+//            output << pos << std::endl;
         }
 
 #ifdef DEBUG_INTERPOLATED_FRAMES
@@ -530,8 +530,9 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
 #endif
     }
 
+
     void KeyFrameInterpolator::smooth(std::vector<Frame>& frames) {
-        if (frames.empty())
+        if (frames.size() < 2)
             return;
 
         // use the interpolated frames as keyframes -> another round interpolation
@@ -555,13 +556,19 @@ void save_interpolation(const std::vector<easy3d::Frame>& frames) {
             as_key_frames.push_back(new KeyFrame(frames[i], time));
         }
 
-        // adjust the period
+        // adjust the period, using the ratio of the two period
         float ratio = duration() / (as_key_frames.back()->time() - as_key_frames.front()->time());
-        for (auto& f : as_key_frames)
-            f->set_time(f->time() * ratio);
+        if (is_nan(ratio)) {
+            LOG(ERROR) << "duration is 0";
+        }
+        else {
+            for (auto &f : as_key_frames)
+                f->set_time(f->time() * ratio);
 
-        do_interpolate(frames, as_key_frames);
+            do_interpolate(frames, as_key_frames);
+        }
 
+        // clean
         for (auto f : as_key_frames)
             delete f;
     }
