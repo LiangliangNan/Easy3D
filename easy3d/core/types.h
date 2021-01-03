@@ -129,6 +129,13 @@ namespace easy3d {
     typedef GenericPolygon<float> Polygon2;
 
 
+
+    template <typename FT>
+    inline bool is_nan(FT v) {
+        return (std::isnan(v) || std::isinf(v));
+    }
+
+
     namespace geom {
 
         /** \brief Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
