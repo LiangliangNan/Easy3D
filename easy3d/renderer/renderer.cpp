@@ -92,9 +92,9 @@ namespace easy3d {
             borders->set_line_width(setting::surface_mesh_borders_line_width);
             borders->set_visible(setting::surface_mesh_show_borders);
 
-            auto locks = mesh->renderer()->get_points_drawable("locks");
-            if (!locks) {
-                locks = mesh->renderer()->add_points_drawable("locks");
+            auto locks_prop = mesh->get_vertex_property<bool>("v:locked");
+            if (locks_prop) {
+                auto locks = mesh->renderer()->add_points_drawable("locks");
                 locks->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
                 locks->set_impostor_type(PointsDrawable::SPHERE);
                 locks->set_point_size(setting::surface_mesh_vertices_point_size + 5);
