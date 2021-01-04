@@ -40,7 +40,8 @@ public:
 	//! Returns whether the file is opened or not
 	inline bool isOpen() const { return m_isOpen; }
 
-	//! Adds an image to the stream
+	//! Adds an image to the stream.
+	/// \attention The image format must be one of Format_RGB32, Format_ARGB32, Format_ARGB32_Premultiplied.
 	virtual bool encodeImage(const QImage& image, int frameIndex, QString* errorString = 0);
 
 	//! Closes the file
