@@ -159,6 +159,12 @@ public slots:
     void onAbout();
     void showManual();
 
+#ifndef NDEBUG
+    void test1();
+    void test2();
+#endif
+
+
 protected:
     void dragEnterEvent(QDragEnterEvent *e) override;
     void dropEvent(QDropEvent *) override;
