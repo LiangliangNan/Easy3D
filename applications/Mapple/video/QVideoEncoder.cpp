@@ -338,6 +338,8 @@ bool QVideoEncoder::encodeImage(const QImage &image, int frameIndex, QString* er
 			av_make_error_string(errorStr, AV_ERROR_MAX_STRING_SIZE, ret);
 			if (errorString)
 				*errorString = QString("Error encoding video frame: %1").arg(errorStr);
+
+            av_packet_unref(&pkt);
 			return false;
 		}
 	}
@@ -351,6 +353,8 @@ bool QVideoEncoder::encodeImage(const QImage &image, int frameIndex, QString* er
 			av_make_error_string(errorStr, AV_ERROR_MAX_STRING_SIZE, ret);
 			if (errorString)
 				*errorString = QString("Error while writing video frame: %1").arg(errorStr);
+
+            av_packet_unref(&pkt);
 			return false;
 		}
 	}
