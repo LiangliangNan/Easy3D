@@ -27,9 +27,7 @@
 #define SHOW_PROGRESS
 
 #ifdef  USE_QT_FBO
-
 #include <QOpenGLFramebufferObject>
-
 #else
 #include <easy3d/renderer/framebuffer_object.h>
 #endif
@@ -48,7 +46,10 @@
 #include <easy3d/core//model.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+
+#ifdef SHOW_PROGRESS
 #include <easy3d/util/progress.h>
+#endif
 
 
 using namespace easy3d;
@@ -107,11 +108,12 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     if (nbX * sub_w < w) ++nbX;
     if (nbY * sub_h < h) ++nbY;
 
-    ProgressLogger progress(nbX * nbY * 1.1f, false, false); // the extra 0.1 is for saving the "big" image (time consuming)
-
     // remember the current projection matrix
     // const mat4& proj_matrix = camera()->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
     const mat4 proj_matrix = camera()->projectionMatrix();
+
+    // temporarily don't allow updating rendering when the camera parameters are changing.
+    easy3d::disconnect(&camera_->frame_modified, this);
 
     makeCurrent();
 
@@ -128,13 +130,17 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 #endif
 
     int count = 0;
+#ifdef SHOW_PROGRESS
+    ProgressLogger progress(nbX * nbY * 1.1f, false, false); // the extra 0.1 is for saving the "big" image (time consuming)
+#endif
     for (int i = 0; i < nbX; i++) {
         for (int j = 0; j < nbY; j++) {
+#ifdef SHOW_PROGRESS
             if (progress.is_canceled()) {
                 LOG(WARNING) << "snapshot cancelled";
                 break;
             }
-
+#endif
             if (camera()->type() == Camera::PERSPECTIVE) {
                 // change the projection matrix of the camera.
                 const mat4 &proj = transform::frustum(-xMin + i * deltaX, -xMin + (i + 1) * deltaX,
@@ -148,6 +154,9 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             }
 
             //---------------------------------------------------------------------------
+
+            // this very important (the progress bar may interfere the framebuffer
+            makeCurrent();
 
             fbo->bind();
 
@@ -163,6 +172,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             fbo->release();
 
             //---------------------------------------------------------------------------
+
 
 #ifdef USE_QT_FBO
             const QImage subImage = fbo->toImage();
@@ -193,20 +203,23 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 #ifdef SHOW_PROGRESS
             progress.next();
-            // this very important (the progress bar may interfere the framebuffer
-            makeCurrent();
 #endif
         }
     }
 
+    // this very important (the progress bar may interfere the framebuffer
+    makeCurrent();
+    // clean
     delete fbo;
+    // restore the clear color
+    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    doneCurrent();
 
     // restore the projection matrix
     camera()->set_projection_matrix(proj_matrix);
 
-    // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-    doneCurrent();
+    // enable updating the rendering
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     return image.save(file_name);
 }
@@ -218,9 +231,10 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
-    if (kfi->number_of_keyframes() == 0) {
-        LOG(WARNING) << "recording aborted (camera path is empty). You may import a camera path from a file or"
-                        " creat it by adding key frames";
+    if (!kfi || kfi->number_of_keyframes() == 0) {
+        LOG_IF(WARNING, kfi->number_of_keyframes() == 0)
+                        << "nothing to record (camera path is empty). You may import a camera path from a file or"
+                           " creat it by adding keyframes";
         return;
     }
 
@@ -234,11 +248,11 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         w = (original_width / 8 + 1) * 8;
     if (original_height % 8)
         h = (original_height / 8 + 1) * 8;
-    if (w != original_width || h != original_height) {
+    if (w != original_width || h != original_height)
         camera_->setScreenWidthAndHeight(w, h);
-        update();
-        QApplication::processEvents();
-    }
+
+    // temporarily don't allow updating rendering when the camera parameters are changing.
+    easy3d::disconnect(&camera_->frame_modified, this);
 
     const int bitrate = bit_rate * 1024 * 1024;
     const int gop = fps;
@@ -270,16 +284,24 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 #endif
 
     const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    ProgressLogger progress(frames.size(), false, false);
+#ifdef SHOW_PROGRESS
+    ProgressLogger progress(frames.size(), true, false);
+#endif
     for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+#ifdef SHOW_PROGRESS
         if (progress.is_canceled()) {
             success = false;
             LOG(WARNING) << "animation recording cancelled";
             break;
         }
+#endif
+
         const auto &f = frames[frame_index];
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
+
+        // this very important (the progress bar may interfere the framebuffer
+        makeCurrent();
 
         fbo->bind();
 
@@ -321,22 +343,21 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
 #ifdef SHOW_PROGRESS
         progress.next();
-        // this very important (the progress bar may interfere the framebuffer
-        makeCurrent();
 #endif
     }
 
     // this very important (the progress bar may interfere the framebuffer
     makeCurrent();
-
     // clean
     delete fbo;
-
     // restore the clear color
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
     encoder.close();
+
+    // enable updating the rendering
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     // restore the viewer size
     if (w != original_width || h != original_height) {
@@ -345,7 +366,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     }
 
     if (success)
-        LOG(INFO) << "the animation has been saved successfully";
+        LOG(INFO) << "animation has been saved successfully";
     else
         LOG(ERROR) << "animation recording failed";
 }
@@ -370,11 +391,11 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         w = (original_width / 8 + 1) * 8;
     if (original_height % 8)
         h = (original_height / 8 + 1) * 8;
-    if (w != original_width || h != original_height) {
+    if (w != original_width || h != original_height)
         camera_->setScreenWidthAndHeight(w, h);
-        update();
-        QApplication::processEvents();
-    }
+
+    // temporarily don't allow updating rendering when the camera parameters are changing.
+    easy3d::disconnect(&camera_->frame_modified, this);
 
     const int fw = w * dpi_scaling();
     const int fh = h * dpi_scaling();
@@ -395,16 +416,24 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 
     bool success = true;
     const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
-    ProgressLogger progress(frames.size(), false, false);
+#ifdef SHOW_PROGRESS
+    ProgressLogger progress(frames.size(), true, false);
+#endif
     for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+#ifdef SHOW_PROGRESS
         if (progress.is_canceled()) {
             success = false;
             LOG(WARNING) << "animation recording cancelled";
             break;
         }
+#endif
+
         const auto &f = frames[frame_index];
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
+
+        // this very important (the progress bar may interfere the framebuffer
+        makeCurrent();
 
         fbo->bind();
 
@@ -432,6 +461,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         QImage image(fw, fh, QImage::Format_RGBA8888);
         fbo->read_color(0, image.bits(), GL_RGBA);
 #endif
+
         const QString full_name = ext_less_name + QString("-%1.png").arg(frame_index, 4, 10, QChar('0'));
         if (!image.save(full_name)) {
             QMessageBox::critical(this, "Error", QString("failed to save the %1-th frame").arg(frame_index));
@@ -441,19 +471,19 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 
 #ifdef SHOW_PROGRESS
         progress.next();
-        // this very important (the progress bar may interfere the framebuffer
-        makeCurrent();
 #endif
     }
+
     // this very important (the progress bar may interfere the framebuffer
     makeCurrent();
-
     // clean
     delete fbo;
-
     // restore the clear color
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
+
+    // enable updating the rendering
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     // restore the viewer size
     if (w != original_width || h != original_height) {
@@ -462,7 +492,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     }
 
     if (success)
-        LOG(INFO) << "the animation (in " << frames.size() << " images) have been saved successfully";
+        LOG(INFO) << "animation (in " << frames.size() << " images) have been saved successfully";
     else
         LOG(ERROR) << "animation recording failed";
 }
