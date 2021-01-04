@@ -38,6 +38,7 @@
 #endif
 #include <QSurfaceFormat>
 #include <QElapsedTimer>
+#include <QException>
 
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
@@ -55,7 +56,7 @@ public:
     virtual bool notify(QObject * receiver, QEvent * event) {
         try {
             return QApplication::notify(receiver, event);
-        } catch(std::exception& e) {
+        } catch(QException& e) {
             LOG(ERROR) << "an exception was thrown: " << e.what();
         }
         return false;
