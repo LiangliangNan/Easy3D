@@ -1455,7 +1455,7 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
 
     input >> dummy;	// this skips the keyword
 
-    // don't allow modify view when the camera parameters are changing.
+    // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect(&camera_->frame_modified, this);
 
     std::string t;
