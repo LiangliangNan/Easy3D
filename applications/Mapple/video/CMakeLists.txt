@@ -36,7 +36,9 @@ set(${PROJECT_NAME}_SOURCES
         QVideoEncoder.cpp
         )
 
-add_library(${PROJECT_NAME} SHARED ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "Mapple")
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE  ${FFMPEG_DEFINITIONS})
 

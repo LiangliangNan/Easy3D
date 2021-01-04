@@ -26,7 +26,7 @@ add_library(${PROJECT_NAME} STATIC
         ${${PROJECT_NAME}_HEADERS}
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "Mapple")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
