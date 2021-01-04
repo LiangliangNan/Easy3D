@@ -444,7 +444,7 @@ namespace easy3d {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool smoothing) {
-        if (pathIsValid_)
+        if (pathIsValid_ || keyframes_.size() == 1)
             return interpolated_path_;
 
         if (smoothing)
@@ -454,7 +454,7 @@ namespace easy3d {
         do_interpolate(interpolated_path_, keyframes_);
         LOG_IF(INFO, keyframes_.size() > 2) << "keyframe interpolation done, " << interpolated_path_.size() << " frames";
 
-        if (smoothing) { // more iterations do not provide further improvement
+        if (smoothing && interpolated_path_.size() > 2) { // more iterations do not provide further improvement
             std::vector<Keyframe> as_key_frames;
             for (std::size_t i = 0; i < interpolated_path_.size(); ++i)
                 as_key_frames.emplace_back(Keyframe(interpolated_path_[i], i));
@@ -513,10 +513,19 @@ namespace easy3d {
         if (keyframes.size() < 2)
             return;
 
+        auto distance_func = [](const Keyframe& f1, const Keyframe& f2) -> float {
+#if 0 // How to define a good distance function measuring the distance between two quaternions?
+            const float cos_angle = std::abs(quat::dot(f1.orientation(), f2.orientation()));
+            return distance(f1.position(), f2.position()) * cos_angle;
+#else // currently only the Euclidean distance between two positions.
+            return distance(f1.position(), f2.position());
+#endif
+        };
+
         std::vector<float> sub_lengths(keyframes.size(), 0.0f);
         float total_length = 0.0f;
         for (std::size_t i=1; i<keyframes.size(); ++i) {
-            total_length += distance(keyframes[i - 1].position(), keyframes[i].position());
+            total_length += distance_func(keyframes[i - 1], keyframes[i]);
             sub_lengths[i] = total_length;
         }
         if (total_length < epsilon_sqr<float>())
