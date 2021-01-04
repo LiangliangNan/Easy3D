@@ -89,7 +89,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             yMin = xMin / newAspectRatio;
     }
 
-    QImage image(w, h, QImage::Format_ARGB32);
+    QImage image(w, h, QImage::Format_RGBA8888);
     if (image.isNull()) {
         QMessageBox::warning(this, "Image saving error", "Failed to allocate the image", QMessageBox::Ok,
                              QMessageBox::NoButton);
@@ -242,8 +242,6 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 
     const int bitrate = bit_rate * 1024 * 1024;
     const int gop = fps;
-    const double timeStep = 1.0 / fps;
-    double currentTime = 0.0;
     bool success = true;
 
     const int fw = w * dpi_scaling();
@@ -308,6 +306,9 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 #else
         QImage image(fw, fh, QImage::Format_RGBA8888);
         fbo->read_color(0, image.bits(), GL_RGBA);
+
+        // QVideoEncoder only accepted Format_RGB32, Format_ARGB32, or Format_ARGB32_Premultiplied
+        image.convertTo(QImage::Format_ARGB32);
 #endif
 
         QString errorString;
@@ -317,9 +318,6 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
             success = false;
             break;
         }
-
-        //next frame
-        currentTime += timeStep;
 
 #ifdef SHOW_PROGRESS
         progress.next();
