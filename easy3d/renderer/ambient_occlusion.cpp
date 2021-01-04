@@ -193,14 +193,14 @@ namespace easy3d {
                 for (auto d : model->renderer()->points_drawables()) {
                     if (d->is_visible()) {
                         if (setting::clipping_plane)
-                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
+                            setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                         d->gl_draw(false); easy3d_debug_log_gl_error
                     }
                 }
                 for (auto d : model->renderer()->triangles_drawables()) {
                     if (d->is_visible()) {
                         if (setting::clipping_plane)
-                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
+                            setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                         program->set_uniform("smooth_shading", d->smooth_shading());
                         d->gl_draw(false); easy3d_debug_log_gl_error
                     }
@@ -208,7 +208,7 @@ namespace easy3d {
                 for (auto d : model->renderer()->lines_drawables()) {
                     if (d->is_visible()) {
                         if (setting::clipping_plane)
-                            setting::clipping_plane->set_program(program, d->plane_clipping_discard());
+                            setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                         d->gl_draw(false); easy3d_debug_log_gl_error
                     }
                 }

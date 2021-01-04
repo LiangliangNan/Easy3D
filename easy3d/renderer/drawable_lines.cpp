@@ -103,7 +103,7 @@ namespace easy3d {
                     ->set_uniform("default_color",color());
 
             if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clipping_discard());
+                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             gl_draw(with_storage_buffer);
             program->release();
@@ -131,7 +131,7 @@ namespace easy3d {
                     ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer());
 
             if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clipping_discard());
+                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             gl_draw(with_storage_buffer);
             program->release();
@@ -174,7 +174,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         gl_draw(with_storage_buffer);
         program->release();
@@ -215,7 +215,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         gl_draw(with_storage_buffer);
         program->release();
@@ -251,7 +251,7 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_min",highlight_range().first)
 //                ->set_uniform("hightlight_id_max",highlight_range().second);
             if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clipping_discard());
+                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             program->bind_texture("textureID",texture()->id(), 0);
             gl_draw(with_storage_buffer);
@@ -281,7 +281,7 @@ namespace easy3d {
             //                ->set_uniform("hightlight_id_min",highlight_range().first)
             //                ->set_uniform("hightlight_id_max",highlight_range().second);
             if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clipping_discard());
+                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             program->bind_texture("textureID",texture()->id(), 0);
             gl_draw(with_storage_buffer);
@@ -332,7 +332,7 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_min",highlight_range().first)
 //                ->set_uniform("hightlight_id_max",highlight_range().second);
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         program->bind_texture("textureID",texture()->id(), 0);
         gl_draw(with_storage_buffer);
@@ -379,7 +379,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         program->bind_texture("textureID",texture()->id(), 0);
 //      program->set_uniform("highlight",highlight())

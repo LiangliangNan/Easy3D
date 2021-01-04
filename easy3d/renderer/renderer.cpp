@@ -124,21 +124,19 @@ namespace easy3d {
             interior_faces->set_distinct_back_color(true);
             interior_faces->set_lighting_two_sides(true);
             interior_faces->set_visible(true);
-            interior_faces->set_plane_clipping_discard(true);
+
             // border faces
             auto border_faces = mesh->renderer()->add_triangles_drawable("faces:border");
             border_faces->set_uniform_coloring(setting::surface_mesh_faces_color);
             border_faces->set_distinct_back_color(true);
             border_faces->set_lighting_two_sides(true);
             border_faces->set_visible(true);
-            border_faces->set_plane_clipping_discard(true);
 
             // edges
             auto edges = mesh->renderer()->add_lines_drawable("edges");
             edges->set_uniform_coloring(setting::surface_mesh_edges_color);
             edges->set_line_width(setting::surface_mesh_edges_line_width);
             edges->set_visible(setting::surface_mesh_show_edges);
-            edges->set_plane_clipping_discard(true);
 
             // vertices
             auto vertices = mesh->renderer()->add_points_drawable("vertices");
@@ -146,7 +144,6 @@ namespace easy3d {
             vertices->set_impostor_type(PointsDrawable::SPHERE);
             vertices->set_point_size(setting::surface_mesh_vertices_point_size);
             vertices->set_visible(setting::surface_mesh_show_vertices);
-            edges->set_plane_clipping_discard(true);
         }
     }
 
@@ -381,6 +378,11 @@ namespace easy3d {
         LinesDrawable* d = new LinesDrawable(name);
         d->set_model(model_);
         lines_drawables_.push_back(d);
+
+        // for PolyMesh, we want to completely discard vertices in the vertex buffer.
+        if (dynamic_cast<PolyMesh*>(model_))
+            d->set_plane_clip_discard_primitive(true);
+
         return d;
     }
 
@@ -395,6 +397,11 @@ namespace easy3d {
         TrianglesDrawable* d = new TrianglesDrawable(name);
         d->set_model(model_);
         triangles_drawables_.push_back(d);
+
+        // for PolyMesh, we want to completely discard vertices in the vertex buffer.
+        if (dynamic_cast<PolyMesh*>(model_))
+            d->set_plane_clip_discard_primitive(true);
+
         return d;
     }
 

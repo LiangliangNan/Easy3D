@@ -225,12 +225,15 @@ namespace easy3d {
         void set_material(const Material &m) { material_ = m; }
 
         /**
-         * Controls the clipping behavior.
-         *  - true completely discard
-         *  - false standard plane clipping
+         * \brief Controls the behavior for vertex clipping.
+         * \details If plane_clip_discard_primitive() is \c false (default value, standard plane clip), the clip
+         *      distances will be linearly interpolated across the primitive (e.g., line, triangle) and the portion
+         *      of the primitive with interpolated distances less than 0.0 will be clipped.
+         *      If plane_clip_discard_primitive() is \c true, a primitive will be completely discarded if one of its
+         *      vertices has a negative clip distance.
          */
-        bool plane_clipping_discard() const { return plane_clipping_discard_; };
-        void set_plane_clipping_discard(bool b) { plane_clipping_discard_ = b; };
+        bool plane_clip_discard_primitive() const { return plane_clip_discard_primitive_; };
+        void set_plane_clip_discard_primitive(bool b) { plane_clip_discard_primitive_ = b; };
 
         /**
          * Highlight a subset of primitives of this drawable. Primitives with indices within the range
@@ -277,8 +280,10 @@ namespace easy3d {
 
         Material material_;
 
-        // Clipping plane behavior. true: completely discard a vertex in vertex shader; false: standard plane clipping
-        bool plane_clipping_discard_;
+        // Clipping plane behavior.
+        //  - true: completely discard a primitive if one of its vertices has a negative clip distance
+        //  - false: linearly interpolated (standard plane clipping behavior)
+        bool plane_clip_discard_primitive_;
 
         // highlight the primitives within the range [highlight_id_low_, highlight_id_high_]
         bool highlight_;

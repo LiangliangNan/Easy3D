@@ -192,7 +192,7 @@ namespace easy3d {
             for (auto d : surfaces) {
                 if (d->is_visible()) {
                     if (setting::clipping_plane)
-                        setting::clipping_plane->set_program(program, d->plane_clipping_discard());
+                        setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                     d->gl_draw(false);
                 }
             }
@@ -240,7 +240,7 @@ namespace easy3d {
                     program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                     program->set_uniform("default_color", d->color());
                     if (setting::clipping_plane)
-                        setting::clipping_plane->set_program(program, d->plane_clipping_discard());
+                        setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                     d->gl_draw(false);
                 }
             }

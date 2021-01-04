@@ -108,7 +108,7 @@ namespace easy3d {
                 ->set_uniform("hightlight_id_max",highlight_range().second);
 
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         if (is_ssao_enabled())
             program->bind_texture("ssaoTexture", ssao_texture_, 0);
@@ -170,7 +170,7 @@ namespace easy3d {
                 ->set_uniform("hightlight_id_max",highlight_range().second);
 
         if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clipping_discard());
+            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         gl_draw(with_storage_buffer);
 
