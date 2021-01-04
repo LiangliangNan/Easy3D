@@ -102,8 +102,9 @@ public:
     easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found) const;
 
 	/// \brief Saves snapshot.
-	/// This function renders the scene into a framebuffer and takes a snapshot of the framebuffer. Thus, it has no
-	/// limit on the image size (if memory allows).
+	/// \details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
+	///         It allow the snapshot image to have a dimension different from the viewer and it has no limit on the
+	///         image size (if memory allows).
     /// \param w The required width of the snapshot image
     /// \param h The required height of the snapshot image
     /// \param samples The required number of samples for rendering (can be different from the default framebuffer).
@@ -115,7 +116,8 @@ public:
     /// \brief Records the animation of a camera path.
     /// \details This function generates an animation from a camera path and renders the animation into a video (if
     ///         ffmpeg exists, otherwise into a sequence of images). It renders all frames of the animation into a
-    ///         framebuffer and streams the framebuffer snapshots into a video file (or a set of images).
+    ///         framebuffer and streams the framebuffer snapshots into a video file (or a set of images). The dimension
+    ///         of the output video (or images) is the same as the viewer, i.e., you get exactly what we see in preview.
     /// \param file_name Specifies the file name of the video/images (in case of images, suffixes of unique indices
     ///         will be added to the file names).
     /// \param fps The desired frame rate.
