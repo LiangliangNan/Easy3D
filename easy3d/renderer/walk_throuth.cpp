@@ -113,7 +113,7 @@ namespace easy3d {
             return;
 
         kfi_->delete_last_keyframe();
-        --current_frame_idx_;
+        move_to(kfi_->number_of_keyframes() -1);
     }
 
 

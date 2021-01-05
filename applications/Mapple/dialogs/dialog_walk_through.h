@@ -65,7 +65,7 @@ public Q_SLOTS :
 
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
-	void set_interpolation_speed(double);
+	void setInterpolationSpeed(double);
 	void setFrameRate(int);
 
     void onPreviewStopped();
@@ -77,7 +77,7 @@ protected:
 	virtual	void showEvent(QShowEvent* e);
 	virtual void closeEvent(QCloseEvent* e);
 
-    void keyFrameAdded();
+    void numKeyramesChanged();
 };
 
 #endif // DIALOG_WALK_THROUGH_H

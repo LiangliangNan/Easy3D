@@ -53,7 +53,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
     connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
-    connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(set_interpolation_speed(double)));
+    connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
 
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
     connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
@@ -73,7 +73,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
 
-    easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::keyFrameAdded);
+    easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::numKeyramesChanged);
 
     QButtonGroup* group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
@@ -87,7 +87,7 @@ DialogWalkThrough::~DialogWalkThrough()
 }
 
 
-void DialogWalkThrough::keyFrameAdded() {
+void DialogWalkThrough::numKeyramesChanged() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
     int num = interpolator()->number_of_keyframes();
     if (num == 1) // range is [0, 0]
@@ -97,7 +97,8 @@ void DialogWalkThrough::keyFrameAdded() {
         horizontalSliderPreview->setRange(0, std::max(0, num - 1));
     }
     int pos = walkThrough()->current_keyframe_index();
-    horizontalSliderPreview->setValue(pos);
+    if (pos >= 0)
+        horizontalSliderPreview->setValue(pos);
     connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
 }
 
@@ -163,7 +164,7 @@ void DialogWalkThrough::setCharacterDistanceFactor(double d) {
 }
 
 
-void DialogWalkThrough::set_interpolation_speed(double s) {
+void DialogWalkThrough::setInterpolationSpeed(double s) {
     interpolator()->set_interpolation_speed(s);
     viewer_->update();
 }
@@ -486,6 +487,8 @@ void DialogWalkThrough::importCameraPathFromFile() {
             viewer_->camera()->setSceneRadius(radius);
             viewer_->update();
         }
+
+        numKeyramesChanged();
     }
 
     update();
