@@ -24,13 +24,11 @@
 
 /** ----------------------------------------------------------
  *
- * the code is adapted from libQGLViewer with modifications.
+ * The code in this file is adapted from Surface_mesh with significant
+ * modifications and enhancement.
  *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
- * http://libqglviewer.com/
- *
- * libQGLViewer is a C++ library based on Qt that eases the
- * creation of OpenGL 3D viewers.
+ *      http://libqglviewer.com/
  *
  *----------------------------------------------------------*/
 
@@ -294,12 +292,9 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::save_keyframes(const std::string &file_name) const {
-        std::ofstream output(file_name.c_str());
-        if (output.fail()) {
-            LOG(ERROR) << "unable to open \'" << file_name << "\'";
+    bool KeyFrameInterpolator::save_keyframes(std::ostream& output) const {
+        if (output.fail())
             return false;
-        }
 
         output << "\tnum_key_frames: " << keyframes_.size() << std::endl;
 
@@ -314,12 +309,9 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::read_keyframes(const std::string &file_name) {
-        std::ifstream input(file_name.c_str());
-        if (input.fail()) {
-            LOG(ERROR) << "unable to open \'" << file_name << "\'";
+    bool KeyFrameInterpolator::read_keyframes(std::istream& input) {
+        if (input.fail())
             return false;
-        }
 
         // clean
         delete_path();
@@ -513,19 +505,12 @@ namespace easy3d {
         if (keyframes.size() < 2)
             return;
 
-        auto distance_func = [](const Keyframe& f1, const Keyframe& f2) -> float {
-#if 0 // How to define a good distance function measuring the distance between two quaternions?
-            const float cos_angle = std::abs(quat::dot(f1.orientation(), f2.orientation()));
-            return distance(f1.position(), f2.position()) * cos_angle;
-#else // currently only the Euclidean distance between two positions.
-            return distance(f1.position(), f2.position());
-#endif
-        };
+        // use step-distance-weighted keyframe timing
 
         std::vector<float> sub_lengths(keyframes.size(), 0.0f);
         float total_length = 0.0f;
         for (std::size_t i=1; i<keyframes.size(); ++i) {
-            total_length += distance_func(keyframes[i - 1], keyframes[i]);
+            total_length += distance(keyframes[i - 1].position(), keyframes[i].position());
             sub_lengths[i] = total_length;
         }
         if (total_length < epsilon_sqr<float>())

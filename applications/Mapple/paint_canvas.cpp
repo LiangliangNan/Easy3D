@@ -57,6 +57,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/string.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -1328,9 +1329,12 @@ void PaintCanvas::pasteCamera() {
 }
 
 
-void PaintCanvas::saveStateToFile(std::ofstream& output) const {
+void PaintCanvas::saveState(std::ostream& output) const {
+    if (output.fail())
+        return;
+
     // first line is just a comment
-    output << "<Mapple>" << std::endl << std::endl;
+    output << "<Mapple Viewer State> - Saved on " << string::from_current_time() << std::endl << std::endl;
 
     //-----------------------------------------------------
 
@@ -1383,11 +1387,14 @@ void PaintCanvas::saveStateToFile(std::ofstream& output) const {
 
     //-----------------------------------------------------
 
-    output << "</Mapple>" << std::endl << std::endl;
+    output << "</Mapple Viewer State>";
 }
 
 
-void PaintCanvas::restoreStateFromFile(std::ifstream& input) {
+void PaintCanvas::restoreState(std::istream& input) {
+    if (input.fail())
+        return;
+
     // first line is just a comment
     char line[500];
     input.getline(line, 500);	// just skip this line
@@ -1459,7 +1466,8 @@ void PaintCanvas::restoreStateFromFile(std::ifstream& input) {
 
     //-----------------------------------------------------
 
-    input >> dummy;	// the last keyword "</Mapple>"
+    // last line is a comment
+    input.getline(line, 500);	// just skip this line
 
     //-----------------------------------------------------
 

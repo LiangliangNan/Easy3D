@@ -156,12 +156,17 @@ public slots:
     void pasteCamera();
 
 public:
-    /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
-    Use restoreStateFromFile() to restore this state, or you can restore it in your init() method).
+    /**
+     * Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
+     * \sa restoreState()
     */
-    void saveStateToFile(std::ofstream& output) const;
-    /*! Restores the viewer state from previously saved file. */
-    void restoreStateFromFile(std::ifstream& input);
+    void saveState(std::ostream& os) const;
+    /**
+     * Restores the viewer state from a previously saved file.
+     * A typically use case it calling this method in your init() before the viewer appears.
+     * \sa saveState()
+     */
+    void restoreState(std::istream& is);
 
 protected:
 

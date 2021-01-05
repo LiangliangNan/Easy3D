@@ -24,6 +24,9 @@
 
 #include "dialog_snapshot.h"
 
+#include <QFileDialog>
+
+#include <easy3d/core/model.h>
 #include <easy3d/util/file_system.h>
 
 #include "main_window.h"
@@ -63,12 +66,39 @@ void DialogSnapshot::computeImageSize() {
 }
 
 
-void DialogSnapshot::saveSnapshot(const QString& fileName) {
+void DialogSnapshot::saveSnapshot() {
+    // make sure the save file dialog is really hidden
+    QApplication::processEvents();
+
+    const Model* model = viewer_->currentModel();
+
+    const bool overwrite = false;
+    std::string default_file_name("untitled.png");
+    if (model)
+        default_file_name = file_system::replace_extension(model->name(), "png");
+
+    QString proposedFormat = "PNG (*.png)";
+    const QString fileName = QFileDialog::getSaveFileName(
+            this,
+            "Choose an image file name",
+            QString::fromStdString(default_file_name),
+            "Image formats (*.png *.jpg *.bmp *.ppm)\n"
+            "PNG (*.png)\n"
+            "JPG (*.jpg)\n"
+            "Windows Bitmap (*.bmp)\n"
+            "24bit RGB Bitmap (*.ppm)",
+            &proposedFormat,
+            overwrite ? QFileDialog::DontConfirmOverwrite : QFlags<QFileDialog::Option>(nullptr)
+    );
+
+    // make sure the save file dialog is really hidden
+    QApplication::processEvents();
+
+    if (fileName.isEmpty())
+        return;
+
     // disable ui to prevent the rendering from being modified.
     window_->setEnabled(false);
-
-    // Hide closed dialog
-    QApplication::processEvents();
 
     const int w = spinBoxImageWidth->value();
     const int h = spinBoxImageHeight->value();
@@ -80,8 +110,8 @@ void DialogSnapshot::saveSnapshot(const QString& fileName) {
 
     if (checkBoxSaveWindowState->isChecked()) {
         const auto state_file = file_system::replace_extension(fileName.toStdString(), "view");
-        std::ofstream output(fileName.toStdString().c_str());
-        viewer_->saveStateToFile(output);
+        std::ofstream output(state_file.c_str());
+        viewer_->saveState(output);
     }
 
     // restore the ui

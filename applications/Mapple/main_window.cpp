@@ -532,7 +532,8 @@ Model* MainWindow::open(const std::string& file_name) {
 
         const auto keyframe_file = file_system::replace_extension(model->name(), "kf");
         if (file_system::is_file(keyframe_file)) {
-            if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file))
+            std::ifstream input(keyframe_file.c_str());
+            if (viewer_->walkThrough()->interpolator()->read_keyframes(input))
                 LOG(INFO) << "model has an accompanying animation file \'"
                           << file_system::simple_name(keyframe_file)
                           << "\' (also loaded)";
@@ -617,36 +618,9 @@ void MainWindow::onClearRecentFiles() {
 
 
 void MainWindow::saveSnapshot() {
-    const Model* model = viewer_->currentModel();
-
-    const bool overwrite = false;
-    std::string default_file_name("untitled.png");
-    if (model)
-        default_file_name = file_system::replace_extension(model->name(), "png");
-
-    QString proposedFormat = "PNG (*.png)";
-    const QString fileName = QFileDialog::getSaveFileName(
-        this,
-        "Choose an image file name",
-        QString::fromStdString(default_file_name),
-        "Image formats (*.png *.jpg *.bmp *.ppm)\n"
-        "PNG (*.png)\n"
-        "JPG (*.jpg)\n"
-        "Windows Bitmap (*.bmp)\n"
-        "24bit RGB Bitmap (*.ppm)",
-        &proposedFormat,
-        overwrite ? QFileDialog::DontConfirmOverwrite : QFlags<QFileDialog::Option>(nullptr)
-    );
-
-    // Hide closed dialog
-    QApplication::processEvents();
-
-    if (fileName.isEmpty())
-        return;
-
     DialogSnapshot dialog(this);
     if (dialog.exec() == QDialog::Accepted)
-        dialog.saveSnapshot(fileName);
+        dialog.saveSnapshot();
 }
 
 
@@ -685,7 +659,7 @@ void MainWindow::saveCameraStateToFile() {
         return;
     }
 
-    viewer_->saveStateToFile(output);
+    viewer_->saveState(output);
     // assume the user will soon restore the state from this file.
     curDataDirectory_ = fileName.left(fileName.lastIndexOf("/"));
 }
@@ -710,7 +684,7 @@ void MainWindow::restoreCameraStateFromFile() {
         return;
     }
 
-    viewer_->restoreStateFromFile(input);
+    viewer_->restoreState(input);
 }
 
 

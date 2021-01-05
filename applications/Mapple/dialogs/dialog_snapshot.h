@@ -37,7 +37,7 @@ public:
     explicit DialogSnapshot(MainWindow *window);
     ~DialogSnapshot();
 
-    void saveSnapshot(const QString& fileName);
+    void saveSnapshot();
 
 private slots:
     void computeImageSize();

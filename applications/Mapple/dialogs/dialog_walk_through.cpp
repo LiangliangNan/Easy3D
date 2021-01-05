@@ -445,10 +445,12 @@ void DialogWalkThrough::exportCameraPathToFile() {
             "All formats (*.*)"
     );
 
-    if (!fileName.isEmpty()) {
-        if (interpolator()->save_keyframes(fileName.toStdString()))
-            LOG(INFO) << "keyframes saved to file";
-    }
+    if (fileName.isEmpty())
+        return;
+
+    std::ofstream output(fileName.toStdString().c_str());
+    if (interpolator()->save_keyframes(output))
+        LOG(INFO) << "keyframes saved to file";
 }
 
 
@@ -468,7 +470,8 @@ void DialogWalkThrough::importCameraPathFromFile() {
     if (fileName.isEmpty())
         return;
 
-    if (interpolator()->read_keyframes(fileName.toStdString())) {
+    std::ifstream input(fileName.toStdString().c_str());
+    if (interpolator()->read_keyframes(input)) {
         LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
         if (walkThrough()->is_path_visible()) {
             // update scene radius to make sure the path is within the view frustum
