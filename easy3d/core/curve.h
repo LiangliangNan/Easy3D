@@ -94,7 +94,7 @@ namespace easy3d {
 
         /**
          * \brief De Casteljau algorithm evaluating a cubic (third degree) curve from the given control points \p A,
-         * \p B, and \p C. Works for both 2D and 3D. Works for both 2D and 3D.
+         * \p B, and \p C. Works for both 2D and 3D.
          * @param curve Returns the sequence of points on the curve.
          * @param bezier_steps Controls the smoothness of the curved corners. A greater value results in a smoother
          *      transitions but more vertices. Suggested value is 4.
@@ -145,6 +145,214 @@ namespace easy3d {
             if (include_end)
                 curve.push_back(D);
         }
+
+
+        /**
+         * Base class for curve fitting/interpolation
+         * \sa Bezier, BSpline, and CatmullRom
+         */
+        template<typename Point>
+        class Curve {
+        public:
+            typedef typename Point::FT FT;
+        public:
+            Curve() : steps_(10) {}
+            virtual ~Curve() = default;
+
+            void set_steps(int steps) { steps_ = steps; }
+
+            void add_way_point(const Point &point){
+                way_points_.push_back(point);
+                on_way_point_added();
+            }
+
+            int node_count() const { return static_cast<int>(nodes_.size()); }
+            const Point& node(int i) const { return nodes_[i]; }
+
+            FT length_from_starting_point(int i) const { return distances_[i]; }
+
+            FT total_length() const {
+                assert(!distances_.empty());
+                return distances_.back();
+            }
+
+            void clear() {
+                nodes_.clear();
+                way_points_.clear();
+                distances_.clear();
+            }
+
+        protected:
+            void add_node(const Point &node) {
+                nodes_.push_back(node);
+                if(nodes_.size()==1)
+                    distances_.push_back(0);
+                else{
+                    int new_node_index=nodes_.size() - 1;
+                    FT segment_distance = distance(nodes_[new_node_index], nodes_[new_node_index-1]);
+                    distances_.push_back(segment_distance + distances_[new_node_index-1]);
+                }
+            }
+
+            virtual void on_way_point_added() = 0;
+            virtual  Point interpolate(FT u, const Point &P0, const Point &P1, const Point &P2, const Point &P3) const = 0;
+
+        protected:
+            int steps_;
+            std::vector<Point>  way_points_;
+            std::vector<Point>  nodes_;
+            std::vector<FT>     distances_;
+        };
+
+        /**
+         * Class for Bezier curve fitting.
+         * Works for both 2D and 3D.
+         * Example:
+         *  \code
+         *      auto cv = new easy3d::curve::Bezier<vec3>;
+         *      curve->set_steps(num);
+         *      for (const auto& p : points)
+         *      cv->add_way_point(p);
+         *      for (int i = 0; i < cv->node_count(); ++i)
+         *      std::cout << cv->node(i) << std::endl;
+         *  \endcode
+         */
+        template<typename Point>
+        class Bezier : public Curve<Point> {
+        public:
+            typedef typename Point::FT FT;
+        public:
+            Bezier() = default;
+
+        protected:
+            using Curve<Point>::way_points_;
+            using Curve<Point>::steps_;
+            using Curve<Point>::add_node;
+            void on_way_point_added() override {
+                if (way_points_.size() < 4)
+                    return;
+                int new_control_point_index = way_points_.size() - 1;
+                if (new_control_point_index == 3) {
+                    for (int i = 0; i <= steps_; i++) {
+                        FT u = (FT) i / (FT) steps_;
+                        add_node(interpolate(u, way_points_[0], way_points_[1], way_points_[2], way_points_[3]));
+                    }
+                } else {
+                    if (new_control_point_index % 2 == 0)
+                        return;
+                    int pt = new_control_point_index - 2;
+                    for (int i = 0; i <= steps_; i++) {
+                        FT u = (FT) i / (FT) steps_;
+                        Point point4 = 2 * way_points_[pt] - way_points_[pt - 1];
+                        add_node(interpolate(u, way_points_[pt], point4, way_points_[pt + 1], way_points_[pt + 2]));
+                    }
+                }
+            }
+
+            Point interpolate(FT u, const Point &P0, const Point &P1, const Point &P2, const Point &P3) const override {
+                Point point;
+                point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3);
+                point += u * u * (3 * P0 - 6 * P1 + 3 * P2);
+                point += u * ((-3) * P0 + 3 * P1);
+                point += P0;
+                return point;
+            }
+        };
+
+
+        /**
+         * Class for BSpline curve fitting.
+         * Works for both 2D and 3D.
+         * Example:
+         *  \code
+         *      auto cv = new easy3d::curve::BSpline<vec3>;
+         *      curve->set_steps(num);
+         *      for (const auto& p : points)
+         *      cv->add_way_point(p);
+         *      for (int i = 0; i < cv->node_count(); ++i)
+         *      std::cout << cv->node(i) << std::endl;
+         *  \endcode
+         */
+        template<typename Point>
+        class BSpline : public Curve<Point> {
+        public:
+            typedef typename Point::FT FT;
+        public:
+            BSpline() = default;
+
+        protected:
+            using Curve<Point>::way_points_;
+            using Curve<Point>::steps_;
+            using Curve<Point>::add_node;
+            void on_way_point_added() override {
+                if (way_points_.size() < 4)
+                    return;
+                int new_control_point_index = static_cast<int>(way_points_.size()) - 1;
+                int pt = new_control_point_index - 3;
+                for (int i = 0; i <= steps_; i++) {
+                    FT u = (FT) i / (FT) steps_;
+                    add_node(interpolate(u, way_points_[pt], way_points_[pt + 1], way_points_[pt + 2], way_points_[pt + 3]));
+                }
+            }
+
+            Point interpolate(FT u, const Point &P0, const Point &P1, const Point &P2, const Point &P3) const override {
+                Point point;
+                point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 6;
+                point += u * u * (3 * P0 - 6 * P1 + 3 * P2) / 6;
+                point += u * ((-3) * P0 + 3 * P2) / 6;
+                point += (P0 + 4 * P1 + P2) / 6;
+
+                return point;
+            }
+
+        };
+
+
+        /**
+         * Class for CatmullRom curve interpolation.
+         * Works for both 2D and 3D.
+         * Example:
+         *  \code
+         *      auto cv = new easy3d::curve::CatmullRom<vec3>;
+         *      curve->set_steps(num);
+         *      for (const auto& p : points)
+         *      cv->add_way_point(p);
+         *      for (int i = 0; i < cv->node_count(); ++i)
+         *      std::cout << cv->node(i) << std::endl;
+         *  \endcode
+         */
+        template<typename Point>
+        class CatmullRom : public Curve<Point> {
+        public:
+            typedef typename Point::FT FT;
+        public:
+            CatmullRom() = default;
+
+        protected:
+            using Curve<Point>::way_points_;
+            using Curve<Point>::steps_;
+            using Curve<Point>::add_node;
+            void on_way_point_added() override {
+                if (way_points_.size() < 4)
+                    return;
+                int new_control_point_index = way_points_.size() - 1;
+                int pt = new_control_point_index - 2;
+                for (int i = 0; i <= steps_; i++) {
+                    FT u = (FT) i / (FT) steps_;
+                    add_node(interpolate(u, way_points_[pt - 1], way_points_[pt], way_points_[pt + 1], way_points_[pt + 2]));
+                }
+            }
+
+            Point interpolate(FT u, const Point &P0, const Point &P1, const Point &P2, const Point &P3) const override {
+                Point point;
+                point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 2;
+                point += u * u * (2 * P0 - 5 * P1 + 4 * P2 - P3) / 2;
+                point += u * ((-1) * P0 + P2) / 2;
+                point += P1;
+                return point;
+            }
+
+        };
 
     }   // namespace curve
 

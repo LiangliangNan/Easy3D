@@ -463,8 +463,60 @@ namespace easy3d {
         return interpolated_path_;
     }
 
+#if 0  // allow to use two different interpolation methods: CatmullRom and BSpline
 
-//    int idx = 0;
+    auto interpolate_CatmullRom = [](float u, const vec3 &P0, const vec3 &P1, const vec3 &P2, const vec3 &P3) -> vec3 {
+        vec3 point(0, 0, 0);
+        point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 2;
+        point += u * u * (2 * P0 - 5 * P1 + 4 * P2 - P3) / 2;
+        point += u * ((-1) * P0 + P2) / 2;
+        point += P1;
+        return point;
+    };
+
+    auto interpolate_BSpline = [](float u, const vec3 &P0, const vec3 &P1, const vec3 &P2, const vec3 &P3) -> vec3 {
+        vec3 point(0, 0, 0);
+        point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 6;
+        point += u * u * (3 * P0 - 6 * P1 + 3 * P2) / 6;
+        point += u * ((-3) * P0 + 3 * P2) / 6;
+        point += (P0 + 4 * P1 + P2) / 6;
+        return point;
+    };
+
+    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes) {
+        frames.clear();
+        if (keyframes.size() < 2)
+            return;
+
+        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
+        for (float time = firstTime(); time < lastTime() + interval; time += interval) {
+            std::vector<Keyframe>::const_iterator related[4];
+            get_keyframes_at_time(time, keyframes, related);
+
+            float alpha = 0.0f;
+            const float dt = related[2]->time() - related[1]->time();
+            if (std::abs(dt) < epsilon<float>())
+                alpha = 0.0f;
+            else
+                alpha = (time - related[1]->time()) / dt;
+
+            // spline interpolation
+            const vec3 pos = interpolate_BSpline(alpha, related[0]->position(), related[1]->position(), related[2]->position(), related[3]->position());
+            const quat q = quat::squad(
+                    related[1]->orientation(),
+                    quat::squad_tangent(related[0]->orientation(), related[1]->orientation(),related[2]->orientation()),
+                    quat::squad_tangent(related[1]->orientation(), related[2]->orientation(),related[3]->orientation()),
+                    related[2]->orientation(),
+                    alpha
+            );
+
+            frames.emplace_back(Frame(pos, q));
+        }
+    }
+
+#else
+
+    //    int idx = 0;
     void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes) {
         frames.clear();
         if (keyframes.size() < 2)
@@ -499,6 +551,7 @@ namespace easy3d {
         }
     }
 
+#endif
 
     void KeyFrameInterpolator::adjust_keyframe_times(std::vector<Keyframe>& keyframes, bool slower_turning) {
         if (keyframes.size() < 2)
