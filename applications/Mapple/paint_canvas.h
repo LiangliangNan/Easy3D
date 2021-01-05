@@ -159,9 +159,9 @@ public:
     /*! Save the viewer state (camera state, widget geometry, display flags... etc.) to a file.
     Use restoreStateFromFile() to restore this state, or you can restore it in your init() method).
     */
-    void saveStateToFile(const std::string& file_name) const;
+    void saveStateToFile(std::ofstream& output) const;
     /*! Restores the viewer state from previously saved file. */
-    void restoreStateFromFile(const std::string& file_name);
+    void restoreStateFromFile(std::ifstream& input);
 
 protected:
 

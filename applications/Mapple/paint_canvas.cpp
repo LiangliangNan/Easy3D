@@ -1328,21 +1328,9 @@ void PaintCanvas::pasteCamera() {
 }
 
 
-void PaintCanvas::saveStateToFile(const std::string& file_name) const {
-    if (file_name.empty())
-        return;
-
-    // Write the state to file
-    std::ofstream output(file_name.c_str());
-    if (output.fail()) {
-        QMessageBox::warning(window(), tr("Save state to file error"), tr("Unable to create file %1").arg(QString::fromStdString(file_name)));
-        return;
-    }
-
-    //-----------------------------------------------------
-
+void PaintCanvas::saveStateToFile(std::ofstream& output) const {
     // first line is just a comment
-    output << "<Mapple state file>" << std::endl << std::endl;
+    output << "<Mapple>" << std::endl << std::endl;
 
     //-----------------------------------------------------
 
@@ -1370,9 +1358,6 @@ void PaintCanvas::saveStateToFile(const std::string& file_name) const {
     //-----------------------------------------------------
 
     output << "<camera>" << std::endl;
-//    // Restore original QCamera zClippingCoefficient before saving.
-//    if (cameraIsEdited())
-//        camera()->setZClippingCoefficient(previousCameraZClippingCoefficient_);
 
     switch (camera()->type()) {
         case Camera::PERSPECTIVE:	output << "\t type: " << "PERSPECTIVE" << std::endl;	break;
@@ -1394,28 +1379,15 @@ void PaintCanvas::saveStateToFile(const std::string& file_name) const {
     output << "\t zoomsOnPivotPoint: " << camera()->frame()->zoomsOnPivotPoint() << std::endl;
     output << "\t pivotPoint: " << camera()->frame()->pivotPoint() << std::endl;
 
-//    if (cameraIsEdited())
-//        // #CONNECTION# 5.0 from setCameraIsEdited()
-//        camera()->setZClippingCoefficient(5.0);
     output << "</camera>" << std::endl << std::endl;
-}
-
-
-void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
-    if (file_name.empty())
-        return;
-
-    // read the state from file
-    std::ifstream input(file_name.c_str());
-    if (input.fail()) {
-        QMessageBox::warning(this, tr("Read state file error"), tr("Unable to read file %1").arg(QString::fromStdString(file_name)));
-        return;
-    }
-
-//    bool tmpCameraIsEdited = cameraIsEdited();
 
     //-----------------------------------------------------
 
+    output << "</Mapple>" << std::endl << std::endl;
+}
+
+
+void PaintCanvas::restoreStateFromFile(std::ifstream& input) {
     // first line is just a comment
     char line[500];
     input.getline(line, 500);	// just skip this line
@@ -1465,7 +1437,7 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
     else if (t == "ORTHOGRAPHIC")
         camera()->setType(Camera::ORTHOGRAPHIC);
 
-    float v;
+    float v(0);
     vec3 p;
     quat q;
     input >> dummy >> v;	camera()->setZClippingCoefficient(v);
@@ -1485,20 +1457,15 @@ void PaintCanvas::restoreStateFromFile(const std::string& file_name) {
     input >> dummy >> p;	camera()->frame()->setPivotPoint(p);
     input >> dummy;	// this skips the keyword
 
+    //-----------------------------------------------------
+
+    input >> dummy;	// the last keyword "</Mapple>"
+
+    //-----------------------------------------------------
+
     // now camera parameters are all up-to-date, enable updating the rendering
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
-    // The Camera always stores its "real" zClippingCoef in file. If it is edited,
-    // its "real" coef must be saved and the coef set to 5.0, as is done in setCameraIsEdited().
-    // BUT : Camera and Display are read in an arbitrary order. We must initialize Camera's
-    // "real" coef BEFORE calling setCameraIsEdited. Hence this temp cameraIsEdited and delayed call
-//    cameraIsEdited_ = tmpCameraIsEdited;
-//    if (cameraIsEdited_)
-//    {
-//        previousCameraZClippingCoefficient_ = camera()->zClippingCoefficient();
-//        // #CONNECTION# 5.0 from setCameraIsEdited.
-//        camera()->setZClippingCoefficient(5.0);
-//    }
     update();
 }
 

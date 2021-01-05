@@ -61,12 +61,17 @@ public Q_SLOTS :
 
     void browse();
 	void preview(bool);
-    void record(bool);
+    void record();
 
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
 	void set_interpolation_speed(double);
 	void setFrameRate(int);
+
+    void onPreviewStopped();
+
+signals:
+    void previewStopped();
 
 protected:
 	virtual	void showEvent(QShowEvent* e);

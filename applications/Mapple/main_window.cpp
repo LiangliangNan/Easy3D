@@ -676,11 +676,18 @@ void MainWindow::saveCameraStateToFile() {
             "All formats (*.*)"
     );
 
-    if (!fileName.isEmpty()) {
-        viewer_->saveStateToFile(fileName.toStdString());
-        // assume the user will soon restore the state from this file.
-        curDataDirectory_ = fileName.left(fileName.lastIndexOf("/"));
+    if (fileName.isEmpty())
+        return;
+
+    std::ofstream output(fileName.toStdString().c_str());
+    if (output.fail()) {
+        QMessageBox::warning(window(), tr("Save state to file error"), tr("Unable to create file %1").arg(fileName));
+        return;
     }
+
+    viewer_->saveStateToFile(output);
+    // assume the user will soon restore the state from this file.
+    curDataDirectory_ = fileName.left(fileName.lastIndexOf("/"));
 }
 
 
@@ -693,8 +700,17 @@ void MainWindow::restoreCameraStateFromFile() {
             "All formats (*.*)"
     );
 
-    if (!fileName.isEmpty())
-        viewer_->restoreStateFromFile(fileName.toStdString());
+    if (fileName.isEmpty())
+        return;
+
+    // read the state from file
+    std::ifstream input(fileName.toStdString().c_str());
+    if (input.fail()) {
+        QMessageBox::warning(this, tr("Read state file error"), tr("Unable to read file %1").arg(fileName));
+        return;
+    }
+
+    viewer_->restoreStateFromFile(input);
 }
 
 

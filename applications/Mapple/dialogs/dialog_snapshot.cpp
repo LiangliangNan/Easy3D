@@ -70,17 +70,18 @@ void DialogSnapshot::saveSnapshot(const QString& fileName) {
     // Hide closed dialog
     QApplication::processEvents();
 
-    int w = spinBoxImageWidth->value();
-    int h = spinBoxImageHeight->value();
-    int samples = spinBoxSamples->value();
+    const int w = spinBoxImageWidth->value();
+    const int h = spinBoxImageHeight->value();
+    const int samples = spinBoxSamples->value();
     viewer_->saveSnapshot(w, h, samples, fileName,
                           checkBoxUseWhiteBackground->isChecked(),
                           checkBoxExpandFrustum->isChecked()
     );
 
-    if (checkBoxSaveWindowState) {
+    if (checkBoxSaveWindowState->isChecked()) {
         const auto state_file = file_system::replace_extension(fileName.toStdString(), "view");
-        viewer_->saveStateToFile(state_file);
+        std::ofstream output(fileName.toStdString().c_str());
+        viewer_->saveStateToFile(output);
     }
 
     // restore the ui

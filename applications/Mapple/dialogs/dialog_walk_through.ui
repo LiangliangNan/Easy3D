@@ -73,9 +73,6 @@
             <property name="text">
              <string>Import</string>
             </property>
-            <property name="default">
-             <bool>true</bool>
-            </property>
            </widget>
           </item>
           <item>
@@ -445,9 +442,6 @@ The higher the better the quality (but the larger file size of the video)</strin
          <widget class="QPushButton" name="recordButton">
           <property name="text">
            <string>Record</string>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
           </property>
          </widget>
         </item>

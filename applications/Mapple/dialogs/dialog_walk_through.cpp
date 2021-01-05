@@ -69,7 +69,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(clearCameraPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
     connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
-    connect(recordButton, SIGNAL(toggled(bool)), this, SLOT(record(bool)));
+    connect(recordButton, SIGNAL(clicked()), this, SLOT(record()));
 
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
 
@@ -113,6 +113,9 @@ easy3d::KeyFrameInterpolator* DialogWalkThrough::interpolator() {
 
 
 void DialogWalkThrough::showEvent(QShowEvent* e) {
+    viewer_->camera()->setZClippingCoefficient(5.0f);
+    viewer_->camera()->setZNearCoefficient(0.0001);
+
     if (radioButtonWalkingMode->isChecked())
         walkThrough()->set_status(easy3d::WalkThrough::WALKING_MODE);
     else
@@ -137,6 +140,9 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
 
 
 void DialogWalkThrough::closeEvent(QCloseEvent* e) {
+    viewer_->camera()->setZClippingCoefficient(std::sqrt(3.0f));
+    viewer_->camera()->setZNearCoefficient(0.005);
+
     walkThrough()->set_status(easy3d::WalkThrough::STOPPED);
     QDialog::closeEvent(e);
 	viewer_->update();
@@ -260,17 +266,21 @@ void DialogWalkThrough::browse() {
 
 
 void DialogWalkThrough::preview(bool b) {
-#if 1
-    // this single line works: very efficient (in another thread without overhead).
+#if 0
+    // this single line works: very efficient (in another thread without overhead), but I want a better UI.
     walkThrough()->preview();
     viewer_->update();
 
-#elif 0 // this also works. But std::this_thread::sleep_for() is not efficient and frame rate is low.
+#elif 0 // this also works, but low framerate (overhead from std::this_thread::sleep_for() and ProgressLogger)
     if (b) {
-        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
-            recordButton->setChecked(false);
+        if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
+            LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
+                            << "nothing to preview (camera path is empty). You may import a camera path from a file or"
+                               " creat it by adding keyframes";
+            previewButton->setChecked(false);
             return;
         }
+
         static int last_stopped_index = 0;
         const auto &frames = interpolator()->interpolate();
 
@@ -287,7 +297,6 @@ void DialogWalkThrough::preview(bool b) {
             const auto &f = frames[id];
             viewer_->camera()->frame()->setPositionAndOrientation(f.position(), f.orientation());
             const int interval = interpolator()->interpolation_period() / interpolator()->interpolation_speed();
-            std::cout << "interval: " << interval << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
             if (id == frames.size() - 1)  // reaches the end frame
                 last_stopped_index = 0;
@@ -302,75 +311,95 @@ void DialogWalkThrough::preview(bool b) {
         previewButton->setChecked(false);
     }
     else
-        recordButton->setChecked(false);
+        previewButton->setChecked(false);
 
 #else
 
-    // this also handles the UI, but too complicated. I don't like it.
-//    auto interpolationStopped = [this]() -> void { emit animationStopped(); };
-//    auto currentFrameFinished = [this]() -> void { emit oneFrameFinished(); };
-//
-//    if (b) {
-//        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
-//            previewButton->setChecked(false);
-//            return;
-//        }
-//
-//        easy3d::connect(&interpolator()->interpolation_stopped, 0, interpolationStopped);
-//        easy3d::connect(&interpolator()->current_frame_finished, 0, currentFrameFinished);
-//        QObject::connect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
-//        QObject::connect(this, &DialogWalkThrough::oneFrameFinished, this, &DialogWalkThrough::onOneFrameFinished);
-//
-//        setEnabled(false);
-//
-//        LOG(INFO) << "preview started...";
-//    }
-//    else {
-//        easy3d::disconnect(&interpolator()->interpolation_stopped, 0);
-//        easy3d::disconnect(&interpolator()->current_frame_finished, 0);
-//        QObject::disconnect(this, &DialogWalkThrough::animationStopped, this, &DialogWalkThrough::resetUIAfterAnimationStopped);
-//        QObject::disconnect(this, &DialogWalkThrough::oneFrameFinished, this, &DialogWalkThrough::onOneFrameFinished);
-//
-//        interpolator()->stop_interpolation();
-//        LOG(INFO) << "animation finished";
-//
-//        setEnabled(true);
-//        previewButton->setChecked(false);
-//    }
+    // this also handles the UI, but a bit complicated (because the Qt GUI actions cannot be triggered in another thread)
+    // idea: animation signal -> Qt signals -> Qt action
+    auto interpolationStopped = [this]() -> void { emit previewStopped(); };
+    if (b) {
+        if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
+            LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
+                            << "nothing to preview (camera path is empty). You may import a camera path from a file or"
+                               " creat it by adding keyframes";
+            disconnect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
+            previewButton->setChecked(false);
+            connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
+            return;
+        }
+
+        easy3d::connect(&interpolator()->interpolation_stopped, 0, interpolationStopped);
+        QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
+
+        for (auto w : findChildren<QLabel*>()) w->setEnabled(false);
+        for (auto w : findChildren<QPushButton*>()) w->setEnabled(w == previewButton);
+        for (auto w : findChildren<QCheckBox*>()) w->setEnabled(false);
+        for (auto w : findChildren<QRadioButton*>()) w->setEnabled(false);
+        for (auto w : findChildren<QSpinBox*>()) w->setEnabled(false);
+        for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(false);
+        for (auto w : findChildren<QLineEdit*>()) w->setEnabled(false);
+        for (auto w : findChildren<QToolButton*>()) w->setEnabled(false);
+
+        LOG(INFO) << "preview started...";
+        interpolator()->start_interpolation();
+    }
+    else {
+        easy3d::disconnect(&interpolator()->interpolation_stopped, 0);
+        QObject::disconnect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
+
+        interpolator()->stop_interpolation();
+        LOG(INFO) << "animation finished";
+
+        for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
+        for (auto w : findChildren<QPushButton*>()) w->setEnabled(true);
+        for (auto w : findChildren<QCheckBox*>()) w->setEnabled(true);
+        for (auto w : findChildren<QRadioButton*>()) w->setEnabled(true);
+        for (auto w : findChildren<QSpinBox*>()) w->setEnabled(true);
+        for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(true);
+        for (auto w : findChildren<QLineEdit*>()) w->setEnabled(true);
+        for (auto w : findChildren<QToolButton*>()) w->setEnabled(true);
+
+        setWalkingMode(radioButtonWalkingMode->isChecked());
+    }
 #endif
 }
 
 
-void DialogWalkThrough::record(bool b) {
-    if (b) {
-        if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
-            recordButton->setChecked(false);
-            return;
-        }
-
-        if (previewButton->isChecked())
-            previewButton->setChecked(false);
-
-        // make sure the path is not visible in recording
-        const bool visible = walkThrough()->is_path_visible();
-        if (visible)
-            walkThrough()->set_path_visible(false);
-
-        const QString file = lineEditOutputFile->text();
-        const int fps = spinBoxFPS->value();
-        const int bitrate = spinBoxBitRate->value();
-
-        setEnabled(false);
-        viewer_->recordAnimation(file, fps, bitrate, true);
-        setEnabled(true);
-        recordButton->setChecked(false);
-
-        // restore
-        if (visible)
-            walkThrough()->set_path_visible(true);
+void DialogWalkThrough::record() {
+    if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
+        LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
+                        << "nothing to record (camera path is empty). You may import a camera path from a file or"
+                           " creat it by adding keyframes";
+        return;
     }
-    else
-        recordButton->setChecked(false);
+
+    if (previewButton->isChecked())
+        previewButton->setChecked(false);
+
+    // make sure the path is not visible in recording
+    const bool visible = walkThrough()->is_path_visible();
+    if (visible)
+        walkThrough()->set_path_visible(false);
+
+    const QString file = lineEditOutputFile->text();
+    const int fps = spinBoxFPS->value();
+    const int bitrate = spinBoxBitRate->value();
+
+    hide();
+    QApplication::processEvents();
+    LOG(INFO) << "recording started...";
+    viewer_->recordAnimation(file, fps, bitrate, true);
+    LOG(INFO) << "recording finished";
+
+    // restore
+    if (visible)
+        walkThrough()->set_path_visible(true);
+}
+
+
+void DialogWalkThrough::onPreviewStopped() {
+    previewButton->setChecked(false);
 }
 
 
@@ -384,7 +413,8 @@ void DialogWalkThrough::showCameraPath(bool b) {
                                distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position())
             );
         }
-        viewer_->camera()->setSceneRadius(radius);
+        if (radius > viewer_->camera()->sceneRadius())
+            viewer_->camera()->setSceneRadius(radius);
     }
     else {
         Box3 box;
