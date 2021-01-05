@@ -61,11 +61,11 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
 
-	connect(previousPositionButton, SIGNAL(clicked()), this, SLOT(goToPreviousPosition()));
-	connect(nextPositionButton, SIGNAL(clicked()), this, SLOT(goToNextPosition()));
-    connect(removeLastPositionButton, SIGNAL(clicked()), this, SLOT(removeLastPosition()));
+	connect(previousKeyframeButton, SIGNAL(clicked()), this, SLOT(goToPreviousKeyframe()));
+	connect(nextKeyframeButton, SIGNAL(clicked()), this, SLOT(goToNextKeyframe()));
+    connect(removeLastKeyframeButton, SIGNAL(clicked()), this, SLOT(removeLastKeyframe()));
 
-    connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
+    connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToKeyframe(int)));
 
     connect(clearCameraPathButton, SIGNAL(clicked()), this, SLOT(clearPath()));
     connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
@@ -88,7 +88,7 @@ DialogWalkThrough::~DialogWalkThrough()
 
 
 void DialogWalkThrough::numKeyramesChanged() {
-    disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
+    disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToKeyframe(int)));
     int num = interpolator()->number_of_keyframes();
     if (num == 1) // range is [0, 0]
         horizontalSliderPreview->setEnabled(false);
@@ -99,7 +99,7 @@ void DialogWalkThrough::numKeyramesChanged() {
     int pos = walkThrough()->current_keyframe_index();
     if (pos >= 0)
         horizontalSliderPreview->setValue(pos);
-    connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToPosition(int)));
+    connect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToKeyframe(int)));
 }
 
 
@@ -189,7 +189,7 @@ void DialogWalkThrough::setWalkingMode(bool b) {
 }
 
 
-void DialogWalkThrough::goToPreviousPosition()
+void DialogWalkThrough::goToPreviousKeyframe()
 {
     int pos = walkThrough()->current_keyframe_index();
     if (pos <= 0)  // if not started (or at the 1st keyframe), move to the start view point
@@ -197,11 +197,11 @@ void DialogWalkThrough::goToPreviousPosition()
     else
         walkThrough()->move_to(pos - 1);
     viewer_->update();
-    LOG(INFO) << "moved to position " << walkThrough()->current_keyframe_index();
+    LOG(INFO) << "moved to keyframe " << walkThrough()->current_keyframe_index();
 }
 
 
-void DialogWalkThrough::goToNextPosition()
+void DialogWalkThrough::goToNextKeyframe()
 {
     int pos = walkThrough()->current_keyframe_index();
     if (pos >= interpolator()->number_of_keyframes() - 1)  // if already at the end, move to the last view point
@@ -209,27 +209,27 @@ void DialogWalkThrough::goToNextPosition()
     else
         walkThrough()->move_to(pos + 1);
     viewer_->update();
-    LOG(INFO) << "moved to position " << walkThrough()->current_keyframe_index();
+    LOG(INFO) << "moved to keyframe " << walkThrough()->current_keyframe_index();
 }
 
 
-void DialogWalkThrough::removeLastPosition() {
-    if (interpolator()->number_of_keyframes() == 0) {
-        LOG(INFO) << "no position can be removed (path is empty)";
-    }
+void DialogWalkThrough::removeLastKeyframe() {
+    if (interpolator()->number_of_keyframes() == 0)
+        LOG(WARNING) << "no keyframe can be removed (empty path)";
     else {
-        int pos = walkThrough()->current_keyframe_index();
-        if (pos == interpolator()->number_of_keyframes() - 1)  // currently viewing at the last position
-            pos = walkThrough()->move_to(pos - 1);  // move to the previous position
-        walkThrough()->delete_last_position();
+        walkThrough()->delete_last_keyframe();
+        int index = walkThrough()->current_keyframe_index();
         viewer_->update();
 
-        LOG(INFO) << "last position removed (current position is " << pos << ")";
+        if (index == -1)
+            LOG(WARNING) << "no keyframe can be removed (empty path)";
+        else
+            LOG(INFO) << "last keyframe removed (current keyframe: " << index << ")";
     }
 }
 
 
-void DialogWalkThrough::goToPosition(int p) {
+void DialogWalkThrough::goToKeyframe(int p) {
     walkThrough()->move_to(p, false);
     viewer_->update();
 }
@@ -237,7 +237,7 @@ void DialogWalkThrough::goToPosition(int p) {
 
 void DialogWalkThrough::clearPath() {
     if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
-        LOG(WARNING) << "nothing to clear (path is empty)";
+        LOG(WARNING) << "nothing to clear (empty path)";
         return;
     }
 

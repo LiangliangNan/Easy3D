@@ -98,8 +98,8 @@ namespace easy3d {
         /// \name Path modification and property query for the walking mode
         //@{
 
-        /// Deletes the last position added by walk_to() from the walking path.
-        void delete_last_position();
+        /// Deletes the last keyframe from the path.
+        void delete_last_keyframe();
 
         /// Clears the entire walking path, i.e., all positions added by walk_to().
         void delete_path();

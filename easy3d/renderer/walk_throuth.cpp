@@ -108,9 +108,11 @@ namespace easy3d {
     }
 
 
-    void WalkThrough::delete_last_position() {
-        if (kfi_->number_of_keyframes() == 0)
+    void WalkThrough::delete_last_keyframe() {
+        if (kfi_->number_of_keyframes() == 0) {
+            current_frame_idx_ = -1;
             return;
+        }
 
         kfi_->delete_last_keyframe();
         move_to(kfi_->number_of_keyframes() -1);

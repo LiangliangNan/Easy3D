@@ -54,10 +54,10 @@ public Q_SLOTS :
 
     void setWalkingMode(bool);
 
-    void goToPosition(int);
-    void goToPreviousPosition();
-    void goToNextPosition();
-    void removeLastPosition();
+    void goToKeyframe(int);
+    void goToPreviousKeyframe();
+    void goToNextKeyframe();
+    void removeLastKeyframe();
 
     void browse();
 	void preview(bool);

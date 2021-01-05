@@ -226,14 +226,14 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons">
         <item>
-         <widget class="QPushButton" name="previousPositionButton">
+         <widget class="QPushButton" name="previousKeyframeButton">
           <property name="text">
            <string>Back</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="nextPositionButton">
+         <widget class="QPushButton" name="nextKeyframeButton">
           <property name="text">
            <string>Next</string>
           </property>
@@ -243,7 +243,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="removeLastPositionButton">
+         <widget class="QPushButton" name="removeLastKeyframeButton">
           <property name="text">
            <string>Undo</string>
           </property>
@@ -483,9 +483,9 @@ The higher the better the quality (but the larger file size of the video)</strin
   <tabstop>radioButtonWalkingMode</tabstop>
   <tabstop>doubleSpinBoxCharacterHeightFactor</tabstop>
   <tabstop>doubleSpinBoxCharacterDistanceFactor</tabstop>
-  <tabstop>previousPositionButton</tabstop>
-  <tabstop>nextPositionButton</tabstop>
-  <tabstop>removeLastPositionButton</tabstop>
+  <tabstop>previousKeyframeButton</tabstop>
+  <tabstop>nextKeyframeButton</tabstop>
+  <tabstop>removeLastKeyframeButton</tabstop>
   <tabstop>clearCameraPathButton</tabstop>
   <tabstop>horizontalSliderPreview</tabstop>
   <tabstop>spinBoxFPS</tabstop>
