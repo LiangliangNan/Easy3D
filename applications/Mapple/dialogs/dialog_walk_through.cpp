@@ -57,6 +57,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
     connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
+
     connect(checkBoxShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(showCameraPath(bool)));
 
     connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
@@ -191,7 +192,7 @@ void DialogWalkThrough::setWalkingMode(bool b) {
 
 void DialogWalkThrough::goToPreviousKeyframe()
 {
-    int pos = walkThrough()->current_keyframe_index();
+    const int pos = walkThrough()->current_keyframe_index();
     if (pos <= 0)  // if not started (or at the 1st keyframe), move to the start view point
         walkThrough()->move_to(0);
     else
@@ -379,7 +380,7 @@ void DialogWalkThrough::record() {
         previewButton->setChecked(false);
 
     // make sure the path is not visible in recording
-    const bool visible = walkThrough()->is_path_visible();
+    const bool visible = walkThrough()->path_visible();
     if (visible)
         walkThrough()->set_path_visible(false);
 
@@ -474,20 +475,8 @@ void DialogWalkThrough::importCameraPathFromFile() {
     std::ifstream input(fileName.toStdString().c_str());
     if (interpolator()->read_keyframes(input)) {
         LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
-        if (walkThrough()->is_path_visible()) {
-            // update scene radius to make sure the path is within the view frustum
-            int num = interpolator()->number_of_keyframes();
-            float radius = viewer_->camera()->sceneRadius();
-            for (int i = 0; i < num; ++i) {
-                radius = std::max(
-                        radius,
-                        distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position())
-                );
-            }
-            viewer_->camera()->setSceneRadius(radius);
-            viewer_->update();
-        }
-
+        if (walkThrough()->path_visible())
+            showCameraPath(true);   // change the scene bbox
         numKeyramesChanged();
     }
 

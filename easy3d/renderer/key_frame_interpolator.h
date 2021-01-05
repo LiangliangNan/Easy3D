@@ -38,6 +38,7 @@
 #include <easy3d/core/types.h>
 #include <easy3d/core/signal.h>
 #include <easy3d/util/timer.h>
+#include <easy3d/renderer/frame.h>
 
 #include <vector>
 

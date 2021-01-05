@@ -119,11 +119,10 @@ namespace easy3d {
 
         /// Shows/Hides the path.
         void set_path_visible(bool b)  { path_visible_ = b; }
-
         /// Returns whether the path is visible.
-        bool is_path_visible() const { return path_visible_; }
+        bool path_visible() const { return path_visible_; }
 
-        /// Draws the camera path for the free mode.
+        /// Draws the camera path and the virtual cameras.
         void draw() const;
         //@}
 

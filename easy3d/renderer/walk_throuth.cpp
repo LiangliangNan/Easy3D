@@ -31,7 +31,6 @@
 #include <easy3d/util/logging.h>
 
 
-
 namespace easy3d {
 
 
@@ -156,7 +155,7 @@ namespace easy3d {
 
 
     void WalkThrough::draw() const {
-        if (is_path_visible())
+        if (path_visible())
             kfi_->draw_path(camera_, character_height() * 0.1f);
     }
 

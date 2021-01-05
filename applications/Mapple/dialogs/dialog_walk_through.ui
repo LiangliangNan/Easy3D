@@ -113,7 +113,7 @@
         <item row="2" column="0" colspan="2">
          <widget class="QLabel" name="labelCharacterHeightFactor_3">
           <property name="text">
-           <string>Define a camera path</string>
+           <string>Add key frames to the path</string>
           </property>
          </widget>
         </item>
@@ -138,7 +138,7 @@
           <item>
            <widget class="QRadioButton" name="radioButtonFreeMode">
             <property name="text">
-             <string>Free mode (Ctrl + C) </string>
+             <string>Free mode (press 'K') </string>
             </property>
            </widget>
           </item>

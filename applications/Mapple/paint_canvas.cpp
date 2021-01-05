@@ -310,7 +310,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 walkThrough()->walk_to(p);
             }
             else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
-                LOG(WARNING) << "Alt + Left click is for the walking mode only. Use Ctrl + C instead";
+                LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
         }
     }
@@ -537,7 +537,18 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             fitScreen(currentModel());
     } else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
         fitScreen();
-    } else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
+    }
+
+    else if (e->key() == Qt::Key_K && e->modifiers() == Qt::NoModifier) {
+        if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
+            const vec3 pos = camera()->position();
+            const quat q = camera()->orientation();
+            walkThrough()->add_keyframe(Frame(camera()->position(), q));
+        }
+        else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
+            LOG(WARNING) << "'K' is for the free mode only. Use Alt + Left click to add a keyframe in the walking mode";
+    }
+    else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
         // Aligns camera
         Frame frame;
         frame.setTranslation(camera_->pivotPoint());
@@ -1097,7 +1108,7 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (walk_through_ && walk_through_->is_path_visible() && !walk_through_->interpolator()->is_interpolation_started())
+    if (walk_through_ && !walk_through_->interpolator()->is_interpolation_started())
         walk_through_->draw();
     easy3d_debug_log_gl_error;
 
@@ -1263,22 +1274,15 @@ void PaintCanvas::setPerspective(bool b) {
 void PaintCanvas::copyCamera() {
     const vec3 pos = camera()->position();
     const quat q = camera()->orientation();
-    if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
-        walkThrough()->add_keyframe(Frame(camera()->position(), q));
-    }
-    else if (walkThrough()->status() == easy3d::WalkThrough::STOPPED) {
-        const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")
-                .arg(pos[0])
-                .arg(pos[1])
-                .arg(pos[2])
-                .arg(q[0])
-                .arg(q[1])
-                .arg(q[2])
-                .arg(q[3]);
-        qApp->clipboard()->setText(cam_str);
-    }
-    else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
-        LOG(WARNING) << "Ctrl + C is for the free mode only. Use Alt + Left click instead";
+    const QString cam_str = QString("%1 %2 %3 %4 %5 %6 %7")
+            .arg(pos[0])
+            .arg(pos[1])
+            .arg(pos[2])
+            .arg(q[0])
+            .arg(q[1])
+            .arg(q[2])
+            .arg(q[3]);
+    qApp->clipboard()->setText(cam_str);
 }
 
 
@@ -1345,12 +1349,6 @@ void PaintCanvas::saveState(std::ostream& output) const {
 
     //-----------------------------------------------------
 
-    output << "<display>" << std::endl;
-    output << "\t cameraPathIsDrawn: " << walk_through_->is_path_visible() << std::endl;
-    output << "</display>" << std::endl << std::endl;
-
-    //-----------------------------------------------------
-
     output << "<windowState>" << std::endl;
     output << "\t state: " << window()->windowState() << std::endl;;
     if (window()->windowState() == Qt::WindowNoState) {
@@ -1410,14 +1408,6 @@ void PaintCanvas::restoreState(std::istream& input) {
 
     //-----------------------------------------------------
 
-    bool status = false;
-    input >> dummy;	// this skips the keyword
-    input >> dummy >> status;
-    walk_through_->set_path_visible(status);
-    input >> dummy;	// this skips the keyword
-
-    //-----------------------------------------------------
-
     input >> dummy;	// this skips the keyword
     int state = -1;
     input >> dummy >> state;
@@ -1460,6 +1450,7 @@ void PaintCanvas::restoreState(std::istream& input) {
     input >> dummy >> v;	camera()->frame()->setRotationSensitivity(v);
     input >> dummy >> v;	camera()->frame()->setZoomSensitivity(v);
     input >> dummy >> v;	camera()->frame()->setTranslationSensitivity(v);
+    bool status = false;
     input >> dummy >> status;	camera()->frame()->setZoomsOnPivotPoint(status);
     input >> dummy >> p;	camera()->frame()->setPivotPoint(p);
     input >> dummy;	// this skips the keyword

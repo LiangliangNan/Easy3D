@@ -229,7 +229,6 @@ namespace easy3d {
     void KeyFrameInterpolator::draw_path(const Camera *cam, float camera_width) {
         if (keyframes_.empty())
             return;
-
         if (!pathIsValid_) {
             if (path_drawable_) {
                 delete path_drawable_;
@@ -253,7 +252,6 @@ namespace easy3d {
                 points.push_back(interpolated_path_[i].position());
                 points.push_back(interpolated_path_[i + 1].position());
             }
-
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);
@@ -377,7 +375,7 @@ namespace easy3d {
             const vec3 new_prev = position() +(prev.position() - position()).normalize() * std::sqrt(sd_next);
             tgP_ = 0.5f * (next.position() - new_prev);
         }
-#else
+#else   // standard CatmullRom fitting
         tgP_ = 0.5f * (next.position() - prev.position());
 #endif
         tgQ_ = quat::squad_tangent(prev.orientation(), q_, next.orientation());
