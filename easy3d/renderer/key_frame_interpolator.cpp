@@ -447,7 +447,7 @@ namespace easy3d {
         LOG_IF(INFO, keyframes_.size() > 2)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
-                        << duration() / interpolation_speed() << " seconds (at x" << interpolation_speed() << " speed)";
+                        << duration() / interpolation_speed() << " seconds (at speed " << interpolation_speed() << "x)";
 
         if (smoothing && interpolated_path_.size() > 2) { // more iterations do not provide further improvement
             std::vector<Keyframe> as_key_frames;
