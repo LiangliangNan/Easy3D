@@ -363,6 +363,8 @@ void DialogWalkThrough::preview(bool b) {
         for (auto w : findChildren<QToolButton*>()) w->setEnabled(true);
 
         setWalkingMode(radioButtonWalkingMode->isChecked());
+
+        viewer_->update();
     }
 #endif
 }
