@@ -69,8 +69,6 @@ namespace easy3d {
 		setWheelSensitivity(mf.wheelSensitivity());
 		setZoomSensitivity(mf.zoomSensitivity());
 
-		dirIsFixed_ = false;
-
 		return *this;
 	}
 
@@ -86,25 +84,6 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Return 1 if mouse motion was started horizontally and -1 if it was more
-	vertical. Returns 0 if this could not be determined yet (perfect diagonal
-	motion, rare). */
-	int ManipulatedFrame::mouseOriginalDirection(int x, int y, int dx, int dy) {
-		static bool horiz = true; // Two simultaneous manipulatedFrame require two mice !
-
-		if (!dirIsFixed_) {
-			dirIsFixed_ = abs(dx) != abs(dy);
-			horiz = abs(dx) > abs(dy);
-		}
-
-		if (dirIsFixed_)
-			if (horiz)
-				return 1;
-			else
-				return -1;
-		else
-			return 0;
-	}
 
 	float ManipulatedFrame::deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const {
 		float delta_x = float(dx) / camera->screenWidth();
@@ -121,13 +100,10 @@ namespace easy3d {
 
 
 	void ManipulatedFrame::action_start() {
-		dirIsFixed_ = false;
 	}
 
 
-	void ManipulatedFrame::action_end()
-	{
-		dirIsFixed_ = false;
+	void ManipulatedFrame::action_end() {
 		if (previousConstraint_)
 			setConstraint(previousConstraint_);
 	}
@@ -141,54 +117,100 @@ namespace easy3d {
 	Camera::screenWidth(), Camera::screenHeight(), Camera::fieldOfView()).
 
 	Emits the manipulated() signal. */
-	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
-		if (screen) {
-            const vec3 &trans = camera->projectedCoordinatesOf(position());
-            DLOG_IF(ERROR, has_nan(trans))
-                            << "camera->projectedCoordinatesOf(position()): " << trans << ", position(): "
-                            << position();
+		vec3 trans = camera->projectedCoordinatesOf(position());
+		DLOG_IF(ERROR, has_nan(trans))
+						<< "projectedCoordinatesOf(position()): " << trans
+						<< "\n\tposition(): " << position()
+						<< "\n\tcamera position: " << camera->position()
+						<< "\n\tcamera orientation: " << camera->orientation();
+		if (has_nan(trans))
+			return;
 
-			float pre_x = float(x - dx);
-			float pre_y = float(y - dy);
-			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-			const float angle = atan2(y - trans[1], x - trans[0]);
-            const vec3& axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
+		const int w = camera->screenWidth();
+		const int h = camera->screenHeight();
+
+		quat rot;
+		if (axis == NONE) {	// free rotation
+            const float pre_x = float(x - dx);
+            const float pre_y = float(y - dy);
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-			quat rot(axis, angle - prev_angle);
-			// Rotates the ManipulatedFrame around its origin.
-			rotate(rot);
+			rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], w, h);
 		}
 		else {
-            vec3 trans = camera->projectedCoordinatesOf(position());
-            DLOG_IF(ERROR, has_nan(trans))
-                            << "camera->projectedCoordinatesOf(position()): " << trans << ", position(): "
-                            << position();
-
-			int pre_x = x - dx;
-			int pre_y = y - dy;
-			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-            quat rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
-			trans = vec3(-rot[0], -rot[1], -rot[2]);
-			trans = camera->frame()->orientation().rotate(trans);
-			trans = transformOf(trans);
-			rot[0] = trans[0];
-			rot[1] = trans[1];
-			rot[2] = trans[2];
-			// Rotates the ManipulatedFrame around its origin.
-			rotate(rot);
+#if 0 // old implementation (should work)
+            const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
+            const float angle = atan2(y - trans[1], x - trans[0]);
+            const vec3& axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
+            // The incremental rotation defined in the ManipulatedFrame coordinate system.
+            quat rot(axis, angle - prev_angle);
+            // Rotates the ManipulatedFrame around its origin.
+            rotate(rot);
+#else // new implementation (not tested yet)
+            if (axis == ORTHOGONAL) {
+                const float pre_x = float(x - dx);
+                const float pre_y = float(y - dy);
+                const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
+                const float angle = atan2(y - trans[1], x - trans[0]);
+                // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
+                rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
+            } else if (axis == VERTICAL) {
+                const float pre_x = float(x - dx);
+                const float pre_y = float(y);    // restricts the movement to be horizontal (so purl vertical rotation)
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+            } else if (axis == HORIZONTAL) {
+                const float pre_x = float(x);    // restricts the movement to be vertical (so purl horizontal rotation)
+                const float pre_y = float(y - dy);
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+            }
+#endif
 		}
+
+        trans = vec3(-rot[0], -rot[1], -rot[2]);
+        trans = camera->frame()->orientation().rotate(trans);
+        trans = transformOf(trans);
+        rot[0] = trans[0];
+        rot[1] = trans[1];
+        rot[2] = trans[2];
+        // Rotates the ManipulatedFrame around its origin.
+        rotate(rot);
 	}
 
-	void ManipulatedFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	void ManipulatedFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
-		if (screen)	{
+		if (axis == NONE) {    // free translation
+			vec3 trans(float(dx), -float(dy), 0.0);
+			// Scale to fit the screen mouse displacement
+			switch (camera->type()) {
+				case Camera::PERSPECTIVE:
+					trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+							 fabs((camera->frame()->coordinatesOf(position())).z) /
+							 camera->screenHeight();
+					break;
+				case Camera::ORTHOGRAPHIC: {
+					float w, h;
+					camera->getOrthoWidthHeight(w, h);
+					trans[0] *= 2.0f * w / camera->screenWidth();
+					trans[1] *= 2.0f * h / camera->screenHeight();
+					break;
+				}
+			}
+			// Transform to world coordinate system.
+			trans = camera->frame()->orientation().rotate(translationSensitivity() * trans);
+			// And then down to frame
+			if (referenceFrame())
+				trans = referenceFrame()->transformOf(trans);
+			translate(trans);
+		}
+		else {  // new implementation (not tested yet)
 			vec3 trans;
-			int dir = mouseOriginalDirection(x, y, dx, dy);
-			if (dir == 1)
+			if (axis == HORIZONTAL)
 				trans = vec3(float(dx), 0.0f, 0.0f);
-			else if (dir == -1)
+			else if (axis == VERTICAL)
 				trans = vec3(0.0f, float(-dy), 0.0f);
+			else
+				return;
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
@@ -211,31 +233,6 @@ namespace easy3d {
 			if (referenceFrame())
 				trans = referenceFrame()->transformOf(trans);
 
-			translate(trans);
-		}
-		else {
-			vec3 trans(float(dx), -float(dy), 0.0);
-			// Scale to fit the screen mouse displacement
-			switch (camera->type()) {
-			case Camera::PERSPECTIVE:
-				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
-					fabs((camera->frame()->coordinatesOf(position())).z) /
-					camera->screenHeight();
-				break;
-			case Camera::ORTHOGRAPHIC: {
-				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / camera->screenWidth();
-				trans[1] *= 2.0f * h / camera->screenHeight();
-				break;
-			}
-			}
-			// Transform to world coordinate system.
-			trans =
-				camera->frame()->orientation().rotate(translationSensitivity() * trans);
-			// And then down to frame
-			if (referenceFrame())
-				trans = referenceFrame()->transformOf(trans);
 			translate(trans);
 		}
 
@@ -280,12 +277,12 @@ namespace easy3d {
 #ifndef DOXYGEN
 	/*! Returns a quaternion computed according to the mouse motion. Mouse positions
 	are projected on a deformed ball, centered on (\p cx,\p cy). */
-	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, const Camera *const camera) {
+	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) {
 		// Points on the deformed ball
-		float px = rotationSensitivity() * (pre_x - cx) / camera->screenWidth();
-		float py = rotationSensitivity() * (cy - pre_y) / camera->screenHeight();
-		float dx = rotationSensitivity() * (x - cx) / camera->screenWidth();
-		float dy = rotationSensitivity() * (cy - y) / camera->screenHeight();
+		float px = rotationSensitivity() * (pre_x - cx) / w;
+		float py = rotationSensitivity() * (cy - pre_y) / h;
+		float dx = rotationSensitivity() * (x - cx) / w;
+		float dy = rotationSensitivity() * (cy - y) / h;
 
 		const vec3 p1(px, py, projectOnBall(px, py));
 		const vec3 p2(dx, dy, projectOnBall(dx, dy));

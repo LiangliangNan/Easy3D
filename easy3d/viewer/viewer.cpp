@@ -590,12 +590,16 @@ namespace easy3d {
     bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // control modifier is reserved for zooming on region
         if (modifiers != EASY3D_MOD_CONTROL) {
+            auto axis = ManipulatedFrame::NONE;
+            if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
+            else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
+            else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
             switch (button) {
                 case GLFW_MOUSE_BUTTON_LEFT:
-                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, pressed_key_ == GLFW_KEY_X);
+                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, axis);
                     break;
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    camera_->frame()->action_translate(x, y, dx, dy, camera_, pressed_key_ == GLFW_KEY_X);
+                    camera_->frame()->action_translate(x, y, dx, dy, camera_, axis);
                     break;
                 case GLFW_MOUSE_BUTTON_MIDDLE:
                     if (std::abs(dy) >= 1)
@@ -1026,15 +1030,18 @@ namespace easy3d {
                 " ------------------------------------------------------------------\n"
                 "  Ctrl + 'o':          Open file                                   \n"
                 "  Ctrl + 's':          Save file                                   \n"
-                "  Delete:              Delete current model                        \n"
+                "  Fn + Delete:         Delete current model                        \n"
                 "  '<' or '>':          Switch between models                       \n"
                 "  's':                 Snapshot                                    \n"
                 " ------------------------------------------------------------------\n"
                 "  'p':                 Toggle perspective/orthographic projection) \n"
-                "  Left mouse:          Orbit-rotate the camera                     \n"
-                "  Right mouse:         Pan-move the camera                         \n"
-                "  'x' + Left mouse:    Orbit-rotate the camera (screen based)      \n"
-                "  'x' + Right mouse:   Pan-move camera vertically or horizontally  \n"
+                "  Left drag:           Rotate the camera                           \n"
+                "  Right drag:          Move the camera                             \n"
+                "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
+                "  'x' + Right drag:    Move the camera along horizontal axis       \n"
+                "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
+                "  'y' + Right drag:    Move the camera along vertical axis         \n"
+                "  'o' + Left drag:     Rotate th camera around ortho-screen axis   \n"
                 "  Middle or Wheel:     Zoom in/out                                 \n"
                 "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
                 "  Left/Right           Turn camera left/right                      \n"
@@ -1044,11 +1051,11 @@ namespace easy3d {
                 " ------------------------------------------------------------------\n"
                 "  'f':                 Fit screen (all models)                     \n"
                 "  'c':                 Fit screen (current model only)             \n"
-                "  'z' + Left mouse:    Zoom to target point on model               \n"
-                "  'z' + Right mouse:   Zoom o fit screen                           \n"
-                "  Shift + Left mouse:  Define a target point on model              \n"
-                "  Shift + Right mouse: Undefine the target point (if any) on model \n"
-                "  Ctrl + Left mouse:   Zoom to fit region                          \n"
+                "  'z' + Left click:    Zoom to target point on model               \n"
+                "  'z' + Right click:   Zoom o fit screen                           \n"
+                "  Shift + Left click:  Define a target point on model              \n"
+                "  Shift + Right click: Undefine the target point (if any) on model \n"
+                "  Ctrl + Left drag:    Zoom to fit region                          \n"
                 " ------------------------------------------------------------------\n"
                 "  '-'/'=':             Decrease/Increase point size                \n"
                 "  '{'/'}':             Decrease/Increase line width                \n"

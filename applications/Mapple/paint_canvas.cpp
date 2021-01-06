@@ -418,10 +418,14 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             int y = e->pos().y();
             int dx = x - mouse_current_pos_.x();
             int dy = y - mouse_current_pos_.y();
+            auto axis = ManipulatedFrame::NONE;
+            if (pressed_key_ == Qt::Key_X) axis = ManipulatedFrame::HORIZONTAL;
+            else if (pressed_key_ == Qt::Key_Y) axis = ManipulatedFrame::VERTICAL;
+            else if (pressed_key_ == Qt::Key_O) axis = ManipulatedFrame::ORTHOGONAL;
             if (pressed_button_ == Qt::LeftButton)
-                frame->action_rotate(x, y, dx, dy, camera_, pressed_key_ == Qt::Key_X);
+                frame->action_rotate(x, y, dx, dy, camera_, axis);
             else if (pressed_button_ == Qt::RightButton)
-                frame->action_translate(x, y, dx, dy, camera_, pressed_key_ == Qt::Key_X);
+                frame->action_translate(x, y, dx, dy, camera_, axis);
             else if (pressed_button_ == Qt::MidButton) {
                 if (dy != 0 && frame == camera_->frame()) // zoom is intended for camera manipulation only
                     frame->action_zoom(dy > 0 ? 1 : -1, camera_);
@@ -743,17 +747,20 @@ void PaintCanvas::closeEvent(QCloseEvent *e) {
 std::string PaintCanvas::usage() const {
     return std::string(
             " ------------------------------------------------------------------\n"
-            " Easy3D viewer usage:                                              \n"
+            " Mapple usage:                                              \n"
             " ------------------------------------------------------------------\n"
             "  F1:                  Help                                        \n"
             " ------------------------------------------------------------------\n"
             "  Fn + Delete:         Delete current model                        \n"
             "  '<' or '>':          Switch between models                       \n"
             " ------------------------------------------------------------------\n"
-            "  Left mouse:          Orbit-rotate the camera                     \n"
-            "  Right mouse:         Pan-move the camera                         \n"
-            "  'x' + Left mouse:    Orbit-rotate the camera (screen based)      \n"
-            "  'x' + Right mouse:   Pan-move camera vertically or horizontally  \n"
+            "  Left drag:           Rotate the camera                           \n"
+            "  Right drag:          Move the camera                             \n"
+            "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
+            "  'x' + Right drag:    Move the camera along horizontal axis       \n"
+            "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
+            "  'y' + Right drag:    Move the camera along vertical axis         \n"
+            "  'o' + Left drag:     Rotate th camera around ortho-screen axis   \n"
             "  Middle or Wheel:     Zoom in/out                                 \n"
             "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
             "  Left/Right           Turn camera left/right                      \n"
@@ -763,11 +770,11 @@ std::string PaintCanvas::usage() const {
             " ------------------------------------------------------------------\n"
             "  'f':                 Fit screen (all models)                     \n"
             "  'c':                 Fit screen (current model only)             \n"
-            "  'z' + Left mouse:    Zoom to target point on model               \n"
-            "  'z' + Right mouse:   Zoom o fit screen                           \n"
-            "  Shift + Left mouse:  Define a target point on model              \n"
-            "  Shift + Right mouse: Undefine the target point (if any) on model \n"
-            "  Ctrl + Left mouse:   Zoom to fit region                          \n"
+            "  'z' + Left click:    Zoom to target point on model               \n"
+            "  'z' + Right click:   Zoom o fit screen                           \n"
+            "  Shift + Left click:  Define a target point on model              \n"
+            "  Shift + Right click: Undefine the target point (if any) on model \n"
+            "  Ctrl + Left drag:    Zoom to fit region                          \n"
             " ------------------------------------------------------------------\n"
             "  '-'/'=':             Decrease/Increase point size                \n"
             "  '{'/'}':             Decrease/Increase line width                \n"

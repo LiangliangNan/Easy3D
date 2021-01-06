@@ -196,18 +196,19 @@ namespace easy3d {
 		// This function should be called when an action (e.g., drag) ends, e.g., mouse released
 		virtual void action_end();
 
-		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen);
-		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, bool screen);
+		enum ScreenAxis { NONE, HORIZONTAL, VERTICAL, ORTHOGONAL };
+		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE);
+		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE);
 		virtual void action_zoom(int dy_wheel, Camera *const camera);
 		// @}
 
 #ifndef DOXYGEN
 	protected:
-		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, const Camera *const camera);
+        /*! Returns a quaternion computed according to the mouse motion. Mouse positions
+        are projected on a deformed ball, centered on (\p cx,\p cy), viewer size (\p w, \p h).*/
+		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h);
 
 		Constraint *previousConstraint_; // When manipulation is without constraint.
-
-		int mouseOriginalDirection(int x, int y, int dx, int dy);
 
 		/*! Returns a screen scaled delta from event's position to prevPos_, along the
 				X or Y direction, whichever has the largest magnitude. */
@@ -223,9 +224,6 @@ namespace easy3d {
 		float translationSensitivity_;
 		float wheelSensitivity_;
 		float zoomSensitivity_;
-
-		// Whether the SCREEN_TRANS direction (horizontal or vertical) is fixed or not.
-		bool dirIsFixed_;
 
 	private:
 		friend class Viewer;

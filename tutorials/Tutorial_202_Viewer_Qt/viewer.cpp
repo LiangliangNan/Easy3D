@@ -285,9 +285,9 @@ void ViewerQt::mouseMoveEvent(QMouseEvent *e) {
             int dx = x - mouse_previous_pos_.x();
             int dy = y - mouse_previous_pos_.y();
             if (pressed_button_ == Qt::LeftButton)
-                camera_->frame()->action_rotate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
+                camera_->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
             else if (pressed_button_ == Qt::RightButton)
-                camera_->frame()->action_translate(x, y, dx, dy, camera_, e->modifiers() == Qt::AltModifier);
+                camera_->frame()->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
             else if (pressed_button_ == Qt::MidButton) {
                 if (dy != 0)
                     camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);

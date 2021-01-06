@@ -69,7 +69,7 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-	void ManipulatedCameraFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	void ManipulatedCameraFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
         if (dx == 0 && dy == 0)
             return;
@@ -83,21 +83,36 @@ namespace easy3d {
         if (has_nan(trans))
             return;
 
-		if (screen) {
-            const float pre_x = float(x - dx);
-            const float pre_y = float(y - dy);
-			const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-			const float angle = atan2(y - trans[1], x - trans[0]);
-
-			// The incremental rotation defined in the ManipulatedCameraFrame coordinate system.
-            const quat rot(vec3(0.0, 0.0, 1.0), angle - prev_angle);
-			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-			rotateAroundPoint(rot, pivotPoint());
-		}
-		else {
+        const int w = camera->screenWidth();
+        const int h = camera->screenHeight();
+        if (axis == NONE) {    // free rotation
             const int pre_x = x - dx;
             const int pre_y = y - dy;
-            const quat& rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], camera);
+            const quat& rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+            // Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+            rotateAroundPoint(rot, pivotPoint());
+        }
+        else {
+            const float pre_x = float(x - dx);
+            const float pre_y = float(y - dy);
+            quat rot;
+            if (axis == ORTHOGONAL) {
+                const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
+                const float angle = atan2(y - trans[1], x - trans[0]);
+                // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
+                rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
+            }
+            else if (axis == VERTICAL) {
+                const int pre_x = x - dx;
+                const int pre_y = y;    // restricts the movement to be horizontal (so purl vertical rotation)
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+            }
+            else if (axis == HORIZONTAL) {
+                const int pre_x = x;    // restricts the movement to be vertical (so purl horizontal rotation)
+                const int pre_y = y - dy;
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+            }
+
 			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
 			rotateAroundPoint(rot, pivotPoint());
 		}
@@ -105,18 +120,39 @@ namespace easy3d {
 	}
 
 
-	void ManipulatedCameraFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, bool screen /* = false */)
+	void ManipulatedCameraFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
         if (dx == 0 && dy == 0)
             return;
 
-		if (screen) {
+        if (axis == NONE) {    // free translation
+            vec3 trans(-float(dx), float(dy), 0.0f);
+            // Scale to fit the screen mouse displacement
+            switch (camera->type())
+            {
+                case Camera::PERSPECTIVE:
+                    trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+                             fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
+                             camera->screenHeight();
+                    break;
+                case Camera::ORTHOGRAPHIC: {
+                    float w, h;
+                    camera->getOrthoWidthHeight(w, h);
+                    trans[0] *= 2.0f * w / camera->screenWidth();
+                    trans[1] *= 2.0f * h / camera->screenHeight();
+                    break;
+                }
+            }
+            translate(inverseTransformOf(translationSensitivity() * trans));
+        }
+        else {
 			vec3 trans;
-			int dir = mouseOriginalDirection(x, y, dx, dy);
-			if (dir == 1)
-				trans = vec3(-float(dx), 0.0f, 0.0f);
-			else if (dir == -1)
-				trans = vec3(0.0f, float(dy), 0.0f);
+			if (axis == HORIZONTAL)
+                trans = vec3(-float(dx), 0.0f, 0.0f);
+            else if (axis == VERTICAL)
+                trans = vec3(0.0f, float(dy), 0.0f);
+            else
+                return;
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
@@ -136,26 +172,6 @@ namespace easy3d {
 			translate(inverseTransformOf(translationSensitivity() * trans));
 		}
 
-		else {
-			vec3 trans(-float(dx), float(dy), 0.0f);
-			// Scale to fit the screen mouse displacement
-			switch (camera->type())
-			{
-			case Camera::PERSPECTIVE:
-				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
-					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-					camera->screenHeight();
-				break;
-			case Camera::ORTHOGRAPHIC: {
-				float w, h;
-				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / camera->screenWidth();
-				trans[1] *= 2.0f * h / camera->screenHeight();
-				break;
-			}
-			}
-			translate(inverseTransformOf(translationSensitivity() * trans));
-		}
         modified.send();
 	}
 
@@ -182,10 +198,11 @@ namespace easy3d {
             if (dot(offset, camera->viewDirection()) <= 0)
                 return;
 
+#if 0 //  we allow to zoom out (to avoid lock)
             // don't get too close to and don't get too far away from the pivot point.
             if ( (offset.norm() <= 0.01f * sceneRadius) || (offset.norm() >= 100.0f * sceneRadius))
                 return;
-
+#endif
             // now it is safe
             translate(delta * direction);
 		}
@@ -211,9 +228,12 @@ namespace easy3d {
             frame.translate(offset);
             const vec3& new_target = frame.coordinatesOf(camera->sceneCenter());
 
+
+#if 0 //  we allow to zoom out (to avoid lock)
             // don't get too close to and don't get too far away from the pivot point.
             if ( new_target.z >= -0.01f * sceneRadius || new_target.z <= -100.0f * sceneRadius)
                 return;
+#endif
 
             // now it is safe
             translate(offset);
