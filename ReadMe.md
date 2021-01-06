@@ -112,7 +112,7 @@ of the License or (at your option) any later version. The full text of the licen
 found in the accompanying 'License' file.
 
 ### Citation
-If Easy3D is useful in your research/work, I would be grateful if you show your appreciation by citing it:
+If you use Easy3D in a scientific work, I kindly ask you to cite it:
 
 ```bibtex
 @misc{easy3d2018nan,
