@@ -469,7 +469,7 @@ namespace easy3d {
         return interpolated_path_;
     }
 
-#if 0  // allow to use two different interpolation methods: CatmullRom and BSpline
+#if 0  // allow to use two different methods: CatmullRom (interpolation) and BSpline (fitting)
 
     auto interpolate_CatmullRom = [](float u, const vec3 &P0, const vec3 &P1, const vec3 &P2, const vec3 &P3) -> vec3 {
         vec3 point(0, 0, 0);
@@ -489,7 +489,7 @@ namespace easy3d {
         return point;
     };
 
-    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes) {
+    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const {
         frames.clear();
         if (keyframes.size() < 2)
             return;
@@ -522,10 +522,12 @@ namespace easy3d {
 
 #else
 
-    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes) {
+    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const {
         frames.clear();
 
-        update_keyframe_values(keyframes);
+        const_cast<KeyFrameInterpolator *>(this)->update_keyframe_values(
+                const_cast<std::vector<Keyframe> & >(keyframes)
+        );
 
         const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
         for (float time = firstTime(); time < lastTime() + interval; time += interval) {

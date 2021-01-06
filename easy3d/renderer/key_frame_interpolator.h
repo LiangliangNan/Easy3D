@@ -374,7 +374,7 @@ namespace easy3d {
         void update_keyframe_values(std::vector<Keyframe>& keyframes);
         void get_keyframes_at_time(float time, const std::vector<Keyframe>& keyframes, std::vector<Keyframe>::const_iterator* related) const;
         void compute_spline(const std::vector<Keyframe>::const_iterator* related, vec3& v1, vec3& v2) const;
-        void do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes);
+        void do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const;
 
         // stride-length weighted keyframe timing.
         // both keyframes.front().time() and keyframes.back().time() are preserved.
