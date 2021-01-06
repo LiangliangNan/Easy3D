@@ -434,7 +434,13 @@ namespace easy3d {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool smoothing) {
-        if (pathIsValid_ || keyframes_.size() == 1)
+        interpolated_path_.clear();
+
+        if (keyframes_.size() == 1) {   // only one keyframe
+            interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
+            return interpolated_path_;
+        }
+        else if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
             return interpolated_path_;
 
         if (smoothing && interpolated_path_.size() > 2)
@@ -516,13 +522,9 @@ namespace easy3d {
 
 #else
 
-    //    int idx = 0;
     void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, std::vector<Keyframe>& keyframes) {
         frames.clear();
-        if (keyframes.size() < 2)
-            return;
 
-//        std::ofstream  output ("tmp-iner-" + std::to_string(idx++) + ".xyz");
         update_keyframe_values(keyframes);
 
         const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
@@ -547,7 +549,6 @@ namespace easy3d {
                                        related[2]->tgQ(), related[2]->orientation(), alpha);
 
             frames.emplace_back(Frame(pos, q));
-//            output << pos << std::endl;
         }
     }
 
@@ -580,7 +581,6 @@ namespace easy3d {
                 const float time_distance =
                         distance(keyframes[i].position(), keyframes[i - 1].position()) / path_length * duration;
                 const float time_turning = turning_time(keyframes[i], keyframes[i - 1]);
-//                std::cout << "t: " << time_distance << ", " << time_turning << std::endl;
                 time += (time_distance + time_turning);
                 keyframes[i].set_time(time);
             }
@@ -609,9 +609,6 @@ namespace easy3d {
                 keyframes[i].set_time(t);
             }
         }
-
-//        std::cout << "keyframes.front().time(): " << keyframes.front().time() << std::endl;
-//        std::cout << "keyframes.back().time(): " << keyframes.back().time() << std::endl;
     }
 
 }
