@@ -1041,7 +1041,7 @@ namespace easy3d {
                 "  'x' + Right drag:    Move the camera along horizontal axis       \n"
                 "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
                 "  'y' + Right drag:    Move the camera along vertical axis         \n"
-                "  'o' + Left drag:     Rotate th camera around ortho-screen axis   \n"
+                "  'o' + Left drag:     Rotate the camera around ortho-screen axis  \n"
                 "  Middle or Wheel:     Zoom in/out                                 \n"
                 "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
                 "  Left/Right           Turn camera left/right                      \n"
