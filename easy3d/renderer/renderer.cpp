@@ -315,6 +315,17 @@ namespace easy3d {
     }
 
 
+    void Renderer::set_selected(bool b) {
+        for (auto d : points_drawables_)
+            d->set_selected(b);
+        for (auto d : lines_drawables_)
+            d->set_selected(b);
+        for (auto d : triangles_drawables_)
+            d->set_selected(b);
+        selected_ = b;
+    }
+
+
     void Renderer::update() {
         model_->invalidate_bounding_box();
 

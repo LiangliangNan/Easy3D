@@ -90,22 +90,23 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP)
-                ->set_uniform("lighting",lighting())
+                ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
-                ->set_uniform("two_sides_lighting",lighting_two_sides())
-                ->set_uniform("distinct_back_color",distinct_back_color())
-                ->set_uniform("backside_color",back_color())
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
                 ->set_uniform("ssaoEnabled", is_ssao_enabled())
-                ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
-                ->set_uniform("default_color",color())
-                ->set_block_uniform("Material", "ambient",material().ambient)
-                ->set_block_uniform("Material", "specular",material().specular)
+                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                ->set_uniform("default_color", color())
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
-                ->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range().first)
+                ->set_uniform("hightlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected());
 
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
@@ -152,23 +153,24 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP)
-                ->set_uniform("lighting",lighting())
+                ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
-                ->set_uniform("two_sides_lighting",lighting_two_sides())
-                ->set_uniform("distinct_back_color",distinct_back_color())
-                ->set_uniform("backside_color",back_color())
+                ->set_uniform("two_sides_lighting", lighting_two_sides())
+                ->set_uniform("distinct_back_color", distinct_back_color())
+                ->set_uniform("backside_color", back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
                 ->set_uniform("ssaoEnabled", is_ssao_enabled())
-                ->set_block_uniform("Material", "ambient",material().ambient)
-                ->set_block_uniform("Material", "specular",material().specular)
+                ->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
-                ->bind_texture("textureID",texture()->id(), 0)
-                ->set_uniform("texture_repeat",texture_repeat())
-                ->set_uniform("fractional_repeat",texture_fractional_repeat())
-                ->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->bind_texture("textureID", texture()->id(), 0)
+                ->set_uniform("texture_repeat", texture_repeat())
+                ->set_uniform("fractional_repeat", texture_fractional_repeat())
+                ->set_uniform("highlight", highlight())
+                ->set_uniform("hightlight_id_min", highlight_range().first)
+                ->set_uniform("hightlight_id_max", highlight_range().second)
+                ->set_uniform("selected", is_selected());
 
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());

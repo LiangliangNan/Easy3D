@@ -55,6 +55,7 @@
 #include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/gui/picker_surface_mesh.h>
+#include <easy3d/gui/picker_model.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/string.h>
@@ -129,6 +130,7 @@ PaintCanvas::~PaintCanvas() {
 void PaintCanvas::cleanup() {
     for (auto m : models_) {
         delete m->renderer();
+        delete m->frame();
         delete m;
     }
 
@@ -299,9 +301,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 if (pressed_key_ == Qt::Key_Z && e->modifiers() == Qt::NoModifier)
                     camera()->interpolateToFitScene();
             }
-        }
-
-        if (e->modifiers() == Qt::AltModifier) {
+        } else if (e->modifiers() == Qt::AltModifier) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
             if (found && (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE) &&
@@ -312,6 +312,20 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
+        }
+        else if (e->modifiers() == Qt::NoModifier) {
+            ModelPicker picker(camera());
+            auto model = picker.pick(models(), e->pos().x(), e->pos().y());
+            if (model) {
+                if (!model->frame()) {
+                    auto frame = new ManipulatedFrame;
+                    frame->setPositionAndOrientation(model->bounding_box().center(), quat());
+                    model->set_frame(frame);
+                }
+            }
+            // select the picked model (if picked) and deselect others
+            for (auto m : models_)
+                m->renderer()->set_selected(m == model);
         }
     }
 

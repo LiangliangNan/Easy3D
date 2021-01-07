@@ -35,6 +35,7 @@
 namespace easy3d {
 
     class Renderer;
+    class ManipulatedFrame;
 
     /**
      * \brief The base class of renderable 3D models.
@@ -78,12 +79,25 @@ namespace easy3d {
         /** \brief Prints the names of all properties to an output stream (e.g., std::cout). */
         virtual void property_stats(std::ostream &output) const {}
 
-        /** \brief Sets the renderer of this model. */
+        /**
+         * \brief Sets the renderer of this model.
+         * \note Memory management of the renderer is the user's responsibility.
+         */
         void set_renderer(Renderer* r) { renderer_ = r; }
         /** \brief Gets the renderer of this model. */
         inline Renderer* renderer() { return renderer_; }
         /** \brief Gets the constant renderer of this model. */
         inline const Renderer* renderer() const { return renderer_; }
+
+        /**
+         * \brief Associate an manipulated frame to this model.
+         * \note Memory management of the frame is the user's responsibility.
+         */
+        void set_frame(ManipulatedFrame* f) { frame_ = f; }
+        /** \brief Gets the manipulated frame associated to this model. */
+        inline ManipulatedFrame* frame() { return frame_; }
+        /** \brief Gets the manipulated frame associated to this model. */
+        inline const ManipulatedFrame* frame() const { return frame_; }
 
     protected:
         std::string	name_;
@@ -91,7 +105,8 @@ namespace easy3d {
         Box3		bbox_;
         bool		bbox_known_;
 
-        Renderer* renderer_;
+        Renderer* renderer_;        // for rendering
+        ManipulatedFrame* frame_;   // for manipulation
     };
 }
 

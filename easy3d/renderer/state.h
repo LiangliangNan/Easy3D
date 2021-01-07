@@ -95,6 +95,9 @@ namespace easy3d {
         bool is_visible() const { return visible_; }
         void set_visible(bool v) { visible_ = v; }
 
+        bool is_selected() const { return selected_; }
+        void set_selected(bool b) { selected_ = b; }
+
         /// \name Coloring
 
         /**
@@ -252,6 +255,7 @@ namespace easy3d {
 
     protected:
         bool visible_;
+        bool selected_;
 
         Method coloring_method_;
         vec4 color_; // valid when color method is UNIFORM_COLOR

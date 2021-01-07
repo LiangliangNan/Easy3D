@@ -27,6 +27,8 @@ uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
+uniform bool selected = false;
+
 in Data{
     vec4 color;
     vec3 position;
@@ -49,6 +51,9 @@ void main(void) {
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
             color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
+
+    if (selected)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
     vec3 normal;
     if (smooth_shading)
