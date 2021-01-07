@@ -190,8 +190,8 @@ namespace easy3d {
 
     void KeyFrameInterpolator::start_interpolation() {
         auto animation = [this]() {
-            // interval in ms. 0.9 for (approximately) compensating the timer overhead
-            const int interval = interpolation_period() / interpolation_speed() * 0.9f;
+            // interval in ms. (0.9 to approximately compensate the overhead the timer thread and viewer update)
+            const int interval = 1000.0f / frame_rate() * 0.9f;
             for (int id = last_stopped_index_; id < interpolated_path_.size(); ++id) {
                 if (timer_.is_stopped()) {
                     last_stopped_index_ = id;
@@ -434,8 +434,6 @@ namespace easy3d {
 
 
     const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool smoothing) {
-        interpolated_path_.clear();
-
         if (keyframes_.size() == 1) {   // only one keyframe
             interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
             return interpolated_path_;
@@ -443,7 +441,7 @@ namespace easy3d {
         else if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
             return interpolated_path_;
 
-        if (smoothing && interpolated_path_.size() > 2)
+        if (smoothing && keyframes_.size() > 2)
             adjust_keyframe_times(keyframes_, true);
 
         LOG_IF(INFO, keyframes_.size() > 2) << "interpolating " << keyframes_.size() << " keyframes";
@@ -451,7 +449,7 @@ namespace easy3d {
         LOG_IF(INFO, keyframes_.size() > 2)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
-                        << duration() / interpolation_speed() << " seconds (at speed " << interpolation_speed() << "x)";
+                        << duration() / interpolation_speed() << "s (at speed " << interpolation_speed() << "x)";
 
         if (smoothing && interpolated_path_.size() > 2) { // more iterations do not provide further improvement
             std::vector<Keyframe> as_key_frames;
