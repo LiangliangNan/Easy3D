@@ -60,12 +60,12 @@ private:
         float tx, ty, tz;   // the translation
     };
     std::vector<CameraPara> views_;
-    std::size_t current_view_;
+    int current_view_;
     
     bool read_bundler_file(const std::string& file_name);
     
     // K [R T] -> easy3d camera representation
-    bool KRT_to_camera(std::size_t view_index, int method, easy3d::Camera* c);
+    bool KRT_to_camera(int view_index, int method, easy3d::Camera* c);
     
     void create_cameras_drawable();
 

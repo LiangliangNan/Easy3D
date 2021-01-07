@@ -111,7 +111,7 @@ namespace easy3d {
     TextMesher::_generate_contours(int codepoint, float &x, float &y, int font_size, std::vector<Polygon2> &contours) {
         int glyph_index = stbtt_FindGlyphIndex(get_font(font_), codepoint);
         if (glyph_index == 0) {
-            LOG(WARNING) << "given font does not support character " << string::to_string({wchar_t(codepoint)});
+            LOG(WARNING) << "given font does not support character " << string::from_wstring({wchar_t(codepoint)});
             return false;
         }
 

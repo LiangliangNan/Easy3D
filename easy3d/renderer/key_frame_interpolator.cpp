@@ -42,6 +42,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
+#include <easy3d/util/string.h>  // for formating time string
 
 
 namespace easy3d {
@@ -449,7 +450,8 @@ namespace easy3d {
         LOG_IF(INFO, keyframes_.size() > 2)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
-                        << duration() / interpolation_speed() << "s (at speed " << interpolation_speed() << "x)";
+                        << string::time(duration() / interpolation_speed() * 1000)
+                        << " (at speed " << interpolation_speed() << "x)";
 
         if (smoothing && interpolated_path_.size() > 2) { // more iterations do not provide further improvement
             std::vector<Keyframe> as_key_frames;

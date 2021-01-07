@@ -1345,7 +1345,7 @@ void PaintCanvas::saveState(std::ostream& output) const {
         return;
 
     // first line is just a comment
-    output << "<Mapple Viewer State> - Saved on " << string::from_current_time() << std::endl << std::endl;
+    output << "<Mapple Viewer State> - Saved on " << string::date_time() << std::endl << std::endl;
 
     //-----------------------------------------------------
 

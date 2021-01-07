@@ -161,7 +161,7 @@ namespace easy3d {
 		std::string vert_code;
         file_system::read_file_to_string(vert_file, vert_code);
 		if (!extra_vert_code.empty())
-			string::replace_substring(vert_code, "//INSERT", extra_vert_code);
+			string::replace(vert_code, "//INSERT", extra_vert_code);
         bool success = program->load_shader_from_code(ShaderProgram::VERTEX, vert_code);
         if (!success) {
             delete program;
@@ -171,7 +171,7 @@ namespace easy3d {
 		std::string frag_code;
         file_system::read_file_to_string(frag_file, frag_code);
 		if (!extra_frag_code.empty())
-			string::replace_substring(frag_code, "//INSERT", extra_frag_code);
+			string::replace(frag_code, "//INSERT", extra_frag_code);
         success = program->load_shader_from_code(ShaderProgram::FRAGMENT, frag_code);
         if (!success) {
             delete program;
@@ -182,7 +182,7 @@ namespace easy3d {
 			std::string geom_code;
             file_system::read_file_to_string(geom_file, geom_code);
 			if (!extra_geom_code.empty())
-				string::replace_substring(geom_code, "//INSERT", extra_geom_code);
+				string::replace(geom_code, "//INSERT", extra_geom_code);
             success = program->load_shader_from_code(ShaderProgram::GEOMETRY, geom_code);
             if (!success) {
                 delete program;

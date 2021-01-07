@@ -129,7 +129,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 
 
 void RealCamera::load_image() {
-    const std::string image_file = resource::directory() + "/data/fountain/images/" + string::from_integer(current_view_, 4, '0') + ".jpg";
+    const std::string image_file = resource::directory() + "/data/fountain/images/" + string::to_string(current_view_, 4, '0') + ".jpg";
     if (file_system::is_file(image_file)) {
         texture_ = TextureManager::request(image_file);
     }
@@ -137,7 +137,7 @@ void RealCamera::load_image() {
 }
 
 
-bool RealCamera::KRT_to_camera(std::size_t view_index, int method, Camera* c) {
+bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
     if (view_index < 0 || view_index >= views_.size()) {
         std::cerr << "Error: invalid view index (" << view_index << ")" << std::endl;
         return false;

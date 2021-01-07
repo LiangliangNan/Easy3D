@@ -26,8 +26,8 @@
 
 #include <algorithm>
 #include <cstdarg>
-#include <iostream>
 #include <iomanip>
+#include <cmath>
 #include <codecvt>
 
 
@@ -35,12 +35,7 @@ namespace easy3d {
 
     namespace string {
 
-        void split_string(
-                const std::string &in,
-                char separator,
-                std::vector<std::string> &out,
-                bool skip_empty_fields
-        ) {
+        void split(const std::string &in, char separator, std::vector<std::string> &out, bool skip_empty_fields) {
             size_t length = in.length();
             size_t start = 0;
             while (start < length) {
@@ -55,12 +50,7 @@ namespace easy3d {
             }
         }
 
-        bool split_string(
-                const std::string &in,
-                char separator,
-                std::string &left,
-                std::string &right
-        ) {
+        bool split(const std::string &in, char separator, std::string &left, std::string &right) {
             size_t p = in.find(separator);
             if (p == std::string::npos) {
                 left = "";
@@ -72,10 +62,7 @@ namespace easy3d {
             return true;
         }
 
-        std::string join_strings(
-                const std::vector<std::string> &in,
-                char separator
-        ) {
+        std::string join(const std::vector<std::string> &in, char separator) {
             std::string result;
             for (unsigned int i = 0; i < in.size(); i++) {
                 if (result.length() != 0) {
@@ -86,10 +73,7 @@ namespace easy3d {
             return result;
         }
 
-        std::string join_strings(
-                const std::vector<std::string> &in,
-                const std::string &separator
-        ) {
+        std::string join(const std::vector<std::string> &in, const std::string &separator) {
             std::string result;
             for (unsigned int i = 0; i < in.size(); i++) {
                 if (result.length() != 0) {
@@ -101,11 +85,7 @@ namespace easy3d {
         }
 
 
-        void replace_substring(
-                std::string &in,
-                const std::string &old_substr,
-                const std::string &new_substr
-        ) {
+        void replace(std::string &in, const std::string &old_substr, const std::string &new_substr) {
             std::size_t pos = in.find(old_substr);
             if (pos != std::string::npos) {
                 in.replace(pos, old_substr.length(), new_substr);
@@ -145,24 +125,20 @@ namespace easy3d {
 #endif
 
         std::string quote(const std::string &s, char quotes) {
-            return char_to_string(quotes) + s + char_to_string(quotes);
+            return to_string(quotes) + s + to_string(quotes);
         }
 
-        bool string_starts_with(
-                const std::string &haystack, const std::string &needle
-        ) {
+        bool starts_with(const std::string &haystack, const std::string &needle) {
             return haystack.compare(0, needle.length(), needle) == 0;
         }
 
-        bool string_ends_with(
-                const std::string &haystack, const std::string &needle
-        ) {
+        bool ends_with(const std::string &haystack, const std::string &needle) {
             size_t l1 = haystack.length();
             size_t l2 = needle.length();
             return l1 > l2 && haystack.compare(l1 - l2, l1, needle) == 0;
         }
 
-        std::string from_integer(int v, int width, char fill) {
+        std::string to_string(int v, int width, char fill) {
             std::ostringstream string_stream;
             string_stream << std::setfill(fill) << std::setw(width) << v;
             return string_stream.str();
@@ -170,7 +146,7 @@ namespace easy3d {
 
         /********************************************************************/
 
-        void string_append_v(std::string *dst, const char *format, va_list ap) {
+        void append_v(std::string &dst, const char *format, va_list ap) {
             // First try with a small fixed size buffer.
             static const int kFixedBufferSize = 1024;
             char fixed_buffer[kFixedBufferSize];
@@ -186,7 +162,7 @@ namespace easy3d {
             if (result < kFixedBufferSize) {
                 if (result >= 0) {
                     // Normal case - everything fits.
-                    dst->append(fixed_buffer, result);
+                    dst.append(fixed_buffer, result);
                     return;
                 }
 
@@ -211,37 +187,36 @@ namespace easy3d {
 
             // Restore the va_list before we use it again.
             va_copy(backup_ap, ap);
-            result =
-                    vsnprintf(variable_buffer, variable_buffer_size, format, backup_ap);
+            result = vsnprintf(variable_buffer, variable_buffer_size, format, backup_ap);
             va_end(backup_ap);
 
             if (result >= 0 && result < variable_buffer_size) {
-                dst->append(variable_buffer, result);
+                dst.append(variable_buffer, result);
             }
             delete[] variable_buffer;
         }
 
 
-        std::string string_printf(const char *format, ...) {
+        std::string printf(const char *format, ...) {
             va_list ap;
             va_start(ap, format);
             std::string result;
-            string_append_v(&result, format, ap);
+            append_v(result, format, ap);
             va_end(ap);
             return result;
         }
 
-        void string_appendf(std::string *dst, const char *format, ...) {
+        void appendf(std::string &dst, const char *format, ...) {
             va_list ap;
             va_start(ap, format);
-            string_append_v(dst, format, ap);
+            append_v(dst, format, ap);
             va_end(ap);
         }
 
 
         // format example: "Fri Jan 09 11:39:32 2015"
-        std::string from_current_time() {
-            time_t now = time(nullptr); /* get current time; same as: time(&now)  */
+        std::string date_time() {
+            time_t now = ::time(nullptr); /* get current time; same as: time(&now)  */
             struct tm *timeinfo = localtime(&now);
             std::string tstr = asctime(timeinfo);
 
@@ -252,14 +227,43 @@ namespace easy3d {
             //size_t strftime(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr);
         }
 
-        using convert_t = std::codecvt_utf8<wchar_t>;
-        static std::wstring_convert<convert_t, wchar_t> converter;
 
-        std::wstring to_wstring(const std::string& str) {
+        std::string time(double time, int num_digits) {
+            if (std::isnan(time) || std::isinf(time))
+                return "inf";
+
+            std::string suffix = "ms";
+            if (time > 1000) {
+                time /= 1000;
+                suffix = "s";
+                if (time > 60) {
+                    time /= 60;
+                    suffix = "m";
+                    if (time > 60) {
+                        time /= 60;
+                        suffix = "h";
+                        if (time > 12) {
+                            time /= 12;
+                            suffix = "d";
+                        }
+                    }
+                }
+            }
+
+            std::ostringstream os;
+            os << std::setprecision(num_digits) << std::fixed << time << suffix;
+
+            return os.str();
+        }
+
+
+        std::wstring to_wstring(const std::string &str) {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
             return converter.from_bytes(str);
         }
 
-        std::string to_string(const std::wstring& wstr) {
+        std::string from_wstring(const std::wstring &wstr) {
+            std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
             return converter.to_bytes(wstr);
         }
 
