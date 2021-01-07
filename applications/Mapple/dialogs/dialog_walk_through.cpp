@@ -33,6 +33,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/stop_watch.h>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -320,6 +321,7 @@ void DialogWalkThrough::preview(bool b) {
     // this also handles the UI, but a bit complicated (because the Qt GUI actions cannot be triggered in another thread)
     // idea: animation signal -> Qt signals -> Qt action
     auto interpolationStopped = [this]() -> void { emit previewStopped(); };
+    static StopWatch w;
     if (b) {
         if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
             LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
@@ -344,6 +346,7 @@ void DialogWalkThrough::preview(bool b) {
         for (auto w : findChildren<QToolButton*>()) w->setEnabled(false);
 
         LOG(INFO) << "preview started...";
+        w.start();
         interpolator()->start_interpolation();
     }
     else {
@@ -351,7 +354,7 @@ void DialogWalkThrough::preview(bool b) {
         QObject::disconnect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
         interpolator()->stop_interpolation();
-        LOG(INFO) << "animation finished";
+        LOG(INFO) << "preview finished. " << w.time_string() << std::endl;
 
         for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
         for (auto w : findChildren<QPushButton*>()) w->setEnabled(true);
@@ -393,8 +396,9 @@ void DialogWalkThrough::record() {
     hide();
     QApplication::processEvents();
     LOG(INFO) << "recording started...";
+    StopWatch w;
     viewer_->recordAnimation(file, fps, bitrate, true);
-    LOG(INFO) << "recording finished";
+    LOG(INFO) << "recording finished. " << w.time_string() << std::endl;
 
     // restore
     if (visible)

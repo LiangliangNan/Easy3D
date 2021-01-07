@@ -155,7 +155,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
             //---------------------------------------------------------------------------
 
-            // this very important (the progress bar may interfere the framebuffer
+            // this very important (the progress bar may interfere the framebuffer)
             makeCurrent();
 
             fbo->bind();
@@ -207,7 +207,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
         }
     }
 
-    // this very important (the progress bar may interfere the framebuffer
+    // this very important (the progress bar may interfere the framebuffer)
     makeCurrent();
     // clean
     delete fbo;
@@ -300,7 +300,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
 
-        // this very important (the progress bar may interfere the framebuffer
+        // this very important (the progress bar may interfere the framebuffer)
         makeCurrent();
 
         fbo->bind();
@@ -346,7 +346,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
 #endif
     }
 
-    // this very important (the progress bar may interfere the framebuffer
+    // this very important (the progress bar may interfere the framebuffer)
     makeCurrent();
     // clean
     delete fbo;
@@ -432,7 +432,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
 
-        // this very important (the progress bar may interfere the framebuffer
+        // this very important (the progress bar may interfere the framebuffer)
         makeCurrent();
 
         fbo->bind();
@@ -474,7 +474,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
 #endif
     }
 
-    // this very important (the progress bar may interfere the framebuffer
+    // this very important (the progress bar may interfere the framebuffer)
     makeCurrent();
     // clean
     delete fbo;
