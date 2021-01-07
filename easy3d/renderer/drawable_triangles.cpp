@@ -159,6 +159,7 @@ namespace easy3d {
                 ->set_uniform("distinct_back_color",distinct_back_color())
                 ->set_uniform("backside_color",back_color())
                 ->set_uniform("smooth_shading", smooth_shading())
+                ->set_uniform("ssaoEnabled", is_ssao_enabled())
                 ->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess)
@@ -172,7 +173,11 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
+        if (is_ssao_enabled())
+            program->bind_texture("ssaoTexture", ssao_texture_, 1);
         gl_draw(with_storage_buffer);
+        if (is_ssao_enabled())
+            program->release_texture();
 
         program->release_texture();
         program->release();

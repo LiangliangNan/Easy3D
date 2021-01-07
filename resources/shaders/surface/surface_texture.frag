@@ -11,6 +11,10 @@ layout(std140) uniform Material {
     float    shininess;
 };
 
+// SSAO
+uniform sampler2D   ssaoTexture;
+uniform bool        ssaoEnabled = false;
+
 uniform bool lighting = true;
 uniform bool two_sides_lighting = true;
 uniform bool smooth_shading;
@@ -97,11 +101,11 @@ void main() {
         sf = pow(sf, shininess);
     }
 
-    //		if (ssaoEnabled) {
-    //			vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
-    //			float coeff = texture(ssaoTexture, texCoord).r;
-    //			outputF = vec4(vec3(color * df + specular * sf + ambient) * coeff, alpha);
-    //		}
-    //		else
-    outputF = vec4(color * df + specular * sf + ambient, alpha);
+    if (ssaoEnabled) {
+        vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
+        float coeff = texture(ssaoTexture, texCoord).r;
+        outputF = vec4((color * df + specular * sf + ambient) * coeff, alpha);
+    }
+    else
+        outputF = vec4(color * df + specular * sf + ambient, alpha);
 }
