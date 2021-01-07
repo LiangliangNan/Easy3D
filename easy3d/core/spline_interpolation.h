@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CORE_CUBIC_SPLINE_INTERPOLATION_H
-#define EASY3D_CORE_CUBIC_SPLINE_INTERPOLATION_H
+#ifndef EASY3D_CORE_SPLINE_INTERPOLATION_H
+#define EASY3D_CORE_SPLINE_INTERPOLATION_H
 
 #include <cstdio>
 #include <cassert>
@@ -35,13 +35,17 @@
 
 namespace easy3d {
 
-
     /**
      * \brief Cubic spline interpolation.
-     * \details Spline interpolation have many applications, e.g., curve interpolation (for any dimensions).
+     * \details SplineInterpolation generates a piecewise polynomial function of degree 3 and is twice continuously
+     *      differentiable everywhere. Boundary conditions default to zero-curvature at the end points. It extrapolates
+     *      linearly, if default boundary conditions are used, or otherwise extrapolation is a quadratic function.
      *      The math behind this implementation is described here: https://kluge.in-chemnitz.de/opensource/spline/
-     * Example for 3D curve interpolation
+     *
+     * Spline interpolation have many applications, e.g., curve interpolation (for any dimensions).
+     * The following code shows how to use SplineInterpolation for 3D curve interpolation.
      *      \code
+     *          // a 3D curve is represented in the parametric form: x(t), y(t), and z(t).
      *          std::vector<double> T(points.size()), X(points.size()), Y(points.size()), Z(points.size());
      *          double t = 0.0;
      *          for (std::size_t i = 0; i < points.size(); ++i) {
@@ -53,9 +57,17 @@ namespace easy3d {
      *              Y[i] = p.y;
      *              Z[i] = p.z;
      *          }
-     *          SplineInterpolation<double> x_spline;x_spline.set_data(T, X);
-     *          SplineInterpolation<double> y_spline;y_spline.set_data(T, Y);
-     *          SplineInterpolation<double> z_spline; z_spline.set_data(T, Z);
+     *
+     *          // class instantiation
+     *          typedef SplineInterpolation<double> Interpolator;
+     *          Interpolator x_spline, y_spline, z_spline;
+     *          // [optional] set the boundary conditions.
+     *          x_spline.set_boundary(Interpolator::second_deriv, 0.0, Interpolator::first_deriv, -2.0, false);
+     *          // set data
+     *          x_spline.set_data(T, X);
+     *          y_spline.set_data(T, Y);
+     *          z_spline.set_data(T, Z);
+     *          // evaluate the curve at equal intervals (this results in a sequence of points on the curve).
      *          double total_length = t;
      *          int steps = 1000;
      *          double interval = total_length / steps;
@@ -500,4 +512,4 @@ namespace easy3d {
 }
 
 
-#endif //EASY3D_CORE_CUBIC_SPLINE_INTERPOLATION_H
+#endif //EASY3D_CORE_SPLINE_INTERPOLATION_H
