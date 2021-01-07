@@ -40,10 +40,8 @@ namespace easy3d {
      * (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
      * This Timer class provides a single-header implementation.
      *
-     * With Timer, tasks (i.e., calling to functions) can be easily
-     * scheduled at either constant intervals or after a specified
-     * period. Timer supports any types of functions with any number
-     * of arguments.
+     * With Timer, tasks (i.e., calling to functions) can be easily scheduled at either constant intervals or after
+     * a specified period. Timer supports any types of functions with any number of arguments.
      *
      ** Code examples:
      *### Example 1: calling to non-member functions
@@ -105,16 +103,18 @@ namespace easy3d {
          * \brief Executes function \p func after \p delay milliseconds.
          * \param func The pointer to the function.
          * \param delay The time to be delayed, in milliseconds.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const int taskID = 3;
          *          const std::string msg = "Finished";
-         *          Timer::single_shot(5000, &reset, taskID, msg);
+         *          Timer::single_shot(5000, &reset, taskID, msg, data);
          *      \endcode
-         * so this won't work
+         * So this won't work
          *      \code
-         *          Timer::single_shot(5000, &reset, 3, "Finished");
-         *      \endcode       
+         *          Timer::single_shot(5000, &reset, 3, "Finished", data);
+         *      \endcode
          */
         template < class Function, class... Args >
         static void single_shot(int delay, Function&& func, Args&&... args);
@@ -124,34 +124,38 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param owner The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c owner, e.g., '&Class::foo()'.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const int taskID = 3;
          *          const std::string msg = "Finished";
-         *          Timer::single_shot(5000, viewer, &Viewer::reset, taskID, msg);
+         *          Timer::single_shot(5000, viewer, &Viewer::reset, taskID, msg, data);
          *      \endcode    
          * so this won't work
          *      \code
-         *          Timer::single_shot(5000, viewer, &Viewer::reset, 3, "Finished");
-         *      \endcode       
+         *          Timer::single_shot(5000, viewer, &Viewer::reset, 3, "Finished", data);
+         *      \endcode
          */
         template < class Class, class Function, class... Args >
-        static void single_shot(int delay, Class&& owner, Function&& func, Args&&... args);
+        static void single_shot(int delay, Function&& func, Class&& owner, Args&&... args);
 
         /**
          * \brief Executes function \p func after \p delay milliseconds. 
          * \details This is the same as single_shot() except that it is not static.
          * \param delay The time to be delayed, in milliseconds.
          * \param func The pointer to the function.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const int taskID = 3;
          *          const std::string msg = "Finished";
-         *          timer.set_timeout(5000, &reset, taskID, msg);
+         *          timer.set_timeout(5000, &reset, taskID, msg, data);
          *      \endcode    
          * so this won't work
          *      \code
-         *          timer.set_timeout(5000, &reset, 3, "Finished");
+         *          timer.set_timeout(5000, &reset, 3, "Finished", data);
          *      \endcode       
          */
         template <class Function, class... Args >
@@ -163,32 +167,36 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param owner The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c owner, e.g., '&Class::foo()'.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const int taskID = 3;
          *          const std::string msg = "Finished";
-         *          timer.set_timeout(5000, viewer, &Viewer::reset, taskID, msg);
+         *          timer.set_timeout(5000, viewer, &Viewer::reset, taskID, msg, data);
          *      \endcode    
          * so this won't work
          *      \code
-         *          timer.set_timeout(5000, viewer, &Viewer::reset, 3, "Finished");
+         *          timer.set_timeout(5000, viewer, &Viewer::reset, 3, "Finished", data);
          *      \endcode       
          */
         template < class Class, class Function, class... Args >
-        void set_timeout(int delay, Class&& owner, Function&& func, Args&&... args);
+        void set_timeout(int delay, Function&& func, Class&& owner, Args&&... args);
 
         /**
          * \brief Executes function ‘func' for every 'interval' milliseconds.
          * \param interval The interval, in milliseconds.
          * \param func The pointer to the function.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const std::string speed = "Speed: ";
-         *          timer.set_interval(10000, &print_speed, speed);
+         *          timer.set_interval(10000, &print_speed, speed, data);
          *      \endcode    
          * so this won't work
          *      \code
-         *          timer.set_interval(10000, &print_speed, "Speed: ");
+         *          timer.set_interval(10000, &print_speed, "Speed: ", data);
          *      \endcode       
          */
         template <class Function, class... Args >
@@ -199,18 +207,20 @@ namespace easy3d {
          * \param interval The interval, in milliseconds.
          * \param owner The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c owner, e.g., '&Class::foo()'.
-         * \note Arguments must be \c const.
+         * \note Arguments must be \c const. When an argument is a pointer, it has to be of type "Class* const".
          *      \code
+         *          class MyClass {};
+         *          MyClass* const data = new MyClass;   // MyClass* data = new MyClass; will not work
          *          const std::string speed = "Speed: ";
-         *          timer.set_interval(10000, car, &Car::print_speed, speed);
+         *          timer.set_interval(10000, car, &Car::print_speed, speed, data);
          *      \endcode    
          * so this won't work
          *      \code
-         *          timer.set_interval(10000, car, &Car::print_speed, "Speed: ");
+         *          timer.set_interval(10000, car, &Car::print_speed, "Speed: ", data);
          *      \endcode       
          */
         template < class Class, class Function, class... Args >
-        void set_interval(int interval, Class&& owner, Function&& func, Args&&... args);
+        void set_interval(int interval, Function&& func, Class&& owner, Args&&... args);
 
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
@@ -238,7 +248,7 @@ namespace easy3d {
 
 
     template < class Class, class Function, class... Args >
-    void Timer::single_shot(int delay, Class&& owner, Function&& func, Args&&... args) {
+    void Timer::single_shot(int delay, Function&& func, Class&& owner, Args&&... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 #if 0 // this has ambiguities in determine which function
@@ -267,7 +277,7 @@ namespace easy3d {
 
 
     template < class Class, class Function, class... Args >
-    void Timer::set_timeout(int delay, Class&& owner, Function&& func, Args&&... args) {
+    void Timer::set_timeout(int delay, Function&& func, Class&& owner, Args&&... args) {
         stopped_ = false;
         std::thread t([=]() {
             if(stopped_) return;
@@ -301,7 +311,7 @@ namespace easy3d {
 
 
     template < class Class, class Function, class... Args >
-    void Timer::set_interval(int interval, Class&& owner, Function&& func, Args&&... args) {
+    void Timer::set_interval(int interval, Function&& func, Class&& owner, Args&&... args) {
         stopped_ = false;
         std::thread t([=]() {
             while(true) {
