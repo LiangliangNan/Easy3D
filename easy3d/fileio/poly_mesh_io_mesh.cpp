@@ -25,6 +25,7 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 
 #include <iostream>
+#include <cstring> //for strcmp
 
 #include <easy3d/core/poly_mesh.h>
 

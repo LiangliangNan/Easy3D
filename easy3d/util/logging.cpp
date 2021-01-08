@@ -23,6 +23,8 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <iomanip>
+#include <cstring>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #include <process.h>

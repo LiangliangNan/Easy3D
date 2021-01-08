@@ -23,6 +23,9 @@
  */
 
 #include <easy3d/algo/delaunay_2d.h>
+
+#include <cstring> // for memset
+
 #include <easy3d/util/stop_watch.h>
 
 extern "C" {
