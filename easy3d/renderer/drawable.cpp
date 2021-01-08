@@ -330,7 +330,7 @@ namespace easy3d {
     mat4 Drawable::manipulated_matrix() const {
         if (manipulator_)
             return manipulator()->matrix();
-        else if (model_)
+        else if (model_ && model_->manipulator())
             return model_->manipulator()->matrix();
         else
             return mat4::identity();
