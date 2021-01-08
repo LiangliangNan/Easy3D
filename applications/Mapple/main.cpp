@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 #endif
     QDir::setCurrent(workingDir.absolutePath());
 
-    logging::initialize(true, "", google::GLOG_INFO);
+    logging::initialize();
 
 #ifdef NDEBUG
     // splash screen

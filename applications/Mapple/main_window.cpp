@@ -227,24 +227,24 @@ void MainWindow::notify(std::size_t percent, bool update_viewer) {
 }
 
 
-void MainWindow::send(int severity, const std::string &message) {
+void MainWindow::write_log(int severity, const std::string &message) {
     static QMutex mutex;
     mutex.lock();
     std::string line("");
 	switch (severity) {
-        case 0:
+        case INFO:
             ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + message));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
             break;
-        case 1:
+        case WARNING:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + message));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkBlue);
             break;
-        case 2:
+        case ERROR:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + message));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkMagenta);
             break;
-        case 3:
+        case FATAL:
             ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + message));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
             break;

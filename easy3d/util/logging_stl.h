@@ -44,12 +44,9 @@
 // - GLOG_STL_LOGGING_FOR_EXT_SLIST     - <ext/slist>
 //
 
-#ifndef UTIL_GTL_STL_LOGGING_INL_H_
-#define UTIL_GTL_STL_LOGGING_INL_H_
+#ifndef EASY3D_UTIL_LOGGING_STL_H
+#define EASY3D_UTIL_LOGGING_STL_H
 
-#if !@ac_cv_cxx_using_operator@
-# error We do not support stl_logging for this compiler
-#endif
 
 #include <deque>
 #include <list>
@@ -59,51 +56,33 @@
 #include <utility>
 #include <vector>
 
-#ifdef GLOG_STL_LOGGING_FOR_UNORDERED
-# include <unordered_map>
-# include <unordered_set>
-#endif
-
-#ifdef GLOG_STL_LOGGING_FOR_TR1_UNORDERED
-# include <tr1/unordered_map>
-# include <tr1/unordered_set>
-#endif
-
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-# include <ext/hash_set>
-# include <ext/hash_map>
-#endif
-#ifdef GLOG_STL_LOGGING_FOR_EXT_SLIST
-# include <ext/slist>
-#endif
 
 // Forward declare these two, and define them after all the container streams
 // operators so that we can recurse from pair -> container -> container -> pair
 // properly.
 template<class First, class Second>
-std::ostream& operator<<(std::ostream& out, const std::pair<First, Second>& p);
+std::ostream &operator<<(std::ostream &out, const std::pair<First, Second> &p);
 
-@ac_google_start_namespace@
+namespace google {
 
-template<class Iter>
-void PrintSequence(std::ostream& out, Iter begin, Iter end);
+    template<class Iter>
+    void PrintSequence(std::ostream &out, Iter begin, Iter end);
 
-@ac_google_end_namespace@
+}
 
 #define OUTPUT_TWO_ARG_CONTAINER(Sequence) \
 template<class T1, class T2> \
 inline std::ostream& operator<<(std::ostream& out, \
                                 const Sequence<T1, T2>& seq) { \
-  @ac_google_namespace@::PrintSequence(out, seq.begin(), seq.end()); \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
   return out; \
 }
 
 OUTPUT_TWO_ARG_CONTAINER(std::vector)
+
 OUTPUT_TWO_ARG_CONTAINER(std::deque)
+
 OUTPUT_TWO_ARG_CONTAINER(std::list)
-#ifdef GLOG_STL_LOGGING_FOR_EXT_SLIST
-OUTPUT_TWO_ARG_CONTAINER(__gnu_cxx::slist)
-#endif
 
 #undef OUTPUT_TWO_ARG_CONTAINER
 
@@ -111,11 +90,12 @@ OUTPUT_TWO_ARG_CONTAINER(__gnu_cxx::slist)
 template<class T1, class T2, class T3> \
 inline std::ostream& operator<<(std::ostream& out, \
                                 const Sequence<T1, T2, T3>& seq) { \
-  @ac_google_namespace@::PrintSequence(out, seq.begin(), seq.end()); \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
   return out; \
 }
 
 OUTPUT_THREE_ARG_CONTAINER(std::set)
+
 OUTPUT_THREE_ARG_CONTAINER(std::multiset)
 
 #undef OUTPUT_THREE_ARG_CONTAINER
@@ -124,24 +104,13 @@ OUTPUT_THREE_ARG_CONTAINER(std::multiset)
 template<class T1, class T2, class T3, class T4> \
 inline std::ostream& operator<<(std::ostream& out, \
                                 const Sequence<T1, T2, T3, T4>& seq) { \
-  @ac_google_namespace@::PrintSequence(out, seq.begin(), seq.end()); \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
   return out; \
 }
 
 OUTPUT_FOUR_ARG_CONTAINER(std::map)
+
 OUTPUT_FOUR_ARG_CONTAINER(std::multimap)
-#ifdef GLOG_STL_LOGGING_FOR_UNORDERED
-OUTPUT_FOUR_ARG_CONTAINER(std::unordered_set)
-OUTPUT_FOUR_ARG_CONTAINER(std::unordered_multiset)
-#endif
-#ifdef GLOG_STL_LOGGING_FOR_TR1_UNORDERED
-OUTPUT_FOUR_ARG_CONTAINER(std::tr1::unordered_set)
-OUTPUT_FOUR_ARG_CONTAINER(std::tr1::unordered_multiset)
-#endif
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-OUTPUT_FOUR_ARG_CONTAINER(__gnu_cxx::hash_set)
-OUTPUT_FOUR_ARG_CONTAINER(__gnu_cxx::hash_multiset)
-#endif
 
 #undef OUTPUT_FOUR_ARG_CONTAINER
 
@@ -149,47 +118,34 @@ OUTPUT_FOUR_ARG_CONTAINER(__gnu_cxx::hash_multiset)
 template<class T1, class T2, class T3, class T4, class T5> \
 inline std::ostream& operator<<(std::ostream& out, \
                                 const Sequence<T1, T2, T3, T4, T5>& seq) { \
-  @ac_google_namespace@::PrintSequence(out, seq.begin(), seq.end()); \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
   return out; \
 }
-
-#ifdef GLOG_STL_LOGGING_FOR_UNORDERED
-OUTPUT_FIVE_ARG_CONTAINER(std::unordered_map)
-OUTPUT_FIVE_ARG_CONTAINER(std::unordered_multimap)
-#endif
-#ifdef GLOG_STL_LOGGING_FOR_TR1_UNORDERED
-OUTPUT_FIVE_ARG_CONTAINER(std::tr1::unordered_map)
-OUTPUT_FIVE_ARG_CONTAINER(std::tr1::unordered_multimap)
-#endif
-#ifdef GLOG_STL_LOGGING_FOR_EXT_HASH
-OUTPUT_FIVE_ARG_CONTAINER(__gnu_cxx::hash_map)
-OUTPUT_FIVE_ARG_CONTAINER(__gnu_cxx::hash_multimap)
-#endif
 
 #undef OUTPUT_FIVE_ARG_CONTAINER
 
 template<class First, class Second>
-inline std::ostream& operator<<(std::ostream& out,
-                                const std::pair<First, Second>& p) {
-  out << '(' << p.first << ", " << p.second << ')';
-  return out;
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::pair<First, Second> &p) {
+    out << '(' << p.first << ", " << p.second << ')';
+    return out;
 }
 
-@ac_google_start_namespace@
+namespace google {
 
-template<class Iter>
-inline void PrintSequence(std::ostream& out, Iter begin, Iter end) {
-  // Output at most 100 elements -- appropriate if used for logging.
-  for (int i = 0; begin != end && i < 100; ++i, ++begin) {
-    if (i > 0) out << ' ';
-    out << *begin;
-  }
-  if (begin != end) {
-    out << " ...";
-  }
+    template<class Iter>
+    inline void PrintSequence(std::ostream &out, Iter begin, Iter end) {
+        // Output at most 100 elements -- appropriate if used for logging.
+        for (int i = 0; begin != end && i < 100; ++i, ++begin) {
+            if (i > 0) out << ' ';
+            out << *begin;
+        }
+        if (begin != end) {
+            out << " ...";
+        }
+    }
+
 }
-
-@ac_google_end_namespace@
 
 // Note that this is technically undefined behavior! We are adding things into
 // the std namespace for a reason though -- we are providing new operations on
@@ -217,4 +173,4 @@ inline void PrintSequence(std::ostream& out, Iter begin, Iter end) {
 // in both because that would create ambiguous overloads when both are found.
 namespace std { using ::operator<<; }
 
-#endif  // UTIL_GTL_STL_LOGGING_INL_H_
+#endif  // EASY3D_UTIL_LOGGING_STL_H

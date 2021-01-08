@@ -196,7 +196,7 @@ private:
     QString strippedName(const QString &fullFileName);
 
     void notify(std::size_t percent, bool update_viewer) override;
-    void send(int severity, const std::string &message) override;
+    void write_log(int severity, const std::string &message) override;
 
 private:
     PaintCanvas*   viewer_;
