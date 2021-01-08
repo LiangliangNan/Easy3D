@@ -4,11 +4,13 @@ in  vec3 vtx_position;
 in  vec3 vtx_normal;
 in  vec3 vtx_color;
 
-uniform vec4	default_color = vec4(0.4f, 0.8f, 0.8f, 1.0f);
-uniform bool	per_vertex_color = false;
+uniform vec4 default_color = vec4(0.4f, 0.8f, 0.8f, 1.0f);
+uniform bool per_vertex_color = false;
 
-uniform mat4	MVP;
+uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
+
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;
@@ -42,7 +44,7 @@ void main() {
         DataOut.color = default_color;
 
     DataOut.position = new_position.xyz;
-    DataOut.normal = vtx_normal;
+    DataOut.normal = NORMAL * vtx_normal;
 
     gl_Position = MVP * new_position;
 }

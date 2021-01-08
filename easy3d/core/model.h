@@ -35,7 +35,7 @@
 namespace easy3d {
 
     class Renderer;
-    class ManipulatedFrame;
+    class Manipulator;
 
     /**
      * \brief The base class of renderable 3D models.
@@ -85,19 +85,20 @@ namespace easy3d {
          */
         void set_renderer(Renderer* r) { renderer_ = r; }
         /** \brief Gets the renderer of this model. */
-        inline Renderer* renderer() { return renderer_; }
+        Renderer* renderer() { return renderer_; }
         /** \brief Gets the constant renderer of this model. */
-        inline const Renderer* renderer() const { return renderer_; }
+        const Renderer* renderer() const { return renderer_; }
 
         /**
-         * \brief Associate an manipulated frame to this model.
-         * \note Memory management of the frame is the user's responsibility.
+         * \brief Attaches a manipulator to this model.
+         * \note Memory management of the manipulator is the user's responsibility.
          */
-        void set_frame(ManipulatedFrame* f) { frame_ = f; }
-        /** \brief Gets the manipulated frame associated to this model. */
-        inline ManipulatedFrame* frame() { return frame_; }
-        /** \brief Gets the manipulated frame associated to this model. */
-        inline const ManipulatedFrame* frame() const { return frame_; }
+        void set_manipulator(Manipulator* manip) { manipulator_ = manip; }
+
+        /** \brief Gets the manipulator attached to this model. */
+        Manipulator* manipulator() { return manipulator_; }
+        /** \brief Gets the manipulator attached to this model. */
+        const Manipulator* manipulator() const { return manipulator_; }
 
     protected:
         std::string	name_;
@@ -105,8 +106,8 @@ namespace easy3d {
         Box3		bbox_;
         bool		bbox_known_;
 
-        Renderer* renderer_;        // for rendering
-        ManipulatedFrame* frame_;   // for manipulation
+        Renderer* renderer_;         // for rendering
+        Manipulator* manipulator_;   // for manipulation
     };
 }
 

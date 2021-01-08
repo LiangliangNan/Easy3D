@@ -53,6 +53,7 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>
@@ -130,7 +131,7 @@ PaintCanvas::~PaintCanvas() {
 void PaintCanvas::cleanup() {
     for (auto m : models_) {
         delete m->renderer();
-        delete m->frame();
+        delete m->manipulator();
         delete m;
     }
 
@@ -315,13 +316,14 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
         }
         else if (e->modifiers() == Qt::NoModifier) {
             ModelPicker picker(camera());
+            makeCurrent();
             auto model = picker.pick(models(), e->pos().x(), e->pos().y());
+            doneCurrent();
             if (model) {
-                if (!model->frame()) {
-                    auto frame = new ManipulatedFrame;
-                    frame->setPositionAndOrientation(model->bounding_box().center(), quat());
-                    model->set_frame(frame);
-                }
+                if (!model->manipulator())
+                    model->set_manipulator(new Manipulator(model));
+                setCurrentModel(model);
+                window_->updateUi();
             }
             // select the picked model (if picked) and deselect others
             for (auto m : models_)
@@ -425,7 +427,10 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             ManipulatedFrame *frame = camera()->frame();
             if (e->modifiers() == Qt::AltModifier) {
                 if (setting::clipping_plane && setting::clipping_plane->is_enabled())
-                    frame = setting::clipping_plane->manipulated_frame();
+                    frame = setting::clipping_plane->manipulator()->frame();
+                else if (currentModel() && currentModel()->renderer()->is_selected()) {
+                    frame = currentModel()->manipulator()->frame();
+                }
             }
 
             int x = e->pos().x();
@@ -821,6 +826,8 @@ void PaintCanvas::addModel(Model *model) {
 
     auto renderer = new Renderer(model);
     model->set_renderer(renderer);
+    auto manipulator = new Manipulator(model);
+    model->set_manipulator(manipulator);
 
     models_.push_back(model);
 //    model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
@@ -1019,6 +1026,8 @@ void PaintCanvas::drawCornerAxes() {
 
     program->bind();
     program->set_uniform("MVP", MVP)
+            ->set_uniform("MANIP", mat4::identity())
+            ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
             ->set_uniform("lighting", true)
             ->set_uniform("two_sides_lighting", false)
             ->set_uniform("smooth_shading", true)
@@ -1032,7 +1041,8 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("hightlight_id_min", -1)
             ->set_uniform("hightlight_id_max", -1)
-            ->set_uniform("clippingPlaneEnabled", false); easy3d_debug_log_gl_error;
+            ->set_uniform("clippingPlaneEnabled", false)
+            ->set_uniform("selected", false);  easy3d_debug_log_gl_error;
 
     drawable_axes_->gl_draw(false); easy3d_debug_log_gl_error;
     program->release();

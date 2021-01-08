@@ -5,8 +5,9 @@ in vec3 vtx_position;
 in vec2 vtx_texcoord;
 in vec3 vtx_normal;
 
-uniform mat4	MVP;
+uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -22,10 +23,6 @@ out Data{
 } DataOut;
 
 void main() {
-
-    DataOut.texcoord = vtx_texcoord;
-    DataOut.normal = vtx_normal;
-
     vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
     if (clippingPlaneEnabled) {
@@ -40,6 +37,8 @@ void main() {
     }
 
     DataOut.position = new_position.xyz;
+    DataOut.texcoord = vtx_texcoord;
+    DataOut.normal = NORMAL * vtx_normal;
 
     gl_Position = MVP * new_position;
 }

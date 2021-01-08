@@ -20,6 +20,7 @@ set(${PROJECT_NAME}_HEADERS
         framebuffer_object.h
         frustum.h
         key_frame_interpolator.h
+        manipulator.h
         manipulated_camera_frame.h
         manipulated_frame.h
         opengl.h
@@ -62,6 +63,7 @@ set(${PROJECT_NAME}_SOURCES
         framebuffer_object.cpp
         frustum.cpp
         key_frame_interpolator.cpp
+        manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
         opengl_error.cpp

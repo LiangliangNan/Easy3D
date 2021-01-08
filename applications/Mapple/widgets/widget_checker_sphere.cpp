@@ -199,6 +199,7 @@ void WidgetCheckerSphere::paintGL() {
 
     program->bind();
     program->set_uniform("MVP", MVP)
+            ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
             ->set_uniform("lighting", true)
             ->set_uniform("wLightPos", wLightPos)
             ->set_uniform("wCamPos", wCamPos)
@@ -209,7 +210,11 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("per_vertex_color", true)
             ->set_block_uniform("Material", "ambient", setting::material_ambient)
             ->set_block_uniform("Material", "specular", setting::material_specular)
-            ->set_block_uniform("Material", "shininess", &setting::material_shininess);
+            ->set_block_uniform("Material", "shininess", &setting::material_shininess)
+            ->set_uniform("highlight", false)
+            ->set_uniform("hightlight_id_min", -1)
+            ->set_uniform("hightlight_id_max", -1)
+            ->set_uniform("selected", false);
 
     program->set_uniform("MANIP", mat4::translation(lightPos_));
     lightSphere_->gl_draw(false);

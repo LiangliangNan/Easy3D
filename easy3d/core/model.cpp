@@ -31,7 +31,7 @@ namespace easy3d {
             : name_(name)
             , bbox_known_(false)
             , renderer_(nullptr)
-            , frame_(nullptr)
+            , manipulator_(nullptr)
     {
     }
 

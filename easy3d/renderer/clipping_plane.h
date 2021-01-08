@@ -30,9 +30,9 @@
 
 namespace easy3d {
 
-    class ManipulatedFrame;
     class Camera;
     class ShaderProgram;
+    class Manipulator;
 
     /**
      * \brief An implementation of a manipulable clipping plane for visualization of model interiors and cross sections.
@@ -84,7 +84,7 @@ namespace easy3d {
         /// sets the thickness of the cross section.
         void set_cross_section_width(float w) { cross_section_width_ = w; }
 
-        /// setups the shader program for rendering.
+        /// sets up the shader program for rendering.
         /// \param program The shader program.
         /// \param plane_clipping_discard Controls clipping plane behavior.
         ///     - true: completely discard a vertex in vertex shader
@@ -94,13 +94,13 @@ namespace easy3d {
         /// draws the clipping plane itself.
         void draw(Camera* cam) const;
 
-        /// returns the manipulated frame bound to the clipping plane.
-        virtual ManipulatedFrame *manipulated_frame();
-        /// returns the manipulated frame bound to the clipping plane.
-        virtual const ManipulatedFrame *manipulated_frame() const;
+        /// returns the manipulator attached to the clipping plane.
+        virtual Manipulator *manipulator() { return manipulator_; }
+        /// returns the manipulator attached to the clipping plane.
+        virtual const Manipulator *manipulator() const { return manipulator_; }
 
     protected:
-        ManipulatedFrame *manipulated_frame_;
+        Manipulator *manipulator_;
         bool enabled_;
         bool visible_;
         vec4 color_;

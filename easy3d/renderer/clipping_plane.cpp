@@ -31,6 +31,7 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/setting.h>
 
 
@@ -38,39 +39,27 @@ namespace easy3d {
 
 
     ClippingPlane::ClippingPlane()
-            : manipulated_frame_(nullptr), enabled_(false), visible_(true),
+            : manipulator_(nullptr), enabled_(false), visible_(true),
               color_(setting::clipping_plane_color), cross_section_(false),
-              cross_section_width_(0.001f), scene_radius_(1.0f) {
+              cross_section_width_(0.001f), scene_radius_(1.0f)
+    {
+        manipulator_ = new Manipulator;
+        static LocalConstraint constaint;
+        //constaint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
+        constaint.setTranslationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
+        manipulator_->frame()->setConstraint(&constaint);
     }
 
 
     ClippingPlane::~ClippingPlane() {
-        delete manipulated_frame_;
-    }
-
-
-    ManipulatedFrame *ClippingPlane::manipulated_frame() {
-        if (manipulated_frame_ == 0) {
-            manipulated_frame_ = new ManipulatedFrame;
-
-            static LocalConstraint constaint;
-            //constaint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
-            constaint.setTranslationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
-            manipulated_frame_->setConstraint(&constaint);
-        }
-        return manipulated_frame_;
-    }
-
-
-    const ManipulatedFrame *ClippingPlane::manipulated_frame() const {
-        return const_cast<ClippingPlane *>(this)->manipulated_frame();
+        delete manipulator_;
     }
 
 
     void ClippingPlane::fit_scene(const vec3 &center, float radius) {
         scene_radius_ = radius;
-        //manipulated_frame()->setPositionAndOrientation(center_, quat());
-        manipulated_frame()->setPosition(center); // keep the orientation
+        //manipulator_->frame()->setPositionAndOrientation(center_, quat());
+        manipulator_->frame()->setPosition(center); // keep the orientation
     }
 
 
@@ -86,12 +75,12 @@ namespace easy3d {
 
 
     vec3 ClippingPlane::center() const {
-        return manipulated_frame()->position();
+        return manipulator_->frame()->position();
     }
 
 
     vec3 ClippingPlane::normal() const {
-        const mat4 &CS = manipulated_frame()->matrix();
+        const mat4 &CS = manipulator_->frame()->matrix();
         return transform::normal_matrix(CS) * vec3(0, 0, 1);
     }
 
@@ -150,7 +139,7 @@ namespace easy3d {
         static std::vector<unsigned int> wire_indices = {0, 1, 1, 2, 2, 3, 3, 0};
 
         std::vector<vec3> points(4);
-        const mat4 &m = manipulated_frame()->matrix();
+        const mat4 &m = manipulator_->frame()->matrix();
         for (std::size_t i = 0; i < 4; ++i)
             points[i] = m * corners[i];
 

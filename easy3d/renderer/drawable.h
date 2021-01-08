@@ -36,6 +36,7 @@ namespace easy3d {
 
     class Model;
     class Camera;
+    class Manipulator;
     class VertexArrayObject;
 
     /**
@@ -171,6 +172,31 @@ namespace easy3d {
 
         ///@}
 
+        /// \name Manipulation
+        ///@{
+        /**
+         * \brief Gets the manipulator attached to this drawable.
+         * \details If the drawable is part of a model, it returns the model's manipulator.
+         *      Returns \c nullptr if the drawable cannot be manipulated.
+         */
+        Manipulator* manipulator();
+        /**
+         * \brief Gets the manipulator attached to this drawable.
+         * \details If the drawable is part of a model, it returns the model's manipulator.
+         *      Returns \c nullptr if the drawable cannot be manipulated.
+         */
+        const Manipulator* manipulator() const;
+
+        /**
+         * \brief Attaches a manipulator to this model.
+         * \details This is used to manipulate a drawable that is not part of a model.
+         */
+        void set_manipulator(Manipulator* manip) { manipulator_ = manip; }
+
+        /// \brief Returns the manipulation matrix.
+        mat4 manipulated_matrix() const;
+        ///@}
+
     protected:
         VertexArrayObject *vao() const { return vao_; }
 
@@ -203,6 +229,9 @@ namespace easy3d {
 
         unsigned int selection_buffer_;  // used for selection.
         std::size_t current_selection_buffer_size_; // in case the object is modified
+
+        // drawables not attached to a model can also be manipulated
+        Manipulator* manipulator_;   // for manipulation
     };
 
 }

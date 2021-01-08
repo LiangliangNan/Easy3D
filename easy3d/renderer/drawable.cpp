@@ -33,6 +33,7 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
@@ -44,7 +45,7 @@ namespace easy3d {
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
               texcoord_buffer_(0), element_buffer_(0), storage_buffer_(0), current_storage_buffer_size_(0),
-              selection_buffer_(0), current_selection_buffer_size_(0) {
+              selection_buffer_(0), current_selection_buffer_size_(0), manipulator_(nullptr) {
         vao_ = new VertexArrayObject;
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }
@@ -53,6 +54,7 @@ namespace easy3d {
     Drawable::~Drawable() {
         clear();
         delete vao_;
+        delete manipulator_;
     }
 
 
@@ -306,6 +308,32 @@ namespace easy3d {
 
         vao_->release();
         easy3d_debug_log_gl_error;
+    }
+
+
+    Manipulator* Drawable::manipulator() {
+        if (manipulator_)
+            return manipulator_;
+        else if (model_)
+            return model_->manipulator();
+        else
+            return nullptr;
+    }
+
+    /**
+     * \brief Gets the manipulator attached to this drawable.
+     * \details If the drawable is part of a model, it returns the model's manipulator.
+     */
+    const Manipulator* Drawable::manipulator() const { return manipulator_; }
+
+
+    mat4 Drawable::manipulated_matrix() const {
+        if (manipulator_)
+            return manipulator()->matrix();
+        else if (model_)
+            return model_->manipulator()->matrix();
+        else
+            return mat4::identity();
     }
 
 }

@@ -29,6 +29,9 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/transform.h>
+#include <easy3d/core/model.h>
 #include <easy3d/util/logging.h>
 
 
@@ -88,8 +91,15 @@ namespace easy3d {
         const mat4 &MV = camera->modelViewMatrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
+        // transformation introduced by manipulation
+        const mat4 MANIP = manipulated_matrix();
+        // needs be padded when using uniform blocks
+        const mat3 NORMAL = transform::normal_matrix(MANIP);
+
         program->bind();
         program->set_uniform("MVP", MVP)
+                ->set_uniform("MANIP", MANIP)
+                ->set_uniform( "NORMAL", NORMAL)
                 ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
@@ -151,8 +161,15 @@ namespace easy3d {
         const mat4 &MV = camera->modelViewMatrix();
         const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
+        // transformation introduced by manipulation
+        const mat4 MANIP = manipulated_matrix();
+        // needs be padded when using uniform blocks
+        const mat3 NORMAL = transform::normal_matrix(MANIP);
+
         program->bind();
         program->set_uniform("MVP", MVP)
+                ->set_uniform("MANIP", MANIP)
+                ->set_uniform( "NORMAL", NORMAL)
                 ->set_uniform("lighting", lighting())
                 ->set_uniform("wLightPos", wLightPos)
                 ->set_uniform("wCamPos", wCamPos)
