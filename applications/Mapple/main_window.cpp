@@ -227,25 +227,34 @@ void MainWindow::notify(std::size_t percent, bool update_viewer) {
 }
 
 
-void MainWindow::write_log(int severity, const std::string &message) {
+void MainWindow::send(google::LogSeverity severity, int line_number, const std::string &full_path,
+          const std::string &short_name, const std::string &time,
+          const std::string &pid_tid, const std::string &msg)
+  {
+    (void) line_number;
+    (void)full_path;
+    (void)short_name;
+    (void)time;
+    (void)pid_tid;
+
     static QMutex mutex;
     mutex.lock();
     std::string line("");
 	switch (severity) {
         case INFO:
-            ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + message));
+            ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
             break;
         case WARNING:
-            ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + message));
+            ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkBlue);
             break;
         case ERROR:
-            ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + message));
+            ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkMagenta);
             break;
         case FATAL:
-            ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + message));
+            ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
             break;
     }

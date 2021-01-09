@@ -12,13 +12,11 @@ set(EASY3D_LIB_DIR      "${EASY3D_PREFIX}/lib")
 set(EASY3D_INCLUDE_DIR
         "${EASY3D_SRC_DIR}"
         "${EASY3D_BUILD_DIR}"
-        "${EASY3D_SRC_DIR}/3rd_party/glog/src"
-        "${EASY3D_BUILD_DIR}/3rd_party/glog"
         )
 
 set(EASY3D_3RDPARTY_LIB_DIR    "${EASY3D_LIB_DIR}")
 
-set(EASY3D_3RDPARTY_LIBRARIES  "-L${EASY3D_LIB_DIR} -lglew -lglfw3 -lglogd -limgui -lLAStools -llibtess -lpoisson_recon-9.0.1 -lRANSAC-1.1 -lrply -ltriangle -ltetgen")
+set(EASY3D_3RDPARTY_LIBRARIES  "-L${EASY3D_LIB_DIR} -lglew -lglfw3 -limgui -lLAStools -llibtess -lpoisson_recon-9.0.1 -lRANSAC-1.1 -lrply -ltriangle -ltetgen")
 
 # glfw
 if (BUILD_SHARED_LIBS AND UNIX)
@@ -26,13 +24,6 @@ if (BUILD_SHARED_LIBS AND UNIX)
 else()
     set(EASY3D_3RDPARTY_LIBRARIES ${EASY3D_3RDPARTY_LIBRARIES} glfw3)
 endif()
-
-# glog
-#if (BUILD_SHARED_LIBS AND UNIX)
-#    set(EASY3D_3RDPARTY_LIBRARIES ${EASY3D_3RDPARTY_LIBRARIES} glfw)
-#else()
-#    set(EASY3D_3RDPARTY_LIBRARIES ${EASY3D_3RDPARTY_LIBRARIES} glfw3)
-#endif()
 
 set(EASY3D_LIBRARIES    "-L${EASY3D_LIB_DIR} -lcore -lfileio -lkdtree -lrenderer -lgui -lalgo -lutil -lviewer")
 set(EASY3D_LIBRARIES    ${EASY3D_LIBRARIES}   ${EASY3D_3RDPARTY_LIBRARIES})

@@ -28,9 +28,7 @@
 // Portions of this code are taken from the GLOG package.  This code is only a
 // small subset of the GLOG functionality. Notable differences from GLOG
 // behavior include lack of support for displaying unprintable characters and
-// lack of stack trace information upon failure of the CHECK macros.  On
-// non-Android systems, log output goes to std::cerr and is not written to a
-// file.
+// lack of stack trace information upon failure of the CHECK macros.
 //
 // CHECK macros are defined to test for conditions within code.  Any CHECK that
 // fails will log the failure and terminate the application.
@@ -86,40 +84,33 @@ namespace google {
     const int ERROR = ::ERROR;
     const int FATAL = ::FATAL;
 
-
-    // Set the file to which the log messages will be written into.
-    void set_log_file(std::ofstream *os);
-
-// Sink class used for integration with mock and test functions. If sinks are
-// added, all log output is also sent to each sink through the send function.
-// In this implementation, WaitTillSent() is called immediately after the send.
-// This implementation is not thread safe.
+    // Sink class used for integration with mock and test functions. If sinks are
+    // added, all log output is also sent to each sink through the send function.
+    // In this implementation, WaitTillSent() is called immediately after the send.
+    // This implementation is not thread safe.
     class LogSink {
     public:
         virtual ~LogSink() {}
 
-        virtual void write_log(int severity, const std::string& msg) = 0;
-        virtual void WaitTillSent() = 0;
+        virtual void send(google::LogSeverity severity,
+                          int line_number,
+                          const std::string& full_path,
+                          const std::string& short_name,
+                          const std::string& time,
+                          const std::string& pid_tid,
+                          const std::string& msg) = 0;
+        virtual void WaitTillSent() { /* client code should implement this */ }
     };
 
-// Global set of log sinks. The actual object is defined in logging.cc.
-    extern std::set<LogSink *> log_sinks_global;
 
-    inline void InitGoogleLogging(char *argv) {
-        (void) argv;
-        // Do nothing; this is ignored.
-    }
+    // Note: the Log sink functions are not thread safe.
+    void AddLogSink(LogSink *sink);
 
-// Note: the Log sink functions are not thread safe.
-    inline void AddLogSink(LogSink *sink) {
-        // TODO(settinger): Add locks for thread safety.
-        log_sinks_global.insert(sink);
-    }
+    void RemoveLogSink(LogSink *sink);
 
-    inline void RemoveLogSink(LogSink *sink) {
-        log_sinks_global.erase(sink);
-    }
-
+    // the function that will be called before abortion.
+    typedef void (*logging_fail_func_t)();
+    void InstallFailureFunction(void (*fail_func)());
 
     // ---------------------------- Logger Class --------------------------------
 
@@ -132,7 +123,6 @@ namespace google {
     class MessageLogger {
     public:
         MessageLogger(const char *file, int line, google::LogSeverity severity);
-
         MessageLogger(const char *file, int line, google::LogSeverity severity, int ctr);
 
         // Output the contents of the stream to the proper channel on destruction.
@@ -141,14 +131,14 @@ namespace google {
         // Return the stream associated with the logger object.
         std::stringstream &stream() { return stream_; }
 
-    private:
         static const std::string severity_labels[4];
-        static const char *severity_color_code[4];
 
+    private:
+        static const char *severity_color_code[4];
         static bool terminal_supports_colors();
 
     private:
-        void LogToSinks(const std::string& msg) const;
+        void LogToSinks() const;
         void WaitForSinks();
 
         static std::string simple_name(const std::string &full_path);
@@ -161,15 +151,18 @@ namespace google {
         std::string full_path_;
         std::string short_name_;
         int line_;
+        std::string time_str_;
+        std::string pid_tid_str_;
+        std::string message_;
         std::stringstream stream_;
         int severity_;
     };
 
-// ---------------------- Logging Macro definitions --------------------------
+    // ---------------------- Logging Macro definitions --------------------------
 
-// This class is used to explicitly ignore values in the conditional
-// logging macros.  This avoids compiler warnings like "value computed
-// is not used" and "statement has no effect".
+    // This class is used to explicitly ignore values in the conditional
+    // logging macros.  This avoids compiler warnings like "value computed
+    // is not used" and "statement has no effect".
     class LoggerVoidify {
     public:
         LoggerVoidify() {}
@@ -324,9 +317,7 @@ void LogMessageFatal(const char *file, int line, const T &message) {
 #define CHECK_GE(val1, val2) CHECK_OP(val1, val2, >=)
 #define CHECK_GT(val1, val2) CHECK_OP(val1, val2, >)
 
-// qiao.helloworld@gmail.com /tzu.ta.lin@gmail.com add
-// Add logging macros which are missing in glog or are not accessible for
-// whatever reason.
+
 #define CHECK_NEAR(val1, val2, margin)           \
   do {                                           \
     CHECK_LE((val1), (val2)+(margin));           \
@@ -341,7 +332,6 @@ void LogMessageFatal(const char *file, int line, const T &message) {
 #  define DCHECK_LT(val1, val2) CHECK_OP(val1, val2, <)
 #  define DCHECK_GE(val1, val2) CHECK_OP(val1, val2, >=)
 #  define DCHECK_GT(val1, val2) CHECK_OP(val1, val2, >)
-// qiao.helloworld@gmail.com /tzu.ta.lin@gmail.com add
 #  define DCHECK_NEAR(val1, val2, margin) CHECK_NEAR(val1, val2, margin)
 #else
 // These versions generate no code in optimized mode.
@@ -351,7 +341,6 @@ void LogMessageFatal(const char *file, int line, const T &message) {
 #  define DCHECK_LT(val1, val2) if (false) CHECK_OP(val1, val2, <)
 #  define DCHECK_GE(val1, val2) if (false) CHECK_OP(val1, val2, >=)
 #  define DCHECK_GT(val1, val2) if (false) CHECK_OP(val1, val2, >)
-// qiao.helloworld@gmail.com /tzu.ta.lin@gmail.com add
 #  define DCHECK_NEAR(val1, val2, margin) if (false) CHECK_NEAR(val1, val2, margin)
 #endif  // NDEBUG
 
@@ -393,7 +382,6 @@ T &CheckNotNull(const char *file, int line, const char *names, T &t) {
 
 
 // ---------------------------TRACE macros ---------------------------
-// qiao.helloworld@gmail.com /tzu.ta.lin@gmail.com add
 #define __FILENAME__ \
   (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
@@ -443,12 +431,12 @@ namespace easy3d
          *        (stderr) in addition to log files. The value can be one of INFO, WARNING, and ERROR.
          * @param log_file If a valid file path is provided (i.e., the file can be created or opened), the log messages
          *      will also be written to this file in addition to logging to stderr.
-         *      The default value is "default", the file will be created and put in a directory "logs" next to the
-         *      executable file.
-         * @note This initialization is optional. By default log messages will be written to stderr and the defaulty
-         *      log file (in a directory "logs" next to the executable file).
+         *      If an empty string is passed, no log file will be created.
+         *      Passing "default" allows to creat a log file with a title "ApplicationName.log" in a directory "logs"
+         *      next to the executable file.
+         * @note This initialization is optional. If not called, log messages will be written to stderr only.
          */
-        void initialize(int severity_threshold = INFO, const std::string& log_file = "default");
+        void initialize(int severity_threshold = INFO, const std::string& log_file = "");
 
 
         // Base class for a log client.
@@ -456,15 +444,24 @@ namespace easy3d
         class LogClient : public google::LogSink {
         public:
             LogClient();
+        };
 
-            // severity
-            //  0: INFO
-            //  1: WARNING
-            //  2: ERROR
-            //  3: FATAL
-            virtual void write_log(int severity, const std::string &message) override = 0;
-            void WaitTillSent() override {}
 
+        // log into a file
+        class FileLogClient : public google::LogSink {
+        public:
+            FileLogClient(const std::string &file_name);
+
+            void send(google::LogSeverity severity,
+                      int line_number,
+                      const std::string &file_full_path,
+                      const std::string &file_short_name,
+                      const std::string &time,
+                      const std::string &pid_tid,
+                      const std::string &msg) override;
+
+        private:
+            std::ofstream* output_;
         };
 
     };

@@ -18,6 +18,7 @@
 // this software without specific prior written permission.
 
 #include <easy3d/util/logging.h>
+#include <easy3d/util/stack_tracer.h>
 
 #include <algorithm>
 #include <fstream>
@@ -26,12 +27,11 @@
 #include <iomanip>
 #include <cstring>
 
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 #include <process.h>
 #else
-
 #include <unistd.h>
-
 #endif
 
 
@@ -39,14 +39,22 @@ namespace google {
 
     // This is the set of log sinks. This must be in a separate library to ensure
     // that there is only one instance of this across the entire program.
-    std::set<google::LogSink *> log_sinks_global;
+    static std::set<google::LogSink *> log_sinks_global;
 
+    // Note: the Log sink functions are not thread safe.
+    void AddLogSink(LogSink *sink) {
+        // TODO(settinger): Add locks for thread safety.
+        log_sinks_global.insert(sink);
+    }
 
-    std::ofstream* os_file_log = nullptr;
+    void RemoveLogSink(LogSink *sink) {
+        log_sinks_global.erase(sink);
+    }
 
-    // Set the file to which the log messages will be written into.
-    void set_log_file(std::ofstream *os) {
-        os_file_log = os;
+    logging_fail_func_t g_logging_fail_func = nullptr;
+
+    void InstallFailureFunction(void (*fail_func)()) {
+        g_logging_fail_func = (logging_fail_func_t)fail_func;
     }
 
 
@@ -76,49 +84,59 @@ namespace google {
 
     // Output the contents of the stream to the proper channel on destruction.
     MessageLogger::~MessageLogger() {
+        short_name_ = simple_name(std::string(full_path_));
+
         // get a precise timestamp as a string
         const auto now = std::chrono::system_clock::now();
         const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
         const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
         std::stringstream time_stream;
-        time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d %a %T")
+        time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d:%T")
                     << '.' << std::setfill('0') << std::setw(3) << now_in_ms.count();
+        time_str_ = time_stream.str();
 
-        short_name_ = simple_name(std::string(full_path_));
-
-        std::ostringstream record;
-        record << severity_labels[severity_][0]
-               << time_stream.str() << ' '
-               << std::setfill(' ') << std::setw(5)
-               #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-               << _getpid() << ' '
-               #else
-               << getpid() << ' '
-               #endif
-               << std::this_thread::get_id() << ' '
-               << short_name_ << ':' << line_ << " ";
+        std::ostringstream pid_tid_stream;
+        pid_tid_stream << std::setfill(' ') << std::setw(5)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+                       << _getpid() << ':'
+#else
+                       << getpid() << ':'
+#endif
+                       << std::this_thread::get_id();
+        pid_tid_str_ = pid_tid_stream.str();
 
         // remove all the ending line breaks
-        std::string msg = stream_.str();
-        while (msg.back() == '\n' && !msg.empty())
-            msg.erase(msg.end() - 1);
-        record << msg << "\n";  // we need only one.
+        message_ = stream_.str();
+        while (message_.back() == '\n' && !message_.empty()) {
+            message_.erase(message_.end() - 1);
+            LOG(WARNING) << "an extra line break found at the end of a record";
+        }
 
+        if (severity_ == FATAL) {
+            easy3d::StackTracer tracer;
+            message_ += ("\n\nEasy3D encountered a problem. \n"
+                         "Please report this issue (along with the complete log and your model) to Liangliang Nan "
+                         "(liangliang.nan@gmail.com).\nStack trace (most recent call first):\n" + tracer.dump(2));
+        }
+
+        std::ostringstream record;
+        record << severity_labels[severity_][0] << ' ' << time_str_ << ' ' << pid_tid_str_ << ' ' << short_name_ << ':'
+               << line_ << "] " << message_ << std::endl;
         write_to_stderr(severity_, record.str().c_str(), record.str().size());
 
-        if (os_file_log)
-            os_file_log->write(record.str().c_str(), record.str().size());
-
-        LogToSinks(msg);
+        LogToSinks();
         WaitForSinks();
 
         // If fatal error occurred, stop the program.
-        if (severity_ == FATAL)
+        if (severity_ == FATAL) {
+            if (g_logging_fail_func)
+                g_logging_fail_func();
             abort();
+        }
     }
 
 
-    void MessageLogger::LogToSinks(const std::string& msg) const {
+    void MessageLogger::LogToSinks() const {
 //        time_t rawtime;
 //        time(&rawtime);
 //
@@ -135,7 +153,7 @@ namespace google {
         // Send the log message to all sinks.
         for (iter = google::log_sinks_global.begin();
              iter != google::log_sinks_global.end(); ++iter) {
-            (*iter)->write_log(severity_, msg);
+            (*iter)->send(severity_, line_, full_path_, short_name_, time_str_, pid_tid_str_, message_);
         }
     }
 
@@ -248,10 +266,10 @@ namespace easy3d
     namespace logging
     {
 
-        void initialize(int stderr_threshold, const std::string& log_file)
+        void initialize(int severity_threshold, const std::string& log_file)
         {
             std::string full_path = log_file;
-            if (log_file == "default" || log_file.empty()) {
+            if (log_file == "default") {
                 const std::string app_path = file_system::executable();
                 std::string log_path = app_path;
 #ifdef __APPLE__
@@ -269,11 +287,9 @@ namespace easy3d
                 full_path = log_path + "/" + file_system::base_name(app_path) + ".log";
             }
 
-            static std::ofstream output(full_path.c_str(), std::ios::app);
-            LOG_IF(ERROR, output.fail()) << "could not creat log file: "
-                                         << full_path << ". Log messages will be written to stderr only";
-
-            google::set_log_file(&output);
+            if (!full_path.empty()) {
+                static FileLogClient client(full_path);
+            }
 
             DLOG(INFO) << "logger initialized";
             DLOG(INFO) << "executable path: " << file_system::executable_directory();
@@ -284,6 +300,27 @@ namespace easy3d
 
         LogClient::LogClient() {
             google::AddLogSink(this);
+        }
+
+
+        FileLogClient::FileLogClient(const std::string &file_name) {
+            static std::ofstream output(file_name.c_str(), std::ios::app);
+            if (output.is_open()) {
+                output_ = &output;
+                google::AddLogSink(this);
+            }
+            else {
+                output_ = nullptr;
+                LOG(WARNING) << "failed to creat file logger";
+            }
+        }
+
+        void FileLogClient::send(google::LogSeverity severity, int line_number, const std::string &full_path,
+                                 const std::string &short_name, const std::string &time,
+                                 const std::string &pid_tid, const std::string &msg) {
+            if (output_)
+                (*output_) << MessageLogger::severity_labels[severity][0] << ' ' << time << ' ' << pid_tid << ' '
+                           << short_name << ':' << line_number << "] " << msg << std::endl;
         }
 
     }

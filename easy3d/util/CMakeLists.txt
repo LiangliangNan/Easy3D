@@ -5,6 +5,7 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
+        backward.h
         chrono_watch.h
         dialogs.h
         file_system.h
@@ -12,6 +13,7 @@ set(${PROJECT_NAME}_HEADERS
         logging.h
         logging_stl.h
         progress.h
+        stack_tracer.h
         stop_watch.h
         string.h
         timer.h
@@ -19,11 +21,13 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
+        backward.cpp
         chrono_watch.cpp
         dialogs.cpp
         file_system.cpp
         logging.cpp
         progress.cpp
+        stack_tracer.cpp
         stop_watch.cpp
         string.cpp
         )

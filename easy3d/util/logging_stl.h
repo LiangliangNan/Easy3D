@@ -34,15 +34,7 @@
 // LOG(INFO) << "data: " << x;
 // vector<int> v1, v2;
 // CHECK_EQ(v1, v2);
-//
-// If you want to use this header file with hash maps or slist, you
-// need to define macros before including this file:
-//
-// - GLOG_STL_LOGGING_FOR_UNORDERED     - <unordered_map> and <unordered_set>
-// - GLOG_STL_LOGGING_FOR_TR1_UNORDERED - <tr1/unordered_(map|set)>
-// - GLOG_STL_LOGGING_FOR_EXT_HASH      - <ext/hash_(map|set)>
-// - GLOG_STL_LOGGING_FOR_EXT_SLIST     - <ext/slist>
-//
+
 
 #ifndef EASY3D_UTIL_LOGGING_STL_H
 #define EASY3D_UTIL_LOGGING_STL_H

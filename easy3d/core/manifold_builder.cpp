@@ -216,7 +216,7 @@ namespace easy3d {
         // ----------------------------------------------------------------------------------
 
         if (!issues.empty())
-            LOG(WARNING) << " mesh has topological issues:" << issues;
+            LOG(WARNING) << "mesh has topological issues:" << issues;
     }
 
 
