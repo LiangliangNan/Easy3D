@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
 

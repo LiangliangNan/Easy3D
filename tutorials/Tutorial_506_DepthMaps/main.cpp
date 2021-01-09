@@ -36,7 +36,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     DepthImage viewer("Tutorial_506_DepthMaps");
 

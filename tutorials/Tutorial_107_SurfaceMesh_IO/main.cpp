@@ -38,7 +38,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
 	// Read a mesh specified by its file name
     const std::string file_name = resource::directory() + "/data/sphere.obj";

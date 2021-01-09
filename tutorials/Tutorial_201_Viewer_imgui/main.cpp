@@ -35,7 +35,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
     ViewerImGui viewer("Tutorial_201_viewer_imgui");

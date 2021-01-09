@@ -39,6 +39,8 @@
 #include "main_window.h"
 
 
+using namespace easy3d;
+
 int main(int argc, char *argv[]) {
     // Note: Calling QSurfaceFormat::setDefaultFormat() before constructing the
     //       QApplication instance is mandatory on some platforms(for example, macOS)
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
     QDir::setCurrent(workingDir.absolutePath());
 
     // Initialize logging.
-    easy3d::logging::initialize();
+    logging::initialize(WARNING);
 
     MainWindow win;
     win.show();

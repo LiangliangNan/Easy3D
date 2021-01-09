@@ -37,7 +37,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     // Create an Easy3D viewer.
     Viewer viewer("Tutorial_310_TextMesher");

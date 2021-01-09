@@ -58,7 +58,7 @@ Graph* old_graph_from_previous_example() {
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
 	Graph* graph = old_graph_from_previous_example();
 

@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     PickerViewer viewer("Tutorial_401_ModelPicker");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");

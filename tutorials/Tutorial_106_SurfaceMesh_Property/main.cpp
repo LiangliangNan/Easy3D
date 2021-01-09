@@ -54,7 +54,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize();
+    logging::initialize(WARNING);
 
     // The mesh created from the previous tutorial.
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
