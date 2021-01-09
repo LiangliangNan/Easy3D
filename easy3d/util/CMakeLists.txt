@@ -45,3 +45,13 @@ target_link_libraries(${PROJECT_NAME} Threads::Threads backward)
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
+
+# EasyLogging++: request all features
+add_definitions(-DELPP_FEATURE_ALL)
+
+# EasyLogging++: for stack trace
+include(CheckIncludeFileCXX)
+check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
+if (HAVE_EXECINFO)
+    add_definitions(-DHAVE_EXECINFO)
+endif()
