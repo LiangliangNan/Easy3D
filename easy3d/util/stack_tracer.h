@@ -32,18 +32,41 @@ namespace easy3d {
 
 
     /**
-     * Track the stack when program failed.
+     * \brief Tracks and dumps the stack frames when program fails.
+     * \class StackTracer easy3d/util/stack_tracer.h
+     *
+     * Track failure example:
+     *      \code
+     *          #include <easy3d/util/stack_tracer.h>
+     *          int main() {
+     *              easy3d::StackTracer dh;
+     *              int a = 1;
+     *              a /= 0;
+     *              return 0;
+     *          }
+     *      \endcode
+     *
+     * Read recent stack activities example:
+     *      \code
+     *          std::cout << StackTracer::backtrace();
+     *      \endcode
      */
     class StackTracer {
     public:
+        StackTracer();
+        ~StackTracer();
+
         /// This function produces a stack backtrace with demangled function & method names.
         /// \param skip The number of the most recent frames to skip.
         /// \param amount The number of frames to retrieve. Default value is 32.
         ///     You can pass -1 to retrieve all available traces.
-        std::string dump(int skip = 1, int amount = 32) const;
+        static std::string back_trace(int skip = 1, int amount = 32);
+
+        /// The function to be called when a signal was triggered
+        static void signal_handler(int sig, void* info, void* secret);
     };
 
 }
 
 
-#endif  // EASY3D_UTIL_STACK_TRACE_H
+#endif  // EASY3D_UTIL_STACK_TRACER_H

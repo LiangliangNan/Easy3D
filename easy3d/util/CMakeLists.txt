@@ -8,6 +8,7 @@ set(${PROJECT_NAME}_HEADERS
         backward.h
         chrono_watch.h
         dialogs.h
+        easylogging++.h
         file_system.h
         line_stream.h
         logging.h
@@ -24,6 +25,7 @@ set(${PROJECT_NAME}_SOURCES
         backward.cpp
         chrono_watch.cpp
         dialogs.cpp
+        easylogging++.cc
         file_system.cpp
         logging.cpp
         progress.cpp

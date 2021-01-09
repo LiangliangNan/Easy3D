@@ -113,10 +113,10 @@ namespace google {
         }
 
         if (severity_ == FATAL) {
-            easy3d::StackTracer tracer;
             message_ += ("\n\nEasy3D encountered a problem. \n"
                          "Please report this issue (along with the complete log and your model) to Liangliang Nan "
-                         "(liangliang.nan@gmail.com).\nStack trace (most recent call first):\n" + tracer.dump(2));
+                         "(liangliang.nan@gmail.com).\nStack trace (most recent call first):\n"
+                         + easy3d::StackTracer::back_trace(2));
         }
 
         std::ostringstream record;
