@@ -109,7 +109,6 @@ namespace google {
         message_ = stream_.str();
         while (message_.back() == '\n' && !message_.empty()) {
             message_.erase(message_.end() - 1);
-            LOG(WARNING) << "an extra line break found at the end of a record: " << message_;
         }
 
         if (severity_ == FATAL) {
