@@ -94,11 +94,12 @@ namespace google {
 
         virtual void send(google::LogSeverity severity,
                           int line_number,
-                          const std::string& full_path,
-                          const std::string& short_name,
-                          const std::string& time,
-                          const std::string& pid_tid,
-                          const std::string& msg) = 0;
+                          const std::string &full_path,
+                          const std::string &short_name,
+                          const std::string &time,
+                          const std::string &pid_tid,
+                          const std::string &msg) = 0;
+
         virtual void WaitTillSent() { /* client code should implement this */ }
     };
 
@@ -108,9 +109,6 @@ namespace google {
 
     void RemoveLogSink(LogSink *sink);
 
-    // the function that will be called before abortion.
-    typedef void (*logging_fail_func_t)();
-    void InstallFailureFunction(void (*fail_func)());
 
     // ---------------------------- Logger Class --------------------------------
 
@@ -123,6 +121,7 @@ namespace google {
     class MessageLogger {
     public:
         MessageLogger(const char *file, int line, google::LogSeverity severity);
+
         MessageLogger(const char *file, int line, google::LogSeverity severity, int ctr);
 
         // Output the contents of the stream to the proper channel on destruction.
@@ -135,10 +134,12 @@ namespace google {
 
     private:
         static const char *severity_color_code[4];
+
         static bool terminal_supports_colors();
 
     private:
         void LogToSinks() const;
+
         void WaitForSinks();
 
         static std::string simple_name(const std::string &full_path);
@@ -419,13 +420,13 @@ T &CheckNotNull(const char *file, int line, const char *names, T &t) {
 // Another great logging library:
 //  https://github.com/amrayn/easyloggingpp
 
-namespace easy3d
-{
+namespace easy3d {
+
+    class StackTracer;
 
     /// \brief The logging mechanism.
     /// \namespace easy3d::logging
-    namespace logging
-    {
+    namespace logging {
 
         /**
          * @brief Initializes the logging module.
@@ -438,7 +439,7 @@ namespace easy3d
          *      next to the executable file.
          * @note This initialization is optional. If not called, log messages will be written to stderr only.
          */
-        void initialize(int severity_threshold = INFO, const std::string& log_file = "");
+        void initialize(int severity_threshold = INFO, const std::string &log_file = "");
 
 
         // Base class for a log client.
@@ -454,6 +455,10 @@ namespace easy3d
         public:
             FileLogClient(const std::string &file_name);
 
+            // returns the log file name.
+            // returns and empty string if the stream doesn't exist.
+            static const std::string &log_file_name();
+
             void send(google::LogSeverity severity,
                       int line_number,
                       const std::string &file_full_path,
@@ -463,7 +468,8 @@ namespace easy3d
                       const std::string &msg) override;
 
         private:
-            std::ofstream* output_;
+            std::ofstream *output_;
+            static std::string log_file_name_;
         };
 
     };

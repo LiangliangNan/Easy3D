@@ -19,10 +19,10 @@
 
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stack_tracer.h>
+#include <easy3d/util/file_system.h>
+#include <3rd_party/backward/backward.hpp>
 
 #include <algorithm>
-#include <fstream>
-#include <iostream>
 #include <thread>
 #include <iomanip>
 #include <cstring>
@@ -49,12 +49,6 @@ namespace google {
 
     void RemoveLogSink(LogSink *sink) {
         log_sinks_global.erase(sink);
-    }
-
-    logging_fail_func_t g_logging_fail_func = nullptr;
-
-    void InstallFailureFunction(void (*fail_func)()) {
-        g_logging_fail_func = (logging_fail_func_t)fail_func;
     }
 
 
@@ -112,28 +106,42 @@ namespace google {
         }
 
         if (severity_ == FATAL) {
-            message_ += ("\n================================================================================="
-                         "\nEasy3D encountered a problem."
-                         "\nPlease report this issue with the complete log, a description of how to reproduce"
-                         "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com)."
-                         "\n================================================================================="
-                         "\nStack trace (most recent call first):\n"
-                         + easy3d::StackTracer::back_trace(2));
+            // If fatal error occurred, stop the program.
+            // After logging the error (before the program crashes), notify StackTracer not to log again.
+            if (!backward::SignalHandling::failure_has_been_recored) {
+                std::stringstream stream;
+                stream << "\n================================================================================="
+                       << "\nEasy3D has encountered a fatal error and has to abort. ";
+
+                const std::string log_file = easy3d::logging::FileLogClient::log_file_name();
+                if (!log_file.empty()) { // a log file exists
+                    stream << "The error has been recorded \n"
+                           << "in the log file [" + easy3d::file_system::absolute_path(log_file) + "].";
+                }
+
+                stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
+                stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
+                stream << "\n=================================================================================";
+                stream << "\nStack trace (most recent call first):";
+                stream << "\n" << easy3d::StackTracer::back_trace_string(32, 5);
+
+                message_ += stream.str();
+            }
         }
 
         std::ostringstream record;
-        record << severity_labels[severity_][0] << ' ' << time_str_ << ' ' << pid_tid_str_ << ' ' << short_name_ << ':'
-               << line_ << "] " << message_ << std::endl;
+        record << severity_labels[severity_][0] << ' ' << time_str_ << ' ' << pid_tid_str_
+               << ' ' << short_name_ << ':' << line_ << "] " << message_ << std::endl;
         write_to_stderr(severity_, record.str().c_str(), record.str().size());
-
         LogToSinks();
         WaitForSinks();
 
-        // If fatal error occurred, stop the program.
         if (severity_ == FATAL) {
-            if (g_logging_fail_func)
-                g_logging_fail_func();
-            abort();
+            // Now log has been written. Notify StackTracer not to log again.
+            if (!backward::SignalHandling::failure_has_been_recored) {
+                backward::SignalHandling::failure_has_been_recored = true;
+                abort();
+            }
         }
     }
 
@@ -305,16 +313,24 @@ namespace easy3d
         }
 
 
+
+        std::string FileLogClient::log_file_name_ = "";
+
         FileLogClient::FileLogClient(const std::string &file_name) {
             static std::ofstream output(file_name.c_str(), std::ios::app);
             if (output.is_open()) {
                 output_ = &output;
                 google::AddLogSink(this);
+                log_file_name_ = file_name;
             }
             else {
                 output_ = nullptr;
                 LOG(WARNING) << "failed to creat file logger";
             }
+        }
+
+        const std::string& FileLogClient::log_file_name() {
+            return log_file_name_;
         }
 
         void FileLogClient::send(google::LogSeverity severity, int line_number, const std::string &full_path,

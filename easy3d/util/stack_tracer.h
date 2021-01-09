@@ -56,14 +56,29 @@ namespace easy3d {
         StackTracer();
         ~StackTracer();
 
-        /// This function produces a stack backtrace with demangled function & method names.
-        /// \param skip The number of the most recent frames to skip.
-        /// \param amount The number of frames to retrieve. Default value is 32.
-        ///     You can pass -1 to retrieve all available traces.
-        static std::string back_trace(int skip = 1, int amount = 32);
+        class StackEntry {
+        public:
+            StackEntry(const std::string &object, const std::string &function)
+                    : object_name(object), function_name(function) {}
+            std::string object_name;
+            std::string function_name;
+        private:
+            StackEntry(void);
+        };
 
-        /// The function to be called when a signal was triggered
-        static void signal_handler(int sig, void* info, void* secret);
+        /// This function produces a stack backtrace with demangled function & method names.
+        /// \param amount The number of frames to retrieve. Default value is 32. A negative value retrieve all record.
+        /// \param skip The number of the most recent frames to skip.
+        static std::vector<StackEntry> back_trace(int amount = 32, int skip = 2);
+
+        /// Returns the back_trace() record as a string, line by line with an index and most recent one first.
+        static std::string back_trace_string(int amount = 32, int skip = 2);
+
+        static std::string to_string(const std::vector<StackEntry>& record);
+
+    private:
+        /// The function to be called when a failure signal was triggered
+        static void signal_logger();
     };
 
 }

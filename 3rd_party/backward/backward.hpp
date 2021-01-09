@@ -4078,6 +4078,10 @@ private:
 
 class SignalHandling {
 public:
+    static std::function<void(StackTrace *, int, const char*)> signal_log_func;
+    static bool failure_has_been_recored;
+
+public:
   static std::vector<int> make_default_signals() {
     const int posix_signals[] = {
       // Signals for which the default action is "Core".
@@ -4184,9 +4188,44 @@ public:
       st.load_here(32, reinterpret_cast<void *>(uctx), info->si_addr);
     }
 
-    Printer printer;
-    printer.address = true;
-    printer.print(st, stderr);
+    if (!failure_has_been_recored) {
+        if (signal_log_func) {
+            std::string msg;
+            switch (info->si_signo) {
+                case SIGABRT:   msg = "Abort signal from abort() (" + std::to_string(SIGABRT) + ": SIGABRT)";        break;
+                case SIGBUS:    msg = "Bus error (bad memory access) (" + std::to_string(SIGBUS) + ": SIGBUS)";     break;
+                case SIGFPE:    msg = "Floating point exception (" + std::to_string(SIGFPE) + ": SIGFPE)";
+                if (info->si_code == FPE_FLTDIV) msg += " - floating point divide by zero";
+                else if (info->si_code == FPE_FLTOVF) msg += " - floating point overflow";
+                else if (info->si_code == FPE_FLTUND) msg += " - floating point underflow";
+                else if (info->si_code == FPE_FLTRES) msg += " - floating point inexact result";
+                else if (info->si_code == FPE_FLTINV) msg += " - invalid floating point operation";
+                else if (info->si_code == FPE_FLTSUB) msg += " - subscript out of range";
+                else if (info->si_code == FPE_INTDIV) msg += " - integer divide by zero";
+                else if (info->si_code == FPE_INTOVF) msg += " - integer overflow";
+                break;
+                case SIGILL:    msg = "Illegal Instruction (" + std::to_string(SIGILL) + ": SIGILL)";               break;
+                case SIGQUIT:   msg = "Quit from keyboard (" + std::to_string(SIGQUIT) + ": SIGQUIT)";               break;
+                case SIGSEGV:   msg = "Invalid memory reference (" + std::to_string(SIGSEGV) + ": SIGSEGV)";
+                if (info->si_code == SEGV_MAPERR) msg += " - address not mapped to object";
+                else if (info->si_code == SEGV_ACCERR) msg += " - invalid permission for mapped object";
+                break;
+                case SIGSYS:    msg = "Bad argument to routine (SVr4) (" + std::to_string(SIGSYS) + ": SIGSYS)";    break;
+                case SIGTRAP:   msg = "Trace/breakpoint trap (" + std::to_string(SIGTRAP) + ": SIGTRAP)";            break;
+                case SIGXCPU:   msg = "CPU time limit exceeded (4.2BSD) (" + std::to_string(SIGXCPU) + ": SIGXCPU)"; break;
+                case SIGXFSZ:   msg = "File size limit exceeded (4.2BSD) (" + std::to_string(SIGXFSZ) + ": SIGXFSZ)";break;
+                case SIGEMT:    msg = "emulation instruction executed (" + std::to_string(SIGEMT) + ": SIGEMT)";    break;
+            }
+            signal_log_func(&st, 0, msg.c_str());
+        }
+        else {
+            Printer printer;
+            printer.address = true;
+            printer.color_mode = ColorMode::automatic;
+            printer.print(st, stderr);
+        }
+        failure_has_been_recored = true;
+    }
 
 #if _XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L
     psiginfo(info, nullptr);

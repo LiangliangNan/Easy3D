@@ -33,10 +33,13 @@
 // - g++/clang++ -lunwind
 // #define BACKWARD_HAS_LIBUNWIND 1
 
-#include "backward.h"
+#include "backward.hpp"
 
 namespace backward {
 
-backward::SignalHandling sh;
+    backward::SignalHandling sh;
+
+    std::function<void(StackTrace*, int, const char*)> SignalHandling::signal_log_func = nullptr;
+    bool SignalHandling::failure_has_been_recored = false;
 
 } // namespace backward
