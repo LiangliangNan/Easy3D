@@ -16,6 +16,7 @@ private Q_SLOTS :
     void showContextMenu(const QPoint &p);
     void copySelected();
     void exportLog();
+    void clearLog();
 
 private:
     QMenu *popupMenu_;

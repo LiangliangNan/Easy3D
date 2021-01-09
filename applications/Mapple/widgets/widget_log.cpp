@@ -16,9 +16,7 @@ WidgetLog::WidgetLog(QWidget *parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     setSelectionMode(QTreeWidget::ContiguousSelection);
 
-
     connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(showContextMenu(const QPoint &)));
-//    connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 }
 
 
@@ -30,12 +28,16 @@ void WidgetLog::showContextMenu(const QPoint &pos) {
     if (!popupMenu_) {
         popupMenu_ = new QMenu(this);
 
-        QAction *copy = popupMenu_->addAction("Copy");
-        connect(copy, SIGNAL(triggered()), this, SLOT(copySelected()));
+        QAction *actionCopyLog = popupMenu_->addAction("Copy");
+        connect(actionCopyLog, SIGNAL(triggered()), this, SLOT(copySelected()));
         popupMenu_->addSeparator();
 
-        QAction *exportLog = popupMenu_->addAction("Export log");
-        connect(exportLog, SIGNAL(triggered()), this, SLOT(exportLog()));
+        QAction *actionExportLog = popupMenu_->addAction("Export log");
+        connect(actionExportLog, SIGNAL(triggered()), this, SLOT(exportLog()));
+
+        popupMenu_->addSeparator();
+        QAction *actionClearLog = popupMenu_->addAction("Clear log");
+        connect(actionClearLog, SIGNAL(triggered()), this, SLOT(clearLog()));
     }
 
     popupMenu_->popup(mapToGlobal(pos));
@@ -72,4 +74,9 @@ void WidgetLog::exportLog() {
         }
         file.close();
     }
+}
+
+
+void WidgetLog::clearLog() {
+    clear();
 }
