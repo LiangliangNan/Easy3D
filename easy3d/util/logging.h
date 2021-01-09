@@ -416,6 +416,8 @@ T &CheckNotNull(const char *file, int line, const char *names, T &t) {
 
 #include <easy3d/util/logging_stl.h>
 
+// Another great logging library:
+//  https://github.com/amrayn/easyloggingpp
 
 namespace easy3d
 {
