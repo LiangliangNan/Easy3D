@@ -52,7 +52,7 @@ namespace easy3d {
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
         camera_->showEntireScene();
-        camera_->connect(this, &ViewerVK::update);
+        easy3d::connect(&camera()->frame_modified, this, &ViewerVK::update);
 
         int fw, fh;
         glfwGetFramebufferSize(window, &fw, &fh);
@@ -397,12 +397,16 @@ namespace easy3d {
     bool ViewerVK::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // control modifier is reserved for zooming on region
         if (modifiers != EASY3D_MOD_CONTROL) {
+            auto axis = ManipulatedFrame::NONE;
+            if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
+            else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
+            else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
             switch (button) {
                 case GLFW_MOUSE_BUTTON_LEFT:
-                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, pressed_key_ == GLFW_KEY_X);
+                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, axis);
                     break;
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    camera_->frame()->action_translate(x, y, dx, dy, camera_, pressed_key_ == GLFW_KEY_X);
+                    camera_->frame()->action_translate(x, y, dx, dy, camera_, axis);
                     break;
                 case GLFW_MOUSE_BUTTON_MIDDLE:
                     if (std::abs(dy) >= 1)
