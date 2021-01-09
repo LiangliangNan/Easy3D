@@ -39,9 +39,12 @@
 #include <dlfcn.h>    // for dladdr
 #include <cxxabi.h>   // for __cxa_demangle
 #include <signal.h>
-#include<unistd.h>
+#include <unistd.h>
+#include <sys/wait.h>   // for waitpid
 #endif
 
+#include <easy3d/util/backward.h>
+#include <easy3d/util/logging.h>
 
 namespace easy3d {
 
@@ -51,25 +54,23 @@ namespace easy3d {
     //      https://github.com/bombela/backward-cpp
 
     std::string StackTracer::back_trace(int skip, int amount) {
-#if 0
+#if 1
         using namespace backward;
-        StackTrace st; st.load_here(32);
-        Printer p; p.print(st);
-        return "";
-#elif 0
-        using namespace backward;
-        StackTrace st; st.load_here(32);
+        StackTrace st;
+        st.load_here(amount + skip);
 
-        TraceResolver tr; tr.load_stacktrace(st);
-        for (size_t i = 0; i < st.size(); ++i) {
-            ResolvedTrace trace = tr.resolve(st[i]);
-            std::cout << "#" << i
-                      << " " << trace.object_filename
-                      << " " << trace.object_function
-                      << std::endl;
+        TraceResolver tr;
+        tr.load_stacktrace(st);
+        std::stringstream trace_buffer;
+        for (size_t i = skip; i < st.size(); ++i) {
+            const ResolvedTrace trace = tr.resolve(st[i]);
+            // the "- skip" makes sure the most recent trace has an index of 0.
+            trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
+                         << "\t" << std::setw(20) << std::setfill(' ') << file_system::base_name(trace.object_filename)
+                         << "\t" << trace.object_function << "\n";
         }
-        return "";
-#endif
+        return trace_buffer.str();
+#else
 
 
         std::ostringstream trace_buffer;
@@ -126,6 +127,7 @@ namespace easy3d {
         }
 
         return trace_buffer.str();
+#endif
     }
 
 
@@ -189,22 +191,24 @@ namespace easy3d {
             exit(EXIT_FAILURE);
         }
 
+        std::string log = "==========================================\n";
         switch (sig) {
             case SIGSEGV:
-                std::cerr << "Fatal error: segmentation fault" << std::endl;
+                log = "Fatal error: segmentation fault";
                 break;
             case SIGABRT:
-                std::cerr << "Fatal error: aborted" << std::endl;
+                log = "Fatal error: aborted";
                 break;
             case SIGFPE:
-                std::cerr << "Fatal error: floating point exception" << std::endl;
+                log = "Fatal error: floating point exception";
                 break;
             default:
-                std::cerr << "Fatal error with signal: " + std::to_string(sig) << std::endl;
+                log = "Fatal error with signal: " + std::to_string(sig);
                 break;
         }
 
-        std::cerr << back_trace().c_str() << std::endl;
+        // skip the last function call, i.e., back_trace() itself.
+        LOG(INFO) << log << "\n" << back_trace(1).c_str();
 
         // Resume the parent process
         kill(getppid(), SIGCONT);
