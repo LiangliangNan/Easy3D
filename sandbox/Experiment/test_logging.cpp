@@ -132,7 +132,7 @@ int main (int argc, char *argv[])
     //------------------------------------------------
 
     LOG(INFO) << "---------- TEST has succeeded!!!!!!!!!!!!!!!!! ----------";
-    // LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
+     LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
 
     return EXIT_SUCCESS;
 }
