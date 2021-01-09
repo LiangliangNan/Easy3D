@@ -67,7 +67,9 @@ namespace easy3d {
             // the "- skip" makes sure the most recent trace has an index of 0.
             trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
                          << "\t" << std::setw(20) << std::setfill(' ') << file_system::base_name(trace.object_filename)
-                         << "\t" << trace.object_function << "\n";
+                         << "\t" << trace.object_function;
+            if (i != st.size() - 1)
+                trace_buffer << "\n";
         }
         return trace_buffer.str();
 #else

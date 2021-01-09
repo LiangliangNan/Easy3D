@@ -109,13 +109,16 @@ namespace google {
         message_ = stream_.str();
         while (message_.back() == '\n' && !message_.empty()) {
             message_.erase(message_.end() - 1);
-            LOG(WARNING) << "an extra line break found at the end of a record";
+            LOG(WARNING) << "an extra line break found at the end of a record: " << message_;
         }
 
         if (severity_ == FATAL) {
-            message_ += ("\n\nEasy3D encountered a problem. \n"
-                         "Please report this issue (along with the complete log and your model) to Liangliang Nan "
-                         "(liangliang.nan@gmail.com).\nStack trace (most recent call first):\n"
+            message_ += ("\n================================================================================="
+                         "\nEasy3D encountered a problem."
+                         "\nPlease report this issue with the complete log, a description of how to reproduce"
+                         "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com)."
+                         "\n================================================================================="
+                         "\nStack trace (most recent call first):\n"
                          + easy3d::StackTracer::back_trace(2));
         }
 
