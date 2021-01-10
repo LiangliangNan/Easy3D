@@ -39,7 +39,7 @@ namespace easy3d {
      *      \code
      *          #include <easy3d/util/stack_tracer.h>
      *          int main() {
-     *              easy3d::StackTracer dh;
+     *              easy3d::StackTracer st;
      *              int a = 1;
      *              a /= 0;
      *              return 0;
@@ -48,7 +48,7 @@ namespace easy3d {
      *
      * Read recent stack activities example:
      *      \code
-     *          std::cout << StackTracer::backtrace();
+     *          std::cout << StackTracer::back_trace_string();
      *      \endcode
      */
     class StackTracer {
