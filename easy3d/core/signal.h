@@ -92,10 +92,10 @@ namespace easy3d {
          */
         template < class ... Args >
         void send(Args&&... args) {
-            for(auto it : owned_slots_) {
+            for(auto& it : owned_slots_) {
                 it.second(std::forward<Args>(args)...);
             }
-            for(auto it : free_slots_) {
+            for(auto& it : free_slots_) {
                 it.second(std::forward<Args>(args)...);
             }
         }
