@@ -164,6 +164,16 @@ namespace easy3d {
 //        return trace_buffer.str();
 //    }
 //
+///     // For Windows
+//    int GetStackTrace(void** result, int max_depth, int skip_count) {
+//        if (max_depth > 64) {
+//            max_depth = 64;
+//        }
+//        skip_count++;  // we want to skip the current frame as well
+//        // This API is thread-safe (moreover it walks only the current thread).
+//        return CaptureStackBackTrace(skip_count, max_depth, result, NULL);
+//    }
+//
 //
 //    StackTracer::StackTracer() {
 //        struct sigaction sa;
