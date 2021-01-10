@@ -72,6 +72,7 @@ const int INFO = 0;
 const int WARNING = 1;
 const int ERROR = 2;
 const int FATAL = 3;
+const int QUIET = 4; // log messages written to sinks (e.g., a log file) only, not to stderr
 
 
 // ------------------------- Glog compatibility ------------------------------
@@ -83,10 +84,7 @@ namespace google {
     const int WARNING = ::WARNING;
     const int ERROR = ::ERROR;
     const int FATAL = ::FATAL;
-
-    // only log messages at levels >= min_severity will be logged
-    void setLogSeverityThreshold(LogSeverity min_severity);
-
+    const int QUIET = ::QUIET;
 
     // Sink class used for integration with mock and test functions. If sinks are
     // added, all log output is also sent to each sink through the send function.
@@ -106,12 +104,6 @@ namespace google {
 
         virtual void WaitTillSent() { /* client code should implement this */ }
     };
-
-
-    // Note: the Log sink functions are not thread safe.
-    void AddLogSink(LogSink *sink);
-
-    void RemoveLogSink(LogSink *sink);
 
 
     // ---------------------------- Logger Class --------------------------------
@@ -134,10 +126,7 @@ namespace google {
         // Return the stream associated with the logger object.
         std::stringstream &stream() { return stream_; }
 
-        static const std::string severity_labels[4];
-
     private:
-        static const char *severity_color_code[4];
 
         static bool terminal_supports_colors();
 
@@ -146,7 +135,7 @@ namespace google {
 
         void WaitForSinks();
 
-        static std::string simple_name(const std::string &full_path);
+        std::string simple_name(const std::string &full_path);
 
         // Avoid using cerr from this module since we may get called during
         // exit code, and cerr may be partially or fully destroyed by then.
@@ -436,33 +425,56 @@ namespace easy3d {
          * @brief Initializes the logging module.
          * @param threshold Log messages at a level >= this flag are automatically sent to standard error
          *        (stderr) in addition to log files. The value can be one of INFO, WARNING, and ERROR.
-         * @param log_file If a valid file path is provided (i.e., the file can be created or opened), the log messages
-         *      will also be written to this file in addition to logging to stderr.
-         *      If an empty string is passed, no log file will be created.
-         *      Passing "default" allows to creat a log file with a title "ApplicationName.log" in a directory "logs"
-         *      next to the executable file.
+         * @param log_file If a valid file path is provided (i.e., the file can be created or opened),
+         *      the log messages will be written to this file in addition to logging to stderr.
+         *      No log file will be created if \p log_file is empty.
+         *      Passing "default" allows to creat a log file with a title "ApplicationName.log" in a
+         *      directory "logs" next to the executable file.
          * @note This initialization is optional. If not called, log messages will be written to stderr only.
          */
-        void initialize(google::LogSeverity threshold = INFO, const std::string &log_file = "");
+        void initialize(int threshold = INFO, const std::string &log_file = "default");
 
 
-        // Base class for a log client.
-        // Users should subclass LogClient and override output to do whatever they want.
-        class LogClient : public google::LogSink {
+        /// Changes the log severity threshold.
+        /// Only log messages at levels >= min_severity will be logged
+        void set_severity_threshold(int min_severity);
+
+        /// header string for recording stack trace.
+        /// This is used when we log a FATAL message, or when the program crashes.
+        std::string stacktrace_header();
+
+        /// Base class for a logger, i.e., to log messages to whatever
+        /// Users should subclass Logger and override send() to do whatever they want.
+        class Logger : public google::LogSink {
         public:
-            LogClient();
+            Logger();
+
+            /// writes the log message \p msg (and may also other given information).
+            virtual void send(google::LogSeverity severity,
+                      int line_number,
+                      const std::string &file_full_path,
+                      const std::string &file_short_name,
+                      const std::string &time,
+                      const std::string &pid_tid,
+                      const std::string &msg) override = 0;
         };
 
+        /// Add a logger
+        void add_logger(Logger *logger);
 
-        // log into a file
-        class FileLogClient : public google::LogSink {
+        /// Removes a logger
+        void remove_logger(Logger *logger);
+
+        /// A file logger logs all log message into a file.
+        class FileLogger : public Logger {
         public:
-            FileLogClient(const std::string &file_name);
+            FileLogger(const std::string &file_name, std::ios::open_mode mode = std::ios::app);
 
-            // returns the log file name.
-            // returns and empty string if the stream doesn't exist.
-            static const std::string &log_file_name();
+            /// returns the log file name.
+            /// returns and empty string if the stream doesn't exist.
+            static const std::string log_file_name();
 
+            /// writes the log message \p msg (and may also other given information) into the log file.
             void send(google::LogSeverity severity,
                       int line_number,
                       const std::string &file_full_path,
@@ -471,8 +483,11 @@ namespace easy3d {
                       const std::string &pid_tid,
                       const std::string &msg) override;
 
+            /// appends a message
+            void append(const std::string& msg);
+
         private:
-            std::ofstream *output_;
+            static std::ofstream* output_;
             static std::string log_file_name_;
         };
 

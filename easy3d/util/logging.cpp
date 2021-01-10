@@ -26,6 +26,7 @@
 #include <thread>
 #include <iomanip>
 #include <cstring>
+#include <mutex>
 
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -35,45 +36,34 @@
 #endif
 
 
+
 namespace google {
 
-    // This is the set of log sinks. This must be in a separate library to ensure
-    // that there is only one instance of this across the entire program.
-    static std::set<google::LogSink *> log_sinks_global;
-
-    static google::LogSeverity log_severity_threshold_global;
-
-    void setLogSeverityThreshold(LogSeverity min_severity) {
-        log_severity_threshold_global = min_severity;
-    }
-
-
-    // Note: the Log sink functions are not thread safe.
-    void AddLogSink(LogSink *sink) {
-        // TODO(settinger): Add locks for thread safety.
-        log_sinks_global.insert(sink);
-    }
-
-    void RemoveLogSink(LogSink *sink) {
-        log_sinks_global.erase(sink);
-    }
-
-
-    const std::string MessageLogger::severity_labels[4] = {
+    static std::string global_severity_labels[5] = {
             "INFO    ",
             "WARNING ",
             "ERROR   ",
-            "FATAL   "
+            "FATAL   ",
+            "QUIET   "
     };
 
 
     // see https://gist.github.com/vratiu/9780109
-    const char *MessageLogger::severity_color_code[4] = {
+    static const char *global_severity_color_code[5] = {
             "",     // default -> INFO
             "3",    // yellow  -> WARNING
             "5",    // purple  -> ERROR
-            "1"     // red     -> FATAL
+            "1",    // red     -> FATAL
+            ""      // default -> QUIET
     };
+
+
+    // This is the set of log sinks. This must be in a separate library to ensure
+    // that there is only one instance of this across the entire program.
+    static std::set<google::LogSink *> global_log_sinks;
+
+    static google::LogSeverity global_log_severity_threshold;
+
 
     MessageLogger::MessageLogger(const char *file, int line, int severity)
             : full_path_(file), line_(line), severity_(severity) {
@@ -85,7 +75,10 @@ namespace google {
 
     // Output the contents of the stream to the proper channel on destruction.
     MessageLogger::~MessageLogger() {
-        if (severity_ < log_severity_threshold_global)
+        static std::mutex mutex;
+        const std::lock_guard<std::mutex> lock(mutex);
+
+        if (severity_ < global_log_severity_threshold)
             return;
 
         short_name_ = simple_name(std::string(full_path_));
@@ -109,7 +102,7 @@ namespace google {
                        << std::this_thread::get_id();
         pid_tid_str_ = pid_tid_stream.str();
 
-        // remove all the ending line breaks
+        // remove all trailing ending line breaks
         message_ = stream_.str();
         while (message_.back() == '\n' && !message_.empty()) {
             message_.erase(message_.end() - 1);
@@ -119,31 +112,22 @@ namespace google {
             // If fatal error occurred, stop the program.
             // After logging the error (before the program crashes), notify StackTracer not to log again.
             if (!backward::SignalHandling::failure_has_been_recored) {
-                std::stringstream stream;
-                stream << "\n================================================================================="
-                       << "\nEasy3D has encountered a fatal error and has to abort. ";
-
-                const std::string log_file = easy3d::logging::FileLogClient::log_file_name();
-                if (!log_file.empty()) { // a log file exists
-                    stream << "The error has been recorded \n"
-                           << "in the log file [" + easy3d::file_system::absolute_path(log_file) + "].";
-                }
-
-                stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
-                stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
-                stream << "\n=================================================================================";
-                stream << "\nStack trace (most recent call first):";
-                stream << "\n" << easy3d::StackTracer::back_trace_string(32, 5);
-
-                message_ += stream.str();
+                message_ += "\n" + easy3d::logging::stacktrace_header()
+                            + "\n" + easy3d::StackTracer::back_trace_string(32, 5);
             }
         }
 
         std::ostringstream record;
-        record << severity_labels[severity_][0] << ' ' << time_str_ << ' ' << pid_tid_str_
+        record << global_severity_labels[severity_][0] << ' ' << time_str_ << ' ' << pid_tid_str_
                << ' ' << short_name_ << ':' << line_ << "] " << message_ << std::endl;
-        write_to_stderr(severity_, record.str().c_str(), record.str().size());
+
+        if (severity_ != QUIET)
+            write_to_stderr(severity_, record.str().c_str(), record.str().size());
+
         LogToSinks();
+
+        // release the lock so that signal handlers can use the logging facility.
+        mutex.unlock();
         WaitForSinks();
 
         if (severity_ == FATAL) {
@@ -169,22 +153,25 @@ namespace google {
 //        localtime_r(&rawtime, &timeinfo);
 //#endif
 
+        static std::mutex mutex;
+        const std::lock_guard<std::mutex> lock(mutex);
         std::set<google::LogSink *>::iterator iter;
         // Send the log message to all sinks.
-        for (iter = google::log_sinks_global.begin();
-             iter != google::log_sinks_global.end(); ++iter) {
+        for (iter = google::global_log_sinks.begin();
+             iter != google::global_log_sinks.end(); ++iter) {
             (*iter)->send(severity_, line_, full_path_, short_name_, time_str_, pid_tid_str_, message_);
         }
     }
 
 
     void MessageLogger::WaitForSinks() {
-        // TODO(settinger): Add locks for thread safety.
-        std::set<google::LogSink *>::iterator iter;
+        static std::mutex mutex;
+        const std::lock_guard<std::mutex> lock(mutex);
 
+        std::set<google::LogSink *>::iterator iter;
         // Call WaitTillSent() for all sinks.
-        for (iter = google::log_sinks_global.begin();
-             iter != google::log_sinks_global.end(); ++iter) {
+        for (iter = google::global_log_sinks.begin();
+             iter != google::global_log_sinks.end(); ++iter) {
             (*iter)->WaitTillSent();
         }
     }
@@ -204,7 +191,6 @@ namespace google {
     bool MessageLogger::terminal_supports_colors() {
         // for now I assume colors are always supported.
         return true;
-
 
         static bool term_supports_color = false;
         static bool already_known = false;
@@ -238,11 +224,11 @@ namespace google {
 
 
     void MessageLogger::write_to_stderr(google::LogSeverity severity, const char *message, size_t len) {
-        const char *code = terminal_supports_colors() ? severity_color_code[severity] : severity_color_code[0];
+        const char *code = terminal_supports_colors() ? global_severity_color_code[severity] : global_severity_color_code[0];
 
         // Avoid using cerr from this module since we may get called during
         // exit code, and cerr may be partially or fully destroyed by then.
-        if (severity_color_code[0] == code) {
+        if (global_severity_color_code[0] == code) {
             fwrite(message, len, 1, stderr);
             return;
         }
@@ -311,31 +297,49 @@ namespace easy3d
             }
 
             if (!full_path.empty()) {
-                static FileLogClient client(full_path);
+                static FileLogger client(full_path);
+                if (file_system::file_size(FileLogger::log_file_name()) != 0)
+                    client.append("\n\n");
+                client.append("***********************************************************************************"
+                              " program started ...\n");
             }
 
-            google::setLogSeverityThreshold(severity_threshold);
+            set_severity_threshold(severity_threshold);
 
-            DLOG(INFO) << "logger initialized";
-            DLOG(INFO) << "executable path: " << file_system::executable_directory();
-            DLOG(INFO) << "current working dir: " << file_system::current_working_directory();
+            LOG(QUIET) << "executable path: " << file_system::executable_directory();
+            LOG(QUIET) << "current working dir: " << file_system::current_working_directory();
         }
 
 
-
-        LogClient::LogClient() {
-            google::AddLogSink(this);
+        void set_severity_threshold(int min_severity) {
+            google::global_log_severity_threshold = min_severity;
         }
 
 
+        Logger::Logger() {
+            add_logger(this);
+        }
 
-        std::string FileLogClient::log_file_name_ = "";
 
-        FileLogClient::FileLogClient(const std::string &file_name) {
-            static std::ofstream output(file_name.c_str(), std::ios::app);
+        // Note: the Log sink functions are not thread safe.
+        void add_logger(Logger *logger) {
+            // TODO(settinger): Add locks for thread safety.
+            google::global_log_sinks.insert(logger);
+        }
+
+        void remove_logger(Logger *logger) {
+            google::global_log_sinks.erase(logger);
+        }
+
+
+        std::string FileLogger::log_file_name_ = "";
+        std::ofstream* FileLogger::output_ = nullptr;
+
+        FileLogger::FileLogger(const std::string &file_name, std::ios::open_mode mode) {
+            static std::ofstream output(file_name.c_str(), mode);
             if (output.is_open()) {
                 output_ = &output;
-                google::AddLogSink(this);
+                add_logger(this);
                 log_file_name_ = file_name;
             }
             else {
@@ -344,16 +348,43 @@ namespace easy3d
             }
         }
 
-        const std::string& FileLogClient::log_file_name() {
-            return log_file_name_;
+        const std::string FileLogger::log_file_name() {
+            return (output_ ? log_file_name_ : "");
         }
 
-        void FileLogClient::send(google::LogSeverity severity, int line_number, const std::string &full_path,
-                                 const std::string &short_name, const std::string &time,
-                                 const std::string &pid_tid, const std::string &msg) {
+        void FileLogger::send(google::LogSeverity severity, int line_number, const std::string &full_path,
+                              const std::string &short_name, const std::string &time,
+                              const std::string &pid_tid, const std::string &msg) {
             if (output_)
-                (*output_) << MessageLogger::severity_labels[severity][0] << ' ' << time << ' ' << pid_tid << ' '
+                (*output_) << google::global_severity_labels[severity][0] << ' ' << time << ' ' << pid_tid << ' '
                            << short_name << ':' << line_number << "] " << msg << std::endl;
+        }
+
+
+        void FileLogger::append(const std::string& msg) {
+            (*output_) << msg;
+        }
+
+        std::string stacktrace_header() {
+            auto compose_header = []() -> std::string {
+                std::stringstream stream;
+                stream << "================================================================================="
+                       << "\nEasy3D has encountered a fatal error and has to abort. ";
+
+                const std::string log_file = easy3d::logging::FileLogger::log_file_name();
+                if (!log_file.empty()) { // a log file exists
+                    stream << "The error has been recorded \n"
+                           << "in the log file [" + easy3d::file_system::absolute_path(log_file) + "].";
+                }
+
+                stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
+                stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
+                stream << "\n=================================================================================";
+                stream << "\nStack trace (most recent call first):";
+                return stream.str();
+            };
+            static std::string header = compose_header();
+            return header;
         }
 
     }

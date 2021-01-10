@@ -54,7 +54,7 @@ namespace easy3d {
 }
 
 
-class MainWindow : public QMainWindow, public easy3d::ProgressClient, public easy3d::logging::LogClient
+class MainWindow : public QMainWindow, public easy3d::ProgressClient, public easy3d::logging::Logger
 {
     Q_OBJECT
 

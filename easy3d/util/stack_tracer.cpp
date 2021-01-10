@@ -36,6 +36,9 @@
 namespace easy3d {
 
 
+    // To provide cross platform support, this implementation depends on backward.
+    // An independent implementation is at the end of this file (tested on macOS, should work on Linux, but not Windows).
+
     StackTracer::StackTracer() {
         static backward::SignalHandling sh;
 
@@ -62,21 +65,8 @@ namespace easy3d {
             }
 
             std::stringstream stream;
-            stream << "\n================================================================================="
-                   << "\nEasy3D has encountered a fatal error and has to abort. ";
-
-            const std::string log_file = logging::FileLogClient::log_file_name();
-            if (!log_file.empty()) { // a log file exists
-                stream << "The error has been recorded \n"
-                       << "in the log file [" + file_system::absolute_path(log_file) + "].";
-            }
-
-            stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
-            stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
-            stream << "\n=================================================================================";
-            stream << "\nStack trace (most recent call first):";
-            stream << "\n" << StackTracer::to_string(record);
-
+            stream << "\n" << logging::stacktrace_header()
+                   << "\n" << StackTracer::to_string(record);
             backward::SignalHandling::failure_has_been_recored = true;
 
             // log this failure as a fatal error
@@ -122,5 +112,143 @@ namespace easy3d {
         }
         return stream.str();
     }
+
+
+///    // This implementation is independent of backward.
+///    // Tested on macOS, should work on Linux, but not Windows.
+//
+//    std::string StackTracer::back_trace_string(int skip, int amount) {
+//        std::ostringstream trace_buffer;
+//        void *callstack[128];
+//        const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
+//        int nFrames = backtrace(callstack, nMaxFrames);
+//        if (amount == 0) {
+//            return trace_buffer.str();
+//        } else if (amount > 0) {
+//            // limit the number of frames
+//            nFrames = (skip + amount) < nFrames ? skip + amount : nFrames;
+//        }
+//        char **symbols = backtrace_symbols(callstack, nFrames);
+//        for (int i = skip; i < nFrames; i++) {
+//            // this is the raw data
+//            // printf("%s\n", symbols[i]);
+//            Dl_info info;
+//            if (dladdr(callstack[i], &info)) {
+//                int status(0);
+//                char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, 0, &status);
+//                const char *name;
+//                if (status == 0)
+//                    name = demangled ? demangled : "(no demangled name)";
+//                else
+//                    name = info.dli_sname ? info.dli_sname : "(no dli_sname)";
+//                // the "- skip" makes sure the most recent trace has an index of 0.
+//                trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
+//                             << "\t" << std::setw(20) << std::setfill(' ') << file_system::base_name(info.dli_fname)
+//                             << "\t" << name << "\n";
+//                if (demangled)
+//                    free(demangled);
+//            } else {
+//                // the "- skip" makes sure the most recent trace has an index of 0.
+//                trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
+//                             << "\t" << std::setw(20) << std::setfill(' ') << "[unknown]"
+//                             << "\t" << "[unknown]" << "\n";
+//            }
+//        }
+//        if (symbols)
+//            free(symbols);
+//        if (nFrames == nMaxFrames) {
+//            // the "- skip" makes sure the most recent trace has an index of 0.
+//            trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << nMaxFrames + 1 - skip
+//                         << "\t" << "record too long [truncated]\n";
+//        }
+//        return trace_buffer.str();
+//    }
+//
+//
+//    StackTracer::StackTracer() {
+//        struct sigaction sa;
+//        sa.sa_sigaction = (void (*)(int, siginfo_t *, void *))signal_handler;
+//        sigemptyset(&sa.sa_mask);
+//        sa.sa_flags = SA_RESTART | SA_SIGINFO;
+//        if (sigaction(SIGSEGV, &sa, nullptr) < 0) {
+//            perror("DeathHandler - sigaction(SIGSEGV)");
+//        }
+//        if (sigaction(SIGABRT, &sa, nullptr) < 0) {
+//            perror("DeathHandler - sigaction(SIGABBRT)");
+//        }
+//        if (sigaction(SIGFPE, &sa, nullptr) < 0) {
+//            perror("DeathHandler - sigaction(SIGFPE)");
+//        }
+//    }
+//
+//
+//    StackTracer::~StackTracer() {
+//        // Disable alternative signal handler stack
+//        stack_t altstack;
+//        altstack.ss_sp = nullptr;
+//        altstack.ss_size = 0;
+//        altstack.ss_flags = SS_DISABLE;
+//        sigaltstack(&altstack, nullptr);
+//
+//        struct sigaction sa;
+//
+//        sigaction(SIGSEGV, nullptr, &sa);
+//        sa.sa_handler = SIG_DFL;
+//        sigaction(SIGSEGV, &sa, nullptr);
+//
+//        sigaction(SIGABRT, nullptr, &sa);
+//        sa.sa_handler = SIG_DFL;
+//        sigaction(SIGABRT, &sa, nullptr);
+//
+//        sigaction(SIGFPE, nullptr, &sa);
+//        sa.sa_handler = SIG_DFL;
+//        sigaction(SIGFPE, &sa, nullptr);
+//    }
+//
+//
+//    void StackTracer::signal_handler(int sig, void *info, void *secret) {
+//        // Stop all other running threads by forking
+//        pid_t forkedPid = fork();
+//        if (forkedPid != 0) {
+//            int status;
+//            // Freeze the original process, until it's child prints the stack trace
+//            kill(getpid(), SIGSTOP);
+//            // Wait for the child without blocking and exit as soon as possible,
+//            // so that no zombies are left.
+//            waitpid(forkedPid, &status, WNOHANG);
+//
+//#ifdef QUICK_EXIT
+//            if (quick_exit_) {
+//              ::quick_exit(EXIT_FAILURE);
+//            }
+//#endif
+//            exit(EXIT_FAILURE);
+//        }
+//
+//        std::string log = "==========================================\n";
+//        switch (sig) {
+//            case SIGSEGV:
+//                log = "Fatal error: segmentation fault";
+//                break;
+//            case SIGABRT:
+//                log = "Fatal error: aborted";
+//                break;
+//            case SIGFPE:
+//                log = "Fatal error: floating point exception";
+//                break;
+//            default:
+//                log = "Fatal error with signal: " + std::to_string(sig);
+//                break;
+//        }
+//
+//        // skip the last function call, i.e., back_trace() itself.
+//        LOG(INFO) << log << "\n" << back_trace(1).c_str();
+//
+//        // Resume the parent process
+//        kill(getppid(), SIGCONT);
+//
+//        // This is called in the child process
+//        _Exit(EXIT_SUCCESS);
+//    }
 
 }
