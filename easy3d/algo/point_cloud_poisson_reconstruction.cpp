@@ -207,7 +207,7 @@ namespace easy3d {
 
         PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
         if (!normals) {
-            LOG(ERROR) << "normals are required";
+            LOG(ERROR) << "normal information not exist for Poisson surface reconstruction method";
             return nullptr;
         }
 
