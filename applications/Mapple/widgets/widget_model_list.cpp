@@ -484,10 +484,8 @@ void WidgetModelList::modelItemSelectionChanged() {
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
         item->setStatus(item->model() == active_model);
-        item->model()->renderer()->set_selected(item->isSelected());
     }
 
-//	viewer()->configureManipulation();
     viewer()->update();
     update();
 }
@@ -498,30 +496,26 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
     if (!current_item)
         return;
 
+    int num = topLevelItemCount();
+    for (int i = 0; i < num; ++i) {
+        ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
+        item->setStatus(item == current_item);
+        item->setSelected(item->model()->renderer()->is_selected());
+    }
+    viewer()->setCurrentModel(current_item->model());
+
     if (column == 2 && !selected_only_) {
         Model *model = current_item->model();
         bool visible = !model->renderer()->is_visible();
         current_item->setVisibilityIcon(2, visible);
         model->renderer()->set_visible(visible);
-        viewer()->update();
-        mainWindow_->updateRenderingPanel();
     }
-    else {
-        int num = topLevelItemCount();
-        for (int i = 0; i < num; ++i) {
-            ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-            item->setStatus(item == current_item);
-            item->setSelected(item->model()->renderer()->is_selected());
-        }
-        viewer()->setCurrentModel(current_item->model());
 
-        if (auto_focus_)
-            viewer()->fitScreen(current_item->model());
-        else
-            viewer()->update();
+    if (auto_focus_)
+        viewer()->fitScreen(current_item->model());
 
-        mainWindow_->updateUi();
-    }
+    viewer()->update();
+    mainWindow_->updateUi();
 }
 
 
