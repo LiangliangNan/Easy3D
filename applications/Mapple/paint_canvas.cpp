@@ -398,11 +398,6 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 
     QOpenGLWidget::mouseReleaseEvent(e);
     update();
-
-    LOG(FATAL) << "test crash. Don't worry"; // Crash!
-
-    int* i;
-    *i = 0; // Crash!
 }
 
 
