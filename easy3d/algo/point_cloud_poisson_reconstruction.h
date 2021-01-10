@@ -111,7 +111,7 @@ namespace easy3d {
         bool triangulate_mesh_;
 
     private:
-        // these parameters that usually do not need to change
+        // these parameters usually do not need to change
         int voxelDepth_;
         int cgDepth_;
         float scale_;

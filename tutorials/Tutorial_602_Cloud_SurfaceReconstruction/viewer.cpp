@@ -67,7 +67,10 @@ bool TutorialSurfaceReconstruction::key_press_event(int key, int modifiers) {
             return false;
         }
 
+        const int depth = 6;
         PoissonReconstruction algo;
+        algo.set_depth(depth);
+        std::cout << "reconstruction depth: " << depth << std::endl;
         Model* surface = algo.apply(cloud);
         if (surface != nullptr) {
             add_model(surface, true);
