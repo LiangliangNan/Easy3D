@@ -1442,7 +1442,7 @@ void MainWindow::pointCloudEstimateNormals() {
         return;
 
     PointCloudNormals pcn;
-    std::cout << "show the parameter dialog" << std::endl;
+    LOG(WARNING) << "TODO: add a dialog for parameter tuning" << std::endl;
     pcn.estimate(cloud);
 
     cloud->renderer()->update();
@@ -1456,7 +1456,7 @@ void MainWindow::pointCloudReorientNormals() {
         return;
 
     PointCloudNormals pcn;
-    std::cout << "show the parameter dialog" << std::endl;
+    LOG(WARNING) << "TODO: add a dialog for parameter tuning" << std::endl;
     pcn.reorient(cloud);
 
     cloud->renderer()->update();
