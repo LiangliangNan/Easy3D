@@ -11,7 +11,6 @@ set(${PROJECT_NAME}_HEADERS
         file_system.h
         line_stream.h
         logging.h
-        logging_stl.h
         progress.h
         stack_tracer.h
         stop_watch.h

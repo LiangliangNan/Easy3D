@@ -105,8 +105,48 @@ namespace google {
         virtual void WaitTillSent() { /* client code should implement this */ }
     };
 
+}
 
     // ---------------------------- Logger Class --------------------------------
+
+    namespace easy3d {
+        namespace logging {
+            // We want the special COUNTER value available for LOG_EVERY_X()'ed messages
+            enum PRIVATE_Counter { COUNTER };
+        }
+    }
+
+namespace google {
+
+    class LogStream : public std::ostringstream {
+    public:
+        LogStream(int ctr) : ctr_(ctr) {}
+
+        int ctr() const { return ctr_; }
+
+    private:
+        LogStream(const LogStream &);
+
+        LogStream &operator=(const LogStream &);
+
+        int ctr_;  // Counter hack (for the LOG_EVERY_X() macro)
+    };
+
+}
+
+// Define global operator<< to declare using ::operator<<.
+// This allows to output the COUNTER value. This is only valid if ostream is a LogStream.
+// You must not use COUNTER with non-glog ostream
+inline std::ostream& operator<<(std::ostream &os, const easy3d::logging::PRIVATE_Counter&) {
+    auto log = dynamic_cast<google::LogStream*>(&os);
+    if (log)
+        os << log->ctr();
+    return os;
+}
+
+
+namespace google {
+
 
     // Class created for each use of the logging macros.
     // The logger acts as a stream and routes the final stream contents to the
@@ -117,14 +157,13 @@ namespace google {
     class MessageLogger {
     public:
         MessageLogger(const char *file, int line, google::LogSeverity severity);
-
         MessageLogger(const char *file, int line, google::LogSeverity severity, int ctr);
 
         // Output the contents of the stream to the proper channel on destruction.
         ~MessageLogger();
 
         // Return the stream associated with the logger object.
-        std::stringstream &stream() { return stream_; }
+        LogStream &stream() { return stream_; }
 
     private:
 
@@ -148,7 +187,7 @@ namespace google {
         std::string time_str_;
         std::string pid_tid_str_;
         std::string message_;
-        std::stringstream stream_;
+        LogStream stream_;
         int severity_;
     };
 
@@ -210,13 +249,14 @@ using google::LoggerVoidify;
 #endif
 
 
-#define SOME_KIND_OF_LOG_FIRST_N(severity, n) \
-  static int LOG_OCCURRENCES = 0; \
-  if (LOG_OCCURRENCES <= n) \
-    ++LOG_OCCURRENCES; \
-  if (LOG_OCCURRENCES <= n) \
-    MessageLogger( \
-        __FILE__, __LINE__, severity, LOG_OCCURRENCES).stream()
+
+// Use macro expansion to create, for each use of LOG_EVERY_N(), static
+// variables with the __LINE__ expansion as part of the variable name.
+#define LOG_EVERY_N_VARNAME(base, line) LOG_EVERY_N_VARNAME_CONCAT(base, line)
+#define LOG_EVERY_N_VARNAME_CONCAT(base, line) base ## line
+
+#define LOG_OCCURRENCES LOG_EVERY_N_VARNAME(occurrences_, __LINE__)
+#define LOG_OCCURRENCES_MOD_N LOG_EVERY_N_VARNAME(occurrences_mod_n_, __LINE__)
 
 #define SOME_KIND_OF_LOG_EVERY_N(severity, n) \
   static int LOG_OCCURRENCES = 0, LOG_OCCURRENCES_MOD_N = 0; \
@@ -233,6 +273,18 @@ using google::LoggerVoidify;
       ((LOG_OCCURRENCES_MOD_N=(LOG_OCCURRENCES_MOD_N + 1) % n) == (1 % n))) \
     MessageLogger( \
         __FILE__, __LINE__, severity, LOG_OCCURRENCES).stream()
+
+#define SOME_KIND_OF_LOG_FIRST_N(severity, n) \
+  static int LOG_OCCURRENCES = 0; \
+  if (LOG_OCCURRENCES <= n) \
+    ++LOG_OCCURRENCES; \
+  if (LOG_OCCURRENCES <= n) \
+    MessageLogger( \
+        __FILE__, __LINE__, severity, LOG_OCCURRENCES).stream()
+
+
+
+
 
 #define LOG_EVERY_N(severity, n)                SOME_KIND_OF_LOG_EVERY_N(severity, (n))
 #define LOG_FIRST_N(severity, n)                SOME_KIND_OF_LOG_FIRST_N(severity, (n))
@@ -408,7 +460,135 @@ T &CheckNotNull(const char *file, int line, const char *names, T &t) {
 // foo.cpp: 123 of [void foo(void)]
 
 
-#include <easy3d/util/logging_stl.h>
+// --------------------------- LOG STL containers ---------------------------
+
+#include <deque>
+#include <list>
+#include <map>
+#include <ostream>
+#include <set>
+#include <utility>
+#include <vector>
+
+
+// Forward declare these two, and define them after all the container streams
+// operators so that we can recurse from pair -> container -> container -> pair
+// properly.
+template<class First, class Second>
+std::ostream &operator<<(std::ostream &out, const std::pair<First, Second> &p);
+
+namespace google {
+
+    template<class Iter>
+    void PrintSequence(std::ostream &out, Iter begin, Iter end);
+
+}
+
+#define OUTPUT_TWO_ARG_CONTAINER(Sequence) \
+template<class T1, class T2> \
+inline std::ostream& operator<<(std::ostream& out, \
+                                const Sequence<T1, T2>& seq) { \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
+  return out; \
+}
+
+OUTPUT_TWO_ARG_CONTAINER(std::vector)
+
+OUTPUT_TWO_ARG_CONTAINER(std::deque)
+
+OUTPUT_TWO_ARG_CONTAINER(std::list)
+
+#undef OUTPUT_TWO_ARG_CONTAINER
+
+#define OUTPUT_THREE_ARG_CONTAINER(Sequence) \
+template<class T1, class T2, class T3> \
+inline std::ostream& operator<<(std::ostream& out, \
+                                const Sequence<T1, T2, T3>& seq) { \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
+  return out; \
+}
+
+OUTPUT_THREE_ARG_CONTAINER(std::set)
+
+OUTPUT_THREE_ARG_CONTAINER(std::multiset)
+
+#undef OUTPUT_THREE_ARG_CONTAINER
+
+#define OUTPUT_FOUR_ARG_CONTAINER(Sequence) \
+template<class T1, class T2, class T3, class T4> \
+inline std::ostream& operator<<(std::ostream& out, \
+                                const Sequence<T1, T2, T3, T4>& seq) { \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
+  return out; \
+}
+
+OUTPUT_FOUR_ARG_CONTAINER(std::map)
+
+OUTPUT_FOUR_ARG_CONTAINER(std::multimap)
+
+#undef OUTPUT_FOUR_ARG_CONTAINER
+
+#define OUTPUT_FIVE_ARG_CONTAINER(Sequence) \
+template<class T1, class T2, class T3, class T4, class T5> \
+inline std::ostream& operator<<(std::ostream& out, \
+                                const Sequence<T1, T2, T3, T4, T5>& seq) { \
+  google::PrintSequence(out, seq.begin(), seq.end()); \
+  return out; \
+}
+
+#undef OUTPUT_FIVE_ARG_CONTAINER
+
+template<class First, class Second>
+inline std::ostream &operator<<(std::ostream &out,
+                                const std::pair<First, Second> &p) {
+    out << '(' << p.first << ", " << p.second << ')';
+    return out;
+}
+
+namespace google {
+
+    template<class Iter>
+    inline void PrintSequence(std::ostream &out, Iter begin, Iter end) {
+        // Output at most 100 elements -- appropriate if used for logging.
+        for (int i = 0; begin != end && i < 100; ++i, ++begin) {
+            if (i > 0) out << ' ';
+            out << *begin;
+        }
+        if (begin != end) {
+            out << " ...";
+        }
+    }
+
+}
+
+// Note that this is technically undefined behavior! We are adding things into
+// the std namespace for a reason though -- we are providing new operations on
+// types which are themselves defined with this namespace. Without this, these
+// operator overloads cannot be found via ADL. If these definitions are not
+// found via ADL, they must be #included before they're used, which requires
+// this header to be included before apparently independent other headers.
+//
+// For example, base/logging.h defines various template functions to implement
+// CHECK_EQ(x, y) and stream x and y into the log in the event the check fails.
+// It does so via the function template MakeCheckOpValueString:
+//   template<class T>
+//   void MakeCheckOpValueString(strstream* ss, const T& v) {
+//     (*ss) << v;
+//   }
+// Because 'glog/logging.h' is included before 'glog/stl_logging.h',
+// subsequent CHECK_EQ(v1, v2) for vector<...> typed variable v1 and v2 can only
+// find these operator definitions via ADL.
+//
+// Even this solution has problems -- it may pull unintended operators into the
+// namespace as well, allowing them to also be found via ADL, and creating code
+// that only works with a particular order of includes. Long term, we need to
+// move all of the *definitions* into namespace std, bet we need to ensure no
+// one references them first. This lets us take that step. We cannot define them
+// in both because that would create ambiguous overloads when both are found.
+namespace std { using ::operator<<; }
+
+// End of ------ LOG STL containers ---------------------------
+
 
 // Another great logging library:
 //  https://github.com/amrayn/easyloggingpp

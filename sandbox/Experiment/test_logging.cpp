@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/util/logging.h>
-#include <easy3d/core/types.h>
+#include "easy3d/util/logging.h"
+
 
 #include <thread>
 
@@ -31,30 +31,54 @@
 
 using namespace easy3d;
 
+
+struct vec3 {
+    vec3(int x_, int y_, int z_) : x(x_), y(y_), z(z_) {}
+    int x, y, z;
+};
+
+std::ostream& operator<<(std::ostream& os, const vec3& v) {
+    os << v.x << " " << v.y << " " << v.z;
+    return os;
+};
+
+void run_many_threads() {
+    for (int i=0; i<8; ++i) {
+        std::thread t([=]() {
+            LOG(WARNING) << "Run in another thread ---------: " << i;
+            LOG(WARNING) << "Run in another thread *********: " << i;
+        });
+        t.detach();
+    }
+}
+
+void DoNothingFunc() {
+    LOG(WARNING) << "function " << __FUNCTION__ << "() executed";
+}
+
 void test_conditional_ccasional_logging() {
-    for ( int i = 0; i < 10; ++i ) {
-      LOG_FIRST_N(ERROR, 3) << "Log first 3, iteration " << google::COUNTER << std::endl;
+    for (int i = 0; i < 20; ++i) {
+        LOG_FIRST_N(INFO, 4) << "Log first 4 INFO, iteration " << i << ", " << logging::COUNTER << std::endl;
+        LOG_FIRST_N(ERROR, 5) << "Log first 5 ERROR, iteration " << i << ", " << logging::COUNTER << std::endl;
+    }
 
-      LOG_EVERY_N(ERROR, 3) << "Log every 3, iteration " << google::COUNTER << std::endl;
-      LOG_EVERY_N(ERROR, 4) << "Log every 4, iteration " << google::COUNTER << std::endl;
+    LOG(INFO) << " \n ------------------------ \n";
 
-      LOG_IF_EVERY_N(WARNING, true, 5) << "Log if every 5, iteration " << google::COUNTER;
-      LOG_IF_EVERY_N(WARNING, false, 3)
-          << "Log if every 3, iteration " << google::COUNTER;
-      LOG_IF_EVERY_N(INFO, true, 1) << "Log if every 1, iteration " << google::COUNTER;
-      LOG_IF_EVERY_N(ERROR, (i < 3), 2)
-          << "Log if less than 3 every 2, iteration " << google::COUNTER;
+    for (int i = 0; i < 20; ++i) {
+        LOG_EVERY_N(WARNING, 4) << "Log every 4 WARNING, iteration " << i << ", " << logging::COUNTER;
+        LOG_EVERY_N(ERROR, 5) << "Log every 5 ERROR, iteration " << i << ", " << logging::COUNTER;
+    }
+
+    LOG(INFO) << " \n ------------------------ \n";
+
+    for (int i = 0; i < 40; ++i) {
+        LOG_IF_EVERY_N(WARNING, i < 20, 5) << "Log if (i < 10) for every 5, i = " << i << ", " << logging::COUNTER;
+        LOG_IF_EVERY_N(ERROR, i >= 20, 5) << "Log if (i < 10) for every 5, i = " << i << ", " << logging::COUNTER;
     }
 }
 
 
-void MyFunction() {
-    LOG(WARNING) << "function [" << __FUNCTION__ << "] executed";
-}
-
-
-int main (int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     logging::initialize();
 
     //------------------------------------------------
@@ -69,19 +93,16 @@ int main (int argc, char *argv[])
     int c = 2;
 
     LOG_ASSERT(b == c) << ": The world must be ending!";
-    LOG_ASSERT(a == b) << ": The world must be ending!";
+    LOG_ASSERT(a != b) << ": The world must be ending!";
 
     CHECK_EQ(std::string("abc")[1], 'b');
 
     LOG_IF(WARNING, a < b) << "Warning, a < b";
     LOG_IF(ERROR, a < b) << "Error, a < b";
 
-    LOG_ASSERT(b == c);
-    LOG_ASSERT(a == b);
-
     //------------------------------------------------
 
-    for (int i=0; i<10; ++i) {
+    for (int i = 0; i < 10; ++i) {
         LOG_FIRST_N(ERROR, 3) << "LOG_FIRST_N(ERROR, 5): " << i;
     }
 
@@ -93,16 +114,20 @@ int main (int argc, char *argv[])
     t.detach();
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
+    run_many_threads();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
     // ---------------------------------
 
     int *ptr = new int[10];
     CHECK_NOTNULL(ptr);
-    DLOG(INFO) << "of [" << __func__ << "]";
-    delete [] ptr;
+    DLOG(INFO) << "of " << __func__ << "()";
+    delete[] ptr;
+
 
     //------------------------------------------------
 
-    MyFunction();
+    DoNothingFunc();
 
     //------------------------------------------------
 
@@ -116,8 +141,8 @@ int main (int argc, char *argv[])
     //------------------------------------------------
 
     std::vector<vec3> points;
-    for(int i=0; i<20; ++i)
-        points.push_back(vec3(i));
+    for (int i = 0; i < 3; ++i)
+        points.push_back(vec3(i, i, i));
     LOG(INFO) << "std::vector<vec3>: " << points;
 
     //------------------------------------------------
@@ -127,7 +152,7 @@ int main (int argc, char *argv[])
     //------------------------------------------------
 
     LOG(INFO) << "---------- TEST has succeeded!!!!!!!!!!!!!!!!! ----------";
-     LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
+    LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
 
     return EXIT_SUCCESS;
 }

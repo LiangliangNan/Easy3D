@@ -66,11 +66,11 @@ namespace google {
 
 
     MessageLogger::MessageLogger(const char *file, int line, int severity)
-            : full_path_(file), line_(line), severity_(severity) {
+            : full_path_(file), line_(line), severity_(severity), stream_(0) {
     }
 
     MessageLogger::MessageLogger(const char *file, int line, int severity, int ctr)
-            : full_path_(file), line_(line), severity_(severity) {
+            : full_path_(file), line_(line), severity_(severity), stream_(ctr) {
     }
 
     // Output the contents of the stream to the proper channel on destruction.
@@ -112,8 +112,8 @@ namespace google {
             // If fatal error occurred, stop the program.
             // After logging the error (before the program crashes), notify StackTracer not to log again.
             if (!backward::SignalHandling::failure_has_been_recored) {
-                message_ += "\n" + easy3d::logging::stacktrace_header()
-                            + "\n" + easy3d::StackTracer::back_trace_string(32, 5);
+                message_ += "\n" + ::easy3d::logging::stacktrace_header()
+                            + "\n" + ::easy3d::StackTracer::back_trace_string(32, 5);
             }
         }
 
@@ -380,7 +380,7 @@ namespace easy3d
                 stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
                 stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
                 stream << "\n=================================================================================";
-                stream << "\nStack trace (most recent call first):";
+                stream << "\n*** Check failure stack trace (most recent call first): ***";
                 return stream.str();
             };
             static std::string header = compose_header();
