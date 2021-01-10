@@ -302,7 +302,7 @@ namespace easy3d {
             return;
         }
         if (!colors) {
-            LOG(WARNING) << "color property no allocated" << "\'";
+            LOG(WARNING) << "color property not allocated" << "\'";
             return;
         }
 
