@@ -50,6 +50,9 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -1377,6 +1380,8 @@ void MainWindow::surfaceMeshSlice() {
         planes[i] = Plane3(vec3(0, 0, minz + i * step), vec3(0, 0, 1));
 
     const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
+    if (all_polylines.empty())
+        return;
 
     Graph* graph = new Graph;
     for (const auto& polylines : all_polylines) {
@@ -1402,6 +1407,18 @@ void MainWindow::surfaceMeshSlice() {
 
     graph->set_name(file_system::base_name(mesh->name()) + "-slice");
     viewer()->addModel(graph);
+
+    auto edges = graph->renderer()->get_lines_drawable("edges");
+    edges->set_line_width(2.0f);
+    edges->set_uniform_coloring(vec4(1, 0, 0, 1));
+    LOG(INFO) << "color information added to visualize individual polylines of the slice";
+    edges->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::EDGE, "e:color");
+
+    auto vertices = graph->renderer()->get_points_drawable("vertices");
+    vertices->set_uniform_coloring(vec4(0, 1, 0, 1));
+    vertices->set_point_size(4.0f);
+    vertices->set_visible(false);
+
     ui->treeWidgetModels->addModel(graph, false);
 #endif
 
