@@ -7,6 +7,7 @@ in  vec3 vtx_color;		// vertex color
 uniform mat4 SHADOW;
 uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -45,7 +46,7 @@ void main() {
         else
                 DataOut.color = default_color;
 
-        DataOut.normal = vtx_normal;
+        DataOut.normal = NORMAL * vtx_normal;
         DataOut.position = new_position.xyz;
         DataOut.shadowCoord = SHADOW * new_position;
 

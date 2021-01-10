@@ -33,6 +33,8 @@ layout(std140) uniform Material {
 
 uniform sampler2D	textureID;
 
+uniform bool selected = false;
+
 out vec4 fragmentColor;
 
 void main()
@@ -52,6 +54,9 @@ void main()
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
             color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
+
+    if (selected)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
     vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
     vec3 normal = FragmentIn.normal;

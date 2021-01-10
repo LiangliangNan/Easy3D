@@ -38,6 +38,9 @@ uniform bool two_sides_lighting;
 
 uniform bool is_background = false;
 
+uniform bool selected = false;
+
+
 out vec4 FragColor;	// Ouput data
 
 
@@ -725,6 +728,9 @@ vec3 shade(vec3 worldPos)
 
 void main(void) {
     vec3 color = shade(DataIn.position);
+
+	if (selected && !is_background)
+		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
     // transforming from clip space to NDC space
     vec3 ProjCoords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;

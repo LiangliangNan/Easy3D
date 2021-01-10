@@ -16,6 +16,8 @@ uniform bool    is_background = false;
 uniform sampler2DShadow  shadowMap;
 uniform float darkness;
 
+uniform bool selected = false;
+
 in Data{
 	vec3 color;
 	vec3 normal;
@@ -59,6 +61,8 @@ vec3 shade(vec3 worldPos)
 
 void main(void) {
         vec3 color = shade(DataIn.position);
+        if (selected && !is_background)
+            color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
         vec3 coords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;
         // to avoid shadow acne: See: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/

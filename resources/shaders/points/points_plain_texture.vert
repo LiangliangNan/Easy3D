@@ -7,6 +7,7 @@ in vec3 vtx_normal;
 
 uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -27,7 +28,7 @@ void main() {
 
     DataOut.position = vtx_position;
     DataOut.texcoord = vtx_texcoord;
-    DataOut.normal = vtx_normal;
+    DataOut.normal = NORMAL * vtx_normal;
 
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(new_position, clippingPlane0);

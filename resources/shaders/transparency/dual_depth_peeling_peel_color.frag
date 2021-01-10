@@ -25,6 +25,8 @@ layout(std140) uniform Material {
 // smooth shading
 uniform bool    smooth_shading = true;
 
+uniform bool 	selected = false;
+
 in Data{
 	vec3 color;
 	vec3 normal;
@@ -45,6 +47,8 @@ in Data{
 vec4 ShadeFragment()
 {
 	vec3 color = DataIn.color;
+	if (selected)
+		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
         vec3 normal;
         if (smooth_shading)

@@ -25,6 +25,8 @@ uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
+uniform bool selected = false;
+
 layout(std140) uniform Material {
         vec3	ambient;		// in [0, 1], r==g==b;
         vec3	specular;		// in [0, 1], r==g==b;
@@ -51,6 +53,9 @@ void main()
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
             color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
+
+    if (selected)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
     vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
     vec3 normal = FragmentIn.normal;

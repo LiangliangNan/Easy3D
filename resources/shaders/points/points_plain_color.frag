@@ -20,6 +20,9 @@ uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
+uniform bool selected = false;
+
+
 in Data{
     vec4 color;
     vec3 position;
@@ -50,6 +53,9 @@ void main(void) {
         if (dot(normal, view_dir) < 0)
             color = backside_color;
     }
+
+    if (selected)
+        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
     float df = 0.0;	// diffuse factor
     if (two_sides_lighting)

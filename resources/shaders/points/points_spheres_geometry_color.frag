@@ -19,6 +19,8 @@ uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
+uniform bool selected = false;
+
 in Data{
 	flat    vec4    sphere_color;
 	smooth  vec2    tex;
@@ -133,4 +135,7 @@ void main()
 
 		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
 	}
+
+	if (selected)
+		outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 }

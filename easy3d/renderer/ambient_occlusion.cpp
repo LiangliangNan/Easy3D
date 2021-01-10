@@ -41,6 +41,8 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/transform.h>
 
 
 const int  KERNEL_SIZE = 64;
@@ -186,10 +188,18 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MV", MV);
         program->set_uniform("invMV", transform::normal_matrix(MV));
-        program->set_uniform("PROJ", PROJ); easy3d_debug_log_gl_error
+        program->set_uniform("PROJ", PROJ);
 
         for (auto model : models) {
             if (model->renderer()->is_visible()) {
+                // transformation introduced by manipulation
+                const mat4 MANIP = model->manipulator()->matrix();
+                // needs be padded when using uniform blocks
+                const mat3 NORMAL = transform::normal_matrix(MANIP);
+
+                program->set_uniform("MANIP", MANIP)
+                        ->set_uniform("NORMAL", NORMAL);
+
                 for (auto d : model->renderer()->points_drawables()) {
                     if (d->is_visible()) {
                         if (setting::clipping_plane)

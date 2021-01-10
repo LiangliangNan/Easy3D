@@ -7,6 +7,7 @@ uniform mat4 MV;
 uniform mat3 invMV;
 uniform mat4 PROJ;
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -38,7 +39,7 @@ void main()
     vec4 viewPos = MV * new_position;
     DataOut.position = viewPos.xyz;
 
-    DataOut.normal = invMV * vtx_normal;
+    DataOut.normal = invMV * NORMAL * vtx_normal;
     
     gl_Position = PROJ * viewPos;
 }

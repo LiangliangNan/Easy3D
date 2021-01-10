@@ -40,21 +40,13 @@ using namespace easy3d;
 
 
 
-int print(int * v) {
-     std::cout << *v << std::endl;
-    LOG_IF(FATAL, v== nullptr) << "v== nullptr";
-
-}
-
 int main(void) {
+
+    logging::initialize(INFO);
 
     LOG(INFO) << "crash test";
     LOG(ERROR) << "error!";
 
-
-    StackTracer st;
-
-    //print(0);
 
     LOG(FATAL) << "bad";
 

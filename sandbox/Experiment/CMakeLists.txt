@@ -12,4 +12,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
-target_link_libraries(${PROJECT_NAME} core viewer algo util)
+target_link_libraries(${PROJECT_NAME} core viewer algo)

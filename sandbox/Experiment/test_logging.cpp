@@ -33,11 +33,6 @@ using namespace easy3d;
 
 void test_conditional_ccasional_logging() {
     for ( int i = 0; i < 10; ++i ) {
-      int old_errno = errno;
-      errno = i;
-      PLOG_EVERY_N(ERROR, 2) << "Plog every 2, iteration " << google::COUNTER;
-      errno = old_errno;
-
       LOG_FIRST_N(ERROR, 3) << "Log first 3, iteration " << google::COUNTER << std::endl;
 
       LOG_EVERY_N(ERROR, 3) << "Log every 3, iteration " << google::COUNTER << std::endl;
@@ -73,16 +68,16 @@ int main (int argc, char *argv[])
     int b = 2;
     int c = 2;
 
-    CHECK_TRUE(b == c) << ": The world must be ending!";
-    CHECK_FALSE(a == b) << ": The world must be ending!";
+    LOG_ASSERT(b == c) << ": The world must be ending!";
+    LOG_ASSERT(a == b) << ": The world must be ending!";
 
     CHECK_EQ(std::string("abc")[1], 'b');
 
     LOG_IF(WARNING, a < b) << "Warning, a < b";
     LOG_IF(ERROR, a < b) << "Error, a < b";
 
-    CHECK_TRUE(b == c);
-    CHECK_FALSE(a == b);
+    LOG_ASSERT(b == c);
+    LOG_ASSERT(a == b);
 
     //------------------------------------------------
 

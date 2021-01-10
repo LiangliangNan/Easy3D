@@ -84,6 +84,10 @@ namespace google {
     const int ERROR = ::ERROR;
     const int FATAL = ::FATAL;
 
+    // only log messages at levels >= min_severity will be logged
+    void setLogSeverityThreshold(LogSeverity min_severity);
+
+
     // Sink class used for integration with mock and test functions. If sinks are
     // added, all log output is also sent to each sink through the send function.
     // In this implementation, WaitTillSent() is called immediately after the send.
@@ -430,7 +434,7 @@ namespace easy3d {
 
         /**
          * @brief Initializes the logging module.
-         * @param severity_threshold Log messages at a level >= this flag are automatically sent to standard error
+         * @param threshold Log messages at a level >= this flag are automatically sent to standard error
          *        (stderr) in addition to log files. The value can be one of INFO, WARNING, and ERROR.
          * @param log_file If a valid file path is provided (i.e., the file can be created or opened), the log messages
          *      will also be written to this file in addition to logging to stderr.
@@ -439,7 +443,7 @@ namespace easy3d {
          *      next to the executable file.
          * @note This initialization is optional. If not called, log messages will be written to stderr only.
          */
-        void initialize(int severity_threshold = INFO, const std::string &log_file = "");
+        void initialize(google::LogSeverity threshold = INFO, const std::string &log_file = "");
 
 
         // Base class for a log client.

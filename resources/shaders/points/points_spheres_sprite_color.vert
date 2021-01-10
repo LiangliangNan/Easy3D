@@ -3,6 +3,8 @@
 // please send comments or report bug to: liangliang.nan@gmail.com
 uniform mat4 MV;
 uniform mat4 PROJ;
+uniform mat4 MANIP = mat4(1.0);
+
 
 in vec3  vtx_position;
 in vec3  vtx_color;
@@ -29,14 +31,16 @@ out Data {
 
 void main()
 {
+    vec4 new_position = MANIP * vec4(vtx_position, 1.0);
+
 	if (per_vertex_color)
-    DataOut.sphere_color = vec4(vtx_color, 1.0);
-        else
-            DataOut.sphere_color = default_color;
+        DataOut.sphere_color = vec4(vtx_color, 1.0);
+    else
+        DataOut.sphere_color = default_color;
 	//DataOut.sphere_radius = sphere_radius;
 
 	// Output vertex position
-        DataOut.position = MV * vec4(vtx_position, 1.0); // eye space
+        DataOut.position = MV * new_position; // eye space
 
 	// http://stackoverflow.com/questions/8608844/resizing-point-sprites-based-on-distance-from-the-camera
 	vec4 projCorner = PROJ * vec4(sphere_radius, sphere_radius, DataOut.position.z, DataOut.position.w);

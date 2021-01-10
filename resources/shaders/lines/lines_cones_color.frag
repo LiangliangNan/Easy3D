@@ -18,6 +18,7 @@ layout(std140) uniform Material {
         float	shininess;
 };
 
+uniform bool selected = false;
 
 in Data{
 	vec3 point;// camera space
@@ -43,7 +44,10 @@ vec3 shade(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color) {
 		sf = pow(sf, sh);
 	}
 
-	return color * df + spec * sf + amb;
+	color = color * df + spec * sf + amb;
+	if (selected)
+		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+	return color;
 }
 
 void main()

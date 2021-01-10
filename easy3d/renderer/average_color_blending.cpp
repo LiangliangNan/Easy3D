@@ -31,6 +31,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
 
 
@@ -102,6 +103,12 @@ namespace easy3d {
 
         for (auto d : surfaces) {
             if (d->is_visible()) {
+                // transformation introduced by manipulation
+                const mat4 MANIP = d->manipulated_matrix();
+                // needs be padded when using uniform blocks
+                const mat3 NORMAL = transform::normal_matrix(MANIP);
+                program->set_uniform("MANIP", MANIP)
+                        ->set_uniform( "NORMAL", NORMAL);
                 program->set_uniform("smooth_shading", d->smooth_shading());
                 program->set_block_uniform("Material", "ambient", d->material().ambient);
                 program->set_block_uniform("Material", "specular", d->material().specular);
@@ -109,6 +116,7 @@ namespace easy3d {
                 program->set_uniform("Alpha", d->opacity());
                 program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                 program->set_uniform("default_color", d->color());
+                program->set_uniform("selected", d->is_selected());
                 if (setting::clipping_plane)
                     setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
                 d->gl_draw(false);

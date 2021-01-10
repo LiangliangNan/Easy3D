@@ -77,9 +77,8 @@ vec4 ShadeFragment()
 	else if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
 		color = vec3(1.0, 0.0, 0.0);
 
-	if (selected) {
-		color = vec3(1.0, 0.0, 0.0);
-	}
+	if (selected)
+		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
 
 	if (lightingEnabled) {
 		vec3 normal;

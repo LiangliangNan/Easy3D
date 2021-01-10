@@ -41,6 +41,13 @@ namespace google {
     // that there is only one instance of this across the entire program.
     static std::set<google::LogSink *> log_sinks_global;
 
+    static google::LogSeverity log_severity_threshold_global;
+
+    void setLogSeverityThreshold(LogSeverity min_severity) {
+        log_severity_threshold_global = min_severity;
+    }
+
+
     // Note: the Log sink functions are not thread safe.
     void AddLogSink(LogSink *sink) {
         // TODO(settinger): Add locks for thread safety.
@@ -78,6 +85,9 @@ namespace google {
 
     // Output the contents of the stream to the proper channel on destruction.
     MessageLogger::~MessageLogger() {
+        if (severity_ < log_severity_threshold_global)
+            return;
+
         short_name_ = simple_name(std::string(full_path_));
 
         // get a precise timestamp as a string
@@ -276,7 +286,7 @@ namespace easy3d
     namespace logging
     {
 
-        void initialize(int severity_threshold, const std::string& log_file)
+        void initialize(google::LogSeverity severity_threshold, const std::string& log_file)
         {
             std::string full_path = log_file;
             if (log_file == "default") {
@@ -300,6 +310,8 @@ namespace easy3d
             if (!full_path.empty()) {
                 static FileLogClient client(full_path);
             }
+
+            google::setLogSeverityThreshold(severity_threshold);
 
             DLOG(INFO) << "logger initialized";
             DLOG(INFO) << "executable path: " << file_system::executable_directory();

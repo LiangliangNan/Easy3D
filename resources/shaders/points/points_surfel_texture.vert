@@ -6,6 +6,7 @@ in  vec2 vtx_texcoord;  // texture coordinate
 in  vec3 vtx_normal;    // point normal
 
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -36,5 +37,5 @@ void main()
     gl_Position = new_position;
 
     vertexOut.texcoord = vtx_texcoord;
-    vertexOut.normal = vtx_normal;
+    vertexOut.normal = NORMAL * vtx_normal;
 }

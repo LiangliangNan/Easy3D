@@ -28,6 +28,8 @@ in Data{
 	vec3 V;
 } DataIn;
 
+uniform bool selected = false;
+
 in  vec2 gOutTexcoord;
 
 out vec4 outputF;
@@ -43,7 +45,10 @@ vec3 ComputeLight(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 co
 		sf = pow(sf, sh);
 	}
 
-	return color * df + spec * sf + amb;
+	color = color * df + spec * sf + amb;
+	if (selected)
+		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+	return color;
 }
 
 void main()

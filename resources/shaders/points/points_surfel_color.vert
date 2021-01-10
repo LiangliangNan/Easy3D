@@ -6,6 +6,7 @@ in  vec3 vtx_color;// point color
 in  vec3 vtx_normal;// point normal
 
 uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
 
 uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
@@ -43,5 +44,5 @@ void main()
     else
         vertexOut.color = default_color;
 
-    vertexOut.normal = vtx_normal;
+    vertexOut.normal = NORMAL * vtx_normal;
 }

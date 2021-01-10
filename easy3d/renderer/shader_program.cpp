@@ -301,7 +301,7 @@ namespace easy3d {
 
 	ShaderProgram* ShaderProgram::set_block(const std::string& name, const void *value) {
 		if (spBlocks.count(name) == 0) {
-			LOG(ERROR) << "warning: block " << name << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "block \'" << name << "\' does not exist or is not active";
 			return this;
 		}
 
@@ -315,13 +315,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			LOG(ERROR) << "warning: block " << blockName << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "block " << blockName << " does not exist or is not active";
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			LOG(ERROR) << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
 			return this;
 		}
 
@@ -336,13 +336,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void * value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			LOG(ERROR) << "warning: block " << blockName << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "block " << blockName << " does not exist or is not active";
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			LOG(ERROR) << "warning: block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active";
 			return this;
 		}
 
@@ -357,7 +357,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "uniform \'" << name << "\' does not exist or is not active";
 			return this;
 		}
 
@@ -370,7 +370,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, unsigned int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
+            LOG_FIRST_N(WARNING, 5) << "uniform \'" << name << "\' does not exist or is not active";
 			return this;
 		}
 
@@ -383,7 +383,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, float value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "uniform \'" << name << "\' does not exist or is not active";
 			return this;
 		}
 
@@ -396,7 +396,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, const void *value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG(ERROR) << "warning: uniform " << name << " does not exist or is not active";
+			LOG_FIRST_N(WARNING, 5) << "uniform \'" << name << "\' does not exist or is not active";
 			return this;
 		}
 
@@ -723,7 +723,7 @@ namespace easy3d {
             int nameBufSize = results[0] + 1;
 			char * name = new char[nameBufSize];
             glGetProgramResourceName(program_, GL_PROGRAM_INPUT, i, nameBufSize, nullptr, name);
-			LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]);
+			LOG(INFO) << "   " << results[2] << "\t\'" << name << "\'\t" << _type_string(results[1]);
 			delete[] name;
 		}
 	}
@@ -754,7 +754,7 @@ namespace easy3d {
             int nameBufSize = results[0] + 1;
 			char * name = new char[nameBufSize];
             glGetProgramResourceName(program_, GL_UNIFORM, i, nameBufSize, nullptr, name);
-			LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "";
+			LOG(INFO) << "   " << results[2] << "\t\'" << name << "\'\t" << _type_string(results[1]) << "";
 			delete[] name;
 		}
 	}
@@ -799,7 +799,7 @@ namespace easy3d {
                 int nameBufSize = results[0] + 1;
 				char * name = new char[nameBufSize];
                 glGetProgramResourceName(program_, GL_UNIFORM, uniIndex, nameBufSize, nullptr, name);
-				LOG(INFO) << "   " << results[2] << "\t" << name << "\t" << _type_string(results[1]) << "";
+				LOG(INFO) << "   " << results[2] << "\t\'" << name << "\'\t" << _type_string(results[1]) << "";
 				delete[] name;
 			}
 

@@ -6,7 +6,7 @@ in  vec3 vtx_color;	// point color
 uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
 
-uniform vec4    default_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+uniform vec4 default_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 uniform bool per_vertex_color = false;
 
 uniform bool planeClippingDiscard = false;
