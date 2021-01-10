@@ -230,12 +230,22 @@ namespace easy3d {
             return;
         }
 
-        // other unknown scalar fields
-        const auto properties = model->vertex_properties();
-        for (const auto& name : properties) {
+        // other unknown scalar fields on faces
+        const auto face_properties = model->face_properties();
+        for (const auto& name : face_properties) {
+            if (model->get_face_property<int>(name) || model->get_face_property<unsigned int>(name) ||
+                model->get_face_property<float>(name)) {
+                drawable->set_scalar_coloring(State::FACE, name);
+                return;
+            }
+        }
+
+        // other unknown scalar fields on vertices
+        const auto vertex_properties = model->vertex_properties();
+        for (const auto& name : vertex_properties) {
             if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
                 model->get_vertex_property<float>(name)) {
-                drawable->set_scalar_coloring(State::FACE, name);
+                drawable->set_scalar_coloring(State::VERTEX, name);
                 return;
             }
         }
