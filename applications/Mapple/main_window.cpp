@@ -191,15 +191,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     readSettings();
     updateWindowTitle();
-
-#ifndef NDEBUG  // temporal menus/tools
-		QToolBar* toolBarExperimental = new QToolBar(this);
-		addToolBar(toolBarExperimental);
-		QAction* actionTest1 = toolBarExperimental->addAction("Test1");
-		connect(actionTest1, SIGNAL(triggered()), this, SLOT(test1()));
-        QAction* actionTest2 = toolBarExperimental->addAction("Test2");
-        connect(actionTest2, SIGNAL(triggered()), this, SLOT(test2()));
-#endif
 }
 
 
@@ -1856,9 +1847,10 @@ void MainWindow::animation() {
         dialog = new DialogWalkThrough(this);
 
     dialog->walkThrough()->start_walking(viewer_->models());
+    for (auto m : viewer_->models())
+        m->renderer()->set_selected(false);
     dialog->show();
 }
-
 
 
 void MainWindow::surfaceMeshGeodesic() {
@@ -1972,20 +1964,3 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     updateUi();
     viewer_->update();
 }
-
-
-#ifndef NDEBUG
-void MainWindow::test1() {
-    float coeff = viewer_->camera()->zNearCoefficient();
-    viewer_->camera()->setZNearCoefficient(coeff + 0.005);
-    std::cout << "camera()->zNearCoefficient(): " << coeff << " -> " << coeff + 0.005 << std::endl;
-    viewer_->update();
-}
-
-void MainWindow::test2() {
-    float coeff = viewer_->camera()->zNearCoefficient();
-    viewer_->camera()->setZNearCoefficient(coeff - 0.001);
-    std::cout << "camera()->zNearCoefficient(): " << coeff << " -> " << coeff - 0.001 << std::endl;
-    viewer_->update();
-}
-#endif
