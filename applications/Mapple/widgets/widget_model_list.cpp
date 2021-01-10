@@ -9,6 +9,7 @@
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/walk_throuth.h>
 #include <easy3d/util/file_system.h>
 
 #include <QMenu>
@@ -484,6 +485,10 @@ void WidgetModelList::modelItemSelectionChanged() {
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
         item->setStatus(item->model() == active_model);
+
+        // don't allow changing selection for camera path creation
+        if (viewer()->walkThrough()->status() == easy3d::WalkThrough::STOPPED)
+            item->model()->renderer()->set_selected(item->isSelected());
     }
 
     viewer()->update();
