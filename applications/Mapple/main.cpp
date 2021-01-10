@@ -42,7 +42,6 @@
 
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/stack_tracer.h>
 
 
 using namespace easy3d;
@@ -67,8 +66,6 @@ public:
 
 int main(int argc, char *argv[])
 {
-    StackTracer tracer;
-
     //Locale management
     {
         //Force 'English' locale so as to get a consistent behavior everywhere

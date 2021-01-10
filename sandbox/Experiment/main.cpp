@@ -47,11 +47,13 @@ int main(void) {
     LOG(INFO) << "crash test";
     LOG(ERROR) << "error!";
 
-
-    LOG(FATAL) << "bad";
+    StackTracer st;
 
     int* i;
     *i = 0; // Crash!
+
+
+    LOG(FATAL) << "bad";
 
     return 0;
 }

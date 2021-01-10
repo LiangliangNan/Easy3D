@@ -278,7 +278,7 @@ namespace google {
 
 
 #include <easy3d/util/file_system.h>
-
+#include <easy3d/util/stack_tracer.h>
 
 namespace easy3d
 {
@@ -288,6 +288,9 @@ namespace easy3d
 
         void initialize(google::LogSeverity severity_threshold, const std::string& log_file)
         {
+            // allow to chase failures
+            static StackTracer tracer;
+
             std::string full_path = log_file;
             if (log_file == "default") {
                 const std::string app_path = file_system::executable();
