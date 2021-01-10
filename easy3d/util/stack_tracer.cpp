@@ -60,7 +60,10 @@ namespace easy3d {
                 const auto trace = resolver.resolve(stack[trace_idx]);
                 record.emplace_back(
                         file_system::base_name(trace.object_filename), // get the short name
-                        trace.object_function
+                        trace.object_function,
+                        trace.source.filename,
+                        trace.source.line,
+                        trace.addr
                 );
             }
 
@@ -91,7 +94,10 @@ namespace easy3d {
             const auto trace = tr.resolve(st[i]);
             record.emplace_back(
                     file_system::base_name(trace.object_filename), // get the short name
-                    trace.object_function
+                    trace.object_function,
+                    trace.source.filename,
+                    trace.source.line,
+                    trace.addr
             );
         }
         return record;
@@ -108,6 +114,9 @@ namespace easy3d {
         for (std::size_t i=0; i<record.size(); ++i) {
             stream << "\t" << std::setw(5) << std::left << std::setfill(' ') << i
                    << "\t" << std::setw(20) << std::setfill(' ') << record[i].object_name
+//                   << "\t" << std::setw(20) << std::setfill(' ') << record[i].file_name
+//                   << "\t" << std::setw(10) << std::setfill(' ') << record[i].line_number
+//                   << "\t" << std::setw(20) << std::left << std::setfill(' ') << record[i].address
                    << "\t" << record[i].function_name << "\n";
         }
         return stream.str();

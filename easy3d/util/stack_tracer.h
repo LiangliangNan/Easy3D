@@ -58,10 +58,18 @@ namespace easy3d {
 
         class StackEntry {
         public:
-            StackEntry(const std::string &object, const std::string &function)
-                    : object_name(object), function_name(function) {}
+            StackEntry(
+                    const std::string &object,
+                    const std::string &function,
+                    const std::string &file,
+                    unsigned int line,
+                    const void *addr
+            ) : object_name(object), function_name(function), file_name(file), line_number(line), address(addr) {}
             std::string object_name;
             std::string function_name;
+            std::string file_name;
+            unsigned int line_number;
+            const void* address;
         private:
             StackEntry(void);
         };
@@ -74,11 +82,8 @@ namespace easy3d {
         /// Returns the back_trace() record as a string, line by line with an index and most recent one first.
         static std::string back_trace_string(int amount = 32, int skip = 2);
 
+        /// Converts the back_trace() record to a string.
         static std::string to_string(const std::vector<StackEntry>& record);
-
-    private:
-        /// The function to be called when a failure signal was triggered
-        static void signal_logger();
     };
 
 }
