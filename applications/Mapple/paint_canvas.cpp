@@ -313,8 +313,9 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
-        }
-        else if (e->modifiers() == Qt::NoModifier) {
+        } else if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
+                   walkThrough()->status() == easy3d::WalkThrough::STOPPED)
+        {
             ModelPicker picker(camera());
             makeCurrent();
             auto model = picker.pick(models(), e->pos().x(), e->pos().y());
