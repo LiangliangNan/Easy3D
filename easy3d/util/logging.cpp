@@ -297,8 +297,14 @@ namespace easy3d
             }
 
             if (!full_path.empty()) {
-                static FileLogger client(full_path);
-                if (file_system::file_size(FileLogger::log_file_name()) != 0)
+                auto size_bytes = file_system::file_size(full_path);
+                auto mode = std::ios::app;
+                if (size_bytes > 10 * 1024 * 1024) {
+                    mode = std::ios::out | std::ios::trunc;
+                    size_bytes = 0;
+                }
+                static FileLogger client(full_path, mode);
+                if (size_bytes > 0)
                     client.append("\n\n");
                 client.append("***********************************************************************************"
                               " program started ...\n");
