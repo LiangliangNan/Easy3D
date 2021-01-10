@@ -66,11 +66,11 @@ namespace google {
 
 
     MessageLogger::MessageLogger(const char *file, int line, int severity)
-            : full_path_(file), line_(line), severity_(severity), stream_(0) {
+            : full_path_(file), line_(line), stream_(0), severity_(severity) {
     }
 
     MessageLogger::MessageLogger(const char *file, int line, int severity, int ctr)
-            : full_path_(file), line_(line), severity_(severity), stream_(ctr) {
+            : full_path_(file), line_(line), stream_(ctr), severity_(severity) {
     }
 
     // Output the contents of the stream to the proper channel on destruction.
@@ -88,7 +88,7 @@ namespace google {
         const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
         const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
         std::stringstream time_stream;
-        time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d:%T")
+        time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d %T")
                     << '.' << std::setfill('0') << std::setw(3) << now_in_ms.count();
         time_str_ = time_stream.str();
 
@@ -341,7 +341,7 @@ namespace easy3d
         std::string FileLogger::log_file_name_ = "";
         std::ofstream* FileLogger::output_ = nullptr;
 
-        FileLogger::FileLogger(const std::string &file_name, std::ios::open_mode mode) {
+        FileLogger::FileLogger(const std::string &file_name, std::ios::openmode mode) {
             static std::ofstream output(file_name.c_str(), mode);
             if (output.is_open()) {
                 output_ = &output;

@@ -648,7 +648,7 @@ namespace easy3d {
         /// A file logger logs all log message into a file.
         class FileLogger : public Logger {
         public:
-            FileLogger(const std::string &file_name, std::ios::open_mode mode = std::ios::app);
+            FileLogger(const std::string &file_name, std::ios::openmode mode = std::ios::app);
 
             /// returns the log file name.
             /// returns and empty string if the stream doesn't exist.
