@@ -88,6 +88,8 @@
 #include <string>
 #include <vector>
 #include <exception>
+#include <functional>
+
 
 #if defined(BACKWARD_SYSTEM_LINUX)
 
@@ -4214,8 +4216,7 @@ public:
                 case SIGTRAP:   msg = "Trace/breakpoint trap (" + std::to_string(SIGTRAP) + ": SIGTRAP)";            break;
                 case SIGXCPU:   msg = "CPU time limit exceeded (4.2BSD) (" + std::to_string(SIGXCPU) + ": SIGXCPU)"; break;
                 case SIGXFSZ:   msg = "File size limit exceeded (4.2BSD) (" + std::to_string(SIGXFSZ) + ": SIGXFSZ)";break;
-                case SIGEMT:    msg = "emulation instruction executed (" + std::to_string(SIGEMT) + ": SIGEMT)";    break;
-            }
+           }
             signal_log_func(&st, 0, msg.c_str());
         }
         else {

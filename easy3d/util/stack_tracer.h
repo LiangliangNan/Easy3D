@@ -26,7 +26,7 @@
 #define EASY3D_UTIL_STACK_TRACER_H
 
 #include <string>
-
+#include <vector>
 
 namespace easy3d {
 
