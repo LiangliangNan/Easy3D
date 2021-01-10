@@ -73,6 +73,8 @@ void main()
 
         if (!lighting) {
             outputF = DataIn.sphere_color;
+            if (selected)
+            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
             return;
         }
 
@@ -120,6 +122,8 @@ void main()
 
         if (!lighting) {
             outputF = DataIn.sphere_color;
+            if (selected)
+            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
             return;
         }
 

@@ -42,6 +42,8 @@ void main()
 	vec3 color = texture(textureID, DataIn.texcoord).rgb;
 	if (!lighting) {
 		outputF = vec4(color, 1.0);
+		if (selected)
+			outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 		return;
 	}
 

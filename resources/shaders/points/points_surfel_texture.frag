@@ -47,6 +47,8 @@ void main()
     vec3 color = texture(textureID, FragmentIn.texcoord).rgb;
     if (!lighting) {
         fragmentColor = vec4(color, 1.0);
+        if (selected)
+        fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         return;
     }
 

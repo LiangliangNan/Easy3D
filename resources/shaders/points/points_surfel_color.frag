@@ -45,6 +45,8 @@ void main()
 
     if (!lighting) {
         fragmentColor = FragmentIn.color;
+        if (selected)
+        fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         return;
     }
 
