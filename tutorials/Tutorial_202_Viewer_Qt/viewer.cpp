@@ -38,18 +38,15 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/ambient_occlusion.h>
-#include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
-#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_info.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/setting.h>
-#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/opengl_timer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -60,7 +57,6 @@
 #include <QPainter>
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
-#include <QOpenGLFramebufferObject>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QApplication>
 #include <QClipboard>
@@ -106,6 +102,7 @@ void ViewerQt::cleanup() {
 
     for (auto m : models_) {
         delete m->renderer();
+        delete m->manipulator();
         delete m;
     }
 
@@ -685,6 +682,8 @@ void ViewerQt::addModel(Model *model) {
 
     auto renderer = new Renderer(model);
     model->set_renderer(renderer);
+    auto manipulator = new Manipulator(model);
+    model->set_manipulator(manipulator);
 
     int pre_idx = model_idx_;
     models_.push_back(model);

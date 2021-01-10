@@ -42,6 +42,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -1127,6 +1128,8 @@ namespace easy3d {
 
         auto renderer = new Renderer(model, create);
         model->set_renderer(renderer);
+        auto manipulator = new Manipulator(model);
+        model->set_manipulator(manipulator);
 
         int pre_idx = model_idx_;
         models_.push_back(model);
