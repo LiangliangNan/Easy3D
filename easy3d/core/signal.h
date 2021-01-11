@@ -36,9 +36,10 @@ namespace easy3d {
      * \brief Implementation of a simple signal-slot mechanism.
      * \class Signal easy3d/core/signal.h
      * \details Signal supports any types of functions (functions, lambda functions, and member functions) with any
-     *      number of arguments. Connected functions will be called when the send() method on the signal object is
+     *      number of arguments. Connected functions will be called when the send() method of the signal object is
      *      invoked. Any argument passed to send() will be passed to the given functions.
-     *      Multiple slots can be connected to a single signal object.
+     *      Multiple slots can be connected to the same signal object. A signal (i.e., the sender) can be connected
+     *      to another signal (e.g., the receiver).
      *      A typical usage of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the
      *      viewer should be notified (e.g., a repaint event should be triggered). This is done by calling to the
      *      viewer's update() function. So in Easy3D, the viewer's update function is connected to the camera's
@@ -51,9 +52,10 @@ namespace easy3d {
 
     public:
         Signal() = default;
+
         ~Signal() = default;
 
-        // Copy constructor and assignment create a new signal.
+        /// Copy constructor and assignment create a new signal.
         Signal(Signal const & /*unused*/) {}
 
         Signal &operator=(Signal const &other) {
@@ -63,7 +65,7 @@ namespace easy3d {
             return *this;
         }
 
-        // Move constructor and assignment operator work as expected.
+        /// Move constructor and assignment operator.
         Signal(Signal &&other) noexcept:
                 slots_(std::move(other.slots_)),
                 current_id_(other.current_id_) {}
@@ -78,7 +80,7 @@ namespace easy3d {
         }
 
 
-        /// Connects a function to the signal.
+        /// Connects a function to this signal.
         /// The returned value can be used to disconnect the function again.
         int connect(std::function<void(Args...)> const &slot) const {
             slots_.insert(std::make_pair(++current_id_, slot));
@@ -105,6 +107,13 @@ namespace easy3d {
             return connect([=](Args... args) {
                 (inst->*func)(args...);
             });
+        }
+
+        /// Connects this signal to another signal \p receiver.
+        /// Upon return, the emission of this signal will trigger \p receiver to emit.
+        /// The returned value can be used to disconnect the connected signal.
+        int connect(Signal<Args...> *receiver) {
+            return connect(receiver, &Signal<Args...>::send);
         }
 
         /// Disconnects a previously connected function.
@@ -150,20 +159,11 @@ namespace easy3d {
     /// \name  Global methods for connection and disconnection.
     //\{
 
-    /// Connects an function to the signal.
+    /// Connects a function to the signal.
     /// The returned value can be used to disconnect the function again.
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
         return signal->connect(slot);
-    }
-
-    /// Connect a member function of an object to this Signal.
-    /// The returned value can be used to disconnect the function again.
-    /// \note When a member function has overloads or inheritance, you may need to explicit cast the function to indicate
-    ///         the template argument. For example, \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
-    template<typename SIGNAL, typename CLASS, typename FUNCTION>
-    inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION &slot) {
-        return signal->connect(inst, slot);
     }
 
     /// Connects a const member function of an object to this Signal.
@@ -173,6 +173,14 @@ namespace easy3d {
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
         return signal->connect(inst, slot);
+    }
+
+    /// Connects this signal to \p another signal.
+    /// Upon return, the emission of this signal will trigger \p another to be emitted.
+    /// The returned value can be used to disconnect the connected signal.
+    template<typename... Args>
+    int connect(Signal<Args...> *sender, Signal<Args...> *receiver) {
+        return sender->connect(receiver);
     }
 
     /// Disconnects a previously connected function.

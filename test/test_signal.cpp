@@ -57,10 +57,10 @@ private:
 };
 
 
-void test_for_members(Car* car) {
-    Signal<>  start_signal;
-    Signal<int>  report_signal;
-    Signal<int, const std::string&>  stop_signal;
+void test_for_members(Car *car) {
+    Signal<> start_signal;
+    Signal<int> report_signal;
+    Signal<int, const std::string &> stop_signal;
 
     // ---- connect to a class member, no argument
     easy3d::connect(&start_signal, car, &Car::start);  // use the global function connect()
@@ -84,33 +84,34 @@ void func_start() {
     std::cout << "started\n";
 }
 
-void func_start(Car* car) {
+void func_start(Car *car) {
     std::cout << "speed is " << car->speed() << "\n";
 }
 
-void func_report_speed(int max_allow_speed, const Car* car) {
+void func_report_speed(int max_allow_speed, const Car *car) {
     std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
 }
 
-void func_stop(const Car* car, int hours, const std::string& msg) {
+void func_stop(const Car *car, int hours, const std::string &msg) {
     std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
 }
 
 
-void test_for_functions(Car* car) {
+void test_for_functions(Car *car) {
     Signal<> func_start_signal;
-    Signal<Car*> func_start_signal_1arg;
-    Signal<int, const Car*> func_report_signal;
-    Signal<const Car*, int, const std::string&> another_stop_signal;
+    Signal<Car *> func_start_signal_1arg;
+    Signal<int, const Car *> func_report_signal;
+    Signal<const Car *, int, const std::string &> another_stop_signal;
 
     // ---- connect to a function, no argument
-    easy3d::connect(&func_start_signal, static_cast<void(*)(void)> (func_start));  // use the global function connect()
-    func_start_signal.connect(static_cast<void(*)(void)> (func_start));  // use signal's connect()
+    easy3d::connect(&func_start_signal, static_cast<void (*)(void)> (func_start));  // use the global function connect()
+    func_start_signal.connect(static_cast<void (*)(void)> (func_start));  // use signal's connect()
 
     // ---- connect to a function, one argument
 
-    easy3d::connect(&func_start_signal_1arg, static_cast<void(*)(Car*)> (func_start));  // use the global function connect()
-    func_start_signal_1arg.connect(static_cast<void(*)(Car*)> (func_start));  // use signal's connect()
+    easy3d::connect(&func_start_signal_1arg,
+                    static_cast<void (*)(Car *)> (func_start));  // use the global function connect()
+    func_start_signal_1arg.connect(static_cast<void (*)(Car *)> (func_start));  // use signal's connect()
 
     // ---- connect to a function, two arguments
     easy3d::connect(&func_report_signal, func_report_speed);  // use the global function connect()
@@ -127,27 +128,27 @@ void test_for_functions(Car* car) {
 }
 
 
-void test_for_lambda_functions(Car* car) {
+void test_for_lambda_functions(Car *car) {
     auto lambda_start = []() -> void {
         std::cout << "started\n";
     };
 
-    auto lambda_start_1arg = [](Car* car) -> void {
+    auto lambda_start_1arg = [](Car *car) -> void {
         std::cout << "speed is " << car->speed() << "\n";
     };
 
-    auto lambda_report_speed = [](int max_allow_speed, const Car* car) -> void {
+    auto lambda_report_speed = [](int max_allow_speed, const Car *car) -> void {
         std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
     };
 
-    auto lambda_stop = [](const Car* car, int hours, const std::string& msg) -> void {
+    auto lambda_stop = [](const Car *car, int hours, const std::string &msg) -> void {
         std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
     };
 
     Signal<> lambda_start_signal;
-    Signal<Car*> lambda_start_signal_1arg;
-    Signal<int, const Car*> lambda_report_signal;
-    Signal<const Car*, int, const std::string&> lambda_stop_signal;
+    Signal<Car *> lambda_start_signal_1arg;
+    Signal<int, const Car *> lambda_report_signal;
+    Signal<const Car *, int, const std::string &> lambda_stop_signal;
 
     // ---- connect to a function, no argument
     easy3d::connect(&lambda_start_signal, lambda_start);  // use the global function connect()
@@ -173,6 +174,21 @@ void test_for_lambda_functions(Car* car) {
 }
 
 
+void test_connect_signal_to_signal() {
+    Signal<const std::string &> A;
+    Signal<const std::string &> B;
+    Signal<const std::string &> C;
+
+    easy3d::connect(&A, &B);    // or A.connect(&B);
+    easy3d::connect(&B, &C);    // or B.connect(&C);
+    C.connect([](const std::string &msg) -> void {
+        std::cout << "C: " << msg << std::endl;
+    });
+
+    A.send("abc");
+}
+
+
 int main() {
     Car car(100);
 
@@ -182,9 +198,12 @@ int main() {
     std::cout << "\n\nconnect to a function ------------------------------------------------------------------\n\n";
     test_for_functions(&car);
 
-
     std::cout << "\n\nconnect to a lambda function -----------------------------------------------------------\n\n";
     test_for_lambda_functions(&car);
+
+    std::cout << "\n\nconnect a signal to another signal -----------------------------------------------------\n\n";
+    test_connect_signal_to_signal();
+
 
     return EXIT_SUCCESS;
 }
