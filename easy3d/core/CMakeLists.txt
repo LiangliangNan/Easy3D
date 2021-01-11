@@ -15,6 +15,7 @@ set(${PROJECT_NAME}_HEADERS
         line.h
         manifold_builder.h
         mat.h
+        matrix.h
         model.h
         oriented_line.h
         plane.h
