@@ -42,6 +42,7 @@ namespace easy3d {
      *        function. So in Easy3D, the viewer's update function is connected to the camera.
      * \note Current implementation can hold only one single function of each owner.
      * \class Signal easy3d/core/signal.h
+     * \example test_signal  \include test/test_signal.cpp
      */
 
     template<typename... Args>
