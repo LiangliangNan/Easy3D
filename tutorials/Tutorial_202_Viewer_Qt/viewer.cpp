@@ -226,8 +226,7 @@ void ViewerQt::mousePressEvent(QMouseEvent *e) {
 
                 // show, but hide the visual hint of pivot point after \p delay milliseconds.
                 show_pivot_point_ = true;
-                const int delay = 10000;
-                Timer::single_shot(delay, [&]() {
+                Timer<>::single_shot(10000, [&]() {
                     show_pivot_point_ = false;
                     update();
                 });
