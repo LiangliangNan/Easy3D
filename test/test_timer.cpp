@@ -33,22 +33,30 @@ using namespace easy3d;
 
 // a simple class
 
-class Car {
+class Vehicle {
+public:
+    virtual void start() {
+        std::lock_guard<std::mutex> guard(mutex);
+        std::cout << "do nothing\n";
+    }
+};
+
+class Car : public Vehicle {
 public:
     Car(int speed) : speed_(speed) {}
 
 public:
-
     int speed() const { return speed_; }
 
-    void start() {
+    void start() override {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << "started\n";
     }
 
-    void report_speed(int max_allow_speed) const {
+    void start(int new_speed) {
         std::lock_guard<std::mutex> guard(mutex);
-        std::cout << "max allowed is " << max_allow_speed << ". I am at " << speed_ << "\n";
+        std::cout << "speed changed from " << speed_ << " to " << new_speed << "\n";
+        speed_ = new_speed;
     }
 
     void stop(int hours, const std::string &msg) const {
@@ -65,22 +73,22 @@ void test_for_members(Car* car) {
     // ---- a non-const class member, no argument
     Timer<>::single_shot(33, car, &Car::start);
 
-    // ---- a const class member, one argument
-    Timer<int>::single_shot(33, car, &Car::report_speed, 100);
+    // ---- a non-const overloaded class member, one argument
+    Timer<int>::single_shot(33, car, &Car::start, 100);
 
     // ---- a const class member, two arguments
     Timer<int, const std::string&>::single_shot(33, car, &Car::stop, 6, "I have to stop");
 
     {   Timer<> t;
-        t.single_shot(33, car, &Car::start);
-        t.set_interval(33, car, &Car::start);
+        t.single_shot(33, car, &Car::start);  // This works
+        t.set_interval(33, car, &Car::start);          // This also works
         t.set_timeout(33, car, &Car::start);
     }
 
     {   Timer<int> t;
-        t.single_shot(33, car, &Car::report_speed, 100);
-        t.set_interval(33, car, &Car::report_speed, 100);
-        t.set_timeout(33, car, &Car::report_speed, 100);
+        t.single_shot(33, car, &Car::start, 100);
+        t.set_interval(33, car, &Car::start, 100);
+        t.set_timeout(33, car, &Car::start, 100);
     }
 
     {   Timer<int, const std::string&> t;
@@ -96,7 +104,7 @@ void func_start() {
     std::cout << "started\n";
 }
 
-void func_start_1arg(Car* car) {
+void func_start(Car* car) {
     std::lock_guard<std::mutex> guard(mutex);
     std::cout << "speed is " << car->speed() << "\n";
 }
@@ -114,10 +122,12 @@ void func_stop(const Car* car, int hours, const std::string& msg) {
 
 void test_for_functions(Car* car) {
     // ---- no argument
-    Timer<>::single_shot(33, func_start);
+
+    Timer<>::single_shot(33,  static_cast<void(*)(void)> (func_start));
 
     // ---- one argument
-    Timer<Car*>::single_shot(33, func_start_1arg, car);
+    Timer<Car*>::single_shot(33, static_cast<void(*)(Car*)> (func_start), car);
+
 
     // ---- two argument
     Timer<int, const Car*>::single_shot(33, func_report_speed, 120, car);
@@ -127,16 +137,16 @@ void test_for_functions(Car* car) {
 
     {   // ---- no argument
         Timer<> t;
-        t.single_shot(33, func_start);
-        t.set_interval(33, func_start);
-        t.set_timeout(33, func_start);
+        t.single_shot(33, static_cast<void(*)(void)> (func_start));
+        t.set_interval(33, static_cast<void(*)(void)> (func_start));
+        t.set_timeout(33, static_cast<void(*)(void)> (func_start));
     }
 
     {   // ---- one argument
         Timer<Car*> t;
-        t.single_shot(33, func_start_1arg, car);
-        t.set_interval(33, func_start_1arg, car);
-        t.set_timeout(33, func_start_1arg, car);
+        t.single_shot(33, static_cast<void(*)(Car*)> (func_start), car);
+        t.set_interval(33, static_cast<void(*)(Car*)> (func_start), car);
+        t.set_timeout(33, static_cast<void(*)(Car*)> (func_start), car);
     }
 
     {   // ---- two argument

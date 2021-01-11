@@ -51,6 +51,8 @@ namespace easy3d {
          * \brief Executes function \p func after \p delay milliseconds.
          * \param func The pointer to the function.
          * \param delay The time to be delayed, in milliseconds.
+         * \note When a function has overloads, you may need to explicit cast the function to indicate template
+         *      arguments, e.g., \code static_cast<void(*)(Class*)>(func). \endcode
          */
         static void single_shot(int delay, std::function<void(Args...)> const &func, Args... args);
 
@@ -59,8 +61,8 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         static void single_shot(int delay, Class* inst, void (Class::*func)(Args...), Args... args);
@@ -70,8 +72,8 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         static void single_shot(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args);
@@ -81,6 +83,8 @@ namespace easy3d {
          * \details This is the same as single_shot() except that it is not static.
          * \param delay The time to be delayed, in milliseconds.
          * \param func The pointer to the function.    
+         * \note When a function has overloads, you may need to explicit cast the function to indicate template
+         *      arguments, e.g., \code static_cast<void(*)(Class*)>(func). \endcode
          */
         void set_timeout(int delay, std::function<void(Args...)> const &func, Args... args) const;
 
@@ -90,8 +94,8 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.    
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         void set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const;
@@ -102,8 +106,8 @@ namespace easy3d {
          * \param delay The time to be delayed, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.    
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         void set_timeout(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) const;
@@ -111,7 +115,9 @@ namespace easy3d {
         /**
          * \brief Executes function \p func for every \p interval milliseconds.
          * \param interval The interval, in milliseconds.
-         * \param func The pointer to the function.    
+         * \param func The pointer to the function.
+         * \note When a function has overloads, you may need to explicit cast the function to indicate template
+         *      arguments, e.g., \code static_cast<void(*)(Class*)>(func). \endcode
          */
         void set_interval(int interval, std::function<void(Args...)> const &func, Args... args);
 
@@ -120,8 +126,8 @@ namespace easy3d {
          * \param interval The interval, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         void set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args);
@@ -131,8 +137,8 @@ namespace easy3d {
          * \param interval The interval, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
          * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.
-         * \note When a member function has overloads or inheritance, use static_cast of the function to indicate
-         *      the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
+         * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
+         *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
         template < class Class >
         void set_interval(int interval, Class* inst, void (Class::*func)(Args...) const, Args... args);

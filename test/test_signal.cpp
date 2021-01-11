@@ -84,7 +84,7 @@ void func_start() {
     std::cout << "started\n";
 }
 
-void func_start_1arg(Car* car) {
+void func_start(Car* car) {
     std::cout << "speed is " << car->speed() << "\n";
 }
 
@@ -104,13 +104,13 @@ void test_for_functions(Car* car) {
     Signal<const Car*, int, const std::string&> another_stop_signal;
 
     // ---- connect to a function, no argument
-    easy3d::connect(&func_start_signal, func_start);  // use the global function connect()
-    func_start_signal.connect(func_start);  // use signal's connect()
+    easy3d::connect(&func_start_signal, static_cast<void(*)(void)> (func_start));  // use the global function connect()
+    func_start_signal.connect(static_cast<void(*)(void)> (func_start));  // use signal's connect()
 
     // ---- connect to a function, one argument
 
-    easy3d::connect(&func_start_signal_1arg, func_start_1arg);  // use the global function connect()
-    func_start_signal_1arg.connect(func_start_1arg);  // use signal's connect()
+    easy3d::connect(&func_start_signal_1arg, static_cast<void(*)(Car*)> (func_start));  // use the global function connect()
+    func_start_signal_1arg.connect(static_cast<void(*)(Car*)> (func_start));  // use signal's connect()
 
     // ---- connect to a function, two arguments
     easy3d::connect(&func_report_signal, func_report_speed);  // use the global function connect()
