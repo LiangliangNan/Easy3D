@@ -404,8 +404,8 @@ namespace easy3d {
         LinesDrawable* cameras_drawable_;
 
     public:
-        Signal frame_interpolated;
-        Signal interpolation_stopped;
+        Signal<> frame_interpolated;
+        Signal<> interpolation_stopped;
     };
 
 }

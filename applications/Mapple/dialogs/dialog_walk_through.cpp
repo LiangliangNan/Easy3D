@@ -321,19 +321,22 @@ void DialogWalkThrough::preview(bool b) {
     // this also handles the UI, but a bit complicated (because the Qt GUI actions cannot be triggered in another thread)
     // idea: animation signal -> Qt signals -> Qt action
     auto interpolationStopped = [this]() -> void { emit previewStopped(); };
+    static int id_interpolationStopped = 0;
     static StopWatch w;
     if (b) {
         if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
             LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
-                            << "nothing to preview (camera path is empty). You may import a camera path from a file or"
-                               " creat it by adding keyframes";
+                    << "nothing to preview (camera path is empty). "
+                       "You may import a camera path from a file or create it by adding keyframes";
             disconnect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
             previewButton->setChecked(false);
             connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
             return;
         }
 
-        easy3d::connect(&interpolator()->interpolation_stopped, 0, interpolationStopped);
+        // This doesn't work (
+//        id_interpolationStopped = easy3d::connect(&interpolator()->interpolation_stopped, interpolationStopped);
+        id_interpolationStopped = interpolator()->interpolation_stopped.connect(interpolationStopped);
         QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
         for (auto w : findChildren<QLabel*>()) w->setEnabled(false);
@@ -350,7 +353,7 @@ void DialogWalkThrough::preview(bool b) {
         interpolator()->start_interpolation();
     }
     else {
-        easy3d::disconnect(&interpolator()->interpolation_stopped, 0);
+        easy3d::disconnect(&interpolator()->interpolation_stopped, id_interpolationStopped);
         QObject::disconnect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
         interpolator()->stop_interpolation();

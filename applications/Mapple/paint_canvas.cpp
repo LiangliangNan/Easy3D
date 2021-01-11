@@ -1457,7 +1457,7 @@ void PaintCanvas::restoreState(std::istream& input) {
     input >> dummy;	// this skips the keyword
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
-    easy3d::disconnect(&camera_->frame_modified, this);
+    easy3d::disconnect_all(&camera_->frame_modified);
 
     std::string t;
     input >> dummy >> t;

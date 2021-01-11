@@ -168,7 +168,7 @@ namespace easy3d {
         int current_frame_idx_;
 
     public:
-        Signal path_modified;
+        Signal<> path_modified;
     };
 
 }

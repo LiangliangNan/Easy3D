@@ -113,7 +113,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     const mat4 proj_matrix = camera()->projectionMatrix();
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
-    easy3d::disconnect(&camera_->frame_modified, this);
+    easy3d::disconnect_all(&camera_->frame_modified);
 
     makeCurrent();
 
@@ -252,7 +252,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         camera_->setScreenWidthAndHeight(w, h);
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
-    easy3d::disconnect(&camera_->frame_modified, this);
+    easy3d::disconnect_all(&camera_->frame_modified);
 
     const int bitrate = bit_rate * 1024 * 1024;
     const int gop = fps;
@@ -395,7 +395,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         camera_->setScreenWidthAndHeight(w, h);
 
     // temporarily don't allow updating rendering when the camera parameters are changing.
-    easy3d::disconnect(&camera_->frame_modified, this);
+    easy3d::disconnect_all(&camera_->frame_modified);
 
     const int fw = w * dpi_scaling();
     const int fh = h * dpi_scaling();

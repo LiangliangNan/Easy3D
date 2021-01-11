@@ -33,10 +33,10 @@
 namespace easy3d {
 
     /**
-     * \brief Implementation of a simple signal-slot mechanism. \par
-     * \details Multiple slots (classes and their member functions) can be connected to a signal object.
+     * \brief Implementation of a simple signal-slot mechanism.
+     * \details Multiple slots (functions, lambda functions, and member functions) can be connected to a signal object.
      *        You can connect functions to the signal which will be called when the trigger() method on the signal
-     *        object is invoked. Any argument passed to emit() will be passed to the given functions. A typical usage
+     *        object is invoked. Any argument passed to trigger() will be passed to the given functions. A typical usage
      *        of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the viewer should be
      *        notified (e.g., a repaint event should be triggered). This is done by calling to the viewer's update()
      *        function. So in Easy3D, the viewer's update function is connected to the camera.
@@ -44,89 +44,152 @@ namespace easy3d {
      * \class Signal easy3d/core/signal.h
      * \todo Extend this class to accept multiple functions of a class.
      */
+
+
+// A signal object may call multiple slots with the
+// same signature. You can connect functions to the signal
+// which will be called when the emit() method on the
+// signal object is invoked. Any argument passed to emit()
+// will be passed to the given functions.
+
+    template <typename... Args>
     class Signal {
-	public:
-        /**
-         * \brief Connect an owned slot to this signal.
-         *  - If no overloaded function:  \par
-         *      \code
-         *      camera()->connect(this, &Viewer::update);
-         *      \endcode
-         *  - If the function has been overloaded (of course you can always treat it this way):   \par
-         *      \code
-         *      camera()->connect(this, static_cast<void(Viewer::*)(void) const>(&Viewer::update));
-         *      \endcode
-         */
-        template < class Class, class Function, class... Args >
-        void connect(Class&& owner, Function&& func, Args&&... args)  {
-            owned_slots_[owner] = std::bind(func, owner, std::forward<Args>(args)...);
-        }
 
-        /**
-         * \brief Disconnect all the slots of a owner from this signal.
-         */
-        template < class Class >
-        void disconnect(Class&& owner)  {
-            owned_slots_.erase(owner);
-        }
+    public:
+        Signal()  = default;
+        ~Signal() = default;
 
-        /**
-         * \brief Connect a free (i.e., not owned by any class) slot to this signal.
-         * A unique index of the function must be provided (to differentiate with other free functions).
-         */
-        template < class Function, class... Args >
-        void connect(int idx, Function&& func, Args&&... args) {
-            free_slots_[idx] = std::bind(func, std::forward<Args>(args)...);
-        }
+        // Copy constructor and assignment create a new signal.
+        Signal(Signal const& /*unused*/) {}
 
-        /**
-         * \brief Disconnect a free slot function from this signal.
-         * The slot is identified by its unique index.
-         */
-        void disconnect(int idx) { free_slots_.erase(idx); }
-
-        /**
-         * \brief Trigger all the execution of all connected slot functions.
-         * \todo A better function name can be 'emit', but occupied by other software like Qt.
-         *       Don't know how to still use 'emit'.
-         */
-        template < class ... Args >
-        void send(Args&&... args) {
-            for(auto& it : owned_slots_) {
-                it.second(std::forward<Args>(args)...);
+        Signal& operator=(Signal const& other) {
+            if (this != &other) {
+                disconnect_all();
             }
-            for(auto& it : free_slots_) {
-                it.second(std::forward<Args>(args)...);
+            return *this;
+        }
+
+        // Move constructor and assignment operator work as expected.
+        Signal(Signal&& other) noexcept:
+                _slots(std::move(other._slots)),
+                _current_id(other._current_id) {}
+
+        Signal& operator=(Signal&& other) noexcept {
+            if (this != &other) {
+                _slots     = std::move(other._slots);
+                _current_id = other._current_id;
+            }
+
+            return *this;
+        }
+
+
+        // Connects a std::function to the signal. The returned
+        // value can be used to disconnect the function again.
+        int connect(std::function<void(Args...)> const& slot) const {
+            _slots.insert(std::make_pair(++_current_id, slot));
+            return _current_id;
+        }
+
+        // Convenience method to connect a member function of an
+        // object to this Signal.
+        template <typename Class>
+        int connect(Class *inst, void (Class::*func)(Args...)) {
+            return connect([=](Args... args) {
+                (inst->*func)(args...);
+            });
+        }
+
+        // Convenience method to connect a const member function
+        // of an object to this Signal.
+        template <typename Class>
+        int connect(Class *inst, void (Class::*func)(Args...) const) {
+            return connect([=](Args... args) {
+                (inst->*func)(args...);
+            });
+        }
+
+        // Disconnects a previously connected function.
+        void disconnect(int id) const {
+            _slots.erase(id);
+        }
+
+        // Disconnects all previously connected functions.
+        void disconnect_all() const {
+            _slots.clear();
+        }
+
+        // Calls all connected functions.
+        void send(Args... p) {
+            for (auto const& it : _slots) {
+                it.second(p...);
+            }
+        }
+
+        // Calls all connected functions except for one.
+        void send_for_all_but_one(int excludedConnectionID, Args... p) {
+            for (auto const& it : _slots) {
+                if (it.first != excludedConnectionID) {
+                    it.second(p...);
+                }
+            }
+        }
+
+        // Calls only one connected function.
+        void emit_for(int connectionID, Args... p) {
+            auto const& it = _slots.find(connectionID);
+            if (it != _slots.end()) {
+                it->second(p...);
             }
         }
 
     private:
-        // the key value is the pointer to the owner of the slot (to differentiate with slots of other owners)
-        std::unordered_map<void*, std::function<void(void)> > owned_slots_;
-
-        // the key value is the unique index of a slot function (to differentiate with other free functions)
-        std::unordered_map<int, std::function<void(void)> > free_slots_;
-	};
+        mutable std::unordered_map<int, std::function<void(Args...)>> _slots;
+        mutable int                                                   _current_id{0};
+    };
 
 
-    template < class Class, class Function, class... Args >
-    inline void connect(Signal* signal, Class&& owner, Function&& func, Args&&... args) {
-        signal->connect(owner, std::bind(func, owner, std::forward<Args>(args)...));
+
+
+    // Connects a std::function to the signal. The returned
+    // value can be used to disconnect the function again.
+    template < typename ... Args >
+    int connect(Signal<Args&&...>* signal, std::function<void(Args...)>& slot) {
+        return signal->template connect(slot);
     }
 
-    template < class Function, class... Args >
-    inline void connect(Signal* signal, int idx, Function&& func, Args&&... args) {
-        signal->connect(idx, std::bind(func, std::forward<Args>(args)...));
+    // Connects a std::function to the signal. The returned
+    // value can be used to disconnect the function again.
+    template < typename ... Args >
+    int connect(Signal<Args&&...>* signal, std::function<void(Args...)> const& slot) {
+        return signal->template connect(slot);
     }
 
-    template < class Class >
-    inline void disconnect(Signal* signal, Class&& owner) {
-        signal->disconnect(owner);
+    // Convenience method to connect a member function of an
+    // object to this Signal.
+    template < typename Class, typename ... Args >
+    int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...)) {
+        return signal->template connect(inst, func);
     }
 
-    inline void disconnect(Signal* signal, int idx) {
-        signal->disconnect(idx);
+    // Convenience method to connect a const member function
+    // of an object to this Signal.
+    template < typename Class, typename ... Args >
+    int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...) const) {
+        return signal->template connect(inst, func);
     }
+
+    // Disconnects a previously connected function.
+    template < typename ... Args>
+    void disconnect(Signal<Args&&...>* signal, int id) {
+        signal->disconnect(id);
+    }
+
+    template < typename ... Args>
+    void disconnect_all(Signal<Args&&...>* signal) {
+        signal->disconnect_all();
+    }
+
 
 }
 

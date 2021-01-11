@@ -467,7 +467,7 @@ namespace easy3d {
         KeyFrameInterpolator* interpolationKfi_;
 
 	public:
-	    Signal frame_modified;
+	    Signal<> frame_modified;
 	};
 
 }
