@@ -334,9 +334,10 @@ void DialogWalkThrough::preview(bool b) {
             return;
         }
 
-        // This doesn't work (
+        // both work
 //        id_interpolationStopped = easy3d::connect(&interpolator()->interpolation_stopped, interpolationStopped);
         id_interpolationStopped = interpolator()->interpolation_stopped.connect(interpolationStopped);
+
         QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
         for (auto w : findChildren<QLabel*>()) w->setEnabled(false);

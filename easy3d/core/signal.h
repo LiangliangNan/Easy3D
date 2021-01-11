@@ -153,30 +153,30 @@ namespace easy3d {
 
     // Connects a std::function to the signal. The returned
     // value can be used to disconnect the function again.
-    template < typename ... Args >
-    int connect(Signal<Args&&...>* signal, std::function<void(Args...)>& slot) {
-        return signal->template connect(slot);
+    template <typename Func, typename ... Args >
+    int connect(Signal<Args&&...>* signal, Func& slot) {
+        return signal->connect(slot);
     }
 
     // Connects a std::function to the signal. The returned
     // value can be used to disconnect the function again.
-    template < typename ... Args >
-    int connect(Signal<Args&&...>* signal, std::function<void(Args...)> const& slot) {
-        return signal->template connect(slot);
+    template <typename Func, typename ... Args >
+    int connect(Signal<Args&&...>* signal, Func const& slot) {
+        return signal->connect(slot);
     }
 
     // Convenience method to connect a member function of an
     // object to this Signal.
     template < typename Class, typename ... Args >
     int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...)) {
-        return signal->template connect(inst, func);
+        return signal->connect(inst, func);
     }
 
     // Convenience method to connect a const member function
     // of an object to this Signal.
     template < typename Class, typename ... Args >
     int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...) const) {
-        return signal->template connect(inst, func);
+        return signal->connect(inst, func);
     }
 
     // Disconnects a previously connected function.
