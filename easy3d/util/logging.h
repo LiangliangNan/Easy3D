@@ -334,10 +334,11 @@ using google::LoggerVoidify;
 
 // cond
 
+
 // Log a message and terminate.
 template<class T>
 void LogMessageFatal(const char *file, int line, const T &message) {
-    MessageLogger(file, line, FATAL).stream() << message;
+    MessageLogger(file, line, easy3d::FATAL).stream() << message;
 }
 
 // \endcond
