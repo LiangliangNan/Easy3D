@@ -183,6 +183,8 @@ namespace easy3d {
          */
         template < class Class >
         void set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const;
+        template < class Class >
+        void set_timeout(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) const;
 
         /**
          * \brief Executes function ‘func' for every 'interval' milliseconds.
@@ -221,6 +223,8 @@ namespace easy3d {
          */
         template < class Class >
         void set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args);
+        template < class Class >
+        void set_interval(int interval, Class* inst, void (Class::*func)(Args...) const, Args... args);
 
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
@@ -297,6 +301,20 @@ namespace easy3d {
 
 
     template < class... Args >
+    template < class Class >
+    void Timer<Args...>::set_timeout(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) const {
+        stopped_ = false;
+        std::thread t([=]() {
+            if(stopped_) return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            if(stopped_) return;
+            (inst->*func)(args...);
+        });
+        t.detach();
+    }
+
+
+    template < class... Args >
     void Timer<Args...>::set_interval(int interval, std::function<void(Args...)> const &func, Args... args) {
         stopped_ = false;
         std::thread t([=]() {
@@ -325,6 +343,22 @@ namespace easy3d {
         });
         t.detach();
     }
+
+    template < class... Args >
+    template < class Class >
+    void Timer<Args...>::set_interval(int interval, Class* inst, void (Class::*func)(Args...) const, Args... args) {
+        stopped_ = false;
+        std::thread t([=]() {
+            while(true) {
+                if(stopped_) return;
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+                if(stopped_) return;
+                (inst->*func)(args...);
+            }
+        });
+        t.detach();
+    }
+
 
 
 } // namespace easy3d
