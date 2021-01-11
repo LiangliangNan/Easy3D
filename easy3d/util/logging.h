@@ -114,13 +114,14 @@ namespace google {
 
 // ---------------------------- Logger Class --------------------------------
 
+// \cond
 namespace easy3d {
     namespace logging {
         // We want the special COUNTER value available for LOG_EVERY_X()'ed messages
         enum PRIVATE_Counter { COUNTER };
     }
 }
-
+// \endcond
 
 // \cond
 namespace google {
@@ -139,6 +140,7 @@ namespace google {
 // \endcond
 
 
+// \cond
 // Define global operator<< to declare using ::operator<<.
 // This allows to output the COUNTER value. This is only valid if ostream is a LogStream.
 // You must not use COUNTER with non-glog ostream
@@ -148,6 +150,7 @@ inline std::ostream& operator<<(std::ostream &os, const easy3d::logging::PRIVATE
         os << log->ctr();
     return os;
 }
+// \endcond
 
 
 // \cond

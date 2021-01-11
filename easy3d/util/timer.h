@@ -33,17 +33,13 @@ namespace easy3d {
 
     /**
      * \brief An light-weight implementation of the timer mechanism.
-     *
      * \class Timer easy3d/util/timer.h
-     *
      * \details Timer functionalities are usually implemented in large libraries
-     * (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
-     * This Timer class provides a single-header implementation.
-     *
-     * With Timer, tasks (i.e., calling to functions) can be easily scheduled at either constant intervals or after
-     * a specified period. Timer supports any types of functions with any number of arguments.
-     *
-     * @example test_timer  \include test/test_timer.cpp
+     *      (e.g., the [QTimer of Qt](http://doc.qt.io/archives/qt-5.5/qtimer.html)).
+     *      This Timer class provides a single-header implementation.
+     *      With Timer, tasks (i.e., calling to functions) can be easily scheduled at either constant intervals
+     *      or after a specified period. Timer supports any types of functions with any number of arguments.
+     * \example Test_Timer     \include test/test_timer.cpp
      */
 
     template < class... Args >

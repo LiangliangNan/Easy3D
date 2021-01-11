@@ -26,23 +26,24 @@
 #define EASY3D_CORE_SIGNAL_H
 
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
 
 namespace easy3d {
 
     /**
      * \brief Implementation of a simple signal-slot mechanism.
-     * \details Multiple slots (functions, lambda functions, and member functions) can be connected to a signal object.
-     *        You can connect functions to the signal which will be called when the send() method on the signal
-     *        object is invoked. Any argument passed to send() will be passed to the given functions. A typical usage
-     *        of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the viewer should be
-     *        notified (e.g., a repaint event should be triggered). This is done by calling to the viewer's update()
-     *        function. So in Easy3D, the viewer's update function is connected to the camera.
-     * \note Current implementation can hold only one single function of each owner.
      * \class Signal easy3d/core/signal.h
-     * \example test_signal  \include test/test_signal.cpp
+     * \details Signal supports any types of functions (functions, lambda functions, and member functions) with any
+     *      number of arguments. Connected functions will be called when the send() method on the signal object is
+     *      invoked. Any argument passed to send() will be passed to the given functions.
+     *      Multiple slots can be connected to a single signal object.
+     *      A typical usage of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the
+     *      viewer should be notified (e.g., a repaint event should be triggered). This is done by calling to the
+     *      viewer's update() function. So in Easy3D, the viewer's update function is connected to the camera's
+     *      corresponding signal.
+     * \example Test_Signal    \include test/test_signal.cpp
      */
 
     template<typename... Args>
@@ -77,7 +78,7 @@ namespace easy3d {
         }
 
 
-        /// Connects a const std::function to the signal.
+        /// Connects a function to the signal.
         /// The returned value can be used to disconnect the function again.
         int connect(std::function<void(Args...)> const &slot) const {
             slots_.insert(std::make_pair(++current_id_, slot));
@@ -145,7 +146,7 @@ namespace easy3d {
     /// \name  Global methods for connection and disconnection.
     //\{
 
-    /// Connects an std::function to the signal.
+    /// Connects an function to the signal.
     /// The returned value can be used to disconnect the function again.
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
