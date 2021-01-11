@@ -36,7 +36,7 @@
 #endif
 
 
-
+// \cond
 namespace google {
 
     static std::string global_severity_labels[5] = {
@@ -260,6 +260,7 @@ namespace google {
 
 }  // namespace google
 
+// \endcond
 
 
 

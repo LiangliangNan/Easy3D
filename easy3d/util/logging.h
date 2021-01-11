@@ -67,24 +67,28 @@
 #include <sstream>
 
 
-// Log severity level constants.
-const int INFO = 0;
-const int WARNING = 1;
-const int ERROR = 2;
-const int FATAL = 3;
-const int QUIET = 4; // log messages written to sinks (e.g., a log file) only, not to stderr
+namespace easy3d {
 
+    // Log severity level constants.
+    const int INFO = 0;
+    const int WARNING = 1;
+    const int ERROR = 2;
+    const int FATAL = 3;
+    const int QUIET = 4; // log messages written to sinks (e.g., a log file) only, not to stderr
+
+}
 
 // ------------------------- Glog compatibility ------------------------------
 
+// \cond
 namespace google {
 
     typedef int LogSeverity;
-    const int INFO = ::INFO;
-    const int WARNING = ::WARNING;
-    const int ERROR = ::ERROR;
-    const int FATAL = ::FATAL;
-    const int QUIET = ::QUIET;
+    const int INFO = easy3d::INFO;
+    const int WARNING = easy3d::WARNING;
+    const int ERROR = easy3d::ERROR;
+    const int FATAL = easy3d::FATAL;
+    const int QUIET = easy3d::QUIET;
 
     // Sink class used for integration with mock and test functions. If sinks are
     // added, all log output is also sent to each sink through the send function.
@@ -106,33 +110,34 @@ namespace google {
     };
 
 }
+// \endcond
 
-    // ---------------------------- Logger Class --------------------------------
+// ---------------------------- Logger Class --------------------------------
 
-    namespace easy3d {
-        namespace logging {
-            // We want the special COUNTER value available for LOG_EVERY_X()'ed messages
-            enum PRIVATE_Counter { COUNTER };
-        }
+namespace easy3d {
+    namespace logging {
+        // We want the special COUNTER value available for LOG_EVERY_X()'ed messages
+        enum PRIVATE_Counter { COUNTER };
     }
+}
 
+
+// \cond
 namespace google {
 
     class LogStream : public std::ostringstream {
     public:
         LogStream(int ctr) : ctr_(ctr) {}
-
         int ctr() const { return ctr_; }
 
     private:
         LogStream(const LogStream &);
-
         LogStream &operator=(const LogStream &);
-
         int ctr_;  // Counter hack (for the LOG_EVERY_X() macro)
     };
-
 }
+// \endcond
+
 
 // Define global operator<< to declare using ::operator<<.
 // This allows to output the COUNTER value. This is only valid if ostream is a LogStream.
@@ -145,8 +150,8 @@ inline std::ostream& operator<<(std::ostream &os, const easy3d::logging::PRIVATE
 }
 
 
+// \cond
 namespace google {
-
 
     // Class created for each use of the logging macros.
     // The logger acts as a stream and routes the final stream contents to the
@@ -210,6 +215,7 @@ namespace google {
 using google::MessageLogger;
 using google::LoggerVoidify;
 
+// \endcond
 
 // Log only if condition is met.  Otherwise evaluates to void.
 #define LOG_IF(severity, condition) \
@@ -249,6 +255,7 @@ using google::LoggerVoidify;
 #endif
 
 
+// \cond
 
 // Use macro expansion to create, for each use of LOG_EVERY_N(), static
 // variables with the __LINE__ expansion as part of the variable name.
@@ -282,8 +289,7 @@ using google::LoggerVoidify;
     MessageLogger( \
         __FILE__, __LINE__, severity, LOG_OCCURRENCES).stream()
 
-
-
+// \endcond
 
 
 #define LOG_EVERY_N(severity, n)                SOME_KIND_OF_LOG_EVERY_N(severity, (n))
@@ -326,11 +332,16 @@ using google::LoggerVoidify;
 #endif
 
 
+// cond
+
 // Log a message and terminate.
 template<class T>
 void LogMessageFatal(const char *file, int line, const T &message) {
     MessageLogger(file, line, FATAL).stream() << message;
 }
+
+// \endcond
+
 
 // ---------------------------- CHECK macros ---------------------------------
 
@@ -392,6 +403,9 @@ void LogMessageFatal(const char *file, int line, const T &message) {
 
 // ---------------------------CHECK_NOTNULL macros ---------------------------
 
+// \cond
+
+
 // Helpers for CHECK_NOTNULL(). Two are necessary to support both raw pointers
 // and smart pointers.
 template<typename T>
@@ -411,6 +425,9 @@ template<typename T>
 T &CheckNotNull(const char *file, int line, const char *names, T &t) {
     return CheckNotNullCommon(file, line, names, t);
 }
+
+// \endcond
+
 
 // Check that a pointer is not null.
 #define CHECK_NOTNULL(val) \
@@ -470,6 +487,8 @@ T &CheckNotNull(const char *file, int line, const char *names, T &t) {
 #include <utility>
 #include <vector>
 
+
+// \cond
 
 // Forward declare these two, and define them after all the container streams
 // operators so that we can recurse from pair -> container -> container -> pair
@@ -587,6 +606,8 @@ namespace google {
 // in both because that would create ambiguous overloads when both are found.
 namespace std { using ::operator<<; }
 
+// \endcond
+
 // End of ------ LOG STL containers ---------------------------
 
 
@@ -625,6 +646,7 @@ namespace easy3d {
 
         /// Base class for a logger, i.e., to log messages to whatever
         /// Users should subclass Logger and override send() to do whatever they want.
+        /// \class Logger easy3d/util/logger.h
         class Logger : public google::LogSink {
         public:
             Logger();

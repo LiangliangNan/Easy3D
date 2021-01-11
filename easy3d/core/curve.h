@@ -149,7 +149,8 @@ namespace easy3d {
 
 
     /**
-     * Base class for curve fitting/interpolation
+     * \brief Base class for curve fitting/interpolation
+     * \class Curve easy3d/core/curve.h
      * \sa Bezier, BSpline, and CatmullRom
      */
     template<typename Point_t>
@@ -208,7 +209,7 @@ namespace easy3d {
     };
 
     /**
-     * Class for Bezier curve fitting.
+     * \brief Class for Bezier curve fitting.
      * Works for both 2D and 3D.
      * Example:
      *  \code
@@ -219,6 +220,7 @@ namespace easy3d {
      *      for (int i = 0; i < cv->node_count(); ++i)
      *          std::cout << cv->node(i) << std::endl;
      *  \endcode
+     * \class Bezier easy3d/core/curve.h
      */
     template<typename Point_t>
     class Bezier : public Curve<Point_t> {
@@ -266,7 +268,7 @@ namespace easy3d {
 
 
     /**
-     * Class for BSpline curve fitting.
+     * \brief Class for BSpline curve fitting.
      * Works for both 2D and 3D.
      * Example:
      *  \code
@@ -277,6 +279,7 @@ namespace easy3d {
      *      for (int i = 0; i < cv->node_count(); ++i)
      *      std::cout << cv->node(i) << std::endl;
      *  \endcode
+     * \class BSpline easy3d/core/curve.h
      */
     template<typename Point_t>
     class BSpline : public Curve<Point_t> {
@@ -317,7 +320,7 @@ namespace easy3d {
 
 
     /**
-     * Class for CatmullRom curve interpolation.
+     * \brief Class for CatmullRom curve interpolation.
      * Works for both 2D and 3D.
      * Example:
      *  \code
@@ -328,6 +331,7 @@ namespace easy3d {
      *      for (int i = 0; i < cv->node_count(); ++i)
      *      std::cout << cv->node(i) << std::endl;
      *  \endcode
+     * \class CatmullRom easy3d/core/curve.h
      */
     template<typename Point_t>
     class CatmullRom : public Curve<Point_t> {
