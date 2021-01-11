@@ -95,6 +95,7 @@ namespace easy3d {
      *      \endcode
      */
 
+    template < class... Args >
     class Timer {
     public:
         Timer() : stopped_(false) {}
@@ -116,8 +117,7 @@ namespace easy3d {
          *          Timer::single_shot(5000, &reset, 3, "Finished", data);
          *      \endcode
          */
-        template < class Function, class... Args >
-        static void single_shot(int delay, Function&& func, Args&&... args);
+        static void single_shot(int delay, std::function<void(Args...)> const &func, Args... args);
 
         /**
          * \brief Executes member function \p func of class \p owner after \p delay milliseconds.
@@ -137,8 +137,10 @@ namespace easy3d {
          *          Timer::single_shot(5000, viewer, &Viewer::reset, 3, "Finished", data);
          *      \endcode
          */
-        template < class Class, class Function, class... Args >
-        static void single_shot(int delay, Function&& func, Class&& owner, Args&&... args);
+        template < class Class >
+        static void single_shot(int delay, Class* inst, void (Class::*func)(Args...), Args... args);
+        template < class Class >
+        static void single_shot(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args);
 
         /**
          * \brief Executes function \p func after \p delay milliseconds. 
@@ -158,8 +160,7 @@ namespace easy3d {
          *          timer.set_timeout(5000, &reset, 3, "Finished", data);
          *      \endcode       
          */
-        template <class Function, class... Args >
-        void set_timeout(int delay, Function&& func, Args&&... args);
+        void set_timeout(int delay, std::function<void(Args...)> const &func, Args... args) const;
 
         /**
          * \brief Executes member function \p func of class 'owner' after \p delay milliseconds.
@@ -180,8 +181,8 @@ namespace easy3d {
          *          timer.set_timeout(5000, viewer, &Viewer::reset, 3, "Finished", data);
          *      \endcode       
          */
-        template < class Class, class Function, class... Args >
-        void set_timeout(int delay, Function&& func, Class&& owner, Args&&... args);
+        template < class Class >
+        void set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const;
 
         /**
          * \brief Executes function ‘func' for every 'interval' milliseconds.
@@ -199,8 +200,7 @@ namespace easy3d {
          *          timer.set_interval(10000, &print_speed, "Speed: ", data);
          *      \endcode       
          */
-        template <class Function, class... Args >
-        void set_interval(int interval, Function&& func, Args&&... args);
+        void set_interval(int interval, std::function<void(Args...)> const &func, Args... args);
 
         /**
          * \brief Executes member function \p func of class 'owner' for every 'interval' milliseconds.
@@ -219,8 +219,8 @@ namespace easy3d {
          *          timer.set_interval(10000, car, &Car::print_speed, "Speed: ", data);
          *      \endcode       
          */
-        template < class Class, class Function, class... Args >
-        void set_interval(int interval, Function&& func, Class&& owner, Args&&... args);
+        template < class Class >
+        void set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args);
 
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
@@ -229,7 +229,7 @@ namespace easy3d {
         bool is_stopped() const { return stopped_; }
 
     private:
-       bool stopped_;
+       mutable bool stopped_;
     };
 
 
@@ -237,94 +237,90 @@ namespace easy3d {
     //-------------------------- IMPLEMENTATION ---------------------------
 
 
-    template <class Function, class... Args >
-    void Timer::single_shot(int delay, Function&& func, Args&&... args) {
+    template < class... Args >
+    void Timer<Args...>::single_shot(int delay, std::function<void(Args...)> const &func, Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            func(std::forward<Args>(args)...);
+            func(args...);
         });
         t.detach();
     }
 
 
-    template < class Class, class Function, class... Args >
-    void Timer::single_shot(int delay, Function&& func, Class&& owner, Args&&... args) {
+    template < class... Args >
+    template < class Class >
+    void Timer<Args...>::single_shot(int delay, Class* inst, void (Class::*func)(Args...), Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-#if 0 // this has ambiguities in determine which function
-                (owner->*func)(std::forward<Args>(args)...);
-#else
-                // store a call to a member function and object ptr
-                auto f = std::bind(func, owner, std::forward<Args>(args)...);
-                f(std::forward<Args>(args)...);
-#endif
+            (inst->*func)(args...);
         });
         t.detach();
     }
 
 
-    template <class Function, class... Args >
-    void Timer::set_timeout(int delay, Function&& func, Args&&... args) {
+    template < class... Args >
+    template < class Class >
+    void Timer<Args...>::single_shot(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) {
+        std::thread t([=]() {
+            std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+            (inst->*func)(args...);
+        });
+        t.detach();
+    }
+
+
+    template < class... Args >
+    void Timer<Args...>::set_timeout(int delay, std::function<void(Args...)> const &func, Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
             if(stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             if(stopped_) return;
-            func(std::forward<Args>(args)...);
+            func(args...);
         });
         t.detach();
     }
 
 
-    template < class Class, class Function, class... Args >
-    void Timer::set_timeout(int delay, Function&& func, Class&& owner, Args&&... args) {
+    template < class... Args >
+    template < class Class >
+    void Timer<Args...>::set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
             if(stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             if(stopped_) return;
-#if 0 // this has ambiguities in determine which function
-            (owner->*func)(std::forward<Args>(args)...);
-#else
-            // store a call to a member function and object ptr
-            auto f = std::bind(func, owner, std::forward<Args>(args)...);
-            f(std::forward<Args>(args)...);
-#endif
+            (inst->*func)(args...);
         });
         t.detach();
     }
 
 
-    template <class Function, class... Args >
-    void Timer::set_interval(int interval, Function&& func, Args&&... args) {
+    template < class... Args >
+    void Timer<Args...>::set_interval(int interval, std::function<void(Args...)> const &func, Args... args) {
         stopped_ = false;
         std::thread t([=]() {
             while(true) {
                 if(stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                 if(stopped_) return;
-                func(std::forward<Args>(args)...);
+                func(args...);
             }
         });
         t.detach();
     }
 
 
-    template < class Class, class Function, class... Args >
-    void Timer::set_interval(int interval, Function&& func, Class&& owner, Args&&... args) {
+    template < class... Args >
+    template < class Class >
+    void Timer<Args...>::set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args) {
         stopped_ = false;
         std::thread t([=]() {
             while(true) {
                 if(stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
                 if(stopped_) return;
-#if 0 // this has ambiguities in determine which function
-                (owner->*func)(std::forward<Args>(args)...);
-#else
-                // store a call to a member function and object ptr
-                auto f = std::bind(func, owner, std::forward<Args>(args)...);
-                f(std::forward<Args>(args)...);
-#endif
+                (inst->*func)(args...);
             }
         });
         t.detach();

@@ -391,7 +391,7 @@ namespace easy3d {
         std::vector<Frame> interpolated_path_;
 
         // Rhythm
-        Timer timer_;
+        Timer<> timer_;
         int fps_;
         float interpolation_speed_;
         bool interpolation_started_;
