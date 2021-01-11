@@ -87,6 +87,8 @@ namespace easy3d {
 
         /// Connects a member function of an object to this Signal.
         /// The returned value can be used to disconnect the function again.
+        /// \note When a member function has overloads or inheritance, use static_cast of the function to indicate
+        ///         the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...)) {
             return connect([=](Args... args) {
@@ -96,6 +98,8 @@ namespace easy3d {
 
         /// Connects a const member function of an object to this Signal.
         /// The returned value can be used to disconnect the function again.
+        /// \note When a member function has overloads or inheritance, use static_cast of the function to indicate
+        ///         the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...) const) {
             return connect([=](Args... args) {
@@ -155,6 +159,8 @@ namespace easy3d {
 
     /// Connect a member function of an object to this Signal.
     /// The returned value can be used to disconnect the function again.
+    /// \note When a member function has overloads or inheritance, use static_cast of the function to indicate
+    ///         the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION &slot) {
         return signal->connect(inst, slot);
@@ -162,6 +168,8 @@ namespace easy3d {
 
     /// Connects a const member function of an object to this Signal.
     /// The returned value can be used to disconnect the function again.
+    /// \note When a member function has overloads or inheritance, use static_cast of the function to indicate
+    ///         the template argument. For example, \code static_cast<void (Class::*)(void)>(&Class::func). \endcode
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
         return signal->connect(inst, slot);
