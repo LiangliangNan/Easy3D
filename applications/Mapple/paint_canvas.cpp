@@ -451,19 +451,17 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         }
     }
 
-    mouse_current_pos_ = e->pos();
-    QOpenGLWidget::mouseMoveEvent(e);
-
     if (show_labels_under_mouse_) {
         auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             makeCurrent();
             SurfaceMeshPicker picker(camera());
-            picked_face_index_ = picker.pick_face(mesh, mouse_current_pos_.x(), mouse_current_pos_.y()).idx();
+            picked_face_index_ = picker.pick_face(mesh, e->pos().x(), e->pos().y()).idx();
             doneCurrent();
         }
         else
             picked_face_index_ = -1;
+        update();
     }
 
     if (show_coordinates_under_mouse_) {
@@ -474,6 +472,9 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             coords = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
         window_->setPointUnderMouse(coords);
     }
+
+    mouse_current_pos_ = e->pos();
+    QOpenGLWidget::mouseMoveEvent(e);
 }
 
 
@@ -486,6 +487,9 @@ void PaintCanvas::mouseDoubleClickEvent(QMouseEvent *e) {
 
 
 void PaintCanvas::wheelEvent(QWheelEvent *e) {
+    if (walkThrough()->interpolator()->is_interpolation_started())
+        return;
+
     if (tool_manager()->current_tool()) {
         update();
     }
