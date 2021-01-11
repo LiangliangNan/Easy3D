@@ -328,11 +328,11 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             // select the picked model (if picked) and deselect others
             for (auto m : models_)
                 m->renderer()->set_selected(m == model);
+            update();
         }
     }
 
     QOpenGLWidget::mousePressEvent(e);
-    update();
 }
 
 
@@ -397,7 +397,6 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
     mouse_current_pos_ = e->pos();
 
     QOpenGLWidget::mouseReleaseEvent(e);
-    update();
 }
 
 
@@ -475,8 +474,6 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             coords = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
         window_->setPointUnderMouse(coords);
     }
-
-    update();
 }
 
 
@@ -490,6 +487,7 @@ void PaintCanvas::mouseDoubleClickEvent(QMouseEvent *e) {
 
 void PaintCanvas::wheelEvent(QWheelEvent *e) {
     if (tool_manager()->current_tool()) {
+        update();
     }
     else {
         const int delta = e->delta();
@@ -500,7 +498,6 @@ void PaintCanvas::wheelEvent(QWheelEvent *e) {
     }
 
     QOpenGLWidget::wheelEvent(e);
-    update();
 }
 
 
