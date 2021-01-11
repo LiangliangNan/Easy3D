@@ -58,8 +58,8 @@ option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications"  OFF)
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
 # Build documentation
 option(EASY3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"            OFF)
-# Build sandbox
-option(EASY3D_BUILD_SANDBOX         "Build sandbox (for development)"       OFF)
+# Build tests
+option(EASY3D_BUILD_TESTS           "Build Easy3D Tests"                    OFF)
 
 ################################################################################
 
@@ -101,8 +101,8 @@ if(EASY3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif()
 
-if(EASY3D_BUILD_SANDBOX)
-    add_subdirectory(sandbox)
+if(EASY3D_BUILD_TESTS)
+    add_subdirectory(test)
 endif()
 
 add_subdirectory(applications)

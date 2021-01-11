@@ -1,19 +1,17 @@
-cmake_minimum_required(VERSION 3.1)
-
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
-
 add_executable(${PROJECT_NAME}
-        main.cpp
-        some_test.h
-        some_test.cpp
-)
+#        ThreadPool/example.cpp
+#        test_logging.cpp
+#        test_signal.cpp
+        test_timer.cpp
+        )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "SandBox")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
-target_link_libraries(${PROJECT_NAME} core viewer)
+target_link_libraries(${PROJECT_NAME} core viewer algo)
