@@ -35,34 +35,26 @@ namespace easy3d {
     /**
      * \brief Implementation of a simple signal-slot mechanism.
      * \details Multiple slots (functions, lambda functions, and member functions) can be connected to a signal object.
-     *        You can connect functions to the signal which will be called when the trigger() method on the signal
-     *        object is invoked. Any argument passed to trigger() will be passed to the given functions. A typical usage
+     *        You can connect functions to the signal which will be called when the send() method on the signal
+     *        object is invoked. Any argument passed to send() will be passed to the given functions. A typical usage
      *        of Signal in Easy3D is camera manipulation. When the camera has been manipulated, the viewer should be
      *        notified (e.g., a repaint event should be triggered). This is done by calling to the viewer's update()
      *        function. So in Easy3D, the viewer's update function is connected to the camera.
      * \note Current implementation can hold only one single function of each owner.
      * \class Signal easy3d/core/signal.h
-     * \todo Extend this class to accept multiple functions of a class.
      */
 
-
-// A signal object may call multiple slots with the
-// same signature. You can connect functions to the signal
-// which will be called when the emit() method on the
-// signal object is invoked. Any argument passed to emit()
-// will be passed to the given functions.
-
-    template <typename... Args>
+    template<typename... Args>
     class Signal {
 
     public:
-        Signal()  = default;
+        Signal() = default;
         ~Signal() = default;
 
         // Copy constructor and assignment create a new signal.
-        Signal(Signal const& /*unused*/) {}
+        Signal(Signal const & /*unused*/) {}
 
-        Signal& operator=(Signal const& other) {
+        Signal &operator=(Signal const &other) {
             if (this != &other) {
                 disconnect_all();
             }
@@ -70,127 +62,135 @@ namespace easy3d {
         }
 
         // Move constructor and assignment operator work as expected.
-        Signal(Signal&& other) noexcept:
-                _slots(std::move(other._slots)),
-                _current_id(other._current_id) {}
+        Signal(Signal &&other) noexcept:
+                slots_(std::move(other.slots_)),
+                current_id_(other.current_id_) {}
 
-        Signal& operator=(Signal&& other) noexcept {
+        Signal &operator=(Signal &&other) noexcept {
             if (this != &other) {
-                _slots     = std::move(other._slots);
-                _current_id = other._current_id;
+                slots_ = std::move(other.slots_);
+                current_id_ = other.current_id_;
             }
 
             return *this;
         }
 
-
-        // Connects a std::function to the signal. The returned
-        // value can be used to disconnect the function again.
-        int connect(std::function<void(Args...)> const& slot) const {
-            _slots.insert(std::make_pair(++_current_id, slot));
-            return _current_id;
+        /// Connects an std::function to the signal.
+        /// The returned value can be used to disconnect the function again.
+        int connect(std::function<void(Args...)> &slot) const {
+            slots_.insert(std::make_pair(++current_id_, slot));
+            return current_id_;
         }
 
-        // Convenience method to connect a member function of an
-        // object to this Signal.
-        template <typename Class>
+        /// Connects a const std::function to the signal.
+        /// The returned value can be used to disconnect the function again.
+        int connect(std::function<void(Args...)> const &slot) const {
+            slots_.insert(std::make_pair(++current_id_, slot));
+            return current_id_;
+        }
+
+        /// Connects a member function of an object to this Signal.
+        /// The returned value can be used to disconnect the function again.
+        template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...)) {
             return connect([=](Args... args) {
                 (inst->*func)(args...);
             });
         }
 
-        // Convenience method to connect a const member function
-        // of an object to this Signal.
-        template <typename Class>
+        /// Connects a const member function of an object to this Signal.
+        /// The returned value can be used to disconnect the function again.
+        template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...) const) {
             return connect([=](Args... args) {
                 (inst->*func)(args...);
             });
         }
 
-        // Disconnects a previously connected function.
+        /// Disconnects a previously connected function.
         void disconnect(int id) const {
-            _slots.erase(id);
+            slots_.erase(id);
         }
 
-        // Disconnects all previously connected functions.
+        /// Disconnects all previously connected functions.
         void disconnect_all() const {
-            _slots.clear();
+            slots_.clear();
         }
 
-        // Calls all connected functions.
+        /// Calls all connected functions.
         void send(Args... p) {
-            for (auto const& it : _slots) {
+            for (auto const &it : slots_) {
                 it.second(p...);
             }
         }
 
-        // Calls all connected functions except for one.
+        /// Calls all connected functions except for one.
         void send_for_all_but_one(int excludedConnectionID, Args... p) {
-            for (auto const& it : _slots) {
+            for (auto const &it : slots_) {
                 if (it.first != excludedConnectionID) {
                     it.second(p...);
                 }
             }
         }
 
-        // Calls only one connected function.
+        /// Calls only one connected function.
         void emit_for(int connectionID, Args... p) {
-            auto const& it = _slots.find(connectionID);
-            if (it != _slots.end()) {
+            auto const &it = slots_.find(connectionID);
+            if (it != slots_.end()) {
                 it->second(p...);
             }
         }
 
     private:
-        mutable std::unordered_map<int, std::function<void(Args...)>> _slots;
-        mutable int                                                   _current_id{0};
+        mutable std::unordered_map<int, std::function<void(Args...)>> slots_;
+        mutable int current_id_{0};
     };
 
 
+    /// \name  Global methods for connection and disconnection.
+    //\{
 
-
-    // Connects a std::function to the signal. The returned
-    // value can be used to disconnect the function again.
-    template <typename Func, typename ... Args >
-    int connect(Signal<Args&&...>* signal, Func& slot) {
+    /// Connects a std::function to the signal.
+    /// The returned value can be used to disconnect the function again.
+    template<typename SIGNAL, typename FUNCTION>
+    inline int connect(SIGNAL *signal, FUNCTION &slot) {
         return signal->connect(slot);
     }
 
-    // Connects a std::function to the signal. The returned
-    // value can be used to disconnect the function again.
-    template <typename Func, typename ... Args >
-    int connect(Signal<Args&&...>* signal, Func const& slot) {
+    /// Connects an const std::function to the signal.
+    /// The returned value can be used to disconnect the function again.
+    template<typename SIGNAL, typename FUNCTION>
+    inline int connect(SIGNAL *signal, FUNCTION const &slot) {
         return signal->connect(slot);
     }
 
-    // Convenience method to connect a member function of an
-    // object to this Signal.
-    template < typename Class, typename ... Args >
-    int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...)) {
-        return signal->connect(inst, func);
+    /// Connect a member function of an object to this Signal.
+    /// The returned value can be used to disconnect the function again.
+    template<typename SIGNAL, typename CLASS, typename FUNCTION>
+    inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION &slot) {
+        return signal->connect(inst, slot);
     }
 
-    // Convenience method to connect a const member function
-    // of an object to this Signal.
-    template < typename Class, typename ... Args >
-    int connect(Signal<Args&&...>* signal, Class *inst, void (Class::*func)(Args...) const) {
-        return signal->connect(inst, func);
+    /// Connects a const member function of an object to this Signal.
+    /// The returned value can be used to disconnect the function again.
+    template<typename SIGNAL, typename CLASS, typename FUNCTION>
+    inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
+        return signal->connect(inst, slot);
     }
 
-    // Disconnects a previously connected function.
-    template < typename ... Args>
-    void disconnect(Signal<Args&&...>* signal, int id) {
+    /// Disconnects a previously connected function.
+    template<typename SIGNAL>
+    inline void disconnect(SIGNAL *signal, int id) {
         signal->disconnect(id);
     }
 
-    template < typename ... Args>
-    void disconnect_all(Signal<Args&&...>* signal) {
+    /// Disconnects all previously connected functions.
+    template<typename SIGNAL>
+    inline void disconnect_all(SIGNAL *signal) {
         signal->disconnect_all();
     }
 
-
+    //\}
 }
 
 
