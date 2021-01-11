@@ -69,7 +69,7 @@ private:
 };
 
 
-void test_for_members(Car* car) {
+void test_for_members(Car *car) {
     // ---- a non-const class member, no argument
     Timer<>::single_shot(33, car, &Car::start);
 
@@ -77,21 +77,24 @@ void test_for_members(Car* car) {
     Timer<int>::single_shot(33, car, &Car::start, 100);
 
     // ---- a const class member, two arguments
-    Timer<int, const std::string&>::single_shot(33, car, &Car::stop, 6, "I have to stop");
+    Timer<int, const std::string &>::single_shot(33, car, &Car::stop, 6, "I have to stop");
 
-    {   Timer<> t;
+    {
+        Timer<> t;
         t.single_shot(33, car, &Car::start);  // This works
         t.set_interval(33, car, &Car::start);          // This also works
         t.set_timeout(33, car, &Car::start);
     }
 
-    {   Timer<int> t;
+    {
+        Timer<int> t;
         t.single_shot(33, car, &Car::start, 100);
         t.set_interval(33, car, &Car::start, 100);
         t.set_timeout(33, car, &Car::start, 100);
     }
 
-    {   Timer<int, const std::string&> t;
+    {
+        Timer<int, const std::string &> t;
         t.single_shot(33, car, &Car::stop, 6, "I have to stop");
         t.set_interval(33, car, &Car::stop, 6, "I have to stop");
         t.set_timeout(33, car, &Car::stop, 6, "I have to stop");
@@ -104,84 +107,84 @@ void func_start() {
     std::cout << "started\n";
 }
 
-void func_start(Car* car) {
+void func_start(Car *car) {
     std::lock_guard<std::mutex> guard(mutex);
     std::cout << "speed is " << car->speed() << "\n";
 }
 
-void func_report_speed(int max_allow_speed, const Car* car) {
+void func_report_speed(int max_allow_speed, const Car *car) {
     std::lock_guard<std::mutex> guard(mutex);
     std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
 }
 
-void func_stop(const Car* car, int hours, const std::string& msg) {
+void func_stop(const Car *car, int hours, const std::string &msg) {
     std::lock_guard<std::mutex> guard(mutex);
     std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
 }
 
 
-void test_for_functions(Car* car) {
+void test_for_functions(Car *car) {
     // ---- no argument
 
-    Timer<>::single_shot(33,  static_cast<void(*)(void)> (func_start));
+    Timer<>::single_shot(33, static_cast<void (*)(void)> (func_start));
 
     // ---- one argument
-    Timer<Car*>::single_shot(33, static_cast<void(*)(Car*)> (func_start), car);
+    Timer<Car *>::single_shot(33, static_cast<void (*)(Car *)> (func_start), car);
 
 
     // ---- two argument
-    Timer<int, const Car*>::single_shot(33, func_report_speed, 120, car);
+    Timer<int, const Car *>::single_shot(33, func_report_speed, 120, car);
 
     // ---- three arguments
-    Timer<const Car*, int, const std::string&>::single_shot(333, func_stop, car,  6, "I have to stop");
+    Timer<const Car *, int, const std::string &>::single_shot(333, func_stop, car, 6, "I have to stop");
 
     {   // ---- no argument
         Timer<> t;
-        t.single_shot(33, static_cast<void(*)(void)> (func_start));
-        t.set_interval(33, static_cast<void(*)(void)> (func_start));
-        t.set_timeout(33, static_cast<void(*)(void)> (func_start));
+        t.single_shot(33, static_cast<void (*)(void)> (func_start));
+        t.set_interval(33, static_cast<void (*)(void)> (func_start));
+        t.set_timeout(33, static_cast<void (*)(void)> (func_start));
     }
 
     {   // ---- one argument
-        Timer<Car*> t;
-        t.single_shot(33, static_cast<void(*)(Car*)> (func_start), car);
-        t.set_interval(33, static_cast<void(*)(Car*)> (func_start), car);
-        t.set_timeout(33, static_cast<void(*)(Car*)> (func_start), car);
+        Timer<Car *> t;
+        t.single_shot(33, static_cast<void (*)(Car *)> (func_start), car);
+        t.set_interval(33, static_cast<void (*)(Car *)> (func_start), car);
+        t.set_timeout(33, static_cast<void (*)(Car *)> (func_start), car);
     }
 
     {   // ---- two argument
-        Timer<int, const Car*> t;
+        Timer<int, const Car *> t;
         t.single_shot(33, func_report_speed, 120, car);
         t.set_interval(33, func_report_speed, 120, car);
         t.set_timeout(33, func_report_speed, 120, car);
     }
 
     {   // ---- three arguments
-        Timer<const Car*, int, const std::string&> t;
-        t.single_shot(333, func_stop, car,  6, "I have to stop");
-        t.set_interval(333, func_stop, car,  6, "I have to stop");
-        t.set_timeout(333, func_stop, car,  6, "I have to stop");
+        Timer<const Car *, int, const std::string &> t;
+        t.single_shot(333, func_stop, car, 6, "I have to stop");
+        t.set_interval(333, func_stop, car, 6, "I have to stop");
+        t.set_timeout(333, func_stop, car, 6, "I have to stop");
     }
 }
 
 
-void test_for_lambda_functions(Car* car) {
+void test_for_lambda_functions(Car *car) {
     auto lambda_start = []() -> void {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << "started\n";
     };
 
-    auto lambda_start_1arg = [](Car* car) -> void {
+    auto lambda_start_1arg = [](Car *car) -> void {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << "speed is " << car->speed() << "\n";
     };
 
-    auto lambda_report_speed = [](int max_allow_speed, const Car* car) -> void {
+    auto lambda_report_speed = [](int max_allow_speed, const Car *car) -> void {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
     };
 
-    auto lambda_stop = [](const Car* car, int hours, const std::string& msg) -> void {
+    auto lambda_stop = [](const Car *car, int hours, const std::string &msg) -> void {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
     };
@@ -190,13 +193,13 @@ void test_for_lambda_functions(Car* car) {
     Timer<>::single_shot(33, lambda_start);
 
     // ---- one argument
-    Timer<Car*>::single_shot(33, lambda_start_1arg, car);
+    Timer<Car *>::single_shot(33, lambda_start_1arg, car);
 
     // ---- two argument
-    Timer<int, const Car*>::single_shot(33, lambda_report_speed, 120, car);
+    Timer<int, const Car *>::single_shot(33, lambda_report_speed, 120, car);
 
     // ---- three arguments
-    Timer<const Car*, int, const std::string&>::single_shot(33, lambda_stop, car,  6, "I have to stop");
+    Timer<const Car *, int, const std::string &>::single_shot(33, lambda_stop, car, 6, "I have to stop");
 
     {   // ---- no argument
         Timer<> t;
@@ -206,24 +209,24 @@ void test_for_lambda_functions(Car* car) {
     }
 
     {   // ---- one argument
-        Timer<Car*> t;
+        Timer<Car *> t;
         t.single_shot(33, lambda_start_1arg, car);
         t.set_interval(33, lambda_start_1arg, car);
         t.set_timeout(33, lambda_start_1arg, car);
     }
 
     {   // ---- two argument
-        Timer<int, const Car*> t;
+        Timer<int, const Car *> t;
         t.single_shot(33, lambda_report_speed, 120, car);
         t.set_interval(33, lambda_report_speed, 120, car);
         t.set_timeout(33, lambda_report_speed, 120, car);
     }
 
     {   // ---- three arguments
-        Timer<const Car*, int, const std::string&> t;
-        t.single_shot(333, lambda_stop, car,  6, "I have to stop");
-        t.set_interval(333, lambda_stop, car,  6, "I have to stop");
-        t.set_timeout(333, lambda_stop, car,  6, "I have to stop");
+        Timer<const Car *, int, const std::string &> t;
+        t.single_shot(333, lambda_stop, car, 6, "I have to stop");
+        t.set_interval(333, lambda_stop, car, 6, "I have to stop");
+        t.set_timeout(333, lambda_stop, car, 6, "I have to stop");
     }
 }
 

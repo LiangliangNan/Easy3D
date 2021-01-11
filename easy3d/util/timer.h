@@ -42,7 +42,7 @@ namespace easy3d {
      * \example Test_Timer     \include test/test_timer.cpp
      */
 
-    template < class... Args >
+    template<class... Args>
     class Timer {
     public:
         Timer() : stopped_(false) {}
@@ -64,9 +64,9 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        static void single_shot(int delay, Class* inst, void (Class::*func)(Args...), Args... args);
-        
+        template<class Class>
+        static void single_shot(int delay, Class *inst, void (Class::*func)(Args...), Args... args);
+
         /**
          * \brief Executes a const member function \p func of \p Class \p inst after \p delay milliseconds.
          * \param delay The time to be delayed, in milliseconds.
@@ -75,8 +75,8 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        static void single_shot(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args);
+        template<class Class>
+        static void single_shot(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args);
 
         /**
          * \brief Executes function \p func after \p delay milliseconds. 
@@ -97,9 +97,9 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        void set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const;
-        
+        template<class Class>
+        void set_timeout(int delay, Class *inst, void (Class::*func)(Args...), Args... args) const;
+
         /**
          * \brief Executes a const member function \p func of \p Class \p inst after \p delay milliseconds.
          * \details This is the same as single_shot() except that it is not static.
@@ -109,8 +109,8 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        void set_timeout(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) const;
+        template<class Class>
+        void set_timeout(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) const;
 
         /**
          * \brief Executes function \p func for every \p interval milliseconds.
@@ -129,8 +129,8 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        void set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args);
+        template<class Class>
+        void set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args);
 
         /**
          * \brief Executes a const member function \p func of \p Class \p inst for every \p interval milliseconds.
@@ -140,8 +140,8 @@ namespace easy3d {
          * \note When a member function has overloads or inheritance, you may need to explicit cast the function to
          *      indicate template arguments, e.g., \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
          */
-        template < class Class >
-        void set_interval(int interval, Class* inst, void (Class::*func)(Args...) const, Args... args);
+        template<class Class>
+        void set_interval(int interval, Class *inst, void (Class::*func)(Args...) const, Args... args);
 
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
@@ -150,7 +150,7 @@ namespace easy3d {
         bool is_stopped() const { return stopped_; }
 
     private:
-       mutable bool stopped_;
+        mutable bool stopped_;
     };
 
 
@@ -158,7 +158,7 @@ namespace easy3d {
     //-------------------------- IMPLEMENTATION ---------------------------
 
 
-    template < class... Args >
+    template<class... Args>
     void Timer<Args...>::single_shot(int delay, std::function<void(Args...)> const &func, Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -168,9 +168,9 @@ namespace easy3d {
     }
 
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::single_shot(int delay, Class* inst, void (Class::*func)(Args...), Args... args) {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::single_shot(int delay, Class *inst, void (Class::*func)(Args...), Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             (inst->*func)(args...);
@@ -179,9 +179,9 @@ namespace easy3d {
     }
 
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::single_shot(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::single_shot(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             (inst->*func)(args...);
@@ -190,55 +190,55 @@ namespace easy3d {
     }
 
 
-    template < class... Args >
+    template<class... Args>
     void Timer<Args...>::set_timeout(int delay, std::function<void(Args...)> const &func, Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
-            if(stopped_) return;
+            if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            if(stopped_) return;
+            if (stopped_) return;
             func(args...);
         });
         t.detach();
     }
 
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::set_timeout(int delay, Class* inst, void (Class::*func)(Args...), Args... args) const {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::set_timeout(int delay, Class *inst, void (Class::*func)(Args...), Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
-            if(stopped_) return;
+            if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            if(stopped_) return;
+            if (stopped_) return;
             (inst->*func)(args...);
         });
         t.detach();
     }
 
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::set_timeout(int delay, Class* inst, void (Class::*func)(Args...) const, Args... args) const {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::set_timeout(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
-            if(stopped_) return;
+            if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-            if(stopped_) return;
+            if (stopped_) return;
             (inst->*func)(args...);
         });
         t.detach();
     }
 
 
-    template < class... Args >
+    template<class... Args>
     void Timer<Args...>::set_interval(int interval, std::function<void(Args...)> const &func, Args... args) {
         stopped_ = false;
         std::thread t([=]() {
-            while(true) {
-                if(stopped_) return;
+            while (true) {
+                if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if(stopped_) return;
+                if (stopped_) return;
                 func(args...);
             }
         });
@@ -246,36 +246,35 @@ namespace easy3d {
     }
 
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::set_interval(int interval, Class* inst, void (Class::*func)(Args...), Args... args) {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args) {
         stopped_ = false;
         std::thread t([=]() {
-            while(true) {
-                if(stopped_) return;
+            while (true) {
+                if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if(stopped_) return;
+                if (stopped_) return;
                 (inst->*func)(args...);
             }
         });
         t.detach();
     }
 
-    template < class... Args >
-    template < class Class >
-    void Timer<Args...>::set_interval(int interval, Class* inst, void (Class::*func)(Args...) const, Args... args) {
+    template<class... Args>
+    template<class Class>
+    void Timer<Args...>::set_interval(int interval, Class *inst, void (Class::*func)(Args...) const, Args... args) {
         stopped_ = false;
         std::thread t([=]() {
-            while(true) {
-                if(stopped_) return;
+            while (true) {
+                if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if(stopped_) return;
+                if (stopped_) return;
                 (inst->*func)(args...);
             }
         });
         t.detach();
     }
-
 
 
 } // namespace easy3d
