@@ -3,7 +3,7 @@ project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
 #        ThreadPool/example.cpp
-        main.cpp
+        test_signal.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "SandBox")

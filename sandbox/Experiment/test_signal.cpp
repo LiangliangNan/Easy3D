@@ -5,23 +5,26 @@
 using namespace easy3d;
 
 
+// a simple class
+
 class Car {
 public:
     Car(int speed) : speed_(speed) {}
+
 public:
 
     int speed() const { return speed_; }
 
     void start() {
-        std::cout << "Car::" << __func__ << ". Class member: started\n";
+        std::cout << "started\n";
     }
 
     void report_speed(int max_allow_speed) const {
-        std::cout << "Car::" << __func__ << ". max allowed is " << max_allow_speed << ". I am at " << speed_ << "\n";
+        std::cout << "max allowed is " << max_allow_speed << ". I am at " << speed_ << "\n";
     }
 
-    void stop(int hours, const std::string& msg) const {
-        std::cout << "Car::" << __func__ << ". " << msg << ". After driving for " << hours << " hours\n";
+    void stop(int hours, const std::string &msg) const {
+        std::cout << msg << ". After driving for " << hours << " hours\n";
     }
 
 private:
@@ -29,51 +32,47 @@ private:
 };
 
 
-void func_start() {
-    std::cout << __func__ << "\n";
-}
-
-void func_start_1arg(Car* car) {
-    std::cout << __func__ << ". speed is " << car->speed() << "\n";
-}
-
-void func_report_speed(int max_allow_speed, const Car* car) {
-    std::cout << __func__ << ". max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
-}
-
-void func_stop(const Car* car, int hours, const std::string& msg) {
-    std::cout << __func__ << ". " << msg << ". After driving for " << hours << " hours, I have to stopped. My speed was " << car->speed() << "\n";
-}
-
-
-int main() {
-
-    Car car(100);
-
-    // connect to a class member ---------------------------------------------------------------------------------------
-
+void test_for_members(Car* car) {
     Signal<>  start_signal;
     Signal<int>  report_signal;
     Signal<int, const std::string&>  stop_signal;
 
     // ---- connect to a class member, no argument
-    easy3d::connect(&start_signal, &car, &Car::start);  // use the global function connect()
-    start_signal.connect(&car, &Car::start);  // use signal's connect()
+    easy3d::connect(&start_signal, car, &Car::start);  // use the global function connect()
+    start_signal.connect(car, &Car::start);  // use signal's connect()
 
     // ---- connect to a const class member, one argument
-    easy3d::connect(&report_signal, &car, &Car::report_speed);  // use the global function connect()
-    report_signal.connect(&car, &Car::report_speed);  // use signal's connect()
+    easy3d::connect(&report_signal, car, &Car::report_speed);  // use the global function connect()
+    report_signal.connect(car, &Car::report_speed);  // use signal's connect()
 
     // ---- connect to a const class member, two arguments
-    easy3d::connect(&stop_signal, &car, &Car::stop);  // use the global function connect()
-    stop_signal.connect(&car, &Car::stop);  // use signal's connect()
+    easy3d::connect(&stop_signal, car, &Car::stop);  // use the global function connect()
+    stop_signal.connect(car, &Car::stop);  // use signal's connect()
 
     start_signal.send();
     report_signal.send(80);
     stop_signal.send(6, "I have to stop");
+}
 
-    // connect to a function -------------------------------------------------------------------------------------------
 
+void func_start() {
+    std::cout << "started\n";
+}
+
+void func_start_1arg(Car* car) {
+    std::cout << "speed is " << car->speed() << "\n";
+}
+
+void func_report_speed(int max_allow_speed, const Car* car) {
+    std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
+}
+
+void func_stop(const Car* car, int hours, const std::string& msg) {
+    std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
+}
+
+
+void test_for_functions(Car* car) {
     Signal<> func_start_signal;
     Signal<Car*> func_start_signal_1arg;
     Signal<int, const Car*> func_report_signal;
@@ -97,27 +96,27 @@ int main() {
     another_stop_signal.connect(func_stop);  // use signal's connect()
 
     func_start_signal.send();
-    func_start_signal_1arg.send(&car);
-    func_report_signal.send(80, &car);
-    another_stop_signal.send(&car, 6, "I have to stop");
+    func_start_signal_1arg.send(car);
+    func_report_signal.send(80, car);
+    another_stop_signal.send(car, 6, "I have to stop");
+}
 
 
-    // connect to a lambda function ------------------------------------------------------------------------------------
-
+void test_for_lambda_functions(Car* car) {
     auto lambda_start = []() -> void {
-        std::cout << __func__ << "\n";
+        std::cout << "started\n";
     };
 
     auto lambda_start_1arg = [](Car* car) -> void {
-        std::cout << __func__ << ". speed is " << car->speed() << "\n";
+        std::cout << "speed is " << car->speed() << "\n";
     };
 
     auto lambda_report_speed = [](int max_allow_speed, const Car* car) -> void {
-        std::cout << __func__ << ". max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
+        std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
     };
 
     auto lambda_stop = [](const Car* car, int hours, const std::string& msg) -> void {
-        std::cout << __func__ << ". " << msg << ". After driving for " << hours << " hours, I have to stopped. My speed was " << car->speed() << "\n";
+        std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
     };
 
     Signal<> lambda_start_signal;
@@ -143,9 +142,24 @@ int main() {
     lambda_stop_signal.connect(lambda_stop);  // use signal's connect()
 
     lambda_start_signal.send();
-    lambda_start_signal_1arg.send(&car);
-    lambda_report_signal.send(80, &car);
-    lambda_stop_signal.send(&car, 6, "I have to stop");
+    lambda_start_signal_1arg.send(car);
+    lambda_report_signal.send(80, car);
+    lambda_stop_signal.send(car, 6, "I have to stop");
+}
 
-    return 0;
+
+int main() {
+    Car car(100);
+
+    std::cout << "connect to a class member ------------------------------------------------------------------\n\n";
+    test_for_members(&car);
+
+    std::cout << "\n\nconnect to a function ------------------------------------------------------------------\n\n";
+    test_for_functions(&car);
+
+
+    std::cout << "\n\nconnect to a lambda function -----------------------------------------------------------\n\n";
+    test_for_lambda_functions(&car);
+
+    return EXIT_SUCCESS;
 }
