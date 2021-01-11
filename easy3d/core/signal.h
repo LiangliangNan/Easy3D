@@ -75,12 +75,6 @@ namespace easy3d {
             return *this;
         }
 
-        /// Connects an std::function to the signal.
-        /// The returned value can be used to disconnect the function again.
-        int connect(std::function<void(Args...)> &slot) const {
-            slots_.insert(std::make_pair(++current_id_, slot));
-            return current_id_;
-        }
 
         /// Connects a const std::function to the signal.
         /// The returned value can be used to disconnect the function again.
@@ -150,14 +144,7 @@ namespace easy3d {
     /// \name  Global methods for connection and disconnection.
     //\{
 
-    /// Connects a std::function to the signal.
-    /// The returned value can be used to disconnect the function again.
-    template<typename SIGNAL, typename FUNCTION>
-    inline int connect(SIGNAL *signal, FUNCTION &slot) {
-        return signal->connect(slot);
-    }
-
-    /// Connects an const std::function to the signal.
+    /// Connects an std::function to the signal.
     /// The returned value can be used to disconnect the function again.
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
