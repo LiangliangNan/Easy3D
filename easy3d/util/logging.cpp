@@ -299,7 +299,7 @@ namespace easy3d
 
             if (!full_path.empty()) {
                 auto size_bytes = file_system::file_size(full_path);
-                auto mode = std::ios::app;
+                std::ofstream::openmode mode = std::ios::app;
                 if (size_bytes > 10 * 1024 * 1024) {
                     mode = std::ios::out | std::ios::trunc;
                     size_bytes = 0;
