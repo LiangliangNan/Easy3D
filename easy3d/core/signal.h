@@ -83,17 +83,25 @@ namespace easy3d {
         }
 
 
-        /// Connects a function to this signal.
-        /// The returned value can be used to disconnect the function again.
+        /**
+         * Connects a function to this signal.
+         * The returned value can be used to disconnect the function from this signal.
+         * \note When a function has overloads, explicitly cast the function to the right function type using
+         *     e.g., <tt> static_cast<void (*)(const std::string&, int)>(&print). </tt> Or use the helper function
+         *     \fn overload for a lighter syntax.
+         */
         int connect(std::function<void(Args...)> const &slot) const {
             slots_.insert(std::make_pair(++current_id_, slot));
             return current_id_;
         }
 
-        /// Connects a member function of an object to this Signal.
-        /// The returned value can be used to disconnect the function again.
-        /// \note When a member function has overloads or inheritance, you may need to explicit cast the function to indicate
-        ///         the template argument. For example, \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
+        /**
+         * Connects a member function of an object to this signal.
+         * The returned value can be used to disconnect the function from this signal.
+         * \note When a member function has overloads, explicitly cast the function to the right function type using
+         *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
+         *     Or use the helper function \fn overload for a lighter syntax.
+         */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...)) {
             return connect([=](Args... args) {
@@ -101,10 +109,13 @@ namespace easy3d {
             });
         }
 
-        /// Connects a const member function of an object to this Signal.
-        /// The returned value can be used to disconnect the function again.
-        /// \note When a member function has overloads or inheritance, you may need to explicit cast the function to indicate
-        ///         the template argument. For example, \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
+        /**
+         * Connects a const member function of an object to this Signal.
+         * The returned value can be used to disconnect the function from this signal.
+         * \note When a member function has overloads, explicitly cast the function to the right function type using
+         *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
+         *     Or use the helper function \fn overload for a lighter syntax.
+         */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...) const) {
             return connect([=](Args... args) {
@@ -112,9 +123,11 @@ namespace easy3d {
             });
         }
 
-        /// Connects this signal to another signal \p receiver.
-        /// Upon return, the emission of this signal will trigger \p receiver to emit.
-        /// The returned value can be used to disconnect the connected signal.
+        /**
+         * Connects this signal to another signal \p receiver.
+         * Upon return, the emission of this signal will trigger \p receiver to emit.
+         * The returned value can be used to disconnect the connected signal.
+         */
         int connect(Signal<Args...> *receiver) {
             return connect(receiver, &Signal<Args...>::send);
         }
@@ -162,25 +175,35 @@ namespace easy3d {
     /// \name  Global methods for connection and disconnection.
     //\{
 
-    /// Connects a function to the signal.
-    /// The returned value can be used to disconnect the function again.
+    /**
+     * Connects a function to the signal.
+     * The returned value can be used to disconnect the function from this signal.
+     * \note When a function has overloads, explicitly cast the function to the right function type using
+     *     e.g., <tt> static_cast<void (*)(const std::string&, int)>(&print). </tt> Or use the helper function
+     *     \fn overload for a lighter syntax.
+     */
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
         return signal->connect(slot);
     }
 
-    /// Connects a const member function of an object to this Signal.
-    /// The returned value can be used to disconnect the function again.
-    /// \note When a member function has overloads or inheritance, you may need to explicit cast the function to indicate
-    ///         the template argument. For example, \code static_cast<void (Car::*)(void)>(&Vehicle::start). \endcode
+    /**
+     * Connects a member function of an object to this Signal.
+     * The returned value can be used to disconnect the function from this signal.
+     * \note When a member function has overloads, explicitly cast the function to the right function type using
+     *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
+     *     Or use the helper function \fn overload for a lighter syntax.
+     */
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
         return signal->connect(inst, slot);
     }
 
-    /// Connects this signal to \p another signal.
-    /// Upon return, the emission of this signal will trigger \p another to be emitted.
-    /// The returned value can be used to disconnect the connected signal.
+    /**
+     * Connects this signal to \p another signal.
+     * Upon return, the emission of this signal will trigger \p another to be emitted.
+     * The returned value can be used to disconnect the connected signal.
+     */
     template<typename... Args>
     int connect(Signal<Args...> *sender, Signal<Args...> *receiver) {
         return sender->connect(receiver);
@@ -197,6 +220,80 @@ namespace easy3d {
     inline void disconnect_all(SIGNAL *signal) {
         signal->disconnect_all();
     }
+
+    //\}
+
+
+    /// \name  Helper functions for resolving overloaded functions.
+    //\{
+
+    /**
+     * Helper function for resolving overloaded non-member functions.
+     * In case of overloading, the pointer to a function does not map to a unique symbol, so the compiler
+     * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
+     * the function pointer to the right function type, e.g., static_cast<void (*)(const std::string&, int)>(func),
+     * which is a bit heavy syntax. This helper function does just that for a lighter syntax.
+     * \example
+     *     \code
+     *         void foo() {}       // function #1
+     *         void foo(int) {}    // function #2
+     *         sig_1.connect(overload<>(&foo));    // sig_1 connects to function #1
+     *         sig_2.connect(overload<int>(&foo)); // sig_2 connects to function #2
+     *     \endcode
+     * \sa overload(void (C::*func)(Args...))
+     */
+    template <typename... Args>
+    inline constexpr auto overload(void (*func)(Args...)) -> void (*)(Args...) {
+        return func;
+    }
+
+    /**
+     * Helper function for resolving overloaded member functions.
+     * In case of overloading, the pointer to a member function does not map to a unique symbol, so the compiler
+     * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
+     * the function pointer to the right function type, e.g.,
+     * static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print), which is a bit heave syntax.
+     * This helper function does just that for a lighter syntax.
+     * \example
+     *     \code
+     *         struct foo {
+     *             void bar() {}       // function #1
+     *             void bar(int) {}    // function #2
+     *         };
+     *         sig_1.connect(overload<>(&foo::bar));    // sig_1 connects to function #1
+     *         sig_2.connect(overload<int>(&foo::bar)); // sig_2 connects to function #2
+     *     \endcode
+     * \sa overload(void (*func)(Args...))
+     */
+    template <typename C, typename... Args>
+    inline constexpr auto overload(void (C::*func)(Args...)) -> void (C::*)(Args...) {
+        return func;
+    }
+
+    /**
+     * About default arguments.
+     * Default arguments are not part of the function type signature, and can be redefined, so they are really
+     * difficult to deal with. When connecting a slot to a signal, the \c Signal determines if the supplied callable
+     * can be invoked with the signal argument types, but at this point the existence of default arguments is unknown,
+     * so there might be a mismatch in the number of arguments. Below is an example,
+     *      \code
+     *          void foo(int &i, int b = 1) {}  // a function with an default argument
+     *          Signal<int &> signal;           // a signal with one argument
+     *          signal.connect(foo);            // this will never work
+     *          // but the following work
+     *          Signal<int &, int> signal2;     // a signal handles all the arguments
+     *          signal2.connect(foo);           // this works
+     *      \endcode
+     *
+     * Starting from C++14, we can have a simple workaround, to create a bind adapter. In fact we can even make it
+     * quite generic like so:
+     *      \code
+     *          #define ADAPT(func) \
+     *                  [=]( auto && ...a) { (func)(std::forward<decltype(a)>(a)...); }
+     *          Signal<int &> signal;           // a signal with one argument
+     *          signal.connect(ADAPT(foo));     // this will work for >= C++14
+     * But with C++11, \c auto is not allowed in lambda parameters.
+     */
 
     //\}
 }

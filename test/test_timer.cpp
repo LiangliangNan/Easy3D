@@ -24,6 +24,8 @@
 
 
 #include <easy3d/util/timer.h>
+#include <easy3d/core/signal.h>
+
 #include <iostream>
 #include <mutex>
 
@@ -31,7 +33,7 @@ std::mutex mutex;
 
 using namespace easy3d;
 
-// a simple class
+// Trivial classes (that do not make sense, but can show the use of the Signal class).
 
 class Vehicle {
 public:
@@ -127,9 +129,11 @@ void test_for_functions(Car *car) {
     // ---- no argument
 
     Timer<>::single_shot(33, static_cast<void (*)(void)> (func_start));
+    Timer<>::single_shot(33, overload<>(func_start));   // also works
 
     // ---- one argument
     Timer<Car *>::single_shot(33, static_cast<void (*)(Car *)> (func_start), car);
+    Timer<Car *>::single_shot(33, overload<Car *> (func_start), car);
 
 
     // ---- two argument
@@ -141,15 +145,25 @@ void test_for_functions(Car *car) {
     {   // ---- no argument
         Timer<> t;
         t.single_shot(33, static_cast<void (*)(void)> (func_start));
+        t.single_shot(33, overload<>(func_start));   // also works
+
         t.set_interval(33, static_cast<void (*)(void)> (func_start));
+        t.set_interval(33, overload<>(func_start));   // also works
+
         t.set_timeout(33, static_cast<void (*)(void)> (func_start));
+        t.set_timeout(33, overload<>(func_start));   // also works
     }
 
     {   // ---- one argument
         Timer<Car *> t;
         t.single_shot(33, static_cast<void (*)(Car *)> (func_start), car);
+        t.single_shot(33, overload<Car*> (func_start), car);  // also works
+
         t.set_interval(33, static_cast<void (*)(Car *)> (func_start), car);
+        t.set_interval(33, overload<Car*>  (func_start), car);  // also works
+
         t.set_timeout(33, static_cast<void (*)(Car *)> (func_start), car);
+        t.set_timeout(33, overload<Car*> (func_start), car);  // also works
     }
 
     {   // ---- two argument
