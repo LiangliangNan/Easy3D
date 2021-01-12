@@ -147,7 +147,7 @@ namespace easy3d {
             quat rot(axis, angle - prev_angle);
             // Rotates the ManipulatedFrame around its origin.
             rotate(rot);
-#else // new implementation (not tested yet)
+#else // new implementation
             if (axis == ORTHOGONAL) {
                 const float pre_x = float(x - dx);
                 const float pre_y = float(y - dy);
@@ -175,6 +175,8 @@ namespace easy3d {
         rot[2] = trans[2];
         // Rotates the ManipulatedFrame around its origin.
         rotate(rot);
+
+        modified.send();
 	}
 
 	void ManipulatedFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
@@ -203,7 +205,7 @@ namespace easy3d {
 				trans = referenceFrame()->transformOf(trans);
 			translate(trans);
 		}
-		else {  // new implementation (not tested yet)
+		else {  // new implementation
 			vec3 trans;
 			if (axis == HORIZONTAL)
 				trans = vec3(float(dx), 0.0f, 0.0f);
