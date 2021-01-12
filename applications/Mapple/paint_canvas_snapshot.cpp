@@ -357,7 +357,12 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     encoder.close();
 
     // enable updating the rendering
-    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
+    easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));  // this works
+//    easy3d::connect(&camera_->frame_modified, this, overload<PaintCanvas>(&PaintCanvas::update));  // this also works
+//    camera_->frame_modified.connect(this, static_cast<void (PaintCanvas::*)(void)> (&PaintCanvas::update));  // this also works
+//    camera_->frame_modified.connect(this, overload<PaintCanvas>(&PaintCanvas::update));  // this also works
+////    camera_->frame_modified.connect(this, &PaintCanvas::update);  // this won't work
+////    easy3d::connect(&camera_->frame_modified, this, &PaintCanvas::update);  // this won't work
 
     // restore the viewer size
     if (w != original_width || h != original_height) {
