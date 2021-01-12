@@ -4261,6 +4261,10 @@ private:
 
 class SignalHandling {
 public:
+    static std::function<void(StackTrace *, int, const char*)> signal_log_func;
+    static bool failure_has_been_recored;
+
+public:
   SignalHandling(const std::vector<int> & = std::vector<int>())
       : reporter_thread_([]() {
           /* We handle crashes in a utility thread:
@@ -4433,6 +4437,10 @@ private:
 #ifdef BACKWARD_SYSTEM_UNKNOWN
 
 class SignalHandling {
+public:
+    static std::function<void(StackTrace *, int, const char*)> signal_log_func;
+    static bool failure_has_been_recored;
+
 public:
   SignalHandling(const std::vector<int> & = std::vector<int>()) {}
   bool init() { return false; }
