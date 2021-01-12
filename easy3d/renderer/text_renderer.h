@@ -91,7 +91,7 @@ namespace easy3d {
          *        defined at the bottom left corner of the content area.
          * @return The end position of the x-coordinate. This allows you to draw another string after the previous one.
          *
-         * @Note: This function will draw the text in one line and thus line breaks (i.e., "\n") will be ignored.
+         * @note: This function will draw the text in one line and thus line breaks (i.e., "\n") will be ignored.
          */
         float draw(const std::string &text, float x, float y, float font_size, int font_id = 0,
                    const vec3 &font_color = vec3(0, 0, 0), bool upper_left = true

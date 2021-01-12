@@ -52,7 +52,7 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/gui/picker_surface_mesh.h>

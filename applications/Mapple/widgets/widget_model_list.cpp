@@ -9,7 +9,7 @@
 #include <easy3d/core/manifold_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/walk_through.h>
 #include <easy3d/util/file_system.h>
 
 #include <QMenu>

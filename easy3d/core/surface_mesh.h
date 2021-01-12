@@ -961,7 +961,6 @@ namespace easy3d {
         SurfaceMesh& assign(const SurfaceMesh& rhs);
         //@}
 
-        //!@}
         //! \name File IO
         //!@{
 

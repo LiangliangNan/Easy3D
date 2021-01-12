@@ -39,7 +39,7 @@ namespace easy3d {
      *      This Timer class provides a single-header implementation.
      *      With Timer, tasks (i.e., calling to functions) can be easily scheduled at either constant intervals
      *      or after a specified period. Timer supports any types of functions with any number of arguments.
-     * \example Test_Timer     \include test/test_timer.cpp
+     * \example Test_Timer  \include test/test_timer.cpp
      */
 
     template<class... Args>

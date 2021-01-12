@@ -44,7 +44,10 @@ namespace easy3d {
      *      viewer should be notified (e.g., a repaint event should be triggered). This is done by calling to the
      *      viewer's update() function. So in Easy3D, the viewer's update function is connected to the camera's
      *      corresponding signal.
-     * \example Test_Signal    \include test/test_signal.cpp
+     *
+     * \see A more powerful implementation [sigslot](https://github.com/palacaze/sigslot) based on C++14.
+     *
+     * \example Test_Signal  \include test/test_signal.cpp
      */
 
     template<typename... Args>

@@ -23,7 +23,7 @@
  */
 
 
-#include <easy3d/renderer/walk_throuth.h>
+#include <easy3d/renderer/walk_through.h>
 #include <easy3d/core//model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/key_frame_interpolator.h>

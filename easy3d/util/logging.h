@@ -646,11 +646,11 @@ namespace easy3d {
 
         /// header string for recording stack trace.
         /// This is used when we log a FATAL message, or when the program crashes.
-        std::string stacktrace_header();
+        std::string stacktrace_failure_header();
 
         /// Base class for a logger, i.e., to log messages to whatever
         /// Users should subclass Logger and override send() to do whatever they want.
-        /// \class Logger easy3d/util/logger.h
+        /// \class Logger easy3d/util/logging.h
         class Logger : public google::LogSink {
         public:
             Logger();

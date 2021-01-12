@@ -78,7 +78,7 @@ namespace easy3d {
          * @param font_size The size of the font.
          * @param extrude The height (in the Z direction) of the 3D model.
          * @param collision_free If true, the final mesh will be free of intersections between characters.
-         * @param True on success and false on failure.
+         * @return \c true on success and \c false on failure.
          */
         bool generate(SurfaceMesh *mesh, const std::string &text, float x, float y, int font_size, float extrude,
                       bool collision_free = false);

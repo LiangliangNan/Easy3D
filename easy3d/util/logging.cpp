@@ -112,7 +112,7 @@ namespace google {
             // If fatal error occurred, stop the program.
             // After logging the error (before the program crashes), notify StackTracer not to log again.
             if (!backward::SignalHandling::failure_has_been_recored) {
-                message_ += "\n" + ::easy3d::logging::stacktrace_header()
+                message_ += "\n" + ::easy3d::logging::stacktrace_failure_header()
                             + "\n" + ::easy3d::StackTracer::back_trace_string(32, 5);
             }
         }

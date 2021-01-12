@@ -681,7 +681,6 @@ namespace easy3d {
         PolyMesh& assign(const PolyMesh& rhs);
         //@}
 
-        //!@}
         //! \name File IO
         //!@{
 

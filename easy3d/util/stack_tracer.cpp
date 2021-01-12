@@ -68,7 +68,7 @@ namespace easy3d {
             }
 
             std::stringstream stream;
-            stream << "\n" << logging::stacktrace_header()
+            stream << "\n" << logging::stacktrace_failure_header()
                    << "\n" << StackTracer::to_string(record);
             backward::SignalHandling::failure_has_been_recored = true;
 

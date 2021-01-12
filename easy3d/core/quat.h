@@ -122,7 +122,7 @@ namespace easy3d {
 
         /**
          * \brief Constructs a quaternion that will rotate from the \p from direction to the \p to direction.
-         * \Note This rotation is not uniquely defined. The selected axis is usually orthogonal to \p from and \p to,
+         * \note This rotation is not uniquely defined. The selected axis is usually orthogonal to \p from and \p to,
          * minimizing the rotation angle. This method is robust and can handle small or almost identical vectors.
          */
         Quat(const Vec3& from, const Vec3& to);
