@@ -372,7 +372,7 @@ namespace easy3d
             (*output_) << msg;
         }
 
-        std::string stacktrace_header() {
+        std::string stacktrace_failure_header() {
             auto compose_header = []() -> std::string {
                 std::stringstream stream;
                 stream << "================================================================================="
