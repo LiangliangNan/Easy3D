@@ -320,8 +320,6 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             auto model = picker.pick(models(), e->pos().x(), e->pos().y());
             doneCurrent();
             if (model) {
-                if (!model->manipulator())
-                    model->set_manipulator(new Manipulator(model));
                 setCurrentModel(model);
                 window_->updateUi();
             }
@@ -829,6 +827,8 @@ void PaintCanvas::addModel(Model *model) {
     model->set_renderer(renderer);
     auto manipulator = new Manipulator(model);
     model->set_manipulator(manipulator);
+    // connect the manipulator's signal to the viewer's update function to automatically update rendering.
+    model->manipulator()->frame()->modified.connect(this, overload<PaintCanvas>(&PaintCanvas::update));
 
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current

@@ -8,6 +8,10 @@ namespace Ui {
     class WidgetGlobalSetting;
 }
 
+namespace easy3d {
+    class ClippingPlane;
+}
+
 class PaintCanvas;
 
 class WidgetGlobalSetting : public QWidget {
@@ -57,6 +61,8 @@ private slots:
 
 private:
     void disableUnavailableOptions();
+
+    easy3d::ClippingPlane* clippingPlane() const;
 
 private:
     Ui::WidgetGlobalSetting *ui;

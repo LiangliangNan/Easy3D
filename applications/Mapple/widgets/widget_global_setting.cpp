@@ -7,6 +7,8 @@
 #include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/manipulated_frame.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"
@@ -68,7 +70,7 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     // visible
     ui->checkBoxClippingPlaneVisible->setChecked(true);
     // default color
-    const vec3& c = setting::clipping_plane_color;
+    const vec3& c = clippingPlane()->color();
     QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
     pixmap.fill(
             QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -93,21 +95,28 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
 WidgetGlobalSetting::~WidgetGlobalSetting()
 {
     delete ui;
+    if (clippingPlane())
+        delete clippingPlane();
+}
 
-    if (setting::clipping_plane)
-        delete setting::clipping_plane;
+
+easy3d::ClippingPlane* WidgetGlobalSetting::clippingPlane() const {
+    if (!setting::clipping_plane) {
+        setting::clipping_plane = new ClippingPlane;
+        // connect the manipulator's signal to the viewer's update function to automatically update rendering.
+        setting::clipping_plane->manipulator()->frame()->modified.connect(viewer_,
+                                                                          overload<PaintCanvas>(&PaintCanvas::update));
+    }
+    return setting::clipping_plane;
 }
 
 
 void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
-    if (!setting::clipping_plane)
-        setting::clipping_plane = new ClippingPlane;
-
-    setting::clipping_plane->set_enabled(b);
+    clippingPlane()->set_enabled(b);
     if (b) {
         static bool init_size = false;
         if (!init_size) {
-            setting::clipping_plane->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+            clippingPlane()->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
             init_size = true;
         }
     }
@@ -122,25 +131,19 @@ void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
 
 
 void WidgetGlobalSetting::setClippingPlaneVisible(bool b) {
-    if (!setting::clipping_plane)
-        setting::clipping_plane = new ClippingPlane;
-
-    setting::clipping_plane->set_visible(b);
+    clippingPlane()->set_visible(b);
     viewer_->update();
     disableUnavailableOptions();
 }
 
 
 void WidgetGlobalSetting::setClippingPlaneColor() {
-    if (!setting::clipping_plane)
-        setting::clipping_plane = new ClippingPlane;
-
-    const vec4 &c = setting::clipping_plane->color();
+    const vec4 &c = clippingPlane()->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
         const vec4 new_color(color.redF(), color.greenF(), color.blueF(), c.a);
-        setting::clipping_plane->set_color(new_color);
+        clippingPlane()->set_color(new_color);
         viewer_->update();
 
         QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
@@ -151,10 +154,7 @@ void WidgetGlobalSetting::setClippingPlaneColor() {
 
 
 void WidgetGlobalSetting::setEnableCrossSection(bool b) {
-    if (!setting::clipping_plane)
-        setting::clipping_plane = new ClippingPlane;
-
-    setting::clipping_plane->set_cross_section(b);
+    clippingPlane()->set_cross_section(b);
     viewer_->update();
     disableUnavailableOptions();
 
@@ -166,10 +166,7 @@ void WidgetGlobalSetting::setEnableCrossSection(bool b) {
 
 
 void WidgetGlobalSetting::setCrossSectionThickness(double w) {
-    if (!setting::clipping_plane)
-        setting::clipping_plane = new ClippingPlane;
-
-    setting::clipping_plane->set_cross_section_width(w);
+    clippingPlane()->set_cross_section_width(w);
     viewer_->update();
     LOG(INFO) << "cross-section thickness: " << w;
 }
