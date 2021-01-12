@@ -106,6 +106,12 @@
 
 #include <ui_main_window.h>
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#ifdef ERROR
+#undef ERROR
+#endif
+#endif
+
 
 using namespace easy3d;
 
