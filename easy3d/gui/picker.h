@@ -42,7 +42,7 @@ namespace easy3d {
     public:
         Picker(const Camera *cam);
 
-        ~Picker();
+        virtual ~Picker();
 
         /// \brief Returns the pointer of the camera.
         const Camera *camera() const { return camera_; }
