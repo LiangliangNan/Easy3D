@@ -37,9 +37,6 @@
 
 namespace backward {
 
-//    backward::SignalHandling sh;
-
-    std::function<void(StackTrace*, int, const char*)> SignalHandling::signal_log_func = nullptr;
-    bool SignalHandling::failure_has_been_recored = false;
+backward::SignalHandling sh;
 
 } // namespace backward
