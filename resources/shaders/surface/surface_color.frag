@@ -40,7 +40,7 @@ out vec4 outputF;
 
 void main(void) {
     if (DataIn.clipped > 0.0)
-        return;
+        discard;
 
     if (!lighting) {
         outputF = DataIn.color;
