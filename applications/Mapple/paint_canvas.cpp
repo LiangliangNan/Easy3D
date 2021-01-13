@@ -93,6 +93,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
         , show_labels_under_mouse_(false)
+        , model_picker_(nullptr)
         , picked_face_index_(-1)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
@@ -143,6 +144,7 @@ void PaintCanvas::cleanup() {
     delete transparency_;
     delete edl_;
     delete texter_;
+    delete model_picker_;
 
     ShaderManager::terminate();
     TextureManager::terminate();
@@ -315,9 +317,10 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
         } else if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
                    walkThrough()->status() == easy3d::WalkThrough::STOPPED)
         {
-            ModelPicker picker(camera());
+            if (!model_picker_)
+                model_picker_ = new ModelPicker(camera());
             makeCurrent();
-            auto model = picker.pick(models(), e->pos().x(), e->pos().y());
+            auto model = model_picker_->pick(models(), e->pos().x(), e->pos().y());
             doneCurrent();
             if (model) {
                 setCurrentModel(model);

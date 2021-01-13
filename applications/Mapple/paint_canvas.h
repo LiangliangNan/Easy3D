@@ -45,6 +45,7 @@ namespace easy3d {
     class EyeDomeLighting;
     class TextRenderer;
     class WalkThrough;
+    class ModelPicker;
 }
 
 class QWidget;
@@ -301,6 +302,7 @@ protected:
     // corner axes
     easy3d::TrianglesDrawable* drawable_axes_;
 
+    easy3d::ModelPicker* model_picker_;
     bool    show_labels_under_mouse_;
     int     picked_face_index_;
 
