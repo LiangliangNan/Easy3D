@@ -1878,7 +1878,7 @@ void MainWindow::applyManipulatedTransformation() {
     }
 
     model->manipulator()->reset();
-    model->renderer()->update();
+    model->renderer()->update(false);
     viewer_->update();
 }
 
@@ -1889,7 +1889,7 @@ void MainWindow::giveUpManipulatedTransformation() {
         return;
 
     model->manipulator()->reset();
-    model->renderer()->update();
+    model->renderer()->update(false);
     viewer_->update();
 }
 
