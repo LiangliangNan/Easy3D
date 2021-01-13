@@ -7,10 +7,10 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/fileio/resources.h>
@@ -265,60 +265,87 @@ void WidgetTrianglesDrawable::updatePanel() {
 
 
 
+
+namespace details {
+
+    template <typename MODEL>
+    void collect_color_schemes(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
+        // color schemes from color properties and texture
+        for (const auto &name : model->face_properties()) {
+            if (name.find("f:color") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : model->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+
+        // scalar fields defined on faces
+        for (const auto &name : model->face_properties()) {
+            if (model->template get_face_property<float>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<double>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+        }
+
+        // scalar fields defined on vertices
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+        }
+    }
+
+    // vector fields defined on faces
+    template <typename MODEL>
+    void vector_fields_on_faces(MODEL* model, std::vector<QString>& fields) {
+        fields.push_back("f:normal");
+        for (const auto &name : model->face_properties()) {
+            if (model->template get_face_property<vec3>(name)) {
+                if (name != "f:normal" && name != "f:color")
+                    fields.push_back(QString::fromStdString(name));
+            }
+        }
+    }
+
+}
+
+
+
 std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
     schemes.push_back("uniform color");
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
-        // color schemes from color properties and texture
-        for (const auto &name : mesh->face_properties()) {
-            if (name.find("f:color") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
-        for (const auto &name : mesh->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
         for (const auto &name : mesh->halfedge_properties()) {
             if (name.find("h:texcoord") != std::string::npos)
                 schemes.push_back(QString::fromStdString(name));
         }
 
-        // color schemes from scalar fields
-
-        // scalar fields defined on faces
-        for (const auto &name : mesh->face_properties()) {
-            if (mesh->get_face_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_face_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_face_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_face_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-
-        // scalar fields defined on vertices
-        for (const auto &name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
+        details::collect_color_schemes(mesh, scalar_prefix_, schemes);
     }
+
+    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+    if (poly)
+        details::collect_color_schemes(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -328,17 +355,12 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
     std::vector<QString> fields;
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh) {
-        // vector fields defined on faces
-        fields.push_back("f:normal");
+    if (mesh)
+        details::vector_fields_on_faces(mesh, fields);
 
-        for (const auto &name : mesh->face_properties()) {
-            if (mesh->get_face_property<vec3>(name)) {
-                if (name != "f:normal" && name != "f:color")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    auto poly = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    if (poly)
+        details::vector_fields_on_faces(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())

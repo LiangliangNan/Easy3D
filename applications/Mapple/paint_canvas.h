@@ -46,6 +46,7 @@ namespace easy3d {
     class TextRenderer;
     class WalkThrough;
     class ModelPicker;
+    class SurfaceMeshPicker;
 }
 
 class QWidget;
@@ -152,6 +153,7 @@ public slots:
     void showFrameRate(bool);
     void showAxes(bool);
 
+    void enableSelectModel(bool);
     void invertSelection();
     void deleteSelectedPrimitives();
 
@@ -303,6 +305,8 @@ protected:
     easy3d::TrianglesDrawable* drawable_axes_;
 
     easy3d::ModelPicker* model_picker_;
+    bool    allow_select_model_;
+    easy3d::SurfaceMeshPicker* surface_mesh_picker_;
     bool    show_labels_under_mouse_;
     int     picked_face_index_;
 

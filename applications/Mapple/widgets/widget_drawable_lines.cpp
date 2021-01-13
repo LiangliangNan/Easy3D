@@ -4,11 +4,11 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/buffers.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
@@ -326,83 +326,76 @@ void WidgetLinesDrawable::setDefaultColor() {
 }
 
 
+namespace details {
+
+    // color schemes from scalar fields
+    // scalar fields defined on edges
+    template <typename MODEL>
+    void color_schemes_for_scalar_fields(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
+        // color schemes from color properties and texture
+        for (const auto &name : model->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : model->edge_properties()) {
+            if (name.find("e:color") != std::string::npos || name.find("e:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+
+        // color schemes from scalar fields
+        // scalar fields defined on edges
+        for (const auto &name : model->edge_properties()) {
+            if (model->template get_edge_property<float>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<double>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+        }
+        // scalar fields defined on vertices
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+        }
+    }
+
+    // vector fields defined on edges
+    template <typename MODEL>
+    void vector_fields_on_edges(MODEL* model, std::vector<QString>& fields) {
+        for (const auto &name : model->edge_properties()) {
+            if (model->template get_edge_property<vec3>(name)) {
+                if (name != "e:color")
+                    fields.push_back(QString::fromStdString(name));
+            }
+        }
+    }
+
+}
+
+
 std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
     schemes.push_back("uniform color");
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh) {
-        // color schemes from color properties and texture
-        for (const auto &name : mesh->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
-        for (const auto &name : mesh->edge_properties()) {
-            if (name.find("e:color") != std::string::npos || name.find("e:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
-
-        // color schemes from scalar fields
-        // scalar fields defined on edges
-        for (const auto &name : mesh->edge_properties()) {
-            if (mesh->get_edge_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_edge_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_edge_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_edge_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-        // scalar fields defined on vertices
-        for (const auto &name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-    }
+    if (mesh)
+        details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph) {
-        // color schemes from color properties and texture
-        for (const auto &name : graph->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back( QString::fromStdString(name));
-        }
-        for (const auto &name : graph->edge_properties()) {
-            if (name.find("e:color") != std::string::npos || name.find("e:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
+    if (graph)
+        details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
-        // color schemes from scalar fields
-        // scalar fields defined on edges
-        for (const auto &name : graph->edge_properties()) {
-            if (graph->get_edge_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_edge_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_edge_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_edge_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-        // scalar fields defined on vertices
-        for (const auto &name : graph->vertex_properties()) {
-            if (graph->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-    }
+    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+    if (poly)
+        details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -412,26 +405,16 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
     std::vector<QString> fields;
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh) {
-        // vector fields defined on edges
-        for (const auto &name : mesh->edge_properties()) {
-            if (mesh->get_edge_property<vec3>(name)) {
-                if (name != "e:color")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    if (mesh)
+        details::vector_fields_on_edges(mesh, fields);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph) {
-        // vector fields defined on edges
-        for (const auto &name : graph->edge_properties()) {
-            if (graph->get_edge_property<vec3>(name)) {
-                if (name != "e:color")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    if (graph)
+        details::vector_fields_on_edges(graph, fields);
+
+    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+    if (poly)
+        details::vector_fields_on_edges(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())

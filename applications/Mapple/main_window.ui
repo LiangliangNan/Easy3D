@@ -90,6 +90,12 @@
     <property name="title">
      <string>Select</string>
     </property>
+    <addaction name="actionSelectModel"/>
+    <addaction name="separator"/>
+    <addaction name="actionSelectClick"/>
+    <addaction name="actionSelectRect"/>
+    <addaction name="actionSelectLasso"/>
+    <addaction name="separator"/>
     <addaction name="actionInvertSelection"/>
     <addaction name="separator"/>
     <addaction name="actionDeleteSelectedPrimitives"/>
@@ -231,9 +237,6 @@
    <addaction name="separator"/>
    <addaction name="actionCameraManipulation"/>
    <addaction name="separator"/>
-   <addaction name="actionSelectClick"/>
-   <addaction name="actionSelectRect"/>
-   <addaction name="actionSelectLasso"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetRendering">
@@ -734,7 +737,7 @@
      <normaloff>:/resources/icons/select_lasso.png</normaloff>:/resources/icons/select_lasso.png</iconset>
    </property>
    <property name="text">
-    <string>Select Using the Lasso Tool</string>
+    <string>Select primitives by lasso</string>
    </property>
    <property name="toolTip">
     <string>Select Using the Lasso Tool</string>
@@ -765,7 +768,7 @@
      <normaloff>:/resources/icons/select_rect.png</normaloff>:/resources/icons/select_rect.png</iconset>
    </property>
    <property name="text">
-    <string>Select Using the Sketch Tool</string>
+    <string>Select primitives by sketching tool</string>
    </property>
    <property name="toolTip">
     <string>Select Using the Sketch Tool</string>
@@ -795,7 +798,7 @@
      <normaloff>:/resources/icons/select_click.png</normaloff>:/resources/icons/select_click.png</iconset>
    </property>
    <property name="text">
-    <string>Select by Clicking</string>
+    <string>Select primitives by clicking</string>
    </property>
    <property name="toolTip">
     <string>Select by Clicking</string>
@@ -1115,6 +1118,14 @@
   <action name="actionGiveUpManipulatedTransformation">
    <property name="text">
     <string>Give up manipulated transformation</string>
+   </property>
+  </action>
+  <action name="actionSelectModel">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Select model</string>
    </property>
   </action>
  </widget>

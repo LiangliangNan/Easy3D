@@ -52,7 +52,6 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -886,13 +885,14 @@ void MainWindow::createActionsForPropertyMenu() {
 
 void MainWindow::createActionsForEditMenu() {
     connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
-
     connect(ui->actionApplyManipulatedTransformation, SIGNAL(triggered()), this, SLOT(applyManipulatedTransformation()));
     connect(ui->actionGiveUpManipulatedTransformation, SIGNAL(triggered()), this, SLOT(giveUpManipulatedTransformation()));
 }
 
 
 void MainWindow::createActionsForSelectMenu() {
+    connect(ui->actionSelectModel, SIGNAL(toggled(bool)), viewer_, SLOT(enableSelectModel(bool)));
+
     connect(ui->actionInvertSelection, SIGNAL(triggered()), viewer_, SLOT(invertSelection()));
     connect(ui->actionDeleteSelectedPrimitives, SIGNAL(triggered()), viewer_, SLOT(deleteSelectedPrimitives()));
 
@@ -1956,8 +1956,12 @@ void MainWindow::animation() {
         dialog = new DialogWalkThrough(this);
 
     dialog->walkThrough()->start_walking(viewer_->models());
+
+    // don't allow model picking when creating camera paths.
+    ui->actionSelectModel->setChecked(false);
     for (auto m : viewer_->models())
         m->renderer()->set_selected(false);
+
     dialog->show();
 }
 

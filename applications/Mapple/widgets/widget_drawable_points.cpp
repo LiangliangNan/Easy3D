@@ -5,13 +5,12 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/buffers.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
@@ -141,83 +140,66 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 }
 
 
+namespace details {
+
+    // color schemes from scalar fields
+    // scalar fields defined on vertices
+    template <typename MODEL>
+    void color_schemes_for_scalar_fields(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
+        // color schemes from color properties and texture
+        for (const auto &name : model->vertex_properties()) {
+            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
+                schemes.push_back(QString::fromStdString(name));
+        }
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<float>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<double>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+        }
+    }
+
+    // vector fields defined on vertices
+    template <typename MODEL>
+    void vector_fields_on_vertices(MODEL* model, std::vector<QString>& fields) {
+        for (const auto &name : model->vertex_properties()) {
+            if (model->template get_vertex_property<vec3>(name)) {
+                if (name != "v:color" && name != "v:point")
+                    fields.push_back(QString::fromStdString(name));
+            }
+        }
+    }
+
+}
+
+
 std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
     schemes.push_back("uniform color");
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
-    if (cloud) {
-        // color schemes from color properties and texture
-        for (const auto &name : cloud->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
-
-        // color schemes from scalar fields
-        // scalar fields defined on vertices
-        for (const auto &name : cloud->vertex_properties()) {
-            if (cloud->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (cloud->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (cloud->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (cloud->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (cloud->get_vertex_property<char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (cloud->get_vertex_property<unsigned char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-    }
+    if (cloud)
+        details::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh) {
-        // color schemes from color properties and texture
-        for (const auto &name : mesh->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
-
-        // color schemes from scalar fields
-        // scalar fields defined on vertices
-        for (const auto &name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (mesh->get_vertex_property<unsigned char>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-    }
+    if (mesh)
+        details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph) {
-        // color schemes from color properties and texture
-        for (const auto &name : graph->vertex_properties()) {
-            if (name.find("v:color") != std::string::npos || name.find("v:texcoord") != std::string::npos)
-                schemes.push_back(QString::fromStdString(name));
-        }
+    if (graph)
+        details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
-        // color schemes from scalar fields
-        // scalar fields defined on vertices
-        for (const auto &name : graph->vertex_properties()) {
-            if (graph->get_vertex_property<float>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<double>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<unsigned int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-            else if (graph->get_vertex_property<int>(name))
-                schemes.push_back(scalar_prefix_ + QString::fromStdString(name));
-        }
-    }
+    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+    if (poly)
+        details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -227,37 +209,20 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
     std::vector<QString> fields;
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
-    if (cloud) {
-        // vector fields defined on vertices
-        for (const auto &name : cloud->vertex_properties()) {
-            if (cloud->get_vertex_property<vec3>(name)) {
-                if (name != "v:color" && name != "v:point")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    if (cloud)
+        details::vector_fields_on_vertices(cloud, fields);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh) {
-        // vector fields defined on vertices
-        for (const auto &name : mesh->vertex_properties()) {
-            if (mesh->get_vertex_property<vec3>(name)) {
-                if (name != "v:color" && name != "v:point")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    if (mesh)
+        details::vector_fields_on_vertices(mesh, fields);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph) {
-        // vector fields defined on vertices
-        for (const auto &name : graph->vertex_properties()) {
-            if (graph->get_vertex_property<vec3>(name)) {
-                if (name != "v:color" && name != "v:point")
-                    fields.push_back(QString::fromStdString(name));
-            }
-        }
-    }
+    if (graph)
+        details::vector_fields_on_vertices(graph, fields);
+
+    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+    if (poly)
+        details::vector_fields_on_vertices(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())

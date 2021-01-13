@@ -94,6 +94,8 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , drawable_axes_(nullptr)
         , show_labels_under_mouse_(false)
         , model_picker_(nullptr)
+        , allow_select_model_(false)
+        , surface_mesh_picker_(nullptr)
         , picked_face_index_(-1)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
@@ -145,6 +147,7 @@ void PaintCanvas::cleanup() {
     delete edl_;
     delete texter_;
     delete model_picker_;
+    delete surface_mesh_picker_;
 
     ShaderManager::terminate();
     TextureManager::terminate();
@@ -315,7 +318,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
         } else if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
-                   walkThrough()->status() == easy3d::WalkThrough::STOPPED)
+                   walkThrough()->status() == easy3d::WalkThrough::STOPPED && allow_select_model_)
         {
             if (!model_picker_)
                 model_picker_ = new ModelPicker(camera());
@@ -457,9 +460,10 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     if (show_labels_under_mouse_) {
         auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
+            if (!surface_mesh_picker_)
+                surface_mesh_picker_ = new SurfaceMeshPicker(camera());
             makeCurrent();
-            SurfaceMeshPicker picker(camera());
-            picked_face_index_ = picker.pick_face(mesh, e->pos().x(), e->pos().y()).idx();
+            picked_face_index_ = surface_mesh_picker_->pick_face(mesh, e->pos().x(), e->pos().y()).idx();
             doneCurrent();
         }
         else
@@ -883,8 +887,6 @@ void PaintCanvas::fitScreen() {
 
 
 vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
-    const_cast<PaintCanvas *>(this)->makeCurrent();
-
     // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
     int glx = p.x();
     int gly = height() - 1 - p.y();
@@ -893,6 +895,8 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     //       So we have to handle highdpi desplays.
     glx = static_cast<int>(glx * dpi_scaling());
     gly = static_cast<int>(gly * dpi_scaling());
+
+    const_cast<PaintCanvas *>(this)->makeCurrent();
 
     int samples = 0;
     func_->glGetIntegerv(GL_SAMPLES, &samples);
@@ -1283,6 +1287,11 @@ void PaintCanvas::enableEyeDomeLighting(bool b) {
         delete edl_;
         edl_ = nullptr;
     }
+}
+
+
+void PaintCanvas::enableSelectModel(bool b) {
+    allow_select_model_ = b;
 }
 
 
