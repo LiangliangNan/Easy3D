@@ -1333,6 +1333,9 @@ namespace easy3d {
         /// vector of vertex positions (read only)
         const std::vector<vec3>& points() const { return vpoint_.vector(); }
 
+        /// @brief vector of vertex positions
+        std::vector<vec3>& points() { return vpoint_.vector(); }
+
         /// compute face normals by calling compute_face_normal(HalfFace) for each face.
         void update_face_normals();
 

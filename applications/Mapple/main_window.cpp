@@ -56,6 +56,8 @@
 #include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -862,6 +864,7 @@ void MainWindow::createActionsForViewMenu() {
 
 void MainWindow::createActionsForCameraMenu() {
     connect(ui->actionPerspectiveOrthographic, SIGNAL(toggled(bool)), viewer_, SLOT(setPerspective(bool)));
+    connect(ui->actionFitScreen, SIGNAL(triggered()), viewer_, SLOT(fitScreen()));
     connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
 
     connect(ui->actionCopyCamera, SIGNAL(triggered()), viewer_, SLOT(copyCamera()));
@@ -883,6 +886,9 @@ void MainWindow::createActionsForPropertyMenu() {
 
 void MainWindow::createActionsForEditMenu() {
     connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
+
+    connect(ui->actionApplyManipulatedTransformation, SIGNAL(triggered()), this, SLOT(applyManipulatedTransformation()));
+    connect(ui->actionGiveUpManipulatedTransformation, SIGNAL(triggered()), this, SLOT(giveUpManipulatedTransformation()));
 }
 
 
@@ -1791,6 +1797,47 @@ void MainWindow::addGaussianNoise() {
     if (!dialog)
         dialog = new DialogGaussianNoise(this);
     dialog->show();
+}
+
+
+void MainWindow::applyManipulatedTransformation() {
+    Model* model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    mat4 manip = model->manipulator()->matrix();
+    auto& points = model->points();
+    for (auto& p : points)
+        p = manip * p;
+
+    if (dynamic_cast<SurfaceMesh*>(model)) {
+        dynamic_cast<SurfaceMesh *>(model)->update_vertex_normals();
+    }
+    else if (dynamic_cast<PointCloud*>(model)) {
+        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+        auto normal = cloud->get_vertex_property<vec3>("v:normal");
+        if (normal) {
+            const mat3& N = transform::normal_matrix(manip);
+            for (auto v : cloud->vertices())
+                normal[v] = N * normal[v];
+            // vector fields...
+        }
+    }
+
+    model->manipulator()->reset();
+    model->renderer()->update();
+    viewer_->update();
+}
+
+
+void MainWindow::giveUpManipulatedTransformation() {
+    Model* model = viewer_->currentModel();
+    if (!model)
+        return;
+
+    model->manipulator()->reset();
+    model->renderer()->update();
+    viewer_->update();
 }
 
 

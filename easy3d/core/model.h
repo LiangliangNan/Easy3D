@@ -59,10 +59,12 @@ namespace easy3d {
 
         /**
          * \brief The bounding box of the model.
-         * If the bounding box is unknown, it will be computed first. Otherwise it returns the known bounding box.
+         * \param recompute If \c true, or if the bounding box is not known, it computes and returns the bounding
+         *      box of the model. Otherwise, it returns the known bounding box.
+         * \note Manipulation transformation is not handled.
          * \see invalidate_bounding_box().
          */
-        const Box3& bounding_box() const;
+        const Box3& bounding_box(bool recompute = false) const;
 
         /**
          * \brief Invalidates the bounding box of the model. So when bounding_box() is called, the bounding box will be
@@ -71,6 +73,7 @@ namespace easy3d {
         void invalidate_bounding_box();
 
         /** \brief The vertices of the model. */
+        virtual std::vector<vec3>& points() = 0;
         virtual const std::vector<vec3>& points() const = 0;
 
         /** \brief Tests if the model is empty. */

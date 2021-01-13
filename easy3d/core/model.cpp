@@ -40,8 +40,8 @@ namespace easy3d {
     }
 
 
-    const Box3& Model::bounding_box() const {
-        if (!bbox_known_) {
+    const Box3& Model::bounding_box(bool recompute) const {
+        if (!bbox_known_ || recompute) {
             Box3& box = const_cast<Model*>(this)->bbox_;
             box.clear();
             for (const auto& p : points())

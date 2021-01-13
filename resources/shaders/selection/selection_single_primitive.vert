@@ -4,8 +4,9 @@
 in  vec3    vtx_position;// vertex position
 
 uniform mat4 MVP;
+uniform mat4 MANIP = mat4(1.0);
 
 void main()
 {
-    gl_Position = MVP * vec4(vtx_position, 1.0);
+    gl_Position = MVP * MANIP * vec4(vtx_position, 1.0);
 } 

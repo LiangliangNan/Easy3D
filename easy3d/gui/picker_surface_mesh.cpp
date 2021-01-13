@@ -30,6 +30,7 @@
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/util/logging.h>
 
 
@@ -270,7 +271,8 @@ namespace easy3d {
         easy3d_debug_log_frame_buffer_error;
 
         program_->bind();
-        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix());
+        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix())
+                ->set_uniform("MANIP", model->manipulator()->matrix());
         drawable->gl_draw(false);
         program_->release();
 
@@ -350,7 +352,7 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         // Get combined model-view and projection matrix
-        const mat4& m = camera()->modelViewProjectionMatrix();
+        const mat4& m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
         const auto& points = model->get_vertex_property<vec3>("v:point").vector();
         int num = model->n_vertices();
 
@@ -420,7 +422,7 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         // Get combined model-view and projection matrix
-        const mat4& m = camera()->modelViewProjectionMatrix();
+        const mat4& m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
         const auto& points = model->get_vertex_property<vec3>("v:point").vector();
         int num = model->n_vertices();
 

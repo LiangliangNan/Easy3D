@@ -178,6 +178,9 @@
      <string>Edit</string>
     </property>
     <addaction name="actionAddGaussianNoise"/>
+    <addaction name="separator"/>
+    <addaction name="actionApplyManipulatedTransformation"/>
+    <addaction name="actionGiveUpManipulatedTransformation"/>
    </widget>
    <widget class="QMenu" name="menuPolyMesh">
     <property name="title">
@@ -190,6 +193,8 @@
      <string>Camera</string>
     </property>
     <addaction name="actionPerspectiveOrthographic"/>
+    <addaction name="separator"/>
+    <addaction name="actionFitScreen"/>
     <addaction name="separator"/>
     <addaction name="actionSnapshot"/>
     <addaction name="separator"/>
@@ -221,6 +226,7 @@
    </attribute>
    <addaction name="actionOpen"/>
    <addaction name="actionSave"/>
+   <addaction name="actionFitScreen"/>
    <addaction name="actionSnapshot"/>
    <addaction name="separator"/>
    <addaction name="actionCameraManipulation"/>
@@ -1087,6 +1093,28 @@
    </property>
    <property name="text">
     <string>Perspective/Orthographic</string>
+   </property>
+  </action>
+  <action name="actionFitScreen">
+   <property name="icon">
+    <iconset resource="mapple.qrc">
+     <normaloff>:/resources/icons/home.png</normaloff>:/resources/icons/home.png</iconset>
+   </property>
+   <property name="text">
+    <string>Fit screen</string>
+   </property>
+   <property name="shortcut">
+    <string>F</string>
+   </property>
+  </action>
+  <action name="actionApplyManipulatedTransformation">
+   <property name="text">
+    <string>Apply manipulated transformation</string>
+   </property>
+  </action>
+  <action name="actionGiveUpManipulatedTransformation">
+   <property name="text">
+    <string>Give up manipulated transformation</string>
    </property>
   </action>
  </widget>

@@ -86,7 +86,7 @@ public:
 
 	// moves the camera so that the 'model' is centered on the screen.
 	// if 'model' is NULL, it centers the entire scene (all models).
-	void fitScreen(const easy3d::Model* model = nullptr);
+	void fitScreen(const easy3d::Model* model);
 
     // Returns the coordinates of the 3D point located at pixel (x,y) on screen.
     // x, y: screen point expressed in pixel units with an origin in the upper left corner.
@@ -141,6 +141,9 @@ public:
     void enableEyeDomeLighting(bool b);
 
 public slots:
+    // centers the entire scene to fit the screen region.
+    void fitScreen();
+
     void showFaceVertexLabelsUnderMouse(bool);
     void showCordinatesUnderMouse(bool);
 
