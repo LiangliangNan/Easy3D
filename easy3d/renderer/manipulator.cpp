@@ -49,7 +49,7 @@ namespace easy3d {
 
     void Manipulator::reset() {
         if (model_) {
-            const vec3 &center = model_->bounding_box().center();
+            const vec3 &center = model_->bounding_box(true).center();
             frame()->setPositionAndOrientation(center, quat());
         }
     }
