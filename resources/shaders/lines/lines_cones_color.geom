@@ -19,9 +19,11 @@ uniform bool crossSectionEnabled = false;
 uniform vec4 clippingPlane0;
 uniform vec4 clippingPlane1;
 
-in  vec4 vOutColor[];
+in vec4  vOutColor[];
+in float vOutClipped[];
 
-out vec4 gOutColor;
+out vec4  gOutColor;
+out float gOutClipped;
 
 out Data{
     vec3 point;// camera space
@@ -59,6 +61,7 @@ void main()
         DataOut.point = top;
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[1];
+        gOutClipped = vOutClipped[1];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -75,6 +78,7 @@ void main()
         DataOut.point = (base + left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -91,6 +95,7 @@ void main()
         DataOut.point = (base - left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -107,6 +112,7 @@ void main()
         DataOut.point = (base + left + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -123,6 +129,7 @@ void main()
         DataOut.point = (base - left + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -140,6 +147,7 @@ void main()
         DataOut.point = top;
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[1];
+        gOutClipped = vOutClipped[1];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -160,6 +168,7 @@ void main()
         DataOut.point = (base - left * factor + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -176,6 +185,7 @@ void main()
         DataOut.point = (base + left * factor + up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -192,6 +202,7 @@ void main()
         DataOut.point = (base - left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)
@@ -208,6 +219,7 @@ void main()
         DataOut.point = (base + left - up);
         gl_Position = PROJ  * vec4(DataOut.point, 1.0);
         gOutColor = vOutColor[0];
+        gOutClipped = vOutClipped[0];
         if (clippingPlaneEnabled) {
             gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
             if (crossSectionEnabled)

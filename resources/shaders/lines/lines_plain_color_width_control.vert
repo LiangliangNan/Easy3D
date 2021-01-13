@@ -21,25 +21,31 @@ uniform bool per_vertex_color;
 in  vec3 vtx_position;	// point position
 in  vec3 vtx_color;	// point color
 
-out vec4 vOutcolor;
+out Data {
+    vec4 color;
+    float clipped;
+} DataOut;
 
 void main()
 {
     vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
+    DataOut.clipped = 0.0;
     if (clippingPlaneEnabled) {
-        if (planeClippingDiscard && dot(new_position, clippingPlane0) < 0)
-            return;
+        gl_ClipDistance[0] = dot(new_position, clippingPlane0);
+        if (planeClippingDiscard && gl_ClipDistance[0] < 0)
+        DataOut.clipped = 1.0;
         if (crossSectionEnabled) {
-            if (planeClippingDiscard && dot(new_position, clippingPlane1) < 0)
-                return;
+            gl_ClipDistance[1] = dot(new_position, clippingPlane1);
+            if (planeClippingDiscard && gl_ClipDistance[1] < 0)
+            DataOut.clipped = 1.0;
         }
     }
 
     gl_Position = MV * new_position;
 
     if (per_vertex_color)
-        vOutcolor = vec4(vtx_color, 1.0);
+        DataOut.color = vec4(vtx_color, 1.0);
     else
-        vOutcolor = default_color;
+        DataOut.color = default_color;
 }

@@ -29,7 +29,8 @@ in Data{
 	vec3 V;
 } DataIn;
 
-in  vec4 gOutColor;
+in vec4  gOutColor;
+in float gOutClipped;
 
 out vec4 outputF;
 
@@ -52,6 +53,9 @@ vec3 shade(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 color) {
 
 void main()
 {
+	if (gOutClipped > 0.0)
+	discard;
+
 	// First of all, I need the correct point that we're pointing at
 
 	vec3 view_dir = vec3(0, 0, 1);	// this is view direction for orthographic mode in camera space
