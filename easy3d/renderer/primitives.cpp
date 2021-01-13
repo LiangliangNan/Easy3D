@@ -46,7 +46,7 @@ namespace easy3d {
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
             if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace easy3d {
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
             if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
                 return;
             }
 
@@ -146,7 +146,7 @@ namespace easy3d {
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
             if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
                 return;
             }
 
@@ -210,7 +210,7 @@ namespace easy3d {
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
             if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
                 return;
             }
 
@@ -265,7 +265,7 @@ namespace easy3d {
                 program = ShaderManager::create_program_from_files(name, attributes);
             }
             if (!program) {
-                LOG_FIRST_N(ERROR, 1) << "shader doesn't exist: " << name << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
                 return;
             }
 

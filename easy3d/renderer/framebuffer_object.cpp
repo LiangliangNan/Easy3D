@@ -47,7 +47,7 @@ namespace easy3d {
     FramebufferObject::FramebufferObject(int w, int h, int samples /* = 0 */)
     {
         if (!is_supported()) {
-            LOG_FIRST_N(WARNING, 1) << "frame buffer object not supported on this platform";
+            LOG_FIRST_N(1, WARNING) << "frame buffer object not supported on this platform. " << COUNTER;
             return;
         }
 
@@ -86,7 +86,7 @@ namespace easy3d {
 
                 // warn the user if the expected request was not satisfied
                 if (samples_ != samples)
-                    LOG_IF(WARNING, samples != samples_) << "MSAA is available with "
+                    LOG_IF(samples != samples_, WARNING) << "MSAA is available with "
                                                          << samples_ << " samples (" << samples
                                                          << " requested, max support is " << max_samples << ")";
 			}

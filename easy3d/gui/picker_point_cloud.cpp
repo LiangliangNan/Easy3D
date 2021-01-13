@@ -60,14 +60,14 @@ namespace easy3d {
                 if (program)
                     return pick_vertices_gpu(model, rect, deselect, program);
                 else {
-                    LOG_FIRST_N(ERROR, 1)
-                        << "shader program not available, default to CPU implementation (this is the first record)";
+                    LOG_FIRST_N(1, ERROR)
+                        << "shader program not available, default to CPU implementation. " << COUNTER;
                 }
             }
             else {
-                LOG_FIRST_N(WARNING, 1)
+                LOG_FIRST_N(1, WARNING)
                     << "GPU implementation requires OpenGL 4.3 or higher (available is "
-                    << OpenglInfo::gl_version_number() << "), default to CPU implementation (this is the first record)";
+                    << OpenglInfo::gl_version_number() << "), default to CPU implementation. " << COUNTER;
             }
         }
 
@@ -92,13 +92,13 @@ namespace easy3d {
                 if (program)
                     return pick_vertices_gpu(model, plg, deselect, program);
                 else {
-                    LOG_FIRST_N(ERROR, 1)
-                        << "shader program not available, default to CPU implementation (this is the first record)";
+                    LOG_FIRST_N(1, ERROR)
+                        << "shader program not available, default to CPU implementation. " << COUNTER;
                 }
             } else {
-                LOG_FIRST_N(WARNING, 1)
+                LOG_FIRST_N(1, WARNING)
                     << "GPU implementation requires OpenGL 4.3 or higher (available is "
-                    << OpenglInfo::gl_version_number() << "), default to CPU implementation (this is the first record)";
+                    << OpenglInfo::gl_version_number() << "), default to CPU implementation. " << COUNTER;
             }
         }
 
@@ -154,7 +154,7 @@ namespace easy3d {
 
         auto drawable = model->renderer()->get_points_drawable("vertices");
         if (!drawable) {
-            LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
+            LOG_FIRST_N(1, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
             return 0;
         }
 
@@ -254,7 +254,7 @@ namespace easy3d {
 
         auto drawable = model->renderer()->get_points_drawable("vertices");
         if (!drawable) {
-            LOG_FIRST_N(WARNING, 1) << "drawable 'vertices' does not exist";
+            LOG_FIRST_N(1, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
             return 0;
         }
 

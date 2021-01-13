@@ -28,59 +28,10 @@
 #include <string>
 
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/logging.h>
-
 #include <3rd_party/backward/backward.hpp>
 
 
 namespace easy3d {
-
-
-    // To provide cross platform support, this implementation depends on backward.
-    // An independent implementation is at the end of this file (tested on macOS, should work on Linux, but not Windows).
-
-    StackTracer::StackTracer() {
-        static backward::SignalHandling sh;
-
-        // Setup the failure function.
-        // This function writes the stack trace record \p st as a FATAL error into the log file and stderr.
-        // This failure function will be called when the program encountered an error and has to abort.
-
-        // st was captured in backward's SignalHandling method
-        sh.signal_log_func = [](backward::StackTrace* st, int skip, const char* comment) ->void {
-            if (backward::SignalHandling::failure_has_been_recored)
-                return;
-
-            backward::StackTrace& stack = *st;
-            backward::TraceResolver resolver;
-            resolver.load_stacktrace(stack);
-
-            std::vector<StackTracer::StackEntry> record;
-            for (size_t trace_idx = skip; trace_idx < stack.size(); ++trace_idx) {
-                const auto trace = resolver.resolve(stack[trace_idx]);
-                record.emplace_back(
-                        file_system::base_name(trace.object_filename), // get the short name
-                        trace.object_function,
-                        trace.source.filename,
-                        trace.source.line,
-                        trace.addr
-                );
-            }
-
-            std::stringstream stream;
-            stream << "\n" << logging::stacktrace_failure_header()
-                   << "\n" << StackTracer::to_string(record);
-            backward::SignalHandling::failure_has_been_recored = true;
-
-            // log this failure as a fatal error
-            LOG(FATAL) << (comment ? std::string(comment) : "A fatal error has occurred") << stream.str();
-        };
-    }
-
-
-    StackTracer::~StackTracer() {
-    }
-
 
     std::vector<StackTracer::StackEntry> StackTracer::back_trace(int amount, int skip) {
         backward::StackTrace st;
@@ -94,10 +45,7 @@ namespace easy3d {
             const auto trace = tr.resolve(st[i]);
             record.emplace_back(
                     file_system::base_name(trace.object_filename), // get the short name
-                    trace.object_function,
-                    trace.source.filename,
-                    trace.source.line,
-                    trace.addr
+                    trace.object_function
             );
         }
         return record;
@@ -113,10 +61,7 @@ namespace easy3d {
         std::stringstream stream;
         for (std::size_t i=0; i<record.size(); ++i) {
             stream << "\t" << std::setw(5) << std::left << std::setfill(' ') << i
-                   << "\t" << std::setw(20) << std::setfill(' ') << record[i].object_name
-//                   << "\t" << std::setw(20) << std::setfill(' ') << record[i].file_name
-//                   << "\t" << std::setw(10) << std::setfill(' ') << record[i].line_number
-//                   << "\t" << std::setw(20) << std::left << std::setfill(' ') << record[i].address
+                   << "\t" << std::setw(15) << std::setfill(' ') << record[i].object_name
                    << "\t" << record[i].function_name << "\n";
         }
         return stream.str();

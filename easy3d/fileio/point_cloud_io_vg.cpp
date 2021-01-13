@@ -230,7 +230,7 @@ namespace easy3d {
                 }
                 // check if the normals are normalized
                 const float len = length(normals[0]);
-                LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                LOG_IF(std::abs(1.0 - len) > epsilon<float>(), WARNING)
                                 << "normals not normalized (length of the first normal vector is " << len << ")";
             }
 
@@ -283,19 +283,19 @@ namespace easy3d {
             int type;
             input >> dummy >> type;
             if (input.fail()) {
-                LOG_FIRST_N(ERROR, 1) << "failed reading vertex group type (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "failed reading vertex group type. " << COUNTER;
             }
 
             std::size_t num;
             input >> dummy >> num;
-            LOG_IF(ERROR, num != num_group_parameters(type)) << "sizes don't match";
+            LOG_IF(num != num_group_parameters(type), ERROR) << "sizes don't match";
             std::vector<float> para(num);
             input >> dummy;
             double v;
             for (std::size_t i = 0; i < num; ++i) {
                 input >> v;
                 if (input.fail()) {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading vertex group parameters (this is the first record)";
+                    LOG_FIRST_N(1, ERROR) << "failed reading vertex group parameters. " << COUNTER;
                 } else
                     para[i] = v;
             }
@@ -303,7 +303,7 @@ namespace easy3d {
             std::string label;
             input >> dummy >> label;
             if (input.fail()) {
-                LOG_FIRST_N(ERROR, 1) << "failed reading vertex group label (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "failed reading vertex group label. " << COUNTER;
             }
 
             vec3 color;
@@ -461,7 +461,7 @@ namespace easy3d {
 
             int num;
             input.read((char*)&num, sizeof(int));
-            LOG_IF(ERROR, num != num_group_parameters(type)) << "sizes don't match";
+            LOG_IF(num != num_group_parameters(type), ERROR) << "sizes don't match";
 
             std::vector<float> para(num);
             input.read((char*)para.data(), num * sizeof(float));

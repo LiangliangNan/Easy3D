@@ -116,8 +116,8 @@ namespace easy3d {
                     if (mesh->target(h) == v)
                         return h;
                 }
-                LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
-                                      << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "could not find a halfedge pointing to " << v << " in face " << face
+                                      << ". " << COUNTER;
                 return SurfaceMesh::Halfedge();
             };
 
@@ -173,23 +173,23 @@ namespace easy3d {
             for (unsigned int i = 0; i < fom->material_count; ++i) {
                 const auto &mat = fom->materials[i];
                 if (mat.map_Ka.name && mat.map_Ka.path)
-                    LOG_IF(WARNING, strlen(mat.map_Ka.name) > 0) << "ambient texture ignored: " << mat.map_Ka.name;
+                    LOG_IF(strlen(mat.map_Ka.name) > 0, WARNING) << "ambient texture ignored: " << mat.map_Ka.name;
                 if (mat.map_Kd.name && mat.map_Kd.path)
-                    LOG_IF(WARNING, strlen(mat.map_Kd.name) > 0) << "diffuse texture ignored: " << mat.map_Kd.name;
+                    LOG_IF(strlen(mat.map_Kd.name) > 0, WARNING) << "diffuse texture ignored: " << mat.map_Kd.name;
                 if (mat.map_Ks.name && mat.map_Ks.path)
-                    LOG_IF(WARNING, strlen(mat.map_Ks.name) > 0) << "specular texture ignored: " << mat.map_Ks.name;
+                    LOG_IF(strlen(mat.map_Ks.name) > 0, WARNING) << "specular texture ignored: " << mat.map_Ks.name;
                 if (mat.map_Ke.name && mat.map_Ke.path)
-                    LOG_IF(WARNING, strlen(mat.map_Ke.name) > 0) << "emission texture ignored: " << mat.map_Ke.name;
+                    LOG_IF(strlen(mat.map_Ke.name) > 0, WARNING) << "emission texture ignored: " << mat.map_Ke.name;
                 if (mat.map_Kt.name && mat.map_Kt.path)
-                    LOG_IF(WARNING, strlen(mat.map_Kt.name) > 0) << "transmittance texture ignored: " << mat.map_Kt.name;
+                    LOG_IF(strlen(mat.map_Kt.name) > 0, WARNING) << "transmittance texture ignored: " << mat.map_Kt.name;
                 if (mat.map_Ns.name && mat.map_Ns.path)
-                    LOG_IF(WARNING, strlen(mat.map_Ns.name) > 0) << "shininess texture ignored: " << mat.map_Ns.name;
+                    LOG_IF(strlen(mat.map_Ns.name) > 0, WARNING) << "shininess texture ignored: " << mat.map_Ns.name;
                 if (mat.map_Ni.name && mat.map_Ni.path)
-                    LOG_IF(WARNING, strlen(mat.map_Ni.name) > 0) << "index of refraction texture ignored: " << mat.map_Ni.name;
+                    LOG_IF(strlen(mat.map_Ni.name) > 0, WARNING) << "index of refraction texture ignored: " << mat.map_Ni.name;
                 if (mat.map_d.name && mat.map_d.path)
-                    LOG_IF(WARNING, strlen(mat.map_d.name) > 0) << "dissolve (alpha) texture ignored: " << mat.map_d.name;
+                    LOG_IF(strlen(mat.map_d.name) > 0, WARNING) << "dissolve (alpha) texture ignored: " << mat.map_d.name;
                 if (mat.map_bump.name && mat.map_bump.path)
-                    LOG_IF(WARNING, strlen(mat.map_bump.name) > 0) << "bump texture ignored: " << mat.map_bump.name;
+                    LOG_IF(strlen(mat.map_bump.name) > 0, WARNING) << "bump texture ignored: " << mat.map_bump.name;
             }
 
             fast_obj_destroy(fom);
@@ -286,8 +286,8 @@ namespace easy3d {
                     if (mesh->target(h) == v)
                         return h;
                 }
-                LOG_FIRST_N(ERROR, 1) << "could not find a halfedge pointing to " << v << " in face " << face
-                                      << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "could not find a halfedge pointing to " << v << " in face " << face
+                                      << ". " << COUNTER;
                 return SurfaceMesh::Halfedge();
             };
 

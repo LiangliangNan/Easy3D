@@ -120,7 +120,7 @@ namespace easy3d {
 	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
 		vec3 trans = camera->projectedCoordinatesOf(position());
-		DLOG_IF(ERROR, has_nan(trans))
+		DLOG_IF(has_nan(trans), ERROR)
 						<< "projectedCoordinatesOf(position()): " << trans
 						<< "\n\tposition(): " << position()
 						<< "\n\tcamera position: " << camera->position()

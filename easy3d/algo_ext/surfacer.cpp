@@ -529,7 +529,7 @@ namespace easy3d {
                 if (t.is_degenerate())
                     to_delete.insert(f);
             } else {
-                LOG_FIRST_N(WARNING, 1) << "only triangular meshes can be processed (this is the first record)";
+                LOG_FIRST_N(1, WARNING) << "only triangular meshes can be processed. " << COUNTER;
             }
         }
 
@@ -540,7 +540,7 @@ namespace easy3d {
 
         int diff = num - mesh->n_faces();
         if (diff > 0)
-            LOG(INFO) << diff << " degenerate faces deleted" << std::endl;
+            LOG(INFO) << diff << " degenerate faces deleted";
 
         return diff;
     }

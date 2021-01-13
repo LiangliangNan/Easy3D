@@ -24,6 +24,7 @@
 
 #include <easy3d/algo/point_cloud_simplification.h>
 
+#include <set>
 #include <cassert>
 
 #include <easy3d/core/point_cloud.h>

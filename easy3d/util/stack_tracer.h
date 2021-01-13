@@ -30,22 +30,9 @@
 
 namespace easy3d {
 
-
     /**
-     * \brief Tracks and dumps the stack frames when program fails.
+     * \brief Tracks stack frames.
      * \class StackTracer easy3d/util/stack_tracer.h
-     *
-     * Track failure example:
-     *      \code
-     *          #include <easy3d/util/stack_tracer.h>
-     *          int main() {
-     *              easy3d::StackTracer st;
-     *              int a = 1;
-     *              a /= 0;
-     *              return 0;
-     *          }
-     *      \endcode
-     *
      * Read recent stack activities example:
      *      \code
      *          std::cout << StackTracer::back_trace_string();
@@ -53,23 +40,13 @@ namespace easy3d {
      */
     class StackTracer {
     public:
-        StackTracer();
-        ~StackTracer();
-
         class StackEntry {
         public:
-            StackEntry(
-                    const std::string &object,
-                    const std::string &function,
-                    const std::string &file,
-                    unsigned int line,
-                    const void *addr
-            ) : object_name(object), function_name(function), file_name(file), line_number(line), address(addr) {}
+            StackEntry(const std::string &object, const std::string &function)
+                    : object_name(object), function_name(function) {}
+
             std::string object_name;
             std::string function_name;
-            std::string file_name;
-            unsigned int line_number;
-            const void* address;
         private:
             StackEntry(void);
         };

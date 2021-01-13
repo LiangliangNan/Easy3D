@@ -35,7 +35,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     // Create a graph
     Graph* g = new Graph;

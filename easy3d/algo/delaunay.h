@@ -101,7 +101,7 @@ namespace easy3d {
             for (unsigned int iv = 0; iv < cell_size(); iv++) {
                 if (cell_vertex(c, iv) == v) { return iv; }
             }
-            DLOG_ASSERT(false) << "should not have reached here";
+            DCHECK(false) << "should not have reached here";
             return cell_size();
         }
 
@@ -111,7 +111,7 @@ namespace easy3d {
             for (unsigned int f = 0; f < cell_size(); f++) {
                 if (cell_adjacent(c1, f) == c2) { return f; }
             }
-            DLOG_ASSERT(false) << "should not have reached here";
+            DCHECK(false) << "should not have reached here";
             return cell_size();
         }
 

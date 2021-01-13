@@ -69,7 +69,7 @@ namespace easy3d {
                 input.read((char*)normals.data(), num * sizeof(vec3));
                 // check if the normals are normalized
                 const float len = length(normals[PointCloud::Vertex(0)]);
-                LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                LOG_IF(std::abs(1.0 - len) > epsilon<float>(), WARNING)
                                 << "normals not normalized (length of the first normal vector is " << len << ")";
 			}
 

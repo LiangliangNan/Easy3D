@@ -637,7 +637,7 @@ namespace easy3d {
                     // check if the normals are normalized
                     if (!prop_normal.empty()) {
                         const float len = length(prop_normal[0]);
-                        LOG_IF(WARNING, std::abs(1.0 - len) > epsilon<float>())
+                        LOG_IF(std::abs(1.0 - len) > epsilon<float>(), WARNING)
                                         << "normals (defined on element '" << element.name
                                         << "') not normalized (length of the first normal vector is " << len << ")";
                     }

@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     const std::string file_name = resource::directory() + "/data/sphere.obj";
 

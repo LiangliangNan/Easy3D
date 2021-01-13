@@ -40,7 +40,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(resource::directory() + "/data/bunny.bin");

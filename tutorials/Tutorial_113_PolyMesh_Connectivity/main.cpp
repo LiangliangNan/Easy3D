@@ -125,7 +125,7 @@ PolyMesh *old_mesh_from_previous_example() {
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     // Create mesh object
     PolyMesh *mesh = old_mesh_from_previous_example();

@@ -106,12 +106,6 @@
 
 #include <ui_main_window.h>
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-#ifdef ERROR
-#undef ERROR
-#endif
-#endif
-
 
 using namespace easy3d;
 
@@ -227,36 +221,28 @@ void MainWindow::notify(std::size_t percent, bool update_viewer) {
 }
 
 
-void MainWindow::send(google::LogSeverity severity, int line_number, const std::string &full_path,
-          const std::string &short_name, const std::string &time,
-          const std::string &pid_tid, const std::string &msg)
-  {
-    (void) line_number;
-    (void)full_path;
-    (void)short_name;
-    (void)time;
-    (void)pid_tid;
-
+void MainWindow::send(el::Level level, const std::string &msg) {
     static QMutex mutex;
     mutex.lock();
     std::string line("");
-	switch (severity) {
-        case INFO:
+	switch (level) {
+        case el::Level::Info:
             ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
             break;
-        case WARNING:
+        case el::Level::Warning:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkBlue);
             break;
-        case ERROR:
+        case el::Level::Error:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkMagenta);
             break;
-        case FATAL:
+        case el::Level::Fatal:
             ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
             break;
+        default: break;
     }
 
     ui->listWidgetLog->scrollToBottom();

@@ -111,7 +111,7 @@ namespace easy3d {
 #endif
                 }
                 else {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th vertex from file (this is the first record)";
+                    LOG_FIRST_N(1, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
                 }
             }
 
@@ -129,7 +129,7 @@ namespace easy3d {
                             vertices.emplace_back(SurfaceMesh::Vertex(index));
                         }
                         else {
-                            LOG_FIRST_N(ERROR, 1) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file (this is the first record)";
+                            LOG_FIRST_N(1, ERROR) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file. " << COUNTER;
                         }
 					}
 #if RESOLVE_NONMANIFOLDNESS
@@ -139,7 +139,7 @@ namespace easy3d {
 #endif
 				}
                 else {
-                    LOG_FIRST_N(ERROR, 1) << "failed reading the " << i << "_th face from file (this is the first record)";
+                    LOG_FIRST_N(1, ERROR) << "failed reading the " << i << "_th face from file. " << COUNTER;
                 }
             }
 

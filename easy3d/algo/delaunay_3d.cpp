@@ -122,7 +122,7 @@ namespace easy3d {
                     return i;
                 }
             }
-            DLOG_ASSERT(false) << "should not have reached here";
+            DCHECK(false) << "should not have reached here";
             return 4;
         }
 

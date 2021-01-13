@@ -80,7 +80,7 @@ namespace easy3d {
     template <int DIM, typename FT> inline
     GenericLine<DIM, FT>::GenericLine(const Point & p, const Vector & dir) : p_(p) {
       dir_ = normalize(dir);
-      DLOG_IF(ERROR, length(dir_) < 1e-15)
+      LOG_IF(length(dir_) < 1e-15, ERROR)
               << "degenerate line constructed from point (" << p << ") and direction (" << dir << ")";
     }
 

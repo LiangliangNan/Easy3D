@@ -87,9 +87,9 @@ namespace easy3d {
 
     template<int DIM, typename FT> inline
     GenericSegment<DIM, FT>::GenericSegment(const Point& s, const Point& t) : s_(s), t_(t) {
-      DLOG_IF(ERROR, distance2(s, t) < 1e-15) << "degenerate segment constructed from 2 points:"
-                                              << "\t(" << s << ")"
-                                              << "\t(" << t << ")";
+        DLOG_IF(distance2(s, t) < 1e-15, ERROR) << "degenerate segment constructed from 2 points:"
+                                                << "\t(" << s << ")"
+                                                << "\t(" << t << ")";
     }
 
 

@@ -26,6 +26,9 @@
 #define EASY3D_CORE_POLYHEDRAL_MESH_H
 
 #include <easy3d/core/model.h>
+
+#include <set>
+
 #include <easy3d/core/types.h>
 #include <easy3d/core/properties.h>
 

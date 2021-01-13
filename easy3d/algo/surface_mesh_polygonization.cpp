@@ -109,7 +109,7 @@ namespace easy3d {
             }
             auto f = builder.add_face(vts);
             if (!f.is_valid()) {
-                LOG_FIRST_N(WARNING, 1) << "failed to add a face to the surface mesh";
+                LOG_FIRST_N(1, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                 break;
             }
         }

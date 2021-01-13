@@ -122,10 +122,10 @@ namespace easy3d {
 
         if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
             bool success = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
-            LOG_IF(ERROR, !success) << "failed creating storage buffer";
+            LOG_IF(!success, ERROR) << "failed creating storage buffer";
         } else {
             bool success = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
-            LOG_IF(ERROR, !success) << "failed updating storage buffer";
+            LOG_IF(!success, ERROR) << "failed updating storage buffer";
         }
     }
 
@@ -159,12 +159,12 @@ namespace easy3d {
 
     void Drawable::internal_update_buffers() {
         if (!model_ && !update_func_) {
-            LOG_FIRST_N(ERROR, 1)
-                << "updating buffers failed: drawable not associated with a model and no update function specified.";
+            LOG_FIRST_N(1, ERROR)
+                << "updating buffers failed: drawable not associated with a model and no update function specified. " << COUNTER;
             return;
         } else if (model_ && model_->points().empty()) {
             clear();
-            LOG_FIRST_N(WARNING, 1) << "model has no valid geometry";
+            LOG_FIRST_N(1, WARNING) << "model has no valid geometry. " << COUNTER;
             return;
         }
 
@@ -174,7 +174,7 @@ namespace easy3d {
         else {
             buffers::update(model_, this);
         }
-        LOG_IF(INFO, w.elapsed_seconds() > 0.5) << "rendering buffers updated. " << w.time_string();
+        LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "rendering buffers updated. " << w.time_string();
         update_needed_ = false;
     }
 
@@ -185,7 +185,7 @@ namespace easy3d {
         bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
                                                  vertices.size() * sizeof(vec3), 3);
 
-        LOG_IF(ERROR, !success) << "failed creating vertex buffer";
+        LOG_IF(!success, ERROR) << "failed creating vertex buffer";
 
         if (!success)
             num_vertices_ = 0;
@@ -209,7 +209,7 @@ namespace easy3d {
 
         bool success = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
                                                  colors.size() * sizeof(vec3), 3);
-        LOG_IF(ERROR, !success) << "failed updating color buffer";
+        LOG_IF(!success, ERROR) << "failed updating color buffer";
     }
 
 
@@ -217,7 +217,7 @@ namespace easy3d {
         assert(vao_);
         bool success = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
                                                  normals.size() * sizeof(vec3), 3);
-        LOG_IF(ERROR, !success) << "failed updating normal buffer";
+        LOG_IF(!success, ERROR) << "failed updating normal buffer";
     }
 
 
@@ -226,7 +226,7 @@ namespace easy3d {
 
         bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
                                                  texcoords.size() * sizeof(vec2), 2);
-        LOG_IF(ERROR, !success) << "failed updating texcoord buffer";
+        LOG_IF(!success, ERROR) << "failed updating texcoord buffer";
     }
 
 

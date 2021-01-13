@@ -34,7 +34,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     CompositeView viewer("Tutorial_203_CompositeView");
 

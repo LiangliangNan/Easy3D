@@ -23,6 +23,9 @@
  */
 
 #include <easy3d/core/manifold_builder.h>
+
+#include <set>
+
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 
@@ -42,7 +45,7 @@ namespace easy3d {
 
 
     ManifoldBuilder::~ManifoldBuilder() {
-        LOG_IF(ERROR, original_vertex_) << "missing call to end_surface(), which must be in pair with begin_surface()";
+        LOG_IF(original_vertex_, ERROR) << "missing call to end_surface(), which must be in pair with begin_surface()";
     }
 
 
@@ -82,7 +85,7 @@ namespace easy3d {
         std::size_t num_non_manifold_vertices = copied_vertices_.size();
         std::size_t num_copy_occurrences(0);
         for (const auto& copies : copied_vertices_) {
-            LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
+            LOG_IF(copies.second.empty(), FATAL) << "vertex " << copies.first << " not actually copied";
             num_copy_occurrences += copies.second.size();
             for (auto v : copies.second)
                 locked[v] = true;
@@ -123,28 +126,28 @@ namespace easy3d {
 
         // Check if the mesh is valid
         for (auto v : mesh_->vertices()) {
-            DLOG_IF(ERROR, !mesh_->is_valid(v)) << "vertex " << v << " is not valid";
-            DLOG_IF(ERROR, mesh_->source(mesh_->out_halfedge(v)) != v) << "vertex " << v << " is not valid";
-            DLOG_IF(ERROR, mesh_->target(mesh_->opposite(mesh_->out_halfedge(v))) != v) << "vertex " << v << " is not valid";
+            DLOG_IF(!mesh_->is_valid(v), ERROR) << "vertex " << v << " is not valid";
+            DLOG_IF(mesh_->source(mesh_->out_halfedge(v)) != v, ERROR) << "vertex " << v << " is not valid";
+            DLOG_IF(mesh_->target(mesh_->opposite(mesh_->out_halfedge(v))) != v, ERROR) << "vertex " << v << " is not valid";
         }
         for (auto f : mesh_->faces())
-            DLOG_IF(ERROR, !mesh_->is_valid(f)) << "face " << f << " is not valid";
+            DLOG_IF(!mesh_->is_valid(f), ERROR) << "face " << f << " is not valid";
         for (auto e : mesh_->edges())
-            DLOG_IF(ERROR, !mesh_->is_valid(e)) << "edge " << e << " is not valid";
+            DLOG_IF(!mesh_->is_valid(e), ERROR) << "edge " << e << " is not valid";
         for (auto h : mesh_->halfedges()) {
-            DLOG_IF(ERROR, !mesh_->is_valid(h)) << "halfedge " << h << " is not valid";
-            DLOG_IF(ERROR, mesh_->opposite(mesh_->opposite(h)) != h) << "halfedge " << h << " is not valid";
+            DLOG_IF(!mesh_->is_valid(h), ERROR) << "halfedge " << h << " is not valid";
+            DLOG_IF(mesh_->opposite(mesh_->opposite(h)) != h, ERROR) << "halfedge " << h << " is not valid";
         }
 
         // Check if there are still non-manifold vertices
         std::size_t count(0);
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v)) {
-                LOG_FIRST_N(ERROR, 1) << "vertex " << v << " is not manifold (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "vertex " << v << " is not manifold. " << COUNTER;
                 ++count;
             }
         }
-        LOG_IF(ERROR, count > 0) << "mesh still have " << count << " non-manifold vertices";
+        LOG_IF(count > 0, ERROR) << "mesh still have " << count << " non-manifold vertices";
 
         // ----------------------------------------------------------------------------------
 
@@ -201,7 +204,7 @@ namespace easy3d {
                 if (copied_vertices_for_linking_.size() > 0) {
                     std::size_t occurrences(0);
                     for (const auto &copies : copied_vertices_for_linking_) {
-                        LOG_IF(FATAL, copies.second.empty()) << "vertex " << copies.first << " not actually copied";
+                        LOG_IF(copies.second.empty(), FATAL) << "vertex " << copies.first << " not actually copied";
                         occurrences += copies.second.size();
                     }
                     issues += ", among which " + std::to_string(copied_vertices_for_linking_.size()) + " vertices with "
@@ -221,7 +224,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
-        DLOG_IF(ERROR, !original_vertex_) << "you must call begin_surface() before the constructing a surface mesh";
+        DLOG_IF(!original_vertex_, ERROR) << "you must call begin_surface() before the constructing a surface mesh";
         SurfaceMesh::Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
@@ -233,7 +236,7 @@ namespace easy3d {
 
         // Check #1: a face has less than 3 vertices
         if (n < 3) {
-            LOG_FIRST_N(ERROR, 1) << "face has less than 3 vertices: " << vertices << " (this is the first record)";
+            LOG_FIRST_N(1, ERROR) << "face has less than 3 vertices. " << COUNTER;
             ++num_faces_less_three_vertices_;
             return false;
         }
@@ -241,8 +244,7 @@ namespace easy3d {
         // Check #2; a face has duplicate vertices
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
             if (vertices[s] == vertices[t]) {
-                LOG_FIRST_N(ERROR, 1) << "face has duplicate vertices: " << vertices
-                                      << " (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "face has duplicate vertices. " << COUNTER;
                 ++num_faces_duplicate_vertices;
                 return false;
             }
@@ -251,8 +253,8 @@ namespace easy3d {
         // Check #3; a face has out-of-range vertices
         for (auto v : vertices) {
             if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->n_vertices())) {
-                LOG_FIRST_N(ERROR, 1) << "face has out-of-range vertices: " << vertices << " (number of vertices is "
-                                      << mesh_->n_vertices() << ") (this is the first record)";
+                LOG_FIRST_N(1, ERROR) << "face has out-of-range vertices (number of vertices is "
+                                      << mesh_->n_vertices() << "). " << COUNTER;
                 ++num_faces_out_of_range_vertices_;
                 return false;
             }
@@ -316,8 +318,8 @@ namespace easy3d {
                         boundary_prev = mesh_->opposite(mesh_->next(boundary_prev));
                     } while (!mesh_->is_border(boundary_prev) || boundary_prev == inner_prev);
                     boundary_next = mesh_->next(boundary_prev);
-                    DLOG_IF(FATAL, !mesh_->is_border(boundary_prev));
-                    DLOG_IF(FATAL, !mesh_->is_border(boundary_next));
+                    DLOG_IF(!mesh_->is_border(boundary_prev), FATAL);
+                    DLOG_IF(!mesh_->is_border(boundary_next), FATAL);
                     if (boundary_next == inner_next) {
                         face_vertices_[t] = copy_vertex(vertices[t]);
 
@@ -341,7 +343,7 @@ namespace easy3d {
             }
         } else {
             ++num_faces_unknown_topology_;
-            LOG_FIRST_N(ERROR, 1) << "failed adding face (" << vertices << ") (this is the first record)";
+            LOG_FIRST_N(1, ERROR) << "failed adding face. " << COUNTER;
         }
 
         return face;
@@ -504,7 +506,7 @@ namespace easy3d {
                 else
                     h = mesh->prev(mesh->opposite(h));
             } while (h != sector_begin_h); // for safety
-            DLOG_ASSERT(h != sector_begin_h);
+            DCHECK(h != sector_begin_h);
             return new_v;
         };
 
@@ -543,12 +545,12 @@ namespace easy3d {
         else {
             // the first manifold sector, described by two halfedges
             auto sector_start_h = border_h;
-            DLOG_ASSERT(mesh->is_border(border_h));
+            DCHECK(mesh->is_border(border_h));
 
             bool should_stop = false;
             bool is_main_sector = true;
             do {
-                DLOG_ASSERT(mesh->is_border(sector_start_h));
+                DCHECK(mesh->is_border(sector_start_h));
 
                 // collect the sector and split it away if it must be
                 auto sector_last_h = sector_start_h;
@@ -559,8 +561,8 @@ namespace easy3d {
 
                     sector_last_h = next_h;
                 } while (sector_last_h != sector_start_h);
-                DLOG_ASSERT(!mesh->is_border(sector_last_h));
-                DLOG_ASSERT(sector_last_h != sector_start_h);
+                DCHECK(!mesh->is_border(sector_last_h));
+                DCHECK(sector_last_h != sector_start_h);
 
                 auto next_start_h = mesh->prev(mesh->opposite(sector_last_h));
 

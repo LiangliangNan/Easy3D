@@ -75,7 +75,7 @@ namespace easy3d {
             return;
 
         const vec3& trans = camera->projectedCoordinatesOf(pivotPoint());
-        DLOG_IF(ERROR, has_nan(trans))
+        DLOG_IF(has_nan(trans), ERROR)
                         << "projectedCoordinatesOf(pivotPoint()): " << trans
                         << "\n\tpivotPoint():    " << pivotPoint()
                         << "\n\tcamera position: " << camera->position()

@@ -98,7 +98,7 @@ void DialogSnapshot::saveSnapshot() {
         return;
 
     // disable ui to prevent the rendering from being modified.
-    window_->setEnabled(false);
+    window_->setDisabled(true);
 
     const int w = spinBoxImageWidth->value();
     const int h = spinBoxImageHeight->value();
@@ -115,5 +115,5 @@ void DialogSnapshot::saveSnapshot() {
     }
 
     // restore the ui
-    window_->setEnabled(true);
+    window_->setDisabled(false);
 }

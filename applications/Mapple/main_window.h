@@ -191,9 +191,7 @@ private:
 
     void notify(std::size_t percent, bool update_viewer) override;
 
-    void send(google::LogSeverity severity, int line_number, const std::string &full_path,
-              const std::string &short_name, const std::string &time,
-              const std::string &pid_tid, const std::string &msg) override;
+    void send(el::Level level, const std::string &msg) override;
 
 private:
     PaintCanvas*   viewer_;

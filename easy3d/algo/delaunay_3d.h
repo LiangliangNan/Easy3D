@@ -154,7 +154,7 @@ namespace easy3d {
             if (lv1 == ov3 && lv2 == ov1) { return ov2; }
             if (lv1 == ov2 && lv2 == ov3) { return ov1; }
             if (lv1 == ov3 && lv2 == ov2) { return ov1; }
-            DLOG_ASSERT(false) << "should not have reached here";
+            DCHECK(false) << "should not have reached here";
             return 4;
         }
 
@@ -299,7 +299,7 @@ namespace easy3d {
                 std::cerr << facet_bisector_[i] << " ";
             }
             std::cerr << "]" << std::endl;
-            DLOG_ASSERT(false) << "should not have reached here";
+            DCHECK(false) << "should not have reached here";
             return 0;
         }
 

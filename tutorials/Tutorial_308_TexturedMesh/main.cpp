@@ -36,7 +36,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     // Create the viewer.
     TexturedViewer viewer("Tutorial_308_TexturedMesh");

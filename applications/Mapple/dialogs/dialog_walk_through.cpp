@@ -325,7 +325,7 @@ void DialogWalkThrough::preview(bool b) {
     static StopWatch w;
     if (b) {
         if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
-            LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
+            LOG_IF(interpolator()->number_of_keyframes() == 0, WARNING)
                     << "nothing to preview (camera path is empty). "
                        "You may import a camera path from a file or create it by adding keyframes";
             disconnect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
@@ -376,7 +376,7 @@ void DialogWalkThrough::preview(bool b) {
 
 void DialogWalkThrough::record() {
     if (!interpolator() || interpolator()->number_of_keyframes() == 0) {
-        LOG_IF(WARNING, interpolator()->number_of_keyframes() == 0)
+        LOG_IF(interpolator()->number_of_keyframes() == 0, WARNING)
                         << "nothing to record (camera path is empty). You may import a camera path from a file or"
                            " creat it by adding keyframes";
         return;

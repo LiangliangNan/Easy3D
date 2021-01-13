@@ -1,3 +1,5 @@
+#ifdef USE_MINI_GLOG
+
 /// Liangliang: This file comes from Google GLOG, but most parts of it have been rewritten.
 /// So now it is a quite light logging module.
 
@@ -262,10 +264,15 @@ namespace google {
 
 // \endcond
 
+#endif
 
-
+#include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stack_tracer.h>
+
+
+INITIALIZE_EASYLOGGINGPP
+
 
 namespace easy3d
 {
@@ -273,11 +280,71 @@ namespace easy3d
     namespace logging
     {
 
-        void initialize(google::LogSeverity severity_threshold, const std::string& log_file)
-        {
-            // allow to chase failures
-            static StackTracer tracer;
+        std::string log_file_name = "";
 
+
+        std::string stacktrace_failure_header() {
+            auto compose_header = []() -> std::string {
+                std::stringstream stream;
+                stream << "================================================================================="
+                       << "\nEasy3D has encountered a fatal error and has to abort. ";
+
+                if (!log_file_name.empty()) { // a log file exists
+                    stream << "The error has been recorded \n"
+                           << "in the log file [" + easy3d::file_system::absolute_path(log_file_name) + "].";
+                }
+
+                stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
+                stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
+                stream << "\n=================================================================================";
+                stream << "\n*** Check failure stack trace (most recent call first): ***";
+                return stream.str();
+            };
+            static std::string header = compose_header();
+            return header;
+        }
+
+
+        static std::string crashReason(int sig) {
+            std::stringstream ss;
+            bool foundReason = false;
+            for (int i = 0; i < el::base::consts::kCrashSignalsCount; ++i) {
+                if (el::base::consts::kCrashSignals[i].numb == sig) {
+                    ss << "Application has crashed due to [" << el::base::consts::kCrashSignals[i].name << "] signal";
+                    if (ELPP->hasFlag(el::LoggingFlag::LogDetailedCrashReason)) {
+                        ss << std::endl <<
+                           "    " << el::base::consts::kCrashSignals[i].brief << std::endl <<
+                           "    " << el::base::consts::kCrashSignals[i].detail;
+                    }
+                    foundReason = true;
+                }
+            }
+            if (!foundReason) {
+                ss << "Application has crashed due to unknown signal [" << sig << "]";
+            }
+            return ss.str();
+        }
+
+        void myCrashHandler(int sig) {
+#if 0
+            el::Helpers::logCrashReason(sig, true);
+#else
+            std::stringstream ss;
+            ss << crashReason(sig) << "\n"
+               << stacktrace_failure_header() << "\n"
+//               << el::base::debug::StackTrace();
+                << StackTracer::back_trace_string(32, 5); // more reliable and readable than el
+
+            LOG(FATAL) << ss.str();
+#endif
+            // FOLLOWING LINE IS ABSOLUTELY NEEDED AT THE END IN ORDER TO ABORT APPLICATION
+            el::Helpers::crashAbort(sig);
+        }
+
+
+
+        void initialize(bool verbose, const std::string &log_file)
+        {
             std::string full_path = log_file;
             if (log_file == "default") {
                 const std::string app_path = file_system::executable();
@@ -292,106 +359,59 @@ namespace easy3d
 
                 if (!file_system::is_directory(log_path))
                     file_system::create_directory(log_path);
-                LOG_IF(ERROR, !file_system::is_directory(log_path)) << "could not create log directory: " << log_path;
-
                 full_path = log_path + "/" + file_system::base_name(app_path) + ".log";
             }
 
             if (!full_path.empty()) {
-                auto size_bytes = file_system::file_size(full_path);
-                std::ofstream::openmode mode = std::ios::app;
-                if (size_bytes > 10 * 1024 * 1024) {
-                    mode = std::ios::out | std::ios::trunc;
-                    size_bytes = 0;
+                std::ofstream output(full_path.c_str(), std::ios::app);
+                if (output.is_open()) {
+                    auto size_bytes = static_cast<std::size_t>(output.tellp());
+                    if (size_bytes > 0)
+                        output << "\n\n";
+                    output << "================================================================= program started ...\n";
+                    output.close();
+                    log_file_name = full_path;
                 }
-                static FileLogger client(full_path, mode);
-                if (size_bytes > 0)
-                    client.append("\n\n");
-                client.append("***********************************************************************************"
-                              " program started ...\n");
             }
 
-            set_severity_threshold(severity_threshold);
+//            // configures existing logger - everything in global.conf
+//            el::Loggers::configureFromGlobal("global.conf");
 
-            LOG(QUIET) << "executable path: " << file_system::executable_directory();
-            LOG(QUIET) << "current working dir: " << file_system::current_working_directory();
-        }
+            el::Configurations defaultConf;
+            defaultConf.setToDefault();
+            // Values are always std::string
+            defaultConf.setGlobally(el::ConfigurationType::Format, "%levshort %datetime{%d/%M/%Y %h:%m:%s.%g} %fbase:%line] %msg");
 
+            if (!log_file_name.empty()) {
+                defaultConf.setGlobally(el::ConfigurationType::Filename, log_file_name);
+                defaultConf.setGlobally(el::ConfigurationType::MaxLogFileSize, std::string("1048576")); // 1024 * 1024 = 1M
+            }
+            else
+                defaultConf.setGlobally(el::ConfigurationType::ToFile, std::string("false"));
 
-        void set_severity_threshold(int min_severity) {
-            google::global_log_severity_threshold = min_severity;
+            defaultConf.set(el::Level::Info, el::ConfigurationType::ToStandardOutput, verbose ? "true" : "false");
+
+            // If you wish to have a configuration for existing and future loggers, you can use the following.
+            // This is useful when you are working on fairly large scale, or using a third-party library that is
+            // already using Easylogging++. Any newly created logger will use default configurations. If you wish
+            // to configure existing loggers as well, you can set second argument to true (it defaults to false).
+            el::Loggers::setDefaultConfigurations(defaultConf, false);
+
+            el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
+            el::Loggers::addFlag(el::LoggingFlag::LogDetailedCrashReason);
+
+            // default logger uses default configurations
+            el::Loggers::reconfigureLogger("default", defaultConf);
+
+            el::Helpers::setCrashHandler(myCrashHandler);
+
+            LOG(INFO) << "executable path: " << file_system::executable_directory();
+            LOG(INFO) << "current working dir: " << file_system::current_working_directory();
         }
 
 
         Logger::Logger() {
-            add_logger(this);
-        }
-
-
-        // Note: the Log sink functions are not thread safe.
-        void add_logger(Logger *logger) {
-            // TODO(settinger): Add locks for thread safety.
-            google::global_log_sinks.insert(logger);
-        }
-
-        void remove_logger(Logger *logger) {
-            google::global_log_sinks.erase(logger);
-        }
-
-
-        std::string FileLogger::log_file_name_ = "";
-        std::ofstream* FileLogger::output_ = nullptr;
-
-        FileLogger::FileLogger(const std::string &file_name, std::ios::openmode mode) {
-            static std::ofstream output(file_name.c_str(), mode);
-            if (output.is_open()) {
-                output_ = &output;
-                add_logger(this);
-                log_file_name_ = file_name;
-            }
-            else {
-                output_ = nullptr;
-                LOG(WARNING) << "failed to creat file logger";
-            }
-        }
-
-        const std::string FileLogger::log_file_name() {
-            return (output_ ? log_file_name_ : "");
-        }
-
-        void FileLogger::send(google::LogSeverity severity, int line_number, const std::string &full_path,
-                              const std::string &short_name, const std::string &time,
-                              const std::string &pid_tid, const std::string &msg) {
-            if (output_)
-                (*output_) << google::global_severity_labels[severity][0] << ' ' << time << ' ' << pid_tid << ' '
-                           << short_name << ':' << line_number << "] " << msg << std::endl;
-        }
-
-
-        void FileLogger::append(const std::string& msg) {
-            (*output_) << msg;
-        }
-
-        std::string stacktrace_failure_header() {
-            auto compose_header = []() -> std::string {
-                std::stringstream stream;
-                stream << "================================================================================="
-                       << "\nEasy3D has encountered a fatal error and has to abort. ";
-
-                const std::string log_file = easy3d::logging::FileLogger::log_file_name();
-                if (!log_file.empty()) { // a log file exists
-                    stream << "The error has been recorded \n"
-                           << "in the log file [" + easy3d::file_system::absolute_path(log_file) + "].";
-                }
-
-                stream << "\nPlease report this issue with the complete log, a description of how to reproduce";
-                stream << "\nthe issue, and possibly your data to Liangliang Nan (liangliang.nan@gmail.com).";
-                stream << "\n=================================================================================";
-                stream << "\n*** Check failure stack trace (most recent call first): ***";
-                return stream.str();
-            };
-            static std::string header = compose_header();
-            return header;
+            el::base::elStorage->installLogDispatchCallback(this);
         }
 
     }

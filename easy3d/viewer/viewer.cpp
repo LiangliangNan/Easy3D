@@ -220,11 +220,11 @@ namespace easy3d {
         opengl::setup_gl_debug_callback();
 #endif
 
-        LOG(QUIET) << "OpenGL vendor: " << glGetString(GL_VENDOR);
-        LOG(QUIET) << "OpenGL renderer: " << glGetString(GL_RENDERER);
-        LOG(QUIET) << "OpenGL version requested: " << gl_major << "." << gl_minor;
-        LOG(QUIET) << "OpenGL version received: " << glGetString(GL_VERSION);
-        LOG(QUIET) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+        LOG(TRACE) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+        LOG(TRACE) << "OpenGL renderer: " << glGetString(GL_RENDERER);
+        LOG(TRACE) << "OpenGL version requested: " << gl_major << "." << gl_minor;
+        LOG(TRACE) << "OpenGL version received: " << glGetString(GL_VERSION);
+        LOG(TRACE) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
         glGetIntegerv(GL_SAMPLES, &samples_);
         int max_num = 0;
@@ -238,13 +238,13 @@ namespace easy3d {
                 LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
                              << " requested but max support is " << max_num << ")";
         } else
-            LOG(QUIET) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
+            LOG(TRACE) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
                       << max_num << ")";
 
         float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
-        LOG(QUIET) << "DPI scaling: " << dpi_scaling();
+        LOG(TRACE) << "DPI scaling: " << dpi_scaling();
 
         return window;
     }
@@ -362,7 +362,7 @@ namespace easy3d {
                 return mouse_release_event(mouse_current_x_, mouse_current_y_, button, modifiers);
             } else {
                 drag_active_ = false;
-                LOG(QUIET) << "GLFW_REPEAT? Seems never happen";
+                LOG(TRACE) << "GLFW_REPEAT? Seems never happen";
                 return false;
             }
         }

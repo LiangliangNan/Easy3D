@@ -232,7 +232,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
     if (!kfi || kfi->number_of_keyframes() == 0) {
-        LOG_IF(WARNING, kfi->number_of_keyframes() == 0)
+        LOG_IF(kfi->number_of_keyframes() == 0, WARNING)
                         << "nothing to record (camera path is empty). You may import a camera path from a file or"
                            " creat it by adding keyframes";
         return;

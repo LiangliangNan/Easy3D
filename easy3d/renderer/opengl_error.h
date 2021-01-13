@@ -42,7 +42,7 @@ namespace easy3d {
 
 #define easy3d_log_gl_error {                                               \
     std::string log("");                                                    \
-    LOG_IF(ERROR, !opengl::gl_error(log)) << "GL error: \n"                 \
+    LOG_IF(!opengl::gl_error(log), ERROR) << "GL error: \n"                 \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
@@ -51,7 +51,7 @@ namespace easy3d {
 
 #define easy3d_log_frame_buffer_error {                                     \
     std::string log("");                                                    \
-    LOG_IF(ERROR, !opengl::frame_buffer_error(log)) << "GL error: \n"       \
+    LOG_IF(!opengl::frame_buffer_error(log), ERROR) << "GL error: \n"       \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \

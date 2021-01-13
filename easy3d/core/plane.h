@@ -162,7 +162,7 @@ namespace easy3d {
         coeff_[2] = n.z;
         coeff_[3] = -(coeff_[0] * p1.x + coeff_[1] * p1.y + coeff_[2] * p1.z);
 
-        DLOG_IF(ERROR, length(n) < 1e-15) << "degenerate plane constructed from 3 points:"
+        DLOG_IF(length(n) < 1e-15, ERROR) << "degenerate plane constructed from 3 points:"
                                         << "\t(" << p1 << ")"
                                         << "\t(" << p2 << ")"
                                         << "\t(" << p3 << ")";
@@ -176,7 +176,7 @@ namespace easy3d {
         coeff_[2] = nn.z;
         coeff_[3] = -(coeff_[0] * p.x + coeff_[1] * p.y + coeff_[2] * p.z);
 
-		DLOG_IF(ERROR, length(nn) < 1e-15) << "degenerate plane constructed from point ("
+		DLOG_IF(length(nn) < 1e-15, ERROR) << "degenerate plane constructed from point ("
 										   << p << ") and normal (" << n << ")";
 	}
 
@@ -184,7 +184,7 @@ namespace easy3d {
     template <typename FT> inline
     typename GenericPlane<FT>::Vector3 GenericPlane<FT>::normal() const {
         Vector3 n = normalize(Vector3(coeff_[0], coeff_[1], coeff_[2]));
-        DLOG_IF(ERROR, length(n) < 1e-15) << "degenerate plane with normal: (" << n << ")";
+        DLOG_IF(length(n) < 1e-15, ERROR) << "degenerate plane with normal: (" << n << ")";
         return n;
     }
 

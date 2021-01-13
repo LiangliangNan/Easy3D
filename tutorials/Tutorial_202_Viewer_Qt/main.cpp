@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     QDir::setCurrent(workingDir.absolutePath());
 
     // Initialize logging.
-    logging::initialize(WARNING);
+    logging::initialize();
 
     MainWindow win;
     win.show();

@@ -333,7 +333,7 @@ namespace easy3d {
 
 
     void KeyFrameInterpolator::update_keyframe_values(std::vector<Keyframe> &keyframes) {
-        LOG_IF(WARNING, keyframes.size() < 2) << "computing frame values for only 2 keyframes";
+        LOG_IF(keyframes.size() < 2, WARNING) << "computing frame values for only 2 keyframes";
 
         quat prevQ = keyframes.front().orientation();
         for (std::size_t i = 0; i < keyframes.size(); ++i) {
@@ -445,9 +445,9 @@ namespace easy3d {
         if (smoothing && keyframes_.size() > 2)
             adjust_keyframe_times(keyframes_, true);
 
-        LOG_IF(INFO, keyframes_.size() > 2) << "interpolating " << keyframes_.size() << " keyframes";
+        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
         do_interpolate(interpolated_path_, keyframes_);
-        LOG_IF(INFO, keyframes_.size() > 2)
+        LOG_IF(keyframes_.size() > 2, INFO)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
                         << string::time(duration() / interpolation_speed() * 1000)
