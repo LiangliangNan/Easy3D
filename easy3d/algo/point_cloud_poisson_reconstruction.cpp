@@ -53,8 +53,8 @@ namespace easy3d {
 
 #define REAL    float
 
-#define DEGREE            2
-#define DATA_DEGREE        1        // The order of the B-Spline used to splat in data for color interpolation
+#define DEGREE           2
+#define DATA_DEGREE      1        // The order of the B-Spline used to splat in data for color interpolation
 #define WEIGHT_DEGREE    2        // The order of the B-Spline used to splat in the weights for density estimation
 #define NORMAL_DEGREE    2        // The order of the B-Spline used to splat int the normals for constructing the Laplacian constraints
 
