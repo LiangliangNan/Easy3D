@@ -1367,8 +1367,8 @@ void MainWindow::surfaceMeshSlice() {
 
 #else   // slices using a set of horizontal planes
 
-    float minz = mesh->bounding_box().min().z;
-    float maxz = mesh->bounding_box().max().z;
+    float minz = mesh->bounding_box().min_point().z;
+    float maxz = mesh->bounding_box().max_point().z;
 
     int num = 10;
     float step = (maxz - minz) / num;

@@ -95,8 +95,8 @@ namespace easy3d {
         /// \brief Returns the position of the rectangle's bottom-left corner.
         Vec<2, FT> bottom_left() const  { return Vec<2, FT>(x_min_, y_max_); }
 
-        Vec<2, FT> min() const { return Vec<2, FT>(x_min_, y_min_); }
-        Vec<2, FT> max() const { return Vec<2, FT>(x_max_, y_max_); }
+        Vec<2, FT> min_point() const { return Vec<2, FT>(x_min_, y_min_); }
+        Vec<2, FT> max_point() const { return Vec<2, FT>(x_max_, y_max_); }
 
         /// \brief Returns the center point of the rectangle.
         Vec<2, FT> center() const {

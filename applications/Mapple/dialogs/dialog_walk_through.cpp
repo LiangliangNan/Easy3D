@@ -429,7 +429,7 @@ void DialogWalkThrough::showCameraPath(bool b) {
         Box3 box;
         for (auto m : viewer_->models())
             box.add_box(m->bounding_box());
-        viewer_->camera()->setSceneBoundingBox(box.min(), box.max());
+        viewer_->camera()->setSceneBoundingBox(box.min_point(), box.max_point());
     }
     viewer_->update();
 }

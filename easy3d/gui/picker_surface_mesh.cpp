@@ -414,10 +414,10 @@ namespace easy3d {
         }
 
         const Box2& box = plg.bbox();
-        float xmin = box.min().x / (win_width - 1.0f);
-        float ymin = 1.0f - box.min().y / (win_height - 1.0f);
-        float xmax = box.max().x / (win_width - 1);
-        float ymax = 1.0f - box.max().y / (win_height - 1.0f);
+        float xmin = box.min_point().x / (win_width - 1.0f);
+        float ymin = 1.0f - box.min_point().y / (win_height - 1.0f);
+        float xmax = box.max_point().x / (win_width - 1);
+        float ymax = 1.0f - box.max_point().y / (win_height - 1.0f);
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 

@@ -77,7 +77,7 @@ namespace easy3d {
         }
 
         // split longest side of bounding box
-        vec3 bb = bbox.max() - bbox.min();
+        vec3 bb = bbox.max_point() - bbox.min_point();
         float length = bb[0];
         int axis = 0;
         if (bb[1] > length)

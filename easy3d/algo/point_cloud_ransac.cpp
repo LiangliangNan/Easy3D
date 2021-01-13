@@ -62,10 +62,10 @@ namespace easy3d {
         ) {
             const Box3 &box = cloud->bounding_box();
             pc.setBBox(
-                    Vec3f(static_cast<float>(box.min(0)), static_cast<float>(box.min(1)),
-                          static_cast<float>(box.min(2))),
-                    Vec3f(static_cast<float>(box.max(0)), static_cast<float>(box.max(1)),
-                          static_cast<float>(box.max(2)))
+                    Vec3f(static_cast<float>(box.min_coord(0)), static_cast<float>(box.min_coord(1)),
+                          static_cast<float>(box.min_coord(2))),
+                    Vec3f(static_cast<float>(box.max_coord(0)), static_cast<float>(box.max_coord(1)),
+                          static_cast<float>(box.max_coord(2)))
             );
 
             //////////////////////////////////////////////////////////////////////////

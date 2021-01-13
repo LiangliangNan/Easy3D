@@ -226,7 +226,7 @@ namespace easy3d {
 
 					// populate the point
 					laspoint.compute_XYZ();
-                    laspoint.set_intensity(static_cast<unsigned short>((p[2] - box.min(2)) / ht * 255));
+                    laspoint.set_intensity(static_cast<unsigned short>((p[2] - box.min_coord(2)) / ht * 255));
 					laspoint.set_gps_time(0.0006 * v.idx());
 
 					// write the point

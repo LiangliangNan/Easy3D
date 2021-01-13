@@ -88,17 +88,17 @@ namespace easy3d {
         }
 
         /** Return the coordinates of the min corner. */
-        inline Point min() const {
+        inline const Point& min_point() const {
             return min_;
         }
 
         /** Return the coordinates of the max corner. */
-        inline Point max() const {
+        inline const Point& max_point() const {
             return max_;
         }
 
         /** Return a component of the coordinates of the min corner. \c axis must be in [0, DIM). */
-        inline FT min(unsigned int axis) const {
+        inline FT min_coord(unsigned int axis) const {
             assert(axis >= 0 && axis < DIM);
             if (is_valid())
                 return min_[axis];
@@ -107,7 +107,7 @@ namespace easy3d {
         }
 
         /** Return a component of the coordinates of the max corner. \c axis must be in [0, DIM). */
-        inline FT max(unsigned int axis) const {
+        inline FT max_coord(unsigned int axis) const {
             assert(axis >= 0 && axis < DIM);
             if (is_valid())
                 return max_[axis];
@@ -166,8 +166,8 @@ namespace easy3d {
         /** Add a box to this box. This will compute its new extend. */
         inline void add_box(const thisclass &b) {
             if (b.is_valid()) {
-                add_point(b.min());
-                add_point(b.max());
+                add_point(b.min_point());
+                add_point(b.max_point());
             }
         }
 
@@ -182,8 +182,8 @@ namespace easy3d {
         /** Modify this box by adding another box \c b. */
         inline thisclass &operator+=(const thisclass &b) {
             if (b.is_valid()) {
-                add_point(b.min());
-                add_point(b.max());
+                add_point(b.min_point());
+                add_point(b.max_point());
             }
             return *this;
         }
@@ -196,7 +196,7 @@ namespace easy3d {
 
     template<int DIM, typename FT>
     inline bool has_nan(const GenericBox<DIM, FT> &box) {
-        return has_nan(box.min()) || has_nan(box.max());
+        return has_nan(box.min_point()) || has_nan(box.max_point());
     }
 
 } // namespace easy3d

@@ -265,7 +265,7 @@ namespace easy3d {
             {
                 const Box3 &box = cloud->bounding_box();
 
-                Point3D<REAL> min_p(box.min(0), box.min(1), box.min(2)), max_p(box.max(0), box.max(1), box.max(2));
+                Point3D<REAL> min_p(box.min_coord(0), box.min_coord(1), box.min_coord(2)), max_p(box.max_coord(0), box.max_coord(1), box.max_coord(2));
                 Point3D<REAL> center = (max_p + min_p) / 2;
                 REAL scale = std::max<REAL>(max_p[0] - min_p[0],
                                             std::max<REAL>(max_p[1] - min_p[1], max_p[2] - min_p[2]));

@@ -426,7 +426,7 @@ void ViewerQt::keyPressEvent(QKeyEvent *e) {
         Box3 box;
         for (auto m : models_)
             box.add_box(m->bounding_box());
-        camera_->setSceneBoundingBox(box.min(), box.max());
+        camera_->setSceneBoundingBox(box.min_point(), box.max_point());
     } else if (e->key() == Qt::Key_K && e->modifiers() == Qt::ControlModifier) { // play the path
         if (camera()->keyframe_interpolator()->is_interpolation_started())
             camera()->keyframe_interpolator()->stop_interpolation();
@@ -733,7 +733,7 @@ void ViewerQt::fitScreen(const Model *model) {
         for (auto m : models_)
             box.add_box(m->bounding_box());
     }
-    camera_->setSceneBoundingBox(box.min(), box.max());
+    camera_->setSceneBoundingBox(box.min_point(), box.max_point());
     camera_->showEntireScene();
     update();
 }

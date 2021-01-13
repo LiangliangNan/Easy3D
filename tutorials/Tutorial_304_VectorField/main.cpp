@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     // Get the bounding box of the model. Then we defined the length of the
     // normal vectors to be 5% of the bounding box diagonal.
     const Box3 &box = model->bounding_box();
-    float length = norm(box.max() - box.min()) * 0.05f;
+    float length = norm(box.max_point() - box.min_point()) * 0.05f;
 
     // Compute the face normals.
     model->update_face_normals();

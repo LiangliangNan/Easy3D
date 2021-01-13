@@ -732,7 +732,7 @@ namespace easy3d {
             Box3 box;
             for (auto m : models_)
                 box.add_box(m->bounding_box());
-            camera_->setSceneBoundingBox(box.min(), box.max());
+            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             LOG(INFO) << "camera path deleted";
         } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
             if (kfi_->is_interpolation_started())
@@ -755,7 +755,7 @@ namespace easy3d {
                 Box3 box;
                 for (auto m : models_)
                     box.add_box(m->bounding_box());
-                camera_->setSceneBoundingBox(box.min(), box.max());
+                camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             }
         } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
             for (auto m : models_) {
@@ -1229,7 +1229,7 @@ namespace easy3d {
         }
 
         if (box.is_valid()) {
-            camera_->setSceneBoundingBox(box.min(), box.max());
+            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             camera_->showEntireScene();
             update();
         }
