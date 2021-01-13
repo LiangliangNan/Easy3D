@@ -361,8 +361,8 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             mesh->collect_garbage();
-            mesh->renderer()->update();
-            LOG(INFO) << count << " faces deleted" << std::endl;
+            mesh->renderer()->update(false);   // do not recompute the bounding box
+            LOG(INFO) << count << " faces deleted";
         } else if (dynamic_cast<PointCloud*>(currentModel())) {
             auto cloud = dynamic_cast<PointCloud*>(currentModel());
             auto select = cloud->vertex_property<bool>("v:select");
@@ -374,11 +374,12 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             cloud->collect_garbage();
-            cloud->renderer()->update();
-            LOG(INFO) << count << " points deleted" << std::endl;
+            cloud->renderer()->update(false);   // do not recompute the bounding box
+            LOG(INFO) << count << " points deleted";
         }
         window_->updateUi();
 #endif
+        update();
     }
     else if (pressed_button_ == Qt::LeftButton && e->modifiers() == Qt::ControlModifier) { // ZOOM_ON_REGION
         int xmin = std::min(mouse_pressed_pos_.x(), e->pos().x());
@@ -417,6 +418,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         makeCurrent();
         tool_manager()->drag(bt, e->pos().x(), e->pos().y());
         doneCurrent();
+        update();
     }
     else {
         // control modifier is reserved for zooming on region
@@ -557,8 +559,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     } else if (e->key() == Qt::Key_C && e->modifiers() == Qt::NoModifier) {
         if (currentModel())
             fitScreen(currentModel());
-    } else if (e->key() == Qt::Key_F && e->modifiers() == Qt::NoModifier) {
-        fitScreen();
     }
 
     else if (e->key() == Qt::Key_K && e->modifiers() == Qt::NoModifier) {
@@ -858,20 +858,12 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     if (!model && models_.empty())
         return;
 
-    auto visual_box = [](const Model *m) -> Box3 {
-        Box3 box = m->bounding_box();
-        for (auto d : m->renderer()->points_drawables()) box.add_box(d->bounding_box());
-        for (auto d : m->renderer()->lines_drawables()) box.add_box(d->bounding_box());
-        for (auto d : m->renderer()->triangles_drawables()) box.add_box(d->bounding_box());
-        return box;
-    };
-
     Box3 box;
     if (model)
-        box = visual_box(model);
+        box = model->bounding_box(true);
     else {
         for (auto m : models_)
-            box.add_box(visual_box(m));
+            box.add_box(m->bounding_box(true));
     }
 
     if (box.is_valid()) {
@@ -879,6 +871,11 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
         camera_->showEntireScene();
         update();
     }
+}
+
+
+void PaintCanvas::fitScreen() {
+    fitScreen(nullptr);
 }
 
 
@@ -1067,20 +1064,22 @@ void PaintCanvas::drawFaceAndVertexLabels(const QColor& face_color, const QColor
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.beginNativePainting();
 
+    mat4 manip = mesh->manipulator()->matrix();
+
     // draw labels for the vertices of the picked face
     vec3 face_center(0, 0, 0);
     int valence = 0;
     for (auto v : mesh->vertices(SurfaceMesh::Face(picked_face_index_))) {
         const auto& p = mesh->position(v);
         face_center += p;
-        const vec3 proj = camera()->projectedCoordinatesOf(p);
+        const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
         painter.setPen(vertex_color);
         painter.drawText(proj.x, proj.y, QString::fromStdString("v" + std::to_string(v.idx())));
         ++valence;
     }
 
     // draw label for the picked face
-    const vec3 proj = camera()->projectedCoordinatesOf(face_center/valence);
+    const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center/valence));
     painter.setPen(face_color);
     painter.drawText(proj.x, proj.y, QString::fromStdString("f" + std::to_string(picked_face_index_)));
     easy3d_debug_log_gl_error;

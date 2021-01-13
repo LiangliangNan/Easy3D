@@ -101,6 +101,8 @@ public slots:
 
     // edit
     void addGaussianNoise();
+    void applyManipulatedTransformation();
+    void giveUpManipulatedTransformation();
 
     // point cloud
     void pointCloudDownsampling();
