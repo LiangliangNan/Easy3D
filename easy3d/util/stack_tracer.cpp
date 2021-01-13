@@ -31,7 +31,13 @@
 #include <3rd_party/backward/backward.hpp>
 
 
-namespace easy3d {
+#define USE_BACKWARD
+
+
+
+    namespace easy3d {
+
+#ifdef USE_BACKWARD
 
     std::vector<StackTracer::StackEntry> StackTracer::back_trace(int amount, int skip) {
         backward::StackTrace st;
@@ -51,74 +57,86 @@ namespace easy3d {
         return record;
     }
 
+#endif
 
     std::string StackTracer::back_trace_string(int amount, int skip) {
         return to_string(back_trace(amount, skip + 1));
     }
 
 
-    std::string StackTracer::to_string(const std::vector<StackEntry>& record) {
+    std::string StackTracer::to_string(const std::vector<StackEntry> &record) {
         std::stringstream stream;
-        for (std::size_t i=0; i<record.size(); ++i) {
+        for (std::size_t i = 0; i < record.size(); ++i) {
             stream << "\t" << std::setw(5) << std::left << std::setfill(' ') << i
                    << "\t" << std::setw(15) << std::setfill(' ') << record[i].object_name
                    << "\t" << record[i].function_name << "\n";
         }
         return stream.str();
     }
+}
 
 
-///    // This implementation is independent of backward.
-///    // Tested on macOS, should work on Linux, but not Windows.
-//
-//    std::string StackTracer::back_trace_string(int skip, int amount) {
-//        std::ostringstream trace_buffer;
-//        void *callstack[128];
-//        const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
-//        int nFrames = backtrace(callstack, nMaxFrames);
-//        if (amount == 0) {
-//            return trace_buffer.str();
-//        } else if (amount > 0) {
-//            // limit the number of frames
-//            nFrames = (skip + amount) < nFrames ? skip + amount : nFrames;
-//        }
-//        char **symbols = backtrace_symbols(callstack, nFrames);
-//        for (int i = skip; i < nFrames; i++) {
-//            // this is the raw data
-//            // printf("%s\n", symbols[i]);
-//            Dl_info info;
-//            if (dladdr(callstack[i], &info)) {
-//                int status(0);
-//                char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, 0, &status);
-//                const char *name;
-//                if (status == 0)
-//                    name = demangled ? demangled : "(no demangled name)";
-//                else
-//                    name = info.dli_sname ? info.dli_sname : "(no dli_sname)";
-//                // the "- skip" makes sure the most recent trace has an index of 0.
-//                trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
-//                             << "\t" << std::setw(20) << std::setfill(' ') << file_system::base_name(info.dli_fname)
-//                             << "\t" << name << "\n";
-//                if (demangled)
-//                    free(demangled);
-//            } else {
-//                // the "- skip" makes sure the most recent trace has an index of 0.
-//                trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << i - skip
-//                             << "\t" << std::setw(20) << std::setfill(' ') << "[unknown]"
-//                             << "\t" << "[unknown]" << "\n";
-//            }
-//        }
-//        if (symbols)
-//            free(symbols);
-//        if (nFrames == nMaxFrames) {
-//            // the "- skip" makes sure the most recent trace has an index of 0.
-//            trace_buffer << "\t" << std::setw(5) << std::left << std::setfill(' ') << nMaxFrames + 1 - skip
-//                         << "\t" << "record too long [truncated]\n";
-//        }
-//        return trace_buffer.str();
-//    }
-//
-///     // For Windows
+#ifndef USE_BACKWARD
+
+#include <stdlib.h>
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <dlfcn.h>
+
+#include <easy3d/util/logging.h>
+
+    namespace easy3d {
+
+        // This implementation is independent of backward.
+        // Tested on macOS, should work on Linux, but not Windows.
+        std::vector<StackTracer::StackEntry> StackTracer::back_trace(int amount, int skip) {
+            std::vector<StackTracer::StackEntry> frames;
+
+            void *callstack[128];
+            const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
+            int nFrames = backtrace(callstack, nMaxFrames);
+            if (amount == 0) {
+                return frames;
+            } else if (amount > 0) {
+                // limit the number of frames
+                nFrames = (skip + amount) < nFrames ? skip + amount : nFrames;
+            }
+            char **symbols = backtrace_symbols(callstack, nFrames);
+            for (int i = skip; i < nFrames; i++) {
+                // this is the raw data
+                // printf("%s\n", symbols[i]);
+                Dl_info info;
+                if (dladdr(callstack[i], &info)) {
+                    int status(0);
+                    char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, 0, &status);
+                    const char *name;
+                    if (status == 0)
+                        name = demangled ? demangled : "(no demangled name)";
+                    else
+                        name = info.dli_sname ? info.dli_sname : "(no dli_sname)";
+                    // the "- skip" makes sure the most recent trace has an index of 0.
+                    frames.emplace_back(file_system::base_name(info.dli_fname), name);
+                    if (demangled)
+                        free(demangled);
+                } else {
+                    // the "- skip" makes sure the most recent trace has an index of 0.
+                    frames.emplace_back("[unknown]", "[unknown]");
+                }
+            }
+            if (symbols)
+                free(symbols);
+            if (nFrames == nMaxFrames) {
+                // the "- skip" makes sure the most recent trace has an index of 0.
+                frames.emplace_back("record too long [truncated]", "");
+            }
+            return frames;
+        }
+    }
+
+#endif
+
+
+//    // For Windows
 //    int GetStackTrace(void** result, int max_depth, int skip_count) {
 //        if (max_depth > 64) {
 //            max_depth = 64;
@@ -214,5 +232,3 @@ namespace easy3d {
 //        // This is called in the child process
 //        _Exit(EXIT_SUCCESS);
 //    }
-
-}
