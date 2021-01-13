@@ -1342,6 +1342,15 @@ namespace easy3d {
         /// compute normal vector of face \c h.
         vec3 compute_face_normal(HalfFace h) const;
 
+        /**
+         * Computes vertex normals for each vertex.
+         * \attention For vertices on the border of the polyhedral mesh, the normals point outside.
+         *      For interior vertices, vertex normals are not defined.
+         *      This method is not stable for concave vertices or vertices with spanning angles close to 0 or 180
+         *      degrees (but these are very rare cases for polyhedral meshes).
+         */
+        void update_vertex_normals();
+
         /// compute the length of edge \c e.
         float edge_length(Edge e) const;
 

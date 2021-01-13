@@ -2432,16 +2432,23 @@ namespace easy3d {
                 return;
             }
 
+            model->update_vertex_normals();
+            auto vnormal = model->get_vertex_property<vec3>("v:normal");
+
             if (model->is_tetraheral_mesh()) {
                 std::vector<unsigned int> d_indices;
+                std::vector<vec3> d_normals;
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        for (auto v : model->vertices(f))
+                        for (auto v : model->vertices(f)) {
                             d_indices.push_back(v.idx());
+                            d_normals.push_back(vnormal[v]);
+                        }
                     }
                 }
 
                 drawable->update_vertex_buffer(model->points());
+                drawable->update_normal_buffer(d_normals);
                 drawable->update_element_buffer(d_indices);
             }
             else {
@@ -2458,6 +2465,7 @@ namespace easy3d {
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
                             Tessellator::Vertex vertex(model->position(v), v.idx());
+                            vertex.append(vnormal[v]);
                             tessellator.add_vertex(vertex);
                         }
                         tessellator.end_contour();
@@ -2467,14 +2475,19 @@ namespace easy3d {
 
                 const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
                 std::vector<vec3> d_points;
+                std::vector<vec3> d_normals;
                 d_points.reserve(vts.size());
+                d_normals.reserve(vts.size());
 
-                for (auto v :vts)
+                for (auto v :vts) {
                     d_points.emplace_back(v->data());
+                    d_normals.emplace_back(v->data() + 3);
+                }
 
                 const auto &d_indices = tessellator.elements();
 
                 drawable->update_vertex_buffer(d_points);
+                drawable->update_normal_buffer(d_normals);
                 drawable->update_element_buffer(d_indices);
 
                 DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/" << d_points.size();

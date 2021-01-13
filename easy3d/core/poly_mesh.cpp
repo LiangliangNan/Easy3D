@@ -560,6 +560,35 @@ namespace easy3d {
     }
 
 
+
+    void PolyMesh::update_vertex_normals()
+    {
+        auto vnormal = vertex_property<vec3>("v:normal");
+
+        update_face_normals();
+
+        VertexIterator vit, vend=vertices_end();
+
+        for (vit=vertices_begin(); vit!=vend; ++vit) {
+            auto v = *vit;
+            if (is_border(v)) { // compute the average of its incident border faces' normals
+                vec3 n(0,0,0);
+                for (auto f : halffaces(v)) {
+                    if (is_border(f))
+                        n += fnormal_[f];
+                }
+                vnormal[v] = normalize(n);
+            }
+            else { // interior vertex, normal not defined. We assign one of its incident face's normal
+                if (!halffaces(v).empty()) {
+                    auto hf = *halffaces(v).begin();
+                    vnormal[v] = fnormal_[hf];
+                }
+            }
+        }
+    }
+
+
     //-----------------------------------------------------------------------------
 
 
