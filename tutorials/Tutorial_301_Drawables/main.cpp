@@ -101,12 +101,12 @@ int main(int argc, char **argv) {
     // Compute the bounding box.
     LinesDrawable *bbox_drawable = new LinesDrawable("bbox");
     const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
-    float xmin = box.min(0);
-    float xmax = box.max(0);
-    float ymin = box.min(1);
-    float ymax = box.max(1);
-    float zmin = box.min(2);
-    float zmax = box.max(2);
+    float xmin = box.min_coord(0);
+    float xmax = box.max_coord(0);
+    float ymin = box.min_coord(1);
+    float ymax = box.max_coord(1);
+    float zmin = box.min_coord(2);
+    float zmax = box.max_coord(2);
     // The eight vertices of the bounding box.
     const std::vector<vec3> bbox_points = {
             vec3(xmin, ymin, zmax), vec3(xmax, ymin, zmax),

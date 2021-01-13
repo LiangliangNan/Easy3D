@@ -1633,6 +1633,59 @@ void MainWindow::computeHeightField() {
             e_height_z[e] = c.z;
         }
     }
+    // add 3 scalar fields defined on vertices, edges, and faces respectively.
+    else if (dynamic_cast<PolyMesh*>(model)) {
+        PolyMesh* mesh = dynamic_cast<PolyMesh*>(model);
+
+        ProgressLogger progress(4, false, false);
+
+        auto v_height_x = mesh->vertex_property<float>("v:height_x");
+        auto v_height_y = mesh->vertex_property<float>("v:height_y");
+        auto v_height_z = mesh->vertex_property<float>("v:height_z");
+        for (auto v : mesh->vertices()) {
+            const auto& p = mesh->position(v);
+            v_height_x[v] = p.x;
+            v_height_y[v] = p.y;
+            v_height_z[v] = p.z;
+        }
+        progress.next();
+
+        auto e_height_x = mesh->edge_property<float>("e:height_x");
+        auto e_height_y = mesh->edge_property<float>("e:height_y");
+        auto e_height_z = mesh->edge_property<float>("e:height_z");
+        for (auto e : mesh->edges()) {
+            const auto& s = mesh->vertex(e, 0);
+            const auto& t = mesh->vertex(e, 1);
+            const auto& c = 0.5 * (mesh->position(s) + mesh->position(t));
+            e_height_x[e] = c.x;
+            e_height_y[e] = c.y;
+            e_height_z[e] = c.z;
+        }
+        progress.next();
+
+        auto f_height_x = mesh->face_property<float>("f:height_x");
+        auto f_height_y = mesh->face_property<float>("f:height_y");
+        auto f_height_z = mesh->face_property<float>("f:height_z");
+        for (auto f : mesh->faces()) {
+            vec3 c(0,0,0);
+            float count = 0.0f;
+            for (auto v : mesh->vertices(f)) {
+                c += mesh->position(v);
+                ++count;
+            }
+            c /= count;
+            f_height_x[f] = c.x;
+            f_height_y[f] = c.y;
+            f_height_z[f] = c.z;
+        }
+        progress.next();
+
+        // add a vector field to the faces
+        mesh->update_face_normals();
+        auto fnormals = mesh->get_face_property<vec3>("f:normal");
+        progress.next();
+    }
+
 
     model->renderer()->update();
     viewer()->update();
