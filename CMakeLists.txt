@@ -103,6 +103,12 @@ if (HAVE_EXECINFO)
 endif()
 
 ################################################################################
+# get a clean windows
+if (WIN32 OR MSVC)
+    add_definitions(-DNOMINMAX)
+endif()
+
+################################################################################
 
 add_subdirectory(3rd_party)
 

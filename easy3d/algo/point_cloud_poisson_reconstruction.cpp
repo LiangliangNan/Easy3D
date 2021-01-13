@@ -26,12 +26,6 @@
 
 #include <algorithm>
 
-#ifdef WIN32
-#define NOMINMAX
-#undef min
-#undef max
-#endif
-
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
