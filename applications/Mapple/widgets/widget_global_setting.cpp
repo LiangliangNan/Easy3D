@@ -105,7 +105,7 @@ easy3d::ClippingPlane* WidgetGlobalSetting::clippingPlane() const {
         setting::clipping_plane = new ClippingPlane;
         // connect the manipulator's signal to the viewer's update function to automatically update rendering.
         setting::clipping_plane->manipulator()->frame()->modified.connect(viewer_,
-                                                                          overload<PaintCanvas>(&PaintCanvas::update));
+                static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
     }
     return setting::clipping_plane;
 }
