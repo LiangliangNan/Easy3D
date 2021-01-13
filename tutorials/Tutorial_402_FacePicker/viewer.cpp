@@ -69,7 +69,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             drawable->set_highlight(false);
         }
 
-        LOG_IF(ERROR, !triangle_range) << "face property 'f:triangle_range' not defined";
+        LOG_IF(!triangle_range, ERROR) << "face property 'f:triangle_range' not defined";
     }
 
     return Viewer::mouse_press_event(x, y, button, modifiers);

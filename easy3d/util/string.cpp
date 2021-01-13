@@ -225,6 +225,15 @@ namespace easy3d {
 
             // use strftime() to define your own stamp format
             //size_t strftime(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr);
+
+            // get a precise timestamp as a string
+//            const auto now = std::chrono::system_clock::now();
+//            const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
+//            const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+//            std::stringstream time_stream;
+//            time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d %T")
+//                        << '.' << std::setfill('0') << std::setw(3) << now_in_ms.count();
+//            time_str_ = time_stream.str();
         }
 
 

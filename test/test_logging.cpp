@@ -26,10 +26,14 @@
 
 
 #include <thread>
+#include <mutex>
 
 // This examples shows how to use the logging functions.
 
 using namespace easy3d;
+
+
+std::mutex mutex;
 
 
 struct vec3 {
@@ -43,8 +47,10 @@ std::ostream& operator<<(std::ostream& os, const vec3& v) {
 };
 
 void run_many_threads() {
+
     for (int i=0; i<8; ++i) {
         std::thread t([=]() {
+            std::lock_guard<std::mutex> guard(mutex);
             LOG(WARNING) << "Run in another thread ---------: " << i;
             LOG(WARNING) << "Run in another thread *********: " << i;
         });
@@ -58,22 +64,22 @@ void DoNothingFunc() {
 
 void test_conditional_ccasional_logging() {
     for (int i = 0; i < 20; ++i) {
-        LOG_FIRST_N(INFO, 4) << "Log first 4 INFO, iteration " << i << ", " << logging::COUNTER << std::endl;
-        LOG_FIRST_N(ERROR, 5) << "Log first 5 ERROR, iteration " << i << ", " << logging::COUNTER << std::endl;
+        LOG_FIRST_N(4, INFO) << "Log first 4 INFO, iteration " << i << ", " << COUNTER;
+        LOG_FIRST_N(5, ERROR) << "Log first 5 ERROR, iteration " << i << ", " << COUNTER;
     }
 
     LOG(INFO) << " \n ------------------------ \n";
 
     for (int i = 0; i < 20; ++i) {
-        LOG_EVERY_N(WARNING, 4) << "Log every 4 WARNING, iteration " << i << ", " << logging::COUNTER;
-        LOG_EVERY_N(ERROR, 5) << "Log every 5 ERROR, iteration " << i << ", " << logging::COUNTER;
+        LOG_EVERY_N(4, WARNING) << "Log every 4 WARNING, iteration " << i << ", " << COUNTER;
+        LOG_EVERY_N(5, ERROR) << "Log every 5 ERROR, iteration " << i << ", " << COUNTER;
     }
 
     LOG(INFO) << " \n ------------------------ \n";
 
     for (int i = 0; i < 40; ++i) {
-        LOG_IF_EVERY_N(WARNING, i < 20, 5) << "Log if (i < 10) for every 5, i = " << i << ", " << logging::COUNTER;
-        LOG_IF_EVERY_N(ERROR, i >= 20, 5) << "Log if (i < 10) for every 5, i = " << i << ", " << logging::COUNTER;
+        LOG_IF_EVERY_N(5, i < 20, WARNING) << "Log if (i < 10) for every 5, i = " << i << ", " << COUNTER;
+        LOG_IF_EVERY_N(5, i >= 20, ERROR) << "Log if (i < 10) for every 5, i = " << i << ", " << COUNTER;
     }
 }
 
@@ -92,23 +98,17 @@ int main(int argc, char *argv[]) {
     int b = 2;
     int c = 2;
 
-    LOG_ASSERT(b == c) << ": The world must be ending!";
-    LOG_ASSERT(a != b) << ": The world must be ending!";
+    DCHECK(b == c) << ": The world must be ending!";
+    DCHECK(a != b) << ": The world must be ending!";
 
     CHECK_EQ(std::string("abc")[1], 'b');
 
-    LOG_IF(WARNING, a < b) << "Warning, a < b";
-    LOG_IF(ERROR, a < b) << "Error, a < b";
-
-    //------------------------------------------------
-
-    for (int i = 0; i < 10; ++i) {
-        LOG_FIRST_N(ERROR, 3) << "LOG_FIRST_N(ERROR, 5): " << i;
-    }
+    LOG_IF(a < b, WARNING) << "Warning, a < b";
 
     //------------------------------------------------
 
     std::thread t([=]() {
+        std::lock_guard<std::mutex> guard(mutex);
         LOG(WARNING) << "Run in another thread";
     });
     t.detach();

@@ -161,7 +161,7 @@ void DialogWalkThrough::setCharacterHeightFactor(double h) {
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
-    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here" << std::endl;
+    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
@@ -355,7 +355,7 @@ void DialogWalkThrough::preview(bool b) {
         QObject::disconnect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
         interpolator()->stop_interpolation();
-        LOG(INFO) << "preview finished. " << w.time_string() << std::endl;
+        LOG(INFO) << "preview finished. " << w.time_string();
 
         for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
         for (auto w : findChildren<QPushButton*>()) w->setEnabled(true);

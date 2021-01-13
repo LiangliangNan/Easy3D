@@ -93,6 +93,17 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
 
 ################################################################################
 
+# EasyLogging++: request all features
+add_definitions(-DELPP_FEATURE_ALL -DELPP_STL_LOGGING -DELPP_THREAD_SAFE)
+# EasyLogging++: for stack trace
+include(CheckIncludeFileCXX)
+check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
+if (HAVE_EXECINFO)
+    add_definitions(-DHAVE_EXECINFO)
+endif()
+
+################################################################################
+
 add_subdirectory(3rd_party)
 
 add_subdirectory(easy3d)
