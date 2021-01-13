@@ -2002,7 +2002,7 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
         mesh->add_vertex(points[i]);
     }
 
-    LOG(INFO) << "building tetrahedral mesh with " << delaunay.nb_tets() << " tetrahedra..." << std::endl;
+    LOG(INFO) << "building tetrahedral mesh with " << delaunay.nb_tets() << " tetrahedra...";
     StopWatch w;
     for (unsigned int i = 0; i < delaunay.nb_tets(); i++) {
         PolyMesh::Vertex vts[4];
@@ -2014,7 +2014,7 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
         }
         mesh->add_tetra(vts[0], vts[1], vts[2], vts[3]);
     }
-    LOG(INFO) << "done. " << w.time_string() << std::endl;
+    LOG(INFO) << "done. " << w.time_string();
 
     viewer_->addModel(mesh);
     updateUi();
