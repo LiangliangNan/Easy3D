@@ -33,11 +33,15 @@ in Data{
     vec4 color;
     vec3 position;
     vec3 normal;
+    float clipped;
 } DataIn;
 
 out vec4 outputF;
 
 void main(void) {
+    if (DataIn.clipped > 0.0)
+        return;
+
     if (!lighting) {
         outputF = DataIn.color;
         return;

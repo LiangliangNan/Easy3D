@@ -22,33 +22,31 @@ out Data{
     vec4 color;
     vec3 position;
     vec3 normal;
+    float clipped;
 } DataOut;
 
 void main() {
     vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
-
-    bool keep = true;
+    DataOut.clipped = 0.0;
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(new_position, clippingPlane0);
         if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-            keep = false;
+            DataOut.clipped = 1.0;
         if (keep && crossSectionEnabled) {
             gl_ClipDistance[1] = dot(new_position, clippingPlane1);
             if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-                keep = false;
+                DataOut.clipped = 1.0;
         }
     }
 
-    if (keep) {
-        if (per_vertex_color)
-            DataOut.color = vec4(vtx_color, 1.0);
-        else
-            DataOut.color = default_color;
+    if (per_vertex_color)
+        DataOut.color = vec4(vtx_color, 1.0);
+    else
+        DataOut.color = default_color;
 
-        DataOut.position = new_position.xyz;
-        DataOut.normal = NORMAL * vtx_normal;
+    DataOut.position = new_position.xyz;
+    DataOut.normal = NORMAL * vtx_normal;
 
-        gl_Position = MVP * new_position;
-    }
+    gl_Position = MVP * new_position;
 }
