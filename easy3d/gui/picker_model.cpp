@@ -46,8 +46,6 @@ namespace easy3d {
 
 
     ModelPicker::~ModelPicker() {
-        delete fbo_;
-        fbo_ = nullptr;
     }
 
 
