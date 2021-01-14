@@ -189,7 +189,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::FaceProperty<FT> prop) {
+            update_scalar_on_faces(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::FaceProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -323,7 +323,7 @@ namespace easy3d {
 
             template<typename FT>
             inline void
-            update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update_scalar_on_vertices(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -509,7 +509,7 @@ namespace easy3d {
 
 
             inline void
-            update_color_on_vertices(PolyMesh *model, TrianglesDrawable *drawable, PolyMesh::VertexProperty<vec3> colors, bool border) {
+            update_colors_on_vertices(PolyMesh *model, TrianglesDrawable *drawable, PolyMesh::VertexProperty<vec3> colors, bool border) {
                 assert(model);
                 assert(drawable);
                 assert(colors);
@@ -636,8 +636,65 @@ namespace easy3d {
 
 
             inline void
-            update_texcoords_on_vertices(PolyMesh *model, TrianglesDrawable *drawable, PolyMesh::VertexProperty<vec2> prop, bool border) {
-                LOG(WARNING) << "not implemented yet";
+            update_texcoords_on_vertices(PolyMesh *model, TrianglesDrawable *drawable, PolyMesh::VertexProperty<vec2> vtexcoords, bool border) {
+                assert(model);
+                assert(drawable);
+                assert(vtexcoords);
+
+                if (model->empty()) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
+                model->update_vertex_normals();
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+                auto points = model->get_vertex_property<vec3>("v:point");
+
+                /**
+                 * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
+                 */
+                Tessellator tessellator;
+
+                for (auto f : model->faces()) {
+                    if (model->is_border(f) == border) {
+                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        for (auto v : model->vertices(f)) {
+                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(vtexcoords[v]);
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+                    }
+                }
+
+                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                std::vector<vec3> d_points;
+                std::vector<vec3> d_normals;
+                std::vector<vec2> d_texcoords;
+                d_points.reserve(vts.size());
+                d_normals.reserve(vts.size());
+                d_texcoords.reserve(vts.size());
+
+                for (auto v :vts) {
+                    d_points.emplace_back(v->data());
+                    d_normals.emplace_back(v->data() + 3);
+                    d_texcoords.emplace_back(v->data() + 6);
+                }
+
+                const auto &d_indices = tessellator.elements();
+
+                drawable->update_vertex_buffer(d_points);
+                drawable->update_normal_buffer(d_normals);
+                drawable->update_texcoord_buffer(d_texcoords);
+                drawable->update_element_buffer(d_indices);
+
+                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                           << d_points.size();
             }
 
 
@@ -788,7 +845,7 @@ namespace easy3d {
             }
 
             // with a per-face color
-            void update(SurfaceMesh *model, TrianglesDrawable *drawable,
+            void update_colors_on_faces(SurfaceMesh *model, TrianglesDrawable *drawable,
                         SurfaceMesh::FaceProperty<vec3> fcolor) {
                 assert(model);
                 assert(drawable);
@@ -907,7 +964,7 @@ namespace easy3d {
             }
 
 
-            void update_color_on_vertices(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
+            void update_colors_on_vertices(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
                 assert(model);
                 assert(drawable);
                 assert(vcolor);
@@ -1015,7 +1072,7 @@ namespace easy3d {
             }
 
 
-            void update(SurfaceMesh *model, TrianglesDrawable *drawable,
+            void update_texcoords_on_vertices(SurfaceMesh *model, TrianglesDrawable *drawable,
                         SurfaceMesh::VertexProperty<vec2> vtexcoords) {
                 assert(model);
                 assert(drawable);
@@ -1126,7 +1183,7 @@ namespace easy3d {
             }
 
 
-            void update(SurfaceMesh *model, TrianglesDrawable *drawable,
+            void update_texcoords_on_halfedges(SurfaceMesh *model, TrianglesDrawable *drawable,
                         SurfaceMesh::HalfedgeProperty<vec2> htexcoords) {
                 assert(model);
                 assert(drawable);
@@ -1877,7 +1934,7 @@ namespace easy3d {
                         case State::VERTEX: {
                             auto texcoord = model->get_vertex_property<vec2>(name);
                             if (texcoord)
-                                details::update(model, drawable, texcoord);
+                                details::update_texcoords_on_vertices(model, drawable, texcoord);
                             else {
                                 LOG(WARNING) << "texcoord property \'" << name
                                              << "\' not found on vertices (use uniform coloring)";
@@ -1890,7 +1947,7 @@ namespace easy3d {
                         case State::HALFEDGE: {
                             auto texcoord = model->get_halfedge_property<vec2>(name);
                             if (texcoord)
-                                details::update(model, drawable, texcoord);
+                                details::update_texcoords_on_halfedges(model, drawable, texcoord);
                             else {
                                 LOG(WARNING) << "texcoord property \'" << name
                                              << "\' not found on halfedges (use uniform coloring)";
@@ -1913,7 +1970,7 @@ namespace easy3d {
                         case State::FACE: {
                             auto colors = model->get_face_property<vec3>(name);
                             if (colors)
-                                details::update(model, drawable, colors);
+                                details::update_colors_on_faces(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << name
                                              << "\' not found on faces (use uniform coloring)";
@@ -1926,7 +1983,7 @@ namespace easy3d {
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
-                                details::update_color_on_vertices(model, drawable, colors);
+                                details::update_colors_on_vertices(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << name
                                              << "\' not found on vertices (use uniform coloring)";
@@ -1949,22 +2006,22 @@ namespace easy3d {
                         case State::FACE: {
                             if (model->get_face_property<float>(name)) {
                                 auto prop = model->get_face_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else if (model->get_face_property<double>(name)) {
                                 auto prop = model->get_face_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else if (model->get_face_property<int>(name)) {
                                 auto prop = model->get_face_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else if (model->get_face_property<unsigned int>(name)) {
                                 auto prop = model->get_face_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else if (model->get_face_property<char>(name)) {
                                 auto prop = model->get_face_property<char>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else if (model->get_face_property<unsigned char>(name)) {
                                 auto prop = model->get_face_property<unsigned char>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
                                              << "\' not found on faces (use uniform coloring)";
@@ -1977,22 +2034,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update(model, drawable, prop);
+                                details::update_scalar_on_vertices(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2101,7 +2158,7 @@ namespace easy3d {
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
-                                details::update_color_on_vertices(model, drawable, colors, border);
+                                details::update_colors_on_vertices(model, drawable, colors, border);
                             else {
                                 LOG(WARNING) << "color property \'" << name
                                              << "\' not found on vertices (use uniform coloring)";
