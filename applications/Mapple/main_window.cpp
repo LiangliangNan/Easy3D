@@ -399,10 +399,10 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh *.trilist)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm *.trilist)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
-                "Polytope Mesh (*.plm *.pm *.mesh)\n"
+                "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
             );
 
@@ -448,7 +448,7 @@ bool MainWindow::onSave() {
                 "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
-                "Polytope Mesh (*.plm *.pm *.mesh)\n"
+                "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
     );
 
