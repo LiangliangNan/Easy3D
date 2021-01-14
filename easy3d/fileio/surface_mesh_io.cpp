@@ -48,8 +48,8 @@ namespace easy3d {
         const std::string& ext = file_system::extension(file_name, true);
         if (ext == "ply")
             success = io::load_ply(file_name, mesh);
-        else if (ext == "smesh")
-            success = io::load_smesh(file_name, mesh);
+        else if (ext == "sm")
+            success = io::load_sm(file_name, mesh);
         else if (ext == "obj")
 			success = io::load_obj(file_name, mesh);
 		else if (ext == "off")
@@ -111,8 +111,8 @@ namespace easy3d {
             }
             success = io::save_ply(final_name, mesh, true);
         }
-        else if (ext == "smesh")
-            success = io::save_smesh(final_name, mesh);
+        else if (ext == "sm")
+            success = io::save_sm(final_name, mesh);
         else if (ext == "obj")
             success = io::save_obj(final_name, mesh);
         else if (ext == "off")

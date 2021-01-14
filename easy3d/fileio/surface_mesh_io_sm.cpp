@@ -51,7 +51,7 @@ namespace easy3d {
     namespace io {
 
 
-        bool load_smesh(const std::string& file_name, SurfaceMesh* mesh)
+        bool load_sm(const std::string& file_name, SurfaceMesh* mesh)
         {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";
@@ -101,7 +101,7 @@ namespace easy3d {
         //-----------------------------------------------------------------------------
 
 
-        bool save_smesh(const std::string& file_name, const SurfaceMesh* mesh)
+        bool save_sm(const std::string& file_name, const SurfaceMesh* mesh)
         {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";

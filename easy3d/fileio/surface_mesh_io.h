@@ -64,10 +64,10 @@ namespace easy3d {
 
 	namespace io {
 
-        /// Reads a surface mesh from a \p SMESH format file.
-        bool load_smesh(const std::string& file_name, SurfaceMesh* mesh);
-        /// Saves a surface mesh to a \p SMESH format file.
-        bool save_smesh(const std::string& file_name, const SurfaceMesh* mesh);
+        /// Reads a surface mesh from a \p SM format file.
+        bool load_sm(const std::string& file_name, SurfaceMesh* mesh);
+        /// Saves a surface mesh to a \p SM format file.
+        bool save_sm(const std::string& file_name, const SurfaceMesh* mesh);
 
         /// Reads a surface mesh from a \p PLY format file.
         bool load_ply(const std::string& file_name, SurfaceMesh* mesh);
