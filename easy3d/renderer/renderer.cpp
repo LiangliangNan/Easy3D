@@ -118,19 +118,19 @@ namespace easy3d {
             PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
 
             // we have two faces drawables for polyhedral meshes
-            // interior faces
-            auto interior_faces = mesh->renderer()->add_triangles_drawable("faces:interior");
-            interior_faces->set_uniform_coloring(setting::triangles_drawable_backside_color);
-            interior_faces->set_distinct_back_color(true);
-            interior_faces->set_lighting_two_sides(true);
-            interior_faces->set_visible(true);
-
             // border faces
             auto border_faces = mesh->renderer()->add_triangles_drawable("faces:border");
             border_faces->set_uniform_coloring(setting::surface_mesh_faces_color);
             border_faces->set_distinct_back_color(true);
             border_faces->set_lighting_two_sides(true);
             border_faces->set_visible(true);
+
+            // interior faces
+            auto interior_faces = mesh->renderer()->add_triangles_drawable("faces:interior");
+            interior_faces->set_uniform_coloring(setting::triangles_drawable_backside_color);
+            interior_faces->set_distinct_back_color(true);
+            interior_faces->set_lighting_two_sides(true);
+            interior_faces->set_visible(true);
 
             // edges
             auto edges = mesh->renderer()->add_lines_drawable("edges");
